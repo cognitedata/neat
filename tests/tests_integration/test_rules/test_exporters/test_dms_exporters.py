@@ -306,40 +306,56 @@ class TestDMSExporters:
     ) -> None:
         # We change the space to avoid conflicts with Olav's not-updated rules in the previous test
         dumped = olav_rebuilt_dms_rules.dump(by_alias=True)
-        new_enterprise_space = "power_update"
         new_solution_space = "power_analytics_update"
+        new_enterprise_space = "power_update"
         dumped["Metadata"]["space"] = new_solution_space
+        dumped["Last"]["Metadata"]["space"] = new_solution_space
         dumped["Reference"]["Metadata"]["space"] = new_enterprise_space
-        for prop in itertools.chain(dumped["Properties"], dumped["Reference"]["Properties"]):
+        for prop in itertools.chain(
+            dumped["Properties"], dumped["Last"]["Properties"], dumped["Reference"]["Properties"]
+        ):
             if prop["Reference"]:
                 prop["Reference"] = prop["Reference"].replace("power", new_enterprise_space)
             if prop["Container"]:
                 prop["Container"] = prop["Container"].replace("power", new_enterprise_space)
-        for view in itertools.chain(dumped["Views"], dumped["Reference"]["Views"]):
+        for view in itertools.chain(dumped["Views"], dumped["Last"]["Views"], dumped["Reference"]["Views"]):
             if view["Reference"]:
                 view["Reference"] = view["Reference"].replace("power", new_enterprise_space)
             if view["Implements"]:
                 view["Implements"] = view["Implements"].replace("power", new_enterprise_space)
-        for container in itertools.chain(dumped["Containers"], dumped["Reference"]["Containers"]):
+        for container in itertools.chain(
+            dumped.get("Containers", []),
+            dumped["Last"].get("Containers", []),
+            dumped["Reference"].get("Containers", []),
+        ):
             if container["Reference"]:
                 container["Reference"] = container["Reference"].replace("power", new_enterprise_space)
             if container["Constraint"]:
                 container["Constraint"] = container["Constraint"].replace("power", new_enterprise_space)
             container["Container"] = container["Container"].replace("power", new_enterprise_space)
             container["Class (linage)"] = container["Class (linage)"].replace("power", new_enterprise_space)
-
+        dumped["Last"]["Reference"] = dumped["Reference"]
         rules = DMSRulesInput.load(dumped).as_rules()
         schema = rules.as_schema()
-        assert schema.referenced_spaces(include_indirect_references=True) == {new_enterprise_space, new_solution_space}
+        referenced_spaces = (
+            schema.referenced_spaces(True)
+            | schema.last.referenced_spaces(True)
+            | schema.reference.referenced_spaces(True)
+        )
+        assert referenced_spaces == {new_enterprise_space, new_solution_space}
         exporter = DMSExporter(existing_handling="force")
+        # First, we ensure that the previous version of the data model is deployed
+        uploaded = list(exporter.export_to_cdf(rules.last, cognite_client, dry_run=False))
+        failed = [entity for entity in uploaded if entity.failed]
+        assert not failed, f"Failed to deploy previous version of the data model: {failed}"
 
         uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].total == len(rules.containers)
+        assert uploaded_by_name["containers"].total == len(schema.containers)
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].total == len(rules.views)
+        assert uploaded_by_name["views"].total == len(schema.views)
         assert uploaded_by_name["views"].failed == 0
 
         assert uploaded_by_name["data_models"].total == 1
