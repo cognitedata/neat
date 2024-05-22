@@ -38,6 +38,15 @@ def olav_dms_rules() -> DMSRules:
 
 
 @pytest.fixture(scope="session")
+def olav_rebuilt_dms_rules() -> DMSRules:
+    filepath = DOC_RULES / "dms-rebuild-olav.xlsx"
+
+    excel_importer = ExcelImporter(filepath)
+
+    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms_architect)
+
+
+@pytest.fixture(scope="session")
 def svein_harald_dms_rules() -> DMSRules:
     filepath = DOC_RULES / "dms-addition-svein-harald.xlsx"
 
@@ -283,7 +292,7 @@ class TestDMSExporters:
         assert uploaded_by_name["containers"].total == len(rules.containers)
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].total == len(rules.views)
+        assert uploaded_by_name["views"].total == len(schema.views)
         assert uploaded_by_name["views"].failed == 0
 
         assert uploaded_by_name["data_models"].total == 1
@@ -292,9 +301,11 @@ class TestDMSExporters:
         assert uploaded_by_name["spaces"].total == 1
         assert uploaded_by_name["spaces"].failed == 0
 
-    def test_export_olav_updated_dms_to_cdf(self, cognite_client: CogniteClient, olav_dms_rules: DMSRules) -> None:
+    def test_export_olav_updated_dms_to_cdf(
+        self, cognite_client: CogniteClient, olav_rebuilt_dms_rules: DMSRules
+    ) -> None:
         # We change the space to avoid conflicts with Olav's not-updated rules in the previous test
-        dumped = olav_dms_rules.dump(by_alias=True)
+        dumped = olav_rebuilt_dms_rules.dump(by_alias=True)
         new_enterprise_space = "power_update"
         new_solution_space = "power_analytics_update"
         dumped["Metadata"]["space"] = new_solution_space

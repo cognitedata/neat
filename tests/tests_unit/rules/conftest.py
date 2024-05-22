@@ -102,4 +102,4 @@ def svein_harald_dms_rules() -> DMSRules:
 
 @pytest.fixture(scope="session")
 def olav_rebuild_dms_rules() -> DMSRules:
-    return ExcelImporter(DOC_RULES / "dms_rebuild_olav.xlsx").to_rules(errors="raise", role=RoleTypes.dms_architect)
+    return ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx").to_rules(errors="raise", role=RoleTypes.dms_architect)
