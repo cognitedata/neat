@@ -8,6 +8,7 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     EntityTypes,
 )
+from cognite.neat.utils.utils import get_inheritance_path
 
 from ._rules import InformationRules
 
@@ -45,7 +46,6 @@ class InformationPostValidation:
         defined_classes = {class_.class_ for class_ in self.classes}
         referred_classes = {property_.class_ for property_ in self.properties}
         class_parent_pairs = self._class_parent_pairs()
-
         dangling_classes = set()
 
         if classes_without_properties := defined_classes.difference(referred_classes):
@@ -55,7 +55,7 @@ class InformationPostValidation:
                     dangling_classes.add(class_)
                 # USE CASE: class has no direct properties and no parents with properties
                 elif class_parent_pairs.get(class_, None) and not any(
-                    parent in referred_classes for parent in class_parent_pairs[class_]
+                    parent in referred_classes for parent in get_inheritance_path(class_, class_parent_pairs)
                 ):
                     dangling_classes.add(class_)
 
