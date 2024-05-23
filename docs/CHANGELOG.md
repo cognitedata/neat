@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.77.7] - 23-05-24
+### Fixed
+- In the `DMSImporter`, if you imported a data model with multiple views referencing the same direct property
+  in a container, it would return an error. This is allowed and thus no longer return an error.
+
 ## [0.77.6] - 23-05-24
 ### Improves
 - Documentation on how to use raw filter
