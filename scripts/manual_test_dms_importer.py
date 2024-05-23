@@ -45,23 +45,30 @@ CONFIG_FILE = Path(__file__).parent / 'manual_test_config.yaml'
 
 
 def main():
+    total = 0
+    failed = 0
+    warning = 0
+    success = 0
     for client, model_id in load_cases():
+        total += 1
         print(Panel(f"Testing model: {model_id} from {client.config.project}"))
         importer = DMSImporter.from_data_model_id(client, model_id)
         print("Successfully fetched model from CDF")
         rules, issues = importer.to_rules()
         if issues.has_errors:
-            print("Issues found during conversion:")
+            print("[red]Errors[/red] found during conversion:")
             for issue in issues.errors:
-                print(issue)
+                print(issue.message())
             print("Aborting")
+            failed += 1
             continue
         if not issues:
-            print("Successfully converted model to rules")
+            print("[green]Successfully[/green] converted model to rules")
         else:
-            print("Successfully converted model to rules with issues")
+            print("Successfully converted model to rules with [yellow]issues[/yellow]")
             for issue in issues.warnings:
                 print(issue)
+            warning += 1
         assert isinstance(rules, DMSRules)
         information = rules.as_information_architect_rules()
         print("Successfully converted rules to information architect rules")
@@ -73,7 +80,8 @@ def main():
         output_folder.mkdir(exist_ok=True)
         exporter.export_to_file(information, output_folder)
         print("Successfully exported information architect rules to file")
-
+        success += 1
+    print(Panel(f"Total: {total}, Success: {success}, Warnings: {warning}, Failed: {failed} Data Models"))
 
 def load_cases() -> Iterable[tuple[CogniteClient, DataModelId]]:
     config_file = yaml.safe_load(CONFIG_FILE.read_text())
