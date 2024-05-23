@@ -34,7 +34,7 @@ Furthermore, he clicks on the `Create Excel Sheet` step which opens a modal with
 <img src="../../artifacts/figs/life_cycle_download_reference_model_analytic_solution_model_export.png" height="300">
 
 * **Styling**: `maximal`. This is how the exported Excel document is styled.
-* **Output role format**: `intput`. This is the same as the role format in the `Import DMS` step. Svein Harald
+* **Output role format**: `intput`. This is the same as the role format in the `Import DMS` step. Olav
   just set it to `input` as this will use the same format as he selected in the `Import DMS` step.
 * **Dump Format**: This tells **NEAT** how to write the Excel document. Olav selects `last`
   as he is updating the model, and thus wants the model he downloaded to be in the Last sheets.

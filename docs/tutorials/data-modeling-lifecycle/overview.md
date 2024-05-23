@@ -40,7 +40,7 @@ different people with different roles can work together to achieve the goal of b
   to extend the solution model while keeping the existing model intact. In this tutorial, we will add new concepts
   discovered during the implementation of the forecasting use case.
 
-- (Planned)**[Business Solution Model](./part-5-business-solution-model.md)**: In this tutorial, you will learn how to
+- **[Business Solution Model](./part-5-business-solution-model.md)**: In this tutorial, you will learn how to
   use the Enterprise Model to build a Solution Model for a business case. This data model will only use a subset
   of the Enterprise Model and not add any new concepts. It is intended for a business user that only needs to select
   the part of the Enterprise Model that is relevant for their business case.

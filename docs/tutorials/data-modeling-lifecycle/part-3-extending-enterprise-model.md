@@ -209,14 +209,14 @@ spreadsheet. He adds the following row:
 ## Iterating on the Extension
 
 Olav takes the new concept `TimeseriesForecastProduct` to the trading department to get feedback. In the trading
-department, the trader Lars points out that it is challenging to get a context for the forecast. He suggests that they
-should add `named` and `description` properties to the `TimeseriesForecastProduct`. In addition, he points out that
-when he makes a decision based on the forecast, he first needs to be confident in the forecast. Olav asks what
-criteria Lars uses to determine whether he is confident in a forecast, and learns that the input data to the forecast
+department, the trader Camilla points out that it is challenging to get a context for the forecast. She suggests that they
+should add `named` and `description` properties to the `TimeseriesForecastProduct`. In addition, she points out that
+when she makes a decision based on the forecast, she first needs to be confident in the forecast. Olav asks what
+criteria Camilla uses to determine whether she is confident in a forecast, and learns that the input data to the forecast
 is one of the most important factors. Furthermore, Olav wonders whether he should include a `confidence` property
-in the `TimeseriesForecastProduct`. Lars does not have a statical background, and explains that `confidence` becomes
-a very abstract concept for him. He instead explains that he is happy with the three different timeseries
-`low`, `expected`, and `high` as they give him a good understanding of the forecast and the uncertainty.
+in the `TimeseriesForecastProduct`. Camilla does not have a statical background, and explains that `confidence` becomes
+a very abstract concept for her. She instead explains that he is happy with the three different timeseries
+`low`, `expected`, and `high` as they give her a good understanding of the forecast and the uncertainty.
 
 Olav goes back to Svein Harald, and together they add the following properties to the `Properties` sheet:
 
