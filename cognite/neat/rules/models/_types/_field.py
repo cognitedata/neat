@@ -1,4 +1,5 @@
 import re
+import warnings
 from collections.abc import Callable
 from typing import Annotated, Any, cast
 
@@ -17,6 +18,7 @@ from pydantic.functional_serializers import PlainSerializer
 from pydantic_core import PydanticCustomError
 
 from cognite.neat.rules import exceptions
+from cognite.neat.rules.issues.importing import MoreThanOneNonAlphanumericCharacterWarning
 
 from ._base import (
     MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX,
@@ -49,7 +51,6 @@ StrOrListType = Annotated[
         when_used="unless-none",
     ),
 ]
-
 
 StrListType = Annotated[
     list[str],
@@ -96,19 +97,12 @@ VersionType = Annotated[
 ]
 
 
-PropertyType = Annotated[
-    str,
-    AfterValidator(
-        lambda value: (
-            _raise(exceptions.MoreThanOneNonAlphanumericCharacter("property", value).to_pydantic_custom_error())
-            if re.search(MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX, value)
-            else (
-                value
-                if re.match(PROPERTY_ID_COMPLIANCE_REGEX, value)
-                else _raise(
-                    exceptions.PropertyIDRegexViolation(value, PROPERTY_ID_COMPLIANCE_REGEX).to_pydantic_custom_error()
-                )
-            )
-        )
-    ),
-]
+def _property_validation(value: str) -> str:
+    if not re.match(PROPERTY_ID_COMPLIANCE_REGEX, value):
+        _raise(exceptions.PropertyIDRegexViolation(value, PROPERTY_ID_COMPLIANCE_REGEX).to_pydantic_custom_error())
+    if re.search(MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX, value):
+        warnings.warn(MoreThanOneNonAlphanumericCharacterWarning("property", value), stacklevel=2)
+    return value
+
+
+PropertyType = Annotated[str, AfterValidator(_property_validation)]
