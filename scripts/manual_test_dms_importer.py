@@ -22,6 +22,7 @@ It depends on the config file 'manual_test_config.yaml' which should be placed i
   models: all # Will load all models that the client can access.
 ```
 """
+import shutil
 from collections.abc import Iterable
 
 import yaml
@@ -65,7 +66,12 @@ def main():
         information = rules.as_information_architect_rules()
         print("Successfully converted rules to information architect rules")
         exporter = DMSExporter()
-        exporter.export_to_file(information, TMP_FOLDER / f"{model_id.external_id}")
+        output_folder = TMP_FOLDER / f"{model_id.external_id}"
+        if output_folder.exists():
+            print("Output folder already exists, removing")
+            shutil.rmtree(output_folder)
+        output_folder.mkdir(exist_ok=True)
+        exporter.export_to_file(information, output_folder)
         print("Successfully exported information architect rules to file")
 
 
