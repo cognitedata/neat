@@ -83,6 +83,7 @@ def main():
         success += 1
     print(Panel(f"Total: {total}, Success: {success}, Warnings: {warning}, Failed: {failed} Data Models"))
 
+
 def load_cases() -> Iterable[tuple[CogniteClient, DataModelId]]:
     config_file = yaml.safe_load(CONFIG_FILE.read_text())
     if not isinstance(config_file, list):
