@@ -80,7 +80,8 @@ def main():
         exporter.export_to_file(information, output_folder)
         print("Successfully exported information architect rules to file")
         success += 1
-    print(Panel(f"Tested {total} Data Models\nSuccess: {success}\nWarnings:\n{warning}\nFailed: {failed}", expand=False))
+    print(Panel(f"Tested {total} Data Models\n[green]Success[/green]: "
+                f"{success}\n[yellow]Warnings[/yellow]: {warning}\n[red]Failed[/red]: {failed}", expand=False))
 
 
 def load_cases() -> Iterable[tuple[CogniteClient, DataModelId]]:
