@@ -1,6 +1,6 @@
 """This scrips is used to test real data models from various sources.
 
-It depends on the config file 'manual_test_config.yaml' which should be placed in the same folder as this script.
+It depends on the config file 'config_manual_test.yaml' which should be placed in the same folder as this script.
 
 ```yaml
 - credentials:
@@ -40,7 +40,7 @@ from rich import print
 TMP_FOLDER = Path(__file__).parent / 'tmp'
 TMP_FOLDER.mkdir(exist_ok=True)
 
-CONFIG_FILE = Path(__file__).parent / 'manual_test_config.yaml'
+CONFIG_FILE = Path(__file__).parent / 'config_manual_test.yaml'
 
 
 def main():
