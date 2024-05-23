@@ -50,7 +50,6 @@ StrOrListType = Annotated[
     ),
 ]
 
-
 StrListType = Annotated[
     list[str],
     BeforeValidator(lambda value: [entry.strip() for entry in value.split(",")] if isinstance(value, str) else value),
@@ -96,19 +95,15 @@ VersionType = Annotated[
 ]
 
 
+def _property_validation(value: str) -> str:
+    if not re.match(PROPERTY_ID_COMPLIANCE_REGEX, value):
+        _raise(exceptions.PropertyIDRegexViolation(value, PROPERTY_ID_COMPLIANCE_REGEX).to_pydantic_custom_error())
+    if re.search(MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX, value):
+        _raise(exceptions.MoreThanOneNonAlphanumericCharacter("property", value).to_pydantic_custom_error())
+    return value
+
+
 PropertyType = Annotated[
     str,
-    AfterValidator(
-        lambda value: (
-            _raise(exceptions.MoreThanOneNonAlphanumericCharacter("property", value).to_pydantic_custom_error())
-            if re.search(MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX, value)
-            else (
-                value
-                if re.match(PROPERTY_ID_COMPLIANCE_REGEX, value)
-                else _raise(
-                    exceptions.PropertyIDRegexViolation(value, PROPERTY_ID_COMPLIANCE_REGEX).to_pydantic_custom_error()
-                )
-            )
-        )
-    ),
+    AfterValidator(_property_validation),
 ]

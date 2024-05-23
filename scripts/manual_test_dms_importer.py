@@ -123,7 +123,8 @@ def load_cases() -> Iterable[tuple[CogniteClient, DataModelId]]:
                 yield client, model.as_id()
         else:
             for model in models:
-                yield client, DataModelId(model['space'], model['externalId'])
+                for model_version in client.data_modeling.data_models.retrieve((model['space'], model['externalId'])):
+                    yield client, model_version.as_id()
 
 
 if __name__ == '__main__':
