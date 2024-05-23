@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Any
+from typing import Any, ClassVar
 
 from cognite.client import data_modeling as dm
 
@@ -17,6 +17,10 @@ from ._schema import DMSSchema
 class DMSPostValidation:
     """This class does all the validation of the DMS rules that have dependencies between
     components."""
+
+    # When checking for changes extension=addition, we need to check if the new view has changed.
+    # For example, changing the filter is allowed, but changing the properties is not.
+    changeable_view_attributes: ClassVar[set[str]] = {"filter"}
 
     def __init__(self, rules: DMSRules):
         self.rules = rules
@@ -212,6 +216,13 @@ class DMSPostValidation:
             changed_attributes, changed_properties = self._changed_attributes_and_properties(
                 view.dump(), existing_view.dump()
             )
+            existing_properties = existing_view.properties or {}
+            changed_properties = [prop for prop in changed_properties if prop in existing_properties]
+            changed_attributes = [attr for attr in changed_attributes if attr not in self.changeable_view_attributes]
+
+            if not changed_attributes and not changed_properties:
+                # Only added new properties, no problem
+                continue
             self.issue_list.append(
                 issues.dms.ChangingViewError(
                     view_id=view_id,

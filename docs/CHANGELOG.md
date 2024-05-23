@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.77.5] - 23-05-24
+### Fixed
+- `DMSExporter` creates the schema depending on `extension` in metadata field as defined in the
+  [documentation](https://cognite-neat.readthedocs-hosted.com/en/latest/terminology/rules-excel-input.html).
+
 ## [0.77.4] - 22-05-24
 ### Improves
 - Information rules are now read using InformationRulesInput data class, replicate the form of DMS rules.

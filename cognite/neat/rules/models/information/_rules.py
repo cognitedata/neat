@@ -1,11 +1,10 @@
 import math
 import sys
-from collections.abc import Callable
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
-from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
-from pydantic_core.core_schema import SerializationInfo
+from pydantic import Field, field_serializer, field_validator, model_validator
+from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import PREFIXES
@@ -13,12 +12,12 @@ from cognite.neat.rules import exceptions, issues
 from cognite.neat.rules.issues.base import MultiValueError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
+    BaseRules,
     DataModelType,
     ExtensionCategory,
     ExtensionCategoryType,
     MatchType,
     RoleTypes,
-    RuleModel,
     SchemaCompleteness,
     SheetEntity,
     SheetList,
@@ -51,7 +50,6 @@ from cognite.neat.rules.models.entities import (
     Undefined,
     UnknownEntity,
     URLEntity,
-    _UndefinedType,
 )
 
 if TYPE_CHECKING:
@@ -259,7 +257,7 @@ class InformationProperty(SheetEntity):
         return self.max_count != 1
 
 
-class InformationRules(RuleModel):
+class InformationRules(BaseRules):
     metadata: InformationMetadata = Field(alias="Metadata")
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
@@ -304,14 +302,37 @@ class InformationRules(RuleModel):
             raise MultiValueError([error for error in issue_list if isinstance(error, issues.NeatValidationError)])
         return self
 
-    @model_serializer(mode="wrap", when_used="always")
-    def information_rules_serializer(self, handler: Callable, info: SerializationInfo) -> dict[str, Any]:
+    def dump(
+        self,
+        mode: Literal["python", "json"] = "python",
+        by_alias: bool = False,
+        exclude: IncEx = None,
+        exclude_none: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        as_reference: bool = False,
+    ) -> dict[str, Any]:
         from ._serializer import _InformationRulesSerializer
 
-        dumped = cast(dict[str, Any], handler(self, info))
+        dumped = self.model_dump(
+            mode=mode,
+            by_alias=by_alias,
+            exclude=exclude,
+            exclude_none=exclude_none,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+        )
         prefix = self.metadata.prefix
-
-        return _InformationRulesSerializer(info, prefix).clean(dumped)
+        serializer = _InformationRulesSerializer(by_alias, prefix)
+        cleaned = serializer.clean(dumped, as_reference)
+        last = "Last" if by_alias else "last"
+        if last_dump := cleaned.get(last):
+            cleaned[last] = serializer.clean(last_dump, False)
+        reference = "Reference" if by_alias else "reference"
+        if self.reference and (ref_dump := cleaned.get(reference)):
+            prefix = self.reference.metadata.prefix
+            cleaned[reference] = _InformationRulesSerializer(by_alias, prefix).clean(ref_dump, True)
+        return cleaned
 
     def as_domain_rules(self) -> DomainRules:
         from ._converter import _InformationRulesConverter
@@ -322,26 +343,3 @@ class InformationRules(RuleModel):
         from ._converter import _InformationRulesConverter
 
         return _InformationRulesConverter(self).as_dms_architect_rules()
-
-    def reference_self(self) -> "InformationRules":
-        new_self = self.model_copy(deep=True)
-        for prop in new_self.properties:
-            prop.reference = ReferenceEntity(
-                prefix=(
-                    prop.class_.prefix if not isinstance(prop.class_.prefix, _UndefinedType) else self.metadata.prefix
-                ),
-                suffix=prop.class_.suffix,
-                version=prop.class_.version,
-                property=prop.property_,
-            )
-
-        for cls_ in new_self.classes:
-            cls_.reference = ReferenceEntity(
-                prefix=(
-                    cls_.class_.prefix if not isinstance(cls_.class_.prefix, _UndefinedType) else self.metadata.prefix
-                ),
-                suffix=cls_.class_.suffix,
-                version=cls_.class_.version,
-            )
-
-        return new_self

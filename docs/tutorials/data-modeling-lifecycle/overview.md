@@ -36,7 +36,7 @@ different people with different roles can work together to achieve the goal of b
   the enterprise model while keeping the existing model intact. In this tutorial, we will add new concepts discovered
   during the implementation of the forecasting use case.
 
-- (Planned)**[Extending Solution Model](./part-4-extending-solution-model.md)**: In this tutorial, you will learn how
+- **[Extending Solution Model](./part-4-extending-solution-model.md)**: In this tutorial, you will learn how
   to extend the solution model while keeping the existing model intact. In this tutorial, we will add new concepts
   discovered during the implementation of the forecasting use case.
 

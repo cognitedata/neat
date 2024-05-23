@@ -9,8 +9,8 @@ from cognite.neat.rules.models.entities import ClassEntity, ParentEntityList
 
 from ._base import (
     BaseMetadata,
+    BaseRules,
     RoleTypes,
-    RuleModel,
     SheetEntity,
     SheetList,
 )
@@ -51,7 +51,7 @@ class DomainClass(SheetEntity):
     parent: ParentEntityList | None = Field(alias="Parent Class")
 
 
-class DomainRules(RuleModel):
+class DomainRules(BaseRules):
     metadata: DomainMetadata = Field(alias="Metadata")
     properties: SheetList[DomainProperty] = Field(alias="Properties")
     classes: SheetList[DomainClass] | None = Field(None, alias="Classes")
@@ -70,7 +70,3 @@ class DomainRules(RuleModel):
                 cls.model_dump(**kwargs) for cls in self.classes or []
             ] or None
         return output
-
-    def reference_self(self) -> "DomainRules":
-        """DomainRules does not have reference field, so it returns a copy of itself."""
-        return self.model_copy(deep=True)
