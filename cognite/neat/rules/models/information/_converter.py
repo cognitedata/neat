@@ -78,13 +78,24 @@ class _InformationRulesConverter:
             for cls_ in self.rules.classes
         ]
 
+        last_dms_rules = self.rules.last.as_dms_architect_rules() if self.rules.last else None
+        ref_dms_rules = self.rules.reference.as_dms_architect_rules() if self.rules.reference else None
+
         containers: list[DMSContainer] = []
         class_by_entity = {cls_.class_: cls_ for cls_ in self.rules.classes}
         if self.rules.last:
             for cls_ in self.rules.last.classes:
                 if cls_.class_ not in class_by_entity:
                     class_by_entity[cls_.class_] = cls_
+
+        existing_containers: set[ContainerEntity] = set()
+        for rule_set in [last_dms_rules, ref_dms_rules]:
+            if rule_set:
+                existing_containers.update({c.container for c in rule_set.containers or []})
+
         for container_entity, class_entities in referenced_containers.items():
+            if container_entity in existing_containers:
+                continue
             constrains = self._create_container_constraint(
                 class_entities, default_space, class_by_entity, referenced_containers
             )
@@ -106,8 +117,8 @@ class _InformationRulesConverter:
             ),
             views=SheetList[DMSView](data=views),
             containers=SheetList[DMSContainer](data=containers),
-            last=self.rules.last.as_dms_architect_rules() if self.rules.last else None,
-            reference=self.rules.reference.as_dms_architect_rules() if self.rules.reference else None,
+            last=last_dms_rules,
+            reference=ref_dms_rules,
         )
 
     @staticmethod
