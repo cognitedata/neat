@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.77.6] - 23-05-24
+### Improves
+- Documentation on how to use raw filter
+- Added a simple example of Rules with raw filter
+- Added new test for raw filter
+
 ## [0.77.5] - 23-05-24
 ### Fixed
 - `DMSExporter` creates the schema depending on `extension` in metadata field as defined in the
