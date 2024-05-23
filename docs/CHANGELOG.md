@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.77.8] - 23-05-24
+### Fixed
+- In the conversion form Information to DMS Rules, when referencing a class in reference rules, the implements
+  was not set correctly. This is now fixed.
+- In the new implementation of the conversion between Information and DMS rules, containers that already exist
+  in a last or reference rule object were recreated. This is now fixed.
+
 ## [0.77.7] - 23-05-24
 ### Fixed
 - In the `DMSImporter`, if you imported a data model with multiple views referencing the same direct property
