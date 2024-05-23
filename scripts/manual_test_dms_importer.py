@@ -48,6 +48,7 @@ def main():
     failed = 0
     warning = 0
     success = 0
+    failing_models = []
     for client, model_id in load_cases():
         total += 1
         print(Panel(f"Testing model: {model_id!r} from {client.config.project!r} CDF Project", expand=False))
@@ -59,6 +60,7 @@ def main():
             for issue in issues.errors:
                 print(issue)
             print("Aborting")
+            failing_models.append(model_id)
             failed += 1
             continue
         if not issues:
@@ -69,7 +71,13 @@ def main():
                 print(issue)
             warning += 1
         assert isinstance(rules, DMSRules)
-        information = rules.as_information_architect_rules()
+        try:
+            information = rules.as_information_architect_rules()
+        except Exception as e:
+            print(f"[red]Failed[/red] to convert rules to information architect rules: {e}")
+            failing_models.append(model_id)
+            failed += 1
+            continue
         print("Successfully converted rules to information architect rules")
         exporter = DMSExporter()
         output_folder = TMP_FOLDER / f"{model_id.external_id}"
@@ -77,11 +85,18 @@ def main():
             print("Output folder already exists, removing")
             shutil.rmtree(output_folder)
         output_folder.mkdir(exist_ok=True)
-        exporter.export_to_file(information, output_folder)
+        try:
+            exporter.export_to_file(information, output_folder)
+        except Exception as e:
+            print(f"[red]Failed[/red] to export information architect rules to folder: {e}")
+            failing_models.append(model_id)
+            failed += 1
+            continue
         print("Successfully exported information architect rules to file")
         success += 1
-    print(Panel(f"Tested {total} Data Models\n[green]Success[/green]: "
-                f"{success}\n[yellow]Warnings[/yellow]: {warning}\n[red]Failed[/red]: {failed}", expand=False))
+    print(Panel(f"Tested {total} Data Models\n[green]Success[/green]: {success}\n"
+                f"[yellow]Warnings[/yellow]: {warning}\n"
+                f"[red]Failed[/red]: {failed} {failing_models}", expand=False))
 
 
 def load_cases() -> Iterable[tuple[CogniteClient, DataModelId]]:
@@ -101,7 +116,7 @@ def load_cases() -> Iterable[tuple[CogniteClient, DataModelId]]:
             raise ValueError(f"Unknown login flow: {login_flow}")
         models = entry['models']
         if models == "all":
-            for model in client.data_modeling.data_models.list():
+            for model in client.data_modeling.data_models.list(limit=-1):
                 yield client, model.as_id()
         else:
             for model in models:
