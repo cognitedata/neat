@@ -3,6 +3,7 @@ from typing import Any
 import pytest
 from cognite.client import data_modeling as dm
 
+from cognite.neat.rules import importers
 from cognite.neat.rules.models.entities import ContainerEntity, DMSNodeEntity
 from cognite.neat.rules.models.wrapped_entities import (
     DMSFilter,
@@ -11,6 +12,7 @@ from cognite.neat.rules.models.wrapped_entities import (
     RawFilter,
     WrappedEntity,
 )
+from tests import config
 
 RAW_FILTER_EXAMPLE = """{"and": [
     {
@@ -114,4 +116,14 @@ class TestWrappedEntities:
             )
             .as_dms_filter()
             .dump()
+        )
+
+    def test_raw_filter_in_sheet(self) -> None:
+        rules, issues = importers.ExcelImporter(
+            config.DOC_RULES / "dms-architect-rules-raw-filter-example.xlsx"
+        ).to_rules()
+
+        assert rules.views.data[0].filter_ == RawFilter.load(
+            """rawFilter({"equals": {"property": ["node", "type"],
+                "value": {"space": "power", "externalId": "WindTurbine"}}})"""
         )
