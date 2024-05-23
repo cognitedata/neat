@@ -57,7 +57,10 @@ class DMSPostValidation:
             container_id = container.as_id()
             row_numbers = {prop_no for prop_no, _ in properties}
             value_types = {prop.value_type for _, prop in properties if prop.value_type}
-            if len(value_types) > 1:
+            # The container type 'direct' is an exception. On a container the type direct can point to any
+            # node. The value type is typically set on the view.
+            is_all_direct = all(prop.connection == "direct" for _, prop in properties)
+            if len(value_types) > 1 and not is_all_direct:
                 errors.append(
                     issues.spreadsheet.MultiValueTypeError(
                         container_id,
