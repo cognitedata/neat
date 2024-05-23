@@ -48,8 +48,20 @@ def main():
         print(Panel(f"Testing model: {model_id} from {client.config.project}"))
         importer = DMSImporter.from_data_model_id(client, model_id)
         print("Successfully fetched model from CDF")
-        rules = cast(DMSRules, importer.to_rules())
-        print("Successfully converted model to rules")
+        rules, issues = importer.to_rules()
+        if issues.has_errors:
+            print("Issues found during conversion:")
+            for issue in issues.errors:
+                print(issue)
+            print("Aborting")
+            continue
+        if not issues:
+            print("Successfully converted model to rules")
+        else:
+            print("Successfully converted model to rules with issues")
+            for issue in issues.warnings:
+                print(issue)
+        assert isinstance(rules, DMSRules)
         information = rules.as_information_architect_rules()
         print("Successfully converted rules to information architect rules")
         exporter = DMSExporter()
