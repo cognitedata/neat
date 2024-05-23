@@ -1,4 +1,4 @@
-"""This scrips is used to test real data models from various sources.
+"""This script is used to test real data models from various sources.
 
 It depends on the config file 'config_manual_test.yaml' which should be placed in the same folder as this script.
 
@@ -26,6 +26,7 @@ import shutil
 from collections.abc import Iterable
 
 import yaml
+import traceback
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
 
@@ -75,6 +76,7 @@ def main():
             information = rules.as_information_architect_rules()
         except Exception as e:
             print(f"[red]Failed[/red] to convert rules to information architect rules: {e}")
+            print(Panel(traceback.format_exc(), expand=False))
             failing_models.append(model_id)
             failed += 1
             continue
@@ -89,6 +91,7 @@ def main():
             exporter.export_to_file(information, output_folder)
         except Exception as e:
             print(f"[red]Failed[/red] to export information architect rules to folder: {e}")
+            print(Panel(traceback.format_exc(), expand=False))
             failing_models.append(model_id)
             failed += 1
             continue
