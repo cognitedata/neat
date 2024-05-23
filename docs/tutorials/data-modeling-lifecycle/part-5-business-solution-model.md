@@ -107,7 +107,6 @@ In addition, the `Properties` sheet looks like this:
 | WindFarm | name          |      |             | string                    | 1         | 1         |         | power:EnergyArea(property=name)          |
 | WindFarm | powerForecast |      |             | TimeseriesForecastProduct | 0         | 1         |         | power:EnergyArea(property=powerForecast) |
 
-
 ### The Finished Spreadsheet (Download Camilla's Spreadsheet)
 
 The finished spreadsheet for Camilla's business solution model can be downloaded [here](../../artifacts/rules/information-business-camilla.xlsx).

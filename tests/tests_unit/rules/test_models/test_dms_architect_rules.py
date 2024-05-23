@@ -1669,6 +1669,24 @@ class TestDMSExporter:
         }
         assert not missing_properties, f"Missing properties for views: {missing_properties}"
 
+    def test_camilla_business_solution_as_schema(self, camilla_information_rules: InformationRules) -> None:
+        dms_rules = camilla_information_rules.as_dms_architect_rules()
+        expected_views = {"TimeseriesForecastProduct", "WindFarm"}
+
+        schema = dms_rules.as_schema()
+
+        assert {v.external_id for v in schema.views} == expected_views
+        assert {v.external_id for v in schema.data_model.views} == expected_views
+        product = next((v for v in schema.views.values() if v.external_id == "TimeseriesForecastProduct"), None)
+        assert product is not None
+        assert not product.properties, f"Expected no properties for {product.external_id}"
+        assert product.implements == [dm.ViewId("power", "TimeseriesForecastProduct", "0.1.0")]
+
+        wind_farm = next((v for v in schema.views.values() if v.external_id == "WindFarm"), None)
+        assert wind_farm is not None
+        assert set(wind_farm.properties) == {"name", "PowerForecast"}
+        assert wind_farm.referenced_containers() == {dm.ContainerId("power", "EnergyArea")}
+
 
 def test_dms_rules_validation_error():
     with pytest.raises(ValidationError) as e:
