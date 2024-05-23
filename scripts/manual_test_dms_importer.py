@@ -28,7 +28,6 @@ from collections.abc import Iterable
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
-from typing import cast
 
 from rich.panel import Panel
 
@@ -58,7 +57,7 @@ def main():
         if issues.has_errors:
             print("[red]Errors[/red] found during conversion:")
             for issue in issues.errors:
-                print(issue.message())
+                print(issue)
             print("Aborting")
             failed += 1
             continue
