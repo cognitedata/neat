@@ -99,7 +99,7 @@ def main():
         success += 1
     print(Panel(f"Tested {total} Data Models\n[green]Success[/green]: {success}\n"
                 f"[yellow]Warnings[/yellow]: {warning}\n"
-                f"[red]Failed[/red]: {failed} {failing_models}", expand=False))
+                f"[red]Failed[/red]: {failed} {failing_models or ''}", expand=False))
 
 
 def load_cases() -> Iterable[tuple[CogniteClient, DataModelId]]:
