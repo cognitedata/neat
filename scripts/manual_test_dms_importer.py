@@ -50,7 +50,7 @@ def main():
     success = 0
     for client, model_id in load_cases():
         total += 1
-        print(Panel(f"Testing model: {model_id} from {client.config.project} CDF Project"))
+        print(Panel(f"Testing model: {model_id!r} from {client.config.project!r} CDF Project", expand=False))
         importer = DMSImporter.from_data_model_id(client, model_id)
         print("Successfully fetched model from CDF")
         rules, issues = importer.to_rules()
@@ -80,7 +80,7 @@ def main():
         exporter.export_to_file(information, output_folder)
         print("Successfully exported information architect rules to file")
         success += 1
-    print(Panel(f"Tested {total} Data Models\nSuccess: {success}, Warnings: {warning}, Failed: {failed}"))
+    print(Panel(f"Tested {total} Data Models\nSuccess: {success}\nWarnings:\n{warning}\nFailed: {failed}", expand=False))
 
 
 def load_cases() -> Iterable[tuple[CogniteClient, DataModelId]]:
