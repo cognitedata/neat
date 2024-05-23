@@ -168,11 +168,7 @@ def incomplete_rules_case():
                 }
             ],
         },
-        (
-            "Classes {'power:GeneratingUnit2'} are not defined in the Class sheet!"
-            "\nFor more information visit: "
-            "https://cognite-neat.readthedocs-hosted.com/en/latest/api/exceptions.html#cognite.neat.rules.exceptions.IncompleteSchema"
-        ),
+        ("Value error, [PropertiesDefinedForUndefinedClassesError(classes=['power:GeneratingUnit2'])]"),
         id="missing_rule",
     )
 

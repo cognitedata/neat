@@ -68,8 +68,8 @@ class TestImportExportDMS:
     @pytest.mark.parametrize(
         "filepath",
         [
-            pytest.param(INFORMATION_UNKNOWN_VALUE_TYPE, id="Information source"),
             pytest.param(DMS_UNKNOWN_VALUE_TYPE, id="DMS source"),
+            pytest.param(INFORMATION_UNKNOWN_VALUE_TYPE, id="Information source"),
         ],
     )
     def test_import_excel_export_dms(self, filepath: Path) -> None:

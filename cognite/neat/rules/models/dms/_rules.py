@@ -58,7 +58,7 @@ _DEFAULT_VERSION = "1"
 
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
-    data_model_type: DataModelType = Field(DataModelType.solution, alias="dataModelType")
+    data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
     schema_: SchemaCompleteness = Field(alias="schema")
     extension: ExtensionCategory = ExtensionCategory.addition
     space: ExternalIdType
