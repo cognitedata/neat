@@ -231,17 +231,29 @@ class _InformationRulesConverter:
         else:
             return prop.class_.as_container_entity(default_space), prop.property_
 
-    @classmethod
-    def _get_view_implements(cls, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
+    def _get_view_implements(self, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
         if isinstance(cls_.reference, ReferenceEntity) and cls_.reference.prefix != metadata.prefix:
             # We use the reference for implements if it is in a different namespace
-            implements = [
-                cls_.reference.as_view_entity(metadata.prefix, metadata.version),
-            ]
+            if self.rules.reference and cls_.reference.prefix == self.rules.reference.metadata.prefix:
+                implements = [
+                    cls_.reference.as_view_entity(
+                        self.rules.reference.metadata.prefix, self.rules.reference.metadata.version
+                    )
+                ]
+            else:
+                implements = [
+                    cls_.reference.as_view_entity(metadata.prefix, metadata.version),
+                ]
         else:
             implements = []
-
-        implements.extend([parent.as_view_entity(metadata.prefix, metadata.version) for parent in cls_.parent or []])
+        for parent in cls_.parent or []:
+            if self.rules.reference and parent.prefix == self.rules.reference.metadata.prefix:
+                view_entity = parent.as_view_entity(
+                    self.rules.reference.metadata.prefix, self.rules.reference.metadata.version
+                )
+            else:
+                view_entity = parent.as_view_entity(metadata.prefix, metadata.version)
+            implements.append(view_entity)
         return implements
 
     @staticmethod

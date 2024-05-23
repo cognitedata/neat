@@ -1684,7 +1684,7 @@ class TestDMSExporter:
 
         wind_farm = next((v for v in schema.views.values() if v.external_id == "WindFarm"), None)
         assert wind_farm is not None
-        assert set(wind_farm.properties) == {"name", "PowerForecast"}
+        assert set(wind_farm.properties) == {"name", "powerForecast"}
         assert wind_farm.referenced_containers() == {dm.ContainerId("power", "EnergyArea")}
 
 
