@@ -303,3 +303,18 @@ class TestInformationRulesConverter:
         }
 
         assert actual == expected
+
+
+class TestInformationConverter:
+    @pytest.mark.parametrize(
+        "name, expected",
+        [
+            ("mycontainer", "mycontainer2"),
+            ("mycontainer2", "mycontainer3"),
+            ("sran*2@N", "sran*2@N2"),
+        ],
+    )
+    def test_bump_suffix(self, name: str, expected: str) -> None:
+        actual = _InformationRulesConverter._bump_suffix(name)
+
+        assert actual == expected

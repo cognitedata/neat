@@ -19,7 +19,7 @@ class TestDMSImporter:
         assert len(issues) == 1
         assert issues[0] == DirectRelationMissingSourceWarning(dm.ViewId("neat", "OneView", "1"), "direct")
         dms_rules = cast(DMSRules, rules)
-        dump_dms = dms_rules.model_dump()
+        dump_dms = dms_rules.dump()
         assert dump_dms["properties"][0]["value_type"] == "#N/A"
         assert dump_dms["properties"][0]["name"] == "direct"
         assert dump_dms["properties"][0]["description"] == "Direction Relation"
@@ -27,7 +27,7 @@ class TestDMSImporter:
         assert dump_dms["views"][0]["description"] == "One View"
 
         info_rules = dms_rules.as_information_architect_rules()
-        dump_info = info_rules.model_dump()
+        dump_info = info_rules.dump()
         assert dump_info["properties"][0]["value_type"] == "#N/A"
 
     @pytest.mark.parametrize(
@@ -50,11 +50,11 @@ class TestDMSImporter:
         # This information is lost in the conversion to schema
         exclude = {
             "metadata": {"created", "updated"},
-            "properties": {"__all__": {"reference"}},
-            "reference": {},
-            "views": {"__all__": {"reference"}},
+            "properties": {"data": {"__all__": {"reference"}}},
+            "reference": {"__all__"},
+            "views": {"data": {"__all__": {"reference"}}},
         }
-        assert rules.model_dump(exclude=exclude) == dms_rules.model_dump(exclude=exclude)
+        assert rules.dump(exclude=exclude) == dms_rules.dump(exclude=exclude)
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(

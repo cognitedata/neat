@@ -7,10 +7,9 @@ from __future__ import annotations
 import math
 import sys
 import types
-from abc import abstractmethod
 from collections.abc import Callable, Iterator
 from functools import wraps
-from typing import Annotated, Any, ClassVar, Generic, TypeAlias, TypeVar
+from typing import Annotated, Any, ClassVar, Generic, Literal, TypeAlias, TypeVar
 
 import pandas as pd
 from pydantic import (
@@ -26,13 +25,12 @@ from pydantic import (
     model_validator,
 )
 from pydantic.fields import FieldInfo
+from pydantic.main import IncEx
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
-    from typing import Self
 else:
     from backports.strenum import StrEnum
-    from typing_extensions import Self
 
 
 METADATA_VALUE_MAX_LENGTH = 5120
@@ -259,26 +257,33 @@ class BaseRules(RuleModel):
 
     Args:
         metadata: Data model metadata
-        classes: Classes defined in the data model
-        properties: Class properties defined in the data model with accompanying transformation rules
-                    to transform data from source to target representation
-        prefixes: Prefixes used in the data model. Defaults to PREFIXES
-        instances: Instances defined in the data model. Defaults to None
         validators_to_skip: List of validators to skip. Defaults to []
     """
 
     metadata: BaseMetadata
 
-    @abstractmethod
-    def reference_self(self) -> Self:
-        """
-        Returns a copy of the rules with reference fields set to itself
+    def dump(
+        self,
+        mode: Literal["python", "json"] = "python",
+        by_alias: bool = False,
+        exclude: IncEx = None,
+        exclude_none: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        as_reference: bool = False,
+    ) -> dict[str, Any]:
+        """Dump the model to a dictionary.
 
-        For example, if the rules have a property with a reference field, then
-        the reference field will be set to the property itself. This is used when
-        exporting a reference model.
+        This is used in the Exporters to dump rules in the required format.
         """
-        raise NotImplementedError
+        return self.model_dump(
+            mode=mode,
+            by_alias=by_alias,
+            exclude=exclude,
+            exclude_none=exclude_none,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+        )
 
 
 # An sheet entity is either a class or a property.

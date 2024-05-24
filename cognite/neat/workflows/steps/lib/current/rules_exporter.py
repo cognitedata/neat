@@ -281,7 +281,6 @@ class RulesToExcel(Step):
             value="",
             label="If you chose Dump Format 'reference', the provided ID will be use in the new medata sheet. "
             "Expected format 'sp_space:my_external_id'.",
-            options=list(exporters.ExcelExporter.dump_options),
         ),
         Configurable(
             name="File path",

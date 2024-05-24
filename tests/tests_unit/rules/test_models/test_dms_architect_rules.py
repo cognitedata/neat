@@ -1356,14 +1356,14 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             DMSContainerInput(container="Asset", class_="Asset"),
         ],
         views=[
-            DMSViewInput(view="Asset", class_="Asset"),
+            DMSViewInput(view="Asset", class_="Asset", description="Change not allowed"),
         ],
         last=last_rules,
     ).as_rules()
 
     yield pytest.param(
         changing_view,
-        [validation.dms.ChangingViewError(dm.ViewId("my_space", "Asset", "1"), ["navn"])],
+        [validation.dms.ChangingViewError(dm.ViewId("my_space", "Asset", "1"), None, ["description"])],
         id="Addition extension, changing view",
     )
 
@@ -1421,8 +1421,8 @@ class TestDMSRules:
         recreated_rules = DMSImporter(schema).to_rules(errors="raise")
 
         # This information is lost in the conversion
-        exclude = {"metadata": {"created", "updated"}, "properties": {"__all__": {"reference"}}}
-        assert recreated_rules.model_dump(exclude=exclude) == alice_rules.model_dump(exclude=exclude)
+        exclude = {"metadata": {"created", "updated"}, "properties": {"data": {"__all__": {"reference"}}}}
+        assert recreated_rules.dump(exclude=exclude) == alice_rules.dump(exclude=exclude)
 
     @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, input_rules: DMSRulesInput, expected_schema: DMSSchema) -> None:
@@ -1504,7 +1504,7 @@ class TestDMSRules:
             "containers": [{"container": "Asset", "class_": "Asset", "constraint": "Sourceable,Describable"}],
         }
 
-        actual_dump = dms_rules.model_dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
+        actual_dump = dms_rules.dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
 
         assert actual_dump == expected_dump
 
@@ -1541,7 +1541,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("rules, expected_issues", list(invalid_extended_rules_test_cases()))
     def test_load_invalid_extended_rules(self, rules: DMSRules, expected_issues: list[validation.ValidationIssue]):
-        raw = rules.model_dump(by_alias=True)
+        raw = rules.dump(by_alias=True)
         raw["Metadata"]["schema"] = "extended"
 
         with pytest.raises(ValidationError) as e:
@@ -1605,6 +1605,87 @@ class TestDMSExporter:
             polygon.filter.dump()
             == dm.filters.Equals(["node", "type"], {"space": "power", "externalId": "Polygon"}).dump()
         )
+
+    def test_svein_harald_as_schema(self, svein_harald_dms_rules: DMSRules) -> None:
+        expected_views = {"GeneratingUnit", "EnergyArea", "TimeseriesForecastProduct"}
+        expected_model_views = expected_views | {
+            "ArrayCable",
+            "CircuitBreaker",
+            "CurrentTransformer",
+            "DisconnectSwitch",
+            "DistributionLine",
+            "DistributionSubstation",
+            "ElectricCarCharger",
+            "EnergyArea",
+            "EnergyConsumer",
+            "ExportCable",
+            "GeneratingUnit",
+            "GeoLocation",
+            "Meter",
+            "MultiLineString",
+            "OffshoreSubstation",
+            "OnshoreSubstation",
+            "Point",
+            "Polygon",
+            "PowerLine",
+            "Substation",
+            "Transmission",
+            "TransmissionSubstation",
+            "VoltageLevel",
+            "VoltageTransformer",
+            "WindFarm",
+            "WindTurbine",
+        }
+
+        schema = svein_harald_dms_rules.as_schema()
+
+        actual_views = {view.external_id for view in schema.views}
+        assert actual_views == expected_views
+        actual_model_views = {view.external_id for view in schema.data_model.views}
+        assert actual_model_views == expected_model_views
+
+    def test_olav_rebuild_as_schema(self, olav_rebuild_dms_rules: DMSRules) -> None:
+        expected_views = {
+            "Point",
+            "Polygon",
+            "PowerForecast",
+            "WeatherStation",
+            "WindFarm",
+            "WindTurbine",
+            "TimeseriesForecastProduct",
+        }
+        expected_containers = {"PowerForecast", "WeatherStation"}
+
+        schema = olav_rebuild_dms_rules.as_schema()
+
+        actual_views = {view.external_id for view in schema.views}
+        assert actual_views == expected_views
+        actual_model_views = {view.external_id for view in schema.data_model.views}
+        assert actual_model_views == expected_views
+        actual_containers = {container.external_id for container in schema.containers}
+        assert actual_containers == expected_containers
+        missing_properties = {
+            view_id for view_id, view in schema.views.items() if not view.properties and not view.implements
+        }
+        assert not missing_properties, f"Missing properties for views: {missing_properties}"
+
+    def test_camilla_business_solution_as_schema(self, camilla_information_rules: InformationRules) -> None:
+        dms_rules = camilla_information_rules.as_dms_architect_rules()
+        expected_views = {"TimeseriesForecastProduct", "WindFarm"}
+
+        schema = dms_rules.as_schema()
+
+        assert {v.external_id for v in schema.views} == expected_views
+        assert {v.external_id for v in schema.data_model.views} == expected_views
+        product = next((v for v in schema.views.values() if v.external_id == "TimeseriesForecastProduct"), None)
+        assert product is not None
+        assert not product.properties, f"Expected no properties for {product.external_id}"
+        assert product.implements == [dm.ViewId("power", "TimeseriesForecastProduct", "0.1.0")]
+
+        wind_farm = next((v for v in schema.views.values() if v.external_id == "WindFarm"), None)
+        assert wind_farm is not None
+        assert set(wind_farm.properties) == {"name", "powerForecast"}
+        assert wind_farm.referenced_containers() == {dm.ContainerId("power", "EnergyArea")}
 
 
 def test_dms_rules_validation_error():
