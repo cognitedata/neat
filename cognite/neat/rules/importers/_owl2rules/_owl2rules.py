@@ -21,7 +21,7 @@ class OWLImporter(BaseImporter):
 
         Args:
             filepath: Path to OWL ontology
-            make_compliant: If True, NEAT will attempt to make the imported rules compliant
+            make_compliant: If True, NEAT will attempt to make the imported rules compliant with CDF
 
     !!! Note
         OWL Ontologies typically lacks some information that is required for making a complete
