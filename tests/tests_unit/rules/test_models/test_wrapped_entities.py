@@ -3,8 +3,27 @@ from typing import Any
 import pytest
 from cognite.client import data_modeling as dm
 
+from cognite.neat.rules import importers
 from cognite.neat.rules.models.entities import ContainerEntity, DMSNodeEntity
-from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter, WrappedEntity
+from cognite.neat.rules.models.wrapped_entities import (
+    DMSFilter,
+    HasDataFilter,
+    NodeTypeFilter,
+    RawFilter,
+    WrappedEntity,
+)
+from tests import config
+
+RAW_FILTER_EXAMPLE = """{"and": [
+    {
+      "in": {
+        "property": ["yggdrasil_domain_model", "EntityTypeGroup", "entityType"],
+        "values": ["CFIHOS_00000003"]
+      }
+    }
+  ]}"""
+
+RAW_FILTER_CELL_EXAMPLE = f"""rawFilter({RAW_FILTER_EXAMPLE})"""
 
 
 class TestWrappedEntities:
@@ -42,6 +61,11 @@ class TestWrappedEntities:
                         DMSNodeEntity(space="space", externalId="node2"),
                     ]
                 ),
+            ),
+            (
+                RawFilter,
+                RAW_FILTER_CELL_EXAMPLE,
+                RawFilter(filter=RAW_FILTER_EXAMPLE),
             ),
         ],
     )
@@ -81,3 +105,25 @@ class TestWrappedEntities:
         loaded = DMSFilter.from_dms_filter(filter_)
 
         assert loaded == expected
+
+    def test_has_data_vs_raw_filter(self) -> None:
+        assert (
+            HasDataFilter.load("hasData(space:container1)").as_dms_filter().dump()
+            == RawFilter.load(
+                """rawFilter({"hasData": [{"type": "container",
+                                           "space": "space",
+                                           "externalId": "container1"}]})"""
+            )
+            .as_dms_filter()
+            .dump()
+        )
+
+    def test_raw_filter_in_sheet(self) -> None:
+        rules, issues = importers.ExcelImporter(
+            config.DOC_RULES / "dms-architect-rules-raw-filter-example.xlsx"
+        ).to_rules()
+
+        assert rules.views.data[0].filter_ == RawFilter.load(
+            """rawFilter({"equals": {"property": ["node", "type"],
+                "value": {"space": "power", "externalId": "WindTurbine"}}})"""
+        )

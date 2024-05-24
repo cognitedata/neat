@@ -13,22 +13,12 @@ from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, ParentC
 from cognite.neat.rules.models.information import InformationClass, InformationProperty, InformationRules
 from cognite.neat.utils.utils import get_inheritance_path
 
-from ._base import BaseAnalysis, DataModelingScenario
+from ._base import BaseAnalysis
 
 
 class InformationArchitectRulesAnalysis(BaseAnalysis):
     def __init__(self, rules: InformationRules):
         self.rules = rules
-
-    @property
-    def data_modeling_scenario(self) -> DataModelingScenario:
-        if not self.rules.reference:
-            return DataModelingScenario.from_scratch
-
-        if self.rules.metadata.namespace == self.rules.reference.metadata.namespace:
-            return DataModelingScenario.extend_reference
-        else:
-            return DataModelingScenario.build_solution
 
     @property
     def referred_classes(self) -> set[ClassEntity]:
@@ -362,7 +352,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
 
         rules = cast(InformationRules, self.rules.reference if use_reference else self.rules)
 
-        if not rules.metadata.schema_ is not SchemaCompleteness.complete:
+        if rules.metadata.schema_ is not SchemaCompleteness.complete:
             raise ValueError("Rules are not complete cannot perform reduction!")
         class_as_dict = self.as_class_dict()
         class_parents_pairs = self.class_parent_pairs()

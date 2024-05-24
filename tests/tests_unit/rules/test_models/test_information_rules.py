@@ -168,11 +168,7 @@ def incomplete_rules_case():
                 }
             ],
         },
-        (
-            "Classes {'power:GeneratingUnit2'} are not defined in the Class sheet!"
-            "\nFor more information visit: "
-            "https://cognite-neat.readthedocs-hosted.com/en/latest/api/exceptions.html#cognite.neat.rules.exceptions.IncompleteSchema"
-        ),
+        ("Value error, [PropertiesDefinedForUndefinedClassesError(classes=['power:GeneratingUnit2'])]"),
         id="missing_rule",
     )
 
@@ -233,7 +229,7 @@ class TestInformationRules:
         assert isinstance(dms_rules, DMSRules)
         schema = dms_rules.as_schema()
 
-        wind_turbine = next((view for view in schema.views if view.external_id == "WindTurbine"), None)
+        wind_turbine = next((view for view in schema.views.values() if view.external_id == "WindTurbine"), None)
         assert wind_turbine is not None
         expected_containers = {
             dm.ContainerId("power", "GeneratingUnit"),
@@ -245,7 +241,7 @@ class TestInformationRules:
         extra = wind_turbine.referenced_containers() - expected_containers
         assert not extra, f"Extra containers: {extra}"
 
-        wind_farm = next((view for view in schema.views if view.external_id == "WindFarm"), None)
+        wind_farm = next((view for view in schema.views.values() if view.external_id == "WindFarm"), None)
         assert wind_farm is not None
         expected_containers = {dm.ContainerId("power", "EnergyArea"), dm.ContainerId("power_analytics", "WindFarm")}
         missing = expected_containers - wind_farm.referenced_containers()
@@ -253,11 +249,11 @@ class TestInformationRules:
         extra = wind_farm.referenced_containers() - expected_containers
         assert not extra, f"Extra containers: {extra}"
 
-        point = next((view for view in schema.views if view.external_id == "Point"), None)
+        point = next((view for view in schema.views.values() if view.external_id == "Point"), None)
         assert point is not None
         assert point.implements == [dm.ViewId("power", "Point", "0.1.0")]
 
-        polygon = next((view for view in schema.views if view.external_id == "Polygon"), None)
+        polygon = next((view for view in schema.views.values() if view.external_id == "Polygon"), None)
         assert polygon is not None
         assert polygon.implements == [dm.ViewId("power", "Polygon", "0.1.0")]
 
@@ -277,3 +273,48 @@ class TestInformationRulesConverter:
         actual_space = _InformationRulesConverter._to_space(prefix)
 
         assert actual_space == expected_space
+
+    def test_svein_harald_information_as_dms(self, svein_harald_information_rules: InformationRules) -> None:
+        expected = {
+            "ArrayCable": {"PowerLine"},
+            "DistributionLine": {"PowerLine"},
+            "DistributionSubstation": {"Substation"},
+            "ElectricCarCharger": {"EnergyConsumer"},
+            "ExportCable": {"PowerLine"},
+            "MultiLineString": {"GeoLocation"},
+            "OffshoreSubstation": {"Substation"},
+            "OnshoreSubstation": {"TransmissionSubstation"},
+            "Point": {"GeoLocation"},
+            "Polygon": {"GeoLocation"},
+            "Transmission": {"PowerLine"},
+            "TransmissionSubstation": {"Substation"},
+            "WindFarm": {"EnergyArea"},
+            "WindTurbine": {"GeneratingUnit"},
+        }
+
+        dms_rules = svein_harald_information_rules.as_dms_architect_rules()
+
+        assert isinstance(dms_rules, DMSRules)
+        assert dms_rules.last is not None
+        actual = {
+            view.view.external_id: {parent.external_id for parent in view.implements}
+            for view in dms_rules.last.views
+            if view.implements
+        }
+
+        assert actual == expected
+
+
+class TestInformationConverter:
+    @pytest.mark.parametrize(
+        "name, expected",
+        [
+            ("mycontainer", "mycontainer2"),
+            ("mycontainer2", "mycontainer3"),
+            ("sran*2@N", "sran*2@N2"),
+        ],
+    )
+    def test_bump_suffix(self, name: str, expected: str) -> None:
+        actual = _InformationRulesConverter._bump_suffix(name)
+
+        assert actual == expected

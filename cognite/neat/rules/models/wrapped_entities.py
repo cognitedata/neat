@@ -1,3 +1,5 @@
+import json
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Collection
 from functools import total_ordering
@@ -37,8 +39,19 @@ class WrappedEntity(BaseModel, ABC):
     def _parse(cls, data: str) -> dict:
         if data.casefold() == cls.name.casefold():
             return {"inner": None}
-        inner = data[len(cls.name) :].removeprefix("(").removesuffix(")")
-        return {"inner": [cls._inner_cls.load(entry.strip()) for entry in inner.split(",")]}
+
+        # raw filter case:
+        if cls.__name__ == "RawFilter":
+            if match := re.search(r"rawFilter\(([\s\S]*?)\)", data):
+                return {"filter": match.group(1), "inner": None}
+            else:
+                raise ValueError(f"Cannot parse {cls.name} from {data}. Ill formatted raw filter.")
+
+        # nodeType and hasData case:
+        elif inner := data[len(cls.name) :].removeprefix("(").removesuffix(")"):
+            return {"inner": [cls._inner_cls.load(entry.strip()) for entry in inner.split(",")]}
+        else:
+            raise ValueError(f"Cannot parse {cls.name} from {data}")
 
     @model_serializer(when_used="unless-none", return_type=str)
     def as_str(self) -> str:
@@ -164,3 +177,22 @@ class HasDataFilter(DMSFilter):
             # Sorting to ensure deterministic order
             containers=sorted(containers, key=lambda container: container.as_tuple())  # type: ignore[union-attr]
         )
+
+
+class RawFilter(DMSFilter):
+    name: ClassVar[str] = "rawFilter"
+    filter: str
+    inner: None = None  # type: ignore[assignment]
+
+    def as_dms_filter(self) -> dm.Filter:  # type: ignore[override]
+        try:
+            return dm.Filter.load(json.loads(self.filter))
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Error loading raw filter: {e}") from e
+
+    @property
+    def is_empty(self) -> bool:
+        return self.filter is None
+
+    def __repr__(self) -> str:
+        return self.filter

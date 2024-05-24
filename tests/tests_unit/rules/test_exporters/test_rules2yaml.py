@@ -13,7 +13,7 @@ class TestYAMLExporter:
 
         recreated_rules = importer.to_rules("raise")
 
-        assert alice_rules.model_dump() == recreated_rules.model_dump()
+        assert alice_rules.dump() == recreated_rules.dump()
 
     def test_export_import_information_rules(self, david_rules: InformationRules, tmp_path: Path) -> None:
         exporter = YAMLExporter(files="single", output="yaml")
@@ -22,7 +22,7 @@ class TestYAMLExporter:
 
         recreated_rules = importer.to_rules("raise")
 
-        assert david_rules.model_dump() == recreated_rules.model_dump()
+        assert david_rules.dump() == recreated_rules.dump()
 
     def test_export_domain_rules(self, jon_rules: DomainRules, tmp_path: Path) -> None:
         exporter = YAMLExporter(files="single", output="yaml")

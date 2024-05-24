@@ -5,7 +5,14 @@ from typing import Literal, TypeAlias, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResource, CogniteResourceList
-from cognite.client.data_classes.data_modeling import DataModelApply, DataModelApplyList, DataModelId
+from cognite.client.data_classes.data_modeling import (
+    ContainerApplyList,
+    DataModelApply,
+    DataModelApplyList,
+    DataModelId,
+    SpaceApplyList,
+    ViewApplyList,
+)
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.rules import issues
@@ -264,11 +271,11 @@ class DMSExporter(CDFExporter[DMSSchema]):
         schema = self.export(rules)
         to_export: list[tuple[CogniteResourceList, ResourceLoader]] = []
         if self.export_components.intersection({"all", "spaces"}):
-            to_export.append((schema.spaces, SpaceLoader(client)))
+            to_export.append((SpaceApplyList(schema.spaces.values()), SpaceLoader(client)))
         if self.export_components.intersection({"all", "containers"}):
-            to_export.append((schema.containers, ContainerLoader(client)))
+            to_export.append((ContainerApplyList(schema.containers.values()), ContainerLoader(client)))
         if self.export_components.intersection({"all", "views"}):
-            to_export.append((schema.views, ViewLoader(client, self.existing_handling)))
+            to_export.append((ViewApplyList(schema.views.values()), ViewLoader(client, self.existing_handling)))
         if self.export_components.intersection({"all", "data_models"}):
             to_export.append((DataModelApplyList([schema.data_model]), DataModelLoader(client)))
         if isinstance(schema, PipelineSchema):

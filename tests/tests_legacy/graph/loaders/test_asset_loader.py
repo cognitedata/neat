@@ -1,6 +1,6 @@
 from typing import Any
 
-import pytest
+from freezegun import freeze_time
 from rdflib import Graph
 
 from cognite.neat.legacy.graph.loaders import AssetLoader
@@ -11,7 +11,7 @@ from cognite.neat.legacy.rules.models import Rules
 
 
 class TestAssetLoader:
-    @pytest.mark.freeze_time("2024-01-01")
+    @freeze_time("2024-01-01")
     def test_vs_existing_rdf2assets(self, transformation_rules: Rules, solution_knowledge_graph: Graph):
         store = MemoryStore(solution_knowledge_graph)
         loader = AssetLoader(transformation_rules, store, data_set_id=123456, always_store_in_metadata=True)
@@ -42,7 +42,7 @@ class TestAssetLoader:
             actual_asset = actual_dumped[external_id]
             assert actual_asset == expected_asset
 
-    @pytest.mark.freeze_time("2024-01-01")
+    @freeze_time("2024-01-01")
     def test_vs_existing_rdf2relationships(self, transformation_rules: Rules, solution_knowledge_graph: Graph):
         store = MemoryStore(solution_knowledge_graph)
         loader = AssetLoader(transformation_rules, store, data_set_id=123456)

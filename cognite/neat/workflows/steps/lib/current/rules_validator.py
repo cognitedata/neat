@@ -78,9 +78,9 @@ class ValidateRulesAgainstCDF(Step):
             f"and {len(retrieved_views)} views from CDF."
         )
 
-        schema.spaces.extend(retrieved_spaces)
-        schema.containers.extend(retrieved_containers)
-        schema.views.extend(retrieved_views)
+        schema.spaces.update({space.space: space for space in retrieved_spaces})
+        schema.containers.update({container.as_id(): container for container in retrieved_containers})
+        schema.views.update({view.as_id(): view for view in retrieved_views})
 
         errors = schema.validate()
         if errors:

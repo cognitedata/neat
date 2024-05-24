@@ -15,6 +15,62 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.77.8] - 23-05-24
+### Fixed
+- In the conversion form Information to DMS Rules, when referencing a class in reference rules, the implements
+  was not set correctly. This is now fixed.
+- In the new implementation of the conversion between Information and DMS rules, containers that already exist
+  in a last or reference rule object were recreated. This is now fixed.
+
+## [0.77.7] - 23-05-24
+### Fixed
+- In the `DMSImporter`, if you imported a data model with multiple views referencing the same direct property
+  in a container, it would return an error. This is allowed and thus no longer return an error.
+- There was an edge case that could cause the conversion between Information and DMS rules to fail with
+  `MissingContainerError`. The conversion is now reimplemented to ensure that Information rules always
+  will create the necessary containers in the conversion to DMS rules.
+
+## [0.77.6] - 23-05-24
+### Improves
+- Documentation on how to use raw filter
+- Added a simple example of Rules with raw filter
+- Added new test for raw filter
+
+## [0.77.5] - 23-05-24
+### Fixed
+- `DMSExporter` creates the schema depending on `extension` in metadata field as defined in the
+  [documentation](https://cognite-neat.readthedocs-hosted.com/en/latest/terminology/rules-excel-input.html).
+
+## [0.77.4] - 22-05-24
+### Improves
+- Information rules are now read using InformationRulesInput data class, replicate the form of DMS rules.
+- Information rules are now serialized using dedicated serializer class
+- Information rules are now validated using dedicated validator class
+- Defaulting to "enterprise" data model type and "partial" schema completeness set to avoid validation error on import
+### Fixed
+- Fixed bug in `ExcelImporter` when importing a data model with a last spreadsheet and no reference model.
+  This would trigger an error `RefMetadata sheet is missing or it failed` even though the
+  ReferenceMetadata sheet is not needed.
+
+## [0.77.3] - 14-05-24
+### Fixed
+- When using `DMSExporter` and importing a data model with a view pointing to a view not in the data model,
+  it would fail to convert to an `Information` rules. This is now fixed.
+- In the `ExcelExporter`, the `metadata` sheet is now created correctly when you use the arguments `dump_as="last"`,
+  or `dump_as="reference"`, combined with and without `new_model_id`. **[Note]** The order of the `dump_as` and
+  `new_model_id` arguments have switched places. This is to make it more intuitive to use the `ExcelExporter`
+  as `new_model_id` is only relevant if `dump_as` is set to `last` or `reference`.
+
+## [0.77.2] - 14-05-24
+### Added
+- Missing warning when `RawFilter` is used to warn users that the usage of this filter is not recommended.
+
+
+## [0.77.1] - 14-05-24
+### Added
+- Support for `RawFilter` allow arbitrary filters to be applied to the data model.
+
+
 ## [0.77.0] - 13-05-24
 ### Changed
 - [BREAKING] The subpackage `cognite.neat.rules.models` is reorganized. All imports using this subpackage must be

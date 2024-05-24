@@ -60,11 +60,11 @@ class DMSImporter(BaseImporter):
         self.metadata = metadata
         self.ref_metadata = ref_metadata
         self.issue_list = IssueList(read_issues)
-        self._all_containers_by_id = {container.as_id(): container for container in schema.containers}
+        self._all_containers_by_id = schema.containers.copy()
+        self._all_view_ids = set(self.root_schema.views.keys())
         if self.root_schema.reference:
-            self._all_containers_by_id.update(
-                {container.as_id(): container for container in self.root_schema.reference.containers}
-            )
+            self._all_containers_by_id.update(self.root_schema.reference.containers)
+            self._all_view_ids.update(self.root_schema.reference.views.keys())
 
     @classmethod
     def from_data_model_id(
@@ -102,15 +102,17 @@ class DMSImporter(BaseImporter):
         else:
             ref_model = None
 
-        try:
+        issue_list = IssueList()
+        with _handle_issues(issue_list) as result:
             schema = DMSSchema.from_data_model(client, user_model, ref_model)
-        except Exception as e:
-            return cls(DMSSchema(), [issues.importing.APIError(str(e))])
 
-        metadata = cls._create_metadata_from_model(user_model)
+        if result.result == "failure" or issue_list.has_errors:
+            return cls(DMSSchema(), issue_list)
+
+        metadata = cls._create_metadata_from_model(user_model, has_reference=ref_model is not None)
         ref_metadata = cls._create_metadata_from_model(ref_model) if ref_model else None
 
-        return cls(schema, [], metadata, ref_metadata)
+        return cls(schema, issue_list, metadata, ref_metadata)
 
     @classmethod
     def _find_model_in_list(
@@ -129,6 +131,7 @@ class DMSImporter(BaseImporter):
     def _create_metadata_from_model(
         cls,
         model: dm.DataModel[dm.View] | dm.DataModelApply,
+        has_reference: bool = False,
     ) -> DMSMetadata:
         description, creator = DMSMetadata._get_description_and_creator(model.description)
 
@@ -141,6 +144,7 @@ class DMSImporter(BaseImporter):
             updated = now
         return DMSMetadata(
             schema_=SchemaCompleteness.complete,
+            data_model_type=DataModelType.solution if has_reference else DataModelType.enterprise,
             extension=ExtensionCategory.addition,
             space=model.space,
             external_id=model.external_id,
@@ -200,16 +204,21 @@ class DMSImporter(BaseImporter):
                     **self._create_rule_components(
                         ref_model,
                         ref_schema,
-                        self.ref_metadata or self._create_default_metadata(ref_schema.views),
+                        self.ref_metadata
+                        or self._create_default_metadata(list(ref_schema.views.values()), is_ref=True),
                         DataModelType.enterprise,
                     )
                 )
-                schema_completeness = SchemaCompleteness.extended
                 data_model_type = DataModelType.solution
 
             user_rules = DMSRules(
                 **self._create_rule_components(
-                    model, self.root_schema, self.metadata, data_model_type, schema_completeness
+                    model,
+                    self.root_schema,
+                    self.metadata,
+                    data_model_type,
+                    schema_completeness,
+                    has_reference=reference is not None,
                 ),
                 reference=reference,
             )
@@ -226,10 +235,10 @@ class DMSImporter(BaseImporter):
         metadata: DMSMetadata | None = None,
         data_model_type: DataModelType | None = None,
         schema_completeness: SchemaCompleteness | None = None,
+        has_reference: bool = False,
     ) -> dict[str, Any]:
         properties = SheetList[DMSProperty]()
-        for view in schema.views:
-            view_id = view.as_id()
+        for view_id, view in schema.views.items():
             view_entity = ViewEntity.from_id(view_id)
             class_entity = view_entity.as_class()
             for prop_id, prop in (view.properties or {}).items():
@@ -241,7 +250,7 @@ class DMSImporter(BaseImporter):
             view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
         }
 
-        metadata = metadata or DMSMetadata.from_data_model(data_model)
+        metadata = metadata or DMSMetadata.from_data_model(data_model, has_reference)
         if data_model_type is not None:
             metadata.data_model_type = data_model_type
         if schema_completeness is not None:
@@ -250,20 +259,24 @@ class DMSImporter(BaseImporter):
             metadata=metadata,
             properties=properties,
             containers=SheetList[DMSContainer](
-                data=[DMSContainer.from_container(container) for container in schema.containers]
+                data=[DMSContainer.from_container(container) for container in schema.containers.values()]
             ),
             views=SheetList[DMSView](
-                data=[DMSView.from_view(view, in_model=view.as_id() in data_model_view_ids) for view in schema.views]
+                data=[
+                    DMSView.from_view(view, in_model=view_id in data_model_view_ids)
+                    for view_id, view in schema.views.items()
+                ]
             ),
         )
 
     @classmethod
-    def _create_default_metadata(cls, views: Sequence[dm.View | dm.ViewApply]) -> DMSMetadata:
+    def _create_default_metadata(cls, views: Sequence[dm.View | dm.ViewApply], is_ref: bool = False) -> DMSMetadata:
         now = datetime.now().replace(microsecond=0)
         space = Counter(view.space for view in views).most_common(1)[0][0]
         return DMSMetadata(
             schema_=SchemaCompleteness.complete,
             extension=ExtensionCategory.addition,
+            data_model_type=DataModelType.enterprise if is_ref else DataModelType.solution,
             space=space,
             external_id="Unknown",
             version="0.1.0",
@@ -361,7 +374,7 @@ class DMSImporter(BaseImporter):
         elif isinstance(prop, dm.MappedPropertyApply):
             container_prop = self._container_prop_unsafe(cast(dm.MappedPropertyApply, prop))
             if isinstance(container_prop.type, dm.DirectRelation):
-                if prop.source is None:
+                if prop.source is None or prop.source not in self._all_view_ids:
                     # The warning is issued when the DMS Rules are created.
                     return DMSUnknownEntity()
                 else:

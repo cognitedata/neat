@@ -2,13 +2,13 @@ import math
 import re
 import sys
 import warnings
-from collections.abc import Callable
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from cognite.client import data_modeling as dm
-from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
-from pydantic_core.core_schema import SerializationInfo, ValidationInfo
+from pydantic import Field, field_serializer, field_validator, model_validator
+from pydantic.main import IncEx
+from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import MultiValueError
@@ -41,7 +41,7 @@ from cognite.neat.rules.models.entities import (
     ViewEntityList,
     ViewPropertyEntity,
 )
-from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFilter
+from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFilter, RawFilter
 
 from ._schema import DMSSchema
 
@@ -49,16 +49,16 @@ if TYPE_CHECKING:
     from cognite.neat.rules.models.information._rules import InformationRules
 
 if sys.version_info >= (3, 11):
-    from typing import Self
+    pass
 else:
-    from typing_extensions import Self
+    pass
 
 _DEFAULT_VERSION = "1"
 
 
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms_architect
-    data_model_type: DataModelType = Field(DataModelType.solution, alias="dataModelType")
+    data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
     schema_: SchemaCompleteness = Field(alias="schema")
     extension: ExtensionCategory = ExtensionCategory.addition
     space: ExternalIdType
@@ -146,10 +146,11 @@ class DMSMetadata(BaseMetadata):
         return description, creator
 
     @classmethod
-    def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSMetadata":
+    def from_data_model(cls, data_model: dm.DataModelApply, has_reference: bool) -> "DMSMetadata":
         description, creator = cls._get_description_and_creator(data_model.description)
         return cls(
             schema_=SchemaCompleteness.complete,
+            data_model_type=DataModelType.solution if has_reference else DataModelType.enterprise,
             space=data_model.space,
             name=data_model.name or None,
             description=description,
@@ -257,19 +258,26 @@ class DMSView(SheetEntity):
     description: str | None = Field(alias="Description", default=None)
     implements: ViewEntityList | None = Field(None, alias="Implements")
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
-    filter_: HasDataFilter | NodeTypeFilter | None = Field(None, alias="Filter")
+    filter_: HasDataFilter | NodeTypeFilter | RawFilter | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="In Model")
     class_: ClassEntity = Field(alias="Class (linage)")
 
     def as_view(self) -> dm.ViewApply:
         view_id = self.view.as_id()
+        implements = [parent.as_id() for parent in self.implements or []] or None
+        if implements is None and isinstance(self.reference, ReferenceEntity):
+            # Fallback to the reference if no implements are provided
+            parent = self.reference.as_view_id()
+            if (parent.space, parent.external_id) != (view_id.space, view_id.external_id):
+                implements = [parent]
+
         return dm.ViewApply(
             space=view_id.space,
             external_id=view_id.external_id,
             version=view_id.version or _DEFAULT_VERSION,
             name=self.name or None,
             description=self.description,
-            implements=[parent.as_id() for parent in self.implements or []] or None,
+            implements=implements,
             properties={},
         )
 
@@ -333,17 +341,37 @@ class DMSRules(BaseRules):
             raise MultiValueError([error for error in issue_list if isinstance(error, issues.NeatValidationError)])
         return self
 
-    @model_serializer(mode="wrap", when_used="always")
-    def dms_rules_serialization(
+    def dump(
         self,
-        handler: Callable,
-        info: SerializationInfo,
+        mode: Literal["python", "json"] = "python",
+        by_alias: bool = False,
+        exclude: IncEx = None,
+        exclude_none: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        as_reference: bool = False,
     ) -> dict[str, Any]:
         from ._serializer import _DMSRulesSerializer
 
-        dumped = cast(dict[str, Any], handler(self, info))
+        dumped = self.model_dump(
+            mode=mode,
+            by_alias=by_alias,
+            exclude=exclude,
+            exclude_none=exclude_none,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+        )
         space, version = self.metadata.space, self.metadata.version
-        return _DMSRulesSerializer(info, space, version).clean(dumped)
+        serializer = _DMSRulesSerializer(by_alias, space, version)
+        clean = serializer.clean(dumped, as_reference)
+        last = "Last" if by_alias else "last"
+        if last_dump := clean.get(last):
+            clean[last] = serializer.clean(last_dump, False)
+        reference = "Reference" if by_alias else "reference"
+        if self.reference and (ref_dump := clean.get(reference)):
+            space, version = self.reference.metadata.space, self.reference.metadata.version
+            clean[reference] = _DMSRulesSerializer(by_alias, space, version).clean(ref_dump, True)
+        return clean
 
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         from ._exporter import _DMSExporter
@@ -359,19 +387,3 @@ class DMSRules(BaseRules):
         from ._converter import _DMSRulesConverter
 
         return _DMSRulesConverter(self).as_domain_rules()
-
-    def reference_self(self) -> Self:
-        new_rules = self.model_copy(deep=True)
-        for prop in new_rules.properties:
-            prop.reference = ReferenceEntity(
-                prefix=prop.view.prefix, suffix=prop.view.suffix, version=prop.view.version, property=prop.property_
-            )
-        view: DMSView
-        for view in new_rules.views:
-            view.reference = ReferenceEntity(
-                prefix=view.view.prefix, suffix=view.view.suffix, version=view.view.version
-            )
-        container: DMSContainer
-        for container in new_rules.containers or []:
-            container.reference = ReferenceEntity(prefix=container.container.prefix, suffix=container.container.suffix)
-        return new_rules

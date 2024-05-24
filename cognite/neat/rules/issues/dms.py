@@ -30,6 +30,7 @@ __all__ = [
     "HasDataFilterAppliedToTooManyContainersWarning",
     "ReverseRelationMissingOtherSideWarning",
     "NodeTypeFilterOnParentViewWarning",
+    "MissingViewInModelWarning",
     "ChangingContainerError",
     "ChangingViewError",
 ]
@@ -294,6 +295,24 @@ class ViewMapsToTooManyContainersWarning(DMSSchemaWarning):
 
 
 @dataclass(frozen=True)
+class MissingViewInModelWarning(DMSSchemaWarning):
+    description = "The data model contains view pointing to views not present in the data model"
+    fix = "Add the view(s) to the data model"
+    error_name: ClassVar[str] = "MissingViewInModel"
+    data_model_id: dm.DataModelId
+    view_ids: set[dm.ViewId]
+
+    def message(self) -> str:
+        return f"The view(s) {self.view_ids} are missing in the data model {self.data_model_id}"
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["data_model_id"] = self.data_model_id.dump()
+        output["view_id"] = [view_id.dump() for view_id in self.view_ids]
+        return output
+
+
+@dataclass(frozen=True)
 class ContainerPropertyUsedMultipleTimesError(DMSSchemaError):
     description = "The container property is used multiple times by the same view property"
     fix = "Use unique container properties for when mapping to the same container"
@@ -504,6 +523,26 @@ class HasDataFilterAppliedToTooManyContainersWarning(DMSSchemaWarning):
         output = super().dump()
         output["view_id"] = self.view_id.dump()
         output["container_ids"] = [container_id.dump() for container_id in self.container_ids]
+        return output
+
+
+@dataclass(frozen=True)
+class RawFilterAppliedToViewWarning(DMSSchemaWarning):
+    description = "Raw filter is applied to a view, which is against the neat data modeling lifecycle."
+    fix = "Do not use raw filter, instead use HasData filter or nodeType filter or change the data model design."
+    error_name: ClassVar[str] = "RawFilterAppliedToView"
+    view_id: dm.ViewId
+
+    def message(self) -> str:
+        return (
+            f"RawFilter applied to the view {self.view_id}."
+            " The usage of RawFilter is against the neat team recommendations and the neat data modeling lifecycle."
+            " When opting for raw filter, the user is responsible for any errors that arise in neat."
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
         return output
 
 

@@ -60,26 +60,3 @@ class TestRulesAnalysis:
             )
             == 1
         )
-
-    def test_data_modeling_scenario(self, olav_rules: InformationRules) -> None:
-        assert InformationArchitectRulesAnalysis(olav_rules).data_modeling_scenario == "build solution"
-
-    def test_directly_referred_classes(self, olav_rules: InformationRules) -> None:
-        assert len(InformationArchitectRulesAnalysis(olav_rules).directly_referred_classes) == 3
-
-    def test_inherited_referred_classes(self, olav_rules: InformationRules) -> None:
-        assert len(InformationArchitectRulesAnalysis(olav_rules).inherited_referred_classes) == 1
-
-    def test_referred_classes(self, olav_rules: InformationRules) -> None:
-        expected = {
-            ClassEntity(prefix="power", suffix="GeoLocation"),
-            ClassEntity(prefix="power", suffix="Point"),
-            ClassEntity(prefix="power", suffix="Polygon"),
-        }
-
-        actual = InformationArchitectRulesAnalysis(olav_rules).referred_classes
-
-        missing = expected - actual
-        assert not missing, f"Missing classes: {missing}"
-        extra = actual - expected
-        assert not extra, f"Extra classes: {extra}"

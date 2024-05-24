@@ -38,10 +38,10 @@ Svein Harald is the head Information Architect at `Acme Corporation`. He is havi
 model. He has deep knowledge and experience in information modeling. When it comes to the implementation on Cognite Data
 Fusion, he relies on Alice to ensure that the data models are implemented correctly.
 
-## Lars
-Lars works in the trading department at `Acme Corporation`. He is responsible for selling the power that is produced by
+## Camilla
+Camilla works in the trading department at `Acme Corporation`. She is responsible for selling the power that is produced by
 `Acme Corporation`. He depends on good analysis to make good decisions. Trading is a fast-paced environment, and
-having access to the right data at the right time is crucial for Lars to make the right decisions.
+having access to the right data at the right time is crucial for Camilla to make the right decisions.
 
 ## Acme Corporation
 The `Acme Corporation` is a fictional company that works in the Power & Utilities industry. The company is

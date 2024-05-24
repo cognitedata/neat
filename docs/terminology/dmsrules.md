@@ -3,10 +3,10 @@
 ## Properties
 
 ### Connection
-Connection are used to specify how nodes are connected. When implementing a connection, you have two options:
+Connections are used to specify how nodes are connected. When implementing a connection, you have two options:
 
-* Direct relation - This is cheap in terms of storage and query time.
-* Edge connection - This is more flexible, but more expensive in terms of storage and query time.
+* Direct relation—This is cheap in terms of storage and query time.
+* Edge connection—This is more flexible, but more expensive in terms of storage and query time.
 
 To get more details on the difference between the two, see the
 [see the data modeling documentation](https://docs.cognite.com/cdf/dm/dm_concepts/dm_spaces_instances#direct-relations-vs-edges).
@@ -43,7 +43,7 @@ If `connection=edge`, then:
 * `isList=true` - The connection is implemented as `multi_edge_connection` with direction `outwards`.
 * `isList=false` - The connection is implemented as `single_edge_connection` with direction `outwards`.
 
-If `relation=reverse` the implementations depends on the relation of the other property.
+If `relation=reverse` the implementation depends on the relation of the other property.
 
 If `otherProperty.connection=direct`, then:
 
@@ -97,7 +97,7 @@ the most of the views will use a `hasData` filter, for example, the wind turbine
 use a `nodeType` filter `nodeType(power:Polygon)`.
 
 
-#### Setting a manual filter
+#### Setting `hasData` and `nodeType` filters manually
 
 !!! warning annotate "Only for advanced users"
     Setting a manual filter is only recommended for advanced users. If you are not sure what you are doing, we recommend
@@ -111,3 +111,28 @@ You can set manuel filters by specifying the `filter` column in the view sheet. 
 * `nodeType` - This will set a `nodeType` filter with the same node id as the view.
 * `nodeType(my_space:my_node)` - This will set a `nodeType` filter with the specified node id.
 * `nodeType(my_space:my_node, my_space:my_node2)` - This will set a `nodeType` filter with the specified node ids.
+
+#### Setting a `rawFilter`
+
+!!! warning annotate "Use it on your own risk!"
+    The **NEAT** team is not responsible for any issues that may arise from setting a raw filter. This includes **NEAT** errors, **CDF** errors,  performance issues, etc. We do not recommend setting a raw filter unless you know what you are doing.
+
+If the above filters are limiting and you have no other choice you can set a raw filter. The syntax is as follows:
+
+* `rawFilter(your_custom_filter_as_json_string)` - This will set a raw filter with the specified filter.
+
+In this example of the raw filter:
+
+```
+rawFilter({"equals": {"property": ["node", "type"], "value": {"space": "power", "externalId": "WindTurbine"}}})
+```
+
+the JSON string that defines filter is:
+
+```JSON
+{"equals": {"property": ["node", "type"], "value": {"space": "power", "externalId": "WindTurbine"}}}
+```
+
+BEWARE to properly form the JSON string, as it is easy to make mistakes. The JSON string must be a valid JSON object!
+
+The exemplary `Rules` sheet with the above filters can be downloaded using [this link](../artifacts/rules/dms-architect-rules-raw-filter-example.xlsx).

@@ -1,24 +1,23 @@
 import math
 import sys
-import warnings
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
-from pydantic import Field, field_serializer, field_validator, model_serializer, model_validator
-from pydantic_core.core_schema import SerializationInfo
+from pydantic import Field, field_serializer, field_validator, model_validator
+from pydantic.main import IncEx
 from rdflib import Namespace
 
-import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.constants import PREFIXES
-from cognite.neat.rules import exceptions
+from cognite.neat.rules import exceptions, issues
+from cognite.neat.rules.issues.base import MultiValueError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
+    BaseRules,
     DataModelType,
     ExtensionCategory,
     ExtensionCategoryType,
     MatchType,
     RoleTypes,
-    RuleModel,
     SchemaCompleteness,
     SheetEntity,
     SheetList,
@@ -44,17 +43,13 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
-    Entity,
     EntityTypes,
     ParentClassEntity,
     ParentEntityList,
     ReferenceEntity,
     Undefined,
-    Unknown,
     UnknownEntity,
     URLEntity,
-    _UndefinedType,
-    _UnknownType,
 )
 
 if TYPE_CHECKING:
@@ -69,9 +64,10 @@ else:
 
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
-    data_model_type: DataModelType = Field(DataModelType.solution, alias="dataModelType")
-    schema_: SchemaCompleteness = Field(alias="schema")
+    data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
+    schema_: SchemaCompleteness = Field(SchemaCompleteness.partial, alias="schema")
     extension: ExtensionCategoryType | None = ExtensionCategory.addition
+
     prefix: PrefixType
     namespace: NamespaceType
 
@@ -97,6 +93,8 @@ class InformationMetadata(BaseMetadata):
             "typically information architects are considered as contributors."
         ),
     )
+    license: str | None = None
+    rights: str | None = None
 
     @model_validator(mode="after")
     def extension_none_but_schema_extend(self) -> Self:
@@ -104,6 +102,18 @@ class InformationMetadata(BaseMetadata):
             self.extension = ExtensionCategory.addition
             return self
         return self
+
+    @field_validator("schema_", mode="plain")
+    def as_enum_schema(cls, value: str) -> SchemaCompleteness:
+        return SchemaCompleteness(value)
+
+    @field_validator("extension", mode="plain")
+    def as_enum_extension(cls, value: str) -> ExtensionCategory:
+        return ExtensionCategory(value)
+
+    @field_validator("data_model_type", mode="plain")
+    def as_enum_model_type(cls, value: str) -> DataModelType:
+        return DataModelType(value)
 
 
 class InformationClass(SheetEntity):
@@ -247,7 +257,7 @@ class InformationProperty(SheetEntity):
         return self.max_count != 1
 
 
-class InformationRules(RuleModel):
+class InformationRules(BaseRules):
     metadata: InformationMetadata = Field(alias="Metadata")
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
@@ -282,77 +292,47 @@ class InformationRules(RuleModel):
         return self
 
     @model_validator(mode="after")
-    def validate_schema_completeness(self) -> Self:
-        # update expected_value_types
+    def post_validation(self) -> "InformationRules":
+        from ._validation import InformationPostValidation
 
-        if self.metadata.schema_ == SchemaCompleteness.complete:
-            defined_classes = {str(class_.class_) for class_ in self.classes}
-            referred_classes = {str(property_.class_) for property_ in self.properties} | {
-                str(parent) for class_ in self.classes for parent in class_.parent or []
-            }
-            referred_types = {
-                str(property_.value_type)
-                for property_ in self.properties
-                if isinstance(property_.value_type, Entity)
-                and not isinstance(property_.value_type.suffix, _UnknownType)
-            }
-            if not referred_classes.issubset(defined_classes) or not referred_types.issubset(defined_classes):
-                missing_classes = referred_classes.difference(defined_classes).union(
-                    referred_types.difference(defined_classes)
-                )
-                raise exceptions.IncompleteSchema(missing_classes).to_pydantic_custom_error()
-
+        issue_list = InformationPostValidation(self).validate()
+        if issue_list.warnings:
+            issue_list.trigger_warnings()
+        if issue_list.has_errors:
+            raise MultiValueError([error for error in issue_list if isinstance(error, issues.NeatValidationError)])
         return self
 
-    @model_validator(mode="after")
-    def validate_class_has_properties_or_parent(self) -> Self:
-        defined_classes = {class_.class_ for class_ in self.classes if class_.reference is None}
-        referred_classes = {property_.class_ for property_ in self.properties if property_.class_.suffix is not Unknown}
-        has_parent_classes = {class_.class_ for class_ in self.classes if class_.parent}
-        missing_classes = defined_classes.difference(referred_classes) - has_parent_classes
-        if missing_classes:
-            warnings.warn(
-                cognite.neat.rules.issues.spreadsheet.ClassNoPropertiesNoParentsWarning(
-                    [missing.versioned_id for missing in missing_classes]
-                ),
-                stacklevel=2,
-            )
-        return self
+    def dump(
+        self,
+        mode: Literal["python", "json"] = "python",
+        by_alias: bool = False,
+        exclude: IncEx = None,
+        exclude_none: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        as_reference: bool = False,
+    ) -> dict[str, Any]:
+        from ._serializer import _InformationRulesSerializer
 
-    @model_serializer(mode="plain", when_used="always")
-    def information_rules_serializer(self, info: SerializationInfo) -> dict[str, Any]:
-        kwargs = vars(info)
-        default_prefix = f"{self.metadata.prefix}:" if self.metadata.prefix else ""
-
-        field_names = ["Class", "Value Type"] if info.by_alias else ["class_", "value_type"]
-        properties = []
-        for prop in self.properties:
-            dumped = prop.model_dump(**kwargs)
-            for field_name in field_names:
-                if value := dumped.get(field_name):
-                    dumped[field_name] = value.removeprefix(default_prefix)
-            properties.append(dumped)
-
-        field_names = ["Class"] if info.by_alias else ["class_"]
-        classes = []
-        parent_name = "Parent Class" if info.by_alias else "parent"
-        for cls in self.classes:
-            dumped = cls.model_dump(**kwargs)
-            for field_name in field_names:
-                if value := dumped.get(field_name):
-                    dumped[field_name] = value.removeprefix(default_prefix)
-            if value := dumped.get(parent_name):
-                dumped[parent_name] = ",".join(
-                    constraint.strip().removeprefix(default_prefix) for constraint in value.split(",")
-                )
-            classes.append(dumped)
-
-        return {
-            "Metadata" if info.by_alias else "metadata": self.metadata.model_dump(**kwargs),
-            "Classes" if info.by_alias else "classes": classes,
-            "Properties" if info.by_alias else "properties": properties,
-            "prefixes": {key: str(value) for key, value in self.prefixes.items()},
-        }
+        dumped = self.model_dump(
+            mode=mode,
+            by_alias=by_alias,
+            exclude=exclude,
+            exclude_none=exclude_none,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+        )
+        prefix = self.metadata.prefix
+        serializer = _InformationRulesSerializer(by_alias, prefix)
+        cleaned = serializer.clean(dumped, as_reference)
+        last = "Last" if by_alias else "last"
+        if last_dump := cleaned.get(last):
+            cleaned[last] = serializer.clean(last_dump, False)
+        reference = "Reference" if by_alias else "reference"
+        if self.reference and (ref_dump := cleaned.get(reference)):
+            prefix = self.reference.metadata.prefix
+            cleaned[reference] = _InformationRulesSerializer(by_alias, prefix).clean(ref_dump, True)
+        return cleaned
 
     def as_domain_rules(self) -> DomainRules:
         from ._converter import _InformationRulesConverter
@@ -363,26 +343,3 @@ class InformationRules(RuleModel):
         from ._converter import _InformationRulesConverter
 
         return _InformationRulesConverter(self).as_dms_architect_rules()
-
-    def reference_self(self) -> "InformationRules":
-        new_self = self.model_copy(deep=True)
-        for prop in new_self.properties:
-            prop.reference = ReferenceEntity(
-                prefix=prop.class_.prefix
-                if not isinstance(prop.class_.prefix, _UndefinedType)
-                else self.metadata.prefix,
-                suffix=prop.class_.suffix,
-                version=prop.class_.version,
-                property=prop.property_,
-            )
-
-        for cls_ in new_self.classes:
-            cls_.reference = ReferenceEntity(
-                prefix=cls_.class_.prefix
-                if not isinstance(cls_.class_.prefix, _UndefinedType)
-                else self.metadata.prefix,
-                suffix=cls_.class_.suffix,
-                version=cls_.class_.version,
-            )
-
-        return new_self

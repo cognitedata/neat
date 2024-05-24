@@ -13,13 +13,9 @@ from tests.tests_unit.rules.test_importers.constants import DTDL_IMPORTER_DATA
 class TestDTDLImporter:
     def test_import_energy_grid_example(self) -> None:
         # In the example data, there is a property with an Object that does not have an identifier.
-        # In addition, there is a class without properties
         expected_issues = IssueList(
             [
                 cognite.neat.rules.issues.importing.MissingIdentifierError(component_type="Object"),
-                cognite.neat.rules.issues.spreadsheet.ClassNoPropertiesNoParentsWarning(
-                    ["example_grid_transmission:baseReceiver(version=1)"]
-                ),
             ]
         )
         dtdl_importer = DTDLImporter.from_directory(DTDL_IMPORTER_DATA / "energy-grid")
@@ -53,22 +49,6 @@ class TestDTDLImporter:
         assert len(rules.classes) == 2
 
     def tests_import_invalid_data_model_and_return_errors(self) -> None:
-        expected_issue = validation.DefaultPydanticError(
-            type="IncompleteSchema",
-            loc=(),
-            msg="Classes {'com_example:TemperatureController(version=1)'} are not defined in the Class sheet!\n"
-            "For more information visit: https://cognite-neat.readthedocs-hosted.com/en/latest/api/"
-            "exceptions.html#cognite.neat.rules.exceptions.IncompleteSchema",
-            input=None,
-            ctx={
-                "code": 28,
-                "description": "This exceptions is raised when schema is not complete, meaning defined "
-                "properties are pointing to non-existing classes or value types",
-                "example": "",
-                "fix": "",
-                "type_": "IncompleteSchema",
-            },
-        )
         dtdl_importer = DTDLImporter(
             [
                 Interface.model_validate(
@@ -89,11 +69,7 @@ class TestDTDLImporter:
         assert rules is None
         assert len(issues) == 1
         actual_issue = issues[0]
-        assert isinstance(actual_issue, validation.DefaultPydanticError)
-        # Setting the input to None, to avoid bloating the test with the large input
-        # Using object.__setattr__ as errors are immutable
-        object.__setattr__(actual_issue, "input", None)
-        assert actual_issue == expected_issue
+        assert isinstance(actual_issue, validation.spreadsheet.ParentClassesNotDefinedError)
 
 
 class TestV3Spec:

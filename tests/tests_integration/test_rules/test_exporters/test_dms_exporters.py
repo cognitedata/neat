@@ -1,3 +1,4 @@
+import itertools
 from typing import cast
 
 import pytest
@@ -8,7 +9,7 @@ from cognite.client.data_classes import Row
 from cognite.neat.rules.exporters import DMSExporter
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes, SheetList
-from cognite.neat.rules.models.dms import PipelineSchema
+from cognite.neat.rules.models.dms import DMSRulesInput, PipelineSchema
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationMetadata,
@@ -30,6 +31,24 @@ def alice_rules() -> DMSRules:
 @pytest.fixture(scope="session")
 def olav_dms_rules() -> DMSRules:
     filepath = DOC_RULES / "dms-analytics-olav.xlsx"
+
+    excel_importer = ExcelImporter(filepath)
+
+    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms_architect)
+
+
+@pytest.fixture(scope="session")
+def olav_rebuilt_dms_rules() -> DMSRules:
+    filepath = DOC_RULES / "dms-rebuild-olav.xlsx"
+
+    excel_importer = ExcelImporter(filepath)
+
+    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms_architect)
+
+
+@pytest.fixture(scope="session")
+def svein_harald_dms_rules() -> DMSRules:
+    filepath = DOC_RULES / "dms-addition-svein-harald.xlsx"
 
     excel_importer = ExcelImporter(filepath)
 
@@ -129,7 +148,7 @@ def table_example_data() -> dict[str, list[Row]]:
 
 
 class TestDMSExporters:
-    def test_export_to_cdf_dry_run(self, cognite_client: CogniteClient, alice_rules: DMSRules):
+    def test_export_alice_to_cdf_dry_run(self, cognite_client: CogniteClient, alice_rules: DMSRules):
         rules: DMSRules = alice_rules
 
         exporter = DMSExporter()
@@ -142,7 +161,7 @@ class TestDMSExporters:
         assert uploaded_by_name["data_models"].total == 1
         assert uploaded_by_name["spaces"].total == 1
 
-    def test_export_to_cdf(self, cognite_client: CogniteClient, alice_rules: DMSRules):
+    def test_export_alice_to_cdf(self, cognite_client: CogniteClient, alice_rules: DMSRules):
         rules: DMSRules = alice_rules
 
         exporter = DMSExporter(existing_handling="force")
@@ -208,13 +227,13 @@ class TestDMSExporters:
 
         # Verify data is in the data model
         views = schema.views
-        table_view = next((view for view in views if view.external_id == "Table"), None)
+        table_view = next((view for view in views.values() if view.external_id == "Table"), None)
         assert table_view is not None, "Table view not found"
         table_nodes = cognite_client.data_modeling.instances.list(
             "node", space="sp_table_example_data", sources=[table_view.as_id()], limit=-1
         )
         assert len(table_nodes) == len(table_example_data["Table"])
-        item_view = next((view for view in views if view.external_id == "Item"), None)
+        item_view = next((view for view in views.values() if view.external_id == "Item"), None)
         item_nodes = cognite_client.data_modeling.instances.list(
             "node", space="sp_table_example_data", sources=[item_view.as_id()], limit=-1
         )
@@ -242,6 +261,101 @@ class TestDMSExporters:
         assert uploaded_by_name["containers"].failed == 0
 
         assert uploaded_by_name["views"].total == len(rules.views)
+        assert uploaded_by_name["views"].failed == 0
+
+        assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].failed == 0
+
+        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].failed == 0
+
+    def test_export_svein_harald_dms_to_cdf(
+        self, cognite_client: CogniteClient, svein_harald_dms_rules: DMSRules
+    ) -> None:
+        # We change the space to avoid conflicts with Alice's rules in the previous test
+        dumped = svein_harald_dms_rules.dump(by_alias=True)
+        new_space = "power_update"
+        dumped["Metadata"]["space"] = new_space
+        dumped["Last"]["Metadata"]["space"] = new_space
+        rules = DMSRulesInput.load(dumped).as_rules()
+        schema = rules.as_schema()
+        assert schema.referenced_spaces(include_indirect_references=True) == {new_space}
+        exporter = DMSExporter(existing_handling="force")
+        # First, we ensure that the previous version of the data model is deployed
+        uploaded = list(exporter.export_to_cdf(rules.last, cognite_client, dry_run=False))
+        failed = [entity for entity in uploaded if entity.failed]
+        assert not failed, f"Failed to deploy previous version of the data model: {failed}"
+
+        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
+        uploaded_by_name = {entity.name: entity for entity in uploaded}
+
+        assert uploaded_by_name["containers"].total == len(rules.containers)
+        assert uploaded_by_name["containers"].failed == 0
+
+        assert uploaded_by_name["views"].total == len(schema.views)
+        assert uploaded_by_name["views"].failed == 0
+
+        assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].failed == 0
+
+        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].failed == 0
+
+    def test_export_olav_updated_dms_to_cdf(
+        self, cognite_client: CogniteClient, olav_rebuilt_dms_rules: DMSRules
+    ) -> None:
+        # We change the space to avoid conflicts with Olav's not-updated rules in the previous test
+        dumped = olav_rebuilt_dms_rules.dump(by_alias=True)
+        new_solution_space = "power_analytics_update"
+        new_enterprise_space = "power_update"
+        dumped["Metadata"]["space"] = new_solution_space
+        dumped["Last"]["Metadata"]["space"] = new_solution_space
+        dumped["Reference"]["Metadata"]["space"] = new_enterprise_space
+        for prop in itertools.chain(
+            dumped["Properties"], dumped["Last"]["Properties"], dumped["Reference"]["Properties"]
+        ):
+            if prop["Reference"]:
+                prop["Reference"] = prop["Reference"].replace("power", new_enterprise_space)
+            if prop["Container"]:
+                prop["Container"] = prop["Container"].replace("power", new_enterprise_space)
+        for view in itertools.chain(dumped["Views"], dumped["Last"]["Views"], dumped["Reference"]["Views"]):
+            if view["Reference"]:
+                view["Reference"] = view["Reference"].replace("power", new_enterprise_space)
+            if view["Implements"]:
+                view["Implements"] = view["Implements"].replace("power", new_enterprise_space)
+        for container in itertools.chain(
+            dumped.get("Containers", []),
+            dumped["Last"].get("Containers", []),
+            dumped["Reference"].get("Containers", []),
+        ):
+            if container["Reference"]:
+                container["Reference"] = container["Reference"].replace("power", new_enterprise_space)
+            if container["Constraint"]:
+                container["Constraint"] = container["Constraint"].replace("power", new_enterprise_space)
+            container["Container"] = container["Container"].replace("power", new_enterprise_space)
+            container["Class (linage)"] = container["Class (linage)"].replace("power", new_enterprise_space)
+        dumped["Last"]["Reference"] = dumped["Reference"]
+        rules = DMSRulesInput.load(dumped).as_rules()
+        schema = rules.as_schema()
+        referenced_spaces = (
+            schema.referenced_spaces(True)
+            | schema.last.referenced_spaces(True)
+            | schema.reference.referenced_spaces(True)
+        )
+        assert referenced_spaces == {new_enterprise_space, new_solution_space}
+        exporter = DMSExporter(existing_handling="force")
+        # First, we ensure that the previous version of the data model is deployed
+        uploaded = list(exporter.export_to_cdf(rules.last, cognite_client, dry_run=False))
+        failed = [entity for entity in uploaded if entity.failed]
+        assert not failed, f"Failed to deploy previous version of the data model: {failed}"
+
+        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
+        uploaded_by_name = {entity.name: entity for entity in uploaded}
+
+        assert uploaded_by_name["containers"].total == len(schema.containers)
+        assert uploaded_by_name["containers"].failed == 0
+
+        assert uploaded_by_name["views"].total == len(schema.views)
         assert uploaded_by_name["views"].failed == 0
 
         assert uploaded_by_name["data_models"].total == 1

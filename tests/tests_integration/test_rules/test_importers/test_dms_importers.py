@@ -3,7 +3,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
 
 from cognite.neat.rules.importers import DMSImporter, ExcelImporter
-from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes
+from cognite.neat.rules.models import DataModelType, DMSRules, InformationRules, RoleTypes
 from tests.config import DOC_RULES
 
 
@@ -42,6 +42,7 @@ class TestDMSImporter:
         rules = dms_exporter.to_rules(errors="raise", role=RoleTypes.information_architect)
 
         assert isinstance(rules, InformationRules)
+        assert rules.metadata.data_model_type is DataModelType.enterprise
 
     def test_import_olav_from_cdf(
         self, cognite_client: CogniteClient, olav_data_model_id: DataModelId, alice_data_model_id: DataModelId

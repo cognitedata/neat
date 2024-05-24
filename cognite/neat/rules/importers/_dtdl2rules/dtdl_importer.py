@@ -134,6 +134,7 @@ class DTDLImporter(BaseImporter):
 
         metadata = self._default_metadata()
         metadata["schema"] = self._schema_completeness.value
+
         if self.title:
             metadata["title"] = to_pascal(self.title)
         try:
