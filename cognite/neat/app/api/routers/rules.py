@@ -150,7 +150,7 @@ def get_rules(
             error_text = ""
             rules_schema_version = "v2"
             if rules_v2:
-                remaped_rules = rules_v2.model_dump()
+                remaped_rules = rules_v2.model_dump(mode="json")
             else:
                 logging.error(f"Error while loading rules from {path}, issues: {issues}")
                 error_text = str(issues)
@@ -277,7 +277,7 @@ def create_new_rule(request: NewRuleV2Request):
     rules = InformationRules(metadata=metadata, classes=[], properties=[])
     exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
     return {
-        "rules": rules.model_dump(),
+        "rules": rules.model_dump(mode="json"),
         "error_text": "",
         "file_name": rules_file_str,
         "hash": get_file_hash(path),
@@ -311,7 +311,7 @@ def upsert_rule_component(request: RuleV2MetadataUpsertRequest):
     else:
         return {"error_text": f"Role {role} is not allowed to update metadata of the rule object"}
     exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
-    return {"rules": rules.model_dump(), "error_text": issues}
+    return {"rules": rules.model_dump(mode="json"), "error_text": issues}
 
 
 @router.post("/api/rules/class/upsert")
@@ -343,7 +343,7 @@ def upsert_rule_class(request: RulesV2ClassUpsertRequest):
         rules.classes.append(request_class)
 
     exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
-    return {"rules": rules.model_dump(), "error_text": issues}
+    return {"rules": rules.model_dump(mode="json"), "error_text": issues}
 
 
 @router.post("/api/rules/property/upsert")
@@ -376,5 +376,7 @@ def upsert_rule_property(request: RuleV2PropertyUpsertRequest):
     else:
         rules.properties.append(request_property)
 
+    # rules.model_validate()
     exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
-    return {"rules": rules.model_dump(), "error_text": issues}
+
+    return {"rules": rules.model_dump(mode="json"), "error_text": issues}

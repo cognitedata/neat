@@ -482,6 +482,9 @@ export default function InformationArchitectDataModelPropertyEditor(props: any) 
         }
     };
     const handleConfigChange = (key: string, value: any) => {
+        if (key === "max_count" && value == "" || value == "inf" || value == " ") {
+            value = null;
+        }
         setData({ ...data, [key]: value });
     }
 
@@ -634,7 +637,7 @@ export function InformationArchitectPropsRow(props: { row: any, properties: any,
                                             <TableCell>{pr.description}</TableCell>
                                             <TableCell>{pr.value_type}</TableCell>
                                             <TableCell>{pr.min_count}</TableCell>
-                                            <TableCell>{pr.max_count}</TableCell>
+                                            <TableCell>{pr.max_count || "infinite"}</TableCell>
                                             <TableCell>{pr.default}</TableCell>
                                             <TableCell>{pr.reference}</TableCell>
                                             <TableCell>{pr.match_type}</TableCell>

@@ -3,22 +3,8 @@ import { useState, useEffect } from 'react';
 
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
-import Collapse from '@mui/material/Collapse';
-import IconButton from '@mui/material/IconButton';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import Button from '@mui/material/Button';
-import { getNeatApiRootUrl, getSelectedWorkflowName } from 'components/Utils';
-import FileUpload from 'react-mui-fileuploader';
-import { margin } from '@mui/system';
+import { getNeatApiRootUrl, getSelectedDataModelName, getSelectedWorkflowName, setSelectedDataModelName } from 'components/Utils';
 import CdfPublisher from 'components/CdfPublisher';
 import LocalUploader from 'components/LocalUploader';
 import Container from '@mui/material/Container';
@@ -31,7 +17,7 @@ import RulesV1Viewer from 'components/RulesV1Viewer';
 import RulesV2Viewer from 'components/RulesV2Viewer';
 import AddNewRulesaDialog from 'components/rules/AddRulesDialog';
 
-export default function RulesView() {
+export default function RulesView(props: any) {
   const neatApiRootUrl = getNeatApiRootUrl();
   const [data, setData] = useState({
     "rules": {
@@ -42,30 +28,27 @@ export default function RulesView() {
     "file_name": "", "hash": "", "error_text": "", "src": "", "rules_schema_version": ""
   });
   const [alertMsg, setAlertMsg] = useState("");
-  const [selectedWorkflow, setSelectedWorkflow] = useState<string>(getSelectedWorkflowName());
-  const [selectedTab, setSelectedTab] = useState(1);
+  const selectedWorkflow = props.selectedWorkflow;
 
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setSelectedTab(newValue);
-  };
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'name', headerName: 'Name', width: 130 },
     { field: 'value', headerName: 'Value', type: 'number', width: 90 },
   ];
-  const downloadUrl = neatApiRootUrl + "/data/rules/" + data.file_name + "?version=" + data.hash;
+  const downloadUrl = neatApiRootUrl + "/data/rules/" + data?.file_name + "?version=" + data?.hash;
   useEffect(() => {
     loadDataset("", "");
   }, []);
 
   const loadDataset = (fileName: string, fileHash: string) => {
+    if (selectedWorkflow == undefined) {
+      fileName = getSelectedDataModelName()
+    }
     let url = neatApiRootUrl + "/api/rules?" + new URLSearchParams({ "workflow_name": selectedWorkflow, "file_name": fileName, "version": fileHash }).toString()
     fetch(url)
       .then((response) => {
         return response.json();
       }).then((data) => {
-
         setAlertMsg("");
         if (data.rules.metadata)
           setData(data)
@@ -78,6 +61,8 @@ export default function RulesView() {
   }
 
   const loadArbitraryRulesFile = (fileName: string) => {
+    setSelectedDataModelName(fileName);
+    setData(null)
     let url = neatApiRootUrl + "/api/rules?" + new URLSearchParams({ "workflow_name": "undefined", "file_name": fileName, "version": "" }).toString()
     fetch(url)
       .then((response) => {
@@ -125,29 +110,29 @@ export default function RulesView() {
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
-        Data model : <a href={downloadUrl} >{data.file_name}</a>
+        Data model : {data?.file_name}
         <AddNewRulesaDialog onCreated={onNewRulesCreated}></AddNewRulesaDialog>
         <RulesBrowserDialog onSelectRule={loadArbitraryRulesFile} />
-        {data.error_text && <Container sx={{ color: 'red' }}>{data.error_text}</Container>}
+        {data?.error_text && <Container sx={{ color: 'red' }}>{data?.error_text}</Container>}
       </Typography>
       {alertMsg != "" && (<Alert severity="warning">
         <AlertTitle>Warning</AlertTitle>
         {alertMsg}
       </Alert>)}
       {data?.rules_schema_version == "v1" && (
-        <RulesV1Viewer rules={data.rules} ></RulesV1Viewer>
+        <RulesV1Viewer rules={data?.rules} ></RulesV1Viewer>
       )}
       {data?.rules_schema_version == "v2" && (
         <Box>
           <RulesV2Viewer rules={data.rules} fileName={data.file_name} onRoleChange={onRoleChange} ></RulesV2Viewer>
         </Box>
       )}
-      <Box sx={{ margin: 1 }}> schema version : {data.rules_schema_version} file version : {data.hash} source: {data.src} </Box>
+      <Box sx={{ margin: 1 }}> schema version : {data?.rules_schema_version} file version : {data?.hash} source: {data?.src} <a href={downloadUrl} >Download</a> </Box>
       <Box sx={{ margin: 5 }}>
         <Box sx={{ width: 500 }}>
           <LocalUploader fileType="rules" action="none" stepId="none" label="Upload new data model" workflowName={selectedWorkflow} onUpload={onUpload} />
         </Box>
-        <CdfPublisher type="transformation rules" fileName={data.file_name} />
+        <CdfPublisher type="transformation rules" fileName={data?.file_name} />
         <CdfDownloader type="neat-wf-rules" onDownloadSuccess={onDownloadSuccess} />
       </Box>
     </Box>

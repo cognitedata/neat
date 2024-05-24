@@ -583,7 +583,7 @@ export default function WorkflowView() {
         <ConfigView></ConfigView>
       )}
       {viewType == "transformations" && (
-        <RulesView />
+        <RulesView selectedWorkflow={selectedWorkflow} />
       )}
       {viewType == "data_explorer" && (
         <QDataTable />
