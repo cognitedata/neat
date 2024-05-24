@@ -1,8 +1,6 @@
 """This module performs importing of various formats to one of serializations for which
 there are loaders to TransformationRules pydantic class."""
 
-# TODO: if this module grows too big, split it into several files and place under ./converter directory
-
 from pathlib import Path
 from typing import Literal, overload
 
@@ -22,7 +20,8 @@ class OWLImporter(BaseImporter):
     """Convert OWL ontology to tables/ transformation rules / Excel file.
 
         Args:
-            owl_filepath: Path to OWL ontology
+            filepath: Path to OWL ontology
+            make_compliant: If True, NEAT will attempt to make the imported rules compliant
 
     !!! Note
         OWL Ontologies typically lacks some information that is required for making a complete
