@@ -20,16 +20,19 @@ import { InformationArchitectPropsRow, InformationArchitectRulesViewer, Informat
 
 export default function RulesV2Viewer(props: any) {
   const neatApiRootUrl = getNeatApiRootUrl();
-  const [rules, setRules] = useState({
+  const newLocal = useState<any>({
     "classes": [],
     "properties": [],
     "views": [],
     "containers": [],
-    "metadata": { "prefix": "", "role": "", "extension": "", "schema_": "", "suffix": "", "namespace": "", "version": "", "title": "", "description": "", "created": "", "updated": "", "creator": [], "contributor": [], "rights": "", "license": "", "dataModelId": "", "source": "" }
+    "metadata": { "prefix": "", "role": "", "extension": "", "schema_": "", "suffix": "", "namespace": "", "version": "", "title": "", "description": "", "created": "", "updated": "", "creator": [], "contributor": [], "rights": "", "license": "", "dataModelId": "", "source": "" },
+    "reference": {}
   });
+  const [rules, setRules] = newLocal;
   const [selectedTab, setSelectedTab] = useState(1);
   const [role, setRole] = useState("");
   const [alertMsg, setAlertMsg] = useState("");
+  const [modelType, setModelType] = useState("current");
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -52,6 +55,18 @@ export default function RulesV2Viewer(props: any) {
     setSelectedTab(0);
     setRole(newValue);
     props.onRoleChange(newValue);
+  }
+
+  const handleModelTypeChange = (event: React.SyntheticEvent, newValue: string) => {
+    if (newValue == null) {
+      return;
+    }
+    if (newValue == "reference" && rules.reference) {
+      setRules(rules.reference);
+    } else {
+      setRules(props.rules);
+    }
+    setModelType(newValue);
   }
 
   useEffect(() => {
@@ -86,6 +101,24 @@ export default function RulesV2Viewer(props: any) {
           </div>
         </ToggleButton>
       </ToggleButtonGroup>
+      {(rules.reference || modelType == "reference") && (
+        <Box sx={{ marginTop: 1 }}>
+          <ToggleButtonGroup
+            color="primary"
+            value={modelType}
+            exclusive
+            onChange={handleModelTypeChange}
+            aria-label="Platform"
+            size='small'
+          >
+            <ToggleButton value="current">
+              Current model
+            </ToggleButton>
+            <ToggleButton value="reference">
+              Reference model
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>)}
       {alertMsg != "" && (<Alert severity="warning" onClose={() => { setAlertMsg("") }}>
         <AlertTitle>Warning</AlertTitle>
         {alertMsg}
@@ -94,7 +127,7 @@ export default function RulesV2Viewer(props: any) {
         <DomainExpertRulesViewer rules={rules} />
       )}
       {role == "information architect" && (
-        <InformationArchitectRulesViewer rules={rules} fileName={props.fileName} />
+        <InformationArchitectRulesViewer rules={rules} fileName={props.fileName} modelType={modelType} />
       )}
       {role == "DMS Architect" && (
         <DMSArchitectRulesViewer rules={rules} />

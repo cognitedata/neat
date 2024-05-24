@@ -37,6 +37,7 @@ export function InformationArchitectRulesViewer(props: any) {
     const [propsEditorOpen, setPropsEditorOpen] = React.useState(false);
     const [classEditorOpen, setClassEditorOpen] = React.useState(false);
     const [editorData, setEditorData] = React.useState({});
+    const modelType = props.modelType;
 
     const [tableContainerKey, setTableContainerKey] = React.useState(0); // Add state for the key
 
@@ -107,13 +108,13 @@ export function InformationArchitectRulesViewer(props: any) {
                         <TableBody>
                             {rules.classes?.map((row: any) => (
                                 <React.Fragment>
-                                    <InformationArchitectPropsRow row={row} properties={rules.properties} onEditClick={onEditClick} />
+                                    <InformationArchitectPropsRow row={row} properties={rules.properties} onEditClick={onEditClick} modelType={modelType} />
                                 </React.Fragment>
                             ))}
                         </TableBody>
                     </Table>
                     <InformationArchitectClassEditor data={editorData} fileName={props.fileName} open={classEditorOpen} onSaved={handleClassEdit} onClose={() => { setClassEditorOpen(false) }} />
-                    <Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={() => setClassEditorOpen(true)}>Add new class</Button>
+                    {modelType == "current" && (<Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={() => setClassEditorOpen(true)}>Add new class</Button>)}
                 </TableContainer>
             )}
             {selectedTab == 2 && (
@@ -270,10 +271,10 @@ export function InformationArchitectMetadataEditor(props: any) {
                                 onChange={(event) => { handleConfigChange("data_model_type", event.target.value) }}
                             >
                                 <MenuItem value="solution">
-                                    Solution
+                                    Solution model - is expected to be based on another data model, which should be present as Reference rules.
                                 </MenuItem>
                                 <MenuItem value="enterprise">
-                                    Enterprise
+                                    Enterprise model - is expected to be a fundamental data model, meaning that is not based on another data model.
                                 </MenuItem>
                             </Select>
                         </FormControl>
@@ -309,13 +310,13 @@ export function InformationArchitectMetadataEditor(props: any) {
                                 onChange={(event) => { handleConfigChange("schema_", event.target.value) }}
                             >
                                 <MenuItem value="complete">
-                                    complete
+                                    Complete - model should contain all the classes, views, and containers that are needed for the data model.
                                 </MenuItem>
                                 <MenuItem value="partial">
-                                    partial
+                                    Partial - model is expected to be a partial data model. No validation of the consistency of the Rule object as a whole will be done.
                                 </MenuItem>
                                 <MenuItem value="extended">
-                                    extended
+                                    extended - model is expected to be an extension of the previous iteration
                                 </MenuItem>
                             </Select>
                         </FormControl>
@@ -572,13 +573,14 @@ Property:
 },
 */
 
-export function InformationArchitectPropsRow(props: { row: any, properties: any, onEditClick: any }) {
+export function InformationArchitectPropsRow(props: { row: any, properties: any, onEditClick: any, modelType: string }) {
     const { row, properties } = props;
     const [open, setOpen] = React.useState(false);
     const getPropertyByClass = (className: string) => {
         const r = properties.filter((f: any) => f.class_ == className);
         return r;
     }
+    const modelType = props.modelType;
     const addNewProperty = () => {
         const newProperty = { class_: row.class_, property_: "", name: "", description: "", value_type: "", min_count: 1, max_count: 1, default: null, reference: null, match_type: null, rule_type: null, rule: null, comment: null };
         props.onEditClick(newProperty, "prop_edit");
@@ -604,7 +606,7 @@ export function InformationArchitectPropsRow(props: { row: any, properties: any,
                 <TableCell align="right">{row.reference}</TableCell>
                 <TableCell align="right">{row.match_type}</TableCell>
                 <TableCell align="right">{row.comment}</TableCell>
-                <TableCell align="center"><Button onClick={() => { props.onEditClick(row, "class_edit"); }}>Edit</Button></TableCell>
+                <TableCell align="center"> {modelType == "current" && (<Button onClick={() => { props.onEditClick(row, "class_edit"); }}>Edit</Button>)}</TableCell>
             </TableRow>
             <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
@@ -642,12 +644,12 @@ export function InformationArchitectPropsRow(props: { row: any, properties: any,
                                             <TableCell>{pr.reference}</TableCell>
                                             <TableCell>{pr.match_type}</TableCell>
                                             <TableCell>{pr.comment}</TableCell>
-                                            <TableCell> <Button onClick={() => { props.onEditClick(pr, "prop_edit"); }}>Edit</Button> </TableCell>
+                                            <TableCell>   {modelType == "current" && (<Button onClick={() => { props.onEditClick(pr, "prop_edit"); }}>Edit</Button>)} </TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
                             </Table>)}
-                            <Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={addNewProperty}>Add new property</Button>
+                            {modelType == "current" && (<Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={addNewProperty}>Add new property</Button>)}
                         </Box>
                     </Collapse>
                 </TableCell>

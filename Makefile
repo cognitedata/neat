@@ -12,6 +12,9 @@ run-tests:
 	@echo "Running tests..."
 	poetry run pytest
 
+sync:
+	poetry install --sync
+
 run-regen-test:
 	@echo "Regenerating test data for failed test. This will overwrite the existing test data !!!!!! Use with caution !!!!!!"
 	poetry run pytest --force-regen

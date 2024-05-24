@@ -67,40 +67,8 @@ export function DomainMetadataTable(props: any) {
                 <Table aria-label="metadata table">
                     <TableBody>
                         <TableRow>
-                            <TableCell><b>Name</b></TableCell>
-                            <TableCell>{metadata?.name}</TableCell>
-                        </TableRow>
-                        <TableRow>
                             <TableCell><b>Role</b></TableCell>
                             <TableCell>{metadata?.role}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell><b>Schema state</b></TableCell>
-                            <TableCell>{metadata?.schema_}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell><b>Extension</b></TableCell>
-                            <TableCell>{metadata?.extension}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell><b>Description</b></TableCell>
-                            <TableCell>{metadata?.description}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell><b>DMS Space</b></TableCell>
-                            <TableCell>{metadata?.space}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell><b>Version</b></TableCell>
-                            <TableCell>{metadata?.version}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell><b>Created at</b></TableCell>
-                            <TableCell>{metadata?.created}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell><b>Updated at</b></TableCell>
-                            <TableCell>{metadata?.updated}</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell><b>Creator</b></TableCell>
