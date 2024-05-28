@@ -5,6 +5,7 @@ from typing import Literal, cast, overload
 from rdflib import Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
+import cognite.neat.rules.issues as issues
 from cognite.neat.constants import PREFIXES
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
 from cognite.neat.rules.issues import IssueList
@@ -32,8 +33,8 @@ INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occur
 class InferenceImporter(BaseImporter):
     """Rules inference through analysis of knowledge graph provided in various formats.
 
-
     Args:
+        issue_list: Issue list to store issues
         graph: Knowledge graph
         max_number_of_instance: Maximum number of instances to be used in inference
         make_compliant: If True, NEAT will attempt to make the imported rules compliant with CDF
@@ -54,8 +55,8 @@ class InferenceImporter(BaseImporter):
         graph = Graph()
         try:
             graph.parse(filepath)
-        except Exception as e:
-            raise Exception(f"Could not parse RDF file: {e}") from e
+        except Exception:
+            issue_list.append(issues.fileread.FileReadError(filepath))
 
         return cls(issue_list, graph, make_compliant=make_compliant, max_number_of_instance=max_number_of_instance)
 
@@ -87,6 +88,10 @@ class InferenceImporter(BaseImporter):
         """
         Creates `Rules` object from the data for target role.
         """
+
+        if self.issue_list.has_errors:
+            # In case there were errors during the import, the to_rules method will return None
+            return self._return_or_raise(self.issue_list, errors)
 
         rules_dict = self._to_rules_components()
 
