@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.77.9] - 23-05-24
+### Added
+- `InferenceImporter` added to the core library enabling inference of rules from a graph.
+
 ## [0.77.8] - 23-05-24
 ### Fixed
 - In the conversion form Information to DMS Rules, when referencing a class in reference rules, the implements
