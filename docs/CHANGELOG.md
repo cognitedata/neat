@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.78.1] - 30-05-24
+### Added
+- Added `RulesInferenceFromRdfFile` to the step library
+
+
 ## [0.78.0] - 30-05-24
 ### Added
 - `make_compliant` feature added to `InferenceImporter` producing compliant rules from a knowledge graph.
