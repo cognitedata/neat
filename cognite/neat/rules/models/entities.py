@@ -213,11 +213,6 @@ class Entity(BaseModel, extra="ignore"):
             return f"{self.suffix!s}"
         return f"{self.prefix}:{self.suffix!s}"
 
-    def as_dms_compliant_entity(self) -> "Self":
-        new_entity = self.model_copy(deep=True)
-        new_entity.suffix = replace_non_alphanumeric_with_underscore(new_entity.suffix)
-        return new_entity
-
 
 T_Entity = TypeVar("T_Entity", bound=Entity)
 
@@ -237,6 +232,11 @@ class ClassEntity(Entity):
     def as_container_entity(self, default_space: str) -> "ContainerEntity":
         space = default_space if isinstance(self.prefix, _UndefinedType) else self.prefix
         return ContainerEntity(space=space, externalId=str(self.suffix))
+
+    def as_dms_compliant_entity(self) -> "Self":
+        new_entity = self.model_copy(deep=True)
+        new_entity.suffix = replace_non_alphanumeric_with_underscore(new_entity.suffix)
+        return new_entity
 
 
 class ParentClassEntity(ClassEntity):
