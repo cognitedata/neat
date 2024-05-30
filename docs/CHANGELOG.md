@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.78.0] - 30-05-24
+### Added
+- `make_compliant` feature added to `InferenceImporter` producing compliant rules from a knowledge graph.
+
 ## [0.77.9] - 23-05-24
 ### Added
 - `InferenceImporter` added to the core library enabling inference of rules from a graph.
