@@ -19,10 +19,13 @@ Changes are grouped as follows:
 ### Added
 - Added `RulesInferenceFromRdfFile` to the step library
 
-
 ## [0.78.0] - 30-05-24
 ### Added
 - `make_compliant` feature added to `InferenceImporter` producing compliant rules from a knowledge graph.
+
+## [0.77.10] - 23-05-30
+### Changed
+- Increased upper bound on `uvicorn` dependency.
 
 ## [0.77.9] - 23-05-24
 ### Added

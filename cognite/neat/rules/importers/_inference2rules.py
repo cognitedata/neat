@@ -234,14 +234,14 @@ class InferenceImporter(BaseImporter):
 
     @classmethod
     def _fix_property_redefinition(cls, rules: InformationRules) -> None:
-        viewed = set()
+        seen = set()
         for i, property_ in enumerate(rules.properties.data):
             prop_id = f"{property_.class_}.{property_.property_}"
-            if prop_id in viewed:
+            if prop_id in seen:
                 property_.property_ = f"{property_.property_}_{i+1}"
-                viewed.add(f"{property_.class_}.{property_.property_}")
+                seen.add(f"{property_.class_}.{property_.property_}")
             else:
-                viewed.add(prop_id)
+                seen.add(prop_id)
 
     @classmethod
     def _fix_naming_of_entities(cls, rules: InformationRules) -> None:

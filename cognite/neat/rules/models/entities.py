@@ -238,6 +238,11 @@ class ClassEntity(Entity):
         space = default_space if isinstance(self.prefix, _UndefinedType) else self.prefix
         return ContainerEntity(space=space, externalId=str(self.suffix))
 
+    def as_dms_compliant_entity(self) -> "Self":
+        new_entity = self.model_copy(deep=True)
+        new_entity.suffix = replace_non_alphanumeric_with_underscore(new_entity.suffix)
+        return new_entity
+
 
 class ParentClassEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.parent_class
