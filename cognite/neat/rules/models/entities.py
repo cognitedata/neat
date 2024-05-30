@@ -7,6 +7,8 @@ from typing import Annotated, Any, ClassVar, Generic, TypeVar, cast
 from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, NodeId, PropertyId, ViewId
 from pydantic import AnyHttpUrl, BaseModel, BeforeValidator, Field, PlainSerializer, model_serializer, model_validator
 
+from cognite.neat.utils.utils import replace_non_alphanumeric_with_underscore
+
 if sys.version_info >= (3, 11):
     from enum import StrEnum
     from typing import Self
@@ -230,6 +232,11 @@ class ClassEntity(Entity):
     def as_container_entity(self, default_space: str) -> "ContainerEntity":
         space = default_space if isinstance(self.prefix, _UndefinedType) else self.prefix
         return ContainerEntity(space=space, externalId=str(self.suffix))
+
+    def as_dms_compliant_entity(self) -> "Self":
+        new_entity = self.model_copy(deep=True)
+        new_entity.suffix = replace_non_alphanumeric_with_underscore(new_entity.suffix)
+        return new_entity
 
 
 class ParentClassEntity(ClassEntity):
