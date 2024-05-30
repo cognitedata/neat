@@ -7,6 +7,7 @@ from rdflib import Literal as RdfLiteral
 
 import cognite.neat.rules.issues as issues
 from cognite.neat.constants import PREFIXES
+from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models import InformationRules, RoleTypes
@@ -42,12 +43,22 @@ class InferenceImporter(BaseImporter):
     """
 
     def __init__(
-        self, issue_list: IssueList, graph: Graph, max_number_of_instance: int = -1, make_compliant: bool = False
+        self, issue_list: IssueList, graph: Graph, make_compliant: bool = False, max_number_of_instance: int = -1
     ):
         self.issue_list = issue_list
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
         self.make_compliant = make_compliant
+
+    @classmethod
+    def from_graph_store(
+        cls, store: NeatGraphStoreBase, make_compliant: bool = False, max_number_of_instance: int = -1
+    ):
+        issue_list = IssueList(title="Inferred from graph store")
+
+        return cls(
+            issue_list, store.graph, make_compliant=make_compliant, max_number_of_instance=max_number_of_instance
+        )
 
     @classmethod
     def from_rdf_file(cls, filepath: Path, make_compliant: bool = False, max_number_of_instance: int = -1):

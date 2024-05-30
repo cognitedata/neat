@@ -20,6 +20,7 @@ __all__ = [
     "ExcelToRules",
     "OntologyToRules",
     "DMSToRules",
+    "RulesInferenceFromRdfFile",
 ]
 
 
@@ -257,5 +258,99 @@ class DMSToRules(Step):
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
         output_text = "Rules import and validation passed successfully!"
+
+        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(rules)
+
+
+class RulesInferenceFromRdfFile(Step):
+    """This step infers rules from the RDF file which contains knowledge graph."""
+
+    description = "This step infers rules from the RDF file which contains knowledge graph"
+    version = "private-beta"
+    category = CATEGORY
+    configurables: ClassVar[list[Configurable]] = [
+        Configurable(
+            name="File path",
+            value="staging/knowledge_graph.ttl",
+            label=("Relative path to the RDF file to be used for inference"),
+        ),
+        Configurable(
+            name="Report formatter",
+            value=next(iter(FORMATTER_BY_NAME.keys())),
+            label="The format of the report for the validation of the rules",
+            options=list(FORMATTER_BY_NAME),
+        ),
+        Configurable(
+            name="Role",
+            value="infer",
+            label="For what role Rules are intended?",
+            options=["infer", *RoleTypes.__members__.keys()],
+        ),
+        Configurable(
+            name="Make compliant",
+            value="True",
+            label=(
+                "Attempt to make the imported Rules compliant, by fixing "
+                "redefinition of properties and by making ids of entities compliant with"
+                " CDF-allowed set of characters ."
+            ),
+            options=["True", "False"],
+        ),
+        Configurable(
+            name="Maximum number of instances to process",
+            value="-1",
+            label=(
+                "Maximum number of instances to process"
+                " to infer rules from the RDF file. Default -1 means all instances."
+            ),
+        ),
+    ]
+
+    def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
+        if self.configs is None or self.data_store_path is None:
+            raise StepNotInitialized(type(self).__name__)
+
+        file_path = self.configs.get("File path", None)
+        full_path = flow_message.payload.get("full_path", None) if flow_message.payload else None
+        make_compliant = self.configs.get("Make compliant", "True") == "True"
+
+        try:
+            max_number_of_instance = int(self.configs.get("Maximum number of instances to process", -1))
+        except ValueError:
+            error_text = "Maximum number of instances to process should be an integer value"
+            return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+
+        if file_path:
+            rdf_file_path = self.data_store_path / Path(file_path)
+        elif full_path:
+            rdf_file_path = full_path
+        else:
+            error_text = "Expected either 'File name' in the step config or 'File uploader' step uploading Excel Rules."
+            return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+
+        # if role is None, it will be inferred from the rules file
+        role = self.configs.get("Role")
+        role_enum = None
+        if role != "infer" and role is not None:
+            role_enum = RoleTypes[role]
+
+        inference_importer = importers.InferenceImporter.from_rdf_file(
+            rdf_file_path, make_compliant=make_compliant, max_number_of_instance=max_number_of_instance
+        )
+        rules, issues = inference_importer.to_rules(errors="continue", role=role_enum)
+
+        if rules is None:
+            output_dir = self.config.staging_path
+            report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
+            report_writer.write_to_file(issues, file_or_dir_path=output_dir)
+            report_file = report_writer.default_file_name
+            error_text = (
+                "<p></p>"
+                f'<a href="/data/staging/{report_file}?{time.time()}" '
+                f'target="_blank">Failed to validate rules, click here for report</a>'
+            )
+            return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+
+        output_text = "Rules validation passed successfully!"
 
         return FlowMessage(output_text=output_text), MultiRuleData.from_rules(rules)
