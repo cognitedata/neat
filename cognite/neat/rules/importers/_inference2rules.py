@@ -217,12 +217,12 @@ class InferenceImporter(BaseImporter):
         )
 
     @classmethod
-    def _make_dms_compliant_rules(cls, rules: InformationRules) -> InformationRules:
+    def _make_dms_compliant_rules(cls, rules: InformationRules) -> None:
         cls._fix_property_redefinition(rules)
         cls._fix_naming_of_entities(rules)
 
     @classmethod
-    def _fix_property_redefinition(cls, rules: InformationRules) -> InformationRules:
+    def _fix_property_redefinition(cls, rules: InformationRules) -> None:
         viewed = set()
         for i, property_ in enumerate(rules.properties.data):
             prop_id = f"{property_.class_}.{property_.property_}"
@@ -233,8 +233,7 @@ class InferenceImporter(BaseImporter):
                 viewed.add(prop_id)
 
     @classmethod
-    def _fix_naming_of_entities(cls, rules: InformationRules) -> InformationRules:
-
+    def _fix_naming_of_entities(cls, rules: InformationRules) -> None:
         # Fixing class ids
         for class_ in rules.classes:
             class_.class_ = class_.class_.as_dms_compliant_entity()
@@ -242,7 +241,6 @@ class InferenceImporter(BaseImporter):
 
         # Fixing property definitions
         for property_ in rules.properties:
-
             # fix class id
             property_.class_ = property_.class_.as_dms_compliant_entity()
 
