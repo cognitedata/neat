@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import re
 import sys
 import time
 from collections import OrderedDict
@@ -350,3 +351,7 @@ def get_inheritance_path(child: Any, child_parent: dict[Any, list[Any]]) -> list
         for parent in child_parent[child]:
             path.extend(get_inheritance_path(parent, child_parent))
     return path
+
+
+def replace_non_alphanumeric_with_underscore(text):
+    return re.sub(r"\W+", "_", text)

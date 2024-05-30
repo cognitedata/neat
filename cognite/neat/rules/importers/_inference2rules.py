@@ -11,11 +11,12 @@ from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issu
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models import InformationRules, RoleTypes
 from cognite.neat.rules.models._base import MatchType
+from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import (
     InformationMetadata,
     InformationRulesInput,
 )
-from cognite.neat.utils.utils import get_namespace, remove_namespace
+from cognite.neat.utils.utils import get_namespace, remove_namespace, replace_non_alphanumeric_with_underscore
 
 ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class . }
@@ -106,7 +107,7 @@ class InferenceImporter(BaseImporter):
             return self._return_or_raise(self.issue_list, errors)
 
         if self.make_compliant and rules:
-            rules = self._make_dms_compliant_rules(rules)
+            self._make_dms_compliant_rules(rules)
 
         return self._to_output(
             rules,
@@ -172,7 +173,7 @@ class InferenceImporter(BaseImporter):
                     definition = {
                         "class_": class_id,
                         "property_": property_id,
-                        "max_occurrence": cast(RdfLiteral, occurrence).value,
+                        "max_count": cast(RdfLiteral, occurrence).value,
                         "value_type": value_type_id,
                         "reference": property_uri,
                     }
@@ -180,7 +181,6 @@ class InferenceImporter(BaseImporter):
                     # USE CASE 1: If property is not present in properties
                     if id_ not in properties:
                         properties[id_] = definition
-
                     # USE CASE 2: If property is present in properties but with different max count
                     elif id_ in properties and not (properties[id_]["max_count"] == definition["max_count"]):
                         properties[id_]["max_count"] = max(properties[id_]["max_count"], definition["max_count"])
@@ -218,4 +218,37 @@ class InferenceImporter(BaseImporter):
 
     @classmethod
     def _make_dms_compliant_rules(cls, rules: InformationRules) -> InformationRules:
-        raise NotImplementedError("Compliance with DMS is not supported yet.")
+        cls._fix_property_redefinition(rules)
+        cls._fix_naming_of_entities(rules)
+
+    @classmethod
+    def _fix_property_redefinition(cls, rules: InformationRules) -> InformationRules:
+        viewed = set()
+        for i, property_ in enumerate(rules.properties.data):
+            prop_id = f"{property_.class_}.{property_.property_}"
+            if prop_id in viewed:
+                property_.property_ = f"{property_.property_}_{i+1}"
+                viewed.add(f"{property_.class_}.{property_.property_}")
+            else:
+                viewed.add(prop_id)
+
+    @classmethod
+    def _fix_naming_of_entities(cls, rules: InformationRules) -> InformationRules:
+
+        # Fixing class ids
+        for class_ in rules.classes:
+            class_.class_ = class_.class_.as_dms_compliant_entity()
+            class_.parent = [parent.as_dms_compliant_entity() for parent in class_.parent] if class_.parent else None
+
+        # Fixing property definitions
+        for property_ in rules.properties:
+
+            # fix class id
+            property_.class_ = property_.class_.as_dms_compliant_entity()
+
+            # fix property id
+            property_.property_ = replace_non_alphanumeric_with_underscore(property_.property_)
+
+            # fix value type
+            if isinstance(property_.value_type, ClassEntity):
+                property_.value_type = property_.value_type.as_dms_compliant_entity()
