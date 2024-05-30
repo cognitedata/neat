@@ -213,6 +213,11 @@ class Entity(BaseModel, extra="ignore"):
             return f"{self.suffix!s}"
         return f"{self.prefix}:{self.suffix!s}"
 
+    def as_dms_compliant_entity(self) -> "Self":
+        new_entity = self.model_copy(deep=True)
+        new_entity.suffix = replace_non_alphanumeric_with_underscore(new_entity.suffix)
+        return new_entity
+
 
 T_Entity = TypeVar("T_Entity", bound=Entity)
 

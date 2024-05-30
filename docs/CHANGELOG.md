@@ -15,6 +15,9 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.78.1] - 30-05-24
+### Added
+- Added `RulesInferenceFromRdfFile` to the step library
 
 ## [0.78.0] - 30-05-24
 ### Added
@@ -23,7 +26,6 @@ Changes are grouped as follows:
 ## [0.77.10] - 23-05-30
 ### Changed
 - Increased upper bound on `uvicorn` dependency.
-
 
 ## [0.77.9] - 23-05-24
 ### Added
