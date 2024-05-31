@@ -8,19 +8,17 @@ from cognite.neat.rules.models._base import MatchType
 from cognite.neat.utils.utils import remove_namespace
 
 
-def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str = "en") -> list[dict]:
+def parse_owl_classes(graph: Graph, language: str = "en") -> list[dict]:
     """Parse owl classes from graph to pandas dataframe.
 
     Args:
         graph: Graph containing owl classes
-        make_compliant: Flag for generating compliant classes, by default False
         language: Language to use for parsing, by default "en"
 
     Returns:
         Dataframe containing owl classes
 
-    !!! note "make_compliant"
-        If `make_compliant` is set to True, in presence of errors, default values will be used instead.
+    !!! note "Compliant OWL classes"
         This makes the method very opinionated, but results in a compliant classes.
     """
 
@@ -48,8 +46,7 @@ def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str 
     processed_df = _clean_up_classes(raw_df)
 
     # make compliant
-    if make_compliant:
-        processed_df = make_classes_compliant(processed_df)
+    processed_df = make_classes_compliant(processed_df)
 
     # Make Parent Class list elements into string joined with comma
     processed_df["Parent Class"] = processed_df["Parent Class"].apply(
