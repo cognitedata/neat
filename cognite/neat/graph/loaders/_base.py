@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import Generic, Literal, TypeVar, overload
 
 from cognite.client import CogniteClient
-from pydantic_core import ErrorDetails
+
+from cognite.neat.rules.issues import NeatValidationError
 
 T_Output = TypeVar("T_Output")
 
@@ -21,15 +22,15 @@ class BaseLoader(ABC, Generic[T_Output]):
     def load(self, stop_on_exception: Literal[True]) -> Iterable[T_Output]: ...
 
     @overload
-    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[T_Output | ErrorDetails]: ...
+    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[T_Output | NeatValidationError]: ...
 
-    def load(self, stop_on_exception: bool = False) -> Iterable[T_Output | ErrorDetails]:
+    def load(self, stop_on_exception: bool = False) -> Iterable[T_Output | NeatValidationError]:
         """Load the graph with data."""
         return self._load(stop_on_exception)
 
     # Private to avoid creating overload in all subclasses
     @abstractmethod
-    def _load(self, stop_on_exception: bool = False) -> Iterable[T_Output | ErrorDetails]:
+    def _load(self, stop_on_exception: bool = False) -> Iterable[T_Output | NeatValidationError]:
         """Load the graph with data."""
         pass
 
