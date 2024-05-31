@@ -43,7 +43,15 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         return cls(schema.as_read_model(), graph_store, add_class_prefix)
 
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatValidationError]:
-        raise NotImplementedError()
+        classes = (view.external_id for view in self.data_model.views)
+        for class_name, triples in self._iterate_class_triples(classes):
+            # Some tracking and creation of a structure to do validation
+            validation_structure = self._create_validation_structure(class_name)
+            for instance_dict in triples2dictionary(triples).values():
+                try:
+                    yield self._create_instance(class_name, instance_dict, validation_structure)
+                except NeatValidationError as e:
+                    yield e
 
     def load_into_cdf_iterable(self, client: CogniteClient, dry_run: bool = False) -> Iterable:
         raise NotImplementedError()
