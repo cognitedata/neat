@@ -10,12 +10,11 @@ from cognite.neat.utils.utils import remove_namespace
 from ._owl2classes import _data_type_property_class, _object_property_class, _thing_class
 
 
-def parse_owl_properties(graph: Graph, make_compliant: bool = False, language: str = "en") -> list[dict]:
+def parse_owl_properties(graph: Graph, language: str = "en") -> list[dict]:
     """Parse owl properties from graph to pandas dataframe.
 
     Args:
         graph: Graph containing owl properties
-        make_compliant: Flag for generating compliant properties, by default False
         language: Language to use for parsing, by default "en"
 
     Returns:
@@ -53,8 +52,7 @@ def parse_owl_properties(graph: Graph, make_compliant: bool = False, language: s
     processed_df = _clean_up_properties(raw_df)
 
     # make compliant
-    if make_compliant:
-        processed_df = make_properties_compliant(processed_df)
+    processed_df = make_properties_compliant(processed_df)
 
     # drop column _property_type, which was a helper column:
     processed_df.drop(columns=["_property_type"], inplace=True)

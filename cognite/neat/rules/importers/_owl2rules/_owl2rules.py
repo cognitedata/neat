@@ -21,25 +21,21 @@ class OWLImporter(BaseImporter):
 
         Args:
             filepath: Path to OWL ontology
-            make_compliant: If True, NEAT will attempt to make the imported rules compliant with CDF
 
     !!! Note
-        OWL Ontologies typically lacks some information that is required for making a complete
-        data model. This means that the methods .to_rules() will typically fail. Instead, it is recommended
-        that you use the .to_spreadsheet() method to generate an Excel file, and then manually add the missing
-        information to the Excel file. The Excel file can then be converted to a `Rules` object.
+        OWL Ontologies are information models which completeness varies. As such, constructing functional
+        data model directly will often be impossible, therefore the produced Rules object will be ill formed.
+        To avoid this, neat will automatically attempt to make the imported rules compliant by adding default
+        values for missing information, attaching dangling properties to default containers based on the
+        property type, etc.
 
-        Alternatively, one can set the `make_compliant` parameter to True to allow neat to attempt to make
-        the imported rules compliant by adding default values for missing information, attaching dangling
-        properties to default containers based on the property type, etc. One has to be aware
-        that NEAT will be opinionated about how to make the ontology compliant, and that the resulting
-        rules may not be what you expect.
+        One has to be aware that NEAT will be opinionated about how to make the ontology
+        compliant, and that the resulting rules may not be what you expect.
 
     """
 
-    def __init__(self, filepath: Path, make_compliant: bool = False):
+    def __init__(self, filepath: Path):
         self.owl_filepath = filepath
-        self.make_compliant = make_compliant
 
     @overload
     def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
@@ -67,13 +63,12 @@ class OWLImporter(BaseImporter):
         graph.bind("skos", SKOS)
 
         components = {
-            "Metadata": parse_owl_metadata(graph, make_compliant=self.make_compliant),
-            "Classes": parse_owl_classes(graph, make_compliant=self.make_compliant),
-            "Properties": parse_owl_properties(graph, make_compliant=self.make_compliant),
+            "Metadata": parse_owl_metadata(graph),
+            "Classes": parse_owl_classes(graph),
+            "Properties": parse_owl_properties(graph),
         }
 
-        if self.make_compliant:
-            components = make_components_compliant(components)
+        components = make_components_compliant(components)
 
         rules = InformationRules.model_validate(components)
         return self._to_output(rules, IssueList(), errors, role)

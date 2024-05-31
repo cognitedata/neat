@@ -119,15 +119,6 @@ class OntologyToRules(Step):
             label="For what role Rules are intended?",
             options=["infer", *RoleTypes.__members__.keys()],
         ),
-        Configurable(
-            name="Make compliant",
-            value="True",
-            label=(
-                "Attempt to make the imported Rules compliant, by converting "
-                "the information model provided in the ontology to data model."
-            ),
-            options=["True", "False"],
-        ),
     ]
 
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
@@ -136,7 +127,6 @@ class OntologyToRules(Step):
 
         file_name = self.configs.get("File name", None)
         full_path = flow_message.payload.get("full_path", None) if flow_message.payload else None
-        make_compliant = self.configs.get("Make compliant", "True") == "True"
 
         if file_name:
             rules_file_path = self.config.rules_store_path / file_name
@@ -152,7 +142,7 @@ class OntologyToRules(Step):
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
 
-        ontology_importer = importers.OWLImporter(filepath=rules_file_path, make_compliant=make_compliant)
+        ontology_importer = importers.OWLImporter(filepath=rules_file_path)
         rules, issues = ontology_importer.to_rules(errors="continue", role=role_enum)
 
         if rules is None:
