@@ -1,6 +1,9 @@
+import json
+import warnings
 from collections.abc import Iterable
 from pathlib import Path
 
+import yaml
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
@@ -42,8 +45,26 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatValidationError]:
         raise NotImplementedError()
 
-    def write_to_file(self, filepath: Path) -> None:
-        raise NotImplementedError()
-
     def load_into_cdf_iterable(self, client: CogniteClient, dry_run: bool = False) -> Iterable:
         raise NotImplementedError()
+
+    def write_to_file(self, filepath: Path) -> None:
+        if filepath.suffix not in [".json", ".yaml", ".yml"]:
+            raise ValueError(f"File format {filepath.suffix} is not supported")
+        dumped: dict[str, list] = {"nodes": [], "edges": [], "errors": []}
+        for item in self.load(stop_on_exception=False):
+            key = {
+                dm.NodeApply: "nodes",
+                dm.EdgeApply: "edges",
+                NeatValidationError: "errors",
+            }.get(type(item))
+            if key is None:
+                # Todo use appropriate warning
+                warnings.warn(f"Item {item} is not supported", UserWarning, stacklevel=2)
+                continue
+            dumped[key].append(item.dump())
+        with filepath.open("w", encoding=self._encoding, newline=self._new_line) as f:
+            if filepath.suffix == ".json":
+                json.dump(dumped, f, indent=2)
+            else:
+                yaml.safe_dump(dumped, f, sort_keys=False)
