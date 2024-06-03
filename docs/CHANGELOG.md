@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.78.3] - 03-06-24
+### Added
+- `MultiValueType` for the Information Architect rules, allowing multiple value types for a property.
+
+### Improved
+- `InferenceImporter` is retaining information on multi value type for properties.
+
 ## [0.78.2] - 31-05-24
 ### Improved
 - `OWLImporter` is now opinionated and will attempt to make the imported ontology compliant with the rules.

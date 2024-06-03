@@ -44,6 +44,7 @@ from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     EntityTypes,
+    MultiValueTypeInfo,
     ParentClassEntity,
     ParentEntityList,
     ReferenceEntity,
@@ -162,7 +163,9 @@ class InformationProperty(SheetEntity):
     property_: PropertyType = Field(alias="Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    value_type: DataType | ClassEntity | UnknownEntity = Field(alias="Value Type", union_mode="left_to_right")
+    value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity = Field(
+        alias="Value Type", union_mode="left_to_right"
+    )
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
@@ -277,6 +280,10 @@ class InformationRules(BaseRules):
         for property_ in self.properties:
             if isinstance(property_.value_type, ClassEntity) and property_.value_type.prefix is Undefined:
                 property_.value_type.prefix = self.metadata.prefix
+
+            if isinstance(property_.value_type, MultiValueTypeInfo):
+                property_.value_type.set_default_prefix(self.metadata.prefix)
+
             if property_.class_.prefix is Undefined:
                 property_.class_.prefix = self.metadata.prefix
 

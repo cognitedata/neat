@@ -331,7 +331,7 @@ class OWLProperty(OntologyModel):
             elif isinstance(definition.value_type, ClassEntity):
                 owl_property.range_.add(namespace[str(definition.value_type.suffix)])
             else:
-                raise ValueError(f"Value type {definition.value_type} is not supported")
+                raise ValueError(f"Value type {definition.value_type.type_} is not supported")
             owl_property.domain.add(namespace[str(definition.class_.suffix)])
             owl_property.label.add(definition.name or definition.property_)
             if definition.description:
@@ -549,15 +549,19 @@ class SHACLPropertyShape(OntologyModel):
 
     @classmethod
     def from_property(cls, definition: InformationProperty, namespace: Namespace) -> "SHACLPropertyShape":
+        # TODO requires PR to fix MultiValueType and UnknownValueType
+        if isinstance(definition.value_type, ClassEntity):
+            expected_value_type = namespace[f"{definition.value_type.suffix}Shape"]
+        elif isinstance(definition.value_type, DataType):
+            expected_value_type = XSD[definition.value_type.xsd]
+        else:
+            raise ValueError(f"Value type {definition.value_type.type_} is not supported")
+
         return cls(
             id_=BNode(),
             path=namespace[definition.property_],
             node_kind=SHACL.IRI if definition.type_ == EntityTypes.object_property else SHACL.Literal,
-            expected_value_type=(
-                namespace[f"{definition.value_type.suffix}Shape"]
-                if isinstance(definition.value_type, ClassEntity)
-                else XSD[definition.value_type.xsd]
-            ),
+            expected_value_type=expected_value_type,
             min_count=definition.min_count,
             max_count=(
                 int(definition.max_count) if definition.max_count and definition.max_count != float("inf") else None
