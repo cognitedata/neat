@@ -277,16 +277,6 @@ class RulesInferenceFromRdfFile(Step):
             options=["infer", *RoleTypes.__members__.keys()],
         ),
         Configurable(
-            name="Make compliant",
-            value="True",
-            label=(
-                "Attempt to make the imported Rules compliant, by fixing "
-                "redefinition of properties and by making ids of entities compliant with"
-                " CDF-allowed set of characters ."
-            ),
-            options=["True", "False"],
-        ),
-        Configurable(
             name="Maximum number of instances to process",
             value="-1",
             label=(
@@ -302,7 +292,6 @@ class RulesInferenceFromRdfFile(Step):
 
         file_path = self.configs.get("File path", None)
         full_path = flow_message.payload.get("full_path", None) if flow_message.payload else None
-        make_compliant = self.configs.get("Make compliant", "True") == "True"
 
         try:
             max_number_of_instance = int(self.configs.get("Maximum number of instances to process", -1))
@@ -325,7 +314,7 @@ class RulesInferenceFromRdfFile(Step):
             role_enum = RoleTypes[role]
 
         inference_importer = importers.InferenceImporter.from_rdf_file(
-            rdf_file_path, make_compliant=make_compliant, max_number_of_instance=max_number_of_instance
+            rdf_file_path, max_number_of_instance=max_number_of_instance
         )
         rules, issues = inference_importer.to_rules(errors="continue", role=role_enum)
 

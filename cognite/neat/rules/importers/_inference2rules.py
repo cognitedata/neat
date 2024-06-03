@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Literal, cast, overload
@@ -12,12 +13,11 @@ from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issu
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models import InformationRules, RoleTypes
 from cognite.neat.rules.models._base import MatchType
-from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import (
     InformationMetadata,
     InformationRulesInput,
 )
-from cognite.neat.utils.utils import get_namespace, remove_namespace, replace_non_alphanumeric_with_underscore
+from cognite.neat.utils.utils import get_namespace, remove_namespace
 
 ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class . }
@@ -39,29 +39,21 @@ class InferenceImporter(BaseImporter):
         issue_list: Issue list to store issues
         graph: Knowledge graph
         max_number_of_instance: Maximum number of instances to be used in inference
-        make_compliant: If True, NEAT will attempt to make the imported rules compliant with CDF
     """
 
-    def __init__(
-        self, issue_list: IssueList, graph: Graph, make_compliant: bool = False, max_number_of_instance: int = -1
-    ):
+    def __init__(self, issue_list: IssueList, graph: Graph, max_number_of_instance: int = -1):
         self.issue_list = issue_list
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
-        self.make_compliant = make_compliant
 
     @classmethod
-    def from_graph_store(
-        cls, store: NeatGraphStoreBase, make_compliant: bool = False, max_number_of_instance: int = -1
-    ):
+    def from_graph_store(cls, store: NeatGraphStoreBase, max_number_of_instance: int = -1):
         issue_list = IssueList(title="Inferred from graph store")
 
-        return cls(
-            issue_list, store.graph, make_compliant=make_compliant, max_number_of_instance=max_number_of_instance
-        )
+        return cls(issue_list, store.graph, max_number_of_instance=max_number_of_instance)
 
     @classmethod
-    def from_rdf_file(cls, filepath: Path, make_compliant: bool = False, max_number_of_instance: int = -1):
+    def from_rdf_file(cls, filepath: Path, max_number_of_instance: int = -1):
         issue_list = IssueList(title=f"'{filepath.name}'")
 
         graph = Graph()
@@ -70,18 +62,18 @@ class InferenceImporter(BaseImporter):
         except Exception:
             issue_list.append(issues.fileread.FileReadError(filepath))
 
-        return cls(issue_list, graph, make_compliant=make_compliant, max_number_of_instance=max_number_of_instance)
+        return cls(issue_list, graph, max_number_of_instance=max_number_of_instance)
 
     @classmethod
-    def from_json_file(cls, filepath: Path, make_compliant: bool = False, max_number_of_instance: int = -1):
+    def from_json_file(cls, filepath: Path, max_number_of_instance: int = -1):
         raise NotImplementedError("JSON file format is not supported yet.")
 
     @classmethod
-    def from_yaml_file(cls, filepath: Path, make_compliant: bool = False, max_number_of_instance: int = -1):
+    def from_yaml_file(cls, filepath: Path, max_number_of_instance: int = -1):
         raise NotImplementedError("YAML file format is not supported yet.")
 
     @classmethod
-    def from_xml_file(cls, filepath: Path, make_compliant: bool = False, max_number_of_instance: int = -1):
+    def from_xml_file(cls, filepath: Path, max_number_of_instance: int = -1):
         raise NotImplementedError("JSON file format is not supported yet.")
 
     @overload
@@ -116,9 +108,6 @@ class InferenceImporter(BaseImporter):
 
         if future.result == "failure" or self.issue_list.has_errors:
             return self._return_or_raise(self.issue_list, errors)
-
-        if self.make_compliant and rules:
-            self._make_dms_compliant_rules(rules)
 
         return self._to_output(
             rules,
@@ -155,7 +144,7 @@ class InferenceImporter(BaseImporter):
                 "class_": class_id,
                 "reference": class_uri,
                 "match_type": MatchType.exact,
-                "comment": f"Inferred from knowledge graph, where this class has {no_instances} instances",
+                "comment": f"Inferred from knowledge graph, where this class has <{no_instances}> instances",
             }
 
         # Infers all the properties of the class
@@ -179,7 +168,7 @@ class InferenceImporter(BaseImporter):
 
                     self._add_uri_namespace_to_prefixes(cast(URIRef, value_type_uri), prefixes)
                     value_type_id = remove_namespace(value_type_uri)
-                    id_ = f"{class_id}:{property_id}:{value_type_id}"
+                    id_ = f"{class_id}:{property_id}"
 
                     definition = {
                         "class_": class_id,
@@ -187,14 +176,40 @@ class InferenceImporter(BaseImporter):
                         "max_count": cast(RdfLiteral, occurrence).value,
                         "value_type": value_type_id,
                         "reference": property_uri,
+                        "comment": (
+                            f"Class <{class_id}> has property <{property_id}> with "
+                            f"value type <{value_type_id}> which occurs <1> times in the graph"
+                        ),
                     }
 
                     # USE CASE 1: If property is not present in properties
                     if id_ not in properties:
                         properties[id_] = definition
-                    # USE CASE 2: If property is present in properties but with different max count
-                    elif id_ in properties and not (properties[id_]["max_count"] == definition["max_count"]):
+
+                    # USE CASE 2: first time redefinition, value type change to multi
+                    elif id_ in properties and definition["value_type"] not in properties[id_]["value_type"]:
+                        properties[id_]["value_type"] = properties[id_]["value_type"] + " | " + definition["value_type"]
+                        properties[id_]["comment"] = (
+                            properties[id_]["comment"] + ", with" + definition["comment"].split("with")[1]
+                        )
+
+                    # USE CASE 3: existing but max count is different
+                    elif (
+                        id_ in properties
+                        and definition["value_type"] in properties[id_]["value_type"]
+                        and not (properties[id_]["max_count"] == definition["max_count"])
+                    ):
                         properties[id_]["max_count"] = max(properties[id_]["max_count"], definition["max_count"])
+
+                        properties[id_]["comment"] = self._update_value_type_occurrence_in_comment(
+                            definition["value_type"], properties[id_]["comment"]
+                        )
+
+                    # USE CASE 4: Just update the comment with occurrence
+                    else:
+                        properties[id_]["comment"] = self._update_value_type_occurrence_in_comment(
+                            definition["value_type"], properties[id_]["comment"]
+                        )
 
         return {
             "metadata": self._default_metadata().model_dump(),
@@ -228,36 +243,17 @@ class InferenceImporter(BaseImporter):
         )
 
     @classmethod
-    def _make_dms_compliant_rules(cls, rules: InformationRules) -> None:
-        cls._fix_property_redefinition(rules)
-        cls._fix_naming_of_entities(rules)
+    def _update_value_type_occurrence_in_comment(cls, value_type: str, comment: str) -> str:
+        occurrence = cls._read_value_type_occurrence_from_comment(value_type, comment)
+        return comment.replace(
+            f"with value type <{value_type}> which occurs <{occurrence}> times in the graph",
+            f"with value type <{value_type}> which occurs <{occurrence+1}> times in the graph",
+        )
 
     @classmethod
-    def _fix_property_redefinition(cls, rules: InformationRules) -> None:
-        seen = set()
-        for i, property_ in enumerate(rules.properties.data):
-            prop_id = f"{property_.class_}.{property_.property_}"
-            if prop_id in seen:
-                property_.property_ = f"{property_.property_}_{i+1}"
-                seen.add(f"{property_.class_}.{property_.property_}")
-            else:
-                seen.add(prop_id)
-
-    @classmethod
-    def _fix_naming_of_entities(cls, rules: InformationRules) -> None:
-        # Fixing class ids
-        for class_ in rules.classes:
-            class_.class_ = class_.class_.as_dms_compliant_entity()
-            class_.parent = [parent.as_dms_compliant_entity() for parent in class_.parent] if class_.parent else None
-
-        # Fixing property definitions
-        for property_ in rules.properties:
-            # fix class id
-            property_.class_ = property_.class_.as_dms_compliant_entity()
-
-            # fix property id
-            property_.property_ = replace_non_alphanumeric_with_underscore(property_.property_)
-
-            # fix value type
-            if isinstance(property_.value_type, ClassEntity):
-                property_.value_type = property_.value_type.as_dms_compliant_entity()
+    def _read_value_type_occurrence_from_comment(cls, value_type: str, comment: str) -> int:
+        return int(
+            cast(
+                re.Match, re.search(rf"with value type <{value_type}> which occurs <(\d+)> times in the graph", comment)
+            ).group(1)
+        )
