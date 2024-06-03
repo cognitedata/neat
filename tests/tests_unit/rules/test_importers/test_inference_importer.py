@@ -1,19 +1,21 @@
 from cognite.neat.graph.examples import nordic44_knowledge_graph
 from cognite.neat.rules.importers import InferenceImporter
+from cognite.neat.rules.models.entities import MultiValueTypeInfo
 
 
 def test_rdf_inference():
-    rules, _ = InferenceImporter.from_rdf_file(nordic44_knowledge_graph, make_compliant=True).to_rules(
-        errors="continue"
-    )
+    rules, _ = InferenceImporter.from_rdf_file(nordic44_knowledge_graph).to_rules(errors="continue")
 
-    assert len(rules.properties) == 327
+    assert len(rules.properties) == 312
     assert len(rules.classes) == 59
 
-    # make compliant will make sure that "." from the original property will be replace
-    assert rules.properties.data[0].property_ == "CurrentLimit_value"
+    # checking multi-value type
+    assert set(rules.properties.data[19].value_type.types) == set(
+        MultiValueTypeInfo.load(
+            "inferred:ConformLoad | inferred:NonConformLoad | "
+            "inferred:GeneratingUnit | inferred:ACLineSegment | inferred:PowerTransformer"
+        ).types
+    )
 
-    # make compliant will do two things for this property:
-    # 1. redefinition of property will get new ID by adding "_(property number)", in this case 20
-    # 2. replace " " with "_"
-    assert rules.properties.data[19].property_ == "Terminal_ConductingEquipment_20"
+    # we should have 4 multi-value property
+    assert len([prop_ for prop_ in rules.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]) == 4

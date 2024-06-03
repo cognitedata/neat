@@ -331,7 +331,7 @@ class OWLProperty(OntologyModel):
             elif isinstance(definition.value_type, ClassEntity):
                 owl_property.range_.add(namespace[str(definition.value_type.suffix)])
             else:
-                raise ValueError(f"Value type {definition.value_type} is not supported")
+                raise ValueError(f"Value type {definition.value_type.type_} is not supported")
             owl_property.domain.add(namespace[str(definition.class_.suffix)])
             owl_property.label.add(definition.name or definition.property_)
             if definition.description:
