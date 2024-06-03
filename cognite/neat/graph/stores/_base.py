@@ -109,9 +109,9 @@ class NeatGraphStoreBase(ABC):
 
         if base_prefix:
             self.base_prefix = base_prefix
-
-        self.graph.bind(self.base_prefix, self.namespace)
-        logging.info("Adding prefix %s with namespace %s", self.base_prefix, self.namespace)
+        if self.base_prefix:
+            self.graph.bind(self.base_prefix, self.namespace)
+            logging.info("Adding prefix %s with namespace %s", self.base_prefix, self.namespace)
         logging.info("Graph initialized")
 
     def reinitialize_graph(self):
@@ -355,8 +355,8 @@ class _Queries:
             List of triples for instances of the given class
         """
         query = (
-            f"SELECT ?instance ?prop ?value "
-            f"WHERE {{ ?instance rdf:type <{class_uri}> . ?instance ?prop ?value . }} order by ?instance "
+            "SELECT ?instance ?prop ?value "
+            f"WHERE {{ ?instance <rdf:type> <{class_uri}> . ?instance ?prop ?value . }} order by ?instance "
         )
         logging.info(query)
         # Select queries gives an iterable of result rows

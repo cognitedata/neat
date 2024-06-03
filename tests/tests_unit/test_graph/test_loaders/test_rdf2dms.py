@@ -10,6 +10,7 @@ from cognite.neat.graph.stores import MemoryStore
 @pytest.fixture()
 def car_case() -> MemoryStore:
     store = MemoryStore(namespace=Namespace("http://example.com/"), prefixes={"ex": "http://example.com/"})
+    store.init_graph()
     store.add_triples(
         [
             (URIRef("ex:Car1"), URIRef("rdf:type"), URIRef("ex:Car")),
@@ -47,7 +48,7 @@ class TestDMSLoader:
                 ],
             ),
         ]
-        loader = DMSLoader(car_case, CAR_MODEL)
+        loader = DMSLoader(car_case, CAR_MODEL, {CAR_MODEL.views[0].as_id(): URIRef("ex:Car")})
 
         loaded = loader.load(stop_on_exception=True)
 
