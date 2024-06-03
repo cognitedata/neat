@@ -22,8 +22,6 @@ Changes are grouped as follows:
 ### Improved
 - `InferenceImporter` is retaining information on multi value type for properties.
 
-
-
 ## [0.78.2] - 31-05-24
 ### Improved
 - `OWLImporter` is now opinionated and will attempt to make the imported ontology compliant with the rules.
