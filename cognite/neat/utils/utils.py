@@ -355,3 +355,30 @@ def get_inheritance_path(child: Any, child_parent: dict[Any, list[Any]]) -> list
 
 def replace_non_alphanumeric_with_underscore(text):
     return re.sub(r"\W+", "_", text)
+
+
+def string_to_ideal_type(input_string: str) -> Any:
+    try:
+        # Try converting to int
+        value = int(input_string)
+        return value
+    except ValueError:
+        try:
+            # Try converting to float
+            value = float(input_string)  # type: ignore
+            return value
+        except ValueError:
+            if input_string.lower() == "true":
+                # Return True if input is 'true'
+                return True
+            elif input_string.lower() == "false":
+                # Return False if input is 'false'
+                return False
+            else:
+                try:
+                    # Try converting to datetime
+                    value = datetime.fromisoformat(input_string)  # type: ignore
+                    return value
+                except ValueError:
+                    # Return the input string if no conversion is possible
+                    return input_string
