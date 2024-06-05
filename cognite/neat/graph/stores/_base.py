@@ -355,8 +355,8 @@ class _Queries:
             List of triples for instances of the given class
         """
         query = (
-            "SELECT ?instance ?prop ?value "
-            f"WHERE {{ ?instance <rdf:type> <{class_uri}> . ?instance ?prop ?value . }} order by ?instance "
+            f"SELECT ?instance ?prop ?value "
+            f"WHERE {{ ?instance rdf:type <{class_uri}> . ?instance ?prop ?value . }} order by ?instance "
         )
         logging.info(query)
         # Select queries gives an iterable of result rows
