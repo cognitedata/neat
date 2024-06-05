@@ -1,8 +1,9 @@
 import pytest
 from cognite.client import data_modeling as dm
-from rdflib import Namespace
-from rdflib.term import URIRef
+from rdflib import RDF
+from rdflib.term import Literal
 
+from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.loaders import DMSLoader
 from cognite.neat.graph.stores import MemoryStore
 
@@ -11,16 +12,17 @@ from cognite.neat.graph.stores import MemoryStore
 def car_case() -> MemoryStore:
     store = MemoryStore()
     store.init_graph()
+    neat = DEFAULT_NAMESPACE
     store.add_triples(
         [
-            (URIRef("neat:Car1"), URIRef("rdf:type"), URIRef("neat:Car")),
-            (URIRef("neat:Car1"), URIRef("neat:make"), URIRef("Toyota")),
-            (URIRef("neat:Car1"), URIRef("neat:year"), URIRef("2020")),
-            (URIRef("neat:Car1"), URIRef("neat:color"), URIRef("Blue")),
-            (URIRef("neat:Car2"), URIRef("rdf:type"), URIRef("ex:Car")),
-            (URIRef("neat:Car2"), URIRef("neat:make"), URIRef("Ford")),
-            (URIRef("neat:Car2"), URIRef("neat:year"), URIRef("2018")),
-            (URIRef("neat:Car2"), URIRef("neat:color"), URIRef("Red")),
+            (neat["Car1"], RDF.type, neat["Car"]),
+            (neat["Car1"], neat["make"], Literal("Toyota")),
+            (neat["Car1"], neat["year"], Literal("2020")),
+            (neat["Car1"], neat["color"], Literal("Blue")),
+            (neat["Car2"], RDF.type, neat["Car"]),
+            (neat["Car2"], neat["make"], Literal("Ford")),
+            (neat["Car2"], neat["year"], Literal("2018")),
+            (neat["Car2"], neat["color"], Literal("Red")),
         ]
     )
     return store
@@ -28,9 +30,10 @@ def car_case() -> MemoryStore:
 
 class TestDMSLoader:
     def test_load_car_example(self, car_case: MemoryStore) -> None:
+        instance_space = "sp_cars"
         expected_nodes = [
             dm.NodeApply(
-                space="sp_example",
+                space=instance_space,
                 external_id="Car1",
                 sources=[
                     dm.NodeOrEdgeData(
@@ -39,7 +42,7 @@ class TestDMSLoader:
                 ],
             ),
             dm.NodeApply(
-                space="sp_example",
+                space=instance_space,
                 external_id="Car2",
                 sources=[
                     dm.NodeOrEdgeData(
@@ -48,7 +51,7 @@ class TestDMSLoader:
                 ],
             ),
         ]
-        loader = DMSLoader(car_case, CAR_MODEL, {CAR_MODEL.views[0].as_id(): "Car"})
+        loader = DMSLoader(car_case, CAR_MODEL, instance_space, {CAR_MODEL.views[0].as_id(): "Car"})
 
         loaded = loader.load(stop_on_exception=True)
 

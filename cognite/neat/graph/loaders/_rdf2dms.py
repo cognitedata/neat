@@ -58,14 +58,14 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             # Todo Some tracking and creation of a structure to do validation
             pydantic_cls, edge_by_properties = self._create_validation_classes(view)  # type: ignore[var-annotated]
             class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
-            triples = self.graph_store.queries.literals_of_type(class_name)
+            triples = self.graph_store.queries.triples_of_type(class_name)
             for identifier, properties in _triples2dictionary(triples).items():
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except Exception:
                     # Todo Convert to NeatValidationError
                     raise
-                yield from self.create_edges(identifier, properties, edge_by_properties)
+                yield from self._create_edges(identifier, properties, edge_by_properties)
 
     def load_into_cdf_iterable(self, client: CogniteClient, dry_run: bool = False) -> Iterable:
         raise NotImplementedError()
@@ -138,7 +138,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             sources=[dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump().items()))],
         )
 
-    def create_edges(
+    def _create_edges(
         self, identifier: str, properties: dict[str, list[str]], edge_by_properties: dict[str, dm.EdgeConnection]
     ) -> Iterable[dm.EdgeApply | NeatValidationError]:
         for prop, values in properties.items():
