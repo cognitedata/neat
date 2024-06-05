@@ -9,18 +9,18 @@ from cognite.neat.graph.stores import MemoryStore
 
 @pytest.fixture()
 def car_case() -> MemoryStore:
-    store = MemoryStore(namespace=Namespace("http://example.com/"), prefixes={"ex": "http://example.com/"})
+    store = MemoryStore()
     store.init_graph()
     store.add_triples(
         [
-            (URIRef("ex:Car1"), URIRef("rdf:type"), URIRef("ex:Car")),
-            (URIRef("ex:Car1"), URIRef("ex:make"), URIRef("Toyota")),
-            (URIRef("ex:Car1"), URIRef("ex:year"), URIRef("2020")),
-            (URIRef("ex:Car1"), URIRef("ex:color"), URIRef("Blue")),
-            (URIRef("ex:Car2"), URIRef("rdf:type"), URIRef("ex:Car")),
-            (URIRef("ex:Car2"), URIRef("ex:make"), URIRef("Ford")),
-            (URIRef("ex:Car2"), URIRef("ex:year"), URIRef("2018")),
-            (URIRef("ex:Car2"), URIRef("ex:color"), URIRef("Red")),
+            (URIRef("neat:Car1"), URIRef("rdf:type"), URIRef("neat:Car")),
+            (URIRef("neat:Car1"), URIRef("neat:make"), URIRef("Toyota")),
+            (URIRef("neat:Car1"), URIRef("neat:year"), URIRef("2020")),
+            (URIRef("neat:Car1"), URIRef("neat:color"), URIRef("Blue")),
+            (URIRef("neat:Car2"), URIRef("rdf:type"), URIRef("ex:Car")),
+            (URIRef("neat:Car2"), URIRef("neat:make"), URIRef("Ford")),
+            (URIRef("neat:Car2"), URIRef("neat:year"), URIRef("2018")),
+            (URIRef("neat:Car2"), URIRef("neat:color"), URIRef("Red")),
         ]
     )
     return store
@@ -48,7 +48,7 @@ class TestDMSLoader:
                 ],
             ),
         ]
-        loader = DMSLoader(car_case, CAR_MODEL, {CAR_MODEL.views[0].as_id(): URIRef("ex:Car")})
+        loader = DMSLoader(car_case, CAR_MODEL, {CAR_MODEL.views[0].as_id(): "Car"})
 
         loaded = loader.load(stop_on_exception=True)
 
@@ -68,7 +68,7 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
         dm.View(
             space="sp_example",
             external_id="Car",
-            version=1,
+            version="1",
             properties={
                 "make": dm.MappedProperty(
                     container=dm.ContainerId("my_example", "Car"),

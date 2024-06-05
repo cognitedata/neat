@@ -361,3 +361,9 @@ class _Queries:
         logging.info(query)
         # Select queries gives an iterable of result rows
         return cast(list[ResultRow], list(self.store.query(query)))
+
+    def literals_of_type(self, rdf_type: str) -> list[tuple[str, str, str]]:
+        raise NotImplementedError()
+
+    def connections_of_type(self, rdf_type: str) -> list[tuple[str, str, str]]:
+        raise NotImplementedError()

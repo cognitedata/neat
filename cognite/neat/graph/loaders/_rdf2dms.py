@@ -11,8 +11,6 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ViewId
 from pydantic import HttpUrl, TypeAdapter, ValidationError, ValidationInfo, create_model, field_validator
 from pydantic.main import Model
-from rdflib.query import ResultRow
-from rdflib.term import URIRef
 
 from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.rules.issues import NeatValidationError
@@ -27,13 +25,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self,
         graph_store: NeatGraphStoreBase,
         data_model: dm.DataModel[dm.View],
-        class_by_view_id: dict[ViewId, URIRef] | None = None,
-        add_class_prefix: bool = False,
+        class_by_view_id: dict[ViewId, str] | None = None,
     ):
         super().__init__(graph_store)
         self.data_model = data_model
         self.class_by_view_id = class_by_view_id or {}
-        self.add_class_prefix = add_class_prefix
 
     @classmethod
     def from_data_model_id(
@@ -41,30 +37,29 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         client: CogniteClient,
         data_model_id: dm.DataModelId,
         graph_store: NeatGraphStoreBase,
-        add_class_prefix: bool = False,
     ) -> "DMSLoader":
         # Todo add error handling
         data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
-        return cls(graph_store, data_model, {}, add_class_prefix)
+        return cls(graph_store, data_model, {})
 
     @classmethod
     def from_rules(
-        cls, rules: DMSRules, graph_store: NeatGraphStoreBase, add_class_prefix: bool = False
+        cls, rules: DMSRules, graph_store: NeatGraphStoreBase
     ) -> "DMSLoader":
         schema = rules.as_schema()
         # Todo add error handling
-        return cls(graph_store, schema.as_read_model(), {}, add_class_prefix)
+        return cls(graph_store, schema.as_read_model(), {},)
 
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatValidationError]:
         for view in self.data_model.views:
             view_id = view.as_id()
             # Todo Some tracking and creation of a structure to do validation
-            validation_structure = self._create_validation_structure(view)  # type: ignore[var-annotated]
-            uri_ref = self.class_by_view_id.get(view.as_id(), URIRef(f"{view.space}:{view.external_id}"))
-            triples = self.graph_store.queries.list_instances_of_type(uri_ref)
+            pydantic_cls = self._create_pydantic_class(view)  # type: ignore[var-annotated]
+            class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
+            triples = self.graph_store.queries.literals_of_type(class_name)
             for identifier, properties in _triples2dictionary(triples).items():
                 try:
-                    yield self._create_instance(identifier, properties, validation_structure, view_id)
+                    yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except Exception:
                     # Todo Convert to NeatValidationError
                     raise
@@ -93,10 +88,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 yaml.safe_dump(dumped, f, sort_keys=False)
 
-    def _create_validation_structure(self, view: dm.View) -> type[Model]:
+    def _create_pydantic_class(self, view: dm.View) -> type[Model]:
         field_definitions: dict[str, tuple[type, Any]] = {}
         for prop_name, prop in view.properties.items():
             if not isinstance(prop, dm.MappedProperty):
+                # Todo handle edges.
                 continue
             data_type = _DATA_TYPE_BY_DMS_TYPE.get(prop.type._type)
             if not data_type:
@@ -124,10 +120,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         return create_model(view.external_id, __validators__=validators, **field_definitions)  # type: ignore[arg-type, call-overload]
 
-    def _create_instance(
-        self, identifier: str, properties: dict, validation_structure: type[Model], view_id: dm.ViewId
+    def _create_node(
+        self, identifier: str, properties: dict, pydantic_cls: type[Model], view_id: dm.ViewId
     ) -> dm.InstanceApply:
-        created = validation_structure.model_validate(properties)
+        created = pydantic_cls.model_validate(properties)
 
         return dm.NodeApply(
             space=self.data_model.space,
@@ -138,54 +134,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
 
 def _triples2dictionary(
-    triples: Iterable[ResultRow],
+    triples: Iterable[tuple[str, str, str]],
 ) -> dict[str, dict[str, list[str]]]:
     """Converts list of triples to dictionary"""
     values_by_property_by_identifier: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
-    for triple in triples:
-        id_, property_, value = _remove_namespace(triple, special_separator=":")
+    for id_, property_, value in triples:
         values_by_property_by_identifier[id_][property_].append(value)
     return values_by_property_by_identifier
 
-
-def _remove_namespace(URI: ResultRow, special_separator: str = "#") -> list[str]:
-    """Removes namespace from URI
-
-    Args
-        URI: URIRef | str
-            URI of an entity
-        special_separator : str
-            Special separator to use instead of # or / if present in URI
-            Set by default to "#_" which covers special client use case
-
-    Returns
-        Entities id without namespace
-
-    Examples:
-
-        >>> _remove_namespace("http://www.example.org/index.html#section2")
-        'section2'
-        >>> _remove_namespace("http://www.example.org/index.html#section2", "http://www.example.org/index.html#section3")
-        ('section2', 'section3')
-    """
-    if isinstance(URI, str | URIRef):
-        uris = (URI,)
-    elif isinstance(URI, tuple):
-        # Assume that all elements in the tuple are of the same type following type hint
-        uris = cast(tuple[URIRef | str, ...], URI)
-    else:
-        raise TypeError(f"URI must be of type URIRef or str, got {type(URI)}")
-
-    output: list[str] = []
-    for u in uris:
-        try:
-            _ = TypeAdapter(HttpUrl).validate_python(u)
-            output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
-        except ValidationError:
-            u_str = str(u)
-            if special_separator in u_str:
-                output.append(u_str.split(special_separator)[-1])
-            else:
-                output.append(u_str)
-
-    return output
