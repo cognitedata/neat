@@ -8,12 +8,13 @@ from typing import Literal, TypeAlias, cast
 
 import pandas as pd
 from prometheus_client import Gauge, Summary
-from rdflib import Graph, Namespace, URIRef
+from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib.query import Result, ResultRow
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.graph.models import Triple
 from cognite.neat.graph.stores._rdf_to_graph import rdf_file_to_graph
+from cognite.neat.utils import remove_namespace
 
 if sys.version_info >= (3, 11):
     pass
@@ -109,9 +110,9 @@ class NeatGraphStoreBase(ABC):
 
         if base_prefix:
             self.base_prefix = base_prefix
-
-        self.graph.bind(self.base_prefix, self.namespace)
-        logging.info("Adding prefix %s with namespace %s", self.base_prefix, self.namespace)
+        if self.base_prefix:
+            self.graph.bind(self.base_prefix, self.namespace)
+            logging.info("Adding prefix %s with namespace %s", self.base_prefix, self.namespace)
         logging.info("Graph initialized")
 
     def reinitialize_graph(self):
@@ -361,3 +362,17 @@ class _Queries:
         logging.info(query)
         # Select queries gives an iterable of result rows
         return cast(list[ResultRow], list(self.store.query(query)))
+
+    def triples_of_type_instances(self, rdf_type: str) -> list[tuple[str, str, str]]:
+        """Get all triples of a given type.
+
+        This method assumes the graph has been transformed into the default namespace.
+        """
+        query = (
+            f"SELECT ?instance ?prop ?value "
+            f"WHERE {{ ?instance a <{self.store.namespace[rdf_type]}> . ?instance ?prop ?value . }} order by ?instance"
+        )
+        result = self.store.query(query)
+
+        # We cannot include the RDF.type in case there is a neat:type property
+        return [remove_namespace(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]

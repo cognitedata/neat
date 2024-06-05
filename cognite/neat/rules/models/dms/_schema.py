@@ -668,6 +668,9 @@ class DMSSchema:
         referenced_spaces |= {s.space for s in self.spaces.values()}
         return referenced_spaces
 
+    def as_read_model(self) -> dm.DataModel[dm.View]:
+        raise NotImplementedError()
+
 
 @dataclass
 class PipelineSchema(DMSSchema):
