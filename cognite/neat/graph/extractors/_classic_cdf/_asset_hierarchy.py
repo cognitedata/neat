@@ -1,38 +1,54 @@
+from collections.abc import Iterable
 from datetime import datetime
+from pathlib import Path
+from typing import cast
 
 import pytz
 from cognite.client import CogniteClient
-from cognite.client.data_classes import Asset
+from cognite.client.data_classes import Asset, AssetList
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
+from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
 from cognite.neat.utils.utils import string_to_ideal_type
 
-from ._base import BaseExtractor
 
-
-class AssetExtractor(BaseExtractor):
-    def __init__(self, client: CogniteClient, data_set_id: int | None = None, namespace: Namespace | None = None):
+class AssetHierarchyExtractor(BaseExtractor):
+    def __init__(
+        self,
+        assets: Iterable[Asset],
+        namespace: Namespace | None = None,
+    ):
         self.namespace = namespace or DEFAULT_NAMESPACE
-        self.client = client
-        self.dataset_id = data_set_id
+        self.assets = assets
 
-    def extract(self, limit: int = -1) -> list[Triple]:
+    @classmethod
+    def from_dataset(
+        cls,
+        client: CogniteClient,
+        data_set_external_id: str,
+        namespace: Namespace | None = None,
+    ):
+        return cls(cast(Iterable[Asset], client.assets(data_set_external_ids=data_set_external_id)), namespace)
+
+    @classmethod
+    def from_hierarchy(cls, client: CogniteClient, root_asset_external_id: str, namespace: Namespace | None = None):
+        return cls(cast(Iterable[Asset], client.assets(asset_subtree_external_ids=root_asset_external_id)), namespace)
+
+    @classmethod
+    def from_file(cls, file_path: str, namespace: Namespace | None = None):
+        return cls(AssetList.load(Path(file_path).read_text()), namespace)
+
+    def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
-
-        triples: list[Triple] = []
-        for asset in self.client.assets.list(limit=limit, data_set_ids=self.dataset_id):
-            triples.extend(self._asset2triples(asset, self.namespace))
-
-        return triples
+        for asset in self.assets:
+            yield from self._asset2triples(asset, self.namespace)
 
     @classmethod
     def _asset2triples(cls, asset: Asset, namespace: Namespace) -> list[Triple]:
         """Converts an asset to triples."""
-        triples: list[Triple] = []
-
-        triples.append((namespace[str(asset.id)], RDF.type, namespace["Asset"]))
+        triples: list[Triple] = [(namespace[str(asset.id)], RDF.type, namespace["Asset"])]
 
         if asset.name:
             triples.append((namespace[str(asset.id)], namespace["name"], Literal(asset.name)))
@@ -73,7 +89,8 @@ class AssetExtractor(BaseExtractor):
 
         if asset.labels:
             for label in asset.labels:
-                triples.append((namespace[str(asset.id)], namespace["label"], namespace[label.dump()["externalId"]]))
+                # external_id can create ill-formed URIs, so we opt for Literal instead
+                triples.append((namespace[str(asset.id)], namespace["label"], Literal(label.dump()["externalId"])))
 
         if asset.metadata:
             for key, value in asset.metadata.items():
