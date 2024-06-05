@@ -357,16 +357,14 @@ def replace_non_alphanumeric_with_underscore(text):
     return re.sub(r"\W+", "_", text)
 
 
-def string_to_ideal_type(input_string: str) -> Any:
+def string_to_ideal_type(input_string: str) -> int | bool | float | datetime | str:
     try:
         # Try converting to int
-        value = int(input_string)
-        return value
+        return int(input_string)
     except ValueError:
         try:
             # Try converting to float
-            value = float(input_string)  # type: ignore
-            return value
+            return float(input_string)  # type: ignore
         except ValueError:
             if input_string.lower() == "true":
                 # Return True if input is 'true'
@@ -377,8 +375,7 @@ def string_to_ideal_type(input_string: str) -> Any:
             else:
                 try:
                     # Try converting to datetime
-                    value = datetime.fromisoformat(input_string)  # type: ignore
-                    return value
+                    return datetime.fromisoformat(input_string)  # type: ignore
                 except ValueError:
                     # Return the input string if no conversion is possible
                     return input_string
