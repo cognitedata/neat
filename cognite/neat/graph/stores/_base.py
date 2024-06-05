@@ -363,15 +363,14 @@ class _Queries:
         # Select queries gives an iterable of result rows
         return cast(list[ResultRow], list(self.store.query(query)))
 
-    def triples_of_type(self, rdf_type: str) -> list[tuple[str, str, str]]:
+    def triples_of_type_instances(self, rdf_type: str) -> list[tuple[str, str, str]]:
         """Get all triples of a given type.
 
         This method assumes the graph has been transformed into the default namespace.
         """
-        rdf_uri = self.store.namespace[rdf_type]
         query = (
             f"SELECT ?instance ?prop ?value "
-            f"WHERE {{ ?instance a <{rdf_uri}> . ?instance ?prop ?value . }} order by ?instance "
+            f"WHERE {{ ?instance a <{self.store.namespace[rdf_type]}> . ?instance ?prop ?value . }} order by ?instance"
         )
         result = self.store.query(query)
 
