@@ -3,13 +3,14 @@ import warnings
 from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import yaml
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ViewId
-from pydantic import HttpUrl, TypeAdapter, ValidationError, ValidationInfo, create_model, field_validator
+from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
+from pydantic import ValidationInfo, create_model, field_validator
 from pydantic.main import Model
 
 from cognite.neat.graph.stores import NeatGraphStoreBase
@@ -25,10 +26,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self,
         graph_store: NeatGraphStoreBase,
         data_model: dm.DataModel[dm.View],
+        instance_space: str,
         class_by_view_id: dict[ViewId, str] | None = None,
     ):
         super().__init__(graph_store)
         self.data_model = data_model
+        self.instance_space = instance_space
         self.class_by_view_id = class_by_view_id or {}
 
     @classmethod
@@ -37,24 +40,23 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         client: CogniteClient,
         data_model_id: dm.DataModelId,
         graph_store: NeatGraphStoreBase,
+        instance_space: str,
     ) -> "DMSLoader":
         # Todo add error handling
         data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
-        return cls(graph_store, data_model, {})
+        return cls(graph_store, data_model, instance_space, {})
 
     @classmethod
-    def from_rules(
-        cls, rules: DMSRules, graph_store: NeatGraphStoreBase
-    ) -> "DMSLoader":
+    def from_rules(cls, rules: DMSRules, graph_store: NeatGraphStoreBase, instance_space: str) -> "DMSLoader":
         schema = rules.as_schema()
         # Todo add error handling
-        return cls(graph_store, schema.as_read_model(), {},)
+        return cls(graph_store, schema.as_read_model(), instance_space, {})
 
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatValidationError]:
         for view in self.data_model.views:
             view_id = view.as_id()
             # Todo Some tracking and creation of a structure to do validation
-            pydantic_cls = self._create_pydantic_class(view)  # type: ignore[var-annotated]
+            pydantic_cls, edge_by_properties = self._create_validation_classes(view)  # type: ignore[var-annotated]
             class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
             triples = self.graph_store.queries.literals_of_type(class_name)
             for identifier, properties in _triples2dictionary(triples).items():
@@ -63,6 +65,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 except Exception:
                     # Todo Convert to NeatValidationError
                     raise
+                yield from self.create_edges(identifier, properties, edge_by_properties)
 
     def load_into_cdf_iterable(self, client: CogniteClient, dry_run: bool = False) -> Iterable:
         raise NotImplementedError()
@@ -88,26 +91,28 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 yaml.safe_dump(dumped, f, sort_keys=False)
 
-    def _create_pydantic_class(self, view: dm.View) -> type[Model]:
+    @staticmethod
+    def _create_validation_classes(view: dm.View) -> tuple[type[Model], dict[str, dm.EdgeConnection]]:
         field_definitions: dict[str, tuple[type, Any]] = {}
+        edge_by_property: dict[str, dm.EdgeConnection] = {}
         for prop_name, prop in view.properties.items():
-            if not isinstance(prop, dm.MappedProperty):
-                # Todo handle edges.
-                continue
-            data_type = _DATA_TYPE_BY_DMS_TYPE.get(prop.type._type)
-            if not data_type:
-                # Todo warning
-                continue
-            python_type: Any = data_type.python
-            if prop.type.is_list:
-                python_type = list[python_type]
-            default_value: Any = prop.default_value
-            if prop.nullable:
-                python_type = python_type | None
-            else:
-                default_value = ...
+            if isinstance(prop, dm.EdgeConnection):
+                edge_by_property[prop_name] = prop
+            if isinstance(prop, dm.MappedProperty):
+                data_type = _DATA_TYPE_BY_DMS_TYPE.get(prop.type._type)
+                if not data_type:
+                    # Todo warning
+                    continue
+                python_type: Any = data_type.python
+                if prop.type.is_list:
+                    python_type = list[python_type]
+                default_value: Any = prop.default_value
+                if prop.nullable:
+                    python_type = python_type | None
+                else:
+                    default_value = ...
 
-            field_definitions[prop_name] = (python_type, default_value)
+                field_definitions[prop_name] = (python_type, default_value)
 
         def parse_list(cls, value: Any, info: ValidationInfo) -> list[str]:
             if isinstance(value, list) and cls.model_fields[info.field_name].annotation is not list:
@@ -118,19 +123,39 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         validators: dict[str, classmethod] = {"parse_list": field_validator("*", mode="before")(parse_list)}  # type: ignore[dict-item,arg-type]
 
-        return create_model(view.external_id, __validators__=validators, **field_definitions)  # type: ignore[arg-type, call-overload]
+        pydantic_cls = create_model(view.external_id, __validators__=validators, **field_definitions)  # type: ignore[arg-type, call-overload]
+        return pydantic_cls, edge_by_property
 
     def _create_node(
-        self, identifier: str, properties: dict, pydantic_cls: type[Model], view_id: dm.ViewId
+        self, identifier: str, properties: dict[str, list[str]], pydantic_cls: type[Model], view_id: dm.ViewId
     ) -> dm.InstanceApply:
         created = pydantic_cls.model_validate(properties)
 
         return dm.NodeApply(
-            space=self.data_model.space,
+            space=self.instance_space,
             external_id=identifier,
             # type=#RDF type
             sources=[dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump().items()))],
         )
+
+    def create_edges(
+        self, identifier: str, properties: dict[str, list[str]], edge_by_properties: dict[str, dm.EdgeConnection]
+    ) -> Iterable[dm.EdgeApply | NeatValidationError]:
+        for prop, values in properties.items():
+            if prop not in edge_by_properties:
+                continue
+            edge = edge_by_properties[prop]
+            if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
+                # Todo convert to NeatValidationError
+                raise ValueError(f"Multiple values for single edge {edge}")
+            for target in values:
+                yield dm.EdgeApply(
+                    space=self.instance_space,
+                    external_id=f"{identifier}.{prop}.{target}",
+                    type=edge.type,
+                    start_node=dm.DirectRelationReference(self.instance_space, identifier),
+                    end_node=dm.DirectRelationReference(self.instance_space, target),
+                )
 
 
 def _triples2dictionary(
@@ -141,4 +166,3 @@ def _triples2dictionary(
     for id_, property_, value in triples:
         values_by_property_by_identifier[id_][property_].append(value)
     return values_by_property_by_identifier
-
