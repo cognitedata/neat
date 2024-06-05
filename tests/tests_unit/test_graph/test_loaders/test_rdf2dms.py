@@ -17,16 +17,20 @@ def car_case() -> MemoryStore:
         [
             (neat["Toyota"], RDF.type, neat["Manufacturer"]),
             (neat["Toyota"], neat["name"], Literal("Toyota")),
+            (neat["Blue"], RDF.type, neat["Color"]),
+            (neat["Blue"], neat["name"], Literal("blue")),
             (neat["Car1"], RDF.type, neat["Car"]),
             (neat["Car1"], neat["make"], neat["Toyota"]),
             (neat["Car1"], neat["year"], Literal("2020")),
-            (neat["Car1"], neat["color"], Literal("Blue")),
+            (neat["Car1"], neat["color"], neat["Blue"]),
             (neat["Ford"], RDF.type, neat["Manufacturer"]),
             (neat["Ford"], neat["name"], Literal("Ford")),
+            (neat["Red"], RDF.type, neat["Color"]),
+            (neat["Red"], neat["name"], Literal("red")),
             (neat["Car2"], RDF.type, neat["Car"]),
             (neat["Car2"], neat["make"], neat["Ford"]),
             (neat["Car2"], neat["year"], Literal("2018")),
-            (neat["Car2"], neat["color"], Literal("Red")),
+            (neat["Car2"], neat["color"], neat["Red"]),
         ]
     )
     return store
@@ -40,7 +44,10 @@ class TestDMSLoader:
                 space=instance_space,
                 external_id="Car1",
                 sources=[
-                    dm.NodeOrEdgeData(source=CAR_MODEL.views[0].as_id(), properties={"year": 2020, "color": "Blue"})
+                    dm.NodeOrEdgeData(
+                        source=CAR_MODEL.views[0].as_id(),
+                        properties={"year": 2020, "color": {"space": instance_space, "externalId": "Blue"}},
+                    )
                 ],
             ),
             dm.EdgeApply(
@@ -54,7 +61,10 @@ class TestDMSLoader:
                 space=instance_space,
                 external_id="Car2",
                 sources=[
-                    dm.NodeOrEdgeData(source=CAR_MODEL.views[0].as_id(), properties={"year": 2018, "color": "Red"})
+                    dm.NodeOrEdgeData(
+                        source=CAR_MODEL.views[0].as_id(),
+                        properties={"year": 2018, "color": {"space": instance_space, "externalId": "Red"}},
+                    )
                 ],
             ),
             dm.EdgeApply(
@@ -74,12 +84,26 @@ class TestDMSLoader:
                 external_id="Toyota",
                 sources=[dm.NodeOrEdgeData(source=CAR_MODEL.views[1].as_id(), properties={"name": "Toyota"})],
             ),
+            dm.NodeApply(
+                space=instance_space,
+                external_id="Blue",
+                sources=[dm.NodeOrEdgeData(source=CAR_MODEL.views[2].as_id(), properties={"name": "blue"})],
+            ),
+            dm.NodeApply(
+                space=instance_space,
+                external_id="Red",
+                sources=[dm.NodeOrEdgeData(source=CAR_MODEL.views[2].as_id(), properties={"name": "red"})],
+            ),
         ]
         loader = DMSLoader(
             car_case,
             CAR_MODEL,
             instance_space,
-            {CAR_MODEL.views[0].as_id(): "Car", CAR_MODEL.views[1].as_id(): "Manufacturer"},
+            {
+                CAR_MODEL.views[0].as_id(): "Car",
+                CAR_MODEL.views[1].as_id(): "Manufacturer",
+                CAR_MODEL.views[2].as_id(): "Color",
+            },
         )
 
         loaded = loader.load(stop_on_exception=True)
@@ -120,9 +144,10 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
                 "color": dm.MappedProperty(
                     container=dm.ContainerId("my_example", "Car"),
                     container_property_identifier="color",
-                    type=dm.Text(),
+                    type=dm.DirectRelation(is_list=False),
                     nullable=False,
                     auto_increment=False,
+                    source=dm.ViewId("sp_example", "Color", "1"),
                 ),
             },
             last_updated_time=0,
@@ -142,6 +167,29 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
             properties={
                 "name": dm.MappedProperty(
                     container=dm.ContainerId("my_example", "Manufacturer"),
+                    container_property_identifier="name",
+                    type=dm.Text(),
+                    nullable=False,
+                    auto_increment=False,
+                ),
+            },
+            last_updated_time=0,
+            created_time=0,
+            description=None,
+            name=None,
+            filter=None,
+            implements=None,
+            writable=True,
+            used_for="node",
+            is_global=False,
+        ),
+        dm.View(
+            space="sp_example",
+            external_id="Color",
+            version="1",
+            properties={
+                "name": dm.MappedProperty(
+                    container=dm.ContainerId("my_example", "Color"),
                     container_property_identifier="name",
                     type=dm.Text(),
                     nullable=False,
