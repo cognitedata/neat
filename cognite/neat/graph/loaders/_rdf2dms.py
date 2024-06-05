@@ -91,19 +91,23 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 yaml.safe_dump(dumped, f, sort_keys=False)
 
-    @staticmethod
-    def _create_validation_classes(view: dm.View) -> tuple[type[Model], dict[str, dm.EdgeConnection]]:
+    def _create_validation_classes(self, view: dm.View) -> tuple[type[Model], dict[str, dm.EdgeConnection]]:
         field_definitions: dict[str, tuple[type, Any]] = {}
         edge_by_property: dict[str, dm.EdgeConnection] = {}
+        direct_relation_by_property: dict[str, dm.DirectRelation] = {}
         for prop_name, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
                 edge_by_property[prop_name] = prop
             if isinstance(prop, dm.MappedProperty):
-                data_type = _DATA_TYPE_BY_DMS_TYPE.get(prop.type._type)
-                if not data_type:
-                    # Todo warning
-                    continue
-                python_type: Any = data_type.python
+                if isinstance(prop.type, dm.DirectRelation):
+                    direct_relation_by_property[prop_name] = prop.type
+                    python_type: Any = dict
+                else:
+                    data_type = _DATA_TYPE_BY_DMS_TYPE.get(prop.type._type)
+                    if not data_type:
+                        # Todo warning
+                        continue
+                    python_type = data_type.python
                 if prop.type.is_list:
                     python_type = list[python_type]
                 default_value: Any = prop.default_value
@@ -122,6 +126,19 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return value
 
         validators: dict[str, classmethod] = {"parse_list": field_validator("*", mode="before")(parse_list)}  # type: ignore[dict-item,arg-type]
+        if direct_relation_by_property:
+
+            def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
+                # We validate above that we only get one value for single direct relations.
+                if cls.model_fields[info.field_name].annotation is list:
+                    return [{"space": self.instance_space, "externalId": v} for v in value]
+                elif value:
+                    return {"space": self.instance_space, "externalId": value[0]}
+                return {}
+
+            validators["parse_direct_relation"] = field_validator(*direct_relation_by_property.keys(), mode="before")(  # type: ignore[assignment]
+                parse_direct_relation  # type: ignore[arg-type]
+            )
 
         pydantic_cls = create_model(view.external_id, __validators__=validators, **field_definitions)  # type: ignore[arg-type, call-overload]
         return pydantic_cls, edge_by_property
