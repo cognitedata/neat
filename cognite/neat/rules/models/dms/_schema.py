@@ -2,17 +2,27 @@ import json
 import sys
 import warnings
 import zipfile
-from collections import Counter, defaultdict
+from collections import ChainMap, Counter, defaultdict
+from collections.abc import Iterable, MutableMapping
 from dataclasses import Field, dataclass, field, fields
 from pathlib import Path
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar, Literal, cast
 
 import yaml
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 from cognite.client.data_classes.data_modeling import ViewApply
-from cognite.client.data_classes.data_modeling.views import ReverseDirectRelation
+from cognite.client.data_classes.data_modeling.views import (
+    ReverseDirectRelation,
+    ReverseDirectRelationApply,
+    SingleEdgeConnection,
+    SingleEdgeConnectionApply,
+    SingleReverseDirectRelation,
+    SingleReverseDirectRelationApply,
+    ViewProperty,
+    ViewPropertyApply,
+)
 from cognite.client.data_classes.transformations.common import Edges, EdgeType, Nodes, ViewInfo
 
 from cognite.neat.rules import issues
@@ -669,7 +679,124 @@ class DMSSchema:
         return referenced_spaces
 
     def as_read_model(self) -> dm.DataModel[dm.View]:
-        raise NotImplementedError()
+        if self.data_model is None:
+            raise ValueError("Data model is not defined")
+        all_containers = self.containers.copy()
+        all_views = self.views.copy()
+        for other_schema in [self.reference, self.last]:
+            if other_schema:
+                all_containers |= other_schema.containers
+                all_views |= other_schema.views
+
+        views: list[dm.View] = []
+        for view in self.views.values():
+            referenced_containers = ContainerApplyDict()
+            properties: dict[str, ViewProperty] = {}
+            # ChainMap is used to merge properties from the view and its parents
+            # Note that the order of the ChainMap is important, as the first dictionary has the highest priority
+            # So if a child and parent have the same property, the child property will be used.
+            write_properties = ChainMap(view.properties, *(all_views[v].properties for v in view.implements or []))  # type: ignore[arg-type]
+            for prop_name, prop in write_properties.items():
+                read_prop = self._as_read_properties(prop, all_containers)
+                if isinstance(read_prop, dm.MappedProperty) and read_prop.container not in referenced_containers:
+                    referenced_containers[read_prop.container] = all_containers[read_prop.container]
+                properties[prop_name] = read_prop
+
+            read_view = dm.View(
+                space=view.space,
+                external_id=view.external_id,
+                version=view.version,
+                description=view.description,
+                name=view.name,
+                filter=view.filter,
+                implements=view.implements.copy(),
+                used_for=self._used_for(referenced_containers.values()),
+                writable=self._writable(properties.values(), referenced_containers.values()),
+                properties=properties,
+                is_global=False,
+                last_updated_time=0,
+                created_time=0,
+            )
+            views.append(read_view)
+
+        return dm.DataModel(
+            space=self.data_model.space,
+            external_id=self.data_model.external_id,
+            version=self.data_model.version,
+            name=self.data_model.name,
+            description=self.data_model.description,
+            views=views,
+            is_global=False,
+            last_updated_time=0,
+            created_time=0,
+        )
+
+    @staticmethod
+    def _as_read_properties(
+        write: ViewPropertyApply, all_containers: MutableMapping[dm.ContainerId, dm.ContainerApply]
+    ) -> ViewProperty:
+        if isinstance(write, dm.MappedPropertyApply):
+            container_prop = all_containers[write.container].properties[write.container_property_identifier]
+            return dm.MappedProperty(
+                container=write.container,
+                container_property_identifier=write.container_property_identifier,
+                name=write.name,
+                description=write.description,
+                source=write.source,
+                type=container_prop.type,
+                nullable=container_prop.nullable,
+                auto_increment=container_prop.auto_increment,
+                # Likely bug in SDK.
+                default_value=container_prop.default_value,  # type: ignore[arg-type]
+            )
+        if isinstance(write, dm.EdgeConnectionApply):
+            edge_cls = SingleEdgeConnection if isinstance(write, SingleEdgeConnectionApply) else dm.MultiEdgeConnection
+            return edge_cls(
+                type=write.type,
+                source=write.source,
+                name=write.name,
+                description=write.description,
+                edge_source=write.edge_source,
+                direction=write.direction,
+            )
+        if isinstance(write, ReverseDirectRelationApply):
+            relation_cls = (
+                SingleReverseDirectRelation
+                if isinstance(write, SingleReverseDirectRelationApply)
+                else dm.MultiReverseDirectRelation
+            )
+            return relation_cls(
+                source=write.source,
+                through=write.through,
+                name=write.name,
+                description=write.description,
+            )
+        raise ValueError(f"Cannot convert {write} to read format")
+
+    @staticmethod
+    def _used_for(containers: Iterable[dm.ContainerApply]) -> Literal["node", "edge", "all"]:
+        used_for = {container.used_for for container in containers}
+        if used_for == {"node"}:
+            return "node"
+        if used_for == {"edge"}:
+            return "edge"
+        return "all"
+
+    @staticmethod
+    def _writable(properties: Iterable[ViewProperty], containers: Iterable[dm.ContainerApply]) -> bool:
+        used_properties = {
+            (prop.container, prop.container_property_identifier)
+            for prop in properties
+            if isinstance(prop, dm.MappedProperty)
+        }
+        required_properties = {
+            (container.as_id(), prop_id)
+            for container in containers
+            for prop_id, prop in container.properties.items()
+            if not prop.nullable
+        }
+
+        return not bool(used_properties - required_properties)
 
 
 @dataclass
