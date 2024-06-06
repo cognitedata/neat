@@ -134,6 +134,9 @@ class NeatIssueList(UserList[T_NeatIssue], ABC):
     def _repr_html_(self) -> str | None:
         return self.to_pandas()._repr_html_()  # type: ignore[operator]
 
+    def as_exception(self) -> "MultiValueError":
+        return MultiValueError(self.errors)
+
 
 class MultiValueError(ValueError):
     """This is a container for multiple errors.
@@ -143,5 +146,5 @@ class MultiValueError(ValueError):
 
     """
 
-    def __init__(self, errors: Sequence[NeatError]):
+    def __init__(self, errors: Sequence[T_NeatIssue]):
         self.errors = list(errors)

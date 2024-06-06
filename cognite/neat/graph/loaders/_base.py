@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Generic, Literal, TypeVar, overload
+from typing import Generic, TypeVar
 
 from cognite.client import CogniteClient
 
@@ -22,17 +22,10 @@ class BaseLoader(ABC, Generic[T_Output]):
     def write_to_file(self, filepath: Path) -> None:
         raise NotImplementedError
 
-    @overload
-    def load(self, stop_on_exception: Literal[True]) -> Iterable[T_Output]: ...
-
-    @overload
-    def load(self, stop_on_exception: Literal[False] = False) -> Iterable[T_Output | NeatIssue]: ...
-
     def load(self, stop_on_exception: bool = False) -> Iterable[T_Output | NeatIssue]:
         """Load the graph with data."""
         return self._load(stop_on_exception)
 
-    # Private to avoid creating overload in all subclasses
     @abstractmethod
     def _load(self, stop_on_exception: bool = False) -> Iterable[T_Output | NeatIssue]:
         """Load the graph with data."""

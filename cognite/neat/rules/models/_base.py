@@ -7,6 +7,7 @@ from __future__ import annotations
 import math
 import sys
 import types
+from abc import abstractmethod
 from collections.abc import Callable, Iterator
 from functools import wraps
 from typing import Annotated, Any, ClassVar, Generic, Literal, TypeAlias, TypeVar
@@ -244,6 +245,11 @@ class BaseMetadata(RuleModel):
     @model_serializer(mode="wrap")
     def include_role(self, serializer: Callable) -> dict:
         return {"role": self.role.value, **serializer(self)}
+
+    @abstractmethod
+    def as_identifier(self) -> str:
+        """Returns a unique identifier for the metadata."""
+        raise NotImplementedError()
 
 
 class BaseRules(RuleModel):

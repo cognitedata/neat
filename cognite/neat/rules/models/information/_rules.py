@@ -116,6 +116,9 @@ class InformationMetadata(BaseMetadata):
     def as_enum_model_type(cls, value: str) -> DataModelType:
         return DataModelType(value)
 
+    def as_identifier(self) -> str:
+        return f"{self.prefix}:{self.name}"
+
 
 class InformationClass(SheetEntity):
     """

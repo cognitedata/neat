@@ -1,6 +1,6 @@
 import json
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +14,7 @@ from pydantic.main import Model
 
 from cognite.neat.graph.issues import loader as loader_issues
 from cognite.neat.graph.stores import NeatGraphStoreBase
-from cognite.neat.issues import NeatIssue
+from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 
@@ -25,14 +25,16 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     def __init__(
         self,
         graph_store: NeatGraphStoreBase,
-        data_model: dm.DataModel[dm.View],
+        data_model: dm.DataModel[dm.View] | None,
         instance_space: str,
         class_by_view_id: dict[ViewId, str] | None = None,
+        creat_issue_list: Sequence[NeatIssue] | None = None,
     ):
         super().__init__(graph_store)
         self.data_model = data_model
         self.instance_space = instance_space
         self.class_by_view_id = class_by_view_id or {}
+        self._issues = NeatIssueList[NeatIssue](creat_issue_list or [])
 
     @classmethod
     def from_data_model_id(
@@ -42,21 +44,44 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         graph_store: NeatGraphStoreBase,
         instance_space: str,
     ) -> "DMSLoader":
-        # Todo add error handling
-        data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
-        return cls(graph_store, data_model, instance_space, {})
+        issues: list[NeatIssue] = []
+        data_model: dm.DataModel[dm.View] | None = None
+        try:
+            data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
+        except Exception as e:
+            issues.append(loader_issues.MissingDataModelError(identifier=repr(data_model_id), reason=str(e)))
+
+        return cls(graph_store, data_model, instance_space, {}, issues)
 
     @classmethod
     def from_rules(cls, rules: DMSRules, graph_store: NeatGraphStoreBase, instance_space: str) -> "DMSLoader":
-        schema = rules.as_schema()
-        # Todo add error handling
-        return cls(graph_store, schema.as_read_model(), instance_space, {})
+        issues: list[NeatIssue] = []
+        data_model: dm.DataModel[dm.View] | None = None
+        try:
+            data_model = rules.as_schema().as_read_model()
+        except Exception as e:
+            issues.append(
+                loader_issues.FailedConvertError(
+                    identifier=rules.metadata.as_identifier(), target_format="read DMS model", reason=str(e)
+                )
+            )
+        return cls(graph_store, data_model, instance_space, {}, issues)
 
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue]:
+        if self._issues.has_errors and stop_on_exception:
+            raise self._issues.as_exception()
+        elif self._issues.has_errors:
+            yield from self._issues
+            return
+        if not self.data_model:
+            # There should already be an error in this case.
+            return
+
         for view in self.data_model.views:
             view_id = view.as_id()
             # Todo Some tracking and creation of a structure to do validation
-            pydantic_cls, edge_by_properties = self._create_validation_classes(view)  # type: ignore[var-annotated]
+            pydantic_cls, edge_by_properties, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
+            yield from issues
             class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
             triples = self.graph_store.queries.triples_of_type_instances(class_name)
             for identifier, properties in _triples2dictionary(triples).items():
@@ -92,7 +117,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 yaml.safe_dump(dumped, f, sort_keys=False)
 
-    def _create_validation_classes(self, view: dm.View) -> tuple[type[Model], dict[str, dm.EdgeConnection]]:
+    def _create_validation_classes(
+        self, view: dm.View
+    ) -> tuple[type[Model], dict[str, dm.EdgeConnection], NeatIssueList]:
+        issues = NeatIssueList[NeatIssue]()
         field_definitions: dict[str, tuple[type, Any]] = {}
         edge_by_property: dict[str, dm.EdgeConnection] = {}
         direct_relation_by_property: dict[str, dm.DirectRelation] = {}
@@ -106,7 +134,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 else:
                     data_type = _DATA_TYPE_BY_DMS_TYPE.get(prop.type._type)
                     if not data_type:
-                        # Todo warning
+                        issues.append(
+                            loader_issues.InvalidClassWarning(
+                                class_name=repr(view.as_id()),
+                                reason=f"Unknown data type for property {prop_name}: {prop.type._type}",
+                            )
+                        )
                         continue
                     python_type = data_type.python
                 if prop.type.is_list:
@@ -142,7 +175,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             )
 
         pydantic_cls = create_model(view.external_id, __validators__=validators, **field_definitions)  # type: ignore[arg-type, call-overload]
-        return pydantic_cls, edge_by_property
+        return pydantic_cls, edge_by_property, issues
 
     def _create_node(
         self, identifier: str, properties: dict[str, list[str]], pydantic_cls: type[Model], view_id: dm.ViewId
