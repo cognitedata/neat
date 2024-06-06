@@ -28,13 +28,13 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         data_model: dm.DataModel[dm.View] | None,
         instance_space: str,
         class_by_view_id: dict[ViewId, str] | None = None,
-        creat_issue_list: Sequence[NeatIssue] | None = None,
+        creat_issues: Sequence[NeatIssue] | None = None,
     ):
         super().__init__(graph_store)
         self.data_model = data_model
         self.instance_space = instance_space
         self.class_by_view_id = class_by_view_id or {}
-        self._issues = NeatIssueList[NeatIssue](creat_issue_list or [])
+        self._issues = NeatIssueList[NeatIssue](creat_issues or [])
 
     @classmethod
     def from_data_model_id(
