@@ -4,11 +4,29 @@ from typing import Any
 from cognite.neat.issues import NeatError, NeatWarning
 
 __all__ = [
+    "FailedAuthorizationError",
     "MissingDataModelError",
     "FailedConvertError",
     "InvalidClassWarning",
     "InvalidInstanceError",
 ]
+
+
+@dataclass(frozen=True)
+class FailedAuthorizationError(NeatError):
+    description = "Missing authorization for {action}: {reason}"
+
+    action: str
+    reason: str
+
+    def message(self) -> str:
+        return self.description.format(action=self.action, reason=self.reason)
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["action"] = self.action
+        output["reason"] = self.reason
+        return output
 
 
 @dataclass(frozen=True)

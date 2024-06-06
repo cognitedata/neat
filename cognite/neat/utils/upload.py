@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass, field
 from functools import total_ordering
 
-from cognite.neat.rules.issues import IssueList
+from cognite.neat.issues import NeatIssueList
 
 
 @total_ordering
@@ -10,7 +10,7 @@ from cognite.neat.rules.issues import IssueList
 class UploadResultCore(ABC):
     name: str
     error_messages: list[str] = field(default_factory=list)
-    issues: IssueList = field(default_factory=IssueList)
+    issues: NeatIssueList = field(default_factory=NeatIssueList)
 
     def __lt__(self, other: object) -> bool:
         if isinstance(other, UploadDiffsCount):

@@ -4,8 +4,10 @@ from pathlib import Path
 from typing import Generic, Literal, TypeVar, overload
 
 from cognite.client import CogniteClient
+from cognite.client.data_classes.capabilities import Capability
 
 from cognite.neat.graph import NeatGraphStoreBase
+from cognite.neat.graph.issues.loader import FailedAuthorizationError
 from cognite.neat.issues import NeatIssue
 from cognite.neat.utils.upload import UploadDiffsID, UploadResultIDs
 
@@ -64,8 +66,18 @@ class CDFLoader(BaseLoader[T_Output]):
     ) -> list[UploadResultIDs] | list[UploadDiffsID]:
         return list(self._load_into_cdf_iterable(client, return_diffs, dry_run))  # type: ignore[return-value]
 
-    @abstractmethod
     def _load_into_cdf_iterable(
         self, client: CogniteClient, return_diffs: bool = False, dry_run: bool = False
     ) -> Iterable[UploadResultIDs] | Iterable[UploadDiffsID]:
-        raise
+        missing_capabilities = client.iam.verify_capabilities(self._get_required_capabilities())
+        result_cls = UploadDiffsID if return_diffs else UploadResultIDs
+        if missing_capabilities:
+            error = FailedAuthorizationError(action="Upload to CDF", reason=str(missing_capabilities))
+            result = result_cls(name=type(self).__name__)
+            result.issues.append(error)
+            yield result
+            return
+
+    @abstractmethod
+    def _get_required_capabilities(self) -> list[Capability]:
+        raise NotImplementedError

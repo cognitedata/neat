@@ -7,6 +7,7 @@ from typing import Any
 import yaml
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
+from cognite.client.data_classes.capabilities import Capability, DataModelInstancesAcl
 from cognite.client.data_classes.data_modeling import ViewId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from pydantic import ValidationInfo, create_model, field_validator
@@ -221,6 +222,18 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     start_node=dm.DirectRelationReference(self.instance_space, identifier),
                     end_node=dm.DirectRelationReference(self.instance_space, target),
                 )
+
+    def _get_required_capabilities(self) -> list[Capability]:
+        return [
+            DataModelInstancesAcl(
+                actions=[
+                    DataModelInstancesAcl.Action.Write,
+                    DataModelInstancesAcl.Action.Write_Properties,
+                    DataModelInstancesAcl.Action.Read,
+                ],
+                scope=DataModelInstancesAcl.Scope.SpaceID([self.instance_space]),
+            )
+        ]
 
     def _load_into_cdf_iterable(
         self, client: CogniteClient, return_diffs: bool = False, dry_run: bool = False
