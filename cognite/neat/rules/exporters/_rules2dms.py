@@ -31,9 +31,9 @@ from cognite.neat.utils.cdf_loaders import (
     TransformationLoader,
     ViewLoader,
 )
+from cognite.neat.utils.upload import UploadResult
 
 from ._base import CDFExporter
-from ._models import UploadResult
 
 Component: TypeAlias = Literal["all", "spaces", "data_models", "views", "containers", "node_types"]
 

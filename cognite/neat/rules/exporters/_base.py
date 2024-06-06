@@ -7,8 +7,7 @@ from cognite.client import CogniteClient
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes
-
-from ._models import UploadResult
+from cognite.neat.utils.upload import UploadResult
 
 T_Export = TypeVar("T_Export")
 
