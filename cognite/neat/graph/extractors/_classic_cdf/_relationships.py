@@ -58,7 +58,7 @@ class RelationshipsExtractor(BaseExtractor):
             triples.append(
                 (
                     id_,
-                    namespace["source_type"],
+                    namespace.source_type,
                     namespace[relationship.source_type.title()],
                 )
             )
@@ -67,20 +67,20 @@ class RelationshipsExtractor(BaseExtractor):
             triples.append(
                 (
                     id_,
-                    namespace["source_type"],
+                    namespace.target_type,
                     namespace[relationship.target_type.title()],
                 )
             )
 
         # Create attributes
         if relationship.external_id:
-            triples.append((id_, namespace["external_id"], Literal(relationship.external_id)))
+            triples.append((id_, namespace.external_id, Literal(relationship.external_id)))
 
         if relationship.source_external_id:
             triples.append(
                 (
                     id_,
-                    namespace["source_external_id"],
+                    namespace.source_external_id,
                     Literal(relationship.source_external_id),
                 )
             )
@@ -89,7 +89,7 @@ class RelationshipsExtractor(BaseExtractor):
             triples.append(
                 (
                     id_,
-                    namespace["target_external_id"],
+                    namespace.target_external_id,
                     Literal(relationship.target_external_id),
                 )
             )
@@ -98,7 +98,7 @@ class RelationshipsExtractor(BaseExtractor):
             triples.append(
                 (
                     id_,
-                    namespace["start_time"],
+                    namespace.start_time,
                     Literal(datetime.fromtimestamp(relationship.start_time / 1000, pytz.utc)),
                 )
             )
@@ -107,7 +107,7 @@ class RelationshipsExtractor(BaseExtractor):
             triples.append(
                 (
                     id_,
-                    namespace["start_time"],
+                    namespace.end_time,
                     Literal(datetime.fromtimestamp(relationship.end_time / 1000, pytz.utc)),
                 )
             )
@@ -116,7 +116,7 @@ class RelationshipsExtractor(BaseExtractor):
             triples.append(
                 (
                     id_,
-                    namespace["created_time"],
+                    namespace.created_time,
                     Literal(datetime.fromtimestamp(relationship.created_time / 1000, pytz.utc)),
                 )
             )
@@ -125,7 +125,7 @@ class RelationshipsExtractor(BaseExtractor):
             triples.append(
                 (
                     id_,
-                    namespace["last_updated_time"],
+                    namespace.last_updated_time,
                     Literal(datetime.fromtimestamp(relationship.last_updated_time / 1000, pytz.utc)),
                 )
             )
@@ -134,7 +134,7 @@ class RelationshipsExtractor(BaseExtractor):
             triples.append(
                 (
                     id_,
-                    namespace["start_time"],
+                    namespace.confidence,
                     Literal(relationship.confidence),
                 )
             )
@@ -142,10 +142,10 @@ class RelationshipsExtractor(BaseExtractor):
         if relationship.labels:
             for label in relationship.labels:
                 # external_id can create ill-formed URIs, so we opt for Literal instead
-                triples.append((id_, namespace["label"], Literal(label.dump()["externalId"])))
+                triples.append((id_, namespace.label, Literal(label.dump()["externalId"])))
 
         # Create connection
         if relationship.data_set_id:
-            triples.append((id_, namespace["dataset"], namespace[str(relationship.data_set_id)]))
+            triples.append((id_, namespace.dataset, namespace[str(relationship.data_set_id)]))
 
         return triples
