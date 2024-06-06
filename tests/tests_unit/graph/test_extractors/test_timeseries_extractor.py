@@ -23,4 +23,5 @@ def test_timeseries_extractor():
     )
 
     assert len(g) == 2256
+
     assert URIRef("http://purl.org/aspect/wind_speed") == res[0][0]

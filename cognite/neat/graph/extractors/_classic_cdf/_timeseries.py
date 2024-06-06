@@ -40,7 +40,7 @@ class TimeSeriesExtractor(BaseExtractor):
         return cls(TimeSeriesList.load(Path(file_path).read_text()), namespace)
 
     def extract(self) -> Iterable[Triple]:
-        """Extract timeseries an asset with the given asset_id."""
+        """Extract timeseries as triples."""
         for timeseries in self.timeseries:
             yield from self._timeseries2triples(timeseries, self.namespace)
 
