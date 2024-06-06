@@ -8,8 +8,8 @@ from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import PREFIXES
+from cognite.neat.issues import MultiValueError
 from cognite.neat.rules import exceptions, issues
-from cognite.neat.rules.issues.base import MultiValueError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
     BaseRules,
@@ -115,6 +115,9 @@ class InformationMetadata(BaseMetadata):
     @field_validator("data_model_type", mode="plain")
     def as_enum_model_type(cls, value: str) -> DataModelType:
         return DataModelType(value)
+
+    def as_identifier(self) -> str:
+        return f"{self.prefix}:{self.name}"
 
 
 class InformationClass(SheetEntity):

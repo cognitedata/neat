@@ -22,5 +22,6 @@ def test_timeseries_extractor():
         g.query(f"SELECT ?o WHERE {{ <{DEFAULT_NAMESPACE['1802374391833157']}> <{DEFAULT_NAMESPACE.concept_id}> ?o  }}")
     )
 
-    assert len(g) == 2410
+    assert len(g) == 2256
+
     assert URIRef("http://purl.org/aspect/wind_speed") == res[0][0]

@@ -351,6 +351,14 @@ class TestDMSSchema:
         "schema",
         list(valid_schema_test_cases()),
     )
+    def test_as_read_model(self, schema: DMSSchema) -> None:
+        read_model = schema.as_read_model()
+        assert isinstance(read_model, dm.DataModel)
+
+    @pytest.mark.parametrize(
+        "schema",
+        list(valid_schema_test_cases()),
+    )
     def test_to_and_from_directory(self, schema: DMSSchema, tmp_path: Path) -> None:
         schema.to_directory(tmp_path)
         loaded_schema = PipelineSchema.from_directory(tmp_path)

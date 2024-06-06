@@ -118,4 +118,4 @@ def _handle_issues(
             future_result._result = "success"
         finally:
             if warning_logger:
-                issues.extend([warning_cls.from_warning(warning) for warning in warning_logger])
+                issues.extend([warning_cls.from_warning(warning) for warning in warning_logger])  # type: ignore[misc]

@@ -48,35 +48,36 @@ class AssetsExtractor(BaseExtractor):
     @classmethod
     def _asset2triples(cls, asset: Asset, namespace: Namespace) -> list[Triple]:
         """Converts an asset to triples."""
+        id_ = namespace[str(asset.id)]
 
         # Set rdf type
-        triples: list[Triple] = [(namespace[str(asset.id)], RDF.type, namespace["Asset"])]
+        triples: list[Triple] = [(id_, RDF.type, namespace["Asset"])]
 
         # Create attributes
         if asset.name:
-            triples.append((namespace[str(asset.id)], namespace["name"], Literal(asset.name)))
+            triples.append((id_, namespace.name, Literal(asset.name)))
 
         if asset.description:
-            triples.append((namespace[str(asset.id)], namespace["description"], Literal(asset.description)))
+            triples.append((id_, namespace.description, Literal(asset.description)))
 
         if asset.external_id:
-            triples.append((namespace[str(asset.id)], namespace["external_id"], Literal(asset.external_id)))
+            triples.append((id_, namespace.external_id, Literal(asset.external_id)))
 
         if asset.source:
-            triples.append((namespace[str(asset.id)], namespace["source"], Literal(asset.source)))
-
+            triples.append((id_, namespace.source, Literal(asset.source)))
+            
         # properties ref creation and update
         triples.append(
             (
-                namespace[str(asset.id)],
-                namespace["created_time"],
+                id_,
+                namespace.created_time,
                 Literal(datetime.fromtimestamp(asset.created_time / 1000, pytz.utc)),
             )
         )
         triples.append(
             (
-                namespace[str(asset.id)],
-                namespace["last_updated_time"],
+                id_,
+                namespace.last_updated_time,
                 Literal(datetime.fromtimestamp(asset.last_updated_time / 1000, pytz.utc)),
             )
         )
@@ -84,21 +85,21 @@ class AssetsExtractor(BaseExtractor):
         if asset.labels:
             for label in asset.labels:
                 # external_id can create ill-formed URIs, so we opt for Literal instead
-                triples.append((namespace[str(asset.id)], namespace["label"], Literal(label.dump()["externalId"])))
+                triples.append((id_, namespace.label, Literal(label.dump()["externalId"])))
 
         if asset.metadata:
             for key, value in asset.metadata.items():
                 if value:
-                    triples.append((namespace[str(asset.id)], namespace[key], Literal(string_to_ideal_type(value))))
+                    triples.append((id_, namespace[key], Literal(string_to_ideal_type(value))))
 
         # Create connections:
         if asset.parent_id:
-            triples.append((namespace[str(asset.id)], namespace["parent"], namespace[str(asset.parent_id)]))
+            triples.append((id_, namespace.parent, namespace[str(asset.parent_id)]))
 
         if asset.root_id:
-            triples.append((namespace[str(asset.id)], namespace["root"], namespace[str(asset.root_id)]))
+            triples.append((id_, namespace.root, namespace[str(asset.root_id)]))
 
         if asset.data_set_id:
-            triples.append((namespace[str(asset.id)], namespace["dataset"], namespace[str(asset.data_set_id)]))
+            triples.append((id_, namespace.dataset, namespace[str(asset.data_set_id)]))
 
         return triples
