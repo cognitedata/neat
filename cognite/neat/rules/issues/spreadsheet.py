@@ -8,9 +8,10 @@ from cognite.client.data_classes import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic_core import ErrorDetails
 
+from cognite.neat.issues import MultiValueError
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
 
-from .base import DefaultPydanticError, MultiValueError, NeatValidationError
+from .base import DefaultPydanticError, NeatValidationError
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -69,7 +70,7 @@ class InvalidSheetError(NeatValidationError, ABC):
                             new_row = reader.adjusted_row_number(caught_error.row)
                             # The error is frozen, so we have to use __setattr__ to change the row number
                             object.__setattr__(caught_error, "row", new_row)
-                        output.append(caught_error)
+                        output.append(caught_error)  # type: ignore[arg-type]
                     continue
 
             if len(error["loc"]) >= 4:

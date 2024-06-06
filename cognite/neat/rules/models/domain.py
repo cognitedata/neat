@@ -21,6 +21,9 @@ class DomainMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.domain_expert
     creator: StrOrListType
 
+    def as_identifier(self) -> str:
+        return "DomainRules"
+
 
 class DomainProperty(SheetEntity):
     class_: ClassEntity = Field(alias="Class")
