@@ -12,6 +12,7 @@ from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from pydantic import ValidationInfo, create_model, field_validator
 from pydantic.main import Model
 
+from cognite.neat.graph._tracking import LogTracker, Tracker
 from cognite.neat.graph.issues import loader as loader_issues
 from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.issues import NeatIssue, NeatIssueList
@@ -29,12 +30,14 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         instance_space: str,
         class_by_view_id: dict[ViewId, str] | None = None,
         creat_issues: Sequence[NeatIssue] | None = None,
+        tracker: type[Tracker] | None = None,
     ):
         super().__init__(graph_store)
         self.data_model = data_model
         self.instance_space = instance_space
         self.class_by_view_id = class_by_view_id or {}
         self._issues = NeatIssueList[NeatIssue](creat_issues or [])
+        self._tracker: type[Tracker] = tracker or LogTracker
 
     @classmethod
     def from_data_model_id(
@@ -76,12 +79,14 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if not self.data_model:
             # There should already be an error in this case.
             return
-
+        view_ids = [repr(v.as_id()) for v in self.data_model.views]
+        tracker = self._tracker(type(self).__name__, view_ids, "views")
         for view in self.data_model.views:
             view_id = view.as_id()
-            # Todo Some tracking and creation of a structure to do validation
+            tracker.start(repr(view_id))
             pydantic_cls, edge_by_properties, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
             yield from issues
+            tracker.issue(issues)
             class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
             triples = self.graph_store.queries.triples_of_type_instances(class_name)
             for identifier, properties in _triples2dictionary(triples).items():
@@ -89,10 +94,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
                     error = loader_issues.InvalidInstanceError(type_="node", identifier=identifier, reason=str(e))
+                    tracker.issue(error)
                     if stop_on_exception:
                         raise error.as_exception() from e
                     yield error
-                yield from self._create_edges(identifier, properties, edge_by_properties)
+                yield from self._create_edges(identifier, properties, edge_by_properties, tracker)
+            tracker.finish(repr(view_id))
 
     def load_into_cdf_iterable(self, client: CogniteClient, dry_run: bool = False) -> Iterable:
         raise NotImplementedError()
@@ -190,18 +197,24 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         )
 
     def _create_edges(
-        self, identifier: str, properties: dict[str, list[str]], edge_by_properties: dict[str, dm.EdgeConnection]
+        self,
+        identifier: str,
+        properties: dict[str, list[str]],
+        edge_by_properties: dict[str, dm.EdgeConnection],
+        tracker: Tracker,
     ) -> Iterable[dm.EdgeApply | NeatIssue]:
         for prop, values in properties.items():
             if prop not in edge_by_properties:
                 continue
             edge = edge_by_properties[prop]
             if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
-                yield loader_issues.InvalidInstanceError(
+                error = loader_issues.InvalidInstanceError(
                     type_="edge",
                     identifier=identifier,
                     reason=f"Multiple values for single edge {edge}. Expected only one.",
                 )
+                tracker.issue(error)
+                yield error
             for target in values:
                 yield dm.EdgeApply(
                     space=self.instance_space,
