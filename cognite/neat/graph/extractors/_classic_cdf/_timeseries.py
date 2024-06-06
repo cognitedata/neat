@@ -74,7 +74,8 @@ class TimeSeriesExtractor(BaseExtractor):
         if timeseries.unit is not None:
             triples.append((id_, namespace.unit, Literal(timeseries.unit)))
 
-        triples.append((id_, namespace.is_step, Literal(timeseries.is_step)))
+        if timeseries.is_step is not None:
+            triples.append((id_, namespace.is_step, Literal(timeseries.is_step)))
 
         if timeseries.description is not None:
             triples.append((id_, namespace.description, Literal(timeseries.description)))
