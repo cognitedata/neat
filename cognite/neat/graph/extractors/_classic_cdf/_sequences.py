@@ -51,10 +51,10 @@ class SequencesExtractor(BaseExtractor):
 
         # Create attributes
 
-        if sequence.external_id is not None:
+        if sequence.external_id:
             triples.append((id_, namespace.external_id, Literal(sequence.external_id)))
 
-        if sequence.name is not None:
+        if sequence.name:
             triples.append((id_, namespace.name, Literal(sequence.name)))
 
         if sequence.metadata:
@@ -66,15 +66,15 @@ class SequencesExtractor(BaseExtractor):
                     except ValidationError:
                         triples.append((id_, namespace[key], Literal(type_aware_value)))
 
-        if sequence.description is not None:
+        if sequence.description:
             triples.append((id_, namespace.description, Literal(sequence.description)))
 
-        if sequence.created_time is not None:
+        if sequence.created_time:
             triples.append(
                 (id_, namespace.created_time, Literal(datetime.fromtimestamp(sequence.created_time / 1000, pytz.utc)))
             )
 
-        if sequence.last_updated_time is not None:
+        if sequence.last_updated_time:
             triples.append(
                 (
                     id_,
@@ -83,10 +83,10 @@ class SequencesExtractor(BaseExtractor):
                 )
             )
 
-        if sequence.data_set_id is not None:
+        if sequence.data_set_id:
             triples.append((id_, namespace.data_set_id, namespace[str(sequence.data_set_id)]))
 
-        if sequence.asset_id is not None:
+        if sequence.asset_id:
             triples.append((id_, namespace.asset, namespace[str(sequence.asset_id)]))
 
         return triples

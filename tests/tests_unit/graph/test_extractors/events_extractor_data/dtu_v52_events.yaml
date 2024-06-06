@@ -1,0 +1,954 @@
+- externalId: turbine:alarm:24933b83-7577-40a9-a491-f0b2ea1fca65
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: hydraulic leaks
+    detection_method_1: SCADA - hpu pressure monitoring (gross measure)
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: Y
+  id: 381696371818828
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:1a2a73ed-562b-4f79-8374-59eef50bea63
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: imbalance
+    detection_method_1: vibration monitoring
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: Y
+  id: 439923073764677
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:bf3c4c06-4343-48bc-89fa-6a688fb5d27b
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: IGBT failure
+    detection_method_1: Built-in (failure codes)
+    detection_method_2: Temperature monitoring
+    detection_method_3: ''
+    fault_progression: Fast
+    condition_monitoring: ''
+  id: 452315252721330
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:5715bd6f-a416-4293-84c2-e2e3444ea7c8
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: cracks/damage
+    detection_method_1: visual inspection
+    detection_method_2: vibration
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: Y
+  id: 505871977309672
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:c241330b-01a9-471f-9e8a-774bcf36d58b
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Stator winding faults (inter-turn faults)
+    detection_method_1: Voltage/current signature analysis
+    detection_method_2: Vibration monitoring
+    detection_method_3: Temperature monitoring
+    fault_progression: Fast
+    condition_monitoring: Y
+  id: 711488375704707
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:23b8c1e9-3924-46de-beb1-3b9046685257
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Bearings overheating (lack of lubrication/ventilation)
+    detection_method_1: Temperature monitoring (SCADA)
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: Slow
+    condition_monitoring: Y
+  id: 1143340573294145
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:ddd1dfb2-3b98-4ef8-9af6-1a26146d3f31
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: yaw motor(s) fault
+    detection_method_1: 'SCADA - yaw ref. vs. actual position
+
+      SCADA - yaw motors temperature (if exists)
+
+      SCADA - yaw motors excessive current draw (if exists)'
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: 'Fast
+
+      '
+    condition_monitoring: Y
+  id: 1215528043994249
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:ec1b8ca1-f91e-4d4c-9ff4-9b7889463e85
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: carrier plate damage (cracks)
+    detection_method_1: vibration monitoring
+    detection_method_2: oil quality monitoring
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: Y
+  id: 1393966380559478
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:9132b63e-f162-47e4-a9c3-49e03602f8ac
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: brake disc fault/failure
+    detection_method_1: critical event - turbine trip
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 1522410540624945
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:dc713d96-0c0f-4195-817a-f08a1745d6d8
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Winding fault - inter-turns, phase-to-phase, phase-to-ground
+    detection_method_1: Dissolved gas analysis (Trafo app)
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: Y
+  id: 1540771975497343
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:a9488d99-0bbb-4599-91ce-5dd2b45ed1f0
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: lubrication issues (low, contamination)
+    detection_method_1: SCADA temperature monitoring
+    detection_method_2: oil quality monitoring
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: N
+  id: 1554633342274022
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:bdd640fb-0667-4ad1-9c80-317fa3b1799d
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Overheating (ventilation issue)
+    detection_method_1: Temperature monitoring (SCADA)
+    detection_method_2: Generator cooling system (SCADA)
+    detection_method_3: ''
+    fault_progression: Slow
+    condition_monitoring: Y
+  id: 1592573666587515
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:81f631d4-a392-41a7-9777-a4774c66e0a8
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: structural damage (cracks / broken)
+    detection_method_1: visual inspection
+    detection_method_2: vibration monitoring
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 1634663433535677
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:98ae4334-6c12-4ce8-ae34-0454cac5b68c
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Cooling failure (leakage/poor coolant)
+    detection_method_1: Temperature monitoring (SCADA)
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: Y
+  id: 1891017669254173
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:fc377a4c-4a15-444d-85e7-ce8a3a578a8e
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: gearbox seals/gaskets
+    detection_method_1: ''
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 2038207690618303
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:9a1de644-815e-46d1-bb8f-aa1837f8a88b
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Internal arcing
+    detection_method_1: Temperature monitoring (SCADA)
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: Fast
+    condition_monitoring: Y
+  id: 2155843034943184
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:81f76d1c-2dbc-4134-830f-f46e8026695f
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: local damage
+    detection_method_1: vibration monitoring
+    detection_method_2: ''
+    detection_method_3: slow
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 2174580680751658
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:e2acf72f-9e57-4f7a-a0ee-89aed453dd32
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: shaft damage (lss, iss, hss)
+    detection_method_1: vibration monitoring
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: Y
+  id: 2410449704035940
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:28f49481-a0a0-4dc4-a720-9bdf1c11f735
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Core fault
+    detection_method_1: ''
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: Y
+  id: 2566249011998466
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:c0398710-8976-4334-a281-7efdae849217
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: imbalance (dirt/icing)
+    detection_method_1: vibration (hub)
+    detection_method_2: blade root loads (SCADA)
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 2824483392918625
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:6c307511-b2b9-437a-a8df-6ec4ce4a2bbd
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Stator windings overheating
+    detection_method_1: Temperature monitoring (SCADA)
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 2871095293470678
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:beb79919-3f22-4af8-a3be-d01d43cf2fde
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: PLC failure
+    detection_method_1: Built-in (failure codes)
+    detection_method_2: Temperature monitoring
+    detection_method_3: ''
+    fault_progression: Fast
+    condition_monitoring: ''
+  id: 2954545612846617
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:3139d32c-93cd-49bf-9c94-1cf0dc98d2c1
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: coupling damage
+    detection_method_1: vibration monitoring
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: Y
+  id: 3013894295795722
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:43b7a3a6-9a8d-4a03-980d-7b71d8f56413
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: misalignment
+    detection_method_1: vibration monitoring
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: Y
+  id: 3045120138515663
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:b02b61c4-a3d7-4628-ace6-6fa2fd5166e6
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: loss of hydraulic pressure (external fault)
+    detection_method_1: hpu pressure monitoring (SCADA)
+    detection_method_2: pitch actuation reference vs. actual angle (SCADA)
+    detection_method_3: ''
+    fault_progression: fast
+    condition_monitoring: ''
+  id: 3215868977047493
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:366eb16f-508e-4ad7-b7c9-3acfe059a0ee
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: brake pad wear
+    detection_method_1: SCADA - brake command vs. rotor speed tracking
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: Y
+  id: 3233283656339107
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:0e51f30d-c6a7-4e39-84b0-32ccd7c524a5
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: cylinder damage (leak)
+    detection_method_1: hpu pressure monitoring (SCADA)
+    detection_method_2: pitch actuation reference vs. actual angle (SCADA)
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 3288745055143315
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:5be6128e-18c2-4797-a142-ea7d17be3111
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: cracks/damage
+    detection_method_1: vibration monitoring
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: Y
+  id: 3467018212508213
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:17fc695a-07a0-4a6e-8822-e8f36c031199
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Shaft damage
+    detection_method_1: Vibration monitoring
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: Slow
+    condition_monitoring: Y
+  id: 4126290698995489
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:e27a984d-6548-41d0-bfcd-9eb1a7cad415
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: hydraulic circuit fault/failure
+    detection_method_1: SCADA - hpu pressure monitoring (gross measure)
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: Y
+  id: 4408178512986535
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:3eabedcb-baa8-4dd4-88bd-64072bcfbe01
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: planetary gearbox fault
+    detection_method_1: vibration monitoring
+    detection_method_2: pitch actuation reference vs. actual angle (SCADA)
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: ''
+  id: 4663859782192395
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:bd9c66b3-ad3c-4d6d-9a3d-1fa7bc8960a9
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: 'Bearing faults (race,cage, ball defect)
+
+      <See Bearings>'
+    detection_method_1: Vibration monitoring
+    detection_method_2: Temperature monitoring (SCADA)
+    detection_method_3: ''
+    fault_progression: Slow
+    condition_monitoring: Y
+  id: 4817191162706324
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:1d53434b-b881-49b9-ae27-0da702f06b90
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: bearing seal damage
+    detection_method_1: vibration monitoring
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: N
+  id: 4880467344384875
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:ff50bde4-3825-47b8-9cab-cc97663f1c97
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Overheating
+    detection_method_1: Temperature monitoring (SCADA)
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: Y
+  id: 4930779013322590
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:988c24c9-61b1-4d22-a280-1c4510435a10
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: bearing runs hot (due to external factors)
+    detection_method_1: SCADA temperature monitoring
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: Y
+  id: 5008664034139173
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:29a3b2e9-5d65-4441-9588-42dea2bc372f
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: yaw pinion damage
+    detection_method_1: ''
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 5189181279504807
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:405cacec-8774-49a9-b7d2-1e02ff01cf99
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: bearing runs rough (due to lubrication issues)
+    detection_method_1: vibration monitoring
+    detection_method_2: SCADA temperature monitoring
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: Y
+  id: 5377593513424771
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:371ecd7b-27cd-4130-8722-9389571aa876
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: ''
+    detection_method_1: ''
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 5392023035291916
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:f8cda88b-436d-46e2-b83c-fe0be037e5ed
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: high friction due to lubrication contamination
+    detection_method_1: high actuation forces (more power exerted)
+    detection_method_2: increased servo tracking times (SCADA)
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 5843872953142194
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:972a8469-1641-4f82-8b9d-2434e465e150
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Shaft misalignment
+    detection_method_1: Vibration monitoring
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: Slow
+    condition_monitoring: Y
+  id: 6071931480940170
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:b74d0fb1-32e7-4629-8fad-c1a606cb0fb3
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Rotor imbalance
+    detection_method_1: Vibration monitoring
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: Slow
+    condition_monitoring: Y
+  id: 6457133467134562
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:759cde66-bacf-43d0-8b1f-9163ce9ff57f
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: gear damage (scuffing / teeth cracks)
+    detection_method_1: vibration monitoring
+    detection_method_2: oil quality monitoring
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: Y
+  id: 6496622660375191
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:10f1bc81-448a-4a9e-a6b2-bc5b50c187fc
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: actuator/link arms breakage
+    detection_method_1: pitch actuation reference vs. actual angle (SCADA)
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: Turbine trips
+  id: 6540114967319636
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:ab9099a4-35a2-40ae-9af3-05535ec42e08
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: yaw bearing damage
+    detection_method_1: <see blade bearing damage>
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: ''
+  id: 6942557767688969
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:5304317f-af42-412f-b838-b3268e944239
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: piston damage
+    detection_method_1: hpu pressure monitoring (SCADA)
+    detection_method_2: pitch actuation reference vs. actual angle (SCADA)
+    detection_method_3: ''
+    fault_progression: slow/fast (depends on severity of damage)
+    condition_monitoring: ''
+  id: 7063921133617091
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:6b65a6a4-8b81-48f6-b38a-088ca65ed389
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Rotor eccentricity (static/dynamic)
+    detection_method_1: Vibration monitoring
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: Slow
+    condition_monitoring: Y
+  id: 7286322372926814
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:287d06ca-6f4c-469a-8b22-d3081c8eaee9
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: leading edge erosion
+    detection_method_1: visual inspection
+    detection_method_2: ''
+    detection_method_3: slow
+    fault_progression: ''
+    condition_monitoring: Y
+  id: 7479280489159612
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:ce177b4e-0837-48a3-9261-a7ab3aa2e4f9
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: seal damage (leak)
+    detection_method_1: ''
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: Difficult
+  id: 7562475680396430
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:a013ac6e-deda-4e16-9b3d-bd5ce9a1fa6f
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: deformation due to static loads
+    detection_method_1: visual inspection
+    detection_method_2: vibration monitoring
+    detection_method_3: slow (eventual breakage)
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 7587910294138114
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:a28defe3-9bf0-4273-9247-6f57a5e5a5ab
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: motor fault
+    detection_method_1: current signature analysis
+    detection_method_2: vibration monitoring
+    detection_method_3: pitch actuation reference vs. actual angle (SCADA)
+    fault_progression: 'bearings/rotor faults/shaft faults - slow
+
+      stator windings - fast'
+    condition_monitoring: Y
+  id: 7624302718434172
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:b8db0672-f42d-47cc-80d4-af5974273ca3
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: delamination
+    detection_method_1: visual inspection
+    detection_method_2: vibration
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 7786693268889356
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:451b4cf3-6123-4df7-b656-af7229d4beef
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: pinion gear fault
+    detection_method_1: vibration monitoring
+    detection_method_2: pitch actuation reference vs. actual angle (SCADA)
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: ''
+  id: 7869425903901552
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:f143262f-dc5c-4eed-8da0-365bf89897b9
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: bearing damage (race,cage,roller)
+    detection_method_1: vibration monitoring
+    detection_method_2: SCADA data
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: Y
+  id: 7960096821069630
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:7412b293-4729-4739-a14f-f3d719db3ad0
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: yaw gear fault
+    detection_method_1: ''
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: ''
+  id: 7976514085968285
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:aefcfad8-efc8-4849-b3aa-7efe4458a885
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: controller fault
+    detection_method_1: current / voltage analysis
+    detection_method_2: temperature monitoring (electronics faliures)
+    detection_method_3: ''
+    fault_progression: fast
+    condition_monitoring: Y/N
+  id: 8094205065775979
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:956269f0-e5d7-4875-adad-d6c795a76d79
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Diode failure
+    detection_method_1: Built-in (failure codes)
+    detection_method_2: Temperature monitoring
+    detection_method_3: ''
+    fault_progression: Fast
+    condition_monitoring: ''
+  id: 8122831628858518
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:4b0dbb41-8d52-48f1-942c-3fe860e7a113
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: bearing damage
+    detection_method_1: vibration monitoring
+    detection_method_2: SCADA temperature monitoring
+    detection_method_3: ''
+    fault_progression: slow
+    condition_monitoring: Y
+  id: 8411629297708385
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:7e570ddf-8270-40a8-a369-b584ff5e9ff0
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Insulation ageing/ degradation
+    detection_method_1: Dissolved gas analysis (Trafo app)
+    detection_method_2: ''
+    detection_method_3: ''
+    fault_progression: ''
+    condition_monitoring: Y
+  id: 8569603551396398
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: turbine:alarm:47378190-96da-4dac-b2ff-5d2a386ecbe0
+  dataSetId: 3387046938944729
+  type: alarm
+  subtype: ''
+  description: ''
+  metadata:
+    asset_external_id: ''
+    alarm: Rotor electircal faults
+    detection_method_1: Voltage/current signature analysis
+    detection_method_2: Vibration monitoring
+    detection_method_3: ''
+    fault_progression: Fast
+    condition_monitoring: Y
+  id: 8911156866563575
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
