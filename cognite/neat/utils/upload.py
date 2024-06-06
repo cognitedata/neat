@@ -11,20 +11,20 @@ class UploadResultCore(ABC):
     name: str
 
     def __lt__(self, other: object) -> bool:
-        if isinstance(other, UploadResult):
+        if isinstance(other, UploadResultCount):
             return self.name < other.name
         else:
             return NotImplemented
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, UploadResult):
+        if isinstance(other, UploadResultCount):
             return self.name == other.name
         else:
             return NotImplemented
 
 
 @dataclass
-class UploadResult(UploadResultCore):
+class UploadResultCount(UploadResultCore):
     created: int = 0
     deleted: int = 0
     changed: int = 0
