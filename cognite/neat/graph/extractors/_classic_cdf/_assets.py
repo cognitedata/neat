@@ -2,6 +2,7 @@ from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
 from typing import cast
+from urllib.parse import quote
 
 import pytz
 from cognite.client import CogniteClient
@@ -84,8 +85,9 @@ class AssetsExtractor(BaseExtractor):
 
         if asset.labels:
             for label in asset.labels:
-                # external_id can create ill-formed URIs, so we opt for Literal instead
-                triples.append((id_, namespace.label, Literal(label.dump()["externalId"])))
+                # external_id can create ill-formed URIs, so we create websafe URIs
+                # since labels do not have internal ids, we use the external_id as the id
+                triples.append((id_, namespace.label, namespace[quote(label.dump()["externalId"])]))
 
         if asset.metadata:
             for key, value in asset.metadata.items():
