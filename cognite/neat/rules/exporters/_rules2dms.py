@@ -31,9 +31,9 @@ from cognite.neat.utils.cdf_loaders import (
     TransformationLoader,
     ViewLoader,
 )
+from cognite.neat.utils.upload import UploadDiffsCount
 
 from ._base import CDFExporter
-from ._models import UploadResult
 
 Component: TypeAlias = Literal["all", "spaces", "data_models", "views", "containers", "node_types"]
 
@@ -123,7 +123,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
             raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
         return dms_rules.as_schema(include_pipeline=self.export_pipeline, instance_space=self.instance_space)
 
-    def delete_from_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
+    def delete_from_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadDiffsCount]:
         schema, to_export = self._prepare_schema_and_exporters(rules, client)
 
         # we need to reverse order in which we are picking up the items to delete
@@ -161,7 +161,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
                         deleted -= failed_deleted
                         error_messages.append(f"Failed delete: {e.message}")
 
-            yield UploadResult(
+            yield UploadDiffsCount(
                 name=loader.resource_name,
                 deleted=deleted,
                 skipped=0,
@@ -169,7 +169,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
                 error_messages=error_messages,
             )
 
-    def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
+    def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadDiffsCount]:
         schema, to_export = self._prepare_schema_and_exporters(rules, client)
 
         # The conversion from DMS to GraphQL does not seem to be triggered even if the views
@@ -250,7 +250,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
                         changed -= failed_changed
                         error_messages.append(e.message)
 
-            yield UploadResult(
+            yield UploadDiffsCount(
                 name=loader.resource_name,
                 created=created,
                 changed=changed,

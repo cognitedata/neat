@@ -2,29 +2,31 @@ from abc import ABC
 from dataclasses import dataclass, field
 from functools import total_ordering
 
-from cognite.neat.rules.issues import IssueList
+from cognite.neat.issues import NeatIssueList
 
 
 @total_ordering
 @dataclass
 class UploadResultCore(ABC):
     name: str
+    error_messages: list[str] = field(default_factory=list)
+    issues: NeatIssueList = field(default_factory=NeatIssueList)
 
     def __lt__(self, other: object) -> bool:
-        if isinstance(other, UploadResult):
+        if isinstance(other, UploadDiffsCount):
             return self.name < other.name
         else:
             return NotImplemented
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, UploadResult):
+        if isinstance(other, UploadDiffsCount):
             return self.name == other.name
         else:
             return NotImplemented
 
 
 @dataclass
-class UploadResult(UploadResultCore):
+class UploadDiffsCount(UploadResultCore):
     created: int = 0
     deleted: int = 0
     changed: int = 0
@@ -33,8 +35,6 @@ class UploadResult(UploadResultCore):
     failed_created: int = 0
     failed_changed: int = 0
     failed_deleted: int = 0
-    error_messages: list[str] = field(default_factory=list)
-    issues: IssueList = field(default_factory=IssueList)
 
     @property
     def total(self) -> int:
@@ -64,3 +64,23 @@ class UploadResult(UploadResultCore):
             line.append(f"failed to delete {self.failed_deleted}")
 
         return f"{self.name.title()}: {', '.join(line)}"
+
+
+@dataclass
+class UploadResultIDs(UploadResultCore):
+    success: list[str] = field(default_factory=list)
+    failed: list[str] = field(default_factory=list)
+
+
+@dataclass
+class UploadDiffsID(UploadResultCore):
+    created: list[str] = field(default_factory=list)
+    changed: list[str] = field(default_factory=list)
+    unchanged: list[str] = field(default_factory=list)
+    failed: list[str] = field(default_factory=list)
+
+    def as_upload_result_ids(self) -> UploadResultIDs:
+        result = UploadResultIDs(name=self.name, error_messages=self.error_messages, issues=self.issues)
+        result.success = self.created + self.changed + self.unchanged
+        result.failed = self.failed
+        return result
