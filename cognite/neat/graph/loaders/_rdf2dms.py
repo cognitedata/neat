@@ -1,5 +1,4 @@
 import json
-import warnings
 from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
@@ -13,8 +12,9 @@ from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from pydantic import ValidationInfo, create_model, field_validator
 from pydantic.main import Model
 
+from cognite.neat.graph.issues import loader as loader_issues
 from cognite.neat.graph.stores import NeatGraphStoreBase
-from cognite.neat.rules.issues import NeatValidationError
+from cognite.neat.issues import NeatIssue
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 
@@ -52,7 +52,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         # Todo add error handling
         return cls(graph_store, schema.as_read_model(), instance_space, {})
 
-    def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatValidationError]:
+    def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue]:
         for view in self.data_model.views:
             view_id = view.as_id()
             # Todo Some tracking and creation of a structure to do validation
@@ -62,9 +62,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             for identifier, properties in _triples2dictionary(triples).items():
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
-                except Exception:
-                    # Todo Convert to NeatValidationError
-                    raise
+                except ValueError as e:
+                    error = loader_issues.InvalidInstanceError(type_="node", identifier=identifier, reason=str(e))
+                    if stop_on_exception:
+                        raise error.as_exception() from e
+                    yield error
                 yield from self._create_edges(identifier, properties, edge_by_properties)
 
     def load_into_cdf_iterable(self, client: CogniteClient, dry_run: bool = False) -> Iterable:
@@ -73,17 +75,16 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     def write_to_file(self, filepath: Path) -> None:
         if filepath.suffix not in [".json", ".yaml", ".yml"]:
             raise ValueError(f"File format {filepath.suffix} is not supported")
-        dumped: dict[str, list] = {"nodes": [], "edges": [], "errors": []}
+        dumped: dict[str, list] = {"nodes": [], "edges": [], "issues": []}
         for item in self.load(stop_on_exception=False):
             key = {
                 dm.NodeApply: "nodes",
                 dm.EdgeApply: "edges",
-                NeatValidationError: "errors",
+                NeatIssue: "issues",
             }.get(type(item))
             if key is None:
-                # Todo use appropriate warning
-                warnings.warn(f"Item {item} is not supported", UserWarning, stacklevel=2)
-                continue
+                # This should never happen, and is a bug in neat
+                raise ValueError(f"Item {item} is not supported. This is a bug in neat please report it.")
             dumped[key].append(item.dump())
         with filepath.open("w", encoding=self._encoding, newline=self._new_line) as f:
             if filepath.suffix == ".json":
@@ -157,14 +158,17 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def _create_edges(
         self, identifier: str, properties: dict[str, list[str]], edge_by_properties: dict[str, dm.EdgeConnection]
-    ) -> Iterable[dm.EdgeApply | NeatValidationError]:
+    ) -> Iterable[dm.EdgeApply | NeatIssue]:
         for prop, values in properties.items():
             if prop not in edge_by_properties:
                 continue
             edge = edge_by_properties[prop]
             if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
-                # Todo convert to NeatValidationError
-                raise ValueError(f"Multiple values for single edge {edge}")
+                yield loader_issues.InvalidInstanceError(
+                    type_="edge",
+                    identifier=identifier,
+                    reason=f"Multiple values for single edge {edge}. Expected only one.",
+                )
             for target in values:
                 yield dm.EdgeApply(
                     space=self.instance_space,

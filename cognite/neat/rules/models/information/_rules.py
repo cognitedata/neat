@@ -8,8 +8,8 @@ from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import PREFIXES
+from cognite.neat.issues import MultiValueError
 from cognite.neat.rules import exceptions, issues
-from cognite.neat.rules.issues.base import MultiValueError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
     BaseRules,

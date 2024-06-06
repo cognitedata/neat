@@ -1,21 +1,15 @@
-from abc import ABC
 from dataclasses import dataclass
 from typing import Any
 
-from cognite.neat.issues import NeatIssue
+from cognite.neat.issues import NeatError
 
 __all__ = [
-    "LoaderIssue",
     "InvalidInstanceError",
 ]
 
 
 @dataclass(frozen=True)
-class LoaderIssue(NeatIssue, ABC): ...
-
-
-@dataclass(frozen=True)
-class InvalidInstanceError(LoaderIssue):
+class InvalidInstanceError(NeatError):
     description = "The {type_} with identifier {identifier} is invalid and will be skipped. {reason}"
     fix = "Check the error message and correct the instance."
 
@@ -27,4 +21,8 @@ class InvalidInstanceError(LoaderIssue):
         return self.description.format(type_=self.type_, identifier=self.identifier, reason=self.reason)
 
     def dump(self) -> dict[str, Any]:
-        return {"error": type(self).__name__, "type": self.type_, "identifier": self.identifier, "reason": self.reason}
+        output = super().dump()
+        output["type"] = self.type_
+        output["identifier"] = self.identifier
+        output["reason"] = self.reason
+        return output
