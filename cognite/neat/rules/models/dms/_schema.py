@@ -795,8 +795,8 @@ class DMSSchema:
             for prop_id, prop in container.properties.items()
             if not prop.nullable
         }
-
-        return not bool(used_properties - required_properties)
+        # If a container has a required property that is not used by the view, the view is not writable
+        return not bool(required_properties - used_properties)
 
 
 @dataclass
