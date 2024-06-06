@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Generic, TypeVar
+from typing import Generic, Literal, TypeVar, overload
 
 from cognite.client import CogniteClient
 
 from cognite.neat.graph import NeatGraphStoreBase
 from cognite.neat.issues import NeatIssue
+from cognite.neat.utils.upload import UploadDiffsID, UploadResultIDs
 
 T_Output = TypeVar("T_Output")
 
@@ -33,9 +34,38 @@ class BaseLoader(ABC, Generic[T_Output]):
 
 
 class CDFLoader(BaseLoader[T_Output]):
-    @abstractmethod
-    def load_into_cdf_iterable(self, client: CogniteClient, dry_run: bool = False) -> Iterable:
-        raise NotImplementedError
+    @overload
+    def load_into_cdf_iterable(
+        self, client: CogniteClient, return_diffs: Literal[False] = False, dry_run: bool = False
+    ) -> Iterable[UploadResultIDs]: ...
 
-    def load_into_cdf(self, client: CogniteClient, dry_run: bool = False) -> list:
-        return list(self.load_into_cdf_iterable(client, dry_run))
+    @overload
+    def load_into_cdf_iterable(
+        self, client: CogniteClient, return_diffs: Literal[True], dry_run: bool = False
+    ) -> Iterable[UploadDiffsID]: ...
+
+    def load_into_cdf_iterable(
+        self, client: CogniteClient, return_diffs: bool = False, dry_run: bool = False
+    ) -> Iterable[UploadResultIDs] | Iterable[UploadDiffsID]:
+        yield from self._load_into_cdf_iterable(client, return_diffs, dry_run)
+
+    @overload
+    def load_into_cdf(
+        self, client: CogniteClient, return_diffs: Literal[False] = False, dry_run: bool = False
+    ) -> list[UploadResultIDs]: ...
+
+    @overload
+    def load_into_cdf(
+        self, client: CogniteClient, return_diffs: Literal[True], dry_run: bool = False
+    ) -> list[UploadDiffsID]: ...
+
+    def load_into_cdf(
+        self, client: CogniteClient, return_diffs: bool = False, dry_run: bool = False
+    ) -> list[UploadResultIDs] | list[UploadDiffsID]:
+        return list(self._load_into_cdf_iterable(client, return_diffs, dry_run))  # type: ignore[return-value]
+
+    @abstractmethod
+    def _load_into_cdf_iterable(
+        self, client: CogniteClient, return_diffs: bool = False, dry_run: bool = False
+    ) -> Iterable[UploadResultIDs] | Iterable[UploadDiffsID]:
+        raise

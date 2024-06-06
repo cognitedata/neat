@@ -18,6 +18,7 @@ from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
+from cognite.neat.utils.upload import UploadDiffsID, UploadResultIDs
 
 from ._base import CDFLoader
 
@@ -100,9 +101,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     yield error
                 yield from self._create_edges(identifier, properties, edge_by_properties, tracker)
             tracker.finish(repr(view_id))
-
-    def load_into_cdf_iterable(self, client: CogniteClient, dry_run: bool = False) -> Iterable:
-        raise NotImplementedError()
 
     def write_to_file(self, filepath: Path) -> None:
         if filepath.suffix not in [".json", ".yaml", ".yml"]:
@@ -223,6 +221,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     start_node=dm.DirectRelationReference(self.instance_space, identifier),
                     end_node=dm.DirectRelationReference(self.instance_space, target),
                 )
+
+    def _load_into_cdf_iterable(
+        self, client: CogniteClient, return_diffs: bool = False, dry_run: bool = False
+    ) -> Iterable[UploadResultIDs] | Iterable[UploadDiffsID]:
+        raise NotImplementedError("This method is not implemented for DMSLoader")
 
 
 def _triples2dictionary(
