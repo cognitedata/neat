@@ -1,15 +1,16 @@
 import sys
 import warnings
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import UserList
 from collections.abc import Sequence
 from dataclasses import dataclass
-from functools import total_ordering
-from typing import Any, ClassVar
+from typing import Any
 from warnings import WarningMessage
 
 import pandas as pd
 from pydantic_core import ErrorDetails
+
+from cognite.neat.issues import NeatIssue
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
@@ -27,35 +28,8 @@ __all__ = [
 ]
 
 
-@total_ordering
 @dataclass(frozen=True)
-class ValidationIssue(ABC):
-    description: ClassVar[str]
-    fix: ClassVar[str]
-
-    def message(self) -> str:
-        """Return a human-readable message for the issue.
-
-        This is the default implementation, which returns the description.
-        It is recommended to override this method in subclasses with a more
-        specific message.
-        """
-        return self.description
-
-    @abstractmethod
-    def dump(self) -> dict[str, Any]:
-        """Return a dictionary representation of the issue."""
-        raise NotImplementedError()
-
-    def __lt__(self, other: "ValidationIssue") -> bool:
-        if not isinstance(other, ValidationIssue):
-            return NotImplemented
-        return (type(self).__name__, self.message()) < (type(other).__name__, other.message())
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ValidationIssue):
-            return NotImplemented
-        return (type(self).__name__, self.message()) == (type(other).__name__, other.message())
+class ValidationIssue(NeatIssue, ABC): ...
 
 
 @dataclass(frozen=True)
