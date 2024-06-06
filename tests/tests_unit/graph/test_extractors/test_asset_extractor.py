@@ -3,7 +3,7 @@ from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.graph.extractors import AssetHierarchyExtractor
+from cognite.neat.graph.extractors import AssetsExtractor
 from tests.tests_unit.graph.test_extractors.constants import ASSET_EXTRACTOR_DATA
 
 
@@ -13,7 +13,7 @@ def test_asset_extractor():
 
     g = Graph()
 
-    for triple in AssetHierarchyExtractor.from_dataset(client_mock, data_set_external_id="nordic44").extract():
+    for triple in AssetsExtractor.from_dataset(client_mock, data_set_external_id="nordic44").extract():
         g.add(triple)
 
     assert len(g) == 18675

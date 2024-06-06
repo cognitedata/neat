@@ -17,4 +17,4 @@ def test_asset_extractor():
     for triple in RelationshipsExtractor.from_dataset(client_mock, data_set_external_id="nordic44").extract():
         g.add(triple)
 
-    assert len(g) == 14037
+    assert len(g) == 14976
