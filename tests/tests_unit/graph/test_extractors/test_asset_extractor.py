@@ -17,4 +17,9 @@ def test_asset_extractor():
         g.add(triple)
 
     assert len(g) == 18675
-    assert len(list(g.query(f"Select ?s Where {{ ?s <{DEFAULT_NAMESPACE['label']}> 'Substation'}}"))) == 44
+    assert (
+        len(
+            list(g.query(f"Select ?s Where {{ ?s <{DEFAULT_NAMESPACE['label']}> <{DEFAULT_NAMESPACE['Substation']}>}}"))
+        )
+        == 44
+    )

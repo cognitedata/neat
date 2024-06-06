@@ -2,6 +2,7 @@ from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
 from typing import cast
+from urllib.parse import quote
 
 import pytz
 from cognite.client import CogniteClient
@@ -112,8 +113,9 @@ class FilesExtractor(BaseExtractor):
 
         if file.labels:
             for label in file.labels:
-                # external_id can create ill-formed URIs, so we opt for Literal instead
-                triples.append((id_, namespace.label, Literal(label.dump()["externalId"])))
+                # external_id can create ill-formed URIs, so we create websafe URIs
+                # since labels do not have internal ids, we use the external_id as the id
+                triples.append((id_, namespace.label, namespace[quote(label.dump()["externalId"])]))
 
         if file.security_categories:
             for category in file.security_categories:
