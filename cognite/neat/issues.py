@@ -58,7 +58,7 @@ class NeatError(NeatIssue, ABC):
 
 
 @dataclass(frozen=True)
-class NeatWarning(NeatError, ABC, UserWarning):
+class NeatWarning(NeatIssue, ABC, UserWarning):
     def dump(self) -> dict[str, Any]:
         return {"warningType": type(self).__name__}
 
