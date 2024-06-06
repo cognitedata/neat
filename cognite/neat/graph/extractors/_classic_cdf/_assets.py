@@ -65,7 +65,7 @@ class AssetsExtractor(BaseExtractor):
 
         if asset.source:
             triples.append((id_, namespace.source, Literal(asset.source)))
-            
+
         # properties ref creation and update
         triples.append(
             (
