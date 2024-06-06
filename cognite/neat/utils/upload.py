@@ -78,3 +78,9 @@ class UploadDiffsID(UploadResultCore):
     changed: list[str] = field(default_factory=list)
     unchanged: list[str] = field(default_factory=list)
     failed: list[str] = field(default_factory=list)
+
+    def as_upload_result_ids(self) -> UploadResultIDs:
+        result = UploadResultIDs(name=self.name, error_messages=self.error_messages, issues=self.issues)
+        result.success = self.created + self.changed + self.unchanged
+        result.failed = self.failed
+        return result

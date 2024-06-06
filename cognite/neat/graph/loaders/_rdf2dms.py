@@ -267,7 +267,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     result.changed.append(repr(instance.as_id()))
                 else:
                     result.unchanged.append(repr(instance.as_id()))
-        return result
+        return result if return_diffs else result.as_upload_result_ids()  # type: ignore[return-value]
 
 
 def _triples2dictionary(
