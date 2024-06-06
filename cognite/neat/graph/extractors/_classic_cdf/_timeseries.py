@@ -40,7 +40,7 @@ class TimeSeriesExtractor(BaseExtractor):
         return cls(TimeSeriesList.load(Path(file_path).read_text()), namespace)
 
     def extract(self) -> Iterable[Triple]:
-        """Extrac timeseries an asset with the given asset_id."""
+        """Extract timeseries an asset with the given asset_id."""
         for timeseries in self.timeseries:
             yield from self._timeseries2triples(timeseries, self.namespace)
 
@@ -53,13 +53,13 @@ class TimeSeriesExtractor(BaseExtractor):
 
         # Create attributes
 
-        if timeseries.external_id is not None:
+        if timeseries.external_id:
             triples.append((id_, namespace.external_id, Literal(timeseries.external_id)))
 
-        if timeseries.name is not None:
+        if timeseries.name:
             triples.append((id_, namespace.name, Literal(timeseries.name)))
 
-        if timeseries.is_string is not None:
+        if timeseries.is_string:
             triples.append((id_, namespace.is_string, Literal(timeseries.is_string)))
 
         if timeseries.metadata:
@@ -71,24 +71,25 @@ class TimeSeriesExtractor(BaseExtractor):
                     except ValidationError:
                         triples.append((id_, namespace[key], Literal(type_aware_value)))
 
-        if timeseries.unit is not None:
+        if timeseries.unit:
             triples.append((id_, namespace.unit, Literal(timeseries.unit)))
 
-        triples.append((id_, namespace.is_step, Literal(timeseries.is_step)))
+        if namespace.is_step:
+            triples.append((id_, namespace.is_step, Literal(timeseries.is_step)))
 
-        if timeseries.description is not None:
+        if timeseries.description:
             triples.append((id_, namespace.description, Literal(timeseries.description)))
 
-        if timeseries.security_categories is not None:
+        if timeseries.security_categories:
             for category in timeseries.security_categories:
                 triples.append((id_, namespace.security_categories, Literal(category)))
 
-        if timeseries.created_time is not None:
+        if timeseries.created_time:
             triples.append(
                 (id_, namespace.created_time, Literal(datetime.fromtimestamp(timeseries.created_time / 1000, pytz.utc)))
             )
 
-        if timeseries.last_updated_time is not None:
+        if timeseries.last_updated_time:
             triples.append(
                 (
                     id_,
@@ -97,21 +98,21 @@ class TimeSeriesExtractor(BaseExtractor):
                 )
             )
 
-        if timeseries.legacy_name is not None:
+        if timeseries.legacy_name:
             triples.append((id_, namespace.legacy_name, Literal(timeseries.legacy_name)))
 
         # Create connections
-        if timeseries.unit_external_id is not None:
+        if timeseries.unit_external_id:
             # try to create connection to QUDT unit catalog
             try:
                 triples.append((id_, namespace.unit_external_id, URIRef(str(AnyHttpUrl(timeseries.unit_external_id)))))
             except ValidationError:
                 triples.append((id_, namespace.unit_external_id, Literal(timeseries.unit_external_id)))
 
-        if timeseries.data_set_id is not None:
+        if timeseries.data_set_id:
             triples.append((id_, namespace.data_set_id, namespace[str(timeseries.data_set_id)]))
 
-        if timeseries.asset_id is not None:
+        if timeseries.asset_id:
             triples.append((id_, namespace.asset, namespace[str(timeseries.asset_id)]))
 
         return triples
