@@ -79,7 +79,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if not self.data_model:
             # There should already be an error in this case.
             return
-        tracker = self._tracker([repr(v.as_id()) for v in self.data_model.views])
+        view_ids = [repr(v.as_id()) for v in self.data_model.views]
+        tracker = self._tracker(type(self).__name__, view_ids, "views")
         for view in self.data_model.views:
             view_id = view.as_id()
             tracker.start(repr(view_id))
