@@ -14,7 +14,7 @@ from cognite.neat.graph.models import Triple
 from cognite.neat.utils.utils import string_to_ideal_type
 
 
-class AssetHierarchyExtractor(BaseExtractor):
+class AssetsExtractor(BaseExtractor):
     def __init__(
         self,
         assets: Iterable[Asset],
@@ -48,8 +48,11 @@ class AssetHierarchyExtractor(BaseExtractor):
     @classmethod
     def _asset2triples(cls, asset: Asset, namespace: Namespace) -> list[Triple]:
         """Converts an asset to triples."""
+
+        # Set rdf type
         triples: list[Triple] = [(namespace[str(asset.id)], RDF.type, namespace["Asset"])]
 
+        # Create attributes
         if asset.name:
             triples.append((namespace[str(asset.id)], namespace["name"], Literal(asset.name)))
 
@@ -57,7 +60,7 @@ class AssetHierarchyExtractor(BaseExtractor):
             triples.append((namespace[str(asset.id)], namespace["description"], Literal(asset.description)))
 
         if asset.external_id:
-            triples.append((namespace[str(asset.id)], namespace["externalId"], Literal(asset.external_id)))
+            triples.append((namespace[str(asset.id)], namespace["external_id"], Literal(asset.external_id)))
 
         if asset.source:
             triples.append((namespace[str(asset.id)], namespace["source"], Literal(asset.source)))
@@ -66,26 +69,17 @@ class AssetHierarchyExtractor(BaseExtractor):
         triples.append(
             (
                 namespace[str(asset.id)],
-                namespace["createdTime"],
+                namespace["created_time"],
                 Literal(datetime.fromtimestamp(asset.created_time / 1000, pytz.utc)),
             )
         )
         triples.append(
             (
                 namespace[str(asset.id)],
-                namespace["lastUpdatedTime"],
+                namespace["last_updated_time"],
                 Literal(datetime.fromtimestamp(asset.last_updated_time / 1000, pytz.utc)),
             )
         )
-
-        if asset.parent_id:
-            triples.append((namespace[str(asset.id)], namespace["parent"], namespace[str(asset.parent_id)]))
-
-        if asset.root_id:
-            triples.append((namespace[str(asset.id)], namespace["root"], namespace[str(asset.root_id)]))
-
-        if asset.data_set_id:
-            triples.append((namespace[str(asset.id)], namespace["dataset"], namespace[str(asset.data_set_id)]))
 
         if asset.labels:
             for label in asset.labels:
@@ -96,5 +90,15 @@ class AssetHierarchyExtractor(BaseExtractor):
             for key, value in asset.metadata.items():
                 if value:
                     triples.append((namespace[str(asset.id)], namespace[key], Literal(string_to_ideal_type(value))))
+
+        # Create connections:
+        if asset.parent_id:
+            triples.append((namespace[str(asset.id)], namespace["parent"], namespace[str(asset.parent_id)]))
+
+        if asset.root_id:
+            triples.append((namespace[str(asset.id)], namespace["root"], namespace[str(asset.root_id)]))
+
+        if asset.data_set_id:
+            triples.append((namespace[str(asset.id)], namespace["dataset"], namespace[str(asset.data_set_id)]))
 
         return triples
