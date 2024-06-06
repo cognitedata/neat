@@ -25,10 +25,33 @@ TRIPLES = tuple(
         (_neat["Car2"], _neat["color"], _neat["Red"]),
     ]
 )
+MODEL_SPACE = "sp_example_car"
+CONTAINERS = dm.ContainerApplyList(
+    [
+        dm.ContainerApply(
+            space=MODEL_SPACE,
+            external_id="Car",
+            properties={
+                "year": dm.ContainerProperty(dm.Int64()),
+                "color": dm.ContainerProperty(dm.DirectRelation(is_list=False)),
+            },
+        ),
+        dm.ContainerApply(
+            space=MODEL_SPACE,
+            external_id="Manufacturer",
+            properties={"name": dm.ContainerProperty(dm.Text())},
+        ),
+        dm.ContainerApply(
+            space=MODEL_SPACE,
+            external_id="Color",
+            properties={"name": dm.ContainerProperty(dm.Text())},
+        ),
+    ]
+)
 
 CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
-    space="sp_example",
-    external_id="Car Model",
+    space=MODEL_SPACE,
+    external_id="CarModel",
     version="1",
     is_global=False,
     name=None,
@@ -37,32 +60,32 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     created_time=1,
     views=[
         dm.View(
-            space="sp_example",
+            space=MODEL_SPACE,
             external_id="Car",
             version="1",
             properties={
                 "make": dm.MultiEdgeConnection(
-                    source=dm.ViewId("sp_example", "Manufacturer", "1"),
-                    type=dm.DirectRelationReference("sp_example", "Car.Manufacturer"),
+                    source=dm.ViewId(MODEL_SPACE, "Manufacturer", "1"),
+                    type=dm.DirectRelationReference(MODEL_SPACE, "Car.Manufacturer"),
                     name=None,
                     description=None,
                     edge_source=None,
                     direction="outwards",
                 ),
                 "year": dm.MappedProperty(
-                    container=dm.ContainerId("my_example", "Car"),
+                    container=dm.ContainerId(MODEL_SPACE, "Car"),
                     container_property_identifier="year",
                     type=dm.Int64(),
                     nullable=False,
                     auto_increment=False,
                 ),
                 "color": dm.MappedProperty(
-                    container=dm.ContainerId("my_example", "Car"),
+                    container=dm.ContainerId(MODEL_SPACE, "Car"),
                     container_property_identifier="color",
                     type=dm.DirectRelation(is_list=False),
                     nullable=False,
                     auto_increment=False,
-                    source=dm.ViewId("sp_example", "Color", "1"),
+                    source=dm.ViewId(MODEL_SPACE, "Color", "1"),
                 ),
             },
             last_updated_time=0,
@@ -76,12 +99,12 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
             is_global=False,
         ),
         dm.View(
-            space="sp_example",
+            space=MODEL_SPACE,
             external_id="Manufacturer",
             version="1",
             properties={
                 "name": dm.MappedProperty(
-                    container=dm.ContainerId("my_example", "Manufacturer"),
+                    container=dm.ContainerId(MODEL_SPACE, "Manufacturer"),
                     container_property_identifier="name",
                     type=dm.Text(),
                     nullable=False,
@@ -99,12 +122,12 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
             is_global=False,
         ),
         dm.View(
-            space="sp_example",
+            space=MODEL_SPACE,
             external_id="Color",
             version="1",
             properties={
                 "name": dm.MappedProperty(
-                    container=dm.ContainerId("my_example", "Color"),
+                    container=dm.ContainerId(MODEL_SPACE, "Color"),
                     container_property_identifier="name",
                     type=dm.Text(),
                     nullable=False,
@@ -124,6 +147,11 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     ],
 )
 
+NODE_TYPES = dm.NodeApplyList(
+    [
+        dm.NodeApply(MODEL_SPACE, "Car.Manufacturer"),
+    ]
+)
 
 INSTANCE_SPACE = "sp_cars"
 INSTANCES = [
@@ -140,7 +168,7 @@ INSTANCES = [
     dm.EdgeApply(
         space=INSTANCE_SPACE,
         external_id="Car1.make.Toyota",
-        type=dm.DirectRelationReference("sp_example", "Car.Manufacturer"),
+        type=dm.DirectRelationReference(MODEL_SPACE, "Car.Manufacturer"),
         start_node=dm.DirectRelationReference(INSTANCE_SPACE, "Car1"),
         end_node=dm.DirectRelationReference(INSTANCE_SPACE, "Toyota"),
     ),
@@ -157,7 +185,7 @@ INSTANCES = [
     dm.EdgeApply(
         space=INSTANCE_SPACE,
         external_id="Car2.make.Ford",
-        type=dm.DirectRelationReference("sp_example", "Car.Manufacturer"),
+        type=dm.DirectRelationReference(MODEL_SPACE, "Car.Manufacturer"),
         start_node=dm.DirectRelationReference(INSTANCE_SPACE, "Car2"),
         end_node=dm.DirectRelationReference(INSTANCE_SPACE, "Ford"),
     ),
