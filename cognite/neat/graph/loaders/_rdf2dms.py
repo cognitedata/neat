@@ -1,3 +1,4 @@
+import itertools
 import json
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
@@ -10,6 +11,7 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.capabilities import Capability, DataModelInstancesAcl
 from cognite.client.data_classes.data_modeling import ViewId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
+from cognite.client.exceptions import CogniteAPIError
 from pydantic import ValidationInfo, create_model, field_validator
 from pydantic.main import Model
 
@@ -19,7 +21,7 @@ from cognite.neat.graph.stores import NeatGraphStoreBase
 from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
-from cognite.neat.utils.upload import UploadDiffsID, UploadResultIDs
+from cognite.neat.utils.upload import UploadDiffsID
 
 from ._base import CDFLoader
 
@@ -235,10 +237,37 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             )
         ]
 
-    def _load_into_cdf_iterable(
-        self, client: CogniteClient, return_diffs: bool = False, dry_run: bool = False
-    ) -> Iterable[UploadResultIDs] | Iterable[UploadDiffsID]:
-        raise NotImplementedError("This method is not implemented for DMSLoader")
+    def _upload_to_cdf(
+        self,
+        client: CogniteClient,
+        items: list[dm.InstanceApply],
+        return_diffs: bool,
+        dry_run: bool,
+        read_issues: NeatIssueList,
+    ) -> UploadDiffsID:
+        result = UploadDiffsID(name=type(self).__name__, issues=read_issues)
+        try:
+            nodes = [item for item in items if isinstance(item, dm.NodeApply)]
+            edges = [item for item in items if isinstance(item, dm.EdgeApply)]
+            upserted = client.data_modeling.instances.apply(
+                nodes,
+                edges,
+                auto_create_end_nodes=True,
+                auto_create_start_nodes=True,
+                skip_on_version_conflict=True,
+            )
+        except CogniteAPIError as e:
+            result.error_messages.append(str(e))
+            result.failed.append([repr(instance.as_id()) for instance in items])  # type: ignore[arg-type, attr-defined]
+        else:
+            for instance in itertools.chain(upserted.nodes, upserted.edges):
+                if instance.was_modified and instance.created_time == instance.last_updated_time:
+                    result.created.append(repr(instance.as_id()))
+                elif instance.was_modified:
+                    result.changed.append(repr(instance.as_id()))
+                else:
+                    result.unchanged.append(repr(instance.as_id()))
+        return result
 
 
 def _triples2dictionary(

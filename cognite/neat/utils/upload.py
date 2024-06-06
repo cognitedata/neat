@@ -75,10 +75,6 @@ class UploadResultIDs(UploadResultCore):
 @dataclass
 class UploadDiffsID(UploadResultCore):
     created: list[str] = field(default_factory=list)
-    deleted: list[str] = field(default_factory=list)
     changed: list[str] = field(default_factory=list)
     unchanged: list[str] = field(default_factory=list)
-    skipped: list[str] = field(default_factory=list)
-    failed_created: list[str] = field(default_factory=list)
-    failed_changed: list[str] = field(default_factory=list)
-    failed_deleted: list[str] = field(default_factory=list)
+    failed: list[str] = field(default_factory=list)
