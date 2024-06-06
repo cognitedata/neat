@@ -110,7 +110,7 @@ class TimeSeriesExtractor(BaseExtractor):
                 triples.append((id_, namespace.unit_external_id, Literal(timeseries.unit_external_id)))
 
         if timeseries.data_set_id:
-            triples.append((id_, namespace.data_set_id, namespace[str(timeseries.data_set_id)]))
+            triples.append((id_, namespace.dataset, namespace[str(timeseries.data_set_id)]))
 
         if timeseries.asset_id:
             triples.append((id_, namespace.asset, namespace[str(timeseries.asset_id)]))
