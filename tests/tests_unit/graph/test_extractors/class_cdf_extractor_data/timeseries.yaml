@@ -1,0 +1,25 @@
+- externalId: SubstationActualVoltageLevel
+  name: Substation Actual Voltage Level
+  isString: false
+  unit: V
+  assetId: 78504378486679
+  isStep: false
+  description: Substation actual voltage level measured in volts (V).
+  securityCategories: []
+  dataSetId: 6931754270713290
+  id: 7075848883606566
+  createdTime: 1668864716048
+  lastUpdatedTime: 1696593983429
+
+- externalId: SubstationCurrentLevel
+  name: Substation Current Level
+  isString: false
+  unit: A
+  assetId: 78504378486679
+  isStep: false
+  description: Substation current level measured in amperes (A).
+  securityCategories: []
+  dataSetId: 6931754270713290
+  id: 7015848883606566
+  createdTime: 1668864716048
+  lastUpdatedTime: 1696593983429
