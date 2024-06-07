@@ -93,19 +93,7 @@ class Provenance(UserList[T_Change]):
         return any(change.description == this for change in self)
 
     def __delitem__(self, *args, **kwargs):
-        raise TypeError("Cannot delete elements of ImmutableList")
+        raise TypeError("Cannot delete change from provenance")
 
     def __setitem__(self, *args, **kwargs):
-        raise TypeError("Cannot modify elements of ImmutableList")
-
-    def extend(self, *args, **kwargs):
-        raise TypeError("Cannot add elements to ImmutableList")
-
-    def insert(self, *args, **kwargs):
-        raise TypeError("Cannot add elements to ImmutableList")
-
-    def remove(self, *args, **kwargs):
-        raise TypeError("Cannot remove elements from ImmutableList")
-
-    def pop(self, *args, **kwargs):
-        raise TypeError("Cannot remove elements from ImmutableList")
+        raise TypeError("Cannot modify change from provenance")
