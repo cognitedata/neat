@@ -1,0 +1,93 @@
+- externalId: room-cim-node
+  name: Root CIM Node
+  dataSetId: 6931754270713290
+  metadata:
+    IdentifiedObject.name: Root CIM Node
+    active: "false"
+    cdfResourceType: Asset
+    end_time: "2023-10-23 14:19:33.101443+00:00"
+    identifier: room-cim-node
+    type: RootCIMNode
+    update_time: "2023-10-23 14:19:33.101443+00:00"
+  labels:
+    - externalId: historic
+    - externalId: RootCIMNode
+  id: 4901062138807933
+  createdTime: 1669733555170
+  lastUpdatedTime: 1698070774246
+  rootId: 4901062138807933
+- externalId: 2dd9048c-bdfb-11e5-94fa-c8f73332c8f4
+  name: "NO"
+  parentId: 4901062138807933
+  parentExternalId: room-cim-node
+  dataSetId: 6931754270713290
+  metadata:
+    IdentifiedObject.description: Nordic
+    IdentifiedObject.name: "NO"
+    RootCIMNode.node: room-cim-node
+    active: "false"
+    cdfResourceType: Asset
+    end_time: "2023-10-23 14:19:33.101345+00:00"
+    identifier: 2dd9048c-bdfb-11e5-94fa-c8f73332c8f4
+    type: GeographicalRegion
+    update_time: "2023-10-23 14:19:33.101345+00:00"
+  labels:
+    - externalId: historic
+    - externalId: GeographicalRegion
+  id: 4288662884680989
+  createdTime: 1669733555261
+  lastUpdatedTime: 1698070774246
+  rootId: 4901062138807933
+- externalId: f17696cf-9aeb-11e5-91da-b8763fd99c5f
+  name: SE4 SGR
+  parentId: 4288662884680989
+  parentExternalId: 2dd9048c-bdfb-11e5-94fa-c8f73332c8f4
+  dataSetId: 6931754270713290
+  metadata:
+    IdentifiedObject.name: SE4 SGR
+    SubGeographicalRegion.Region: 2dd9048c-bdfb-11e5-94fa-c8f73332c8f4
+    active: "false"
+    cdfResourceType: Asset
+    end_time: "2023-10-23 14:19:33.098812+00:00"
+    identifier: f17696cf-9aeb-11e5-91da-b8763fd99c5f
+    type: SubGeographicalRegion
+    update_time: "2023-10-23 14:19:33.098812+00:00"
+  labels:
+    - externalId: SubGeographicalRegion
+    - externalId: historic
+  id: 5132527530441957
+  createdTime: 1669733555350
+  lastUpdatedTime: 1698070774246
+  rootId: 4901062138807933
+- externalId: f17696ca-9aeb-11e5-91da-b8763fd99c5f
+  name: MALMO
+  parentId: 5132527530441957
+  parentExternalId: f17696cf-9aeb-11e5-91da-b8763fd99c5f
+  dataSetId: 6931754270713290
+  metadata:
+    IdentifiedObject.name: MALMO
+    Substation.EnergySchedulingArea: d8739dc3-ffab-4457-b819-a20579c4d0fc
+    Substation.Region: f17696cf-9aeb-11e5-91da-b8763fd99c5f
+    Substation.Terminal:
+      _2dd901be-bdfb-11e5-94fa-c8f73332c8f4, _2dd90244-bdfb-11e5-94fa-c8f73332c8f4,
+      _2dd90247-bdfb-11e5-94fa-c8f73332c8f4, _2dd9024a-bdfb-11e5-94fa-c8f73332c8f4,
+      _2dd9024d-bdfb-11e5-94fa-c8f73332c8f4, _2dd90347-bdfb-11e5-94fa-c8f73332c8f4,
+      _2dd9034a-bdfb-11e5-94fa-c8f73332c8f4, _2dd9034d-bdfb-11e5-94fa-c8f73332c8f4,
+      _2dd90350-bdfb-11e5-94fa-c8f73332c8f4, _2dd90353-bdfb-11e5-94fa-c8f73332c8f4,
+      _2dd90356-bdfb-11e5-94fa-c8f73332c8f4, _2dd90432-bdfb-11e5-94fa-c8f73332c8f4,
+      _2dd90435-bdfb-11e5-94fa-c8f73332c8f4, _2dd90391-bdfb-11e5-94fa-c8f73332c8f4,
+      _2dd9039a-bdfb-11e5-94fa-c8f73332c8f4, _2dd9039d-bdfb-11e5-94fa-c8f73332c8f4,
+      _2dd903a6-bdfb-11e5-94fa-c8f73332c8f4, _2dd903a9-bdfb-11e5-94fa-c8f73332c8f4
+    active: "false"
+    cdfResourceType: Asset
+    end_time: "2023-10-23 14:19:33.105265+00:00"
+    identifier: f17696ca-9aeb-11e5-91da-b8763fd99c5f
+    type: Substation
+    update_time: "2023-10-23 14:19:33.105265+00:00"
+  labels:
+    - externalId: Substation
+    - externalId: historic
+  id: 78504378486679
+  createdTime: 1669733555456
+  lastUpdatedTime: 1698070774246
+  rootId: 4901062138807933
