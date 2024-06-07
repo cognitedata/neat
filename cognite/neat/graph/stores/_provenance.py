@@ -91,3 +91,21 @@ class Provenance(UserList[T_Change]):
 
     def did_this_happen(self, this: str) -> bool:
         return any(change.description == this for change in self)
+
+    def __delitem__(self, *args, **kwargs):
+        raise TypeError("Cannot delete elements of ImmutableList")
+
+    def __setitem__(self, *args, **kwargs):
+        raise TypeError("Cannot modify elements of ImmutableList")
+
+    def extend(self, *args, **kwargs):
+        raise TypeError("Cannot add elements to ImmutableList")
+
+    def insert(self, *args, **kwargs):
+        raise TypeError("Cannot add elements to ImmutableList")
+
+    def remove(self, *args, **kwargs):
+        raise TypeError("Cannot remove elements from ImmutableList")
+
+    def pop(self, *args, **kwargs):
+        raise TypeError("Cannot remove elements from ImmutableList")
