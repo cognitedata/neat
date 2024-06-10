@@ -8,7 +8,7 @@ from rdflib import Literal as RdfLiteral
 
 import cognite.neat.rules.issues as issues
 from cognite.neat.constants import PREFIXES
-from cognite.neat.graph.stores import NeatGraphStoreBase
+from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models import InformationRules, RoleTypes
@@ -47,7 +47,7 @@ class InferenceImporter(BaseImporter):
         self.max_number_of_instance = max_number_of_instance
 
     @classmethod
-    def from_graph_store(cls, store: NeatGraphStoreBase, max_number_of_instance: int = -1):
+    def from_graph_store(cls, store: NeatGraphStore, max_number_of_instance: int = -1):
         issue_list = IssueList(title="Inferred from graph store")
 
         return cls(issue_list, store.graph, max_number_of_instance=max_number_of_instance)

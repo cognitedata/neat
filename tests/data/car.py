@@ -1,8 +1,12 @@
+from pathlib import Path
+
 from cognite.client import data_modeling as dm
 from rdflib import RDF
 from rdflib.term import Literal
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
+from cognite.neat.rules import importers
+from cognite.neat.rules.models import InformationRules
 
 _neat = DEFAULT_NAMESPACE
 TRIPLES = tuple(
@@ -48,6 +52,10 @@ CONTAINERS = dm.ContainerApplyList(
         ),
     ]
 )
+
+CAR_RULES: InformationRules = importers.ExcelImporter(
+    Path(__file__).resolve().parent / "info-arch-car-rules.xlsx"
+).to_rules()[0]
 
 CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     space=MODEL_SPACE,

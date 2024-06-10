@@ -1,7 +1,8 @@
-from cognite.neat.graph.stores import MemoryStore
+from cognite.neat.graph.stores import NeatGraphStore
 
 
 def test_provenance():
-    store = MemoryStore()
+    store = NeatGraphStore.from_memory_store()
 
-    assert store.provenance[0].activity.used == "MemoryStore.__init__"
+    assert store.provenance[0].activity.used == "NeatGraphStore.__init__"
+    assert store.provenance[0].description == "Initialize graph store as Memory"
