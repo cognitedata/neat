@@ -1,11 +1,12 @@
+import sys
 import warnings
 from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import Self, cast
+from typing import cast
 
 import pytz
-from rdflib import RDF, Graph, URIRef
+from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from rdflib.query import ResultRow
 
@@ -17,6 +18,11 @@ from cognite.neat.utils import remove_namespace
 from cognite.neat.utils.auxiliary import local_import
 
 from ._provenance import Change, Provenance
+
+if sys.version_info < (3, 11):
+    from typing_extensions import Self
+else:
+    from typing import Self
 
 
 class NeatGraphStore:
@@ -49,21 +55,20 @@ class NeatGraphStore:
         )
         self.rules = rules
 
-        if self.rules:
-            self._upsert_prefixes(self.provenance, self.graph, self.rules)
+        if self.rules and self.rules.prefixes:
+            self._upsert_prefixes(self.rules.prefixes)
 
         self.queries = _Queries(self)
 
-    @classmethod
-    def _upsert_prefixes(cls, provenance: Provenance, graph: Graph, rules: InformationRules) -> None:
+    def _upsert_prefixes(self, prefixes: dict[str, Namespace]) -> None:
         """Adds prefixes to the graph store."""
         _start = datetime.now(pytz.utc)
-        for prefix, namespace in rules.prefixes.items():
-            graph.bind(prefix, namespace)
+        for prefix, namespace in prefixes.items():
+            self.graph.bind(prefix, namespace)
 
-        provenance.append(
+        self.provenance.append(
             Change.record(
-                activity=f"{type(cls).__name__}._upsert_prefixes",
+                activity=f"{type(self).__name__}._upsert_prefixes",
                 start=_start,
                 end=datetime.now(pytz.utc),
                 description="Upsert prefixes to graph store",
