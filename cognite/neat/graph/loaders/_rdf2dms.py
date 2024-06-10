@@ -17,7 +17,7 @@ from pydantic.main import Model
 
 from cognite.neat.graph._tracking import LogTracker, Tracker
 from cognite.neat.graph.issues import loader as loader_issues
-from cognite.neat.graph.stores import NeatGraphStoreBase
+from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
@@ -29,7 +29,7 @@ from ._base import CDFLoader
 class DMSLoader(CDFLoader[dm.InstanceApply]):
     def __init__(
         self,
-        graph_store: NeatGraphStoreBase,
+        graph_store: NeatGraphStore,
         data_model: dm.DataModel[dm.View] | None,
         instance_space: str,
         class_by_view_id: dict[ViewId, str] | None = None,
@@ -48,7 +48,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         cls,
         client: CogniteClient,
         data_model_id: dm.DataModelId,
-        graph_store: NeatGraphStoreBase,
+        graph_store: NeatGraphStore,
         instance_space: str,
     ) -> "DMSLoader":
         issues: list[NeatIssue] = []
@@ -61,7 +61,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         return cls(graph_store, data_model, instance_space, {}, issues)
 
     @classmethod
-    def from_rules(cls, rules: DMSRules, graph_store: NeatGraphStoreBase, instance_space: str) -> "DMSLoader":
+    def from_rules(cls, rules: DMSRules, graph_store: NeatGraphStore, instance_space: str) -> "DMSLoader":
         issues: list[NeatIssue] = []
         data_model: dm.DataModel[dm.View] | None = None
         try:

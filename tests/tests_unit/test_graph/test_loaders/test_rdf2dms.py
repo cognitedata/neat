@@ -1,20 +1,22 @@
 import pytest
 
 from cognite.neat.graph.loaders import DMSLoader
-from cognite.neat.graph.stores import MemoryStore
+from cognite.neat.graph.stores import NeatGraphStore
 from tests.data import car
 
 
 @pytest.fixture()
-def car_case() -> MemoryStore:
-    store = MemoryStore()
-    store.init_graph()
-    store.add_triples(car.TRIPLES)
+def car_case() -> NeatGraphStore:
+    print(car.CAR_RULES)
+    store = NeatGraphStore.from_memory_store(rules=car.CAR_RULES)
+
+    for triple in car.TRIPLES:
+        store.graph.add(triple)
     return store
 
 
 class TestDMSLoader:
-    def test_load_car_example(self, car_case: MemoryStore) -> None:
+    def test_load_car_example(self, car_case: NeatGraphStore) -> None:
         loader = DMSLoader(
             car_case,
             car.CAR_MODEL,

@@ -16,6 +16,20 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.80.0] - 10-06-24
+
+### Improved
+- Single `NeatGraphStore` instantiated via three options:
+  - `from_memory_store`
+  - `from_oxi_store`
+  - `from_sparql_store`
+### Removed
+- Removed various superclassing of `NeatGraphStore`
+- Remove Prometheus reminisce in code base
+- Remove logging
+### Added
+- `RdfFileExtractor` graph extractor added.
+
 ## [0.79.0] - 10-06-24
 ### Added
 - `TimeSeriesExtractor` graph extractor added.

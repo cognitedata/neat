@@ -6,6 +6,7 @@ from ._classic_cdf._relationships import RelationshipsExtractor
 from ._classic_cdf._sequences import SequencesExtractor
 from ._classic_cdf._timeseries import TimeSeriesExtractor
 from ._mock_graph_generator import MockGraphGenerator
+from ._rdf_file import RdfFileExtractor
 
 __all__ = [
     "AssetsExtractor",
@@ -16,4 +17,18 @@ __all__ = [
     "EventsExtractor",
     "FilesExtractor",
     "LabelsExtractor",
+    "RdfFileExtractor",
 ]
+
+
+TripleExtractors = (
+    AssetsExtractor
+    | MockGraphGenerator
+    | RelationshipsExtractor
+    | TimeSeriesExtractor
+    | SequencesExtractor
+    | EventsExtractor
+    | FilesExtractor
+    | LabelsExtractor
+    | RdfFileExtractor
+)
