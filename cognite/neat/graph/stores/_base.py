@@ -1,4 +1,5 @@
 import logging
+import warnings
 from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
@@ -244,9 +245,11 @@ class _Queries:
                 f"WHERE {{ ?instance a <{self.store.rules.metadata.namespace[rdf_type]}> . ?instance ?prop ?value . }} "
                 "order by ?instance"
             )
+
             result = self.store.graph.query(query)
 
             # We cannot include the RDF.type in case there is a neat:type property
             return [remove_namespace(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
         else:
+            warnings.warn("No rules found for the graph store, returning empty list.", stacklevel=2)
             return []
