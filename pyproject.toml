@@ -75,7 +75,7 @@ uvicorn = { extras = ["standard"], version = "^0" }
 prometheus-client = "^0.20.0"
 cognite-sdk = "^7.37.0"
 deepdiff = "*"
-fastapi = "^0.110"
+fastapi = "^0"
 schedule = "^1"
 python-multipart = "^0.0.6"
 oxrdflib = { version = "^0.3.3", optional = true, extras = ["oxigraph"] }
