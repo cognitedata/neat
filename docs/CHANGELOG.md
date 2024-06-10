@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.78.5] - 05-06-24
+### Changed
+- Increased upper bound on `fastapi` dependency.
+
 ## [0.78.4] - 05-06-24
 ### Added
 - `AssetHierarchyExtractor` graph extractor added.
