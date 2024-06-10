@@ -6,7 +6,7 @@ from typing import ClassVar, Generic, Literal, TypeVar, overload
 from cognite.client import CogniteClient
 from cognite.client.data_classes.capabilities import Capability
 
-from cognite.neat.graph import NeatGraphStoreBase
+from cognite.neat.graph import NeatGraphStore
 from cognite.neat.graph.issues.loader import FailedAuthorizationError
 from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.utils.upload import UploadDiffsID, UploadResultIDs
@@ -18,7 +18,7 @@ class BaseLoader(ABC, Generic[T_Output]):
     _new_line = "\n"
     _encoding = "utf-8"
 
-    def __init__(self, graph_store: NeatGraphStoreBase):
+    def __init__(self, graph_store: NeatGraphStore):
         self.graph_store = graph_store
 
     @abstractmethod
