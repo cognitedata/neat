@@ -15,13 +15,25 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+
+## [0.79.0] - 10-06-24
+### Added
+- `TimeSeriesExtractor` graph extractor added.
+- `SequencesExtractor` graph extractor added.
+- `EventsExtractor` graph extractor added.
+- `FilesExtractor` graph extractor added.
+- `LabelsExtractor` graph extractor added.
+- Dedicate test data for Classic CDF data model created
+- Tracking of graph provenance added to `NeatGraphStore`
+
 ## [0.78.5] - 05-06-24
 ### Changed
 - Increased upper bound on `fastapi` dependency.
 
+
 ## [0.78.4] - 05-06-24
 ### Added
-- `AssetHierarchyExtractor` graph extractor added.
+- `AssetsExtractor` graph extractor added.
 
 ## [0.78.3] - 03-06-24
 ### Added

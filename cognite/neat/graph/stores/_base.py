@@ -3,10 +3,12 @@ import sys
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator
+from datetime import datetime
 from pathlib import Path
 from typing import Literal, TypeAlias, cast
 
 import pandas as pd
+import pytz
 from prometheus_client import Gauge, Summary
 from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib.query import Result, ResultRow
@@ -15,6 +17,8 @@ from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.graph.models import Triple
 from cognite.neat.graph.stores._rdf_to_graph import rdf_file_to_graph
 from cognite.neat.utils import remove_namespace
+
+from ._provenance import Change, Provenance
 
 if sys.version_info >= (3, 11):
     pass
@@ -49,6 +53,7 @@ class NeatGraphStoreBase(ABC):
         namespace: Namespace = DEFAULT_NAMESPACE,
         prefixes: dict = PREFIXES,
     ):
+        _start = datetime.now(pytz.utc)
         self.graph = graph or Graph()
         self.base_prefix: str = base_prefix
         self.namespace: Namespace = namespace
@@ -63,6 +68,16 @@ class NeatGraphStoreBase(ABC):
         self.internal_storage_dir_orig: Path | None = None
         self.storage_dirs_to_delete: list[Path] = []
         self.queries = _Queries(self)
+        self.provenance = Provenance(
+            [
+                Change.record(
+                    activity=f"{type(self).__name__}.__init__",
+                    start=_start,
+                    end=datetime.now(pytz.utc),
+                    description="Initialize graph store",
+                )
+            ]
+        )
 
     @abstractmethod
     def _set_graph(self) -> None:
