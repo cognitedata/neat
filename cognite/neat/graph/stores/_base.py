@@ -1,4 +1,3 @@
-import logging
 import warnings
 from collections.abc import Iterable
 from datetime import datetime
@@ -109,10 +108,8 @@ class NeatGraphStore:
                 break
             except OSError as e:
                 if "lock" in str(e) and i < 3:
-                    # lock originated from another instance of the store
-                    logging.error("Error initializing Oxigraph store: %s", e)
-                else:
-                    raise e
+                    continue
+                raise e
         else:
             raise Exception("Error initializing Oxigraph store")
 
