@@ -16,6 +16,11 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.80.1] - 11-06-24
+### Fixed
+- Fixed issues with duplicated edges when different properties are referring to the same target node.
+
+
 ## [0.80.0] - 10-06-24
 
 ### Improved

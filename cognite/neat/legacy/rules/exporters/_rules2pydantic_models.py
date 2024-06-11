@@ -685,7 +685,7 @@ def to_edge(self, data_model: DMSSchemaComponents, add_class_prefix: bool = Fals
 
                 edge = EdgeApply(
                     space=data_model.views[view_id].space,
-                    external_id=f"{self.external_id}-{end_node_external_id}",
+                    external_id=f"{self.external_id}-{edge_one_to_many}-{end_node_external_id}",
                     type=(data_model.views[view_id].space, edge_type_id),
                     start_node=(data_model.views[view_id].space, self.external_id),
                     end_node=(data_model.views[view_id].space, end_node_external_id),
