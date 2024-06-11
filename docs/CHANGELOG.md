@@ -16,6 +16,10 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.80.2] - 11-06-24
+### Fixed
+- Fixed missing input for `Reference data model id` in  `DMSToRules` step
+
 ## [0.80.1] - 11-06-24
 ### Fixed
 - Fixed issues with duplicated edges when different properties are referring to the same target node.
