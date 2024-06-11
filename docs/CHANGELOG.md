@@ -16,6 +16,11 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.81.0] - 11-06-24
+### Added
+- `DexpiExtractor` graph extractor added.
+
+
 ## [0.80.2] - 11-06-24
 ### Fixed
 - Fixed missing input for `Reference data model id` in  `DMSToRules` step
