@@ -147,6 +147,13 @@ def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
         return "/".join(URI.split("/")[:-1]) + "/"
 
 
+def as_neat_compliant_uri(uri: URIRef) -> URIRef:
+    namespace = get_namespace(uri)
+    id_ = remove_namespace(uri)
+    compliant_uri = re.sub(r"[^a-zA-Z0-9-_.]", "", id_)
+    return URIRef(f"{namespace}{compliant_uri}")
+
+
 def convert_rdflib_content(content: Literal | URIRef | dict | list) -> Any:
     if isinstance(content, Literal) or isinstance(content, URIRef):
         return content.toPython()
