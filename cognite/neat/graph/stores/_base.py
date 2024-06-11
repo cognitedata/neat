@@ -124,10 +124,21 @@ class NeatGraphStore:
         return cls(graph, rules)
 
     def write(self, extractor: TripleExtractors) -> None:
+        _start = datetime.now(pytz.utc)
+
         if isinstance(extractor, RdfFileExtractor):
             self._parse_file(extractor.filepath, extractor.mime_type, extractor.base_uri)
         else:
             self._add_triples(extractor.extract())
+
+        self.provenance.append(
+            Change.record(
+                activity=f"{type(extractor).__name__}",
+                start=_start,
+                end=datetime.now(pytz.utc),
+                description=f"Extracted triples to graph store using {type(extractor).__name__}",
+            )
+        )
 
     def _parse_file(
         self,
