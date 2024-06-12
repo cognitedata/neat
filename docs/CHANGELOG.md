@@ -16,6 +16,14 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.81.1] - 12-06-24
+### Improved
+- Classic CDF extractors now prefix ids with resource type
+
+### Removed
+- Dependency on pytz
+
+
 ## [0.81.0] - 11-06-24
 ### Added
 - `DexpiExtractor` graph extractor added.
