@@ -16,6 +16,10 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.80.3] - 12-06-24
+### Fixed
+- Increased upper bound on `python-multipart` dependency.
+
 ## [0.80.2] - 11-06-24
 ### Fixed
 - Fixed missing input for `Reference data model id` in  `DMSToRules` step
