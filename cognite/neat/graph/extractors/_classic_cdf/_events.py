@@ -1,9 +1,8 @@
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 
-import pytz
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Event, EventList
 from pydantic import AnyHttpUrl, ValidationError
@@ -44,7 +43,7 @@ class EventsExtractor(BaseExtractor):
 
     @classmethod
     def _event2triples(cls, event: Event, namespace: Namespace) -> list[Triple]:
-        id_ = namespace[str(event.id)]
+        id_ = namespace[f"Event_{event.id}"]
 
         # Set rdf type
         triples: list[Triple] = [(id_, RDF.type, namespace.Event)]
@@ -77,7 +76,7 @@ class EventsExtractor(BaseExtractor):
 
         if event.created_time:
             triples.append(
-                (id_, namespace.created_time, Literal(datetime.fromtimestamp(event.created_time / 1000, pytz.utc)))
+                (id_, namespace.created_time, Literal(datetime.fromtimestamp(event.created_time / 1000, timezone.utc)))
             )
 
         if event.last_updated_time:
@@ -85,7 +84,7 @@ class EventsExtractor(BaseExtractor):
                 (
                     id_,
                     namespace.last_updated_time,
-                    Literal(datetime.fromtimestamp(event.last_updated_time / 1000, pytz.utc)),
+                    Literal(datetime.fromtimestamp(event.last_updated_time / 1000, timezone.utc)),
                 )
             )
 
@@ -94,7 +93,7 @@ class EventsExtractor(BaseExtractor):
                 (
                     id_,
                     namespace.start_time,
-                    Literal(datetime.fromtimestamp(event.start_time / 1000, pytz.utc)),
+                    Literal(datetime.fromtimestamp(event.start_time / 1000, timezone.utc)),
                 )
             )
 
@@ -103,15 +102,15 @@ class EventsExtractor(BaseExtractor):
                 (
                     id_,
                     namespace.end_time,
-                    Literal(datetime.fromtimestamp(event.end_time / 1000, pytz.utc)),
+                    Literal(datetime.fromtimestamp(event.end_time / 1000, timezone.utc)),
                 )
             )
 
         if event.data_set_id:
-            triples.append((id_, namespace.data_set_id, namespace[str(event.data_set_id)]))
+            triples.append((id_, namespace.data_set_id, namespace[f"Dataset_{event.data_set_id}"]))
 
         if event.asset_ids:
             for asset_id in event.asset_ids:
-                triples.append((id_, namespace.asset, namespace[str(asset_id)]))
+                triples.append((id_, namespace.asset, namespace[f"Asset_{asset_id}"]))
 
         return triples

@@ -1,9 +1,8 @@
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 
-import pytz
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Sequence, SequenceList
 from pydantic import AnyHttpUrl, ValidationError
@@ -44,7 +43,7 @@ class SequencesExtractor(BaseExtractor):
 
     @classmethod
     def _sequence2triples(cls, sequence: Sequence, namespace: Namespace) -> list[Triple]:
-        id_ = namespace[str(sequence.id)]
+        id_ = namespace[f"Sequence_{sequence.id}"]
 
         # Set rdf type
         triples: list[Triple] = [(id_, RDF.type, namespace.Sequence)]
@@ -71,7 +70,11 @@ class SequencesExtractor(BaseExtractor):
 
         if sequence.created_time:
             triples.append(
-                (id_, namespace.created_time, Literal(datetime.fromtimestamp(sequence.created_time / 1000, pytz.utc)))
+                (
+                    id_,
+                    namespace.created_time,
+                    Literal(datetime.fromtimestamp(sequence.created_time / 1000, timezone.utc)),
+                )
             )
 
         if sequence.last_updated_time:
@@ -79,14 +82,14 @@ class SequencesExtractor(BaseExtractor):
                 (
                     id_,
                     namespace.last_updated_time,
-                    Literal(datetime.fromtimestamp(sequence.last_updated_time / 1000, pytz.utc)),
+                    Literal(datetime.fromtimestamp(sequence.last_updated_time / 1000, timezone.utc)),
                 )
             )
 
         if sequence.data_set_id:
-            triples.append((id_, namespace.data_set_id, namespace[str(sequence.data_set_id)]))
+            triples.append((id_, namespace.data_set_id, namespace[f"Dataset_{sequence.data_set_id}"]))
 
         if sequence.asset_id:
-            triples.append((id_, namespace.asset, namespace[str(sequence.asset_id)]))
+            triples.append((id_, namespace.asset, namespace[f"Asset_{sequence.asset_id}"]))
 
         return triples

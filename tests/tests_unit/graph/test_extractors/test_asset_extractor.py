@@ -21,7 +21,7 @@ def test_asset_extractor():
         len(
             list(
                 store.graph.query(
-                    f"Select ?s Where {{ ?s <{DEFAULT_NAMESPACE['label']}> <{DEFAULT_NAMESPACE['Substation']}>}}"
+                    f"Select ?s Where {{ ?s <{DEFAULT_NAMESPACE['label']}> <{DEFAULT_NAMESPACE['Label_Substation']}>}}"
                 )
             )
         )

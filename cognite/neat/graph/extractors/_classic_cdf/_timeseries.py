@@ -1,9 +1,8 @@
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 
-import pytz
 from cognite.client import CogniteClient
 from cognite.client.data_classes import TimeSeries, TimeSeriesList
 from pydantic import AnyHttpUrl, ValidationError
@@ -46,7 +45,7 @@ class TimeSeriesExtractor(BaseExtractor):
 
     @classmethod
     def _timeseries2triples(cls, timeseries: TimeSeries, namespace: Namespace) -> list[Triple]:
-        id_ = namespace[str(timeseries.id)]
+        id_ = namespace[f"TimeSeries_{timeseries.id}"]
 
         # Set rdf type
         triples: list[Triple] = [(id_, RDF.type, namespace.TimeSeries)]
@@ -86,7 +85,11 @@ class TimeSeriesExtractor(BaseExtractor):
 
         if timeseries.created_time:
             triples.append(
-                (id_, namespace.created_time, Literal(datetime.fromtimestamp(timeseries.created_time / 1000, pytz.utc)))
+                (
+                    id_,
+                    namespace.created_time,
+                    Literal(datetime.fromtimestamp(timeseries.created_time / 1000, timezone.utc)),
+                )
             )
 
         if timeseries.last_updated_time:
@@ -94,7 +97,7 @@ class TimeSeriesExtractor(BaseExtractor):
                 (
                     id_,
                     namespace.last_updated_time,
-                    Literal(datetime.fromtimestamp(timeseries.last_updated_time / 1000, pytz.utc)),
+                    Literal(datetime.fromtimestamp(timeseries.last_updated_time / 1000, timezone.utc)),
                 )
             )
 
@@ -110,9 +113,9 @@ class TimeSeriesExtractor(BaseExtractor):
                 triples.append((id_, namespace.unit_external_id, Literal(timeseries.unit_external_id)))
 
         if timeseries.data_set_id:
-            triples.append((id_, namespace.dataset, namespace[str(timeseries.data_set_id)]))
+            triples.append((id_, namespace.dataset, namespace[f"Dataset_{timeseries.data_set_id}"]))
 
         if timeseries.asset_id:
-            triples.append((id_, namespace.asset, namespace[str(timeseries.asset_id)]))
+            triples.append((id_, namespace.asset, namespace[f"Asset_{timeseries.asset_id}"]))
 
         return triples

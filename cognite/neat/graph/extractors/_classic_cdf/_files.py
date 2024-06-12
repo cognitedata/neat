@@ -1,10 +1,9 @@
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 from urllib.parse import quote
 
-import pytz
 from cognite.client import CogniteClient
 from cognite.client.data_classes import FileMetadata, FileMetadataList
 from pydantic import AnyHttpUrl, ValidationError
@@ -45,7 +44,7 @@ class FilesExtractor(BaseExtractor):
 
     @classmethod
     def _file2triples(cls, file: FileMetadata, namespace: Namespace) -> list[Triple]:
-        id_ = namespace[str(file.id)]
+        id_ = namespace[f"File_{file.id}"]
 
         # Set rdf type
         triples: list[Triple] = [(id_, RDF.type, namespace.File)]
@@ -81,7 +80,7 @@ class FilesExtractor(BaseExtractor):
                 (
                     id_,
                     namespace.source_created_time,
-                    Literal(datetime.fromtimestamp(file.source_created_time / 1000, pytz.utc)),
+                    Literal(datetime.fromtimestamp(file.source_created_time / 1000, timezone.utc)),
                 )
             )
         if file.source_modified_time:
@@ -89,17 +88,17 @@ class FilesExtractor(BaseExtractor):
                 (
                     id_,
                     namespace.source_created_time,
-                    Literal(datetime.fromtimestamp(file.source_modified_time / 1000, pytz.utc)),
+                    Literal(datetime.fromtimestamp(file.source_modified_time / 1000, timezone.utc)),
                 )
             )
         if file.uploaded_time:
             triples.append(
-                (id_, namespace.uploaded_time, Literal(datetime.fromtimestamp(file.uploaded_time / 1000, pytz.utc)))
+                (id_, namespace.uploaded_time, Literal(datetime.fromtimestamp(file.uploaded_time / 1000, timezone.utc)))
             )
 
         if file.created_time:
             triples.append(
-                (id_, namespace.created_time, Literal(datetime.fromtimestamp(file.created_time / 1000, pytz.utc)))
+                (id_, namespace.created_time, Literal(datetime.fromtimestamp(file.created_time / 1000, timezone.utc)))
             )
 
         if file.last_updated_time:
@@ -107,7 +106,7 @@ class FilesExtractor(BaseExtractor):
                 (
                     id_,
                     namespace.last_updated_time,
-                    Literal(datetime.fromtimestamp(file.last_updated_time / 1000, pytz.utc)),
+                    Literal(datetime.fromtimestamp(file.last_updated_time / 1000, timezone.utc)),
                 )
             )
 
@@ -115,17 +114,17 @@ class FilesExtractor(BaseExtractor):
             for label in file.labels:
                 # external_id can create ill-formed URIs, so we create websafe URIs
                 # since labels do not have internal ids, we use the external_id as the id
-                triples.append((id_, namespace.label, namespace[quote(label.dump()["externalId"])]))
+                triples.append((id_, namespace.label, namespace[f"Label_{quote(label.dump()['externalId'])}"]))
 
         if file.security_categories:
             for category in file.security_categories:
                 triples.append((id_, namespace.security_categories, Literal(category)))
 
         if file.data_set_id:
-            triples.append((id_, namespace.data_set_id, namespace[str(file.data_set_id)]))
+            triples.append((id_, namespace.data_set_id, namespace[f"Dataset_{file.data_set_id}"]))
 
         if file.asset_ids:
             for asset_id in file.asset_ids:
-                triples.append((id_, namespace.asset, namespace[str(asset_id)]))
+                triples.append((id_, namespace.asset, namespace[f"Asset_{asset_id}"]))
 
         return triples

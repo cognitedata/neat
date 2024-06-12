@@ -1,10 +1,9 @@
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 from urllib.parse import quote
 
-import pytz
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetList
 from rdflib import RDF, Literal, Namespace
@@ -49,7 +48,7 @@ class AssetsExtractor(BaseExtractor):
     @classmethod
     def _asset2triples(cls, asset: Asset, namespace: Namespace) -> list[Triple]:
         """Converts an asset to triples."""
-        id_ = namespace[str(asset.id)]
+        id_ = namespace[f"Asset_{asset.id}"]
 
         # Set rdf type
         triples: list[Triple] = [(id_, RDF.type, namespace["Asset"])]
@@ -72,14 +71,14 @@ class AssetsExtractor(BaseExtractor):
             (
                 id_,
                 namespace.created_time,
-                Literal(datetime.fromtimestamp(asset.created_time / 1000, pytz.utc)),
+                Literal(datetime.fromtimestamp(asset.created_time / 1000, timezone.utc)),
             )
         )
         triples.append(
             (
                 id_,
                 namespace.last_updated_time,
-                Literal(datetime.fromtimestamp(asset.last_updated_time / 1000, pytz.utc)),
+                Literal(datetime.fromtimestamp(asset.last_updated_time / 1000, timezone.utc)),
             )
         )
 
@@ -87,7 +86,7 @@ class AssetsExtractor(BaseExtractor):
             for label in asset.labels:
                 # external_id can create ill-formed URIs, so we create websafe URIs
                 # since labels do not have internal ids, we use the external_id as the id
-                triples.append((id_, namespace.label, namespace[quote(label.dump()["externalId"])]))
+                triples.append((id_, namespace.label, namespace[f"Label_{quote(label.dump()['externalId'])}"]))
 
         if asset.metadata:
             for key, value in asset.metadata.items():
@@ -96,12 +95,12 @@ class AssetsExtractor(BaseExtractor):
 
         # Create connections:
         if asset.parent_id:
-            triples.append((id_, namespace.parent, namespace[str(asset.parent_id)]))
+            triples.append((id_, namespace.parent, namespace[f"Asset_{asset.parent_id}"]))
 
         if asset.root_id:
-            triples.append((id_, namespace.root, namespace[str(asset.root_id)]))
+            triples.append((id_, namespace.root, namespace[f"Asset_{asset.root_id}"]))
 
         if asset.data_set_id:
-            triples.append((id_, namespace.dataset, namespace[str(asset.data_set_id)]))
+            triples.append((id_, namespace.dataset, namespace[f"Dataset_{asset.data_set_id}"]))
 
         return triples

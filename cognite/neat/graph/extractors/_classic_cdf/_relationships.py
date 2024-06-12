@@ -1,11 +1,10 @@
 import uuid
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 from urllib.parse import quote
 
-import pytz
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Relationship, RelationshipList
 from rdflib import RDF, Literal, Namespace
@@ -49,27 +48,27 @@ class RelationshipsExtractor(BaseExtractor):
         """Converts an asset to triples."""
 
         # relationships do not have an internal id, so we generate one
-        id_ = namespace[str(uuid.uuid4())]
+        id_ = namespace[f"Relationship_{uuid.uuid4()}"]
 
         # Set rdf type
         triples: list[Triple] = [(id_, RDF.type, namespace["Relationship"])]
 
         # Set source and target types
-        if relationship.source_type:
+        if source_type := relationship.source_type:
             triples.append(
                 (
                     id_,
                     namespace.source_type,
-                    namespace[relationship.source_type.title()],
+                    namespace[source_type.title()],
                 )
             )
 
-        if relationship.target_type:
+        if target_type := relationship.target_type:
             triples.append(
                 (
                     id_,
                     namespace.target_type,
-                    namespace[relationship.target_type.title()],
+                    namespace[target_type.title()],
                 )
             )
 
@@ -100,7 +99,7 @@ class RelationshipsExtractor(BaseExtractor):
                 (
                     id_,
                     namespace.start_time,
-                    Literal(datetime.fromtimestamp(relationship.start_time / 1000, pytz.utc)),
+                    Literal(datetime.fromtimestamp(relationship.start_time / 1000, timezone.utc)),
                 )
             )
 
@@ -109,7 +108,7 @@ class RelationshipsExtractor(BaseExtractor):
                 (
                     id_,
                     namespace.end_time,
-                    Literal(datetime.fromtimestamp(relationship.end_time / 1000, pytz.utc)),
+                    Literal(datetime.fromtimestamp(relationship.end_time / 1000, timezone.utc)),
                 )
             )
 
@@ -118,7 +117,7 @@ class RelationshipsExtractor(BaseExtractor):
                 (
                     id_,
                     namespace.created_time,
-                    Literal(datetime.fromtimestamp(relationship.created_time / 1000, pytz.utc)),
+                    Literal(datetime.fromtimestamp(relationship.created_time / 1000, timezone.utc)),
                 )
             )
 
@@ -127,7 +126,7 @@ class RelationshipsExtractor(BaseExtractor):
                 (
                     id_,
                     namespace.last_updated_time,
-                    Literal(datetime.fromtimestamp(relationship.last_updated_time / 1000, pytz.utc)),
+                    Literal(datetime.fromtimestamp(relationship.last_updated_time / 1000, timezone.utc)),
                 )
             )
 
@@ -144,10 +143,10 @@ class RelationshipsExtractor(BaseExtractor):
             for label in relationship.labels:
                 # external_id can create ill-formed URIs, so we create websafe URIs
                 # since labels do not have internal ids, we use the external_id as the id
-                triples.append((id_, namespace.label, namespace[quote(label.dump()["externalId"])]))
+                triples.append((id_, namespace.label, namespace[f"Label_{quote(label.dump()['externalId'])}"]))
 
         # Create connection
         if relationship.data_set_id:
-            triples.append((id_, namespace.dataset, namespace[str(relationship.data_set_id)]))
+            triples.append((id_, namespace.dataset, namespace[f"Dataset_{relationship.data_set_id}"]))
 
         return triples

@@ -1,10 +1,9 @@
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 from urllib.parse import quote
 
-import pytz
 from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelDefinition, LabelDefinitionList
 from rdflib import RDF, Literal, Namespace
@@ -45,7 +44,7 @@ class LabelsExtractor(BaseExtractor):
 
     @classmethod
     def _labels2triples(cls, label: LabelDefinition, namespace: Namespace) -> list[Triple]:
-        id_ = namespace[quote(cast(str, label.external_id))]
+        id_ = namespace[f"Label_{quote(label.dump()['externalId'])}"]
 
         # Set rdf type
         triples: list[Triple] = [(id_, RDF.type, namespace.Label)]
@@ -63,10 +62,10 @@ class LabelsExtractor(BaseExtractor):
 
         if label.created_time:
             triples.append(
-                (id_, namespace.created_time, Literal(datetime.fromtimestamp(label.created_time / 1000, pytz.utc)))
+                (id_, namespace.created_time, Literal(datetime.fromtimestamp(label.created_time / 1000, timezone.utc)))
             )
 
         if label.data_set_id:
-            triples.append((id_, namespace.data_set_id, namespace[str(label.data_set_id)]))
+            triples.append((id_, namespace.data_set_id, namespace[f"Dataset_{label.data_set_id}"]))
 
         return triples
