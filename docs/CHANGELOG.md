@@ -20,6 +20,9 @@ Changes are grouped as follows:
 ### Added
 - `DexpiExtractor` graph extractor added.
 
+## [0.80.3] - 12-06-24
+### Fixed
+- Increased upper bound on `python-multipart` dependency.
 
 ## [0.80.2] - 11-06-24
 ### Fixed
