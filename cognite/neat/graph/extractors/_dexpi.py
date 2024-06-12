@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
 from xml.etree.ElementTree import Element
@@ -196,7 +197,7 @@ class DexpiExtractor(BaseExtractor):
     def _get_element_generic_attributes(cls, element: Element) -> dict:
         # TODO: This requires more work as there are multiple groupings of GenericAttributes
 
-        attributes = {}
+        attributes = defaultdict(list)
         if children := get_children(element, "GenericAttributes", 1):
             if grandchildren := get_children(children[0], "GenericAttribute"):
                 for generic_attribute in grandchildren:
