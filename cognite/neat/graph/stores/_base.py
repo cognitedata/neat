@@ -1,11 +1,10 @@
 import sys
 import warnings
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-import pytz
 from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from rdflib.query import ResultRow
@@ -41,14 +40,14 @@ class NeatGraphStore:
         graph: Graph,
         rules: InformationRules | None = None,
     ):
-        _start = datetime.now(pytz.utc)
+        _start = datetime.now(UTC)
         self.graph = graph
         self.provenance = Provenance(
             [
                 Change.record(
                     activity=f"{type(self).__name__}.__init__",
                     start=_start,
-                    end=datetime.now(pytz.utc),
+                    end=datetime.now(UTC),
                     description=f"Initialize graph store as {type(self.graph.store).__name__}",
                 )
             ]
@@ -62,7 +61,7 @@ class NeatGraphStore:
 
     def _upsert_prefixes(self, prefixes: dict[str, Namespace]) -> None:
         """Adds prefixes to the graph store."""
-        _start = datetime.now(pytz.utc)
+        _start = datetime.now(UTC)
         for prefix, namespace in prefixes.items():
             self.graph.bind(prefix, namespace)
 
@@ -70,7 +69,7 @@ class NeatGraphStore:
             Change.record(
                 activity=f"{type(self).__name__}._upsert_prefixes",
                 start=_start,
-                end=datetime.now(pytz.utc),
+                end=datetime.now(UTC),
                 description="Upsert prefixes to graph store",
             )
         )
@@ -124,7 +123,7 @@ class NeatGraphStore:
         return cls(graph, rules)
 
     def write(self, extractor: TripleExtractors) -> None:
-        _start = datetime.now(pytz.utc)
+        _start = datetime.now(UTC)
 
         if isinstance(extractor, RdfFileExtractor):
             self._parse_file(extractor.filepath, extractor.mime_type, extractor.base_uri)
@@ -135,7 +134,7 @@ class NeatGraphStore:
             Change.record(
                 activity=f"{type(extractor).__name__}",
                 start=_start,
-                end=datetime.now(pytz.utc),
+                end=datetime.now(UTC),
                 description=f"Extracted triples to graph store using {type(extractor).__name__}",
             )
         )
