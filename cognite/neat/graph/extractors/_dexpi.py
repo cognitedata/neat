@@ -19,23 +19,32 @@ class DexpiExtractor(BaseExtractor):
     DEXPI-XML extractor of RDF triples
 
     Args:
-        filepath: File path to DEXPI XML file.
+        root: XML root element of DEXPI file.
         namespace: Optional custom namespace to use for extracted triples that define data
                     model instances. Defaults to DEFAULT_NAMESPACE.
     """
 
     def __init__(
         self,
-        filepath: Path,
+        root: Element,
         namespace: Namespace | None = None,
     ):
-        self.filepath = filepath
+        self.root = root
         self.namespace = namespace or DEFAULT_NAMESPACE
-        self.root = ET.parse(self.filepath).getroot()
 
     @classmethod
-    def from_file(cls, file_path: str | Path, namespace: Namespace | None = None):
-        return cls(Path(file_path), namespace)
+    def from_file(cls, filepath: str | Path, namespace: Namespace | None = None):
+        return cls(ET.parse(filepath).getroot(), namespace)
+
+    @classmethod
+    def from_url(cls, url: str, namespace: Namespace | None = None):
+        from io import BytesIO
+
+        import requests
+
+        response = requests.get(url)
+        response.raise_for_status()
+        return cls(ET.parse(BytesIO(response.content)).getroot(), namespace)
 
     def extract(self) -> Iterable[Triple]:
         """Extracts RDF triples from DEXPI XML file."""
@@ -108,7 +117,7 @@ class DexpiExtractor(BaseExtractor):
         return triples
 
     @classmethod
-    def _to_uri_friendly_association_type(cls, association):
+    def _to_uri_friendly_association_type(cls, association: Element):
         association_type = "".join(
             [word.capitalize() if i != 0 else word for i, word in enumerate(association.attrib["Type"].split(" "))]
         )
