@@ -20,6 +20,10 @@ Changes are grouped as follows:
 ### Improved
 - Classic CDF extractors now prefix ids with resource type
 
+### Removed
+- Dependency on pytz
+
+
 ## [0.81.0] - 11-06-24
 ### Added
 - `DexpiExtractor` graph extractor added.
