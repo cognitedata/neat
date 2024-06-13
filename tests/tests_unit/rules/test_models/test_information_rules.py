@@ -6,12 +6,19 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.models import DMSRules, SheetList
+from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType, String
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationRules,
+    InformationRulesInput,
 )
 from cognite.neat.rules.models.information._converter import _InformationRulesConverter
+from cognite.neat.rules.models.information._rules_input import (
+    InformationClassInput,
+    InformationMetadataInput,
+    InformationPropertyInput,
+)
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 
@@ -303,6 +310,31 @@ class TestInformationRulesConverter:
         }
 
         assert actual == expected
+
+    def test_convert_above_container_limit(self) -> None:
+        info = InformationRulesInput(
+            metadata=InformationMetadataInput(
+                schema_="complete",
+                prefix="bad_model",
+                namespace="http://purl.org/cognite/bad_model",
+                name="Bad Model",
+                version="0.1.0",
+                creator="Anders",
+            ),
+            classes=[InformationClassInput(class_="MassiveClass")],
+            properties=[
+                InformationPropertyInput(
+                    class_="MassiveClass",
+                    property_=f"property_{no}",
+                    value_type="string",
+                )
+                for no in range(DMS_CONTAINER_SIZE_LIMIT + 1)
+            ],
+        ).as_rules()
+
+        dms_rules = info.as_dms_architect_rules()
+
+        assert len(dms_rules.containers) == 2
 
 
 class TestInformationConverter:

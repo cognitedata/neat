@@ -8,6 +8,7 @@ from cognite.neat.rules.models._base import (
     SchemaCompleteness,
     SheetList,
 )
+from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
@@ -41,6 +42,7 @@ class _InformationRulesConverter:
             self.last_classes = {class_.class_: class_ for class_ in self.rules.last.classes}
         else:
             self.last_classes = {}
+        self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
 
     def as_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
@@ -81,7 +83,6 @@ class _InformationRulesConverter:
         last_dms_rules = self.rules.last.as_dms_architect_rules() if self.rules.last else None
         ref_dms_rules = self.rules.reference.as_dms_architect_rules() if self.rules.reference else None
 
-        containers: list[DMSContainer] = []
         class_by_entity = {cls_.class_: cls_ for cls_ in self.rules.classes}
         if self.rules.last:
             for cls_ in self.rules.last.classes:
@@ -93,6 +94,7 @@ class _InformationRulesConverter:
             if rule_set:
                 existing_containers.update({c.container for c in rule_set.containers or []})
 
+        containers: list[DMSContainer] = []
         for container_entity, class_entities in referenced_containers.items():
             if container_entity in existing_containers:
                 continue
@@ -227,9 +229,14 @@ class _InformationRulesConverter:
             # the existing container in the last schema
             container_entity = prop.class_.as_container_entity(default_space)
             container_entity.suffix = self._bump_suffix(container_entity.suffix)
-            return container_entity, prop.property_
         else:
-            return prop.class_.as_container_entity(default_space), prop.property_
+            container_entity = prop.class_.as_container_entity(default_space)
+
+        while self.property_count_by_container[container_entity] >= DMS_CONTAINER_SIZE_LIMIT:
+            container_entity.suffix = self._bump_suffix(container_entity.suffix)
+
+        self.property_count_by_container[container_entity] += 1
+        return container_entity, prop.property_
 
     def _get_view_implements(self, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
         if isinstance(cls_.reference, ReferenceEntity) and cls_.reference.prefix != metadata.prefix:

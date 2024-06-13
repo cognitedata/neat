@@ -16,6 +16,12 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.81.2] - 12-06-24
+### Fixed
+- When converting from Information to DMS rules, `neat` now automatically creates more containers if
+  the number of properties exceeds the maximum number of properties per container. In addition, a warning
+  is issued to the user if the number of properties exceeds the maximum number of properties per container.
+
 ## [0.81.1] - 12-06-24
 ### Improved
 - Classic CDF extractors now prefix ids with resource type
