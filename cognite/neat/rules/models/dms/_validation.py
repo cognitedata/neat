@@ -6,6 +6,7 @@ from cognite.client import data_modeling as dm
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
+from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ContainerEntity
 from cognite.neat.rules.models.wrapped_entities import RawFilter
@@ -34,7 +35,7 @@ class DMSPostValidation:
         self._validate_raw_filter()
         self._consistent_container_properties()
 
-        self._referenced_views_and_containers_are_existing()
+        self._referenced_views_and_containers_are_existing_and_proper_size()
         if self.metadata.schema_ is SchemaCompleteness.extended:
             self._validate_extension()
         if self.metadata.schema_ is SchemaCompleteness.partial:
@@ -118,14 +119,16 @@ class DMSPostValidation:
                 prop.constraint = prop.constraint or constraint_definition
         self.issue_list.extend(errors)
 
-    def _referenced_views_and_containers_are_existing(self) -> None:
+    def _referenced_views_and_containers_are_existing_and_proper_size(self) -> None:
         defined_views = {view.view.as_id() for view in self.views}
         if self.metadata.schema_ is SchemaCompleteness.extended and self.rules.last:
             defined_views |= {view.view.as_id() for view in self.rules.last.views}
 
-        errors: list[issues.NeatValidationError] = []
+        property_count_by_view: dict[dm.ViewId, int] = defaultdict(int)
+        errors: list[issues.ValidationIssue] = []
         for prop_no, prop in enumerate(self.properties):
-            if prop.view and (view_id := prop.view.as_id()) not in defined_views:
+            view_id = prop.view.as_id()
+            if view_id not in defined_views:
                 errors.append(
                     issues.spreadsheet.NonExistingViewError(
                         column="View",
@@ -135,6 +138,17 @@ class DMSPostValidation:
                         msg="",
                         input=None,
                         url=None,
+                    )
+                )
+            else:
+                property_count_by_view[view_id] += 1
+        for view_id, count in property_count_by_view.items():
+            if count > DMS_CONTAINER_SIZE_LIMIT:
+                errors.append(
+                    issues.dms.ViewSizeWarning(
+                        view_id=view_id,
+                        limit=DMS_CONTAINER_SIZE_LIMIT,
+                        count=count,
                     )
                 )
         if self.metadata.schema_ is SchemaCompleteness.complete:
