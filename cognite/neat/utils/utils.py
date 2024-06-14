@@ -386,3 +386,7 @@ def string_to_ideal_type(input_string: str) -> int | bool | float | datetime | s
                 except ValueError:
                     # Return the input string if no conversion is possible
                     return input_string
+
+
+def hash_external_id(external_id: str) -> str:
+    return hashlib.sha256(external_id.encode()).hexdigest()

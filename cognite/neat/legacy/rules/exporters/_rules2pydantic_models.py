@@ -21,7 +21,7 @@ from cognite.neat.legacy.rules.exporters._rules2dms import DMSSchemaComponents
 from cognite.neat.legacy.rules.exporters._validation import are_entity_names_dms_compliant
 from cognite.neat.legacy.rules.models.rules import Property, Rules
 from cognite.neat.legacy.rules.models.value_types import ValueTypeMapping
-from cognite.neat.utils.utils import generate_exception_report
+from cognite.neat.utils.utils import generate_exception_report, hash_external_id
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -683,9 +683,10 @@ def to_edge(self, data_model: DMSSchemaComponents, add_class_prefix: bool = Fals
                             stacklevel=2,
                         )
 
+                external_id = f"{self.external_id}.{edge_one_to_many}.{end_node_external_id}"
                 edge = EdgeApply(
                     space=data_model.views[view_id].space,
-                    external_id=f"{self.external_id}-{edge_one_to_many}-{end_node_external_id}",
+                    external_id=external_id if len(external_id) < 256 else hash_external_id(external_id),
                     type=(data_model.views[view_id].space, edge_type_id),
                     start_node=(data_model.views[view_id].space, self.external_id),
                     end_node=(data_model.views[view_id].space, end_node_external_id),
