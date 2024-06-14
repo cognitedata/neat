@@ -16,6 +16,11 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.81.3] - 14-06-24
+### Fixed
+- If external id of edge is longer than 256 characters it will be hashed to avoid exceeding the limit of 256 characters.
+
+
 ## [0.81.2] - 12-06-24
 ### Fixed
 - When converting from Information to DMS rules, `neat` now automatically creates more containers if
