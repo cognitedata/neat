@@ -9,4 +9,4 @@ def test_dexpi_extractor():
     store = NeatGraphStore.from_memory_store()
     store.write(DexpiExtractor.from_file(config.DEXPI_EXAMPLE))
 
-    assert len(store.graph) == 1716
+    assert len(store.graph) == 1922
