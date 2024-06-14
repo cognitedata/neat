@@ -389,6 +389,7 @@ class _DMSExporter:
                 }
                 if dms_view and isinstance(dms_view.reference, ReferenceEntity):
                     referenced_node_ids.add(dms_view.reference.as_node_entity())
+
                 if referenced_node_ids:
                     return NodeTypeFilter(inner=list(referenced_node_ids))
 
