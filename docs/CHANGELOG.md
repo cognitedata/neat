@@ -16,6 +16,11 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.81.4] - 14-06-24
+### Fixed
+- When creating a new Enterprise model, node types are automatically created for all views. This is such that
+  the node types can be used in the filters for any solution model built on top of the enterprise model.
+
 ## [0.81.3] - 14-06-24
 ### Fixed
 - If external id of edge is longer than 256 characters it will be hashed to avoid exceeding the limit of 256 characters.

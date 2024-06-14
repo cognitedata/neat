@@ -228,6 +228,11 @@ class _DMSExporter:
                     issues.dms.HasDataFilterOnViewWithReferencesWarning(view.as_id(), list(references)), stacklevel=2
                 )
 
+            if data_model_type == DataModelType.enterprise:
+                # Enterprise Model needs to create node types for all views,
+                # as they are expected for the solution model.
+                unique_node_types.add(dm.NodeId(space=view.space, external_id=view.external_id))
+
         return views, NodeApplyDict(
             [dm.NodeApply(space=node.space, external_id=node.external_id) for node in unique_node_types]
         )
@@ -389,6 +394,7 @@ class _DMSExporter:
                 }
                 if dms_view and isinstance(dms_view.reference, ReferenceEntity):
                     referenced_node_ids.add(dms_view.reference.as_node_entity())
+
                 if referenced_node_ids:
                     return NodeTypeFilter(inner=list(referenced_node_ids))
 
