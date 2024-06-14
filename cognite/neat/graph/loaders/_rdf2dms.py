@@ -1,6 +1,5 @@
 import itertools
 import json
-import uuid
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from pathlib import Path
@@ -23,6 +22,7 @@ from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.upload import UploadDiffsID
+from cognite.neat.utils.utils import create_sha256_hash
 
 from ._base import CDFLoader
 
@@ -221,7 +221,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 external_id = f"{identifier}.{prop}.{target}"
                 yield dm.EdgeApply(
                     space=self.instance_space,
-                    external_id=external_id if len(external_id) < 256 else str(uuid.uuid4()),
+                    external_id=external_id if len(external_id) < 256 else create_sha256_hash(external_id),
                     type=edge.type,
                     start_node=dm.DirectRelationReference(self.instance_space, identifier),
                     end_node=dm.DirectRelationReference(self.instance_space, target),
