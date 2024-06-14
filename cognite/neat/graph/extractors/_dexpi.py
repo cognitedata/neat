@@ -13,6 +13,7 @@ from cognite.neat.utils.utils import as_neat_compliant_uri
 from cognite.neat.utils.xml import get_children, iterate_tree
 
 DEXPI = Namespace("http://sandbox.dexpi.org/rdl/")
+QUDT = Namespace("https://qudt.org/vocab/unit/")
 
 
 class DexpiExtractor(BaseExtractor):
@@ -130,6 +131,11 @@ class DexpiExtractor(BaseExtractor):
         """Converts an XML element to triples."""
         triples: list[Triple] = []
 
+        # setting these to None this is the order of getting the type
+        component_class: str | None = None
+        component_name: str | None = None
+        tag: str | None = None
+
         # adding tag triple if exists
         if tag := element.tag:
             triples.append((id_, DEXPI.tag, Literal(str(tag))))
@@ -140,8 +146,16 @@ class DexpiExtractor(BaseExtractor):
                 triples.append((id_, DEXPI.ComponentClass, Literal(component_class)))
             if component_name := attributes.get("ComponentName", None):
                 triples.append((id_, DEXPI.ComponentName, Literal(component_name)))
-            if type_ := attributes.get("ComponentClassURI", None):
-                triples.append((id_, RDF.type, URIRef(type_)))
+            if component_class_uri := attributes.get("ComponentClassURI", None):
+                triples.append((id_, DEXPI.ComponentClassURI, URIRef(component_class_uri)))
+
+        triples.append(
+            (
+                id_,
+                RDF.type,
+                as_neat_compliant_uri(DEFAULT_NAMESPACE[component_class or component_name or tag or "Unknown"]),
+            )
+        )
 
         # add label triple
         if label := cls._get_element_label(element):
@@ -158,9 +172,16 @@ class DexpiExtractor(BaseExtractor):
         return triples
 
     @classmethod
-    def _value_definition2literal(cls, definition: dict) -> Literal | None:
+    def _value_definition2literal(cls, definition: dict, make_unit_datatype: bool = False) -> Literal | None:
         if "Value" not in definition or "Format" not in definition:
             return None
+
+        if "Units" in definition and "Value" in definition:
+            if make_unit_datatype and "UnitsURI" in definition:
+                return Literal(definition["Value"], datatype=URIRef(definition["UnitsURI"]))
+
+            else:
+                return Literal(definition["Value"], datatype=XSD.float)
 
         # case: when language is present we create add language tag to the literal
         elif "Language" in definition and "Value" in definition:
@@ -202,11 +223,11 @@ class DexpiExtractor(BaseExtractor):
             if grandchildren := get_children(children[0], "GenericAttribute"):
                 for generic_attribute in grandchildren:
                     # extension for schema version 3.3, where "AttributeURI" is not included
-                    if "AttributeURI" in generic_attribute.attrib:
-                        if generic_attribute.attrib["AttributeURI"] not in attributes:
-                            attributes[generic_attribute.attrib["AttributeURI"]] = [generic_attribute.attrib]
-
+                    if name := generic_attribute.attrib.get("Name", None):
+                        attribute_uri = as_neat_compliant_uri(DEFAULT_NAMESPACE[name])
+                        if attribute_uri not in attributes:
+                            attributes[attribute_uri] = [generic_attribute.attrib]
                         else:
-                            attributes[generic_attribute.attrib["AttributeURI"]].append(generic_attribute.attrib)
+                            attributes[attribute_uri].append(generic_attribute.attrib)
 
         return attributes
