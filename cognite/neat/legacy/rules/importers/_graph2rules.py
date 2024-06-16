@@ -134,14 +134,17 @@ def _parse_properties_df(data_model: dict, prefixes: dict, parsing_config: dict 
         for property_ in data_model[class_]["properties"]:
             for type_ in data_model[class_]["properties"][property_]["value_type"]:
                 sanitized_property = to_dms_name(property_, "property")
+
+                max_count = max(data_model[class_]["properties"][property_]["occurrence"])
+
                 property_rows.append(
                     [
                         sanitized_class,
                         sanitized_property,
                         None,
-                        type_,
+                        to_dms_name(type_, "value-type"),
                         0,  # setting min count to 0 to be more flexible (all properties are optional)
-                        max(data_model[class_]["properties"][property_]["occurrence"]),
+                        None if max_count > 1 else 1,
                         "rdfpath",
                         f'{data_model[class_]["uri"]}({data_model[class_]["properties"][property_]["uri"]})',
                         str(prefixes[data_model[class_]["properties"][property_]["uri"].split(":")[0]]) + property_,

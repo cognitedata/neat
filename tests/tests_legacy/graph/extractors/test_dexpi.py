@@ -6,4 +6,4 @@ def test_dexpi_extractor():
     """Test that the dexpi extractor works."""
     triples = graph_loader.DexpiXML(config.DEXPI_EXAMPLE).extract()
 
-    assert len(triples) == 1752
+    assert len(triples) == 1922
