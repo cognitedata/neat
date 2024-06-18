@@ -16,6 +16,11 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.81.6] - 18-06-24
+### Added
+- Transformers module to NeatGraphStore
+- `AddAssetDepth` transformer added
+
 ## [0.81.5] - 14-06-24
 ### Improved
 - Dexpi Extractor is significantly more extracting triples from Dexpi XML files
