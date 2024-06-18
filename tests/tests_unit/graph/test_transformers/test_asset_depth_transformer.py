@@ -16,4 +16,7 @@ def test_asset_depth_transformer():
     result = list(store.graph.query(f"SELECT ?s WHERE {{ ?s <{DEFAULT_NAMESPACE.depth}> 1}}"))
 
     assert len(result) == 1
-    assert result[0][0] == DEFAULT_NAMESPACE.Asset_78504378486679  #
+    assert result[0][0] == DEFAULT_NAMESPACE.Asset_4901062138807933
+    assert set(store.graph.query(f"SELECT ?s WHERE {{ ?s <{DEFAULT_NAMESPACE.depth}> ?d}}")) == set(
+        store.graph.query(f"SELECT ?s WHERE {{ ?s a <{DEFAULT_NAMESPACE.Asset}>}}")
+    )
