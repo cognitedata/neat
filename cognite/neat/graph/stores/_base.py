@@ -214,25 +214,23 @@ class NeatGraphStore:
     def transform(self, transformer: Transformers) -> None:
         """Transforms the graph store using a transformer."""
 
+        missing_changes = [
+            change for change in transformer._need_changes if not self.provenance.activity_took_place(change)
+        ]
         if self.provenance.activity_took_place(type(transformer).__name__) and transformer._use_only_once:
             warnings.warn(
                 f"Cannot transform graph store with {type(transformer).__name__}, already applied",
                 stacklevel=2,
             )
-            return
-
-        missing_changes = [
-            change for change in transformer._need_changes if not self.provenance.activity_took_place(change)
-        ]
-
-        if missing_changes:
+        elif missing_changes:
             warnings.warn(
                 (
                     f"Cannot transform graph store with {type(transformer).__name__}, "
-                    f"missing one or more required changes {missing_changes}"
+                    f"missing one or more required changes [{', '.join(missing_changes)}]"
                 ),
                 stacklevel=2,
             )
+
         else:
             _start = datetime.now(timezone.utc)
             transformer.transform(self.graph)

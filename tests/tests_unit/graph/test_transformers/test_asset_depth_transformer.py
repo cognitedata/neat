@@ -1,3 +1,5 @@
+import pytest
+
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph import extractors, transformers
 from cognite.neat.graph.stores import NeatGraphStore
@@ -20,3 +22,21 @@ def test_asset_depth_transformer():
     assert set(store.graph.query(f"SELECT ?s WHERE {{ ?s <{DEFAULT_NAMESPACE.depth}> ?d}}")) == set(
         store.graph.query(f"SELECT ?s WHERE {{ ?s a <{DEFAULT_NAMESPACE.Asset}>}}")
     )
+
+
+def test_asset_depth_transformer_warning():
+    store = NeatGraphStore.from_memory_store()
+
+    transformer = transformers.AddAssetDepth()
+    with pytest.warns(
+        UserWarning,
+        match="Cannot transform graph store with AddAssetDepth, missing one or more required changes",
+    ):
+        store.transform(transformer)
+
+    extractor = extractors.AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml")
+    store.write(extractor)
+    store.transform(transformer)
+
+    with pytest.warns(UserWarning, match="Cannot transform graph store with AddAssetDepth, already applied"):
+        store.transform(transformer)
