@@ -3,7 +3,7 @@ from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
 from cognite.neat.graph.extractors import TimeSeriesExtractor
-from tests.tests_unit.graph.test_extractors.constants import CLASSIC_CDF_EXTRACTOR_DATA
+from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 
 def test_timeseries_extractor():
