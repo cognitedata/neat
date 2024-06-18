@@ -11,7 +11,7 @@ from ._base import BaseTransformer
 class AddAssetDepth(BaseTransformer):
     description: str = "Adds depth of asset in the asset hierarchy to the graph"
     _use_only_once: bool = True
-    _need_changes: ClassVar[tuple] = (AssetsExtractor.__name__,)
+    _need_changes = frozenset({AssetExtractor})
 
     _parent_template: str = """SELECT ?child ?parent WHERE {{
                               <{asset_id}> <{parent_prop}> ?child .
