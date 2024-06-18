@@ -3,6 +3,7 @@ from typing import cast
 from rdflib import Graph, Literal, URIRef
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
+from cognite.neat.graph.extractors import AssetsExtractor
 
 from ._base import BaseTransformer
 
@@ -10,7 +11,7 @@ from ._base import BaseTransformer
 class AddAssetDepth(BaseTransformer):
     description: str = "Adds depth of asset in the asset hierarchy to the graph"
     _use_only_once: bool = True
-    _need_changes = frozenset({AssetExtractor})
+    _need_changes = frozenset({str(AssetsExtractor.__name__)})
 
     _parent_template: str = """SELECT ?child ?parent WHERE {{
                               <{asset_id}> <{parent_prop}> ?child .
