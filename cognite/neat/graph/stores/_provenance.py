@@ -89,8 +89,8 @@ class Provenance(UserList[T_Change]):
     def __init__(self, changes: Sequence[T_Change] | None = None):
         super().__init__(changes or [])
 
-    def did_this_happen(self, this: str) -> bool:
-        return any(change.description == this for change in self)
+    def activity_took_place(self, activity: str) -> bool:
+        return any(change.activity.used == activity for change in self)
 
     def __delitem__(self, *args, **kwargs):
         raise TypeError("Cannot delete change from provenance")

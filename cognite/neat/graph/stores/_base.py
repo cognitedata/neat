@@ -9,9 +9,11 @@ from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from rdflib.query import ResultRow
 
+from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph._shared import MIMETypes
 from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.graph.models import Triple
+from cognite.neat.graph.transformers import Transformers
 from cognite.neat.rules.models.information import InformationRules
 from cognite.neat.utils import remove_namespace
 from cognite.neat.utils.auxiliary import local_import
@@ -56,6 +58,9 @@ class NeatGraphStore:
 
         if self.rules and self.rules.prefixes:
             self._upsert_prefixes(self.rules.prefixes)
+            self.base_namespace = self.rules.metadata.namespace
+        else:
+            self.base_namespace = DEFAULT_NAMESPACE
 
         self.queries = _Queries(self)
 
@@ -205,6 +210,40 @@ class NeatGraphStore:
             check_commit()
 
         check_commit(force_commit=True)
+
+    def transform(self, transformer: Transformers) -> None:
+        """Transforms the graph store using a transformer."""
+
+        missing_changes = [
+            change for change in transformer._need_changes if not self.provenance.activity_took_place(change)
+        ]
+        if self.provenance.activity_took_place(type(transformer).__name__) and transformer._use_only_once:
+            warnings.warn(
+                f"Cannot transform graph store with {type(transformer).__name__}, already applied",
+                stacklevel=2,
+            )
+        elif missing_changes:
+            warnings.warn(
+                (
+                    f"Cannot transform graph store with {type(transformer).__name__}, "
+                    f"missing one or more required changes [{', '.join(missing_changes)}]"
+                ),
+                stacklevel=2,
+            )
+
+        else:
+            _start = datetime.now(timezone.utc)
+            transformer.transform(self.graph)
+            self.provenance = Provenance(
+                [
+                    Change.record(
+                        activity=f"{type(transformer).__name__}",
+                        start=_start,
+                        end=datetime.now(timezone.utc),
+                        description=transformer.description,
+                    )
+                ]
+            )
 
 
 class _Queries:
