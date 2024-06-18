@@ -1,9 +1,8 @@
-from typing import ClassVar, cast
+from typing import cast
 
 from rdflib import Graph, Literal, URIRef
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.graph.extractors import AssetsExtractor
 
 from ._base import BaseTransformer
 
