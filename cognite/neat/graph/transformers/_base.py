@@ -7,7 +7,7 @@ from rdflib import Graph
 class BaseTransformer(ABC):
     description: str
     _use_only_once: bool
-    _need_changes: ClassVar[tuple] = ()
+    _need_changes: ClassVar[frozenset[type]]] = frozenset()
 
     @abstractmethod
     def transform(self, graph: Graph) -> None:
