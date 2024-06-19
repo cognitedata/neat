@@ -16,9 +16,14 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.81.10] - 19-06-24
+### Added
+- `AssetEventConnector` transformer added
+
 ## [0.81.9] - 19-06-24
 ### Added
 - `AssetFilesConnector` transformer added
+
 
 ## [0.81.8] - 19-06-24
 ### Added

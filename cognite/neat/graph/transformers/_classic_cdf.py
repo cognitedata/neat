@@ -169,3 +169,39 @@ class AssetFileConnector(BaseTransformer):
                 # files can be connected to multiple assets in the graph
                 for (asset_id,) in cast(list[tuple], assets_id_res):
                     graph.add((asset_id, DEFAULT_NAMESPACE.file, file_id))
+
+
+class AssetEventConnector(BaseTransformer):
+    description: str = "Connects assets to events, thus forming bi-directional connection"
+    _use_only_once: bool = True
+    _need_changes = frozenset({str(extractors.AssetsExtractor.__name__), str(extractors.EventsExtractor.__name__)})
+    _asset_template: str = """SELECT ?asset_id WHERE {{
+                              <{event_id}> <{asset_prop}> ?asset_id .
+                              ?asset_id a <{asset_type}>}}"""
+
+    def __init__(
+        self,
+        asset_type: URIRef | None = None,
+        event_type: URIRef | None = None,
+        asset_prop: URIRef | None = None,
+    ):
+        self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
+        self.event_type = event_type or DEFAULT_NAMESPACE.Event
+        self.asset_prop = asset_prop or DEFAULT_NAMESPACE.asset
+
+    def transform(self, graph: Graph) -> None:
+        for event_id_result in graph.query(f"SELECT DISTINCT ?event_id WHERE {{?event_id a <{self.event_type}>}}"):
+            event_id: URIRef = cast(tuple, event_id_result)[0]
+
+            if assets_id_res := list(
+                graph.query(
+                    self._asset_template.format(
+                        event_id=event_id,
+                        asset_prop=self.asset_prop,
+                        asset_type=self.asset_type,
+                    )
+                )
+            ):
+                # files can be connected to multiple assets in the graph
+                for (asset_id,) in cast(list[tuple], assets_id_res):
+                    graph.add((asset_id, DEFAULT_NAMESPACE.event, event_id))
