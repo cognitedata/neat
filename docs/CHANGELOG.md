@@ -16,6 +16,14 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.81.7] - 19-06-24
+### Added
+- `AssetTimeSeriesConnector` transformer added
+
+### Fixed
+- `NeatGraphStore.transform` was resetting provenance object, this is now fixed
+
+
 ## [0.81.6] - 18-06-24
 ### Added
 - Transformers module to NeatGraphStore

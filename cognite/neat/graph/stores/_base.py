@@ -234,15 +234,13 @@ class NeatGraphStore:
         else:
             _start = datetime.now(timezone.utc)
             transformer.transform(self.graph)
-            self.provenance = Provenance(
-                [
-                    Change.record(
-                        activity=f"{type(transformer).__name__}",
-                        start=_start,
-                        end=datetime.now(timezone.utc),
-                        description=transformer.description,
-                    )
-                ]
+            self.provenance.append(
+                Change.record(
+                    activity=f"{type(transformer).__name__}",
+                    start=_start,
+                    end=datetime.now(timezone.utc),
+                    description=transformer.description,
+                )
             )
 
 
