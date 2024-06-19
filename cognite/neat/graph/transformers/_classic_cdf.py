@@ -133,3 +133,39 @@ class AssetSequenceConnector(BaseTransformer):
                 # sequence can be connected to only one asset in the graph
                 asset_id = cast(list[tuple], asset_id_res)[0][0]
                 graph.add((asset_id, DEFAULT_NAMESPACE.sequence, sequence_id))
+
+
+class AssetFileConnector(BaseTransformer):
+    description: str = "Connects assets to files, thus forming bi-directional connection"
+    _use_only_once: bool = True
+    _need_changes = frozenset({str(extractors.AssetsExtractor.__name__), str(extractors.FilesExtractor.__name__)})
+    _asset_template: str = """SELECT ?asset_id WHERE {{
+                              <{file_id}> <{asset_prop}> ?asset_id .
+                              ?asset_id a <{asset_type}>}}"""
+
+    def __init__(
+        self,
+        asset_type: URIRef | None = None,
+        file_type: URIRef | None = None,
+        asset_prop: URIRef | None = None,
+    ):
+        self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
+        self.file_type = file_type or DEFAULT_NAMESPACE.File
+        self.asset_prop = asset_prop or DEFAULT_NAMESPACE.asset
+
+    def transform(self, graph: Graph) -> None:
+        for sequency_id_result in graph.query(f"SELECT DISTINCT ?file_id WHERE {{?file_id a <{self.file_type}>}}"):
+            file_id: URIRef = cast(tuple, sequency_id_result)[0]
+
+            if assets_id_res := list(
+                graph.query(
+                    self._asset_template.format(
+                        file_id=file_id,
+                        asset_prop=self.asset_prop,
+                        asset_type=self.asset_type,
+                    )
+                )
+            ):
+                # files can be connected to multiple assets in the graph
+                for (asset_id,) in cast(list[tuple], assets_id_res):
+                    graph.add((asset_id, DEFAULT_NAMESPACE.file, file_id))
