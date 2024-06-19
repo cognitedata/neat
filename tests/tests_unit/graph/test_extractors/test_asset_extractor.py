@@ -4,6 +4,7 @@ from cognite.client.testing import monkeypatch_cognite_client
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors import AssetsExtractor
 from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.utils.utils import create_sha256_hash
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 
@@ -16,14 +17,6 @@ def test_asset_extractor():
     extractor = AssetsExtractor.from_dataset(client_mock, data_set_external_id="nordic44")
     store.write(extractor)
 
+    label_id = DEFAULT_NAMESPACE[f'Label_{create_sha256_hash("Substation")}']
     assert len(store.graph) == 73
-    assert (
-        len(
-            list(
-                store.graph.query(
-                    f"Select ?s Where {{ ?s <{DEFAULT_NAMESPACE['label']}> <{DEFAULT_NAMESPACE['Label_Substation']}>}}"
-                )
-            )
-        )
-        == 1
-    )
+    assert len(list(store.graph.query(f"Select ?s Where {{ ?s <{DEFAULT_NAMESPACE['label']}> <{label_id}>}}"))) == 1

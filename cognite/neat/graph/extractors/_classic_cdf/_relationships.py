@@ -1,4 +1,3 @@
-import uuid
 from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,6 +11,7 @@ from rdflib import RDF, Literal, Namespace
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
+from cognite.neat.utils.utils import create_sha256_hash
 
 
 class RelationshipsExtractor(BaseExtractor):
@@ -47,36 +47,36 @@ class RelationshipsExtractor(BaseExtractor):
     def _relationship2triples(cls, relationship: Relationship, namespace: Namespace) -> list[Triple]:
         """Converts an asset to triples."""
 
-        # relationships do not have an internal id, so we generate one
-        id_ = namespace[f"Relationship_{uuid.uuid4()}"]
+        if relationship.external_id and relationship.source_external_id and relationship.target_external_id:
+            # relationships do not have an internal id, so we generate one
+            id_ = namespace[f"Relationship_{create_sha256_hash(relationship.external_id)}"]
 
-        # Set rdf type
-        triples: list[Triple] = [(id_, RDF.type, namespace["Relationship"])]
+            # Set rdf type
+            triples: list[Triple] = [(id_, RDF.type, namespace["Relationship"])]
 
-        # Set source and target types
-        if source_type := relationship.source_type:
-            triples.append(
-                (
-                    id_,
-                    namespace.source_type,
-                    namespace[source_type.title()],
+            # Set source and target types
+            if source_type := relationship.source_type:
+                triples.append(
+                    (
+                        id_,
+                        namespace.source_type,
+                        namespace[source_type.title()],
+                    )
                 )
-            )
 
-        if target_type := relationship.target_type:
-            triples.append(
-                (
-                    id_,
-                    namespace.target_type,
-                    namespace[target_type.title()],
+            if target_type := relationship.target_type:
+                triples.append(
+                    (
+                        id_,
+                        namespace.target_type,
+                        namespace[target_type.title()],
+                    )
                 )
-            )
 
-        # Create attributes
-        if relationship.external_id:
+            # Create attributes
+
             triples.append((id_, namespace.external_id, Literal(relationship.external_id)))
 
-        if relationship.source_external_id:
             triples.append(
                 (
                     id_,
@@ -85,7 +85,6 @@ class RelationshipsExtractor(BaseExtractor):
                 )
             )
 
-        if relationship.target_external_id:
             triples.append(
                 (
                     id_,
@@ -94,59 +93,60 @@ class RelationshipsExtractor(BaseExtractor):
                 )
             )
 
-        if relationship.start_time:
-            triples.append(
-                (
-                    id_,
-                    namespace.start_time,
-                    Literal(datetime.fromtimestamp(relationship.start_time / 1000, timezone.utc)),
+            if relationship.start_time:
+                triples.append(
+                    (
+                        id_,
+                        namespace.start_time,
+                        Literal(datetime.fromtimestamp(relationship.start_time / 1000, timezone.utc)),
+                    )
                 )
-            )
 
-        if relationship.end_time:
-            triples.append(
-                (
-                    id_,
-                    namespace.end_time,
-                    Literal(datetime.fromtimestamp(relationship.end_time / 1000, timezone.utc)),
+            if relationship.end_time:
+                triples.append(
+                    (
+                        id_,
+                        namespace.end_time,
+                        Literal(datetime.fromtimestamp(relationship.end_time / 1000, timezone.utc)),
+                    )
                 )
-            )
 
-        if relationship.created_time:
-            triples.append(
-                (
-                    id_,
-                    namespace.created_time,
-                    Literal(datetime.fromtimestamp(relationship.created_time / 1000, timezone.utc)),
+            if relationship.created_time:
+                triples.append(
+                    (
+                        id_,
+                        namespace.created_time,
+                        Literal(datetime.fromtimestamp(relationship.created_time / 1000, timezone.utc)),
+                    )
                 )
-            )
 
-        if relationship.last_updated_time:
-            triples.append(
-                (
-                    id_,
-                    namespace.last_updated_time,
-                    Literal(datetime.fromtimestamp(relationship.last_updated_time / 1000, timezone.utc)),
+            if relationship.last_updated_time:
+                triples.append(
+                    (
+                        id_,
+                        namespace.last_updated_time,
+                        Literal(datetime.fromtimestamp(relationship.last_updated_time / 1000, timezone.utc)),
+                    )
                 )
-            )
 
-        if relationship.confidence:
-            triples.append(
-                (
-                    id_,
-                    namespace.confidence,
-                    Literal(relationship.confidence),
+            if relationship.confidence:
+                triples.append(
+                    (
+                        id_,
+                        namespace.confidence,
+                        Literal(relationship.confidence),
+                    )
                 )
-            )
 
-        if relationship.labels:
-            for label in relationship.labels:
-                # external_id can create ill-formed URIs, so we create websafe URIs
-                # since labels do not have internal ids, we use the external_id as the id
-                triples.append((id_, namespace.label, namespace[f"Label_{quote(label.dump()['externalId'])}"]))
+            if relationship.labels:
+                for label in relationship.labels:
+                    # external_id can create ill-formed URIs, so we create websafe URIs
+                    # since labels do not have internal ids, we use the external_id as the id
+                    triples.append((id_, namespace.label, namespace[f"Label_{quote(label.dump()['externalId'])}"]))
 
-        # Create connection
-        if relationship.data_set_id:
-            triples.append((id_, namespace.dataset, namespace[f"Dataset_{relationship.data_set_id}"]))
+            # Create connection
+            if relationship.data_set_id:
+                triples.append((id_, namespace.dataset, namespace[f"Dataset_{relationship.data_set_id}"]))
 
-        return triples
+            return triples
+        return []
