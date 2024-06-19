@@ -16,6 +16,13 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.81.11] - 19-06-24
+### Added
+- `AssetRelationshipConnector` transformer added
+### Improved
+- Handling of ids for labels and relationships
+
+
 ## [0.81.10] - 19-06-24
 ### Added
 - `AssetEventConnector` transformer added
