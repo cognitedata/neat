@@ -205,3 +205,64 @@ class AssetEventConnector(BaseTransformer):
                 # files can be connected to multiple assets in the graph
                 for (asset_id,) in cast(list[tuple], assets_id_res):
                     graph.add((asset_id, DEFAULT_NAMESPACE.event, event_id))
+
+
+class AssetRelationshipConnector(BaseTransformer):
+    description: str = "Connects assets via relationships"
+    _use_only_once: bool = True
+    _need_changes = frozenset(
+        {str(extractors.AssetsExtractor.__name__), str(extractors.RelationshipsExtractor.__name__)}
+    )
+    _asset_template: str = """SELECT ?source ?target WHERE {{
+                              <{relationship_id}> <{relationship_source_xid_prop}> ?source_xid .
+                              ?source <{asset_xid_property}> ?source_xid .
+                              ?source a <{asset_type}> .
+
+                              <{relationship_id}> <{relationship_target_xid_prop}> ?target_xid .
+                              ?target <{asset_xid_property}> ?target_xid .
+                              ?target a <{asset_type}> .}}"""
+
+    def __init__(
+        self,
+        asset_type: URIRef | None = None,
+        relationship_type: URIRef | None = None,
+        relationship_source_xid_prop: URIRef | None = None,
+        relationship_target_xid_prop: URIRef | None = None,
+        asset_xid_property: URIRef | None = None,
+    ):
+        self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
+        self.relationship_type = relationship_type or DEFAULT_NAMESPACE.Relationship
+        self.relationship_source_xid_prop = relationship_source_xid_prop or DEFAULT_NAMESPACE.source_external_id
+        self.relationship_target_xid_prop = relationship_target_xid_prop or DEFAULT_NAMESPACE.target_external_id
+        self.asset_xid_property = asset_xid_property or DEFAULT_NAMESPACE.external_id
+
+    def transform(self, graph: Graph) -> None:
+        for relationship_id_result in graph.query(
+            f"SELECT DISTINCT ?relationship_id WHERE {{?relationship_id a <{self.relationship_type}>}}"
+        ):
+            relationship_id: URIRef = cast(tuple, relationship_id_result)[0]
+
+            if assets_id_res := list(
+                graph.query(
+                    self._asset_template.format(
+                        relationship_id=relationship_id,
+                        asset_xid_property=self.asset_xid_property,
+                        relationship_source_xid_prop=self.relationship_source_xid_prop,
+                        relationship_target_xid_prop=self.relationship_target_xid_prop,
+                        asset_type=self.asset_type,
+                    )
+                )
+            ):
+                # files can be connected to multiple assets in the graph
+                for source_asset_id, target_asset_id in cast(list[tuple], assets_id_res):
+                    # create a relationship between the two assets
+                    graph.add((source_asset_id, DEFAULT_NAMESPACE.relationship, relationship_id))
+                    graph.add((target_asset_id, DEFAULT_NAMESPACE.relationship, relationship_id))
+
+                    # add source and target to the relationship
+                    graph.add((relationship_id, DEFAULT_NAMESPACE.source, source_asset_id))
+                    graph.add((relationship_id, DEFAULT_NAMESPACE.target, target_asset_id))
+
+                    # remove properties that are not needed, specifically the external ids
+                    graph.remove((relationship_id, self.relationship_source_xid_prop, None))
+                    graph.remove((relationship_id, self.relationship_target_xid_prop, None))

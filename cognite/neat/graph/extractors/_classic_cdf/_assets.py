@@ -2,7 +2,6 @@ from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
-from urllib.parse import quote
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetList
@@ -11,7 +10,7 @@ from rdflib import RDF, Literal, Namespace
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
-from cognite.neat.utils.utils import string_to_ideal_type
+from cognite.neat.utils.utils import create_sha256_hash, string_to_ideal_type
 
 
 class AssetsExtractor(BaseExtractor):
@@ -86,7 +85,9 @@ class AssetsExtractor(BaseExtractor):
             for label in asset.labels:
                 # external_id can create ill-formed URIs, so we create websafe URIs
                 # since labels do not have internal ids, we use the external_id as the id
-                triples.append((id_, namespace.label, namespace[f"Label_{quote(label.dump()['externalId'])}"]))
+                triples.append(
+                    (id_, namespace.label, namespace[f"Label_{create_sha256_hash(label.dump()['externalId'])}"])
+                )
 
         if asset.metadata:
             for key, value in asset.metadata.items():
