@@ -1,5 +1,19 @@
-from ._classic_cdf import AddAssetDepth, AssetFileConnector, AssetSequenceConnector, AssetTimeSeriesConnector
+from ._classic_cdf import (
+    AddAssetDepth,
+    AssetEventConnector,
+    AssetFileConnector,
+    AssetSequenceConnector,
+    AssetTimeSeriesConnector,
+)
 
-__all__ = ["AddAssetDepth", "AssetTimeSeriesConnector", "AssetSequenceConnector", "AssetFileConnector"]
+__all__ = [
+    "AddAssetDepth",
+    "AssetTimeSeriesConnector",
+    "AssetSequenceConnector",
+    "AssetFileConnector",
+    "AssetEventConnector",
+]
 
-Transformers = AddAssetDepth | AssetTimeSeriesConnector | AssetSequenceConnector | AssetFileConnector
+Transformers = (
+    AddAssetDepth | AssetTimeSeriesConnector | AssetSequenceConnector | AssetFileConnector | AssetEventConnector
+)
