@@ -74,26 +74,24 @@ class RelationshipsExtractor(BaseExtractor):
                 )
 
             # Create attributes
-            if relationship.external_id:
-                triples.append((id_, namespace.external_id, Literal(relationship.external_id)))
 
-            if relationship.source_external_id:
-                triples.append(
-                    (
-                        id_,
-                        namespace.source_external_id,
-                        Literal(relationship.source_external_id),
-                    )
-                )
+            triples.append((id_, namespace.external_id, Literal(relationship.external_id)))
 
-            if relationship.target_external_id:
-                triples.append(
-                    (
-                        id_,
-                        namespace.target_external_id,
-                        Literal(relationship.target_external_id),
-                    )
+            triples.append(
+                (
+                    id_,
+                    namespace.source_external_id,
+                    Literal(relationship.source_external_id),
                 )
+            )
+
+            triples.append(
+                (
+                    id_,
+                    namespace.target_external_id,
+                    Literal(relationship.target_external_id),
+                )
+            )
 
             if relationship.start_time:
                 triples.append(

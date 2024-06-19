@@ -51,9 +51,7 @@ class LabelsExtractor(BaseExtractor):
             triples: list[Triple] = [(id_, RDF.type, namespace.Label)]
 
             # Create attributes
-
-            if label.external_id:
-                triples.append((id_, namespace.external_id, Literal(label.external_id)))
+            triples.append((id_, namespace.external_id, Literal(label.external_id)))
 
             if label.name:
                 triples.append((id_, namespace.name, Literal(label.name)))
