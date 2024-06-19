@@ -15,4 +15,4 @@ def test_timeseries_extractor():
     for triple in FilesExtractor.from_dataset(client_mock, data_set_external_id="some data set").extract():
         g.add(triple)
 
-    assert len(g) == 10
+    assert len(g) == 11
