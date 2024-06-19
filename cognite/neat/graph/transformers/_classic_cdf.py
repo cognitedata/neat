@@ -95,3 +95,41 @@ class AssetTimeSeriesConnector(BaseTransformer):
                 # timeseries can be connected to only one asset in the graph
                 asset_id = cast(list[tuple], asset_id_res)[0][0]
                 graph.add((asset_id, DEFAULT_NAMESPACE.timeSeries, timeseries_id))
+
+
+class AssetSequenceConnector(BaseTransformer):
+    description: str = "Connects assets to sequences, thus forming bi-directional connection"
+    _use_only_once: bool = True
+    _need_changes = frozenset({str(extractors.AssetsExtractor.__name__), str(extractors.SequencesExtractor.__name__)})
+    _asset_template: str = """SELECT ?asset_id WHERE {{
+                              <{sequence_id}> <{asset_prop}> ?asset_id .
+                              ?asset_id a <{asset_type}>}}"""
+
+    def __init__(
+        self,
+        asset_type: URIRef | None = None,
+        sequence_type: URIRef | None = None,
+        asset_prop: URIRef | None = None,
+    ):
+        self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
+        self.sequence_type = sequence_type or DEFAULT_NAMESPACE.Sequence
+        self.asset_prop = asset_prop or DEFAULT_NAMESPACE.asset
+
+    def transform(self, graph: Graph) -> None:
+        for sequency_id_result in graph.query(
+            f"SELECT DISTINCT ?sequence_id WHERE {{?sequence_id a <{self.sequence_type}>}}"
+        ):
+            sequence_id: URIRef = cast(tuple, sequency_id_result)[0]
+
+            if asset_id_res := list(
+                graph.query(
+                    self._asset_template.format(
+                        sequence_id=sequence_id,
+                        asset_prop=self.asset_prop,
+                        asset_type=self.asset_type,
+                    )
+                )
+            ):
+                # sequence can be connected to only one asset in the graph
+                asset_id = cast(list[tuple], asset_id_res)[0][0]
+                graph.add((asset_id, DEFAULT_NAMESPACE.sequence, sequence_id))

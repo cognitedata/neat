@@ -16,6 +16,10 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.81.8] - 19-06-24
+### Added
+- `AssetSequenceConnector` transformer added
+
 ## [0.81.7] - 19-06-24
 ### Added
 - `AssetTimeSeriesConnector` transformer added
