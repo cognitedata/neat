@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 
+from cognite.client.data_classes.data_modeling.views import View
 from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from rdflib.query import ResultRow
@@ -14,6 +15,7 @@ from cognite.neat.graph._shared import MIMETypes
 from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.graph.models import Triple
 from cognite.neat.graph.transformers import Transformers
+from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import InformationRules
 from cognite.neat.utils import remove_namespace
 from cognite.neat.utils.auxiliary import local_import
@@ -143,6 +145,27 @@ class NeatGraphStore:
                 description=f"Extracted triples to graph store using {type(extractor).__name__}",
             )
         )
+
+    def read_view(self, view: View) -> None:
+        """Read instances for given view from the graph store."""
+        # PLACEHOLDER: Implement reading instances for a given view
+        # not yet developed
+
+        target_class = ClassEntity(prefix=view.space, suffix=view.external_id)
+
+        if not self.rules:
+            warnings.warn("No rules found for the graph store!", stacklevel=2)
+            return None
+
+        if target_class not in [definition.class_ for definition in self.rules.classes.data]:
+            warnings.warn(f"No class found for view {view.external_id}!", stacklevel=2)
+            return None
+
+        if not view.properties:
+            warnings.warn(f"No properties found for view {view.external_id}!", stacklevel=2)
+            return None
+
+        return None
 
     def _parse_file(
         self,
