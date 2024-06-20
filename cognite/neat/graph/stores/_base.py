@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 
-from cognite.client.data_classes.data_modeling.views import View
 from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from rdflib.query import ResultRow
@@ -44,6 +43,8 @@ class NeatGraphStore:
         graph: Graph,
         rules: InformationRules | None = None,
     ):
+        self.rules: InformationRules | None = None
+
         _start = datetime.now(timezone.utc)
         self.graph = graph
         self.provenance = Provenance(
@@ -56,11 +57,30 @@ class NeatGraphStore:
                 )
             ]
         )
-        self.rules = rules
 
-        if self.rules and self.rules.prefixes:
-            self._upsert_prefixes(self.rules.prefixes)
+        if rules:
+            self.rules = rules
             self.base_namespace = self.rules.metadata.namespace
+            self.provenance.append(
+                Change.record(
+                    activity=f"{type(self)}.rules",
+                    start=_start,
+                    end=datetime.now(timezone.utc),
+                    description=f"Added rules to graph store as {type(self.rules).__name__}",
+                )
+            )
+
+            if self.rules.prefixes:
+                self._upsert_prefixes(self.rules.prefixes)
+                self.provenance.append(
+                    Change.record(
+                        activity=f"{type(self).__name__}._upsert_prefixes",
+                        start=_start,
+                        end=datetime.now(timezone.utc),
+                        description="Upsert prefixes to graph store",
+                    )
+                )
+
         else:
             self.base_namespace = DEFAULT_NAMESPACE
 
@@ -146,26 +166,22 @@ class NeatGraphStore:
             )
         )
 
-    def read_view(self, view: View) -> None:
+    def read(self, class_: str) -> list[tuple[str, str, str]]:
         """Read instances for given view from the graph store."""
         # PLACEHOLDER: Implement reading instances for a given view
         # not yet developed
 
-        target_class = ClassEntity(prefix=view.space, suffix=view.external_id)
-
         if not self.rules:
-            warnings.warn("No rules found for the graph store!", stacklevel=2)
-            return None
+            warnings.warn("No rules found for the graph store, returning empty list.", stacklevel=2)
+            return []
 
-        if target_class not in [definition.class_ for definition in self.rules.classes.data]:
-            warnings.warn(f"No class found for view {view.external_id}!", stacklevel=2)
-            return None
+        class_entity = ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
 
-        if not view.properties:
-            warnings.warn(f"No properties found for view {view.external_id}!", stacklevel=2)
-            return None
+        if class_entity not in [definition.class_ for definition in self.rules.classes.data]:
+            warnings.warn("Desired type not found in graph!", stacklevel=2)
+            return []
 
-        return None
+        return []
 
     def _parse_file(
         self,
