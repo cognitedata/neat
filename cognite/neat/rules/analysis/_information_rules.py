@@ -2,7 +2,7 @@ import itertools
 import logging
 import warnings
 from collections import defaultdict
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 from pydantic import ValidationError

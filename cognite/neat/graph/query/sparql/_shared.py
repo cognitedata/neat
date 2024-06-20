@@ -1,36 +1,20 @@
-import re
-from collections import Counter
-from collections.abc import Iterable
 import sys
-from typing import ClassVar, cast
+from typing import cast
 
-from pydantic import BaseModel, ConfigDict, Field
-from rdflib import Graph, Literal, Namespace
+from rdflib import Graph, Namespace
 from rdflib.term import URIRef
 
 from cognite.neat.constants import PREFIXES
-from cognite.neat.legacy.rules.models.rdfpath import RDFPath
-from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
 from cognite.neat.rules.models._rdfpath import (
-    AllProperties,
-    AllReferences,
     Hop,
-    SingleProperty,
     Step,
-    TransformationRuleType,
-    Traversal,
-    parse_rule,
-    parse_traversal,
 )
-from cognite.neat.rules.models.information import InformationRules, InformationProperty
-from cognite.neat.rules.models.entities import ClassEntity
-from cognite.neat.utils.utils import remove_namespace, uri_to_short_form
-
+from cognite.neat.utils.utils import uri_to_short_form
 
 if sys.version_info >= (3, 11):
-    from typing import Self
+    pass
 else:
-    from typing_extensions import Self
+    pass
 
 
 def _generate_prefix_header(prefixes: dict[str, Namespace] = PREFIXES) -> str:
