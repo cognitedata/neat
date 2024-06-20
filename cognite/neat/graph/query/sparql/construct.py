@@ -1,30 +1,24 @@
 import re
+import sys
 from collections import Counter
 from collections.abc import Iterable
-import sys
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
-from rdflib import Graph, Literal, Namespace
+from rdflib import Graph, Literal
 from rdflib.term import URIRef
 
-from cognite.neat.constants import PREFIXES
-from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
 from cognite.neat.rules.models._rdfpath import (
-    AllProperties,
     AllReferences,
     Hop,
     SingleProperty,
-    Step,
     TransformationRuleType,
     Traversal,
     parse_rule,
-    parse_traversal,
 )
-from cognite.neat.rules.models.information import InformationRules
 from cognite.neat.rules.models.entities import ClassEntity
+from cognite.neat.rules.models.information import InformationRules
 from cognite.neat.utils.utils import remove_namespace
-
 
 if sys.version_info >= (3, 11):
     from typing import Self
