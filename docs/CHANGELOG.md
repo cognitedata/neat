@@ -16,7 +16,7 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
-## [0.81.12] - 19-06-24
+## [0.81.12] - 20-06-24
 ### Added
 - Placeholder for `NeatGraphStore.read_view` method
 ### Improved
