@@ -16,6 +16,13 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.81.12] - 19-06-24
+### Added
+- Placeholder for `NeatGraphStore.read_view` method
+### Improved
+- Simplified InformationArchitect rules by remove `rule_type` and renaming `rule` to `transformation` instead
+
+
 ## [0.81.11] - 19-06-24
 ### Added
 - `AssetRelationshipConnector` transformer added
