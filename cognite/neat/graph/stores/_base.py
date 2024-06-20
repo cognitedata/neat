@@ -166,7 +166,7 @@ class NeatGraphStore:
             )
         )
 
-    def read(self, rdf_type: str) -> list[tuple[str, str, str]]:
+    def read(self, class_: str) -> list[tuple[str, str, str]]:
         """Read instances for given view from the graph store."""
         # PLACEHOLDER: Implement reading instances for a given view
         # not yet developed
@@ -175,9 +175,9 @@ class NeatGraphStore:
             warnings.warn("No rules found for the graph store, returning empty list.", stacklevel=2)
             return []
 
-        class_ = ClassEntity(prefix=self.rules.metadata.prefix, suffix=rdf_type)
+        class_entity = ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
 
-        if class_ not in [definition.class_ for definition in self.rules.classes.data]:
+        if class_entity not in [definition.class_ for definition in self.rules.classes.data]:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return []
 
