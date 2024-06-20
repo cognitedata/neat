@@ -8,6 +8,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from rdflib import Graph, Literal
 from rdflib.term import URIRef
 
+<<<<<<< HEAD
+=======
+from cognite.neat.constants import PREFIXES
+from cognite.neat.legacy.rules.models.rdfpath import RDFPath
+from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+>>>>>>> 7c10f324 (push changes)
 from cognite.neat.rules.models._rdfpath import (
     AllReferences,
     Hop,
@@ -127,12 +133,10 @@ def _to_construct_triples(
     patterns = []
 
     class_ids = []
-    for property_ in get_classes_with_properties(rules)[class_]:
-        if property_.rule_type != TransformationRuleType.rdfpath or property_.skip_rule:
-            continue
-        if not isinstance(property_.rule, str):
-            raise ValueError("Rule must be string!")
-        traversal = parse_rule(property_.rule, property_.rule_type).traversal
+    for property_ in InformationArchitectRulesAnalysis(rules).classes_with_properties(
+        only_rdfpath=True, consider_inheritance=True
+    )[class_]:
+        traversal = cast(RDFPath, property_.rule).traversal
 
         if isinstance(traversal, Traversal):
             class_ids.append(traversal.class_.id)

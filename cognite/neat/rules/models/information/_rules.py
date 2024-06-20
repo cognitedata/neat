@@ -169,6 +169,11 @@ class InformationProperty(SheetEntity):
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     transformation: str | RDFPath | None = Field(alias="Transformation", default=None)
     comment: str | None = Field(alias="Comment", default=None)
+    inherited: bool = Field(
+        default=False,
+        alias="Inherited",
+        description="Flag to indicate if the property is inherited, only use for internal purposes",
+    )
 
     @field_serializer("max_count", when_used="json-unless-none")
     def serialize_max_count(self, value: int | float | None) -> int | float | None | str:

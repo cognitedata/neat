@@ -87,11 +87,11 @@ def generate_triples(
     stop_on_exception: bool = False,
     allow_isolated_classes: bool = True,
 ) -> list[Triple]:
-    """Generate mock triples based on data model defined transformation rules and desired number
+    """Generate mock triples based on data model defined in rules and desired number
     of class instances
 
     Args:
-        transformation_rules : Transformation rules defining the data model
+        rules : Rules defining the data model
         class_count: Target class count for each class in the ontology
         stop_on_exception: To stop if exception is encountered or not, default is False
         allow_isolated_classes: To allow generation of instances for classes that are not
