@@ -79,19 +79,14 @@ def to_construct_triples(
 ) -> tuple[list[Triple], list[Triple]]:
     """Converts class definition to CONSTRUCT triples which are used to generate CONSTRUCT query
 
-    Parameters
-    ----------
-    graph : Graph
-        Graph containing instances of classes
-    class_ : str
-        Class entity for which we want to generate query
-    rules : InformationRules
-        InformationRules rules to use for query generation
+    Args:
+        graph: Graph containing instances of classes
+        transformations : List of transformations to apply
+        prefixes : Dictionary of prefixes for namespaces
+        properties_optional : Flag indicating if properties should be optional. Defaults to True.
 
-    Returns
-    -------
-    tuple[list[Triple],list[Triple]]
-        Tuple of triples that define graph template and graph pattern parts of CONSTRUCT query
+    Returns:
+        tuple: Tuple of triples that define graph template and graph pattern parts of CONSTRUCT query
     """
     # TODO: Add handling of UNIONs in rules
 
