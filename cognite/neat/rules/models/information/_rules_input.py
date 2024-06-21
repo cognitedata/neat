@@ -84,8 +84,7 @@ class InformationPropertyInput:
     default: Any | None = None
     reference: str | None = None
     match_type: str | None = None
-    rule_type: str | None = None
-    rule: str | None = None
+    transformation: str | None = None
 
     @classmethod
     @overload
@@ -122,8 +121,7 @@ class InformationPropertyInput:
             default=data.get("default", None),
             reference=data.get("reference", None),
             match_type=data.get("match_type", None),
-            rule_type=data.get("rule_type", None),
-            rule=data.get("rule", None),
+            transformation=data.get("transformation", None),
         )
 
     def dump(self, default_prefix: str) -> dict[str, Any]:
@@ -158,8 +156,7 @@ class InformationPropertyInput:
             "Default": self.default,
             "Reference": self.reference,
             "Match Type": self.match_type,
-            "Rule Type": self.rule_type,
-            "Rule": self.rule,
+            "Transformation": self.transformation,
         }
 
 

@@ -2,7 +2,6 @@
 It is a bit ugly and needs some proper refactoring, but it is not a priority at the moment.
 """
 
-import logging
 import random
 import warnings
 from collections import OrderedDict
@@ -107,11 +106,9 @@ def generate_triples(
     if non_existing_classes := set(class_count.keys()) - defined_classes:
         msg = f"Class count contains classes {non_existing_classes} for which properties are not defined in Data Model!"
         if stop_on_exception:
-            logging.error(msg)
             raise ValueError(msg)
         else:
             msg += " These classes will be ignored."
-            logging.warning(msg)
             warnings.warn(msg, stacklevel=2)
             for class_ in non_existing_classes:
                 class_count.pop(class_)
@@ -279,14 +276,12 @@ def _generate_mock_object_property_triples(
     if property_definition.value_type not in instance_ids:
         msg = f"Class {property_definition.value_type} not found in class count! "
         if stop_on_exception:
-            logging.error(msg)
             raise ValueError(msg)
         else:
             msg += (
                 f"Skipping creating triples for property {property_definition.name} "
                 f"of class {class_.suffix} which expects values of this type!"
             )
-            logging.warning(msg)
             warnings.warn(msg, stacklevel=2)
             return []
 
@@ -354,7 +349,6 @@ def _generate_triples_per_class(
             )
 
         else:
-            logging.error(f"Property type {property_.value_type} not supported!")
             raise ValueError(f"Property type {property_.value_type} not supported!")
 
     return triples

@@ -3,7 +3,7 @@ import logging
 import re
 import sys
 import time
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 from collections.abc import Iterable
 from datetime import datetime
 from functools import wraps
@@ -386,3 +386,8 @@ def string_to_ideal_type(input_string: str) -> int | bool | float | datetime | s
                 except ValueError:
                     # Return the input string if no conversion is possible
                     return input_string
+
+
+def most_occurring_element(list_of_elements: list):
+    counts = Counter(list_of_elements)
+    return counts.most_common(1)[0][0]

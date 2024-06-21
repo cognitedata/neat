@@ -1,7 +1,9 @@
 import sys
-from typing import cast
+from collections.abc import Iterable
+from typing import ClassVar, cast
 
-from rdflib import Graph, Namespace
+from pydantic import BaseModel, ConfigDict, Field
+from rdflib import Graph, Literal, Namespace
 from rdflib.term import URIRef
 
 from cognite.neat.constants import PREFIXES
@@ -9,12 +11,30 @@ from cognite.neat.rules.models._rdfpath import (
     Hop,
     Step,
 )
-from cognite.neat.utils.utils import uri_to_short_form
+from cognite.neat.utils.utils import remove_namespace, uri_to_short_form
 
 if sys.version_info >= (3, 11):
-    pass
+    from typing import Self
 else:
-    pass
+    from typing_extensions import Self
+
+
+class Triple(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        populate_by_name=True, arbitrary_types_allowed=True, strict=False, extra="allow"
+    )
+
+    subject: str | URIRef
+    predicate: str | URIRef
+    object: str | URIRef | Literal | None = None
+    optional: bool = Field(
+        description="Indicates whether a triple is optional, used when building SPARQL query",
+        default=False,
+    )
+
+    @classmethod
+    def from_rdflib_triple(cls, triple: tuple[URIRef, URIRef, URIRef | Literal]) -> Self:
+        return cls(subject=triple[0], predicate=triple[1], object=triple[2])
 
 
 def _generate_prefix_header(prefixes: dict[str, Namespace] = PREFIXES) -> str:
@@ -115,3 +135,25 @@ def _hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) -
     else:
         # removing "/" at the end of property path if there is no property at the end
         return property_path[:-1]
+
+
+def triples2dictionary(triples: Iterable[tuple[URIRef, URIRef, str | URIRef]]) -> dict[URIRef, dict[str, list[str]]]:
+    """Converts list of triples to dictionary"""
+    dictionary: dict[URIRef, dict[str, list[str]]] = {}
+    for triple in triples:
+        id_: str
+        property_: str
+        value: str
+        uri: URIRef
+
+        id_, property_, value = remove_namespace(*triple)  # type: ignore[misc]
+        uri = triple[0]
+
+        if uri not in dictionary:
+            dictionary[uri] = {"external_id": [id_]}
+
+        if property_ not in dictionary[uri]:
+            dictionary[uri][property_] = [value]
+        else:
+            dictionary[uri][property_].append(value)
+    return dictionary
