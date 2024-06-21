@@ -72,24 +72,24 @@ class Queries:
             return []
 
     def construct_instances_of_class(self, class_: str, properties_optional: bool = True) -> list[tuple[str, str, str]]:
-        """Builds CONSTRUCT query for given class and rules
+        """CONSTRUCT instances for a given class from the graph store
 
         Args:
             class_: Class entity for which we want to generate query
             properties_optional: Whether to make all properties optional, default True
 
         Returns:
-            CONSTRUCT query
+            List of triples for instances of the given class
         """
 
-        if self.rules:
-            query = build_construct_query(
+        if self.rules and (
+            query := build_construct_query(
                 ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_),
                 self.graph,
                 self.rules,
                 properties_optional,
             )
-
+        ):
             result = self.graph.query(query)
 
             # We cannot include the RDF.type in case there is a neat:type property
