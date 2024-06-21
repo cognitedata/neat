@@ -15,7 +15,7 @@ from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import InformationProperty, InformationRules
 from cognite.neat.utils.utils import most_occurring_element
 
-from ._shared import Triple, _hop2property_path
+from ._shared import Triple, hop2property_path
 
 
 def build_construct_query(
@@ -24,55 +24,46 @@ def build_construct_query(
     rules: InformationRules,
     properties_optional: bool = True,
     class_instances: list[URIRef] | None = None,
-) -> str:
-    """Builds CONSTRUCT query for given class and rules and optionally filters by class instances
+) -> str | None:
+    """Builds a CONSTRUCT query for a given class and rules and optionally filters by class instances.
 
-    Parameters
-    ----------
-    graph : Graph
-        Graph containing instances of classes
-    class_ : str
-        Class entity for which we want to generate query
-    rules : InformationRules
-        InformationRules rules to use for query generation
-    properties_optional : bool, optional
-        Whether to make all properties optional, default True
-    class_instances : list[URIRef], optional
-        List of class instances to filter by, default None (no filter return all instances)
+    Args:
+        class_ : The class entity for which the query is generated.
+        graph : The graph containing instances of classes.
+        rules : The information rules to use for query generation.
+        properties_optional : Whether to make all properties optional. Defaults to True.
+        class_instances : List of class instances to filter by. Defaults to None (no filter, return all instances).
 
-    Returns
-    -------
-    str
-        CONSTRUCT query
+    Returns:
+        str: The CONSTRUCT query.
 
-    Notes
-    -----
-    Construct query is far less unforgiving than SELECT query, in sense that it will not return
-    anything if one of the properties that define "shape" of the class instance is missing.
-    This is the reason why there is option to make all properties optional, so that query will
-    return all instances that have at least one property defined.
-
+    Notes:
+        The CONSTRUCT query is far less forgiving than the SELECT query. It will not return
+        anything if one of the properties that define the "shape" of the class instance is missing.
+        This is the reason why there is an option to make all properties optional, so that
+        the query will return all instances that have at least one property defined.
     """
-
     if (
         transformations := InformationArchitectRulesAnalysis(rules)
         .class_property_pairs(only_rdfpath=True, consider_inheritance=True)
         .get(class_, None)
     ):
         query_template = "CONSTRUCT {graph_template\n}\n\nWHERE {graph_pattern\ninsert_filter} ORDER BY ?instance"
-        query_template = _add_filter(class_instances, query_template)
+        query_template = add_filter(class_instances, query_template)
 
-        templates, patterns = _to_construct_triples(
+        templates, patterns = to_construct_triples(
             graph, list(transformations.values()), rules.prefixes, properties_optional
         )
 
-        graph_template = "\n           ".join(_triples2sparql_statement(templates))
-        graph_pattern = "\n       ".join(_triples2sparql_statement(patterns))
+        graph_template = "\n           ".join(triples2sparql_statement(templates))
+        graph_pattern = "\n       ".join(triples2sparql_statement(patterns))
 
         return query_template.replace("graph_template", graph_template).replace("graph_pattern", graph_pattern)
+    else:
+        return None
 
 
-def _add_filter(class_instances, query_template):
+def add_filter(class_instances, query_template):
     if class_instances:
         class_instances_formatted = [f"<{instance}>" for instance in class_instances]
         query_template = query_template.replace(
@@ -83,9 +74,9 @@ def _add_filter(class_instances, query_template):
     return query_template
 
 
-def _to_construct_triples(
+def to_construct_triples(
     graph: Graph, transformations: list[InformationProperty], prefixes: dict, properties_optional: bool = True
-) -> tuple[list[Triple], list[Triple]] | None:
+) -> tuple[list[Triple], list[Triple]]:
     """Converts class definition to CONSTRUCT triples which are used to generate CONSTRUCT query
 
     Parameters
@@ -140,7 +131,7 @@ def _to_construct_triples(
         elif isinstance(traversal, Hop):
             graph_pattern_triple = Triple(
                 subject="?instance",
-                predicate=_hop2property_path(graph, traversal, prefixes),
+                predicate=hop2property_path(graph, traversal, prefixes),
                 object=graph_template_triple.object,
                 optional=True if properties_optional else not transformation.is_mandatory,
             )
@@ -159,7 +150,7 @@ def _to_construct_triples(
     return templates, patterns
 
 
-def _triples2sparql_statement(triples: list[Triple]):
+def triples2sparql_statement(triples: list[Triple]):
     return [
         (
             f"OPTIONAL {{ {triple.subject} {triple.predicate} {triple.object} . }}"

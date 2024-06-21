@@ -37,7 +37,7 @@ class Triple(BaseModel):
         return cls(subject=triple[0], predicate=triple[1], object=triple[2])
 
 
-def _generate_prefix_header(prefixes: dict[str, Namespace] = PREFIXES) -> str:
+def generate_prefix_header(prefixes: dict[str, Namespace] = PREFIXES) -> str:
     """Generate prefix header which is added to SPARQL query and allows for shorten query statements
 
     Parameters
@@ -53,7 +53,7 @@ def _generate_prefix_header(prefixes: dict[str, Namespace] = PREFIXES) -> str:
     return "".join(f"PREFIX {key}:<{value}>\n" for key, value in prefixes.items())
 
 
-def _get_predicate_id(
+def get_predicate_id(
     graph: Graph, subject_type_id: str, object_type_id: str, prefixes: dict[str, Namespace] = PREFIXES
 ) -> URIRef:
     """Returns predicate (aka property) URI (i.e., ID) that connects subject and object
@@ -83,7 +83,7 @@ def _get_predicate_id(
             ?subjectInstanceID ?predicateTypeID ?objectInstanceID .
         } LIMIT 1"""
 
-    query = query.replace("insertPrefixes", _generate_prefix_header(prefixes))
+    query = query.replace("insertPrefixes", generate_prefix_header(prefixes))
     final_query = query.replace("subjectTypeID", subject_type_id).replace("objectTypeID", object_type_id)
     res = list(cast(tuple, graph.query(final_query)))
 
@@ -93,7 +93,7 @@ def _get_predicate_id(
     return res[0][0]
 
 
-def _hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) -> str:
+def hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) -> str:
     """Converts hop to property path string
 
     Parameters
@@ -121,7 +121,7 @@ def _hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) -
             (current_step, previous_step) if current_step.direction == "source" else (previous_step, current_step)
         )
 
-        predicate_raw = _get_predicate_id(graph, sub_entity.class_.id, obj_entity.class_.id, prefixes)
+        predicate_raw = get_predicate_id(graph, sub_entity.class_.id, obj_entity.class_.id, prefixes)
 
         predicate = uri_to_short_form(predicate_raw, prefixes)
 
