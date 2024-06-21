@@ -157,20 +157,19 @@ For more information about how these different `Rules` objects are used, see the
 
 === "Information Architect Profile"
 
-    | Column      | Description                                                                                                                                                                        | Predefined Value                   | Mandatory |
-    |-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------|-----------|
-    | Class       | Class id that the property is defined for, strongly advise `PascalCase` usage                                                                                                      |                                    | Yes       |
-    | Property    | Property id, strongly advised to `camelCase` usage                                                                                                                                 |                                    | Yes       |
-    | Name        | Human readable name of the property                                                                                                                                                |                                    | No        |
-    | Description | Short description of the property                                                                                                                                                  |                                    | Yes       |
-    | Value Type  | Value type that the property can hold. It takes either subset of XSD type (see note below) or a class defined                                                                      | XSD Types or Class id              | Yes       |
-    | Min Count   | Minimum number of values that the property can hold. If no value is provided, the default value is  `0`, which means that the property is optional.                                |                                    | Yes       |
-    | Max Count   | Maximum number of values that the property can hold. If no value is provided, the default value is  `inf`, which means that the property can hold any number of values (listable). |                                    | Yes       |
-    | Default     | Specifies default value for the property.                                                                                                                                          |                                    | No        |
-    | Rule Type   | The rule type that is used to populate the data model                                                                                                                              | `sparql`, `rdfpath` or `rawlookup` | No        |
-    | Rule        | The rule that is used to populate the data model. The rule is provided as a string, which is either SPARQL query or RDFPath query or RAW lookup query                              |                                    | No        |
-    | Reference   | Reference to the source of the property provided as `URI`                                                                                                                          |                                    | No        |
-    | Match Type  | The match type between the source entity and the class                                                                                                                             | `exact` or `partial`               | No        |
+    | Column         | Description                                                                                                                                                                        | Predefined Value                   | Mandatory |
+    |----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------|-----------|
+    | Class          | Class id that the property is defined for, strongly advise `PascalCase` usage                                                                                                      |                                    | Yes       |
+    | Property       | Property id, strongly advised to `camelCase` usage                                                                                                                                 |                                    | Yes       |
+    | Name           | Human readable name of the property                                                                                                                                                |                                    | No        |
+    | Description    | Short description of the property                                                                                                                                                  |                                    | Yes       |
+    | Value Type     | Value type that the property can hold. It takes either subset of XSD type (see note below) or a class defined                                                                      | XSD Types or Class id              | Yes       |
+    | Min Count      | Minimum number of values that the property can hold. If no value is provided, the default value is  `0`, which means that the property is optional.                                |                                    | Yes       |
+    | Max Count      | Maximum number of values that the property can hold. If no value is provided, the default value is  `inf`, which means that the property can hold any number of values (listable). |                                    | Yes       |
+    | Default        | Specifies default value for the property.                                                                                                                                          |                                    | No        |
+    | Transformation | The rule that is used to populate the data model. The rule is provided in a RDFPath query syntax which is converted to downstream solution query (e.g. SPARQL)                     |                                    | No        |
+    | Reference      | Reference to the source of the property provided as `URI`                                                                                                                          |                                    | No        |
+    | Match Type     | The match type between the source entity and the class                                                                                                                             | `exact` or `partial`               | No        |
 
     !!! info annotate "XSD Value Types"
         The following XSD types are supported:
@@ -179,8 +178,7 @@ For more information about how these different `Rules` objects are used, see the
         `timeseries`, `file` , `sequence` and `json`
 
     !!! info annotate "Data model population rule"
-        The `Rule Type` and `Rule` columns are used to populate the data model using [NEAT graph store](./graph.md).
-        They are optional, but if used, both must be provided !
+        The `Transformation` column are used to populate the data model using [NEAT graph store](./graph.md). Currently we only support `RDFPath` query syntax.
 
     !!! tip annotate "Usage"
         More details on **Information Architect** Profile **Properties sheet**  usage can be found [here](../tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md#information-architect-properties)!

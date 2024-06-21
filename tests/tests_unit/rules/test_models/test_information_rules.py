@@ -70,8 +70,7 @@ def case_insensitive_value_types():
                     "Default": None,
                     "Source": None,
                     "MatchType": None,
-                    "Rule Type": None,
-                    "Rule": None,
+                    "Transformation": None,
                 }
             ],
         },
@@ -116,15 +115,14 @@ def invalid_domain_rules_cases():
                     "Default": None,
                     "Source": None,
                     "MatchType": None,
-                    "Rule Type": "rdfpath",
-                    "Rule": None,
+                    "Transformation": ":GeneratingUnit(cim:name)",
                 }
             ],
         },
         (
-            "Rule type 'rdfpath' provided for property 'name' in class 'GeneratingUnit' but rule is not provided!"
+            ":GeneratingUnit(cim:name) is not a valid rdfpath!"
             "\nFor more information visit: "
-            "https://cognite-neat.readthedocs-hosted.com/en/latest/api/exceptions.html#cognite.neat.rules.exceptions.RuleTypeProvidedButRuleMissing"
+            "https://cognite-neat.readthedocs-hosted.com/en/latest/api/exceptions.html#cognite.neat.rules.exceptions.NotValidRDFPath"
         ),
         id="missing_rule",
     )

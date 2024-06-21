@@ -23,13 +23,8 @@ from cognite.neat.rules.models._base import (
     SheetList,
 )
 from cognite.neat.rules.models._rdfpath import (
-    AllReferences,
-    Hop,
-    RawLookup,
-    SingleProperty,
-    SPARQLQuery,
+    RDFPath,
     TransformationRuleType,
-    Traversal,
     parse_rule,
 )
 from cognite.neat.rules.models._types import (
@@ -156,9 +151,7 @@ class InformationProperty(SheetEntity):
         default: Default value of the property
         reference: Reference to the source of the information, HTTP URI
         match_type: The match type of the resource being described and the source entity.
-        rule_type: Rule type for the transformation from source to target representation
-                   of knowledge graph. Defaults to None (no transformation)
-        rule: Actual rule for the transformation from source to target representation of
+        transformation: Actual rule for the transformation from source to target representation of
               knowledge graph. Defaults to None (no transformation)
     """
 
@@ -174,10 +167,7 @@ class InformationProperty(SheetEntity):
     default: Any | None = Field(alias="Default", default=None)
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     match_type: MatchType | None = Field(alias="Match Type", default=None)
-    rule_type: str | TransformationRuleType | None = Field(alias="Rule Type", default=None)
-    rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
-        alias="Rule", default=None
-    )
+    transformation: str | RDFPath | None = Field(alias="Transformation", default=None)
     comment: str | None = Field(alias="Comment", default=None)
 
     @field_serializer("max_count", when_used="json-unless-none")
@@ -193,15 +183,10 @@ class InformationProperty(SheetEntity):
         return value
 
     @model_validator(mode="after")
-    def is_valid_rule(self):
-        # TODO: Can we skip rule_type and simply try to parse the rule and if it fails, raise an error?
-        if self.rule_type:
-            self.rule_type = self.rule_type.lower()
-            if not self.rule:
-                raise exceptions.RuleTypeProvidedButRuleMissing(
-                    self.property_, self.class_, self.rule_type
-                ).to_pydantic_custom_error()
-            self.rule = parse_rule(self.rule, self.rule_type)
+    def generate_valid_transformation(self):
+        # TODO: Currently only supporting RDFpath
+        if self.transformation:
+            self.transformation = parse_rule(self.transformation, TransformationRuleType.rdfpath)
         return self
 
     @model_validator(mode="after")

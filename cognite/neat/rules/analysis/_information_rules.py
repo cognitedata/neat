@@ -8,7 +8,7 @@ import pandas as pd
 from pydantic import ValidationError
 
 from cognite.neat.rules.models import SchemaCompleteness
-from cognite.neat.rules.models._rdfpath import TransformationRuleType
+from cognite.neat.rules.models._rdfpath import RDFPath
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, ParentClassEntity, ReferenceEntity
 from cognite.neat.rules.models.information import InformationClass, InformationProperty, InformationRules
 from cognite.neat.utils.utils import get_inheritance_path
@@ -191,7 +191,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
                     )
                     continue
 
-                if (only_rdfpath and property_.rule_type == TransformationRuleType.rdfpath) or not only_rdfpath:
+                if (only_rdfpath and isinstance(property_.transformation, RDFPath)) or not only_rdfpath:
                     processed_properties[property_.property_] = property_
             class_property_pairs[class_] = processed_properties
 
