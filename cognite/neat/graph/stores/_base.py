@@ -181,10 +181,6 @@ class NeatGraphStore:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return []
 
-        # query = build_construct_query
-
-        # execute query
-
         return []
 
     def _parse_file(
