@@ -93,7 +93,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield from issues
             tracker.issue(issues)
             class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
-            triples = self.graph_store.queries.triples_of_type_instances(class_name)
+            triples = self.graph_store.read(class_name)
             for identifier, properties in _triples2dictionary(triples).items():
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)

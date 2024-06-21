@@ -20,7 +20,7 @@ from ._shared import Triple, hop2property_path
 _QUERY_TEMPLATE = """CONSTRUCT {{ {graph_template} }}
                      WHERE {{     {graph_pattern}
                                   {filter}
-                     }} ORDER BY ?instance"""
+                     }}"""
 
 
 def build_construct_query(
