@@ -645,7 +645,7 @@ typer = {version = ">=0.12.0, <1.0", extras = ["all"]}
 type = "git"
 url = "https://github.com/cognitedata/toolkit.git"
 reference = "installation-branch-neat"
-resolved_reference = "12b99432a6b982cb5b296dbd75a292b71e9a2b1d"
+resolved_reference = "009daf5ccfce4e34da1d306e9c1a624378da6dfe"
 
 [[package]]
 name = "colorama"
