@@ -16,6 +16,16 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.82.0] - 21-06-24
+### Added
+- Introduce `query` module under `neat.graph` which holds previous `_Queries` class
+- Added generation of `SPARQL` `CONSTRUCT` queries based on `rdfpath` transformations defined in `InformationRules`
+- Introduce `NeatGraphStore.read` method which takes class and returns all instances of that class
+- Test for `NeatGraphStore.read` method which entails end-to-end process of loading triples, inferring data model and reading instances of a class
+### Changed
+- `DMSLoader` now uses `.read` method of `NeatGraphStore`
+
+
 ## [0.81.12] - 20-06-24
 ### Added
 - Placeholder for `NeatGraphStore.read_view` method

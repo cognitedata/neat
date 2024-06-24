@@ -17,7 +17,7 @@ from cognite.neat.rules.models.information import (
     InformationMetadata,
     InformationRulesInput,
 )
-from cognite.neat.utils.utils import get_namespace, remove_namespace
+from cognite.neat.utils.utils import get_namespace, remove_namespace, uri_to_short_form
 
 ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class . }
@@ -176,6 +176,10 @@ class InferenceImporter(BaseImporter):
                         "max_count": cast(RdfLiteral, occurrence).value,
                         "value_type": value_type_id,
                         "reference": property_uri,
+                        "transformation": (
+                            f"{uri_to_short_form(class_definition['reference'], prefixes)}"
+                            f"({uri_to_short_form(cast(URIRef, property_uri), prefixes)})"
+                        ),
                         "comment": (
                             f"Class <{class_id}> has property <{property_id}> with "
                             f"value type <{value_type_id}> which occurs <1> times in the graph"

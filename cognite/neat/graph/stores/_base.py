@@ -5,18 +5,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 
-from rdflib import RDF, Graph, Namespace, URIRef
+from rdflib import Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
-from rdflib.query import ResultRow
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph._shared import MIMETypes
 from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.graph.models import Triple
+from cognite.neat.graph.queries import Queries
 from cognite.neat.graph.transformers import Transformers
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import InformationRules
-from cognite.neat.utils import remove_namespace
 from cognite.neat.utils.auxiliary import local_import
 
 from ._provenance import Change, Provenance
@@ -59,32 +58,30 @@ class NeatGraphStore:
         )
 
         if rules:
-            self.rules = rules
-            self.base_namespace = self.rules.metadata.namespace
-            self.provenance.append(
-                Change.record(
-                    activity=f"{type(self)}.rules",
-                    start=_start,
-                    end=datetime.now(timezone.utc),
-                    description=f"Added rules to graph store as {type(self.rules).__name__}",
-                )
-            )
-
-            if self.rules.prefixes:
-                self._upsert_prefixes(self.rules.prefixes)
-                self.provenance.append(
-                    Change.record(
-                        activity=f"{type(self).__name__}._upsert_prefixes",
-                        start=_start,
-                        end=datetime.now(timezone.utc),
-                        description="Upsert prefixes to graph store",
-                    )
-                )
-
+            self.add_rules(rules)
         else:
             self.base_namespace = DEFAULT_NAMESPACE
 
-        self.queries = _Queries(self)
+        self.queries = Queries(self.graph, self.rules)
+
+    def add_rules(self, rules: InformationRules) -> None:
+        """This method is used to add rules to the graph store and it is the only correct
+        way to add rules to the graph store, after the graph store has been initialized."""
+
+        self.rules = rules
+        self.base_namespace = self.rules.metadata.namespace
+        self.queries = Queries(self.graph, self.rules)
+        self.provenance.append(
+            Change.record(
+                activity=f"{type(self)}.rules",
+                start=datetime.now(timezone.utc),
+                end=datetime.now(timezone.utc),
+                description=f"Added rules to graph store as {type(self.rules).__name__}",
+            )
+        )
+
+        if self.rules.prefixes:
+            self._upsert_prefixes(self.rules.prefixes)
 
     def _upsert_prefixes(self, prefixes: dict[str, Namespace]) -> None:
         """Adds prefixes to the graph store."""
@@ -181,7 +178,7 @@ class NeatGraphStore:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return []
 
-        return []
+        return self.queries.construct_instances_of_class(class_)
 
     def _parse_file(
         self,
@@ -281,63 +278,3 @@ class NeatGraphStore:
                     description=transformer.description,
                 )
             )
-
-
-class _Queries:
-    """Helper class for storing standard queries for the graph store."""
-
-    def __init__(self, store: NeatGraphStore):
-        self.store = store
-
-    def list_instances_ids_of_class(self, class_uri: URIRef, limit: int = -1) -> list[URIRef]:
-        """Get instances ids for a given class
-
-        Args:
-            class_uri: Class for which instances are to be found
-            limit: Max number of instances to return, by default -1 meaning all instances
-
-        Returns:
-            List of class instance URIs
-        """
-        query_statement = "SELECT DISTINCT ?subject WHERE { ?subject a <class> .} LIMIT X".replace(
-            "class", class_uri
-        ).replace("LIMIT X", "" if limit == -1 else f"LIMIT {limit}")
-        return [cast(tuple, res)[0] for res in list(self.store.graph.query(query_statement))]
-
-    def list_instances_of_type(self, class_uri: URIRef) -> list[ResultRow]:
-        """Get all triples for instances of a given class
-
-        Args:
-            class_uri: Class for which instances are to be found
-
-        Returns:
-            List of triples for instances of the given class
-        """
-        query = (
-            f"SELECT ?instance ?prop ?value "
-            f"WHERE {{ ?instance rdf:type <{class_uri}> . ?instance ?prop ?value . }} order by ?instance "
-        )
-
-        # Select queries gives an iterable of result rows
-        return cast(list[ResultRow], list(self.store.graph.query(query)))
-
-    def triples_of_type_instances(self, rdf_type: str) -> list[tuple[str, str, str]]:
-        """Get all triples of a given type.
-
-        This method assumes the graph has been transformed into the default namespace.
-        """
-
-        if self.store.rules:
-            query = (
-                f"SELECT ?instance ?prop ?value "
-                f"WHERE {{ ?instance a <{self.store.rules.metadata.namespace[rdf_type]}> . ?instance ?prop ?value . }} "
-                "order by ?instance"
-            )
-
-            result = self.store.graph.query(query)
-
-            # We cannot include the RDF.type in case there is a neat:type property
-            return [remove_namespace(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
-        else:
-            warnings.warn("No rules found for the graph store, returning empty list.", stacklevel=2)
-            return []
