@@ -48,6 +48,8 @@ class EntityTypes(StrEnum):
     datamodel = "datamodel"
     undefined = "undefined"
     multi_value_type = "multi_value_type"
+    asset = "asset"
+    relationship = "relationship"
 
 
 # ALLOWED
@@ -204,7 +206,7 @@ class Entity(BaseModel, extra="ignore"):
             if (v := getattr(self, field_name)) is not None and field_name not in {"prefix", "suffix"}
         )
         args = ",".join([f"{k}={v}" for k, v in model_dump])
-        if self.prefix is Undefined:
+        if self.prefix == Undefined:
             base_id = str(self.suffix)
         else:
             base_id = f"{self.prefix}:{self.suffix!s}"
@@ -265,6 +267,28 @@ class UnknownEntity(ClassEntity):
     @property
     def id(self) -> str:
         return str(Unknown)
+
+
+class AssetFields(StrEnum):
+    external_id = "external_id"
+    name = "name"
+    parent_external_id = "parent_external_id"
+    description = "description"
+    metadata = "metadata"
+
+
+class AssetEntity(Entity):
+    type_: ClassVar[EntityTypes] = EntityTypes.asset
+    suffix: str = "Asset"
+    prefix: _UndefinedType = Undefined
+    property_: AssetFields = Field(alias="property")
+
+
+class RelationshipEntity(Entity):
+    type_: ClassVar[EntityTypes] = EntityTypes.relationship
+    suffix: str = "Relationship"
+    prefix: _UndefinedType = Undefined
+    label: str | None = None
 
 
 T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId | NodeId | None)
@@ -505,6 +529,23 @@ def _join_str(v: list[ClassEntity]) -> str | None:
     return ",".join([entry.id for entry in v]) if v else None
 
 
+def _generate_cdf_resource_list(v: Any):
+    results = []
+    for item in _split_str(v):
+        if isinstance(item, str):
+            if "relationship" in item.lower():
+                results.append(RelationshipEntity.load(item))
+            elif "asset" in item.lower():  # type: ignore
+                results.append(AssetEntity.load(item))  # type: ignore
+            else:
+                raise ValueError(f"Unsupported implementation definition: {item}")
+
+        else:
+            results.append(item)
+
+    return results
+
+
 ParentEntityList = Annotated[
     list[ParentClassEntity],
     BeforeValidator(_split_str),
@@ -514,6 +555,18 @@ ParentEntityList = Annotated[
         when_used="unless-none",
     ),
 ]
+
+
+CdfResourceEntityList = Annotated[
+    list[AssetEntity | RelationshipEntity],
+    BeforeValidator(_generate_cdf_resource_list),
+    PlainSerializer(
+        _join_str,
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
+
 
 ContainerEntityList = Annotated[
     list[ContainerEntity],

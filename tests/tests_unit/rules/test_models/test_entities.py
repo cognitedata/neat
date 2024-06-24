@@ -4,11 +4,13 @@ import pytest
 from cognite.client.data_classes.data_modeling import DataModelId, PropertyId, ViewId
 
 from cognite.neat.rules.models.entities import (
+    AssetEntity,
     ClassEntity,
     DataModelEntity,
     DMSUnknownEntity,
     Entity,
     ReferenceEntity,
+    RelationshipEntity,
     UnknownEntity,
     ViewEntity,
     ViewPropertyEntity,
@@ -70,6 +72,16 @@ class TestEntities:
                 ClassEntity,
                 "#N/A",
                 UnknownEntity(),
+            ),
+            (
+                AssetEntity,
+                "Asset(property=external_id)",
+                AssetEntity(property="external_id"),
+            ),
+            (
+                RelationshipEntity,
+                "RelationshipEntity(label=cool-label)",
+                RelationshipEntity(label="cool-label"),
             ),
         ],
     )
