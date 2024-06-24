@@ -1,0 +1,9 @@
+- externalId: src:lift_pump_stations
+  name: Lift Pump Stations
+  description: This dataset <a href="https://data.bendoregon.gov/maps/collections-pump">lift_pump_stations</a>
+    contains the lift pump stations.
+  metadata:
+    consoleCreatedBy: '{"username":"Anders Albert"}'
+    consoleMetaDataVersion: '3'
+    consoleLabels: '[]'
+  writeProtected: false
