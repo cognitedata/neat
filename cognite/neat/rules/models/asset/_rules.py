@@ -1,8 +1,9 @@
 import sys
 from typing import TYPE_CHECKING, Any, Literal, cast
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic.main import IncEx
+from rdflib import Namespace
 
 from cognite.neat.issues import MultiValueError
 from cognite.neat.rules import issues
@@ -10,6 +11,10 @@ from cognite.neat.rules.models._base import BaseRules, SheetList
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     CdfResourceEntityList,
+    ClassEntity,
+    MultiValueTypeInfo,
+    ParentClassEntity,
+    Undefined,
 )
 from cognite.neat.rules.models.information import (
     InformationClass,
@@ -23,9 +28,9 @@ if TYPE_CHECKING:
 
 
 if sys.version_info >= (3, 11):
-    pass
+    from typing import Self
 else:
-    pass
+    from typing_extensions import Self
 
 
 class AssetMetadata(InformationMetadata): ...
@@ -63,6 +68,36 @@ class AssetRules(BaseRules):
     classes: SheetList[AssetClass] = Field(alias="Classes")
     last: "AssetRules | None" = Field(None, alias="Last")
     reference: "AssetRules | None" = Field(None, alias="Reference")
+
+    @field_validator("prefixes", mode="before")
+    def parse_str(cls, values: Any) -> Any:
+        if isinstance(values, dict):
+            return {key: Namespace(value) if isinstance(value, str) else value for key, value in values.items()}
+        return values
+
+    @model_validator(mode="after")
+    def update_entities_prefix(self) -> Self:
+        # update expected_value_types
+        for property_ in self.properties:
+            if isinstance(property_.value_type, ClassEntity) and property_.value_type.prefix is Undefined:
+                property_.value_type.prefix = self.metadata.prefix
+
+            if isinstance(property_.value_type, MultiValueTypeInfo):
+                property_.value_type.set_default_prefix(self.metadata.prefix)
+
+            if property_.class_.prefix is Undefined:
+                property_.class_.prefix = self.metadata.prefix
+
+        # update parent classes
+        for class_ in self.classes:
+            if class_.parent:
+                for parent in cast(list[ParentClassEntity], class_.parent):
+                    if not isinstance(parent.prefix, str):
+                        parent.prefix = self.metadata.prefix
+            if class_.class_.prefix is Undefined:
+                class_.class_.prefix = self.metadata.prefix
+
+        return self
 
     @model_validator(mode="after")
     def post_validation(self) -> "AssetRules":
