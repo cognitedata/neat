@@ -529,21 +529,23 @@ def _join_str(v: list[ClassEntity]) -> str | None:
     return ",".join([entry.id for entry in v]) if v else None
 
 
-def _generate_cdf_resource_list(v: Any):
+def _generate_cdf_resource_list(v: Any) -> list[AssetEntity | RelationshipEntity]:
     results = []
     for item in _split_str(v):
         if isinstance(item, str):
             if "relationship" in item.lower():
                 results.append(RelationshipEntity.load(item))
             elif "asset" in item.lower():
-                results.append(AssetEntity.load(item))  # type: ignore
+                results.append(AssetEntity, AssetEntity.load(item))  # type: ignore
             else:
                 raise ValueError(f"Unsupported implementation definition: {item}")
 
-        else:
+        elif isinstance(item, AssetEntity | RelationshipEntity):
             results.append(item)
+        else:
+            raise ValueError(f"Unsupported implementation definition: {item}")
 
-    return results
+    return results  # type: ignore
 
 
 ParentEntityList = Annotated[
