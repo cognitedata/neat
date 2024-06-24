@@ -147,9 +147,7 @@ types-PyYAML = "^6"
 types-openpyxl = "^3"
 types-requests = "^2"
 types-setuptools = "^68"
-# Temporarily removing cognite-toolkit as we need version 0.1.2 to be released due to the
-# current strict upper bound on cognite-sdk.
-#cognite-toolkit = {git = "https://github.com/cognitedata/cdf-project-templates.git", branch = "main"}
+cognite-toolkit = "^0.2.4"
 
 
 [build-system]
