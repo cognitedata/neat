@@ -536,7 +536,7 @@ def _generate_cdf_resource_list(v: Any) -> list[AssetEntity | RelationshipEntity
             if "relationship" in item.lower():
                 results.append(RelationshipEntity.load(item))
             elif "asset" in item.lower():
-                results.append(AssetEntity, AssetEntity.load(item))  # type: ignore
+                results.append(AssetEntity.load(item))  # type: ignore
             else:
                 raise ValueError(f"Unsupported implementation definition: {item}")
 
