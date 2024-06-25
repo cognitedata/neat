@@ -245,12 +245,14 @@ class InformationProperty(SheetEntity):
     @property
     def is_mandatory(self) -> bool:
         """Returns True if property is mandatory."""
-        return self.min_count != 0
+        return self.min_count not in {0, None}
 
     @property
     def is_list(self) -> bool:
         """Returns True if property contains a list of values."""
-        return self.max_count != 1
+        return self.max_count in {float("inf"), None} or (
+            isinstance(self.max_count, int | float) and self.max_count > 1
+        )
 
 
 class InformationRules(BaseRules):
