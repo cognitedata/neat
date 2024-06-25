@@ -147,8 +147,7 @@ types-PyYAML = "^6"
 types-openpyxl = "^3"
 types-requests = "^2"
 types-setuptools = "^68"
-# Need the new asset feature in Toolkit
-cognite-toolkit = {git = "https://github.com/cognitedata/toolkit.git", branch = "installation-branch-neat"}
+cognite-toolkit = "^0.2.4"
 
 
 [build-system]

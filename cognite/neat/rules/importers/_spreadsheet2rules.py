@@ -15,12 +15,14 @@ from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models import (
     RULES_PER_ROLE,
+    AssetRules,
     DMSRules,
     DomainRules,
     InformationRules,
     RoleTypes,
     SchemaCompleteness,
 )
+from cognite.neat.rules.models.asset import AssetRulesInput
 from cognite.neat.rules.models.dms import DMSRulesInput
 from cognite.neat.rules.models.information import InformationRulesInput
 from cognite.neat.utils.auxiliary import local_import
@@ -35,6 +37,7 @@ SOURCE_SHEET__TARGET_FIELD__HEADERS = [
         {
             RoleTypes.domain_expert: "Property",
             RoleTypes.information_architect: "Property",
+            RoleTypes.asset_architect: "Property",
             RoleTypes.dms_architect: "View Property",
         },
     ),
@@ -266,6 +269,8 @@ class ExcelImporter(BaseImporter):
                 rules = DMSRulesInput.load(sheets).as_rules()
             elif rules_cls is InformationRules:
                 rules = InformationRulesInput.load(sheets).as_rules()
+            elif rules_cls is AssetRules:
+                rules = AssetRulesInput.load(sheets).as_rules()
             else:
                 rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
 
@@ -300,7 +305,7 @@ class GoogleSheetImporter(BaseImporter):
         import gspread  # type: ignore[import]
 
         role = role or RoleTypes.domain_expert
-        rules_model = cast(DomainRules | InformationRules | DMSRules, RULES_PER_ROLE[role])
+        rules_model = cast(DomainRules | InformationRules | AssetRules | DMSRules, RULES_PER_ROLE[role])
 
         client_google = gspread.service_account()
         google_sheet = client_google.open_by_key(self.sheet_id)
