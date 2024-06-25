@@ -357,15 +357,22 @@ class TestInformationConverter:
                 MultiValueTypeInfo(types=[data_types.Integer(), data_types.String()]), data_types.String(), id="IntStr"
             ),
             pytest.param(
-                MultiValueTypeInfo(types=[data_types.Float(), data_types.Integer()]), data_types.Float(), id="FloatStr"
+                MultiValueTypeInfo(types=[data_types.Float(), data_types.Integer()]), data_types.Double(), id="FloatStr"
             ),
             pytest.param(
-                MultiValueTypeInfo(types=[data_types.Boolean(), data_types.Float()]), data_types.Float(), id="BoolFloat"
+                MultiValueTypeInfo(types=[data_types.Boolean(), data_types.Float()]),
+                data_types.Double(),
+                id="BoolFloat",
             ),
             pytest.param(
                 MultiValueTypeInfo(types=[data_types.DateTime(), data_types.Boolean()]),
                 data_types.String(),
                 id="DatetimeBool as String",
+            ),
+            pytest.param(
+                MultiValueTypeInfo(types=[data_types.Date(), data_types.DateTime()]),
+                data_types.DateTime(),
+                id="Date and Datetime",
             ),
         ],
     )
