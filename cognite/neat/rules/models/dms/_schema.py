@@ -746,6 +746,7 @@ class DMSSchema:
                 type=container_prop.type,
                 nullable=container_prop.nullable,
                 auto_increment=container_prop.auto_increment,
+                immutable=container_prop.immutable,
                 # Likely bug in SDK.
                 default_value=container_prop.default_value,  # type: ignore[arg-type]
             )

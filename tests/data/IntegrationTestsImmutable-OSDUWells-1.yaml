@@ -15,6 +15,7 @@
       properties:
         EffectiveDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: HistoricalInterests
             space: IntegrationTestsImmutable
@@ -30,6 +31,7 @@
             type: text
         InterestTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: HistoricalInterests
             space: IntegrationTestsImmutable
@@ -45,6 +47,7 @@
             type: text
         TerminationDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: HistoricalInterests
             space: IntegrationTestsImmutable
@@ -70,6 +73,7 @@
       properties:
         EffectiveDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -85,6 +89,7 @@
             type: text
         RigID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -100,6 +105,7 @@
             type: text
         TerminationDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -115,6 +121,7 @@
             type: text
         VerticalCRSID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -130,6 +137,7 @@
             type: text
         VerticalMeasurement:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -144,6 +152,7 @@
             type: float64
         VerticalMeasurementDescription:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -159,6 +168,7 @@
             type: text
         VerticalMeasurementID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -174,6 +184,7 @@
             type: text
         VerticalMeasurementPathID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -189,6 +200,7 @@
             type: text
         VerticalMeasurementSourceID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -204,6 +216,7 @@
             type: text
         VerticalMeasurementTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -219,6 +232,7 @@
             type: text
         VerticalMeasurementUnitOfMeasureID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -234,6 +248,7 @@
             type: text
         VerticalReferenceEntityID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -249,6 +264,7 @@
             type: text
         VerticalReferenceID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -264,6 +280,7 @@
             type: text
         WellboreTVDTrajectoryID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurements
             space: IntegrationTestsImmutable
@@ -289,6 +306,7 @@
       properties:
         EffectiveDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilitySpecifications
             space: IntegrationTestsImmutable
@@ -304,6 +322,7 @@
             type: text
         FacilitySpecificationDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilitySpecifications
             space: IntegrationTestsImmutable
@@ -319,6 +338,7 @@
             type: text
         FacilitySpecificationIndicator:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilitySpecifications
             space: IntegrationTestsImmutable
@@ -333,6 +353,7 @@
             type: boolean
         FacilitySpecificationQuantity:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilitySpecifications
             space: IntegrationTestsImmutable
@@ -347,6 +368,7 @@
             type: float64
         FacilitySpecificationText:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilitySpecifications
             space: IntegrationTestsImmutable
@@ -362,6 +384,7 @@
             type: text
         ParameterTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilitySpecifications
             space: IntegrationTestsImmutable
@@ -377,6 +400,7 @@
             type: text
         TerminationDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilitySpecifications
             space: IntegrationTestsImmutable
@@ -392,6 +416,7 @@
             type: text
         UnitOfMeasureID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilitySpecifications
             space: IntegrationTestsImmutable
@@ -417,6 +442,7 @@
       properties:
         EffectiveDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityEvents
             space: IntegrationTestsImmutable
@@ -432,6 +458,7 @@
             type: text
         FacilityEventTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityEvents
             space: IntegrationTestsImmutable
@@ -447,6 +474,7 @@
             type: text
         Remark:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityEvents
             space: IntegrationTestsImmutable
@@ -462,6 +490,7 @@
             type: text
         TerminationDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityEvents
             space: IntegrationTestsImmutable
@@ -487,6 +516,7 @@
       properties:
         EffectiveDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityStates
             space: IntegrationTestsImmutable
@@ -502,6 +532,7 @@
             type: text
         FacilityStateTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityStates
             space: IntegrationTestsImmutable
@@ -517,6 +548,7 @@
             type: text
         Remark:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityStates
             space: IntegrationTestsImmutable
@@ -532,6 +564,7 @@
             type: text
         TerminationDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityStates
             space: IntegrationTestsImmutable
@@ -557,6 +590,7 @@
       properties:
         EffectiveDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityOperators
             space: IntegrationTestsImmutable
@@ -572,6 +606,7 @@
             type: text
         FacilityOperatorID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityOperators
             space: IntegrationTestsImmutable
@@ -587,6 +622,7 @@
             type: text
         FacilityOperatorOrganisationID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityOperators
             space: IntegrationTestsImmutable
@@ -602,6 +638,7 @@
             type: text
         Remark:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityOperators
             space: IntegrationTestsImmutable
@@ -617,6 +654,7 @@
             type: text
         TerminationDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: FacilityOperators
             space: IntegrationTestsImmutable
@@ -642,6 +680,7 @@
       properties:
         DataQualityID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: UnacceptableUsage
             space: IntegrationTestsImmutable
@@ -657,6 +696,7 @@
             type: text
         DataQualityRuleSetID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: UnacceptableUsage
             space: IntegrationTestsImmutable
@@ -672,6 +712,7 @@
             type: text
         ValueChainStatusTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: UnacceptableUsage
             space: IntegrationTestsImmutable
@@ -687,6 +728,7 @@
             type: text
         WorkflowPersonaTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: UnacceptableUsage
             space: IntegrationTestsImmutable
@@ -702,6 +744,7 @@
             type: text
         WorkflowUsageTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: UnacceptableUsage
             space: IntegrationTestsImmutable
@@ -727,6 +770,7 @@
       properties:
         DataQualityID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AcceptableUsage
             space: IntegrationTestsImmutable
@@ -742,6 +786,7 @@
             type: text
         DataQualityRuleSetID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AcceptableUsage
             space: IntegrationTestsImmutable
@@ -757,6 +802,7 @@
             type: text
         ValueChainStatusTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AcceptableUsage
             space: IntegrationTestsImmutable
@@ -772,6 +818,7 @@
             type: text
         WorkflowPersonaTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AcceptableUsage
             space: IntegrationTestsImmutable
@@ -787,6 +834,7 @@
             type: text
         WorkflowUsageTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AcceptableUsage
             space: IntegrationTestsImmutable
@@ -812,6 +860,7 @@
       properties:
         DataGovernanceRoleTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Reviewers
             space: IntegrationTestsImmutable
@@ -827,6 +876,7 @@
             type: text
         Name:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Reviewers
             space: IntegrationTestsImmutable
@@ -842,6 +892,7 @@
             type: text
         OrganisationID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Reviewers
             space: IntegrationTestsImmutable
@@ -857,6 +908,7 @@
             type: text
         RoleTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Reviewers
             space: IntegrationTestsImmutable
@@ -872,6 +924,7 @@
             type: text
         WorkflowPersonaTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Reviewers
             space: IntegrationTestsImmutable
@@ -910,6 +963,7 @@
             space: IntegrationTestsImmutable
         Comment:
           autoIncrement: false
+          immutable: false
           container:
             externalId: TechnicalAssurances
             space: IntegrationTestsImmutable
@@ -925,6 +979,7 @@
             type: text
         EffectiveDate:
           autoIncrement: false
+          immutable: false
           container:
             externalId: TechnicalAssurances
             space: IntegrationTestsImmutable
@@ -953,6 +1008,7 @@
             space: IntegrationTestsImmutable
         TechnicalAssuranceTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: TechnicalAssurances
             space: IntegrationTestsImmutable
@@ -991,6 +1047,7 @@
       properties:
         bbox:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Geometry
             space: IntegrationTestsImmutable
@@ -1005,6 +1062,7 @@
             type: float64
         coordinates:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Geometry
             space: IntegrationTestsImmutable
@@ -1019,6 +1077,7 @@
             type: float64
         type:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Geometry
             space: IntegrationTestsImmutable
@@ -1044,6 +1103,7 @@
       properties:
         bbox:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Features
             space: IntegrationTestsImmutable
@@ -1058,6 +1118,7 @@
             type: float64
         geometry:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Features
             space: IntegrationTestsImmutable
@@ -1076,6 +1137,7 @@
             list: false
         type:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Features
             space: IntegrationTestsImmutable
@@ -1101,6 +1163,7 @@
       properties:
         bbox:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wgs84Coordinates
             space: IntegrationTestsImmutable
@@ -1128,6 +1191,7 @@
             space: IntegrationTestsImmutable
         type:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wgs84Coordinates
             space: IntegrationTestsImmutable
@@ -1153,6 +1217,7 @@
       properties:
         CoordinateReferenceSystemID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AsIngestedCoordinates
             space: IntegrationTestsImmutable
@@ -1168,6 +1233,7 @@
             type: text
         VerticalCoordinateReferenceSystemID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AsIngestedCoordinates
             space: IntegrationTestsImmutable
@@ -1183,6 +1249,7 @@
             type: text
         VerticalUnitID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AsIngestedCoordinates
             space: IntegrationTestsImmutable
@@ -1198,6 +1265,7 @@
             type: text
         bbox:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AsIngestedCoordinates
             space: IntegrationTestsImmutable
@@ -1225,6 +1293,7 @@
             space: IntegrationTestsImmutable
         persistableReferenceCrs:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AsIngestedCoordinates
             space: IntegrationTestsImmutable
@@ -1240,6 +1309,7 @@
             type: text
         persistableReferenceUnitZ:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AsIngestedCoordinates
             space: IntegrationTestsImmutable
@@ -1255,6 +1325,7 @@
             type: text
         persistableReferenceVerticalCrs:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AsIngestedCoordinates
             space: IntegrationTestsImmutable
@@ -1270,6 +1341,7 @@
             type: text
         type:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AsIngestedCoordinates
             space: IntegrationTestsImmutable
@@ -1295,6 +1367,7 @@
       properties:
         AppliedOperations:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialLocation
             space: IntegrationTestsImmutable
@@ -1310,6 +1383,7 @@
             type: text
         AsIngestedCoordinates:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialLocation
             space: IntegrationTestsImmutable
@@ -1328,6 +1402,7 @@
             list: false
         CoordinateQualityCheckDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialLocation
             space: IntegrationTestsImmutable
@@ -1343,6 +1418,7 @@
             type: text
         CoordinateQualityCheckPerformedBy:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialLocation
             space: IntegrationTestsImmutable
@@ -1358,6 +1434,7 @@
             type: text
         CoordinateQualityCheckRemarks:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialLocation
             space: IntegrationTestsImmutable
@@ -1373,6 +1450,7 @@
             type: text
         QualitativeSpatialAccuracyTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialLocation
             space: IntegrationTestsImmutable
@@ -1388,6 +1466,7 @@
             type: text
         QuantitativeAccuracyBandID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialLocation
             space: IntegrationTestsImmutable
@@ -1403,6 +1482,7 @@
             type: text
         SpatialGeometryTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialLocation
             space: IntegrationTestsImmutable
@@ -1418,6 +1498,7 @@
             type: text
         SpatialLocationCoordinatesDate:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialLocation
             space: IntegrationTestsImmutable
@@ -1433,6 +1514,7 @@
             type: text
         SpatialParameterTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialLocation
             space: IntegrationTestsImmutable
@@ -1448,6 +1530,7 @@
             type: text
         Wgs84Coordinates:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialLocation
             space: IntegrationTestsImmutable
@@ -1476,6 +1559,7 @@
       properties:
         BasinID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeoContexts
             space: IntegrationTestsImmutable
@@ -1491,6 +1575,7 @@
             type: text
         FieldID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeoContexts
             space: IntegrationTestsImmutable
@@ -1506,6 +1591,7 @@
             type: text
         GeoPoliticalEntityID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeoContexts
             space: IntegrationTestsImmutable
@@ -1521,6 +1607,7 @@
             type: text
         GeoTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeoContexts
             space: IntegrationTestsImmutable
@@ -1536,6 +1623,7 @@
             type: text
         PlayID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeoContexts
             space: IntegrationTestsImmutable
@@ -1551,6 +1639,7 @@
             type: text
         ProspectID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeoContexts
             space: IntegrationTestsImmutable
@@ -1576,6 +1665,7 @@
       properties:
         AliasName:
           autoIncrement: false
+          immutable: false
           container:
             externalId: NameAliases
             space: IntegrationTestsImmutable
@@ -1591,6 +1681,7 @@
             type: text
         AliasNameTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: NameAliases
             space: IntegrationTestsImmutable
@@ -1606,6 +1697,7 @@
             type: text
         DefinitionOrganisationID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: NameAliases
             space: IntegrationTestsImmutable
@@ -1621,6 +1713,7 @@
             type: text
         EffectiveDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: NameAliases
             space: IntegrationTestsImmutable
@@ -1636,6 +1729,7 @@
             type: text
         TerminationDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: NameAliases
             space: IntegrationTestsImmutable
@@ -1661,6 +1755,7 @@
       properties:
         BusinessIntentionID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1676,6 +1771,7 @@
             type: text
         ConditionID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1691,6 +1787,7 @@
             type: text
         CurrentOperatorID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1706,6 +1803,7 @@
             type: text
         DataSourceOrganisationID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1721,6 +1819,7 @@
             type: text
         DefaultVerticalCRSID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1736,6 +1835,7 @@
             type: text
         DefaultVerticalMeasurementID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1751,6 +1851,7 @@
             type: text
         ExistenceKind:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1766,6 +1867,7 @@
             type: text
         FacilityDescription:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1794,6 +1896,7 @@
             space: IntegrationTestsImmutable
         FacilityID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1809,6 +1912,7 @@
             type: text
         FacilityName:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1863,6 +1967,7 @@
             space: IntegrationTestsImmutable
         FacilityTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1904,6 +2009,7 @@
             space: IntegrationTestsImmutable
         InitialOperatorID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1919,6 +2025,7 @@
             type: text
         InterestTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1947,6 +2054,7 @@
             space: IntegrationTestsImmutable
         OperatingEnvironmentID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1962,6 +2070,7 @@
             type: text
         OutcomeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1977,6 +2086,7 @@
             type: text
         ResourceCurationStatus:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -1992,6 +2102,7 @@
             type: text
         ResourceHomeRegionID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2007,6 +2118,7 @@
             type: text
         ResourceHostRegionIDs:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2022,6 +2134,7 @@
             type: text
         ResourceLifecycleStatus:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2037,6 +2150,7 @@
             type: text
         ResourceSecurityClassification:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2052,6 +2166,7 @@
             type: text
         RoleID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2067,6 +2182,7 @@
             type: text
         Source:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2082,6 +2198,7 @@
             type: text
         SpatialLocation:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2100,6 +2217,7 @@
             list: false
         StatusSummaryID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2115,6 +2233,7 @@
             type: text
         TechnicalAssuranceTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2143,6 +2262,7 @@
             space: IntegrationTestsImmutable
         VersionCreationReason:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2171,6 +2291,7 @@
             space: IntegrationTestsImmutable
         WasBusinessInterestFinancialNonOperated:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2185,6 +2306,7 @@
             type: boolean
         WasBusinessInterestFinancialOperated:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2199,6 +2321,7 @@
             type: boolean
         WasBusinessInterestObligatory:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2213,6 +2336,7 @@
             type: boolean
         WasBusinessInterestTechnical:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellData
             space: IntegrationTestsImmutable
@@ -2237,6 +2361,7 @@
       properties:
         kind:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Meta
             space: IntegrationTestsImmutable
@@ -2252,6 +2377,7 @@
             type: text
         name:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Meta
             space: IntegrationTestsImmutable
@@ -2267,6 +2393,7 @@
             type: text
         persistableReference:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Meta
             space: IntegrationTestsImmutable
@@ -2282,6 +2409,7 @@
             type: text
         propertyNames:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Meta
             space: IntegrationTestsImmutable
@@ -2297,6 +2425,7 @@
             type: text
         unitOfMeasureID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Meta
             space: IntegrationTestsImmutable
@@ -2322,6 +2451,7 @@
       properties:
         parents:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Ancestry
             space: IntegrationTestsImmutable
@@ -2347,6 +2477,7 @@
       properties:
         NameOfKey:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Tags
             space: IntegrationTestsImmutable
@@ -2372,6 +2503,7 @@
       properties:
         legaltags:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Legal
             space: IntegrationTestsImmutable
@@ -2387,6 +2519,7 @@
             type: text
         otherRelevantDataCountries:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Legal
             space: IntegrationTestsImmutable
@@ -2402,6 +2535,7 @@
             type: text
         status:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Legal
             space: IntegrationTestsImmutable
@@ -2427,6 +2561,7 @@
       properties:
         owners:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Acl
             space: IntegrationTestsImmutable
@@ -2442,6 +2577,7 @@
             type: text
         viewers:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Acl
             space: IntegrationTestsImmutable
@@ -2467,6 +2603,7 @@
       properties:
         acl:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Well
             space: IntegrationTestsImmutable
@@ -2485,6 +2622,7 @@
             list: false
         ancestry:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Well
             space: IntegrationTestsImmutable
@@ -2503,6 +2641,7 @@
             list: false
         createTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Well
             space: IntegrationTestsImmutable
@@ -2518,6 +2657,7 @@
             type: text
         createUser:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Well
             space: IntegrationTestsImmutable
@@ -2533,6 +2673,7 @@
             type: text
         data:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Well
             space: IntegrationTestsImmutable
@@ -2551,6 +2692,7 @@
             list: false
         id:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Well
             space: IntegrationTestsImmutable
@@ -2566,6 +2708,7 @@
             type: text
         kind:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Well
             space: IntegrationTestsImmutable
@@ -2581,6 +2724,7 @@
             type: text
         legal:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Well
             space: IntegrationTestsImmutable
@@ -2612,6 +2756,7 @@
             space: IntegrationTestsImmutable
         modifyTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Well
             space: IntegrationTestsImmutable
@@ -2627,6 +2772,7 @@
             type: text
         modifyUser:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Well
             space: IntegrationTestsImmutable
@@ -2642,6 +2788,7 @@
             type: text
         tags:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Well
             space: IntegrationTestsImmutable
@@ -2660,6 +2807,7 @@
             list: false
         version:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Well
             space: IntegrationTestsImmutable
@@ -2684,6 +2832,7 @@
       properties:
         ActivityTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreCosts
             space: IntegrationTestsImmutable
@@ -2699,6 +2848,7 @@
             type: text
         Cost:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreCosts
             space: IntegrationTestsImmutable
@@ -2723,6 +2873,7 @@
       properties:
         AppliedOperations:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeographicBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2738,6 +2889,7 @@
             type: text
         AsIngestedCoordinates:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeographicBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2756,6 +2908,7 @@
             list: false
         CoordinateQualityCheckDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeographicBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2771,6 +2924,7 @@
             type: text
         CoordinateQualityCheckPerformedBy:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeographicBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2786,6 +2940,7 @@
             type: text
         CoordinateQualityCheckRemarks:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeographicBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2801,6 +2956,7 @@
             type: text
         QualitativeSpatialAccuracyTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeographicBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2816,6 +2972,7 @@
             type: text
         QuantitativeAccuracyBandID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeographicBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2831,6 +2988,7 @@
             type: text
         SpatialGeometryTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeographicBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2846,6 +3004,7 @@
             type: text
         SpatialLocationCoordinatesDate:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeographicBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2861,6 +3020,7 @@
             type: text
         SpatialParameterTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeographicBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2876,6 +3036,7 @@
             type: text
         Wgs84Coordinates:
           autoIncrement: false
+          immutable: false
           container:
             externalId: GeographicBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2904,6 +3065,7 @@
       properties:
         AppliedOperations:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ProjectedBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2919,6 +3081,7 @@
             type: text
         AsIngestedCoordinates:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ProjectedBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2937,6 +3100,7 @@
             list: false
         CoordinateQualityCheckDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ProjectedBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2952,6 +3116,7 @@
             type: text
         CoordinateQualityCheckPerformedBy:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ProjectedBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2967,6 +3132,7 @@
             type: text
         CoordinateQualityCheckRemarks:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ProjectedBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2982,6 +3148,7 @@
             type: text
         QualitativeSpatialAccuracyTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ProjectedBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -2997,6 +3164,7 @@
             type: text
         QuantitativeAccuracyBandID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ProjectedBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -3012,6 +3180,7 @@
             type: text
         SpatialGeometryTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ProjectedBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -3027,6 +3196,7 @@
             type: text
         SpatialLocationCoordinatesDate:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ProjectedBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -3042,6 +3212,7 @@
             type: text
         SpatialParameterTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ProjectedBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -3057,6 +3228,7 @@
             type: text
         Wgs84Coordinates:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ProjectedBottomHoleLocation
             space: IntegrationTestsImmutable
@@ -3085,6 +3257,7 @@
       properties:
         EffectiveDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: DrillingReasons
             space: IntegrationTestsImmutable
@@ -3100,6 +3273,7 @@
             type: text
         LaheeClassID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: DrillingReasons
             space: IntegrationTestsImmutable
@@ -3115,6 +3289,7 @@
             type: text
         Remark:
           autoIncrement: false
+          immutable: false
           container:
             externalId: DrillingReasons
             space: IntegrationTestsImmutable
@@ -3130,6 +3305,7 @@
             type: text
         TerminationDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: DrillingReasons
             space: IntegrationTestsImmutable
@@ -3155,6 +3331,7 @@
       properties:
         BusinessIntentionID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3170,6 +3347,7 @@
             type: text
         ConditionID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3185,6 +3363,7 @@
             type: text
         CurrentOperatorID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3200,6 +3379,7 @@
             type: text
         DataSourceOrganisationID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3215,6 +3395,7 @@
             type: text
         DefaultVerticalMeasurementID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3230,6 +3411,7 @@
             type: text
         DefinitiveTrajectoryID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3258,6 +3440,7 @@
             space: IntegrationTestsImmutable
         ExistenceKind:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3273,6 +3456,7 @@
             type: text
         FacilityDescription:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3301,6 +3485,7 @@
             space: IntegrationTestsImmutable
         FacilityID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3316,6 +3501,7 @@
             type: text
         FacilityName:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3370,6 +3556,7 @@
             space: IntegrationTestsImmutable
         FacilityTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3385,6 +3572,7 @@
             type: text
         FluidDirectionID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3400,6 +3588,7 @@
             type: text
         FormationNameAtTotalDepth:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3428,6 +3617,7 @@
             space: IntegrationTestsImmutable
         GeographicBottomHoleLocation:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3459,6 +3649,7 @@
             space: IntegrationTestsImmutable
         InitialOperatorID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3474,6 +3665,7 @@
             type: text
         InterestTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3489,6 +3681,7 @@
             type: text
         KickOffWellbore:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3517,6 +3710,7 @@
             space: IntegrationTestsImmutable
         OperatingEnvironmentID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3532,6 +3726,7 @@
             type: text
         OutcomeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3547,6 +3742,7 @@
             type: text
         PrimaryProductTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3562,6 +3758,7 @@
             type: text
         ProjectedBottomHoleLocation:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3580,6 +3777,7 @@
             list: false
         ResourceCurationStatus:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3595,6 +3793,7 @@
             type: text
         ResourceHomeRegionID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3610,6 +3809,7 @@
             type: text
         ResourceHostRegionIDs:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3625,6 +3825,7 @@
             type: text
         ResourceLifecycleStatus:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3640,6 +3841,7 @@
             type: text
         ResourceSecurityClassification:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3655,6 +3857,7 @@
             type: text
         RoleID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3670,6 +3873,7 @@
             type: text
         SecondaryProductTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3685,6 +3889,7 @@
             type: text
         SequenceNumber:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3699,6 +3904,7 @@
             type: int32
         ShowProductTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3714,6 +3920,7 @@
             type: text
         Source:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3729,6 +3936,7 @@
             type: text
         SpatialLocation:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3747,6 +3955,7 @@
             list: false
         StatusSummaryID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3762,6 +3971,7 @@
             type: text
         TargetFormation:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3777,6 +3987,7 @@
             type: text
         TechnicalAssuranceTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3805,6 +4016,7 @@
             space: IntegrationTestsImmutable
         TertiaryProductTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3820,6 +4032,7 @@
             type: text
         TrajectoryTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3835,6 +4048,7 @@
             type: text
         VersionCreationReason:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3863,6 +4077,7 @@
             space: IntegrationTestsImmutable
         WasBusinessInterestFinancialNonOperated:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3877,6 +4092,7 @@
             type: boolean
         WasBusinessInterestFinancialOperated:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3891,6 +4107,7 @@
             type: boolean
         WasBusinessInterestObligatory:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3905,6 +4122,7 @@
             type: boolean
         WasBusinessInterestTechnical:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3919,6 +4137,7 @@
             type: boolean
         WellID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3947,6 +4166,7 @@
             space: IntegrationTestsImmutable
         WellboreReasonID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreData
             space: IntegrationTestsImmutable
@@ -3972,6 +4192,7 @@
       properties:
         acl:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wellbore
             space: IntegrationTestsImmutable
@@ -3990,6 +4211,7 @@
             list: false
         ancestry:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wellbore
             space: IntegrationTestsImmutable
@@ -4008,6 +4230,7 @@
             list: false
         createTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wellbore
             space: IntegrationTestsImmutable
@@ -4023,6 +4246,7 @@
             type: text
         createUser:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wellbore
             space: IntegrationTestsImmutable
@@ -4038,6 +4262,7 @@
             type: text
         data:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wellbore
             space: IntegrationTestsImmutable
@@ -4056,6 +4281,7 @@
             list: false
         id:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wellbore
             space: IntegrationTestsImmutable
@@ -4071,6 +4297,7 @@
             type: text
         kind:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wellbore
             space: IntegrationTestsImmutable
@@ -4086,6 +4313,7 @@
             type: text
         legal:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wellbore
             space: IntegrationTestsImmutable
@@ -4117,6 +4345,7 @@
             space: IntegrationTestsImmutable
         modifyTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wellbore
             space: IntegrationTestsImmutable
@@ -4132,6 +4361,7 @@
             type: text
         modifyUser:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wellbore
             space: IntegrationTestsImmutable
@@ -4147,6 +4377,7 @@
             type: text
         tags:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wellbore
             space: IntegrationTestsImmutable
@@ -4165,6 +4396,7 @@
             list: false
         version:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Wellbore
             space: IntegrationTestsImmutable
@@ -4189,6 +4421,7 @@
       properties:
         Name:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AvailableTrajectoryStationProperties
             space: IntegrationTestsImmutable
@@ -4204,6 +4437,7 @@
             type: text
         StationPropertyUnitID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AvailableTrajectoryStationProperties
             space: IntegrationTestsImmutable
@@ -4219,6 +4453,7 @@
             type: text
         TrajectoryStationPropertyTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: AvailableTrajectoryStationProperties
             space: IntegrationTestsImmutable
@@ -4244,6 +4479,7 @@
       properties:
         EffectiveDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurement
             space: IntegrationTestsImmutable
@@ -4259,6 +4495,7 @@
             type: text
         TerminationDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurement
             space: IntegrationTestsImmutable
@@ -4274,6 +4511,7 @@
             type: text
         VerticalCRSID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurement
             space: IntegrationTestsImmutable
@@ -4289,6 +4527,7 @@
             type: text
         VerticalMeasurement:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurement
             space: IntegrationTestsImmutable
@@ -4303,6 +4542,7 @@
             type: float64
         VerticalMeasurementDescription:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurement
             space: IntegrationTestsImmutable
@@ -4318,6 +4558,7 @@
             type: text
         VerticalMeasurementPathID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurement
             space: IntegrationTestsImmutable
@@ -4333,6 +4574,7 @@
             type: text
         VerticalMeasurementSourceID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurement
             space: IntegrationTestsImmutable
@@ -4348,6 +4590,7 @@
             type: text
         VerticalMeasurementTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurement
             space: IntegrationTestsImmutable
@@ -4363,6 +4606,7 @@
             type: text
         VerticalMeasurementUnitOfMeasureID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurement
             space: IntegrationTestsImmutable
@@ -4378,6 +4622,7 @@
             type: text
         VerticalReferenceEntityID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurement
             space: IntegrationTestsImmutable
@@ -4393,6 +4638,7 @@
             type: text
         VerticalReferenceID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurement
             space: IntegrationTestsImmutable
@@ -4408,6 +4654,7 @@
             type: text
         WellboreTVDTrajectoryID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: VerticalMeasurement
             space: IntegrationTestsImmutable
@@ -4433,6 +4680,7 @@
       properties:
         ID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: LineageAssertions
             space: IntegrationTestsImmutable
@@ -4448,6 +4696,7 @@
             type: text
         LineageRelationshipType:
           autoIncrement: false
+          immutable: false
           container:
             externalId: LineageAssertions
             space: IntegrationTestsImmutable
@@ -4473,6 +4722,7 @@
       properties:
         AppliedOperations:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialArea
             space: IntegrationTestsImmutable
@@ -4488,6 +4738,7 @@
             type: text
         AsIngestedCoordinates:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialArea
             space: IntegrationTestsImmutable
@@ -4506,6 +4757,7 @@
             list: false
         CoordinateQualityCheckDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialArea
             space: IntegrationTestsImmutable
@@ -4521,6 +4773,7 @@
             type: text
         CoordinateQualityCheckPerformedBy:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialArea
             space: IntegrationTestsImmutable
@@ -4536,6 +4789,7 @@
             type: text
         CoordinateQualityCheckRemarks:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialArea
             space: IntegrationTestsImmutable
@@ -4551,6 +4805,7 @@
             type: text
         QualitativeSpatialAccuracyTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialArea
             space: IntegrationTestsImmutable
@@ -4566,6 +4821,7 @@
             type: text
         QuantitativeAccuracyBandID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialArea
             space: IntegrationTestsImmutable
@@ -4581,6 +4837,7 @@
             type: text
         SpatialGeometryTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialArea
             space: IntegrationTestsImmutable
@@ -4596,6 +4853,7 @@
             type: text
         SpatialLocationCoordinatesDate:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialArea
             space: IntegrationTestsImmutable
@@ -4611,6 +4869,7 @@
             type: text
         SpatialParameterTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialArea
             space: IntegrationTestsImmutable
@@ -4626,6 +4885,7 @@
             type: text
         Wgs84Coordinates:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialArea
             space: IntegrationTestsImmutable
@@ -4654,6 +4914,7 @@
       properties:
         AppliedOperations:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialPoint
             space: IntegrationTestsImmutable
@@ -4669,6 +4930,7 @@
             type: text
         AsIngestedCoordinates:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialPoint
             space: IntegrationTestsImmutable
@@ -4687,6 +4949,7 @@
             list: false
         CoordinateQualityCheckDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialPoint
             space: IntegrationTestsImmutable
@@ -4702,6 +4965,7 @@
             type: text
         CoordinateQualityCheckPerformedBy:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialPoint
             space: IntegrationTestsImmutable
@@ -4717,6 +4981,7 @@
             type: text
         CoordinateQualityCheckRemarks:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialPoint
             space: IntegrationTestsImmutable
@@ -4732,6 +4997,7 @@
             type: text
         QualitativeSpatialAccuracyTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialPoint
             space: IntegrationTestsImmutable
@@ -4747,6 +5013,7 @@
             type: text
         QuantitativeAccuracyBandID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialPoint
             space: IntegrationTestsImmutable
@@ -4762,6 +5029,7 @@
             type: text
         SpatialGeometryTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialPoint
             space: IntegrationTestsImmutable
@@ -4777,6 +5045,7 @@
             type: text
         SpatialLocationCoordinatesDate:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialPoint
             space: IntegrationTestsImmutable
@@ -4792,6 +5061,7 @@
             type: text
         SpatialParameterTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialPoint
             space: IntegrationTestsImmutable
@@ -4807,6 +5077,7 @@
             type: text
         Wgs84Coordinates:
           autoIncrement: false
+          immutable: false
           container:
             externalId: SpatialPoint
             space: IntegrationTestsImmutable
@@ -4835,6 +5106,7 @@
       properties:
         ResourceID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Artefacts
             space: IntegrationTestsImmutable
@@ -4850,6 +5122,7 @@
             type: text
         ResourceKind:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Artefacts
             space: IntegrationTestsImmutable
@@ -4865,6 +5138,7 @@
             type: text
         RoleID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: Artefacts
             space: IntegrationTestsImmutable
@@ -4890,6 +5164,7 @@
       properties:
         AcquisitionDate:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -4905,6 +5180,7 @@
             type: text
         AcquisitionRemark:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -4920,6 +5196,7 @@
             type: text
         ActiveIndicator:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -4934,6 +5211,7 @@
             type: boolean
         AppliedOperations:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -4949,6 +5227,7 @@
             type: text
         AppliedOperationsDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -4964,6 +5243,7 @@
             type: text
         AppliedOperationsRemarks:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -4979,6 +5259,7 @@
             type: text
         AppliedOperationsUser:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5007,6 +5288,7 @@
             space: IntegrationTestsImmutable
         AuthorIDs:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5035,6 +5317,7 @@
             space: IntegrationTestsImmutable
         AzimuthReferenceType:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5050,6 +5333,7 @@
             type: text
         BaseDepthMeasuredDepth:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5064,6 +5348,7 @@
             type: int32
         BusinessActivities:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5079,6 +5364,7 @@
             type: text
         CalculationMethodType:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5094,6 +5380,7 @@
             type: text
         CompanyID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5109,6 +5396,7 @@
             type: text
         CreationDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5124,6 +5412,7 @@
             type: text
         DDMSDatasets:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5139,6 +5428,7 @@
             type: text
         Datasets:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5154,6 +5444,7 @@
             type: text
         Description:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5169,6 +5460,7 @@
             type: text
         EndDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5184,6 +5476,7 @@
             type: text
         ExistenceKind:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5199,6 +5492,7 @@
             type: text
         ExtrapolatedMeasuredDepth:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5213,6 +5507,7 @@
             type: int32
         ExtrapolatedMeasuredDepthRemark:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5241,6 +5536,7 @@
             space: IntegrationTestsImmutable
         GeographicCRSID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5256,6 +5552,7 @@
             type: text
         IsDiscoverable:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5270,6 +5567,7 @@
             type: boolean
         IsExtendedLoad:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5297,6 +5595,7 @@
             space: IntegrationTestsImmutable
         Name:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5325,6 +5624,7 @@
             space: IntegrationTestsImmutable
         ProjectedCRSID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5340,6 +5640,7 @@
             type: text
         ResourceCurationStatus:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5355,6 +5656,7 @@
             type: text
         ResourceHomeRegionID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5370,6 +5672,7 @@
             type: text
         ResourceHostRegionIDs:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5385,6 +5688,7 @@
             type: text
         ResourceLifecycleStatus:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5400,6 +5704,7 @@
             type: text
         ResourceSecurityClassification:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5415,6 +5720,7 @@
             type: text
         ServiceCompanyID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5430,6 +5736,7 @@
             type: text
         Source:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5445,6 +5752,7 @@
             type: text
         SpatialArea:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5463,6 +5771,7 @@
             list: false
         SpatialPoint:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5481,6 +5790,7 @@
             list: false
         StartDateTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5496,6 +5806,7 @@
             type: text
         SubmitterName:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5511,6 +5822,7 @@
             type: text
         SurfaceGridConvergence:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5525,6 +5837,7 @@
             type: float64
         SurfaceScaleFactor:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5539,6 +5852,7 @@
             type: float64
         SurveyReferenceIdentifier:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5554,6 +5868,7 @@
             type: text
         SurveyToolTypeID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5569,6 +5884,7 @@
             type: text
         SurveyType:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5584,6 +5900,7 @@
             type: text
         SurveyVersion:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5599,6 +5916,7 @@
             type: text
         Tags:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5627,6 +5945,7 @@
             space: IntegrationTestsImmutable
         TieMeasuredDepth:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5641,6 +5960,7 @@
             type: int32
         TieTrueVerticalDepth:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5655,6 +5975,7 @@
             type: int32
         TopDepthMeasuredDepth:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5669,6 +5990,7 @@
             type: int32
         Tortuosity:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5683,6 +6005,7 @@
             type: float64
         VerticalMeasurement:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5701,6 +6024,7 @@
             list: false
         WellboreID:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectoryData
             space: IntegrationTestsImmutable
@@ -5726,6 +6050,7 @@
       properties:
         acl:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectory
             space: IntegrationTestsImmutable
@@ -5744,6 +6069,7 @@
             list: false
         ancestry:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectory
             space: IntegrationTestsImmutable
@@ -5762,6 +6088,7 @@
             list: false
         createTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectory
             space: IntegrationTestsImmutable
@@ -5777,6 +6104,7 @@
             type: text
         createUser:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectory
             space: IntegrationTestsImmutable
@@ -5792,6 +6120,7 @@
             type: text
         data:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectory
             space: IntegrationTestsImmutable
@@ -5810,6 +6139,7 @@
             list: false
         id:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectory
             space: IntegrationTestsImmutable
@@ -5825,6 +6155,7 @@
             type: text
         kind:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectory
             space: IntegrationTestsImmutable
@@ -5840,6 +6171,7 @@
             type: text
         legal:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectory
             space: IntegrationTestsImmutable
@@ -5871,6 +6203,7 @@
             space: IntegrationTestsImmutable
         modifyTime:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectory
             space: IntegrationTestsImmutable
@@ -5886,6 +6219,7 @@
             type: text
         modifyUser:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectory
             space: IntegrationTestsImmutable
@@ -5901,6 +6235,7 @@
             type: text
         tags:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectory
             space: IntegrationTestsImmutable
@@ -5919,6 +6254,7 @@
             list: false
         version:
           autoIncrement: false
+          immutable: false
           container:
             externalId: WellboreTrajectory
             space: IntegrationTestsImmutable
