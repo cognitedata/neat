@@ -5405,11 +5405,11 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 all = ["fastapi", "jinja2", "oxrdflib", "prometheus-client", "pyoxigraph", "schedule", "uvicorn"]
 docs = ["mkdocs", "mkdocs-autorefs", "mkdocs-git-authors-plugin", "mkdocs-git-revision-date-localized-plugin", "mkdocs-gitbook", "mkdocs-glightbox", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocstrings", "pymdown-extensions"]
 google = ["google-api-python-client", "google-auth-oauthlib", "gspread"]
-graphql = []
+graphql = ["jinja2"]
 oxi = ["oxrdflib", "pyoxigraph"]
 service = ["fastapi", "prometheus-client", "schedule", "uvicorn"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "1dead52ddb2084376a9117ffba2b40d6b8b13c39924d6ff0388e838cde380518"
+content-hash = "5ba0d0e20d59b8d455d47b9715ed3803e07174077a04ae7beaa3a1f542976a7b"
