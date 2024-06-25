@@ -85,7 +85,7 @@ def _to_visualization_compliant_views(views, containers):
 @router.post("/api/core/publish-rules")
 async def publish_rules_as_data_model(rules: DMSRules):
     if NEAT_APP.cdf_client:
-        uploaded = exporters.DMSExporter().export_to_cdf(rules, NEAT_APP.cdf_client)
+        uploaded = exporters.DMSExporter().export_to_cdf_iterable(rules, NEAT_APP.cdf_client)
         return {"uploaded": uploaded}
     else:
         return {"uploaded": []}

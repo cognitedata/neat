@@ -216,7 +216,7 @@ class RulesToDMS(Step):
 
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
-        for result in dms_exporter.export_to_cdf(rules=input_rules, client=cdf_client, dry_run=dry_run):
+        for result in dms_exporter.export_to_cdf_iterable(rules=input_rules, client=cdf_client, dry_run=dry_run):
             report_lines.append(result.as_report_str())
             errors.extend(result.error_messages)
 
@@ -555,7 +555,7 @@ class RulesToCDFTransformations(Step):
 
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
-        for result in dms_exporter.export_to_cdf(rules=input_rules, client=cdf_client, dry_run=dry_run):
+        for result in dms_exporter.export_to_cdf_iterable(rules=input_rules, client=cdf_client, dry_run=dry_run):
             report_lines.append(result.as_report_str())
             errors.extend(result.error_messages)
 

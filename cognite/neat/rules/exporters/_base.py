@@ -37,5 +37,10 @@ class BaseExporter(ABC, Generic[T_Export]):
 
 class CDFExporter(BaseExporter[T_Export]):
     @abstractmethod
-    def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadDiffsCount]:
+    def export_to_cdf_iterable(
+        self, rules: Rules, client: CogniteClient, dry_run: bool = False
+    ) -> Iterable[UploadDiffsCount]:
         raise NotImplementedError
+
+    def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> list[UploadDiffsCount]:
+        return list(self.export_to_cdf_iterable(rules, client, dry_run))

@@ -169,7 +169,9 @@ class DMSExporter(CDFExporter[DMSSchema]):
                 error_messages=error_messages,
             )
 
-    def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadDiffsCount]:
+    def export_to_cdf_iterable(
+        self, rules: Rules, client: CogniteClient, dry_run: bool = False
+    ) -> Iterable[UploadDiffsCount]:
         schema, to_export = self._prepare_schema_and_exporters(rules, client)
 
         # The conversion from DMS to GraphQL does not seem to be triggered even if the views

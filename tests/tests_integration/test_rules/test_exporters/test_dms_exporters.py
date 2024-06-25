@@ -153,7 +153,7 @@ class TestDMSExporters:
 
         exporter = DMSExporter()
 
-        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=True)
+        uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=True)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
         assert uploaded_by_name["containers"].total == len(rules.containers)
@@ -166,7 +166,7 @@ class TestDMSExporters:
 
         exporter = DMSExporter(existing_handling="force")
 
-        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
+        uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
         assert uploaded_by_name["containers"].total == len(rules.containers)
@@ -192,7 +192,7 @@ class TestDMSExporters:
         schema = cast(PipelineSchema, exporter.export(table_example))
 
         # Write Pipeline to CDF
-        uploaded = list(exporter.export_to_cdf(table_example, cognite_client, dry_run=False))
+        uploaded = list(exporter.export_to_cdf_iterable(table_example, cognite_client, dry_run=False))
 
         # Verify Raw Tables are written
         assert uploaded
@@ -254,7 +254,7 @@ class TestDMSExporters:
 
         exporter = DMSExporter(existing_handling="force")
 
-        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
+        uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
         assert uploaded_by_name["containers"].total == len(rules.containers)
@@ -282,11 +282,11 @@ class TestDMSExporters:
         assert schema.referenced_spaces(include_indirect_references=True) == {new_space}
         exporter = DMSExporter(existing_handling="force")
         # First, we ensure that the previous version of the data model is deployed
-        uploaded = list(exporter.export_to_cdf(rules.last, cognite_client, dry_run=False))
+        uploaded = list(exporter.export_to_cdf_iterable(rules.last, cognite_client, dry_run=False))
         failed = [entity for entity in uploaded if entity.failed]
         assert not failed, f"Failed to deploy previous version of the data model: {failed}"
 
-        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
+        uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
         assert uploaded_by_name["containers"].total == len(rules.containers)
@@ -345,11 +345,11 @@ class TestDMSExporters:
         assert referenced_spaces == {new_enterprise_space, new_solution_space}
         exporter = DMSExporter(existing_handling="force")
         # First, we ensure that the previous version of the data model is deployed
-        uploaded = list(exporter.export_to_cdf(rules.last, cognite_client, dry_run=False))
+        uploaded = list(exporter.export_to_cdf_iterable(rules.last, cognite_client, dry_run=False))
         failed = [entity for entity in uploaded if entity.failed]
         assert not failed, f"Failed to deploy previous version of the data model: {failed}"
 
-        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
+        uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
         assert uploaded_by_name["containers"].total == len(schema.containers)
