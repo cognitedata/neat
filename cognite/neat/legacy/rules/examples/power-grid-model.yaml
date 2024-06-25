@@ -23,6 +23,7 @@ views:
           type: text
         nullable: false
         autoIncrement: false
+          immutable: false
         source: null
         defaultValue: null
         name: name
@@ -67,6 +68,7 @@ views:
           type: text
         nullable: false
         autoIncrement: false
+          immutable: false
         source: null
         defaultValue: null
         name: name
@@ -88,6 +90,7 @@ views:
             version: "1"
         nullable: true
         autoIncrement: false
+          immutable: false
         defaultValue: null
         name: region
         description: "Region to which subgeographical region belongs to
@@ -119,6 +122,7 @@ views:
           type: text
         nullable: false
         autoIncrement: false
+          immutable: false
         source: null
         defaultValue: null
         name: name
@@ -140,6 +144,7 @@ views:
             version: bbe4295878a47f
         nullable: true
         autoIncrement: false
+          immutable: false
         defaultValue: null
         name: subGeographicalRegion
         description: "The subgeographical region containing the substation
@@ -166,6 +171,7 @@ views:
           type: text
         nullable: false
         autoIncrement: false
+          immutable: false
         source: null
         defaultValue: null
         name: name
@@ -183,6 +189,7 @@ views:
           type: text
         nullable: true
         autoIncrement: false
+          immutable: false
         source: null
         defaultValue: null
         name: aliasName
@@ -204,6 +211,7 @@ views:
             version: "1"
         nullable: true
         autoIncrement: false
+          immutable: false
         defaultValue: null
         name: substation
         description: "Substation to which terminal belongs to
