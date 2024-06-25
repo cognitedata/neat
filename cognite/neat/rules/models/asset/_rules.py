@@ -1,5 +1,5 @@
 import sys
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 from pydantic import Field, field_validator, model_validator
 from pydantic.main import IncEx
@@ -8,7 +8,7 @@ from rdflib import Namespace
 from cognite.neat.constants import PREFIXES
 from cognite.neat.issues import MultiValueError
 from cognite.neat.rules import issues
-from cognite.neat.rules.models._base import BaseRules, SheetList
+from cognite.neat.rules.models._base import BaseRules, RoleTypes, SheetList
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     CdfResourceEntityList,
@@ -34,7 +34,8 @@ else:
     from typing_extensions import Self
 
 
-class AssetMetadata(InformationMetadata): ...
+class AssetMetadata(InformationMetadata):
+    role: ClassVar[RoleTypes] = RoleTypes.asset_architect
 
 
 class AssetClass(InformationClass): ...
