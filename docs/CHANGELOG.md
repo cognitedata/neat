@@ -30,7 +30,6 @@ Changes are grouped as follows:
 - added new entities `AssetEntity` and `RelationshipEntity`
 - added new rules type `AssetRules`
 
-
 ## [0.82.0] - 21-06-24
 ### Added
 - Introduce `query` module under `neat.graph` which holds previous `_Queries` class
