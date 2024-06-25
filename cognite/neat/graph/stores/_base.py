@@ -68,7 +68,7 @@ class NeatGraphStore:
         """This method is used to add rules to the graph store and it is the only correct
         way to add rules to the graph store, after the graph store has been initialized."""
 
-        self.rules = rules.as_information_architect_rules() if isinstance(rules, AssetRules) else rules
+        self.rules = rules.as_information_architect_rules() if not isinstance(rules, InformationRules) else rules
         self.base_namespace = self.rules.metadata.namespace
         self.queries = Queries(self.graph, self.rules)
         self.provenance.append(
