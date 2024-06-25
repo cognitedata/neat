@@ -16,6 +16,11 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.82.2] - 25-06-24
+### Fixed
+- Conversion from Information to DMS rules incorrectly set `nullable` for a property if
+  the property had `min_value` not set in the Information rules. This is now fixed.
+
 ## [0.82.1] - 21-06-24
 ### Added
 - added new entities `AssetEntity` and `RelationshipEntity`
