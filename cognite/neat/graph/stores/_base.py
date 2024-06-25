@@ -14,8 +14,8 @@ from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.graph.models import Triple
 from cognite.neat.graph.queries import Queries
 from cognite.neat.graph.transformers import Transformers
+from cognite.neat.rules.models import AssetRules, InformationRules
 from cognite.neat.rules.models.entities import ClassEntity
-from cognite.neat.rules.models.information import InformationRules
 from cognite.neat.utils.auxiliary import local_import
 
 from ._provenance import Change, Provenance
@@ -40,7 +40,7 @@ class NeatGraphStore:
     def __init__(
         self,
         graph: Graph,
-        rules: InformationRules | None = None,
+        rules: InformationRules | AssetRules | None = None,
     ):
         self.rules: InformationRules | None = None
 
@@ -64,11 +64,11 @@ class NeatGraphStore:
 
         self.queries = Queries(self.graph, self.rules)
 
-    def add_rules(self, rules: InformationRules) -> None:
+    def add_rules(self, rules: InformationRules | AssetRules) -> None:
         """This method is used to add rules to the graph store and it is the only correct
         way to add rules to the graph store, after the graph store has been initialized."""
 
-        self.rules = rules
+        self.rules = rules.as_information_architect_rules() if isinstance(rules, AssetRules) else rules
         self.base_namespace = self.rules.metadata.namespace
         self.queries = Queries(self.graph, self.rules)
         self.provenance.append(
