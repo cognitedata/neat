@@ -16,6 +16,12 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.82.1] - 21-06-24
+### Added
+- added new entities `AssetEntity` and `RelationshipEntity`
+- added new rules type `AssetRules`
+
+
 ## [0.82.0] - 21-06-24
 ### Added
 - Introduce `query` module under `neat.graph` which holds previous `_Queries` class

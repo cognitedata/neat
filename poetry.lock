@@ -622,30 +622,27 @@ yaml = ["PyYAML (>=6.0,<7.0)"]
 
 [[package]]
 name = "cognite-toolkit"
-version = "0.2.3"
+version = "0.2.4"
 description = "Official Cognite Data Fusion tool for project templates and configuration deployment"
 optional = false
-python-versions = "^3.9"
-files = []
-develop = false
+python-versions = "<4.0,>=3.9"
+files = [
+    {file = "cognite_toolkit-0.2.4-py3-none-any.whl", hash = "sha256:40c4dad37db0ef9a5573093eace2136504bf53183595918db7159bbfdcaa6486"},
+    {file = "cognite_toolkit-0.2.4.tar.gz", hash = "sha256:1de86a3ae0d8d79eeedf96096bcab982c3b8cc1a75546758912b1e75fc44559c"},
+]
 
 [package.dependencies]
 cognite-extractor-utils = ">=7"
-cognite-logger = "^0.6"
-cognite-sdk = {version = "^7.51.0", extras = ["pandas"]}
-mixpanel = "^4.10.1"
-pandas = ">=1.5.3, <3.0"
-python-dotenv = "^1.0.0"
-pyyaml = "^6.0.1"
-questionary = "^2.0.1"
-sentry-sdk = "^2.1.0"
-typer = {version = ">=0.12.0, <1.0", extras = ["all"]}
-
-[package.source]
-type = "git"
-url = "https://github.com/cognitedata/toolkit.git"
-reference = "installation-branch-neat"
-resolved_reference = "009daf5ccfce4e34da1d306e9c1a624378da6dfe"
+cognite-logger = ">=0.6,<0.7"
+cognite-sdk = {version = ">=7.51.0,<8.0.0", extras = ["pandas"]}
+mixpanel = ">=4.10.1,<5.0.0"
+packaging = ">=24.1,<25.0"
+pandas = ">=1.5.3,<3.0"
+python-dotenv = ">=1.0.0,<2.0.0"
+pyyaml = ">=6.0.1,<7.0.0"
+questionary = ">=2.0.1,<3.0.0"
+sentry-sdk = ">=2.1.0,<3.0.0"
+typer = {version = ">=0.12.0,<1.0", extras = ["all"]}
 
 [[package]]
 name = "colorama"
@@ -5624,4 +5621,4 @@ oxi = ["oxrdflib"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "983c4c1c8fca06fefd878d29ac18da4e795f21e19c56ad53ec2d772b84992334"
+content-hash = "8f823e58295282eae290d6f909bcc755a4947ccbcf4bb2d8ebb34a635c3e1200"

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.82.0"
+version = "0.82.1"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -147,8 +147,7 @@ types-PyYAML = "^6"
 types-openpyxl = "^3"
 types-requests = "^2"
 types-setuptools = "^68"
-# Need the new asset feature in Toolkit
-cognite-toolkit = {git = "https://github.com/cognitedata/toolkit.git", branch = "installation-branch-neat"}
+cognite-toolkit = "^0.2.4"
 
 
 [build-system]
