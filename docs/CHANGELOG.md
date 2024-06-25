@@ -16,6 +16,10 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.82.3] - 25-06-24
+### Improved
+- Automatic conversion of `MultiValueType` in `InformationRules` to `DMSRules`.
+
 ## [0.82.2] - 25-06-24
 ### Fixed
 - Conversion from Information to DMS rules incorrectly set `nullable` for a property if
@@ -25,7 +29,6 @@ Changes are grouped as follows:
 ### Added
 - added new entities `AssetEntity` and `RelationshipEntity`
 - added new rules type `AssetRules`
-
 
 ## [0.82.0] - 21-06-24
 ### Added

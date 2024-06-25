@@ -1,8 +1,12 @@
 import re
 from collections import Counter, defaultdict
 from collections.abc import Collection
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Literal
 
+from cognite.client.data_classes import data_modeling as dms
+
+from cognite.neat.rules.models import data_types
 from cognite.neat.rules.models._base import (
     ExtensionCategory,
     SchemaCompleteness,
@@ -15,6 +19,7 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     DMSUnknownEntity,
+    MultiValueTypeInfo,
     ReferenceEntity,
     UnknownEntity,
     ViewEntity,
@@ -172,6 +177,8 @@ class _InformationRulesConverter:
             value_type = DMSUnknownEntity()
         elif isinstance(prop.value_type, ClassEntity):
             value_type = prop.value_type.as_view_entity(default_space, default_version)
+        elif isinstance(prop.value_type, MultiValueTypeInfo):
+            value_type = self.convert_multi_value_type(prop.value_type)
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
@@ -271,3 +278,24 @@ class _InformationRulesConverter:
             return suffix[: suffix_number.start()] + str(int(suffix_number.group()) + 1)
         else:
             return f"{suffix}2"
+
+    @staticmethod
+    def convert_multi_value_type(value_type: MultiValueTypeInfo) -> DataType:
+        if not all(isinstance(type_, DataType) for type_ in value_type.types):
+            raise ValueError("Only MultiValueType with DataType types is supported")
+        # We check above that there are no ClassEntity types in the MultiValueType
+        py_types = {type_.python for type_ in value_type.types}  # type: ignore[union-attr]
+        if dms.Json in py_types and len(py_types) > 1:
+            raise ValueError("MultiValueType with Json and other types is not supported")
+        elif dms.Json in py_types:
+            return data_types.Json()
+        elif not (py_types - {bool}):
+            return data_types.Boolean()
+        elif not (py_types - {int, bool}):
+            return data_types.Integer()
+        elif not (py_types - {float, int, bool}):
+            return data_types.Double()
+        elif not (py_types - {datetime, date}):
+            return data_types.DateTime()
+
+        return data_types.String()

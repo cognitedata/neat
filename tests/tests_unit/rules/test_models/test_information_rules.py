@@ -5,9 +5,10 @@ import pandas as pd
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat.rules.models import DMSRules, SheetList
+from cognite.neat.rules.models import DMSRules, SheetList, data_types
 from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType, String
+from cognite.neat.rules.models.entities import MultiValueTypeInfo
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationRules,
@@ -346,5 +347,36 @@ class TestInformationConverter:
     )
     def test_bump_suffix(self, name: str, expected: str) -> None:
         actual = _InformationRulesConverter._bump_suffix(name)
+
+        assert actual == expected
+
+    @pytest.mark.parametrize(
+        "multi, expected",
+        [
+            pytest.param(
+                MultiValueTypeInfo(types=[data_types.Integer(), data_types.String()]), data_types.String(), id="IntStr"
+            ),
+            pytest.param(
+                MultiValueTypeInfo(types=[data_types.Float(), data_types.Integer()]), data_types.Double(), id="FloatStr"
+            ),
+            pytest.param(
+                MultiValueTypeInfo(types=[data_types.Boolean(), data_types.Float()]),
+                data_types.Double(),
+                id="BoolFloat",
+            ),
+            pytest.param(
+                MultiValueTypeInfo(types=[data_types.DateTime(), data_types.Boolean()]),
+                data_types.String(),
+                id="DatetimeBool as String",
+            ),
+            pytest.param(
+                MultiValueTypeInfo(types=[data_types.Date(), data_types.DateTime()]),
+                data_types.DateTime(),
+                id="Date and Datetime",
+            ),
+        ],
+    )
+    def test_convert_multivalue_type(self, multi: MultiValueTypeInfo, expected: DataType) -> None:
+        actual = _InformationRulesConverter.convert_multi_value_type(multi)
 
         assert actual == expected
