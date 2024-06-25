@@ -1,5 +1,5 @@
 .PHONY: run-explorer run-tests run-linters build-ui build-python build-docker run-docker compose-up
-version="0.82.3"
+version="0.83.0"
 run-explorer:
 	@echo "Running explorer API server..."
 	# open "http://localhost:8000/static/index.html" || true
@@ -39,7 +39,7 @@ start-ui-dev:
 
 poetry-export:
 	@echo "Exporting poetry dependencies"
-	poetry export -f requirements.txt --output requirements.txt --extras "graphql"
+	poetry export -f requirements.txt --output requirements.txt --extras "graphql" --extras "service"
 
 build-docker: poetry-export
 	@echo "Building docker image"

@@ -16,6 +16,12 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.83.0] - 25-06-24
+### Changed
+- The dependency for running the neat service `fastapi`, `uvicorn`, and `prometheus-client` have been
+  made optional. This is to make it easier to use `neat` as a Python package without the need for
+  these dependencies.
+
 ## [0.82.3] - 25-06-24
 ### Improved
 - Automatic conversion of `MultiValueType` in `InformationRules` to `DMSRules`.

@@ -15,6 +15,7 @@
       properties:
         aggregation:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ScenarioInstance
             space: IntegrationTestsImmutable
@@ -30,6 +31,7 @@
             type: text
         country:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ScenarioInstance
             space: IntegrationTestsImmutable
@@ -45,6 +47,7 @@
             type: text
         instance:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ScenarioInstance
             space: IntegrationTestsImmutable
@@ -59,6 +62,7 @@
             type: timestamp
         market:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ScenarioInstance
             space: IntegrationTestsImmutable
@@ -74,6 +78,7 @@
             type: text
         priceArea:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ScenarioInstance
             space: IntegrationTestsImmutable
@@ -89,6 +94,7 @@
             type: text
         priceForecast:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ScenarioInstance
             space: IntegrationTestsImmutable
@@ -103,6 +109,7 @@
             type: timeseries
         scenario:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ScenarioInstance
             space: IntegrationTestsImmutable
@@ -118,6 +125,7 @@
             type: text
         start:
           autoIncrement: false
+          immutable: false
           container:
             externalId: ScenarioInstance
             space: IntegrationTestsImmutable

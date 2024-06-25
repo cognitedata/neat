@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ruamel.yaml import YAML
+import yaml
 
 # Migration mapping
 
@@ -62,9 +62,7 @@ step_rename_mapping = {
 
 def rename_workflow_steps(workflow_path: Path, dry_run: bool) -> str:
     # Load the YAML file
-    yaml = YAML()
-    with workflow_path.open() as file:
-        data = yaml.load(file)
+    data = yaml.safe_load(workflow_path.read_text())
     # Replace old step names with new ones
     for step in data["steps"]:
         if step["method"] in step_rename_mapping:
@@ -73,7 +71,7 @@ def rename_workflow_steps(workflow_path: Path, dry_run: bool) -> str:
 
     # Save the updated YAML file
     with workflow_path.open("w") as file:
-        yaml.dump(data, file)
+        yaml.safe_dump(data, file)
     return "ok"
 
 
