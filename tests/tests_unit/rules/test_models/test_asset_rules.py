@@ -6,17 +6,9 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.models import DMSRules, SheetList
-from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.asset import (
     AssetClass,
     AssetRules,
-    AssetRulesInput,
-)
-from cognite.neat.rules.models.asset._converter import _AssetRulesConverter
-from cognite.neat.rules.models.asset._rules_input import (
-    AssetClassInput,
-    AssetMetadataInput,
-    AssetPropertyInput,
 )
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import AssetEntity, RelationshipEntity
@@ -269,7 +261,3 @@ class TestAssetRules:
         polygon = next((view for view in schema.views.values() if view.external_id == "Polygon"), None)
         assert polygon is not None
         assert polygon.implements == [dm.ViewId("power", "Polygon", "0.1.0")]
-
-
-
-
