@@ -20,12 +20,6 @@ exclude = [
     "cognite/neat/app/ui/neat-app/*.json",
 ]
 
-
-[tool.black]
-line-length = 120
-target_version = ['py310']
-include = '\.py$'
-
 [tool.ruff.lint]
 # See https://docs.astral.sh/ruff/rules/ for an overview of ruff rules
 select = ["E", "W", "F", "I", "RUF", "TID", "UP", "B", "FLY", "PTH", "ERA"]
