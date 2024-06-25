@@ -80,7 +80,7 @@ class TestEntities:
             ),
             (
                 RelationshipEntity,
-                "RelationshipEntity(label=cool-label)",
+                "Relationship(label=cool-label)",
                 RelationshipEntity(label="cool-label"),
             ),
         ],
