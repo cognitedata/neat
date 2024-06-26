@@ -3,6 +3,7 @@
   properties:
     name:
       autoIncrement: false
+      immutable: false
       defaultValue: null
       description: 'The name that identifies Greographical
 
@@ -20,6 +21,7 @@
   properties:
     aliasName:
       autoIncrement: false
+      immutable: false
       defaultValue: null
       description: 'The alternative name that identifies Substation
 
@@ -32,6 +34,7 @@
         type: text
     name:
       autoIncrement: false
+      immutable: false
       defaultValue: null
       description: 'The name that identifies Terminal
 
@@ -44,6 +47,7 @@
         type: text
     substation:
       autoIncrement: false
+      immutable: false
       defaultValue: null
       description: 'Substation to which terminal belongs to
 
@@ -61,6 +65,7 @@
   properties:
     name:
       autoIncrement: false
+      immutable: false
       defaultValue: null
       description: 'The name that identifies SubGreographical
 
@@ -73,6 +78,7 @@
         type: text
     region:
       autoIncrement: false
+      immutable: false
       defaultValue: null
       description: 'Region to which subgeographical region belongs to
 
@@ -90,6 +96,7 @@
   properties:
     name:
       autoIncrement: false
+      immutable: false
       defaultValue: null
       description: 'The name that identifies Substation
 
@@ -102,6 +109,7 @@
         type: text
     subGeographicalRegion:
       autoIncrement: false
+      immutable: false
       defaultValue: null
       description: 'The subgeographical region containing the substation
 

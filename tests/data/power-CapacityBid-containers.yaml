@@ -10,6 +10,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: DocumentTypeName
       defaultValue: null
       description: missing
@@ -20,6 +21,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: ProcessTypeName
       defaultValue: null
       description: missing
@@ -30,6 +32,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: TSO
       defaultValue: null
       description: missing
@@ -40,6 +43,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: Owner
       defaultValue: null
       description: missing
@@ -49,11 +53,13 @@
         type: timestamp
       nullable: true
       autoIncrement: false
+      immutable: false
       name: CreatedDateTime
       defaultValue: null
       description: missing
     BidInterval:
       autoIncrement: false
+      immutable: false
       defaultValue: null
       description: missing
       name: BidInterval
@@ -69,6 +75,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: Country
       defaultValue: null
       description: missing
@@ -79,6 +86,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: Origin
       defaultValue: null
       description: missing
@@ -93,6 +101,7 @@
         type: timestamp
       nullable: true
       autoIncrement: false
+      immutable: false
       name: Start
       defaultValue: null
       description: missing
@@ -102,6 +111,7 @@
         type: timestamp
       nullable: true
       autoIncrement: false
+      immutable: false
       name: End
       defaultValue: null
       description: missing
@@ -117,6 +127,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: BidType
       defaultValue: null
       description: missing
@@ -127,6 +138,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: MeasureUnit
       defaultValue: null
       description: missing
@@ -137,6 +149,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: Currency
       defaultValue: null
       description: missing
@@ -146,6 +159,7 @@
         type: float64
       nullable: true
       autoIncrement: false
+      immutable: false
       name: Price
       defaultValue: null
       description: missing
@@ -156,6 +170,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: DirectionName
       defaultValue: null
       description: missing
@@ -166,6 +181,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: ReserveObject
       defaultValue: null
       description: missing
@@ -181,6 +197,7 @@
         list: false
       nullable: true
       autoIncrement: false
+      immutable: false
       name: TimeInterval
       defaultValue: null
       description: missing
@@ -191,6 +208,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: Resolution
       defaultValue: null
       description: missing
@@ -205,6 +223,7 @@
         type: timestamp
       nullable: true
       autoIncrement: false
+      immutable: false
       name: Start
       defaultValue: null
       description: missing
@@ -214,6 +233,7 @@
         type: timestamp
       nullable: true
       autoIncrement: false
+      immutable: false
       name: End
       defaultValue: null
       description: missing
@@ -229,6 +249,7 @@
         type: text
       nullable: true
       autoIncrement: false
+      immutable: false
       name: ReserveObject
       defaultValue: null
       description: missing
@@ -238,6 +259,7 @@
         type: float64
       nullable: true
       autoIncrement: false
+      immutable: false
       name: Qty
       defaultValue: null
       description: missing
