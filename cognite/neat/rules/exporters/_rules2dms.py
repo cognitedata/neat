@@ -124,7 +124,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         return dms_rules.as_schema(include_pipeline=self.export_pipeline, instance_space=self.instance_space)
 
     def delete_from_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
-        _, to_export = self._prepare_schema_and_exporters(rules, client)
+        to_export = self._prepare_exporters(rules, client)
 
         # we need to reverse order in which we are picking up the items to delete
         # as they are sorted in the order of creation and we need to delete them in reverse order
@@ -169,7 +169,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
     def export_to_cdf_iterable(
         self, rules: Rules, client: CogniteClient, dry_run: bool = False
     ) -> Iterable[UploadResult]:
-        _, to_export = self._prepare_schema_and_exporters(rules, client)
+        to_export = self._prepare_exporters(rules, client)
 
         redeploy_data_model = False
         for items, loader in to_export:
@@ -275,9 +275,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
                 to_update.append(item)
         return to_create, to_delete, to_update, unchanged
 
-    def _prepare_schema_and_exporters(
-        self, rules, client
-    ) -> tuple[DMSSchema, list[tuple[CogniteResourceList, ResourceLoader]]]:
+    def _prepare_exporters(self, rules, client) -> list[tuple[CogniteResourceList, ResourceLoader]]:
         schema = self.export(rules)
         to_export: list[tuple[CogniteResourceList, ResourceLoader]] = []
         if self.export_components.intersection({"all", "spaces"}):
@@ -292,7 +290,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
             to_export.append((schema.databases, RawDatabaseLoader(client)))
             to_export.append((schema.raw_tables, RawTableLoader(client)))
             to_export.append((schema.transformations, TransformationLoader(client)))
-        return schema, to_export
+        return to_export
 
     def _validate(self, loader: ResourceLoader, items: CogniteResourceList) -> IssueList:
         issue_list = IssueList()

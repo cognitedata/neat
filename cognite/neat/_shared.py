@@ -13,7 +13,7 @@ class NeatObject:
     """A neat object can be dumped to a dictionary."""
 
     @abstractmethod
-    def dump(self) -> dict[str, Any]:
+    def dump(self, aggregate: bool = True) -> dict[str, Any]:
         """Return a dictionary representation of the object."""
         raise NotImplementedError()
 

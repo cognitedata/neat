@@ -95,7 +95,7 @@ class DeleteDataModelFromCDF(Step):
         report_lines = ["# Data Model Deletion from CDF\n\n"]
         errors = []
         for result in dms_exporter.delete_from_cdf(rules=input_rules, client=cdf_client, dry_run=dry_run):
-            report_lines.append(result.as_report_str())
+            report_lines.append(str(result))
             errors.extend(result.error_messages)
 
         report_lines.append("\n\n# ERRORS\n\n")
@@ -217,7 +217,7 @@ class RulesToDMS(Step):
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
         for result in dms_exporter.export_to_cdf_iterable(rules=input_rules, client=cdf_client, dry_run=dry_run):
-            report_lines.append(result.as_report_str())
+            report_lines.append(str(result))
             errors.extend(result.error_messages)
 
         report_lines.append("\n\n# ERRORS\n\n")
@@ -556,7 +556,7 @@ class RulesToCDFTransformations(Step):
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
         for result in dms_exporter.export_to_cdf_iterable(rules=input_rules, client=cdf_client, dry_run=dry_run):
-            report_lines.append(result.as_report_str())
+            report_lines.append(str(result))
             errors.extend(result.error_messages)
 
         report_lines.append("\n\n# ERRORS\n\n")
