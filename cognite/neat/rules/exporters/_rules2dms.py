@@ -144,8 +144,8 @@ class DMSExporter(CDFExporter[DMSSchema]):
                 if item_id in existing_ids:
                     to_delete.append(item_id)
 
-            deleted = set()
-            failed_deleted = set()
+            deleted: set[Hashable] = set()
+            failed_deleted: set[Hashable] = set()
             error_messages: list[str] = []
             if dry_run:
                 deleted.update(to_delete)
@@ -153,8 +153,8 @@ class DMSExporter(CDFExporter[DMSSchema]):
                 try:
                     loader.delete(to_delete)
                 except CogniteAPIError as e:
-                    failed_deleted.update(e.failed + e.unknown)
-                    deleted.update(e.successful)
+                    failed_deleted.update(loader.get_id(item) for item in e.failed + e.unknown)
+                    deleted.update(loader.get_id(item) for item in e.successful)
                     error_messages.append(f"Failed delete: {e.message}")
                 else:
                     deleted.update(to_delete)
@@ -213,8 +213,8 @@ class DMSExporter(CDFExporter[DMSSchema]):
                 try:
                     loader.create(to_create)
                 except CogniteAPIError as e:
-                    failed_created.update(e.failed + e.unknown)
-                    created.update(e.successful)
+                    failed_created.update(loader.get_id(item) for item in e.failed + e.unknown)
+                    created.update(loader.get_id(item) for item in e.successful)
                     error_messages.append(e.message)
                 else:
                     created.update(loader.get_id(item) for item in to_create)
@@ -223,8 +223,8 @@ class DMSExporter(CDFExporter[DMSSchema]):
                     try:
                         loader.update(to_update)
                     except CogniteAPIError as e:
-                        failed_changed.update(e.failed + e.unknown)
-                        changed.update(e.successful)
+                        failed_changed.update(loader.get_id(item) for item in e.failed + e.unknown)
+                        changed.update(loader.get_id(item) for item in e.successful)
                         error_messages.append(e.message)
                     else:
                         changed.update(loader.get_id(item) for item in to_update)
