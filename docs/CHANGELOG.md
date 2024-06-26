@@ -16,6 +16,10 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.82.4] - 26-06-24
+### Added
+- Conversion between information, asset and dms rules
+
 ## [0.82.3] - 25-06-24
 ### Improved
 - Automatic conversion of `MultiValueType` in `InformationRules` to `DMSRules`.
