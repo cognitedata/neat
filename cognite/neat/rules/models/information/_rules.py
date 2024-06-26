@@ -49,7 +49,7 @@ from cognite.neat.rules.models.entities import (
 )
 
 if TYPE_CHECKING:
-    from cognite.neat.rules.models.dms._rules import DMSRules
+    from cognite.neat.rules.models import AssetRules, DMSRules
 
 
 if sys.version_info >= (3, 11):
@@ -340,6 +340,11 @@ class InformationRules(BaseRules):
         from ._converter import _InformationRulesConverter
 
         return _InformationRulesConverter(self).as_domain_rules()
+
+    def as_asset_architect_rules(self) -> "AssetRules":
+        from ._converter import _InformationRulesConverter
+
+        return _InformationRulesConverter(self).as_asset_architect_rules()
 
     def as_dms_architect_rules(self) -> "DMSRules":
         from ._converter import _InformationRulesConverter
