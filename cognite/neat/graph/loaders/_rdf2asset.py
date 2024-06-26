@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, fields
 
+from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetWrite
 
 from cognite.neat.graph._tracking.base import Tracker
@@ -86,41 +87,37 @@ class AssetLoader(CDFLoader[AssetWrite]):
             rules, graph_store, data_set_id, use_orphanage, use_labels, asset_external_id_prefix, metadata_keys, issues
         )
 
-    # def _load(self) -> Iterable[AssetWrite]:
-    #     # need mapping class to asset definition
-    #     ...
+    def _create_validation_classes(self) -> None:
+        # need to get back class-property pairs where are definition of
+        # asset implementations, extend InformationRulesAnalysis make it generic
 
-    # def _create_validation_classes(self) -> None:
-    #     # need to get back class-property pairs where are definition of
-    #     # asset implementations, extend InformationRulesAnalysis make it generic
+        # by default if there is not explicitly stated external_id
+        # use rdf:type and drop the prefix
 
-    #     # by default if there is not explicitly stated external_id
-    #     # use rdf:type and drop the prefix
+        # based on those create pydantic model AssetDefinition
+        # which will have .to_asset_write()
 
-    #     # based on those create pydantic model AssetDefinition
-    #     # which will have .to_asset_write()
+        raise NotImplementedError("Not implemented yet, this is placeholder")
 
-    #     ...
+    def categorize_assets(self, client: CogniteClient) -> None:
+        """Categorize assets to those to be created, updated, decommissioned, or resurrected"""
 
-    # def categorize_assets(self, client: CogniteClient) -> None:
-    #     """Categorize assets to those to be created, updated, decommissioned, or resurrected"""
+        raise NotImplementedError("Not implemented yet, this is placeholder")
 
-    #     ...
+    def load_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> Sequence[AssetWrite]:
+        # generate assets
+        # check for circular asset hierarchy
+        # check for orphaned assets
+        # batch upsert of assets to CDF (otherwise we will hit the API rate limit)
 
-    # def load_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> Sequence[AssetWrite]:
-    #     # generate assets
-    #     # check for circular asset hierarchy
-    #     # check for orphaned assets
-    #     # batch upsert of assets to CDF (otherwise we will hit the API rate limit)
+        raise NotImplementedError("Not implemented yet, this is placeholder")
 
-    #     ...
+    @classmethod
+    def _check_for_circular_asset_hierarchy(cls, assets: list[AssetWrite]) -> None:
+        """Check for circular references in the asset rules"""
+        raise NotImplementedError("Not implemented yet, this is placeholder")
 
-    # @classmethod
-    # def _check_for_circular_asset_hierarchy(cls, assets: list[AssetWrite]) -> None:
-    #     """Check for circular references in the asset rules"""
-    #     ...
-
-    # @classmethod
-    # def _check_for_orphaned_assets(cls, assets: list[AssetWrite]) -> None:
-    #     """Check for circular references in the asset rules"""
-    #     ...
+    @classmethod
+    def _check_for_orphaned_assets(cls, assets: list[AssetWrite]) -> None:
+        """Check for circular references in the asset rules"""
+        raise NotImplementedError("Not implemented yet, this is placeholder")
