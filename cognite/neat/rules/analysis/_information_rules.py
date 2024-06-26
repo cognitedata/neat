@@ -400,3 +400,9 @@ class InformationArchitectRulesAnalysis(_SharedAnalysis[InformationRules, Inform
     """Assumes analysis over only the complete schema"""
 
     ...
+
+
+class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, AssetClass]):
+    """Assumes analysis over only the complete schema"""
+
+    ...
