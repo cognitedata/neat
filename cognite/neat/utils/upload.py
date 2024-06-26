@@ -1,13 +1,15 @@
 from abc import ABC
 from dataclasses import dataclass, field
 from functools import total_ordering
+from typing import Any, Generic
 
+from cognite.neat._shared import T_ID, NeatList, NeatObject
 from cognite.neat.issues import NeatIssueList
 
 
 @total_ordering
 @dataclass
-class UploadResultCore(ABC):
+class UploadResultCore(NeatObject, ABC):
     name: str
     error_messages: list[str] = field(default_factory=list)
     issues: NeatIssueList = field(default_factory=NeatIssueList)
@@ -23,6 +25,47 @@ class UploadResultCore(ABC):
             return self.name == other.name
         else:
             return NotImplemented
+
+
+class UploadResultList(NeatList[UploadResultCore]): ...
+
+
+@dataclass
+class UploadResult(UploadResultCore, Generic[T_ID]):
+    created: set[T_ID] = field(default_factory=set)
+    deleted: set[T_ID] = field(default_factory=set)
+    changed: set[T_ID] = field(default_factory=set)
+    unchanged: set[T_ID] = field(default_factory=set)
+    skipped: set[T_ID] = field(default_factory=set)
+    failed_created: set[T_ID] = field(default_factory=set)
+    failed_changed: set[T_ID] = field(default_factory=set)
+    failed_deleted: set[T_ID] = field(default_factory=set)
+
+    def dump(self) -> dict[str, Any]:
+        output = {
+            "name": self.name,
+        }
+        if self.created:
+            output["created"] = len(self.created)
+        if self.deleted:
+            output["deleted"] = len(self.deleted)
+        if self.changed:
+            output["changed"] = len(self.changed)
+        if self.unchanged:
+            output["unchanged"] = len(self.unchanged)
+        if self.skipped:
+            output["skipped"] = len(self.skipped)
+        if self.failed_created:
+            output["failed_created"] = len(self.failed_created)
+        if self.failed_changed:
+            output["failed_changed"] = len(self.failed_changed)
+        if self.failed_deleted:
+            output["failed_deleted"] = len(self.failed_deleted)
+        if self.error_messages:
+            output["error_messages"] = len(self.error_messages)
+        if self.issues:
+            output["issues"] = len(self.issues)
+        return output
 
 
 @dataclass

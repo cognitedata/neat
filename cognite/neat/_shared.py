@@ -1,9 +1,11 @@
 from abc import abstractmethod
-from collections.abc import Sequence
+from collections.abc import Hashable, Sequence
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
 import pandas as pd
+
+T_ID = TypeVar("T_ID", bound=Hashable)
 
 
 @dataclass

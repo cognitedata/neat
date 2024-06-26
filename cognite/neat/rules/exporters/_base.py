@@ -7,7 +7,7 @@ from cognite.client import CogniteClient
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes
-from cognite.neat.utils.upload import UploadDiffsCount
+from cognite.neat.utils.upload import UploadResult, UploadResultList
 
 T_Export = TypeVar("T_Export")
 
@@ -39,8 +39,8 @@ class CDFExporter(BaseExporter[T_Export]):
     @abstractmethod
     def export_to_cdf_iterable(
         self, rules: Rules, client: CogniteClient, dry_run: bool = False
-    ) -> Iterable[UploadDiffsCount]:
+    ) -> Iterable[UploadResult]:
         raise NotImplementedError
 
-    def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> list[UploadDiffsCount]:
-        return list(self.export_to_cdf_iterable(rules, client, dry_run))
+    def export_to_cdf(self, rules: Rules, client: CogniteClient, dry_run: bool = False) -> UploadResultList:
+        return UploadResultList(self.export_to_cdf_iterable(rules, client, dry_run))
