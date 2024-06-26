@@ -47,14 +47,12 @@ class UploadResult(UploadResultCore, Generic[T_ID]):
 
     @property
     def failed(self) -> int:
-        return len(self.failed_created) + len(self.failed_changed) + len(self.failed_deleted)
+        return (
+            len(self.failed_created) + len(self.failed_changed) + len(self.failed_deleted) + len(self.failed_upserted)
+        )
 
     @property
     def success(self) -> int:
-        return len(self.created) + len(self.changed)
-
-    @property
-    def total(self) -> int:
         return len(self.created) + len(self.deleted) + len(self.changed) + len(self.unchanged) + len(self.skipped)
 
     def dump(self, aggregate: bool = True) -> dict[str, Any]:

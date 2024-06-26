@@ -54,8 +54,6 @@ class CDFLoader(BaseLoader[T_Output]):
         issues = NeatIssueList[NeatIssue]()
         items: list[T_Output] = []
         for result in self.load(stop_on_exception=False):
-            issues = NeatIssueList[NeatIssue]()
-            items = []
             if isinstance(result, NeatIssue):
                 issues.append(result)
             else:
@@ -63,6 +61,8 @@ class CDFLoader(BaseLoader[T_Output]):
 
             if len(items) >= self._UPLOAD_BATCH_SIZE:
                 yield self._upload_to_cdf(client, items, dry_run, issues)
+                issues = NeatIssueList[NeatIssue]()
+                items = []
         if items:
             yield self._upload_to_cdf(client, items, dry_run, issues)
 
