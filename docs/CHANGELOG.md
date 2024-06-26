@@ -19,6 +19,8 @@ Changes are grouped as follows:
 ## [0.82.4] - 26-06-24
 ### Added
 - Conversion between information, asset and dms rules
+- Added serializer for transformations (i.e. RDFPATH)
+- Placeholder for AssetLoader
 
 ## [0.82.3] - 25-06-24
 ### Improved
