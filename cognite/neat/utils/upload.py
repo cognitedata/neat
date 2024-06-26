@@ -44,6 +44,14 @@ class UploadResult(UploadResultCore, Generic[T_ID]):
     failed_changed: set[T_ID] = field(default_factory=set)
     failed_deleted: set[T_ID] = field(default_factory=set)
 
+    @property
+    def failed(self) -> int:
+        return len(self.failed_created) + len(self.failed_changed) + len(self.failed_deleted)
+
+    @property
+    def total(self) -> int:
+        return len(self.created) + len(self.deleted) + len(self.changed) + len(self.unchanged) + len(self.skipped)
+
     def dump(self, aggregate: bool = True) -> dict[str, Any]:
         output = super().dump(aggregate)
         if self.created:
