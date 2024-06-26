@@ -16,12 +16,15 @@ from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
+    AssetEntity,
+    AssetFields,
     ClassEntity,
     ContainerEntity,
     DMSUnknownEntity,
     EntityTypes,
     MultiValueTypeInfo,
     ReferenceEntity,
+    RelationshipEntity,
     UnknownEntity,
     ViewEntity,
     ViewPropertyEntity,
@@ -64,14 +67,10 @@ class _InformationRulesConverter:
         for prop_ in self.rules.properties:
             if prop_.type_ == EntityTypes.data_property:
                 properties.append(
-                    AssetProperty(
-                        **prop_.model_dump(), implementation=f"{EntityTypes.asset.title()}(property=metadata)"
-                    )
+                    AssetProperty(**prop_.model_dump(), implementation=[AssetEntity(property=AssetFields.metadata)])
                 )
             elif prop_.type_ == EntityTypes.object_property:
-                properties.append(
-                    AssetProperty(**prop_.model_dump(), implementation=f"{EntityTypes.relationship.title()}")
-                )
+                properties.append(AssetProperty(**prop_.model_dump(), implementation=[RelationshipEntity()]))
 
         return AssetRules(
             metadata=AssetMetadata(**self.rules.metadata.model_dump()),
