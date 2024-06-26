@@ -265,11 +265,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         else:
             for instance in itertools.chain(upserted.nodes, upserted.edges):
                 if instance.was_modified and instance.created_time == instance.last_updated_time:
-                    result.created.update(instance.as_id())
+                    result.created.add(instance.as_id())
                 elif instance.was_modified:
-                    result.changed.update(instance.as_id())
+                    result.changed.add(instance.as_id())
                 else:
-                    result.unchanged.update(instance.as_id())
+                    result.unchanged.add(instance.as_id())
         return result
 
 
