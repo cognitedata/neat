@@ -389,11 +389,11 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
                 reduced_data_model["properties"].extend(properties)
 
         try:
-            return T_Rules(**reduced_data_model)  # type: ignore
+            return type(self.rules)(**reduced_data_model)
         except ValidationError as e:
             warnings.warn(f"Reduced data model is not complete: {e}", stacklevel=2)
             reduced_data_model["metadata"].schema_ = SchemaCompleteness.partial
-            return T_Rules.model_construct(**reduced_data_model)  # type: ignore
+            return type(self.rules).model_construct(**reduced_data_model)
 
 
 class InformationArchitectRulesAnalysis(_SharedAnalysis[InformationRules, InformationProperty, InformationClass]):
