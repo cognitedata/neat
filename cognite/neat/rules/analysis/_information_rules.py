@@ -11,10 +11,12 @@ from cognite.neat.rules.models import SchemaCompleteness
 from cognite.neat.rules.models._rdfpath import RDFPath
 from cognite.neat.rules.models.asset import AssetClass, AssetProperty, AssetRules
 from cognite.neat.rules.models.entities import (
+    AssetEntity,
     ClassEntity,
     EntityTypes,
     ParentClassEntity,
     ReferenceEntity,
+    RelationshipEntity,
 )
 from cognite.neat.rules.models.information import (
     InformationClass,
@@ -405,4 +407,41 @@ class InformationArchitectRulesAnalysis(_SharedAnalysis[InformationRules, Inform
 class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, AssetClass]):
     """Assumes analysis over only the complete schema"""
 
-    ...
+    def class_property_pairs(
+        self,
+        only_rdfpath: bool = False,
+        consider_inheritance: bool = False,
+        T_implementation: EntityTypes = EntityTypes.asset,
+    ) -> dict[ClassEntity, dict[str, AssetProperty]]:
+        class_property_pairs = {}
+
+        T_implementation = AssetEntity if T_implementation == EntityTypes.asset else RelationshipEntity
+
+        for class_, properties in self.classes_with_properties(consider_inheritance).items():
+            processed_properties = {}
+            for property_ in properties:
+                if property_.property_ in processed_properties:
+                    # TODO: use appropriate Warning class from _exceptions.py
+                    # if missing make one !
+                    warnings.warn(
+                        f"Property {property_.property_} for {class_} has been defined more than once!"
+                        " Only the first definition will be considered, skipping the rest..",
+                        stacklevel=2,
+                    )
+                    continue
+
+                if (
+                    property_.implementation
+                    and (
+                        only_rdfpath
+                        and isinstance(property_.transformation, RDFPath)
+                        and any(
+                            isinstance(implementation, T_implementation) for implementation in property_.implementation
+                        )
+                    )
+                    or not only_rdfpath
+                ):
+                    processed_properties[property_.property_] = property_
+            class_property_pairs[class_] = processed_properties
+
+        return class_property_pairs
