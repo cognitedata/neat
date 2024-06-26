@@ -10,6 +10,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.capabilities import Capability, DataModelInstancesAcl
 from cognite.client.data_classes.data_modeling import ViewId
+from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
 from pydantic import ValidationInfo, create_model, field_validator
@@ -21,7 +22,7 @@ from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
-from cognite.neat.utils.upload import UploadDiffsID
+from cognite.neat.utils.upload import UploadResult
 from cognite.neat.utils.utils import create_sha256_hash
 
 from ._base import CDFLoader
@@ -243,11 +244,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self,
         client: CogniteClient,
         items: list[dm.InstanceApply],
-        return_diffs: bool,
         dry_run: bool,
         read_issues: NeatIssueList,
-    ) -> UploadDiffsID:
-        result = UploadDiffsID(name=type(self).__name__, issues=read_issues)
+    ) -> UploadResult:
+        result = UploadResult[InstanceId](name=type(self).__name__, issues=read_issues)
         try:
             nodes = [item for item in items if isinstance(item, dm.NodeApply)]
             edges = [item for item in items if isinstance(item, dm.EdgeApply)]
@@ -260,16 +260,17 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             )
         except CogniteAPIError as e:
             result.error_messages.append(str(e))
-            result.failed.append([repr(instance.as_id()) for instance in items])  # type: ignore[arg-type, attr-defined]
+            result.failed_upserted.update(item.as_id() for item in e.failed + e.unknown)
+            result.created.update(item.as_id() for item in e.successful)
         else:
             for instance in itertools.chain(upserted.nodes, upserted.edges):
                 if instance.was_modified and instance.created_time == instance.last_updated_time:
-                    result.created.append(repr(instance.as_id()))
+                    result.created.update(instance.as_id())
                 elif instance.was_modified:
-                    result.changed.append(repr(instance.as_id()))
+                    result.changed.update(instance.as_id())
                 else:
-                    result.unchanged.append(repr(instance.as_id()))
-        return result if return_diffs else result.as_upload_result_ids()  # type: ignore[return-value]
+                    result.unchanged.update(instance.as_id())
+        return result
 
 
 def _triples2dictionary(
