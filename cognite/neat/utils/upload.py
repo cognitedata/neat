@@ -42,7 +42,7 @@ class UploadResult(UploadResultCore, Generic[T_ID]):
     failed_deleted: set[T_ID] = field(default_factory=set)
 
     def dump(self) -> dict[str, Any]:
-        output = {
+        output: dict[str, Any] = {
             "name": self.name,
         }
         if self.created:
