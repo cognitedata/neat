@@ -16,6 +16,12 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.84.0] - 25-06-24
+### Changed
+- [BREAKING] Interface for `Exporters`. Instead of `.export_to_cdf` returning an iterable, it now returns a list,
+  and the `.export_to_cdf_iterable` returns an iterable. In addition, these method now returns a new type of
+  objects `UploadResult`. This is to make the interface more notebook friendly and easier to work with.
+
 ## [0.83.0] - 25-06-24
 ### Changed
 - The dependency for running the neat service `fastapi`, `uvicorn`, and `prometheus-client` have been

@@ -1,5 +1,5 @@
 .PHONY: run-explorer run-tests run-linters build-ui build-python build-docker run-docker compose-up
-version="0.83.0"
+version="0.84.0"
 run-explorer:
 	@echo "Running explorer API server..."
 	# open "http://localhost:8000/static/index.html" || true
