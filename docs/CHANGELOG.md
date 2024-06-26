@@ -16,11 +16,18 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
-## [0.82.4] - 26-06-24
+## [0.83.1] - 26-06-24
 ### Added
 - Conversion between information, asset and dms rules
 - Added serializer for transformations (i.e. RDFPATH)
 - Placeholder for AssetLoader
+
+
+## [0.83.0] - 25-06-24
+### Changed
+- The dependency for running the neat service `fastapi`, `uvicorn`, and `prometheus-client` have been
+  made optional. This is to make it easier to use `neat` as a Python package without the need for
+  these dependencies.
 
 ## [0.82.3] - 25-06-24
 ### Improved
