@@ -279,5 +279,5 @@ class NeatGraphStore:
                 )
             )
 
-    def _repr_html(self) -> str:
+    def _repr_html_(self) -> str:
         return self.provenance._repr_html_()
