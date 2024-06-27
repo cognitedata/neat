@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.84.0"
+version = "0.84.1"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -70,15 +70,15 @@ tomli = { version = "^2.0.1", python = "<3.11" }
 
 # API
 uvicorn = { extras = ["standard"], version = "^0", optional = true }
-prometheus-client = {version="^0", optional = true}
-fastapi = {version="^0", optional = true }
+prometheus-client = { version = "^0", optional = true }
+fastapi = { version = "^0", optional = true }
 
 # WorkFlow
-schedule = {version ="^1", optional = true}
+schedule = { version = "^1", optional = true }
 
 # Alternative graph for NEAT Store
 oxrdflib = { version = "^0.3.3", optional = true, extras = ["oxigraph"] }
-pyoxigraph = {version= "0.3.19", optional = true}
+pyoxigraph = { version = "0.3.19", optional = true }
 
 # Only used for GoogleSheetImporter
 gspread = { version = "*", optional = true }

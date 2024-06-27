@@ -6,7 +6,7 @@ from collections import Counter
 from functools import total_ordering
 from typing import ClassVar, Literal
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_serializer
 
 from cognite.neat.rules import exceptions
 
@@ -82,6 +82,7 @@ TABLE_REGEX_COMPILED = re.compile(
 
 StepDirection = Literal["source", "target", "origin"]
 _direction_by_symbol: dict[str, StepDirection] = {"->": "target", "<-": "source"}
+_symbol_by_direction: dict[StepDirection, str] = {"source": "<-", "target": "->"}
 
 Undefined = type(object())
 Unknown = type(object())
@@ -196,9 +197,28 @@ class Step(BaseModel):
         msg += " ->prefix:suffix, <-prefix:suffix, ->prefix:suffix(prefix:suffix) or <-prefix:suffix(prefix:suffix)"
         raise ValueError(msg)
 
+    def __str__(self) -> str:
+        if self.property:
+            return f"{self.class_}({self.property})"
+        else:
+            return f"{_symbol_by_direction[self.direction]}{self.class_}"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 class Traversal(BaseModel):
     class_: Entity
+
+    def __str__(self) -> str:
+        return f"{self.class_}"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    @model_serializer(when_used="unless-none", return_type=str)
+    def as_str(self) -> str:
+        return str(self)
 
 
 class SingleProperty(Traversal):
@@ -207,6 +227,9 @@ class SingleProperty(Traversal):
     @classmethod
     def from_string(cls, class_: str, property_: str) -> Self:
         return cls(class_=Entity.from_string(class_), property=Entity.from_string(property_))
+
+    def __str__(self) -> str:
+        return f"{self.class_}({self.property})"
 
 
 class AllReferences(Traversal):
@@ -219,6 +242,9 @@ class AllProperties(Traversal):
     @classmethod
     def from_string(cls, class_: str) -> Self:
         return cls(class_=Entity.from_string(class_))
+
+    def __str__(self) -> str:
+        return f"{self.class_}(*)"
 
 
 class Origin(BaseModel):
@@ -245,6 +271,9 @@ class Hop(Traversal):
             ),
         )
 
+    def __str__(self) -> str:
+        return f"{self.class_}{''.join([str(step) for step in self.traversal])}"
+
 
 class TableLookup(BaseModel):
     name: str
@@ -261,7 +290,17 @@ class Query(BaseModel):
 
 
 class RDFPath(Rule):
-    traversal: Traversal | Query
+    traversal: SingleProperty | AllProperties | AllReferences | Hop
+
+    def __str__(self) -> str:
+        return f"{self.traversal}"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    @model_serializer(when_used="unless-none", return_type=str)
+    def as_str(self) -> str:
+        return str(self)
 
 
 class RawLookup(RDFPath):
