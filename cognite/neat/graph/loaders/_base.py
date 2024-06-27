@@ -9,6 +9,7 @@ from cognite.client.data_classes.capabilities import Capability
 from cognite.neat.graph import NeatGraphStore
 from cognite.neat.graph.issues.loader import FailedAuthorizationError
 from cognite.neat.issues import NeatIssue, NeatIssueList
+from cognite.neat.utils.auxiliary import get_classmethods
 from cognite.neat.utils.upload import UploadDiffsID, UploadResultIDs
 
 T_Output = TypeVar("T_Output")
@@ -33,6 +34,21 @@ class BaseLoader(ABC, Generic[T_Output]):
     def _load(self, stop_on_exception: bool = False) -> Iterable[T_Output | NeatIssue]:
         """Load the graph with data."""
         pass
+
+    @classmethod
+    def _repr_html_(cls) -> str:
+        if cls.__doc__:
+            docstring = cls.__doc__.split("Args:")[0].strip().replace("\n", "<br />")
+        else:
+            docstring = "Missing Description"
+        factory_methods = get_classmethods(cls)
+        if factory_methods:
+            factory_methods_str = "".join(f"<li>{m.__name__}</li>" for m in factory_methods)
+            docstring += (
+                f"<br /><strong>Factory Methods:</strong><br />"
+                f'<ul style="list-style-type:circle;">{factory_methods_str}</ul>'
+            )
+        return f"<h3>{cls.__name__}</h3><p>{docstring}</p>"
 
 
 class CDFLoader(BaseLoader[T_Output]):
