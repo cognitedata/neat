@@ -37,14 +37,12 @@ def get_cognite_client() -> CogniteClient:
 
         env_file = repo_root / ".env"
         answer = Prompt.ask(
-            "Do you store the variables in a .env file in the repository root for easy reuse?", choices=["y", "n"]
+            "Do you store the variables in an .env file in the repository root for easy reuse?", choices=["y", "n"]
         )
         if env_file.exists():
             answer = Prompt.ask(f"{env_file} already exists. Overwrite?", choices=["y", "n"])
         if answer == "y":
-            env_file.write_text(
-                "\n".join(f"{f.name}={getattr(variables, f.name)}" for f in fields(_EnvironmentVariables))
-            )
+            env_file.write_text(variables.create_env_file())
             print("Created .env file in repository root.")
 
     return variables.get_client()
@@ -175,6 +173,24 @@ class _EnvironmentVariables:
             self.CDF_PROJECT, self.CDF_CLUSTER, credentials=self.get_credentials(), client_name=_CLIENT_NAME
         )
 
+    def create_env_file(self) -> str:
+        lines: list[str] = []
+        first_optional = True
+        for field in fields(self):
+            is_optional = hasattr(self, field.name.lower())
+            if is_optional and first_optional:
+                lines.append(
+                    "# The below variables are the defaults, they are automatically " "constructed unless they are set."
+                )
+                first_optional = False
+            name = field.name.lower() if is_optional else field.name
+            value = getattr(self, name)
+            if value is not None:
+                if isinstance(value, list):
+                    value = " ".join(value)
+                lines.append(f"{field.name}={value}")
+        return "\n".join(lines)
+
 
 def _from_dotenv(evn_file: Path) -> _EnvironmentVariables:
     if not evn_file.exists():
@@ -183,7 +199,7 @@ def _from_dotenv(evn_file: Path) -> _EnvironmentVariables:
     valid_variables = {f.name for f in fields(_EnvironmentVariables)}
     variables: dict[str, str] = {}
     for line in content.splitlines():
-        if line.startswith("#"):
+        if line.startswith("#") or not line:
             continue
         key, value = line.split("=", 1)
         if key in valid_variables:
@@ -217,7 +233,7 @@ def _prompt_user() -> _EnvironmentVariables:
 
     variables.IDP_CLIENT_ID = Prompt.ask("Enter IDP Client ID")
     if login_flow == "client_credentials":
-        variables.IDP_CLIENT_SECRET = Prompt.ask("Enter IDP Client Secret")
+        variables.IDP_CLIENT_SECRET = Prompt.ask("Enter IDP Client Secret", password=True)
         tenant_id = Prompt.ask("Enter IDP_TENANT_ID (leave empty to enter IDP_TOKEN_URL instead)")
         if tenant_id:
             variables.IDP_TENANT_ID = tenant_id
@@ -228,8 +244,10 @@ def _prompt_user() -> _EnvironmentVariables:
     else:
         optional = ["IDP_TENANT_ID", "IDP_SCOPES"]
 
-    defaults = "\n - ".join(f"{name}: {getattr(variables, name.lower())}" for name in optional)
-    use_defaults = Prompt.ask(f"Use default values for the following variables?\n{defaults}", choices=["y", "n"])
+    defaults = "".join(f"\n - {name}: {getattr(variables, name.lower())}" for name in optional)
+    use_defaults = Prompt.ask(
+        f"Use default values for the following variables?{defaults}", choices=["y", "n"], default="y"
+    )
     if use_defaults:
         return variables
     for name in optional:
