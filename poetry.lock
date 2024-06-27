@@ -555,13 +555,13 @@ python-json-logger = ">=2.0.7,<3.0.0"
 
 [[package]]
 name = "cognite-sdk"
-version = "7.52.2"
+version = "7.52.3"
 description = "Cognite Python SDK"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "cognite_sdk-7.52.2-py3-none-any.whl", hash = "sha256:0e28704843e183fd227bfdc20b3b2a1250fcb314c18c127f3f3e599b7ded207f"},
-    {file = "cognite_sdk-7.52.2.tar.gz", hash = "sha256:f30636ad43cc210b7c0ad6988a0abd2efc8c67fccf2ce36ac93781c5f6aab1f4"},
+    {file = "cognite_sdk-7.52.3-py3-none-any.whl", hash = "sha256:eff71cd93e1d5b7ac78ac99b263671246bab3705c2e6ed000d437e77573f19ab"},
+    {file = "cognite_sdk-7.52.3.tar.gz", hash = "sha256:893992d9ee385e0c4224278780209c849a1157bb6bbde62a698eec67d5d58503"},
 ]
 
 [package.dependencies]
@@ -1916,13 +1916,13 @@ test = ["jupyter-server (>=2.0.0)", "pytest (>=7.0)", "pytest-jupyter[server] (>
 
 [[package]]
 name = "jupyterlab"
-version = "4.2.2"
+version = "4.2.3"
 description = "JupyterLab computational environment"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "jupyterlab-4.2.2-py3-none-any.whl", hash = "sha256:59ee9b839f43308c3dfd55d72d1f1a299ed42a7f91f2d1afe9c12a783f9e525f"},
-    {file = "jupyterlab-4.2.2.tar.gz", hash = "sha256:a534b6a25719a92a40d514fb133a9fe8f0d9981b0bbce5d8a5fcaa33344a3038"},
+    {file = "jupyterlab-4.2.3-py3-none-any.whl", hash = "sha256:0b59d11808e84bb84105c73364edfa867dd475492429ab34ea388a52f2e2e596"},
+    {file = "jupyterlab-4.2.3.tar.gz", hash = "sha256:df6e46969ea51d66815167f23d92f105423b7f1f06fa604d4f44aeb018c82c7b"},
 ]
 
 [package.dependencies]
@@ -3171,13 +3171,13 @@ ptyprocess = ">=0.5"
 
 [[package]]
 name = "pkginfo"
-version = "1.11.1"
+version = "1.10.0"
 description = "Query metadata from sdists / bdists / installed packages."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.6"
 files = [
-    {file = "pkginfo-1.11.1-py3-none-any.whl", hash = "sha256:bfa76a714fdfc18a045fcd684dbfc3816b603d9d075febef17cb6582bea29573"},
-    {file = "pkginfo-1.11.1.tar.gz", hash = "sha256:2e0dca1cf4c8e39644eed32408ea9966ee15e0d324c62ba899a393b3c6b467aa"},
+    {file = "pkginfo-1.10.0-py3-none-any.whl", hash = "sha256:889a6da2ed7ffc58ab5b900d888ddce90bce912f2d2de1dc1c26f4cb9fe65097"},
+    {file = "pkginfo-1.10.0.tar.gz", hash = "sha256:5df73835398d10db79f8eecd5cd86b1f6d29317589ea70796994d49399af6297"},
 ]
 
 [package.extras]
@@ -4316,6 +4316,7 @@ files = [
 ]
 
 [package.dependencies]
+ipywidgets = {version = ">=7.5.1,<9", optional = true, markers = "extra == \"jupyter\""}
 markdown-it-py = ">=2.2.0"
 pygments = ">=2.13.0,<3.0.0"
 
@@ -4750,19 +4751,19 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "twine"
-version = "5.0.0"
+version = "5.1.1"
 description = "Collection of utilities for publishing packages on PyPI"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "twine-5.0.0-py3-none-any.whl", hash = "sha256:a262933de0b484c53408f9edae2e7821c1c45a3314ff2df9bdd343aa7ab8edc0"},
-    {file = "twine-5.0.0.tar.gz", hash = "sha256:89b0cc7d370a4b66421cc6102f269aa910fe0f1861c124f573cf2ddedbc10cf4"},
+    {file = "twine-5.1.1-py3-none-any.whl", hash = "sha256:215dbe7b4b94c2c50a7315c0275d2258399280fbb7d04182c7e55e24b5f93997"},
+    {file = "twine-5.1.1.tar.gz", hash = "sha256:9aa0825139c02b3434d913545c7b847a21c835e11597f5255842d457da2322db"},
 ]
 
 [package.dependencies]
 importlib-metadata = ">=3.6"
 keyring = ">=15.1"
-pkginfo = ">=1.8.1"
+pkginfo = ">=1.8.1,<1.11"
 readme-renderer = ">=35.0"
 requests = ">=2.20"
 requests-toolbelt = ">=0.8.0,<0.9.0 || >0.9.0"
@@ -5407,10 +5408,11 @@ all = ["fastapi", "jinja2", "oxrdflib", "prometheus-client", "pyoxigraph", "sche
 docs = ["mkdocs", "mkdocs-autorefs", "mkdocs-git-authors-plugin", "mkdocs-git-revision-date-localized-plugin", "mkdocs-gitbook", "mkdocs-glightbox", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocstrings", "pymdown-extensions"]
 google = ["google-api-python-client", "google-auth-oauthlib", "gspread"]
 graphql = ["jinja2"]
+jupyter = ["rich"]
 oxi = ["oxrdflib", "pyoxigraph"]
 service = ["fastapi", "prometheus-client", "schedule", "uvicorn"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "f679cb3096a6c2a4358930ca42fb5088e5c41f3e79cc92e4cfb34fbb1ebeae04"
+content-hash = "2dd4dfae6bc2d3c4ec7023192d9c1c41cc454508b0ed4e5f348c829ce8782996"
