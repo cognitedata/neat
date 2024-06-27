@@ -33,7 +33,11 @@ INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occur
 
 
 class InferenceImporter(BaseImporter):
-    """Rules inference through analysis of knowledge graph provided in various formats.
+    """Infers rules from a triple store.
+
+    Rules inference through analysis of knowledge graph provided in various formats.
+    Use the factory methods to create an triples store from sources such as
+    RDF files, JSON files, YAML files, XML files, or directly from a graph store.
 
     Args:
         issue_list: Issue list to store issues

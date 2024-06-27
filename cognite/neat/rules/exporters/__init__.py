@@ -27,7 +27,7 @@ def _repr_html_() -> str:
                 "Description": globals()[name].__doc__.strip().split("\n")[0] if globals()[name].__doc__ else "Missing",
             }
             for name in __all__
-            if name not in ("BaseExporter", "CDFExporter")
+            if name not in ("BaseExporter", "CDFExporter", "GraphExporter")
         ]
     )._repr_html_()
 
