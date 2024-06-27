@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Any
 
-import pandas as pd
 import pytest
 from cognite.client import data_modeling as dm
 
@@ -20,19 +19,6 @@ from cognite.neat.rules.models.information._rules_input import (
     InformationMetadataInput,
     InformationPropertyInput,
 )
-from cognite.neat.utils.spreadsheet import read_individual_sheet
-from tests.config import DOC_RULES
-
-
-@pytest.fixture(scope="session")
-def david_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_RULES / "information-architect-david.xlsx"
-    excel_file = pd.ExcelFile(filepath)
-    return {
-        "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
-        "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
-    }
 
 
 def case_insensitive_value_types():
