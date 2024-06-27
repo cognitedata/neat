@@ -16,13 +16,20 @@ from cognite.neat.utils.utils import string_to_ideal_type
 
 
 class FilesExtractor(BaseExtractor):
+    """Extract data from Cognite Data Fusions files metadata into Neat.
+
+    Args:
+        files_metadata (Iterable[FileMetadata]): An iterable of files metadata.
+        namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+    """
+
     def __init__(
         self,
-        events: Iterable[FileMetadata],
+        files_metadata: Iterable[FileMetadata],
         namespace: Namespace | None = None,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
-        self.events = events
+        self.files_metadata = files_metadata
 
     @classmethod
     def from_dataset(
@@ -39,7 +46,7 @@ class FilesExtractor(BaseExtractor):
 
     def extract(self) -> Iterable[Triple]:
         """Extract files metadata as triples."""
-        for event in self.events:
+        for event in self.files_metadata:
             yield from self._file2triples(event, self.namespace)
 
     @classmethod
