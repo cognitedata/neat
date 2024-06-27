@@ -31,6 +31,22 @@ def get_cognite_client() -> CogniteClient:
             print("Found .env file in repository root. Loaded variables from .env file.")
             return client
     variables = _prompt_user()
+    if repo_root and _env_in_gitignore(repo_root):
+        local_import("rich", "jupyter")
+        from rich.prompt import Prompt
+
+        env_file = repo_root / ".env"
+        answer = Prompt.ask(
+            "Do you store the variables in a .env file in the repository root for easy reuse?", choices=["y", "n"]
+        )
+        if env_file.exists():
+            answer = Prompt.ask(f"{env_file} already exists. Overwrite?", choices=["y", "n"])
+        if answer == "y":
+            env_file.write_text(
+                "\n".join(f"{f.name}={getattr(variables, f.name)}" for f in fields(_EnvironmentVariables))
+            )
+            print("Created .env file in repository root.")
+
     return variables.get_client()
 
 
@@ -248,6 +264,15 @@ def _repo_root() -> Path | None:
         result = subprocess.run("git rev-parse --show-toplevel".split(), stdout=subprocess.PIPE)
         return Path(result.stdout.decode().strip())
     return None
+
+
+def _env_in_gitignore(repo_root: Path) -> bool:
+    ignore_file = repo_root / ".gitignore"
+    if not ignore_file.exists():
+        return False
+    else:
+        ignored = {line.strip() for line in ignore_file.read_text().splitlines()}
+        return ".env" in ignored or "*.env" in ignored
 
 
 if __name__ == "__main__":
