@@ -23,14 +23,15 @@ def get_cognite_client() -> CogniteClient:
         variables = _EnvironmentVariables.create_from_environ()
         return variables.get_client()
 
-    repo_root = _CLICommands.repo_root()
+    repo_root = _repo_root()
     if repo_root:
         with suppress(KeyError, FileNotFoundError, TypeError):
             variables = _from_dotenv(repo_root / ".env")
             client = variables.get_client()
             print("Found .env file in repository root. Loaded variables from .env file.")
             return client
-    return _prompt_user()
+    variables = _prompt_user()
+    return variables.get_client()
 
 
 @dataclass
@@ -43,8 +44,9 @@ class _EnvironmentVariables:
     TOKEN: str | None = None
 
     IDP_TENANT_ID: str | None = None
-    CDF_URL: str | None = None
     IDP_TOKEN_URL: str | None = None
+
+    CDF_URL: str | None = None
     IDP_AUDIENCE: str | None = None
     IDP_SCOPES: str | None = None
     IDP_AUTHORITY_URL: str | None = None
@@ -58,7 +60,7 @@ class _EnvironmentVariables:
         return self.CDF_URL or f"https://{self.CDF_CLUSTER}.cognitedata.com"
 
     @property
-    def token_url(self) -> str:
+    def idp_token_url(self) -> str:
         if self.IDP_TOKEN_URL:
             return self.IDP_TOKEN_URL
         if not self.IDP_TENANT_ID:
@@ -66,17 +68,17 @@ class _EnvironmentVariables:
         return f"https://login.microsoftonline.com/{self.IDP_TENANT_ID}/oauth2/v2.0/token"
 
     @property
-    def audience(self) -> str:
+    def idp_audience(self) -> str:
         return self.IDP_AUDIENCE or f"https://{self.CDF_CLUSTER}.cognitedata.com"
 
     @property
-    def scopes(self) -> list[str]:
+    def idp_scopes(self) -> list[str]:
         if self.IDP_SCOPES:
             return self.IDP_SCOPES.split()
         return [f"https://{self.CDF_CLUSTER}.cognitedata.com/.default"]
 
     @property
-    def authority_url(self) -> str:
+    def idp_authority_url(self) -> str:
         if self.IDP_AUTHORITY_URL:
             return self.IDP_AUTHORITY_URL
         if not self.IDP_TENANT_ID:
@@ -132,9 +134,9 @@ class _EnvironmentVariables:
         return OAuthClientCredentials(
             client_id=self.IDP_CLIENT_ID,
             client_secret=self.IDP_CLIENT_SECRET,
-            token_url=self.token_url,
-            audience=self.audience,
-            scopes=self.scopes,
+            token_url=self.idp_token_url,
+            audience=self.idp_audience,
+            scopes=self.idp_scopes,
         )
 
     def get_oauth_interactive(self) -> OAuthInteractive:
@@ -142,9 +144,9 @@ class _EnvironmentVariables:
             raise KeyError("IDP_CLIENT_ID must be set in the environment.", "IDP_CLIENT_ID")
         return OAuthInteractive(
             client_id=self.IDP_CLIENT_ID,
-            authority_url=self.authority_url,
+            authority_url=self.idp_authority_url,
             redirect_port=53_000,
-            scopes=self.scopes,
+            scopes=self.idp_scopes,
         )
 
     def get_token(self) -> Token:
@@ -173,9 +175,59 @@ def _from_dotenv(evn_file: Path) -> _EnvironmentVariables:
     return _EnvironmentVariables(**variables)  # type: ignore[arg-type]
 
 
-def _prompt_user() -> CogniteClient:
+def _prompt_user() -> _EnvironmentVariables:
     local_import("rich", "jupyter")
-    raise NotImplementedError("Prompting the user for credentials is not yet implemented.")
+    from rich.prompt import Prompt
+
+    try:
+        variables = _EnvironmentVariables.create_from_environ()
+        continue_ = Prompt.ask(
+            f"Use environment variables for CDF Cluster '{variables.CDF_CLUSTER}' "
+            f"and Project '{variables.CDF_PROJECT}'? [y/n]",
+            choices=["y", "n"],
+            default="y",
+        )
+        if continue_ == "n":
+            variables = _prompt_cluster_and_project()
+    except KeyError:
+        variables = _prompt_cluster_and_project()
+
+    login_flow = Prompt.ask("Login flow", choices=[f for f in _VALID_LOGIN_FLOWS if f != "infer"])
+    variables.LOGIN_FLOW = login_flow  # type: ignore[assignment]
+    if login_flow == "token":
+        token = Prompt.ask("Enter token")
+        variables.TOKEN = token
+        return variables
+
+    variables.IDP_CLIENT_ID = Prompt.ask("Enter IDP Client ID")
+    if login_flow == "client_credentials":
+        variables.IDP_CLIENT_SECRET = Prompt.ask("Enter IDP Client Secret")
+        tenant_id = Prompt.ask("Enter IDP_TENANT_ID (leave empty to enter IDP_TOKEN_URL instead)")
+        if tenant_id:
+            variables.IDP_TENANT_ID = tenant_id
+        else:
+            token_url = Prompt.ask("Enter IDP_TOKEN_URL")
+            variables.IDP_TOKEN_URL = token_url
+        optional = ["IDP_AUDIENCE", "IDP_SCOPES"]
+    else:
+        optional = ["IDP_TENANT_ID", "IDP_SCOPES"]
+
+    defaults = "\n - ".join(f"{name}: {getattr(variables, name.lower())}" for name in optional)
+    use_defaults = Prompt.ask(f"Use default values for the following variables?\n{defaults}", choices=["y", "n"])
+    if use_defaults:
+        return variables
+    for name in optional:
+        value = Prompt.ask(f"Enter {name}")
+        setattr(variables, name, value)
+    return variables
+
+
+def _prompt_cluster_and_project() -> _EnvironmentVariables:
+    from rich.prompt import Prompt
+
+    cluster = Prompt.ask("Enter CDF Cluster (example 'greenfield', 'bluefield', 'westeurope-1)")
+    project = Prompt.ask("Enter CDF Project")
+    return _EnvironmentVariables(cluster, project)
 
 
 def _is_notebook() -> bool:
@@ -191,15 +243,13 @@ def _is_notebook() -> bool:
         return False  # Probably standard Python interpreter
 
 
-class _CLICommands:
-    @classmethod
-    def repo_root(cls) -> Path | None:
-        with suppress(Exception):
-            result = subprocess.run("git rev-parse --show-toplevel".split(), stdout=subprocess.PIPE)
-            return Path(result.stdout.decode().strip())
-        return None
+def _repo_root() -> Path | None:
+    with suppress(Exception):
+        result = subprocess.run("git rev-parse --show-toplevel".split(), stdout=subprocess.PIPE)
+        return Path(result.stdout.decode().strip())
+    return None
 
 
 if __name__ == "__main__":
-    c = get_cognite_client()
+    c = _prompt_user().get_client()
     print(c.iam.token.inspect())
