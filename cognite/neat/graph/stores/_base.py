@@ -278,3 +278,6 @@ class NeatGraphStore:
                     description=transformer.description,
                 )
             )
+
+    def _repr_html(self) -> str:
+        return self.provenance._repr_html_()
