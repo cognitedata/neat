@@ -7,7 +7,7 @@ __all__ = ["BaseLoader", "CDFLoader", "DMSLoader"]
 def _repr_html_() -> str:
     import pandas as pd
 
-    return pd.DataFrame(  # type: ignore[operator]
+    table = pd.DataFrame(  # type: ignore[operator]
         [
             {
                 "Loader": name,
@@ -17,3 +17,7 @@ def _repr_html_() -> str:
             if name not in ("BaseLoader", "CDFLoader")
         ]
     )._repr_html_()
+
+    return (
+        "<strong>Loader</strong> A loader writes data from Neat's triple storage into a target system" f"<br />{table}"
+    )

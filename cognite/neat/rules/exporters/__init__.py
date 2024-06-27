@@ -20,7 +20,7 @@ __all__ = [
 def _repr_html_() -> str:
     import pandas as pd
 
-    return pd.DataFrame(  # type: ignore[operator]
+    table = pd.DataFrame(  # type: ignore[operator]
         [
             {
                 "Exporter": name,
@@ -30,3 +30,8 @@ def _repr_html_() -> str:
             if name not in ("BaseExporter", "CDFExporter")
         ]
     )._repr_html_()
+
+    return (
+        "<strong>Exporter</strong> An exporter converts Neat's representation of a data model called <em>Rules</em>"
+        f" into a schema/data model for a target format.<br />{table}"
+    )

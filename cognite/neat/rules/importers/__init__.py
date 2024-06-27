@@ -21,7 +21,7 @@ __all__ = [
 def _repr_html_() -> str:
     import pandas as pd
 
-    return pd.DataFrame(  # type: ignore[operator]
+    table = pd.DataFrame(  # type: ignore[operator]
         [
             {
                 "Importer": name,
@@ -31,3 +31,8 @@ def _repr_html_() -> str:
             if name != "BaseImporter"
         ]
     )._repr_html_()
+
+    return (
+        "<strong>Importer</strong> An importer reads data/schema/data model from a source"
+        f" and converts it into Neat's representation of a data model called <em>Rules</em>.<br />{table}"
+    )

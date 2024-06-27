@@ -42,7 +42,7 @@ TripleExtractors = (
 def _repr_html_() -> str:
     import pandas as pd
 
-    return pd.DataFrame(  # type: ignore[operator]
+    table = pd.DataFrame(  # type: ignore[operator]
         [
             {
                 "Extractor": name,
@@ -52,3 +52,8 @@ def _repr_html_() -> str:
             if name != "BaseExtractor"
         ]
     )._repr_html_()
+
+    return (
+        "<strong>Extractor</strong> An extractor is used to read data from "
+        f"a source into Neat's internal triple storage. <br />{table}"
+    )
