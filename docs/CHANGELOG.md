@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.85.0] - 25-06-24
+### Changed
+- [BREAKING] Interface for `Loaders`. Instead of `.export_to_cdf` now always return `UploadResultList` and
+  the `.load_into_cdf_iterable` returns an iterable of `UploadResult`. It is no longer possible to return
+  just the count. This is to make the interface more notebook friendly and easier to work with.
 
 ## [0.84.1] - 26-06-24
 ### Added

@@ -156,10 +156,10 @@ class TestDMSExporters:
         uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=True)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].total == len(rules.containers)
-        assert uploaded_by_name["views"].total == len(rules.views)
-        assert uploaded_by_name["data_models"].total == 1
-        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["containers"].success == len(rules.containers)
+        assert uploaded_by_name["views"].success == len(rules.views)
+        assert uploaded_by_name["data_models"].success == 1
+        assert uploaded_by_name["spaces"].success == 1
 
     def test_export_alice_to_cdf(self, cognite_client: CogniteClient, alice_rules: DMSRules):
         rules: DMSRules = alice_rules
@@ -169,16 +169,16 @@ class TestDMSExporters:
         uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].total == len(rules.containers)
+        assert uploaded_by_name["containers"].success == len(rules.containers)
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].total == len(rules.views)
+        assert uploaded_by_name["views"].success == len(rules.views)
         assert uploaded_by_name["views"].failed == 0
 
-        assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].success == 1
         assert uploaded_by_name["data_models"].failed == 0
 
-        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].success == 1
         assert uploaded_by_name["spaces"].failed == 0
 
     def test_export_pipeline_populate_and_retrieve_data(
@@ -257,16 +257,16 @@ class TestDMSExporters:
         uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].total == len(rules.containers)
+        assert uploaded_by_name["containers"].success == len(rules.containers)
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].total == len(rules.views)
+        assert uploaded_by_name["views"].success == len(rules.views)
         assert uploaded_by_name["views"].failed == 0
 
-        assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].success == 1
         assert uploaded_by_name["data_models"].failed == 0
 
-        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].success == 1
         assert uploaded_by_name["spaces"].failed == 0
 
     def test_export_svein_harald_dms_to_cdf(
@@ -289,16 +289,16 @@ class TestDMSExporters:
         uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].total == len(rules.containers)
+        assert uploaded_by_name["containers"].success == len(rules.containers)
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].total == len(schema.views)
+        assert uploaded_by_name["views"].success == len(schema.views)
         assert uploaded_by_name["views"].failed == 0
 
-        assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].success == 1
         assert uploaded_by_name["data_models"].failed == 0
 
-        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].success == 1
         assert uploaded_by_name["spaces"].failed == 0
 
     def test_export_olav_updated_dms_to_cdf(
@@ -352,14 +352,14 @@ class TestDMSExporters:
         uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].total == len(schema.containers)
+        assert uploaded_by_name["containers"].success == len(schema.containers)
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].total == len(schema.views)
+        assert uploaded_by_name["views"].success == len(schema.views)
         assert uploaded_by_name["views"].failed == 0
 
-        assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].success == 1
         assert uploaded_by_name["data_models"].failed == 0
 
-        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].success == 1
         assert uploaded_by_name["spaces"].failed == 0
