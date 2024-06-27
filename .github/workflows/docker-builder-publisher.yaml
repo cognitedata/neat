@@ -30,14 +30,27 @@ jobs:
         run: |
           poetry export -f requirements.txt --output requirements.txt --extras "all"
 
+      - id: version
+        name: Build Version
+        run: echo "version=$(date -u '+%Y%m%dT%H%M%SZ')"  >> $GITHUB_ENV
+
+      - name: Azure login
+        uses: azure/login@v1
+        with:
+          client-id: 9c8d1e31-54b5-4156-b1d0-408135e2b55b
+          tenant-id: a9ae5b54-3600-4917-a9dc-3020723360b3
+          subscription-id: fd108646-dc13-4d9a-9b8c-d9dbde664887
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Build and push
         uses: docker/build-push-action@v4
+        env:
+          VERSION: ${{ env.version }}
         with:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64/v8
           push: true
-          tags: cognite/neat:latest, cognite/neat:${{ github.ref_name }}
+          tags: cognite/neat:latest, cognite/neat:${{ github.ref_name }}, scsproduction.azurecr.io/neat:${{ env.version }}
