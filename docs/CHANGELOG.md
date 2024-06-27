@@ -16,7 +16,7 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
-## [0.83.1] - 26-06-24
+## [0.84.1] - 26-06-24
 ### Added
 - Conversion between information, asset and dms rules
 - Added serializer for transformations (i.e. RDFPATH)
