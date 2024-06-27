@@ -88,7 +88,13 @@ class _EnvironmentVariables:
     @property
     def idp_scopes(self) -> list[str]:
         if self.IDP_SCOPES:
-            return self.IDP_SCOPES.split()
+            output = self.IDP_SCOPES.split()
+            if isinstance(output, list):
+                return output
+            elif isinstance(output, str):
+                return [output]
+            else:
+                raise ValueError("IDP_SCOPES must be a list or a string.")
         return [f"https://{self.CDF_CLUSTER}.cognitedata.com/.default"]
 
     @property
