@@ -17,7 +17,7 @@ class NeatObject:
         """Return a dictionary representation of the object."""
         raise NotImplementedError()
 
-    def _repr_html(self) -> str:
+    def _repr_html_(self) -> str:
         return pd.Series(self.dump(aggregate=True)).to_frame(name="value")._repr_html_()
 
 
@@ -30,7 +30,7 @@ class FrozenNeatObject:
         """Return a dictionary representation of the object."""
         raise NotImplementedError()
 
-    def _repr_html(self) -> str:
+    def _repr_html_(self) -> str:
         return pd.Series(self.dump(aggregate=True)).to_frame(name="value")._repr_html_()
 
 
