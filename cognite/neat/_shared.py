@@ -17,8 +17,24 @@ class NeatObject:
         """Return a dictionary representation of the object."""
         raise NotImplementedError()
 
+    def _repr_html_(self) -> str:
+        return pd.Series(self.dump(aggregate=True)).to_frame(name="value")._repr_html_()
 
-T_NeatObject = TypeVar("T_NeatObject", bound=NeatObject)
+
+@dataclass(frozen=True)
+class FrozenNeatObject:
+    """A frozen neat object can be dumped to a dictionary."""
+
+    @abstractmethod
+    def dump(self, aggregate: bool = True) -> dict[str, Any]:
+        """Return a dictionary representation of the object."""
+        raise NotImplementedError()
+
+    def _repr_html_(self) -> str:
+        return pd.Series(self.dump(aggregate=True)).to_frame(name="value")._repr_html_()
+
+
+T_NeatObject = TypeVar("T_NeatObject", bound=NeatObject | FrozenNeatObject)
 
 
 class NeatList(list, Sequence[T_NeatObject]):

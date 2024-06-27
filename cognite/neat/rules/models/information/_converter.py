@@ -16,11 +16,15 @@ from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
+    AssetEntity,
+    AssetFields,
     ClassEntity,
     ContainerEntity,
     DMSUnknownEntity,
+    EntityTypes,
     MultiValueTypeInfo,
     ReferenceEntity,
+    RelationshipEntity,
     UnknownEntity,
     ViewEntity,
     ViewPropertyEntity,
@@ -29,6 +33,7 @@ from cognite.neat.rules.models.entities import (
 from ._rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
 
 if TYPE_CHECKING:
+    from cognite.neat.rules.models.asset._rules import AssetRules
     from cognite.neat.rules.models.dms._rules import DMSMetadata, DMSProperty, DMSRules
 
 
@@ -51,6 +56,28 @@ class _InformationRulesConverter:
 
     def as_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
+
+    def as_asset_architect_rules(self) -> "AssetRules":
+        from cognite.neat.rules.models.asset._rules import AssetClass, AssetMetadata, AssetProperty, AssetRules
+
+        classes: SheetList[AssetClass] = SheetList[AssetClass](
+            data=[AssetClass(**class_.model_dump()) for class_ in self.rules.classes]
+        )
+        properties: SheetList[AssetProperty] = SheetList[AssetProperty]()
+        for prop_ in self.rules.properties:
+            if prop_.type_ == EntityTypes.data_property:
+                properties.append(
+                    AssetProperty(**prop_.model_dump(), implementation=[AssetEntity(property=AssetFields.metadata)])
+                )
+            elif prop_.type_ == EntityTypes.object_property:
+                properties.append(AssetProperty(**prop_.model_dump(), implementation=[RelationshipEntity()]))
+
+        return AssetRules(
+            metadata=AssetMetadata(**self.rules.metadata.model_dump()),
+            properties=properties,
+            classes=classes,
+            prefixes=self.rules.prefixes,
+        )
 
     def as_dms_architect_rules(self) -> "DMSRules":
         from cognite.neat.rules.models.dms._rules import (

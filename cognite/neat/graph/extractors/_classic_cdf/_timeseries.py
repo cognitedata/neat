@@ -15,6 +15,13 @@ from cognite.neat.utils.utils import string_to_ideal_type
 
 
 class TimeSeriesExtractor(BaseExtractor):
+    """Extract data from Cognite Data Fusions TimeSeries into Neat.
+
+    Args:
+        timeseries (Iterable[TimeSeries]): An iterable of timeseries.
+        namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+    """
+
     def __init__(
         self,
         timeseries: Iterable[TimeSeries],

@@ -39,7 +39,7 @@ Component: TypeAlias = Literal["all", "spaces", "data_models", "views", "contain
 
 
 class DMSExporter(CDFExporter[DMSSchema]):
-    """Class for exporting rules object to CDF Data Model Storage (DMS).
+    """Export rules to Cognite Data Fusion's Data Model Storage (DMS) service.
 
     Args:
         export_components (frozenset[Literal["all", "spaces", "data_models", "views", "containers"]], optional):

@@ -29,20 +29,31 @@ from ._base import CDFLoader
 
 
 class DMSLoader(CDFLoader[dm.InstanceApply]):
+    """Load data from Cognite Data Fusions Data Modeling Service (DMS) into Neat.
+
+    Args:
+        graph_store (NeatGraphStore): The graph store to load the data into.
+        data_model (dm.DataModel[dm.View] | None): The data model to load.
+        instance_space (str): The instance space to load the data into.
+        class_by_view_id (dict[ViewId, str] | None): A mapping from view id to class name. Defaults to None.
+        creat_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
+        tracker (type[Tracker] | None): The tracker to use. Defaults to None.
+    """
+
     def __init__(
         self,
         graph_store: NeatGraphStore,
         data_model: dm.DataModel[dm.View] | None,
         instance_space: str,
         class_by_view_id: dict[ViewId, str] | None = None,
-        creat_issues: Sequence[NeatIssue] | None = None,
+        create_issues: Sequence[NeatIssue] | None = None,
         tracker: type[Tracker] | None = None,
     ):
         super().__init__(graph_store)
         self.data_model = data_model
         self.instance_space = instance_space
         self.class_by_view_id = class_by_view_id or {}
-        self._issues = NeatIssueList[NeatIssue](creat_issues or [])
+        self._issues = NeatIssueList[NeatIssue](create_issues or [])
         self._tracker: type[Tracker] = tracker or LogTracker
 
     @classmethod

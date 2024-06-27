@@ -15,6 +15,13 @@ from cognite.neat.utils.utils import create_sha256_hash
 
 
 class RelationshipsExtractor(BaseExtractor):
+    """Extract data from Cognite Data Fusions Relationships into Neat.
+
+    Args:
+        relationships (Iterable[Asset]): An iterable of relationships.
+        namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+    """
+
     def __init__(
         self,
         relationships: Iterable[Relationship],

@@ -21,6 +21,19 @@ Changes are grouped as follows:
   the `.load_into_cdf_iterable` returns an iterable of `UploadResult`. It is no longer possible to return
   just the count. This is to make the interface more notebook friendly and easier to work with.
 
+## [0.84.1] - 26-06-24
+### Added
+- Conversion between information, asset and dms rules
+- Added serializer for transformations (i.e. RDFPATH)
+- Placeholder for AssetLoader
+
+
+## [0.84.1] - 26-06-24
+### Added
+- Conversion between information, asset and dms rules
+- Added serializer for transformations (i.e. RDFPATH)
+- Placeholder for AssetLoader
+
 ## [0.84.0] - 25-06-24
 ### Changed
 - [BREAKING] Interface for `Exporters`. Instead of `.export_to_cdf` returning an iterable, it now returns a list,
