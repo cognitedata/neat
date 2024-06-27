@@ -10,7 +10,7 @@ import React from "react"
 import { useEffect, useState } from "react"
 import { WorkflowDefinition } from "types/WorkflowTypes"
 import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined';
-import { InputLabel, MenuItem, Select, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material"
+import { Alert, InputLabel, MenuItem, Select, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material"
 import { getNeatApiRootUrl } from "components/Utils"
 
 
@@ -18,23 +18,36 @@ export default function AddNewRulesaDialog(props: any) {
     const neatApiRootUrl = getNeatApiRootUrl();
     const [dialogOpen, setDialogOpen] = useState(false);
     const [rules, setRules] = useState<any>({
-        "role": "",
-        "base_data_model": "",
+        "role": "information architect",
+        "base_data_model": "scratch",
         "name": "",
         "description": "",
         "rule_file": ""
     });
+    const [error, setError] = useState("");
     const handleDialogCreate = () => {
         // send new rules to the server
+        setError("");
         fetch(neatApiRootUrl + '/api/rules/new', { method: 'POST', body: JSON.stringify(rules), headers: { 'Content-Type': 'application/json' } })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(response.statusText);
+                }
+                return response.json()
+            })
             .then(data => {
+                if (data.error_text) {
+                    setError(data.error_text);
+                    return;
+                }
                 console.log('Success:', data);
                 props.onCreated(data);
+                setDialogOpen(false);
             }).catch((error) => {
                 console.error('Error:', error);
+                setError(error);
             })
-        setDialogOpen(false);
+
     };
     const handleDialogCancel = () => {
         setDialogOpen(false);
@@ -70,8 +83,9 @@ export default function AddNewRulesaDialog(props: any) {
                         exclusive
                         onChange={(event: React.SyntheticEvent, newValue: string) => { handleStepConfigChange("role", newValue) }}
                         aria-label="Platform"
+
                     >
-                        <ToggleButton value="domain expert">
+                        <ToggleButton value="domain expert" >
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <img width="70" src="./img/sme-icon.svg" alt="Domain expert" />
                                 <span>Domain Expert</span>
@@ -102,13 +116,14 @@ export default function AddNewRulesaDialog(props: any) {
                             onChange={(event) => { handleStepConfigChange("base_data_model", event.target.value) }}
                         >
                             <MenuItem value="scratch">Start from scratch</MenuItem>
-                            <MenuItem value="cdf_core">CDF Core model</MenuItem>
-                            <MenuItem value="power_grid">Electrical grid model</MenuItem>
                         </Select>
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Data model name" size='small' variant="outlined" value={rules?.name} onChange={(event) => { handleStepConfigChange("name", event.target.value) }} />
-                        <TextField sx={{ marginTop: 1 }} fullWidth label="Description" size='small' variant="outlined" value={rules?.description} onChange={(event) => { handleStepConfigChange("description", event.target.value) }} />
-                        <TextField sx={{ marginTop: 1 }} fullWidth label="File name" size='small' variant="outlined" value={rules?.rule_file} onChange={(event) => { handleStepConfigChange("rule_file", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Description (optional)" size='small' variant="outlined" value={rules?.description} onChange={(event) => { handleStepConfigChange("description", event.target.value) }} />
+                        <TextField sx={{ marginTop: 1 }} fullWidth label="Custom file name (optional)" size='small' variant="outlined" value={rules?.rule_file} onChange={(event) => { handleStepConfigChange("rule_file", event.target.value) }} />
                     </FormControl>
+                    {error != "" && (<Alert severity="error" sx={{ marginTop: 1 }}>
+                        {error}
+                    </Alert>)}
                 </DialogContent>
                 <DialogActions>
                     <Button variant="outlined" size="small" onClick={handleDialogCreate}>Create</Button>

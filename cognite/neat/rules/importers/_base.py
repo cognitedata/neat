@@ -10,8 +10,13 @@ from pydantic import ValidationError
 from rdflib import Namespace
 
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.issues.base import IssueList, NeatValidationError, ValidationWarning
+from cognite.neat.rules.issues.base import (
+    IssueList,
+    NeatValidationError,
+    ValidationWarning,
+)
 from cognite.neat.rules.models import AssetRules, DMSRules, InformationRules, RoleTypes
+from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.utils.auxiliary import class_html_doc
 
 
@@ -21,7 +26,9 @@ class BaseImporter(ABC):
     """
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
+    def to_rules(
+        self, errors: Literal["raise"], role: RoleTypes | None = None
+    ) -> Rules: ...
 
     @overload
     def to_rules(
@@ -30,7 +37,9 @@ class BaseImporter(ABC):
 
     @abstractmethod
     def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+        self,
+        errors: Literal["raise", "continue"] = "continue",
+        role: RoleTypes | None = None,
     ) -> tuple[Rules | None, IssueList] | Rules:
         """
         Creates `Rules` object from the data for target role.
@@ -49,12 +58,22 @@ class BaseImporter(ABC):
 
         if rules.metadata.role is role or role is None:
             output = rules
-        elif isinstance(rules, DMSRules) or isinstance(rules, AssetRules) and role is RoleTypes.information_architect:
+        elif (
+            isinstance(rules, DMSRules)
+            or isinstance(rules, AssetRules)
+            and role is RoleTypes.information_architect
+        ):
             output = rules.as_information_architect_rules()
-        elif isinstance(rules, InformationRules) or isinstance(rules, AssetRules) and role is RoleTypes.dms_architect:
+        elif (
+            isinstance(rules, InformationRules)
+            or isinstance(rules, AssetRules)
+            and role is RoleTypes.dms_architect
+        ):
             output = rules.as_dms_architect_rules()
         else:
-            raise NotImplementedError(f"Role {role} is not supported for {type(rules).__name__} rules")
+            raise NotImplementedError(
+                f"Role {role} is not supported for {type(rules).__name__} rules"
+            )
 
         if errors == "raise":
             return output
@@ -62,7 +81,9 @@ class BaseImporter(ABC):
             return output, issues
 
     @classmethod
-    def _return_or_raise(cls, issue_list: IssueList, errors: Literal["raise", "continue"]) -> tuple[None, IssueList]:
+    def _return_or_raise(
+        cls, issue_list: IssueList, errors: Literal["raise", "continue"]
+    ) -> tuple[None, IssueList]:
         if errors == "raise":
             raise issue_list.as_errors()
         return None, issue_list
@@ -117,7 +138,9 @@ def _handle_issues(
         try:
             yield future_result
         except ValidationError as e:
-            issues.extend(error_cls.from_pydantic_errors(e.errors(), **(error_args or {})))
+            issues.extend(
+                error_cls.from_pydantic_errors(e.errors(), **(error_args or {}))
+            )
             future_result._result = "failure"
         else:
             future_result._result = "success"

@@ -17,13 +17,28 @@ from cognite.neat.app.api.data_classes.rest import (
 from cognite.neat.legacy.rules import exporters as legacy_exporters
 from cognite.neat.legacy.rules import importers as legacy_importers
 from cognite.neat.legacy.rules.models._base import EntityTypes
-from cognite.neat.legacy.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
+from cognite.neat.legacy.rules.models.rules import (
+    Class,
+    Classes,
+    Metadata,
+    Properties,
+    Property,
+    Rules,
+)
 from cognite.neat.rules import exporters, importers
-from cognite.neat.rules.models import RoleTypes
-from cognite.neat.rules.models.domain import DomainClass, DomainMetadata, DomainProperty
+from cognite.neat.rules.models import RoleTypes, DataModelType
+from cognite.neat.rules.models.domain import (
+    DomainClass,
+    DomainMetadata,
+    DomainProperty,
+    DomainRules,
+)
 from cognite.neat.workflows.steps.data_contracts import RulesData
 from cognite.neat.workflows.steps.lib.current.rules_exporter import RulesToExcel
-from cognite.neat.workflows.steps.lib.current.rules_importer import ExcelToRules
+from cognite.neat.workflows.steps.lib.current.rules_importer import (
+    DMSToRules,
+    ExcelToRules,
+)
 from cognite.neat.workflows.steps.lib.legacy.rules_importer import ImportExcelToRules
 from cognite.neat.workflows.utils import get_file_hash
 from cognite.neat.rules.models.information import (
@@ -32,7 +47,11 @@ from cognite.neat.rules.models.information import (
     InformationClass,
     InformationRules,
 )
-from cognite.neat.rules.models.dms import DMSMetadata, DMSProperty, DMSView, DMSContainer
+from cognite.neat.rules.models.dms import (
+    DMSMetadata,
+    DMSProperty,
+    DMSRules,
+)
 
 from cognite.neat.rules.models import SchemaCompleteness
 
@@ -70,7 +89,10 @@ def get_rules(
                     file_name = step.configs["file_name"]
                     version = step.configs["version"]
                     break
-                if step.method == RulesToExcel.__name__ or step.method == ExcelToRules.__name__:
+                if (
+                    step.method == RulesToExcel.__name__
+                    or step.method == ExcelToRules.__name__
+                ):
                     rules_schema_version = "v2"
                     as_role = step.configs.get("as_role", "")
                     file_name = step.configs.get("File name", "")
@@ -110,7 +132,10 @@ def get_rules(
         # Trying to load rules V1
         if rules_schema_version == "" or rules_schema_version == "v1":
             rules = cast(
-                Rules, legacy_importers.ExcelImporter(path).to_rules(return_report=False, skip_validation=False)
+                Rules,
+                legacy_importers.ExcelImporter(path).to_rules(
+                    return_report=False, skip_validation=False
+                ),
             )
             properties = [
                 {
@@ -139,7 +164,11 @@ def get_rules(
                 for value in rules.classes.values()
             ]
             rules_schema_version = "v1"
-            remaped_rules = {"properties": properties, "metadata": rules.metadata.model_dump(), "classes": classes}
+            remaped_rules = {
+                "properties": properties,
+                "metadata": rules.metadata.model_dump(),
+                "classes": classes,
+            }
     except Exception as e:
         error_text = str(e)
 
@@ -152,7 +181,9 @@ def get_rules(
             if rules_v2:
                 remaped_rules = rules_v2.dump(mode="json")
             else:
-                logging.error(f"Error while loading rules from {path}, issues: {issues}")
+                logging.error(
+                    f"Error while loading rules from {path}, issues: {issues}"
+                )
                 error_text = str(issues)
         except Exception as e:
             logging.error(f"Error while loading rules from {path}, error: {e}")
@@ -174,7 +205,10 @@ def get_original_rules_from_file(file_name: str):
     # """Endpoint for retrieving raw transformation from file"""
     path = Path(NEAT_APP.config.rules_store_path) / file_name
     rules = cast(
-        Rules, legacy_importers.ExcelImporter(filepath=path).to_rules(return_report=False, skip_validation=False)
+        Rules,
+        legacy_importers.ExcelImporter(filepath=path).to_rules(
+            return_report=False, skip_validation=False
+        ),
     )
     return Response(content=rules.model_dump_json(), media_type="application/json")
 
@@ -190,7 +224,9 @@ def get_original_rules_from_workflow(workflow_name: str):
     if type(rules_data) != RulesData:
         return {"error": "RulesData is not found in workflow context"}
 
-    return Response(content=rules_data.rules.model_dump_json(), media_type="application/json")
+    return Response(
+        content=rules_data.rules.model_dump_json(), media_type="application/json"
+    )
 
 
 @router.post("/api/rules/model_and_transformations")
@@ -212,7 +248,13 @@ def upsert_rules(request: TransformationRulesUpdateRequest):
     for prefix, val in rules["prefixes"].items():
         prefixes[prefix] = Namespace(val)
 
-    rules = Rules(metadata=metadata, classes=classes, properties=properties, prefixes=prefixes, instances=[])
+    rules = Rules(
+        metadata=metadata,
+        classes=classes,
+        properties=properties,
+        prefixes=prefixes,
+        instances=[],
+    )
     if request.output_format == "excel":
         rules_file = Path(request.file_name)
         if str(rules_file.parent) == ".":
@@ -244,39 +286,49 @@ def create_new_rule(request: NewRuleV2Request):
         "cdf_core": "cdf-core-spec.xlsx",
     }
     name = request.name.lower().replace(" ", "_")
-    if role == RoleTypes.information_architect:
-        metadata = InformationMetadata(
-            schema=SchemaCompleteness.complete,
-            version="1.0",
-            title=request.name,
-            prefix=name,
-            description=description,
-            created=time.time(),
-            updated=time.time(),
-            creator="Cognite",
-            namespace="http://purl.org/cognite/neat#",
-            license="",
-        )
-    elif role == RoleTypes.domain_expert:
-        metadata = DomainMetadata(
-            creator="Cognite",
-        )
-    elif role == RoleTypes.dms_architect:
-        metadata = DMSMetadata(
-            schema=SchemaCompleteness.complete,
-            version="1.0",
-            name=name,
-            space=name,
-            description=description,
-            created=time.time(),
-            updated=time.time(),
-            creator="Cognite",
-        )
-    else:
-        return {"error_text": f"Role {role} is not supported"}
+    try:
+        if role == RoleTypes.information_architect:
+            metadata = InformationMetadata(
+                schema=SchemaCompleteness.partial,
+                dataModelType=DataModelType.solution,
+                version="1.0",
+                title=request.name,
+                prefix=name,
+                description=description,
+                created=time.time(),
+                updated=time.time(),
+                creator="Cognite",
+                namespace="http://purl.org/cognite/neat#",
+                license="",
+            )
+            rules = InformationRules(metadata=metadata, classes=[], properties=[])
+        elif role == RoleTypes.domain_expert:
+            metadata = DomainMetadata(
+                creator="Cognite",
+            )
+            rules = DomainRules(metadata=metadata, classes=[], properties=[])
+        elif role == RoleTypes.dms_architect:
+            metadata = DMSMetadata(
+                schema=SchemaCompleteness.complete,
+                dataModelType=DataModelType.solution,
+                extensionId=name,
+                version="1.0",
+                externalId="model-external-id",
+                name=name,
+                space=name,
+                description=description,
+                created=time.time(),
+                updated=time.time(),
+                creator="Cognite",
+            )
+            rules = DMSRules(metadata=metadata, views=[], properties=[])
+        else:
+            return {"error_text": f"Role {role} is not supported"}
 
-    rules = InformationRules(metadata=metadata, classes=[], properties=[])
-    exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
+        exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
+    except Exception as e:
+        return {"error_text": str(e)}
+
     return {
         "rules": rules.dump(mode="json"),
         "error_text": "",
@@ -289,7 +341,9 @@ def create_new_rule(request: NewRuleV2Request):
 
 @router.post("/api/rules/metadata/upsert")
 def upsert_rule_component(request: RuleV2MetadataUpsertRequest):
-    logging.info(f"Upserting metadata of type {request.rule_component.__class__.__name__}")
+    logging.info(
+        f"Upserting metadata of type {request.rule_component.__class__.__name__}"
+    )
     role = RoleTypes(request.role)
     rules_file = Path(request.rule_file)
     if str(rules_file.parent) == ".":
@@ -310,14 +364,18 @@ def upsert_rule_component(request: RuleV2MetadataUpsertRequest):
         request_metadata = cast(DMSMetadata, request.rule_component)
         rules.metadata = request_metadata
     else:
-        return {"error_text": f"Role {role} is not allowed to update metadata of the rule object"}
+        return {
+            "error_text": f"Role {role} is not allowed to update metadata of the rule object"
+        }
     exporters.ExcelExporter().export_to_file(rules=rules, filepath=path)
     return {"rules": rules.dump(mode="json"), "error_text": issues}
 
 
 @router.post("/api/rules/class/upsert")
 def upsert_rule_class(request: RulesV2ClassUpsertRequest):
-    logging.info(f"Upserting rule class of type {request.rule_component.__class__.__name__}")
+    logging.info(
+        f"Upserting rule class of type {request.rule_component.__class__.__name__}"
+    )
     role = RoleTypes(request.role)
     rules_file = Path(request.rule_file)
     if str(rules_file.parent) == ".":
@@ -349,7 +407,9 @@ def upsert_rule_class(request: RulesV2ClassUpsertRequest):
 
 @router.post("/api/rules/property/upsert")
 def upsert_rule_property(request: RuleV2PropertyUpsertRequest):
-    logging.info(f"Upserting rule property of type {request.rule_component.__class__.__name__}")
+    logging.info(
+        f"Upserting rule property of type {request.rule_component.__class__.__name__}"
+    )
     role = RoleTypes(request.role)
     rules_file = Path(request.rule_file)
     if str(rules_file.parent) == ".":

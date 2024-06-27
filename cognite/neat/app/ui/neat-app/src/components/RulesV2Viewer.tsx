@@ -14,7 +14,7 @@ import Paper from '@mui/material/Paper';
 import { getNeatApiRootUrl, getSelectedWorkflowName } from 'components/Utils';
 import { Alert, AlertTitle, Button, Tab, Tabs, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { DMSArchitectContainers, DMSArchitectPropsRow, DMSArchitectRulesViewer, DMSArchitectViews, DmsMetadataTable } from './rules/DmsViewer';
-import { DomainExpertRulesViewer, DomainMetadataTable } from './rules/DomainViewer';
+import { DomainExpertRulesViewer } from './rules/DomainViewer';
 import { InformationArchitectPropsRow, InformationArchitectRulesViewer, InformationArchitectTransformationRow, InformationMetadataTable } from './rules/InformationViewer';
 
 
@@ -33,6 +33,7 @@ export default function RulesV2Viewer(props: any) {
   const [role, setRole] = useState("");
   const [alertMsg, setAlertMsg] = useState("");
   const [modelType, setModelType] = useState("current");
+  const [originalRole, setOriginalRole] = useState("");
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -44,15 +45,23 @@ export default function RulesV2Viewer(props: any) {
       return;
     }
     if (role == "information architect" && newValue == "domain expert") {
-      setAlertMsg("You cannot change role from Information Architect to Domain Expert");
+      setAlertMsg("Automatic convertion from Information Architect to Domain Expert is not supported yet ");
+      return
+    }
+
+    if (role == "domain expert" && (newValue == "information architect" || newValue == "DMS Architect")) {
+      setAlertMsg("Automatic convertion  from Domain expert to Information Architect or DMS Architect is not supported yet");
       return
     }
 
     if (role == "DMS Architect" && newValue == "domain expert") {
-      setAlertMsg("You cannot change role from DMS Architect to Domain Expert or Information Architect");
+      setAlertMsg("Automatic convertion  from DMS Architect to Domain Expert or Information Architect is not supported yet");
       return
     }
     setSelectedTab(0);
+    if (newValue == "asset architect") {
+      newValue = "information architect";
+    }
     setRole(newValue);
     props.onRoleChange(newValue);
   }
@@ -70,14 +79,22 @@ export default function RulesV2Viewer(props: any) {
   }
 
   useEffect(() => {
-    setRole(props.rules.metadata.role)
+    if (props.rules.metadata.role == "asset architect") {
+      setRole("information architect")
+    } else {
+      setRole(props.rules.metadata.role)
+    }
     setRules(props.rules)
   }, [props.rules]);
+  useEffect(() => {
+    setOriginalRole(props.rules.metadata.role)
+  }, []);
+
   return (
     <Box>
       <ToggleButtonGroup
         color="primary"
-        value={rules.metadata.role}
+        value={role}
         exclusive
         onChange={handleRoleChange}
         aria-label="Platform"
@@ -85,19 +102,19 @@ export default function RulesV2Viewer(props: any) {
         <ToggleButton value="domain expert">
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <img width="70" src="./img/sme-icon.svg" alt="Domain expert" />
-            <span>Domain Expert</span>
+            <span>Domain Expert {originalRole != role && role == "domain expert" && ("(PREVIEW)")}</span>
           </div>
         </ToggleButton>
         <ToggleButton value="information architect">
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <img width="70" src="./img/architect-icon.svg" alt="Information Architect" />
-            <span>Information Architect</span>
+            <span>Information Architect  {originalRole != role && role == "information architect" && ("(PREVIEW)")}</span>
           </div>
         </ToggleButton>
         <ToggleButton value="DMS Architect">
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <img width="70" src="./img/developer-icon.svg" alt="DMS Expert" />
-            <span>CDF DM Expert</span>
+            <span>CDF DM Expert {originalRole != role && role == "DMS Architect" && ("(PREVIEW)")}</span>
           </div>
         </ToggleButton>
       </ToggleButtonGroup>
@@ -124,7 +141,7 @@ export default function RulesV2Viewer(props: any) {
         {alertMsg}
       </Alert>)}
       {role == "domain expert" && (
-        <DomainExpertRulesViewer rules={rules} />
+        <DomainExpertRulesViewer rules={rules} fileName={props.fileName} />
       )}
       {role == "information architect" && (
         <InformationArchitectRulesViewer rules={rules} fileName={props.fileName} modelType={modelType} />

@@ -70,7 +70,7 @@ export function DMSArchitectRulesViewer(props: any) {
                             ))}
                         </TableBody>
                     </Table>
-                    <Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={() => setEditorOpen(true)}>Add</Button>
+                    {/* <Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={() => setEditorOpen(true)}>Add</Button> */}
                 </TableContainer>
             )}
             {selectedTab == 2 && (
@@ -80,7 +80,7 @@ export function DMSArchitectRulesViewer(props: any) {
             {selectedTab == 3 && (
                 <DMSArchitectContainers row={rules.containers} />
             )}
-            <Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={() => setEditorOpen(true)}>Publish model to CDF</Button>
+            {/* <Button variant="outlined" size="small" color="success" style={{ margin: 5 }} onClick={() => setEditorOpen(true)}>Publish model to CDF</Button> */}
         </React.Fragment>
     );
 }
@@ -225,7 +225,7 @@ export function DMSArchitectPropsRow(props: { row: any, properties: any, views: 
                                         <TableCell><b>Container property</b></TableCell>
                                         <TableCell><b>Index</b></TableCell>
                                         <TableCell><b>Constraint</b></TableCell>
-                                        <TableCell><b>Actions</b></TableCell>
+                                        {/* <TableCell><b>Actions</b></TableCell> */}
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -259,7 +259,7 @@ export function DMSArchitectPropsRow(props: { row: any, properties: any, views: 
                                             <TableCell>{pr.container_property}</TableCell>
                                             <TableCell>{pr.index}</TableCell>
                                             <TableCell>{pr.constraint}</TableCell>
-                                            <TableCell><Button onClick={() => { props.onEditClick(row, "class_edit"); }}>Edit</Button></TableCell>
+                                            {/* <TableCell><Button onClick={() => { props.onEditClick(row, "class_edit"); }}>Edit</Button></TableCell> */}
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -341,7 +341,7 @@ export function DMSArchitectViews(props: { row: any }) {
                             <TableCell><b>Reference</b></TableCell>
                             <TableCell><b>Filter</b></TableCell>
                             <TableCell><b>In model</b></TableCell>
-                            <TableCell><b>Actions</b></TableCell>
+                            {/* <TableCell><b>Actions</b></TableCell> */}
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -355,7 +355,7 @@ export function DMSArchitectViews(props: { row: any }) {
                                 <TableCell>{pr.reference}</TableCell>
                                 <TableCell>{pr.filter_}</TableCell>
                                 <TableCell>{pr.in_model}</TableCell>
-                                <TableCell><Button onClick={() => { }}>Edit</Button></TableCell>
+                                {/* <TableCell><Button onClick={() => { }}>Edit</Button></TableCell> */}
                             </TableRow>
                         ))}
                     </TableBody>
