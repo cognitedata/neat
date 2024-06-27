@@ -16,3 +16,18 @@ __all__ = [
     "YAMLImporter",
     "InferenceImporter",
 ]
+
+
+def _repr_html_() -> str:
+    import pandas as pd
+
+    return pd.DataFrame(  # type: ignore[operator]
+        [
+            {
+                "Importer": name,
+                "Description": globals()[name].__doc__.strip().split("\n")[0] if globals()[name].__doc__ else "Missing",
+            }
+            for name in __all__
+            if name != "BaseImporter"
+        ]
+    )._repr_html_()

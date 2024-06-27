@@ -79,6 +79,13 @@ class BaseImporter(ABC):
             "description": f"Imported using {type(self).__name__}",
         }
 
+    @classmethod
+    def _repr_html_(cls) -> str:
+        if not cls.__doc__:
+            return f"<h3>{cls.__name__}</h3><p>Missing Description</p>"
+        docstring = cls.__doc__.replace("\n", "<br />")
+        return f"<h3>{cls.__name__}</h3><p>{docstring}</p>"
+
 
 class _FutureResult:
     def __init__(self) -> None:

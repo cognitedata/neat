@@ -1,3 +1,4 @@
+from ._base import BaseExtractor
 from ._classic_cdf._assets import AssetsExtractor
 from ._classic_cdf._events import EventsExtractor
 from ._classic_cdf._files import FilesExtractor
@@ -10,6 +11,7 @@ from ._mock_graph_generator import MockGraphGenerator
 from ._rdf_file import RdfFileExtractor
 
 __all__ = [
+    "BaseExtractor",
     "AssetsExtractor",
     "MockGraphGenerator",
     "RelationshipsExtractor",
@@ -35,3 +37,18 @@ TripleExtractors = (
     | RdfFileExtractor
     | DexpiExtractor
 )
+
+
+def _repr_html_() -> str:
+    import pandas as pd
+
+    return pd.DataFrame(  # type: ignore[operator]
+        [
+            {
+                "Extractor": name,
+                "Description": globals()[name].__doc__.strip().split("\n")[0] if globals()[name].__doc__ else "Missing",
+            }
+            for name in __all__
+            if name != "BaseExtractor"
+        ]
+    )._repr_html_()
