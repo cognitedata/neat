@@ -88,13 +88,7 @@ class _EnvironmentVariables:
     @property
     def idp_scopes(self) -> list[str]:
         if self.IDP_SCOPES:
-            output = self.IDP_SCOPES.split()
-            if isinstance(output, list):
-                return output
-            elif isinstance(output, str):
-                return [output]
-            else:
-                raise ValueError("IDP_SCOPES must be a list or a string.")
+            return self.IDP_SCOPES.split(",")
         return [f"https://{self.CDF_CLUSTER}.cognitedata.com/.default"]
 
     @property
@@ -193,7 +187,7 @@ class _EnvironmentVariables:
             value = getattr(self, name)
             if value is not None:
                 if isinstance(value, list):
-                    value = " ".join(value)
+                    value = ",".join(value)
                 lines.append(f"{field.name}={value}")
         return "\n".join(lines)
 
@@ -205,7 +199,7 @@ def _from_dotenv(evn_file: Path) -> _EnvironmentVariables:
     valid_variables = {f.name for f in fields(_EnvironmentVariables)}
     variables: dict[str, str] = {}
     for line in content.splitlines():
-        if line.startswith("#") or not line:
+        if line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
         if key in valid_variables:
@@ -300,5 +294,5 @@ def _env_in_gitignore(repo_root: Path) -> bool:
 
 
 if __name__ == "__main__":
-    c = _prompt_user().get_client()
+    c = get_cognite_client()
     print(c.iam.token.inspect())
