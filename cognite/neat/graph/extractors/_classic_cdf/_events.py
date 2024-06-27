@@ -15,6 +15,13 @@ from cognite.neat.utils.utils import string_to_ideal_type
 
 
 class EventsExtractor(BaseExtractor):
+    """Extract data from Cognite Data Fusions Events into Neat.
+
+    Args:
+        events (Iterable[Event]): An iterable of events.
+        namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+    """
+
     def __init__(
         self,
         events: Iterable[Event],
