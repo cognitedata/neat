@@ -2,12 +2,10 @@ environment:
   name: dev
   project: get-power-grid
   type: dev
-  selected_modules_and_packages:
-  - neat_integration_runner
-  common_function_code: ./common_function_code
+  selected:
+  - modules/
 
-modules:
-  cognite_modules: {}
-  custom_modules:
+variables:
+  modules:
     neat_integration_runner:
       source_id: df15ad2f-f037-462f-9089-43ff9fc95926

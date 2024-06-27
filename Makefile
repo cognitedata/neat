@@ -1,6 +1,5 @@
 .PHONY: run-explorer run-tests run-linters build-ui build-python build-docker run-docker compose-up
-
-version="0.77.8"
+version="0.84.1"
 run-explorer:
 	@echo "Running explorer API server..."
 	# open "http://localhost:8000/static/index.html" || true
@@ -43,7 +42,7 @@ start-ui-dev:
 
 poetry-export:
 	@echo "Exporting poetry dependencies"
-	poetry export -f requirements.txt --output requirements.txt --extras "graphql"
+	poetry export -f requirements.txt --output requirements.txt --extras "graphql" --extras "service"
 
 build-docker: poetry-export
 	@echo "Building docker image"
@@ -89,5 +88,5 @@ gen-steps-md:
 
 run-toolkit:
 	@echo "Setup access for test runner"
-	poetry run cdf-tk build scripts/integration_runner/ --env dev --clean
-	poetry run cdf-tk deploy --env dev
+	poetry run cdf-tk build scripts/integration_runner/ --env dev
+	poetry run cdf-tk deploy

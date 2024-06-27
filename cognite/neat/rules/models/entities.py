@@ -5,7 +5,18 @@ from functools import total_ordering
 from typing import Annotated, Any, ClassVar, Generic, TypeVar, cast
 
 from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, NodeId, PropertyId, ViewId
-from pydantic import AnyHttpUrl, BaseModel, BeforeValidator, Field, PlainSerializer, model_serializer, model_validator
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    BeforeValidator,
+    Field,
+    PlainSerializer,
+    model_serializer,
+    model_validator,
+)
+
+from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.utils.utils import replace_non_alphanumeric_with_underscore
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -36,6 +47,9 @@ class EntityTypes(StrEnum):
     container = "container"
     datamodel = "datamodel"
     undefined = "undefined"
+    multi_value_type = "multi_value_type"
+    asset = "asset"
+    relationship = "relationship"
 
 
 # ALLOWED
@@ -56,6 +70,7 @@ _CLASS_ID_REGEX_COMPILED = re.compile(rf"^{_CLASS_ID_REGEX}$")
 _PROPERTY_ID_REGEX = rf"\((?P<{EntityTypes.property_}>{_ENTITY_ID_REGEX})\)"
 
 _ENTITY_PATTERN = re.compile(r"^(?P<prefix>.*?):?(?P<suffix>[^(:]*)(\((?P<content>[^)]+)\))?$")
+_MULTI_VALUE_TYPE_PATTERN = re.compile(r"^(?P<types>.*?)(\((?P<content>[^)]+)\))?$")
 
 
 class _UndefinedType(BaseModel): ...
@@ -191,7 +206,7 @@ class Entity(BaseModel, extra="ignore"):
             if (v := getattr(self, field_name)) is not None and field_name not in {"prefix", "suffix"}
         )
         args = ",".join([f"{k}={v}" for k, v in model_dump])
-        if self.prefix is Undefined:
+        if self.prefix == Undefined:
             base_id = str(self.suffix)
         else:
             base_id = f"{self.prefix}:{self.suffix!s}"
@@ -210,6 +225,11 @@ class Entity(BaseModel, extra="ignore"):
         if self.prefix is Undefined:
             return f"{self.suffix!s}"
         return f"{self.prefix}:{self.suffix!s}"
+
+    def as_dms_compliant_entity(self) -> "Self":
+        new_entity = self.model_copy(deep=True)
+        new_entity.suffix = replace_non_alphanumeric_with_underscore(new_entity.suffix)
+        return new_entity
 
 
 T_Entity = TypeVar("T_Entity", bound=Entity)
@@ -249,7 +269,83 @@ class UnknownEntity(ClassEntity):
         return str(Unknown)
 
 
+class AssetFields(StrEnum):
+    external_id = "external_id"
+    name = "name"
+    parent_external_id = "parent_external_id"
+    description = "description"
+    metadata = "metadata"
+
+
+class AssetEntity(Entity):
+    type_: ClassVar[EntityTypes] = EntityTypes.asset
+    suffix: str = "Asset"
+    prefix: _UndefinedType = Undefined
+    property_: AssetFields = Field(alias="property")
+
+
+class RelationshipEntity(Entity):
+    type_: ClassVar[EntityTypes] = EntityTypes.relationship
+    suffix: str = "Relationship"
+    prefix: _UndefinedType = Undefined
+    label: str | None = None
+
+
 T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId | NodeId | None)
+
+
+class MultiValueTypeInfo(BaseModel):
+    type_: ClassVar[EntityTypes] = EntityTypes.multi_value_type
+    types: list[DataType | ClassEntity]
+
+    def __str__(self) -> str:
+        return " | ".join([str(t) for t in self.types])
+
+    @model_serializer(when_used="unless-none", return_type=str)
+    def as_str(self) -> str:
+        return str(self)
+
+    @classmethod
+    def load(cls, data: Any) -> "MultiValueTypeInfo":
+        # already instance of MultiValueTypeInfo
+        if isinstance(data, cls):
+            return data
+
+        # it is a raw string that needs to be parsed
+        elif isinstance(data, str):
+            return cls.model_validate({_PARSE: data})
+
+        # it is dict that needs to be parsed
+        else:
+            return cls.model_validate(data)
+
+    @model_validator(mode="before")
+    def _load(cls, data: Any) -> "dict | MultiValueTypeInfo":
+        if isinstance(data, dict) and _PARSE in data:
+            data = data[_PARSE]
+        elif isinstance(data, dict):
+            return data
+        else:
+            raise ValueError(f"Cannot load {cls.__name__} from {data}")
+
+        result = cls._parse(data)
+        return result
+
+    @classmethod
+    def _parse(cls, raw: str) -> dict:
+        if not (types := [type_.strip() for type_ in raw.split("|")]):
+            return {"types": [UnknownEntity()]}
+        else:
+            return {
+                "types": [
+                    DataType.load(type_) if DataType.is_data_type(type_) else ClassEntity.load(type_) for type_ in types
+                ]
+            }
+
+    def set_default_prefix(self, prefix: str):
+        for type_ in self.types:
+            if isinstance(type_, ClassEntity) and type_.prefix is Undefined:
+                type_.prefix = prefix
 
 
 class DMSEntity(Entity, Generic[T_ID], ABC):
@@ -284,6 +380,11 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
 
     def as_class(self) -> ClassEntity:
         return ClassEntity(prefix=self.space, suffix=self.external_id)
+
+    def as_dms_compliant_entity(self) -> "Self":
+        new_entity = self.model_copy(deep=True)
+        new_entity.suffix = replace_non_alphanumeric_with_underscore(new_entity.suffix)
+        return new_entity
 
 
 T_DMSEntity = TypeVar("T_DMSEntity", bound=DMSEntity)
@@ -428,6 +529,25 @@ def _join_str(v: list[ClassEntity]) -> str | None:
     return ",".join([entry.id for entry in v]) if v else None
 
 
+def _generate_cdf_resource_list(v: Any) -> list[AssetEntity | RelationshipEntity]:
+    results = []
+    for item in _split_str(v):
+        if isinstance(item, str):
+            if "relationship" in item.lower():
+                results.append(RelationshipEntity.load(item))
+            elif "asset" in item.lower():
+                results.append(AssetEntity.load(item))  # type: ignore
+            else:
+                raise ValueError(f"Unsupported implementation definition: {item}")
+
+        elif isinstance(item, AssetEntity | RelationshipEntity):
+            results.append(item)
+        else:
+            raise ValueError(f"Unsupported implementation definition: {item}")
+
+    return results  # type: ignore
+
+
 ParentEntityList = Annotated[
     list[ParentClassEntity],
     BeforeValidator(_split_str),
@@ -437,6 +557,18 @@ ParentEntityList = Annotated[
         when_used="unless-none",
     ),
 ]
+
+
+CdfResourceEntityList = Annotated[
+    list[AssetEntity | RelationshipEntity],
+    BeforeValidator(_generate_cdf_resource_list),
+    PlainSerializer(
+        _join_str,
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
+
 
 ContainerEntityList = Annotated[
     list[ContainerEntity],

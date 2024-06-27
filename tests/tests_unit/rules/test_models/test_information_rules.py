@@ -1,30 +1,24 @@
 from datetime import datetime
 from typing import Any
 
-import pandas as pd
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat.rules.models import DMSRules, SheetList
+from cognite.neat.rules.models import DMSRules, SheetList, data_types
+from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType, String
+from cognite.neat.rules.models.entities import MultiValueTypeInfo
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationRules,
+    InformationRulesInput,
 )
 from cognite.neat.rules.models.information._converter import _InformationRulesConverter
-from cognite.neat.utils.spreadsheet import read_individual_sheet
-from tests.config import DOC_RULES
-
-
-@pytest.fixture(scope="session")
-def david_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_RULES / "information-architect-david.xlsx"
-    excel_file = pd.ExcelFile(filepath)
-    return {
-        "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
-        "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
-    }
+from cognite.neat.rules.models.information._rules_input import (
+    InformationClassInput,
+    InformationMetadataInput,
+    InformationPropertyInput,
+)
 
 
 def case_insensitive_value_types():
@@ -63,8 +57,7 @@ def case_insensitive_value_types():
                     "Default": None,
                     "Source": None,
                     "MatchType": None,
-                    "Rule Type": None,
-                    "Rule": None,
+                    "Transformation": None,
                 }
             ],
         },
@@ -109,15 +102,14 @@ def invalid_domain_rules_cases():
                     "Default": None,
                     "Source": None,
                     "MatchType": None,
-                    "Rule Type": "rdfpath",
-                    "Rule": None,
+                    "Transformation": ":GeneratingUnit(cim:name)",
                 }
             ],
         },
         (
-            "Rule type 'rdfpath' provided for property 'name' in class 'GeneratingUnit' but rule is not provided!"
+            ":GeneratingUnit(cim:name) is not a valid rdfpath!"
             "\nFor more information visit: "
-            "https://cognite-neat.readthedocs-hosted.com/en/latest/api/exceptions.html#cognite.neat.rules.exceptions.RuleTypeProvidedButRuleMissing"
+            "https://cognite-neat.readthedocs-hosted.com/en/latest/api/exceptions.html#cognite.neat.rules.exceptions.NotValidRDFPath"
         ),
         id="missing_rule",
     )
@@ -304,6 +296,31 @@ class TestInformationRulesConverter:
 
         assert actual == expected
 
+    def test_convert_above_container_limit(self) -> None:
+        info = InformationRulesInput(
+            metadata=InformationMetadataInput(
+                schema_="complete",
+                prefix="bad_model",
+                namespace="http://purl.org/cognite/bad_model",
+                name="Bad Model",
+                version="0.1.0",
+                creator="Anders",
+            ),
+            classes=[InformationClassInput(class_="MassiveClass")],
+            properties=[
+                InformationPropertyInput(
+                    class_="MassiveClass",
+                    property_=f"property_{no}",
+                    value_type="string",
+                )
+                for no in range(DMS_CONTAINER_SIZE_LIMIT + 1)
+            ],
+        ).as_rules()
+
+        dms_rules = info.as_dms_architect_rules()
+
+        assert len(dms_rules.containers) == 2
+
 
 class TestInformationConverter:
     @pytest.mark.parametrize(
@@ -316,5 +333,36 @@ class TestInformationConverter:
     )
     def test_bump_suffix(self, name: str, expected: str) -> None:
         actual = _InformationRulesConverter._bump_suffix(name)
+
+        assert actual == expected
+
+    @pytest.mark.parametrize(
+        "multi, expected",
+        [
+            pytest.param(
+                MultiValueTypeInfo(types=[data_types.Integer(), data_types.String()]), data_types.String(), id="IntStr"
+            ),
+            pytest.param(
+                MultiValueTypeInfo(types=[data_types.Float(), data_types.Integer()]), data_types.Double(), id="FloatStr"
+            ),
+            pytest.param(
+                MultiValueTypeInfo(types=[data_types.Boolean(), data_types.Float()]),
+                data_types.Double(),
+                id="BoolFloat",
+            ),
+            pytest.param(
+                MultiValueTypeInfo(types=[data_types.DateTime(), data_types.Boolean()]),
+                data_types.String(),
+                id="DatetimeBool as String",
+            ),
+            pytest.param(
+                MultiValueTypeInfo(types=[data_types.Date(), data_types.DateTime()]),
+                data_types.DateTime(),
+                id="Date and Datetime",
+            ),
+        ],
+    )
+    def test_convert_multivalue_type(self, multi: MultiValueTypeInfo, expected: DataType) -> None:
+        actual = _InformationRulesConverter.convert_multi_value_type(multi)
 
         assert actual == expected

@@ -41,7 +41,8 @@ from ._base import T_ID, ResourceLoader, T_WritableCogniteResourceList
 class DataModelingLoader(
     ResourceLoader[T_ID, T_WriteClass, T_WritableCogniteResource, T_CogniteResourceList, T_WritableCogniteResourceList]
 ):
-    def in_space(self, item: T_WriteClass | T_WritableCogniteResource, space: set[str]) -> bool:
+    @classmethod
+    def in_space(cls, item: T_WriteClass | T_WritableCogniteResource | T_ID, space: set[str]) -> bool:
         if hasattr(item, "space"):
             return item.space in space
         raise ValueError(f"Item {item} does not have a space attribute")

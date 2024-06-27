@@ -31,6 +31,7 @@ __all__ = [
     "ReverseRelationMissingOtherSideWarning",
     "NodeTypeFilterOnParentViewWarning",
     "MissingViewInModelWarning",
+    "ViewSizeWarning",
     "ChangingContainerError",
     "ChangingViewError",
 ]
@@ -42,6 +43,30 @@ class DMSSchemaError(NeatValidationError, ABC): ...
 
 @dataclass(frozen=True)
 class DMSSchemaWarning(ValidationWarning, ABC): ...
+
+
+@dataclass(frozen=True)
+class ViewSizeWarning(DMSSchemaWarning):
+    description = (
+        "The number of properties in the {view} view is {count} which is more than "
+        "the recommended limit of {limit} properties. This can lead to performance issues."
+    )
+    fix = "Reduce the size of the view"
+    error_name: ClassVar[str] = "ViewSizeWarning"
+
+    view_id: dm.ViewId
+    limit: int
+    count: int
+
+    def message(self) -> str:
+        return self.description.format(view=repr(self.view_id), count=self.count, limit=self.limit)
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["view_id"] = self.view_id.dump()
+        output["limit"] = self.limit
+        output["count"] = self.count
+        return output
 
 
 @dataclass(frozen=True)

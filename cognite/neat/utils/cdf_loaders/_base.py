@@ -9,18 +9,10 @@ from cognite.client.data_classes._base import (
     T_WriteClass,
     WriteableCogniteResourceList,
 )
-from cognite.client.data_classes.data_modeling import (
-    DataModelingId,
-)
-from cognite.client.data_classes.data_modeling.ids import (
-    InstanceId,
-    VersionedDataModelingId,
-)
 from cognite.client.utils.useful_types import SequenceNotStr
 
-from .data_classes import RawTableID
+from cognite.neat._shared import T_ID
 
-T_ID = TypeVar("T_ID", bound=str | int | DataModelingId | InstanceId | VersionedDataModelingId | RawTableID)
 T_WritableCogniteResourceList = TypeVar("T_WritableCogniteResourceList", bound=WriteableCogniteResourceList)
 
 

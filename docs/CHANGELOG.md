@@ -15,6 +15,203 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+
+## [0.84.1] - 26-06-24
+### Added
+- Conversion between information, asset and dms rules
+- Added serializer for transformations (i.e. RDFPATH)
+- Placeholder for AssetLoader
+
+
+## [0.84.1] - 26-06-24
+### Added
+- Conversion between information, asset and dms rules
+- Added serializer for transformations (i.e. RDFPATH)
+- Placeholder for AssetLoader
+
+## [0.84.0] - 25-06-24
+### Changed
+- [BREAKING] Interface for `Exporters`. Instead of `.export_to_cdf` returning an iterable, it now returns a list,
+  and the `.export_to_cdf_iterable` returns an iterable. In addition, these method now returns a new type of
+  objects `UploadResult`. This is to make the interface more notebook friendly and easier to work with.
+
+## [0.83.0] - 25-06-24
+### Changed
+- The dependency for running the neat service `fastapi`, `uvicorn`, and `prometheus-client` have been
+  made optional. This is to make it easier to use `neat` as a Python package without the need for
+  these dependencies.
+
+## [0.82.3] - 25-06-24
+### Improved
+- Automatic conversion of `MultiValueType` in `InformationRules` to `DMSRules`.
+
+## [0.82.2] - 25-06-24
+### Fixed
+- Conversion from Information to DMS rules incorrectly set `nullable` for a property if
+  the property had `min_value` not set in the Information rules. This is now fixed.
+
+## [0.82.1] - 21-06-24
+### Added
+- added new entities `AssetEntity` and `RelationshipEntity`
+- added new rules type `AssetRules`
+
+## [0.82.0] - 21-06-24
+### Added
+- Introduce `query` module under `neat.graph` which holds previous `_Queries` class
+- Added generation of `SPARQL` `CONSTRUCT` queries based on `rdfpath` transformations defined in `InformationRules`
+- Introduce `NeatGraphStore.read` method which takes class and returns all instances of that class
+- Test for `NeatGraphStore.read` method which entails end-to-end process of loading triples, inferring data model and reading instances of a class
+### Changed
+- `DMSLoader` now uses `.read` method of `NeatGraphStore`
+
+
+## [0.81.12] - 20-06-24
+### Added
+- Placeholder for `NeatGraphStore.read_view` method
+### Improved
+- Simplified InformationArchitect rules by remove `rule_type` and renaming `rule` to `transformation` instead
+
+
+## [0.81.11] - 19-06-24
+### Added
+- `AssetRelationshipConnector` transformer added
+### Improved
+- Handling of ids for labels and relationships
+
+
+## [0.81.10] - 19-06-24
+### Added
+- `AssetEventConnector` transformer added
+
+## [0.81.9] - 19-06-24
+### Added
+- `AssetFilesConnector` transformer added
+
+
+## [0.81.8] - 19-06-24
+### Added
+- `AssetSequenceConnector` transformer added
+
+## [0.81.7] - 19-06-24
+### Added
+- `AssetTimeSeriesConnector` transformer added
+
+### Fixed
+- `NeatGraphStore.transform` was resetting provenance object, this is now fixed
+
+
+## [0.81.6] - 18-06-24
+### Added
+- Transformers module to NeatGraphStore
+- `AddAssetDepth` transformer added
+
+## [0.81.5] - 14-06-24
+### Improved
+- Dexpi Extractor is significantly more extracting triples from Dexpi XML files
+- More human readable class and property ids in Dexpi Extractor
+
+
+## [0.81.4] - 14-06-24
+### Fixed
+- When creating a new Enterprise model, node types are automatically created for all views. This is such that
+  the node types can be used in the filters for any solution model built on top of the enterprise model.
+
+## [0.81.3] - 14-06-24
+### Fixed
+- If external id of edge is longer than 256 characters it will be hashed to avoid exceeding the limit of 256 characters.
+
+
+## [0.81.2] - 12-06-24
+### Fixed
+- When converting from Information to DMS rules, `neat` now automatically creates more containers if
+  the number of properties exceeds the maximum number of properties per container. In addition, a warning
+  is issued to the user if the number of properties exceeds the maximum number of properties per container.
+
+## [0.81.1] - 12-06-24
+### Improved
+- Classic CDF extractors now prefix ids with resource type
+
+### Removed
+- Dependency on pytz
+
+
+## [0.81.0] - 11-06-24
+### Added
+- `DexpiExtractor` graph extractor added.
+
+## [0.80.3] - 12-06-24
+### Fixed
+- Increased upper bound on `python-multipart` dependency.
+
+## [0.80.2] - 11-06-24
+### Fixed
+- Fixed missing input for `Reference data model id` in  `DMSToRules` step
+
+## [0.80.1] - 11-06-24
+### Fixed
+- Fixed issues with duplicated edges when different properties are referring to the same target node.
+
+
+## [0.80.0] - 10-06-24
+
+### Improved
+- Single `NeatGraphStore` instantiated via three options:
+  - `from_memory_store`
+  - `from_oxi_store`
+  - `from_sparql_store`
+### Removed
+- Removed various superclassing of `NeatGraphStore`
+- Remove Prometheus reminisce in code base
+- Remove logging
+### Added
+- `RdfFileExtractor` graph extractor added.
+
+## [0.79.0] - 10-06-24
+### Added
+- `TimeSeriesExtractor` graph extractor added.
+- `SequencesExtractor` graph extractor added.
+- `EventsExtractor` graph extractor added.
+- `FilesExtractor` graph extractor added.
+- `LabelsExtractor` graph extractor added.
+- Dedicate test data for Classic CDF data model created
+- Tracking of graph provenance added to `NeatGraphStore`
+
+## [0.78.5] - 05-06-24
+### Changed
+- Increased upper bound on `fastapi` dependency.
+
+
+## [0.78.4] - 05-06-24
+### Added
+- `AssetsExtractor` graph extractor added.
+
+## [0.78.3] - 03-06-24
+### Added
+- `MultiValueType` for the Information Architect rules, allowing multiple value types for a property.
+
+### Improved
+- `InferenceImporter` is retaining information on multi value type for properties.
+
+## [0.78.2] - 31-05-24
+### Improved
+- `OWLImporter` is now opinionated and will attempt to make the imported ontology compliant with the rules.
+
+## [0.78.1] - 30-05-24
+### Added
+- Added `RulesInferenceFromRdfFile` to the step library
+
+## [0.78.0] - 30-05-24
+### Added
+- `make_compliant` feature added to `InferenceImporter` producing compliant rules from a knowledge graph.
+
+## [0.77.10] - 23-05-30
+### Changed
+- Increased upper bound on `uvicorn` dependency.
+
+## [0.77.9] - 23-05-24
+### Added
+- `InferenceImporter` added to the core library enabling inference of rules from a graph.
+
 ## [0.77.8] - 23-05-24
 ### Fixed
 - In the conversion form Information to DMS Rules, when referencing a class in reference rules, the implements

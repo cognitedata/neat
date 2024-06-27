@@ -8,8 +8,8 @@ from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import PREFIXES
+from cognite.neat.issues import MultiValueError
 from cognite.neat.rules import exceptions, issues
-from cognite.neat.rules.issues.base import MultiValueError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
     BaseRules,
@@ -23,13 +23,8 @@ from cognite.neat.rules.models._base import (
     SheetList,
 )
 from cognite.neat.rules.models._rdfpath import (
-    AllReferences,
-    Hop,
-    RawLookup,
-    SingleProperty,
-    SPARQLQuery,
+    RDFPath,
     TransformationRuleType,
-    Traversal,
     parse_rule,
 )
 from cognite.neat.rules.models._types import (
@@ -44,6 +39,7 @@ from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     EntityTypes,
+    MultiValueTypeInfo,
     ParentClassEntity,
     ParentEntityList,
     ReferenceEntity,
@@ -53,7 +49,7 @@ from cognite.neat.rules.models.entities import (
 )
 
 if TYPE_CHECKING:
-    from cognite.neat.rules.models.dms._rules import DMSRules
+    from cognite.neat.rules.models import AssetRules, DMSRules
 
 
 if sys.version_info >= (3, 11):
@@ -115,6 +111,9 @@ class InformationMetadata(BaseMetadata):
     def as_enum_model_type(cls, value: str) -> DataModelType:
         return DataModelType(value)
 
+    def as_identifier(self) -> str:
+        return f"{self.prefix}:{self.name}"
+
 
 class InformationClass(SheetEntity):
     """
@@ -152,9 +151,7 @@ class InformationProperty(SheetEntity):
         default: Default value of the property
         reference: Reference to the source of the information, HTTP URI
         match_type: The match type of the resource being described and the source entity.
-        rule_type: Rule type for the transformation from source to target representation
-                   of knowledge graph. Defaults to None (no transformation)
-        rule: Actual rule for the transformation from source to target representation of
+        transformation: Actual rule for the transformation from source to target representation of
               knowledge graph. Defaults to None (no transformation)
     """
 
@@ -162,17 +159,21 @@ class InformationProperty(SheetEntity):
     property_: PropertyType = Field(alias="Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    value_type: DataType | ClassEntity | UnknownEntity = Field(alias="Value Type", union_mode="left_to_right")
+    value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity = Field(
+        alias="Value Type", union_mode="left_to_right"
+    )
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     match_type: MatchType | None = Field(alias="Match Type", default=None)
-    rule_type: str | TransformationRuleType | None = Field(alias="Rule Type", default=None)
-    rule: str | AllReferences | SingleProperty | Hop | RawLookup | SPARQLQuery | Traversal | None = Field(
-        alias="Rule", default=None
-    )
+    transformation: str | RDFPath | None = Field(alias="Transformation", default=None)
     comment: str | None = Field(alias="Comment", default=None)
+    inherited: bool = Field(
+        default=False,
+        alias="Inherited",
+        description="Flag to indicate if the property is inherited, only use for internal purposes",
+    )
 
     @field_serializer("max_count", when_used="json-unless-none")
     def serialize_max_count(self, value: int | float | None) -> int | float | None | str:
@@ -187,15 +188,10 @@ class InformationProperty(SheetEntity):
         return value
 
     @model_validator(mode="after")
-    def is_valid_rule(self):
-        # TODO: Can we skip rule_type and simply try to parse the rule and if it fails, raise an error?
-        if self.rule_type:
-            self.rule_type = self.rule_type.lower()
-            if not self.rule:
-                raise exceptions.RuleTypeProvidedButRuleMissing(
-                    self.property_, self.class_, self.rule_type
-                ).to_pydantic_custom_error()
-            self.rule = parse_rule(self.rule, self.rule_type)
+    def generate_valid_transformation(self):
+        # TODO: Currently only supporting RDFpath
+        if self.transformation:
+            self.transformation = parse_rule(self.transformation, TransformationRuleType.rdfpath)
         return self
 
     @model_validator(mode="after")
@@ -249,12 +245,14 @@ class InformationProperty(SheetEntity):
     @property
     def is_mandatory(self) -> bool:
         """Returns True if property is mandatory."""
-        return self.min_count != 0
+        return self.min_count not in {0, None}
 
     @property
     def is_list(self) -> bool:
         """Returns True if property contains a list of values."""
-        return self.max_count != 1
+        return self.max_count in {float("inf"), None} or (
+            isinstance(self.max_count, int | float) and self.max_count > 1
+        )
 
 
 class InformationRules(BaseRules):
@@ -277,6 +275,10 @@ class InformationRules(BaseRules):
         for property_ in self.properties:
             if isinstance(property_.value_type, ClassEntity) and property_.value_type.prefix is Undefined:
                 property_.value_type.prefix = self.metadata.prefix
+
+            if isinstance(property_.value_type, MultiValueTypeInfo):
+                property_.value_type.set_default_prefix(self.metadata.prefix)
+
             if property_.class_.prefix is Undefined:
                 property_.class_.prefix = self.metadata.prefix
 
@@ -338,6 +340,11 @@ class InformationRules(BaseRules):
         from ._converter import _InformationRulesConverter
 
         return _InformationRulesConverter(self).as_domain_rules()
+
+    def as_asset_architect_rules(self) -> "AssetRules":
+        from ._converter import _InformationRulesConverter
+
+        return _InformationRulesConverter(self).as_asset_architect_rules()
 
     def as_dms_architect_rules(self) -> "DMSRules":
         from ._converter import _InformationRulesConverter

@@ -1,8 +1,9 @@
 import hashlib
 import logging
+import re
 import sys
 import time
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 from collections.abc import Iterable
 from datetime import datetime
 from functools import wraps
@@ -144,6 +145,13 @@ def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
         return URI.split("#")[0] + "#"
     else:
         return "/".join(URI.split("/")[:-1]) + "/"
+
+
+def as_neat_compliant_uri(uri: URIRef) -> URIRef:
+    namespace = get_namespace(uri)
+    id_ = remove_namespace(uri)
+    compliant_uri = re.sub(r"[^a-zA-Z0-9-_.]", "", id_)
+    return URIRef(f"{namespace}{compliant_uri}")
 
 
 def convert_rdflib_content(content: Literal | URIRef | dict | list) -> Any:
@@ -350,3 +358,36 @@ def get_inheritance_path(child: Any, child_parent: dict[Any, list[Any]]) -> list
         for parent in child_parent[child]:
             path.extend(get_inheritance_path(parent, child_parent))
     return path
+
+
+def replace_non_alphanumeric_with_underscore(text):
+    return re.sub(r"\W+", "_", text)
+
+
+def string_to_ideal_type(input_string: str) -> int | bool | float | datetime | str:
+    try:
+        # Try converting to int
+        return int(input_string)
+    except ValueError:
+        try:
+            # Try converting to float
+            return float(input_string)  # type: ignore
+        except ValueError:
+            if input_string.lower() == "true":
+                # Return True if input is 'true'
+                return True
+            elif input_string.lower() == "false":
+                # Return False if input is 'false'
+                return False
+            else:
+                try:
+                    # Try converting to datetime
+                    return datetime.fromisoformat(input_string)  # type: ignore
+                except ValueError:
+                    # Return the input string if no conversion is possible
+                    return input_string
+
+
+def most_occurring_element(list_of_elements: list):
+    counts = Counter(list_of_elements)
+    return counts.most_common(1)[0][0]

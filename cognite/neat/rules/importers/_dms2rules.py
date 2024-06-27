@@ -46,6 +46,16 @@ from cognite.neat.rules.models.entities import (
 
 
 class DMSImporter(BaseImporter):
+    """Imports a Data Model from Cognite Data Fusion.
+
+    Args:
+        schema: The schema containing the data model.
+        read_issues: A list of issues that occurred during the import.
+        metadata: Metadata for the data model.
+        ref_metadata: Metadata for the reference data model.
+
+    """
+
     def __init__(
         self,
         schema: DMSSchema,

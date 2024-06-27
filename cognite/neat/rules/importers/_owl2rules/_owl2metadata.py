@@ -12,18 +12,16 @@ from cognite.neat.rules.models._types._base import (
 from cognite.neat.utils.utils import convert_rdflib_content, remove_none_elements_from_set
 
 
-def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> dict:
+def parse_owl_metadata(graph: Graph) -> dict:
     """Parse owl metadata from graph to dict.
 
     Args:
         graph: Graph containing owl metadata
-        make_compliant: Flag for generating compliant metadata, by default False
 
     Returns:
         Dictionary containing owl metadata
 
-    !!! note "make_compliant"
-        If `make_compliant` is set to True, in presence of errors, default values will be used instead.
+    !!! note "Compliant OWL metadata"
         This makes the method very opinionated, but results in a compliant metadata.
 
 
@@ -72,10 +70,7 @@ def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> dict:
         }
     )
 
-    if make_compliant:
-        return make_metadata_compliant(raw_metadata)
-
-    return raw_metadata
+    return make_metadata_compliant(raw_metadata)
 
 
 def make_metadata_compliant(metadata: dict) -> dict:

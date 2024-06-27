@@ -1,20 +1,30 @@
 import re
 from collections import Counter, defaultdict
 from collections.abc import Collection
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Literal
 
+from cognite.client.data_classes import data_modeling as dms
+
+from cognite.neat.rules.models import data_types
 from cognite.neat.rules.models._base import (
     ExtensionCategory,
     SchemaCompleteness,
     SheetList,
 )
+from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
+    AssetEntity,
+    AssetFields,
     ClassEntity,
     ContainerEntity,
     DMSUnknownEntity,
+    EntityTypes,
+    MultiValueTypeInfo,
     ReferenceEntity,
+    RelationshipEntity,
     UnknownEntity,
     ViewEntity,
     ViewPropertyEntity,
@@ -23,6 +33,7 @@ from cognite.neat.rules.models.entities import (
 from ._rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
 
 if TYPE_CHECKING:
+    from cognite.neat.rules.models.asset._rules import AssetRules
     from cognite.neat.rules.models.dms._rules import DMSMetadata, DMSProperty, DMSRules
 
 
@@ -41,9 +52,32 @@ class _InformationRulesConverter:
             self.last_classes = {class_.class_: class_ for class_ in self.rules.last.classes}
         else:
             self.last_classes = {}
+        self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
 
     def as_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
+
+    def as_asset_architect_rules(self) -> "AssetRules":
+        from cognite.neat.rules.models.asset._rules import AssetClass, AssetMetadata, AssetProperty, AssetRules
+
+        classes: SheetList[AssetClass] = SheetList[AssetClass](
+            data=[AssetClass(**class_.model_dump()) for class_ in self.rules.classes]
+        )
+        properties: SheetList[AssetProperty] = SheetList[AssetProperty]()
+        for prop_ in self.rules.properties:
+            if prop_.type_ == EntityTypes.data_property:
+                properties.append(
+                    AssetProperty(**prop_.model_dump(), implementation=[AssetEntity(property=AssetFields.metadata)])
+                )
+            elif prop_.type_ == EntityTypes.object_property:
+                properties.append(AssetProperty(**prop_.model_dump(), implementation=[RelationshipEntity()]))
+
+        return AssetRules(
+            metadata=AssetMetadata(**self.rules.metadata.model_dump()),
+            properties=properties,
+            classes=classes,
+            prefixes=self.rules.prefixes,
+        )
 
     def as_dms_architect_rules(self) -> "DMSRules":
         from cognite.neat.rules.models.dms._rules import (
@@ -81,7 +115,6 @@ class _InformationRulesConverter:
         last_dms_rules = self.rules.last.as_dms_architect_rules() if self.rules.last else None
         ref_dms_rules = self.rules.reference.as_dms_architect_rules() if self.rules.reference else None
 
-        containers: list[DMSContainer] = []
         class_by_entity = {cls_.class_: cls_ for cls_ in self.rules.classes}
         if self.rules.last:
             for cls_ in self.rules.last.classes:
@@ -93,6 +126,7 @@ class _InformationRulesConverter:
             if rule_set:
                 existing_containers.update({c.container for c in rule_set.containers or []})
 
+        containers: list[DMSContainer] = []
         for container_entity, class_entities in referenced_containers.items():
             if container_entity in existing_containers:
                 continue
@@ -170,6 +204,8 @@ class _InformationRulesConverter:
             value_type = DMSUnknownEntity()
         elif isinstance(prop.value_type, ClassEntity):
             value_type = prop.value_type.as_view_entity(default_space, default_version)
+        elif isinstance(prop.value_type, MultiValueTypeInfo):
+            value_type = self.convert_multi_value_type(prop.value_type)
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
@@ -227,9 +263,14 @@ class _InformationRulesConverter:
             # the existing container in the last schema
             container_entity = prop.class_.as_container_entity(default_space)
             container_entity.suffix = self._bump_suffix(container_entity.suffix)
-            return container_entity, prop.property_
         else:
-            return prop.class_.as_container_entity(default_space), prop.property_
+            container_entity = prop.class_.as_container_entity(default_space)
+
+        while self.property_count_by_container[container_entity] >= DMS_CONTAINER_SIZE_LIMIT:
+            container_entity.suffix = self._bump_suffix(container_entity.suffix)
+
+        self.property_count_by_container[container_entity] += 1
+        return container_entity, prop.property_
 
     def _get_view_implements(self, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
         if isinstance(cls_.reference, ReferenceEntity) and cls_.reference.prefix != metadata.prefix:
@@ -264,3 +305,24 @@ class _InformationRulesConverter:
             return suffix[: suffix_number.start()] + str(int(suffix_number.group()) + 1)
         else:
             return f"{suffix}2"
+
+    @staticmethod
+    def convert_multi_value_type(value_type: MultiValueTypeInfo) -> DataType:
+        if not all(isinstance(type_, DataType) for type_ in value_type.types):
+            raise ValueError("Only MultiValueType with DataType types is supported")
+        # We check above that there are no ClassEntity types in the MultiValueType
+        py_types = {type_.python for type_ in value_type.types}  # type: ignore[union-attr]
+        if dms.Json in py_types and len(py_types) > 1:
+            raise ValueError("MultiValueType with Json and other types is not supported")
+        elif dms.Json in py_types:
+            return data_types.Json()
+        elif not (py_types - {bool}):
+            return data_types.Boolean()
+        elif not (py_types - {int, bool}):
+            return data_types.Integer()
+        elif not (py_types - {float, int, bool}):
+            return data_types.Double()
+        elif not (py_types - {datetime, date}):
+            return data_types.DateTime()
+
+        return data_types.String()

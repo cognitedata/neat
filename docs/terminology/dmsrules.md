@@ -79,7 +79,7 @@ The default filter set by **NEAT** is set based on the data model type, whether 
 whether the view is mapping to containers in another data model.
 
 * If the data model type is `solution` and the view has properties mapping to containers in an enterprise data model,
-  the default filter is `nodeType` filter with all node ids matching the id of the container in the enterprise data model.
+  the default filter is `nodeType` filter with all node ids matching the id of the view in the enterprise data model.
 * If the data model type is `solution` and the view has properties mapping only to containers in the same data model,
   the default filter is `hasData` filter with all containers in the data model.
 * If the data model is `enterprise` and the view has properties mapping to containers, the default filter is `hasData` filter

@@ -132,6 +132,9 @@ class DMSMetadata(BaseMetadata):
             views=[],
         )
 
+    def as_identifier(self) -> str:
+        return repr(self.as_data_model_id())
+
     @classmethod
     def _get_description_and_creator(cls, description_raw: str | None) -> tuple[str | None, list[str]]:
         if description_raw and (description_match := re.search(r"Creator: (.+)", description_raw)):

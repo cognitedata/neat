@@ -18,7 +18,7 @@ from cognite.neat.utils.text import to_pascal
 
 
 class DTDLImporter(BaseImporter):
-    """Importer for DTDL (Digital Twin Definition Language).
+    """Importer from Azure Digital Twin - DTDL (Digital Twin Definition Language).
 
     This importer supports DTDL v2.0 and v3.0.
 

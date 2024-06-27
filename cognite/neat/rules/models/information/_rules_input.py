@@ -7,7 +7,13 @@ from rdflib import Namespace
 
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness, _add_alias
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.entities import ClassEntity, ParentClassEntity, Unknown, UnknownEntity
+from cognite.neat.rules.models.entities import (
+    ClassEntity,
+    MultiValueTypeInfo,
+    ParentClassEntity,
+    Unknown,
+    UnknownEntity,
+)
 
 from ._rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
 
@@ -78,8 +84,7 @@ class InformationPropertyInput:
     default: Any | None = None
     reference: str | None = None
     match_type: str | None = None
-    rule_type: str | None = None
-    rule: str | None = None
+    transformation: str | None = None
 
     @classmethod
     @overload
@@ -116,15 +121,19 @@ class InformationPropertyInput:
             default=data.get("default", None),
             reference=data.get("reference", None),
             match_type=data.get("match_type", None),
-            rule_type=data.get("rule_type", None),
-            rule=data.get("rule", None),
+            transformation=data.get("transformation", None),
         )
 
     def dump(self, default_prefix: str) -> dict[str, Any]:
-        value_type: DataType | ClassEntity | UnknownEntity
+        value_type: MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity
 
         # property holding xsd data type
-        if DataType.is_data_type(self.value_type):
+        # check if it is multi value type
+        if "|" in self.value_type:
+            value_type = MultiValueTypeInfo.load(self.value_type)
+            value_type.set_default_prefix(default_prefix)
+
+        elif DataType.is_data_type(self.value_type):
             value_type = DataType.load(self.value_type)
 
         # unknown value type
@@ -147,8 +156,7 @@ class InformationPropertyInput:
             "Default": self.default,
             "Reference": self.reference,
             "Match Type": self.match_type,
-            "Rule Type": self.rule_type,
-            "Rule": self.rule,
+            "Transformation": self.transformation,
         }
 
 
@@ -257,6 +265,7 @@ class InformationRulesInput:
         elif isinstance(self.last, InformationRules):
             # We need to load through the InformationRulesInput to set the correct default space and version
             last = InformationRulesInput.load(self.last.model_dump()).dump()
+
         return dict(
             Metadata=self.metadata.dump(),
             Properties=[prop.dump(default_prefix) for prop in self.properties],
