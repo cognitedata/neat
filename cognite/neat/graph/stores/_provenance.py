@@ -8,7 +8,6 @@
 
 
 import uuid
-from collections import UserList
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
@@ -16,6 +15,7 @@ from typing import TypeVar
 
 from rdflib import PROV, RDF, Literal, URIRef
 
+from cognite.neat._shared import FrozenNeatObject, NeatList
 from cognite.neat.constants import DEFAULT_NAMESPACE
 
 
@@ -64,7 +64,7 @@ class Entity:
 
 
 @dataclass(frozen=True)
-class Change:
+class Change(FrozenNeatObject):
     agent: Agent
     activity: Activity
     entity: Entity
@@ -81,11 +81,19 @@ class Change:
         entity = Entity(was_generated_by=activity, was_attributed_to=agent)
         return cls(agent, activity, entity, description)
 
+    def dump(self, aggregate: bool = True) -> dict[str, str]:
+        return {
+            "Agent": self.agent.id_,
+            "Activity": self.activity.id_,
+            "Entity": self.entity.id_,
+            "Description": self.description,
+        }
+
 
 T_Change = TypeVar("T_Change", bound=Change)
 
 
-class Provenance(UserList[T_Change]):
+class Provenance(NeatList[Change]):
     def __init__(self, changes: Sequence[T_Change] | None = None):
         super().__init__(changes or [])
 

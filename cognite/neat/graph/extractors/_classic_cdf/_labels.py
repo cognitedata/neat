@@ -14,6 +14,13 @@ from cognite.neat.utils.utils import create_sha256_hash
 
 
 class LabelsExtractor(BaseExtractor):
+    """Extract data from Cognite Data Fusions Labels into Neat.
+
+    Args:
+        labels (Iterable[LabelDefinition]): An iterable of labels.
+        namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+    """
+
     def __init__(
         self,
         labels: Iterable[LabelDefinition],

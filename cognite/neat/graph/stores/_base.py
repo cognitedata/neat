@@ -282,3 +282,13 @@ class NeatGraphStore:
                     description=transformer.description,
                 )
             )
+
+    def _repr_html_(self) -> str:
+        provenance = self.provenance._repr_html_()
+
+        return (
+            f"<strong>{type(self).__name__}</strong> A graph store is a container for storing triples. "
+            "It can be queried and transformed to extract information.<br />"
+            "<strong>Provenance</strong> Provenance is a record of changes that have occurred in the graph store.<br />"
+            f"{provenance}"
+        )
