@@ -411,11 +411,11 @@ class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, Ass
         self,
         only_rdfpath: bool = False,
         consider_inheritance: bool = False,
-        T_implementation: EntityTypes = EntityTypes.asset,
+        implementation_type: EntityTypes = EntityTypes.asset,
     ) -> dict[ClassEntity, dict[str, AssetProperty]]:
         class_property_pairs = {}
 
-        T_implementation = AssetEntity if T_implementation == EntityTypes.asset else RelationshipEntity
+        T_implementation = AssetEntity if implementation_type == EntityTypes.asset else RelationshipEntity
 
         for class_, properties in self.classes_with_properties(consider_inheritance).items():
             processed_properties = {}
@@ -445,3 +445,21 @@ class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, Ass
             class_property_pairs[class_] = processed_properties
 
         return class_property_pairs
+
+    def asset_definition(
+        self, only_rdfpath: bool = False, consider_inheritance: bool = False
+    ) -> dict[ClassEntity, dict[str, AssetProperty]]:
+        return self.class_property_pairs(
+            consider_inheritance=consider_inheritance,
+            only_rdfpath=only_rdfpath,
+            implementation_type=EntityTypes.asset,
+        )
+
+    def relationship_definition(
+        self, only_rdfpath: bool = False, consider_inheritance: bool = False
+    ) -> dict[ClassEntity, dict[str, AssetProperty]]:
+        return self.class_property_pairs(
+            consider_inheritance=consider_inheritance,
+            only_rdfpath=only_rdfpath,
+            implementation_type=EntityTypes.relationship,
+        )
