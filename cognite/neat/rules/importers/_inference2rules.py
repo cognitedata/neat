@@ -7,7 +7,7 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
 import cognite.neat.rules.issues as issues
-from cognite.neat.constants import PREFIXES
+from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
 from cognite.neat.rules.issues import IssueList
@@ -247,7 +247,7 @@ class InferenceImporter(BaseImporter):
             updated=datetime.now(),
             description="Inferred model from knowledge graph",
             prefix="inferred",
-            namespace="http://purl.org/cognite/neat/inferred/",
+            namespace=DEFAULT_NAMESPACE,
         )
 
     @classmethod
