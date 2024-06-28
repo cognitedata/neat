@@ -97,3 +97,15 @@ class Queries:
         else:
             warnings.warn("No rules found for the graph store, returning empty list.", stacklevel=2)
             return []
+
+    def list_triples(self, limit: int = 25) -> list[ResultRow]:
+        """List triples in the graph store
+
+        Args:
+            limit: Max number of triples to return, by default 25
+
+        Returns:
+            List of triples
+        """
+        query = f"SELECT ?subject ?predicate ?object WHERE {{ ?subject ?predicate ?object }} LIMIT {limit}"
+        return cast(list[ResultRow], list(self.graph.query(query)))
