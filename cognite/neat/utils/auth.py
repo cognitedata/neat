@@ -243,8 +243,13 @@ def _prompt_user() -> _EnvironmentVariables:
             token_url = Prompt.ask("Enter IDP_TOKEN_URL")
             variables.IDP_TOKEN_URL = token_url
         optional = ["IDP_AUDIENCE", "IDP_SCOPES"]
-    else:
-        optional = ["IDP_TENANT_ID", "IDP_SCOPES"]
+    else:  # login_flow == "interactive"
+        tenant_id = Prompt.ask("Enter IDP_TENANT_ID (leave empty to enter IDP_AUTHORITY_URL instead)")
+        if tenant_id:
+            variables.IDP_TENANT_ID = tenant_id
+        else:
+            variables.IDP_AUTHORITY_URL = Prompt.ask("Enter IDP_TOKEN_URL")
+        optional = ["IDP_SCOPES"]
 
     defaults = "".join(f"\n - {name}: {getattr(variables, name.lower())}" for name in optional)
     use_defaults = Prompt.ask(
