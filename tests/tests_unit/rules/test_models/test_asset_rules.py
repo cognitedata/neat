@@ -3,9 +3,7 @@ from typing import Any
 
 import pytest
 
-from cognite.neat.rules.models.asset import (
-    AssetRules,
-)
+from cognite.neat.rules.models import AssetRules, InformationRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import AssetEntity, RelationshipEntity
 
@@ -70,3 +68,9 @@ class TestAssetRules:
     @pytest.mark.parametrize("rules, expected_exception", list(case_asset_relationship()))
     def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: DataType) -> None:
         assert AssetRules.model_validate(rules).properties.data[0].implementation == expected_exception
+
+    def test_conversion_between_roles(self, david_rules: InformationRules) -> None:
+        asset_rules = david_rules.as_asset_architect_rules()
+        information_rules = asset_rules.as_information_architect_rules()
+
+        assert asset_rules.model_dump() == information_rules.as_asset_architect_rules().model_dump()

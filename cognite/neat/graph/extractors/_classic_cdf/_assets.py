@@ -14,6 +14,13 @@ from cognite.neat.utils.utils import create_sha256_hash, string_to_ideal_type
 
 
 class AssetsExtractor(BaseExtractor):
+    """Extract data from Cognite Data Fusions Assets into Neat.
+
+    Args:
+        assets (Iterable[Asset]): An iterable of assets.
+        namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+    """
+
     def __init__(
         self,
         assets: Iterable[Asset],
