@@ -18,7 +18,9 @@ _VALID_LOGIN_FLOWS = get_args(_LOGIN_FLOW)
 _CLIENT_NAME = f"CogniteNeat:{_version.__version__}"
 
 
-def get_cognite_client() -> CogniteClient:
+def get_cognite_client(env_file_name: str = ".env") -> CogniteClient:
+    if not env_file_name.endswith(".env"):
+        raise ValueError("env_file_name must end with '.env'")
     with suppress(KeyError):
         variables = _EnvironmentVariables.create_from_environ()
         return variables.get_client()
@@ -26,16 +28,16 @@ def get_cognite_client() -> CogniteClient:
     repo_root = _repo_root()
     if repo_root:
         with suppress(KeyError, FileNotFoundError, TypeError):
-            variables = _from_dotenv(repo_root / ".env")
+            variables = _from_dotenv(repo_root / env_file_name)
             client = variables.get_client()
             print("Found .env file in repository root. Loaded variables from .env file.")
             return client
     variables = _prompt_user()
-    if repo_root and _env_in_gitignore(repo_root):
+    if repo_root and _env_in_gitignore(repo_root, env_file_name):
         local_import("rich", "jupyter")
         from rich.prompt import Prompt
 
-        env_file = repo_root / ".env"
+        env_file = repo_root / env_file_name
         answer = Prompt.ask(
             "Do you store the variables in an .env file in the repository root for easy reuse?", choices=["y", "n"]
         )
@@ -284,13 +286,13 @@ def _repo_root() -> Path | None:
     return None
 
 
-def _env_in_gitignore(repo_root: Path) -> bool:
+def _env_in_gitignore(repo_root: Path, env_file_name: str) -> bool:
     ignore_file = repo_root / ".gitignore"
     if not ignore_file.exists():
         return False
     else:
         ignored = {line.strip() for line in ignore_file.read_text().splitlines()}
-        return ".env" in ignored or "*.env" in ignored
+        return env_file_name in ignored or "*.env" in ignored
 
 
 if __name__ == "__main__":
