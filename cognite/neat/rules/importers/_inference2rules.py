@@ -246,7 +246,7 @@ class InferenceImporter(BaseImporter):
             created=datetime.now(),
             updated=datetime.now(),
             description="Inferred model from knowledge graph",
-            prefix="inferred",
+            prefix="neat",
             namespace=DEFAULT_NAMESPACE,
         )
 
