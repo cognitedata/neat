@@ -64,6 +64,8 @@ jobs:
           client-id: 7e26ba04-3da0-4241-b517-c12b8205af8a
           tenant-id: a9ae5b54-3600-4917-a9dc-3020723360b3
           subscription-id: fd108646-dc13-4d9a-9b8c-d9dbde664887
+          
+      - run: az acr login --name scsproduction 
 
       - name: Export dependencies
         run: |
