@@ -18,7 +18,9 @@ _VALID_LOGIN_FLOWS = get_args(_LOGIN_FLOW)
 _CLIENT_NAME = f"CogniteNeat:{_version.__version__}"
 
 
-def get_cognite_client() -> CogniteClient:
+def get_cognite_client(env_file_name: str = ".env") -> CogniteClient:
+    if not env_file_name.endswith(".env"):
+        raise ValueError("env_file_name must end with '.env'")
     with suppress(KeyError):
         variables = _EnvironmentVariables.create_from_environ()
         return variables.get_client()
@@ -26,16 +28,16 @@ def get_cognite_client() -> CogniteClient:
     repo_root = _repo_root()
     if repo_root:
         with suppress(KeyError, FileNotFoundError, TypeError):
-            variables = _from_dotenv(repo_root / ".env")
+            variables = _from_dotenv(repo_root / env_file_name)
             client = variables.get_client()
             print("Found .env file in repository root. Loaded variables from .env file.")
             return client
     variables = _prompt_user()
-    if repo_root and _env_in_gitignore(repo_root):
+    if repo_root and _env_in_gitignore(repo_root, env_file_name):
         local_import("rich", "jupyter")
         from rich.prompt import Prompt
 
-        env_file = repo_root / ".env"
+        env_file = repo_root / env_file_name
         answer = Prompt.ask(
             "Do you store the variables in an .env file in the repository root for easy reuse?", choices=["y", "n"]
         )
@@ -88,7 +90,7 @@ class _EnvironmentVariables:
     @property
     def idp_scopes(self) -> list[str]:
         if self.IDP_SCOPES:
-            return self.IDP_SCOPES.split()
+            return self.IDP_SCOPES.split(",")
         return [f"https://{self.CDF_CLUSTER}.cognitedata.com/.default"]
 
     @property
@@ -187,7 +189,7 @@ class _EnvironmentVariables:
             value = getattr(self, name)
             if value is not None:
                 if isinstance(value, list):
-                    value = " ".join(value)
+                    value = ",".join(value)
                 lines.append(f"{field.name}={value}")
         return "\n".join(lines)
 
@@ -199,7 +201,7 @@ def _from_dotenv(evn_file: Path) -> _EnvironmentVariables:
     valid_variables = {f.name for f in fields(_EnvironmentVariables)}
     variables: dict[str, str] = {}
     for line in content.splitlines():
-        if line.startswith("#") or not line:
+        if line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
         if key in valid_variables:
@@ -241,8 +243,13 @@ def _prompt_user() -> _EnvironmentVariables:
             token_url = Prompt.ask("Enter IDP_TOKEN_URL")
             variables.IDP_TOKEN_URL = token_url
         optional = ["IDP_AUDIENCE", "IDP_SCOPES"]
-    else:
-        optional = ["IDP_TENANT_ID", "IDP_SCOPES"]
+    else:  # login_flow == "interactive"
+        tenant_id = Prompt.ask("Enter IDP_TENANT_ID (leave empty to enter IDP_AUTHORITY_URL instead)")
+        if tenant_id:
+            variables.IDP_TENANT_ID = tenant_id
+        else:
+            variables.IDP_AUTHORITY_URL = Prompt.ask("Enter IDP_TOKEN_URL")
+        optional = ["IDP_SCOPES"]
 
     defaults = "".join(f"\n - {name}: {getattr(variables, name.lower())}" for name in optional)
     use_defaults = Prompt.ask(
@@ -284,15 +291,15 @@ def _repo_root() -> Path | None:
     return None
 
 
-def _env_in_gitignore(repo_root: Path) -> bool:
+def _env_in_gitignore(repo_root: Path, env_file_name: str) -> bool:
     ignore_file = repo_root / ".gitignore"
     if not ignore_file.exists():
         return False
     else:
         ignored = {line.strip() for line in ignore_file.read_text().splitlines()}
-        return ".env" in ignored or "*.env" in ignored
+        return env_file_name in ignored or "*.env" in ignored
 
 
 if __name__ == "__main__":
-    c = _prompt_user().get_client()
+    c = get_cognite_client()
     print(c.iam.token.inspect())

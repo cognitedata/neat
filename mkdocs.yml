@@ -24,6 +24,7 @@ nav:
           - Extending Solution Model: tutorials/data-modeling-lifecycle/part-4-extending-solution-model.md
           - Business Solution Model: tutorials/data-modeling-lifecycle/part-5-business-solution-model.md
           - User Personas: tutorials/data-modeling-lifecycle/user-personas.md
+      - Asset Hierarchy Migration: tutorials/asset_hierarchy_migration.ipynb
       - Workflows:
           - Overview: tutorials/workflows/overview.md
         #   - Steps Library: tutorials/workflows/steps-library.md

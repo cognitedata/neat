@@ -171,3 +171,5 @@ tests/data/970_0ca0c919-046a-4940-b191-f5cc4d0e6513.json
 build/*
 scripts/tmp/*
 scripts/config_manual_test.yaml
+real_cases/
+*.env
