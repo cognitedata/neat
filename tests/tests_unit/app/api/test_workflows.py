@@ -55,9 +55,11 @@ def test_workflow_workflows(workflow_names: list[str], fastapi_client: TestClien
 
 
 def test_rules(transformation_rules: Rules, fastapi_client: TestClient):
-    # transformation_rules load Rules-Nordic44-to-TNT.xlsx
-    # /api/rules fetch rules related to default workflow which are Rules-Nordic44-to-TNT.xlsx
-    response = fastapi_client.get("/api/rules", params={"workflow_name": "Extract_RDF_Graph_and_Generate_Assets"})
+    # transformation_rules load Rules-Nordic44.xlsx
+    # /api/rules fetch rules related to default workflow which are Rules-Nordic44.xlsx
+    response = fastapi_client.get(
+        "/api/rules", params={"workflow_name": "Extract_RDF_Graph_and_Generate_Assets"}
+    )
 
     # Assert
     assert response.status_code == 200
@@ -69,22 +71,31 @@ def test_rules(transformation_rules: Rules, fastapi_client: TestClient):
 @pytest.mark.freeze_time("2024-01-21")
 @pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
 def test_workflow_start(
-    workflow_name: str, cognite_client: CogniteClient, fastapi_client: TestClient, data_regression, tmp_path
+    workflow_name: str,
+    cognite_client: CogniteClient,
+    fastapi_client: TestClient,
+    data_regression,
+    tmp_path,
 ):
     # Arrange
     if workflow_name == "Extract_RDF_Graph_and_Generate_Assets":
         # When running this test in GitHub actions, you get permission issues with the default disk_store_dir.
-        response = fastapi_client.get("/api/workflow/workflow-definition/Extract_RDF_Graph_and_Generate_Assets")
+        response = fastapi_client.get(
+            "/api/workflow/workflow-definition/Extract_RDF_Graph_and_Generate_Assets"
+        )
         definition = WorkflowDefinition(**response.json()["definition"])
         response = fastapi_client.post(
-            "/api/workflow/workflow-definition/Extract_RDF_Graph_and_Generate_Assets", json=definition.model_dump()
+            "/api/workflow/workflow-definition/Extract_RDF_Graph_and_Generate_Assets",
+            json=definition.model_dump(),
         )
         assert response.status_code == 200
 
     # Act
     response = fastapi_client.post(
         "/api/workflow/start",
-        json=RunWorkflowRequest(name=workflow_name, sync=True, config={}, start_step="").model_dump(),
+        json=RunWorkflowRequest(
+            name=workflow_name, sync=True, config={}, start_step=""
+        ).model_dump(),
     )
 
     assert response.status_code == 200
@@ -94,7 +105,8 @@ def test_workflow_start(
     for resource_name in ["assets", "relationships", "labels"]:
         memory: MemoryClient = getattr(cognite_client, resource_name)
         data[resource_name] = memory.dump(
-            ordered=True, exclude={"metadata.start_time", "metadata.update_time", "start_time"}
+            ordered=True,
+            exclude={"metadata.start_time", "metadata.update_time", "start_time"},
         )
     data_regression.check(data, basename=f"{workflow_name}_workflow")
 
@@ -109,7 +121,9 @@ def test_workflow_stats(workflow_name: str, fastapi_client: TestClient):
     assert response.json()["state"] == "COMPLETED"
 
 
-def test_workflow_reload_workflows(workflow_names: list[str], fastapi_client: TestClient):
+def test_workflow_reload_workflows(
+    workflow_names: list[str], fastapi_client: TestClient
+):
     # Act
     response = fastapi_client.post("/api/workflow/reload-workflows")
 
@@ -119,7 +133,9 @@ def test_workflow_reload_workflows(workflow_names: list[str], fastapi_client: Te
 
 
 @pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
-def test_workflow_workflow_definition_get(workflow_name: str, fastapi_client: TestClient):
+def test_workflow_workflow_definition_get(
+    workflow_name: str, fastapi_client: TestClient
+):
     # Act
     response = fastapi_client.get(f"/api/workflow/workflow-definition/{workflow_name}")
 
@@ -167,7 +183,9 @@ def test_query(workflow_name: str, fastapi_client: TestClient):
     response = fastapi_client.post(
         "/api/query",
         json=QueryRequest(
-            graph_name="source", workflow_name=workflow_name, query="SELECT DISTINCT ?class WHERE { ?s a ?class }"
+            graph_name="source",
+            workflow_name=workflow_name,
+            query="SELECT DISTINCT ?class WHERE { ?s a ?class }",
         ).model_dump(),
     )
 
@@ -178,7 +196,9 @@ def test_query(workflow_name: str, fastapi_client: TestClient):
     assert content["fields"] == ["class"], f"Missing fields, got {content}"
     assert len(content["rows"]) == 59
     assert len(content["rows"]) == 59
-    assert {"class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Terminal"} in content["rows"]
+    assert {"class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Terminal"} in content[
+        "rows"
+    ]
 
 
 @pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
@@ -220,7 +240,9 @@ def test_get_datatype_properties(workflow_name: str, fastapi_client: TestClient)
 
     response = fastapi_client.post(
         "/api/get-datatype-properties",
-        json=DatatypePropertyRequest(graph_name="source", workflow_name=workflow_name, limit=1).model_dump(),
+        json=DatatypePropertyRequest(
+            graph_name="source", workflow_name=workflow_name, limit=1
+        ).model_dump(),
     )
 
     content = response.json()
@@ -284,11 +306,16 @@ def test_search(workflow_name: str, fastapi_client: TestClient):
 @pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
 def test_get_classes(workflow_name: str, fastapi_client: TestClient):
     # Act
-    response = fastapi_client.get(f"/api/get-classes?graph_name=source&workflow_name={workflow_name}&cache=true")
+    response = fastapi_client.get(
+        f"/api/get-classes?graph_name=source&workflow_name={workflow_name}&cache=true"
+    )
 
     content = response.json()
 
     assert response.status_code == 200
     assert content["fields"] == ["class", "instances"]
-    assert {"class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Substation", "instances": "45"} in content["rows"]
+    assert {
+        "class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Substation",
+        "instances": "45",
+    } in content["rows"]
     assert len(content["rows"]) == 59

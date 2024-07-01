@@ -7,6 +7,7 @@ from typing import Any, ClassVar
 from cognite.client.data_classes import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic_core import ErrorDetails
+from rdflib import Namespace
 
 from cognite.neat.issues import MultiValueError
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
@@ -23,6 +24,7 @@ __all__ = [
     "InvalidRowError",
     "InvalidPropertyError",
     "InvalidClassError",
+    "PrefixNamespaceCollisionError",
     "InvalidContainerError",
     "InvalidViewError",
     "InvalidRowUnknownSheetError",
@@ -44,27 +46,38 @@ class InvalidSheetError(NeatValidationError, ABC):
     @classmethod
     @abstractmethod
     def from_pydantic_error(
-        cls, error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+        cls,
+        error: ErrorDetails,
+        read_info_by_sheet: dict[str, SpreadsheetRead] | None = None,
     ) -> Self:
         raise NotImplementedError
 
     @classmethod
     def from_pydantic_errors(
-        cls, errors: list[ErrorDetails], read_info_by_sheet: dict[str, SpreadsheetRead] | None = None, **kwargs: Any
+        cls,
+        errors: list[ErrorDetails],
+        read_info_by_sheet: dict[str, SpreadsheetRead] | None = None,
+        **kwargs: Any,
     ) -> "list[NeatValidationError]":
         output: list[NeatValidationError] = []
         for error in errors:
             if raised_error := error.get("ctx", {}).get("error"):
                 if isinstance(raised_error, MultiValueError):
                     for caught_error in raised_error.errors:
-                        reader = (read_info_by_sheet or {}).get("Properties", SpreadsheetRead())
-                        if isinstance(caught_error, InconsistentContainerDefinitionError):
+                        reader = (read_info_by_sheet or {}).get(
+                            "Properties", SpreadsheetRead()
+                        )
+                        if isinstance(
+                            caught_error, InconsistentContainerDefinitionError
+                        ):
                             row_numbers = list(caught_error.row_numbers)
                             # The Error classes are immutable, so we have to reuse the set.
                             caught_error.row_numbers.clear()
                             for row_no in row_numbers:
                                 # Adjusting the row number to the actual row number in the spreadsheet
-                                caught_error.row_numbers.add(reader.adjusted_row_number(row_no))
+                                caught_error.row_numbers.add(
+                                    reader.adjusted_row_number(row_no)
+                                )
                         if isinstance(caught_error, InvalidRowError):
                             # Adjusting the row number to the actual row number in the spreadsheet
                             new_row = reader.adjusted_row_number(caught_error.row)
@@ -75,7 +88,9 @@ class InvalidSheetError(NeatValidationError, ABC):
 
             if len(error["loc"]) >= 4:
                 sheet_name, *_ = error["loc"]
-                error_cls = _INVALID_ROW_ERROR_BY_SHEET_NAME.get(str(sheet_name), InvalidRowUnknownSheetError)
+                error_cls = _INVALID_ROW_ERROR_BY_SHEET_NAME.get(
+                    str(sheet_name), InvalidRowUnknownSheetError
+                )
                 output.append(error_cls.from_pydantic_error(error, read_info_by_sheet))
                 continue
 
@@ -86,7 +101,9 @@ class InvalidSheetError(NeatValidationError, ABC):
 @dataclass(frozen=True)
 @total_ordering
 class InvalidRowError(InvalidSheetError, ABC):
-    description: ClassVar[str] = "This is a generic class for all invalid row specifications."
+    description: ClassVar[str] = (
+        "This is a generic class for all invalid row specifications."
+    )
     fix: ClassVar[str] = "Follow the instruction in the error message."
     sheet_name: ClassVar[str]
 
@@ -100,16 +117,26 @@ class InvalidRowError(InvalidSheetError, ABC):
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, InvalidRowError):
             return NotImplemented
-        return (self.sheet_name, self.row, self.column) < (other.sheet_name, other.row, other.column)
+        return (self.sheet_name, self.row, self.column) < (
+            other.sheet_name,
+            other.row,
+            other.column,
+        )
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, InvalidRowError):
             return NotImplemented
-        return (self.sheet_name, self.row, self.column) == (other.sheet_name, other.row, other.column)
+        return (self.sheet_name, self.row, self.column) == (
+            other.sheet_name,
+            other.row,
+            other.column,
+        )
 
     @classmethod
     def from_pydantic_error(
-        cls, error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+        cls,
+        error: ErrorDetails,
+        read_info_by_sheet: dict[str, SpreadsheetRead] | None = None,
     ) -> Self:
         sheet_name, _, row, column, *__ = error["loc"]
         reader = (read_info_by_sheet or {}).get(str(sheet_name), SpreadsheetRead())
@@ -173,7 +200,9 @@ class InvalidRowUnknownSheetError(InvalidRowError):
 
     @classmethod
     def from_pydantic_error(
-        cls, error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+        cls,
+        error: ErrorDetails,
+        read_info_by_sheet: dict[str, SpreadsheetRead] | None = None,
     ) -> Self:
         sheet_name, _, row, column, *__ = error["loc"]
         reader = (read_info_by_sheet or {}).get(str(sheet_name), SpreadsheetRead())
@@ -197,13 +226,17 @@ class InvalidRowUnknownSheetError(InvalidRowError):
 
 
 _INVALID_ROW_ERROR_BY_SHEET_NAME = {
-    cls_.sheet_name: cls_ for cls_ in InvalidRowError.__subclasses__() if cls_ is not InvalidRowError
+    cls_.sheet_name: cls_
+    for cls_ in InvalidRowError.__subclasses__()
+    if cls_ is not InvalidRowError
 }
 
 
 @dataclass(frozen=True)
 class NonExistingContainerError(InvalidPropertyError):
-    description = "The container referenced by the property is missing in the container sheet"
+    description = (
+        "The container referenced by the property is missing in the container sheet"
+    )
     fix = "Add the container to the container sheet"
 
     container_id: ContainerId
@@ -295,6 +328,26 @@ class ParentClassesNotDefinedError(NeatValidationError):
 
 
 @dataclass(frozen=True)
+class PrefixNamespaceCollisionError(NeatValidationError):
+    description = "Same namespaces are assigned to different prefixes."
+    fix = "Make sure that each unique namespace is assigned to a unique prefix"
+
+    namespaces: list[Namespace]
+    prefixes: list[str]
+
+    def dump(self) -> dict[str, list[str]]:
+        output = super().dump()
+        output["classes"] = self.classes
+        return output
+
+    def message(self) -> str:
+        return (
+            f"Namespaces {', '.join(self.namespaces)} are assigned multiple times."
+            f" Impacted prefixes: {', '.join(self.prefixes)}."
+        )
+
+
+@dataclass(frozen=True)
 class ValueTypeNotDefinedError(NeatValidationError):
     description = "Value types referred by properties are not defined in Rules."
     fix = "Make sure that all value types are defined in Rules."
@@ -371,7 +424,9 @@ class MultiValueIsListError(InconsistentContainerDefinitionError):
 @dataclass(frozen=True)
 class MultiNullableError(InconsistentContainerDefinitionError):
     description = "The property has multiple nullable definitions"
-    fix = "Use the same nullable definition for all properties using the same container."
+    fix = (
+        "Use the same nullable definition for all properties using the same container."
+    )
     nullable_definitions: set[bool]
 
     def message(self) -> str:
@@ -436,5 +491,7 @@ class MultiUniqueConstraintError(InconsistentContainerDefinitionError):
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
-        output["unique_constraint_definitions"] = sorted(self.unique_constraint_definitions)
+        output["unique_constraint_definitions"] = sorted(
+            self.unique_constraint_definitions
+        )
         return output

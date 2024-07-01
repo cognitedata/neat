@@ -3,7 +3,7 @@ from pathlib import Path
 
 from rdflib import Namespace
 
-from cognite.neat.constants import PREFIXES
+from cognite.neat.constants import PREFIXES, DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._dexpi import DexpiExtractor
 from cognite.neat.legacy.graph.models import Triple
 
@@ -31,7 +31,11 @@ class DexpiXML(BaseExtractor):
         base_namespace: str | None = None,
     ):
         self.filepath = Path(filepath)
-        self.namespace = Namespace(base_namespace) if isinstance(base_namespace, str | Namespace) else PREFIXES["neat"]
+        self.namespace = (
+            Namespace(base_namespace)
+            if isinstance(base_namespace, str | Namespace)
+            else DEFAULT_NAMESPACE
+        )
 
     def extract(self) -> set[Triple]:
         """

@@ -8,7 +8,9 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.legacy.graph import extractors, loaders
 from cognite.neat.legacy.graph.stores import MemoryStore
-from cognite.neat.legacy.graph.transformations.transformer import domain2app_knowledge_graph
+from cognite.neat.legacy.graph.transformations.transformer import (
+    domain2app_knowledge_graph,
+)
 from cognite.neat.legacy.rules import importers
 from cognite.neat.legacy.rules.exporters._rules2triples import get_instances_as_triples
 from cognite.neat.legacy.rules.models.rules import Rules
@@ -25,7 +27,9 @@ os.environ["NEAT_CDF_CLIENT_ID"] = "uuid"
 os.environ["NEAT_CDF_CLIENT_SECRET"] = "secret"
 os.environ["NEAT_CDF_CLIENT_NAME"] = "neat-test-service"
 os.environ["NEAT_CDF_BASE_URL"] = "https://bluefield.cognitedata.com"
-os.environ["NEAT_CDF_TOKEN_URL"] = " https://login.microsoftonline.com/uuid4/oauth2/v2.0/token"
+os.environ["NEAT_CDF_TOKEN_URL"] = (
+    " https://login.microsoftonline.com/uuid4/oauth2/v2.0/token"
+)
 os.environ["NEAT_CDF_SCOPES"] = "https://bluefield.cognitedata.com/.default"
 os.environ["NEAT_CDF_DEFAULT_DATASET_ID"] = "3931920688237191"
 os.environ["NEAT_LOAD_EXAMPLES"] = "1"
@@ -38,12 +42,14 @@ def nordic44_inferred_rules() -> Rules:
 
 @pytest.fixture(scope="session")
 def transformation_rules() -> Rules:
-    return importers.ExcelImporter(config.TNT_TRANSFORMATION_RULES).to_rules()
+    return importers.ExcelImporter(config.SIMPLECIM_TRANSFORMATION_RULES).to_rules()
 
 
 @pytest.fixture(scope="session")
 def dms_compliant_rules() -> Rules:
-    return importers.ExcelImporter(config.TNT_TRANSFORMATION_RULES_DMS_COMPLIANT).to_rules()
+    return importers.ExcelImporter(
+        config.SIMPLECIM_TRANSFORMATION_RULES_DMS_COMPLIANT
+    ).to_rules()
 
 
 @pytest.fixture(scope="session")
@@ -81,7 +87,9 @@ def graph_with_numeric_ids(simple_rules) -> MemoryStore:
 
     namespace = simple_rules.metadata.namespace
     graph_store.graph.add((namespace["1"], RDF.type, namespace["PriceAreaConnection"]))
-    graph_store.graph.add((namespace["1"], namespace["name"], Literal("Price Area Connection 1")))
+    graph_store.graph.add(
+        (namespace["1"], namespace["name"], Literal("Price Area Connection 1"))
+    )
     graph_store.graph.add((namespace["1"], namespace["priceArea"], namespace["2"]))
     graph_store.graph.add((namespace["1"], namespace["priceArea"], namespace["3"]))
     return graph_store
@@ -98,7 +106,9 @@ def graph_with_date(transformation_rules_date) -> MemoryStore:
 
     namespace = transformation_rules_date.metadata.namespace
     graph_store.graph.add((namespace["1"], RDF.type, namespace["PriceAreaConnection"]))
-    graph_store.graph.add((namespace["1"], namespace["name"], Literal("Price Area Connection 1")))
+    graph_store.graph.add(
+        (namespace["1"], namespace["name"], Literal("Price Area Connection 1"))
+    )
     graph_store.graph.add((namespace["1"], namespace["priceArea"], namespace["2"]))
     graph_store.graph.add((namespace["1"], namespace["priceArea"], namespace["3"]))
     graph_store.graph.add((namespace["1"], namespace["endDate"], Literal("2020-01-01")))
@@ -106,16 +116,22 @@ def graph_with_date(transformation_rules_date) -> MemoryStore:
 
 
 @pytest.fixture(scope="session")
-def source_knowledge_graph() -> MemoryStore:
+def source_knowledge_graph(dms_compliant_rules) -> MemoryStore:
     graph = MemoryStore(namespace=Namespace("http://purl.org/nordic44#"))
     graph.init_graph()
     graph.import_from_file(config.NORDIC44_KNOWLEDGE_GRAPH)
+
+    for prefix, namespace in dms_compliant_rules.prefixes.items():
+        graph.graph.bind(prefix, namespace)
     return graph
 
 
 @pytest.fixture(scope="session")
 def source_knowledge_graph_dirty(transformation_rules) -> MemoryStore:
-    graph = MemoryStore(namespace=Namespace("http://purl.org/nordic44#"))
+    graph = MemoryStore(
+        namespace=Namespace("http://purl.org/nordic44#"),
+        prefixes=transformation_rules.prefixes,
+    )
     graph.init_graph()
     graph.import_from_file(config.NORDIC44_KNOWLEDGE_GRAPH_DIRTY)
     for triple in get_instances_as_triples(transformation_rules):
@@ -125,7 +141,9 @@ def source_knowledge_graph_dirty(transformation_rules) -> MemoryStore:
 
 @pytest.fixture(scope="session")
 def solution_knowledge_graph_dirty(source_knowledge_graph_dirty, transformation_rules):
-    return domain2app_knowledge_graph(source_knowledge_graph_dirty, transformation_rules)
+    return domain2app_knowledge_graph(
+        source_knowledge_graph_dirty, transformation_rules
+    )
 
 
 @pytest.fixture(scope="session")
@@ -135,7 +153,10 @@ def solution_knowledge_graph(source_knowledge_graph, transformation_rules):
 
 @pytest.fixture(scope="function")
 def mock_knowledge_graph(transformation_rules) -> MemoryStore:
-    mock_graph = MemoryStore(prefixes=transformation_rules.prefixes, namespace=transformation_rules.metadata.namespace)
+    mock_graph = MemoryStore(
+        prefixes=transformation_rules.prefixes,
+        namespace=transformation_rules.metadata.namespace,
+    )
     mock_graph.init_graph(base_prefix=transformation_rules.metadata.prefix)
 
     class_count = {
@@ -146,7 +167,9 @@ def mock_knowledge_graph(transformation_rules) -> MemoryStore:
         "Terminal": 2,
     }
 
-    mock_triples = extractors.MockGraphGenerator(transformation_rules, class_count).extract()
+    mock_triples = extractors.MockGraphGenerator(
+        transformation_rules, class_count
+    ).extract()
     mock_graph.add_triples(mock_triples, batch_size=20000)
 
     return mock_graph
@@ -154,12 +177,16 @@ def mock_knowledge_graph(transformation_rules) -> MemoryStore:
 
 @pytest.fixture(scope="function")
 def mock_rdf_assets(mock_knowledge_graph, transformation_rules):
-    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=123456)
+    return loaders.rdf2assets(
+        mock_knowledge_graph, transformation_rules, data_set_id=123456
+    )
 
 
 @pytest.fixture(scope="function")
 def mock_cdf_assets(mock_knowledge_graph, transformation_rules):
-    return loaders.rdf2assets(mock_knowledge_graph, transformation_rules, data_set_id=123456)
+    return loaders.rdf2assets(
+        mock_knowledge_graph, transformation_rules, data_set_id=123456
+    )
 
 
 @pytest.fixture(scope="function")

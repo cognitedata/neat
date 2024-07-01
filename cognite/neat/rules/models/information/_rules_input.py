@@ -5,7 +5,12 @@ from typing import Any, Literal, cast, overload
 
 from rdflib import Namespace
 
-from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness, _add_alias
+from cognite.neat.rules.models._base import (
+    DataModelType,
+    ExtensionCategory,
+    SchemaCompleteness,
+    _add_alias,
+)
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
@@ -15,7 +20,12 @@ from cognite.neat.rules.models.entities import (
     UnknownEntity,
 )
 
-from ._rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
+from ._rules import (
+    InformationClass,
+    InformationMetadata,
+    InformationProperty,
+    InformationRules,
+)
 
 
 @dataclass
@@ -104,8 +114,13 @@ class InformationPropertyInput:
     ) -> "InformationPropertyInput | list[InformationPropertyInput] | None":
         if data is None:
             return None
-        if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
-            items = cast(list[dict[str, Any]], data.get("data") if isinstance(data, dict) else data)
+        if isinstance(data, list) or (
+            isinstance(data, dict) and isinstance(data.get("data"), list)
+        ):
+            items = cast(
+                list[dict[str, Any]],
+                data.get("data") if isinstance(data, dict) else data,
+            )
             return [loaded for item in items if (loaded := cls.load(item)) is not None]
 
         _add_alias(data, InformationProperty)
@@ -188,8 +203,13 @@ class InformationClassInput:
     ) -> "InformationClassInput | list[InformationClassInput] | None":
         if data is None:
             return None
-        if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
-            items = cast(list[dict[str, Any]], data.get("data") if isinstance(data, dict) else data)
+        if isinstance(data, list) or (
+            isinstance(data, dict) and isinstance(data.get("data"), list)
+        ):
+            items = cast(
+                list[dict[str, Any]],
+                data.get("data") if isinstance(data, dict) else data,
+            )
             return [loaded for item in items if (loaded := cls.load(item)) is not None]
         _add_alias(data, InformationClass)
         return cls(
@@ -211,7 +231,10 @@ class InformationClassInput:
             "Reference": self.reference,
             "Match Type": self.match_type,
             "Parent Class": (
-                [ParentClassEntity.load(parent, prefix=default_prefix) for parent in self.parent.split(",")]
+                [
+                    ParentClassEntity.load(parent, prefix=default_prefix)
+                    for parent in self.parent.split(",")
+                ]
                 if self.parent
                 else None
             ),
@@ -223,6 +246,7 @@ class InformationRulesInput:
     metadata: InformationMetadataInput
     properties: Sequence[InformationPropertyInput]
     classes: Sequence[InformationClassInput]
+    prefixes: "dict[str, Namespace] | None" = None
     last: "InformationRulesInput | InformationRules | None" = None
     reference: "InformationRulesInput | InformationRules | None" = None
 
@@ -244,6 +268,7 @@ class InformationRulesInput:
             metadata=InformationMetadataInput.load(data.get("metadata")),  # type: ignore[arg-type]
             properties=InformationPropertyInput.load(data.get("properties")),  # type: ignore[arg-type]
             classes=InformationClassInput.load(data.get("classes")),  # type: ignore[arg-type]
+            prefixes=data.get("prefixes"),
             last=InformationRulesInput.load(data.get("last")),
             reference=InformationRulesInput.load(data.get("reference")),
         )
@@ -270,6 +295,7 @@ class InformationRulesInput:
             Metadata=self.metadata.dump(),
             Properties=[prop.dump(default_prefix) for prop in self.properties],
             Classes=[class_.dump(default_prefix) for class_ in self.classes],
+            Prefixes=self.prefixes,
             Last=last,
             Reference=reference,
         )

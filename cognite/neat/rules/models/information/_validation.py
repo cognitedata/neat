@@ -1,5 +1,5 @@
 import itertools
-from typing import cast
+from typing import Counter, cast
 
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import IssueList
@@ -25,7 +25,10 @@ class InformationPostValidation:
         if self.metadata.schema_ == SchemaCompleteness.partial:
             return self.issue_list
 
-        if self.metadata.data_model_type == DataModelType.solution and not self.rules.reference:
+        if (
+            self.metadata.data_model_type == DataModelType.solution
+            and not self.rules.reference
+        ):
             raise ValueError("Reference data model is missing")
 
         if self.metadata.schema_ == SchemaCompleteness.extended and not self.rules.last:
@@ -35,6 +38,7 @@ class InformationPostValidation:
         self._referenced_parent_classes_exist()
         self._referenced_classes_exist()
         self._referenced_value_types_exist()
+        self._namespaces_reassigned()
 
         return self.issue_list
 
@@ -52,13 +56,16 @@ class InformationPostValidation:
                     dangling_classes.add(class_)
                 # USE CASE: class has no direct properties and no parents with properties
                 elif class_ not in class_parent_pairs and not any(
-                    parent in referred_classes for parent in get_inheritance_path(class_, class_parent_pairs)
+                    parent in referred_classes
+                    for parent in get_inheritance_path(class_, class_parent_pairs)
                 ):
                     dangling_classes.add(class_)
 
         if dangling_classes:
             self.issue_list.append(
-                issues.spreadsheet.ClassNoPropertiesNoParentError([class_.versioned_id for class_ in dangling_classes])
+                issues.spreadsheet.ClassNoPropertiesNoParentError(
+                    [class_.versioned_id for class_ in dangling_classes]
+                )
             )
 
     def _referenced_parent_classes_exist(self) -> None:
@@ -69,7 +76,9 @@ class InformationPostValidation:
 
         if undefined_parents := parents.difference(classes):
             self.issue_list.append(
-                issues.spreadsheet.ParentClassesNotDefinedError([missing.versioned_id for missing in undefined_parents])
+                issues.spreadsheet.ParentClassesNotDefinedError(
+                    [missing.versioned_id for missing in undefined_parents]
+                )
             )
 
     def _referenced_classes_exist(self) -> None:
@@ -89,7 +98,10 @@ class InformationPostValidation:
 
         # USE CASE: models are extended (user + last = complete)
         if self.metadata.schema_ == SchemaCompleteness.extended:
-            defined_classes |= {class_.class_ for class_ in cast(InformationRules, self.rules.last).classes}
+            defined_classes |= {
+                class_.class_
+                for class_ in cast(InformationRules, self.rules.last).classes
+            }
             if missing_classes := referred_classes.difference(defined_classes):
                 self.issue_list.append(
                     issues.spreadsheet.PropertiesDefinedForUndefinedClassesError(
@@ -112,17 +124,26 @@ class InformationPostValidation:
         ):
             self.issue_list.append(
                 issues.spreadsheet.ValueTypeNotDefinedError(
-                    [cast(ClassEntity, missing).versioned_id for missing in missing_value_types]
+                    [
+                        cast(ClassEntity, missing).versioned_id
+                        for missing in missing_value_types
+                    ]
                 )
             )
 
         # USE CASE: models are extended (user + last = complete)
         if self.metadata.schema_ == SchemaCompleteness.extended:
-            defined_classes |= {class_.class_ for class_ in cast(InformationRules, self.rules.last).classes}
+            defined_classes |= {
+                class_.class_
+                for class_ in cast(InformationRules, self.rules.last).classes
+            }
             if missing_value_types := referred_object_types.difference(defined_classes):
                 self.issue_list.append(
                     issues.spreadsheet.ValueTypeNotDefinedError(
-                        [cast(ClassEntity, missing).versioned_id for missing in missing_value_types]
+                        [
+                            cast(ClassEntity, missing).versioned_id
+                            for missing in missing_value_types
+                        ]
                     )
                 )
 
@@ -137,8 +158,12 @@ class InformationPostValidation:
             and self.metadata.data_model_type == DataModelType.solution
         ):
             classes += (
-                cast(InformationRules, self.rules.last).model_copy(deep=True).classes.data
-                + cast(InformationRules, self.rules.reference).model_copy(deep=True).classes.data
+                cast(InformationRules, self.rules.last)
+                .model_copy(deep=True)
+                .classes.data
+                + cast(InformationRules, self.rules.reference)
+                .model_copy(deep=True)
+                .classes.data
             )
 
         # USE CASE: Solution model being created from scratch (user + reference = complete)
@@ -146,19 +171,48 @@ class InformationPostValidation:
             self.metadata.schema_ == SchemaCompleteness.complete
             and self.metadata.data_model_type == DataModelType.solution
         ):
-            classes += cast(InformationRules, self.rules.reference).model_copy(deep=True).classes.data
+            classes += (
+                cast(InformationRules, self.rules.reference)
+                .model_copy(deep=True)
+                .classes.data
+            )
 
         # USE CASE: Enterprise model being extended (user + last = complete)
         elif (
             self.metadata.schema_ == SchemaCompleteness.extended
             and self.metadata.data_model_type == DataModelType.enterprise
         ):
-            classes += cast(InformationRules, self.rules.last).model_copy(deep=True).classes.data
+            classes += (
+                cast(InformationRules, self.rules.last)
+                .model_copy(deep=True)
+                .classes.data
+            )
 
         for class_ in classes:
             class_subclass_pairs[class_.class_] = []
             if class_.parent is None:
                 continue
-            class_subclass_pairs[class_.class_].extend([parent.as_class_entity() for parent in class_.parent])
+            class_subclass_pairs[class_.class_].extend(
+                [parent.as_class_entity() for parent in class_.parent]
+            )
 
         return class_subclass_pairs
+
+    def _namespaces_reassigned(self) -> None:
+        prefixes = self.rules.prefixes.copy()
+        prefixes[self.rules.metadata.namespace.prefix] = self.rules.metadata.namespace
+
+        if len(set(prefixes.values())) != len(prefixes):
+            reused_namespaces = [
+                value
+                for value, count in Counter(prefixes.values()).items()
+                if count > 1
+            ]
+            impacted_prefixes = [
+                key for key, value in prefixes.items() if value in reused_namespaces
+            ]
+            self.issue_list.append(
+                issues.spreadsheet.PrefixNamespaceCollisionError(
+                    prefixes=impacted_prefixes, namespaces=reused_namespaces
+                )
+            )
