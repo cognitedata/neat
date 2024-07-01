@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.85.2] - 01-07-24
+### Fixed
+- Issues with docker release.
+
 ## [0.85.1] - 01-07-24
 ### Fixed
 - Bug when using the `get_cognite_client` function with interactive login. This is now fixed.
