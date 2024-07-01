@@ -17,7 +17,7 @@ Changes are grouped as follows:
 
 ## [0.85.3] - 01-07-24
 ### Fixed
-- Another issues with docker release.
+- Another issue with docker release.
 
 ## [0.85.2] - 01-07-24
 ### Fixed
