@@ -148,23 +148,37 @@ export function DomainExpertMetadataEditor(props: any) {
     const neatApiRootUrl = getNeatApiRootUrl();
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [data, setData] = React.useState<any>({});
+    const [error, setError] = React.useState("");
 
     React.useEffect(() => {
         setData(props.data);
         setDialogOpen(props.open);
     }, [props.data, props.open]);
 
-    const handleSave = () => {
-        const request = { role: "domain expert", rule_file: props.fileName, rule_component: data };
-        fetch(neatApiRootUrl + '/api/rules/metadata/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                props.onSaved(data);
-            }).catch((error) => {
-                console.error('Error:', error);
-            })
-        setDialogOpen(false);
+    const handleSave = async () => {
+        const request = { rule_file: props.fileName, metadata: data };
+        const response = await fetch(neatApiRootUrl + '/api/rules/domain-expert/component/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
+        if (!response.ok) {
+            console.log("Error response", response.status);
+            if (response.status >= 400) {
+                const errorData = await response.json();
+                try {
+                    setError(errorData.detail[0].msg);
+                } catch (e) {
+                    setError(JSON.stringify(errorData));
+                }
+                return;
+            } else {
+                setError("An unknown error occurred");
+                return;
+            }
+        } else {
+            console.log("Success response", response.status);
+            const responseData = await response.json();
+            props.onSaved(responseData);
+            setDialogOpen(false);
+        }
+
     };
 
     const handleDialogClose = () => {
@@ -207,6 +221,11 @@ export function DomainExpertMetadataEditor(props: any) {
                         </FormControl>
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Creator" size='small' variant="outlined" value={data?.creator} onChange={(event) => { handleConfigChange("creator", event.target.value) }} />
                     </FormControl>
+                    {error && (<Alert severity="error" sx={{ marginTop: 2 }}>
+                        <AlertTitle>Error</AlertTitle>
+                        {error}
+                    </Alert>
+                    )}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleSave}>Save</Button>
@@ -240,23 +259,37 @@ export function DomainExpertClassEditor(props: any) {
     const neatApiRootUrl = getNeatApiRootUrl();
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [data, setData] = React.useState<any>({});
+    const [error, setError] = React.useState("");
 
     React.useEffect(() => {
         setData(props.data);
         setDialogOpen(props.open);
     }, [props.data, props.open]);
 
-    const handleSave = () => {
-        const request = { role: "domain expert", rule_file: props.fileName, rule_component: data };
-        fetch(neatApiRootUrl + '/api/rules/class/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                props.onSaved(data);
-            }).catch((error) => {
-                console.error('Error:', error);
-            })
-        setDialogOpen(false);
+    const handleSave = async () => {
+        const request = { rule_file: props.fileName, class_: data };
+        const response = await fetch(neatApiRootUrl + '/api/rules/domain-expert/component/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
+
+        if (!response.ok) {
+            console.log("Error response", response.status);
+            if (response.status >= 400) {
+                const errorData = await response.json();
+                try {
+                    setError(errorData.detail[0].msg);
+                } catch (e) {
+                    setError(JSON.stringify(errorData));
+                }
+                return;
+            } else {
+                setError("An unknown error occurred");
+                return;
+            }
+        } else {
+            console.log("Success response", response.status);
+            const responseData = await response.json();
+            props.onSaved(responseData);
+            setDialogOpen(false);
+        }
     };
 
     const handleDialogClose = () => {
@@ -283,6 +316,11 @@ export function DomainExpertClassEditor(props: any) {
                     </FormControl>
                     {/* <JsonViewer value={data} /> */}
                 </DialogContent>
+                {error && (<Alert severity="error" sx={{ marginTop: 2 }}>
+                    <AlertTitle>Error</AlertTitle>
+                    {error}
+                </Alert>)}
+
                 <DialogActions>
                     <Button onClick={handleSave}>Save</Button>
                     <Button onClick={handleDialogClose}>Close</Button>
@@ -297,6 +335,7 @@ export default function DomainExpertDataModelPropertyEditor(props: any) {
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [data, setData] = React.useState<any>({});
     const [valueTypes, setValueTypes] = React.useState<any>(valueTypesBaseline);
+    const [error, setError] = React.useState("");
 
     React.useEffect(() => {
         console.log(props.data);
@@ -305,17 +344,30 @@ export default function DomainExpertDataModelPropertyEditor(props: any) {
         setDialogOpen(props.open);
     }, [props.data, props.open, props.classes]);
 
-    const handleSave = () => {
-        const request = { role: "domain expert", rule_file: props.fileName, rule_component: data };
-        fetch(neatApiRootUrl + '/api/rules/property/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                props.onSaved(data);
-            }).catch((error) => {
-                console.error('Error:', error);
-            })
-        setDialogOpen(false);
+    const handleSave = async () => {
+        setError("");
+        const request = { rule_file: props.fileName, property: data };
+        const response = await fetch(neatApiRootUrl + '/api/rules/domain-expert/component/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
+        if (!response.ok) {
+            console.log("Error response", response.status);
+            if (response.status >= 400) {
+                const errorData = await response.json();
+                try {
+                    setError(errorData.detail[0].msg);
+                } catch (e) {
+                    setError(JSON.stringify(errorData));
+                }
+                return;
+            } else {
+                setError("An unknown error occurred");
+                return;
+            }
+        } else {
+            console.log("Success response", response.status);
+            const responseData = await response.json();
+            props.onSaved(responseData);
+            setDialogOpen(false);
+        }
     };
 
     const loadUserDefinedTypes = (classes: any) => {
@@ -379,6 +431,10 @@ export default function DomainExpertDataModelPropertyEditor(props: any) {
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Min count (Minimum number of values that the property can hold. If no value is provided, the default value is 0, which means that the property is optional.)" size='small' variant="outlined" value={data?.min_count} onChange={(event) => { handleConfigChange("min_count", event.target.value) }} />
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Max count (Maximum number of values that the property can hold. If no value is provided, the default value is inf, which means that the property can hold any number of values (listable).	)" size='small' variant="outlined" value={data?.max_count} onChange={(event) => { handleConfigChange("max_count", event.target.value) }} />
                     </FormControl>
+                    {error && (<Alert severity="error" sx={{ marginTop: 2 }}>
+                        <AlertTitle>Error</AlertTitle>
+                        {error}
+                    </Alert>)}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleSave}>Save</Button>
@@ -486,4 +542,3 @@ export function DomainExpertPropsRow(props: { row: any, properties: any, onEditC
         </React.Fragment>
     );
 }
-

@@ -26,7 +26,8 @@ export default function RulesV2Viewer(props: any) {
     "views": [],
     "containers": [],
     "metadata": { "prefix": "", "role": "", "extension": "", "schema_": "", "suffix": "", "namespace": "", "version": "", "title": "", "description": "", "created": "", "updated": "", "creator": [], "contributor": [], "rights": "", "license": "", "dataModelId": "", "source": "" },
-    "reference": {}
+    "reference": {},
+    "last": {}
   });
   const [rules, setRules] = newLocal;
   const [selectedTab, setSelectedTab] = useState(1);
@@ -72,10 +73,15 @@ export default function RulesV2Viewer(props: any) {
     }
     if (newValue == "reference" && rules.reference) {
       setRules(rules.reference);
-    } else {
+      setModelType(newValue);
+    } else if (newValue == "last" && rules.last) {
+      setRules(rules.last);
+      setModelType(newValue);
+    } else if (newValue == "current") {
       setRules(props.rules);
+      setModelType(newValue);
     }
-    setModelType(newValue);
+
   }
 
   useEffect(() => {
@@ -118,7 +124,7 @@ export default function RulesV2Viewer(props: any) {
           </div>
         </ToggleButton>
       </ToggleButtonGroup>
-      {(rules.reference || modelType == "reference") && (
+      {(rules.reference || modelType == "reference" || rules.last || modelType == "last") && (
         <Box sx={{ marginTop: 1 }}>
           <ToggleButtonGroup
             color="primary"
@@ -130,6 +136,9 @@ export default function RulesV2Viewer(props: any) {
           >
             <ToggleButton value="current">
               Current model
+            </ToggleButton>
+            <ToggleButton value="last">
+              Model before new changes
             </ToggleButton>
             <ToggleButton value="reference">
               Reference model

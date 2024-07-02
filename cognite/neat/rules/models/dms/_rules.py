@@ -41,7 +41,11 @@ from cognite.neat.rules.models.entities import (
     ViewEntityList,
     ViewPropertyEntity,
 )
-from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFilter, RawFilter
+from cognite.neat.rules.models.wrapped_entities import (
+    HasDataFilter,
+    NodeTypeFilter,
+    RawFilter,
+)
 
 from ._schema import DMSSchema
 
@@ -153,7 +157,7 @@ class DMSMetadata(BaseMetadata):
         description, creator = cls._get_description_and_creator(data_model.description)
         return cls(
             schema_=SchemaCompleteness.complete,
-            data_model_type=DataModelType.solution if has_reference else DataModelType.enterprise,
+            data_model_type=(DataModelType.solution if has_reference else DataModelType.enterprise),
             space=data_model.space,
             name=data_model.name or None,
             description=description,
@@ -191,7 +195,9 @@ class DMSProperty(SheetEntity):
 
     @field_validator("value_type", mode="after")
     def connections_value_type(
-        cls, value: ViewPropertyEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
+        cls,
+        value: ViewPropertyEntity | ViewEntity | DMSUnknownEntity,
+        info: ValidationInfo,
     ) -> DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity:
         if (connection := info.data.get("connection")) is None:
             return value
@@ -271,7 +277,10 @@ class DMSView(SheetEntity):
         if implements is None and isinstance(self.reference, ReferenceEntity):
             # Fallback to the reference if no implements are provided
             parent = self.reference.as_view_id()
-            if (parent.space, parent.external_id) != (view_id.space, view_id.external_id):
+            if (parent.space, parent.external_id) != (
+                view_id.space,
+                view_id.external_id,
+            ):
                 implements = [parent]
 
         return dm.ViewApply(
@@ -328,9 +337,15 @@ class DMSRules(BaseRules):
             return value
         model_version = metadata.version
         if different_version := [view.view.as_id() for view in value if view.view.version != model_version]:
-            warnings.warn(issues.dms.ViewModelVersionNotMatchingWarning(different_version, model_version), stacklevel=2)
+            warnings.warn(
+                issues.dms.ViewModelVersionNotMatchingWarning(different_version, model_version),
+                stacklevel=2,
+            )
         if different_space := [view.view.as_id() for view in value if view.view.space != metadata.space]:
-            warnings.warn(issues.dms.ViewModelSpaceNotMatchingWarning(different_space, metadata.space), stacklevel=2)
+            warnings.warn(
+                issues.dms.ViewModelSpaceNotMatchingWarning(different_space, metadata.space),
+                stacklevel=2,
+            )
         return value
 
     @model_validator(mode="after")
@@ -372,7 +387,10 @@ class DMSRules(BaseRules):
             clean[last] = serializer.clean(last_dump, False)
         reference = "Reference" if by_alias else "reference"
         if self.reference and (ref_dump := clean.get(reference)):
-            space, version = self.reference.metadata.space, self.reference.metadata.version
+            space, version = (
+                self.reference.metadata.space,
+                self.reference.metadata.version,
+            )
             clean[reference] = _DMSRulesSerializer(by_alias, space, version).clean(ref_dump, True)
         return clean
 

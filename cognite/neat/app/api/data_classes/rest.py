@@ -1,14 +1,20 @@
 import logging
 
-from pydantic import BaseModel, Field, field_validator, model_validator
-from cognite.neat.rules.models.domain import DomainMetadata, DomainProperty, DomainClass
+from pydantic import BaseModel, field_validator, model_validator
+
+from cognite.neat.rules.models import RoleTypes
+from cognite.neat.rules.models.dms import (
+    DMSContainer,
+    DMSMetadata,
+    DMSProperty,
+    DMSView,
+)
+from cognite.neat.rules.models.domain import DomainClass, DomainMetadata, DomainProperty
 from cognite.neat.rules.models.information import (
+    InformationClass,
     InformationMetadata,
     InformationProperty,
-    InformationClass,
 )
-from cognite.neat.rules.models.dms import DMSMetadata, DMSProperty, DMSView, DMSContainer
-from cognite.neat.rules.models import RoleTypes
 
 
 class QueryRequest(BaseModel):
@@ -94,26 +100,23 @@ class NewRuleV2Request(BaseModel):
     rule_file: str
 
 
-class RuleV2MetadataUpsertRequest(BaseModel):
-    role: RoleTypes
+class DomainRulesUpsertRequest(BaseModel):
     rule_file: str
-    rule_component: InformationMetadata | DomainMetadata | DMSMetadata = Field(union_mode="left_to_right")
+    metadata: DomainMetadata | None = None
+    class_: DomainClass | None = None
+    property: DomainProperty | None = None
 
 
-class RuleV2PropertyUpsertRequest(BaseModel):
-    role: RoleTypes
+class InformationRulesUpsertRequest(BaseModel):
     rule_file: str
-    rule_component: InformationProperty | DomainProperty | DMSProperty = Field(union_mode="left_to_right")
+    metadata: InformationMetadata | None = None
+    class_: InformationClass | None = None
+    property: InformationProperty | None = None
 
 
-class RulesV2ClassUpsertRequest(BaseModel):
-    role: RoleTypes
+class DMSRulesUpsertRequest(BaseModel):
     rule_file: str
-    rule_component: InformationClass | DomainClass = Field(union_mode="left_to_right")
-
-
-class RulesV2DMSComponentsUpsertRequest(BaseModel):
-    role: RoleTypes
-    rule_file: str
-    rule_component_name: str
-    rule_component: DMSView | DMSContainer = Field(union_mode="left_to_right")
+    metadata: DMSMetadata | None = None
+    view: DMSView | None = None
+    container: DMSContainer | None = None
+    property: DMSProperty | None = None

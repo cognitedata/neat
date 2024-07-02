@@ -223,23 +223,36 @@ export function InformationArchitectMetadataEditor(props: any) {
     const neatApiRootUrl = getNeatApiRootUrl();
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [data, setData] = React.useState<any>({});
+    const [error, setError] = React.useState<any>("");
 
     React.useEffect(() => {
         setData(props.data);
         setDialogOpen(props.open);
     }, [props.data, props.open]);
 
-    const handleSave = () => {
-        const request = { role: "information architect", rule_file: props.fileName, rule_component: data };
-        fetch(neatApiRootUrl + '/api/rules/metadata/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                props.onSaved(data);
-            }).catch((error) => {
-                console.error('Error:', error);
-            })
-        setDialogOpen(false);
+    const handleSave = async () => {
+        const request = { rule_file: props.fileName, metadata: data };
+        const response = await fetch(neatApiRootUrl + '/api/rules/information-architect/component/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
+        if (!response.ok) {
+            console.log("Error response", response.status);
+            if (response.status >= 400) {
+                const errorData = await response.json();
+                try {
+                    setError(errorData.detail[0].msg);
+                } catch (e) {
+                    setError(JSON.stringify(errorData));
+                }
+                return;
+            } else {
+                setError("An unknown error occurred");
+                return;
+            }
+        } else {
+            console.log("Success response", response.status);
+            const responseData = await response.json();
+            props.onSaved(responseData);
+            setDialogOpen(false);
+        }
     };
 
     const handleDialogClose = () => {
@@ -351,6 +364,11 @@ export function InformationArchitectMetadataEditor(props: any) {
                         <TextField sx={{ marginTop: 1 }} fullWidth label="License" size='small' variant="outlined" value={data?.license} onChange={(event) => { handleConfigChange("license", event.target.value) }} />
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Rights" size='small' variant="outlined" value={data?.rights} onChange={(event) => { handleConfigChange("rights", event.target.value) }} />
                     </FormControl>
+                    {error && (<Alert severity="error" sx={{ marginTop: 2 }}>
+                        <AlertTitle>Error</AlertTitle>
+                        {error}
+                    </Alert>
+                    )}
                     {/* <JsonViewer value={data} /> */}
                 </DialogContent>
                 <DialogActions>
@@ -385,23 +403,36 @@ export function InformationArchitectClassEditor(props: any) {
     const neatApiRootUrl = getNeatApiRootUrl();
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [data, setData] = React.useState<any>({});
+    const [error, setError] = React.useState<any>("");
 
     React.useEffect(() => {
         setData(props.data);
         setDialogOpen(props.open);
     }, [props.data, props.open]);
 
-    const handleSave = () => {
-        const request = { role: "information architect", rule_file: props.fileName, rule_component: data };
-        fetch(neatApiRootUrl + '/api/rules/class/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                props.onSaved(data);
-            }).catch((error) => {
-                console.error('Error:', error);
-            })
-        setDialogOpen(false);
+    const handleSave = async () => {
+        const request = { rule_file: props.fileName, class_: data };
+        const response = await fetch(neatApiRootUrl + '/api/rules/information-architect/component/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
+        if (!response.ok) {
+            console.log("Error response", response.status);
+            if (response.status >= 400) {
+                const errorData = await response.json();
+                try {
+                    setError(errorData.detail[0].msg);
+                } catch (e) {
+                    setError(JSON.stringify(errorData));
+                }
+                return;
+            } else {
+                setError("An unknown error occurred");
+                return;
+            }
+        } else {
+            console.log("Success response", response.status);
+            const responseData = await response.json();
+            props.onSaved(responseData);
+            setDialogOpen(false);
+        }
     };
 
     const handleDialogClose = () => {
@@ -430,6 +461,10 @@ export function InformationArchitectClassEditor(props: any) {
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Comment" size='small' variant="outlined" value={data?.comment} onChange={(event) => { handleConfigChange("comment", event.target.value) }} />
                     </FormControl>
                     {/* <JsonViewer value={data} /> */}
+                    {error && (<Alert severity="error" sx={{ marginTop: 2 }}>
+                        <AlertTitle>Error</AlertTitle>
+                        {error}
+                    </Alert>)}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleSave}>Save</Button>
@@ -445,6 +480,7 @@ export default function InformationArchitectDataModelPropertyEditor(props: any) 
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [data, setData] = React.useState<any>({});
     const [valueTypes, setValueTypes] = React.useState<any>(valueTypesBaseline);
+    const [error, setError] = React.useState<any>("");
 
     React.useEffect(() => {
         loadUserDefinedTypes(props.classes);
@@ -452,17 +488,29 @@ export default function InformationArchitectDataModelPropertyEditor(props: any) 
         setDialogOpen(props.open);
     }, [props.data, props.open, props.classes]);
 
-    const handleSave = () => {
-        const request = { role: "information architect", rule_file: props.fileName, rule_component: data };
-        fetch(neatApiRootUrl + '/api/rules/property/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                props.onSaved(data);
-            }).catch((error) => {
-                console.error('Error:', error);
-            })
-        setDialogOpen(false);
+    const handleSave = async () => {
+        const request = { rule_file: props.fileName, property: data };
+        const response = await fetch(neatApiRootUrl + '/api/rules/information-architect/component/upsert', { method: 'POST', body: JSON.stringify(request), headers: { 'Content-Type': 'application/json' } })
+        if (!response.ok) {
+            console.log("Error response", response.status);
+            if (response.status >= 400) {
+                const errorData = await response.json();
+                try {
+                    setError(errorData.detail[0].msg);
+                } catch (e) {
+                    setError(JSON.stringify(errorData));
+                }
+                return;
+            } else {
+                setError("An unknown error occurred");
+                return;
+            }
+        } else {
+            console.log("Success response", response.status);
+            const responseData = await response.json();
+            props.onSaved(responseData);
+            setDialogOpen(false);
+        }
     };
 
     const loadUserDefinedTypes = (classes: any) => {
@@ -530,6 +578,12 @@ export default function InformationArchitectDataModelPropertyEditor(props: any) 
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Match type (The match type between the source entity and the class)" size='small' variant="outlined" value={data?.match_type} onChange={(event) => { handleConfigChange("match_type", event.target.value) }} />
                         <TextField sx={{ marginTop: 1 }} fullWidth label="Comment" size='small' variant="outlined" value={data?.comment} onChange={(event) => { handleConfigChange("comment", event.target.value) }} />
                     </FormControl>
+                    {error && (<Alert severity="error" sx={{ marginTop: 2 }}>
+                        <AlertTitle>Error</AlertTitle>
+                        {error}
+                    </Alert>)}
+
+
                     {/* <JsonViewer value={data} /> */}
                 </DialogContent>
                 <DialogActions>
