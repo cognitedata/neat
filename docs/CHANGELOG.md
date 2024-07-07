@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.85.5] - 04-07-24
+## [0.85.5] - 07-07-24
 ### Fixed
 - Prefix collision
 - Fixed issue arising when value string "null" is threated as float "null" leading to error
@@ -23,7 +23,6 @@ Changes are grouped as follows:
 
 ### Removed
 - Relation to original data model used to develop neat
-
 
 ## [0.85.4] - 01-07-24
 ### Fixed
