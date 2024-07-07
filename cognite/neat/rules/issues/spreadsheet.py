@@ -64,20 +64,14 @@ class InvalidSheetError(NeatValidationError, ABC):
             if raised_error := error.get("ctx", {}).get("error"):
                 if isinstance(raised_error, MultiValueError):
                     for caught_error in raised_error.errors:
-                        reader = (read_info_by_sheet or {}).get(
-                            "Properties", SpreadsheetRead()
-                        )
-                        if isinstance(
-                            caught_error, InconsistentContainerDefinitionError
-                        ):
+                        reader = (read_info_by_sheet or {}).get("Properties", SpreadsheetRead())
+                        if isinstance(caught_error, InconsistentContainerDefinitionError):
                             row_numbers = list(caught_error.row_numbers)
                             # The Error classes are immutable, so we have to reuse the set.
                             caught_error.row_numbers.clear()
                             for row_no in row_numbers:
                                 # Adjusting the row number to the actual row number in the spreadsheet
-                                caught_error.row_numbers.add(
-                                    reader.adjusted_row_number(row_no)
-                                )
+                                caught_error.row_numbers.add(reader.adjusted_row_number(row_no))
                         if isinstance(caught_error, InvalidRowError):
                             # Adjusting the row number to the actual row number in the spreadsheet
                             new_row = reader.adjusted_row_number(caught_error.row)
@@ -88,9 +82,7 @@ class InvalidSheetError(NeatValidationError, ABC):
 
             if len(error["loc"]) >= 4:
                 sheet_name, *_ = error["loc"]
-                error_cls = _INVALID_ROW_ERROR_BY_SHEET_NAME.get(
-                    str(sheet_name), InvalidRowUnknownSheetError
-                )
+                error_cls = _INVALID_ROW_ERROR_BY_SHEET_NAME.get(str(sheet_name), InvalidRowUnknownSheetError)
                 output.append(error_cls.from_pydantic_error(error, read_info_by_sheet))
                 continue
 
@@ -101,9 +93,7 @@ class InvalidSheetError(NeatValidationError, ABC):
 @dataclass(frozen=True)
 @total_ordering
 class InvalidRowError(InvalidSheetError, ABC):
-    description: ClassVar[str] = (
-        "This is a generic class for all invalid row specifications."
-    )
+    description: ClassVar[str] = "This is a generic class for all invalid row specifications."
     fix: ClassVar[str] = "Follow the instruction in the error message."
     sheet_name: ClassVar[str]
 
@@ -226,17 +216,13 @@ class InvalidRowUnknownSheetError(InvalidRowError):
 
 
 _INVALID_ROW_ERROR_BY_SHEET_NAME = {
-    cls_.sheet_name: cls_
-    for cls_ in InvalidRowError.__subclasses__()
-    if cls_ is not InvalidRowError
+    cls_.sheet_name: cls_ for cls_ in InvalidRowError.__subclasses__() if cls_ is not InvalidRowError
 }
 
 
 @dataclass(frozen=True)
 class NonExistingContainerError(InvalidPropertyError):
-    description = (
-        "The container referenced by the property is missing in the container sheet"
-    )
+    description = "The container referenced by the property is missing in the container sheet"
     fix = "Add the container to the container sheet"
 
     container_id: ContainerId
@@ -337,7 +323,8 @@ class PrefixNamespaceCollisionError(NeatValidationError):
 
     def dump(self) -> dict[str, list[str]]:
         output = super().dump()
-        output["classes"] = self.classes
+        output["prefixes"] = self.prefixes
+        output["namespaces"] = self.namespaces
         return output
 
     def message(self) -> str:
@@ -424,9 +411,7 @@ class MultiValueIsListError(InconsistentContainerDefinitionError):
 @dataclass(frozen=True)
 class MultiNullableError(InconsistentContainerDefinitionError):
     description = "The property has multiple nullable definitions"
-    fix = (
-        "Use the same nullable definition for all properties using the same container."
-    )
+    fix = "Use the same nullable definition for all properties using the same container."
     nullable_definitions: set[bool]
 
     def message(self) -> str:
@@ -491,7 +476,5 @@ class MultiUniqueConstraintError(InconsistentContainerDefinitionError):
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
-        output["unique_constraint_definitions"] = sorted(
-            self.unique_constraint_definitions
-        )
+        output["unique_constraint_definitions"] = sorted(self.unique_constraint_definitions)
         return output
