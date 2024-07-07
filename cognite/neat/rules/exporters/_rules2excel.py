@@ -80,13 +80,9 @@ class ExcelExporter(BaseExporter[Workbook]):
         new_model_id: tuple[str, str] | None = None,
     ):
         if styling not in self.style_options:
-            raise ValueError(
-                f"Invalid styling: {styling}. Valid options are {self.style_options}"
-            )
+            raise ValueError(f"Invalid styling: {styling}. Valid options are {self.style_options}")
         if dump_as not in self.dump_options:
-            raise ValueError(
-                f"Invalid dump_as: {dump_as}. Valid options are {self.dump_options}"
-            )
+            raise ValueError(f"Invalid dump_as: {dump_as}. Valid options are {self.dump_options}")
         self.styling = styling
         self._styling_level = self.style_options.index(styling)
         self.output_role = output_role
@@ -122,9 +118,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             if self.dump_as == "last":
                 dumped_last_rules = rules.dump(by_alias=True)
                 if rules.reference:
-                    dumped_reference_rules = rules.reference.dump(
-                        by_alias=True, as_reference=True
-                    )
+                    dumped_reference_rules = rules.reference.dump(by_alias=True, as_reference=True)
             elif self.dump_as == "reference":
                 dumped_reference_rules = rules.dump(by_alias=True, as_reference=True)
         else:
@@ -132,25 +126,17 @@ class ExcelExporter(BaseExporter[Workbook]):
             if rules.last:
                 dumped_last_rules = rules.last.dump(by_alias=True)
             if rules.reference:
-                dumped_reference_rules = rules.reference.dump(
-                    by_alias=True, as_reference=True
-                )
+                dumped_reference_rules = rules.reference.dump(by_alias=True, as_reference=True)
 
         self._write_metadata_sheet(workbook, dumped_user_rules["Metadata"])
         self._write_sheets(workbook, dumped_user_rules, rules)
         if dumped_last_rules:
             self._write_sheets(workbook, dumped_last_rules, rules, sheet_prefix="Last")
-            self._write_metadata_sheet(
-                workbook, dumped_last_rules["Metadata"], sheet_prefix="Last"
-            )
+            self._write_metadata_sheet(workbook, dumped_last_rules["Metadata"], sheet_prefix="Last")
 
         if dumped_reference_rules:
-            self._write_sheets(
-                workbook, dumped_reference_rules, rules, sheet_prefix="Ref"
-            )
-            self._write_metadata_sheet(
-                workbook, dumped_reference_rules["Metadata"], sheet_prefix="Ref"
-            )
+            self._write_sheets(workbook, dumped_reference_rules, rules, sheet_prefix="Ref")
+            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix="Ref")
 
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)
@@ -171,9 +157,7 @@ class ExcelExporter(BaseExporter[Workbook]):
 
             main_header = self._main_header_by_sheet_name[sheet_name]
             sheet.append([main_header] + [""] * (len(headers) - 1))
-            sheet.merge_cells(
-                start_row=1, start_column=1, end_row=1, end_column=len(headers)
-            )
+            sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
             sheet.append(headers)
 
             fill_colors = itertools.cycle(["CADCFC", "FFFFFF"])
@@ -191,9 +175,7 @@ class ExcelExporter(BaseExporter[Workbook]):
                     for cell in sheet[sheet.max_row]:
                         cell.fill = PatternFill(fgColor=fill_color, patternType="solid")
                         side = Side(style="thin", color="000000")
-                        cell.border = Border(
-                            left=side, right=side, top=side, bottom=side
-                        )
+                        cell.border = Border(left=side, right=side, top=side, bottom=side)
                     fill_color = next(fill_colors)
 
                 sheet.append(row)
@@ -201,9 +183,7 @@ class ExcelExporter(BaseExporter[Workbook]):
                     for cell in sheet[sheet.max_row]:
                         cell.fill = PatternFill(fgColor=fill_color, patternType="solid")
                         side = Side(style="thin", color="000000")
-                        cell.border = Border(
-                            left=side, right=side, top=side, bottom=side
-                        )
+                        cell.border = Border(left=side, right=side, top=side, bottom=side)
                 last_class = class_
 
             if self._styling_level > 0:
@@ -219,9 +199,7 @@ class ExcelExporter(BaseExporter[Workbook]):
                 for cell in sheet["2"]:
                     cell.font = Font(bold=True, size=14)
 
-    def _write_metadata_sheet(
-        self, workbook: Workbook, metadata: dict[str, Any], sheet_prefix: str = ""
-    ) -> None:
+    def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any], sheet_prefix: str = "") -> None:
         # Excel does not support timezone in datetime strings
         if isinstance(metadata.get("created"), datetime):
             metadata["created"] = metadata["created"].replace(tzinfo=None)
@@ -239,19 +217,13 @@ class ExcelExporter(BaseExporter[Workbook]):
     @classmethod
     def _get_item_class(cls, annotation: GenericAlias) -> type[SheetEntity]:
         if not isinstance(annotation, GenericAlias):
-            raise ValueError(
-                f"Expected annotation to be a GenericAlias, but got {type(annotation)}"
-            )
+            raise ValueError(f"Expected annotation to be a GenericAlias, but got {type(annotation)}")
         args = get_args(annotation)
         if len(args) != 1:
-            raise ValueError(
-                f"Expected annotation to have exactly one argument, but got {len(args)}"
-            )
+            raise ValueError(f"Expected annotation to have exactly one argument, but got {len(args)}")
         arg = args[0]
         if not issubclass(arg, SheetEntity):
-            raise ValueError(
-                f"Expected annotation to have a BaseModel argument, but got {type(arg)}"
-            )
+            raise ValueError(f"Expected annotation to have a BaseModel argument, but got {type(arg)}")
         return arg
 
     @classmethod
@@ -260,11 +232,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             sheet = cast(Worksheet, sheet_)
             for column_cells in sheet.columns:
                 try:
-                    max_length = max(
-                        len(str(cell.value))
-                        for cell in column_cells
-                        if cell.value is not None
-                    )
+                    max_length = max(len(str(cell.value)) for cell in column_cells if cell.value is not None)
                 except ValueError:
                     max_length = 0
 
@@ -272,12 +240,8 @@ class ExcelExporter(BaseExporter[Workbook]):
                 if isinstance(selected_column, MergedCell):
                     selected_column = column_cells[1]
 
-                current = sheet.column_dimensions[
-                    selected_column.column_letter
-                ].width or (max_length + 0.5)
-                sheet.column_dimensions[selected_column.column_letter].width = max(
-                    current, max_length + 0.5
-                )
+                current = sheet.column_dimensions[selected_column.column_letter].width or (max_length + 0.5)
+                sheet.column_dimensions[selected_column.column_letter].width = max(current, max_length + 0.5)
         return None
 
 
@@ -292,9 +256,7 @@ class _MetadataCreator:
         self.action = action
         self.new_model_id = new_model_id or ("YOUR_PREFIX", "YOUR_TITLE")
 
-    def create(
-        self, metadata: DomainMetadata | InformationMetadata | DMSMetadata
-    ) -> dict[str, Any]:
+    def create(self, metadata: DomainMetadata | InformationMetadata | DMSMetadata) -> dict[str, Any]:
         now = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None)
         if self.action == "update":
             output = json.loads(metadata.model_dump_json(by_alias=True))
@@ -310,10 +272,7 @@ class _MetadataCreator:
 
         # Action "create"
         if isinstance(metadata, DomainMetadata):
-            output = {
-                field_alias: None
-                for field_alias in metadata.model_dump(by_alias=True).keys()
-            }
+            output = {field_alias: None for field_alias in metadata.model_dump(by_alias=True).keys()}
             output["role"] = metadata.role.value
             output["creator"] = self.creator_name
             return output
@@ -324,8 +283,8 @@ class _MetadataCreator:
                 _InformationRulesConverter,
             )
 
-            output_metadata: DMSMetadata | InformationMetadata = (
-                _InformationRulesConverter._convert_metadata_to_dms(new_metadata)
+            output_metadata: DMSMetadata | InformationMetadata = _InformationRulesConverter._convert_metadata_to_dms(
+                new_metadata
             )
         elif isinstance(metadata, InformationMetadata):
             output_metadata = new_metadata

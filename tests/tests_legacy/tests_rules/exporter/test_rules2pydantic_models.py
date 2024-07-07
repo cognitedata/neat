@@ -36,9 +36,7 @@ def test_rules2pydantic_models(dms_compliant_rules, source_knowledge_graph):
 
 
 def test_views2pydantic_models(dms_compliant_rules, source_knowledge_graph):
-    view = CogniteDataModel.load(
-        safe_load(examples.power_grid_data_model.read_text())
-    ).views[3]
+    view = CogniteDataModel.load(safe_load(examples.power_grid_data_model.read_text())).views[3]
 
     rules = DMSImporter(views=[view]).to_rules(
         validators_to_skip=[

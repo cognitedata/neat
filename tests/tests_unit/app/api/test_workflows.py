@@ -57,9 +57,7 @@ def test_workflow_workflows(workflow_names: list[str], fastapi_client: TestClien
 def test_rules(transformation_rules: Rules, fastapi_client: TestClient):
     # transformation_rules load Rules-Nordic44.xlsx
     # /api/rules fetch rules related to default workflow which are Rules-Nordic44.xlsx
-    response = fastapi_client.get(
-        "/api/rules", params={"workflow_name": "Extract_RDF_Graph_and_Generate_Assets"}
-    )
+    response = fastapi_client.get("/api/rules", params={"workflow_name": "Extract_RDF_Graph_and_Generate_Assets"})
 
     # Assert
     assert response.status_code == 200
@@ -80,9 +78,7 @@ def test_workflow_start(
     # Arrange
     if workflow_name == "Extract_RDF_Graph_and_Generate_Assets":
         # When running this test in GitHub actions, you get permission issues with the default disk_store_dir.
-        response = fastapi_client.get(
-            "/api/workflow/workflow-definition/Extract_RDF_Graph_and_Generate_Assets"
-        )
+        response = fastapi_client.get("/api/workflow/workflow-definition/Extract_RDF_Graph_and_Generate_Assets")
         definition = WorkflowDefinition(**response.json()["definition"])
         response = fastapi_client.post(
             "/api/workflow/workflow-definition/Extract_RDF_Graph_and_Generate_Assets",
@@ -93,9 +89,7 @@ def test_workflow_start(
     # Act
     response = fastapi_client.post(
         "/api/workflow/start",
-        json=RunWorkflowRequest(
-            name=workflow_name, sync=True, config={}, start_step=""
-        ).model_dump(),
+        json=RunWorkflowRequest(name=workflow_name, sync=True, config={}, start_step="").model_dump(),
     )
 
     assert response.status_code == 200
@@ -121,9 +115,7 @@ def test_workflow_stats(workflow_name: str, fastapi_client: TestClient):
     assert response.json()["state"] == "COMPLETED"
 
 
-def test_workflow_reload_workflows(
-    workflow_names: list[str], fastapi_client: TestClient
-):
+def test_workflow_reload_workflows(workflow_names: list[str], fastapi_client: TestClient):
     # Act
     response = fastapi_client.post("/api/workflow/reload-workflows")
 
@@ -133,9 +125,7 @@ def test_workflow_reload_workflows(
 
 
 @pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
-def test_workflow_workflow_definition_get(
-    workflow_name: str, fastapi_client: TestClient
-):
+def test_workflow_workflow_definition_get(workflow_name: str, fastapi_client: TestClient):
     # Act
     response = fastapi_client.get(f"/api/workflow/workflow-definition/{workflow_name}")
 
@@ -196,9 +186,7 @@ def test_query(workflow_name: str, fastapi_client: TestClient):
     assert content["fields"] == ["class"], f"Missing fields, got {content}"
     assert len(content["rows"]) == 59
     assert len(content["rows"]) == 59
-    assert {"class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Terminal"} in content[
-        "rows"
-    ]
+    assert {"class": "http://iec.ch/TC57/2013/CIM-schema-cim16#Terminal"} in content["rows"]
 
 
 @pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
@@ -240,9 +228,7 @@ def test_get_datatype_properties(workflow_name: str, fastapi_client: TestClient)
 
     response = fastapi_client.post(
         "/api/get-datatype-properties",
-        json=DatatypePropertyRequest(
-            graph_name="source", workflow_name=workflow_name, limit=1
-        ).model_dump(),
+        json=DatatypePropertyRequest(graph_name="source", workflow_name=workflow_name, limit=1).model_dump(),
     )
 
     content = response.json()
@@ -306,9 +292,7 @@ def test_search(workflow_name: str, fastapi_client: TestClient):
 @pytest.mark.parametrize("workflow_name", ["Extract_RDF_Graph_and_Generate_Assets"])
 def test_get_classes(workflow_name: str, fastapi_client: TestClient):
     # Act
-    response = fastapi_client.get(
-        f"/api/get-classes?graph_name=source&workflow_name={workflow_name}&cache=true"
-    )
+    response = fastapi_client.get(f"/api/get-classes?graph_name=source&workflow_name={workflow_name}&cache=true")
 
     content = response.json()
 

@@ -114,9 +114,7 @@ class InformationPropertyInput:
     ) -> "InformationPropertyInput | list[InformationPropertyInput] | None":
         if data is None:
             return None
-        if isinstance(data, list) or (
-            isinstance(data, dict) and isinstance(data.get("data"), list)
-        ):
+        if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
             items = cast(
                 list[dict[str, Any]],
                 data.get("data") if isinstance(data, dict) else data,
@@ -203,9 +201,7 @@ class InformationClassInput:
     ) -> "InformationClassInput | list[InformationClassInput] | None":
         if data is None:
             return None
-        if isinstance(data, list) or (
-            isinstance(data, dict) and isinstance(data.get("data"), list)
-        ):
+        if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
             items = cast(
                 list[dict[str, Any]],
                 data.get("data") if isinstance(data, dict) else data,
@@ -231,10 +227,7 @@ class InformationClassInput:
             "Reference": self.reference,
             "Match Type": self.match_type,
             "Parent Class": (
-                [
-                    ParentClassEntity.load(parent, prefix=default_prefix)
-                    for parent in self.parent.split(",")
-                ]
+                [ParentClassEntity.load(parent, prefix=default_prefix) for parent in self.parent.split(",")]
                 if self.parent
                 else None
             ),

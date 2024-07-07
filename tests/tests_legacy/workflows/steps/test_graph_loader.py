@@ -4,7 +4,6 @@ from unittest.mock import MagicMock
 import pytest
 from cognite.client.data_classes import Asset, AssetList, Label
 from cognite.client.testing import monkeypatch_cognite_client
-from rdflib import Namespace
 
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.config import Config
@@ -38,10 +37,7 @@ def test_graph_loader_clean_orphans(
                 "non-historic",
                 "historic",
             ]
-            return [
-                Label(external_id=label_name, name=label_names)
-                for label_name in label_names
-            ]
+            return [Label(external_id=label_name, name=label_names) for label_name in label_names]
 
         client_mock.assets.list = list_assets
         client_mock.labels.list = list_labels
@@ -62,15 +58,10 @@ def test_graph_loader_clean_orphans(
     }
     test_assets_from_graph.metrics = NeatMetricsCollector("TestMetrics")
 
-    _, assets = test_assets_from_graph.run(
-        rules=rules, cdf_client=client_mock, solution_graph=solution_graph
-    )
+    _, assets = test_assets_from_graph.run(rules=rules, cdf_client=client_mock, solution_graph=solution_graph)
 
     assets_external_ids = [asset.external_id for asset in assets.assets["create"]]
-    assert (
-        "2dd90176-bdfb-11e5-94fa-c8f73332c8f4-terminal-orphan-test"
-        not in assets_external_ids
-    )
+    assert "2dd90176-bdfb-11e5-94fa-c8f73332c8f4-terminal-orphan-test" not in assets_external_ids
     assert "f17695fe-9aeb-11e5-91da-b8763fd99c5f-orphan-test" not in assets_external_ids
     assert "f17695fe-9aeb-11e5-91da-b8763fd99c5f" not in assets_external_ids
     assert "2dd90176-bdfb-11e5-94fa-c8f73332c8f4" not in assets_external_ids
@@ -94,10 +85,7 @@ def test_graph_loader_no_orphans_cleanup(
                 "non-historic",
                 "historic",
             ]
-            return [
-                Label(external_id=label_name, name=label_names)
-                for label_name in label_names
-            ]
+            return [Label(external_id=label_name, name=label_names) for label_name in label_names]
 
         client_mock.assets.list = list_assets
         client_mock.labels.list = list_labels
@@ -117,15 +105,10 @@ def test_graph_loader_no_orphans_cleanup(
     }
     test_assets_from_graph.metrics = NeatMetricsCollector("TestMetrics")
 
-    _, assets = test_assets_from_graph.run(
-        rules=rules, cdf_client=client_mock, solution_graph=solution_graph
-    )
+    _, assets = test_assets_from_graph.run(rules=rules, cdf_client=client_mock, solution_graph=solution_graph)
 
     assets_external_ids = [asset.external_id for asset in assets.assets["create"]]
-    assert (
-        "2dd90176-bdfb-11e5-94fa-c8f73332c8f4-terminal-orphan-test"
-        in assets_external_ids
-    )
+    assert "2dd90176-bdfb-11e5-94fa-c8f73332c8f4-terminal-orphan-test" in assets_external_ids
     assert "f17695fe-9aeb-11e5-91da-b8763fd99c5f-orphan-test" in assets_external_ids
     assert "f17695fe-9aeb-11e5-91da-b8763fd99c5f" in assets_external_ids
     assert "2dd90176-bdfb-11e5-94fa-c8f73332c8f4" in assets_external_ids

@@ -20,7 +20,4 @@ def test_graph_traversal(source_knowledge_graph: NeatGraphStoreBase):
     # Assert
     df = pd.DataFrame(list(graph.query(query)))
     df.rename(columns={0: "subject", 1: "predicate", 2: "object"}, inplace=True)
-    assert (
-        str(df.subject[0])
-        == "http://purl.org/nordic44#_f1769b90-9aeb-11e5-91da-b8763fd99c5f"
-    )
+    assert str(df.subject[0]) == "http://purl.org/nordic44#_f1769b90-9aeb-11e5-91da-b8763fd99c5f"

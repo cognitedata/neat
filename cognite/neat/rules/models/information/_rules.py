@@ -60,9 +60,7 @@ else:
 
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information_architect
-    data_model_type: DataModelType = Field(
-        DataModelType.enterprise, alias="dataModelType"
-    )
+    data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
     schema_: SchemaCompleteness = Field(SchemaCompleteness.partial, alias="schema")
     extension: ExtensionCategoryType | None = ExtensionCategory.addition
 
@@ -133,9 +131,7 @@ class InformationClass(SheetEntity):
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     parent: ParentEntityList | None = Field(alias="Parent Class", default=None)
-    reference: URLEntity | ReferenceEntity | None = Field(
-        alias="Reference", default=None, union_mode="left_to_right"
-    )
+    reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     comment: str | None = Field(alias="Comment", default=None)
 
@@ -169,9 +165,7 @@ class InformationProperty(SheetEntity):
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
-    reference: URLEntity | ReferenceEntity | None = Field(
-        alias="Reference", default=None, union_mode="left_to_right"
-    )
+    reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     transformation: str | RDFPath | None = Field(alias="Transformation", default=None)
     comment: str | None = Field(alias="Comment", default=None)
@@ -182,9 +176,7 @@ class InformationProperty(SheetEntity):
     )
 
     @field_serializer("max_count", when_used="json-unless-none")
-    def serialize_max_count(
-        self, value: int | float | None
-    ) -> int | float | None | str:
+    def serialize_max_count(self, value: int | float | None) -> int | float | None | str:
         if isinstance(value, float) and math.isinf(value):
             return None
         return value
@@ -199,9 +191,7 @@ class InformationProperty(SheetEntity):
     def generate_valid_transformation(self):
         # TODO: Currently only supporting RDFpath
         if self.transformation:
-            self.transformation = parse_rule(
-                self.transformation, TransformationRuleType.rdfpath
-            )
+            self.transformation = parse_rule(self.transformation, TransformationRuleType.rdfpath)
         return self
 
     @model_validator(mode="after")
@@ -222,9 +212,7 @@ class InformationProperty(SheetEntity):
     @model_validator(mode="after")
     def set_type_for_default(self):
         if self.type_ == EntityTypes.data_property and self.default:
-            default_value = (
-                self.default[0] if isinstance(self.default, list) else self.default
-            )
+            default_value = self.default[0] if isinstance(self.default, list) else self.default
 
             if type(default_value) != self.value_type.python:
                 try:
@@ -271,19 +259,14 @@ class InformationRules(BaseRules):
     metadata: InformationMetadata = Field(alias="Metadata")
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
-    prefixes: dict[str, Namespace] = Field(
-        default_factory=lambda: PREFIXES.copy(), alias="Prefixes"
-    )
+    prefixes: dict[str, Namespace] = Field(default_factory=lambda: PREFIXES.copy(), alias="Prefixes")
     last: "InformationRules | None" = Field(None, alias="Last")
     reference: "InformationRules | None" = Field(None, alias="Reference")
 
     @field_validator("prefixes", mode="before")
     def parse_str(cls, values: Any) -> Any:
         if isinstance(values, dict):
-            return {
-                key: Namespace(value) if isinstance(value, str) else value
-                for key, value in values.items()
-            }
+            return {key: Namespace(value) if isinstance(value, str) else value for key, value in values.items()}
         elif values is None:
             values = PREFIXES.copy()
         return values
@@ -292,10 +275,7 @@ class InformationRules(BaseRules):
     def update_entities_prefix(self) -> Self:
         # update expected_value_types
         for property_ in self.properties:
-            if (
-                isinstance(property_.value_type, ClassEntity)
-                and property_.value_type.prefix is Undefined
-            ):
+            if isinstance(property_.value_type, ClassEntity) and property_.value_type.prefix is Undefined:
                 property_.value_type.prefix = self.metadata.prefix
 
             if isinstance(property_.value_type, MultiValueTypeInfo):
@@ -323,13 +303,7 @@ class InformationRules(BaseRules):
         if issue_list.warnings:
             issue_list.trigger_warnings()
         if issue_list.has_errors:
-            raise MultiValueError(
-                [
-                    error
-                    for error in issue_list
-                    if isinstance(error, issues.NeatValidationError)
-                ]
-            )
+            raise MultiValueError([error for error in issue_list if isinstance(error, issues.NeatValidationError)])
         return self
 
     def dump(
@@ -361,9 +335,7 @@ class InformationRules(BaseRules):
         reference = "Reference" if by_alias else "reference"
         if self.reference and (ref_dump := cleaned.get(reference)):
             prefix = self.reference.metadata.prefix
-            cleaned[reference] = _InformationRulesSerializer(by_alias, prefix).clean(
-                ref_dump, True
-            )
+            cleaned[reference] = _InformationRulesSerializer(by_alias, prefix).clean(ref_dump, True)
         return cleaned
 
     def as_domain_rules(self) -> DomainRules:

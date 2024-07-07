@@ -4,9 +4,7 @@ from cognite.neat.rules.models.entities import MultiValueTypeInfo
 
 
 def test_rdf_inference():
-    rules, _ = InferenceImporter.from_rdf_file(nordic44_knowledge_graph).to_rules(
-        errors="continue"
-    )
+    rules, _ = InferenceImporter.from_rdf_file(nordic44_knowledge_graph).to_rules(errors="continue")
 
     assert len(rules.properties) == 312
     assert len(rules.classes) == 59
@@ -20,13 +18,4 @@ def test_rdf_inference():
     )
 
     # we should have 4 multi-value property
-    assert (
-        len(
-            [
-                prop_
-                for prop_ in rules.properties
-                if isinstance(prop_.value_type, MultiValueTypeInfo)
-            ]
-        )
-        == 4
-    )
+    assert len([prop_ for prop_ in rules.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]) == 4

@@ -45,9 +45,7 @@ class InferenceImporter(BaseImporter):
         max_number_of_instance: Maximum number of instances to be used in inference
     """
 
-    def __init__(
-        self, issue_list: IssueList, graph: Graph, max_number_of_instance: int = -1
-    ):
+    def __init__(self, issue_list: IssueList, graph: Graph, max_number_of_instance: int = -1):
         self.issue_list = issue_list
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
@@ -56,9 +54,7 @@ class InferenceImporter(BaseImporter):
     def from_graph_store(cls, store: NeatGraphStore, max_number_of_instance: int = -1):
         issue_list = IssueList(title="Inferred from graph store")
 
-        return cls(
-            issue_list, store.graph, max_number_of_instance=max_number_of_instance
-        )
+        return cls(issue_list, store.graph, max_number_of_instance=max_number_of_instance)
 
     @classmethod
     def from_rdf_file(cls, filepath: Path, max_number_of_instance: int = -1):
@@ -85,9 +81,7 @@ class InferenceImporter(BaseImporter):
         raise NotImplementedError("JSON file format is not supported yet.")
 
     @overload
-    def to_rules(
-        self, errors: Literal["raise"], role: RoleTypes | None = None
-    ) -> Rules: ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
 
     @overload
     def to_rules(
@@ -164,27 +158,21 @@ class InferenceImporter(BaseImporter):
             for (instance,) in self.graph.query(  # type: ignore[misc]
                 INSTANCES_OF_CLASS_QUERY.replace("class", class_definition["reference"])
                 if self.max_number_of_instance < 0
-                else INSTANCES_OF_CLASS_QUERY.replace(
-                    "class", class_definition["reference"]
-                )
+                else INSTANCES_OF_CLASS_QUERY.replace("class", class_definition["reference"])
                 + f" LIMIT {self.max_number_of_instance}"
             ):
                 for property_uri, occurrence, data_type_uri, object_type_uri in self.graph.query(  # type: ignore[misc]
                     INSTANCE_PROPERTIES_DEFINITION.replace("instance_id", instance)
                 ):  # type: ignore[misc]
                     property_id = remove_namespace(property_uri)
-                    self._add_uri_namespace_to_prefixes(
-                        cast(URIRef, property_uri), prefixes
-                    )
+                    self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
                     value_type_uri = data_type_uri if data_type_uri else object_type_uri
 
                     # this is to skip rdf:type property
                     if not value_type_uri:
                         continue
 
-                    self._add_uri_namespace_to_prefixes(
-                        cast(URIRef, value_type_uri), prefixes
-                    )
+                    self._add_uri_namespace_to_prefixes(cast(URIRef, value_type_uri), prefixes)
                     value_type_id = remove_namespace(value_type_uri)
                     id_ = f"{class_id}:{property_id}"
 
@@ -209,46 +197,28 @@ class InferenceImporter(BaseImporter):
                         properties[id_] = definition
 
                     # USE CASE 2: first time redefinition, value type change to multi
-                    elif (
-                        id_ in properties
-                        and definition["value_type"]
-                        not in properties[id_]["value_type"]
-                    ):
-                        properties[id_]["value_type"] = (
-                            properties[id_]["value_type"]
-                            + " | "
-                            + definition["value_type"]
-                        )
+                    elif id_ in properties and definition["value_type"] not in properties[id_]["value_type"]:
+                        properties[id_]["value_type"] = properties[id_]["value_type"] + " | " + definition["value_type"]
                         properties[id_]["comment"] = (
-                            properties[id_]["comment"]
-                            + ", with"
-                            + definition["comment"].split("with")[1]
+                            properties[id_]["comment"] + ", with" + definition["comment"].split("with")[1]
                         )
 
                     # USE CASE 3: existing but max count is different
                     elif (
                         id_ in properties
                         and definition["value_type"] in properties[id_]["value_type"]
-                        and not (
-                            properties[id_]["max_count"] == definition["max_count"]
-                        )
+                        and not (properties[id_]["max_count"] == definition["max_count"])
                     ):
-                        properties[id_]["max_count"] = max(
-                            properties[id_]["max_count"], definition["max_count"]
-                        )
+                        properties[id_]["max_count"] = max(properties[id_]["max_count"], definition["max_count"])
 
-                        properties[id_]["comment"] = (
-                            self._update_value_type_occurrence_in_comment(
-                                definition["value_type"], properties[id_]["comment"]
-                            )
+                        properties[id_]["comment"] = self._update_value_type_occurrence_in_comment(
+                            definition["value_type"], properties[id_]["comment"]
                         )
 
                     # USE CASE 4: Just update the comment with occurrence
                     else:
-                        properties[id_]["comment"] = (
-                            self._update_value_type_occurrence_in_comment(
-                                definition["value_type"], properties[id_]["comment"]
-                            )
+                        properties[id_]["comment"] = self._update_value_type_occurrence_in_comment(
+                            definition["value_type"], properties[id_]["comment"]
                         )
 
         return {
@@ -259,9 +229,7 @@ class InferenceImporter(BaseImporter):
         }
 
     @classmethod
-    def _add_uri_namespace_to_prefixes(
-        cls, URI: URIRef, prefixes: dict[str, Namespace]
-    ):
+    def _add_uri_namespace_to_prefixes(cls, URI: URIRef, prefixes: dict[str, Namespace]):
         """Add URI to prefixes dict if not already present
 
         Args:
@@ -285,9 +253,7 @@ class InferenceImporter(BaseImporter):
         )
 
     @classmethod
-    def _update_value_type_occurrence_in_comment(
-        cls, value_type: str, comment: str
-    ) -> str:
+    def _update_value_type_occurrence_in_comment(cls, value_type: str, comment: str) -> str:
         occurrence = cls._read_value_type_occurrence_from_comment(value_type, comment)
         return comment.replace(
             f"with value type <{value_type}> which occurs <{occurrence}> times in the graph",
@@ -295,9 +261,7 @@ class InferenceImporter(BaseImporter):
         )
 
     @classmethod
-    def _read_value_type_occurrence_from_comment(
-        cls, value_type: str, comment: str
-    ) -> int:
+    def _read_value_type_occurrence_from_comment(cls, value_type: str, comment: str) -> int:
         return int(
             cast(
                 re.Match,

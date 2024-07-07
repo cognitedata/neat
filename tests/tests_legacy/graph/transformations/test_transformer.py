@@ -9,9 +9,7 @@ from cognite.neat.legacy.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.legacy.rules.models.rules import Rules
 
 
-def test_domain2app_knowledge_graph(
-    transformation_rules: Rules, source_knowledge_graph: Graph
-):
+def test_domain2app_knowledge_graph(transformation_rules: Rules, source_knowledge_graph: Graph):
     # Arrange
     rules = transformation_rules
     domain_graph = source_knowledge_graph
@@ -23,14 +21,10 @@ def test_domain2app_knowledge_graph(
     res = app_graph.query(
         """SELECT ?o WHERE {<http://purl.org/nordic44#_f17695aa-9aeb-11e5-91da-b8763fd99c5f> rdf:type ?o}"""
     )
-    assert (
-        next(iter(res))[0] == Namespace("http://purl.org/cognite/simplecim#").Substation
-    )
+    assert next(iter(res))[0] == Namespace("http://purl.org/cognite/simplecim#").Substation
 
 
-def test_domain2app_knowledge_graph_raw_lookup(
-    transformation_rules: Rules, source_knowledge_graph: Graph
-):
+def test_domain2app_knowledge_graph_raw_lookup(transformation_rules: Rules, source_knowledge_graph: Graph):
     # Arrange
     rules = transformation_rules.model_copy(deep=True)
     rules.properties["row 18"].rule += " | TerminalName(NordicName, SimpleCIMName)"
@@ -43,9 +37,7 @@ def test_domain2app_knowledge_graph_raw_lookup(
 
         def mock_retrieve(db_name, table_name, **_):
             if db_name == database_name and table_name == "TerminalName":
-                return pd.DataFrame(
-                    [{"NordicName": "ARENDAL 300 A T1", "SimpleCIMName": "Gjerstad"}]
-                )
+                return pd.DataFrame([{"NordicName": "ARENDAL 300 A T1", "SimpleCIMName": "Gjerstad"}])
 
         client_mock.raw.rows.retrieve_dataframe = mock_retrieve
         app_graph = domain2app_knowledge_graph(
