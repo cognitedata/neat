@@ -24,7 +24,7 @@ steps:
       pos_y: 77
   - complex_configs: {}
     configs:
-      file_name: Rules-Nordic44-to-TNT.xlsx
+      file_name: Rules-Nordic44.xlsx
       validation_report_file: rules_validation_report.txt
       validation_report_storage_dir: rules_validation_report
       version: ""

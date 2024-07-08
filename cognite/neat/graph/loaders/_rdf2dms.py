@@ -10,6 +10,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.capabilities import Capability, DataModelInstancesAcl
 from cognite.client.data_classes.data_modeling import ViewId
+from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
 from pydantic import ValidationInfo, create_model, field_validator
@@ -21,13 +22,24 @@ from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
-from cognite.neat.utils.upload import UploadDiffsID
+from cognite.neat.utils.upload import UploadResult
 from cognite.neat.utils.utils import create_sha256_hash
 
 from ._base import CDFLoader
 
 
 class DMSLoader(CDFLoader[dm.InstanceApply]):
+    """Load data from Cognite Data Fusions Data Modeling Service (DMS) into Neat.
+
+    Args:
+        graph_store (NeatGraphStore): The graph store to load the data into.
+        data_model (dm.DataModel[dm.View] | None): The data model to load.
+        instance_space (str): The instance space to load the data into.
+        class_by_view_id (dict[ViewId, str] | None): A mapping from view id to class name. Defaults to None.
+        creat_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
+        tracker (type[Tracker] | None): The tracker to use. Defaults to None.
+    """
+
     def __init__(
         self,
         graph_store: NeatGraphStore,
@@ -70,7 +82,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         except Exception as e:
             issues.append(
                 loader_issues.FailedConvertError(
-                    identifier=rules.metadata.as_identifier(), target_format="read DMS model", reason=str(e)
+                    identifier=rules.metadata.as_identifier(),
+                    target_format="read DMS model",
+                    reason=str(e),
                 )
             )
         return cls(graph_store, data_model, instance_space, {}, issues)
@@ -187,7 +201,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         return pydantic_cls, edge_by_property, issues
 
     def _create_node(
-        self, identifier: str, properties: dict[str, list[str]], pydantic_cls: type[Model], view_id: dm.ViewId
+        self,
+        identifier: str,
+        properties: dict[str, list[str]],
+        pydantic_cls: type[Model],
+        view_id: dm.ViewId,
     ) -> dm.InstanceApply:
         created = pydantic_cls.model_validate(properties)
 
@@ -221,7 +239,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 external_id = f"{identifier}.{prop}.{target}"
                 yield dm.EdgeApply(
                     space=self.instance_space,
-                    external_id=external_id if len(external_id) < 256 else create_sha256_hash(external_id),
+                    external_id=(external_id if len(external_id) < 256 else create_sha256_hash(external_id)),
                     type=edge.type,
                     start_node=dm.DirectRelationReference(self.instance_space, identifier),
                     end_node=dm.DirectRelationReference(self.instance_space, target),
@@ -243,11 +261,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self,
         client: CogniteClient,
         items: list[dm.InstanceApply],
-        return_diffs: bool,
         dry_run: bool,
         read_issues: NeatIssueList,
-    ) -> UploadDiffsID:
-        result = UploadDiffsID(name=type(self).__name__, issues=read_issues)
+    ) -> UploadResult:
+        result = UploadResult[InstanceId](name=type(self).__name__, issues=read_issues)
         try:
             nodes = [item for item in items if isinstance(item, dm.NodeApply)]
             edges = [item for item in items if isinstance(item, dm.EdgeApply)]
@@ -260,16 +277,17 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             )
         except CogniteAPIError as e:
             result.error_messages.append(str(e))
-            result.failed.append([repr(instance.as_id()) for instance in items])  # type: ignore[arg-type, attr-defined]
+            result.failed_upserted.update(item.as_id() for item in e.failed + e.unknown)
+            result.created.update(item.as_id() for item in e.successful)
         else:
             for instance in itertools.chain(upserted.nodes, upserted.edges):
                 if instance.was_modified and instance.created_time == instance.last_updated_time:
-                    result.created.append(repr(instance.as_id()))
+                    result.created.add(instance.as_id())
                 elif instance.was_modified:
-                    result.changed.append(repr(instance.as_id()))
+                    result.changed.add(instance.as_id())
                 else:
-                    result.unchanged.append(repr(instance.as_id()))
-        return result if return_diffs else result.as_upload_result_ids()  # type: ignore[return-value]
+                    result.unchanged.add(instance.as_id())
+        return result
 
 
 def _triples2dictionary(
@@ -278,5 +296,7 @@ def _triples2dictionary(
     """Converts list of triples to dictionary"""
     values_by_property_by_identifier: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
     for id_, property_, value in triples:
-        values_by_property_by_identifier[id_][property_].append(value)
+        # avoid issue with strings "None", "nan", "null" being treated as values
+        if value.lower() not in ["", "None", "nan", "null"]:
+            values_by_property_by_identifier[id_][property_].append(value)
     return values_by_property_by_identifier

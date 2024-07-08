@@ -2,11 +2,15 @@ import logging
 from pathlib import Path
 from typing import ClassVar, cast
 
-from cognite.neat.constants import PREFIXES
+from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
 from cognite.neat.legacy.graph import stores
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
-from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
+from cognite.neat.workflows.steps.data_contracts import (
+    RulesData,
+    SolutionGraph,
+    SourceGraph,
+)
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = ["ResetGraphStores", "ConfigureGraphStore"]
@@ -71,7 +75,11 @@ class ConfigureDefaultGraphStores(Step):
             label="Defines which stores to configure",
             options=["all", "source", "solution"],
         ),
-        Configurable(name="solution_rdf_store.api_root_url", value="", label="Root url for graphdb or sparql endpoint"),
+        Configurable(
+            name="solution_rdf_store.api_root_url",
+            value="",
+            label="Root url for graphdb or sparql endpoint",
+        ),
     ]
 
     def run(self, rules_data: RulesData | None = None) -> (FlowMessage, SourceGraph, SolutionGraph):  # type: ignore[override, syntax]
@@ -92,7 +100,7 @@ class ConfigureDefaultGraphStores(Step):
                 store_cls = stores.STORE_BY_TYPE[source_store_type]
             except KeyError:
                 return FlowMessage(output_text="Invalid store type")
-            source_graph = store_cls(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
+            source_graph = store_cls(prefixes=prefixes, base_prefix="neat", namespace=DEFAULT_NAMESPACE)
 
             source_graph.init_graph(
                 self.configs["source_rdf_store.query_url"],
@@ -207,13 +215,19 @@ class ConfigureGraphStore(Step):
             label="Local directory that is used as local graph store.Only for oxigraph, file store types",
         ),
         Configurable(
-            name="sparql_query_url", value="", label="Query url for sparql endpoint.Only for sparql store type"
+            name="sparql_query_url",
+            value="",
+            label="Query url for sparql endpoint.Only for sparql store type",
         ),
         Configurable(
-            name="sparql_update_url", value="", label="Update url for sparql endpoint.Only for sparql store type"
+            name="sparql_update_url",
+            value="",
+            label="Update url for sparql endpoint.Only for sparql store type",
         ),
         Configurable(
-            name="db_server_api_root_url", value="", label="Root url for graphdb or sparql endpoint.Only for graphdb"
+            name="db_server_api_root_url",
+            value="",
+            label="Root url for graphdb or sparql endpoint.Only for graphdb",
         ),
         Configurable(
             name="init_procedure",
@@ -255,7 +269,7 @@ class ConfigureGraphStore(Step):
         except KeyError:
             return FlowMessage(output_text="Invalid store type")
 
-        new_graph_store = store_cls(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
+        new_graph_store = store_cls(prefixes=prefixes, base_prefix="neat", namespace=DEFAULT_NAMESPACE)
         new_graph_store.init_graph(
             self.configs["sparql_query_url"],
             self.configs["sparql_update_url"],
@@ -271,7 +285,11 @@ class ConfigureGraphStore(Step):
 
         return (
             FlowMessage(output_text="Graph store configured successfully"),
-            SourceGraph(graph=new_graph_store) if graph_name == "SourceGraph" else SolutionGraph(graph=new_graph_store),
+            (
+                SourceGraph(graph=new_graph_store)
+                if graph_name == "SourceGraph"
+                else SolutionGraph(graph=new_graph_store)
+            ),
         )
 
 

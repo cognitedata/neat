@@ -39,16 +39,22 @@ class GraphExporter(BaseExporter[Graph], ABC):
 
 
 class OWLExporter(GraphExporter):
+    """Exports rules to an OWL ontology."""
+
     def export(self, rules: Rules) -> Graph:
         return Ontology.from_rules(rules).as_owl()
 
 
 class SHACLExporter(GraphExporter):
+    """Exports rules to a SHACL graph."""
+
     def export(self, rules: Rules) -> Graph:
         return Ontology.from_rules(rules).as_shacl()
 
 
 class SemanticDataModelExporter(GraphExporter):
+    """Exports rules to a semantic data model."""
+
     def export(self, rules: Rules) -> Graph:
         return Ontology.from_rules(rules).as_semantic_data_model()
 

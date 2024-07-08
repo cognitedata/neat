@@ -271,7 +271,7 @@ def _class2asset_instance(
     if "name" in remapped_class_instance and remapped_class_instance["name"] == "":
         remapped_class_instance["name"] = empty_name_default
     # To maintain shape across of all assets of specific type we are adding missing metadata
-    # keys as empty strings, this was request by Statnett
+    # keys as empty strings, this was request by a customer
     # Generally this is bad practice, but more of a workaround of their bad data
     if missing_metadata and add_missing_metadata:
         msg = f"Adding missing metadata keys with values set to empty string for {class_}"

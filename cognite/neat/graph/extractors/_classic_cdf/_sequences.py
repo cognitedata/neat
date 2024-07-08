@@ -15,6 +15,13 @@ from cognite.neat.utils.utils import string_to_ideal_type
 
 
 class SequencesExtractor(BaseExtractor):
+    """Extract data from Cognite Data Fusions Sequences into Neat.
+
+    Args:
+        sequence (Iterable[Sequence]): An iterable of sequences.
+        namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+    """
+
     def __init__(
         self,
         sequence: Iterable[Sequence],

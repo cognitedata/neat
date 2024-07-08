@@ -41,4 +41,4 @@ class TestDMSLoader:
 
         assert len(result) == 1
 
-        assert len(result[0].success) == len(car.INSTANCES)
+        assert result[0].success == len(car.INSTANCES)

@@ -14,7 +14,7 @@ from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.graph.models import Triple
 from cognite.neat.graph.queries import Queries
 from cognite.neat.graph.transformers import Transformers
-from cognite.neat.rules.models import AssetRules, InformationRules
+from cognite.neat.rules.models import InformationRules
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.utils.auxiliary import local_import
 
@@ -40,7 +40,7 @@ class NeatGraphStore:
     def __init__(
         self,
         graph: Graph,
-        rules: InformationRules | AssetRules | None = None,
+        rules: InformationRules | None = None,
     ):
         self.rules: InformationRules | None = None
 
@@ -64,11 +64,12 @@ class NeatGraphStore:
 
         self.queries = Queries(self.graph, self.rules)
 
-    def add_rules(self, rules: InformationRules | AssetRules) -> None:
+    def add_rules(self, rules: InformationRules) -> None:
         """This method is used to add rules to the graph store and it is the only correct
-        way to add rules to the graph store, after the graph store has been initialized."""
+        way to add rules to the graph store, after the graph store has been initialized.
+        """
 
-        self.rules = rules.as_information_architect_rules() if not isinstance(rules, InformationRules) else rules
+        self.rules = rules
         self.base_namespace = self.rules.metadata.namespace
         self.queries = Queries(self.graph, self.rules)
         self.provenance.append(
@@ -169,7 +170,10 @@ class NeatGraphStore:
         # not yet developed
 
         if not self.rules:
-            warnings.warn("No rules found for the graph store, returning empty list.", stacklevel=2)
+            warnings.warn(
+                "No rules found for the graph store, returning empty list.",
+                stacklevel=2,
+            )
             return []
 
         class_entity = ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
@@ -278,3 +282,13 @@ class NeatGraphStore:
                     description=transformer.description,
                 )
             )
+
+    def _repr_html_(self) -> str:
+        provenance = self.provenance._repr_html_()
+
+        return (
+            f"<strong>{type(self).__name__}</strong> A graph store is a container for storing triples. "
+            "It can be queried and transformed to extract information.<br />"
+            "<strong>Provenance</strong> Provenance is a record of changes that have occurred in the graph store.<br />"
+            f"{provenance}"
+        )

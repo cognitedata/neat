@@ -6,7 +6,7 @@ from cognite.neat.utils.cdf import clean_space
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SPACE = "aleks_playground_2"
+SPACE = "inferred"
 
 
 def main() -> None:

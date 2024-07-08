@@ -15,6 +15,55 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.85.5] - 07-07-24
+### Fixed
+- Prefix collision
+- Fixed issue arising when value string "null" is threated as float "null" leading to error
+  in DMS Instances
+
+### Removed
+- Relation to original data model used to develop neat
+
+## [0.85.4] - 01-07-24
+### Fixed
+- Another issue with docker release.
+
+## [0.85.3] - 01-07-24
+### Fixed
+- Another issue with docker release.
+
+## [0.85.2] - 01-07-24
+### Fixed
+- Issues with docker release.
+
+## [0.85.1] - 01-07-24
+### Fixed
+- Bug when using the `get_cognite_client` function with interactive login. This is now fixed.
+
+## [0.85.0] - 25-06-24
+### Changed
+- [BREAKING] Interface for `Loaders`. Instead of `.export_to_cdf` now always return `UploadResultList` and
+  the `.load_into_cdf_iterable` returns an iterable of `UploadResult`. It is no longer possible to return
+  just the count. This is to make the interface more notebook friendly and easier to work with.
+
+## [0.84.1] - 26-06-24
+### Added
+- Conversion between information, asset and dms rules
+- Added serializer for transformations (i.e. RDFPATH)
+- Placeholder for AssetLoader
+
+
+## [0.84.1] - 26-06-24
+### Added
+- Conversion between information, asset and dms rules
+- Added serializer for transformations (i.e. RDFPATH)
+- Placeholder for AssetLoader
+
+## [0.84.0] - 25-06-24
+### Changed
+- [BREAKING] Interface for `Exporters`. Instead of `.export_to_cdf` returning an iterable, it now returns a list,
+  and the `.export_to_cdf_iterable` returns an iterable. In addition, these method now returns a new type of
+  objects `UploadResult`. This is to make the interface more notebook friendly and easier to work with.
 
 ## [0.83.1] - 26-06-24
 ### Added

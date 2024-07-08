@@ -8,7 +8,9 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.legacy.graph import extractors, loaders
 from cognite.neat.legacy.graph.stores import MemoryStore
-from cognite.neat.legacy.graph.transformations.transformer import domain2app_knowledge_graph
+from cognite.neat.legacy.graph.transformations.transformer import (
+    domain2app_knowledge_graph,
+)
 from cognite.neat.legacy.rules import importers
 from cognite.neat.legacy.rules.exporters._rules2triples import get_instances_as_triples
 from cognite.neat.legacy.rules.models.rules import Rules
@@ -38,12 +40,12 @@ def nordic44_inferred_rules() -> Rules:
 
 @pytest.fixture(scope="session")
 def transformation_rules() -> Rules:
-    return importers.ExcelImporter(config.TNT_TRANSFORMATION_RULES).to_rules()
+    return importers.ExcelImporter(config.SIMPLECIM_TRANSFORMATION_RULES).to_rules()
 
 
 @pytest.fixture(scope="session")
 def dms_compliant_rules() -> Rules:
-    return importers.ExcelImporter(config.TNT_TRANSFORMATION_RULES_DMS_COMPLIANT).to_rules()
+    return importers.ExcelImporter(config.SIMPLECIM_TRANSFORMATION_RULES_DMS_COMPLIANT).to_rules()
 
 
 @pytest.fixture(scope="session")
@@ -106,16 +108,22 @@ def graph_with_date(transformation_rules_date) -> MemoryStore:
 
 
 @pytest.fixture(scope="session")
-def source_knowledge_graph() -> MemoryStore:
+def source_knowledge_graph(dms_compliant_rules) -> MemoryStore:
     graph = MemoryStore(namespace=Namespace("http://purl.org/nordic44#"))
     graph.init_graph()
     graph.import_from_file(config.NORDIC44_KNOWLEDGE_GRAPH)
+
+    for prefix, namespace in dms_compliant_rules.prefixes.items():
+        graph.graph.bind(prefix, namespace)
     return graph
 
 
 @pytest.fixture(scope="session")
 def source_knowledge_graph_dirty(transformation_rules) -> MemoryStore:
-    graph = MemoryStore(namespace=Namespace("http://purl.org/nordic44#"))
+    graph = MemoryStore(
+        namespace=Namespace("http://purl.org/nordic44#"),
+        prefixes=transformation_rules.prefixes,
+    )
     graph.init_graph()
     graph.import_from_file(config.NORDIC44_KNOWLEDGE_GRAPH_DIRTY)
     for triple in get_instances_as_triples(transformation_rules):
@@ -135,7 +143,10 @@ def solution_knowledge_graph(source_knowledge_graph, transformation_rules):
 
 @pytest.fixture(scope="function")
 def mock_knowledge_graph(transformation_rules) -> MemoryStore:
-    mock_graph = MemoryStore(prefixes=transformation_rules.prefixes, namespace=transformation_rules.metadata.namespace)
+    mock_graph = MemoryStore(
+        prefixes=transformation_rules.prefixes,
+        namespace=transformation_rules.metadata.namespace,
+    )
     mock_graph.init_graph(base_prefix=transformation_rules.metadata.prefix)
 
     class_count = {

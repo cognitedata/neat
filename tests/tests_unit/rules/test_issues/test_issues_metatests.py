@@ -7,7 +7,13 @@ from pathlib import Path
 from types import GenericAlias, UnionType
 from typing import Any, TypeVar
 
-from cognite.neat.rules.issues import NeatValidationError, ValidationIssue, ValidationWarning
+from rdflib import Namespace
+
+from cognite.neat.rules.issues import (
+    NeatValidationError,
+    ValidationIssue,
+    ValidationWarning,
+)
 
 T_Type = TypeVar("T_Type", bound=type)
 
@@ -41,6 +47,8 @@ class IssuesCreator:
             return True
         elif type_ is Path:
             return Path("path")
+        elif type_ is Namespace:
+            return Namespace("http://purl.org/cognite/neat/issue#")
         elif isinstance(type_, GenericAlias):
             return self._create_values(type_)
         elif isinstance(type_, UnionType):

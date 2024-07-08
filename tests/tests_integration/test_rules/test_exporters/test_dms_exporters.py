@@ -153,32 +153,32 @@ class TestDMSExporters:
 
         exporter = DMSExporter()
 
-        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=True)
+        uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=True)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].total == len(rules.containers)
-        assert uploaded_by_name["views"].total == len(rules.views)
-        assert uploaded_by_name["data_models"].total == 1
-        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["containers"].success == len(rules.containers)
+        assert uploaded_by_name["views"].success == len(rules.views)
+        assert uploaded_by_name["data_models"].success == 1
+        assert uploaded_by_name["spaces"].success == 1
 
     def test_export_alice_to_cdf(self, cognite_client: CogniteClient, alice_rules: DMSRules):
         rules: DMSRules = alice_rules
 
         exporter = DMSExporter(existing_handling="force")
 
-        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
+        uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].total == len(rules.containers)
+        assert uploaded_by_name["containers"].success == len(rules.containers)
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].total == len(rules.views)
+        assert uploaded_by_name["views"].success == len(rules.views)
         assert uploaded_by_name["views"].failed == 0
 
-        assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].success == 1
         assert uploaded_by_name["data_models"].failed == 0
 
-        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].success == 1
         assert uploaded_by_name["spaces"].failed == 0
 
     def test_export_pipeline_populate_and_retrieve_data(
@@ -192,7 +192,7 @@ class TestDMSExporters:
         schema = cast(PipelineSchema, exporter.export(table_example))
 
         # Write Pipeline to CDF
-        uploaded = list(exporter.export_to_cdf(table_example, cognite_client, dry_run=False))
+        uploaded = exporter.export_to_cdf(table_example, cognite_client, dry_run=False)
 
         # Verify Raw Tables are written
         assert uploaded
@@ -254,19 +254,19 @@ class TestDMSExporters:
 
         exporter = DMSExporter(existing_handling="force")
 
-        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
+        uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].total == len(rules.containers)
+        assert uploaded_by_name["containers"].success == len(rules.containers)
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].total == len(rules.views)
+        assert uploaded_by_name["views"].success == len(rules.views)
         assert uploaded_by_name["views"].failed == 0
 
-        assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].success == 1
         assert uploaded_by_name["data_models"].failed == 0
 
-        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].success == 1
         assert uploaded_by_name["spaces"].failed == 0
 
     def test_export_svein_harald_dms_to_cdf(
@@ -282,23 +282,23 @@ class TestDMSExporters:
         assert schema.referenced_spaces(include_indirect_references=True) == {new_space}
         exporter = DMSExporter(existing_handling="force")
         # First, we ensure that the previous version of the data model is deployed
-        uploaded = list(exporter.export_to_cdf(rules.last, cognite_client, dry_run=False))
+        uploaded = exporter.export_to_cdf(rules.last, cognite_client, dry_run=False)
         failed = [entity for entity in uploaded if entity.failed]
         assert not failed, f"Failed to deploy previous version of the data model: {failed}"
 
         uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].total == len(rules.containers)
+        assert uploaded_by_name["containers"].success == len(rules.containers)
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].total == len(schema.views)
+        assert uploaded_by_name["views"].success == len(schema.views)
         assert uploaded_by_name["views"].failed == 0
 
-        assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].success == 1
         assert uploaded_by_name["data_models"].failed == 0
 
-        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].success == 1
         assert uploaded_by_name["spaces"].failed == 0
 
     def test_export_olav_updated_dms_to_cdf(
@@ -345,21 +345,21 @@ class TestDMSExporters:
         assert referenced_spaces == {new_enterprise_space, new_solution_space}
         exporter = DMSExporter(existing_handling="force")
         # First, we ensure that the previous version of the data model is deployed
-        uploaded = list(exporter.export_to_cdf(rules.last, cognite_client, dry_run=False))
+        uploaded = exporter.export_to_cdf(rules.last, cognite_client, dry_run=False)
         failed = [entity for entity in uploaded if entity.failed]
         assert not failed, f"Failed to deploy previous version of the data model: {failed}"
 
-        uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
+        uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].total == len(schema.containers)
+        assert uploaded_by_name["containers"].success == len(schema.containers)
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].total == len(schema.views)
+        assert uploaded_by_name["views"].success == len(schema.views)
         assert uploaded_by_name["views"].failed == 0
 
-        assert uploaded_by_name["data_models"].total == 1
+        assert uploaded_by_name["data_models"].success == 1
         assert uploaded_by_name["data_models"].failed == 0
 
-        assert uploaded_by_name["spaces"].total == 1
+        assert uploaded_by_name["spaces"].success == 1
         assert uploaded_by_name["spaces"].failed == 0

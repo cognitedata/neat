@@ -205,6 +205,12 @@ class SpreadsheetReader:
 
 
 class ExcelImporter(BaseImporter):
+    """Import rules from an Excel file.
+
+    Args:
+        filepath (Path): The path to the Excel file.
+    """
+
     def __init__(self, filepath: Path):
         self.filepath = filepath
 
@@ -286,6 +292,17 @@ class ExcelImporter(BaseImporter):
 
 
 class GoogleSheetImporter(BaseImporter):
+    """Import rules from a Google Sheet.
+
+    .. warning::
+
+        This importer is experimental and may not work as expected.
+
+    Args:
+        sheet_id (str): The Google Sheet ID.
+        skiprows (int): The number of rows to skip when reading the Google Sheet.
+    """
+
     def __init__(self, sheet_id: str, skiprows: int = 1):
         self.sheet_id = sheet_id
         self.skiprows = skiprows

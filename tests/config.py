@@ -11,8 +11,8 @@ PYPROJECT_TOML = ROOT / "pyproject.toml"
 
 # Example rule files
 NORDIC44_INFERRED_RULES = TEST_FOLDER / "data" / "nordic44_inferred.xlsx"
-TNT_TRANSFORMATION_RULES = PACKAGE_DIRECTORY / "legacy" / "rules" / "examples" / "Rules-Nordic44-to-TNT.xlsx"
-TNT_TRANSFORMATION_RULES_DMS_COMPLIANT = (
+SIMPLECIM_TRANSFORMATION_RULES = PACKAGE_DIRECTORY / "legacy" / "rules" / "examples" / "Rules-Nordic44.xlsx"
+SIMPLECIM_TRANSFORMATION_RULES_DMS_COMPLIANT = (
     PACKAGE_DIRECTORY / "legacy" / "rules" / "examples" / "Rules-Nordic44-to-graphql.xlsx"
 )
 SIMPLE_TRANSFORMATION_RULES = (

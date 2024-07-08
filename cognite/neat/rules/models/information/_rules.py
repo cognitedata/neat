@@ -259,7 +259,7 @@ class InformationRules(BaseRules):
     metadata: InformationMetadata = Field(alias="Metadata")
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
-    prefixes: dict[str, Namespace] = Field(default_factory=lambda: PREFIXES.copy())
+    prefixes: dict[str, Namespace] = Field(default_factory=lambda: PREFIXES.copy(), alias="Prefixes")
     last: "InformationRules | None" = Field(None, alias="Last")
     reference: "InformationRules | None" = Field(None, alias="Reference")
 
@@ -267,6 +267,8 @@ class InformationRules(BaseRules):
     def parse_str(cls, values: Any) -> Any:
         if isinstance(values, dict):
             return {key: Namespace(value) if isinstance(value, str) else value for key, value in values.items()}
+        elif values is None:
+            values = PREFIXES.copy()
         return values
 
     @model_validator(mode="after")
