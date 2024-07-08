@@ -82,7 +82,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         except Exception as e:
             issues.append(
                 loader_issues.FailedConvertError(
-                    identifier=rules.metadata.as_identifier(), target_format="read DMS model", reason=str(e)
+                    identifier=rules.metadata.as_identifier(),
+                    target_format="read DMS model",
+                    reason=str(e),
                 )
             )
         return cls(graph_store, data_model, instance_space, {}, issues)
@@ -199,7 +201,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         return pydantic_cls, edge_by_property, issues
 
     def _create_node(
-        self, identifier: str, properties: dict[str, list[str]], pydantic_cls: type[Model], view_id: dm.ViewId
+        self,
+        identifier: str,
+        properties: dict[str, list[str]],
+        pydantic_cls: type[Model],
+        view_id: dm.ViewId,
     ) -> dm.InstanceApply:
         created = pydantic_cls.model_validate(properties)
 
@@ -233,7 +239,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 external_id = f"{identifier}.{prop}.{target}"
                 yield dm.EdgeApply(
                     space=self.instance_space,
-                    external_id=external_id if len(external_id) < 256 else create_sha256_hash(external_id),
+                    external_id=(external_id if len(external_id) < 256 else create_sha256_hash(external_id)),
                     type=edge.type,
                     start_node=dm.DirectRelationReference(self.instance_space, identifier),
                     end_node=dm.DirectRelationReference(self.instance_space, target),
@@ -290,5 +296,7 @@ def _triples2dictionary(
     """Converts list of triples to dictionary"""
     values_by_property_by_identifier: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
     for id_, property_, value in triples:
-        values_by_property_by_identifier[id_][property_].append(value)
+        # avoid issue with strings "None", "nan", "null" being treated as values
+        if value.lower() not in ["", "None", "nan", "null"]:
+            values_by_property_by_identifier[id_][property_].append(value)
     return values_by_property_by_identifier

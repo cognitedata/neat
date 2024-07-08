@@ -21,7 +21,10 @@ def config_mock() -> Config:
 
 
 def test_graph_loader_clean_orphans(
-    solution_knowledge_graph_dirty, transformation_rules, mock_cdf_assets, config_mock: Config
+    solution_knowledge_graph_dirty,
+    transformation_rules,
+    mock_cdf_assets,
+    config_mock: Config,
 ):
     with monkeypatch_cognite_client() as client_mock:
 
@@ -29,7 +32,11 @@ def test_graph_loader_clean_orphans(
             return AssetList([Asset(**asset) for asset in mock_cdf_assets.values()])
 
         def list_labels(**_):
-            label_names = [*list(get_labels(transformation_rules)), "non-historic", "historic"]
+            label_names = [
+                *list(get_labels(transformation_rules)),
+                "non-historic",
+                "historic",
+            ]
             return [Label(external_id=label_name, name=label_names) for label_name in label_names]
 
         client_mock.assets.list = list_assets
@@ -39,12 +46,16 @@ def test_graph_loader_clean_orphans(
     solution_graph = SolutionGraph(
         graph=MemoryStore(
             graph=solution_knowledge_graph_dirty,
-            namespace="http://purl.org/cognite/tnt#",
+            namespace="http://purl.org/cognite/simplecim#",
             prefixes=solution_knowledge_graph_dirty.namespaces,
         )
     )
+
     test_assets_from_graph = GenerateAssetsFromGraph(config_mock)
-    test_assets_from_graph.configs = {"assets_cleanup_type": "orphans", "data_set_id": 123456}
+    test_assets_from_graph.configs = {
+        "assets_cleanup_type": "orphans",
+        "data_set_id": 123456,
+    }
     test_assets_from_graph.metrics = NeatMetricsCollector("TestMetrics")
 
     _, assets = test_assets_from_graph.run(rules=rules, cdf_client=client_mock, solution_graph=solution_graph)
@@ -58,7 +69,10 @@ def test_graph_loader_clean_orphans(
 
 
 def test_graph_loader_no_orphans_cleanup(
-    solution_knowledge_graph_dirty, transformation_rules, mock_cdf_assets, config_mock: Config
+    solution_knowledge_graph_dirty,
+    transformation_rules,
+    mock_cdf_assets,
+    config_mock: Config,
 ):
     with monkeypatch_cognite_client() as client_mock:
 
@@ -66,7 +80,11 @@ def test_graph_loader_no_orphans_cleanup(
             return AssetList([Asset(**asset) for asset in mock_cdf_assets.values()])
 
         def list_labels(**_):
-            label_names = [*list(get_labels(transformation_rules)), "non-historic", "historic"]
+            label_names = [
+                *list(get_labels(transformation_rules)),
+                "non-historic",
+                "historic",
+            ]
             return [Label(external_id=label_name, name=label_names) for label_name in label_names]
 
         client_mock.assets.list = list_assets
@@ -76,12 +94,15 @@ def test_graph_loader_no_orphans_cleanup(
     solution_graph = SolutionGraph(
         graph=MemoryStore(
             graph=solution_knowledge_graph_dirty,
-            namespace="http://purl.org/cognite/tnt#",
+            namespace="http://purl.org/cognite/simplecim#",
             prefixes=solution_knowledge_graph_dirty.namespaces,
         )
     )
     test_assets_from_graph = GenerateAssetsFromGraph(config_mock)
-    test_assets_from_graph.configs = {"assets_cleanup_type": "nothing", "data_set_id": 123456}
+    test_assets_from_graph.configs = {
+        "assets_cleanup_type": "nothing",
+        "data_set_id": 123456,
+    }
     test_assets_from_graph.metrics = NeatMetricsCollector("TestMetrics")
 
     _, assets = test_assets_from_graph.run(rules=rules, cdf_client=client_mock, solution_graph=solution_graph)

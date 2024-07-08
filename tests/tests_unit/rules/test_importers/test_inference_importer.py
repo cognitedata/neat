@@ -12,8 +12,8 @@ def test_rdf_inference():
     # checking multi-value type
     assert set(rules.properties.data[19].value_type.types) == set(
         MultiValueTypeInfo.load(
-            "neat:ConformLoad | neat:NonConformLoad | "
-            "neat:GeneratingUnit | neat:ACLineSegment | neat:PowerTransformer"
+            "inferred:ConformLoad | inferred:NonConformLoad | "
+            "inferred:GeneratingUnit | inferred:ACLineSegment | inferred:PowerTransformer"
         ).types
     )
 

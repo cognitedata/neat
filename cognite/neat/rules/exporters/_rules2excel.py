@@ -143,9 +143,15 @@ class ExcelExporter(BaseExporter[Workbook]):
 
         return workbook
 
-    def _write_sheets(self, workbook: Workbook, dumped_rules: dict[str, Any], rules: Rules, sheet_prefix: str = ""):
+    def _write_sheets(
+        self,
+        workbook: Workbook,
+        dumped_rules: dict[str, Any],
+        rules: Rules,
+        sheet_prefix: str = "",
+    ):
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
-            if sheet_name in ("Metadata", "prefixes", "Reference", "Last"):
+            if sheet_name in ("Metadata", "Prefixes", "Reference", "Last"):
                 continue
             sheet = workbook.create_sheet(f"{sheet_prefix}{sheet_name}")
 
@@ -273,7 +279,9 @@ class _MetadataCreator:
 
         new_metadata = self._create_new_info(now)
         if isinstance(metadata, DMSMetadata):
-            from cognite.neat.rules.models.information._converter import _InformationRulesConverter
+            from cognite.neat.rules.models.information._converter import (
+                _InformationRulesConverter,
+            )
 
             output_metadata: DMSMetadata | InformationMetadata = _InformationRulesConverter._convert_metadata_to_dms(
                 new_metadata

@@ -91,7 +91,9 @@ class InferenceImporter(BaseImporter):
     ) -> tuple[Rules | None, IssueList]: ...
 
     def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+        self,
+        errors: Literal["raise", "continue"] = "continue",
+        role: RoleTypes | None = None,
     ) -> tuple[Rules | None, IssueList] | Rules:
         """
         Creates `Rules` object from the data for target role.
@@ -102,9 +104,6 @@ class InferenceImporter(BaseImporter):
             return self._return_or_raise(self.issue_list, errors)
 
         rules_dict = self._to_rules_components()
-
-        # adding additional prefix
-        rules_dict["prefixes"][rules_dict["metadata"]["prefix"]] = rules_dict["metadata"]["namespace"]
 
         with _handle_issues(self.issue_list) as future:
             rules: InformationRules
@@ -134,7 +133,10 @@ class InferenceImporter(BaseImporter):
         """
         classes: dict[str, dict] = {}
         properties: dict[str, dict] = {}
-        prefixes: dict[str, Namespace] = PREFIXES
+        prefixes: dict[str, Namespace] = PREFIXES.copy()
+
+        # Adds default namespace to prefixes
+        prefixes[self._default_metadata().prefix] = self._default_metadata().namespace
 
         # Infers all the classes in the graph
         for class_uri, no_instances in self.graph.query(ORDERED_CLASSES_QUERY):  # type: ignore[misc]
@@ -246,7 +248,7 @@ class InferenceImporter(BaseImporter):
             created=datetime.now(),
             updated=datetime.now(),
             description="Inferred model from knowledge graph",
-            prefix="neat",
+            prefix="inferred",
             namespace=DEFAULT_NAMESPACE,
         )
 
@@ -262,6 +264,10 @@ class InferenceImporter(BaseImporter):
     def _read_value_type_occurrence_from_comment(cls, value_type: str, comment: str) -> int:
         return int(
             cast(
-                re.Match, re.search(rf"with value type <{value_type}> which occurs <(\d+)> times in the graph", comment)
+                re.Match,
+                re.search(
+                    rf"with value type <{value_type}> which occurs <(\d+)> times in the graph",
+                    comment,
+                ),
             ).group(1)
         )

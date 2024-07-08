@@ -1,4 +1,5 @@
 import itertools
+from collections import Counter
 from typing import cast
 
 from cognite.neat.rules import issues
@@ -35,6 +36,7 @@ class InformationPostValidation:
         self._referenced_parent_classes_exist()
         self._referenced_classes_exist()
         self._referenced_value_types_exist()
+        self._namespaces_reassigned()
 
         return self.issue_list
 
@@ -162,3 +164,16 @@ class InformationPostValidation:
             class_subclass_pairs[class_.class_].extend([parent.as_class_entity() for parent in class_.parent])
 
         return class_subclass_pairs
+
+    def _namespaces_reassigned(self) -> None:
+        prefixes = self.rules.prefixes.copy()
+        prefixes[self.rules.metadata.namespace.prefix] = self.rules.metadata.namespace
+
+        if len(set(prefixes.values())) != len(prefixes):
+            reused_namespaces = [value for value, count in Counter(prefixes.values()).items() if count > 1]
+            impacted_prefixes = [key for key, value in prefixes.items() if value in reused_namespaces]
+            self.issue_list.append(
+                issues.spreadsheet.PrefixNamespaceCollisionError(
+                    prefixes=impacted_prefixes, namespaces=reused_namespaces
+                )
+            )

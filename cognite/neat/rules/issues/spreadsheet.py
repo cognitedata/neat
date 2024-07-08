@@ -7,6 +7,7 @@ from typing import Any, ClassVar
 from cognite.client.data_classes import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic_core import ErrorDetails
+from rdflib import Namespace
 
 from cognite.neat.issues import MultiValueError
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
@@ -23,6 +24,7 @@ __all__ = [
     "InvalidRowError",
     "InvalidPropertyError",
     "InvalidClassError",
+    "PrefixNamespaceCollisionError",
     "InvalidContainerError",
     "InvalidViewError",
     "InvalidRowUnknownSheetError",
@@ -44,13 +46,18 @@ class InvalidSheetError(NeatValidationError, ABC):
     @classmethod
     @abstractmethod
     def from_pydantic_error(
-        cls, error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+        cls,
+        error: ErrorDetails,
+        read_info_by_sheet: dict[str, SpreadsheetRead] | None = None,
     ) -> Self:
         raise NotImplementedError
 
     @classmethod
     def from_pydantic_errors(
-        cls, errors: list[ErrorDetails], read_info_by_sheet: dict[str, SpreadsheetRead] | None = None, **kwargs: Any
+        cls,
+        errors: list[ErrorDetails],
+        read_info_by_sheet: dict[str, SpreadsheetRead] | None = None,
+        **kwargs: Any,
     ) -> "list[NeatValidationError]":
         output: list[NeatValidationError] = []
         for error in errors:
@@ -100,16 +107,26 @@ class InvalidRowError(InvalidSheetError, ABC):
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, InvalidRowError):
             return NotImplemented
-        return (self.sheet_name, self.row, self.column) < (other.sheet_name, other.row, other.column)
+        return (self.sheet_name, self.row, self.column) < (
+            other.sheet_name,
+            other.row,
+            other.column,
+        )
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, InvalidRowError):
             return NotImplemented
-        return (self.sheet_name, self.row, self.column) == (other.sheet_name, other.row, other.column)
+        return (self.sheet_name, self.row, self.column) == (
+            other.sheet_name,
+            other.row,
+            other.column,
+        )
 
     @classmethod
     def from_pydantic_error(
-        cls, error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+        cls,
+        error: ErrorDetails,
+        read_info_by_sheet: dict[str, SpreadsheetRead] | None = None,
     ) -> Self:
         sheet_name, _, row, column, *__ = error["loc"]
         reader = (read_info_by_sheet or {}).get(str(sheet_name), SpreadsheetRead())
@@ -173,7 +190,9 @@ class InvalidRowUnknownSheetError(InvalidRowError):
 
     @classmethod
     def from_pydantic_error(
-        cls, error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+        cls,
+        error: ErrorDetails,
+        read_info_by_sheet: dict[str, SpreadsheetRead] | None = None,
     ) -> Self:
         sheet_name, _, row, column, *__ = error["loc"]
         reader = (read_info_by_sheet or {}).get(str(sheet_name), SpreadsheetRead())
@@ -292,6 +311,27 @@ class ParentClassesNotDefinedError(NeatValidationError):
         if len(self.classes) > 1:
             return f"Parent classes {', '.join(self.classes)} are not defined. This may be a mistake."
         return f"Parent classes {', '.join(self.classes[0])} are not defined. This may be a mistake."
+
+
+@dataclass(frozen=True)
+class PrefixNamespaceCollisionError(NeatValidationError):
+    description = "Same namespaces are assigned to different prefixes."
+    fix = "Make sure that each unique namespace is assigned to a unique prefix"
+
+    namespaces: list[Namespace]
+    prefixes: list[str]
+
+    def dump(self) -> dict[str, list[str]]:
+        output = super().dump()
+        output["prefixes"] = self.prefixes
+        output["namespaces"] = self.namespaces
+        return output
+
+    def message(self) -> str:
+        return (
+            f"Namespaces {', '.join(self.namespaces)} are assigned multiple times."
+            f" Impacted prefixes: {', '.join(self.prefixes)}."
+        )
 
 
 @dataclass(frozen=True)
