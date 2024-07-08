@@ -1,14 +1,8 @@
-import sys
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models.entities import ClassEntity
-
-if sys.version_info >= (3, 11):
-    pass
-else:
-    pass
 
 T_Rules = TypeVar("T_Rules", bound=Rules)
 
