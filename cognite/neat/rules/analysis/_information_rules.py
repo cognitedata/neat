@@ -432,17 +432,21 @@ class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, Ass
 
                 if (
                     property_.implementation
-                    and (
-                        only_rdfpath
-                        and isinstance(property_.transformation, RDFPath)
-                        and any(
-                            isinstance(implementation, T_implementation) for implementation in property_.implementation
-                        )
-                    )
-                    or not only_rdfpath
+                    and any(isinstance(implementation, T_implementation) for implementation in property_.implementation)
+                    and (not only_rdfpath or (only_rdfpath and isinstance(property_.transformation, RDFPath)))
                 ):
-                    processed_properties[property_.property_] = property_
-            class_property_pairs[class_] = processed_properties
+                    implementation = [
+                        implementation
+                        for implementation in property_.implementation
+                        if isinstance(implementation, T_implementation)
+                    ]
+
+                    processed_properties[property_.property_] = property_.model_copy(
+                        deep=True, update={"implementation": implementation}
+                    )
+
+            if processed_properties:
+                class_property_pairs[class_] = processed_properties
 
         return class_property_pairs
 
