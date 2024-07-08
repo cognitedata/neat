@@ -2,25 +2,37 @@ import itertools
 import logging
 import warnings
 from collections import defaultdict
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 import pandas as pd
 from pydantic import ValidationError
 
 from cognite.neat.rules.models import SchemaCompleteness
 from cognite.neat.rules.models._rdfpath import RDFPath
-from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, ParentClassEntity, ReferenceEntity
-from cognite.neat.rules.models.information import InformationClass, InformationProperty, InformationRules
+from cognite.neat.rules.models.asset import AssetClass, AssetProperty, AssetRules
+from cognite.neat.rules.models.entities import (
+    AssetEntity,
+    ClassEntity,
+    EntityTypes,
+    ParentClassEntity,
+    ReferenceEntity,
+    RelationshipEntity,
+)
+from cognite.neat.rules.models.information import (
+    InformationClass,
+    InformationProperty,
+    InformationRules,
+)
 from cognite.neat.utils.utils import get_inheritance_path
 
-from ._base import BaseAnalysis
+T_Rules = TypeVar("T_Rules", InformationRules, AssetRules)
+T_Property = TypeVar("T_Property", InformationProperty, AssetProperty)
+T_Class = TypeVar("T_Class", InformationClass, AssetClass)
 
 
-class InformationArchitectRulesAnalysis(BaseAnalysis):
-    """Assumes analysis over only the complete schema"""
-
-    def __init__(self, rules: InformationRules):
-        self.rules = rules
+class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
+    def __init__(self, rules: T_Rules):
+        self.rules: T_Rules = rules
 
     @property
     def directly_referred_classes(self) -> set[ClassEntity]:
@@ -65,9 +77,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
 
         return class_subclass_pairs
 
-    def classes_with_properties(
-        self, consider_inheritance: bool = False
-    ) -> dict[ClassEntity, list[InformationProperty]]:
+    def classes_with_properties(self, consider_inheritance: bool = False) -> dict[ClassEntity, list[T_Property]]:
         """Returns classes that have been defined in the data model.
 
         Args:
@@ -85,10 +95,10 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
             it will not be included in the returned dictionary.
         """
 
-        class_property_pairs: dict[ClassEntity, list[InformationProperty]] = defaultdict(list)
+        class_property_pairs: dict[ClassEntity, list[T_Property]] = defaultdict(list)
 
         for property_ in self.rules.properties:
-            class_property_pairs[property_.class_].append(property_)
+            class_property_pairs[property_.class_].append(property_)  # type: ignore
 
         if consider_inheritance:
             class_parent_pairs = self.class_parent_pairs()
@@ -106,7 +116,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
     def _add_inherited_properties(
         cls,
         class_: ClassEntity,
-        class_property_pairs: dict[ClassEntity, list[InformationProperty]],
+        class_property_pairs: dict[ClassEntity, list[T_Property]],
         class_parent_pairs: dict[ClassEntity, list[ParentClassEntity]],
     ):
         inheritance_path = get_inheritance_path(class_, class_parent_pairs)
@@ -130,7 +140,7 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
 
     def class_property_pairs(
         self, only_rdfpath: bool = False, consider_inheritance: bool = False
-    ) -> dict[ClassEntity, dict[str, InformationProperty]]:
+    ) -> dict[ClassEntity, dict[str, T_Property]]:
         """Returns a dictionary of classes with a dictionary of properties associated with them.
 
         Args:
@@ -193,7 +203,14 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
             Dataframe with the class linkage of the data model
         """
 
-        class_linkage = pd.DataFrame(columns=["source_class", "target_class", "connecting_property", "max_occurrence"])
+        class_linkage = pd.DataFrame(
+            columns=[
+                "source_class",
+                "target_class",
+                "connecting_property",
+                "max_occurrence",
+            ]
+        )
 
         class_property_pairs = self.classes_with_properties(consider_inheritance)
         properties = list(itertools.chain.from_iterable(class_property_pairs.values()))
@@ -286,21 +303,21 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
 
     def as_property_dict(
         self,
-    ) -> dict[str, list[InformationProperty]]:
+    ) -> dict[str, list[T_Property]]:
         """This is used to capture all definitions of a property in the data model."""
-        property_dict: dict[str, list[InformationProperty]] = defaultdict(list)
+        property_dict: dict[str, list[T_Property]] = defaultdict(list)
         for definition in self.rules.properties:
-            property_dict[definition.property_].append(definition)
+            property_dict[definition.property_].append(definition)  # type: ignore
         return property_dict
 
-    def as_class_dict(self) -> dict[str, InformationClass]:
+    def as_class_dict(self) -> dict[str, T_Class]:
         """This is to simplify access to classes through dict."""
-        class_dict: dict[str, InformationClass] = {}
+        class_dict: dict[str, T_Class] = {}
         for definition in self.rules.classes:
-            class_dict[str(definition.class_.suffix)] = definition
+            class_dict[str(definition.class_.suffix)] = definition  # type: ignore
         return class_dict
 
-    def subset_rules(self, desired_classes: set[ClassEntity]) -> InformationRules:
+    def subset_rules(self, desired_classes: set[ClassEntity]) -> T_Rules:
         """
         Subset rules to only include desired classes and their properties.
 
@@ -352,7 +369,8 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
         if impossible_classes:
             logging.warning(f"Could not find the following classes defined in the data model: {impossible_classes}")
             warnings.warn(
-                f"Could not find the following classes defined in the data model: {impossible_classes}", stacklevel=2
+                f"Could not find the following classes defined in the data model: {impossible_classes}",
+                stacklevel=2,
             )
 
         reduced_data_model: dict[str, Any] = {
@@ -373,8 +391,79 @@ class InformationArchitectRulesAnalysis(BaseAnalysis):
                 reduced_data_model["properties"].extend(properties)
 
         try:
-            return InformationRules(**reduced_data_model)
+            return type(self.rules)(**reduced_data_model)
         except ValidationError as e:
             warnings.warn(f"Reduced data model is not complete: {e}", stacklevel=2)
             reduced_data_model["metadata"].schema_ = SchemaCompleteness.partial
-            return InformationRules.model_construct(**reduced_data_model)
+            return type(self.rules).model_construct(**reduced_data_model)
+
+
+class InformationArchitectRulesAnalysis(_SharedAnalysis[InformationRules, InformationProperty, InformationClass]):
+    """Assumes analysis over only the complete schema"""
+
+    ...
+
+
+class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, AssetClass]):
+    """Assumes analysis over only the complete schema"""
+
+    def class_property_pairs(
+        self,
+        only_rdfpath: bool = False,
+        consider_inheritance: bool = False,
+        implementation_type: EntityTypes = EntityTypes.asset,
+    ) -> dict[ClassEntity, dict[str, AssetProperty]]:
+        class_property_pairs = {}
+
+        T_implementation = AssetEntity if implementation_type == EntityTypes.asset else RelationshipEntity
+
+        for class_, properties in self.classes_with_properties(consider_inheritance).items():
+            processed_properties = {}
+            for property_ in properties:
+                if property_.property_ in processed_properties:
+                    # TODO: use appropriate Warning class from _exceptions.py
+                    # if missing make one !
+                    warnings.warn(
+                        f"Property {property_.property_} for {class_} has been defined more than once!"
+                        " Only the first definition will be considered, skipping the rest..",
+                        stacklevel=2,
+                    )
+                    continue
+
+                if (
+                    property_.implementation
+                    and any(isinstance(implementation, T_implementation) for implementation in property_.implementation)
+                    and (not only_rdfpath or (only_rdfpath and isinstance(property_.transformation, RDFPath)))
+                ):
+                    implementation = [
+                        implementation
+                        for implementation in property_.implementation
+                        if isinstance(implementation, T_implementation)
+                    ]
+
+                    processed_properties[property_.property_] = property_.model_copy(
+                        deep=True, update={"implementation": implementation}
+                    )
+
+            if processed_properties:
+                class_property_pairs[class_] = processed_properties
+
+        return class_property_pairs
+
+    def asset_definition(
+        self, only_rdfpath: bool = False, consider_inheritance: bool = False
+    ) -> dict[ClassEntity, dict[str, AssetProperty]]:
+        return self.class_property_pairs(
+            consider_inheritance=consider_inheritance,
+            only_rdfpath=only_rdfpath,
+            implementation_type=EntityTypes.asset,
+        )
+
+    def relationship_definition(
+        self, only_rdfpath: bool = False, consider_inheritance: bool = False
+    ) -> dict[ClassEntity, dict[str, AssetProperty]]:
+        return self.class_property_pairs(
+            consider_inheritance=consider_inheritance,
+            only_rdfpath=only_rdfpath,
+            implementation_type=EntityTypes.relationship,
+        )

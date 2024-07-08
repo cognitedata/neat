@@ -1,3 +1,6 @@
-from ._information_rules import InformationArchitectRulesAnalysis
+from ._information_rules import (
+    AssetArchitectRulesAnalysis,
+    InformationArchitectRulesAnalysis,
+)
 
-__all__ = ["InformationArchitectRulesAnalysis"]
+__all__ = ["InformationArchitectRulesAnalysis", "AssetArchitectRulesAnalysis"]

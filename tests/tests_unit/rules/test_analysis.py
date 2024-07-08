@@ -1,9 +1,12 @@
-from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
-from cognite.neat.rules.models import InformationRules
+from cognite.neat.rules.analysis import (
+    AssetArchitectRulesAnalysis,
+    InformationArchitectRulesAnalysis,
+)
+from cognite.neat.rules.models import AssetRules, InformationRules
 from cognite.neat.rules.models.entities import ClassEntity
 
 
-class TestRulesAnalysis:
+class TestInformationRulesAnalysis:
     def test_class_parent_pairs(self, david_rules: InformationRules) -> None:
         assert len(InformationArchitectRulesAnalysis(david_rules).class_parent_pairs()) == 26
 
@@ -60,3 +63,11 @@ class TestRulesAnalysis:
             )
             == 1
         )
+
+
+class TestAssetRulesAnalysis:
+    def test_asset_definitions(self, jimbo_rules: AssetRules) -> None:
+        assert len(AssetArchitectRulesAnalysis(jimbo_rules).asset_definition(only_rdfpath=True)) == 6
+
+    def test_relationship_definitions(self, jimbo_rules: AssetRules) -> None:
+        assert len(AssetArchitectRulesAnalysis(jimbo_rules).relationship_definition(only_rdfpath=True)) == 4

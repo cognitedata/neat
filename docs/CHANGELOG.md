@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.85.6] - 08-07-24
+### Added
+- Analysis for `AssetRules`
+
 ## [0.85.5] - 07-07-24
 ### Fixed
 - Prefix collision
@@ -52,18 +56,18 @@ Changes are grouped as follows:
 - Added serializer for transformations (i.e. RDFPATH)
 - Placeholder for AssetLoader
 
-
-## [0.84.1] - 26-06-24
-### Added
-- Conversion between information, asset and dms rules
-- Added serializer for transformations (i.e. RDFPATH)
-- Placeholder for AssetLoader
-
 ## [0.84.0] - 25-06-24
 ### Changed
 - [BREAKING] Interface for `Exporters`. Instead of `.export_to_cdf` returning an iterable, it now returns a list,
   and the `.export_to_cdf_iterable` returns an iterable. In addition, these method now returns a new type of
   objects `UploadResult`. This is to make the interface more notebook friendly and easier to work with.
+
+## [0.83.1] - 26-06-24
+### Added
+- Conversion between information, asset and dms rules
+- Added serializer for transformations (i.e. RDFPATH)
+- Placeholder for AssetLoader
+
 
 ## [0.83.0] - 25-06-24
 ### Changed

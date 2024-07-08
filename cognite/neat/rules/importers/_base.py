@@ -10,7 +10,11 @@ from pydantic import ValidationError
 from rdflib import Namespace
 
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.issues.base import IssueList, NeatValidationError, ValidationWarning
+from cognite.neat.rules.issues.base import (
+    IssueList,
+    NeatValidationError,
+    ValidationWarning,
+)
 from cognite.neat.rules.models import AssetRules, DMSRules, InformationRules, RoleTypes
 from cognite.neat.utils.auxiliary import class_html_doc
 
@@ -30,7 +34,9 @@ class BaseImporter(ABC):
 
     @abstractmethod
     def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+        self,
+        errors: Literal["raise", "continue"] = "continue",
+        role: RoleTypes | None = None,
     ) -> tuple[Rules | None, IssueList] | Rules:
         """
         Creates `Rules` object from the data for target role.
