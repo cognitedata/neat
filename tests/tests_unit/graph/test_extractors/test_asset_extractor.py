@@ -10,7 +10,9 @@ from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 def test_asset_extractor():
     with monkeypatch_cognite_client() as client_mock:
-        client_mock.assets.return_value = AssetList.load((CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml").read_text())
+        assets = AssetList.load((CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml").read_text())
+        client_mock.assets.aggregate_count.return_value = len(assets)
+        client_mock.assets.return_value = assets
 
     store = NeatGraphStore.from_memory_store()
 
