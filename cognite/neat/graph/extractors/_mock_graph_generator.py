@@ -17,7 +17,7 @@ from cognite.neat.rules.models import DMSRules, InformationRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
 from cognite.neat.rules.models.information import InformationProperty
-from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.utils.utils import remove_namespace_from_uri
 
 from ._base import BaseExtractor
 
@@ -258,7 +258,11 @@ def _generate_mock_data_property_triples(
         # generate string
         else:
             triples.append(
-                (id_, URIRef(namespace[property_]), Literal(f"{property_}-{remove_namespace(id_).split('-')[-1]}"))
+                (
+                    id_,
+                    URIRef(namespace[property_]),
+                    Literal(f"{property_}-{remove_namespace_from_uri(id_).split('-')[-1]}"),
+                )
             )
     return triples
 

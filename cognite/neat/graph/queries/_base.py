@@ -1,12 +1,12 @@
 import warnings
-from typing import cast
+from typing import Literal, cast, overload
 
 from rdflib import RDF, Graph, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import InformationRules
-from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.utils.utils import remove_namespace_from_uri
 
 from ._construct import build_construct_query
 
@@ -66,7 +66,7 @@ class Queries:
             result = self.graph.query(query)
 
             # We cannot include the RDF.type in case there is a neat:type property
-            return [remove_namespace(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
+            return [remove_namespace_from_uri(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
         else:
             warnings.warn("No rules found for the graph store, returning empty list.", stacklevel=2)
             return []
@@ -93,7 +93,7 @@ class Queries:
             result = self.graph.query(query)
 
             # We cannot include the RDF.type in case there is a neat:type property
-            return [remove_namespace(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
+            return [remove_namespace_from_uri(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
         else:
             warnings.warn("No rules found for the graph store, returning empty list.", stacklevel=2)
             return []
@@ -110,14 +110,24 @@ class Queries:
         query = f"SELECT ?subject ?predicate ?object WHERE {{ ?subject ?predicate ?object }} LIMIT {limit}"
         return cast(list[ResultRow], list(self.graph.query(query)))
 
-    def list_types(self, limit: int = 25) -> list[ResultRow]:
+    @overload
+    def list_types(self, remove_namespace: Literal[False] = False, limit: int = 25) -> list[ResultRow]: ...
+
+    @overload
+    def list_types(self, remove_namespace: Literal[True], limit: int = 25) -> list[str]: ...
+
+    def list_types(self, remove_namespace: bool = False, limit: int = 25) -> list[ResultRow] | list[str]:
         """List types in the graph store
 
         Args:
             limit: Max number of types to return, by default 25
+            remove_namespace: Whether to remove the namespace from the type, by default False
 
         Returns:
             List of types
         """
         query = f"SELECT DISTINCT ?type WHERE {{ ?subject a ?type }} LIMIT {limit}"
-        return cast(list[ResultRow], list(self.graph.query(query)))
+        result = cast(list[ResultRow], list(self.graph.query(query)))
+        if remove_namespace:
+            return [remove_namespace_from_uri(res[0]) for res in result]
+        return result

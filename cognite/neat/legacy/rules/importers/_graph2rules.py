@@ -14,7 +14,7 @@ from cognite.neat.constants import PREFIXES
 from cognite.neat.legacy.rules import exceptions
 from cognite.neat.legacy.rules.exporters._rules2rules import to_dms_name
 from cognite.neat.legacy.rules.models.tables import Tables
-from cognite.neat.utils.utils import get_namespace, remove_namespace, uri_to_short_form
+from cognite.neat.utils.utils import get_namespace, remove_namespace_from_uri, uri_to_short_form
 
 from ._base import BaseImporter
 
@@ -173,7 +173,7 @@ def _graph_to_data_model_dict(graph: Graph, max_number_of_instance: int = -1) ->
 
     for class_ in _get_class_ids(graph):
         _add_uri_namespace_to_prefixes(class_, prefixes)
-        class_name = remove_namespace(class_)
+        class_name = remove_namespace_from_uri(class_)
 
         if class_name in data_model:
             warnings.warn(
@@ -187,7 +187,7 @@ def _graph_to_data_model_dict(graph: Graph, max_number_of_instance: int = -1) ->
 
         for instance in _get_class_instance_ids(graph, class_, max_number_of_instance):
             for property_, occurrence, data_type, object_type in _define_instance_properties(graph, instance):
-                property_name = remove_namespace(property_)
+                property_name = remove_namespace_from_uri(property_)
                 _add_uri_namespace_to_prefixes(property_, prefixes)
 
                 type_ = data_type if data_type else object_type
@@ -196,7 +196,7 @@ def _graph_to_data_model_dict(graph: Graph, max_number_of_instance: int = -1) ->
                 if not type_:
                     continue
 
-                type_name = remove_namespace(type_)
+                type_name = remove_namespace_from_uri(type_)
                 _add_uri_namespace_to_prefixes(type_, prefixes)
 
                 if property_name not in data_model[class_name]["properties"]:

@@ -20,7 +20,7 @@ from cognite.neat.rules.models.information import (
     InformationProperty,
     InformationRules,
 )
-from cognite.neat.utils.utils import generate_exception_report, remove_namespace
+from cognite.neat.utils.utils import generate_exception_report, remove_namespace_from_uri
 
 from ._base import BaseExporter
 from ._validation import are_properties_redefined
@@ -350,7 +350,7 @@ class OWLProperty(OntologyModel):
         if len(v) > 1:
             warnings.warn(
                 exceptions.OntologyMultiTypeProperty(
-                    remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]
+                    remove_namespace_from_uri(info.data["id_"]), [remove_namespace_from_uri(t) for t in v]
                 ).message,
                 category=exceptions.OntologyMultiTypeProperty,
                 stacklevel=2,
@@ -362,7 +362,7 @@ class OWLProperty(OntologyModel):
         if len(v) > 1:
             warnings.warn(
                 exceptions.OntologyMultiRangeProperty(
-                    remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]
+                    remove_namespace_from_uri(info.data["id_"]), [remove_namespace_from_uri(t) for t in v]
                 ).message,
                 category=exceptions.OntologyMultiRangeProperty,
                 stacklevel=2,
@@ -374,7 +374,7 @@ class OWLProperty(OntologyModel):
         if len(v) > 1:
             warnings.warn(
                 exceptions.OntologyMultiDomainProperty(
-                    remove_namespace(info.data["id_"]), [remove_namespace(t) for t in v]
+                    remove_namespace_from_uri(info.data["id_"]), [remove_namespace_from_uri(t) for t in v]
                 ).message,
                 category=exceptions.OntologyMultiDomainProperty,
                 stacklevel=2,
@@ -385,7 +385,7 @@ class OWLProperty(OntologyModel):
     def has_multi_name(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                exceptions.OntologyMultiLabeledProperty(remove_namespace(info.data["id_"]), v).message,
+                exceptions.OntologyMultiLabeledProperty(remove_namespace_from_uri(info.data["id_"]), v).message,
                 category=exceptions.OntologyMultiLabeledProperty,
                 stacklevel=2,
             )
@@ -395,7 +395,7 @@ class OWLProperty(OntologyModel):
     def has_multi_comment(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                exceptions.OntologyMultiDefinitionProperty(remove_namespace(info.data["id_"])).message,
+                exceptions.OntologyMultiDefinitionProperty(remove_namespace_from_uri(info.data["id_"])).message,
                 category=exceptions.OntologyMultiDefinitionProperty,
                 stacklevel=2,
             )

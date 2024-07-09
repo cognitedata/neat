@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from rdflib import Graph
 
-from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.utils.utils import remove_namespace_from_uri
 
 from ._owl2classes import _data_type_property_class, _object_property_class, _thing_class
 
@@ -92,12 +92,12 @@ def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     df.replace(np.nan, "", regex=True, inplace=True)
 
     df.Source = df.Property
-    df.Class = df.Class.apply(lambda x: remove_namespace(x))
-    df.Property = df.Property.apply(lambda x: remove_namespace(x))
-    df.Type = df.Type.apply(lambda x: remove_namespace(x))
+    df.Class = df.Class.apply(lambda x: remove_namespace_from_uri(x))
+    df.Property = df.Property.apply(lambda x: remove_namespace_from_uri(x))
+    df.Type = df.Type.apply(lambda x: remove_namespace_from_uri(x))
     df["Source Entity Name"] = df.Property
     df["Match Type"] = len(df) * ["exact"]
-    df["_property_type"] = df["_property_type"].apply(lambda x: remove_namespace(x))
+    df["_property_type"] = df["_property_type"].apply(lambda x: remove_namespace_from_uri(x))
 
     return df
 
