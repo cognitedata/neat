@@ -30,7 +30,7 @@ class FilesExtractor(BaseExtractor):
         self,
         files_metadata: Iterable[FileMetadata],
         namespace: Namespace | None = None,
-        unpack_metadata: bool = False,
+        unpack_metadata: bool = True,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.files_metadata = files_metadata
@@ -42,7 +42,7 @@ class FilesExtractor(BaseExtractor):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
-        unpack_metadata: bool = False,
+        unpack_metadata: bool = True,
     ):
         return cls(
             cast(
@@ -58,7 +58,7 @@ class FilesExtractor(BaseExtractor):
         cls,
         file_path: str,
         namespace: Namespace | None = None,
-        unpack_metadata: bool = False,
+        unpack_metadata: bool = True,
     ):
         return cls(
             FileMetadataList.load(Path(file_path).read_text()),

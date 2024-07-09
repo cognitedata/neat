@@ -29,7 +29,7 @@ class SequencesExtractor(BaseExtractor):
         self,
         sequence: Iterable[Sequence],
         namespace: Namespace | None = None,
-        unpack_metadata: bool = False,
+        unpack_metadata: bool = True,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.sequence = sequence
@@ -41,7 +41,7 @@ class SequencesExtractor(BaseExtractor):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
-        unpack_metadata: bool = False,
+        unpack_metadata: bool = True,
     ):
         return cls(
             cast(
@@ -57,7 +57,7 @@ class SequencesExtractor(BaseExtractor):
         cls,
         file_path: str,
         namespace: Namespace | None = None,
-        unpack_metadata: bool = False,
+        unpack_metadata: bool = True,
     ):
         return cls(SequenceList.load(Path(file_path).read_text()), namespace, unpack_metadata)
 

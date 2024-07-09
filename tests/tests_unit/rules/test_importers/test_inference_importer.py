@@ -1,6 +1,10 @@
 from cognite.neat.graph.examples import nordic44_knowledge_graph
+from cognite.neat.graph.extractors import AssetsExtractor
+from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.importers import InferenceImporter
+from cognite.neat.rules.models.data_types import Json
 from cognite.neat.rules.models.entities import MultiValueTypeInfo
+from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 
 def test_rdf_inference():
@@ -19,3 +23,20 @@ def test_rdf_inference():
 
     # we should have 4 multi-value property
     assert len([prop_ for prop_ in rules.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]) == 4
+
+
+def test_json_value_type_inference():
+    store = NeatGraphStore.from_memory_store()
+
+    extractor = AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml", unpack_metadata=False)
+
+    store.write(extractor)
+
+    rules, _ = InferenceImporter.from_graph_store(store, check_for_json_string=True).to_rules(errors="continue")
+
+    properties = {prop.property_: prop for prop in rules.properties}
+
+    assert len(rules.properties) == 5
+    assert len(rules.classes) == 1
+
+    assert isinstance(properties["metadata"].value_type, Json)

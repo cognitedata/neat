@@ -267,7 +267,7 @@ class Json(DataType):
     python = dms.Json
     dms = dms.Json
     graphql = "Json"
-    xsd = "string"
+    xsd = "json"
     sql = "STRING"
 
 
