@@ -41,7 +41,7 @@ class AssetsExtractor(BaseExtractor):
         to_type: Callable[[Asset], str | None] | None = None,
         total: int | None = None,
         limit: int | None = None,
-        unpack_metadata: bool = False,
+        unpack_metadata: bool = True,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.assets = assets
@@ -58,7 +58,7 @@ class AssetsExtractor(BaseExtractor):
         namespace: Namespace | None = None,
         to_type: Callable[[Asset], str | None] | None = None,
         limit: int | None = None,
-        unpack_metadata: bool = False,
+        unpack_metadata: bool = True,
     ):
         total = client.assets.aggregate_count(filter=AssetFilter(data_set_ids=[{"externalId": data_set_external_id}]))
 
@@ -82,7 +82,7 @@ class AssetsExtractor(BaseExtractor):
         namespace: Namespace | None = None,
         to_type: Callable[[Asset], str | None] | None = None,
         limit: int | None = None,
-        unpack_metadata: bool = False,
+        unpack_metadata: bool = True,
     ):
         total = client.assets.aggregate_count(
             filter=AssetFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
@@ -107,7 +107,7 @@ class AssetsExtractor(BaseExtractor):
         namespace: Namespace | None = None,
         to_type: Callable[[Asset], str] | None = None,
         limit: int | None = None,
-        unpack_metadata: bool = False,
+        unpack_metadata: bool = True,
     ):
         return cls(
             AssetList.load(Path(file_path).read_text()),

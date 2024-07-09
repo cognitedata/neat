@@ -28,7 +28,7 @@ def test_rdf_inference():
 def test_json_value_type_inference():
     store = NeatGraphStore.from_memory_store()
 
-    extractor = AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml")
+    extractor = AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml", unpack_metadata=False)
 
     store.write(extractor)
 
