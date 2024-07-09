@@ -65,11 +65,11 @@ class CDFLoader(BaseLoader[T_Output]):
                 items.append(result)
 
             if len(items) >= self._UPLOAD_BATCH_SIZE:
-                yield self._upload_to_cdf(client, items, dry_run, issues)
+                yield from self._upload_to_cdf(client, items, dry_run, issues)
                 issues = NeatIssueList[NeatIssue]()
                 items = []
         if items:
-            yield self._upload_to_cdf(client, items, dry_run, issues)
+            yield from self._upload_to_cdf(client, items, dry_run, issues)
 
     @abstractmethod
     def _get_required_capabilities(self) -> list[Capability]:
@@ -82,5 +82,5 @@ class CDFLoader(BaseLoader[T_Output]):
         items: list[T_Output],
         dry_run: bool,
         read_issues: NeatIssueList,
-    ) -> UploadResult:
+    ) -> Iterable[UploadResult]:
         raise NotImplementedError

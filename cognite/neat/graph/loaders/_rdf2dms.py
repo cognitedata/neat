@@ -1,4 +1,3 @@
-import itertools
 import json
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
@@ -263,8 +262,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         items: list[dm.InstanceApply],
         dry_run: bool,
         read_issues: NeatIssueList,
-    ) -> UploadResult:
-        result = UploadResult[InstanceId](name=type(self).__name__, issues=read_issues)
+    ) -> Iterable[UploadResult]:
         try:
             nodes = [item for item in items if isinstance(item, dm.NodeApply)]
             edges = [item for item in items if isinstance(item, dm.EdgeApply)]
@@ -276,18 +274,22 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 skip_on_version_conflict=True,
             )
         except CogniteAPIError as e:
+            result = UploadResult[InstanceId](name="Instances", issues=read_issues)
             result.error_messages.append(str(e))
             result.failed_upserted.update(item.as_id() for item in e.failed + e.unknown)
             result.created.update(item.as_id() for item in e.successful)
+            yield result
         else:
-            for instance in itertools.chain(upserted.nodes, upserted.edges):
-                if instance.was_modified and instance.created_time == instance.last_updated_time:
-                    result.created.add(instance.as_id())
-                elif instance.was_modified:
-                    result.changed.add(instance.as_id())
-                else:
-                    result.unchanged.add(instance.as_id())
-        return result
+            for instance_type, instances in {"Nodes": upserted.nodes, "Edges": upserted.edges}.items():
+                result = UploadResult[InstanceId](name=instance_type, issues=read_issues)
+                for instance in instances:  # type: ignore[attr-defined]
+                    if instance.was_modified and instance.created_time == instance.last_updated_time:
+                        result.created.add(instance.as_id())
+                    elif instance.was_modified:
+                        result.changed.add(instance.as_id())
+                    else:
+                        result.unchanged.add(instance.as_id())
+                yield result
 
 
 def _triples2dictionary(

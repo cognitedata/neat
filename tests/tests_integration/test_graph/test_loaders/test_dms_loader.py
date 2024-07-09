@@ -39,6 +39,6 @@ class TestDMSLoader:
 
         result = loader.load_into_cdf(cognite_client, dry_run=False)
 
-        assert len(result) == 1
+        assert len(result) == 2
 
-        assert result[0].success == len(car.INSTANCES)
+        assert result[0].success + result[1].success == len(car.INSTANCES)
