@@ -1,4 +1,4 @@
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
@@ -19,15 +19,19 @@ class AssetsExtractor(BaseExtractor):
     Args:
         assets (Iterable[Asset]): An iterable of assets.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+        to_type (Callable[[Asset], str], optional): A function to convert an asset to a type. Defaults to None.
+            If None, the asset will be converted to the default type "Asset".
     """
 
     def __init__(
         self,
         assets: Iterable[Asset],
         namespace: Namespace | None = None,
+        to_type: Callable[[Asset], str] | None = None,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.assets = assets
+        self.to_type = to_type
 
     @classmethod
     def from_dataset(
@@ -35,16 +39,27 @@ class AssetsExtractor(BaseExtractor):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
+        to_type: Callable[[Asset], str] | None = None,
     ):
-        return cls(cast(Iterable[Asset], client.assets(data_set_external_ids=data_set_external_id)), namespace)
+        return cls(cast(Iterable[Asset], client.assets(data_set_external_ids=data_set_external_id)), namespace, to_type)
 
     @classmethod
-    def from_hierarchy(cls, client: CogniteClient, root_asset_external_id: str, namespace: Namespace | None = None):
-        return cls(cast(Iterable[Asset], client.assets(asset_subtree_external_ids=root_asset_external_id)), namespace)
+    def from_hierarchy(
+        cls,
+        client: CogniteClient,
+        root_asset_external_id: str,
+        namespace: Namespace | None = None,
+        to_type: Callable[[Asset], str] | None = None,
+    ):
+        return cls(
+            cast(Iterable[Asset], client.assets(asset_subtree_external_ids=root_asset_external_id)), namespace, to_type
+        )
 
     @classmethod
-    def from_file(cls, file_path: str, namespace: Namespace | None = None):
-        return cls(AssetList.load(Path(file_path).read_text()), namespace)
+    def from_file(
+        cls, file_path: str, namespace: Namespace | None = None, to_type: Callable[[Asset], str] | None = None
+    ):
+        return cls(AssetList.load(Path(file_path).read_text()), namespace, to_type)
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
