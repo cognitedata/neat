@@ -101,7 +101,7 @@ class AssetsExtractor(BaseExtractor):
             except ModuleNotFoundError:
                 to_iterate = self.assets
             else:
-                to_iterate = track(self.assets, total=self.total, description="Extracting Assets")
+                to_iterate = track(self.assets, total=self.limit or self.total, description="Extracting Assets")
         else:
             to_iterate = self.assets
         for no, asset in enumerate(to_iterate):
