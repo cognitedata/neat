@@ -24,6 +24,7 @@ class AssetsExtractor(BaseExtractor):
             If None or if the function returns None, the asset will be set to the default type "Asset".
         total (int, optional): The total number of assets to load. If passed, you will get a progress bar if rich
             is installed. Defaults to None.
+        limit (int, optional): The maximal number of assets to load. Defaults to None.
     """
 
     _SPACE_PATTERN = re.compile(r"\s+")
@@ -34,11 +35,13 @@ class AssetsExtractor(BaseExtractor):
         namespace: Namespace | None = None,
         to_type: Callable[[Asset], str | None] | None = None,
         total: int | None = None,
+        limit: int | None = None,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.assets = assets
         self.to_type = to_type
         self.total = total
+        self.limit = min(limit, total) if limit and total else limit
 
     @classmethod
     def from_dataset(
@@ -47,11 +50,16 @@ class AssetsExtractor(BaseExtractor):
         data_set_external_id: str,
         namespace: Namespace | None = None,
         to_type: Callable[[Asset], str | None] | None = None,
+        limit: int | None = None,
     ):
         total = client.assets.aggregate_count(filter=AssetFilter(data_set_ids=[{"externalId": data_set_external_id}]))
 
         return cls(
-            cast(Iterable[Asset], client.assets(data_set_external_ids=data_set_external_id)), namespace, to_type, total
+            cast(Iterable[Asset], client.assets(data_set_external_ids=data_set_external_id)),
+            namespace,
+            to_type,
+            total,
+            limit,
         )
 
     @classmethod
@@ -61,6 +69,7 @@ class AssetsExtractor(BaseExtractor):
         root_asset_external_id: str,
         namespace: Namespace | None = None,
         to_type: Callable[[Asset], str | None] | None = None,
+        limit: int | None = None,
     ):
         total = client.assets.aggregate_count(
             filter=AssetFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
@@ -71,13 +80,18 @@ class AssetsExtractor(BaseExtractor):
             namespace,
             to_type,
             total,
+            limit,
         )
 
     @classmethod
     def from_file(
-        cls, file_path: str, namespace: Namespace | None = None, to_type: Callable[[Asset], str] | None = None
+        cls,
+        file_path: str,
+        namespace: Namespace | None = None,
+        to_type: Callable[[Asset], str] | None = None,
+        limit: int | None = None,
     ):
-        return cls(AssetList.load(Path(file_path).read_text()), namespace, to_type)
+        return cls(AssetList.load(Path(file_path).read_text()), namespace, to_type, limit)
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
@@ -90,8 +104,10 @@ class AssetsExtractor(BaseExtractor):
                 to_iterate = track(self.assets, total=self.total, description="Extracting Assets")
         else:
             to_iterate = self.assets
-        for asset in to_iterate:
+        for no, asset in enumerate(to_iterate):
             yield from self._asset2triples(asset, self.namespace)
+            if self.limit and no >= self.limit:
+                break
 
     def _asset2triples(self, asset: Asset, namespace: Namespace) -> list[Triple]:
         """Converts an asset to triples."""
