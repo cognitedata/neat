@@ -36,28 +36,36 @@ class InferenceImporter(BaseImporter):
     """Infers rules from a triple store.
 
     Rules inference through analysis of knowledge graph provided in various formats.
-    Use the factory methods to create an triples store from sources such as
+    Use the factory methods to create n triple store from sources such as
     RDF files, JSON files, YAML files, XML files, or directly from a graph store.
 
     Args:
         issue_list: Issue list to store issues
         graph: Knowledge graph
         max_number_of_instance: Maximum number of instances to be used in inference
+        prefix: Prefix to be used for the inferred model
     """
 
-    def __init__(self, issue_list: IssueList, graph: Graph, max_number_of_instance: int = -1):
+    def __init__(
+        self, issue_list: IssueList, graph: Graph, max_number_of_instance: int = -1, prefix: str = "inferred"
+    ) -> None:
         self.issue_list = issue_list
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
+        self.prefix = prefix
 
     @classmethod
-    def from_graph_store(cls, store: NeatGraphStore, max_number_of_instance: int = -1):
+    def from_graph_store(
+        cls, store: NeatGraphStore, max_number_of_instance: int = -1, prefix: str = "inferred"
+    ) -> "InferenceImporter":
         issue_list = IssueList(title="Inferred from graph store")
 
-        return cls(issue_list, store.graph, max_number_of_instance=max_number_of_instance)
+        return cls(issue_list, store.graph, max_number_of_instance=max_number_of_instance, prefix=prefix)
 
     @classmethod
-    def from_rdf_file(cls, filepath: Path, max_number_of_instance: int = -1):
+    def from_rdf_file(
+        cls, filepath: Path, max_number_of_instance: int = -1, prefix: str = "inferred"
+    ) -> "InferenceImporter":
         issue_list = IssueList(title=f"'{filepath.name}'")
 
         graph = Graph()
@@ -66,18 +74,24 @@ class InferenceImporter(BaseImporter):
         except Exception:
             issue_list.append(issues.fileread.FileReadError(filepath))
 
-        return cls(issue_list, graph, max_number_of_instance=max_number_of_instance)
+        return cls(issue_list, graph, max_number_of_instance=max_number_of_instance, prefix=prefix)
 
     @classmethod
-    def from_json_file(cls, filepath: Path, max_number_of_instance: int = -1):
+    def from_json_file(
+        cls, filepath: Path, max_number_of_instance: int = -1, prefix: str = "inferred"
+    ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
     @classmethod
-    def from_yaml_file(cls, filepath: Path, max_number_of_instance: int = -1):
+    def from_yaml_file(
+        cls, filepath: Path, max_number_of_instance: int = -1, prefix: str = "inferred"
+    ) -> "InferenceImporter":
         raise NotImplementedError("YAML file format is not supported yet.")
 
     @classmethod
-    def from_xml_file(cls, filepath: Path, max_number_of_instance: int = -1):
+    def from_xml_file(
+        cls, filepath: Path, max_number_of_instance: int = -1, prefix: str = "inferred"
+    ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
     @overload
@@ -239,8 +253,7 @@ class InferenceImporter(BaseImporter):
         if Namespace(get_namespace(URI)) not in prefixes.values():
             prefixes[f"prefix-{len(prefixes)+1}"] = Namespace(get_namespace(URI))
 
-    @classmethod
-    def _default_metadata(cls):
+    def _default_metadata(self):
         return InformationMetadata(
             name="Inferred Model",
             creator="NEAT",
@@ -248,7 +261,7 @@ class InferenceImporter(BaseImporter):
             created=datetime.now(),
             updated=datetime.now(),
             description="Inferred model from knowledge graph",
-            prefix="inferred",
+            prefix=self.prefix,
             namespace=DEFAULT_NAMESPACE,
         )
 
