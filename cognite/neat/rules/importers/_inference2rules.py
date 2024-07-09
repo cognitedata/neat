@@ -275,12 +275,9 @@ class InferenceImporter(BaseImporter):
 
     @classmethod
     def _read_value_type_occurrence_from_comment(cls, value_type: str, comment: str) -> int:
-        return int(
-            cast(
-                re.Match,
-                re.search(
-                    rf"with value type <{value_type}> which occurs <(\d+)> times in the graph",
-                    comment,
-                ),
-            ).group(1)
-        )
+        if result := re.search(
+            rf"with value type <{value_type}> which occurs <(\d+)> times in the graph",
+            comment,
+        ):
+            return int(result.group(1))
+        return 0

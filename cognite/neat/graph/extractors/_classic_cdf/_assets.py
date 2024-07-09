@@ -24,7 +24,9 @@ class AssetsExtractor(BaseExtractor):
             If None or if the function returns None, the asset will be set to the default type "Asset".
         total (int, optional): The total number of assets to load. If passed, you will get a progress bar if rich
             is installed. Defaults to None.
-        limit (int, optional): The maximal number of assets to load. Defaults to None.
+        limit (int, optional): The maximal number of assets to load. Defaults to None. This is typically used for
+            testing setup of the extractor. For example, if you are extracting 100 000 assets, you might want to
+            limit the extraction to 1000 assets to test the setup.
     """
 
     _SPACE_PATTERN = re.compile(r"\s+")
