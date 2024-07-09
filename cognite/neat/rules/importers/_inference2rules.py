@@ -36,7 +36,7 @@ class InferenceImporter(BaseImporter):
     """Infers rules from a triple store.
 
     Rules inference through analysis of knowledge graph provided in various formats.
-    Use the factory methods to create n triple store from sources such as
+    Use the factory methods to create a triple store from sources such as
     RDF files, JSON files, YAML files, XML files, or directly from a graph store.
 
     Args:
