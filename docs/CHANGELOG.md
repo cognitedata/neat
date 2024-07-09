@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.85.7] - 08-07-24
+### Added
+- Option for setting lambda function `to_type` in the `AssetExtractor`.
+
 ## [0.85.6] - 08-07-24
 ### Added
 - Analysis for `AssetRules`
