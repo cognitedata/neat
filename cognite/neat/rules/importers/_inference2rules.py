@@ -29,12 +29,20 @@ ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
 
 INSTANCES_OF_CLASS_QUERY = """SELECT ?s WHERE { ?s a <class> . }"""
 
-INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
+INSTANCE_PROPERTIES_JSON_DEFINITION = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
                                     WHERE {<instance_id> ?property ?value .
 
                                            BIND(IF(REGEX(?value, "^\u007b(.*)\u007d$"),
                                            <http://www.w3.org/2001/XMLSchema#json>,
                                            datatype(?value)) AS ?dataType)
+
+                                           OPTIONAL {?value rdf:type ?objectType .}}
+                                    GROUP BY ?property ?dataType ?objectType"""
+
+INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
+                                    WHERE {<instance_id> ?property ?value .
+
+                                           BIND(datatype(?value) AS ?dataType)
 
                                            OPTIONAL {?value rdf:type ?objectType .}}
                                     GROUP BY ?property ?dataType ?objectType"""
@@ -52,6 +60,7 @@ class InferenceImporter(BaseImporter):
         graph: Knowledge graph
         max_number_of_instance: Maximum number of instances to be used in inference
         prefix: Prefix to be used for the inferred model
+        check_for_json_string: Check if values are JSON strings
     """
 
     def __init__(
@@ -60,11 +69,13 @@ class InferenceImporter(BaseImporter):
         graph: Graph,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
+        check_for_json_string: bool = False,
     ) -> None:
         self.issue_list = issue_list
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
         self.prefix = prefix
+        self.check_for_json_string = check_for_json_string
 
     @classmethod
     def from_graph_store(
@@ -72,6 +83,7 @@ class InferenceImporter(BaseImporter):
         store: NeatGraphStore,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
+        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         issue_list = IssueList(title="Inferred from graph store")
 
@@ -80,11 +92,16 @@ class InferenceImporter(BaseImporter):
             store.graph,
             max_number_of_instance=max_number_of_instance,
             prefix=prefix,
+            check_for_json_string=check_for_json_string,
         )
 
     @classmethod
     def from_rdf_file(
-        cls, filepath: Path, max_number_of_instance: int = -1, prefix: str = "inferred"
+        cls,
+        filepath: Path,
+        max_number_of_instance: int = -1,
+        prefix: str = "inferred",
+        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         issue_list = IssueList(title=f"'{filepath.name}'")
 
@@ -99,23 +116,36 @@ class InferenceImporter(BaseImporter):
             graph,
             max_number_of_instance=max_number_of_instance,
             prefix=prefix,
+            check_for_json_string=check_for_json_string,
         )
 
     @classmethod
     def from_json_file(
-        cls, filepath: Path, max_number_of_instance: int = -1, prefix: str = "inferred"
+        cls,
+        filepath: Path,
+        max_number_of_instance: int = -1,
+        prefix: str = "inferred",
+        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
     @classmethod
     def from_yaml_file(
-        cls, filepath: Path, max_number_of_instance: int = -1, prefix: str = "inferred"
+        cls,
+        filepath: Path,
+        max_number_of_instance: int = -1,
+        prefix: str = "inferred",
+        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         raise NotImplementedError("YAML file format is not supported yet.")
 
     @classmethod
     def from_xml_file(
-        cls, filepath: Path, max_number_of_instance: int = -1, prefix: str = "inferred"
+        cls,
+        filepath: Path,
+        max_number_of_instance: int = -1,
+        prefix: str = "inferred",
+        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
@@ -174,6 +204,7 @@ class InferenceImporter(BaseImporter):
         properties: dict[str, dict] = {}
         prefixes: dict[str, Namespace] = PREFIXES.copy()
 
+        query = INSTANCE_PROPERTIES_JSON_DEFINITION if self.check_for_json_string else INSTANCE_PROPERTIES_DEFINITION
         # Adds default namespace to prefixes
         prefixes[self._default_metadata().prefix] = self._default_metadata().namespace
 
@@ -201,7 +232,7 @@ class InferenceImporter(BaseImporter):
                 + f" LIMIT {self.max_number_of_instance}"
             ):
                 for property_uri, occurrence, data_type_uri, object_type_uri in self.graph.query(  # type: ignore[misc]
-                    INSTANCE_PROPERTIES_DEFINITION.replace("instance_id", instance)
+                    query.replace("instance_id", instance)
                 ):  # type: ignore[misc]
                     property_id = remove_namespace_from_uri(property_uri)
                     self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
