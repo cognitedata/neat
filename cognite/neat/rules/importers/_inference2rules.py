@@ -17,7 +17,11 @@ from cognite.neat.rules.models.information import (
     InformationMetadata,
     InformationRulesInput,
 )
-from cognite.neat.utils.utils import get_namespace, remove_namespace_from_uri, uri_to_short_form
+from cognite.neat.utils.utils import (
+    get_namespace,
+    remove_namespace_from_uri,
+    uri_to_short_form,
+)
 
 ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class . }
@@ -27,7 +31,11 @@ INSTANCES_OF_CLASS_QUERY = """SELECT ?s WHERE { ?s a <class> . }"""
 
 INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
                                     WHERE {<instance_id> ?property ?value .
-                                           BIND(datatype(?value) AS ?dataType)
+
+                                           BIND(IF(REGEX(?value, "^\u007b(.*)\u007d$"),
+                                           <http://www.w3.org/2001/XMLSchema#json>,
+                                           datatype(?value)) AS ?dataType)
+
                                            OPTIONAL {?value rdf:type ?objectType .}}
                                     GROUP BY ?property ?dataType ?objectType"""
 
@@ -47,7 +55,11 @@ class InferenceImporter(BaseImporter):
     """
 
     def __init__(
-        self, issue_list: IssueList, graph: Graph, max_number_of_instance: int = -1, prefix: str = "inferred"
+        self,
+        issue_list: IssueList,
+        graph: Graph,
+        max_number_of_instance: int = -1,
+        prefix: str = "inferred",
     ) -> None:
         self.issue_list = issue_list
         self.graph = graph
@@ -56,11 +68,19 @@ class InferenceImporter(BaseImporter):
 
     @classmethod
     def from_graph_store(
-        cls, store: NeatGraphStore, max_number_of_instance: int = -1, prefix: str = "inferred"
+        cls,
+        store: NeatGraphStore,
+        max_number_of_instance: int = -1,
+        prefix: str = "inferred",
     ) -> "InferenceImporter":
         issue_list = IssueList(title="Inferred from graph store")
 
-        return cls(issue_list, store.graph, max_number_of_instance=max_number_of_instance, prefix=prefix)
+        return cls(
+            issue_list,
+            store.graph,
+            max_number_of_instance=max_number_of_instance,
+            prefix=prefix,
+        )
 
     @classmethod
     def from_rdf_file(
@@ -74,7 +94,12 @@ class InferenceImporter(BaseImporter):
         except Exception:
             issue_list.append(issues.fileread.FileReadError(filepath))
 
-        return cls(issue_list, graph, max_number_of_instance=max_number_of_instance, prefix=prefix)
+        return cls(
+            issue_list,
+            graph,
+            max_number_of_instance=max_number_of_instance,
+            prefix=prefix,
+        )
 
     @classmethod
     def from_json_file(
