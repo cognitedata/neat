@@ -19,15 +19,15 @@ class AssetsExtractor(BaseExtractor):
     Args:
         assets (Iterable[Asset]): An iterable of assets.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
-        to_type (Callable[[Asset], str], optional): A function to convert an asset to a type. Defaults to None.
-            If None, the asset will be converted to the default type "Asset".
+        to_type (Callable[[Asset], str | None], optional): A function to convert an asset to a type. Defaults to None.
+            If None or if the function returns None, the asset will be set to the default type "Asset".
     """
 
     def __init__(
         self,
         assets: Iterable[Asset],
         namespace: Namespace | None = None,
-        to_type: Callable[[Asset], str] | None = None,
+        to_type: Callable[[Asset], str | None] | None = None,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.assets = assets
@@ -39,7 +39,7 @@ class AssetsExtractor(BaseExtractor):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
-        to_type: Callable[[Asset], str] | None = None,
+        to_type: Callable[[Asset], str | None] | None = None,
     ):
         return cls(cast(Iterable[Asset], client.assets(data_set_external_ids=data_set_external_id)), namespace, to_type)
 
@@ -49,7 +49,7 @@ class AssetsExtractor(BaseExtractor):
         client: CogniteClient,
         root_asset_external_id: str,
         namespace: Namespace | None = None,
-        to_type: Callable[[Asset], str] | None = None,
+        to_type: Callable[[Asset], str | None] | None = None,
     ):
         return cls(
             cast(Iterable[Asset], client.assets(asset_subtree_external_ids=root_asset_external_id)), namespace, to_type
@@ -66,13 +66,15 @@ class AssetsExtractor(BaseExtractor):
         for asset in self.assets:
             yield from self._asset2triples(asset, self.namespace)
 
-    @classmethod
-    def _asset2triples(cls, asset: Asset, namespace: Namespace) -> list[Triple]:
+    def _asset2triples(self, asset: Asset, namespace: Namespace) -> list[Triple]:
         """Converts an asset to triples."""
         id_ = namespace[f"Asset_{asset.id}"]
 
         # Set rdf type
-        triples: list[Triple] = [(id_, RDF.type, namespace["Asset"])]
+        type_ = "Asset"
+        if self.to_type:
+            type_ = self.to_type(asset) or type_
+        triples: list[Triple] = [(id_, RDF.type, namespace[type_])]
 
         # Create attributes
         if asset.name:
