@@ -38,7 +38,9 @@ Prerequisites:
 - `react-scripts` installed on your system, [`npm i react-scripts`](https://www.npmjs.com/package/react-scripts)
 
 1. Clone this repo: `git clone git@github.com:cognitedata/neat.git`
-2. Create wheel: `make build-python`. This will create a wheel in the `dist` folder.
+2. Configure environment packages and create wheel:
+   1. `make configure`. This will install all the needed python and Node.js packages.
+   2. `make build-python`. This will create a wheel in the `dist` folder.
 3. Install wheel in your preferred environment, `pip install dist/neat-[NEAT_VERSTION]-py3-none-any.whl`
 
 ### Run Neat (Python Package)
