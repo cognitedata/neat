@@ -24,7 +24,7 @@ from cognite.neat.legacy.rules.models.rdfpath import (
     parse_rule,
 )
 from cognite.neat.legacy.rules.models.rules import Rules
-from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.utils.utils import remove_namespace_from_uri
 
 prom_total_proc_rules_g = Gauge("neat_total_processed_rules", "Number of processed rules", ["state"])
 rules_processing_timing_metric = Gauge(
@@ -228,7 +228,7 @@ def domain2app_knowledge_graph(
                 # in the target graph then we should remove namespace from the object URI and store it as literal
                 if isinstance(rule.traversal, AllReferences) and rule_definition.property_type == "DatatypeProperty":
                     instance_df[EntityTypes.object] = instance_df[EntityTypes.object].apply(
-                        lambda x: Literal(remove_namespace(x))
+                        lambda x: Literal(remove_namespace_from_uri(x))
                     )
 
                 if isinstance(rule, RawLookup):

@@ -21,7 +21,7 @@ from cognite.neat.legacy.rules.models.rdfpath import (
     parse_traversal,
 )
 from cognite.neat.legacy.rules.models.rules import Rules
-from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.utils.utils import remove_namespace_from_uri
 
 
 def _generate_prefix_header(prefixes: dict[str, Namespace] = PREFIXES) -> str:
@@ -529,7 +529,7 @@ def triples2dictionary(triples: Iterable[tuple[URIRef, URIRef, str | URIRef]]) -
         property_: str
         value: str
         uri: URIRef
-        id_, property_, value = remove_namespace(*triple)  # type: ignore[misc]
+        id_, property_, value = remove_namespace_from_uri(*triple)  # type: ignore[misc]
         uri = triple[0]
 
         if uri not in dictionary:

@@ -2,7 +2,7 @@ from rdflib import XSD, Literal
 
 from cognite.neat.legacy.graph import extractors
 from cognite.neat.legacy.graph.stores import MemoryStore
-from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.utils.utils import remove_namespace_from_uri
 from tests import config
 
 
@@ -15,7 +15,7 @@ def test_sheet2graph(simple_rules):
     graph_store.add_triples(triples)
 
     count_dict = {
-        remove_namespace(res[0]): int(res[1])
+        remove_namespace_from_uri(res[0]): int(res[1])
         for res in list(
             graph_store.graph.query(
                 "SELECT ?class (count(?s) as ?instances ) WHERE { ?s a ?class . } "

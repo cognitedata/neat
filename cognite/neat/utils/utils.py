@@ -75,14 +75,14 @@ def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProv
 
 
 @overload
-def remove_namespace(*URI: URIRef | str, special_separator: str = "#_") -> str: ...
+def remove_namespace_from_uri(*URI: URIRef | str, special_separator: str = "#_") -> str: ...
 
 
 @overload
-def remove_namespace(*URI: tuple[URIRef | str, ...], special_separator: str = "#_") -> tuple[str, ...]: ...
+def remove_namespace_from_uri(*URI: tuple[URIRef | str, ...], special_separator: str = "#_") -> tuple[str, ...]: ...
 
 
-def remove_namespace(
+def remove_namespace_from_uri(
     *URI: URIRef | str | tuple[URIRef | str, ...], special_separator: str = "#_"
 ) -> tuple[str, ...] | str:
     """Removes namespace from URI
@@ -99,9 +99,9 @@ def remove_namespace(
 
     Examples:
 
-        >>> remove_namespace("http://www.example.org/index.html#section2")
+        >>> remove_namespace_from_uri("http://www.example.org/index.html#section2")
         'section2'
-        >>> remove_namespace("http://www.example.org/index.html#section2", "http://www.example.org/index.html#section3")
+        >>> remove_namespace_from_uri("http://www.example.org/index.html#section2", "http://www.example.org/index.html#section3")
         ('section2', 'section3')
     """
     if isinstance(URI, str | URIRef):
@@ -149,7 +149,7 @@ def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
 
 def as_neat_compliant_uri(uri: URIRef) -> URIRef:
     namespace = get_namespace(uri)
-    id_ = remove_namespace(uri)
+    id_ = remove_namespace_from_uri(uri)
     compliant_uri = re.sub(r"[^a-zA-Z0-9-_.]", "", id_)
     return URIRef(f"{namespace}{compliant_uri}")
 

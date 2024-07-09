@@ -14,7 +14,7 @@ from cognite.neat.legacy.graph.loaders.core.models import RelationshipDefinition
 from cognite.neat.legacy.graph.loaders.core.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.legacy.graph.stores import NeatGraphStoreBase
 from cognite.neat.legacy.rules.models.rules import Rules
-from cognite.neat.utils.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace, retry_decorator
+from cognite.neat.utils.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace_from_uri, retry_decorator
 
 
 def define_relationships(rules: Rules, data_set_id: int, stop_on_exception: bool = False) -> RelationshipDefinitions:
@@ -150,7 +150,7 @@ def rdf2relationships(
             relationship_data_frame.rename(columns={0: "source_external_id", 1: "target_external_id"}, inplace=True)
 
             # removes namespace
-            relationship_data_frame = relationship_data_frame.map(remove_namespace)  # type: ignore[operator]
+            relationship_data_frame = relationship_data_frame.map(remove_namespace_from_uri)  # type: ignore[operator]
 
             # adding prefix
             if relationship_external_id_prefix:

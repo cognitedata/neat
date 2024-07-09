@@ -17,7 +17,7 @@ from cognite.neat.rules.models.information import (
     InformationMetadata,
     InformationRulesInput,
 )
-from cognite.neat.utils.utils import get_namespace, remove_namespace, uri_to_short_form
+from cognite.neat.utils.utils import get_namespace, remove_namespace_from_uri, uri_to_short_form
 
 ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class . }
@@ -142,7 +142,7 @@ class InferenceImporter(BaseImporter):
         for class_uri, no_instances in self.graph.query(ORDERED_CLASSES_QUERY):  # type: ignore[misc]
             self._add_uri_namespace_to_prefixes(cast(URIRef, class_uri), prefixes)
 
-            if (class_id := remove_namespace(class_uri)) in classes:
+            if (class_id := remove_namespace_from_uri(class_uri)) in classes:
                 # handles cases when class id is already present in classes
                 class_id = f"{class_id}_{len(classes)+1}"
 
@@ -164,7 +164,7 @@ class InferenceImporter(BaseImporter):
                 for property_uri, occurrence, data_type_uri, object_type_uri in self.graph.query(  # type: ignore[misc]
                     INSTANCE_PROPERTIES_DEFINITION.replace("instance_id", instance)
                 ):  # type: ignore[misc]
-                    property_id = remove_namespace(property_uri)
+                    property_id = remove_namespace_from_uri(property_uri)
                     self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
                     value_type_uri = data_type_uri if data_type_uri else object_type_uri
 
@@ -173,7 +173,7 @@ class InferenceImporter(BaseImporter):
                         continue
 
                     self._add_uri_namespace_to_prefixes(cast(URIRef, value_type_uri), prefixes)
-                    value_type_id = remove_namespace(value_type_uri)
+                    value_type_id = remove_namespace_from_uri(value_type_uri)
                     id_ = f"{class_id}:{property_id}"
 
                     definition = {

@@ -5,7 +5,7 @@ import pandas as pd
 from rdflib import Graph
 
 from cognite.neat.rules.models._base import MatchType
-from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.utils.utils import remove_namespace_from_uri
 
 from ._owl2classes import _data_type_property_class, _object_property_class, _thing_class
 
@@ -82,12 +82,12 @@ def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     df.replace(np.nan, "", regex=True, inplace=True)
 
     df.Reference = df.Property
-    df.Class = df.Class.apply(lambda x: remove_namespace(x))
-    df.Property = df.Property.apply(lambda x: remove_namespace(x))
-    df["Value Type"] = df["Value Type"].apply(lambda x: remove_namespace(x))
+    df.Class = df.Class.apply(lambda x: remove_namespace_from_uri(x))
+    df.Property = df.Property.apply(lambda x: remove_namespace_from_uri(x))
+    df["Value Type"] = df["Value Type"].apply(lambda x: remove_namespace_from_uri(x))
     df["Match Type"] = len(df) * [MatchType.exact]
     df["Comment"] = len(df) * [None]
-    df["_property_type"] = df["_property_type"].apply(lambda x: remove_namespace(x))
+    df["_property_type"] = df["_property_type"].apply(lambda x: remove_namespace_from_uri(x))
 
     return df
 
