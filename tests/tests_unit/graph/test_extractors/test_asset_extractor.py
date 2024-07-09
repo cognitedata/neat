@@ -17,13 +17,21 @@ def test_asset_extractor():
     store = NeatGraphStore.from_memory_store()
 
     extractor = AssetsExtractor.from_dataset(
-        client_mock, data_set_external_id="nordic44", to_type=lambda a: a.metadata.get("type", "Unknown")
+        client_mock,
+        data_set_external_id="nordic44",
+        to_type=lambda a: a.metadata.get("type", "Unknown"),
+        unpack_metadata=True,
     )
     store.write(extractor)
 
     label_id = DEFAULT_NAMESPACE[f'Label_{create_sha256_hash("Substation")}']
     assert len(store.graph) == 73
     assert len(list(store.graph.query(f"Select ?s Where {{ ?s <{DEFAULT_NAMESPACE['label']}> <{label_id}>}}"))) == 1
-    expected_types = {"Substation", "SubGeographicalRegion", "GeographicalRegion", "RootCIMNode"}
+    expected_types = {
+        "Substation",
+        "SubGeographicalRegion",
+        "GeographicalRegion",
+        "RootCIMNode",
+    }
     actual_type = set(store.queries.list_types(remove_namespace=True))
     assert expected_types == actual_type

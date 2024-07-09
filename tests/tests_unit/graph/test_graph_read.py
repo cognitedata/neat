@@ -15,7 +15,7 @@ def test_asset_extractor():
 
     store = NeatGraphStore.from_memory_store()
 
-    extractor = AssetsExtractor.from_dataset(client_mock, data_set_external_id="nordic44")
+    extractor = AssetsExtractor.from_dataset(client_mock, data_set_external_id="nordic44", unpack_metadata=True)
     store.write(extractor)
 
     rules, _ = InferenceImporter.from_graph_store(store).to_rules()
