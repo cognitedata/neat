@@ -38,7 +38,11 @@ class RelationshipsExtractor(BaseExtractor):
         namespace: Namespace | None = None,
     ):
         return cls(
-            cast(Iterable[Relationship], client.relationships(data_set_external_ids=data_set_external_id)), namespace
+            cast(
+                Iterable[Relationship],
+                client.relationships(data_set_external_ids=data_set_external_id),
+            ),
+            namespace,
         )
 
     @classmethod
@@ -48,26 +52,25 @@ class RelationshipsExtractor(BaseExtractor):
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
         for relationship in self.relationships:
-            yield from self._relationship2triples(relationship, self.namespace)
+            yield from self._relationship2triples(relationship)
 
-    @classmethod
-    def _relationship2triples(cls, relationship: Relationship, namespace: Namespace) -> list[Triple]:
+    def _relationship2triples(self, relationship: Relationship) -> list[Triple]:
         """Converts an asset to triples."""
 
         if relationship.external_id and relationship.source_external_id and relationship.target_external_id:
             # relationships do not have an internal id, so we generate one
-            id_ = namespace[f"Relationship_{create_sha256_hash(relationship.external_id)}"]
+            id_ = self.namespace[f"Relationship_{create_sha256_hash(relationship.external_id)}"]
 
             # Set rdf type
-            triples: list[Triple] = [(id_, RDF.type, namespace["Relationship"])]
+            triples: list[Triple] = [(id_, RDF.type, self.namespace["Relationship"])]
 
             # Set source and target types
             if source_type := relationship.source_type:
                 triples.append(
                     (
                         id_,
-                        namespace.source_type,
-                        namespace[source_type.title()],
+                        self.namespace.source_type,
+                        self.namespace[source_type.title()],
                     )
                 )
 
@@ -75,19 +78,19 @@ class RelationshipsExtractor(BaseExtractor):
                 triples.append(
                     (
                         id_,
-                        namespace.target_type,
-                        namespace[target_type.title()],
+                        self.namespace.target_type,
+                        self.namespace[target_type.title()],
                     )
                 )
 
             # Create attributes
 
-            triples.append((id_, namespace.external_id, Literal(relationship.external_id)))
+            triples.append((id_, self.namespace.external_id, Literal(relationship.external_id)))
 
             triples.append(
                 (
                     id_,
-                    namespace.source_external_id,
+                    self.namespace.source_external_id,
                     Literal(relationship.source_external_id),
                 )
             )
@@ -95,7 +98,7 @@ class RelationshipsExtractor(BaseExtractor):
             triples.append(
                 (
                     id_,
-                    namespace.target_external_id,
+                    self.namespace.target_external_id,
                     Literal(relationship.target_external_id),
                 )
             )
@@ -104,7 +107,7 @@ class RelationshipsExtractor(BaseExtractor):
                 triples.append(
                     (
                         id_,
-                        namespace.start_time,
+                        self.namespace.start_time,
                         Literal(datetime.fromtimestamp(relationship.start_time / 1000, timezone.utc)),
                     )
                 )
@@ -113,7 +116,7 @@ class RelationshipsExtractor(BaseExtractor):
                 triples.append(
                     (
                         id_,
-                        namespace.end_time,
+                        self.namespace.end_time,
                         Literal(datetime.fromtimestamp(relationship.end_time / 1000, timezone.utc)),
                     )
                 )
@@ -122,7 +125,7 @@ class RelationshipsExtractor(BaseExtractor):
                 triples.append(
                     (
                         id_,
-                        namespace.created_time,
+                        self.namespace.created_time,
                         Literal(datetime.fromtimestamp(relationship.created_time / 1000, timezone.utc)),
                     )
                 )
@@ -131,7 +134,7 @@ class RelationshipsExtractor(BaseExtractor):
                 triples.append(
                     (
                         id_,
-                        namespace.last_updated_time,
+                        self.namespace.last_updated_time,
                         Literal(datetime.fromtimestamp(relationship.last_updated_time / 1000, timezone.utc)),
                     )
                 )
@@ -140,7 +143,7 @@ class RelationshipsExtractor(BaseExtractor):
                 triples.append(
                     (
                         id_,
-                        namespace.confidence,
+                        self.namespace.confidence,
                         Literal(relationship.confidence),
                     )
                 )
@@ -149,11 +152,23 @@ class RelationshipsExtractor(BaseExtractor):
                 for label in relationship.labels:
                     # external_id can create ill-formed URIs, so we create websafe URIs
                     # since labels do not have internal ids, we use the external_id as the id
-                    triples.append((id_, namespace.label, namespace[f"Label_{quote(label.dump()['externalId'])}"]))
+                    triples.append(
+                        (
+                            id_,
+                            self.namespace.label,
+                            self.namespace[f"Label_{quote(label.dump()['externalId'])}"],
+                        )
+                    )
 
             # Create connection
             if relationship.data_set_id:
-                triples.append((id_, namespace.dataset, namespace[f"Dataset_{relationship.data_set_id}"]))
+                triples.append(
+                    (
+                        id_,
+                        self.namespace.dataset,
+                        self.namespace[f"Dataset_{relationship.data_set_id}"],
+                    )
+                )
 
             return triples
         return []

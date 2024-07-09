@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.85.8] - 09-07-24
+### Added
+- Option for unpacking metadata from classic CDF resources graph extractor
+
 ## [0.85.7] - 08-07-24
 ### Added
 - Option for setting lambda function `to_type` in the `AssetExtractor`.

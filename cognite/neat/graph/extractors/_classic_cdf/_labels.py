@@ -37,7 +37,11 @@ class LabelsExtractor(BaseExtractor):
         namespace: Namespace | None = None,
     ):
         return cls(
-            cast(Iterable[LabelDefinition], client.labels(data_set_external_ids=data_set_external_id)), namespace
+            cast(
+                Iterable[LabelDefinition],
+                client.labels(data_set_external_ids=data_set_external_id),
+            ),
+            namespace,
         )
 
     @classmethod
@@ -47,36 +51,41 @@ class LabelsExtractor(BaseExtractor):
     def extract(self) -> Iterable[Triple]:
         """Extract labels as triples."""
         for label in self.labels:
-            yield from self._labels2triples(label, self.namespace)
+            yield from self._labels2triples(label)
 
-    @classmethod
-    def _labels2triples(cls, label: LabelDefinition, namespace: Namespace) -> list[Triple]:
+    def _labels2triples(self, label: LabelDefinition) -> list[Triple]:
         if label.external_id:
-            id_ = namespace[f"Label_{create_sha256_hash(label.external_id)}"]
+            id_ = self.namespace[f"Label_{create_sha256_hash(label.external_id)}"]
 
             # Set rdf type
-            triples: list[Triple] = [(id_, RDF.type, namespace.Label)]
+            triples: list[Triple] = [(id_, RDF.type, self.namespace.Label)]
 
             # Create attributes
-            triples.append((id_, namespace.external_id, Literal(label.external_id)))
+            triples.append((id_, self.namespace.external_id, Literal(label.external_id)))
 
             if label.name:
-                triples.append((id_, namespace.name, Literal(label.name)))
+                triples.append((id_, self.namespace.name, Literal(label.name)))
 
             if label.description:
-                triples.append((id_, namespace.description, Literal(label.description)))
+                triples.append((id_, self.namespace.description, Literal(label.description)))
 
             if label.created_time:
                 triples.append(
                     (
                         id_,
-                        namespace.created_time,
+                        self.namespace.created_time,
                         Literal(datetime.fromtimestamp(label.created_time / 1000, timezone.utc)),
                     )
                 )
 
             if label.data_set_id:
-                triples.append((id_, namespace.data_set_id, namespace[f"Dataset_{label.data_set_id}"]))
+                triples.append(
+                    (
+                        id_,
+                        self.namespace.data_set_id,
+                        self.namespace[f"Dataset_{label.data_set_id}"],
+                    )
+                )
 
             return triples
         return []
