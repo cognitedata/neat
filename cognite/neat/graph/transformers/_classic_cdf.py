@@ -21,11 +21,16 @@ class AddAssetDepth(BaseTransformer):
                              <{asset_id}> <{root_prop}> ?root .}}"""
 
     def __init__(
-        self, asset_type: URIRef | None = None, root_prop: URIRef | None = None, parent_prop: URIRef | None = None
+        self,
+        asset_type: URIRef | None = None,
+        root_prop: URIRef | None = None,
+        parent_prop: URIRef | None = None,
+        depth_typing: dict[int, str] | None = None,
     ):
         self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
         self.root_prop = root_prop or DEFAULT_NAMESPACE.root
         self.parent_prop = parent_prop or DEFAULT_NAMESPACE.parent
+        self.depth_typing = depth_typing
 
     def transform(self, graph: Graph) -> None:
         """Adds depth of asset in the asset hierarchy to the graph."""
@@ -62,7 +67,12 @@ class AddAssetDepth(BaseTransformer):
 class AssetTimeSeriesConnector(BaseTransformer):
     description: str = "Connects assets to timeseries, thus forming bi-directional connection"
     _use_only_once: bool = True
-    _need_changes = frozenset({str(extractors.AssetsExtractor.__name__), str(extractors.TimeSeriesExtractor.__name__)})
+    _need_changes = frozenset(
+        {
+            str(extractors.AssetsExtractor.__name__),
+            str(extractors.TimeSeriesExtractor.__name__),
+        }
+    )
     _asset_template: str = """SELECT ?asset_id WHERE {{
                               <{timeseries_id}> <{asset_prop}> ?asset_id .
                               ?asset_id a <{asset_type}>}}"""
@@ -100,7 +110,12 @@ class AssetTimeSeriesConnector(BaseTransformer):
 class AssetSequenceConnector(BaseTransformer):
     description: str = "Connects assets to sequences, thus forming bi-directional connection"
     _use_only_once: bool = True
-    _need_changes = frozenset({str(extractors.AssetsExtractor.__name__), str(extractors.SequencesExtractor.__name__)})
+    _need_changes = frozenset(
+        {
+            str(extractors.AssetsExtractor.__name__),
+            str(extractors.SequencesExtractor.__name__),
+        }
+    )
     _asset_template: str = """SELECT ?asset_id WHERE {{
                               <{sequence_id}> <{asset_prop}> ?asset_id .
                               ?asset_id a <{asset_type}>}}"""
@@ -138,7 +153,12 @@ class AssetSequenceConnector(BaseTransformer):
 class AssetFileConnector(BaseTransformer):
     description: str = "Connects assets to files, thus forming bi-directional connection"
     _use_only_once: bool = True
-    _need_changes = frozenset({str(extractors.AssetsExtractor.__name__), str(extractors.FilesExtractor.__name__)})
+    _need_changes = frozenset(
+        {
+            str(extractors.AssetsExtractor.__name__),
+            str(extractors.FilesExtractor.__name__),
+        }
+    )
     _asset_template: str = """SELECT ?asset_id WHERE {{
                               <{file_id}> <{asset_prop}> ?asset_id .
                               ?asset_id a <{asset_type}>}}"""
@@ -174,7 +194,12 @@ class AssetFileConnector(BaseTransformer):
 class AssetEventConnector(BaseTransformer):
     description: str = "Connects assets to events, thus forming bi-directional connection"
     _use_only_once: bool = True
-    _need_changes = frozenset({str(extractors.AssetsExtractor.__name__), str(extractors.EventsExtractor.__name__)})
+    _need_changes = frozenset(
+        {
+            str(extractors.AssetsExtractor.__name__),
+            str(extractors.EventsExtractor.__name__),
+        }
+    )
     _asset_template: str = """SELECT ?asset_id WHERE {{
                               <{event_id}> <{asset_prop}> ?asset_id .
                               ?asset_id a <{asset_type}>}}"""
@@ -211,7 +236,10 @@ class AssetRelationshipConnector(BaseTransformer):
     description: str = "Connects assets via relationships"
     _use_only_once: bool = True
     _need_changes = frozenset(
-        {str(extractors.AssetsExtractor.__name__), str(extractors.RelationshipsExtractor.__name__)}
+        {
+            str(extractors.AssetsExtractor.__name__),
+            str(extractors.RelationshipsExtractor.__name__),
+        }
     )
     _asset_template: str = """SELECT ?source ?target WHERE {{
                               <{relationship_id}> <{relationship_source_xid_prop}> ?source_xid .
@@ -256,8 +284,20 @@ class AssetRelationshipConnector(BaseTransformer):
                 # files can be connected to multiple assets in the graph
                 for source_asset_id, target_asset_id in cast(list[tuple], assets_id_res):
                     # create a relationship between the two assets
-                    graph.add((source_asset_id, DEFAULT_NAMESPACE.relationship, relationship_id))
-                    graph.add((target_asset_id, DEFAULT_NAMESPACE.relationship, relationship_id))
+                    graph.add(
+                        (
+                            source_asset_id,
+                            DEFAULT_NAMESPACE.relationship,
+                            relationship_id,
+                        )
+                    )
+                    graph.add(
+                        (
+                            target_asset_id,
+                            DEFAULT_NAMESPACE.relationship,
+                            relationship_id,
+                        )
+                    )
 
                     # add source and target to the relationship
                     graph.add((relationship_id, DEFAULT_NAMESPACE.source, source_asset_id))

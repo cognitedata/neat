@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 
+import pandas as pd
 from rdflib import Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
@@ -17,6 +18,7 @@ from cognite.neat.graph.transformers import Transformers
 from cognite.neat.rules.models import InformationRules
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.utils.auxiliary import local_import
+from cognite.neat.utils.utils import remove_namespace_from_uri
 
 from ._provenance import Change, Provenance
 
@@ -24,6 +26,18 @@ if sys.version_info < (3, 11):
     from typing_extensions import Self
 else:
     from typing import Self
+
+
+SUMMARIZE_QUERY = """
+
+SELECT ?class (COUNT(?instance) AS ?instanceCount)
+WHERE {
+  ?instance a ?class .
+}
+GROUP BY ?class
+ORDER BY DESC(?instanceCount)
+
+"""
 
 
 class NeatGraphStore:
@@ -283,12 +297,28 @@ class NeatGraphStore:
                 )
             )
 
+    @property
+    def summary(self) -> pd.DataFrame:
+        content = [
+            (remove_namespace_from_uri(class_), occurrence.value)
+            for class_, occurrence in list(cast(list, self.graph.query(SUMMARIZE_QUERY)))
+        ]
+
+        return pd.DataFrame(content, columns=["Type", "Occurrence"])
+
     def _repr_html_(self) -> str:
         provenance = self.provenance._repr_html_()
+        summary: pd.DataFrame = self.summary
+        summary_text = (
+            "<br /><strong>Graph is empty</strong><br />"
+            if summary.empty
+            else f"<br /><strong>Graph content</strong><br />{cast(pd.DataFrame, summary)._repr_html_()}"  # type: ignore[operator]
+        )
 
         return (
             f"<strong>{type(self).__name__}</strong> A graph store is a container for storing triples. "
             "It can be queried and transformed to extract information.<br />"
             "<strong>Provenance</strong> Provenance is a record of changes that have occurred in the graph store.<br />"
             f"{provenance}"
+            f"{summary_text}"
         )
