@@ -1555,9 +1555,14 @@ class TestDMSRules:
     def test_add_reference(self) -> None:
         dms_rules = car.CAR_RULES.as_dms_architect_rules()
 
-        dms_rules.add_reference(car.BASE_MODEL, mapping={"Manufacturer": "Entity", "Color": "Entity"})
+        dms_rules.add_reference(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"})
 
-        assert True
+        schema = dms_rules.as_schema()
+        view_by_external_id = {view.external_id: view for view in schema.views.values()}
+        manufacturer_view = view_by_external_id["Manufacturer"]
+        assert manufacturer_view.referenced_containers() == {dm.ContainerId(car.BASE_MODEL.metadata.space, "Entity")}
+        color_view = view_by_external_id["Color"]
+        assert color_view.referenced_containers() == {dm.ContainerId(car.BASE_MODEL.metadata.space, "Entity")}
 
 
 class TestDMSExporter:

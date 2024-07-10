@@ -2,6 +2,7 @@ import math
 import re
 import sys
 import warnings
+from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
@@ -391,7 +392,33 @@ class DMSRules(BaseRules):
 
         return _DMSRulesConverter(self).as_domain_rules()
 
-    def add_reference(self, reference: "DMSRules", mapping: dict[str, str]) -> "DMSRules":
+    def add_reference(self, reference: "DMSRules", view_by_ref_external_id: dict[str, str]) -> None:
         if self.reference is not None:
             raise ValueError("Reference already exists")
-        raise NotImplementedError("Adding reference is not implemented yet")
+        self.reference = reference
+        view_by_external_id = {view.view.external_id: view for view in self.views}
+        ref_view_by_external_id = {view.view.external_id: view for view in reference.views}
+        properties_by_view_external_id: dict[str, dict[str, DMSProperty]] = defaultdict(dict)
+        for prop in self.properties:
+            properties_by_view_external_id[prop.view.external_id][prop.view_property] = prop
+        ref_properties_by_view_external_id: dict[str, dict[str, DMSProperty]] = defaultdict(dict)
+        for prop in reference.properties:
+            ref_properties_by_view_external_id[prop.view.external_id][prop.view_property] = prop
+
+        for view_external_id, ref_external_id in view_by_ref_external_id.items():
+            view = view_by_external_id[view_external_id]
+            ref_view = ref_view_by_external_id[ref_external_id]
+            if view.implements is None:
+                view.implements = [ref_view.view]
+            elif isinstance(view.implements, list) and ref_view.view not in view.implements:
+                view.implements.append(ref_view.view)
+            shared_properties = set(properties_by_view_external_id[view_external_id].keys()) & set(
+                ref_properties_by_view_external_id[ref_external_id].keys()
+            )
+            for prop_name in shared_properties:
+                prop = properties_by_view_external_id[view_external_id][prop_name]
+                ref_prop = ref_properties_by_view_external_id[ref_external_id][prop_name]
+                if ref_prop.container and ref_prop.container_property:
+                    prop.container = ref_prop.container
+                    prop.container_property = ref_prop.container_property
+                prop.reference = ReferenceEntity.from_entity(ref_prop.view, ref_prop.view_property)
