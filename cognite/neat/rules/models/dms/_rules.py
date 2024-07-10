@@ -390,3 +390,8 @@ class DMSRules(BaseRules):
         from ._converter import _DMSRulesConverter
 
         return _DMSRulesConverter(self).as_domain_rules()
+
+    def add_reference(self, reference: "DMSRules", mapping: dict[str, str]) -> "DMSRules":
+        if self.reference is not None:
+            raise ValueError("Reference already exists")
+        raise NotImplementedError("Adding reference is not implemented yet")

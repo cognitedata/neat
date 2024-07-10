@@ -21,6 +21,7 @@ from cognite.neat.rules.models.dms import (
     DMSViewInput,
 )
 from cognite.neat.utils.cdf_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
+from tests.data import car
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
@@ -1550,6 +1551,13 @@ class TestDMSRules:
         actual_issues = validation.NeatValidationError.from_pydantic_errors(e.value.errors())
 
         assert sorted(actual_issues) == sorted(expected_issues)
+
+    def test_add_reference(self) -> None:
+        dms_rules = car.CAR_RULES.as_dms_architect_rules()
+
+        dms_rules.add_reference(car.BASE_MODEL, mapping={"Manufacturer": "Entity", "Color": "Entity"})
+
+        assert True
 
 
 class TestDMSExporter:
