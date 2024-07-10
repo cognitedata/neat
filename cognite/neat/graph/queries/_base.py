@@ -20,6 +20,8 @@ class Queries:
         self.rules = rules
 
     def summarize_instances(self) -> list[tuple]:
+        """Summarize instances in the graph store by class and count"""
+
         query_statement = """ SELECT ?class (COUNT(?instance) AS ?instanceCount)
                              WHERE {
                              ?instance a ?class .
