@@ -2,6 +2,7 @@ import warnings
 from typing import Literal, cast, overload
 
 from rdflib import RDF, Graph, URIRef
+from rdflib import Literal as RdfLiteral
 from rdflib.query import ResultRow
 
 from cognite.neat.rules.models.entities import ClassEntity
@@ -17,6 +18,22 @@ class Queries:
     def __init__(self, graph: Graph, rules: InformationRules | None = None):
         self.graph = graph
         self.rules = rules
+
+    def summarize_instances(self) -> list[tuple]:
+        query_statement = """ SELECT ?class (COUNT(?instance) AS ?instanceCount)
+                             WHERE {
+                             ?instance a ?class .
+                             }
+                             GROUP BY ?class
+                             ORDER BY DESC(?instanceCount) """
+
+        return [
+            (
+                remove_namespace_from_uri(cast(URIRef, cast(tuple, res)[0])),
+                cast(RdfLiteral, cast(tuple, res)[1].value),
+            )
+            for res in list(self.graph.query(query_statement))
+        ]
 
     def list_instances_ids_of_class(self, class_uri: URIRef, limit: int = -1) -> list[URIRef]:
         """Get instances ids for a given class
@@ -68,7 +85,10 @@ class Queries:
             # We cannot include the RDF.type in case there is a neat:type property
             return [remove_namespace_from_uri(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
         else:
-            warnings.warn("No rules found for the graph store, returning empty list.", stacklevel=2)
+            warnings.warn(
+                "No rules found for the graph store, returning empty list.",
+                stacklevel=2,
+            )
             return []
 
     def construct_instances_of_class(self, class_: str, properties_optional: bool = True) -> list[tuple[str, str, str]]:
@@ -95,7 +115,10 @@ class Queries:
             # We cannot include the RDF.type in case there is a neat:type property
             return [remove_namespace_from_uri(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
         else:
-            warnings.warn("No rules found for the graph store, returning empty list.", stacklevel=2)
+            warnings.warn(
+                "No rules found for the graph store, returning empty list.",
+                stacklevel=2,
+            )
             return []
 
     def list_triples(self, limit: int = 25) -> list[ResultRow]:

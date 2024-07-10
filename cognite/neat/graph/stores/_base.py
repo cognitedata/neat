@@ -18,7 +18,6 @@ from cognite.neat.graph.transformers import Transformers
 from cognite.neat.rules.models import InformationRules
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.utils.auxiliary import local_import
-from cognite.neat.utils.utils import remove_namespace_from_uri
 
 from ._provenance import Change, Provenance
 
@@ -26,18 +25,6 @@ if sys.version_info < (3, 11):
     from typing_extensions import Self
 else:
     from typing import Self
-
-
-SUMMARIZE_QUERY = """
-
-SELECT ?class (COUNT(?instance) AS ?instanceCount)
-WHERE {
-  ?instance a ?class .
-}
-GROUP BY ?class
-ORDER BY DESC(?instanceCount)
-
-"""
 
 
 class NeatGraphStore:
@@ -299,12 +286,7 @@ class NeatGraphStore:
 
     @property
     def summary(self) -> pd.DataFrame:
-        content = [
-            (remove_namespace_from_uri(class_), occurrence.value)
-            for class_, occurrence in list(cast(list, self.graph.query(SUMMARIZE_QUERY)))
-        ]
-
-        return pd.DataFrame(content, columns=["Type", "Occurrence"])
+        return pd.DataFrame(self.queries.summarize_instances(), columns=["Type", "Occurrence"])
 
     def _repr_html_(self) -> str:
         provenance = self.provenance._repr_html_()
