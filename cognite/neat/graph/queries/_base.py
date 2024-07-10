@@ -30,7 +30,7 @@ class Queries:
         return [
             (
                 remove_namespace_from_uri(cast(URIRef, cast(tuple, res)[0])),
-                cast(RdfLiteral, cast(tuple, res)[1].value),
+                cast(RdfLiteral, cast(tuple, res)[1]).value,
             )
             for res in list(self.graph.query(query_statement))
         ]
