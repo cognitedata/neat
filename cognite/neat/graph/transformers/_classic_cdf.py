@@ -1,6 +1,6 @@
 from typing import cast
 
-from rdflib import Graph, Literal, URIRef
+from rdflib import RDF, Graph, Literal, URIRef
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph import extractors
@@ -38,6 +38,13 @@ class AddAssetDepth(BaseTransformer):
             asset_id = cast(tuple, result)[0]
             if depth := self.get_depth(graph, asset_id, self.root_prop, self.parent_prop):
                 graph.add((asset_id, DEFAULT_NAMESPACE.depth, Literal(depth)))
+
+                if self.depth_typing and (type_ := self.depth_typing.get(depth, None)):
+                    # remove existing type
+                    graph.remove((asset_id, RDF.type, None))
+
+                    # add new type
+                    graph.add((asset_id, RDF.type, DEFAULT_NAMESPACE[type_]))
 
     @classmethod
     def get_depth(
