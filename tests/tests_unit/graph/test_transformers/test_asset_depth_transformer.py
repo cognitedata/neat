@@ -40,12 +40,12 @@ def test_asset_depth_transformer_with_typing():
 
     store.transform(transformer)
 
-    summary = dict(zip(store.summary.iloc[:, 0], store.summary.iloc[:, 1], strict=False))
-
-    assert summary["RootCimNode"] == 1
-    assert summary["GeographicalRegion"] == 1
-    assert summary["SubGeographicalRegion"] == 1
-    assert summary["Substation"] == 1
+    assert set(store.queries.summarize_instances()) == {
+        ("GeographicalRegion", 1),
+        ("RootCimNode", 1),
+        ("SubGeographicalRegion", 1),
+        ("Substation", 1),
+    }
 
 
 def test_asset_depth_transformer_warning():
