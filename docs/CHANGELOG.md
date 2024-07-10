@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.85.10] - 10-07-24
+### Added
+- Depth-based typing in `AddAssetDepth` transformer
+- Graph summary repr
+
 ## [0.85.9] - 09-07-24
 ### Added
 - Option for checking for JSON value type when inferring data model
