@@ -2,13 +2,14 @@ import json
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args
 
 import yaml
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.capabilities import Capability, DataModelInstancesAcl
 from cognite.client.data_classes.data_modeling import ViewId
+from cognite.client.data_classes.data_modeling.data_types import Json
 from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
@@ -175,13 +176,26 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 field_definitions[prop_name] = (python_type, default_value)
 
         def parse_list(cls, value: Any, info: ValidationInfo) -> list[str]:
-            if isinstance(value, list) and cls.model_fields[info.field_name].annotation is not list:
+            if isinstance(value, list) and list.__name__ not in _get_field_value_types(cls, info):
                 if len(value) == 1:
                     return value[0]
                 raise ValueError(f"Got multiple values for {info.field_name}: {value}")
+
             return value
 
-        validators: dict[str, classmethod] = {"parse_list": field_validator("*", mode="before")(parse_list)}  # type: ignore[dict-item,arg-type]
+        def parse_json_string(cls, value: Any, info: ValidationInfo) -> dict:
+            if isinstance(value, str) and Json.__name__ in _get_field_value_types(cls, info):
+                try:
+                    return dict(json.loads(value))
+                except json.JSONDecodeError as error:
+                    raise ValueError(f"Not valid JSON string for {info.field_name}: {value}, error {error}") from error
+
+            return value
+
+        validators: dict[str, classmethod] = {
+            "parse_json_string": field_validator("*", mode="before")(parse_json_string),  # type: ignore[dict-item,arg-type]
+            "parse_list": field_validator("*", mode="before")(parse_list),  # type: ignore[dict-item,arg-type]
+        }
         if direct_relation_by_property:
 
             def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
@@ -280,7 +294,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             result.created.update(item.as_id() for item in e.successful)
             yield result
         else:
-            for instance_type, instances in {"Nodes": upserted.nodes, "Edges": upserted.edges}.items():
+            for instance_type, instances in {
+                "Nodes": upserted.nodes,
+                "Edges": upserted.edges,
+            }.items():
                 result = UploadResult[InstanceId](name=instance_type, issues=read_issues)
                 for instance in instances:  # type: ignore[attr-defined]
                     if instance.was_modified and instance.created_time == instance.last_updated_time:
@@ -290,6 +307,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     else:
                         result.unchanged.add(instance.as_id())
                 yield result
+
+
+def _get_field_value_types(cls, info):
+    return [type_.__name__ for type_ in get_args(cls.model_fields[info.field_name].annotation)]
 
 
 def _triples2dictionary(
