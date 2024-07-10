@@ -6,7 +6,7 @@ from cognite.neat.graph.stores import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 
-def test_asset_depth_transformer():
+def test_asset_depth_transformer_without_typing():
     store = NeatGraphStore.from_memory_store()
     extractor = extractors.AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml")
     store.write(extractor)
@@ -24,6 +24,30 @@ def test_asset_depth_transformer():
     )
 
 
+def test_asset_depth_transformer_with_typing():
+    store = NeatGraphStore.from_memory_store()
+    extractor = extractors.AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml")
+    store.write(extractor)
+
+    transformer = transformers.AddAssetDepth(
+        depth_typing={
+            1: "RootCimNode",
+            2: "GeographicalRegion",
+            3: "SubGeographicalRegion",
+            4: "Substation",
+        }
+    )
+
+    store.transform(transformer)
+
+    summary = dict(zip(store.summary.iloc[:, 0], store.summary.iloc[:, 1], strict=False))
+
+    assert summary["RootCimNode"] == 1
+    assert summary["GeographicalRegion"] == 1
+    assert summary["SubGeographicalRegion"] == 1
+    assert summary["Substation"] == 1
+
+
 def test_asset_depth_transformer_warning():
     store = NeatGraphStore.from_memory_store()
 
@@ -38,5 +62,8 @@ def test_asset_depth_transformer_warning():
     store.write(extractor)
     store.transform(transformer)
 
-    with pytest.warns(UserWarning, match="Cannot transform graph store with AddAssetDepth, already applied"):
+    with pytest.warns(
+        UserWarning,
+        match="Cannot transform graph store with AddAssetDepth, already applied",
+    ):
         store.transform(transformer)
