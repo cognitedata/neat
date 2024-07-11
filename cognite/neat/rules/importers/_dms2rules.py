@@ -250,7 +250,7 @@ class DMSImporter(BaseImporter):
         properties = SheetList[DMSProperty]()
         for view_id, view in schema.views.items():
             view_entity = ViewEntity.from_id(view_id)
-            class_entity = view_entity.as_class()
+            class_entity = view_entity.as_class_entity()
             for prop_id, prop in (view.properties or {}).items():
                 dms_property = self._create_dms_property(prop_id, prop, view_entity, class_entity)
                 if dms_property is not None:

@@ -2,6 +2,7 @@ import itertools
 import logging
 import warnings
 from collections import defaultdict
+from collections.abc import Sequence
 from typing import Any, Generic, TypeVar
 
 import pandas as pd
@@ -10,6 +11,11 @@ from pydantic import ValidationError
 from cognite.neat.rules.models import SchemaCompleteness
 from cognite.neat.rules.models._rdfpath import RDFPath
 from cognite.neat.rules.models.asset import AssetClass, AssetProperty, AssetRules
+from cognite.neat.rules.models.dms import (
+    DMSProperty,
+    DMSRules,
+    DMSView,
+)
 from cognite.neat.rules.models.entities import (
     AssetEntity,
     ClassEntity,
@@ -25,9 +31,27 @@ from cognite.neat.rules.models.information import (
 )
 from cognite.neat.utils.utils import get_inheritance_path
 
-T_Rules = TypeVar("T_Rules", InformationRules, AssetRules)
-T_Property = TypeVar("T_Property", InformationProperty, AssetProperty)
-T_Class = TypeVar("T_Class", InformationClass, AssetClass)
+
+class _ClassAdapter:
+    def __init__(self, view: DMSView) -> None:
+        self.view = view
+
+    @property
+    def parent(self) -> list[ParentClassEntity] | None:
+        return [v.as_parent_class_entity() for v in self.view.implements or []] or None
+
+    @property
+    def class_(self) -> ClassEntity:
+        return self.view.class_
+
+    @property
+    def reference(self) -> ReferenceEntity | None:
+        return self.view.reference if isinstance(self.view.reference, ReferenceEntity) else None
+
+
+T_Rules = TypeVar("T_Rules", InformationRules, AssetRules, DMSRules)
+T_Property = TypeVar("T_Property", InformationProperty, AssetProperty, DMSProperty)
+T_Class = TypeVar("T_Class", InformationClass, AssetClass, _ClassAdapter)
 
 
 class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
@@ -38,7 +62,7 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
     def directly_referred_classes(self) -> set[ClassEntity]:
         return {
             class_.reference.as_class_entity()
-            for class_ in self.rules.classes
+            for class_ in self.classes
             if self.rules.reference
             and class_.reference
             and isinstance(class_.reference, ReferenceEntity)
@@ -53,6 +77,10 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
             inherited_referred_classes.extend(self.class_inheritance_path(class_))
         return set(inherited_referred_classes)
 
+    @property
+    def classes(self) -> Sequence[T_Class]:
+        raise NotImplementedError
+
     def class_parent_pairs(self) -> dict[ClassEntity, list[ParentClassEntity]]:
         """This only returns class - parent pairs only if parent is in the same data model"""
         class_subclass_pairs: dict[ClassEntity, list[ParentClassEntity]] = {}
@@ -60,7 +88,7 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
         if not self.rules:
             return class_subclass_pairs
 
-        for definition in self.rules.classes:
+        for definition in self.classes:
             class_subclass_pairs[definition.class_] = []
 
             if definition.parent is None:
@@ -313,7 +341,7 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
     def as_class_dict(self) -> dict[str, T_Class]:
         """This is to simplify access to classes through dict."""
         class_dict: dict[str, T_Class] = {}
-        for definition in self.rules.classes:
+        for definition in self.classes:
             class_dict[str(definition.class_.suffix)] = definition  # type: ignore
         return class_dict
 
@@ -401,11 +429,17 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
 class InformationArchitectRulesAnalysis(_SharedAnalysis[InformationRules, InformationProperty, InformationClass]):
     """Assumes analysis over only the complete schema"""
 
-    ...
+    @property
+    def classes(self) -> Sequence[InformationClass]:
+        return self.rules.classes
 
 
 class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, AssetClass]):
     """Assumes analysis over only the complete schema"""
+
+    @property
+    def classes(self) -> Sequence[AssetClass]:
+        return self.rules.classes
 
     def class_property_pairs(
         self,
@@ -467,3 +501,9 @@ class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, Ass
             only_rdfpath=only_rdfpath,
             implementation_type=EntityTypes.relationship,
         )
+
+
+class DMSRulesAnalysis(_SharedAnalysis[DMSRules, DMSProperty, _ClassAdapter]):
+    @property
+    def classes(self) -> Sequence[_ClassAdapter]:
+        return [_ClassAdapter(v) for v in self.rules.views]

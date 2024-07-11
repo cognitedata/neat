@@ -2,7 +2,6 @@ import math
 import re
 import sys
 import warnings
-from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
@@ -109,6 +108,10 @@ class DMSMetadata(BaseMetadata):
             return None
         return value
 
+    @property
+    def prefix(self) -> str:
+        return self.space
+
     def as_space(self) -> dm.SpaceApply:
         return dm.SpaceApply(
             space=self.space,
@@ -184,6 +187,12 @@ class DMSProperty(SheetEntity):
     class_: ClassEntity = Field(alias="Class (linage)")
     property_: PropertyType = Field(alias="Property (linage)")
 
+    inherited: bool = Field(
+        default=False,
+        alias="Inherited",
+        description="Flag to indicate if the property is inherited, only use for internal purposes",
+    )
+
     @field_validator("nullable")
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
         if info.data.get("connection") == "direct" and value is False:
@@ -248,7 +257,7 @@ class DMSContainer(SheetEntity):
             # UniquenessConstraint it handled in the properties
         container_entity = ContainerEntity.from_id(container.as_id())
         return cls(
-            class_=container_entity.as_class(),
+            class_=container_entity.as_class_entity(),
             container=container_entity,
             name=container.name or None,
             description=container.description,
@@ -288,7 +297,7 @@ class DMSView(SheetEntity):
     @classmethod
     def from_view(cls, view: dm.ViewApply, in_model: bool) -> "DMSView":
         view_entity = ViewEntity.from_id(view.as_id())
-        class_entity = view_entity.as_class(skip_version=True)
+        class_entity = view_entity.as_class_entity(skip_version=True)
 
         return cls(
             class_=class_entity,
@@ -393,7 +402,10 @@ class DMSRules(BaseRules):
         return _DMSRulesConverter(self).as_domain_rules()
 
     def create_reference(
-        self, reference: "DMSRules", view_extension_mapping: dict[str, str], default_extension: str | None = None
+        self,
+        reference: "DMSRules",
+        view_extension_mapping: dict[str, str],
+        default_extension: str | None = None,
     ) -> None:
         """Takes this data models and makes it into an extension of the reference data model.
 
@@ -415,6 +427,8 @@ class DMSRules(BaseRules):
                 data model should extend if no mapping is provided.
 
         """
+        from cognite.neat.rules.analysis import DMSRulesAnalysis
+
         if self.reference is not None:
             raise ValueError("Reference already exists")
         self.reference = reference
@@ -428,13 +442,16 @@ class DMSRules(BaseRules):
         if default_extension and default_extension not in ref_view_by_external_id:
             raise ValueError(f"Default extension view not in the reference data model {default_extension}")
 
-        properties_by_view_external_id: dict[str, dict[str, DMSProperty]] = defaultdict(dict)
-        for prop in self.properties:
-            properties_by_view_external_id[prop.view.external_id][prop.view_property] = prop
-
-        ref_properties_by_view_external_id: dict[str, dict[str, DMSProperty]] = defaultdict(dict)
-        for prop in reference.properties:
-            ref_properties_by_view_external_id[prop.view.external_id][prop.view_property] = prop
+        this_model = DMSRulesAnalysis(self)
+        properties_by_view_external_id = {
+            class_.suffix: {p.view_property: p for p in properties}
+            for class_, properties in this_model.classes_with_properties(consider_inheritance=True).items()
+        }
+        ref_model = DMSRulesAnalysis(reference)
+        ref_properties_by_view_external_id = {
+            class_.suffix: {p.view_property: p for p in properties}
+            for class_, properties in ref_model.classes_with_properties(consider_inheritance=True).items()
+        }
 
         for view_external_id, view in view_by_external_id.items():
             if view_external_id in view_extension_mapping:
@@ -453,6 +470,23 @@ class DMSRules(BaseRules):
                     view.implements = [ref_view.view]
                 elif isinstance(view.implements, list) and ref_view.view not in view.implements:
                     view.implements.append(ref_view.view)
+                for parent in view.implements:
+                    if parent.external_id not in view_by_external_id:
+                        parent_view = ref_view_by_external_id[parent.external_id]
+                        new_view = DMSView(
+                            view=ViewEntity(
+                                space=self.metadata.space,
+                                externalId=parent_view.view.external_id,
+                                version=parent_view.view.version,
+                            ),
+                            name=parent_view.name,
+                            description=parent_view.description,
+                            implements=[parent],
+                            class_=parent_view.class_,
+                        )
+                        self.views.append(new_view)
+                        view_by_external_id[new_view.view.external_id] = new_view
+
             for prop_name in shared_properties:
                 prop = properties_by_view_external_id[view_external_id][prop_name]
                 ref_prop = ref_properties_by_view_external_id[ref_external_id][prop_name]

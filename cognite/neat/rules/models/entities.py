@@ -378,13 +378,13 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
     def from_id(cls, id: T_ID) -> Self:
         raise NotImplementedError("Method from_id must be implemented in subclasses")
 
-    def as_class(self) -> ClassEntity:
-        return ClassEntity(prefix=self.space, suffix=self.external_id)
-
     def as_dms_compliant_entity(self) -> "Self":
         new_entity = self.model_copy(deep=True)
         new_entity.suffix = replace_non_alphanumeric_with_underscore(new_entity.suffix)
         return new_entity
+
+    def as_class_entity(self) -> ClassEntity:
+        return ClassEntity(prefix=self.space, suffix=self.external_id)
 
 
 T_DMSEntity = TypeVar("T_DMSEntity", bound=DMSEntity)
@@ -404,10 +404,13 @@ class ContainerEntity(DMSEntity[ContainerId]):
 class DMSVersionedEntity(DMSEntity[T_ID], ABC):
     version: str
 
-    def as_class(self, skip_version: bool = False) -> ClassEntity:
+    def as_class_entity(self, skip_version: bool = False) -> ClassEntity:
         if skip_version:
             return ClassEntity(prefix=self.space, suffix=self.external_id)
         return ClassEntity(prefix=self.space, suffix=self.external_id, version=self.version)
+
+    def as_parent_class_entity(self) -> ParentClassEntity:
+        return ParentClassEntity(prefix=self.space, suffix=self.external_id, version=self.version)
 
 
 class ViewEntity(DMSVersionedEntity[ViewId]):

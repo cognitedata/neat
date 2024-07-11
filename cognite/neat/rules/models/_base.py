@@ -8,9 +8,9 @@ import math
 import sys
 import types
 from abc import abstractmethod
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from functools import wraps
-from typing import Annotated, Any, ClassVar, Generic, Literal, TypeAlias, TypeVar
+from typing import Annotated, Any, ClassVar, Generic, Literal, TypeAlias, TypeVar, overload
 
 import pandas as pd
 from pydantic import (
@@ -305,7 +305,7 @@ class SheetEntity(RuleModel):
 T_Entity = TypeVar("T_Entity", bound=SheetEntity)
 
 
-class SheetList(BaseModel, Generic[T_Entity]):
+class SheetList(BaseModel, Generic[T_Entity], Sequence):
     data: list[T_Entity] = Field(default_factory=list)
 
     @model_validator(mode="before")
@@ -314,7 +314,7 @@ class SheetList(BaseModel, Generic[T_Entity]):
             return {"data": values}
         return values
 
-    def __contains__(self, item: str) -> bool:
+    def __contains__(self, item: str) -> bool:  # type: ignore[override]
         return item in self.data
 
     def __len__(self) -> int:
@@ -322,6 +322,15 @@ class SheetList(BaseModel, Generic[T_Entity]):
 
     def __iter__(self) -> Iterator[T_Entity]:  # type: ignore[override]
         return iter(self.data)
+
+    @overload
+    def __getitem__(self, index: int) -> T_Entity: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[T_Entity]: ...
+
+    def __getitem__(self, index: int | slice) -> T_Entity | Sequence[T_Entity]:
+        return self.data[index]
 
     def append(self, value: T_Entity) -> None:
         self.data.append(value)
