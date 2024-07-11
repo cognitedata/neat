@@ -462,6 +462,9 @@ class ViewPropertyEntity(DMSVersionedEntity[PropertyId]):
     def as_view_id(self) -> ViewId:
         return ViewId(space=self.space, external_id=self.external_id, version=self.version)
 
+    def as_view_entity(self) -> ViewEntity:
+        return ViewEntity(space=self.space, externalId=self.external_id, version=self.version)
+
     @classmethod
     def from_id(cls, id: PropertyId) -> "ViewPropertyEntity":
         if isinstance(id.source, ContainerId):

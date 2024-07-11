@@ -453,7 +453,7 @@ class DMSRules(BaseRules):
             for class_, properties in ref_model.classes_with_properties(consider_inheritance=True).items()
         }
 
-        for view_external_id, view in view_by_external_id.items():
+        for view_external_id, view in list(view_by_external_id.items()):
             if view_external_id in view_extension_mapping:
                 ref_external_id = view_extension_mapping[view_external_id]
             elif default_extension:
@@ -470,7 +470,16 @@ class DMSRules(BaseRules):
                     view.implements = [ref_view.view]
                 elif isinstance(view.implements, list) and ref_view.view not in view.implements:
                     view.implements.append(ref_view.view)
-                for parent in view.implements:
+                to_add_list: list[ViewEntity] = list(view.implements or [])
+                for to_add in view.implements or []:
+                    if to_add.external_id in ref_properties_by_view_external_id:
+                        for prop in ref_properties_by_view_external_id[to_add.external_id].values():
+                            if isinstance(prop.value_type, ViewEntity):
+                                to_add_list.append(prop.value_type)
+                            elif isinstance(prop.value_type, ViewPropertyEntity):
+                                to_add_list.append(prop.value_type.as_view_entity())
+
+                for parent in to_add_list:
                     if parent.external_id not in view_by_external_id:
                         parent_view = ref_view_by_external_id[parent.external_id]
                         new_view = DMSView(
