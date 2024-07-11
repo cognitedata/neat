@@ -146,7 +146,9 @@ class DMSPropertyInput:
             "Value Type": value_type,
             "Property (linage)": self.property_ or self.view_property,
             "Class (linage)": (
-                ClassEntity.load(self.class_, prefix=default_space, version=default_version) if self.class_ else None
+                ClassEntity.load(self.class_ or self.view, prefix=default_space, version=default_version)
+                if self.class_ or self.view
+                else None
             ),
             "Name": self.name,
             "Description": self.description,
