@@ -444,12 +444,12 @@ class DMSRules(BaseRules):
 
         this_model = DMSRulesAnalysis(self)
         properties_by_view_external_id = {
-            class_.suffix: {p.view_property: p for p in properties}
+            class_.suffix: properties
             for class_, properties in this_model.classes_with_properties(consider_inheritance=True).items()
         }
         ref_model = DMSRulesAnalysis(reference)
         ref_properties_by_view_external_id = {
-            class_.suffix: {p.view_property: p for p in properties}
+            class_.suffix: properties
             for class_, properties in ref_model.classes_with_properties(consider_inheritance=True).items()
         }
 
