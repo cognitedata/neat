@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.85.11] - 10-07-24
+### Added
+- Method `create_reference` to `DMSRules` to add reference dms rules and do the mapping of properties
+  and views to the reference model.
+
 ## [0.85.10] - 10-07-24
 ### Added
 - Depth-based typing in `AddAssetDepth` transformer

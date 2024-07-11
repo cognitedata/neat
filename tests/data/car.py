@@ -6,7 +6,14 @@ from rdflib.term import Literal
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.rules import importers
-from cognite.neat.rules.models import InformationRules
+from cognite.neat.rules.models import DMSRules, InformationRules
+from cognite.neat.rules.models.dms import (
+    DMSContainerInput,
+    DMSMetadataInput,
+    DMSPropertyInput,
+    DMSRulesInput,
+    DMSViewInput,
+)
 
 _neat = DEFAULT_NAMESPACE
 TRIPLES = tuple(
@@ -55,7 +62,7 @@ CONTAINERS = dm.ContainerApplyList(
 
 CAR_RULES: InformationRules = importers.ExcelImporter(
     Path(__file__).resolve().parent / "info-arch-car-rules.xlsx"
-).to_rules()[0]
+).to_rules(errors="raise")
 
 CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     space=MODEL_SPACE,
@@ -158,6 +165,30 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
         ),
     ],
 )
+
+BASE_MODEL: DMSRules = DMSRulesInput(
+    metadata=DMSMetadataInput(
+        schema_="partial",
+        space="sp_base",
+        external_id="Base",
+        version="1",
+        extension="addition",
+        data_model_type="enterprise",
+        creator="Anders",
+    ),
+    views=[DMSViewInput(view="Entity")],
+    containers=[DMSContainerInput(container="Entity")],
+    properties=[
+        DMSPropertyInput(
+            view="Entity",
+            view_property="name",
+            value_type="text",
+            property_="name",
+            container="Entity",
+            container_property="name",
+        )
+    ],
+).as_rules()
 
 NODE_TYPES = dm.NodeApplyList(
     [

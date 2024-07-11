@@ -499,6 +499,13 @@ class ReferenceEntity(ClassEntity):
     prefix: str
     property_: str | None = Field(None, alias="property")
 
+    @classmethod
+    def from_entity(cls, entity: Entity, property_: str) -> "ReferenceEntity":
+        if isinstance(entity, ClassEntity):
+            return cls(prefix=str(entity.prefix), suffix=entity.suffix, version=entity.version, property=property_)
+        else:
+            return cls(prefix=str(entity.prefix), suffix=entity.suffix, property=property_)
+
     def as_view_id(self) -> ViewId:
         if isinstance(self.prefix, _UndefinedType) or isinstance(self.suffix, _UnknownType):
             raise ValueError("Prefix is not defined or suffix is unknown")
