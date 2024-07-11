@@ -392,29 +392,67 @@ class DMSRules(BaseRules):
 
         return _DMSRulesConverter(self).as_domain_rules()
 
-    def add_reference(self, reference: "DMSRules", view_by_ref_external_id: dict[str, str]) -> None:
+    def create_reference(
+        self, reference: "DMSRules", view_extension_mapping: dict[str, str], default_extension: str | None = None
+    ) -> None:
+        """Takes this data models and makes it into an extension of the reference data model.
+
+        The argument view_extension_mapping is a dictionary where the keys are views of this data model,
+        and each value is the view of the reference data model that the view should extend. For example:
+
+        ```python
+        view_extension_mapping = {"Pump": "Asset"}
+        ```
+
+        This would make the view "Pump" in this data model extend the view "Asset" in the reference data model.
+        Note that all the keys in the dictionary must be external ids of views in this data model,
+        and all the values must be external ids of views in the reference data model.
+
+        Args:
+            reference: The reference data model
+            view_extension_mapping: A dictionary mapping views in this data model to views in the reference data model
+            default_extension: The default view in the reference data model that views in this
+                data model should extend if no mapping is provided.
+
+        """
         if self.reference is not None:
             raise ValueError("Reference already exists")
         self.reference = reference
         view_by_external_id = {view.view.external_id: view for view in self.views}
         ref_view_by_external_id = {view.view.external_id: view for view in reference.views}
+
+        if invalid_views := set(view_extension_mapping.keys()) - set(view_by_external_id.keys()):
+            raise ValueError(f"Views are not in this dat model {invalid_views}")
+        if invalid_views := set(view_extension_mapping.values()) - set(ref_view_by_external_id.keys()):
+            raise ValueError(f"Views are not in the reference data model {invalid_views}")
+        if default_extension and default_extension not in ref_view_by_external_id:
+            raise ValueError(f"Default extension view not in the reference data model {default_extension}")
+
         properties_by_view_external_id: dict[str, dict[str, DMSProperty]] = defaultdict(dict)
         for prop in self.properties:
             properties_by_view_external_id[prop.view.external_id][prop.view_property] = prop
+
         ref_properties_by_view_external_id: dict[str, dict[str, DMSProperty]] = defaultdict(dict)
         for prop in reference.properties:
             ref_properties_by_view_external_id[prop.view.external_id][prop.view_property] = prop
 
-        for view_external_id, ref_external_id in view_by_ref_external_id.items():
-            view = view_by_external_id[view_external_id]
+        for view_external_id, view in view_by_external_id.items():
+            if view_external_id in view_extension_mapping:
+                ref_external_id = view_extension_mapping[view_external_id]
+            elif default_extension:
+                ref_external_id = default_extension
+            else:
+                continue
+
             ref_view = ref_view_by_external_id[ref_external_id]
-            if view.implements is None:
-                view.implements = [ref_view.view]
-            elif isinstance(view.implements, list) and ref_view.view not in view.implements:
-                view.implements.append(ref_view.view)
             shared_properties = set(properties_by_view_external_id[view_external_id].keys()) & set(
                 ref_properties_by_view_external_id[ref_external_id].keys()
             )
+            if shared_properties:
+                if view.implements is None:
+                    view.implements = [ref_view.view]
+                elif isinstance(view.implements, list) and ref_view.view not in view.implements:
+                    view.implements.append(ref_view.view)
             for prop_name in shared_properties:
                 prop = properties_by_view_external_id[view_external_id][prop_name]
                 ref_prop = ref_properties_by_view_external_id[ref_external_id][prop_name]

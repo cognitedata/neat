@@ -1555,7 +1555,7 @@ class TestDMSRules:
     def test_add_reference(self) -> None:
         dms_rules = car.CAR_RULES.as_dms_architect_rules()
 
-        dms_rules.add_reference(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"})
+        dms_rules.create_reference(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"})
 
         schema = dms_rules.as_schema()
         view_by_external_id = {view.external_id: view for view in schema.views.values()}

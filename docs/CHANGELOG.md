@@ -17,7 +17,7 @@ Changes are grouped as follows:
 
 ## [0.85.11] - 10-07-24
 ### Added
-- Method `add_reference` to `DMSRules` to add reference dms rules and do the mapping of properties
+- Method `create_reference` to `DMSRules` to add reference dms rules and do the mapping of properties
   and views to the reference model.
 
 ## [0.85.10] - 10-07-24
