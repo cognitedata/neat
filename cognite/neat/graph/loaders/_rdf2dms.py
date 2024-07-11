@@ -9,7 +9,6 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.capabilities import Capability, DataModelInstancesAcl
 from cognite.client.data_classes.data_modeling import ViewId
-from cognite.client.data_classes.data_modeling.data_types import Json
 from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
@@ -21,7 +20,7 @@ from cognite.neat.graph.issues import loader as loader_issues
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.models import DMSRules
-from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
+from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
 from cognite.neat.utils.upload import UploadResult
 from cognite.neat.utils.utils import create_sha256_hash
 
@@ -146,7 +145,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         issues = NeatIssueList[NeatIssue]()
         field_definitions: dict[str, tuple[type, Any]] = {}
         edge_by_property: dict[str, dm.EdgeConnection] = {}
+        validators: dict[str, classmethod] = {}
         direct_relation_by_property: dict[str, dm.DirectRelation] = {}
+        json_fields: list[str] = []
         for prop_name, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
                 edge_by_property[prop_name] = prop
@@ -164,6 +165,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                             )
                         )
                         continue
+
+                    if data_type == Json:
+                        json_fields.append(prop_name)
                     python_type = data_type.python
                 if prop.type.is_list:
                     python_type = list[python_type]
@@ -184,18 +188,21 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return value
 
         def parse_json_string(cls, value: Any, info: ValidationInfo) -> dict:
-            if isinstance(value, str) and Json.__name__ in _get_field_value_types(cls, info):
+            if isinstance(value, dict):
+                return value
+            elif isinstance(value, str):
                 try:
-                    return dict(json.loads(value))
+                    return json.loads(value)
                 except json.JSONDecodeError as error:
                     raise ValueError(f"Not valid JSON string for {info.field_name}: {value}, error {error}") from error
+            else:
+                raise ValueError(f"Expect valid JSON string or dict for {info.field_name}: {value}")
 
-            return value
+        if json_fields:
+            validators["parse_json_string"] = field_validator(*json_fields, mode="before")(parse_json_string)  # type: ignore[assignment, arg-type]
 
-        validators: dict[str, classmethod] = {
-            "parse_json_string": field_validator("*", mode="before")(parse_json_string),  # type: ignore[dict-item,arg-type]
-            "parse_list": field_validator("*", mode="before")(parse_list),  # type: ignore[dict-item,arg-type]
-        }
+        validators["parse_list"] = field_validator("*", mode="before")(parse_list)  # type: ignore[assignment, arg-type]
+
         if direct_relation_by_property:
 
             def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
