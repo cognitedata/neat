@@ -482,19 +482,8 @@ class DMSRules(BaseRules):
                 for parent in to_add_list:
                     if parent.external_id not in view_by_external_id:
                         parent_view = ref_view_by_external_id[parent.external_id]
-                        new_view = DMSView(
-                            view=ViewEntity(
-                                space=self.metadata.space,
-                                externalId=parent_view.view.external_id,
-                                version=parent_view.view.version,
-                            ),
-                            name=parent_view.name,
-                            description=parent_view.description,
-                            implements=[parent],
-                            class_=parent_view.class_,
-                        )
-                        self.views.append(new_view)
-                        view_by_external_id[new_view.view.external_id] = new_view
+                        self.views.append(parent_view)
+                        view_by_external_id[parent_view.view.external_id] = parent_view
 
             for prop_name in shared_properties:
                 prop = properties_by_view_external_id[view_external_id][prop_name]
