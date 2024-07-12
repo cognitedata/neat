@@ -471,13 +471,29 @@ class DMSRules(BaseRules):
                 elif isinstance(view.implements, list) and ref_view.view not in view.implements:
                     view.implements.append(ref_view.view)
                 to_add_list: list[ViewEntity] = list(view.implements or [])
-                for to_add in view.implements or []:
-                    if to_add.external_id in ref_properties_by_view_external_id:
-                        for prop in ref_properties_by_view_external_id[to_add.external_id].values():
-                            if isinstance(prop.value_type, ViewEntity):
-                                to_add_list.append(prop.value_type)
-                            elif isinstance(prop.value_type, ViewPropertyEntity):
-                                to_add_list.append(prop.value_type.as_view_entity())
+                to_check: list[ViewEntity] = view.implements or []
+                seen = set(to_check)
+                while to_check:
+                    candidate = to_check.pop()
+                    if candidate.external_id not in ref_properties_by_view_external_id:
+                        continue
+                    for prop in ref_properties_by_view_external_id[candidate.external_id].values():
+                        if isinstance(prop.value_type, ViewEntity):
+                            to_add_list.append(prop.value_type)
+                            if prop.value_type not in seen:
+                                seen.add(prop.value_type)
+                                to_check.append(prop.value_type)
+                        elif isinstance(prop.value_type, ViewPropertyEntity):
+                            to_add_list.append(prop.value_type.as_view_entity())
+                            if prop.value_type.as_view_entity() not in seen:
+                                seen.add(prop.value_type.as_view_entity())
+                                to_check.append(prop.value_type.as_view_entity())
+                    for parent in ref_view_by_external_id[candidate.external_id].implements or []:
+                        if parent not in to_add_list:
+                            to_add_list.append(parent)
+                            if parent not in seen:
+                                to_check.append(parent)
+                                seen.add(parent)
 
                 for parent in to_add_list:
                     if parent.external_id not in view_by_external_id:

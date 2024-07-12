@@ -283,7 +283,14 @@ class DMSExporter(CDFExporter[DMSSchema]):
         if self.export_components.intersection({"all", "containers"}):
             to_export.append((ContainerApplyList(schema.containers.values()), ContainerLoader(client)))
         if self.export_components.intersection({"all", "views"}):
-            to_export.append((ViewApplyList(schema.views.values()), ViewLoader(client, self.existing_handling)))
+            to_export.append(
+                (
+                    ViewApplyList(
+                        [v for v in schema.views.values() if schema.data_model and v.space == schema.data_model.space]
+                    ),
+                    ViewLoader(client, self.existing_handling),
+                )
+            )
         if self.export_components.intersection({"all", "data_models"}):
             to_export.append((DataModelApplyList([schema.data_model]), DataModelLoader(client)))
         if isinstance(schema, PipelineSchema):
