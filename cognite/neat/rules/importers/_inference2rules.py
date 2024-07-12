@@ -75,7 +75,9 @@ class InferenceImporter(BaseImporter):
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
         self.prefix = prefix
-        self.check_for_json_string = check_for_json_string
+        self.check_for_json_string = (
+            check_for_json_string if graph.store.__class__.__name__ != "OxigraphStore" else False
+        )
 
     @classmethod
     def from_graph_store(
@@ -235,6 +237,7 @@ class InferenceImporter(BaseImporter):
                     query.replace("instance_id", instance)
                 ):  # type: ignore[misc]
                     property_id = remove_namespace_from_uri(property_uri)
+
                     self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
                     value_type_uri = data_type_uri if data_type_uri else object_type_uri
 
