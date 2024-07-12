@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.85.12] - 11-07-24
+### Added
+- Added handling of Json fields in DMS loader
+
+### Fixed
+- DMS related datatype .python being wrongly mapped to python types
+
 ## [0.85.11] - 10-07-24
 ### Added
 - Method `create_reference` to `DMSRules` to add reference dms rules and do the mapping of properties
