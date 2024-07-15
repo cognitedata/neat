@@ -2,6 +2,7 @@ import itertools
 import logging
 import warnings
 from collections import defaultdict
+from collections.abc import Sequence
 from typing import Any, Generic, TypeVar
 
 import pandas as pd
@@ -10,6 +11,10 @@ from pydantic import ValidationError
 from cognite.neat.rules.models import SchemaCompleteness
 from cognite.neat.rules.models._rdfpath import RDFPath
 from cognite.neat.rules.models.asset import AssetClass, AssetProperty, AssetRules
+from cognite.neat.rules.models.dms import (
+    DMSProperty,
+    DMSRules,
+)
 from cognite.neat.rules.models.entities import (
     AssetEntity,
     ClassEntity,
@@ -17,6 +22,7 @@ from cognite.neat.rules.models.entities import (
     ParentClassEntity,
     ReferenceEntity,
     RelationshipEntity,
+    ViewEntity,
 )
 from cognite.neat.rules.models.information import (
     InformationClass,
@@ -38,7 +44,7 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
     def directly_referred_classes(self) -> set[ClassEntity]:
         return {
             class_.reference.as_class_entity()
-            for class_ in self.rules.classes
+            for class_ in self.classes
             if self.rules.reference
             and class_.reference
             and isinstance(class_.reference, ReferenceEntity)
@@ -53,6 +59,10 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
             inherited_referred_classes.extend(self.class_inheritance_path(class_))
         return set(inherited_referred_classes)
 
+    @property
+    def classes(self) -> Sequence[T_Class]:
+        raise NotImplementedError
+
     def class_parent_pairs(self) -> dict[ClassEntity, list[ParentClassEntity]]:
         """This only returns class - parent pairs only if parent is in the same data model"""
         class_subclass_pairs: dict[ClassEntity, list[ParentClassEntity]] = {}
@@ -60,7 +70,7 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
         if not self.rules:
             return class_subclass_pairs
 
-        for definition in self.rules.classes:
+        for definition in self.classes:
             class_subclass_pairs[definition.class_] = []
 
             if definition.parent is None:
@@ -110,7 +120,7 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
     def class_inheritance_path(self, class_: ClassEntity | str) -> list[ClassEntity]:
         class_ = class_ if isinstance(class_, ClassEntity) else ClassEntity.load(class_)
         class_parent_pairs = self.class_parent_pairs()
-        return get_inheritance_path(class_, class_parent_pairs)
+        return get_inheritance_path(class_, class_parent_pairs)  # type: ignore[arg-type]
 
     @classmethod
     def _add_inherited_properties(
@@ -119,7 +129,7 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
         class_property_pairs: dict[ClassEntity, list[T_Property]],
         class_parent_pairs: dict[ClassEntity, list[ParentClassEntity]],
     ):
-        inheritance_path = get_inheritance_path(class_, class_parent_pairs)
+        inheritance_path = get_inheritance_path(class_, class_parent_pairs)  # type: ignore[misc]
         for parent in inheritance_path:
             # ParentClassEntity -> ClassEntity to match the type of class_property_pairs
             if parent.as_class_entity() in class_property_pairs:
@@ -313,7 +323,7 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
     def as_class_dict(self) -> dict[str, T_Class]:
         """This is to simplify access to classes through dict."""
         class_dict: dict[str, T_Class] = {}
-        for definition in self.rules.classes:
+        for definition in self.classes:
             class_dict[str(definition.class_.suffix)] = definition  # type: ignore
         return class_dict
 
@@ -358,7 +368,7 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
         parents: set[ClassEntity] = set()
         for class_ in possible_classes:
             parents = parents.union(
-                {parent.as_class_entity() for parent in get_inheritance_path(class_, class_parents_pairs)}
+                {parent.as_class_entity() for parent in get_inheritance_path(class_, class_parents_pairs)}  # type: ignore[misc]
             )
         possible_classes = possible_classes.union(parents)
 
@@ -401,11 +411,17 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
 class InformationArchitectRulesAnalysis(_SharedAnalysis[InformationRules, InformationProperty, InformationClass]):
     """Assumes analysis over only the complete schema"""
 
-    ...
+    @property
+    def classes(self) -> Sequence[InformationClass]:
+        return self.rules.classes
 
 
 class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, AssetClass]):
     """Assumes analysis over only the complete schema"""
+
+    @property
+    def classes(self) -> Sequence[AssetClass]:
+        return self.rules.classes
 
     def class_property_pairs(
         self,
@@ -467,3 +483,39 @@ class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, Ass
             only_rdfpath=only_rdfpath,
             implementation_type=EntityTypes.relationship,
         )
+
+
+class DMSRulesAnalysis:
+    def __init__(self, rules: DMSRules):
+        self.rules = rules
+
+    def classes_with_properties(self, consider_inheritance: bool = False) -> dict[ViewEntity, dict[str, DMSProperty]]:
+        properties_by_class: dict[ViewEntity, dict[str, DMSProperty]] = defaultdict(dict)
+
+        for property_ in self.rules.properties:
+            properties_by_class[property_.view][property_.view_property] = property_
+
+        if consider_inheritance:
+            class_parent_pairs = self.class_parent_pairs()
+            for class_ in class_parent_pairs.keys():
+                updated_properties = self._get_parent_prototypes(class_, class_parent_pairs, properties_by_class)
+                properties_by_class[class_] = updated_properties
+        return properties_by_class
+
+    def class_parent_pairs(self) -> dict[ViewEntity, list[ViewEntity]]:
+        """This only returns class - parent pairs only if parent is in the same data model"""
+        class_subclass_pairs: dict[ViewEntity, list[ViewEntity]] = {}
+
+        if not self.rules:
+            return class_subclass_pairs
+
+        return {view.view: [v for v in view.implements or []] for view in self.rules.views}
+
+    def _get_parent_prototypes(self, class_, class_parent_pairs, properties_by_class) -> dict[str, DMSProperty]:
+        inheritance_path = get_inheritance_path(class_, class_parent_pairs)
+        updated_properties = properties_by_class[class_]
+        for parent in inheritance_path:
+            if parent in properties_by_class:
+                # Switch the order to ensure that the child properties are preferred over parent properties
+                updated_properties = properties_by_class[parent] | updated_properties
+        return updated_properties

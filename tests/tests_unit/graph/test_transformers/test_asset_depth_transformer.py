@@ -30,12 +30,12 @@ def test_asset_depth_transformer_with_typing():
     store.write(extractor)
 
     transformer = transformers.AddAssetDepth(
-        depth_typing={
+        depth_typing=lambda depth: {
             1: "RootCimNode",
             2: "GeographicalRegion",
             3: "SubGeographicalRegion",
             4: "Substation",
-        }
+        }.get(depth)
     )
 
     store.transform(transformer)

@@ -7,7 +7,7 @@ from collections import Counter, OrderedDict
 from collections.abc import Iterable
 from datetime import datetime
 from functools import wraps
-from typing import TypeAlias, cast, overload
+from typing import TypeAlias, TypeVar, cast, overload
 
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
@@ -339,7 +339,10 @@ def remove_none_elements_from_set(s):
     return {x for x in s if x is not None}
 
 
-def get_inheritance_path(child: Any, child_parent: dict[Any, list[Any]]) -> list:
+T_Item = TypeVar("T_Item")
+
+
+def get_inheritance_path(child: T_Item, child_parent: dict[T_Item, list[T_Item]]) -> list[T_Item]:
     """Returns the inheritance path for a given child
 
     Args:
@@ -352,7 +355,7 @@ def get_inheritance_path(child: Any, child_parent: dict[Any, list[Any]]) -> list
     !!! note "No Circular Inheritance"
         This method assumes that the child_parent dictionary is a tree and does not contain any cycles.
     """
-    path = []
+    path: list[T_Item] = []
     if child in child_parent:
         path.extend(child_parent[child])
         for parent in child_parent[child]:

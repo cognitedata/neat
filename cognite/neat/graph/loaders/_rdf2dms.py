@@ -149,6 +149,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         direct_relation_by_property: dict[str, dm.DirectRelation] = {}
         json_fields: list[str] = []
         for prop_name, prop in view.properties.items():
+            # Todo Ugly ugly hack
+            if prop_name == "source":
+                continue
             if isinstance(prop, dm.EdgeConnection):
                 edge_by_property[prop_name] = prop
             if isinstance(prop, dm.MappedProperty):
@@ -207,7 +210,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
-                if cls.model_fields[info.field_name].annotation is list:
+                if "list" in str(cls.model_fields[info.field_name].annotation):
                     return [{"space": self.instance_space, "externalId": v} for v in value]
                 elif value:
                     return {"space": self.instance_space, "externalId": value[0]}

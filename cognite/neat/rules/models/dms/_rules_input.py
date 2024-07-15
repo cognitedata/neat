@@ -214,7 +214,7 @@ class DMSContainerInput:
         return {
             "Container": container,
             "Class (linage)": (
-                ClassEntity.load(self.class_, prefix=default_space) if self.class_ else container.as_class()
+                ClassEntity.load(self.class_, prefix=default_space) if self.class_ else container.as_class_entity()
             ),
             "Name": self.name,
             "Description": self.description,
@@ -280,7 +280,7 @@ class DMSViewInput:
             "Class (linage)": (
                 ClassEntity.load(self.class_, prefix=default_space, version=default_version)
                 if self.class_
-                else view.as_class()
+                else view.as_class_entity()
             ),
             "Name": self.name,
             "Description": self.description,

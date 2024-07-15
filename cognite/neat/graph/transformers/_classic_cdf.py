@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import cast
 
 from rdflib import RDF, Graph, Literal, URIRef
@@ -25,7 +26,7 @@ class AddAssetDepth(BaseTransformer):
         asset_type: URIRef | None = None,
         root_prop: URIRef | None = None,
         parent_prop: URIRef | None = None,
-        depth_typing: dict[int, str] | None = None,
+        depth_typing: Callable[[int], str | None] | None = None,
     ):
         self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
         self.root_prop = root_prop or DEFAULT_NAMESPACE.root
@@ -39,11 +40,11 @@ class AddAssetDepth(BaseTransformer):
             if depth := self.get_depth(graph, asset_id, self.root_prop, self.parent_prop):
                 graph.add((asset_id, DEFAULT_NAMESPACE.depth, Literal(depth)))
 
-                if self.depth_typing and (type_ := self.depth_typing.get(depth, None)):
-                    # remove existing type
+                if self.depth_typing and (type_ := self.depth_typing(depth)):
+                    # remove the existing type
                     graph.remove((asset_id, RDF.type, None))
 
-                    # add new type
+                    # add the new type
                     graph.add((asset_id, RDF.type, DEFAULT_NAMESPACE[type_]))
 
     @classmethod
