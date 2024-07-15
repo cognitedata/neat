@@ -237,7 +237,7 @@ class Literal(DataType):
 
 class Timeseries(DataType):
     name = "timeseries"
-    python = dms.TimeSeriesReference
+    python = str
     dms = dms.TimeSeriesReference
     graphql = "TimeSeries"
     xsd = "string"
@@ -246,7 +246,7 @@ class Timeseries(DataType):
 
 class File(DataType):
     name = "file"
-    python = dms.FileReference
+    python = str
     dms = dms.FileReference
     graphql = "File"
     xsd = "string"
@@ -255,7 +255,7 @@ class File(DataType):
 
 class Sequence(DataType):
     name = "sequence"
-    python = dms.SequenceReference
+    python = str
     dms = dms.SequenceReference
     graphql = "Sequence"
     xsd = "string"
@@ -264,10 +264,10 @@ class Sequence(DataType):
 
 class Json(DataType):
     name = "json"
-    python = dms.Json
+    python = dict
     dms = dms.Json
     graphql = "Json"
-    xsd = "string"
+    xsd = "json"
     sql = "STRING"
 
 

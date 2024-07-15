@@ -15,6 +15,42 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.86.0] - 15-07-24
+### Changed
+- `NeatGraphStore.read()` is now iterable utilizing `DESCRIBE` query instead of `CONSTRUCT` query.
+### Improved
+- Order of magnitude improved query speed of instances for downstream graph loaders
+
+
+## [0.85.12] - 11-07-24
+### Added
+- Added handling of Json fields in DMS loader
+
+### Fixed
+- DMS related datatype .python being wrongly mapped to python types
+
+## [0.85.11] - 10-07-24
+### Added
+- Method `create_reference` to `DMSRules` to add reference dms rules and do the mapping of properties
+  and views to the reference model.
+
+## [0.85.10] - 10-07-24
+### Added
+- Depth-based typing in `AddAssetDepth` transformer
+- Graph summary repr
+
+## [0.85.9] - 09-07-24
+### Added
+- Option for checking for JSON value type when inferring data model
+
+## [0.85.8] - 09-07-24
+### Added
+- Option for unpacking metadata from classic CDF resources graph extractor
+
+## [0.85.7] - 08-07-24
+### Added
+- Option for setting lambda function `to_type` in the `AssetExtractor`.
+
 ## [0.85.6] - 08-07-24
 ### Added
 - Analysis for `AssetRules`

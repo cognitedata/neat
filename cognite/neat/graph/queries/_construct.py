@@ -18,8 +18,8 @@ from cognite.neat.utils.utils import most_occurring_element
 from ._shared import Triple, hop2property_path
 
 _QUERY_TEMPLATE = """CONSTRUCT {{ {graph_template} }}
-                     WHERE {{     {graph_pattern}
-                                  {filter}
+                     WHERE {{     {bind_instance_id}
+                                  {graph_pattern}
                      }}"""
 
 
@@ -28,7 +28,7 @@ def build_construct_query(
     graph: Graph,
     rules: InformationRules,
     properties_optional: bool = True,
-    class_instances: list[URIRef] | None = None,
+    instance_id: URIRef | None = None,
 ) -> str | None:
     """Builds a CONSTRUCT query for a given class and rules and optionally filters by class instances.
 
@@ -53,6 +53,7 @@ def build_construct_query(
         This is the reason why there is an option to make all properties optional, so that
         the query will return all instances that have at least one property defined.
     """
+
     if (
         transformations := InformationArchitectRulesAnalysis(rules)
         .class_property_pairs(only_rdfpath=True, consider_inheritance=True)
@@ -63,22 +64,20 @@ def build_construct_query(
         )
 
         return _QUERY_TEMPLATE.format(
+            bind_instance_id=(f"BIND(<{instance_id}> AS ?instance)" if instance_id else ""),
             graph_template="\n".join(triples2sparql_statement(templates)),
             graph_pattern="\n".join(triples2sparql_statement(patterns)),
-            filter="" if not class_instances else add_filter(class_instances),
         )
 
     else:
         return None
 
 
-def add_filter(class_instances: list[URIRef]):
-    class_instances_formatted = [f"<{instance}>" for instance in class_instances]
-    return f"FILTER (?instance IN ({', '.join(class_instances_formatted)}))"
-
-
 def to_construct_triples(
-    graph: Graph, transformations: list[InformationProperty], prefixes: dict, properties_optional: bool = True
+    graph: Graph,
+    transformations: list[InformationProperty],
+    prefixes: dict,
+    properties_optional: bool = True,
 ) -> tuple[list[Triple], list[Triple]]:
     """Converts transformations of a class to CONSTRUCT triples which are used to generate CONSTRUCT query
 
@@ -124,7 +123,10 @@ def to_construct_triples(
         # use case AllReferences: binding instance to certain rdf property
         if isinstance(traversal, AllReferences):
             graph_pattern_triple = Triple(
-                subject="BIND(?instance", predicate="AS", object=f"{graph_template_triple.object})", optional=False
+                subject="BIND(?instance",
+                predicate="AS",
+                object=f"{graph_template_triple.object})",
+                optional=False,
             )
 
         # use case SingleProperty: simple property traversal
@@ -133,7 +135,7 @@ def to_construct_triples(
                 subject=graph_template_triple.subject,
                 predicate=traversal.property.id,
                 object=graph_template_triple.object,
-                optional=True if properties_optional else not transformation.is_mandatory,
+                optional=(True if properties_optional else not transformation.is_mandatory),
             )
 
         # use case Hop: property traversal with multiple hops turned into property path
@@ -143,7 +145,7 @@ def to_construct_triples(
                 subject="?instance",
                 predicate=hop2property_path(graph, traversal, prefixes),
                 object=graph_template_triple.object,
-                optional=True if properties_optional else not transformation.is_mandatory,
+                optional=(True if properties_optional else not transformation.is_mandatory),
             )
 
         # other type of rdfpaths are skipped

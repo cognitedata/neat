@@ -17,7 +17,7 @@ from cognite.neat.app.api.data_classes.rest import (
 from cognite.neat.app.api.utils.data_mapping import rdf_result_to_api_response
 from cognite.neat.app.api.utils.query_templates import query_templates
 from cognite.neat.legacy.graph.transformations import query_generator
-from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.utils.utils import remove_namespace_from_uri
 from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
 
 router = APIRouter()
@@ -51,7 +51,7 @@ def get_datatype_properties(request: DatatypePropertyRequest):
             {
                 "id": row[rdflib.Variable("property")],
                 "count": int(row[rdflib.Variable("occurrence")]),
-                "name": remove_namespace(row[rdflib.Variable("property")]),
+                "name": remove_namespace_from_uri(row[rdflib.Variable("property")]),
             }
             for row in results["rows"]
         ]

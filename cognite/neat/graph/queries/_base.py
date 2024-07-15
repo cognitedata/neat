@@ -1,12 +1,14 @@
 import warnings
-from typing import cast
+from collections import defaultdict
+from typing import Literal, cast, overload
 
 from rdflib import RDF, Graph, URIRef
+from rdflib import Literal as RdfLiteral
 from rdflib.query import ResultRow
 
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import InformationRules
-from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.utils.utils import remove_namespace_from_uri
 
 from ._construct import build_construct_query
 
@@ -17,6 +19,24 @@ class Queries:
     def __init__(self, graph: Graph, rules: InformationRules | None = None):
         self.graph = graph
         self.rules = rules
+
+    def summarize_instances(self) -> list[tuple]:
+        """Summarize instances in the graph store by class and count"""
+
+        query_statement = """ SELECT ?class (COUNT(?instance) AS ?instanceCount)
+                             WHERE {
+                             ?instance a ?class .
+                             }
+                             GROUP BY ?class
+                             ORDER BY DESC(?instanceCount) """
+
+        return [
+            (
+                remove_namespace_from_uri(cast(URIRef, cast(tuple, res)[0])),
+                cast(RdfLiteral, cast(tuple, res)[1]).value,
+            )
+            for res in list(self.graph.query(query_statement))
+        ]
 
     def list_instances_ids_of_class(self, class_uri: URIRef, limit: int = -1) -> list[URIRef]:
         """Get instances ids for a given class
@@ -66,17 +86,64 @@ class Queries:
             result = self.graph.query(query)
 
             # We cannot include the RDF.type in case there is a neat:type property
-            return [remove_namespace(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
+            return [remove_namespace_from_uri(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
         else:
-            warnings.warn("No rules found for the graph store, returning empty list.", stacklevel=2)
+            warnings.warn(
+                "No rules found for the graph store, returning empty list.",
+                stacklevel=2,
+            )
             return []
 
-    def construct_instances_of_class(self, class_: str, properties_optional: bool = True) -> list[tuple[str, str, str]]:
+    def describe(
+        self,
+        instance_id: URIRef,
+        property_renaming_config: dict | None = None,
+    ) -> dict[str, dict[str, list[str]]]:
+        """DESCRIBE instance for a given class from the graph store
+
+        Args:
+            instance_id: Instance id for which we want to generate query
+            property_rename_config: Dictionary to rename properties, default None
+
+        Returns:
+            Dictionary of instance properties
+        """
+
+        result: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+
+        for subject, predicate, object in cast(list[ResultRow], self.graph.query(f"DESCRIBE <{instance_id}>")):
+            # We cannot include the RDF.type in case there is a neat:type property
+            # or if the object is empty
+            if predicate != RDF.type and object.lower() not in [
+                "",
+                "none",
+                "nan",
+                "null",
+            ]:
+                # we are skipping deep validation with Pydantic to remove namespace here
+                # as it reduce time to process triples by 10-15x
+                subject, predicate, object = remove_namespace_from_uri(
+                    *(subject, predicate, object), deep_validation=False
+                )  # type: ignore[misc, index]
+                if property_renaming_config:
+                    predicate = property_renaming_config.get(predicate, predicate)
+
+                result[subject][predicate].append(object)
+
+        return result
+
+    def construct_instances_of_class(
+        self,
+        class_: str,
+        properties_optional: bool = True,
+        instance_id: URIRef | None = None,
+    ) -> list[tuple[str, str, str]]:
         """CONSTRUCT instances for a given class from the graph store
 
         Args:
             class_: Class entity for which we want to generate query
             properties_optional: Whether to make all properties optional, default True
+            instance_ids: List of instance ids to filter on, default None (all)
 
         Returns:
             List of triples for instances of the given class
@@ -84,18 +151,22 @@ class Queries:
 
         if self.rules and (
             query := build_construct_query(
-                ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_),
-                self.graph,
-                self.rules,
-                properties_optional,
+                class_=ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_),
+                graph=self.graph,
+                rules=self.rules,
+                properties_optional=properties_optional,
+                instance_id=instance_id,
             )
         ):
             result = self.graph.query(query)
 
             # We cannot include the RDF.type in case there is a neat:type property
-            return [remove_namespace(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
+            return [remove_namespace_from_uri(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
         else:
-            warnings.warn("No rules found for the graph store, returning empty list.", stacklevel=2)
+            warnings.warn(
+                "No rules found for the graph store, returning empty list.",
+                stacklevel=2,
+            )
             return []
 
     def list_triples(self, limit: int = 25) -> list[ResultRow]:
@@ -110,14 +181,24 @@ class Queries:
         query = f"SELECT ?subject ?predicate ?object WHERE {{ ?subject ?predicate ?object }} LIMIT {limit}"
         return cast(list[ResultRow], list(self.graph.query(query)))
 
-    def list_types(self, limit: int = 25) -> list[ResultRow]:
+    @overload
+    def list_types(self, remove_namespace: Literal[False] = False, limit: int = 25) -> list[ResultRow]: ...
+
+    @overload
+    def list_types(self, remove_namespace: Literal[True], limit: int = 25) -> list[str]: ...
+
+    def list_types(self, remove_namespace: bool = False, limit: int = 25) -> list[ResultRow] | list[str]:
         """List types in the graph store
 
         Args:
             limit: Max number of types to return, by default 25
+            remove_namespace: Whether to remove the namespace from the type, by default False
 
         Returns:
             List of types
         """
         query = f"SELECT DISTINCT ?type WHERE {{ ?subject a ?type }} LIMIT {limit}"
-        return cast(list[ResultRow], list(self.graph.query(query)))
+        result = cast(list[ResultRow], list(self.graph.query(query)))
+        if remove_namespace:
+            return [remove_namespace_from_uri(res[0]) for res in result]
+        return result

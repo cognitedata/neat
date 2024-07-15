@@ -20,7 +20,7 @@ from cognite.neat.legacy.rules.analysis import (
 from cognite.neat.legacy.rules.exporters._rules2rules import subset_rules
 from cognite.neat.legacy.rules.models import Rules
 from cognite.neat.legacy.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
-from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.utils.utils import remove_namespace_from_uri
 
 from ._base import BaseExtractor
 
@@ -247,7 +247,9 @@ def _generate_mock_data_property_triples(
             triples.append((id_, URIRef(namespace[property_]), Literal(numpy.float32(random.uniform(1, 1983)))))
         # generate string
         else:
-            triples.append((id_, URIRef(namespace[property_]), Literal(remove_namespace(id_).replace("-", " "))))
+            triples.append(
+                (id_, URIRef(namespace[property_]), Literal(remove_namespace_from_uri(id_).replace("-", " ")))
+            )
     return triples
 
 

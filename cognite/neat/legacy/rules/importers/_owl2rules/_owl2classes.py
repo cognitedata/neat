@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from rdflib import OWL, Graph
 
-from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.utils.utils import remove_namespace_from_uri
 
 
 def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str = "en") -> pd.DataFrame:
@@ -84,10 +84,10 @@ def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     df.replace(np.nan, "", regex=True, inplace=True)
 
     df.Source = df.Class
-    df.Class = df.Class.apply(lambda x: remove_namespace(x))
+    df.Class = df.Class.apply(lambda x: remove_namespace_from_uri(x))
     df["Source Entity Name"] = df.Class
     df["Match"] = len(df) * ["exact"]
-    df["Parent Class"] = df["Parent Class"].apply(lambda x: remove_namespace(x))
+    df["Parent Class"] = df["Parent Class"].apply(lambda x: remove_namespace_from_uri(x))
 
     return df
 

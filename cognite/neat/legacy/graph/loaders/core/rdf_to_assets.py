@@ -18,7 +18,7 @@ from rdflib.term import URIRef
 from cognite.neat.legacy.graph.loaders.core.models import AssetTemplate
 from cognite.neat.legacy.graph.stores import NeatGraphStoreBase
 from cognite.neat.legacy.rules.models.rules import Property, Rules
-from cognite.neat.utils.utils import chunker, datetime_utc_now, remove_namespace, retry_decorator
+from cognite.neat.utils.utils import chunker, datetime_utc_now, remove_namespace_from_uri, retry_decorator
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -320,13 +320,13 @@ def _list2dict(class_instance: list) -> dict[str, Any]:
 
     class_instance_dict: dict[str, Any] = {}
     for property_value_pair in class_instance:
-        property_ = remove_namespace(property_value_pair[0])
+        property_ = remove_namespace_from_uri(property_value_pair[0])
 
         # Remove namespace from URIRef values, otherwise convert Literal to string
         # ideally this should react upon property type provided in sheet
         # however Assets only support string values
         value = (
-            remove_namespace(property_value_pair[1])
+            remove_namespace_from_uri(property_value_pair[1])
             if isinstance(property_value_pair[1], URIRef)
             else str(property_value_pair[1])
         )
@@ -440,7 +440,7 @@ def rdf2assets(
                 progress_counter += 1
             except Exception as ValidationError:
                 logging.error(
-                    f"Skipping class <{class_}> instance <{remove_namespace(str(instance_id))}>, "
+                    f"Skipping class <{class_}> instance <{remove_namespace_from_uri(str(instance_id))}>, "
                     f"reason:\n{ValidationError}\n"
                 )
                 if stop_on_exception:

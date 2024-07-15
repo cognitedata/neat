@@ -11,7 +11,12 @@ from typing import TypeAlias, cast, overload
 
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
-from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
+from cognite.client.credentials import (
+    CredentialProvider,
+    OAuthClientCredentials,
+    OAuthInteractive,
+    Token,
+)
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 from pydantic_core import ErrorDetails
@@ -20,7 +25,11 @@ from rdflib import Literal, Namespace
 from rdflib.term import URIRef
 
 from cognite.neat import _version
-from cognite.neat.utils.cdf import CogniteClientConfig, InteractiveCogniteClient, ServiceCogniteClient
+from cognite.neat.utils.cdf import (
+    CogniteClientConfig,
+    InteractiveCogniteClient,
+    ServiceCogniteClient,
+)
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -35,7 +44,10 @@ Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
 
 def get_cognite_client_from_config(config: ServiceCogniteClient) -> CogniteClient:
     credentials = OAuthClientCredentials(
-        token_url=config.token_url, client_id=config.client_id, client_secret=config.client_secret, scopes=config.scopes
+        token_url=config.token_url,
+        client_id=config.client_id,
+        client_secret=config.client_secret,
+        scopes=config.scopes,
     )
 
     return _get_cognite_client(config, credentials)
@@ -75,15 +87,25 @@ def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProv
 
 
 @overload
-def remove_namespace(*URI: URIRef | str, special_separator: str = "#_") -> str: ...
+def remove_namespace_from_uri(
+    *URI: URIRef | str,
+    special_separator: str = "#_",
+    deep_validation: bool = False,
+) -> str: ...
 
 
 @overload
-def remove_namespace(*URI: tuple[URIRef | str, ...], special_separator: str = "#_") -> tuple[str, ...]: ...
+def remove_namespace_from_uri(
+    *URI: tuple[URIRef | str, ...],
+    special_separator: str = "#_",
+    deep_validation: bool = False,
+) -> tuple[str, ...]: ...
 
 
-def remove_namespace(
-    *URI: URIRef | str | tuple[URIRef | str, ...], special_separator: str = "#_"
+def remove_namespace_from_uri(
+    *URI: URIRef | str | tuple[URIRef | str, ...],
+    special_separator: str = "#_",
+    deep_validation: bool = False,
 ) -> tuple[str, ...] | str:
     """Removes namespace from URI
 
@@ -99,9 +121,9 @@ def remove_namespace(
 
     Examples:
 
-        >>> remove_namespace("http://www.example.org/index.html#section2")
+        >>> remove_namespace_from_uri("http://www.example.org/index.html#section2")
         'section2'
-        >>> remove_namespace("http://www.example.org/index.html#section2", "http://www.example.org/index.html#section3")
+        >>> remove_namespace_from_uri("http://www.example.org/index.html#section2", "http://www.example.org/index.html#section3")
         ('section2', 'section3')
     """
     if isinstance(URI, str | URIRef):
@@ -114,11 +136,17 @@ def remove_namespace(
 
     output = []
     for u in uris:
-        try:
-            _ = TypeAdapter(HttpUrl).validate_python(u)
-            output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
-        except ValidationError:
-            output.append(str(u))
+        if deep_validation:
+            try:
+                _ = TypeAdapter(HttpUrl).validate_python(u)
+                output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
+            except ValidationError:
+                output.append(str(u))
+        else:
+            if u.lower().startswith("http"):
+                output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
+            else:
+                output.append(str(u))
 
     return tuple(output) if len(output) > 1 else output[0]
 
@@ -149,7 +177,7 @@ def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:
 
 def as_neat_compliant_uri(uri: URIRef) -> URIRef:
     namespace = get_namespace(uri)
-    id_ = remove_namespace(uri)
+    id_ = remove_namespace_from_uri(uri)
     compliant_uri = re.sub(r"[^a-zA-Z0-9-_.]", "", id_)
     return URIRef(f"{namespace}{compliant_uri}")
 
@@ -192,7 +220,9 @@ def _traverse(hierarchy: dict, graph: dict, names: list[str]) -> dict:
 
 
 def get_generation_order(
-    class_linkage: pd.DataFrame, parent_col: str = "source_class", child_col: str = "target_class"
+    class_linkage: pd.DataFrame,
+    parent_col: str = "source_class",
+    child_col: str = "target_class",
 ) -> dict:
     parent_child_list = class_linkage[[parent_col, child_col]].values.tolist()
     # Build a directed graph and a list of all names that have no parent
@@ -318,7 +348,9 @@ def generate_exception_report(exceptions: list[dict] | list[ErrorDetails] | None
     return report
 
 
-def _order_expectations_by_type(exceptions: list[dict] | list[ErrorDetails]) -> dict[str, list[str]]:
+def _order_expectations_by_type(
+    exceptions: list[dict] | list[ErrorDetails],
+) -> dict[str, list[str]]:
     exception_dict: dict[str, list[str]] = {}
     for exception in exceptions:
         if not isinstance(exception["loc"], str) and isinstance(exception["loc"], Iterable):

@@ -1,9 +1,7 @@
-import itertools
 import json
-from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, get_args
 
 import yaml
 from cognite.client import CogniteClient
@@ -21,7 +19,7 @@ from cognite.neat.graph.issues import loader as loader_issues
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.models import DMSRules
-from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
+from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
 from cognite.neat.utils.upload import UploadResult
 from cognite.neat.utils.utils import create_sha256_hash
 
@@ -107,8 +105,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield from issues
             tracker.issue(issues)
             class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
-            triples = self.graph_store.read(class_name)
-            for identifier, properties in _triples2dictionary(triples).items():
+
+            for instance_triples in self.graph_store.read(class_name):
+                identifier, properties = next(iter(instance_triples.items()))
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
@@ -146,7 +145,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         issues = NeatIssueList[NeatIssue]()
         field_definitions: dict[str, tuple[type, Any]] = {}
         edge_by_property: dict[str, dm.EdgeConnection] = {}
+        validators: dict[str, classmethod] = {}
         direct_relation_by_property: dict[str, dm.DirectRelation] = {}
+        json_fields: list[str] = []
         for prop_name, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
                 edge_by_property[prop_name] = prop
@@ -164,6 +165,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                             )
                         )
                         continue
+
+                    if data_type == Json:
+                        json_fields.append(prop_name)
                     python_type = data_type.python
                 if prop.type.is_list:
                     python_type = list[python_type]
@@ -176,13 +180,29 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 field_definitions[prop_name] = (python_type, default_value)
 
         def parse_list(cls, value: Any, info: ValidationInfo) -> list[str]:
-            if isinstance(value, list) and cls.model_fields[info.field_name].annotation is not list:
+            if isinstance(value, list) and list.__name__ not in _get_field_value_types(cls, info):
                 if len(value) == 1:
                     return value[0]
                 raise ValueError(f"Got multiple values for {info.field_name}: {value}")
+
             return value
 
-        validators: dict[str, classmethod] = {"parse_list": field_validator("*", mode="before")(parse_list)}  # type: ignore[dict-item,arg-type]
+        def parse_json_string(cls, value: Any, info: ValidationInfo) -> dict:
+            if isinstance(value, dict):
+                return value
+            elif isinstance(value, str):
+                try:
+                    return json.loads(value)
+                except json.JSONDecodeError as error:
+                    raise ValueError(f"Not valid JSON string for {info.field_name}: {value}, error {error}") from error
+            else:
+                raise ValueError(f"Expect valid JSON string or dict for {info.field_name}: {value}")
+
+        if json_fields:
+            validators["parse_json_string"] = field_validator(*json_fields, mode="before")(parse_json_string)  # type: ignore[assignment, arg-type]
+
+        validators["parse_list"] = field_validator("*", mode="before")(parse_list)  # type: ignore[assignment, arg-type]
+
         if direct_relation_by_property:
 
             def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
@@ -263,8 +283,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         items: list[dm.InstanceApply],
         dry_run: bool,
         read_issues: NeatIssueList,
-    ) -> UploadResult:
-        result = UploadResult[InstanceId](name=type(self).__name__, issues=read_issues)
+    ) -> Iterable[UploadResult]:
         try:
             nodes = [item for item in items if isinstance(item, dm.NodeApply)]
             edges = [item for item in items if isinstance(item, dm.EdgeApply)]
@@ -276,27 +295,26 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 skip_on_version_conflict=True,
             )
         except CogniteAPIError as e:
+            result = UploadResult[InstanceId](name="Instances", issues=read_issues)
             result.error_messages.append(str(e))
             result.failed_upserted.update(item.as_id() for item in e.failed + e.unknown)
             result.created.update(item.as_id() for item in e.successful)
+            yield result
         else:
-            for instance in itertools.chain(upserted.nodes, upserted.edges):
-                if instance.was_modified and instance.created_time == instance.last_updated_time:
-                    result.created.add(instance.as_id())
-                elif instance.was_modified:
-                    result.changed.add(instance.as_id())
-                else:
-                    result.unchanged.add(instance.as_id())
-        return result
+            for instance_type, instances in {
+                "Nodes": upserted.nodes,
+                "Edges": upserted.edges,
+            }.items():
+                result = UploadResult[InstanceId](name=instance_type, issues=read_issues)
+                for instance in instances:  # type: ignore[attr-defined]
+                    if instance.was_modified and instance.created_time == instance.last_updated_time:
+                        result.created.add(instance.as_id())
+                    elif instance.was_modified:
+                        result.changed.add(instance.as_id())
+                    else:
+                        result.unchanged.add(instance.as_id())
+                yield result
 
 
-def _triples2dictionary(
-    triples: Iterable[tuple[str, str, str]],
-) -> dict[str, dict[str, list[str]]]:
-    """Converts list of triples to dictionary"""
-    values_by_property_by_identifier: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
-    for id_, property_, value in triples:
-        # avoid issue with strings "None", "nan", "null" being treated as values
-        if value.lower() not in ["", "None", "nan", "null"]:
-            values_by_property_by_identifier[id_][property_].append(value)
-    return values_by_property_by_identifier
+def _get_field_value_types(cls, info):
+    return [type_.__name__ for type_ in get_args(cls.model_fields[info.field_name].annotation)]

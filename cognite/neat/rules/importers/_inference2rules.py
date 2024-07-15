@@ -17,7 +17,11 @@ from cognite.neat.rules.models.information import (
     InformationMetadata,
     InformationRulesInput,
 )
-from cognite.neat.utils.utils import get_namespace, remove_namespace, uri_to_short_form
+from cognite.neat.utils.utils import (
+    get_namespace,
+    remove_namespace_from_uri,
+    uri_to_short_form,
+)
 
 ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class . }
@@ -25,9 +29,21 @@ ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
 
 INSTANCES_OF_CLASS_QUERY = """SELECT ?s WHERE { ?s a <class> . }"""
 
+INSTANCE_PROPERTIES_JSON_DEFINITION = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
+                                    WHERE {<instance_id> ?property ?value .
+
+                                           BIND(IF(REGEX(?value, "^\u007b(.*)\u007d$"),
+                                           <http://www.w3.org/2001/XMLSchema#json>,
+                                           datatype(?value)) AS ?dataType)
+
+                                           OPTIONAL {?value rdf:type ?objectType .}}
+                                    GROUP BY ?property ?dataType ?objectType"""
+
 INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
                                     WHERE {<instance_id> ?property ?value .
+
                                            BIND(datatype(?value) AS ?dataType)
+
                                            OPTIONAL {?value rdf:type ?objectType .}}
                                     GROUP BY ?property ?dataType ?objectType"""
 
@@ -36,28 +52,59 @@ class InferenceImporter(BaseImporter):
     """Infers rules from a triple store.
 
     Rules inference through analysis of knowledge graph provided in various formats.
-    Use the factory methods to create an triples store from sources such as
+    Use the factory methods to create a triple store from sources such as
     RDF files, JSON files, YAML files, XML files, or directly from a graph store.
 
     Args:
         issue_list: Issue list to store issues
         graph: Knowledge graph
         max_number_of_instance: Maximum number of instances to be used in inference
+        prefix: Prefix to be used for the inferred model
+        check_for_json_string: Check if values are JSON strings
     """
 
-    def __init__(self, issue_list: IssueList, graph: Graph, max_number_of_instance: int = -1):
+    def __init__(
+        self,
+        issue_list: IssueList,
+        graph: Graph,
+        max_number_of_instance: int = -1,
+        prefix: str = "inferred",
+        check_for_json_string: bool = False,
+    ) -> None:
         self.issue_list = issue_list
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
+        self.prefix = prefix
+        self.check_for_json_string = (
+            check_for_json_string if graph.store.__class__.__name__ != "OxigraphStore" else False
+        )
 
     @classmethod
-    def from_graph_store(cls, store: NeatGraphStore, max_number_of_instance: int = -1):
+    def from_graph_store(
+        cls,
+        store: NeatGraphStore,
+        max_number_of_instance: int = -1,
+        prefix: str = "inferred",
+        check_for_json_string: bool = False,
+    ) -> "InferenceImporter":
         issue_list = IssueList(title="Inferred from graph store")
 
-        return cls(issue_list, store.graph, max_number_of_instance=max_number_of_instance)
+        return cls(
+            issue_list,
+            store.graph,
+            max_number_of_instance=max_number_of_instance,
+            prefix=prefix,
+            check_for_json_string=check_for_json_string,
+        )
 
     @classmethod
-    def from_rdf_file(cls, filepath: Path, max_number_of_instance: int = -1):
+    def from_rdf_file(
+        cls,
+        filepath: Path,
+        max_number_of_instance: int = -1,
+        prefix: str = "inferred",
+        check_for_json_string: bool = False,
+    ) -> "InferenceImporter":
         issue_list = IssueList(title=f"'{filepath.name}'")
 
         graph = Graph()
@@ -66,18 +113,42 @@ class InferenceImporter(BaseImporter):
         except Exception:
             issue_list.append(issues.fileread.FileReadError(filepath))
 
-        return cls(issue_list, graph, max_number_of_instance=max_number_of_instance)
+        return cls(
+            issue_list,
+            graph,
+            max_number_of_instance=max_number_of_instance,
+            prefix=prefix,
+            check_for_json_string=check_for_json_string,
+        )
 
     @classmethod
-    def from_json_file(cls, filepath: Path, max_number_of_instance: int = -1):
+    def from_json_file(
+        cls,
+        filepath: Path,
+        max_number_of_instance: int = -1,
+        prefix: str = "inferred",
+        check_for_json_string: bool = False,
+    ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
     @classmethod
-    def from_yaml_file(cls, filepath: Path, max_number_of_instance: int = -1):
+    def from_yaml_file(
+        cls,
+        filepath: Path,
+        max_number_of_instance: int = -1,
+        prefix: str = "inferred",
+        check_for_json_string: bool = False,
+    ) -> "InferenceImporter":
         raise NotImplementedError("YAML file format is not supported yet.")
 
     @classmethod
-    def from_xml_file(cls, filepath: Path, max_number_of_instance: int = -1):
+    def from_xml_file(
+        cls,
+        filepath: Path,
+        max_number_of_instance: int = -1,
+        prefix: str = "inferred",
+        check_for_json_string: bool = False,
+    ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
     @overload
@@ -135,6 +206,7 @@ class InferenceImporter(BaseImporter):
         properties: dict[str, dict] = {}
         prefixes: dict[str, Namespace] = PREFIXES.copy()
 
+        query = INSTANCE_PROPERTIES_JSON_DEFINITION if self.check_for_json_string else INSTANCE_PROPERTIES_DEFINITION
         # Adds default namespace to prefixes
         prefixes[self._default_metadata().prefix] = self._default_metadata().namespace
 
@@ -142,7 +214,7 @@ class InferenceImporter(BaseImporter):
         for class_uri, no_instances in self.graph.query(ORDERED_CLASSES_QUERY):  # type: ignore[misc]
             self._add_uri_namespace_to_prefixes(cast(URIRef, class_uri), prefixes)
 
-            if (class_id := remove_namespace(class_uri)) in classes:
+            if (class_id := remove_namespace_from_uri(class_uri)) in classes:
                 # handles cases when class id is already present in classes
                 class_id = f"{class_id}_{len(classes)+1}"
 
@@ -162,9 +234,10 @@ class InferenceImporter(BaseImporter):
                 + f" LIMIT {self.max_number_of_instance}"
             ):
                 for property_uri, occurrence, data_type_uri, object_type_uri in self.graph.query(  # type: ignore[misc]
-                    INSTANCE_PROPERTIES_DEFINITION.replace("instance_id", instance)
+                    query.replace("instance_id", instance)
                 ):  # type: ignore[misc]
-                    property_id = remove_namespace(property_uri)
+                    property_id = remove_namespace_from_uri(property_uri)
+
                     self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
                     value_type_uri = data_type_uri if data_type_uri else object_type_uri
 
@@ -173,7 +246,7 @@ class InferenceImporter(BaseImporter):
                         continue
 
                     self._add_uri_namespace_to_prefixes(cast(URIRef, value_type_uri), prefixes)
-                    value_type_id = remove_namespace(value_type_uri)
+                    value_type_id = remove_namespace_from_uri(value_type_uri)
                     id_ = f"{class_id}:{property_id}"
 
                     definition = {
@@ -239,8 +312,7 @@ class InferenceImporter(BaseImporter):
         if Namespace(get_namespace(URI)) not in prefixes.values():
             prefixes[f"prefix-{len(prefixes)+1}"] = Namespace(get_namespace(URI))
 
-    @classmethod
-    def _default_metadata(cls):
+    def _default_metadata(self):
         return InformationMetadata(
             name="Inferred Model",
             creator="NEAT",
@@ -248,7 +320,7 @@ class InferenceImporter(BaseImporter):
             created=datetime.now(),
             updated=datetime.now(),
             description="Inferred model from knowledge graph",
-            prefix="inferred",
+            prefix=self.prefix,
             namespace=DEFAULT_NAMESPACE,
         )
 
@@ -262,12 +334,9 @@ class InferenceImporter(BaseImporter):
 
     @classmethod
     def _read_value_type_occurrence_from_comment(cls, value_type: str, comment: str) -> int:
-        return int(
-            cast(
-                re.Match,
-                re.search(
-                    rf"with value type <{value_type}> which occurs <(\d+)> times in the graph",
-                    comment,
-                ),
-            ).group(1)
-        )
+        if result := re.search(
+            rf"with value type <{value_type}> which occurs <(\d+)> times in the graph",
+            comment,
+        ):
+            return int(result.group(1))
+        return 0

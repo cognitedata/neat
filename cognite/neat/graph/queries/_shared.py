@@ -11,7 +11,7 @@ from cognite.neat.rules.models._rdfpath import (
     Hop,
     Step,
 )
-from cognite.neat.utils.utils import remove_namespace, uri_to_short_form
+from cognite.neat.utils.utils import remove_namespace_from_uri, uri_to_short_form
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -146,7 +146,7 @@ def triples2dictionary(triples: Iterable[tuple[URIRef, URIRef, str | URIRef]]) -
         value: str
         uri: URIRef
 
-        id_, property_, value = remove_namespace(*triple)  # type: ignore[misc]
+        id_, property_, value = remove_namespace_from_uri(*triple)  # type: ignore[misc]
         uri = triple[0]
 
         if uri not in dictionary:

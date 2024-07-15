@@ -15,7 +15,7 @@ from rdflib.query import ResultRow
 from cognite.neat.legacy.graph.stores import NeatGraphStoreBase
 from cognite.neat.legacy.rules.models import Rules
 from cognite.neat.legacy.rules.models.rules import Property
-from cognite.neat.utils import remove_namespace
+from cognite.neat.utils import remove_namespace_from_uri
 from cognite.neat.utils.utils import epoch_now_ms
 
 from ._base import CogniteLoader
@@ -166,7 +166,7 @@ class AssetLoader(CogniteLoader[AssetResource]):
             logging.debug(f"Class <{class_name}> has {len(result)} instances")
 
             for instance_uri, properties_values in groupby(result, lambda x: x[0]):
-                instance_id = remove_namespace(instance_uri)
+                instance_id = remove_namespace_from_uri(instance_uri)
                 values_by_property = self._prepare_instance_data(instance_id, properties_values)
                 try:
                     asset = self._load_asset(
@@ -195,7 +195,7 @@ class AssetLoader(CogniteLoader[AssetResource]):
                     relationships = self._load_relationships(
                         properties_by_class_name[class_name],
                         values_by_property,
-                        remove_namespace(instance_id),
+                        remove_namespace_from_uri(instance_id),
                         class_name,
                     )
                 except Exception as e:
@@ -342,11 +342,11 @@ class AssetLoader(CogniteLoader[AssetResource]):
             A dictionary with property type as key and a list of values as value.
         """
         properties_value_tuples: list[tuple[str, str]] = [
-            remove_namespace(prop, value)  # type: ignore[misc]
+            remove_namespace_from_uri(prop, value)  # type: ignore[misc]
             for _, prop, value in properties_values
         ]
         # We add an identifier which will be used as fallback for external_id
-        properties_value_tuples.append((self._identifier, remove_namespace(instance_id)))
+        properties_value_tuples.append((self._identifier, remove_namespace_from_uri(instance_id)))
         values_by_property: dict[str, str | list[str]] = {}
         for prop, values in groupby(sorted(properties_value_tuples), lambda x: x[0]):
             values_list: list[str] = [value for _, value in values]  # type: ignore[misc, has-type]

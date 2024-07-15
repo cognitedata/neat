@@ -5,7 +5,7 @@ import pandas as pd
 from rdflib import OWL, Graph
 
 from cognite.neat.rules.models._base import MatchType
-from cognite.neat.utils.utils import remove_namespace
+from cognite.neat.utils.utils import remove_namespace_from_uri
 
 
 def parse_owl_classes(graph: Graph, language: str = "en") -> list[dict]:
@@ -68,10 +68,10 @@ def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     df.replace(np.nan, "", regex=True, inplace=True)
 
     df.Reference = df.Class
-    df.Class = df.Class.apply(lambda x: remove_namespace(x))
+    df.Class = df.Class.apply(lambda x: remove_namespace_from_uri(x))
     df["Match Type"] = len(df) * [MatchType.exact]
     df["Comment"] = len(df) * [None]
-    df["Parent Class"] = df["Parent Class"].apply(lambda x: remove_namespace(x))
+    df["Parent Class"] = df["Parent Class"].apply(lambda x: remove_namespace_from_uri(x))
 
     return df
 
