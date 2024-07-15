@@ -21,5 +21,5 @@ def test_asset_extractor():
     rules, _ = InferenceImporter.from_graph_store(store).to_rules()
     store.add_rules(rules)
 
-    assert len(store.read("Asset")) == 57
+    assert len([instance for instance in store.read("Asset")]) == 4
     assert len(store.graph) == 73

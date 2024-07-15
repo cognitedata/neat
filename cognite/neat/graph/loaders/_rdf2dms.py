@@ -1,5 +1,4 @@
 import json
-from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any
@@ -106,8 +105,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield from issues
             tracker.issue(issues)
             class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
-            triples = self.graph_store.read(class_name)
-            for identifier, properties in _triples2dictionary(triples).items():
+
+            for instance_triples in self.graph_store.read(class_name):
+                identifier, properties = next(iter(instance_triples.items()))
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
@@ -280,7 +280,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             result.created.update(item.as_id() for item in e.successful)
             yield result
         else:
-            for instance_type, instances in {"Nodes": upserted.nodes, "Edges": upserted.edges}.items():
+            for instance_type, instances in {
+                "Nodes": upserted.nodes,
+                "Edges": upserted.edges,
+            }.items():
                 result = UploadResult[InstanceId](name=instance_type, issues=read_issues)
                 for instance in instances:  # type: ignore[attr-defined]
                     if instance.was_modified and instance.created_time == instance.last_updated_time:
@@ -290,15 +293,3 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     else:
                         result.unchanged.add(instance.as_id())
                 yield result
-
-
-def _triples2dictionary(
-    triples: Iterable[tuple[str, str, str]],
-) -> dict[str, dict[str, list[str]]]:
-    """Converts list of triples to dictionary"""
-    values_by_property_by_identifier: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
-    for id_, property_, value in triples:
-        # avoid issue with strings "None", "nan", "null" being treated as values
-        if value.lower() not in ["", "None", "nan", "null"]:
-            values_by_property_by_identifier[id_][property_].append(value)
-    return values_by_property_by_identifier

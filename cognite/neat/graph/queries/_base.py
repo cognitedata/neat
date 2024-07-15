@@ -1,4 +1,5 @@
 import warnings
+from collections import defaultdict
 from typing import Literal, cast, overload
 
 from rdflib import RDF, Graph, URIRef
@@ -93,12 +94,56 @@ class Queries:
             )
             return []
 
-    def construct_instances_of_class(self, class_: str, properties_optional: bool = True) -> list[tuple[str, str, str]]:
+    def describe(
+        self,
+        instance_id: URIRef,
+        property_renaming_config: dict | None = None,
+    ) -> dict[str, dict[str, list[str]]]:
+        """DESCRIBE instance for a given class from the graph store
+
+        Args:
+            instance_id: Instance id for which we want to generate query
+            property_rename_config: Dictionary to rename properties, default None
+
+        Returns:
+            Dictionary of instance properties
+        """
+
+        result: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+
+        for subject, predicate, object in cast(list[ResultRow], self.graph.query(f"DESCRIBE <{instance_id}>")):
+            # We cannot include the RDF.type in case there is a neat:type property
+            # or if the object is empty
+            if predicate != RDF.type and object.lower() not in [
+                "",
+                "none",
+                "nan",
+                "null",
+            ]:
+                # we are skipping deep validation with Pydantic to remove namespace here
+                # as it reduce time to process triples by 10-15x
+                subject, predicate, object = remove_namespace_from_uri(
+                    *(subject, predicate, object), deep_validation=False
+                )  # type: ignore[misc, index]
+                if property_renaming_config:
+                    predicate = property_renaming_config.get(predicate, predicate)
+
+                result[subject][predicate].append(object)
+
+        return result
+
+    def construct_instances_of_class(
+        self,
+        class_: str,
+        properties_optional: bool = True,
+        instance_id: URIRef | None = None,
+    ) -> list[tuple[str, str, str]]:
         """CONSTRUCT instances for a given class from the graph store
 
         Args:
             class_: Class entity for which we want to generate query
             properties_optional: Whether to make all properties optional, default True
+            instance_ids: List of instance ids to filter on, default None (all)
 
         Returns:
             List of triples for instances of the given class
@@ -106,10 +151,11 @@ class Queries:
 
         if self.rules and (
             query := build_construct_query(
-                ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_),
-                self.graph,
-                self.rules,
-                properties_optional,
+                class_=ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_),
+                graph=self.graph,
+                rules=self.rules,
+                properties_optional=properties_optional,
+                instance_id=instance_id,
             )
         ):
             result = self.graph.query(query)
