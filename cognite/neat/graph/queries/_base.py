@@ -132,7 +132,7 @@ class Queries:
         if predicate_object:
             return (cast(str, subject), predicate_object)
         else:
-            return ("", {})
+            return ()  # type: ignore [return-value]
 
     def construct_instances_of_class(
         self,
