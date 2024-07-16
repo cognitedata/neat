@@ -106,8 +106,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             tracker.issue(issues)
             class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
 
-            for instance_triples in self.graph_store.read(class_name):
-                identifier, properties = next(iter(instance_triples.items()))
+            for identifier, properties in self.graph_store.read(class_name):
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:

@@ -98,7 +98,7 @@ class Queries:
         self,
         instance_id: URIRef,
         property_renaming_config: dict | None = None,
-    ) -> dict[str, dict[str, list[str]]]:
+    ) -> tuple[str, dict[str, list[str]]]:
         """DESCRIBE instance for a given class from the graph store
 
         Args:
@@ -109,7 +109,7 @@ class Queries:
             Dictionary of instance properties
         """
 
-        result: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+        predicate_object: dict[str, list[str]] = defaultdict(list)
 
         for subject, predicate, object in cast(list[ResultRow], self.graph.query(f"DESCRIBE <{instance_id}>")):
             # We cannot include the RDF.type in case there is a neat:type property
@@ -128,9 +128,11 @@ class Queries:
                 if property_renaming_config:
                     predicate = property_renaming_config.get(predicate, predicate)
 
-                result[subject][predicate].append(object)
-
-        return result
+                predicate_object[predicate].append(object)
+        if predicate_object:
+            return (cast(str, subject), predicate_object)
+        else:
+            return ("", {})
 
     def construct_instances_of_class(
         self,

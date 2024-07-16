@@ -166,7 +166,7 @@ class NeatGraphStore:
             )
         )
 
-    def read(self, class_: str) -> Iterable[dict[str, dict[str, list[str]]]]:
+    def read(self, class_: str) -> Iterable[tuple[str, dict[str, list[str]]]]:
         """Read instances for given view from the graph store."""
 
         if not self.rules:
