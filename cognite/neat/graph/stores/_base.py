@@ -188,7 +188,7 @@ class NeatGraphStore:
 
         instance_ids = self.queries.list_instances_ids_of_class(self.rules.metadata.namespace[class_])
 
-        property_renaming_config = InformationAnalysis(self.rules).define_property_renaming_config()
+        property_renaming_config = InformationAnalysis(self.rules).define_property_renaming_config(class_entity)
 
         for instance_id in instance_ids:
             yield self.queries.describe(instance_id, property_renaming_config)
