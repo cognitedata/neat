@@ -34,7 +34,7 @@ else:
 
 
 class AssetMetadata(InformationMetadata):
-    role: ClassVar[RoleTypes] = RoleTypes.asset_architect
+    role: ClassVar[RoleTypes] = RoleTypes.asset
 
 
 class AssetClass(InformationClass): ...
