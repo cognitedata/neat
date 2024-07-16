@@ -121,8 +121,8 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
         inheritance_path = get_inheritance_path(class_, class_parent_pairs)
         for parent in inheritance_path:
             # ParentClassEntity -> ClassEntity to match the type of class_property_pairs
-            if parent.as_class_entity() in class_property_pairs:
-                for property_ in class_property_pairs[parent.as_class_entity()]:
+            if parent in class_property_pairs:
+                for property_ in class_property_pairs[parent]:
                     property_ = property_.model_copy()
 
                     # This corresponds to importing properties from parent class
