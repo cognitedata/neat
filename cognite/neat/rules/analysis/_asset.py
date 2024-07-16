@@ -118,10 +118,7 @@ class AssetAnalysis(BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEnt
 
         if asset_definition := self.asset_definition().get(class_, None):
             for property_, transformation in asset_definition.items():
-                asset_property = cast(
-                    AssetEntity,
-                    cast(list[AssetEntity], transformation.implementation)[0],
-                ).property_
+                asset_property = cast(list[AssetEntity], transformation.implementation)[0].property_
 
                 if asset_property != "metadata":
                     property_renaming_configuration[property_] = str(asset_property)

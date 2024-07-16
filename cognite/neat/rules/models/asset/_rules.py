@@ -60,7 +60,7 @@ class AssetProperty(InformationProperty):
         implementation: Details on how given class-property is implemented in the classic CDF
     """
 
-    implementation: CdfResourceEntityList | None = Field(alias="Implementation", default=None)
+    implementation: CdfResourceEntityList = Field(alias="Implementation")
 
 
 class AssetRules(BaseRules):
