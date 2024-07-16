@@ -123,7 +123,7 @@ class Queries:
                 # we are skipping deep validation with Pydantic to remove namespace here
                 # as it reduce time to process triples by 10-15x
                 subject, predicate, object = remove_namespace_from_uri(
-                    *(subject, predicate, object), deep_validation=False
+                    *(subject, predicate, object), validation="prefix"
                 )  # type: ignore[misc, index]
                 if property_renaming_config:
                     predicate = property_renaming_config.get(predicate, predicate)

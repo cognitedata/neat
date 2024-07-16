@@ -7,7 +7,7 @@ from collections import Counter, OrderedDict
 from collections.abc import Iterable
 from datetime import datetime
 from functools import wraps
-from typing import TypeAlias, cast, overload
+from typing import Literal, TypeAlias, cast, overload
 
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
@@ -21,7 +21,8 @@ from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 from pydantic_core import ErrorDetails
 from pyparsing import Any
-from rdflib import Literal, Namespace
+from rdflib import Literal as RdfLiteral
+from rdflib import Namespace
 from rdflib.term import URIRef
 
 from cognite.neat import _version
@@ -39,7 +40,7 @@ else:
     UTC = timezone.utc
 
 
-Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
+Triple: TypeAlias = tuple[URIRef, URIRef, RdfLiteral | URIRef]
 
 
 def get_cognite_client_from_config(config: ServiceCogniteClient) -> CogniteClient:
@@ -90,7 +91,7 @@ def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProv
 def remove_namespace_from_uri(
     *URI: URIRef | str,
     special_separator: str = "#_",
-    deep_validation: bool = False,
+    validation: Literal["full", "prefix"] = "prefix",
 ) -> str: ...
 
 
@@ -98,14 +99,14 @@ def remove_namespace_from_uri(
 def remove_namespace_from_uri(
     *URI: tuple[URIRef | str, ...],
     special_separator: str = "#_",
-    deep_validation: bool = False,
+    validation: Literal["full", "prefix"] = "prefix",
 ) -> tuple[str, ...]: ...
 
 
 def remove_namespace_from_uri(
     *URI: URIRef | str | tuple[URIRef | str, ...],
     special_separator: str = "#_",
-    deep_validation: bool = False,
+    validation: Literal["full", "prefix"] = "prefix",
 ) -> tuple[str, ...] | str:
     """Removes namespace from URI
 
@@ -115,6 +116,9 @@ def remove_namespace_from_uri(
         special_separator : str
             Special separator to use instead of # or / if present in URI
             Set by default to "#_" which covers special client use case
+        validation:RdfLiteral["full", "prefix"]
+            Validation type to use for URI. If set to "full", URI will be validated using pydantic
+            If set to "prefix", only check if URI starts with http or https will be made
 
     Returns
         Entities id without namespace
@@ -136,7 +140,7 @@ def remove_namespace_from_uri(
 
     output = []
     for u in uris:
-        if deep_validation:
+        if validation == "full":
             try:
                 _ = TypeAdapter(HttpUrl).validate_python(u)
                 output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
@@ -182,8 +186,8 @@ def as_neat_compliant_uri(uri: URIRef) -> URIRef:
     return URIRef(f"{namespace}{compliant_uri}")
 
 
-def convert_rdflib_content(content: Literal | URIRef | dict | list) -> Any:
-    if isinstance(content, Literal) or isinstance(content, URIRef):
+def convert_rdflib_content(content: RdfLiteral | URIRef | dict | list) -> Any:
+    if isinstance(content, RdfLiteral) or isinstance(content, URIRef):
         return content.toPython()
     elif isinstance(content, dict):
         return {key: convert_rdflib_content(value) for key, value in content.items()}
