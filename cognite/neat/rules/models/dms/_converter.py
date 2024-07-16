@@ -11,7 +11,6 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     DMSUnknownEntity,
-    ParentClassEntity,
     ReferenceEntity,
     UnknownEntity,
     ViewEntity,
@@ -52,7 +51,7 @@ class _DMSRulesConverter:
                 description=view.description,
                 parent=[
                     # we do not want a version in class as we use URI for the class
-                    ParentClassEntity(prefix=implemented_view.prefix, suffix=implemented_view.suffix)
+                    implemented_view.as_class(skip_version=True)
                     # We only want parents in the same namespace, parent in a different namespace is a reference
                     for implemented_view in view.implements or []
                     if implemented_view.prefix == view.class_.prefix

@@ -14,7 +14,6 @@ from cognite.neat.rules.models.entities import (
     CdfResourceEntityList,
     ClassEntity,
     MultiValueTypeInfo,
-    ParentClassEntity,
     Undefined,
 )
 from cognite.neat.rules.models.information import (
@@ -94,7 +93,7 @@ class AssetRules(BaseRules):
         # update parent classes
         for class_ in self.classes:
             if class_.parent:
-                for parent in cast(list[ParentClassEntity], class_.parent):
+                for parent in class_.parent:
                     if not isinstance(parent.prefix, str):
                         parent.prefix = self.metadata.prefix
             if class_.class_.prefix is Undefined:

@@ -15,7 +15,6 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     MultiValueTypeInfo,
-    ParentClassEntity,
     Unknown,
     UnknownEntity,
 )
@@ -227,7 +226,7 @@ class InformationClassInput:
             "Reference": self.reference,
             "Match Type": self.match_type,
             "Parent Class": (
-                [ParentClassEntity.load(parent, prefix=default_prefix) for parent in self.parent.split(",")]
+                [ClassEntity.load(parent, prefix=default_prefix) for parent in self.parent.split(",")]
                 if self.parent
                 else None
             ),

@@ -1,7 +1,7 @@
 import math
 import sys
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic.main import IncEx
@@ -38,10 +38,9 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
+    ClassEntityList,
     EntityTypes,
     MultiValueTypeInfo,
-    ParentClassEntity,
-    ParentEntityList,
     ReferenceEntity,
     Undefined,
     UnknownEntity,
@@ -130,7 +129,7 @@ class InformationClass(SheetEntity):
     class_: ClassEntity = Field(alias="Class")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    parent: ParentEntityList | None = Field(alias="Parent Class", default=None)
+    parent: ClassEntityList | None = Field(alias="Parent Class", default=None)
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     comment: str | None = Field(alias="Comment", default=None)
@@ -287,7 +286,7 @@ class InformationRules(BaseRules):
         # update parent classes
         for class_ in self.classes:
             if class_.parent:
-                for parent in cast(list[ParentClassEntity], class_.parent):
+                for parent in class_.parent:
                     if not isinstance(parent.prefix, str):
                         parent.prefix = self.metadata.prefix
             if class_.class_.prefix is Undefined:
