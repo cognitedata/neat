@@ -116,7 +116,7 @@ def remove_namespace_from_uri(
         special_separator : str
             Special separator to use instead of # or / if present in URI
             Set by default to "#_" which covers special client use case
-        validation:RdfLiteral["full", "prefix"]
+        validation: str
             Validation type to use for URI. If set to "full", URI will be validated using pydantic
             If set to "prefix", only check if URI starts with http or https will be made
 
