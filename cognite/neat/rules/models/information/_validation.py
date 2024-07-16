@@ -161,7 +161,7 @@ class InformationPostValidation:
             class_subclass_pairs[class_.class_] = []
             if class_.parent is None:
                 continue
-            class_subclass_pairs[class_.class_].extend([parent.as_class_entity() for parent in class_.parent])
+            class_subclass_pairs[class_.class_].extend(class_.parent)
 
         return class_subclass_pairs
 

@@ -14,7 +14,6 @@ from cognite.neat.rules.models.entities import (
     AssetEntity,
     ClassEntity,
     EntityTypes,
-    ParentClassEntity,
     ReferenceEntity,
     RelationshipEntity,
 )
@@ -53,9 +52,9 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
             inherited_referred_classes.extend(self.class_inheritance_path(class_))
         return set(inherited_referred_classes)
 
-    def class_parent_pairs(self) -> dict[ClassEntity, list[ParentClassEntity]]:
+    def class_parent_pairs(self) -> dict[ClassEntity, list[ClassEntity]]:
         """This only returns class - parent pairs only if parent is in the same data model"""
-        class_subclass_pairs: dict[ClassEntity, list[ParentClassEntity]] = {}
+        class_subclass_pairs: dict[ClassEntity, list[ClassEntity]] = {}
 
         if not self.rules:
             return class_subclass_pairs
@@ -117,13 +116,13 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
         cls,
         class_: ClassEntity,
         class_property_pairs: dict[ClassEntity, list[T_Property]],
-        class_parent_pairs: dict[ClassEntity, list[ParentClassEntity]],
+        class_parent_pairs: dict[ClassEntity, list[ClassEntity]],
     ):
         inheritance_path = get_inheritance_path(class_, class_parent_pairs)
         for parent in inheritance_path:
             # ParentClassEntity -> ClassEntity to match the type of class_property_pairs
-            if parent.as_class_entity() in class_property_pairs:
-                for property_ in class_property_pairs[parent.as_class_entity()]:
+            if parent in class_property_pairs:
+                for property_ in class_property_pairs[parent]:
                     property_ = property_.model_copy()
 
                     # This corresponds to importing properties from parent class
