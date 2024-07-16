@@ -3,7 +3,7 @@ from typing import cast
 
 from rdflib import Graph, URIRef
 
-from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models._rdfpath import (
     AllReferences,
     Hop,
@@ -54,7 +54,7 @@ def build_construct_query(
         the query will return all instances that have at least one property defined.
     """
     if (
-        transformations := InformationArchitectRulesAnalysis(rules)
+        transformations := InformationAnalysis(rules)
         .class_property_pairs(only_rdfpath=True, consider_inheritance=True)
         .get(class_, None)
     ):

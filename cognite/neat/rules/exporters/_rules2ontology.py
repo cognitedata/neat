@@ -10,7 +10,7 @@ from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.rules import exceptions
-from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
@@ -109,11 +109,11 @@ class Ontology(OntologyModel):
         if rules.metadata.namespace is None:
             raise exceptions.MissingDataModelPrefixOrNamespace()
 
-        class_dict = InformationArchitectRulesAnalysis(rules).as_class_dict()
+        class_dict = InformationAnalysis(rules).as_class_dict()
         return cls(
             properties=[
                 OWLProperty.from_list_of_properties(definition, rules.metadata.namespace)
-                for definition in InformationArchitectRulesAnalysis(rules).as_property_dict().values()
+                for definition in InformationAnalysis(rules).as_property_dict().values()
             ],
             classes=[
                 OWLClass.from_class(definition, rules.metadata.namespace, rules.prefixes)
@@ -125,7 +125,7 @@ class Ontology(OntologyModel):
                     list(properties.values()),
                     rules.metadata.namespace,
                 )
-                for class_, properties in InformationArchitectRulesAnalysis(rules).class_property_pairs().items()
+                for class_, properties in InformationAnalysis(rules).class_property_pairs().items()
             ]
             + [
                 SHACLNodeShape.from_rules(

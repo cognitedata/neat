@@ -1,5 +1,5 @@
 from cognite.neat.rules import importers
-from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
 
 
@@ -11,8 +11,6 @@ def test_owl_importer():
 
     # this is rdf:PlainLiteral edge case
     assert (
-        InformationArchitectRulesAnalysis(rules)
-        .class_property_pairs()[ClassEntity.load("neat:LaureateAward")]["motivation"]
-        .type_
+        InformationAnalysis(rules).class_property_pairs()[ClassEntity.load("neat:LaureateAward")]["motivation"].type_
         == EntityTypes.data_property
     )

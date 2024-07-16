@@ -12,7 +12,7 @@ import pandas as pd
 from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.graph.models import Triple
-from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models import DMSRules, InformationRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
@@ -50,8 +50,7 @@ class MockGraphGenerator(BaseExtractor):
 
         if not class_count:
             self.class_count = {
-                class_: 1
-                for class_ in InformationArchitectRulesAnalysis(self.rules).defined_classes(consider_inheritance=True)
+                class_: 1 for class_ in InformationAnalysis(self.rules).defined_classes(consider_inheritance=True)
             }
         elif all(isinstance(key, str) for key in class_count.keys()):
             self.class_count = {
@@ -101,7 +100,7 @@ def generate_triples(
     """
 
     namespace = rules.metadata.namespace
-    defined_classes = InformationArchitectRulesAnalysis(rules).defined_classes(consider_inheritance=True)
+    defined_classes = InformationAnalysis(rules).defined_classes(consider_inheritance=True)
 
     if non_existing_classes := set(class_count.keys()) - defined_classes:
         msg = f"Class count contains classes {non_existing_classes} for which properties are not defined in Data Model!"
@@ -115,16 +114,16 @@ def generate_triples(
 
     # Subset data model to only classes that are defined in class count
     rules = (
-        InformationArchitectRulesAnalysis(rules).subset_rules(set(class_count.keys()))
+        InformationAnalysis(rules).subset_rules(set(class_count.keys()))
         if defined_classes != set(class_count.keys())
         else rules
     )
 
-    class_linkage = InformationArchitectRulesAnalysis(rules).class_linkage()
+    class_linkage = InformationAnalysis(rules).class_linkage()
 
     # Remove one of symmetric pairs from class linkage to maintain proper linking
     # among instances of symmetrically linked classes
-    if sym_pairs := InformationArchitectRulesAnalysis(rules).symmetrically_connected_classes():
+    if sym_pairs := InformationAnalysis(rules).symmetrically_connected_classes():
         class_linkage = _remove_higher_occurring_sym_pair(class_linkage, sym_pairs)
 
     # Remove any of symmetric pairs containing classes that are not present class count
@@ -134,7 +133,7 @@ def generate_triples(
     generation_order = _prettify_generation_order(_get_generation_order(class_linkage))
 
     # Generated simple view of data model
-    class_property_pairs = InformationArchitectRulesAnalysis(rules).classes_with_properties(consider_inheritance=True)
+    class_property_pairs = InformationAnalysis(rules).classes_with_properties(consider_inheritance=True)
 
     # pregenerate instance ids for each remaining class
     instance_ids = {

@@ -165,6 +165,9 @@ class DMSMetadata(BaseMetadata):
             updated=datetime.now(),
         )
 
+    def get_prefix(self) -> str:
+        return self.space
+
 
 class DMSProperty(SheetEntity):
     view: ViewEntity = Field(alias="View")

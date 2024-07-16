@@ -7,7 +7,7 @@ from __future__ import annotations
 import math
 import sys
 import types
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator
 from functools import wraps
 from typing import Annotated, Any, ClassVar, Generic, Literal, TypeAlias, TypeVar
@@ -18,7 +18,6 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
-    HttpUrl,
     PlainSerializer,
     constr,
     field_validator,
@@ -219,10 +218,6 @@ class RuleModel(BaseModel):
         return headers_by_sheet
 
 
-class URL(BaseModel):
-    url: HttpUrl
-
-
 class BaseMetadata(RuleModel):
     """
     Metadata model for data model
@@ -252,8 +247,13 @@ class BaseMetadata(RuleModel):
         """Returns a unique identifier for the metadata."""
         raise NotImplementedError()
 
+    @abstractmethod
+    def get_prefix(self) -> str:
+        """Returns the prefix for the metadata."""
+        raise NotImplementedError()
 
-class BaseRules(RuleModel):
+
+class BaseRules(RuleModel, ABC):
     """
     Rules is a core concept in `neat`. This represents fusion of data model
     definitions and (optionally) the transformation rules used to transform the data/graph
