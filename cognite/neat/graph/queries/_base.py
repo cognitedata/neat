@@ -122,7 +122,7 @@ class Queries:
             ]:
                 # we are skipping deep validation with Pydantic to remove namespace here
                 # as it reduce time to process triples by 10-15x
-                identifier, property_, value = cast(  # type: ignore[misc, index]
+                identifier, property_, value = cast(  # type: ignore[misc]
                     (str, str, str),
                     remove_namespace_from_uri(*(subject, predicate, object_), validation="prefix"),
                 )  # type: ignore[misc, index]
