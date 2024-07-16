@@ -8,7 +8,7 @@ import pandas as pd
 from pydantic import ValidationError
 
 from cognite.neat.rules.models import SchemaCompleteness
-from cognite.neat.rules.models._rdfpath import Hop, RDFPath
+from cognite.neat.rules.models._rdfpath import Hop, RDFPath, SingleProperty
 from cognite.neat.rules.models.asset import AssetClass, AssetProperty, AssetRules
 from cognite.neat.rules.models.entities import (
     AssetEntity,
@@ -406,9 +406,19 @@ class InformationArchitectRulesAnalysis(_SharedAnalysis[InformationRules, Inform
             prop_.transformation and isinstance(prop_.transformation.traversal, Hop) for prop_ in self.rules.properties
         )
 
-    def define_property_renaming_config(self) -> dict[str, str]:
-        # placeholder comes in new PR
-        return {}
+    def define_property_renaming_config(self, class_: ClassEntity) -> dict[str, str]:
+        property_renaming_configuration = {}
+
+        if transformations := self.class_property_pairs(only_rdfpath=True, consider_inheritance=True).get(class_, None):
+            for property_, transformation in transformations.items():
+                if not isinstance(transformation.transformation.traversal, SingleProperty):
+                    graph_property = property_
+                else:
+                    graph_property = transformation.transformation.traversal.property.suffix
+
+                property_renaming_configuration[graph_property] = property_
+
+        return property_renaming_configuration
 
 
 class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, AssetClass]):
@@ -474,3 +484,19 @@ class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, Ass
             only_rdfpath=only_rdfpath,
             implementation_type=EntityTypes.relationship,
         )
+
+    def define_property_renaming_config(self, class_: ClassEntity) -> dict[str, str]:
+        # placeholder comes in new PR
+
+        property_renaming_configuration = {}
+
+        if asset_definition := self.asset_definition().get(class_, None):
+            for property_, transformation in asset_definition.items():
+                asset_property = transformation.implementation[0].property_
+
+                if asset_property != "metadata":
+                    property_renaming_configuration[property_] = str(asset_property)
+                else:
+                    property_renaming_configuration[property_] = f"{asset_property}.{property_}"
+
+        return property_renaming_configuration
