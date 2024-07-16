@@ -199,7 +199,7 @@ class TestInformationRules:
 
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         david_rules = InformationRules.model_validate(david_spreadsheet)
-        dms_rules = david_rules.as_dms_architect_rules()
+        dms_rules = david_rules.as_dms_rules()
 
         assert isinstance(dms_rules, DMSRules)
 
@@ -216,7 +216,7 @@ class TestInformationRules:
         olav_rules_copy.classes = new_classes
         ## End of temporary code
 
-        dms_rules = olav_rules_copy.as_dms_architect_rules()
+        dms_rules = olav_rules_copy.as_dms_rules()
 
         assert isinstance(dms_rules, DMSRules)
         schema = dms_rules.as_schema()
@@ -284,7 +284,7 @@ class TestInformationRulesConverter:
             "WindTurbine": {"GeneratingUnit"},
         }
 
-        dms_rules = svein_harald_information_rules.as_dms_architect_rules()
+        dms_rules = svein_harald_information_rules.as_dms_rules()
 
         assert isinstance(dms_rules, DMSRules)
         assert dms_rules.last is not None
@@ -317,7 +317,7 @@ class TestInformationRulesConverter:
             ],
         ).as_rules()
 
-        dms_rules = info.as_dms_architect_rules()
+        dms_rules = info.as_dms_rules()
 
         assert len(dms_rules.containers) == 2
 

@@ -28,10 +28,10 @@ class BaseExporter(ABC, Generic[T_Export]):
     def _convert_to_output_role(self, rules: Rules, output_role: RoleTypes | None = None) -> Rules:
         if rules.metadata.role is output_role or output_role is None:
             return rules
-        elif output_role is RoleTypes.dms_architect and isinstance(rules, InformationRules):
-            return rules.as_dms_architect_rules()
-        elif output_role is RoleTypes.information_architect and isinstance(rules, DMSRules):
-            return rules.as_information_architect_rules()
+        elif output_role is RoleTypes.dms and isinstance(rules, InformationRules):
+            return rules.as_dms_rules()
+        elif output_role is RoleTypes.information and isinstance(rules, DMSRules):
+            return rules.as_information_rules()
         else:
             raise NotImplementedError(f"Role {output_role} is not supported for {type(rules).__name__} rules")
 

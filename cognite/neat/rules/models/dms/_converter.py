@@ -32,7 +32,7 @@ class _DMSRulesConverter:
     def as_domain_rules(self) -> "DomainRules":
         raise NotImplementedError("DomainRules not implemented yet")
 
-    def as_information_architect_rules(
+    def as_information_rules(
         self,
     ) -> "InformationRules":
         from cognite.neat.rules.models.information._rules import (
@@ -94,8 +94,8 @@ class _DMSRulesConverter:
             metadata=metadata,
             properties=SheetList[InformationProperty](data=properties),
             classes=SheetList[InformationClass](data=classes),
-            last=self.dms.last.as_information_architect_rules() if self.dms.last else None,
-            reference=self.dms.reference.as_information_architect_rules() if self.dms.reference else None,
+            last=self.dms.last.as_information_rules() if self.dms.last else None,
+            reference=self.dms.reference.as_information_rules() if self.dms.reference else None,
         )
 
     @classmethod

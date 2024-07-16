@@ -127,13 +127,11 @@ class TestExcelImporter:
     @pytest.mark.parametrize(
         "filepath, rule_type, convert_to",
         [
-            pytest.param(
-                DOC_RULES / "cdf-dms-architect-alice.xlsx", DMSRules, RoleTypes.information_architect, id="Alice rules"
-            ),
+            pytest.param(DOC_RULES / "cdf-dms-architect-alice.xlsx", DMSRules, RoleTypes.information, id="Alice rules"),
             pytest.param(
                 DOC_RULES / "information-analytics-olav.xlsx",
                 InformationRules,
-                RoleTypes.dms_architect,
+                RoleTypes.dms,
                 id="Olav user rules",
             ),
             pytest.param(DOC_RULES / "expert-wind-energy-jon.xlsx", DomainRules, None, id="expert-wind-energy-jon"),
@@ -141,25 +139,25 @@ class TestExcelImporter:
             pytest.param(
                 DOC_RULES / "information-architect-david.xlsx",
                 InformationRules,
-                RoleTypes.dms_architect,
+                RoleTypes.dms,
                 id="information-architect-david",
             ),
             pytest.param(
                 DOC_RULES / "dms-analytics-olav.xlsx",
                 DMSRules,
-                RoleTypes.information_architect,
+                RoleTypes.information,
                 id="dms-analytics-olav",
             ),
             pytest.param(
                 DOC_RULES / "information-addition-svein-harald.xlsx",
                 InformationRules,
-                RoleTypes.dms_architect,
+                RoleTypes.dms,
                 id="Svein Harald Enterprise Extension Information",
             ),
             pytest.param(
                 DOC_RULES / "dms-addition-svein-harald.xlsx",
                 DMSRules,
-                RoleTypes.information_architect,
+                RoleTypes.information,
                 id="Svein Harald Enterprise Extension DMS",
             ),
         ],

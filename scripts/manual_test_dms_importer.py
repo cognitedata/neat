@@ -73,7 +73,7 @@ def main():
             warning += 1
         assert isinstance(rules, DMSRules)
         try:
-            information = rules.as_information_architect_rules()
+            information = rules.as_information_rules()
         except Exception as e:
             print(f"[red]Failed[/red] to convert rules to information architect rules: {e}")
             print(Panel(traceback.format_exc(), expand=False))

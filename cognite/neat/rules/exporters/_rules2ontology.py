@@ -95,7 +95,7 @@ class Ontology(OntologyModel):
         if isinstance(input_rules, InformationRules):
             rules = input_rules
         elif isinstance(input_rules, DMSRules):
-            rules = input_rules.as_information_architect_rules()
+            rules = input_rules.as_information_rules()
         else:
             raise ValueError(f"{type(input_rules).__name__} cannot be exported to Ontology")
 

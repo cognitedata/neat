@@ -14,7 +14,7 @@ def test_metadata_as_json_filed():
     rules, _ = importer.to_rules()
     store.add_rules(rules)
 
-    dms_rules = rules.as_dms_architect_rules()
+    dms_rules = rules.as_dms_rules()
 
     loader = DMSLoader.from_rules(dms_rules, store, dms_rules.metadata.space)
     instances = {instance.external_id: instance for instance in loader._load()}
