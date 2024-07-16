@@ -15,6 +15,7 @@ from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.graph.models import Triple
 from cognite.neat.graph.queries import Queries
 from cognite.neat.graph.transformers import Transformers
+from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
 from cognite.neat.rules.models import InformationRules
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.utils.auxiliary import local_import
@@ -165,25 +166,32 @@ class NeatGraphStore:
             )
         )
 
-    def read(self, class_: str) -> list[tuple[str, str, str]]:
+    def read(self, class_: str) -> Iterable[tuple[str, dict[str, list[str]]]]:
         """Read instances for given view from the graph store."""
-        # PLACEHOLDER: Implement reading instances for a given view
-        # not yet developed
 
         if not self.rules:
-            warnings.warn(
-                "No rules found for the graph store, returning empty list.",
-                stacklevel=2,
-            )
-            return []
+            warnings.warn("Rules not found in graph store!", stacklevel=2)
+            return None
 
         class_entity = ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
 
         if class_entity not in [definition.class_ for definition in self.rules.classes.data]:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
-            return []
+            return None
 
-        return self.queries.construct_instances_of_class(class_)
+        if InformationArchitectRulesAnalysis(self.rules).has_hop_transformations():
+            warnings.warn(
+                "Rules contain Hop rdfpath, run ReduceHopTraversal transformer first!",
+                stacklevel=2,
+            )
+            return None
+
+        instance_ids = self.queries.list_instances_ids_of_class(self.rules.metadata.namespace[class_])
+
+        property_renaming_config = InformationArchitectRulesAnalysis(self.rules).define_property_renaming_config()
+
+        for instance_id in instance_ids:
+            yield self.queries.describe(instance_id, property_renaming_config)
 
     def _parse_file(
         self,

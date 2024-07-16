@@ -8,7 +8,7 @@ import pandas as pd
 from pydantic import ValidationError
 
 from cognite.neat.rules.models import SchemaCompleteness
-from cognite.neat.rules.models._rdfpath import RDFPath
+from cognite.neat.rules.models._rdfpath import Hop, RDFPath
 from cognite.neat.rules.models.asset import AssetClass, AssetProperty, AssetRules
 from cognite.neat.rules.models.entities import (
     AssetEntity,
@@ -401,7 +401,14 @@ class _SharedAnalysis(Generic[T_Rules, T_Property, T_Class]):
 class InformationArchitectRulesAnalysis(_SharedAnalysis[InformationRules, InformationProperty, InformationClass]):
     """Assumes analysis over only the complete schema"""
 
-    ...
+    def has_hop_transformations(self):
+        return any(
+            prop_.transformation and isinstance(prop_.transformation.traversal, Hop) for prop_ in self.rules.properties
+        )
+
+    def define_property_renaming_config(self) -> dict[str, str]:
+        # placeholder comes in new PR
+        return {}
 
 
 class AssetArchitectRulesAnalysis(_SharedAnalysis[AssetRules, AssetProperty, AssetClass]):

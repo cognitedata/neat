@@ -1,5 +1,4 @@
 import json
-from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any, get_args
@@ -106,8 +105,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield from issues
             tracker.issue(issues)
             class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
-            triples = self.graph_store.read(class_name)
-            for identifier, properties in _triples2dictionary(triples).items():
+
+            for identifier, properties in self.graph_store.read(class_name):
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
@@ -318,15 +317,3 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
 def _get_field_value_types(cls, info):
     return [type_.__name__ for type_ in get_args(cls.model_fields[info.field_name].annotation)]
-
-
-def _triples2dictionary(
-    triples: Iterable[tuple[str, str, str]],
-) -> dict[str, dict[str, list[str]]]:
-    """Converts list of triples to dictionary"""
-    values_by_property_by_identifier: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
-    for id_, property_, value in triples:
-        # avoid issue with strings "None", "nan", "null" being treated as values
-        if value.lower() not in ["", "None", "nan", "null"]:
-            values_by_property_by_identifier[id_][property_].append(value)
-    return values_by_property_by_identifier
