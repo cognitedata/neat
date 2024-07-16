@@ -1,22 +1,22 @@
 import itertools
-import logging
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Any, Generic, TypeVar
+from collections.abc import Set
+from dataclasses import dataclass
+from typing import Generic, TypeVar
 
 import pandas as pd
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
-from cognite.neat.rules.models import SchemaCompleteness
 from cognite.neat.rules.models._base import BaseRules
 from cognite.neat.rules.models._rdfpath import RDFPath
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     Entity,
-    EntityTypes,
     ReferenceEntity,
 )
+from cognite.neat.rules.models.information import InformationProperty
 from cognite.neat.utils.utils import get_inheritance_path
 
 T_Rules = TypeVar("T_Rules", bound=BaseRules)
@@ -24,6 +24,44 @@ T_Property = TypeVar("T_Property", bound=BaseModel)
 T_Class = TypeVar("T_Class", bound=BaseModel)
 T_ClassEntity = TypeVar("T_ClassEntity", bound=Entity)
 T_PropertyEntity = TypeVar("T_PropertyEntity", bound=Entity | str)
+
+
+@dataclass(frozen=True)
+class Linkage(Generic[T_ClassEntity, T_PropertyEntity]):
+    source_class: T_ClassEntity
+    connecting_property: T_PropertyEntity
+    target_class: T_ClassEntity
+    max_occurrence: int | float | None
+
+
+class LinkageSet(set, Generic[T_ClassEntity, T_PropertyEntity], Set[Linkage[T_ClassEntity, T_PropertyEntity]]):
+    @property
+    def source_class(self) -> set[T_ClassEntity]:
+        return {link.source_class for link in self}
+
+    @property
+    def target_class(self) -> set[T_ClassEntity]:
+        return {link.target_class for link in self}
+
+    def get_target_classes_by_source(self) -> dict[T_ClassEntity, set[T_ClassEntity]]:
+        target_classes_by_source: dict[T_ClassEntity, set[T_ClassEntity]] = defaultdict(set)
+        for link in self:
+            target_classes_by_source[link.source_class].add(link.target_class)
+        return target_classes_by_source
+
+    def to_pandas(self) -> pd.DataFrame:
+        # Todo: Remove this method
+        return pd.DataFrame(
+            [
+                {
+                    "source_class": link.source_class,
+                    "connecting_property": link.connecting_property,
+                    "target_class": link.target_class,
+                    "max_occurrence": link.max_occurrence,
+                }
+                for link in self
+            ]
+        )
 
 
 class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_PropertyEntity]):
@@ -58,6 +96,19 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
     def _get_reference_rules(self) -> T_Rules | None:
         raise NotImplementedError
 
+    @classmethod
+    @abstractmethod
+    def _set_cls_entity(cls, property_: T_Property, class_: T_ClassEntity) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def _get_object(self, property_: T_Property) -> T_ClassEntity | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def _get_max_occurrence(self, property_: T_Property) -> int | float | None:
+        raise NotImplementedError
+
     @property
     def directly_referred_classes(self) -> set[ClassEntity]:
         ref_rules = self._get_reference_rules()
@@ -82,10 +133,6 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
     def class_parent_pairs(self) -> dict[T_ClassEntity, list[T_ClassEntity]]:
         """This only returns class - parent pairs only if parent is in the same data model"""
         class_subclass_pairs: dict[T_ClassEntity, list[T_ClassEntity]] = {}
-
-        if not self.rules:
-            return class_subclass_pairs
-
         for cls_ in self._get_classes():
             entity = self._get_cls_entity(cls_)
             class_subclass_pairs[entity] = []
@@ -150,11 +197,9 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
 
                     # This corresponds to importing properties from parent class
                     # making sure that the property is attached to desired child class
-                    property_.class_ = class_
-                    property_.inherited = True
+                    cls._set_cls_entity(property_, class_)
 
                     # need same if we have RDF path to make sure that the starting class is the
-
                     if class_ in class_property_pairs:
                         class_property_pairs[class_].append(property_)
                     else:
@@ -210,48 +255,41 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
                     )
                     continue
 
-                if (only_rdfpath and isinstance(property_.transformation, RDFPath)) or not only_rdfpath:
+                if (
+                    only_rdfpath
+                    and isinstance(property_, InformationProperty)
+                    and isinstance(property_.transformation, RDFPath)
+                ) or not only_rdfpath:
                     processed_properties[prop_entity] = property_
             class_property_pairs[class_] = processed_properties
 
         return class_property_pairs
 
-    def class_linkage(self, consider_inheritance: bool = False) -> pd.DataFrame:
-        """Returns a dataframe with the class linkage of the data model.
+    def class_linkage(self, consider_inheritance: bool = False) -> LinkageSet[T_ClassEntity, T_PropertyEntity]:
+        """Returns a set of class linkages in the data model.
 
         Args:
             consider_inheritance: Whether to consider inheritance or not. Defaults False
 
         Returns:
-            Dataframe with the class linkage of the data model
-        """
 
-        class_linkage = pd.DataFrame(
-            columns=[
-                "source_class",
-                "target_class",
-                "connecting_property",
-                "max_occurrence",
-            ]
-        )
+        """
+        class_linkage = LinkageSet[T_ClassEntity, T_PropertyEntity]()
 
         class_property_pairs = self.classes_with_properties(consider_inheritance)
         properties = list(itertools.chain.from_iterable(class_property_pairs.values()))
 
         for property_ in properties:
-            if property_.type_ == EntityTypes.object_property:
-                new_row = pd.Series(
-                    {
-                        "source_class": property_.class_,
-                        "connecting_property": property_.property_,
-                        "target_class": property_.value_type,
-                        "max_occurrence": property_.max_count,
-                    }
+            object_ = self._get_object(property_)
+            if object_ is not None:
+                class_linkage.add(
+                    Linkage(
+                        source_class=self._get_cls_entity(property_),
+                        connecting_property=self._get_prop_entity(property_),
+                        target_class=object_,
+                        max_occurrence=self._get_max_occurrence(property_),
+                    )
                 )
-                class_linkage = pd.concat([class_linkage, new_row.to_frame().T], ignore_index=True)
-
-        class_linkage.drop_duplicates(inplace=True)
-        class_linkage = class_linkage[["source_class", "connecting_property", "target_class", "max_occurrence"]]
 
         return class_linkage
 
@@ -265,7 +303,7 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
             Set of classes that are connected to other classes
         """
         class_linkage = self.class_linkage(consider_inheritance)
-        return set(class_linkage.source_class.values).union(set(class_linkage.target_class.values))
+        return class_linkage.source_class.union(class_linkage.target_class)
 
     def defined_classes(self, consider_inheritance: bool = False) -> set[T_ClassEntity]:
         """Returns classes that have properties defined for them in the data model.
@@ -313,14 +351,15 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
         sym_pairs: set[tuple[ClassEntity, ClassEntity]] = set()
 
         class_linkage = self.class_linkage(consider_inheritance)
-        if class_linkage.empty:
+        if not class_linkage:
             return sym_pairs
 
-        for _, row in class_linkage.iterrows():
-            source = row.source_class
-            target = row.target_class
-            target_targets = class_linkage[class_linkage.source_class == target].target_class.values
-            if source in target_targets and (source, target) not in sym_pairs:
+        targets_by_source = class_linkage.get_target_classes_by_source()
+        for link in class_linkage:
+            source = link.source_class
+            target = link.target_class
+
+            if source in targets_by_source[source] and (source, target) not in sym_pairs:
                 sym_pairs.add((source, target))
         return sym_pairs
 
@@ -348,79 +387,6 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
             class_dict[entity.suffix] = definition
         return class_dict
 
+    @abstractmethod
     def subset_rules(self, desired_classes: set[T_ClassEntity]) -> T_Rules:
-        """
-        Subset rules to only include desired classes and their properties.
-
-        Args:
-            desired_classes: Desired classes to include in the reduced data model
-
-        Returns:
-            Instance of InformationRules
-
-        !!! note "Inheritance"
-            If desired classes contain a class that is a subclass of another class(es), the parent class(es)
-            will be included in the reduced data model as well even though the parent class(es) are
-            not in the desired classes set. This is to ensure that the reduced data model is
-            consistent and complete.
-
-        !!! note "Partial Reduction"
-            This method does not perform checks if classes that are value types of desired classes
-            properties are part of desired classes. If a class is not part of desired classes, but it
-            is a value type of a property of a class that is part of desired classes, derived reduced
-            rules will be marked as partial.
-
-        !!! note "Validation"
-            This method will attempt to validate the reduced rules with custom validations.
-            If it fails, it will return a partial rules with a warning message, validated
-            only with base Pydantic validators.
-        """
-        if self.rules.metadata.schema_ is not SchemaCompleteness.complete:
-            raise ValueError("Rules are not complete cannot perform reduction!")
-        class_as_dict = self.as_class_dict()
-        class_parents_pairs = self.class_parent_pairs()
-        defined_classes = self.defined_classes(consider_inheritance=True)
-
-        possible_classes = defined_classes.intersection(desired_classes)
-        impossible_classes = desired_classes - possible_classes
-
-        # need to add all the parent classes of the desired classes to the possible classes
-        parents: set[T_ClassEntity] = set()
-        for class_ in possible_classes:
-            parents = parents.union({parent for parent in get_inheritance_path(class_, class_parents_pairs)})
-        possible_classes = possible_classes.union(parents)
-
-        if not possible_classes:
-            logging.error("None of the desired classes are defined in the data model!")
-            raise ValueError("None of the desired classes are defined in the data model!")
-
-        if impossible_classes:
-            logging.warning(f"Could not find the following classes defined in the data model: {impossible_classes}")
-            warnings.warn(
-                f"Could not find the following classes defined in the data model: {impossible_classes}",
-                stacklevel=2,
-            )
-
-        reduced_data_model: dict[str, Any] = {
-            "metadata": self.rules.metadata.model_copy(),
-            "prefixes": (self.rules.prefixes or {}).copy(),
-            "classes": [],
-            "properties": [],
-        }
-
-        logging.info(f"Reducing data model to only include the following classes: {possible_classes}")
-        for class_ in possible_classes:
-            reduced_data_model["classes"].append(class_as_dict[str(class_.suffix)])
-
-        class_property_pairs = self.classes_with_properties(consider_inheritance=False)
-
-        for class_, properties in class_property_pairs.items():
-            if class_ in possible_classes:
-                reduced_data_model["properties"].extend(properties)
-
-        try:
-            return type(self.rules)(**reduced_data_model)
-        except ValidationError as e:
-            warnings.warn(f"Reduced data model is not complete: {e}", stacklevel=2)
-            reduced_data_model["metadata"].schema_ = SchemaCompleteness.partial
-            return type(self.rules).model_construct(**reduced_data_model)
+        raise NotImplementedError

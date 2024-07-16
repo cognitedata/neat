@@ -3,7 +3,13 @@ import warnings
 from cognite.neat.rules.models import AssetRules
 from cognite.neat.rules.models._rdfpath import RDFPath
 from cognite.neat.rules.models.asset import AssetClass, AssetProperty
-from cognite.neat.rules.models.entities import AssetEntity, ClassEntity, EntityTypes, RelationshipEntity
+from cognite.neat.rules.models.entities import (
+    AssetEntity,
+    ClassEntity,
+    EntityTypes,
+    ReferenceEntity,
+    RelationshipEntity,
+)
 
 from ._base import BaseAnalysis
 
@@ -11,11 +17,39 @@ from ._base import BaseAnalysis
 class AssetAnalysis(BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEntity, str]):
     """Assumes analysis over only the complete schema"""
 
+    def _get_reference(self, class_or_property: AssetClass | AssetProperty) -> ReferenceEntity | None:
+        return class_or_property.reference if isinstance(class_or_property.reference, ReferenceEntity) else None
+
+    def _get_cls_entity(self, class_: AssetClass | AssetProperty) -> ClassEntity:
+        return class_.class_
+
+    def _get_prop_entity(self, property_: AssetProperty) -> str:
+        return property_.property_
+
+    def _get_cls_parents(self, class_: AssetClass) -> list[ClassEntity] | None:
+        return list(class_.parent or []) or None
+
+    def _get_reference_rules(self) -> AssetRules | None:
+        return self.rules.reference
+
+    @classmethod
+    def _set_cls_entity(cls, property_: AssetProperty, class_: ClassEntity) -> None:
+        property_.class_ = class_
+
+    def _get_object(self, property_: AssetProperty) -> ClassEntity | None:
+        return property_.value_type if isinstance(property_.value_type, ClassEntity) else None
+
+    def _get_max_occurrence(self, property_: AssetProperty) -> int | float | None:
+        return property_.max_count
+
     def _get_classes(self) -> list[AssetClass]:
         return list(self.rules.classes)
 
     def _get_properties(self) -> list[AssetProperty]:
         return list(self.rules.properties)
+
+    def subset_rules(self, desired_classes: set[ClassEntity]) -> AssetRules:
+        raise NotImplementedError("Method not implemented")
 
     def class_property_pairs(
         self,

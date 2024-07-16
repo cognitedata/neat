@@ -119,7 +119,7 @@ def generate_triples(
         else rules
     )
 
-    class_linkage = InformationAnalysis(rules).class_linkage()
+    class_linkage = InformationAnalysis(rules).class_linkage().to_pandas()
 
     # Remove one of symmetric pairs from class linkage to maintain proper linking
     # among instances of symmetrically linked classes
