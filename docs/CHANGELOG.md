@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.86.0] - 15-07-24
+### Changed
+- `NeatGraphStore.read()` is now iterable utilizing `DESCRIBE` query instead of `CONSTRUCT` query.
+### Improved
+- Order of magnitude improved query speed of instances for downstream graph loaders
+
+
 ## [0.85.12] - 11-07-24
 ### Added
 - Added handling of Json fields in DMS loader

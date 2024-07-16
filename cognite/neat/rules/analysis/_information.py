@@ -5,6 +5,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from cognite.neat.rules.models import SchemaCompleteness
+from cognite.neat.rules.models._rdfpath import Hop
 from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
 from cognite.neat.rules.models.information import (
     InformationClass,
@@ -49,6 +50,15 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
 
     def _get_classes(self) -> list[InformationClass]:
         return list(self.rules.classes)
+
+    def has_hop_transformations(self):
+        return any(
+            prop_.transformation and isinstance(prop_.transformation.traversal, Hop) for prop_ in self.rules.properties
+        )
+
+    def define_property_renaming_config(self) -> dict[str, str]:
+        # placeholder comes in new PR
+        return {}
 
     def subset_rules(self, desired_classes: set[ClassEntity]) -> InformationRules:
         """

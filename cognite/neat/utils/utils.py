@@ -7,20 +7,30 @@ from collections import Counter, OrderedDict
 from collections.abc import Iterable
 from datetime import datetime
 from functools import wraps
-from typing import TypeAlias, cast, overload
+from typing import Literal, TypeAlias, cast, overload
 
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
-from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
+from cognite.client.credentials import (
+    CredentialProvider,
+    OAuthClientCredentials,
+    OAuthInteractive,
+    Token,
+)
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 from pydantic_core import ErrorDetails
 from pyparsing import Any
-from rdflib import Literal, Namespace
+from rdflib import Literal as RdfLiteral
+from rdflib import Namespace
 from rdflib.term import URIRef
 
 from cognite.neat import _version
-from cognite.neat.utils.cdf import CogniteClientConfig, InteractiveCogniteClient, ServiceCogniteClient
+from cognite.neat.utils.cdf import (
+    CogniteClientConfig,
+    InteractiveCogniteClient,
+    ServiceCogniteClient,
+)
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -30,12 +40,15 @@ else:
     UTC = timezone.utc
 
 
-Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
+Triple: TypeAlias = tuple[URIRef, URIRef, RdfLiteral | URIRef]
 
 
 def get_cognite_client_from_config(config: ServiceCogniteClient) -> CogniteClient:
     credentials = OAuthClientCredentials(
-        token_url=config.token_url, client_id=config.client_id, client_secret=config.client_secret, scopes=config.scopes
+        token_url=config.token_url,
+        client_id=config.client_id,
+        client_secret=config.client_secret,
+        scopes=config.scopes,
     )
 
     return _get_cognite_client(config, credentials)
@@ -75,15 +88,25 @@ def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProv
 
 
 @overload
-def remove_namespace_from_uri(*URI: URIRef | str, special_separator: str = "#_") -> str: ...
+def remove_namespace_from_uri(
+    *URI: URIRef | str,
+    special_separator: str = "#_",
+    validation: Literal["full", "prefix"] = "prefix",
+) -> str: ...
 
 
 @overload
-def remove_namespace_from_uri(*URI: tuple[URIRef | str, ...], special_separator: str = "#_") -> tuple[str, ...]: ...
+def remove_namespace_from_uri(
+    *URI: tuple[URIRef | str, ...],
+    special_separator: str = "#_",
+    validation: Literal["full", "prefix"] = "prefix",
+) -> tuple[str, ...]: ...
 
 
 def remove_namespace_from_uri(
-    *URI: URIRef | str | tuple[URIRef | str, ...], special_separator: str = "#_"
+    *URI: URIRef | str | tuple[URIRef | str, ...],
+    special_separator: str = "#_",
+    validation: Literal["full", "prefix"] = "prefix",
 ) -> tuple[str, ...] | str:
     """Removes namespace from URI
 
@@ -93,6 +116,9 @@ def remove_namespace_from_uri(
         special_separator : str
             Special separator to use instead of # or / if present in URI
             Set by default to "#_" which covers special client use case
+        validation: str
+            Validation type to use for URI. If set to "full", URI will be validated using pydantic
+            If set to "prefix", only check if URI starts with http or https will be made
 
     Returns
         Entities id without namespace
@@ -114,11 +140,17 @@ def remove_namespace_from_uri(
 
     output = []
     for u in uris:
-        try:
-            _ = TypeAdapter(HttpUrl).validate_python(u)
-            output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
-        except ValidationError:
-            output.append(str(u))
+        if validation == "full":
+            try:
+                _ = TypeAdapter(HttpUrl).validate_python(u)
+                output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
+            except ValidationError:
+                output.append(str(u))
+        else:
+            if u.lower().startswith("http"):
+                output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
+            else:
+                output.append(str(u))
 
     return tuple(output) if len(output) > 1 else output[0]
 
@@ -154,8 +186,8 @@ def as_neat_compliant_uri(uri: URIRef) -> URIRef:
     return URIRef(f"{namespace}{compliant_uri}")
 
 
-def convert_rdflib_content(content: Literal | URIRef | dict | list) -> Any:
-    if isinstance(content, Literal) or isinstance(content, URIRef):
+def convert_rdflib_content(content: RdfLiteral | URIRef | dict | list) -> Any:
+    if isinstance(content, RdfLiteral) or isinstance(content, URIRef):
         return content.toPython()
     elif isinstance(content, dict):
         return {key: convert_rdflib_content(value) for key, value in content.items()}
@@ -192,7 +224,9 @@ def _traverse(hierarchy: dict, graph: dict, names: list[str]) -> dict:
 
 
 def get_generation_order(
-    class_linkage: pd.DataFrame, parent_col: str = "source_class", child_col: str = "target_class"
+    class_linkage: pd.DataFrame,
+    parent_col: str = "source_class",
+    child_col: str = "target_class",
 ) -> dict:
     parent_child_list = class_linkage[[parent_col, child_col]].values.tolist()
     # Build a directed graph and a list of all names that have no parent
@@ -318,7 +352,9 @@ def generate_exception_report(exceptions: list[dict] | list[ErrorDetails] | None
     return report
 
 
-def _order_expectations_by_type(exceptions: list[dict] | list[ErrorDetails]) -> dict[str, list[str]]:
+def _order_expectations_by_type(
+    exceptions: list[dict] | list[ErrorDetails],
+) -> dict[str, list[str]]:
     exception_dict: dict[str, list[str]] = {}
     for exception in exceptions:
         if not isinstance(exception["loc"], str) and isinstance(exception["loc"], Iterable):
