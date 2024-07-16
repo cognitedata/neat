@@ -38,9 +38,7 @@ class Queries:
             for res in list(self.graph.query(query_statement))
         ]
 
-    def list_instances_ids_of_class(
-        self, class_uri: URIRef, limit: int = -1
-    ) -> list[URIRef]:
+    def list_instances_ids_of_class(self, class_uri: URIRef, limit: int = -1) -> list[URIRef]:
         """Get instances ids for a given class
 
         Args:
@@ -50,11 +48,9 @@ class Queries:
         Returns:
             List of class instance URIs
         """
-        query_statement = (
-            "SELECT DISTINCT ?subject WHERE { ?subject a <class> .} LIMIT X".replace(
-                "class", class_uri
-            ).replace("LIMIT X", "" if limit == -1 else f"LIMIT {limit}")
-        )
+        query_statement = "SELECT DISTINCT ?subject WHERE { ?subject a <class> .} LIMIT X".replace(
+            "class", class_uri
+        ).replace("LIMIT X", "" if limit == -1 else f"LIMIT {limit}")
         return [cast(tuple, res)[0] for res in list(self.graph.query(query_statement))]
 
     def list_instances_of_type(self, class_uri: URIRef) -> list[ResultRow]:
@@ -115,9 +111,7 @@ class Queries:
 
         property_values: dict[str, list[str]] = defaultdict(list)
 
-        for subject, predicate, object_ in cast(
-            list[ResultRow], self.graph.query(f"DESCRIBE <{instance_id}>")
-        ):
+        for subject, predicate, object_ in cast(list[ResultRow], self.graph.query(f"DESCRIBE <{instance_id}>")):
             # We cannot include the RDF.type in case there is a neat:type property
             # or if the object is empty
             if predicate != RDF.type and object_.lower() not in [
@@ -130,9 +124,7 @@ class Queries:
                 # as it reduce time to process triples by 10-15x
                 identifier, property_, value = cast(  # type: ignore[misc]
                     (str, str, str),
-                    remove_namespace_from_uri(
-                        *(subject, predicate, object_), validation="prefix"
-                    ),
+                    remove_namespace_from_uri(*(subject, predicate, object_), validation="prefix"),
                 )  # type: ignore[misc, index]
 
                 if property_renaming_config:
@@ -197,18 +189,12 @@ class Queries:
         return cast(list[ResultRow], list(self.graph.query(query)))
 
     @overload
-    def list_types(
-        self, remove_namespace: Literal[False] = False, limit: int = 25
-    ) -> list[ResultRow]: ...
+    def list_types(self, remove_namespace: Literal[False] = False, limit: int = 25) -> list[ResultRow]: ...
 
     @overload
-    def list_types(
-        self, remove_namespace: Literal[True], limit: int = 25
-    ) -> list[str]: ...
+    def list_types(self, remove_namespace: Literal[True], limit: int = 25) -> list[str]: ...
 
-    def list_types(
-        self, remove_namespace: bool = False, limit: int = 25
-    ) -> list[ResultRow] | list[str]:
+    def list_types(self, remove_namespace: bool = False, limit: int = 25) -> list[ResultRow] | list[str]:
         """List types in the graph store
 
         Args:

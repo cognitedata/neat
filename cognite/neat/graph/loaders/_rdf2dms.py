@@ -65,22 +65,14 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         issues: list[NeatIssue] = []
         data_model: dm.DataModel[dm.View] | None = None
         try:
-            data_model = client.data_modeling.data_models.retrieve(
-                data_model_id, inline_views=True
-            ).latest_version()
+            data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
         except Exception as e:
-            issues.append(
-                loader_issues.MissingDataModelError(
-                    identifier=repr(data_model_id), reason=str(e)
-                )
-            )
+            issues.append(loader_issues.MissingDataModelError(identifier=repr(data_model_id), reason=str(e)))
 
         return cls(graph_store, data_model, instance_space, {}, issues)
 
     @classmethod
-    def from_rules(
-        cls, rules: DMSRules, graph_store: NeatGraphStore, instance_space: str
-    ) -> "DMSLoader":
+    def from_rules(cls, rules: DMSRules, graph_store: NeatGraphStore, instance_space: str) -> "DMSLoader":
         issues: list[NeatIssue] = []
         data_model: dm.DataModel[dm.View] | None = None
         try:
@@ -95,9 +87,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             )
         return cls(graph_store, data_model, instance_space, {}, issues)
 
-    def _load(
-        self, stop_on_exception: bool = False
-    ) -> Iterable[dm.InstanceApply | NeatIssue]:
+    def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue]:
         if self._issues.has_errors and stop_on_exception:
             raise self._issues.as_exception()
         elif self._issues.has_errors:
@@ -118,20 +108,14 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             for identifier, properties in self.graph_store.read(class_name):
                 try:
-                    yield self._create_node(
-                        identifier, properties, pydantic_cls, view_id
-                    )
+                    yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
-                    error = loader_issues.InvalidInstanceError(
-                        type_="node", identifier=identifier, reason=str(e)
-                    )
+                    error = loader_issues.InvalidInstanceError(type_="node", identifier=identifier, reason=str(e))
                     tracker.issue(error)
                     if stop_on_exception:
                         raise error.as_exception() from e
                     yield error
-                yield from self._create_edges(
-                    identifier, properties, edge_by_properties, tracker
-                )
+                yield from self._create_edges(identifier, properties, edge_by_properties, tracker)
             tracker.finish(repr(view_id))
 
     def write_to_file(self, filepath: Path) -> None:
@@ -146,9 +130,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             }.get(type(item))
             if key is None:
                 # This should never happen, and is a bug in neat
-                raise ValueError(
-                    f"Item {item} is not supported. This is a bug in neat please report it."
-                )
+                raise ValueError(f"Item {item} is not supported. This is a bug in neat please report it.")
             dumped[key].append(item.dump())
         with filepath.open("w", encoding=self._encoding, newline=self._new_line) as f:
             if filepath.suffix == ".json":
@@ -197,9 +179,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 field_definitions[prop_name] = (python_type, default_value)
 
         def parse_list(cls, value: Any, info: ValidationInfo) -> list[str]:
-            if isinstance(value, list) and list.__name__ not in _get_field_value_types(
-                cls, info
-            ):
+            if isinstance(value, list) and list.__name__ not in _get_field_value_types(cls, info):
                 if len(value) == 1:
                     return value[0]
                 raise ValueError(f"Got multiple values for {info.field_name}: {value}")
@@ -213,13 +193,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 try:
                     return json.loads(value)
                 except json.JSONDecodeError as error:
-                    raise ValueError(
-                        f"Not valid JSON string for {info.field_name}: {value}, error {error}"
-                    ) from error
+                    raise ValueError(f"Not valid JSON string for {info.field_name}: {value}, error {error}") from error
             else:
-                raise ValueError(
-                    f"Expect valid JSON string or dict for {info.field_name}: {value}"
-                )
+                raise ValueError(f"Expect valid JSON string or dict for {info.field_name}: {value}")
 
         if json_fields:
             validators["parse_json_string"] = field_validator(*json_fields, mode="before")(parse_json_string)  # type: ignore[assignment, arg-type]
@@ -228,14 +204,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         if direct_relation_by_property:
 
-            def parse_direct_relation(
-                cls, value: list, info: ValidationInfo
-            ) -> dict | list[dict]:
+            def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
                 if cls.model_fields[info.field_name].annotation is list:
-                    return [
-                        {"space": self.instance_space, "externalId": v} for v in value
-                    ]
+                    return [{"space": self.instance_space, "externalId": v} for v in value]
                 elif value:
                     return {"space": self.instance_space, "externalId": value[0]}
                 return {}
@@ -260,11 +232,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             space=self.instance_space,
             external_id=identifier,
             # type=#RDF type
-            sources=[
-                dm.NodeOrEdgeData(
-                    source=view_id, properties=dict(created.model_dump().items())
-                )
-            ],
+            sources=[dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump().items()))],
         )
 
     def _create_edges(
@@ -290,15 +258,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 external_id = f"{identifier}.{prop}.{target}"
                 yield dm.EdgeApply(
                     space=self.instance_space,
-                    external_id=(
-                        external_id
-                        if len(external_id) < 256
-                        else create_sha256_hash(external_id)
-                    ),
+                    external_id=(external_id if len(external_id) < 256 else create_sha256_hash(external_id)),
                     type=edge.type,
-                    start_node=dm.DirectRelationReference(
-                        self.instance_space, identifier
-                    ),
+                    start_node=dm.DirectRelationReference(self.instance_space, identifier),
                     end_node=dm.DirectRelationReference(self.instance_space, target),
                 )
 
@@ -342,14 +304,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 "Nodes": upserted.nodes,
                 "Edges": upserted.edges,
             }.items():
-                result = UploadResult[InstanceId](
-                    name=instance_type, issues=read_issues
-                )
+                result = UploadResult[InstanceId](name=instance_type, issues=read_issues)
                 for instance in instances:  # type: ignore[attr-defined]
-                    if (
-                        instance.was_modified
-                        and instance.created_time == instance.last_updated_time
-                    ):
+                    if instance.was_modified and instance.created_time == instance.last_updated_time:
                         result.created.add(instance.as_id())
                     elif instance.was_modified:
                         result.changed.add(instance.as_id())
@@ -359,7 +316,4 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
 
 def _get_field_value_types(cls, info):
-    return [
-        type_.__name__
-        for type_ in get_args(cls.model_fields[info.field_name].annotation)
-    ]
+    return [type_.__name__ for type_ in get_args(cls.model_fields[info.field_name].annotation)]
