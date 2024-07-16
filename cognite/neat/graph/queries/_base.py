@@ -109,12 +109,12 @@ class Queries:
             Dictionary of instance properties
         """
 
-        predicate_object: dict[str, list[str]] = defaultdict(list)
+        property_values: dict[str, list[str]] = defaultdict(list)
 
-        for subject, predicate, object in cast(list[ResultRow], self.graph.query(f"DESCRIBE <{instance_id}>")):
+        for subject, predicate, object_ in cast(list[ResultRow], self.graph.query(f"DESCRIBE <{instance_id}>")):
             # We cannot include the RDF.type in case there is a neat:type property
             # or if the object is empty
-            if predicate != RDF.type and object.lower() not in [
+            if predicate != RDF.type and object_.lower() not in [
                 "",
                 "none",
                 "nan",
@@ -122,15 +122,20 @@ class Queries:
             ]:
                 # we are skipping deep validation with Pydantic to remove namespace here
                 # as it reduce time to process triples by 10-15x
-                subject, predicate, object = remove_namespace_from_uri(
-                    *(subject, predicate, object), validation="prefix"
+                identifier, property_, value = cast(  # type: ignore[misc, index]
+                    (str, str, str),
+                    remove_namespace_from_uri(*(subject, predicate, object_), validation="prefix"),
                 )  # type: ignore[misc, index]
-                if property_renaming_config:
-                    predicate = property_renaming_config.get(predicate, predicate)
 
-                predicate_object[predicate].append(object)
-        if predicate_object:
-            return (cast(str, subject), predicate_object)
+                if property_renaming_config:
+                    predicate = property_renaming_config.get(property_, property_)
+
+                property_values[property_].append(value)
+        if property_values:
+            return (
+                identifier,
+                property_values,
+            )
         else:
             return ()  # type: ignore [return-value]
 
