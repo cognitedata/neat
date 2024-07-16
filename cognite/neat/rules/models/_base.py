@@ -151,7 +151,7 @@ class DataModelType(StrEnum):
 class RoleTypes(StrEnum):
     domain_expert = "domain expert"
     information = "information architect"
-    asset_architect = "asset architect"
+    asset = "asset architect"
     dms = "DMS Architect"
 
 

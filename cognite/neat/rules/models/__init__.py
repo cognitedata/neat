@@ -9,7 +9,7 @@ from .dms._schema import DMSSchema
 RULES_PER_ROLE: dict[RoleTypes, type[DomainRules] | type[InformationRules] | type[AssetRules] | type[DMSRules]] = {
     RoleTypes.domain_expert: DomainRules,
     RoleTypes.information: InformationRules,
-    RoleTypes.asset_architect: AssetRules,
+    RoleTypes.asset: AssetRules,
     RoleTypes.dms: DMSRules,
 }
 
