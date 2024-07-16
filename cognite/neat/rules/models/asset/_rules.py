@@ -35,7 +35,7 @@ else:
 
 
 class AssetMetadata(InformationMetadata):
-    role: ClassVar[RoleTypes] = RoleTypes.asset_architect
+    role: ClassVar[RoleTypes] = RoleTypes.asset
 
 
 class AssetClass(InformationClass): ...
@@ -148,12 +148,12 @@ class AssetRules(BaseRules):
     def as_domain_rules(self) -> DomainRules:
         from ._converter import _AssetRulesConverter
 
-        return _AssetRulesConverter(self.as_information_architect_rules()).as_domain_rules()
+        return _AssetRulesConverter(self.as_information_rules()).as_domain_rules()
 
-    def as_dms_architect_rules(self) -> "DMSRules":
+    def as_dms_rules(self) -> "DMSRules":
         from ._converter import _AssetRulesConverter
 
-        return _AssetRulesConverter(self.as_information_architect_rules()).as_dms_architect_rules()
+        return _AssetRulesConverter(self.as_information_rules()).as_dms_rules()
 
-    def as_information_architect_rules(self) -> InformationRules:
+    def as_information_rules(self) -> InformationRules:
         return InformationRules.model_validate(self.model_dump())

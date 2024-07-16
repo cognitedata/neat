@@ -118,7 +118,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         if isinstance(rules, DMSRules):
             dms_rules = rules
         elif isinstance(rules, InformationRules):
-            dms_rules = rules.as_dms_architect_rules()
+            dms_rules = rules.as_dms_rules()
         else:
             raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
         return dms_rules.as_schema(include_pipeline=self.export_pipeline, instance_space=self.instance_space)

@@ -58,7 +58,7 @@ _DEFAULT_VERSION = "1"
 
 
 class DMSMetadata(BaseMetadata):
-    role: ClassVar[RoleTypes] = RoleTypes.dms_architect
+    role: ClassVar[RoleTypes] = RoleTypes.dms
     data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
     schema_: SchemaCompleteness = Field(alias="schema")
     extension: ExtensionCategory = ExtensionCategory.addition
@@ -382,10 +382,10 @@ class DMSRules(BaseRules):
 
         return _DMSExporter(self, include_pipeline, instance_space).to_schema()
 
-    def as_information_architect_rules(self) -> "InformationRules":
+    def as_information_rules(self) -> "InformationRules":
         from ._converter import _DMSRulesConverter
 
-        return _DMSRulesConverter(self).as_information_architect_rules()
+        return _DMSRulesConverter(self).as_information_rules()
 
     def as_domain_expert_rules(self) -> DomainRules:
         from ._converter import _DMSRulesConverter

@@ -36,9 +36,9 @@ SOURCE_SHEET__TARGET_FIELD__HEADERS = [
         "Properties",
         {
             RoleTypes.domain_expert: "Property",
-            RoleTypes.information_architect: "Property",
-            RoleTypes.asset_architect: "Property",
-            RoleTypes.dms_architect: "View Property",
+            RoleTypes.information: "Property",
+            RoleTypes.asset: "Property",
+            RoleTypes.dms: "View Property",
         },
     ),
     ("Classes", "Classes", "Class"),
@@ -334,9 +334,9 @@ class GoogleSheetImporter(BaseImporter):
 
         if role == RoleTypes.domain_expert:
             output = rules_model.model_validate(sheets)
-        elif role == RoleTypes.information_architect:
+        elif role == RoleTypes.information:
             output = rules_model.model_validate(sheets)
-        elif role == RoleTypes.dms_architect:
+        elif role == RoleTypes.dms:
             output = rules_model.model_validate(sheets)
         else:
             raise ValueError(f"Role {role} is not valid.")

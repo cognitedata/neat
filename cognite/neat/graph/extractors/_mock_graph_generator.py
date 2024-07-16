@@ -42,7 +42,7 @@ class MockGraphGenerator(BaseExtractor):
         allow_isolated_classes: bool = True,
     ):
         if isinstance(rules, DMSRules):
-            self.rules = rules.as_information_architect_rules()
+            self.rules = rules.as_information_rules()
         elif isinstance(rules, InformationRules):
             self.rules = rules
         else:

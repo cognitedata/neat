@@ -59,7 +59,7 @@ else:
 
 
 class InformationMetadata(BaseMetadata):
-    role: ClassVar[RoleTypes] = RoleTypes.information_architect
+    role: ClassVar[RoleTypes] = RoleTypes.information
     data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
     schema_: SchemaCompleteness = Field(SchemaCompleteness.partial, alias="schema")
     extension: ExtensionCategoryType | None = ExtensionCategory.addition
@@ -348,7 +348,7 @@ class InformationRules(BaseRules):
 
         return _InformationRulesConverter(self).as_asset_architect_rules()
 
-    def as_dms_architect_rules(self) -> "DMSRules":
+    def as_dms_rules(self) -> "DMSRules":
         from ._converter import _InformationRulesConverter
 
-        return _InformationRulesConverter(self).as_dms_architect_rules()
+        return _InformationRulesConverter(self).as_dms_rules()

@@ -150,9 +150,9 @@ class DataModelType(StrEnum):
 
 class RoleTypes(StrEnum):
     domain_expert = "domain expert"
-    information_architect = "information architect"
-    asset_architect = "asset architect"
-    dms_architect = "DMS Architect"
+    information = "information architect"
+    asset = "asset architect"
+    dms = "DMS Architect"
 
 
 class MatchType(StrEnum):
