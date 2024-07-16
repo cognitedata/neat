@@ -38,7 +38,9 @@ class Queries:
             for res in list(self.graph.query(query_statement))
         ]
 
-    def list_instances_ids_of_class(self, class_uri: URIRef, limit: int = -1) -> list[URIRef]:
+    def list_instances_ids_of_class(
+        self, class_uri: URIRef, limit: int = -1
+    ) -> list[URIRef]:
         """Get instances ids for a given class
 
         Args:
@@ -48,9 +50,11 @@ class Queries:
         Returns:
             List of class instance URIs
         """
-        query_statement = "SELECT DISTINCT ?subject WHERE { ?subject a <class> .} LIMIT X".replace(
-            "class", class_uri
-        ).replace("LIMIT X", "" if limit == -1 else f"LIMIT {limit}")
+        query_statement = (
+            "SELECT DISTINCT ?subject WHERE { ?subject a <class> .} LIMIT X".replace(
+                "class", class_uri
+            ).replace("LIMIT X", "" if limit == -1 else f"LIMIT {limit}")
+        )
         return [cast(tuple, res)[0] for res in list(self.graph.query(query_statement))]
 
     def list_instances_of_type(self, class_uri: URIRef) -> list[ResultRow]:
@@ -98,7 +102,7 @@ class Queries:
         self,
         instance_id: URIRef,
         property_renaming_config: dict | None = None,
-    ) -> dict[str, dict[str, list[str]]]:
+    ) -> tuple[str, dict[str, list[str]]]:
         """DESCRIBE instance for a given class from the graph store
 
         Args:
@@ -109,12 +113,14 @@ class Queries:
             Dictionary of instance properties
         """
 
-        result: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+        property_values: dict[str, list[str]] = defaultdict(list)
 
-        for subject, predicate, object in cast(list[ResultRow], self.graph.query(f"DESCRIBE <{instance_id}>")):
+        for subject, predicate, object_ in cast(
+            list[ResultRow], self.graph.query(f"DESCRIBE <{instance_id}>")
+        ):
             # We cannot include the RDF.type in case there is a neat:type property
             # or if the object is empty
-            if predicate != RDF.type and object.lower() not in [
+            if predicate != RDF.type and object_.lower() not in [
                 "",
                 "none",
                 "nan",
@@ -122,15 +128,24 @@ class Queries:
             ]:
                 # we are skipping deep validation with Pydantic to remove namespace here
                 # as it reduce time to process triples by 10-15x
-                subject, predicate, object = remove_namespace_from_uri(
-                    *(subject, predicate, object), deep_validation=False
+                identifier, property_, value = cast(  # type: ignore[misc]
+                    (str, str, str),
+                    remove_namespace_from_uri(
+                        *(subject, predicate, object_), validation="prefix"
+                    ),
                 )  # type: ignore[misc, index]
+
                 if property_renaming_config:
-                    predicate = property_renaming_config.get(predicate, predicate)
+                    predicate = property_renaming_config.get(property_, property_)
 
-                result[subject][predicate].append(object)
-
-        return result
+                property_values[property_].append(value)
+        if property_values:
+            return (
+                identifier,
+                property_values,
+            )
+        else:
+            return ()  # type: ignore [return-value]
 
     def construct_instances_of_class(
         self,
@@ -182,12 +197,18 @@ class Queries:
         return cast(list[ResultRow], list(self.graph.query(query)))
 
     @overload
-    def list_types(self, remove_namespace: Literal[False] = False, limit: int = 25) -> list[ResultRow]: ...
+    def list_types(
+        self, remove_namespace: Literal[False] = False, limit: int = 25
+    ) -> list[ResultRow]: ...
 
     @overload
-    def list_types(self, remove_namespace: Literal[True], limit: int = 25) -> list[str]: ...
+    def list_types(
+        self, remove_namespace: Literal[True], limit: int = 25
+    ) -> list[str]: ...
 
-    def list_types(self, remove_namespace: bool = False, limit: int = 25) -> list[ResultRow] | list[str]:
+    def list_types(
+        self, remove_namespace: bool = False, limit: int = 25
+    ) -> list[ResultRow] | list[str]:
         """List types in the graph store
 
         Args:

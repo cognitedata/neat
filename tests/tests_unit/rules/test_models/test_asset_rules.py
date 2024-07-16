@@ -71,6 +71,6 @@ class TestAssetRules:
 
     def test_conversion_between_roles(self, david_rules: InformationRules) -> None:
         asset_rules = david_rules.as_asset_architect_rules()
-        information_rules = asset_rules.as_information_architect_rules()
+        information_rules = asset_rules.as_information_rules()
 
         assert asset_rules.model_dump() == information_rules.as_asset_architect_rules().model_dump()

@@ -55,10 +55,10 @@ class BaseImporter(ABC):
 
         if rules.metadata.role is role or role is None:
             output = rules
-        elif isinstance(rules, DMSRules) or isinstance(rules, AssetRules) and role is RoleTypes.information_architect:
-            output = rules.as_information_architect_rules()
-        elif isinstance(rules, InformationRules) or isinstance(rules, AssetRules) and role is RoleTypes.dms_architect:
-            output = rules.as_dms_architect_rules()
+        elif isinstance(rules, DMSRules) or isinstance(rules, AssetRules) and role is RoleTypes.information:
+            output = rules.as_information_rules()
+        elif isinstance(rules, InformationRules) or isinstance(rules, AssetRules) and role is RoleTypes.dms:
+            output = rules.as_dms_rules()
         else:
             raise NotImplementedError(f"Role {role} is not supported for {type(rules).__name__} rules")
 

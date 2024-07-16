@@ -1,6 +1,5 @@
 from collections import Counter
 from collections.abc import Callable, Sequence
-from typing import cast
 
 import cognite.neat.rules.issues.importing
 from cognite.neat.rules import issues
@@ -22,7 +21,7 @@ from cognite.neat.rules.importers._dtdl2rules.spec import (
 )
 from cognite.neat.rules.issues import IssueList, ValidationIssue
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_NAME, DataType, Json, String
-from cognite.neat.rules.models.entities import ClassEntity, ParentClassEntity
+from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import InformationClass, InformationProperty
 
 
@@ -89,12 +88,7 @@ class _DTDLConverter:
             name=item.display_name,
             description=item.description,
             comment=item.comment,
-            parent=[
-                cast(ParentClassEntity, parent_entity)
-                for parent in item.extends or []
-                if isinstance(parent_entity := ParentClassEntity.load(parent.as_class_id()), ParentClassEntity)
-            ]
-            or None,
+            parent=[parent.as_class_id() for parent in item.extends or []] or None,
         )
         self.classes.append(class_)
         for sub_item_or_id in item.contents or []:

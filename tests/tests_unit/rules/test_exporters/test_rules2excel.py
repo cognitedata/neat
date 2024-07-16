@@ -144,7 +144,7 @@ def metadata_creator_test_cases():
         ),
         now,
         {
-            "role": RoleTypes.dms_architect.value,
+            "role": RoleTypes.dms.value,
             "dataModelType": DataModelType.solution.value,
             "schema": SchemaCompleteness.complete.value,
             "space": "sp_solution",
@@ -174,7 +174,7 @@ def metadata_creator_test_cases():
         ),
         now,
         {
-            "role": RoleTypes.dms_architect.value,
+            "role": RoleTypes.dms.value,
             "dataModelType": DataModelType.solution.value,
             "schema": SchemaCompleteness.extended.value,
             "extension": ExtensionCategory.addition.value,
@@ -206,7 +206,7 @@ def metadata_creator_test_cases():
         ),
         now,
         {
-            "role": RoleTypes.dms_architect.value,
+            "role": RoleTypes.dms.value,
             "dataModelType": DataModelType.enterprise.value,
             "schema": SchemaCompleteness.extended.value,
             "extension": ExtensionCategory.addition.value,

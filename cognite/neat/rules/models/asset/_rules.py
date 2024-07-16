@@ -14,7 +14,6 @@ from cognite.neat.rules.models.entities import (
     CdfResourceEntityList,
     ClassEntity,
     MultiValueTypeInfo,
-    ParentClassEntity,
     Undefined,
 )
 from cognite.neat.rules.models.information import (
@@ -35,7 +34,7 @@ else:
 
 
 class AssetMetadata(InformationMetadata):
-    role: ClassVar[RoleTypes] = RoleTypes.asset_architect
+    role: ClassVar[RoleTypes] = RoleTypes.asset
 
 
 class AssetClass(InformationClass): ...
@@ -94,7 +93,7 @@ class AssetRules(BaseRules):
         # update parent classes
         for class_ in self.classes:
             if class_.parent:
-                for parent in cast(list[ParentClassEntity], class_.parent):
+                for parent in class_.parent:
                     if not isinstance(parent.prefix, str):
                         parent.prefix = self.metadata.prefix
             if class_.class_.prefix is Undefined:
@@ -148,12 +147,12 @@ class AssetRules(BaseRules):
     def as_domain_rules(self) -> DomainRules:
         from ._converter import _AssetRulesConverter
 
-        return _AssetRulesConverter(self.as_information_architect_rules()).as_domain_rules()
+        return _AssetRulesConverter(self.as_information_rules()).as_domain_rules()
 
-    def as_dms_architect_rules(self) -> "DMSRules":
+    def as_dms_rules(self) -> "DMSRules":
         from ._converter import _AssetRulesConverter
 
-        return _AssetRulesConverter(self.as_information_architect_rules()).as_dms_architect_rules()
+        return _AssetRulesConverter(self.as_information_rules()).as_dms_rules()
 
-    def as_information_architect_rules(self) -> InformationRules:
+    def as_information_rules(self) -> InformationRules:
         return InformationRules.model_validate(self.model_dump())

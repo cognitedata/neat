@@ -252,13 +252,6 @@ class ClassEntity(Entity):
         return ContainerEntity(space=space, externalId=str(self.suffix))
 
 
-class ParentClassEntity(ClassEntity):
-    type_: ClassVar[EntityTypes] = EntityTypes.parent_class
-
-    def as_class_entity(self) -> ClassEntity:
-        return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
-
-
 class UnknownEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: _UndefinedType = Undefined
@@ -555,8 +548,8 @@ def _generate_cdf_resource_list(v: Any) -> list[AssetEntity | RelationshipEntity
     return results  # type: ignore
 
 
-ParentEntityList = Annotated[
-    list[ParentClassEntity],
+ClassEntityList = Annotated[
+    list[ClassEntity],
     BeforeValidator(_split_str),
     PlainSerializer(
         _join_str,

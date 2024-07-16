@@ -79,7 +79,7 @@ class _InformationRulesConverter:
             prefixes=self.rules.prefixes,
         )
 
-    def as_dms_architect_rules(self) -> "DMSRules":
+    def as_dms_rules(self) -> "DMSRules":
         from cognite.neat.rules.models.dms._rules import (
             DMSContainer,
             DMSProperty,
@@ -112,8 +112,8 @@ class _InformationRulesConverter:
             for cls_ in self.rules.classes
         ]
 
-        last_dms_rules = self.rules.last.as_dms_architect_rules() if self.rules.last else None
-        ref_dms_rules = self.rules.reference.as_dms_architect_rules() if self.rules.reference else None
+        last_dms_rules = self.rules.last.as_dms_rules() if self.rules.last else None
+        ref_dms_rules = self.rules.reference.as_dms_rules() if self.rules.reference else None
 
         class_by_entity = {cls_.class_: cls_ for cls_ in self.rules.classes}
         if self.rules.last:

@@ -11,7 +11,6 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     DMSUnknownEntity,
-    ParentClassEntity,
     ReferenceEntity,
     UnknownEntity,
     ViewEntity,
@@ -32,7 +31,7 @@ class _DMSRulesConverter:
     def as_domain_rules(self) -> "DomainRules":
         raise NotImplementedError("DomainRules not implemented yet")
 
-    def as_information_architect_rules(
+    def as_information_rules(
         self,
     ) -> "InformationRules":
         from cognite.neat.rules.models.information._rules import (
@@ -52,7 +51,7 @@ class _DMSRulesConverter:
                 description=view.description,
                 parent=[
                     # we do not want a version in class as we use URI for the class
-                    ParentClassEntity(prefix=implemented_view.prefix, suffix=implemented_view.suffix)
+                    implemented_view.as_class(skip_version=True)
                     # We only want parents in the same namespace, parent in a different namespace is a reference
                     for implemented_view in view.implements or []
                     if implemented_view.prefix == view.class_.prefix
@@ -94,8 +93,8 @@ class _DMSRulesConverter:
             metadata=metadata,
             properties=SheetList[InformationProperty](data=properties),
             classes=SheetList[InformationClass](data=classes),
-            last=self.dms.last.as_information_architect_rules() if self.dms.last else None,
-            reference=self.dms.reference.as_information_architect_rules() if self.dms.reference else None,
+            last=self.dms.last.as_information_rules() if self.dms.last else None,
+            reference=self.dms.reference.as_information_rules() if self.dms.reference else None,
         )
 
     @classmethod

@@ -31,21 +31,21 @@ async def convert_data_model_to_rules(file: UploadFile):
 
     # read as Excel rules
     if suffix == ".xlsx":
-        rules, issues = importers.ExcelImporter(filepath=temp_filepath).to_rules(role=RoleTypes.dms_architect)
+        rules, issues = importers.ExcelImporter(filepath=temp_filepath).to_rules(role=RoleTypes.dms)
 
     # load as OWL
     elif suffix in [".ttl", ".owl"]:
-        rules, issues = importers.OWLImporter(filepath=temp_filepath).to_rules(role=RoleTypes.dms_architect)
+        rules, issues = importers.OWLImporter(filepath=temp_filepath).to_rules(role=RoleTypes.dms)
 
     # load as YAML
     elif suffix in [".yml", ".yaml"]:
-        rules, issues = importers.YAMLImporter.from_file(temp_filepath).to_rules(role=RoleTypes.dms_architect)
+        rules, issues = importers.YAMLImporter.from_file(temp_filepath).to_rules(role=RoleTypes.dms)
 
     # load as JSON
     elif suffix == ".json":
         with temp_filepath.open() as temp:
             json_data = json.load(temp)
-        rules, issues = importers.YAMLImporter(raw_data=json.loads(json_data)).to_rules(role=RoleTypes.dms_architect)
+        rules, issues = importers.YAMLImporter(raw_data=json.loads(json_data)).to_rules(role=RoleTypes.dms)
 
     # Remove the temporary file
     temp_filepath.unlink()

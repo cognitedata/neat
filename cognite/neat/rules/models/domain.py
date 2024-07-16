@@ -5,7 +5,7 @@ from pydantic import Field, field_serializer, field_validator, model_serializer
 from pydantic_core.core_schema import SerializationInfo
 
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.entities import ClassEntity, ParentEntityList
+from cognite.neat.rules.models.entities import ClassEntity, ClassEntityList
 
 from ._base import (
     BaseMetadata,
@@ -23,6 +23,9 @@ class DomainMetadata(BaseMetadata):
 
     def as_identifier(self) -> str:
         return "DomainRules"
+
+    def get_prefix(self) -> str:
+        return "domain"
 
 
 class DomainProperty(SheetEntity):
@@ -51,7 +54,7 @@ class DomainClass(SheetEntity):
     class_: ClassEntity = Field(alias="Class")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(None, alias="Description")
-    parent: ParentEntityList | None = Field(alias="Parent Class")
+    parent: ClassEntityList | None = Field(alias="Parent Class")
 
 
 class DomainRules(BaseRules):

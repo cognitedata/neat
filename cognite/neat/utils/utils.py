@@ -7,7 +7,7 @@ from collections import Counter, OrderedDict
 from collections.abc import Iterable
 from datetime import datetime
 from functools import wraps
-from typing import TypeAlias, cast, overload
+from typing import Literal, TypeAlias, cast, overload
 
 import pandas as pd
 from cognite.client import ClientConfig, CogniteClient
@@ -21,7 +21,8 @@ from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 from pydantic_core import ErrorDetails
 from pyparsing import Any
-from rdflib import Literal, Namespace
+from rdflib import Literal as RdfLiteral
+from rdflib import Namespace
 from rdflib.term import URIRef
 
 from cognite.neat import _version
@@ -39,7 +40,7 @@ else:
     UTC = timezone.utc
 
 
-Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
+Triple: TypeAlias = tuple[URIRef, URIRef, RdfLiteral | URIRef]
 
 
 def get_cognite_client_from_config(config: ServiceCogniteClient) -> CogniteClient:
@@ -68,7 +69,9 @@ def get_cognite_client_interactive(config: InteractiveCogniteClient) -> CogniteC
     return _get_cognite_client(config, credentials)
 
 
-def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProvider) -> CogniteClient:
+def _get_cognite_client(
+    config: CogniteClientConfig, credentials: CredentialProvider
+) -> CogniteClient:
     logging.info(f"Creating CogniteClient with parameters : {config}")
 
     # The client name is used for aggregated logging of Neat Usage
@@ -90,7 +93,7 @@ def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProv
 def remove_namespace_from_uri(
     *URI: URIRef | str,
     special_separator: str = "#_",
-    deep_validation: bool = False,
+    validation: Literal["full", "prefix"] = "prefix",
 ) -> str: ...
 
 
@@ -98,14 +101,14 @@ def remove_namespace_from_uri(
 def remove_namespace_from_uri(
     *URI: tuple[URIRef | str, ...],
     special_separator: str = "#_",
-    deep_validation: bool = False,
+    validation: Literal["full", "prefix"] = "prefix",
 ) -> tuple[str, ...]: ...
 
 
 def remove_namespace_from_uri(
     *URI: URIRef | str | tuple[URIRef | str, ...],
     special_separator: str = "#_",
-    deep_validation: bool = False,
+    validation: Literal["full", "prefix"] = "prefix",
 ) -> tuple[str, ...] | str:
     """Removes namespace from URI
 
@@ -115,6 +118,9 @@ def remove_namespace_from_uri(
         special_separator : str
             Special separator to use instead of # or / if present in URI
             Set by default to "#_" which covers special client use case
+        validation: str
+            Validation type to use for URI. If set to "full", URI will be validated using pydantic
+            If set to "prefix", only check if URI starts with http or https will be made
 
     Returns
         Entities id without namespace
@@ -136,15 +142,27 @@ def remove_namespace_from_uri(
 
     output = []
     for u in uris:
-        if deep_validation:
+        if validation == "full":
             try:
                 _ = TypeAdapter(HttpUrl).validate_python(u)
-                output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
+                output.append(
+                    u.split(
+                        special_separator
+                        if special_separator in u
+                        else "#" if "#" in u else "/"
+                    )[-1]
+                )
             except ValidationError:
                 output.append(str(u))
         else:
             if u.lower().startswith("http"):
-                output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
+                output.append(
+                    u.split(
+                        special_separator
+                        if special_separator in u
+                        else "#" if "#" in u else "/"
+                    )[-1]
+                )
             else:
                 output.append(str(u))
 
@@ -182,8 +200,8 @@ def as_neat_compliant_uri(uri: URIRef) -> URIRef:
     return URIRef(f"{namespace}{compliant_uri}")
 
 
-def convert_rdflib_content(content: Literal | URIRef | dict | list) -> Any:
-    if isinstance(content, Literal) or isinstance(content, URIRef):
+def convert_rdflib_content(content: RdfLiteral | URIRef | dict | list) -> Any:
+    if isinstance(content, RdfLiteral) or isinstance(content, URIRef):
         return content.toPython()
     elif isinstance(content, dict):
         return {key: convert_rdflib_content(value) for key, value in content.items()}
@@ -226,7 +244,9 @@ def get_generation_order(
 ) -> dict:
     parent_child_list = class_linkage[[parent_col, child_col]].values.tolist()
     # Build a directed graph and a list of all names that have no parent
-    graph: dict[str, set[str]] = {name: set() for tup in parent_child_list for name in tup}
+    graph: dict[str, set[str]] = {
+        name: set() for tup in parent_child_list for name in tup
+    }
     has_parent = {name: False for tup in parent_child_list for name in tup}
     for parent, child in parent_child_list:
         graph[parent].add(child)
@@ -238,7 +258,9 @@ def get_generation_order(
     return _traverse({}, graph, roots)
 
 
-def prettify_generation_order(generation_order: dict, depth: dict | None = None, start=-1) -> dict:
+def prettify_generation_order(
+    generation_order: dict, depth: dict | None = None, start=-1
+) -> dict:
     """Prettifies generation order dictionary for easier consumption."""
     depth = depth or {}
     for key, value in generation_order.items():
@@ -249,7 +271,9 @@ def prettify_generation_order(generation_order: dict, depth: dict | None = None,
 
 
 def epoch_now_ms() -> int:
-    return int((datetime.now(UTC) - datetime(1970, 1, 1, tzinfo=UTC)).total_seconds() * 1000)
+    return int(
+        (datetime.now(UTC) - datetime(1970, 1, 1, tzinfo=UTC)).total_seconds() * 1000
+    )
 
 
 def chunker(sequence, chunk_size):
@@ -267,7 +291,9 @@ def retry_decorator(max_retries=2, retry_delay=3, component_name=""):
             previous_exception = None
             for attempt in range(max_retries + 1):
                 try:
-                    logging.debug(f"Attempt {attempt + 1} of {max_retries + 1} for {component_name}")
+                    logging.debug(
+                        f"Attempt {attempt + 1} of {max_retries + 1} for {component_name}"
+                    )
                     return func(*args, **kwargs)
                 except CogniteReadTimeout as e:
                     previous_exception = e
@@ -284,7 +310,11 @@ def retry_decorator(max_retries=2, retry_delay=3, component_name=""):
                     if isinstance(previous_exception, CogniteReadTimeout):
                         # if previous exception was CogniteReadTimeout,
                         # we can't be sure if the items were created or not
-                        if len(e.successful) == 0 and len(e.failed) == 0 and len(e.duplicated) >= 0:
+                        if (
+                            len(e.successful) == 0
+                            and len(e.failed) == 0
+                            and len(e.duplicated) >= 0
+                        ):
                             logging.warning(
                                 f"Duplicate error for {component_name} . All items already exist in CDF. "
                                 "Suppressing error."
@@ -336,7 +366,9 @@ def create_sha256_hash(string: str) -> str:
     return hash_value
 
 
-def generate_exception_report(exceptions: list[dict] | list[ErrorDetails] | None, category: str = "") -> str:
+def generate_exception_report(
+    exceptions: list[dict] | list[ErrorDetails] | None, category: str = ""
+) -> str:
     exceptions_as_dict = _order_expectations_by_type(exceptions) if exceptions else {}
     report = ""
 
@@ -353,7 +385,9 @@ def _order_expectations_by_type(
 ) -> dict[str, list[str]]:
     exception_dict: dict[str, list[str]] = {}
     for exception in exceptions:
-        if not isinstance(exception["loc"], str) and isinstance(exception["loc"], Iterable):
+        if not isinstance(exception["loc"], str) and isinstance(
+            exception["loc"], Iterable
+        ):
             location = f"[{'/'.join(str(e) for e in exception['loc'])}]"
         else:
             location = ""

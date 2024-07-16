@@ -15,7 +15,7 @@ from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.graph.models import Triple
 from cognite.neat.graph.queries import Queries
 from cognite.neat.graph.transformers import Transformers
-from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models import InformationRules
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.utils.auxiliary import local_import
@@ -125,7 +125,9 @@ class NeatGraphStore:
         return cls(graph, rules)
 
     @classmethod
-    def from_oxi_store(cls, storage_dir: Path | None = None, rules: InformationRules | None = None) -> "Self":
+    def from_oxi_store(
+        cls, storage_dir: Path | None = None, rules: InformationRules | None = None
+    ) -> "Self":
         """Creates a NeatGraphStore from an Oxigraph store."""
         local_import("pyoxigraph", "oxi")
         import pyoxigraph
@@ -135,7 +137,9 @@ class NeatGraphStore:
         # Adding support for both oxigraph in-memory and file-based storage
         for i in range(4):
             try:
-                oxi_store = pyoxigraph.Store(path=str(storage_dir) if storage_dir else None)
+                oxi_store = pyoxigraph.Store(
+                    path=str(storage_dir) if storage_dir else None
+                )
                 break
             except OSError as e:
                 if "lock" in str(e) and i < 3:
@@ -153,7 +157,9 @@ class NeatGraphStore:
         _start = datetime.now(timezone.utc)
 
         if isinstance(extractor, RdfFileExtractor):
-            self._parse_file(extractor.filepath, extractor.mime_type, extractor.base_uri)
+            self._parse_file(
+                extractor.filepath, extractor.mime_type, extractor.base_uri
+            )
         else:
             self._add_triples(extractor.extract())
 
@@ -166,7 +172,7 @@ class NeatGraphStore:
             )
         )
 
-    def read(self, class_: str) -> Iterable[dict[str, dict[str, list[str]]]]:
+    def read(self, class_: str) -> Iterable[tuple[str, dict[str, list[str]]]]:
         """Read instances for given view from the graph store."""
 
         if not self.rules:
@@ -175,22 +181,26 @@ class NeatGraphStore:
 
         class_entity = ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
 
-        if class_entity not in [definition.class_ for definition in self.rules.classes.data]:
+        if class_entity not in [
+            definition.class_ for definition in self.rules.classes.data
+        ]:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return None
 
-        if InformationArchitectRulesAnalysis(self.rules).has_hop_transformations():
+        if InformationAnalysis(self.rules).has_hop_transformations():
             warnings.warn(
                 "Rules contain Hop rdfpath, run ReduceHopTraversal transformer first!",
                 stacklevel=2,
             )
             return None
 
-        instance_ids = self.queries.list_instances_ids_of_class(self.rules.metadata.namespace[class_])
-
-        property_renaming_config = InformationArchitectRulesAnalysis(self.rules).define_property_renaming_config(
-            class_entity
+        instance_ids = self.queries.list_instances_ids_of_class(
+            self.rules.metadata.namespace[class_]
         )
+
+        property_renaming_config = InformationAnalysis(
+            self.rules
+        ).define_property_renaming_config()
 
         for instance_id in instance_ids:
             yield self.queries.describe(instance_id, property_renaming_config)
@@ -266,9 +276,14 @@ class NeatGraphStore:
         """Transforms the graph store using a transformer."""
 
         missing_changes = [
-            change for change in transformer._need_changes if not self.provenance.activity_took_place(change)
+            change
+            for change in transformer._need_changes
+            if not self.provenance.activity_took_place(change)
         ]
-        if self.provenance.activity_took_place(type(transformer).__name__) and transformer._use_only_once:
+        if (
+            self.provenance.activity_took_place(type(transformer).__name__)
+            and transformer._use_only_once
+        ):
             warnings.warn(
                 f"Cannot transform graph store with {type(transformer).__name__}, already applied",
                 stacklevel=2,
@@ -296,7 +311,9 @@ class NeatGraphStore:
 
     @property
     def summary(self) -> pd.DataFrame:
-        return pd.DataFrame(self.queries.summarize_instances(), columns=["Type", "Occurrence"])
+        return pd.DataFrame(
+            self.queries.summarize_instances(), columns=["Type", "Occurrence"]
+        )
 
     def _repr_html_(self) -> str:
         provenance = self.provenance._repr_html_()

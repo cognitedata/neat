@@ -51,7 +51,7 @@ def parse_owl_metadata(graph: Graph) -> dict:
 
     raw_metadata = convert_rdflib_content(
         {
-            "role": RoleTypes.information_architect,
+            "role": RoleTypes.information,
             "schema": SchemaCompleteness.partial,
             "prefix": results[1].pop(),
             "namespace": Namespace(results[0].pop()),

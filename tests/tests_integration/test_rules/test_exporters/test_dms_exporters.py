@@ -25,7 +25,7 @@ def alice_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms_architect)
+    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
@@ -34,7 +34,7 @@ def olav_dms_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms_architect)
+    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
@@ -43,7 +43,7 @@ def olav_rebuilt_dms_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms_architect)
+    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
@@ -52,7 +52,7 @@ def svein_harald_dms_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms_architect)
+    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
