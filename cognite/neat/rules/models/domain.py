@@ -24,6 +24,9 @@ class DomainMetadata(BaseMetadata):
     def as_identifier(self) -> str:
         return "DomainRules"
 
+    def get_prefix(self) -> str:
+        return "domain"
+
 
 class DomainProperty(SheetEntity):
     class_: ClassEntity = Field(alias="Class")

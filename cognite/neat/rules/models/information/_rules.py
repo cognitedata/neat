@@ -113,6 +113,9 @@ class InformationMetadata(BaseMetadata):
     def as_identifier(self) -> str:
         return f"{self.prefix}:{self.name}"
 
+    def get_prefix(self) -> str:
+        return self.prefix
+
 
 class InformationClass(SheetEntity):
     """

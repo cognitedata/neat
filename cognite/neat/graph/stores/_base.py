@@ -15,7 +15,7 @@ from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.graph.models import Triple
 from cognite.neat.graph.queries import Queries
 from cognite.neat.graph.transformers import Transformers
-from cognite.neat.rules.analysis import InformationArchitectRulesAnalysis
+from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models import InformationRules
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.utils.auxiliary import local_import
@@ -179,7 +179,7 @@ class NeatGraphStore:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return None
 
-        if InformationArchitectRulesAnalysis(self.rules).has_hop_transformations():
+        if InformationAnalysis(self.rules).has_hop_transformations():
             warnings.warn(
                 "Rules contain Hop rdfpath, run ReduceHopTraversal transformer first!",
                 stacklevel=2,
@@ -188,7 +188,7 @@ class NeatGraphStore:
 
         instance_ids = self.queries.list_instances_ids_of_class(self.rules.metadata.namespace[class_])
 
-        property_renaming_config = InformationArchitectRulesAnalysis(self.rules).define_property_renaming_config()
+        property_renaming_config = InformationAnalysis(self.rules).define_property_renaming_config()
 
         for instance_id in instance_ids:
             yield self.queries.describe(instance_id, property_renaming_config)
