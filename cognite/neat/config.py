@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 import yaml
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_serializer, model_validator
 from yaml import safe_load
 
 from cognite.neat.constants import EXAMPLE_GRAPHS, EXAMPLE_RULES, EXAMPLE_WORKFLOWS
@@ -93,6 +93,30 @@ class Config(BaseModel, arbitrary_types_allowed=True):
                 )
         return data
 
+    @field_serializer("cdf_auth_config", when_used="always", return_type=dict)
+    def backwards_compatible_serialize(cdf_auth_config: EnvironmentVariables) -> dict[str, Any]:
+        output: dict[str, Any] = {}
+        config = cdf_auth_config
+        if config.CDF_PROJECT not in {"Missing", "NOT SET"}:
+            output["project"] = config.CDF_PROJECT
+        if config.CDF_CLUSTER not in {"Missing", "NOT SET"}:
+            output["cluster"] = config.CDF_CLUSTER
+        if config.CDF_URL:
+            output["base_url"] = config.CDF_URL
+        if config.IDP_CLIENT_ID:
+            output["client_id"] = config.IDP_CLIENT_ID
+        if config.IDP_CLIENT_SECRET:
+            output["client_secret"] = config.IDP_CLIENT_SECRET
+        if config.IDP_TOKEN_URL:
+            output["token_url"] = config.IDP_TOKEN_URL
+        if config.IDP_SCOPES:
+            output["scopes"] = config.idp_scopes
+        if config.CDF_TIMEOUT:
+            output["timeout"] = config.CDF_TIMEOUT
+        if config.CDF_MAX_WORKERS:
+            output["max_workers"] = config.CDF_MAX_WORKERS
+        return output
+
     @property
     def _dir_suffix(self) -> str:
         is_test_running = "pytest" in sys.modules
@@ -123,7 +147,7 @@ class Config(BaseModel, arbitrary_types_allowed=True):
 
     def to_yaml(self, filepath: Path):
         # Parse as json to avoid Path and Enum objects
-        dump = json.loads(self.json())
+        dump = json.loads(self.model_dump_json())
 
         with filepath.open("w") as f:
             yaml.safe_dump(dump, f)
@@ -134,19 +158,19 @@ class Config(BaseModel, arbitrary_types_allowed=True):
         # This is to be backwards compatible with the old config
 
         if "NEAT_CDF_BASE_URL" in os.environ:
-            base_url = os.environ["NEAT_CDF_BASE_URL"]
+            base_url: str | None = os.environ["NEAT_CDF_BASE_URL"]
             cluster = base_url.removeprefix("https://").removesuffix(".cognitedata.com")
         else:
-            base_url = missing
+            base_url = None
             cluster = missing
         variables = EnvironmentVariables(
-            CDF_PROJECT=os.environ.get("NEAT_CDF_PROJECT", missing),
+            CDF_PROJECT=os.environ.get("NEAT_CDF_PROJECT"),
             CDF_CLUSTER=cluster,
             CDF_URL=base_url,
-            IDP_CLIENT_ID=os.environ.get("NEAT_CDF_CLIENT_ID", missing),
-            IDP_CLIENT_SECRET=os.environ.get("NEAT_CDF_CLIENT_SECRET", missing),
-            IDP_TOKEN_URL=os.environ.get("NEAT_CDF_TOKEN_URL", missing),
-            IDP_SCOPES=os.environ.get("NEAT_CDF_SCOPES", missing),
+            IDP_CLIENT_ID=os.environ.get("NEAT_CDF_CLIENT_ID"),
+            IDP_CLIENT_SECRET=os.environ.get("NEAT_CDF_CLIENT_SECRET"),
+            IDP_TOKEN_URL=os.environ.get("NEAT_CDF_TOKEN_URL"),
+            IDP_SCOPES=os.environ.get("NEAT_CDF_SCOPES"),
             CDF_TIMEOUT=int(os.environ["NEAT_CDF_CLIENT_TIMEOUT"] if "NEAT_CDF_CLIENT_TIMEOUT" in os.environ else 60),
             CDF_MAX_WORKERS=int(
                 os.environ["NEAT_CDF_CLIENT_MAX_WORKERS"] if "NEAT_CDF_CLIENT_MAX_WORKERS" in os.environ else 3
