@@ -57,7 +57,7 @@ class NeatGraphStoreBase(ABC):
         self.graph = graph or Graph()
         self.base_prefix: str = base_prefix
         self.namespace: Namespace = namespace
-        self.prefixes: dict[str, Namespace] = prefixes if prefixes else get_default_prefixes()
+        self.prefixes: dict[str, Namespace] = prefixes or get_default_prefixes()
 
         self.rdf_store_query_url: str | None = None
         self.rdf_store_update_url: str | None = None
