@@ -1,7 +1,7 @@
-from cognite.neat.utils.exceptions import NeatError
+from cognite.neat.exceptions import NeatException
 
 
-class InvalidStepOutputException(NeatError):
+class InvalidStepOutputException(NeatException):
     type_ = "invalid_step_output"
     code = 400
     description = "The step output is invalid."
@@ -12,7 +12,7 @@ class InvalidStepOutputException(NeatError):
         super().__init__(self.message)
 
 
-class ConfigurationNotSet(NeatError):
+class ConfigurationNotSet(NeatException):
     type_ = "configuration_not_set"
     code = 400
     description = "The configuration is not set."
@@ -29,13 +29,13 @@ class ConfigurationNotSet(NeatError):
         return self.message
 
 
-class StepNotInitialized(NeatError):
+class StepNotInitialized(NeatException):
     def __init__(self, step_name: str):
         self.message = f"Step {step_name} has not been initialized."
         super().__init__(self.message)
 
 
-class StepFlowContextNotInitialized(NeatError):
+class StepFlowContextNotInitialized(NeatException):
     def __init__(self, step_name: str):
         self.message = f"Step {step_name} requires flow context which is missing."
         super().__init__(self.message)
