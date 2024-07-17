@@ -12,7 +12,7 @@ SPACE = "sp_pump_station"
 def main() -> None:
     config = Config.from_yaml(REPO_ROOT / "config.yaml")
     client = config.cdf_auth_config.get_client()
-
+    client.files.list()
     SpaceLoader(client).clean(SPACE)
 
 
