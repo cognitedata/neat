@@ -14,7 +14,6 @@ from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.analysis._asset import AssetAnalysis
 from cognite.neat.rules.models import AssetRules
-from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, CDFLoader
@@ -122,7 +121,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
             return
 
         try:
-            topological_order = AssetAnalysis(self.rules).class_topological_sort()
+            ordered_classes = AssetAnalysis(self.rules).class_topological_sort()
         except Exception as e:
             error = loader_issues.InvalidInstanceError(type_="asset", identifier="topological sort", reason=str(e))
             if stop_on_exception:
@@ -132,18 +131,16 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
         tracker = self._tracker(
             type(self).__name__,
-            [repr(class_) for class_ in topological_order],
+            [repr(class_.id) for class_ in ordered_classes],
             "classes",
         )
 
-        for class_ in topological_order:
-            tracker.start(repr(class_))
+        for class_ in ordered_classes:
+            tracker.start(repr(class_.id))
 
-            property_renaming_config = AssetAnalysis(self.rules).define_property_renaming_config(
-                ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
-            )
+            property_renaming_config = AssetAnalysis(self.rules).define_property_renaming_config(class_)
 
-            for identifier, properties in self.graph_store.read(class_):
+            for identifier, properties in self.graph_store.read(class_.suffix):
                 fields = _process_properties(properties, property_renaming_config)
                 # set data set id and external id
                 fields["data_set_id"] = self.data_set_id
