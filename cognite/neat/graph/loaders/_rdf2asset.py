@@ -16,7 +16,7 @@ from cognite.neat.rules.analysis._asset import AssetAnalysis
 from cognite.neat.rules.models import AssetRules
 from cognite.neat.utils.upload import UploadResult
 
-from ._base import CDFLoader
+from ._base import _END_OF_CLASS, CDFLoader
 
 
 @dataclass(frozen=True)
@@ -110,7 +110,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
         raise NotImplementedError("Not implemented yet, this is placeholder")
 
-    def _load(self, stop_on_exception: bool = False) -> Iterable[AssetWrite | NeatIssue]:
+    def _load(self, stop_on_exception: bool = False) -> Iterable[AssetWrite | NeatIssue | type[_END_OF_CLASS]]:
         if self._issues.has_errors and stop_on_exception:
             raise self._issues.as_exception()
         elif self._issues.has_errors:
@@ -142,6 +142,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     if stop_on_exception:
                         raise error.as_exception() from e
                     yield error
+            yield _END_OF_CLASS
 
     def load_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> Sequence[AssetWrite]:
         # generate assets
