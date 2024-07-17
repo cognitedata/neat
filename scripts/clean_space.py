@@ -1,7 +1,7 @@
 from cognite.neat.config import Config
 from pathlib import Path
 
-from cognite.neat.utils.utils import get_cognite_client_from_config
+
 from cognite.neat.utils.cdf import clean_space
 
 
