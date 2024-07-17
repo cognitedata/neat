@@ -73,6 +73,10 @@ class EnvironmentVariables:
     def __post_init__(self):
         if self.LOGIN_FLOW.lower() not in _VALID_LOGIN_FLOWS:
             raise ValueError(f"LOGIN_FLOW must be one of {_VALID_LOGIN_FLOWS}")
+        if self.IDP_TOKEN_URL and not self.IDP_TENANT_ID:
+            prefix, suffix = "https://login.microsoftonline.com/", "/oauth2/v2.0/token"
+            if self.IDP_TOKEN_URL.startswith(prefix) and self.IDP_TOKEN_URL.endswith(suffix):
+                self.IDP_TENANT_ID = self.IDP_TOKEN_URL.removeprefix(prefix).removesuffix(suffix)
 
     @property
     def cdf_url(self) -> str:
@@ -132,6 +136,7 @@ class EnvironmentVariables:
         # This method is for backwards compatibility with the old config
         # It is not recommended to use this method.
         return cls(
+            LOGIN_FLOW="client_credentials",
             CDF_CLUSTER="api",
             CDF_PROJECT="dev",
             IDP_TENANT_ID="common",
