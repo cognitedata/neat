@@ -120,15 +120,15 @@ class AssetLoader(CDFLoader[AssetWrite]):
             # There should already be an error in this case.
             return
 
-        class_ids = [repr(class_.class_.id) for class_ in self.rules.classes]
+        class_ids = [repr(class_.id) for class_ in AssetAnalysis(self.rules).defined_classes()]
         tracker = self._tracker(type(self).__name__, class_ids, "classes")
 
-        for class_ in self.rules.classes:
-            tracker.start(repr(class_.class_.id))
+        for class_ in AssetAnalysis(self.rules).defined_classes():
+            tracker.start(repr(class_.id))
 
-            property_renaming_config = AssetAnalysis(self.rules).define_property_renaming_config(class_.class_)
+            property_renaming_config = AssetAnalysis(self.rules).define_property_renaming_config(class_)
 
-            for identifier, properties in self.graph_store.read(class_.class_.suffix):
+            for identifier, properties in self.graph_store.read(class_.suffix):
                 fields = _process_properties(properties, property_renaming_config)
                 # set data set id and external id
                 fields["data_set_id"] = self.data_set_id

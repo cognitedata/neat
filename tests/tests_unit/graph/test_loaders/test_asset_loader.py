@@ -5,6 +5,7 @@ from cognite.neat.graph.extractors import RdfFileExtractor
 from cognite.neat.graph.issues.loader import InvalidInstanceError
 from cognite.neat.graph.loaders import AssetLoader
 from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.graph.transformers import AddAllReferences
 
 
 def test_generation_of_assets(asset_rules):
@@ -12,6 +13,7 @@ def test_generation_of_assets(asset_rules):
     asset_store.write(RdfFileExtractor(nordic44_knowledge_graph, base_uri=URIRef("http://purl.org/nordic44#")))
 
     asset_store.add_rules(asset_rules.as_information_rules())
+    asset_store.transform(AddAllReferences(rules=asset_store.rules))
 
     loader = AssetLoader(asset_store, asset_rules, 1983)
     result = list(loader._load())
@@ -24,5 +26,5 @@ def test_generation_of_assets(asset_rules):
         else:
             errors.append(r)
 
-    assert len(assets) == 450
-    assert len(errors) == 88
+    assert len(errors) == 0
+    assert len(assets) == 452

@@ -68,6 +68,13 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
             for prop_ in self.rules.properties
         )
 
+    def all_reference_transformations(self):
+        return [
+            prop_
+            for prop_ in self.rules.properties
+            if prop_.transformation and isinstance(prop_.transformation.traversal, AllReferences)
+        ]
+
     def define_property_renaming_config(self, class_: ClassEntity) -> dict[str | URIRef, str]:
         property_renaming_configuration: dict[str | URIRef, str] = {}
 
