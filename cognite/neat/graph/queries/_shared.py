@@ -81,7 +81,7 @@ def get_predicate_id(
         ID of predicate (aka property) connecting subject and object
     """
 
-    prefixes = prefixes if prefixes else get_default_prefixes()
+    prefixes = prefixes or get_default_prefixes()
 
     query = """
 
