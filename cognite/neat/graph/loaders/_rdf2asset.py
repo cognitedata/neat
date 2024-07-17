@@ -50,8 +50,8 @@ class AssetLoader(CDFLoader[AssetWrite]):
     """Load Assets from NeatGraph to Cognite Data Fusions.
 
     Args:
-        rules (AssetRules): The rules to load the assets with.
         graph_store (NeatGraphStore): The graph store to load the data into.
+        rules (AssetRules): The rules to load the assets with.
         data_set_id (int): The CDF data set id to load the Assets into.
         use_orphanage (bool): Whether to use an orphanage for assets that are not part
                               of the hierarchy. Defaults to False.
