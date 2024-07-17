@@ -93,6 +93,7 @@ class Config(BaseModel, arbitrary_types_allowed=True):
                 )
         return data
 
+    @staticmethod
     @field_serializer("cdf_auth_config", when_used="always", return_type=dict)
     def backwards_compatible_serialize(cdf_auth_config: EnvironmentVariables) -> dict[str, Any]:
         output: dict[str, Any] = {}
@@ -157,14 +158,15 @@ class Config(BaseModel, arbitrary_types_allowed=True):
         missing = "Missing"
         # This is to be backwards compatible with the old config
 
+        base_url: str | None = None
         if "NEAT_CDF_BASE_URL" in os.environ:
-            base_url: str | None = os.environ["NEAT_CDF_BASE_URL"]
+            base_url = os.environ["NEAT_CDF_BASE_URL"]
+        if isinstance(base_url, str):
             cluster = base_url.removeprefix("https://").removesuffix(".cognitedata.com")
         else:
-            base_url = None
             cluster = missing
         variables = EnvironmentVariables(
-            CDF_PROJECT=os.environ.get("NEAT_CDF_PROJECT"),
+            CDF_PROJECT=os.environ.get("NEAT_CDF_PROJECT", missing),
             CDF_CLUSTER=cluster,
             CDF_URL=base_url,
             IDP_CLIENT_ID=os.environ.get("NEAT_CDF_CLIENT_ID"),

@@ -129,7 +129,18 @@ class EnvironmentVariables:
 
     @classmethod
     def default(cls) -> "EnvironmentVariables":
-        return cls("NOT SET", "NOT SET")
+        # This method is for backwards compatibility with the old config
+        # It is not recommended to use this method.
+        return cls(
+            CDF_CLUSTER="api",
+            CDF_PROJECT="dev",
+            IDP_TENANT_ID="common",
+            IDP_CLIENT_ID="neat",
+            IDP_CLIENT_SECRET="secret",
+            IDP_SCOPES="project:read,project:write",
+            CDF_TIMEOUT=60,
+            CDF_MAX_WORKERS=3,
+        )
 
     def get_credentials(self) -> CredentialProvider:
         method_by_flow = {
