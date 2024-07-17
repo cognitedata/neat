@@ -20,7 +20,7 @@ Changes are grouped as follows:
 - `AddAllReferences` transformer that handles `AllReferences` RDF path in Rules
 ### Improved
 - Better handling of property renaming in `DESCRIBE` query, which for example allows RDF:type property to be used
-- Iterating over classes which have properties defined for them instead of all classes (which causes errors)
+- Only running loaders for classes for which properties are defined in Rules
 ### Removed
 - `AllProperties` RDF path has been removed as we no longer want support implicit properties
 
