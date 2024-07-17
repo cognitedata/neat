@@ -51,7 +51,7 @@ def generate_prefix_header(prefixes: dict[str, Namespace] | None = None) -> str:
         Prefix header
     """
 
-    prefixes = prefixes if prefixes else get_default_prefixes()
+    prefixes = prefixes or get_default_prefixes()
 
     return "".join(f"PREFIX {key}:<{value}>\n" for key, value in prefixes.items())
 
