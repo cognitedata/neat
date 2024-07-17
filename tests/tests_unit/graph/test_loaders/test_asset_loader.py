@@ -10,14 +10,14 @@ from tests import config
 
 
 def test_generation_of_assets():
-    store = NeatGraphStore.from_memory_store()
-    store.write(RdfFileExtractor(nordic44_knowledge_graph, base_uri=URIRef("http://purl.org/nordic44#")))
+    asset_store = NeatGraphStore.from_oxi_store()
+    asset_store.write(RdfFileExtractor(nordic44_knowledge_graph, base_uri=URIRef("http://purl.org/nordic44#")))
 
     asset_rules = ExcelImporter(filepath=config.DATA_FOLDER / "asset-architect-test.xlsx").to_rules(errors="raise")
 
-    store.add_rules(asset_rules.as_information_rules())
+    asset_store.add_rules(asset_rules.as_information_rules())
 
-    loader = AssetLoader(store, asset_rules, 1983)
+    loader = AssetLoader(asset_store, asset_rules, 1983)
     result = list(loader._load())
 
     assets = []
