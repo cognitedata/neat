@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.87.2] - 17-07-24
+### Added
+- Topological sorting of classes and properties in `AssetRules` to provide proper order of asset creation
+- Additional validation on `AssetRules` to ensure that mapped parent properties point to class not data value type
+
 ## [0.87.1] - 17-07-24
 ### Added
 - `AddAllReferences` transformer that handles `AllReferences` RDF path in Rules
