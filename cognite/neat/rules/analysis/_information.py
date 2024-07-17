@@ -6,7 +6,12 @@ from pydantic import ValidationError
 from rdflib import URIRef
 
 from cognite.neat.rules.models import SchemaCompleteness
-from cognite.neat.rules.models._rdfpath import Hop, RDFPath, SingleProperty
+from cognite.neat.rules.models._rdfpath import (
+    AllReferences,
+    Hop,
+    RDFPath,
+    SingleProperty,
+)
 from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
 from cognite.neat.rules.models.information import (
     InformationClass,
@@ -55,6 +60,12 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
     def has_hop_transformations(self):
         return any(
             prop_.transformation and isinstance(prop_.transformation.traversal, Hop) for prop_ in self.rules.properties
+        )
+
+    def has_all_reference_transformations(self):
+        return any(
+            prop_.transformation and isinstance(prop_.transformation.traversal, AllReferences)
+            for prop_ in self.rules.properties
         )
 
     def define_property_renaming_config(self, class_: ClassEntity) -> dict[str | URIRef, str]:
