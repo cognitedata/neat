@@ -18,6 +18,9 @@ Changes are grouped as follows:
 ## [0.87.0] - 17-07-24
 ### Added
 - `AssetLoader` added to load assets to CDF
+- `get_default_prefixes` method to provide default prefixes
+### Removed
+- `PREFIXES` dict that was used as default prefixes in `NeatGraphStore` and `Rules`
 ### Improved
 - `AssetRules` properties have now mandatory `implementation` field
 ### Fixed
