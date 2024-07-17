@@ -1,6 +1,6 @@
 from cognite.client.data_classes.data_modeling import NodeApply, NodeId
 
-from cognite.neat.utils.cdf_classes import NodeApplyDict
+from cognite.neat.utils.cdf.data_classes import NodeApplyDict
 
 
 class TestCogniteResourceDict:

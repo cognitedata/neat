@@ -42,15 +42,16 @@ from cognite.neat.rules.issues.dms import (
     MissingViewInModelWarning,
 )
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
-from cognite.neat.utils.cdf_classes import (
+from cognite.neat.utils.cdf.data_classes import (
     CogniteResourceDict,
     ContainerApplyDict,
     NodeApplyDict,
+    RawTableWrite,
+    RawTableWriteList,
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat.utils.cdf_loaders import ViewLoader
-from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
+from cognite.neat.utils.cdf.loaders import ViewLoader
 from cognite.neat.utils.text import to_camel
 from cognite.neat.utils.utils import get_inheritance_path
 

@@ -20,7 +20,7 @@ from cognite.neat.rules.models.dms import (
     DMSSchema,
     DMSViewInput,
 )
-from cognite.neat.utils.cdf_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
+from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 from tests.data import car
 
 

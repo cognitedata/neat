@@ -2,7 +2,7 @@ from cognite.neat.config import Config
 from pathlib import Path
 
 
-from cognite.neat.utils.cdf import clean_space
+from cognite.neat.utils.cdf.cdf_loaders import SpaceLoader
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -13,7 +13,7 @@ def main() -> None:
     config = Config.from_yaml(REPO_ROOT / "config.yaml")
     client = config.cdf_auth_config.get_client()
 
-    clean_space(client, SPACE)
+    SpaceLoader(client).clean(SPACE)
 
 
 if __name__ == '__main__':

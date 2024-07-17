@@ -20,7 +20,7 @@ from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models import InformationRules
 from cognite.neat.rules.models.dms import DMSRules, DMSSchema, PipelineSchema
-from cognite.neat.utils.cdf_loaders import (
+from cognite.neat.utils.cdf.loaders import (
     ContainerLoader,
     DataModelingLoader,
     DataModelLoader,
