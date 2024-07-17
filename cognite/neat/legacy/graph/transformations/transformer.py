@@ -24,7 +24,7 @@ from cognite.neat.legacy.rules.models.rdfpath import (
     parse_rule,
 )
 from cognite.neat.legacy.rules.models.rules import Rules
-from cognite.neat.utils.utils import remove_namespace_from_uri
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 prom_total_proc_rules_g = Gauge("neat_total_processed_rules", "Number of processed rules", ["state"])
 rules_processing_timing_metric = Gauge(

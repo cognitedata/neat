@@ -15,8 +15,8 @@ from rdflib.query import ResultRow
 from cognite.neat.legacy.graph.stores import NeatGraphStoreBase
 from cognite.neat.legacy.rules.models import Rules
 from cognite.neat.legacy.rules.models.rules import Property
-from cognite.neat.utils import remove_namespace_from_uri
-from cognite.neat.utils.utils import epoch_now_ms
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
+from cognite.neat.utils.time_ import epoch_now_ms
 
 from ._base import CogniteLoader
 

@@ -10,7 +10,8 @@ from cognite.neat.legacy.rules.models.rules import (
     prefix_compliance_regex,
     version_compliance_regex,
 )
-from cognite.neat.utils.utils import convert_rdflib_content, remove_none_elements_from_set
+from cognite.neat.utils.collection_ import remove_none_elements_from_set
+from cognite.neat.utils.rdf_ import convert_rdflib_content
 
 
 def parse_owl_metadata(graph: Graph, make_compliant: bool = False) -> pd.DataFrame:

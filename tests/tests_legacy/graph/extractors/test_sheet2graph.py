@@ -2,7 +2,7 @@ from rdflib import XSD, Literal
 
 from cognite.neat.legacy.graph import extractors
 from cognite.neat.legacy.graph.stores import MemoryStore
-from cognite.neat.utils.utils import remove_namespace_from_uri
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 from tests import config
 
 

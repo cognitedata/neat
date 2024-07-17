@@ -14,7 +14,8 @@ from cognite.neat.legacy.rules.exporters._base import BaseExporter
 from cognite.neat.legacy.rules.exporters._validation import are_properties_redefined
 from cognite.neat.legacy.rules.models.rules import Class, Metadata, Property, Rules
 from cognite.neat.legacy.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
-from cognite.neat.utils.utils import generate_exception_report, remove_namespace_from_uri
+from cognite.neat.utils.auxiliary import generate_exception_report
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 if sys.version_info >= (3, 11):
     from typing import Self

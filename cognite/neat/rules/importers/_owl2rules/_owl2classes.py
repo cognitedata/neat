@@ -5,7 +5,7 @@ import pandas as pd
 from rdflib import OWL, Graph
 
 from cognite.neat.rules.models._base import MatchType
-from cognite.neat.utils.utils import remove_namespace_from_uri
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 
 def parse_owl_classes(graph: Graph, language: str = "en") -> list[dict]:

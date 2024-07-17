@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from rdflib import Graph
 
-from cognite.neat.utils.utils import remove_namespace_from_uri
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._owl2classes import _data_type_property_class, _object_property_class, _thing_class
 

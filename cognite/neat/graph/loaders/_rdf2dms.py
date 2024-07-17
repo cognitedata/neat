@@ -20,8 +20,8 @@ from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
+from cognite.neat.utils.auxiliary import create_sha256_hash
 from cognite.neat.utils.upload import UploadResult
-from cognite.neat.utils.utils import create_sha256_hash
 
 from ._base import CDFLoader
 

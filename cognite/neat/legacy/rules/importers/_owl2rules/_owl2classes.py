@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from rdflib import OWL, Graph
 
-from cognite.neat.utils.utils import remove_namespace_from_uri
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 
 def parse_owl_classes(graph: Graph, make_compliant: bool = False, language: str = "en") -> pd.DataFrame:

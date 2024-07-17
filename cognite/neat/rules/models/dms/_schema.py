@@ -52,8 +52,8 @@ from cognite.neat.utils.cdf.data_classes import (
     ViewApplyDict,
 )
 from cognite.neat.utils.cdf.loaders import ViewLoader
+from cognite.neat.utils.rdf_ import get_inheritance_path
 from cognite.neat.utils.text import to_camel
-from cognite.neat.utils.utils import get_inheritance_path
 
 if sys.version_info >= (3, 11):
     from typing import Self

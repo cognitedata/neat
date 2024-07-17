@@ -102,3 +102,7 @@ def to_snake(string: str) -> str:
     else:
         words = pattern.findall(string)
     return "_".join(map(str.lower, words))
+
+
+def replace_non_alphanumeric_with_underscore(text: str) -> str:
+    return re.sub(r"\W+", "_", text)

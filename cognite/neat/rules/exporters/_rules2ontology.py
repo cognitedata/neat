@@ -20,7 +20,8 @@ from cognite.neat.rules.models.information import (
     InformationProperty,
     InformationRules,
 )
-from cognite.neat.utils.utils import generate_exception_report, remove_namespace_from_uri
+from cognite.neat.utils.auxiliary import generate_exception_report
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseExporter
 from ._validation import are_properties_redefined

@@ -20,7 +20,7 @@ from cognite.neat.legacy.rules.analysis import (
 from cognite.neat.legacy.rules.exporters._rules2rules import subset_rules
 from cognite.neat.legacy.rules.models import Rules
 from cognite.neat.legacy.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
-from cognite.neat.utils.utils import remove_namespace_from_uri
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseExtractor
 

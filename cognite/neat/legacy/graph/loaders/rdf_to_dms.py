@@ -13,7 +13,9 @@ from cognite.neat.legacy.graph.transformations.query_generator.sparql import tri
 from cognite.neat.legacy.rules.exporters._rules2dms import DMSSchemaComponents
 from cognite.neat.legacy.rules.exporters._rules2pydantic_models import add_class_prefix_to_xid, rules_to_pydantic_models
 from cognite.neat.legacy.rules.models.rules import Rules
-from cognite.neat.utils.utils import chunker, datetime_utc_now, retry_decorator
+from cognite.neat.utils.auxiliary import retry_decorator
+from cognite.neat.utils.collection_ import chunker
+from cognite.neat.utils.time_ import datetime_utc_now
 
 from ._base import CogniteLoader
 

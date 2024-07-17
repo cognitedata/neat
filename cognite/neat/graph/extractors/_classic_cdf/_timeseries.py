@@ -12,7 +12,7 @@ from rdflib import RDF, Literal, Namespace, URIRef
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
-from cognite.neat.utils.utils import string_to_ideal_type
+from cognite.neat.utils.auxiliary import string_to_ideal_type
 
 
 class TimeSeriesExtractor(BaseExtractor):

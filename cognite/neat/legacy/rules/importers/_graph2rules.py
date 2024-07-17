@@ -14,7 +14,7 @@ from cognite.neat.constants import PREFIXES
 from cognite.neat.legacy.rules import exceptions
 from cognite.neat.legacy.rules.exporters._rules2rules import to_dms_name
 from cognite.neat.legacy.rules.models.tables import Tables
-from cognite.neat.utils.utils import get_namespace, remove_namespace_from_uri, uri_to_short_form
+from cognite.neat.utils.rdf_ import get_namespace, remove_namespace_from_uri, uri_to_short_form
 
 from ._base import BaseImporter
 

@@ -17,11 +17,7 @@ from cognite.neat.rules.models.information import (
     InformationMetadata,
     InformationRulesInput,
 )
-from cognite.neat.utils.utils import (
-    get_namespace,
-    remove_namespace_from_uri,
-    uri_to_short_form,
-)
+from cognite.neat.utils.rdf_ import get_namespace, remove_namespace_from_uri, uri_to_short_form
 
 ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class . }
