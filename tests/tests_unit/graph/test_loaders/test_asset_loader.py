@@ -5,19 +5,15 @@ from cognite.neat.graph.extractors import RdfFileExtractor
 from cognite.neat.graph.issues.loader import InvalidInstanceError
 from cognite.neat.graph.loaders import AssetLoader
 from cognite.neat.graph.stores import NeatGraphStore
-from cognite.neat.rules.importers import ExcelImporter
-from tests import config
 
 
-def test_generation_of_assets():
-    store = NeatGraphStore.from_memory_store()
-    store.write(RdfFileExtractor(nordic44_knowledge_graph, base_uri=URIRef("http://purl.org/nordic44#")))
+def test_generation_of_assets(asset_rules):
+    asset_store = NeatGraphStore.from_memory_store()
+    asset_store.write(RdfFileExtractor(nordic44_knowledge_graph, base_uri=URIRef("http://purl.org/nordic44#")))
 
-    asset_rules = ExcelImporter(filepath=config.DATA_FOLDER / "asset-architect-test.xlsx").to_rules(errors="raise")
+    asset_store.add_rules(asset_rules.as_information_rules())
 
-    store.add_rules(asset_rules.as_information_rules())
-
-    loader = AssetLoader(store, asset_rules, 1983)
+    loader = AssetLoader(asset_store, asset_rules, 1983)
     result = list(loader._load())
 
     assets = []
