@@ -9,7 +9,7 @@ from cognite.neat.rules.importers import ExcelImporter
 from tests import config
 
 
-def test_metadata_as_json_filed():
+def test_generation_of_assets():
     store = NeatGraphStore.from_memory_store()
     store.write(RdfFileExtractor(nordic44_knowledge_graph, base_uri=URIRef("http://purl.org/nordic44#")))
 

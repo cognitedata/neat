@@ -18,6 +18,11 @@ Changes are grouped as follows:
 ## [0.87.0] - 17-07-24
 ### Added
 - `AssetLoader` added to load assets to CDF
+### Improved
+- `AssetRules` properties have now mandatory `implementation` field
+### Fixed
+- Issue of properties not being renamed in `DESCRIBE` query
+
 
 ## [0.86.0] - 15-07-24
 ### Changed
