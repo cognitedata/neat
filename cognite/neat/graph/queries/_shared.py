@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from rdflib import Graph, Literal, Namespace
 from rdflib.term import URIRef
 
-from cognite.neat.constants import PREFIXES
+from cognite.neat.constants import get_default_prefixes
 from cognite.neat.rules.models._rdfpath import (
     Hop,
     Step,
@@ -37,24 +37,30 @@ class Triple(BaseModel):
         return cls(subject=triple[0], predicate=triple[1], object=triple[2])
 
 
-def generate_prefix_header(prefixes: dict[str, Namespace] = PREFIXES) -> str:
+def generate_prefix_header(prefixes: dict[str, Namespace] | None = None) -> str:
     """Generate prefix header which is added to SPARQL query and allows for shorten query statements
 
     Parameters
     ----------
     prefixes : dict
-        Dict containing prefix - namespace pairs, default PREFIXES
+        Dict containing prefix - namespace pairs, defaults to internal set of prefixes
 
     Returns
     -------
     str
         Prefix header
     """
+
+    prefixes = prefixes if prefixes else get_default_prefixes()
+
     return "".join(f"PREFIX {key}:<{value}>\n" for key, value in prefixes.items())
 
 
 def get_predicate_id(
-    graph: Graph, subject_type_id: str, object_type_id: str, prefixes: dict[str, Namespace] = PREFIXES
+    graph: Graph,
+    subject_type_id: str,
+    object_type_id: str,
+    prefixes: dict[str, Namespace] | None = None,
 ) -> URIRef:
     """Returns predicate (aka property) URI (i.e., ID) that connects subject and object
 
@@ -67,13 +73,16 @@ def get_predicate_id(
     object_type_id : str
         ID of object type (aka object class)
     prefixes : dict, optional
-        Dict containing prefix - namespace pairs, default PREFIXES
+        Dict containing prefix - namespace pairs, defaults to internal set of prefixes
 
     Returns
     -------
     URIRef
         ID of predicate (aka property) connecting subject and object
     """
+
+    prefixes = prefixes if prefixes else get_default_prefixes()
+
     query = """
 
         SELECT ?predicateTypeID
@@ -93,7 +102,11 @@ def get_predicate_id(
     return res[0][0]
 
 
-def hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) -> str:
+def hop2property_path(
+    graph: Graph,
+    hop: Hop,
+    prefixes: dict[str, Namespace] | None = None,
+) -> str:
     """Converts hop to property path string
 
     Parameters
@@ -110,6 +123,7 @@ def hop2property_path(graph: Graph, hop: Hop, prefixes: dict[str, Namespace]) ->
     str
         Property path string for hop traversal (e.g. ^rdf:type/rdfs:subClassOf)
     """
+    prefixes = prefixes if prefixes else get_default_prefixes()
 
     # setting previous step to origin, as we are starting from there
     previous_step = Step(class_=hop.class_, direction="origin")

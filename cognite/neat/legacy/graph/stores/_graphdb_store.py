@@ -4,7 +4,7 @@ import requests
 from rdflib import Graph, Namespace
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
-from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
+from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 
 from ._base import NeatGraphStoreBase
 
@@ -28,8 +28,9 @@ class GraphDBStore(NeatGraphStoreBase):
         graph: Graph | None = None,
         base_prefix: str = "",  # usually empty
         namespace: Namespace = DEFAULT_NAMESPACE,
-        prefixes: dict = PREFIXES,
+        prefixes: dict[str, Namespace] | None = None,
     ):
+        prefixes = prefixes if prefixes else get_default_prefixes()
         super().__init__(graph, base_prefix, namespace, prefixes)
         self.graph_db_rest_url: str = "http://localhost:7200"
 

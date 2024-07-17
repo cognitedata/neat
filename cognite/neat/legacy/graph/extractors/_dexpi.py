@@ -9,11 +9,6 @@ from cognite.neat.legacy.graph.models import Triple
 
 from ._base import BaseExtractor
 
-_DEXPI_PREFIXES = {
-    "dexpi": Namespace("http://sandbox.dexpi.org/rdl/"),
-    "posccaesar": Namespace("http://data.posccaesar.org/rdl/"),
-}
-
 
 class DexpiXML(BaseExtractor):
     """

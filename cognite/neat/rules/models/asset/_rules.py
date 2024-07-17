@@ -5,7 +5,7 @@ from pydantic import Field, field_validator, model_validator
 from pydantic.main import IncEx
 from rdflib import Namespace
 
-from cognite.neat.constants import PREFIXES
+from cognite.neat.constants import get_default_prefixes
 from cognite.neat.issues import MultiValueError
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import BaseRules, RoleTypes, SheetList
@@ -67,7 +67,7 @@ class AssetRules(BaseRules):
     metadata: AssetMetadata = Field(alias="Metadata")
     properties: SheetList[AssetProperty] = Field(alias="Properties")
     classes: SheetList[AssetClass] = Field(alias="Classes")
-    prefixes: dict[str, Namespace] = Field(default_factory=lambda: PREFIXES.copy())
+    prefixes: dict[str, Namespace] = Field(default_factory=lambda: get_default_prefixes())
     last: "AssetRules | None" = Field(None, alias="Last")
     reference: "AssetRules | None" = Field(None, alias="Reference")
 
