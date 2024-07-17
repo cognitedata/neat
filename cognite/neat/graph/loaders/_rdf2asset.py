@@ -140,7 +140,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
             tracker.start(repr(class_))
 
             property_renaming_config = AssetAnalysis(self.rules).define_property_renaming_config(
-                ClassEntity(prefix=self.rules.metadata.namespace, suffix=class_)
+                ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
             )
 
             for identifier, properties in self.graph_store.read(class_):
