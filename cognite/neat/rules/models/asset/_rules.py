@@ -67,7 +67,7 @@ class AssetRules(BaseRules):
     metadata: AssetMetadata = Field(alias="Metadata")
     properties: SheetList[AssetProperty] = Field(alias="Properties")
     classes: SheetList[AssetClass] = Field(alias="Classes")
-    prefixes: dict[str, Namespace] = Field(default_factory=lambda: get_default_prefixes())
+    prefixes: dict[str, Namespace] = Field(default_factory=get_default_prefixes)
     last: "AssetRules | None" = Field(None, alias="Last")
     reference: "AssetRules | None" = Field(None, alias="Reference")
 
