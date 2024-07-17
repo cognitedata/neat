@@ -11,7 +11,7 @@ SPACE = "sp_pump_station"
 
 def main() -> None:
     config = Config.from_yaml(REPO_ROOT / "config.yaml")
-    client = get_cognite_client_from_config(config.cdf_client)
+    client = config.cdf_auth_config.get_client()
 
     clean_space(client, SPACE)
 

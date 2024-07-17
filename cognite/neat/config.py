@@ -4,14 +4,14 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from yaml import safe_load
 
 from cognite.neat.constants import EXAMPLE_GRAPHS, EXAMPLE_RULES, EXAMPLE_WORKFLOWS
-from cognite.neat.utils.cdf import InteractiveCogniteClient, ServiceCogniteClient
+from cognite.neat.utils.auth import EnvironmentVariables
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -41,7 +41,7 @@ class WorkflowsStoreType(StrEnum):
     URL = "url"
 
 
-class Config(BaseModel):
+class Config(BaseModel, arbitrary_types_allowed=True):
     workflows_store_type: WorkflowsStoreType = WorkflowsStoreType.FILE
     data_store_path: Path = Field(default_factory=lambda: Path.cwd() / "data")
 
@@ -51,7 +51,7 @@ class Config(BaseModel):
         default=None,
     )
 
-    cdf_client: InteractiveCogniteClient | ServiceCogniteClient = ServiceCogniteClient()
+    cdf_auth_config: EnvironmentVariables = Field(default_factory=EnvironmentVariables.default)
     cdf_default_dataset_id: int = 0
     load_examples: bool = True
 
@@ -60,8 +60,13 @@ class Config(BaseModel):
     download_workflows_from_cdf: bool = Field(
         default=False, description="Downloads all workflows from CDF automatically and stores them locally"
     )
-
     stop_on_error: bool = False
+
+    @field_validator("cdf_auth_config", mode="before")
+    def _load(cls, value: Any) -> Any:
+        if isinstance(value, EnvironmentVariables):
+            return value
+        return EnvironmentVariables(**value)
 
     @property
     def _dir_suffix(self) -> str:
@@ -101,15 +106,26 @@ class Config(BaseModel):
     @classmethod
     def from_env(cls) -> Self:
         missing = "Missing"
-        cdf_config = ServiceCogniteClient(
-            project=os.environ.get("NEAT_CDF_PROJECT", missing),
-            client_id=os.environ.get("NEAT_CDF_CLIENT_ID", missing),
-            client_secret=os.environ.get("NEAT_CDF_CLIENT_SECRET", missing),
-            base_url=os.environ.get("NEAT_CDF_BASE_URL", missing),
-            token_url=os.environ.get("NEAT_CDF_TOKEN_URL", missing),
-            scopes=[os.environ.get("NEAT_CDF_SCOPES", missing)],
-            timeout=int(os.environ.get("NEAT_CDF_CLIENT_TIMEOUT", "60")),
-            max_workers=int(os.environ.get("NEAT_CDF_CLIENT_MAX_WORKERS", "3")),
+        # This is to be backwards compatible with the old config
+
+        if "NEAT_CDF_BASE_URL" in os.environ:
+            base_url = os.environ["NEAT_CDF_BASE_URL"]
+            cluster = base_url.removeprefix("https://").removesuffix(".cognitedata.com")
+        else:
+            base_url = missing
+            cluster = missing
+        variables = EnvironmentVariables(
+            CDF_PROJECT=os.environ.get("NEAT_CDF_PROJECT", missing),
+            CDF_CLUSTER=cluster,
+            CDF_URL=base_url,
+            IDP_CLIENT_ID=os.environ.get("NEAT_CDF_CLIENT_ID", missing),
+            IDP_CLIENT_SECRET=os.environ.get("NEAT_CDF_CLIENT_SECRET", missing),
+            IDP_TOKEN_URL=os.environ.get("NEAT_CDF_TOKEN_URL", missing),
+            IDP_SCOPES=os.environ.get("NEAT_CDF_SCOPES", missing),
+            CDF_TIMEOUT=int(os.environ["NEAT_CDF_CLIENT_TIMEOUT"] if "NEAT_CDF_CLIENT_TIMEOUT" in os.environ else 60),
+            CDF_MAX_WORKERS=int(
+                os.environ["NEAT_CDF_CLIENT_MAX_WORKERS"] if "NEAT_CDF_CLIENT_MAX_WORKERS" in os.environ else 3
+            ),
         )
 
         if workflow_downloader_filter_value := os.environ.get("NEAT_WORKFLOW_DOWNLOADER_FILTER", None):
@@ -118,7 +134,7 @@ class Config(BaseModel):
             workflow_downloader_filter = None
 
         return cls(
-            cdf_client=cdf_config,
+            cdf_auth_config=variables,
             workflows_store_type=os.environ.get(  # type: ignore[arg-type]
                 "NEAT_WORKFLOWS_STORE_TYPE", WorkflowsStoreType.FILE
             ),

@@ -9,8 +9,6 @@ from fastapi import FastAPI
 from cognite import neat
 from cognite.neat.config import Config, configure_logging, copy_examples_to_directory, create_data_dir_structure
 from cognite.neat.constants import PACKAGE_DIRECTORY
-from cognite.neat.utils.cdf import ServiceCogniteClient
-from cognite.neat.utils.utils import get_cognite_client_from_config, get_cognite_client_from_token
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.manager import WorkflowManager
 from cognite.neat.workflows.triggers import TriggerManager
@@ -36,14 +34,7 @@ class NeatApp:
             self.config = config
         logging.info("Initializing global objects")
         if not self.cdf_client:
-            if isinstance(self.config.cdf_client, ServiceCogniteClient):
-                if self.config.cdf_client.client_id:
-                    self.cdf_client = get_cognite_client_from_config(self.config.cdf_client)
-                else:
-                    # If no client_id is provided, we assume that the token is provided instead of secret.
-                    self.cdf_client = get_cognite_client_from_token(self.config.cdf_client)
-            else:
-                raise ValueError("Only ServiceCogniteClient is supported at the moment.")
+            self.cdf_client = self.config.cdf_auth_config.get_client()
         self.cdf_store = CdfStore(
             self.cdf_client,
             self.config.cdf_default_dataset_id,
