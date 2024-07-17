@@ -99,8 +99,9 @@ class AssetAnalysis(BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEnt
 
     def class_topological_sort(self) -> list[ClassEntity]:
         child_parent_asset: dict[ClassEntity, set] = {}
-
-        for _, properties in self.asset_definition().items():
+        defined_classes = set()
+        for class_, properties in self.asset_definition().items():
+            defined_classes.add(class_)
             for property_ in properties.values():
                 if any(
                     cast(AssetEntity, implementation).property_ == AssetFields.parent_external_id
@@ -110,13 +111,14 @@ class AssetAnalysis(BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEnt
 
         ts = TopologicalSorter(child_parent_asset)
 
-        # attempt to sort the classes in topological order
+        # attempt to sort the classes in topological order + the rest of the classes
         if child_parent_asset:
-            return list(ts.static_order())
+            ordered_classes = list(ts.static_order())
+            return ordered_classes + list(defined_classes - set(ordered_classes))
 
         # all asset types are root assets and have no parent
         else:
-            return list(self.asset_definition().keys())
+            return list(defined_classes)
 
     def asset_definition(
         self, only_rdfpath: bool = False, consider_inheritance: bool = False
