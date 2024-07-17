@@ -14,6 +14,7 @@ from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.analysis._asset import AssetAnalysis
 from cognite.neat.rules.models import AssetRules
+from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, CDFLoader
@@ -120,15 +121,29 @@ class AssetLoader(CDFLoader[AssetWrite]):
             # There should already be an error in this case.
             return
 
-        class_ids = [repr(class_.id) for class_ in AssetAnalysis(self.rules).defined_classes()]
-        tracker = self._tracker(type(self).__name__, class_ids, "classes")
+        try:
+            topological_order = AssetAnalysis(self.rules).class_topological_sort()
+        except Exception as e:
+            error = loader_issues.InvalidInstanceError(type_="asset", identifier="topological sort", reason=str(e))
+            if stop_on_exception:
+                raise error.as_exception() from e
+            yield error
+            return
 
-        for class_ in AssetAnalysis(self.rules).defined_classes():
-            tracker.start(repr(class_.id))
+        tracker = self._tracker(
+            type(self).__name__,
+            [repr(class_) for class_ in topological_order],
+            "classes",
+        )
 
-            property_renaming_config = AssetAnalysis(self.rules).define_property_renaming_config(class_)
+        for class_ in topological_order:
+            tracker.start(repr(class_))
 
-            for identifier, properties in self.graph_store.read(class_.suffix):
+            property_renaming_config = AssetAnalysis(self.rules).define_property_renaming_config(
+                ClassEntity(prefix=self.rules.metadata.namespace, suffix=class_)
+            )
+
+            for identifier, properties in self.graph_store.read(class_):
                 fields = _process_properties(properties, property_renaming_config)
                 # set data set id and external id
                 fields["data_set_id"] = self.data_set_id
