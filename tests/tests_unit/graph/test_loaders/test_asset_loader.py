@@ -14,7 +14,7 @@ def test_generation_of_assets(asset_rules):
     asset_store.add_rules(asset_rules.as_information_rules())
 
     loader = AssetLoader(asset_store, asset_rules, 1983)
-    result = list(loader._load())
+    result = list(loader.load())
 
     assets = []
     errors = []
