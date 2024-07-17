@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from pathlib import Path
 
 from rdflib import DCTERMS, OWL, RDF, RDFS, SKOS, XSD, Namespace
@@ -14,7 +15,7 @@ EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "workflows" / "examples"
 
 DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/neat#")
 
-PREFIXES = {
+PREFIXES: Mapping[str, Namespace] = {
     "rdf": RDF._NS,
     "rdfs": RDFS._NS,
     "dct": DCTERMS._NS,
