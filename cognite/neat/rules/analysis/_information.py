@@ -3,6 +3,7 @@ import warnings
 from typing import Any, cast
 
 from pydantic import ValidationError
+from rdflib import URIRef
 
 from cognite.neat.rules.models import SchemaCompleteness
 from cognite.neat.rules.models._rdfpath import Hop, RDFPath, SingleProperty
@@ -56,24 +57,33 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
             prop_.transformation and isinstance(prop_.transformation.traversal, Hop) for prop_ in self.rules.properties
         )
 
-    def define_property_renaming_config(self, class_: ClassEntity) -> dict[str, str]:
-        property_renaming_configuration = {}
+    def define_property_renaming_config(self, class_: ClassEntity) -> dict[str | URIRef, str]:
+        property_renaming_configuration: dict[str | URIRef, str] = {}
 
         if definitions := self.class_property_pairs(only_rdfpath=True, consider_inheritance=True).get(class_, None):
             for property_id, definition in definitions.items():
+                transformation = cast(RDFPath, definition.transformation)
+
+                # use case we have a single property rdf path, and defined prefix
+                # in either metadata or prefixes of rules
                 if isinstance(
-                    cast(RDFPath, definition.transformation).traversal,
+                    transformation.traversal,
                     SingleProperty,
+                ) and (
+                    transformation.traversal.property.prefix in self.rules.prefixes
+                    or transformation.traversal.property.prefix == self.rules.metadata.prefix
                 ):
-                    graph_property = cast(
-                        SingleProperty,
-                        cast(RDFPath, definition.transformation).traversal,
-                    ).property.suffix
+                    namespace = (
+                        self.rules.metadata.namespace
+                        if transformation.traversal.property.prefix == self.rules.metadata.prefix
+                        else self.rules.prefixes[transformation.traversal.property.prefix]
+                    )
 
+                    property_renaming_configuration[namespace[transformation.traversal.property.suffix]] = property_id
+
+                # otherwise we default to the property id
                 else:
-                    graph_property = property_id
-
-                property_renaming_configuration[graph_property] = property_id
+                    property_renaming_configuration[property_id] = property_id
 
         return property_renaming_configuration
 

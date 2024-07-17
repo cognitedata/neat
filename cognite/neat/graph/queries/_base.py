@@ -112,9 +112,7 @@ class Queries:
         property_values: dict[str, list[str]] = defaultdict(list)
 
         for subject, predicate, object_ in cast(list[ResultRow], self.graph.query(f"DESCRIBE <{instance_id}>")):
-            # We cannot include the RDF.type in case there is a neat:type property
-            # or if the object is empty
-            if predicate != RDF.type and object_.lower() not in [
+            if object_.lower() not in [
                 "",
                 "none",
                 "nan",
@@ -122,15 +120,26 @@ class Queries:
             ]:
                 # we are skipping deep validation with Pydantic to remove namespace here
                 # as it reduce time to process triples by 10-15x
-                identifier, property_, value = cast(  # type: ignore[misc]
-                    (str, str, str),
-                    remove_namespace_from_uri(*(subject, predicate, object_), validation="prefix"),
+                identifier, value = cast(  # type: ignore[misc]
+                    (str, str),
+                    remove_namespace_from_uri(*(subject, object_), validation="prefix"),
                 )  # type: ignore[misc, index]
 
-                if property_renaming_config:
-                    property_ = property_renaming_config.get(property_, property_)
+                # use-case: calling describe without renaming properties
+                # losing the namespace from the predicate!
+                if not property_renaming_config:
+                    property_values[remove_namespace_from_uri(predicate, validation="prefix")].append(value)
 
-                property_values[property_].append(value)
+                # use-case: calling describe with renaming properties
+                # renaming the property to the new name, if the property is defined
+                # in the RULES sheet
+                elif property_renaming_config and (property_ := property_renaming_config.get(predicate, None)):
+                    property_values[property_].append(value)
+
+                # use-case: skip the property if it is not defined in property_renaming_config
+                else:
+                    continue
+
         if property_values:
             return (
                 identifier,
