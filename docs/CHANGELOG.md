@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.87.0] - 17-07-24
+### Added
+- `AssetLoader` added to load assets to CDF
+
 ## [0.86.0] - 15-07-24
 ### Changed
 - `NeatGraphStore.read()` is now iterable utilizing `DESCRIBE` query instead of `CONSTRUCT` query.
