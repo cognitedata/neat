@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 import yaml
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, model_validator
 from yaml import safe_load
 
 from cognite.neat.constants import EXAMPLE_GRAPHS, EXAMPLE_RULES, EXAMPLE_WORKFLOWS
@@ -62,11 +62,36 @@ class Config(BaseModel, arbitrary_types_allowed=True):
     )
     stop_on_error: bool = False
 
-    @field_validator("cdf_auth_config", mode="before")
-    def _load(cls, value: Any) -> Any:
-        if isinstance(value, EnvironmentVariables):
-            return value
-        return EnvironmentVariables(**value)
+    @model_validator(mode="before")
+    def backwards_compatible(cls, data: Any):
+        if not isinstance(data, dict):
+            return data
+        if "cdf_client" in data:
+            cdf_client = data["cdf_client"]
+            if isinstance(cdf_client, dict):
+                if "base_url" in cdf_client:
+                    base_url = cdf_client["base_url"]
+                    cluster = base_url.removeprefix("https://").removesuffix(".cognitedata.com")
+                else:
+                    base_url, cluster = "Missing", "Missing"
+                if "scopes" in cdf_client:
+                    scopes = cdf_client["scopes"]
+                    if isinstance(scopes, list):
+                        scopes = ",".join(scopes)
+                else:
+                    scopes = "Missing"
+                data["cdf_auth_config"] = EnvironmentVariables(
+                    CDF_PROJECT=cdf_client.get("project", "Missing"),
+                    CDF_CLUSTER=cluster,
+                    CDF_URL=base_url,
+                    IDP_CLIENT_ID=cdf_client.get("client_id", "Missing"),
+                    IDP_CLIENT_SECRET=cdf_client.get("client_secret", "Missing"),
+                    IDP_TOKEN_URL=cdf_client.get("token_url", "Missing"),
+                    IDP_SCOPES=scopes,
+                    CDF_TIMEOUT=int(cdf_client.get("timeout", 60)),
+                    CDF_MAX_WORKERS=int(cdf_client.get("max_workers", 3)),
+                )
+        return data
 
     @property
     def _dir_suffix(self) -> str:
