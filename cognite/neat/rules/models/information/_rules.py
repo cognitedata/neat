@@ -261,7 +261,7 @@ class InformationRules(BaseRules):
     metadata: InformationMetadata = Field(alias="Metadata")
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
-    prefixes: dict[str, Namespace] = Field(default_factory=lambda: get_default_prefixes(), alias="Prefixes")
+    prefixes: dict[str, Namespace] = Field(default_factory=get_default_prefixes, alias="Prefixes")
     last: "InformationRules | None" = Field(None, alias="Last")
     reference: "InformationRules | None" = Field(None, alias="Reference")
 

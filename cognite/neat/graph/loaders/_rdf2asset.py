@@ -50,8 +50,8 @@ class AssetLoader(CDFLoader[AssetWrite]):
     """Load Assets from NeatGraph to Cognite Data Fusions.
 
     Args:
-        rules (AssetRules): The rules to load the assets with.
         graph_store (NeatGraphStore): The graph store to load the data into.
+        rules (AssetRules): The rules to load the assets with.
         data_set_id (int): The CDF data set id to load the Assets into.
         use_orphanage (bool): Whether to use an orphanage for assets that are not part
                               of the hierarchy. Defaults to False.
@@ -92,30 +92,6 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
         self._issues = NeatIssueList[NeatIssue](create_issues or [])
         self._tracker: type[Tracker] = tracker or LogTracker
-
-    @classmethod
-    def from_rules(
-        cls,
-        rules: AssetRules,
-        graph_store: NeatGraphStore,
-        data_set_id: int,
-        use_orphanage: bool = False,
-        use_labels: bool = False,
-        asset_external_id_prefix: str | None = None,
-        metadata_keys: AssetLoaderMetadataKeys | None = None,
-    ) -> "AssetLoader":
-        issues: list[NeatIssue] = []
-
-        return cls(
-            graph_store,
-            rules,
-            data_set_id,
-            use_orphanage,
-            use_labels,
-            asset_external_id_prefix,
-            metadata_keys,
-            issues,
-        )
 
     def _create_validation_classes(self) -> None:
         # need to get back class-property pairs where are definition of
