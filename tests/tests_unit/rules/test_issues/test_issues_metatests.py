@@ -49,6 +49,8 @@ class IssuesCreator:
             return Path("path")
         elif type_ is Namespace:
             return Namespace("http://purl.org/cognite/neat/issue#")
+        elif type_ == list[tuple[str, str]]:
+            return [("Class", "Property")]
         elif isinstance(type_, GenericAlias):
             return self._create_values(type_)
         elif isinstance(type_, UnionType):
