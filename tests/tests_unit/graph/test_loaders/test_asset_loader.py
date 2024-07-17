@@ -16,7 +16,7 @@ def test_generation_of_assets(asset_rules):
     asset_store.transform(AddAllReferences(rules=asset_store.rules))
 
     loader = AssetLoader(asset_store, asset_rules, 1983)
-    result = list(loader._load())
+    result = list(loader.load())
 
     assets = []
     errors = []
