@@ -128,7 +128,7 @@ class Queries:
                 )  # type: ignore[misc, index]
 
                 if property_renaming_config:
-                    predicate = property_renaming_config.get(property_, property_)
+                    property_ = property_renaming_config.get(property_, property_)
 
                 property_values[property_].append(value)
         if property_values:
