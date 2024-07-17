@@ -1,3 +1,4 @@
+import copy
 import re
 from datetime import datetime
 from pathlib import Path
@@ -204,7 +205,7 @@ class InferenceImporter(BaseImporter):
         """
         classes: dict[str, dict] = {}
         properties: dict[str, dict] = {}
-        prefixes: dict[str, Namespace] = PREFIXES.copy()
+        prefixes: dict[str, Namespace] = copy.deepcopy(PREFIXES)
 
         query = INSTANCE_PROPERTIES_JSON_DEFINITION if self.check_for_json_string else INSTANCE_PROPERTIES_DEFINITION
         # Adds default namespace to prefixes
