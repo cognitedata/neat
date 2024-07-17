@@ -3,8 +3,8 @@ import pprint
 import pytest
 from IPython.display import Markdown, display
 from pydantic import ValidationError
+from rdflib import Namespace
 
-from cognite.neat.constants import PREFIXES
 from cognite.neat.legacy.graph.stores import MemoryStore
 from cognite.neat.legacy.graph.transformations.query_generator import build_sparql_query
 from cognite.neat.legacy.rules.models.rdfpath import (
@@ -96,7 +96,9 @@ def generate_is_rdfpath_test_data():
     yield pytest.param("GeographicalRegion(*)", False, id="One to many missing namespace")
     yield pytest.param("cim:GeographicalRegion(*)", True, id="Valid One to many")
     yield pytest.param(
-        "cim:Terminal->cim:ConnectivityNode->cim:VoltageLevel->cim:Substation", True, id="Valid parent path"
+        "cim:Terminal->cim:ConnectivityNode->cim:VoltageLevel->cim:Substation",
+        True,
+        id="Valid parent path",
     )
 
 
@@ -116,7 +118,11 @@ def generate_is_rawlookup_test_data():
         False,
         id="Missing piping operator",
     )
-    yield pytest.param("cim:GeographicalRegion(*) | TableName(Lookup,)", False, id="Missing value column")
+    yield pytest.param(
+        "cim:GeographicalRegion(*) | TableName(Lookup,)",
+        False,
+        id="Missing value column",
+    )
 
 
 @pytest.mark.parametrize("raw_input, is_rawlookup_expected", generate_is_rawlookup_test_data())
@@ -128,22 +134,42 @@ def generate_parse_traversal():
     yield pytest.param(
         "cim:GeographicalRegion(*)",
         AllProperties(
-            class_=Entity(prefix="cim", suffix="GeographicalRegion", name="GeographicalRegion", type_="class")
+            class_=Entity(
+                prefix="cim",
+                suffix="GeographicalRegion",
+                name="GeographicalRegion",
+                type_="class",
+            )
         ),
         id="All properties",
     )
     yield pytest.param(
         "cim:GeographicalRegion(cim:RootCIMNode.node)",
         SingleProperty(
-            class_=Entity(prefix="cim", suffix="GeographicalRegion", name="GeographicalRegion", type_="class"),
-            property=Entity(prefix="cim", suffix="RootCIMNode.node", name="RootCIMNode.node", type_="property"),
+            class_=Entity(
+                prefix="cim",
+                suffix="GeographicalRegion",
+                name="GeographicalRegion",
+                type_="class",
+            ),
+            property=Entity(
+                prefix="cim",
+                suffix="RootCIMNode.node",
+                name="RootCIMNode.node",
+                type_="property",
+            ),
         ),
         id="Single property",
     )
     yield pytest.param(
         "cim:GeographicalRegion",
         AllReferences(
-            class_=Entity(prefix="cim", suffix="GeographicalRegion", name="GeographicalRegion", type_="class")
+            class_=Entity(
+                prefix="cim",
+                suffix="GeographicalRegion",
+                name="GeographicalRegion",
+                type_="class",
+            )
         ),
         id="All references",
     )
@@ -158,7 +184,11 @@ def generate_parse_traversal():
             class_="cim:Terminal",
             traversal=[
                 Step.from_string(raw=step)
-                for step in ["->cim:ConnectivityNode", "->cim:VoltageLevel", "->cim:Substation"]
+                for step in [
+                    "->cim:ConnectivityNode",
+                    "->cim:VoltageLevel",
+                    "->cim:Substation",
+                ]
             ],
         ),
         id="Child traversal without property",
@@ -166,7 +196,8 @@ def generate_parse_traversal():
     yield pytest.param(
         "cim:T->cim:C->cim:V->cim:S",
         Hop.from_string(
-            class_="cim:T", traversal=[Step.from_string(raw=step) for step in ["->cim:C", "->cim:V", "->cim:S"]]
+            class_="cim:T",
+            traversal=[Step.from_string(raw=step) for step in ["->cim:C", "->cim:V", "->cim:S"]],
         ),
         id="Child traversal without property single character name",
     )
@@ -176,7 +207,11 @@ def generate_parse_traversal():
             class_="cim:Substation",
             traversal=[
                 Step.from_string(raw=step)
-                for step in ["<-cim:VoltageLevel", "<-cim:ConnectivityNode", "<-cim:Terminal"]
+                for step in [
+                    "<-cim:VoltageLevel",
+                    "<-cim:ConnectivityNode",
+                    "<-cim:Terminal",
+                ]
             ],
         ),
         id="Parent traversal without property",
@@ -187,7 +222,11 @@ def generate_parse_traversal():
             class_="cim:HydroPump",
             traversal=[
                 Step.from_string(raw=step)
-                for step in ["<-cim:SynchronousMachine", "->cim:VoltageLevel", "->cim:Substation"]
+                for step in [
+                    "<-cim:SynchronousMachine",
+                    "->cim:VoltageLevel",
+                    "->cim:Substation",
+                ]
             ],
         ),
         id="Bidirectional traversal without property",
@@ -214,7 +253,11 @@ def generate_parse_traversal():
             class_="cim:Terminal",
             traversal=[
                 Step.from_string(raw=step)
-                for step in ["->cim:ConnectivityNode", "->cim:VoltageLevel", "->cim:S(cim:n)"]
+                for step in [
+                    "->cim:ConnectivityNode",
+                    "->cim:VoltageLevel",
+                    "->cim:S(cim:n)",
+                ]
             ],
         ),
         id="Child traversal with single character property",
@@ -262,7 +305,7 @@ def test_parse_traversal(raw: str, expected_traversal: AllProperties):
 
 
 def _load_nordic_knowledge_graph():
-    graph = MemoryStore(namespace=PREFIXES["nordic44"])
+    graph = MemoryStore(namespace=Namespace("http://purl.org/nordic44#"))
     graph.init_graph()
     graph.import_from_file(config.NORDIC44_KNOWLEDGE_GRAPH)
     return graph
@@ -272,7 +315,9 @@ GRAPH = None
 
 
 def display_test_parse_traversal(
-    raw: str, expected_traversal: AllProperties | AllReferences | Entity | Hop | SingleProperty, name: str | None = None
+    raw: str,
+    expected_traversal: AllProperties | AllReferences | Entity | Hop | SingleProperty,
+    name: str | None = None,
 ):
     global GRAPH
     if name:
@@ -291,7 +336,7 @@ def display_test_parse_traversal(
         if GRAPH is None:
             GRAPH = _load_nordic_knowledge_graph()
         try:
-            query = build_sparql_query(GRAPH, rule.traversal, PREFIXES)
+            query = build_sparql_query(GRAPH, rule.traversal)
         except Exception as e:
             query = f"Failed to generate query: {e}"
     display(Markdown("## Resulting SparkQL"))

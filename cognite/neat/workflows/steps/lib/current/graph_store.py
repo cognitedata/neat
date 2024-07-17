@@ -2,11 +2,15 @@ import logging
 from pathlib import Path
 from typing import ClassVar, cast
 
-from cognite.neat.constants import PREFIXES
+from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.legacy.graph import stores
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
-from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
+from cognite.neat.workflows.steps.data_contracts import (
+    RulesData,
+    SolutionGraph,
+    SourceGraph,
+)
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = ["GraphStoreConfiguration", "GraphStoreReset"]
@@ -40,9 +44,21 @@ class GraphStoreConfiguration(Step):
             value="source-graph-store",
             label="Local directory that is used as local graph store.Only for oxigraph, file store types",
         ),
-        Configurable(name="Query URL", value="", label="Query URL for SPARQL endpoint. Only for SPARQL store type"),
-        Configurable(name="Update URL", value="", label="Update URL for SPARQL endpoint. Only for SPARQL store type"),
-        Configurable(name="GraphDB API root URL", value="", label="Root url for GraphDB. Only for graphdb"),
+        Configurable(
+            name="Query URL",
+            value="",
+            label="Query URL for SPARQL endpoint. Only for SPARQL store type",
+        ),
+        Configurable(
+            name="Update URL",
+            value="",
+            label="Update URL for SPARQL endpoint. Only for SPARQL store type",
+        ),
+        Configurable(
+            name="GraphDB API root URL",
+            value="",
+            label="Root url for GraphDB. Only for graphdb",
+        ),
         Configurable(
             name="Init procedure",
             value="reset",
@@ -72,7 +88,7 @@ class GraphStoreConfiguration(Step):
             graph_store = None
             logging.info("Graph reset complete")
 
-        prefixes = rules_data.rules.prefixes if rules_data else PREFIXES.copy()
+        prefixes = rules_data.rules.prefixes if rules_data else get_default_prefixes()
 
         if store_type == stores.OxiGraphStore.rdf_store_type and graph_store is not None:
             # OXIGRAPH doesn't like to be initialized twice without a good reason
@@ -83,7 +99,7 @@ class GraphStoreConfiguration(Step):
         except KeyError:
             return FlowMessage(output_text="Invalid store type")
 
-        new_graph_store = store_cls(prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"])
+        new_graph_store = store_cls(prefixes=prefixes, base_prefix="neat", namespace=DEFAULT_NAMESPACE)
         new_graph_store.init_graph(
             self.configs["Query URL"],
             self.configs["Update URL"],
@@ -93,7 +109,11 @@ class GraphStoreConfiguration(Step):
 
         return (
             FlowMessage(output_text="Graph store configured successfully"),
-            SourceGraph(graph=new_graph_store) if graph_name == "SourceGraph" else SolutionGraph(graph=new_graph_store),
+            (
+                SourceGraph(graph=new_graph_store)
+                if graph_name == "SourceGraph"
+                else SolutionGraph(graph=new_graph_store)
+            ),
         )
 
 

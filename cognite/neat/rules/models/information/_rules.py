@@ -7,7 +7,7 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic.main import IncEx
 from rdflib import Namespace
 
-from cognite.neat.constants import PREFIXES
+from cognite.neat.constants import get_default_prefixes
 from cognite.neat.issues import MultiValueError
 from cognite.neat.rules import exceptions, issues
 from cognite.neat.rules.models._base import (
@@ -261,7 +261,7 @@ class InformationRules(BaseRules):
     metadata: InformationMetadata = Field(alias="Metadata")
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
-    prefixes: dict[str, Namespace] = Field(default_factory=lambda: PREFIXES.copy(), alias="Prefixes")
+    prefixes: dict[str, Namespace] = Field(default_factory=get_default_prefixes, alias="Prefixes")
     last: "InformationRules | None" = Field(None, alias="Last")
     reference: "InformationRules | None" = Field(None, alias="Reference")
 
@@ -270,7 +270,7 @@ class InformationRules(BaseRules):
         if isinstance(values, dict):
             return {key: Namespace(value) if isinstance(value, str) else value for key, value in values.items()}
         elif values is None:
-            values = PREFIXES.copy()
+            values = get_default_prefixes()
         return values
 
     @model_validator(mode="after")

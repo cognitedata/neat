@@ -5,7 +5,7 @@ from pathlib import Path
 
 from rdflib import Graph, Namespace
 
-from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
+from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.utils.auxiliary import local_import
 
 from ._base import MIMETypes, NeatGraphStoreBase
@@ -29,8 +29,9 @@ class OxiGraphStore(NeatGraphStoreBase):
         graph: Graph | None = None,
         base_prefix: str = "",  # usually empty
         namespace: Namespace = DEFAULT_NAMESPACE,
-        prefixes: dict = PREFIXES,
+        prefixes: dict[str, Namespace] | None = None,
     ):
+        prefixes = prefixes if prefixes else get_default_prefixes()
         super().__init__(graph, base_prefix, namespace, prefixes)
 
     def _set_graph(self) -> None:
@@ -44,7 +45,7 @@ class OxiGraphStore(NeatGraphStoreBase):
         for i in range(4):
             try:
                 oxstore = pyoxigraph.Store(
-                    path=str(self.internal_storage_dir) if self.internal_storage_dir else None
+                    path=(str(self.internal_storage_dir) if self.internal_storage_dir else None)
                 )  # Store (Rust object) accepts only str as path and not Path.
                 break
             except OSError as e:
@@ -76,7 +77,10 @@ class OxiGraphStore(NeatGraphStoreBase):
         logging.info("GraphStore restarted")
 
     def import_from_file(
-        self, graph_file: Path, mime_type: MIMETypes = "application/rdf+xml", add_base_iri: bool = True
+        self,
+        graph_file: Path,
+        mime_type: MIMETypes = "application/rdf+xml",
+        add_base_iri: bool = True,
     ) -> None:
         """Imports graph data from file.
 

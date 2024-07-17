@@ -9,11 +9,17 @@ from pydantic import field_validator
 from pydantic_core import ErrorDetails, ValidationError
 from rdflib import Namespace
 
-from cognite.neat.constants import PREFIXES
+from cognite.neat.constants import get_default_prefixes
 from cognite.neat.exceptions import wrangle_warnings
 
 # rules model and model components:
-from cognite.neat.legacy.rules.models.rules import Class, Metadata, Property, RuleModel, Rules
+from cognite.neat.legacy.rules.models.rules import (
+    Class,
+    Metadata,
+    Property,
+    RuleModel,
+    Rules,
+)
 from cognite.neat.legacy.rules.models.tables import Tables
 
 # importers:
@@ -36,7 +42,7 @@ class RawRules(RuleModel):
         classes: Classes defined in the data model
         properties: Class properties defined in the data model with accompanying transformation rules
                     to transform data from source to target representation
-        prefixes: Prefixes used in the data model. Defaults to PREFIXES
+        prefixes: Prefixes used in the data model. Defaults to internal set of prefixes
         instances: Instances defined in the data model. Defaults to None
     """
 
@@ -242,7 +248,9 @@ def _raw_tables_to_rules_dict(raw_tables: RawRules, validators_to_skip: set | No
         "metadata": _metadata_table2dict(raw_tables.Metadata),
         "classes": _classes_table2dict(raw_tables.Classes),
         "properties": _properties_table2dict(raw_tables.Properties),
-        "prefixes": PREFIXES if raw_tables.Prefixes.empty else _prefixes_table2dict(raw_tables.Prefixes),
+        "prefixes": (
+            get_default_prefixes() if raw_tables.Prefixes.empty else _prefixes_table2dict(raw_tables.Prefixes)
+        ),
     }
 
     rules_dict["instances"] = (
@@ -272,11 +280,15 @@ def _metadata_table2dict(meta_df: pd.DataFrame) -> dict[str, Any]:
     return metadata_dict
 
 
-def _classes_table2dict(classes_df: pd.DataFrame) -> dict[Any | None, dict[Hashable, Any]]:
+def _classes_table2dict(
+    classes_df: pd.DataFrame,
+) -> dict[Any | None, dict[Hashable, Any]]:
     return {class_.get("Class"): class_ for class_ in classes_df.to_dict(orient="records")}
 
 
-def _properties_table2dict(properties_df: pd.DataFrame) -> dict[str, dict[Hashable, Any]]:
+def _properties_table2dict(
+    properties_df: pd.DataFrame,
+) -> dict[str, dict[Hashable, Any]]:
     return {f"row {i+3}": property_ for i, property_ in enumerate(properties_df.to_dict(orient="records"))}
 
 

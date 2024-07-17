@@ -2,7 +2,7 @@ from pathlib import Path
 
 from rdflib import Graph, Namespace
 
-from cognite.neat.constants import PREFIXES
+from cognite.neat.constants import get_default_prefixes
 
 
 def rdf_file_to_graph(
@@ -10,7 +10,7 @@ def rdf_file_to_graph(
     filepath: Path,
     base_prefix: str | None = None,
     base_namespace: Namespace | None = None,
-    prefixes: dict[str, Namespace] = PREFIXES,
+    prefixes: dict[str, Namespace] | None = None,
 ) -> Graph:
     """Created rdflib Graph instance loaded with RDF triples from file
 
@@ -18,12 +18,14 @@ def rdf_file_to_graph(
         filepath: Path to the RDF file
         base_prefix: base prefix for URIs. Defaults to None.
         base_namespace: base namespace for URIs . Defaults to None.
-        prefixes: Dictionary of prefixes to bind to graph. Defaults to PREFIXES.
+        prefixes: Dictionary of prefixes to bind to graph. Defaults to internal set of prefixes.
         graph: Graph instance to load RDF triples into. Defaults to None.
 
     Returns:
         Graph instance loaded with RDF triples from file
     """
+
+    prefixes = prefixes if prefixes else get_default_prefixes()
 
     if filepath.is_file():
         graph.parse(filepath, publicID=base_namespace)

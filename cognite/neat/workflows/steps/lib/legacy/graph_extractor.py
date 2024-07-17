@@ -8,14 +8,20 @@ from typing import ClassVar, cast
 
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
-from cognite.neat.constants import PREFIXES
+from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.legacy.graph import extractors
-from cognite.neat.legacy.graph.extractors._mock_graph_generator import generate_triples as generate_mock_triples
+from cognite.neat.legacy.graph.extractors._mock_graph_generator import (
+    generate_triples as generate_mock_triples,
+)
 from cognite.neat.legacy.rules.exporters._rules2triples import get_instances_as_triples
 from cognite.neat.utils.utils import create_sha256_hash
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
-from cognite.neat.workflows.steps.data_contracts import RulesData, SolutionGraph, SourceGraph
+from cognite.neat.workflows.steps.data_contracts import (
+    RulesData,
+    SolutionGraph,
+    SourceGraph,
+)
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
@@ -196,7 +202,10 @@ class ExtractGraphFromMockGraph(Step):
             label="Target number of instances for each class",
         ),
         Configurable(
-            name="graph_name", value="solution", label="The name of target graph.", options=["source", "solution"]
+            name="graph_name",
+            value="solution",
+            label="The name of target graph.",
+            options=["source", "solution"],
         ),
     ]
 
@@ -225,7 +234,10 @@ class ExtractGraphFromMockGraph(Step):
         try:
             triples = generate_mock_triples(transformation_rules=transformation_rules.rules, class_count=class_count)
         except Exception as e:
-            return FlowMessage(error_text=f"Error: {e}", step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+            return FlowMessage(
+                error_text=f"Error: {e}",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
 
         logging.info("Adding mock triples to graph")
         graph_store.graph.add_triples(triples, verbose=True)  # type: ignore[arg-type]
@@ -243,7 +255,10 @@ class ExtractGraphFromRulesInstanceSheet(Step):
 
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="graph_name", value="solution", label="The name of target graph.", options=["source", "solution"]
+            name="graph_name",
+            value="solution",
+            label="The name of target graph.",
+            options=["source", "solution"],
         ),
     ]
 
@@ -264,7 +279,10 @@ class ExtractGraphFromRulesInstanceSheet(Step):
         try:
             graph_store.graph.add_triples(triples, verbose=True)  # type: ignore[arg-type]
         except Exception as e:
-            return FlowMessage(error_text=f"Error: {e}", step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+            return FlowMessage(
+                error_text=f"Error: {e}",
+                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
+            )
 
         return FlowMessage(output_text=output_text)
 
@@ -281,7 +299,7 @@ class ExtractGraphFromRulesDataModel(Step):
     def run(  # type: ignore[override, syntax]
         self, transformation_rules: RulesData, source_graph: SourceGraph
     ) -> FlowMessage:
-        ns = PREFIXES["neat"]
+        ns = DEFAULT_NAMESPACE
         classes = transformation_rules.rules.classes
         properties = transformation_rules.rules.properties
         counter = 0
@@ -291,16 +309,29 @@ class ExtractGraphFromRulesDataModel(Step):
             source_graph.graph.graph.add((rdf_instance_id, RDF.type, URIRef(ns + class_def.class_id)))
             if class_def.parent_class:
                 source_graph.graph.graph.add(
-                    (rdf_instance_id, URIRef(ns + "hasParent"), URIRef(ns + "_" + cast(str, class_def.parent_class)))
+                    (
+                        rdf_instance_id,
+                        URIRef(ns + "hasParent"),
+                        URIRef(ns + "_" + cast(str, class_def.parent_class)),
+                    )
                 )
             counter += 1
 
         for _property_name, property_def in properties.items():
             rdf_instance_id = URIRef(ns + "_" + property_def.class_id)
             source_graph.graph.graph.add(
-                (rdf_instance_id, URIRef(ns + property_def.property_id), Literal(property_def.expected_value_type))
+                (
+                    rdf_instance_id,
+                    URIRef(ns + property_def.property_id),
+                    Literal(property_def.expected_value_type),
+                )
             )
-            if property_def.expected_value_type.suffix not in ("string", "integer", "float", "boolean"):
+            if property_def.expected_value_type.suffix not in (
+                "string",
+                "integer",
+                "float",
+                "boolean",
+            ):
                 source_graph.graph.graph.add(
                     (
                         rdf_instance_id,
@@ -324,10 +355,15 @@ class ExtractGraphFromJsonFile(Step):
     version = "legacy"
     configurables: ClassVar[list[Configurable]] = [
         Configurable(
-            name="file_name", value="data_dump.json", label="Full path to the file containing data dump in JSON format"
+            name="file_name",
+            value="data_dump.json",
+            label="Full path to the file containing data dump in JSON format",
         ),
         Configurable(
-            name="graph_name", value="solution", label="The name of target graph.", options=["source", "solution"]
+            name="graph_name",
+            value="solution",
+            label="The name of target graph.",
+            options=["source", "solution"],
         ),
         Configurable(
             name="object_id_generation_method",
@@ -340,7 +376,12 @@ class ExtractGraphFromJsonFile(Step):
                 hash_of_json_element - takes a hash of the JSON element.Very generic method but \
                      can be slow working with big objects. \
                 uuid - generates a random UUID, the option produces unstables ids . ",
-            options=["source_object_properties", "source_object_id_mapping", "hash_of_json_element", "uuid"],
+            options=[
+                "source_object_properties",
+                "source_object_id_mapping",
+                "hash_of_json_element",
+                "uuid",
+            ],
         ),
         Configurable(
             name="json_object_id_mapping",
@@ -359,10 +400,21 @@ class ExtractGraphFromJsonFile(Step):
             value="http://purl.org/cognite/neat#",
             label="Namespace to be used for the generated objects.",
         ),
-        Configurable(name="namespace_prefix", value="neat", label="The prefix to be used for the namespace."),
+        Configurable(
+            name="namespace_prefix",
+            value="neat",
+            label="The prefix to be used for the namespace.",
+        ),
     ]
 
-    def get_json_object_id(self, method, object_name: str, json_object: dict, parent_object_id: str, id_mapping: dict):
+    def get_json_object_id(
+        self,
+        method,
+        object_name: str,
+        json_object: dict,
+        parent_object_id: str,
+        id_mapping: dict,
+    ):
         if method == "source_object_properties":
             object_id = ""
             if object_name in id_mapping:
@@ -385,7 +437,11 @@ class ExtractGraphFromJsonFile(Step):
                 # back to hashing
                 logging.debug(f"Object {object_name} doesn't have a valid id.Error : {e}")
                 object_id = self.get_json_object_id(
-                    "hash_of_json_element", object_name, json_object, parent_object_id, id_mapping
+                    "hash_of_json_element",
+                    object_name,
+                    json_object,
+                    parent_object_id,
+                    id_mapping,
                 )
         else:
             raise ValueError(
@@ -436,7 +492,11 @@ class ExtractGraphFromJsonFile(Step):
 
         # Iterate through the JSON data and convert it to triples
         def convert_json_to_triples(
-            data: dict, parent_node: URIRef, parent_object_id: str, parent_node_path: str, property_name=None
+            data: dict,
+            parent_node: URIRef,
+            parent_object_id: str,
+            parent_node_path: str,
+            property_name=None,
         ):
             nonlocal nodes_counter, property_counter
             if isinstance(data, dict):
@@ -456,7 +516,13 @@ class ExtractGraphFromJsonFile(Step):
                     new_node = URIRef(ns + object_id)
                     graph.graph.add((new_node, RDF.type, URIRef(ns + property_name)))
                     if labels_mapping and property_name in labels_mapping:
-                        graph.graph.add((new_node, URIRef(ns + "label"), Literal(data[labels_mapping[property_name]])))
+                        graph.graph.add(
+                            (
+                                new_node,
+                                URIRef(ns + "label"),
+                                Literal(data[labels_mapping[property_name]]),
+                            )
+                        )
                     else:
                         graph.graph.add((new_node, URIRef(ns + "label"), Literal(property_name)))
                     graph.graph.add((new_node, URIRef(ns + "parent"), parent_node))
@@ -470,7 +536,13 @@ class ExtractGraphFromJsonFile(Step):
                         convert_json_to_triples(value, parent_node, parent_object_id, parent_node_path, key)
                 else:
                     for item in data:
-                        convert_json_to_triples(item, parent_node, parent_object_id, parent_node_path, property_name)
+                        convert_json_to_triples(
+                            item,
+                            parent_node,
+                            parent_object_id,
+                            parent_node_path,
+                            property_name,
+                        )
             else:
                 # Convert scalar values to RDF literals
                 if isinstance(data, bool):
@@ -513,7 +585,10 @@ class ExtractGraphFromAvevaPiAssetFramework(Step):
             containing data dump in XML format",
         ),
         Configurable(
-            name="graph_name", value="solution", label="The name of target graph.", options=["source", "solution"]
+            name="graph_name",
+            value="solution",
+            label="The name of target graph.",
+            options=["source", "solution"],
         ),
         Configurable(
             name="root_node_external_id",
@@ -535,7 +610,11 @@ class ExtractGraphFromAvevaPiAssetFramework(Step):
             value="http://purl.org/cognite/neat#",
             label="Namespace to be used for the generated objects.",
         ),
-        Configurable(name="namespace_prefix", value="neat", label="The prefix to be used for the namespace."),
+        Configurable(
+            name="namespace_prefix",
+            value="neat",
+            label="The prefix to be used for the namespace.",
+        ),
     ]
 
     def add_root_asset_to_source_graph(self) -> str:
@@ -556,7 +635,10 @@ class ExtractGraphFromAvevaPiAssetFramework(Step):
         if source_file := self.configs["file_name"]:
             source_pi_dump = Path(self.data_store_path) / source_file
         else:
-            return FlowMessage(output_text="No source file specified", next_step_ids=["step_error_handler"])
+            return FlowMessage(
+                output_text="No source file specified",
+                next_step_ids=["step_error_handler"],
+            )
 
         # self.graph.bind
         if self.configs["graph_name"] == "solution":
@@ -586,7 +668,11 @@ class ExtractGraphFromAvevaPiAssetFramework(Step):
             self.graph_store.graph.add((rdf_instance_id, URIRef(self.ns + "Path"), Literal(new_element_path)))
             if parent_element_id:
                 self.graph_store.graph.add(
-                    (rdf_instance_id, URIRef(self.ns + "hasParent"), URIRef(self.ns + parent_element_id))
+                    (
+                        rdf_instance_id,
+                        URIRef(self.ns + "hasParent"),
+                        URIRef(self.ns + parent_element_id),
+                    )
                 )
             for child in af_element:
                 if child.tag == "AFAttribute":
@@ -595,7 +681,13 @@ class ExtractGraphFromAvevaPiAssetFramework(Step):
                     pass
                 else:
                     try:
-                        self.graph_store.graph.add((rdf_instance_id, URIRef(self.ns + child.tag), Literal(child.text)))
+                        self.graph_store.graph.add(
+                            (
+                                rdf_instance_id,
+                                URIRef(self.ns + child.tag),
+                                Literal(child.text),
+                            )
+                        )
                     except Exception as e:
                         logging.error(f"Error parsing AFAttribute {name} : {e}")
 
@@ -610,7 +702,11 @@ class ExtractGraphFromAvevaPiAssetFramework(Step):
             self.graph_store.graph.add((rdf_instance_id, URIRef(self.ns + "Path"), Literal(new_element_path)))
             if parent_element_id:
                 self.graph_store.graph.add(
-                    (rdf_instance_id, URIRef(self.ns + "hasParent"), URIRef(self.ns + parent_element_id))
+                    (
+                        rdf_instance_id,
+                        URIRef(self.ns + "hasParent"),
+                        URIRef(self.ns + parent_element_id),
+                    )
                 )
 
             for child in af_element:
@@ -624,7 +720,13 @@ class ExtractGraphFromAvevaPiAssetFramework(Step):
                     counter += 1
                     process_af_element(child, new_element_path, element_id)
                 else:
-                    self.graph_store.graph.add((rdf_instance_id, URIRef(self.ns + child.tag), Literal(child.text)))
+                    self.graph_store.graph.add(
+                        (
+                            rdf_instance_id,
+                            URIRef(self.ns + child.tag),
+                            Literal(child.text),
+                        )
+                    )
 
             if template:
                 self.graph_store.graph.add((rdf_instance_id, RDF.type, URIRef(self.ns + template)))

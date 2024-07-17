@@ -2,7 +2,7 @@ import logging
 
 from rdflib import Graph, Namespace
 
-from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
+from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 
 from ._base import NeatGraphStoreBase
 
@@ -26,9 +26,9 @@ class MemoryStore(NeatGraphStoreBase):
         graph: Graph | None = None,
         base_prefix: str = "",  # usually empty
         namespace: Namespace = DEFAULT_NAMESPACE,
-        prefixes: dict = PREFIXES,
+        prefixes: dict[str, Namespace] | None = None,
     ):
-        # Init repeated to get nice docstring
+        prefixes = prefixes if prefixes else get_default_prefixes()  # Init repeated to get nice docstring
         super().__init__(graph, base_prefix, namespace, prefixes)
 
     def _set_graph(self):

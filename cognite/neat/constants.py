@@ -14,15 +14,17 @@ EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "workflows" / "examples"
 
 DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/neat#")
 
-PREFIXES = {
-    "rdf": RDF._NS,
-    "rdfs": RDFS._NS,
-    "dct": DCTERMS._NS,
-    "skos": SKOS._NS,
-    "owl": OWL._NS,
-    "xsd": XSD._NS,
-    "pav": Namespace("http://purl.org/pav/"),
-}
+
+def get_default_prefixes() -> dict[str, Namespace]:
+    return {
+        "rdf": RDF._NS,
+        "rdfs": RDFS._NS,
+        "dct": DCTERMS._NS,
+        "skos": SKOS._NS,
+        "owl": OWL._NS,
+        "xsd": XSD._NS,
+        "pav": Namespace("http://purl.org/pav/"),
+    }
 
 
 DEFAULT_URI = ""

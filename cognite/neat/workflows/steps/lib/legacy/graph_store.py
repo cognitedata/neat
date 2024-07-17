@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import ClassVar, cast
 
-from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
+from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.legacy.graph import stores
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
@@ -83,7 +83,7 @@ class ConfigureDefaultGraphStores(Step):
     ]
 
     def run(self, rules_data: RulesData | None = None) -> (FlowMessage, SourceGraph, SolutionGraph):  # type: ignore[override, syntax]
-        prefixes = rules_data.rules.prefixes if rules_data else PREFIXES
+        prefixes = rules_data.rules.prefixes if rules_data else get_default_prefixes()
 
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
@@ -126,7 +126,7 @@ class ConfigureDefaultGraphStores(Step):
 
             try:
                 solution_graph = stores.STORE_BY_TYPE[solution_store_type](
-                    prefixes=prefixes, base_prefix="neat", namespace=PREFIXES["neat"]
+                    prefixes=prefixes, base_prefix="neat", namespace=DEFAULT_NAMESPACE
                 )
             except KeyError:
                 return FlowMessage(output_text="Invalid store type")
@@ -258,7 +258,7 @@ class ConfigureGraphStore(Step):
             graph_store = None
             logging.info("Graph reset complete")
 
-        prefixes = rules_data.rules.prefixes if rules_data else PREFIXES.copy()
+        prefixes = rules_data.rules.prefixes if rules_data else get_default_prefixes()
 
         if store_type == stores.OxiGraphStore.rdf_store_type and graph_store is not None:
             # OXIGRAPH doesn't like to be initialized twice without a good reason
