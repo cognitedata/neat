@@ -5,13 +5,13 @@ from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Literal, TypeAlias, get_args
 
-from cognite.client import CogniteClient
+from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
 
 from cognite.neat import _version
 from cognite.neat.utils.auxiliary import local_import
 
-__all__ = ["get_cognite_client"]
+__all__ = ["get_cognite_client", "EnvironmentVariables"]
 
 _LOGIN_FLOW: TypeAlias = Literal["infer", "client_credentials", "interactive", "token"]
 _VALID_LOGIN_FLOWS = get_args(_LOGIN_FLOW)
@@ -22,7 +22,7 @@ def get_cognite_client(env_file_name: str = ".env") -> CogniteClient:
     if not env_file_name.endswith(".env"):
         raise ValueError("env_file_name must end with '.env'")
     with suppress(KeyError):
-        variables = _EnvironmentVariables.create_from_environ()
+        variables = EnvironmentVariables.create_from_environ()
         return variables.get_client()
 
     repo_root = _repo_root()
@@ -51,7 +51,7 @@ def get_cognite_client(env_file_name: str = ".env") -> CogniteClient:
 
 
 @dataclass
-class _EnvironmentVariables:
+class EnvironmentVariables:
     CDF_CLUSTER: str
     CDF_PROJECT: str
     LOGIN_FLOW: _LOGIN_FLOW = "infer"
@@ -66,10 +66,17 @@ class _EnvironmentVariables:
     IDP_AUDIENCE: str | None = None
     IDP_SCOPES: str | None = None
     IDP_AUTHORITY_URL: str | None = None
+    CDF_MAX_WORKERS: int | None = None
+    CDF_TIMEOUT: int | None = None
+    CDF_REDIRECT_PORT: int = 53_000
 
     def __post_init__(self):
         if self.LOGIN_FLOW.lower() not in _VALID_LOGIN_FLOWS:
             raise ValueError(f"LOGIN_FLOW must be one of {_VALID_LOGIN_FLOWS}")
+        if self.IDP_TOKEN_URL and not self.IDP_TENANT_ID:
+            prefix, suffix = "https://login.microsoftonline.com/", "/oauth2/v2.0/token"
+            if self.IDP_TOKEN_URL.startswith(prefix) and self.IDP_TOKEN_URL.endswith(suffix):
+                self.IDP_TENANT_ID = self.IDP_TOKEN_URL.removeprefix(prefix).removesuffix(suffix)
 
     @property
     def cdf_url(self) -> str:
@@ -102,7 +109,7 @@ class _EnvironmentVariables:
         return f"https://login.microsoftonline.com/{self.IDP_TENANT_ID}"
 
     @classmethod
-    def create_from_environ(cls) -> "_EnvironmentVariables":
+    def create_from_environ(cls) -> "EnvironmentVariables":
         if "CDF_CLUSTER" not in os.environ or "CDF_PROJECT" not in os.environ:
             raise KeyError("CDF_CLUSTER and CDF_PROJECT must be set in the environment.", "CDF_CLUSTER", "CDF_PROJECT")
 
@@ -119,6 +126,25 @@ class _EnvironmentVariables:
             IDP_AUDIENCE=os.environ.get("IDP_AUDIENCE"),
             IDP_SCOPES=os.environ.get("IDP_SCOPES"),
             IDP_AUTHORITY_URL=os.environ.get("IDP_AUTHORITY_URL"),
+            CDF_MAX_WORKERS=int(os.environ["CDF_MAX_WORKERS"]) if "CDF_MAX_WORKERS" in os.environ else None,
+            CDF_TIMEOUT=int(os.environ["CDF_TIMEOUT"]) if "CDF_TIMEOUT" in os.environ else None,
+            CDF_REDIRECT_PORT=int(os.environ.get("CDF_REDIRECT_PORT", 53_000)),
+        )
+
+    @classmethod
+    def default(cls) -> "EnvironmentVariables":
+        # This method is for backwards compatibility with the old config
+        # It is not recommended to use this method.
+        return cls(
+            LOGIN_FLOW="client_credentials",
+            CDF_CLUSTER="api",
+            CDF_PROJECT="dev",
+            IDP_TENANT_ID="common",
+            IDP_CLIENT_ID="neat",
+            IDP_CLIENT_SECRET="secret",
+            IDP_SCOPES="project:read,project:write",
+            CDF_TIMEOUT=60,
+            CDF_MAX_WORKERS=3,
         )
 
     def get_credentials(self) -> CredentialProvider:
@@ -161,7 +187,7 @@ class _EnvironmentVariables:
         return OAuthInteractive(
             client_id=self.IDP_CLIENT_ID,
             authority_url=self.idp_authority_url,
-            redirect_port=53_000,
+            redirect_port=self.CDF_REDIRECT_PORT,
             scopes=self.idp_scopes,
         )
 
@@ -171,9 +197,15 @@ class _EnvironmentVariables:
         return Token(self.TOKEN)
 
     def get_client(self) -> CogniteClient:
-        return CogniteClient.default(
-            self.CDF_PROJECT, self.CDF_CLUSTER, credentials=self.get_credentials(), client_name=_CLIENT_NAME
+        config = ClientConfig(
+            client_name=_CLIENT_NAME,
+            project=self.CDF_PROJECT,
+            credentials=self.get_credentials(),
+            base_url=self.cdf_url,
+            max_workers=self.CDF_MAX_WORKERS,
+            timeout=self.CDF_TIMEOUT,
         )
+        return CogniteClient(config)
 
     def create_env_file(self) -> str:
         lines: list[str] = []
@@ -194,11 +226,11 @@ class _EnvironmentVariables:
         return "\n".join(lines)
 
 
-def _from_dotenv(evn_file: Path) -> _EnvironmentVariables:
+def _from_dotenv(evn_file: Path) -> EnvironmentVariables:
     if not evn_file.exists():
         raise FileNotFoundError(f"{evn_file} does not exist.")
     content = evn_file.read_text()
-    valid_variables = {f.name for f in fields(_EnvironmentVariables)}
+    valid_variables = {f.name for f in fields(EnvironmentVariables)}
     variables: dict[str, str] = {}
     for line in content.splitlines():
         if line.startswith("#") or "=" not in line:
@@ -206,15 +238,15 @@ def _from_dotenv(evn_file: Path) -> _EnvironmentVariables:
         key, value = line.split("=", 1)
         if key in valid_variables:
             variables[key] = value
-    return _EnvironmentVariables(**variables)  # type: ignore[arg-type]
+    return EnvironmentVariables(**variables)  # type: ignore[arg-type]
 
 
-def _prompt_user() -> _EnvironmentVariables:
+def _prompt_user() -> EnvironmentVariables:
     local_import("rich", "jupyter")
     from rich.prompt import Prompt
 
     try:
-        variables = _EnvironmentVariables.create_from_environ()
+        variables = EnvironmentVariables.create_from_environ()
         continue_ = Prompt.ask(
             f"Use environment variables for CDF Cluster '{variables.CDF_CLUSTER}' "
             f"and Project '{variables.CDF_PROJECT}'? [y/n]",
@@ -263,25 +295,12 @@ def _prompt_user() -> _EnvironmentVariables:
     return variables
 
 
-def _prompt_cluster_and_project() -> _EnvironmentVariables:
+def _prompt_cluster_and_project() -> EnvironmentVariables:
     from rich.prompt import Prompt
 
     cluster = Prompt.ask("Enter CDF Cluster (example 'greenfield', 'bluefield', 'westeurope-1)")
     project = Prompt.ask("Enter CDF Project")
-    return _EnvironmentVariables(cluster, project)
-
-
-def _is_notebook() -> bool:
-    try:
-        shell = get_ipython().__class__.__name__  # type: ignore[name-defined]
-        if shell == "ZMQInteractiveShell":
-            return True  # Jupyter notebook or qtconsole
-        elif shell == "TerminalInteractiveShell":
-            return False  # Terminal running IPython
-        else:
-            return False  # Other type (?)
-    except NameError:
-        return False  # Probably standard Python interpreter
+    return EnvironmentVariables(cluster, project)
 
 
 def _repo_root() -> Path | None:

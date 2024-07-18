@@ -10,13 +10,6 @@ from functools import wraps
 from typing import Literal, TypeAlias, cast, overload
 
 import pandas as pd
-from cognite.client import ClientConfig, CogniteClient
-from cognite.client.credentials import (
-    CredentialProvider,
-    OAuthClientCredentials,
-    OAuthInteractive,
-    Token,
-)
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 from pydantic_core import ErrorDetails
@@ -24,13 +17,6 @@ from pyparsing import Any
 from rdflib import Literal as RdfLiteral
 from rdflib import Namespace
 from rdflib.term import URIRef
-
-from cognite.neat import _version
-from cognite.neat.utils.cdf import (
-    CogniteClientConfig,
-    InteractiveCogniteClient,
-    ServiceCogniteClient,
-)
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -41,50 +27,6 @@ else:
 
 
 Triple: TypeAlias = tuple[URIRef, URIRef, RdfLiteral | URIRef]
-
-
-def get_cognite_client_from_config(config: ServiceCogniteClient) -> CogniteClient:
-    credentials = OAuthClientCredentials(
-        token_url=config.token_url,
-        client_id=config.client_id,
-        client_secret=config.client_secret,
-        scopes=config.scopes,
-    )
-
-    return _get_cognite_client(config, credentials)
-
-
-def get_cognite_client_from_token(config: ServiceCogniteClient) -> CogniteClient:
-    credentials = Token(config.client_secret)
-    return _get_cognite_client(config, credentials)
-
-
-def get_cognite_client_interactive(config: InteractiveCogniteClient) -> CogniteClient:
-    credentials = OAuthInteractive(
-        authority_url=config.authority_url,
-        client_id=config.client_id,
-        scopes=config.scopes,
-        redirect_port=config.redirect_port,
-    )
-    return _get_cognite_client(config, credentials)
-
-
-def _get_cognite_client(config: CogniteClientConfig, credentials: CredentialProvider) -> CogniteClient:
-    logging.info(f"Creating CogniteClient with parameters : {config}")
-
-    # The client name is used for aggregated logging of Neat Usage
-    client_name = f"CogniteNeat:{_version.__version__}"
-    return CogniteClient(
-        ClientConfig(
-            client_name=client_name,
-            base_url=config.base_url,
-            project=config.project,
-            credentials=credentials,
-            timeout=config.timeout,
-            max_workers=config.max_workers,
-            debug=False,
-        )
-    )
 
 
 @overload

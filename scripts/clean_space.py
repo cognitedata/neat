@@ -1,8 +1,8 @@
 from cognite.neat.config import Config
 from pathlib import Path
 
-from cognite.neat.utils.utils import get_cognite_client_from_config
-from cognite.neat.utils.cdf import clean_space
+
+from cognite.neat.utils.cdf.cdf_loaders import SpaceLoader
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -11,9 +11,9 @@ SPACE = "sp_pump_station"
 
 def main() -> None:
     config = Config.from_yaml(REPO_ROOT / "config.yaml")
-    client = get_cognite_client_from_config(config.cdf_client)
-
-    clean_space(client, SPACE)
+    client = config.cdf_auth_config.get_client()
+    client.files.list()
+    SpaceLoader(client).clean(SPACE)
 
 
 if __name__ == '__main__':

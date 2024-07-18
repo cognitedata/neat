@@ -23,8 +23,13 @@ from cognite.neat.rules.issues.dms import (
 )
 from cognite.neat.rules.models import DMSSchema
 from cognite.neat.rules.models.dms import PipelineSchema
-from cognite.neat.utils.cdf_classes import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
-from cognite.neat.utils.cdf_loaders.data_classes import RawTableWrite, RawTableWriteList
+from cognite.neat.utils.cdf.data_classes import (
+    ContainerApplyDict,
+    RawTableWrite,
+    RawTableWriteList,
+    SpaceApplyDict,
+    ViewApplyDict,
+)
 
 
 def invalid_schema_test_cases() -> Iterable[ParameterSet]:

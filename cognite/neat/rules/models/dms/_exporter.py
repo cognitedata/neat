@@ -23,7 +23,7 @@ from cognite.neat.rules.models.entities import (
     ViewPropertyEntity,
 )
 from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
-from cognite.neat.utils.cdf_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
+from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 
 from ._rules import DMSMetadata, DMSProperty, DMSRules, DMSView
 from ._schema import DMSSchema, PipelineSchema

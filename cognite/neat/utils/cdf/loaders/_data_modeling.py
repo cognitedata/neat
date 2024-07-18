@@ -3,6 +3,7 @@ from graphlib import TopologicalSorter
 from typing import Any, Literal, cast
 
 from cognite.client import CogniteClient
+from cognite.client.data_classes import filters
 from cognite.client.data_classes._base import (
     T_CogniteResourceList,
     T_WritableCogniteResource,
@@ -94,6 +95,42 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
         if all(isinstance(item, Space) for item in ids) or all(isinstance(item, SpaceApply) for item in ids):
             ids = [cast(Space | SpaceApply, item).space for item in ids]
         return self.client.data_modeling.spaces.delete(cast(SequenceNotStr[str], ids))
+
+    def clean(self, space: str) -> None:
+        """Deletes all data in a space.
+
+        This means all nodes, edges, views, containers, and data models located in the given space.
+
+        Args:
+            client: Connected CogniteClient
+            space: The space to delete.
+
+        """
+        edges = self.client.data_modeling.instances.list(
+            "edge", limit=-1, filter=filters.Equals(["edge", "space"], space)
+        )
+        if edges:
+            instances = self.client.data_modeling.instances.delete(edges=edges.as_ids())
+            print(f"Deleted {len(instances.edges)} edges")
+        nodes = self.client.data_modeling.instances.list(
+            "node", limit=-1, filter=filters.Equals(["node", "space"], space)
+        )
+        if nodes:
+            instances = self.client.data_modeling.instances.delete(nodes=nodes.as_ids())
+            print(f"Deleted {len(instances.nodes)} nodes")
+        views = self.client.data_modeling.views.list(limit=-1, space=space)
+        if views:
+            deleted_views = self.client.data_modeling.views.delete(views.as_ids())
+            print(f"Deleted {len(deleted_views)} views")
+        containers = self.client.data_modeling.containers.list(limit=-1, space=space)
+        if containers:
+            deleted_containers = self.client.data_modeling.containers.delete(containers.as_ids())
+            print(f"Deleted {len(deleted_containers)} containers")
+        if data_models := self.client.data_modeling.data_models.list(limit=-1, space=space):
+            deleted_data_models = self.client.data_modeling.data_models.delete(data_models.as_ids())
+            print(f"Deleted {len(deleted_data_models)} data models")
+        deleted_space = self.client.data_modeling.spaces.delete(space)
+        print(f"Deleted space {deleted_space}")
 
 
 class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):

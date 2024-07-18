@@ -9,7 +9,7 @@ from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.issues.dms import MissingContainerError, MissingSpaceError, MissingViewError
 from cognite.neat.rules.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules.models import DMSRules, SchemaCompleteness
-from cognite.neat.utils import cdf_loaders
+from cognite.neat.utils.cdf.loaders import ViewLoader
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import MultiRuleData
@@ -69,7 +69,7 @@ class ValidateRulesAgainstCDF(Step):
         retrieved_containers = cdf_client.data_modeling.containers.retrieve(missing_containers).as_write()
         # Converting read format of views to write format requires to account for parents (implements)
         # Thus we use the loader to convert the views to write format.
-        view_loader = cdf_loaders.ViewLoader(cdf_client)
+        view_loader = ViewLoader(cdf_client)
         retrieved_views = [
             view_loader.as_write(view) for view in cdf_client.data_modeling.views.retrieve(missing_views)
         ]
