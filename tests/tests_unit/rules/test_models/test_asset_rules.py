@@ -64,6 +64,142 @@ def case_asset_relationship():
     )
 
 
+def case_circular_dependency():
+    yield pytest.param(
+        {
+            "Metadata": {
+                "role": "asset architect",
+                "schema": "complete",
+                "creator": "Jon, Emma, David",
+                "namespace": "http://purl.org/cognite/power2consumer",
+                "prefix": "power",
+                "created": datetime(2024, 2, 9, 0, 0),
+                "updated": datetime(2024, 2, 9, 0, 0),
+                "version": "0.1.0",
+                "title": "Power to Consumer Data Model",
+                "license": "CC-BY 4.0",
+                "rights": "Free for use",
+            },
+            "Classes": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
+                    "Match": "exact",
+                },
+                {
+                    "Class": "ACLineSegment",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#ACLineSegment",
+                    "Match": "exact",
+                },
+            ],
+            "Properties": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Property": "line",
+                    "Description": None,
+                    "Value Type": "ACLineSegment",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Transformation": None,
+                    "Implementation": "Asset(property=parent_external_id)",
+                },
+                {
+                    "Class": "ACLineSegment",
+                    "Property": "line",
+                    "Description": None,
+                    "Value Type": "GeneratingUnit",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Transformation": None,
+                    "Implementation": "Asset(property=parent_external_id)",
+                },
+            ],
+        },
+        (
+            "Value error, [AssetRulesHaveCircularDependencyError(classes=[class(prefix=power,"
+            "suffix=GeneratingUnit), class(prefix=power,suffix=ACLineSegment), "
+            "class(prefix=power,suffix=GeneratingUnit)])]"
+        ),
+        id="circular_dependency",
+    )
+
+
+def parent_property_points_to_data_type():
+    yield pytest.param(
+        {
+            "Metadata": {
+                "role": "asset architect",
+                "schema": "complete",
+                "creator": "Jon, Emma, David",
+                "namespace": "http://purl.org/cognite/power2consumer",
+                "prefix": "power",
+                "created": datetime(2024, 2, 9, 0, 0),
+                "updated": datetime(2024, 2, 9, 0, 0),
+                "version": "0.1.0",
+                "title": "Power to Consumer Data Model",
+                "license": "CC-BY 4.0",
+                "rights": "Free for use",
+            },
+            "Classes": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
+                    "Match": "exact",
+                },
+                {
+                    "Class": "ACLineSegment",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#ACLineSegment",
+                    "Match": "exact",
+                },
+            ],
+            "Properties": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Property": "line",
+                    "Description": None,
+                    "Value Type": "ACLineSegment",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Transformation": None,
+                    "Implementation": "Asset(property=parent_external_id)",
+                },
+                {
+                    "Class": "ACLineSegment",
+                    "Property": "line",
+                    "Description": None,
+                    "Value Type": "string",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Transformation": None,
+                    "Implementation": "Asset(property=parent_external_id)",
+                },
+            ],
+        },
+        ("Value error, [AssetParentPropertyPointsToDataValueTypeError(class_property=[('ACLineSegment', 'line')])]"),
+        id="data_type_for_parent_property",
+    )
+
+
 class TestAssetRules:
     @pytest.mark.parametrize("rules, expected_exception", list(case_asset_relationship()))
     def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: DataType) -> None:
@@ -74,3 +210,19 @@ class TestAssetRules:
         information_rules = asset_rules.as_information_rules()
 
         assert asset_rules.model_dump() == information_rules.as_asset_architect_rules().model_dump()
+
+    @pytest.mark.parametrize("invalid_rules, expected_exception", list(case_circular_dependency()))
+    def test_circular_dependency(self, invalid_rules: dict[str, dict[str, Any]], expected_exception: str) -> None:
+        with pytest.raises(ValueError) as e:
+            AssetRules.model_validate(invalid_rules)
+        errors = e.value.errors()
+        assert errors[0]["msg"] == expected_exception
+
+    @pytest.mark.parametrize("invalid_rules, expected_exception", list(parent_property_points_to_data_type()))
+    def test_data_type_for_parent_property(
+        self, invalid_rules: dict[str, dict[str, Any]], expected_exception: str
+    ) -> None:
+        with pytest.raises(ValueError) as e:
+            AssetRules.model_validate(invalid_rules)
+        errors = e.value.errors()
+        assert errors[0]["msg"] == expected_exception
