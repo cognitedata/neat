@@ -14,7 +14,7 @@ from cognite.neat.legacy.rules.analysis import to_class_property_pairs
 from cognite.neat.legacy.rules.exporters._validation import are_entity_names_dms_compliant, are_properties_redefined
 from cognite.neat.legacy.rules.models.rules import Rules
 from cognite.neat.legacy.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS
-from cognite.neat.utils.utils import generate_exception_report
+from cognite.neat.utils.auxiliary import generate_exception_report
 
 from ._base import BaseExporter
 

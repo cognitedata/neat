@@ -14,7 +14,7 @@ from cognite.neat.legacy.graph.extractors._mock_graph_generator import (
     generate_triples as generate_mock_triples,
 )
 from cognite.neat.legacy.rules.exporters._rules2triples import get_instances_as_triples
-from cognite.neat.utils.utils import create_sha256_hash
+from cognite.neat.utils.auxiliary import create_sha256_hash
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import (

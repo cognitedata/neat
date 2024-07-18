@@ -12,7 +12,7 @@ from cognite.neat.rules.models.information import (
     InformationProperty,
     InformationRules,
 )
-from cognite.neat.utils.utils import get_inheritance_path
+from cognite.neat.utils.rdf_ import get_inheritance_path
 
 from ._base import BaseAnalysis
 

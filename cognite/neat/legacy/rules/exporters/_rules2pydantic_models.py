@@ -21,7 +21,7 @@ from cognite.neat.legacy.rules.exporters._rules2dms import DMSSchemaComponents
 from cognite.neat.legacy.rules.exporters._validation import are_entity_names_dms_compliant
 from cognite.neat.legacy.rules.models.rules import Property, Rules
 from cognite.neat.legacy.rules.models.value_types import ValueTypeMapping
-from cognite.neat.utils.utils import create_sha256_hash, generate_exception_report
+from cognite.neat.utils.auxiliary import create_sha256_hash, generate_exception_report
 
 if sys.version_info >= (3, 11):
     from datetime import UTC

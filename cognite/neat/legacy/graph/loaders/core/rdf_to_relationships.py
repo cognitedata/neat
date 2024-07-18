@@ -14,7 +14,10 @@ from cognite.neat.legacy.graph.loaders.core.models import RelationshipDefinition
 from cognite.neat.legacy.graph.loaders.core.rdf_to_assets import _categorize_cdf_assets
 from cognite.neat.legacy.graph.stores import NeatGraphStoreBase
 from cognite.neat.legacy.rules.models.rules import Rules
-from cognite.neat.utils.utils import chunker, datetime_utc_now, epoch_now_ms, remove_namespace_from_uri, retry_decorator
+from cognite.neat.utils.auxiliary import retry_decorator
+from cognite.neat.utils.collection_ import chunker
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
+from cognite.neat.utils.time_ import datetime_utc_now, epoch_now_ms
 
 
 def define_relationships(rules: Rules, data_set_id: int, stop_on_exception: bool = False) -> RelationshipDefinitions:

@@ -8,7 +8,7 @@ from rdflib.query import ResultRow
 
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import InformationRules
-from cognite.neat.utils.utils import remove_namespace_from_uri
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._construct import build_construct_query
 

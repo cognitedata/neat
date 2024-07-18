@@ -21,7 +21,7 @@ from cognite.neat.legacy.rules.models.rdfpath import (
     parse_traversal,
 )
 from cognite.neat.legacy.rules.models.rules import Rules
-from cognite.neat.utils.utils import remove_namespace_from_uri
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 
 def _generate_prefix_header(prefixes: dict[str, Namespace] | None = None) -> str:

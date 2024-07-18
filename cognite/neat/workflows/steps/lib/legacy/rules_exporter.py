@@ -12,7 +12,7 @@ from cognite.neat.legacy.rules import exporters
 from cognite.neat.legacy.rules.exporters._rules2dms import DMSSchemaComponents
 from cognite.neat.legacy.rules.exporters._rules2graphql import GraphQLSchema
 from cognite.neat.legacy.rules.exporters._rules2ontology import Ontology
-from cognite.neat.utils.utils import generate_exception_report
+from cognite.neat.utils.auxiliary import generate_exception_report
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, DMSSchemaComponentsData, RulesData

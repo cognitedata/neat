@@ -16,7 +16,7 @@ from pydantic import (
 )
 
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.utils.utils import replace_non_alphanumeric_with_underscore
+from cognite.neat.utils.text import replace_non_alphanumeric_with_underscore
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum

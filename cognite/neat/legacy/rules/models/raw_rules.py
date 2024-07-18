@@ -24,7 +24,7 @@ from cognite.neat.legacy.rules.models.tables import Tables
 
 # importers:
 from cognite.neat.rules import exceptions
-from cognite.neat.utils.utils import generate_exception_report
+from cognite.neat.utils.auxiliary import generate_exception_report
 
 __all__ = ["RawRules"]
 

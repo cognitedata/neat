@@ -10,7 +10,7 @@ from rdflib import RDF, Literal, Namespace
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
-from cognite.neat.utils.utils import create_sha256_hash
+from cognite.neat.utils.auxiliary import create_sha256_hash
 
 
 class LabelsExtractor(BaseExtractor):

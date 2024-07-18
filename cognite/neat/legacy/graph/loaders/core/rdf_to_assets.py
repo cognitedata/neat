@@ -18,7 +18,10 @@ from rdflib.term import URIRef
 from cognite.neat.legacy.graph.loaders.core.models import AssetTemplate
 from cognite.neat.legacy.graph.stores import NeatGraphStoreBase
 from cognite.neat.legacy.rules.models.rules import Property, Rules
-from cognite.neat.utils.utils import chunker, datetime_utc_now, remove_namespace_from_uri, retry_decorator
+from cognite.neat.utils.auxiliary import retry_decorator
+from cognite.neat.utils.collection_ import chunker
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
+from cognite.neat.utils.time_ import datetime_utc_now
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -899,7 +902,7 @@ def _micro_batch_push(
         except CogniteDuplicatedError:
             # this is handling of very rare case when some assets might be lost . Normally this should not happen.
             # Last attempt to recover
-            client.assets.create_hierarchy(batch, upsert=True)
+            client.assets.create_hierarchy(batch, upsert=True)  # type: ignore[arg-type]
 
         delta_time = (datetime_utc_now() - start_time).seconds
 

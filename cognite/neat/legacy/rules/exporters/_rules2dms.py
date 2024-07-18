@@ -45,7 +45,7 @@ from cognite.neat.legacy.rules.exporters._base import BaseExporter
 from cognite.neat.legacy.rules.exporters._validation import are_entity_names_dms_compliant
 from cognite.neat.legacy.rules.models._base import ContainerEntity, EntityTypes, ParentClass
 from cognite.neat.legacy.rules.models.rules import Class, Property, Rules
-from cognite.neat.utils.utils import generate_exception_report
+from cognite.neat.utils.auxiliary import generate_exception_report
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup

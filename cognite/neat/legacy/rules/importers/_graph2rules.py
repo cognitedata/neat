@@ -14,11 +14,7 @@ from cognite.neat.constants import get_default_prefixes
 from cognite.neat.legacy.rules import exceptions
 from cognite.neat.legacy.rules.exporters._rules2rules import to_dms_name
 from cognite.neat.legacy.rules.models.tables import Tables
-from cognite.neat.utils.utils import (
-    get_namespace,
-    remove_namespace_from_uri,
-    uri_to_short_form,
-)
+from cognite.neat.utils.rdf_ import get_namespace, remove_namespace_from_uri, uri_to_short_form
 
 from ._base import BaseImporter
 
@@ -78,26 +74,11 @@ def _create_default_properties_parsing_config() -> dict[str, tuple[str, ...]]:
 
 def _create_default_classes_parsing_config() -> dict[str, tuple[str, ...]]:
     # TODO: these are to be read from Class pydantic model
-    return {
-        "header": (
-            "Class",
-            "Description",
-            "Parent Class",
-            "Source",
-            "Source Entity Name",
-            "Match Type",
-            "Comment",
-        )
-    }
+    return {"header": ("Class", "Description", "Parent Class", "Source", "Source Entity Name", "Match Type", "Comment")}
 
 
 def _parse_prefixes_df(prefixes: dict[str, Namespace]) -> pd.DataFrame:
-    return pd.DataFrame.from_dict(
-        {
-            "Prefix": list(prefixes.keys()),
-            "URI": [str(uri) for uri in prefixes.values()],
-        }
-    )
+    return pd.DataFrame.from_dict({"Prefix": list(prefixes.keys()), "URI": [str(uri) for uri in prefixes.values()]})
 
 
 def _parse_metadata_df() -> pd.DataFrame:
@@ -202,18 +183,10 @@ def _graph_to_data_model_dict(graph: Graph, max_number_of_instance: int = -1) ->
             )
             class_name = f"{class_name}_{len(data_model)+1}"
 
-        data_model[class_name] = {
-            "properties": {},
-            "uri": uri_to_short_form(class_, prefixes),
-        }
+        data_model[class_name] = {"properties": {}, "uri": uri_to_short_form(class_, prefixes)}
 
         for instance in _get_class_instance_ids(graph, class_, max_number_of_instance):
-            for (
-                property_,
-                occurrence,
-                data_type,
-                object_type,
-            ) in _define_instance_properties(graph, instance):
+            for property_, occurrence, data_type, object_type in _define_instance_properties(graph, instance):
                 property_name = remove_namespace_from_uri(property_)
                 _add_uri_namespace_to_prefixes(property_, prefixes)
 

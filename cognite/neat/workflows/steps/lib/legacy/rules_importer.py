@@ -13,7 +13,7 @@ from cognite.neat.legacy.rules import exporters, importers
 from cognite.neat.legacy.rules.models.rdfpath import TransformationRuleType
 from cognite.neat.legacy.rules.models.rules import Class, Classes, Metadata, Properties, Property, Rules
 from cognite.neat.legacy.rules.models.value_types import ValueType
-from cognite.neat.utils.utils import generate_exception_report
+from cognite.neat.utils.auxiliary import generate_exception_report
 from cognite.neat.workflows import utils
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.cdf_store import CdfStore

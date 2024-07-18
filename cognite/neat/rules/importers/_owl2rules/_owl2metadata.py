@@ -9,7 +9,8 @@ from cognite.neat.rules.models._types._base import (
     PREFIX_COMPLIANCE_REGEX,
     VERSION_COMPLIANCE_REGEX,
 )
-from cognite.neat.utils.utils import convert_rdflib_content, remove_none_elements_from_set
+from cognite.neat.utils.collection_ import remove_none_elements_from_set
+from cognite.neat.utils.rdf_ import convert_rdflib_content
 
 
 def parse_owl_metadata(graph: Graph) -> dict:

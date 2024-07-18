@@ -11,7 +11,7 @@ from cognite.neat.rules.models._rdfpath import (
     Hop,
     Step,
 )
-from cognite.neat.utils.utils import remove_namespace_from_uri, uri_to_short_form
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri, uri_to_short_form
 
 if sys.version_info >= (3, 11):
     from typing import Self

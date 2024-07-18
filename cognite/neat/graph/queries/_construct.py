@@ -13,7 +13,7 @@ from cognite.neat.rules.models._rdfpath import (
 )
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import InformationProperty, InformationRules
-from cognite.neat.utils.utils import most_occurring_element
+from cognite.neat.utils.collection_ import most_occurring_element
 
 from ._shared import Triple, hop2property_path
 

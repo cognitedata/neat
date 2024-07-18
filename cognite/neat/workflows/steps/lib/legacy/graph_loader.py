@@ -26,7 +26,7 @@ from cognite.neat.legacy.graph.loaders.core.rdf_to_relationships import (
 from cognite.neat.legacy.graph.loaders.rdf_to_dms import upload_edges, upload_nodes
 from cognite.neat.legacy.graph.loaders.validator import validate_asset_hierarchy
 from cognite.neat.legacy.rules.models.rdfpath import TransformationRuleType
-from cognite.neat.utils.utils import generate_exception_report
+from cognite.neat.utils.auxiliary import generate_exception_report
 from cognite.neat.workflows._exceptions import StepFlowContextNotInitialized, StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import (
