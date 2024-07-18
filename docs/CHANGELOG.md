@@ -15,6 +15,22 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.87.2] - 17-07-24
+### Added
+- Topological sorting of classes and properties in `AssetRules` to provide proper order of asset creation
+- Additional validation on `AssetRules` to ensure that mapped parent properties point to class not data value type
+- Additional validation on `AssetRules` to ensure that rules do not have circular decadency
+
+## [0.87.1] - 17-07-24
+### Added
+- `AddSelfReferenceProperty` transformer that handles `SelfReferenceProperty` RDF path in Rules
+### Improved
+- Better handling of property renaming in `DESCRIBE` query, which for example allows RDF:type property to be used
+- Iterating over classes which have properties defined for them instead of all classes (which causes errors)
+- Renamed `AllReferences` RDF path to `SelfReferenceProperty` to better reflect its purpose
+### Removed
+- `AllProperties` RDF path has been removed as we no longer want support implicit properties
+
 ## [0.87.0] - 17-07-24
 ### Added
 - `AssetLoader` added to load assets to CDF

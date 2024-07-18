@@ -1,4 +1,5 @@
 import warnings
+from graphlib import TopologicalSorter
 from typing import cast
 
 from cognite.neat.rules.models import AssetRules
@@ -6,6 +7,7 @@ from cognite.neat.rules.models._rdfpath import RDFPath
 from cognite.neat.rules.models.asset import AssetClass, AssetProperty
 from cognite.neat.rules.models.entities import (
     AssetEntity,
+    AssetFields,
     ClassEntity,
     EntityTypes,
     ReferenceEntity,
@@ -94,6 +96,19 @@ class AssetAnalysis(BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEnt
                 class_property_pairs[class_] = processed_properties
 
         return class_property_pairs
+
+    def class_topological_sort(self) -> list[ClassEntity]:
+        child_parent_asset: dict[ClassEntity, set[ClassEntity]] = {}
+        for class_, properties in self.asset_definition().items():
+            child_parent_asset[class_] = set()
+            for property_ in properties.values():
+                if any(
+                    cast(AssetEntity, implementation).property_ == AssetFields.parent_external_id
+                    for implementation in property_.implementation
+                ):
+                    child_parent_asset[property_.class_].add(cast(ClassEntity, property_.value_type))
+
+        return list(TopologicalSorter(child_parent_asset).static_order())
 
     def asset_definition(
         self, only_rdfpath: bool = False, consider_inheritance: bool = False

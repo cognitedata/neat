@@ -232,19 +232,10 @@ class SingleProperty(Traversal):
         return f"{self.class_}({self.property})"
 
 
-class AllReferences(Traversal):
+class SelfReferenceProperty(Traversal):
     @classmethod
     def from_string(cls, class_: str) -> Self:
         return cls(class_=Entity.from_string(class_))
-
-
-class AllProperties(Traversal):
-    @classmethod
-    def from_string(cls, class_: str) -> Self:
-        return cls(class_=Entity.from_string(class_))
-
-    def __str__(self) -> str:
-        return f"{self.class_}(*)"
 
 
 class Origin(BaseModel):
@@ -290,7 +281,7 @@ class Query(BaseModel):
 
 
 class RDFPath(Rule):
-    traversal: SingleProperty | AllProperties | AllReferences | Hop
+    traversal: SingleProperty | SelfReferenceProperty | Hop
 
     def __str__(self) -> str:
         return f"{self.traversal}"
@@ -311,14 +302,13 @@ class SPARQLQuery(RDFPath):
     traversal: Query
 
 
-def parse_traversal(raw: str) -> AllReferences | AllProperties | SingleProperty | Hop:
+def parse_traversal(raw: str) -> SelfReferenceProperty | SingleProperty | Hop:
     if result := CLASS_ID_REGEX_COMPILED.match(raw):
-        return AllReferences.from_string(class_=result.group(EntityTypes.class_))
-    elif result := ALL_PROPERTIES_REGEX_COMPILED.match(raw):
-        return AllProperties.from_string(class_=result.group(EntityTypes.class_))
+        return SelfReferenceProperty.from_string(class_=result.group(EntityTypes.class_))
     elif result := SINGLE_PROPERTY_REGEX_COMPILED.match(raw):
         return SingleProperty.from_string(
-            class_=result.group(EntityTypes.class_), property_=result.group(EntityTypes.property_)
+            class_=result.group(EntityTypes.class_),
+            property_=result.group(EntityTypes.property_),
         )
     elif result := HOP_REGEX_COMPILED.match(raw):
         return Hop.from_string(class_=result.group("origin"), traversal=result.group(_traversal))
@@ -329,7 +319,9 @@ def parse_traversal(raw: str) -> AllReferences | AllProperties | SingleProperty 
 def parse_table_lookup(raw: str) -> TableLookup:
     if result := TABLE_REGEX_COMPILED.match(raw):
         return TableLookup(
-            name=result.group(Lookup.table), key=result.group(Lookup.key), value=result.group(Lookup.value)
+            name=result.group(Lookup.table),
+            key=result.group(Lookup.key),
+            value=result.group(Lookup.value),
         )
     raise exceptions.NotValidTableLookUp(raw).to_pydantic_custom_error()
 
@@ -344,7 +336,10 @@ def parse_rule(rule_raw: str, rule_type: TransformationRuleType | None) -> RDFPa
             if Counter(rule_raw).get("|") != 1:
                 raise exceptions.NotValidRAWLookUp(rule_raw).to_pydantic_custom_error()
             traversal, table_lookup = rule_raw.split("|")
-            return RawLookup(traversal=parse_traversal(traversal), table=parse_table_lookup(table_lookup))
+            return RawLookup(
+                traversal=parse_traversal(traversal),
+                table=parse_table_lookup(table_lookup),
+            )
         case TransformationRuleType.sparql:
             return SPARQLQuery(traversal=Query(query=rule_raw))
         case None:
@@ -352,9 +347,10 @@ def parse_rule(rule_raw: str, rule_type: TransformationRuleType | None) -> RDFPa
 
 
 def is_valid_rule(rule_type: TransformationRuleType, rule_raw: str) -> bool:
-    is_valid_rule = {TransformationRuleType.rdfpath: is_rdfpath, TransformationRuleType.rawlookup: is_rawlookup}[
-        rule_type
-    ]
+    is_valid_rule = {
+        TransformationRuleType.rdfpath: is_rdfpath,
+        TransformationRuleType.rawlookup: is_rawlookup,
+    }[rule_type]
     return is_valid_rule(rule_raw)
 
 

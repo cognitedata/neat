@@ -5,9 +5,9 @@ from rdflib import Graph, URIRef
 
 from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models._rdfpath import (
-    AllReferences,
     Hop,
     RDFPath,
+    SelfReferenceProperty,
     SingleProperty,
     Traversal,
 )
@@ -121,7 +121,7 @@ def to_construct_triples(
         templates.append(graph_template_triple)
 
         # use case AllReferences: binding instance to certain rdf property
-        if isinstance(traversal, AllReferences):
+        if isinstance(traversal, SelfReferenceProperty):
             graph_pattern_triple = Triple(
                 subject="BIND(?instance",
                 predicate="AS",

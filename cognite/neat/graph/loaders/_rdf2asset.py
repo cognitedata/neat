@@ -93,23 +93,6 @@ class AssetLoader(CDFLoader[AssetWrite]):
         self._issues = NeatIssueList[NeatIssue](create_issues or [])
         self._tracker: type[Tracker] = tracker or LogTracker
 
-    def _create_validation_classes(self) -> None:
-        # need to get back class-property pairs where are definition of
-        # asset implementations, extend InformationRulesAnalysis make it generic
-
-        # by default if there is not explicitly stated external_id
-        # use rdf:type and drop the prefix
-
-        # based on those create pydantic model AssetDefinition
-        # which will have .to_asset_write()
-
-        raise NotImplementedError("Not implemented yet, this is placeholder")
-
-    def categorize_assets(self, client: CogniteClient) -> None:
-        """Categorize assets to those to be created, updated, decommissioned, or resurrected"""
-
-        raise NotImplementedError("Not implemented yet, this is placeholder")
-
     def _load(self, stop_on_exception: bool = False) -> Iterable[AssetWrite | NeatIssue | type[_END_OF_CLASS]]:
         if self._issues.has_errors and stop_on_exception:
             raise self._issues.as_exception()
@@ -120,15 +103,20 @@ class AssetLoader(CDFLoader[AssetWrite]):
             # There should already be an error in this case.
             return
 
-        class_ids = [repr(class_.class_.id) for class_ in self.rules.classes]
-        tracker = self._tracker(type(self).__name__, class_ids, "classes")
+        ordered_classes = AssetAnalysis(self.rules).class_topological_sort()
 
-        for class_ in self.rules.classes:
-            tracker.start(repr(class_.class_.id))
+        tracker = self._tracker(
+            type(self).__name__,
+            [repr(class_.id) for class_ in ordered_classes],
+            "classes",
+        )
 
-            property_renaming_config = AssetAnalysis(self.rules).define_property_renaming_config(class_.class_)
+        for class_ in ordered_classes:
+            tracker.start(repr(class_.id))
 
-            for identifier, properties in self.graph_store.read(class_.class_.suffix):
+            property_renaming_config = AssetAnalysis(self.rules).define_property_renaming_config(class_)
+
+            for identifier, properties in self.graph_store.read(class_.suffix):
                 fields = _process_properties(properties, property_renaming_config)
                 # set data set id and external id
                 fields["data_set_id"] = self.data_set_id
@@ -150,16 +138,6 @@ class AssetLoader(CDFLoader[AssetWrite]):
         # check for orphaned assets
         # batch upsert of assets to CDF (otherwise we will hit the API rate limit)
 
-        raise NotImplementedError("Not implemented yet, this is placeholder")
-
-    @classmethod
-    def _check_for_circular_asset_hierarchy(cls, assets: list[AssetWrite]) -> None:
-        """Check for circular references in the asset rules"""
-        raise NotImplementedError("Not implemented yet, this is placeholder")
-
-    @classmethod
-    def _check_for_orphaned_assets(cls, assets: list[AssetWrite]) -> None:
-        """Check for circular references in the asset rules"""
         raise NotImplementedError("Not implemented yet, this is placeholder")
 
     def _get_required_capabilities(self) -> list[Capability]:

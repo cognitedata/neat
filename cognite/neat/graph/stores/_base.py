@@ -179,9 +179,21 @@ class NeatGraphStore:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return None
 
-        if InformationAnalysis(self.rules).has_hop_transformations():
+        analysis = InformationAnalysis(self.rules)
+        has_hop_transformations = analysis.has_hop_transformations()
+        has_self_reference_transformations = analysis.has_self_reference_property_transformations()
+        if has_hop_transformations or has_self_reference_transformations:
+            msg = (
+                f"Rules contain [{'Hop' if has_hop_transformations else '' }"
+                f", {'SelfReferenceProperty' if has_self_reference_transformations else '' }]"
+                " rdfpath."
+                f" Run [{'ReduceHopTraversal' if has_hop_transformations else '' }"
+                f", {'AddSelfReferenceProperty' if has_self_reference_transformations else '' }]"
+                " transformer(s) first!"
+            )
+
             warnings.warn(
-                "Rules contain Hop rdfpath, run ReduceHopTraversal transformer first!",
+                msg,
                 stacklevel=2,
             )
             return None
@@ -189,7 +201,6 @@ class NeatGraphStore:
         instance_ids = self.queries.list_instances_ids_of_class(self.rules.metadata.namespace[class_])
 
         property_renaming_config = InformationAnalysis(self.rules).define_property_renaming_config(class_entity)
-        print(property_renaming_config)
 
         for instance_id in instance_ids:
             yield self.queries.describe(instance_id, property_renaming_config)

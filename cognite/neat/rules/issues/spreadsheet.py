@@ -296,6 +296,41 @@ class ClassNoPropertiesNoParentError(NeatValidationError):
 
 
 @dataclass(frozen=True)
+class AssetRulesHaveCircularDependencyError(NeatValidationError):
+    description = "Asset rules have circular dependencies."
+    fix = "Linking between classes via property that maps to parent_external_id must yield hierarchy structure."
+
+    classes: list[str]
+
+    def dump(self) -> dict[str, list[tuple[str, str]]]:
+        output = super().dump()
+        output["classes"] = self.classes
+        return output
+
+    def message(self) -> str:
+        return f"Asset rules have circular dependencies between classes {', '.join(self.classes)}."
+
+
+@dataclass(frozen=True)
+class AssetParentPropertyPointsToDataValueTypeError(NeatValidationError):
+    description = "Parent property points to a data value type instead of a class."
+    fix = "Make sure that the parent property points to a class."
+
+    class_property_with_data_value_type: list[tuple[str, str]]
+
+    def dump(self) -> dict[str, list[tuple[str, str]]]:
+        output = super().dump()
+        output["class_property"] = self.class_property_with_data_value_type
+        return output
+
+    def message(self) -> str:
+        text = [
+            f"class {class_} property {property_}" for class_, property_ in self.class_property_with_data_value_type
+        ]
+        return f"Following  {', and'.join(text)} point to data value type instead to classes. This is a mistake."
+
+
+@dataclass(frozen=True)
 class ParentClassesNotDefinedError(NeatValidationError):
     description = "Parent classes are not defined."
     fix = "Check if the parent classes are defined in Classes sheet."
