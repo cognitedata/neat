@@ -179,9 +179,10 @@ class NeatGraphStore:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return None
 
-        if (has_hop_transformations := InformationAnalysis(self.rules).has_hop_transformations()) or (
-            has_all_reference_transformations := InformationAnalysis(self.rules).has_all_reference_transformations()
-        ):
+        analysis = InformationAnalysis(self.rules)
+        has_hop_transformations = analysis.has_hop_transformations()
+        has_all_reference_transformations = analysis.has_all_reference_transformations()
+        if has_hop_transformations or has_all_reference_transformations:
             msg = (
                 f"Rules contain [{'Hop' if has_hop_transformations else '' }"
                 f", {'AllReference' if has_all_reference_transformations else '' }]"
