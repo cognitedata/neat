@@ -296,6 +296,22 @@ class ClassNoPropertiesNoParentError(NeatValidationError):
 
 
 @dataclass(frozen=True)
+class AssetRulesHaveCircularDependencyError(NeatValidationError):
+    description = "Asset rules have circular dependencies."
+    fix = "Linking between classes via property that maps to parent_external_id must yield hierarchy structure."
+
+    classes: list[str]
+
+    def dump(self) -> dict[str, list[tuple[str, str]]]:
+        output = super().dump()
+        output["classes"] = self.classes
+        return output
+
+    def message(self) -> str:
+        return f"Asset rules have circular dependencies between classes {', '.join(self.classes)}."
+
+
+@dataclass(frozen=True)
 class AssetParentPropertyPointsToDataValueTypeError(NeatValidationError):
     description = "Parent property points to a data value type instead of a class."
     fix = "Make sure that the parent property points to a class."

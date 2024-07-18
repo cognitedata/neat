@@ -93,23 +93,6 @@ class AssetLoader(CDFLoader[AssetWrite]):
         self._issues = NeatIssueList[NeatIssue](create_issues or [])
         self._tracker: type[Tracker] = tracker or LogTracker
 
-    def _create_validation_classes(self) -> None:
-        # need to get back class-property pairs where are definition of
-        # asset implementations, extend InformationRulesAnalysis make it generic
-
-        # by default if there is not explicitly stated external_id
-        # use rdf:type and drop the prefix
-
-        # based on those create pydantic model AssetDefinition
-        # which will have .to_asset_write()
-
-        raise NotImplementedError("Not implemented yet, this is placeholder")
-
-    def categorize_assets(self, client: CogniteClient) -> None:
-        """Categorize assets to those to be created, updated, decommissioned, or resurrected"""
-
-        raise NotImplementedError("Not implemented yet, this is placeholder")
-
     def _load(self, stop_on_exception: bool = False) -> Iterable[AssetWrite | NeatIssue | type[_END_OF_CLASS]]:
         if self._issues.has_errors and stop_on_exception:
             raise self._issues.as_exception()
@@ -120,14 +103,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
             # There should already be an error in this case.
             return
 
-        try:
-            ordered_classes = AssetAnalysis(self.rules).class_topological_sort()
-        except Exception as e:
-            error = loader_issues.InvalidInstanceError(type_="asset", identifier="topological sort", reason=str(e))
-            if stop_on_exception:
-                raise error.as_exception() from e
-            yield error
-            return
+        ordered_classes = AssetAnalysis(self.rules).class_topological_sort()
 
         tracker = self._tracker(
             type(self).__name__,
@@ -162,16 +138,6 @@ class AssetLoader(CDFLoader[AssetWrite]):
         # check for orphaned assets
         # batch upsert of assets to CDF (otherwise we will hit the API rate limit)
 
-        raise NotImplementedError("Not implemented yet, this is placeholder")
-
-    @classmethod
-    def _check_for_circular_asset_hierarchy(cls, assets: list[AssetWrite]) -> None:
-        """Check for circular references in the asset rules"""
-        raise NotImplementedError("Not implemented yet, this is placeholder")
-
-    @classmethod
-    def _check_for_orphaned_assets(cls, assets: list[AssetWrite]) -> None:
-        """Check for circular references in the asset rules"""
         raise NotImplementedError("Not implemented yet, this is placeholder")
 
     def _get_required_capabilities(self) -> list[Capability]:

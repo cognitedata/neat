@@ -1,9 +1,10 @@
+from graphlib import CycleError
 from typing import cast
 
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues.base import IssueList
 from cognite.neat.rules.models._base import SheetList
-from cognite.neat.rules.models.asset._rules import AssetProperty
+from cognite.neat.rules.models.asset._rules import AssetProperty, AssetRules
 from cognite.neat.rules.models.entities import AssetEntity, AssetFields, ClassEntity
 from cognite.neat.rules.models.information._validation import InformationPostValidation
 
@@ -12,6 +13,7 @@ class AssetPostValidation(InformationPostValidation):
     def validate(self) -> IssueList:
         self.issue_list = super().validate()
         self._parent_property_point_to_class()
+        self._circular_dependency()
         return self.issue_list
 
     def _parent_property_point_to_class(self) -> None:
@@ -29,3 +31,11 @@ class AssetPostValidation(InformationPostValidation):
             self.issue_list.append(
                 issues.spreadsheet.AssetParentPropertyPointsToDataValueTypeError(compromised_class_property)
             )
+
+    def _circular_dependency(self) -> None:
+        from cognite.neat.rules.analysis import AssetAnalysis
+
+        try:
+            _ = AssetAnalysis(cast(AssetRules, self.rules)).class_topological_sort()
+        except CycleError as error:
+            self.issue_list.append(issues.spreadsheet.AssetRulesHaveCircularDependencyError(error.args[1]))
