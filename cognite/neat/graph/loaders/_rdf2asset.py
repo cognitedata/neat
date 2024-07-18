@@ -1,11 +1,15 @@
+import json
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, fields
 from pathlib import Path
+from typing import cast
 
+import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetWrite
 from cognite.client.data_classes.capabilities import AssetsAcl, Capability
+from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.graph._tracking.base import Tracker
 from cognite.neat.graph._tracking.log import LogTracker
@@ -158,10 +162,38 @@ class AssetLoader(CDFLoader[AssetWrite]):
         dry_run: bool,
         read_issues: NeatIssueList,
     ) -> Iterable[UploadResult]:
-        raise NotImplementedError("Not implemented yet, this is placeholder")
+        try:
+            upserted = client.assets.upsert(items, mode="replace")
+        except CogniteAPIError as e:
+            result = UploadResult[str](name="Asset", issues=read_issues)
+            result.error_messages.append(str(e))
+            result.failed_upserted.update(item.as_id() for item in e.failed + e.unknown)
+            result.created.update(item.as_id() for item in e.successful)
+            yield result
+        else:
+            for asset in upserted:
+                result = UploadResult[str](name="asset", issues=read_issues)
+                result.created.add(cast(str, asset.external_id))
+                yield result
 
     def write_to_file(self, filepath: Path) -> None:
-        raise NotImplementedError("Not implemented yet, this is placeholder")
+        if filepath.suffix not in [".json", ".yaml", ".yml"]:
+            raise ValueError(f"File format {filepath.suffix} is not supported")
+        dumped: dict[str, list] = {"assets": []}
+        for item in self.load(stop_on_exception=False):
+            key = {
+                AssetWrite: "asset",
+                NeatIssue: "issues",
+            }.get(type(item))
+            if key is None:
+                # This should never happen, and is a bug in neat
+                raise ValueError(f"Item {item} is not supported. This is a bug in neat please report it.")
+            dumped[key].append(item.dump())
+        with filepath.open("w", encoding=self._encoding, newline=self._new_line) as f:
+            if filepath.suffix == ".json":
+                json.dump(dumped, f, indent=2)
+            else:
+                yaml.safe_dump(dumped, f, sort_keys=False)
 
 
 def _process_properties(properties: dict[str, list[str]], property_renaming_config: dict[str, str]) -> dict:
