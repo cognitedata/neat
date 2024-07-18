@@ -106,7 +106,7 @@ class AssetAnalysis(BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEnt
                     cast(AssetEntity, implementation).property_ == AssetFields.parent_external_id
                     for implementation in property_.implementation
                 ):
-                    child_parent_asset[property_.class_].add(property_.value_type)
+                    child_parent_asset[property_.class_].add(cast(ClassEntity, property_.value_type))
 
         return list(TopologicalSorter(child_parent_asset).static_order())
 
