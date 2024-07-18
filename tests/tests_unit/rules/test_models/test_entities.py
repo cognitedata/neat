@@ -24,39 +24,76 @@ class TestEntities:
     @pytest.mark.parametrize(
         "cls_, raw, expected",
         [
-            (ClassEntity, "subject:person", ClassEntity(prefix="subject", suffix="person", version=DEFAULT_VERSION)),
+            (
+                ClassEntity,
+                "subject:person",
+                ClassEntity(prefix="subject", suffix="person", version=DEFAULT_VERSION),
+            ),
             (
                 ViewEntity,
                 "subject:person(version=1.0)",
                 ViewEntity(space="subject", externalId="person", version="1.0"),
             ),
             (UnknownEntity, "#N/A", UnknownEntity()),
-            (ViewEntity, "Person", ViewEntity(space=DEFAULT_SPACE, externalId="Person", version=DEFAULT_VERSION)),
-            (ViewEntity, "Person(version=3)", ViewEntity(space=DEFAULT_SPACE, externalId="Person", version="3")),
+            (
+                ViewEntity,
+                "Person",
+                ViewEntity(space=DEFAULT_SPACE, externalId="Person", version=DEFAULT_VERSION),
+            ),
+            (
+                ViewEntity,
+                "Person(version=3)",
+                ViewEntity(space=DEFAULT_SPACE, externalId="Person", version="3"),
+            ),
             (
                 ViewPropertyEntity,
                 "Person(property=name)",
-                ViewPropertyEntity(space=DEFAULT_SPACE, externalId="Person", version=DEFAULT_VERSION, property="name"),
+                ViewPropertyEntity(
+                    space=DEFAULT_SPACE,
+                    externalId="Person",
+                    version=DEFAULT_VERSION,
+                    property="name",
+                ),
             ),
             (
                 ViewPropertyEntity,
                 "Person(property=name, version=1)",
-                ViewPropertyEntity(space=DEFAULT_SPACE, externalId="Person", version="1", property="name"),
+                ViewPropertyEntity(
+                    space=DEFAULT_SPACE,
+                    externalId="Person",
+                    version="1",
+                    property="name",
+                ),
             ),
             (
                 ViewPropertyEntity,
                 "Person(property=name,version=1)",
-                ViewPropertyEntity(space=DEFAULT_SPACE, externalId="Person", version="1", property="name"),
+                ViewPropertyEntity(
+                    space=DEFAULT_SPACE,
+                    externalId="Person",
+                    version="1",
+                    property="name",
+                ),
             ),
             (
                 ViewPropertyEntity,
                 "sp_my_space:Person(property=name,version=1)",
-                ViewPropertyEntity(space="sp_my_space", externalId="Person", version="1", property="name"),
+                ViewPropertyEntity(
+                    space="sp_my_space",
+                    externalId="Person",
+                    version="1",
+                    property="name",
+                ),
             ),
             (
                 ViewPropertyEntity,
                 "sp_my_space:Person(version=1, property=name)",
-                ViewPropertyEntity(space="sp_my_space", externalId="Person", version="1", property="name"),
+                ViewPropertyEntity(
+                    space="sp_my_space",
+                    externalId="Person",
+                    version="1",
+                    property="name",
+                ),
             ),
             (
                 ViewEntity,
@@ -75,8 +112,8 @@ class TestEntities:
             ),
             (
                 AssetEntity,
-                "Asset(property=external_id)",
-                AssetEntity(property="external_id"),
+                "Asset(property=externalId)",
+                AssetEntity(property="externalId"),
             ),
             (
                 RelationshipEntity,
@@ -120,13 +157,23 @@ class TestViewPropertyEntity:
         [
             pytest.param(
                 "test:TestGraphQL1(version=3, property=prop1)",
-                ViewPropertyEntity(space="test", externalId="TestGraphQL1", version="3", property="prop1"),
+                ViewPropertyEntity(
+                    space="test",
+                    externalId="TestGraphQL1",
+                    version="3",
+                    property="prop1",
+                ),
                 PropertyId(ViewId("test", "TestGraphQL1", "3"), "prop1"),
                 id="Prefix, suffix, version and prop",
             ),
             pytest.param(
                 "test:TestGraphQL1(property=prop1)",
-                ViewPropertyEntity(space="test", externalId="TestGraphQL1", version=DEFAULT_VERSION, property="prop1"),
+                ViewPropertyEntity(
+                    space="test",
+                    externalId="TestGraphQL1",
+                    version=DEFAULT_VERSION,
+                    property="prop1",
+                ),
                 PropertyId(ViewId("test", "TestGraphQL1", DEFAULT_VERSION), "prop1"),
                 id="Prefix, suffix and prop. Skip version",
             ),
@@ -155,7 +202,12 @@ class TestReferenceType:
             ),
             pytest.param(
                 "test:TestGraphQL1(property=test:prop1)",
-                ReferenceEntity(prefix="test", suffix="TestGraphQL1", version=None, property="test:prop1"),
+                ReferenceEntity(
+                    prefix="test",
+                    suffix="TestGraphQL1",
+                    version=None,
+                    property="test:prop1",
+                ),
                 id="Prefix, suffix and prop. Skip version",
             ),
             pytest.param(
