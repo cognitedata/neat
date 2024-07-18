@@ -195,7 +195,10 @@ def parent_property_points_to_data_type():
                 },
             ],
         },
-        ("Value error, [AssetParentPropertyPointsToDataValueTypeError(class_property=[('ACLineSegment', 'line')])]"),
+        (
+            "Value error, [AssetParentPropertyPointsToDataValueTypeError"
+            "(class_property_with_data_value_type=[('ACLineSegment', 'line')])]"
+        ),
         id="data_type_for_parent_property",
     )
 
