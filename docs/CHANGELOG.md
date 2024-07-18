@@ -19,6 +19,7 @@ Changes are grouped as follows:
 ### Added
 - Topological sorting of classes and properties in `AssetRules` to provide proper order of asset creation
 - Additional validation on `AssetRules` to ensure that mapped parent properties point to class not data value type
+- Additional validation on `AssetRules` to ensure that rules do not have circular decadency
 
 ## [0.87.1] - 17-07-24
 ### Added
