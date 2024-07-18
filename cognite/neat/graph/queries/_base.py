@@ -127,7 +127,7 @@ class Queries:
 
                 # use-case: calling describe without renaming properties
                 # losing the namespace from the predicate!
-                if not property_renaming_config:
+                if not property_renaming_config and predicate != RDF.type:
                     property_values[remove_namespace_from_uri(predicate, validation="prefix")].append(value)
 
                 # use-case: calling describe with renaming properties

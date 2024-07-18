@@ -316,15 +316,17 @@ class AssetParentPropertyPointsToDataValueTypeError(NeatValidationError):
     description = "Parent property points to a data value type instead of a class."
     fix = "Make sure that the parent property points to a class."
 
-    class_property: list[tuple[str, str]]
+    class_property_with_data_value_type: list[tuple[str, str]]
 
     def dump(self) -> dict[str, list[tuple[str, str]]]:
         output = super().dump()
-        output["class_property"] = self.class_property
+        output["class_property"] = self.class_property_with_data_value_type
         return output
 
     def message(self) -> str:
-        text = [f"class {class_} property {property_}" for class_, property_ in self.class_property]
+        text = [
+            f"class {class_} property {property_}" for class_, property_ in self.class_property_with_data_value_type
+        ]
         return f"Following  {', and'.join(text)} point to data value type instead to classes. This is a mistake."
 
 

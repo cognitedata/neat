@@ -17,7 +17,7 @@ class AssetPostValidation(InformationPostValidation):
         return self.issue_list
 
     def _parent_property_point_to_class(self) -> None:
-        compromised_class_property = []
+        class_property_with_data_value_type = []
         for property_ in cast(SheetList[AssetProperty], self.properties):
             for implementation in property_.implementation:
                 if (
@@ -25,11 +25,11 @@ class AssetPostValidation(InformationPostValidation):
                     and implementation.property_ == AssetFields.parent_external_id
                     and not isinstance(property_.value_type, ClassEntity)
                 ):
-                    compromised_class_property.append((property_.class_.suffix, property_.property_))
+                    class_property_with_data_value_type.append((property_.class_.suffix, property_.property_))
 
-        if compromised_class_property:
+        if class_property_with_data_value_type:
             self.issue_list.append(
-                issues.spreadsheet.AssetParentPropertyPointsToDataValueTypeError(compromised_class_property)
+                issues.spreadsheet.AssetParentPropertyPointsToDataValueTypeError(class_property_with_data_value_type)
             )
 
     def _circular_dependency(self) -> None:
