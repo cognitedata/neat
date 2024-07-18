@@ -5,7 +5,7 @@ from pathlib import Path
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetWrite
-from cognite.client.data_classes.capabilities import Capability
+from cognite.client.data_classes.capabilities import AssetsAcl, Capability
 
 from cognite.neat.graph._tracking.base import Tracker
 from cognite.neat.graph._tracking.log import LogTracker
@@ -141,7 +141,15 @@ class AssetLoader(CDFLoader[AssetWrite]):
         raise NotImplementedError("Not implemented yet, this is placeholder")
 
     def _get_required_capabilities(self) -> list[Capability]:
-        raise NotImplementedError("Not implemented yet, this is placeholder")
+        return [
+            AssetsAcl(
+                actions=[
+                    AssetsAcl.Action.Write,
+                    AssetsAcl.Action.Read,
+                ],
+                scope=AssetsAcl.Scope.DataSet([self.data_set_id]),
+            )
+        ]
 
     def _upload_to_cdf(
         self,
