@@ -27,7 +27,7 @@ from ._base import CDFLoader
 
 
 class DMSLoader(CDFLoader[dm.InstanceApply]):
-    """Load data from Cognite Data Fusions Data Modeling Service (DMS) into Neat.
+    """Loads Instances to Cognite Data Fusion Data Model Service from NeatGraph.
 
     Args:
         graph_store (NeatGraphStore): The graph store to load the data into.

@@ -1,7 +1,8 @@
 from ._base import BaseLoader, CDFLoader
+from ._rdf2asset import AssetLoader
 from ._rdf2dms import DMSLoader
 
-__all__ = ["BaseLoader", "CDFLoader", "DMSLoader"]
+__all__ = ["BaseLoader", "CDFLoader", "DMSLoader", "AssetLoader"]
 
 
 def _repr_html_() -> str:
@@ -11,7 +12,9 @@ def _repr_html_() -> str:
         [
             {
                 "Loader": name,
-                "Description": globals()[name].__doc__.strip().split("\n")[0] if globals()[name].__doc__ else "Missing",
+                "Description": (
+                    globals()[name].__doc__.strip().split("\n")[0] if globals()[name].__doc__ else "Missing"
+                ),
             }
             for name in __all__
             if name not in ("BaseLoader", "CDFLoader")

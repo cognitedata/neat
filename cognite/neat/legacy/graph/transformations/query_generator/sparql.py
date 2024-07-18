@@ -6,7 +6,7 @@ from typing import cast
 from rdflib import Graph, Namespace
 from rdflib.term import URIRef
 
-from cognite.neat.constants import PREFIXES
+from cognite.neat.constants import get_default_prefixes
 from cognite.neat.legacy.rules.analysis import get_classes_with_properties
 from cognite.neat.legacy.rules.models._base import Triple
 from cognite.neat.legacy.rules.models.rdfpath import (
@@ -24,7 +24,7 @@ from cognite.neat.legacy.rules.models.rules import Rules
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 
-def _generate_prefix_header(prefixes: dict[str, Namespace] = PREFIXES) -> str:
+def _generate_prefix_header(prefixes: dict[str, Namespace] | None = None) -> str:
     """Generate prefix header which is added to SPARQL query and allows for shorten query statements
 
     Parameters
@@ -37,11 +37,15 @@ def _generate_prefix_header(prefixes: dict[str, Namespace] = PREFIXES) -> str:
     str
         Prefix header
     """
+    prefixes = prefixes if prefixes else get_default_prefixes()
     return "".join(f"PREFIX {key}:<{value}>\n" for key, value in prefixes.items())
 
 
 def _get_predicate_id(
-    graph: Graph, subject_type_id: str, object_type_id: str, prefixes: dict[str, Namespace] = PREFIXES
+    graph: Graph,
+    subject_type_id: str,
+    object_type_id: str,
+    prefixes: dict[str, Namespace] | None = None,
 ) -> URIRef:
     """Returns predicate (aka property) URI (i.e., ID) that connects subject and object
 
@@ -61,6 +65,7 @@ def _get_predicate_id(
     URIRef
         ID of predicate (aka property) connecting subject and object
     """
+    prefixes = prefixes if prefixes else get_default_prefixes()
     query = """
 
         SELECT ?predicateTypeID
@@ -122,11 +127,21 @@ def _get_hop_triples(graph, path: Hop, prefixes) -> list[Triple]:
     if previous_step.property:
         triples.extend(
             [
-                Triple(subject=f"?{previous_step.class_.suffix}ID", predicate="a", object=previous_step.class_.id),
                 Triple(
-                    subject=f"?{previous_step.class_.suffix}ID", predicate=previous_step.property.id, object="?object"
+                    subject=f"?{previous_step.class_.suffix}ID",
+                    predicate="a",
+                    object=previous_step.class_.id,
                 ),
-                Triple(subject="?predicate", predicate="a", object=previous_step.property.id),
+                Triple(
+                    subject=f"?{previous_step.class_.suffix}ID",
+                    predicate=previous_step.property.id,
+                    object="?object",
+                ),
+                Triple(
+                    subject="?predicate",
+                    predicate="a",
+                    object=previous_step.property.id,
+                ),
             ]
         )
     else:
@@ -139,7 +154,7 @@ def _get_hop_triples(graph, path: Hop, prefixes) -> list[Triple]:
     return triples
 
 
-def _get_path_triples(graph: Graph, traversal: Traversal, prefixes: dict[str, Namespace] = PREFIXES) -> list[Triple]:
+def _get_path_triples(graph: Graph, traversal: Traversal, prefixes: dict[str, Namespace] | None = None) -> list[Triple]:
     """Creates triples subject-predicate-object from declarative graph traversal path
 
     Parameters
@@ -227,7 +242,9 @@ def _generate_all_references_query_statement(
 
 
 def _generate_single_property_query_statement(
-    subject: str, predicate: str, query_template: str = SINGLE_PROPERTY_SPARQL_QUERY_TEMPLATE
+    subject: str,
+    predicate: str,
+    query_template: str = SINGLE_PROPERTY_SPARQL_QUERY_TEMPLATE,
 ) -> str:
     query_insertions = "\n".join([f"\t\t?subject a {subject} .", f"\t\t?subject {predicate} ?object ."])
 
@@ -257,7 +274,7 @@ def _generate_hop_query_statement(triples: list[Triple], query_template: str = B
 def build_sparql_query(
     graph: Graph,
     traversal_path: str | Traversal,
-    prefixes: dict[str, Namespace] = PREFIXES,
+    prefixes: dict[str, Namespace] | None = None,
     insert_prefixes: bool = False,
 ) -> str:
     """Builds SPARQL query based on declarative traversal path
@@ -276,7 +293,7 @@ def build_sparql_query(
     str
         SPARQL query
     """
-
+    prefixes = prefixes if prefixes else get_default_prefixes()
     traversal = parse_traversal(traversal_path) if isinstance(traversal_path, str) else traversal_path
     triples = _get_path_triples(graph, traversal, prefixes)
 
@@ -297,7 +314,10 @@ def build_sparql_query(
     for prefix, URI in prefixes.items():
         query = query.replace(URI, f"{prefix}:")
 
-    return query.replace("insertPrefixes\n\n", _generate_prefix_header(prefixes) if insert_prefixes else "")
+    return query.replace(
+        "insertPrefixes\n\n",
+        _generate_prefix_header(prefixes) if insert_prefixes else "",
+    )
 
 
 def compress_uri(uri: URIRef, prefixes: dict) -> str:
@@ -420,7 +440,8 @@ def _add_filter(class_instances, query_template):
     if class_instances:
         class_instances_formatted = [f"<{instance}>" for instance in class_instances]
         query_template = query_template.replace(
-            "insert_filter", f"\n\nFILTER (?subject IN ({', '.join(class_instances_formatted)}))"
+            "insert_filter",
+            f"\n\nFILTER (?subject IN ({', '.join(class_instances_formatted)}))",
         )
     else:
         query_template = query_template.replace("insert_filter", "")
@@ -439,7 +460,10 @@ def _triples2sparql_statement(triples: list[Triple]):
 
 
 def _to_construct_triples(
-    graph: Graph, class_: str, transformation_rules: Rules, properties_optional: bool = True
+    graph: Graph,
+    class_: str,
+    transformation_rules: Rules,
+    properties_optional: bool = True,
 ) -> tuple[list[Triple], list[Triple]]:
     """Converts class definition to CONSTRUCT triples which are used to generate CONSTRUCT query
 
@@ -485,7 +509,10 @@ def _to_construct_triples(
         # by binding them to certain property
         if isinstance(traversal, AllReferences):
             graph_pattern_triple = Triple(
-                subject="BIND(?subject", predicate="AS", object=f"{graph_template_triple.object})", optional=False
+                subject="BIND(?subject",
+                predicate="AS",
+                object=f"{graph_template_triple.object})",
+                optional=False,
             )
 
         elif isinstance(traversal, SingleProperty):
@@ -510,7 +537,13 @@ def _to_construct_triples(
 
     # add first triple for graph pattern stating type of object
     patterns.insert(
-        0, Triple(subject="?subject", predicate="a", object=_most_occurring_element(class_ids), optional=False)
+        0,
+        Triple(
+            subject="?subject",
+            predicate="a",
+            object=_most_occurring_element(class_ids),
+            optional=False,
+        ),
     )
 
     return templates, patterns

@@ -7,7 +7,7 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
 import cognite.neat.rules.issues as issues
-from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
+from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
 from cognite.neat.rules.issues import IssueList
@@ -200,7 +200,7 @@ class InferenceImporter(BaseImporter):
         """
         classes: dict[str, dict] = {}
         properties: dict[str, dict] = {}
-        prefixes: dict[str, Namespace] = PREFIXES.copy()
+        prefixes: dict[str, Namespace] = get_default_prefixes()
 
         query = INSTANCE_PROPERTIES_JSON_DEFINITION if self.check_for_json_string else INSTANCE_PROPERTIES_DEFINITION
         # Adds default namespace to prefixes

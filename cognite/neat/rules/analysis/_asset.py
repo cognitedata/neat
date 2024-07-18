@@ -1,4 +1,5 @@
 import warnings
+from typing import cast
 
 from cognite.neat.rules.models import AssetRules
 from cognite.neat.rules.models._rdfpath import RDFPath
@@ -111,3 +112,17 @@ class AssetAnalysis(BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEnt
             only_rdfpath=only_rdfpath,
             implementation_type=EntityTypes.relationship,
         )
+
+    def define_property_renaming_config(self, class_: ClassEntity) -> dict[str, str]:
+        property_renaming_configuration = {}
+
+        if asset_definition := self.asset_definition().get(class_, None):
+            for property_, transformation in asset_definition.items():
+                asset_property = cast(list[AssetEntity], transformation.implementation)[0].property_
+
+                if asset_property != "metadata":
+                    property_renaming_configuration[property_] = str(asset_property)
+                else:
+                    property_renaming_configuration[property_] = f"{asset_property}.{property_}"
+
+        return property_renaming_configuration

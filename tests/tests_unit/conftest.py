@@ -13,7 +13,7 @@ from cognite.neat.rules.models import (
 )
 from cognite.neat.rules.models.dms import DMSRulesInput
 from cognite.neat.utils.spreadsheet import read_individual_sheet
-from tests.config import DOC_RULES
+from tests.config import DATA_FOLDER, DOC_RULES
 
 
 @pytest.fixture(scope="session")
@@ -47,6 +47,22 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
 @pytest.fixture(scope="session")
 def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> InformationRules:
     return InformationRules.model_validate(david_spreadsheet)
+
+
+@pytest.fixture(scope="session")
+def asset_spreadsheet() -> dict[str, dict[str, Any]]:
+    filepath = DATA_FOLDER / "asset-architect-test.xlsx"
+    excel_file = pd.ExcelFile(filepath)
+    return {
+        "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
+        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
+        "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
+    }
+
+
+@pytest.fixture(scope="session")
+def asset_rules(asset_spreadsheet: dict[str, dict[str, Any]]) -> AssetRules:
+    return AssetRules.model_validate(asset_spreadsheet)
 
 
 @pytest.fixture(scope="session")

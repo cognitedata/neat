@@ -29,7 +29,7 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from rdflib import XSD, Literal, Namespace, URIRef
 
-from cognite.neat.constants import PREFIXES
+from cognite.neat.constants import get_default_prefixes
 from cognite.neat.legacy.rules import exceptions
 from cognite.neat.legacy.rules.models._base import (
     ENTITY_ID_REGEX_COMPILED,
@@ -49,7 +49,10 @@ from cognite.neat.legacy.rules.models.rdfpath import (
     Traversal,
     parse_rule,
 )
-from cognite.neat.legacy.rules.models.value_types import XSD_VALUE_TYPE_MAPPINGS, ValueType
+from cognite.neat.legacy.rules.models.value_types import (
+    XSD_VALUE_TYPE_MAPPINGS,
+    ValueType,
+)
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -82,7 +85,10 @@ def replace_nan_floats_with_default(values: dict, model_fields: dict[str, FieldI
             output[field_name] = model_fields[field_name].default
         else:
             # field_name may be an alias
-            source_name = next((name for name, field in model_fields.items() if field.alias == field_name), None)
+            source_name = next(
+                (name for name, field in model_fields.items() if field.alias == field_name),
+                None,
+            )
             if source_name:
                 output[field_name] = model_fields[source_name].default
             else:
@@ -335,7 +341,9 @@ class Metadata(RuleModel):
         if value.endswith("#") or value.endswith("/"):
             return value
         warnings.warn(
-            exceptions.NamespaceEndingFixed(value).message, category=exceptions.NamespaceEndingFixed, stacklevel=2
+            exceptions.NamespaceEndingFixed(value).message,
+            category=exceptions.NamespaceEndingFixed,
+            stacklevel=2,
         )
         return Namespace(f"{value}#")
 
@@ -444,10 +452,14 @@ class Resource(RuleModel):
         default=None,
     )
     source_entity_name: str | None = Field(
-        alias="Source Entity Name", description="Closest entity in source, e.g. Substation", default=None
+        alias="Source Entity Name",
+        description="Closest entity in source, e.g. Substation",
+        default=None,
     )
     match_type: str | None = Field(
-        alias="Match Type", description="Type of match between source entity and one being defined", default=None
+        alias="Match Type",
+        description="Type of match between source entity and one being defined",
+        default=None,
     )
     comment: str | None = Field(alias="Comment", description="Comment about mapping", default=None)
 
@@ -656,7 +668,9 @@ class Property(Resource):
     # Specialization of cdf_resource_type to allow definition of both
     # Asset and Relationship at the same time
     cdf_resource_type: list[str] = Field(
-        alias="Resource Type", default_factory=list, description="This is typically 'Asset' or 'Relationship'"
+        alias="Resource Type",
+        default_factory=list,
+        description="This is typically 'Asset' or 'Relationship'",
     )
 
     # Transformation rule (domain to solution)
@@ -701,7 +715,11 @@ class Property(Resource):
             return ValueType.from_string(entity_string=value, type_=EntityTypes.object_value_type, mapping=None)
         else:
             return ValueType(
-                prefix="undefined", suffix=value, name=value, type_=EntityTypes.object_value_type, mapping=None
+                prefix="undefined",
+                suffix=value,
+                name=value,
+                type_=EntityTypes.object_value_type,
+                mapping=None,
             )
         #     return ValueType(
 
@@ -820,7 +838,9 @@ class Property(Resource):
     def set_relationship_label(self):
         if self.label is None:
             warnings.warn(
-                exceptions.MissingLabel(self.property_id).message, category=exceptions.MissingLabel, stacklevel=2
+                exceptions.MissingLabel(self.property_id).message,
+                category=exceptions.MissingLabel,
+                stacklevel=2,
             )
             self.label = self.property_id
         return self
@@ -899,7 +919,7 @@ class Prefixes(RuleModel):
         prefixes: Dict of prefixes
     """
 
-    prefixes: dict[str, Namespace] = PREFIXES
+    prefixes: dict[str, Namespace] = get_default_prefixes()
 
 
 class Instance(RuleModel):
@@ -1019,7 +1039,7 @@ class Rules(RuleModel):
         classes: Classes defined in the data model
         properties: Class properties defined in the data model with accompanying transformation rules
                     to transform data from source to target representation
-        prefixes: Prefixes used in the data model. Defaults to PREFIXES
+        prefixes: Prefixes used in the data model. Defaults to internal prefixes
         instances: Instances defined in the data model. Defaults to None
         validators_to_skip: List of validators to skip. Defaults to []
 
@@ -1035,7 +1055,7 @@ class Rules(RuleModel):
     metadata: Metadata
     classes: Classes
     properties: Properties
-    prefixes: dict[str, Namespace] = PREFIXES.copy()
+    prefixes: dict[str, Namespace] = get_default_prefixes()
     instances: list[Instance] = Field(default_factory=list)
 
     @property

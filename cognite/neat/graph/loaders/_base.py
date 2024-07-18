@@ -15,6 +15,11 @@ from cognite.neat.utils.upload import UploadResult, UploadResultList
 T_Output = TypeVar("T_Output")
 
 
+# Sentinel value to indicate in the load method that all instances of a class have been loaded.
+# https://en.wikipedia.org/wiki/Sentinel_value
+class _END_OF_CLASS: ...
+
+
 class BaseLoader(ABC, Generic[T_Output]):
     _new_line = "\n"
     _encoding = "utf-8"
@@ -28,10 +33,10 @@ class BaseLoader(ABC, Generic[T_Output]):
 
     def load(self, stop_on_exception: bool = False) -> Iterable[T_Output | NeatIssue]:
         """Load the graph with data."""
-        return self._load(stop_on_exception)
+        return (item for item in self._load(stop_on_exception) if item is not _END_OF_CLASS)  # type: ignore[misc]
 
     @abstractmethod
-    def _load(self, stop_on_exception: bool = False) -> Iterable[T_Output | NeatIssue]:
+    def _load(self, stop_on_exception: bool = False) -> Iterable[T_Output | NeatIssue | type[_END_OF_CLASS]]:
         """Load the graph with data."""
         pass
 
@@ -58,13 +63,16 @@ class CDFLoader(BaseLoader[T_Output]):
 
         issues = NeatIssueList[NeatIssue]()
         items: list[T_Output] = []
-        for result in self.load(stop_on_exception=False):
+        for result in self._load(stop_on_exception=False):
             if isinstance(result, NeatIssue):
                 issues.append(result)
+            elif result is _END_OF_CLASS:
+                ...
             else:
-                items.append(result)
+                # MyPy does not understand else means the item will be of type T_Output
+                items.append(result)  # type: ignore[arg-type]
 
-            if len(items) >= self._UPLOAD_BATCH_SIZE:
+            if len(items) >= self._UPLOAD_BATCH_SIZE or result is _END_OF_CLASS:
                 yield from self._upload_to_cdf(client, items, dry_run, issues)
                 issues = NeatIssueList[NeatIssue]()
                 items = []

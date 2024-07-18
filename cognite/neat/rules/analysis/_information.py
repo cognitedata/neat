@@ -1,11 +1,11 @@
 import logging
 import warnings
-from typing import Any
+from typing import Any, cast
 
 from pydantic import ValidationError
 
 from cognite.neat.rules.models import SchemaCompleteness
-from cognite.neat.rules.models._rdfpath import Hop
+from cognite.neat.rules.models._rdfpath import Hop, RDFPath, SingleProperty
 from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
 from cognite.neat.rules.models.information import (
     InformationClass,
@@ -56,9 +56,26 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
             prop_.transformation and isinstance(prop_.transformation.traversal, Hop) for prop_ in self.rules.properties
         )
 
-    def define_property_renaming_config(self) -> dict[str, str]:
-        # placeholder comes in new PR
-        return {}
+    def define_property_renaming_config(self, class_: ClassEntity) -> dict[str, str]:
+        property_renaming_configuration = {}
+
+        if definitions := self.class_property_pairs(only_rdfpath=True, consider_inheritance=True).get(class_, None):
+            for property_id, definition in definitions.items():
+                if isinstance(
+                    cast(RDFPath, definition.transformation).traversal,
+                    SingleProperty,
+                ):
+                    graph_property = cast(
+                        SingleProperty,
+                        cast(RDFPath, definition.transformation).traversal,
+                    ).property.suffix
+
+                else:
+                    graph_property = property_id
+
+                property_renaming_configuration[graph_property] = property_id
+
+        return property_renaming_configuration
 
     def subset_rules(self, desired_classes: set[ClassEntity]) -> InformationRules:
         """

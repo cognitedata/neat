@@ -11,7 +11,7 @@ from prometheus_client import Gauge, Summary
 from rdflib import Graph, Namespace, URIRef
 from rdflib.query import Result, ResultRow
 
-from cognite.neat.constants import DEFAULT_NAMESPACE, PREFIXES
+from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.legacy.graph.models import Triple
 from cognite.neat.legacy.graph.stores._rdf_to_graph import rdf_file_to_graph
 from cognite.neat.legacy.rules.models.rules import Rules
@@ -25,7 +25,11 @@ prom_qsm = Summary("store_query_time_summary_legacy", "Time spent processing que
 prom_sq = Gauge("store_single_query_time_legacy", "Time spent processing a single query", ["query"])
 
 MIMETypes: TypeAlias = Literal[
-    "application/rdf+xml", "text/turtle", "application/n-triple", "application/n-quads", "application/trig"
+    "application/rdf+xml",
+    "text/turtle",
+    "application/n-triple",
+    "application/n-quads",
+    "application/trig",
 ]
 
 
@@ -35,7 +39,8 @@ class NeatGraphStoreBase(ABC):
 
     Args:
         graph : Instance of rdflib.Graph class for graph storage
-        base_prefix : Used as a base prefix for graph namespace, allowing querying graph data using a shortform of a URI
+        base_prefix : Used as a base prefix for graph namespace,
+                      allowing querying graph data using a short form of a URI
         namespace : Namespace (aka URI) used to resolve any relative URI in the graph
         prefixes : Dictionary of additional prefixes used and bounded to the graph
     """
@@ -47,12 +52,12 @@ class NeatGraphStoreBase(ABC):
         graph: Graph | None = None,
         base_prefix: str = "",  # usually empty
         namespace: Namespace = DEFAULT_NAMESPACE,
-        prefixes: dict = PREFIXES,
+        prefixes: dict[str, Namespace] | None = None,
     ):
         self.graph = graph or Graph()
         self.base_prefix: str = base_prefix
         self.namespace: Namespace = namespace
-        self.prefixes: dict[str, Namespace] = prefixes
+        self.prefixes: dict[str, Namespace] = prefixes or get_default_prefixes()
 
         self.rdf_store_query_url: str | None = None
         self.rdf_store_update_url: str | None = None
@@ -164,7 +169,10 @@ class NeatGraphStoreBase(ABC):
         return None
 
     def import_from_file(
-        self, graph_file: Path, mime_type: MIMETypes = "application/rdf+xml", add_base_iri: bool = True
+        self,
+        graph_file: Path,
+        mime_type: MIMETypes = "application/rdf+xml",
+        add_base_iri: bool = True,
     ) -> None:
         """Imports graph data from file.
 
@@ -175,7 +183,10 @@ class NeatGraphStoreBase(ABC):
         """
         if add_base_iri:
             self.graph = rdf_file_to_graph(
-                self.graph, graph_file, base_namespace=self.namespace, prefixes=self.prefixes
+                self.graph,
+                graph_file,
+                base_namespace=self.namespace,
+                prefixes=self.prefixes,
             )
         else:
             self.graph = rdf_file_to_graph(self.graph, graph_file, prefixes=self.prefixes)
@@ -290,7 +301,12 @@ class NeatGraphStoreBase(ABC):
             "rdf_store_update_url": self.rdf_store_update_url,
         }
 
-    def add_triples(self, triples: list[Triple] | set[Triple], batch_size: int = 10_000, verbose: bool = False):
+    def add_triples(
+        self,
+        triples: list[Triple] | set[Triple],
+        batch_size: int = 10_000,
+        verbose: bool = False,
+    ):
         """Adds triples to the graph store in batches.
 
         Args:
