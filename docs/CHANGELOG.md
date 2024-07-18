@@ -23,10 +23,11 @@ Changes are grouped as follows:
 
 ## [0.87.1] - 17-07-24
 ### Added
-- `AddAllReferences` transformer that handles `AllReferences` RDF path in Rules
+- `AddSelfReferenceProperty` transformer that handles `SelfReferenceProperty` RDF path in Rules
 ### Improved
 - Better handling of property renaming in `DESCRIBE` query, which for example allows RDF:type property to be used
 - Iterating over classes which have properties defined for them instead of all classes (which causes errors)
+- Renamed `AllReferences` RDF path to `SelfReferenceProperty` to better reflect its purpose
 ### Removed
 - `AllProperties` RDF path has been removed as we no longer want support implicit properties
 

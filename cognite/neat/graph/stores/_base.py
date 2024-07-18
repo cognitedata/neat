@@ -181,14 +181,14 @@ class NeatGraphStore:
 
         analysis = InformationAnalysis(self.rules)
         has_hop_transformations = analysis.has_hop_transformations()
-        has_all_reference_transformations = analysis.has_all_reference_transformations()
-        if has_hop_transformations or has_all_reference_transformations:
+        has_self_reference_transformations = analysis.has_self_reference_property_transformations()
+        if has_hop_transformations or has_self_reference_transformations:
             msg = (
                 f"Rules contain [{'Hop' if has_hop_transformations else '' }"
-                f", {'AllReference' if has_all_reference_transformations else '' }]"
+                f", {'SelfReferenceProperty' if has_self_reference_transformations else '' }]"
                 " rdfpath."
                 f" Run [{'ReduceHopTraversal' if has_hop_transformations else '' }"
-                f", {'AddAllReferences' if has_all_reference_transformations else '' }]"
+                f", {'AddSelfReferenceProperty' if has_self_reference_transformations else '' }]"
                 " transformer(s) first!"
             )
 

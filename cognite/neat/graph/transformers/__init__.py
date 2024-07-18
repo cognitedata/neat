@@ -6,7 +6,7 @@ from ._classic_cdf import (
     AssetSequenceConnector,
     AssetTimeSeriesConnector,
 )
-from ._rdfpath import AddAllReferences
+from ._rdfpath import AddSelfReferenceProperty
 
 __all__ = [
     "AddAssetDepth",
@@ -15,7 +15,7 @@ __all__ = [
     "AssetFileConnector",
     "AssetEventConnector",
     "AssetRelationshipConnector",
-    "AddAllReferences",
+    "AddSelfReferenceProperty",
 ]
 
 Transformers = (
@@ -25,5 +25,5 @@ Transformers = (
     | AssetFileConnector
     | AssetEventConnector
     | AssetRelationshipConnector
-    | AddAllReferences
+    | AddSelfReferenceProperty
 )

@@ -7,9 +7,9 @@ from rdflib import URIRef
 
 from cognite.neat.rules.models import SchemaCompleteness
 from cognite.neat.rules.models._rdfpath import (
-    AllReferences,
     Hop,
     RDFPath,
+    SelfReferenceProperty,
     SingleProperty,
 )
 from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
@@ -62,9 +62,9 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
             prop_.transformation and isinstance(prop_.transformation.traversal, Hop) for prop_ in self.rules.properties
         )
 
-    def has_all_reference_transformations(self):
+    def has_self_reference_property_transformations(self):
         return any(
-            prop_.transformation and isinstance(prop_.transformation.traversal, AllReferences)
+            prop_.transformation and isinstance(prop_.transformation.traversal, SelfReferenceProperty)
             for prop_ in self.rules.properties
         )
 
@@ -72,7 +72,7 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
         return [
             prop_
             for prop_ in self.rules.properties
-            if prop_.transformation and isinstance(prop_.transformation.traversal, AllReferences)
+            if prop_.transformation and isinstance(prop_.transformation.traversal, SelfReferenceProperty)
         ]
 
     def define_property_renaming_config(self, class_: ClassEntity) -> dict[str | URIRef, str]:

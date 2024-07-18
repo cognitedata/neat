@@ -232,7 +232,7 @@ class SingleProperty(Traversal):
         return f"{self.class_}({self.property})"
 
 
-class AllReferences(Traversal):
+class SelfReferenceProperty(Traversal):
     @classmethod
     def from_string(cls, class_: str) -> Self:
         return cls(class_=Entity.from_string(class_))
@@ -281,7 +281,7 @@ class Query(BaseModel):
 
 
 class RDFPath(Rule):
-    traversal: SingleProperty | AllReferences | Hop
+    traversal: SingleProperty | SelfReferenceProperty | Hop
 
     def __str__(self) -> str:
         return f"{self.traversal}"
@@ -302,9 +302,9 @@ class SPARQLQuery(RDFPath):
     traversal: Query
 
 
-def parse_traversal(raw: str) -> AllReferences | SingleProperty | Hop:
+def parse_traversal(raw: str) -> SelfReferenceProperty | SingleProperty | Hop:
     if result := CLASS_ID_REGEX_COMPILED.match(raw):
-        return AllReferences.from_string(class_=result.group(EntityTypes.class_))
+        return SelfReferenceProperty.from_string(class_=result.group(EntityTypes.class_))
     elif result := SINGLE_PROPERTY_REGEX_COMPILED.match(raw):
         return SingleProperty.from_string(
             class_=result.group(EntityTypes.class_),
