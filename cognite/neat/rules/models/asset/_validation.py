@@ -22,7 +22,7 @@ class AssetPostValidation(InformationPostValidation):
             for implementation in property_.implementation:
                 if (
                     isinstance(implementation, AssetEntity)
-                    and implementation.property_ == AssetFields.parent_external_id
+                    and implementation.property_ == AssetFields.parentExternalId
                     and not isinstance(property_.value_type, ClassEntity)
                 ):
                     class_property_with_data_value_type.append((property_.class_.suffix, property_.property_))

@@ -1,5 +1,4 @@
 import json
-from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, fields
 from pathlib import Path
@@ -123,8 +122,8 @@ class AssetLoader(CDFLoader[AssetWrite]):
             for identifier, properties in self.graph_store.read(class_.suffix):
                 fields = _process_properties(properties, property_renaming_config)
                 # set data set id and external id
-                fields["data_set_id"] = self.data_set_id
-                fields["external_id"] = identifier
+                fields["dataSetId"] = self.data_set_id
+                fields["externalId"] = identifier
 
                 try:
                     yield AssetWrite.load(fields)
@@ -182,12 +181,15 @@ class AssetLoader(CDFLoader[AssetWrite]):
         dumped: dict[str, list] = {"assets": []}
         for item in self.load(stop_on_exception=False):
             key = {
-                AssetWrite: "asset",
+                AssetWrite: "assets",
                 NeatIssue: "issues",
+                _END_OF_CLASS: "end_of_class",
             }.get(type(item))
             if key is None:
                 # This should never happen, and is a bug in neat
                 raise ValueError(f"Item {item} is not supported. This is a bug in neat please report it.")
+            if key == "end_of_class":
+                continue
             dumped[key].append(item.dump())
         with filepath.open("w", encoding=self._encoding, newline=self._new_line) as f:
             if filepath.suffix == ".json":
@@ -197,7 +199,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
 
 def _process_properties(properties: dict[str, list[str]], property_renaming_config: dict[str, str]) -> dict:
-    metadata: dict[str, str] = defaultdict(str)
+    metadata: dict[str, str] = {}
     fields: dict[str, str | dict] = {}
 
     for original_property, values in properties.items():

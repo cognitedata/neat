@@ -4,7 +4,13 @@ from abc import ABC, abstractmethod
 from functools import total_ordering
 from typing import Annotated, Any, ClassVar, Generic, TypeVar, cast
 
-from cognite.client.data_classes.data_modeling.ids import ContainerId, DataModelId, NodeId, PropertyId, ViewId
+from cognite.client.data_classes.data_modeling.ids import (
+    ContainerId,
+    DataModelId,
+    NodeId,
+    PropertyId,
+    ViewId,
+)
 from pydantic import (
     AnyHttpUrl,
     BaseModel,
@@ -263,9 +269,9 @@ class UnknownEntity(ClassEntity):
 
 
 class AssetFields(StrEnum):
-    external_id = "external_id"
+    externalId = "externalId"
     name = "name"
-    parent_external_id = "parent_external_id"
+    parentExternalId = "parentExternalId"
     description = "description"
     metadata = "metadata"
 
@@ -331,7 +337,8 @@ class MultiValueTypeInfo(BaseModel):
         else:
             return {
                 "types": [
-                    DataType.load(type_) if DataType.is_data_type(type_) else ClassEntity.load(type_) for type_ in types
+                    (DataType.load(type_) if DataType.is_data_type(type_) else ClassEntity.load(type_))
+                    for type_ in types
                 ]
             }
 
@@ -447,7 +454,10 @@ class ViewPropertyEntity(DMSVersionedEntity[PropertyId]):
     property_: str = Field(alias="property")
 
     def as_id(self) -> PropertyId:
-        return PropertyId(source=ViewId(self.space, self.external_id, self.version), property=self.property_)
+        return PropertyId(
+            source=ViewId(self.space, self.external_id, self.version),
+            property=self.property_,
+        )
 
     def as_view_id(self) -> ViewId:
         return ViewId(space=self.space, external_id=self.external_id, version=self.version)
@@ -459,7 +469,10 @@ class ViewPropertyEntity(DMSVersionedEntity[PropertyId]):
         if id.source.version is None:
             raise ValueError("Version must be specified")
         return cls(
-            space=id.source.space, externalId=id.source.external_id, version=id.source.version, property=id.property
+            space=id.source.space,
+            externalId=id.source.external_id,
+            version=id.source.version,
+            property=id.property,
         )
 
 
@@ -495,7 +508,12 @@ class ReferenceEntity(ClassEntity):
     @classmethod
     def from_entity(cls, entity: Entity, property_: str) -> "ReferenceEntity":
         if isinstance(entity, ClassEntity):
-            return cls(prefix=str(entity.prefix), suffix=entity.suffix, version=entity.version, property=property_)
+            return cls(
+                prefix=str(entity.prefix),
+                suffix=entity.suffix,
+                version=entity.version,
+                property=property_,
+            )
         else:
             return cls(prefix=str(entity.prefix), suffix=entity.suffix, property=property_)
 
