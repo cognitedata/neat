@@ -20,6 +20,8 @@ Changes are grouped as follows:
 - Handling of missing parents when generating assets
 - Concept of orphanage asset for assets whose parents do not exist
 - Uploader to CDF for assets
+### Fixed
+- Issue of not loading all asset fields when calling `AssetWrite.load()` method
 
 
 ## [0.87.2] - 17-07-24
