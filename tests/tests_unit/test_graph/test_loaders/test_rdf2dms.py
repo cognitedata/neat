@@ -8,7 +8,6 @@ from tests.data import car
 
 @pytest.fixture()
 def car_case() -> NeatGraphStore:
-    print(car.CAR_RULES)
     store = NeatGraphStore.from_memory_store()
 
     for triple in car.TRIPLES:

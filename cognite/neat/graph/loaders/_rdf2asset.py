@@ -146,7 +146,10 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     error = loader_issues.InvalidInstanceError(
                         type_="asset",
                         identifier=identifier,
-                        reason=f"Parent asset {fields['parentExternalId']} has not been processed yet",
+                        reason=(
+                            f"Parent asset {fields['parentExternalId']} has not been processed yet"
+                            f" { ', moving the asset under orphanage' if self.orphanage else ''}"
+                        ),
                     )
                     tracker.issue(error)
                     if stop_on_exception:
