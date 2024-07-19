@@ -103,7 +103,7 @@ class AssetAnalysis(BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEnt
             child_parent_asset[class_] = set()
             for property_ in properties.values():
                 if any(
-                    cast(AssetEntity, implementation).property_ == AssetFields.parent_external_id
+                    cast(AssetEntity, implementation).property_ == AssetFields.parentExternalId
                     for implementation in property_.implementation
                 ):
                     child_parent_asset[property_.class_].add(cast(ClassEntity, property_.value_type))

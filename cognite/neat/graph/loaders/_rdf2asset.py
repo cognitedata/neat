@@ -1,11 +1,14 @@
-from collections import defaultdict
+import json
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, fields
 from pathlib import Path
+from typing import cast
 
+import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetWrite
-from cognite.client.data_classes.capabilities import Capability
+from cognite.client.data_classes.capabilities import AssetsAcl, Capability
+from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.graph._tracking.base import Tracker
 from cognite.neat.graph._tracking.log import LogTracker
@@ -81,10 +84,20 @@ class AssetLoader(CDFLoader[AssetWrite]):
         self.rules = rules
         self.data_set_id = data_set_id
         self.use_labels = use_labels
-        self.use_orphanage = use_orphanage
 
-        self.orphanage_external_id = (
-            f"{asset_external_id_prefix or ''}orphanage-{data_set_id}" if use_orphanage else None
+        self.orphanage = (
+            AssetWrite.load(
+                {
+                    "dataSetId": self.data_set_id,
+                    "externalId": (
+                        f"{asset_external_id_prefix or ''}orphanage-{data_set_id}" if use_orphanage else None
+                    ),
+                    "name": "Orphanage",
+                    "description": "Orphanage for assets whose parents do not exist",
+                }
+            )
+            if use_orphanage
+            else None
         )
 
         self.asset_external_id_prefix = asset_external_id_prefix
@@ -111,6 +124,12 @@ class AssetLoader(CDFLoader[AssetWrite]):
             "classes",
         )
 
+        processed_instances = set()
+
+        if self.orphanage:
+            yield self.orphanage
+            processed_instances.add(self.orphanage.external_id)
+
         for class_ in ordered_classes:
             tracker.start(repr(class_.id))
 
@@ -119,29 +138,57 @@ class AssetLoader(CDFLoader[AssetWrite]):
             for identifier, properties in self.graph_store.read(class_.suffix):
                 fields = _process_properties(properties, property_renaming_config)
                 # set data set id and external id
-                fields["data_set_id"] = self.data_set_id
-                fields["external_id"] = identifier
+                fields["dataSetId"] = self.data_set_id
+                fields["externalId"] = identifier
+
+                # check on parent
+                if "parentExternalId" in fields and fields["parentExternalId"] not in processed_instances:
+                    error = loader_issues.InvalidInstanceError(
+                        type_="asset",
+                        identifier=identifier,
+                        reason=(
+                            f"Parent asset {fields['parentExternalId']} does not exist or failed creation"
+                            f""" {
+                                f', moving the asset {identifier} under orphanage {self.orphanage.external_id}'
+                                if self.orphanage
+                                else ''}"""
+                        ),
+                    )
+                    tracker.issue(error)
+                    if stop_on_exception:
+                        raise error.as_exception()
+                    yield error
+
+                    # if orphanage is set asset will use orphanage as parent
+                    if self.orphanage:
+                        fields["parentExternalId"] = self.orphanage.external_id
+
+                    # otherwise asset will be skipped
+                    else:
+                        continue
 
                 try:
                     yield AssetWrite.load(fields)
+                    processed_instances.add(identifier)
                 except KeyError as e:
                     error = loader_issues.InvalidInstanceError(type_="asset", identifier=identifier, reason=str(e))
                     tracker.issue(error)
                     if stop_on_exception:
                         raise error.as_exception() from e
                     yield error
+
             yield _END_OF_CLASS
 
-    def load_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> Sequence[AssetWrite]:
-        # generate assets
-        # check for circular asset hierarchy
-        # check for orphaned assets
-        # batch upsert of assets to CDF (otherwise we will hit the API rate limit)
-
-        raise NotImplementedError("Not implemented yet, this is placeholder")
-
     def _get_required_capabilities(self) -> list[Capability]:
-        raise NotImplementedError("Not implemented yet, this is placeholder")
+        return [
+            AssetsAcl(
+                actions=[
+                    AssetsAcl.Action.Write,
+                    AssetsAcl.Action.Read,
+                ],
+                scope=AssetsAcl.Scope.DataSet([self.data_set_id]),
+            )
+        ]
 
     def _upload_to_cdf(
         self,
@@ -150,14 +197,45 @@ class AssetLoader(CDFLoader[AssetWrite]):
         dry_run: bool,
         read_issues: NeatIssueList,
     ) -> Iterable[UploadResult]:
-        raise NotImplementedError("Not implemented yet, this is placeholder")
+        try:
+            upserted = client.assets.upsert(items, mode="replace")
+        except CogniteAPIError as e:
+            result = UploadResult[str](name="Asset", issues=read_issues)
+            result.error_messages.append(str(e))
+            result.failed_upserted.update(item.as_id() for item in e.failed + e.unknown)
+            result.upserted.update(item.as_id() for item in e.successful)
+            yield result
+        else:
+            for asset in upserted:
+                result = UploadResult[str](name="asset", issues=read_issues)
+                result.upserted.add(cast(str, asset.external_id))
+                yield result
 
     def write_to_file(self, filepath: Path) -> None:
-        raise NotImplementedError("Not implemented yet, this is placeholder")
+        if filepath.suffix not in [".json", ".yaml", ".yml"]:
+            raise ValueError(f"File format {filepath.suffix} is not supported")
+        dumped: dict[str, list] = {"assets": []}
+        for item in self.load(stop_on_exception=False):
+            key = {
+                AssetWrite: "assets",
+                NeatIssue: "issues",
+                _END_OF_CLASS: "end_of_class",
+            }.get(type(item))
+            if key is None:
+                # This should never happen, and is a bug in neat
+                raise ValueError(f"Item {item} is not supported. This is a bug in neat please report it.")
+            if key == "end_of_class":
+                continue
+            dumped[key].append(item.dump())
+        with filepath.open("w", encoding=self._encoding, newline=self._new_line) as f:
+            if filepath.suffix == ".json":
+                json.dump(dumped, f, indent=2)
+            else:
+                yaml.safe_dump(dumped, f, sort_keys=False)
 
 
 def _process_properties(properties: dict[str, list[str]], property_renaming_config: dict[str, str]) -> dict:
-    metadata: dict[str, str] = defaultdict(str)
+    metadata: dict[str, str] = {}
     fields: dict[str, str | dict] = {}
 
     for original_property, values in properties.items():

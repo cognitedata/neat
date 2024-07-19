@@ -36,6 +36,7 @@ class UploadResultList(NeatList[UploadResultCore]): ...
 @dataclass
 class UploadResult(UploadResultCore, Generic[T_ID]):
     created: set[T_ID] = field(default_factory=set)
+    upserted: set[T_ID] = field(default_factory=set)
     deleted: set[T_ID] = field(default_factory=set)
     changed: set[T_ID] = field(default_factory=set)
     unchanged: set[T_ID] = field(default_factory=set)
@@ -53,12 +54,21 @@ class UploadResult(UploadResultCore, Generic[T_ID]):
 
     @property
     def success(self) -> int:
-        return len(self.created) + len(self.deleted) + len(self.changed) + len(self.unchanged) + len(self.skipped)
+        return (
+            len(self.created)
+            + len(self.deleted)
+            + len(self.changed)
+            + len(self.upserted)
+            + len(self.unchanged)
+            + len(self.skipped)
+        )
 
     def dump(self, aggregate: bool = True) -> dict[str, Any]:
         output = super().dump(aggregate)
         if self.created:
             output["created"] = len(self.created) if aggregate else list(self.created)
+        if self.upserted:
+            output["upserted"] = len(self.upserted) if aggregate else list(self.upserted)
         if self.deleted:
             output["deleted"] = len(self.deleted) if aggregate else list(self.deleted)
         if self.changed:
@@ -69,6 +79,8 @@ class UploadResult(UploadResultCore, Generic[T_ID]):
             output["skipped"] = len(self.skipped) if aggregate else list(self.skipped)
         if self.failed_created:
             output["failed_created"] = len(self.failed_created) if aggregate else list(self.failed_created)
+        if self.failed_upserted:
+            output["failed_upserted"] = len(self.failed_upserted) if aggregate else list(self.failed_upserted)
         if self.failed_changed:
             output["failed_changed"] = len(self.failed_changed) if aggregate else list(self.failed_changed)
         if self.failed_deleted:
