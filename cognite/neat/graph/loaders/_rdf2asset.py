@@ -148,7 +148,10 @@ class AssetLoader(CDFLoader[AssetWrite]):
                         identifier=identifier,
                         reason=(
                             f"Parent asset {fields['parentExternalId']} has not been processed yet"
-                            f" { ', moving the asset, {fields['externalId']}, under orphanage' if self.orphanage else ''}"
+                            f""" {
+                                f', moving the asset {identifier} under orphanage {self.orphanage.external_id}'
+                                if self.orphanage
+                                else ''}"""
                         ),
                     )
                     tracker.issue(error)
