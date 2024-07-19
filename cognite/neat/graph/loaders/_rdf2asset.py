@@ -6,7 +6,7 @@ from typing import cast
 
 import yaml
 from cognite.client import CogniteClient
-from cognite.client.data_classes import AssetWrite
+from cognite.client.data_classes import AssetWrite, RelationshipWrite
 from cognite.client.data_classes.capabilities import AssetsAcl, Capability
 from cognite.client.exceptions import CogniteAPIError
 
@@ -90,7 +90,9 @@ class AssetLoader(CDFLoader[AssetWrite]):
                 {
                     "dataSetId": self.data_set_id,
                     "externalId": (
-                        f"{asset_external_id_prefix or ''}orphanage-{data_set_id}" if use_orphanage else None
+                        f"{asset_external_id_prefix or ''}orphanage-{data_set_id}"
+                        if use_orphanage
+                        else None
                     ),
                     "name": "Orphanage",
                     "description": "Orphanage for assets whose parents do not exist",
@@ -103,10 +105,13 @@ class AssetLoader(CDFLoader[AssetWrite]):
         self.asset_external_id_prefix = asset_external_id_prefix
         self.metadata_keys = metadata_keys or AssetLoaderMetadataKeys()
 
+        self._processed_assets = set()
         self._issues = NeatIssueList[NeatIssue](create_issues or [])
         self._tracker: type[Tracker] = tracker or LogTracker
 
-    def _load(self, stop_on_exception: bool = False) -> Iterable[AssetWrite | NeatIssue | type[_END_OF_CLASS]]:
+    def _load(
+        self, stop_on_exception: bool = False
+    ) -> Iterable[AssetWrite | NeatIssue | type[_END_OF_CLASS]]:
         if self._issues.has_errors and stop_on_exception:
             raise self._issues.as_exception()
         elif self._issues.has_errors:
@@ -124,16 +129,16 @@ class AssetLoader(CDFLoader[AssetWrite]):
             "classes",
         )
 
-        processed_instances = set()
-
         if self.orphanage:
             yield self.orphanage
-            processed_instances.add(self.orphanage.external_id)
+            self._processed_assets.add(self.orphanage.external_id)
 
         for class_ in ordered_classes:
             tracker.start(repr(class_.id))
 
-            property_renaming_config = AssetAnalysis(self.rules).define_property_renaming_config(class_)
+            property_renaming_config = AssetAnalysis(
+                self.rules
+            ).define_asset_property_renaming_config(class_)
 
             for identifier, properties in self.graph_store.read(class_.suffix):
                 fields = _process_properties(properties, property_renaming_config)
@@ -142,7 +147,10 @@ class AssetLoader(CDFLoader[AssetWrite]):
                 fields["externalId"] = identifier
 
                 # check on parent
-                if "parentExternalId" in fields and fields["parentExternalId"] not in processed_instances:
+                if (
+                    "parentExternalId" in fields
+                    and fields["parentExternalId"] not in self._processed_assets
+                ):
                     error = loader_issues.InvalidInstanceError(
                         type_="asset",
                         identifier=identifier,
@@ -166,9 +174,11 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
                 try:
                     yield AssetWrite.load(fields)
-                    processed_instances.add(identifier)
+                    self._processed_assets.add(identifier)
                 except KeyError as e:
-                    error = loader_issues.InvalidInstanceError(type_="asset", identifier=identifier, reason=str(e))
+                    error = loader_issues.InvalidInstanceError(
+                        type_="asset", identifier=identifier, reason=str(e)
+                    )
                     tracker.issue(error)
                     if stop_on_exception:
                         raise error.as_exception() from e
@@ -220,7 +230,9 @@ class AssetLoader(CDFLoader[AssetWrite]):
             }.get(type(item))
             if key is None:
                 # This should never happen, and is a bug in neat
-                raise ValueError(f"Item {item} is not supported. This is a bug in neat please report it.")
+                raise ValueError(
+                    f"Item {item} is not supported. This is a bug in neat please report it."
+                )
             if key == "end_of_class":
                 continue
             dumped[key].append(item.dump())
@@ -231,7 +243,9 @@ class AssetLoader(CDFLoader[AssetWrite]):
                 yaml.safe_dump(dumped, f, sort_keys=False)
 
 
-def _process_properties(properties: dict[str, list[str]], property_renaming_config: dict[str, str]) -> dict:
+def _process_properties(
+    properties: dict[str, list[str]], property_renaming_config: dict[str, str]
+) -> dict:
     metadata: dict[str, str] = {}
     fields: dict[str, str | dict] = {}
 
