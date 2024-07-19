@@ -203,12 +203,12 @@ class AssetLoader(CDFLoader[AssetWrite]):
             result = UploadResult[str](name="Asset", issues=read_issues)
             result.error_messages.append(str(e))
             result.failed_upserted.update(item.as_id() for item in e.failed + e.unknown)
-            result.created.update(item.as_id() for item in e.successful)
+            result.upserted.update(item.as_id() for item in e.successful)
             yield result
         else:
             for asset in upserted:
                 result = UploadResult[str](name="asset", issues=read_issues)
-                result.created.add(cast(str, asset.external_id))
+                result.upserted.add(cast(str, asset.external_id))
                 yield result
 
     def write_to_file(self, filepath: Path) -> None:
