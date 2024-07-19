@@ -114,6 +114,8 @@ class AssetLoader(CDFLoader[AssetWrite]):
             "classes",
         )
 
+        processed_instances = set()
+
         for class_ in ordered_classes:
             tracker.start(repr(class_.id))
 
@@ -125,8 +127,22 @@ class AssetLoader(CDFLoader[AssetWrite]):
                 fields["dataSetId"] = self.data_set_id
                 fields["externalId"] = identifier
 
+                # making sure parent has been processed
+                if "parentExternalId" in fields and fields["parentExternalId"] not in processed_instances:
+                    error = loader_issues.InvalidInstanceError(
+                        type_="asset",
+                        identifier=identifier,
+                        reason=f"Parent asset {fields['parentExternalId']} has not been processed yet",
+                    )
+                    tracker.issue(error)
+                    if stop_on_exception:
+                        raise error.as_exception()
+                    yield error
+                    continue
+
                 try:
                     yield AssetWrite.load(fields)
+                    processed_instances.add(identifier)
                 except KeyError as e:
                     error = loader_issues.InvalidInstanceError(type_="asset", identifier=identifier, reason=str(e))
                     tracker.issue(error)
