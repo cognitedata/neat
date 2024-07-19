@@ -15,6 +15,13 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.87.3] - 18-07-24
+### Added
+- Handling of missing parents when generating assets
+- Concept of orphanage asset for assets whose parents do not exist
+- Uploader to CDF for assets
+
+
 ## [0.87.2] - 17-07-24
 ### Added
 - Topological sorting of classes and properties in `AssetRules` to provide proper order of asset creation
