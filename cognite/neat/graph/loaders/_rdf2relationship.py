@@ -1,6 +1,5 @@
 import json
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import cast
 
@@ -17,6 +16,7 @@ from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules.analysis._asset import AssetAnalysis
 from cognite.neat.rules.models import AssetRules
+from cognite.neat.utils.auxiliary import create_sha256_hash
 from cognite.neat.utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, CDFLoader
@@ -56,9 +56,7 @@ class RelationshipLoader(CDFLoader[RelationshipWrite]):
         self._issues = NeatIssueList[NeatIssue](create_issues or [])
         self._tracker: type[Tracker] = tracker or LogTracker
 
-    def _load(
-        self, stop_on_exception: bool = False
-    ) -> Iterable[RelationshipWrite | NeatIssue | type[_END_OF_CLASS]]:
+    def _load(self, stop_on_exception: bool = False) -> Iterable[RelationshipWrite | NeatIssue | type[_END_OF_CLASS]]:
         if self._issues.has_errors and stop_on_exception:
             raise self._issues.as_exception()
         elif self._issues.has_errors:
@@ -80,26 +78,25 @@ class RelationshipLoader(CDFLoader[RelationshipWrite]):
         for class_ in ordered_classes:
             tracker.start(repr(class_.id))
 
-            property_renaming_config = AssetAnalysis(
-                self.rules
-            ).define_relationship_property_renaming_config(class_)
+            property_renaming_config = AssetAnalysis(self.rules).define_relationship_property_renaming_config(class_)
 
-            for identifier, properties in self.graph_store.read(class_.suffix):
-                relationships = _process_properties(
-                    properties, property_renaming_config
-                )
+            for source_external_id, properties in self.graph_store.read(class_.suffix):
+                relationships = _process_properties(properties, property_renaming_config)
 
-                for label, asset_ids in relationships.items():
-                    for asset_id in asset_ids:
-
-                        # here come check if the target
-
+                for _, target_external_ids in relationships.items():
+                    for target_external_id in target_external_ids:
+                        external_id = create_sha256_hash(f"{source_external_id}_{target_external_id}")
                         try:
-                            yield RelationshipWrite.load(fields)
-                            self._processed_assets.add(identifier)
+                            yield RelationshipWrite(
+                                external_id=external_id,
+                                source_external_id=source_external_id,
+                                target_external_id=target_external_id,
+                                source_type="asset",
+                                target_type="asset",
+                            )
                         except KeyError as e:
                             error = loader_issues.InvalidInstanceError(
-                                type_="asset", identifier=identifier, reason=str(e)
+                                type_="asset", identifier=external_id, reason=str(e)
                             )
                             tracker.issue(error)
                             if stop_on_exception:
@@ -122,39 +119,37 @@ class RelationshipLoader(CDFLoader[RelationshipWrite]):
     def _upload_to_cdf(
         self,
         client: CogniteClient,
-        items: list[AssetWrite],
+        items: list[RelationshipWrite],
         dry_run: bool,
         read_issues: NeatIssueList,
     ) -> Iterable[UploadResult]:
         try:
-            upserted = client.assets.upsert(items, mode="replace")
+            upserted = client.relationships.upsert(items, mode="replace")
         except CogniteAPIError as e:
-            result = UploadResult[str](name="Asset", issues=read_issues)
+            result = UploadResult[str](name="Relationship", issues=read_issues)
             result.error_messages.append(str(e))
             result.failed_upserted.update(item.as_id() for item in e.failed + e.unknown)
             result.created.update(item.as_id() for item in e.successful)
             yield result
         else:
             for asset in upserted:
-                result = UploadResult[str](name="asset", issues=read_issues)
+                result = UploadResult[str](name="relationship", issues=read_issues)
                 result.created.add(cast(str, asset.external_id))
                 yield result
 
     def write_to_file(self, filepath: Path) -> None:
         if filepath.suffix not in [".json", ".yaml", ".yml"]:
             raise ValueError(f"File format {filepath.suffix} is not supported")
-        dumped: dict[str, list] = {"assets": []}
+        dumped: dict[str, list] = {"relationship": []}
         for item in self.load(stop_on_exception=False):
             key = {
-                AssetWrite: "assets",
+                RelationshipWrite: "relationship",
                 NeatIssue: "issues",
                 _END_OF_CLASS: "end_of_class",
             }.get(type(item))
             if key is None:
                 # This should never happen, and is a bug in neat
-                raise ValueError(
-                    f"Item {item} is not supported. This is a bug in neat please report it."
-                )
+                raise ValueError(f"Item {item} is not supported. This is a bug in neat please report it.")
             if key == "end_of_class":
                 continue
             dumped[key].append(item.dump())
@@ -165,10 +160,7 @@ class RelationshipLoader(CDFLoader[RelationshipWrite]):
                 yaml.safe_dump(dumped, f, sort_keys=False)
 
 
-def _process_properties(
-    properties: dict[str, list[str]], property_renaming_config: dict[str, str]
-) -> dict:
-
+def _process_properties(properties: dict[str, list[str]], property_renaming_config: dict[str, str]) -> dict:
     relationships: dict[str, list[str]] = {}
 
     for original_property, values in properties.items():

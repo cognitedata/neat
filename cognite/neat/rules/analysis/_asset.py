@@ -17,19 +17,11 @@ from cognite.neat.rules.models.entities import (
 from ._base import BaseAnalysis
 
 
-class AssetAnalysis(
-    BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEntity, str]
-):
+class AssetAnalysis(BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEntity, str]):
     """Assumes analysis over only the complete schema"""
 
-    def _get_reference(
-        self, class_or_property: AssetClass | AssetProperty
-    ) -> ReferenceEntity | None:
-        return (
-            class_or_property.reference
-            if isinstance(class_or_property.reference, ReferenceEntity)
-            else None
-        )
+    def _get_reference(self, class_or_property: AssetClass | AssetProperty) -> ReferenceEntity | None:
+        return class_or_property.reference if isinstance(class_or_property.reference, ReferenceEntity) else None
 
     def _get_cls_entity(self, class_: AssetClass | AssetProperty) -> ClassEntity:
         return class_.class_
@@ -48,11 +40,7 @@ class AssetAnalysis(
         property_.class_ = class_
 
     def _get_object(self, property_: AssetProperty) -> ClassEntity | None:
-        return (
-            property_.value_type
-            if isinstance(property_.value_type, ClassEntity)
-            else None
-        )
+        return property_.value_type if isinstance(property_.value_type, ClassEntity) else None
 
     def _get_max_occurrence(self, property_: AssetProperty) -> int | float | None:
         return property_.max_count
@@ -74,15 +62,9 @@ class AssetAnalysis(
     ) -> dict[ClassEntity, dict[str, AssetProperty]]:
         class_property_pairs = {}
 
-        T_implementation = (
-            AssetEntity
-            if implementation_type == EntityTypes.asset
-            else RelationshipEntity
-        )
+        T_implementation = AssetEntity if implementation_type == EntityTypes.asset else RelationshipEntity
 
-        for class_, properties in self.classes_with_properties(
-            consider_inheritance
-        ).items():
+        for class_, properties in self.classes_with_properties(consider_inheritance).items():
             processed_properties = {}
             for property_ in properties:
                 if property_.property_ in processed_properties:
@@ -97,17 +79,8 @@ class AssetAnalysis(
 
                 if (
                     property_.implementation
-                    and any(
-                        isinstance(implementation, T_implementation)
-                        for implementation in property_.implementation
-                    )
-                    and (
-                        not only_rdfpath
-                        or (
-                            only_rdfpath
-                            and isinstance(property_.transformation, RDFPath)
-                        )
-                    )
+                    and any(isinstance(implementation, T_implementation) for implementation in property_.implementation)
+                    and (not only_rdfpath or (only_rdfpath and isinstance(property_.transformation, RDFPath)))
                 ):
                     implementation = [
                         implementation
@@ -130,13 +103,10 @@ class AssetAnalysis(
             child_parent_asset[class_] = set()
             for property_ in properties.values():
                 if any(
-                    cast(AssetEntity, implementation).property_
-                    == AssetFields.parentExternalId
+                    cast(AssetEntity, implementation).property_ == AssetFields.parentExternalId
                     for implementation in property_.implementation
                 ):
-                    child_parent_asset[property_.class_].add(
-                        cast(ClassEntity, property_.value_type)
-                    )
+                    child_parent_asset[property_.class_].add(cast(ClassEntity, property_.value_type))
 
         return list(TopologicalSorter(child_parent_asset).static_order())
 
@@ -158,36 +128,26 @@ class AssetAnalysis(
             implementation_type=EntityTypes.relationship,
         )
 
-    def define_asset_property_renaming_config(
-        self, class_: ClassEntity
-    ) -> dict[str, str]:
+    def define_asset_property_renaming_config(self, class_: ClassEntity) -> dict[str, str]:
         property_renaming_configuration = {}
 
         if asset_definition := self.asset_definition().get(class_, None):
             for property_, transformation in asset_definition.items():
-                asset_property = cast(list[AssetEntity], transformation.implementation)[
-                    0
-                ].property_
+                asset_property = cast(list[AssetEntity], transformation.implementation)[0].property_
 
                 if asset_property != "metadata":
                     property_renaming_configuration[property_] = str(asset_property)
                 else:
-                    property_renaming_configuration[property_] = (
-                        f"{asset_property}.{property_}"
-                    )
+                    property_renaming_configuration[property_] = f"{asset_property}.{property_}"
 
         return property_renaming_configuration
 
-    def define_relationship_property_renaming_config(
-        self, class_: ClassEntity
-    ) -> dict[str, str]:
+    def define_relationship_property_renaming_config(self, class_: ClassEntity) -> dict[str, str]:
         property_renaming_configuration = {}
 
         if relationship_definition := self.relationship_definition().get(class_, None):
             for property_, transformation in relationship_definition.items():
-                relationship = cast(
-                    list[RelationshipEntity], transformation.implementation
-                )[0]
+                relationship = cast(list[RelationshipEntity], transformation.implementation)[0]
 
                 if relationship.label:
                     property_renaming_configuration[property_] = relationship.label
