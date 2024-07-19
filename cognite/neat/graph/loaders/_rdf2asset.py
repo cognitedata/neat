@@ -84,10 +84,20 @@ class AssetLoader(CDFLoader[AssetWrite]):
         self.rules = rules
         self.data_set_id = data_set_id
         self.use_labels = use_labels
-        self.use_orphanage = use_orphanage
 
-        self.orphanage_external_id = (
-            f"{asset_external_id_prefix or ''}orphanage-{data_set_id}" if use_orphanage else None
+        self.orphanage = (
+            AssetWrite.load(
+                {
+                    "dataSetId": self.data_set_id,
+                    "externalId": (
+                        f"{asset_external_id_prefix or ''}orphanage-{data_set_id}" if use_orphanage else None
+                    ),
+                    "name": "Orphanage",
+                    "description": "Orphanage for assets whose parents do not exist",
+                }
+            )
+            if use_orphanage
+            else None
         )
 
         self.asset_external_id_prefix = asset_external_id_prefix
@@ -116,6 +126,10 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
         processed_instances = set()
 
+        if self.orphanage:
+            yield self.orphanage
+            processed_instances.add(self.orphanage.external_id)
+
         for class_ in ordered_classes:
             tracker.start(repr(class_.id))
 
@@ -127,7 +141,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                 fields["dataSetId"] = self.data_set_id
                 fields["externalId"] = identifier
 
-                # making sure parent has been processed
+                # check on parent
                 if "parentExternalId" in fields and fields["parentExternalId"] not in processed_instances:
                     error = loader_issues.InvalidInstanceError(
                         type_="asset",
@@ -138,7 +152,14 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     if stop_on_exception:
                         raise error.as_exception()
                     yield error
-                    continue
+
+                    # if orphanage is set asset will use orphanage as parent
+                    if self.orphanage:
+                        fields["parentExternalId"] = self.orphanage.external_id
+
+                    # otherwise asset will be skipped
+                    else:
+                        continue
 
                 try:
                     yield AssetWrite.load(fields)
@@ -149,15 +170,8 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     if stop_on_exception:
                         raise error.as_exception() from e
                     yield error
+
             yield _END_OF_CLASS
-
-    def load_to_cdf(self, client: CogniteClient, dry_run: bool = False) -> Sequence[AssetWrite]:
-        # generate assets
-        # check for circular asset hierarchy
-        # check for orphaned assets
-        # batch upsert of assets to CDF (otherwise we will hit the API rate limit)
-
-        raise NotImplementedError("Not implemented yet, this is placeholder")
 
     def _get_required_capabilities(self) -> list[Capability]:
         return [
