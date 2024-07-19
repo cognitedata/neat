@@ -50,11 +50,12 @@ def parse_imf_to_properties(graph: Graph, language: str = "en") -> list[dict]:
 
             OPTIONAL { ?imfProperty skos:prefLabel ?name . }
             OPTIONAL { ?imfProperty skos:description ?description . }
-            OPTIONAL { ?imfProperty rdfs:range ?valueType . }
+            OPTIONAL { ?imfProperty rdfs:range ?range . }
             OPTIONAL { ?imfProperty a ?type . }
             OPTIONAL { ?propertyShape sh:minCount ?minCardinality} .
             OPTIONAL { ?propertyShape sh:maxCount ?maxCardinality} .
-            OPTIONAL { ?propertyShape sh:hasValue | sh:class | sh:qualifiedValueShape/sh:class ?default }
+            OPTIONAL { ?propertyShape sh:hasValue ?defualt . }
+            OPTIONAL { ?propertyShape sh:class | sh:qualifiedValueShape/sh:class ?valueShape .}
         }
         UNION
         # Finding the IMF-attribute types
@@ -80,10 +81,16 @@ def parse_imf_to_properties(graph: Graph, language: str = "en") -> list[dict]:
         BIND(REPLACE(?propertyString, "^.*[/#]([^/#]*)$", "$1") AS ?propertySegment)
         BIND(IF(CONTAINS(?propertyString, "imf/"), CONCAT("IMF_", ?propertySegment) , ?propertySegment) AS ?property)
 
-        # If no type is provided for the the property bind it to ObjectProperty
-        BIND(IF(BOUND(?range) , ?range , "") AS ?valueType)
+        # Set the value type for the property based on sh:class, sh:qualifiedValueType or rdfs:range
+        BIND(IF(BOUND(?valueShape), ?valueShape, IF(BOUND(?range) , ?range , ?valueShape)) AS ?valueIriType)
 
-        # Included to account for future domain and range within IMF-attributes
+        # Finding the last segment of value types
+        BIND(STR(?valueIriType) AS ?valueTypeString)
+        BIND(REPLACE(?valueTypeString, "^.*[/#]([^/#]*)$", "$1") AS ?valueTypeSegment)
+        BIND(IF(CONTAINS(?valueTypeString, "imf/"), CONCAT("IMF_", ?valueTypeSegment) , ?valueTypeSegment)
+            AS ?valueType)
+
+        # Helper variable to set property type if value type is not already set.
         BIND(IF(BOUND(?type) && ?type = owl:DatatypeProperty, ?type , owl:ObjectProperty) AS ?propertyType)
 
         # Assert cardinality values if they do not exist
@@ -161,7 +168,7 @@ def _clean_up_properties(df: pd.DataFrame) -> pd.DataFrame:
                     "Property": property_,
                     "Name": property_grouped_df["Name"].unique()[0],
                     "Description": "\n".join(list(property_grouped_df["Description"].unique()))[:1024],
-                    "Value Type": ", ".join(list(property_grouped_df["Value Type"].unique())),
+                    "Value Type": property_grouped_df["Value Type"].unique()[0],
                     "Min Count": property_grouped_df["Min Count"].unique()[0],
                     "Max Count": property_grouped_df["Max Count"].unique()[0],
                     "Default": property_grouped_df["Default"].unique()[0],
