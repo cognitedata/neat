@@ -290,7 +290,9 @@ class _DMSExporter:
                     type_ = type_cls()
                 container.properties[prop.container_property] = dm.ContainerProperty(
                     type=type_,
+                    # If not set, nullable is True and immutable is False
                     nullable=prop.nullable if prop.nullable is not None else True,
+                    immutable=prop.immutable if prop.immutable is not None else False,
                     default_value=prop.default,
                     name=prop.name,
                     description=prop.description,

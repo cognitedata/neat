@@ -78,6 +78,7 @@ class DMSPropertyInput:
     description: str | None = None
     connection: Literal["direct", "edge", "reverse"] | None = None
     nullable: bool | None = None
+    immutable: bool | None = None
     is_list: bool | None = None
     default: str | int | dict | None = None
     reference: str | None = None
@@ -119,6 +120,7 @@ class DMSPropertyInput:
             description=data.get("description"),
             connection=data.get("connection"),
             nullable=data.get("nullable"),
+            immutable=data.get("immutable"),
             is_list=data.get("is_list"),
             default=data.get("default"),
             reference=data.get("reference"),
@@ -154,6 +156,7 @@ class DMSPropertyInput:
             "Description": self.description,
             "Connection": self.connection,
             "Nullable": self.nullable,
+            "Immutable": self.immutable,
             "Is List": self.is_list,
             "Default": self.default,
             "Reference": self.reference,
