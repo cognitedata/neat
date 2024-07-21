@@ -300,7 +300,7 @@ def test_parse_traversal(raw: str, expected_traversal: AllProperties):
     actual_traversal = parse_traversal(raw)
 
     # Assert
-    assert type(actual_traversal) == type(expected_traversal)
+    assert type(actual_traversal) is type(expected_traversal)
     assert actual_traversal.model_dump_json(indent=4) == expected_traversal.model_dump_json(indent=4)
 
 

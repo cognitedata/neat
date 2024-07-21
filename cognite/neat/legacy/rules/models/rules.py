@@ -886,7 +886,7 @@ class Property(Resource):
         if self.property_type == "DatatypeProperty" and self.default:
             default_value = self.default[0] if isinstance(self.default, list) else self.default
 
-            if type(default_value) != self.expected_value_type.python:
+            if type(default_value) is not self.expected_value_type.python:
                 try:
                     if isinstance(self.default, list):
                         updated_list = []
