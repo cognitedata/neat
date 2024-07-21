@@ -28,7 +28,8 @@ if sys.version_info >= (3, 11):
     from typing import TypeAlias
 else:
     from datetime import timezone
-    from typing import TypeAlias
+
+    from typing_extensions import TypeAlias  # noqa
 
     UTC = timezone.utc
 
