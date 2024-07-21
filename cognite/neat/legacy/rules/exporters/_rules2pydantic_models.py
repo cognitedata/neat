@@ -11,7 +11,6 @@ from cognite.client.data_classes.data_modeling.views import SingleHopConnectionD
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
-from typing_extensions import TypeAliasType
 
 from cognite.neat.legacy.graph.loaders.core.rdf_to_assets import NeatMetadataKeys
 from cognite.neat.legacy.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
@@ -30,8 +29,8 @@ else:
 
     UTC = timezone.utc
 
-EdgeOneToOne: TypeAlias = TypeAliasType("EdgeOneToOne", str)  # type: ignore[valid-type]
-EdgeOneToMany: TypeAlias = TypeAliasType("EdgeOneToMany", list[str])  # type: ignore[valid-type]
+EdgeOneToOne: TypeAlias = str  # type: ignore[valid-type]
+EdgeOneToMany: TypeAlias = list[str]  # type: ignore[valid-type]
 
 
 def default_model_configuration(

@@ -13,6 +13,7 @@ from cognite.client.data_classes.data_modeling import (
     SingleHopConnectionDefinition,
     View,
 )
+from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.ids import DataModelIdentifier, ViewId
 
 from cognite.neat.legacy.rules.models.tables import Tables
@@ -129,7 +130,9 @@ class DMSImporter(BaseImporter):
 
                 max_count: str | float = "1"
                 if isinstance(prop, SingleHopConnectionDefinition) or (
-                    isinstance(prop, MappedProperty) and prop.type.is_list
+                    isinstance(prop, MappedProperty)
+                    and isinstance(prop.type, ListablePropertyType)
+                    and prop.type.is_list
                 ):
                     max_count = float("nan")
 
