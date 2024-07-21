@@ -3,7 +3,7 @@ import sys
 import warnings
 from collections.abc import Iterable
 from datetime import date, datetime
-from typing import Any, TypeAlias, cast
+from typing import Any, cast
 
 from cognite.client.data_classes import Asset, Relationship
 from cognite.client.data_classes.data_modeling import EdgeApply, MappedPropertyApply, NodeApply, NodeOrEdgeData, ViewId
@@ -25,8 +25,10 @@ from cognite.neat.utils.auxiliary import create_sha256_hash, generate_exception_
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
+    from typing import TypeAlias
 else:
     from datetime import timezone
+    from typing import TypeAlias
 
     UTC = timezone.utc
 
