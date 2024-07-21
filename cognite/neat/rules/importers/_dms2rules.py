@@ -346,6 +346,7 @@ class DMSImporter(BaseImporter):
             value_type=value_type,
             is_list=self._get_is_list(prop),
             nullable=self._get_nullable(prop),
+            immutable=self._get_immutable(prop),
             default=self._get_default(prop),
             container=ContainerEntity.from_id(prop.container) if isinstance(prop, dm.MappedPropertyApply) else None,
             container_property=prop.container_property_identifier if isinstance(prop, dm.MappedPropertyApply) else None,
@@ -399,6 +400,12 @@ class DMSImporter(BaseImporter):
     def _get_nullable(self, prop: ViewPropertyApply) -> bool | None:
         if isinstance(prop, dm.MappedPropertyApply):
             return self._container_prop_unsafe(prop).nullable
+        else:
+            return None
+
+    def _get_immutable(self, prop: ViewPropertyApply) -> bool | None:
+        if isinstance(prop, dm.MappedPropertyApply):
+            return self._container_prop_unsafe(prop).immutable
         else:
             return None
 
