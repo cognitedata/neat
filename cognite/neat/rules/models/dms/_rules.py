@@ -177,6 +177,7 @@ class DMSProperty(SheetEntity):
     connection: Literal["direct", "edge", "reverse"] | None = Field(None, alias="Connection")
     value_type: DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
+    immutable: bool | None = Field(default=None, alias="Immutable")
     is_list: bool | None = Field(default=None, alias="Is List")
     default: str | int | dict | None = Field(None, alias="Default")
     reference: URLEntity | ReferenceEntity | None = Field(default=None, alias="Reference", union_mode="left_to_right")
