@@ -241,9 +241,9 @@ def _generate_mock_data_property_triples(
     python_type = XSD_VALUE_TYPE_MAPPINGS[value_type].python
     triples = []
     for id_ in instance_ids:
-        if python_type == int:
+        if python_type is int:
             triples.append((id_, URIRef(namespace[property_]), Literal(random.randint(1, 1983))))
-        elif python_type == float:
+        elif python_type is float:
             triples.append((id_, URIRef(namespace[property_]), Literal(numpy.float32(random.uniform(1, 1983)))))
         # generate string
         else:

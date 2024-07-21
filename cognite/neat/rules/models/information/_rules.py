@@ -216,7 +216,7 @@ class InformationProperty(SheetEntity):
         if self.type_ == EntityTypes.data_property and self.default:
             default_value = self.default[0] if isinstance(self.default, list) else self.default
 
-            if type(default_value) != self.value_type.python:
+            if type(default_value) is not self.value_type.python:
                 try:
                     if isinstance(self.default, list):
                         updated_list = []

@@ -166,7 +166,7 @@ def get_original_rules_from_workflow(workflow_name: str):
         return {"error": f"Workflow {workflow_name} is not found"}
     context = workflow.get_context()
     rules_data = context["RulesData"]
-    if type(rules_data) != RulesData:
+    if type(rules_data) is not RulesData:
         return {"error": "RulesData is not found in workflow context"}
 
     return Response(content=rules_data.rules.model_dump_json(), media_type="application/json")

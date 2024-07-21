@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.2
+    rev: v0.5.4
     hooks:
       - id: ruff
         args:
@@ -8,17 +8,6 @@ repos:
       - id: ruff-format
         args:
           - --line-length=120
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
-    hooks:
-      - id: debug-statements
-      - id: trailing-whitespace
-      - id: check-builtin-literals
-      - id: end-of-file-fixer
-      - id: check-ast
-      - id: check-docstring-first
-      - id: requirements-txt-fixer
 
   - repo: https://github.com/frnhr/pre-commit-nocommit
     rev: 0.0.1
