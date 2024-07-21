@@ -3,7 +3,7 @@ import sys
 import warnings
 from collections.abc import Iterable
 from datetime import date, datetime
-from typing import Any, cast
+from typing import Any, TypeAlias, cast
 
 from cognite.client.data_classes import Asset, Relationship
 from cognite.client.data_classes.data_modeling import EdgeApply, MappedPropertyApply, NodeApply, NodeOrEdgeData, ViewId
@@ -11,7 +11,6 @@ from cognite.client.data_classes.data_modeling.views import SingleHopConnectionD
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from pydantic._internal._model_construction import ModelMetaclass
 from rdflib import Graph, URIRef
-from typing_extensions import TypeAliasType
 
 from cognite.neat.legacy.graph.loaders.core.rdf_to_assets import NeatMetadataKeys
 from cognite.neat.legacy.graph.transformations.query_generator.sparql import build_construct_query, triples2dictionary
@@ -25,16 +24,13 @@ from cognite.neat.utils.auxiliary import create_sha256_hash, generate_exception_
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
-    from typing import TypeAlias
 else:
     from datetime import timezone
 
-    from typing_extensions import TypeAlias  # noqa
-
     UTC = timezone.utc
 
-EdgeOneToOne: TypeAlias = TypeAliasType("EdgeOneToOne", str)  # type: ignore[valid-type]
-EdgeOneToMany: TypeAlias = TypeAliasType("EdgeOneToMany", list[str])  # type: ignore[valid-type]
+EdgeOneToOne: TypeAlias = str  # type: ignore[valid-type]
+EdgeOneToMany: TypeAlias = list[str]  # type: ignore[valid-type]
 
 
 def default_model_configuration(
