@@ -283,8 +283,9 @@ class _DMSExporter:
                     type_cls = prop.value_type.dms
                 else:
                     type_cls = dm.DirectRelation
-                if isinstance(type_cls, ListablePropertyType):
-                    type_ = type_cls(is_list=(isinstance(prop, ListablePropertyType) and prop.is_list) or False)
+                type_: dm.PropertyType
+                if issubclass(type_cls, ListablePropertyType):
+                    type_ = type_cls(is_list=prop.is_list or False)
                 else:
                     type_ = type_cls()
                 container.properties[prop.container_property] = dm.ContainerProperty(
