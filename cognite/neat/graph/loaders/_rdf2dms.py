@@ -8,11 +8,11 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.capabilities import Capability, DataModelInstancesAcl
 from cognite.client.data_classes.data_modeling import ViewId
+from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
-from pydantic import ValidationInfo, create_model, field_validator
-from pydantic.main import Model
+from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 
 from cognite.neat.graph._tracking import LogTracker, Tracker
 from cognite.neat.graph.issues import loader as loader_issues
@@ -140,7 +140,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def _create_validation_classes(
         self, view: dm.View
-    ) -> tuple[type[Model], dict[str, dm.EdgeConnection], NeatIssueList]:
+    ) -> tuple[type[BaseModel], dict[str, dm.EdgeConnection], NeatIssueList]:
         issues = NeatIssueList[NeatIssue]()
         field_definitions: dict[str, tuple[type, Any]] = {}
         edge_by_property: dict[str, dm.EdgeConnection] = {}
@@ -168,7 +168,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     if data_type == Json:
                         json_fields.append(prop_name)
                     python_type = data_type.python
-                if prop.type.is_list:
+                if isinstance(prop.type, ListablePropertyType) and prop.type.is_list:
                     python_type = list[python_type]
                 default_value: Any = prop.default_value
                 if prop.nullable:
@@ -223,7 +223,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self,
         identifier: str,
         properties: dict[str, list[str]],
-        pydantic_cls: type[Model],
+        pydantic_cls: type[BaseModel],
         view_id: dm.ViewId,
     ) -> dm.InstanceApply:
         created = pydantic_cls.model_validate(properties)

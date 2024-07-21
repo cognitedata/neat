@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import ClassVar, Literal, cast, no_type_check
 
 import yaml
+from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 
 from cognite.neat.legacy.rules.models.value_types import ValueTypeMapping
 
@@ -278,13 +279,17 @@ class DMSSchemaComponents(BaseModel):
                             existing_property, default_value=None
                         )
 
-                    # scenario: property hold multiple values -> set is_list to True
+                    # scenario: property holds multiple values -> set is_list to True
                     if (
                         not isinstance(existing_property.type, DirectRelation)
                         and not isinstance(api_container_property.type, DirectRelation)
+                        and isinstance(existing_property.type, ListablePropertyType)
+                        and isinstance(api_container_property.type, ListablePropertyType)
                         and existing_property.type.is_list != api_container_property.type.is_list
                     ):
-                        containers[container_id].properties[container_property_id].type.is_list = True
+                        type_ = containers[container_id].properties[container_property_id].type
+                        if isinstance(type_, ListablePropertyType):
+                            type_.is_list = True
 
         if errors:
             raise ExceptionGroup("Properties value types have been redefined! This is prohibited! Aborting!", errors)
