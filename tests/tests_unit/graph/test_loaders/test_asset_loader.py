@@ -1,4 +1,5 @@
 import pytest
+from cognite.client.data_classes import AssetWrite, RelationshipWrite
 from rdflib import URIRef
 
 from cognite.neat.graph.examples import nordic44_knowledge_graph
@@ -21,20 +22,24 @@ def asset_store(asset_rules) -> NeatGraphStore:
 
 
 class TestAssetLoader:
-    def test_generation_of_assets_no_errors(self, asset_rules, asset_store):
+    def test_generation_of_assets_and_relationships_no_errors(self, asset_rules, asset_store):
         loader = AssetLoader(asset_store, asset_rules, 1983, use_orphanage=True)
         result = list(loader.load())
 
         assets = []
+        relationships = []
         errors = []
         for r in result:
-            if not isinstance(r, InvalidInstanceError):
-                assets.append(r)
-            else:
+            if isinstance(r, InvalidInstanceError):
                 errors.append(r)
+            elif isinstance(r, AssetWrite):
+                assets.append(r)
+            elif isinstance(r, RelationshipWrite):
+                relationships.append(r)
 
         assert len(errors) == 0
         assert len(assets) == 631
+        assert len(relationships) == 586
 
     def test_generation_of_assets_with_orphanage_errors(self, asset_rules, asset_store):
         asset_store.graph.remove(
@@ -48,13 +53,17 @@ class TestAssetLoader:
         result = list(loader.load())
 
         assets = []
+        relationships = []
         errors = []
         for r in result:
-            if not isinstance(r, InvalidInstanceError):
-                assets.append(r)
-            else:
+            if isinstance(r, InvalidInstanceError):
                 errors.append(r)
+            elif isinstance(r, AssetWrite):
+                assets.append(r)
+            elif isinstance(r, RelationshipWrite):
+                relationships.append(r)
 
-        assert len(errors) == 13
+        assert len(errors) == 26
         assert len(assets) == 630
+        assert len(relationships) == 572
         assert assets[0] == loader.orphanage

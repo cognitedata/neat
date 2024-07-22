@@ -1,9 +1,8 @@
 from ._base import BaseLoader, CDFLoader
 from ._rdf2asset import AssetLoader
 from ._rdf2dms import DMSLoader
-from ._rdf2relationship import RelationshipLoader
 
-__all__ = ["BaseLoader", "CDFLoader", "DMSLoader", "AssetLoader", "RelationshipLoader"]
+__all__ = ["BaseLoader", "CDFLoader", "DMSLoader", "AssetLoader"]
 
 
 def _repr_html_() -> str:
