@@ -302,7 +302,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
         dry_run: bool,
         read_issues: NeatIssueList,
     ) -> Iterable[UploadResult]:
-        if isinstance(items[0], AssetWrite) and all(isinstance(item, type(items[0])) for item in items):
+        if isinstance(items[0], AssetWrite) and all(isinstance(item, AssetWrite) for item in items):
             yield from self._upload_assets_to_cdf(client, cast(list[AssetWrite], items), dry_run, read_issues)
         elif isinstance(items[0], RelationshipWrite) and all(isinstance(item, type(items[0])) for item in items):
             yield from self._upload_relationships_to_cdf(
