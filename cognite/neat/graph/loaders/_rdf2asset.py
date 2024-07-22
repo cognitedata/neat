@@ -1,6 +1,5 @@
 import json
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Any, cast
 
@@ -32,33 +31,6 @@ from cognite.neat.utils.upload import UploadResult
 from ._base import _END_OF_CLASS, CDFLoader
 
 
-@dataclass(frozen=True)
-class AssetLoaderMetadataKeys:
-    """Class holding mapping between NEAT metadata key names and their desired names
-    in CDF Asset metadata
-
-    Args:
-        start_time: Start time key name
-        end_time: End time key name
-        update_time: Update time key name
-        resurrection_time: Resurrection time key name
-        identifier: Identifier key name
-        active: Active key name
-        type: Type key name
-    """
-
-    start_time: str = "start_time"
-    end_time: str = "end_time"
-    update_time: str = "update_time"
-    resurrection_time: str = "resurrection_time"
-    identifier: str = "identifier"
-    active: str = "active"
-    type: str = "type"
-
-    def as_aliases(self) -> dict[str, str]:
-        return {str(field.default): getattr(self, field.name) for field in fields(self)}
-
-
 class AssetLoader(CDFLoader[AssetWrite]):
     """Load Assets and their relationships from NeatGraph to Cognite Data Fusions.
 
@@ -70,8 +42,6 @@ class AssetLoader(CDFLoader[AssetWrite]):
                               of the hierarchy. Defaults to False.
         use_labels (bool): Whether to use labels for assets. Defaults to False.
         external_id_prefix (str | None): The prefix to use for the external ids. Defaults to None.
-        metadata_keys (AssetLoaderMetadataKeys | None): Mapping between NEAT metadata key names and
-                                                        their desired names in CDF Asset metadata. Defaults to None.
         create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
         tracker (type[Tracker] | None): The tracker to use. Defaults to None.
     """
@@ -84,7 +54,6 @@ class AssetLoader(CDFLoader[AssetWrite]):
         use_orphanage: bool = False,
         use_labels: bool = False,
         external_id_prefix: str | None = None,
-        metadata_keys: AssetLoaderMetadataKeys | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         tracker: type[Tracker] | None = None,
     ):
@@ -109,7 +78,6 @@ class AssetLoader(CDFLoader[AssetWrite]):
         )
 
         self.external_id_prefix = external_id_prefix
-        self.metadata_keys = metadata_keys or AssetLoaderMetadataKeys()
 
         self.processed_assets: set[str] = set()
         self._issues = NeatIssueList[NeatIssue](create_issues or [])
