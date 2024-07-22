@@ -1,18 +1,21 @@
 import json
 from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Any, cast
 
 import yaml
 from cognite.client import CogniteClient
-from cognite.client.data_classes import AssetWrite, RelationshipWrite
+from cognite.client.data_classes import (
+    AssetWrite,
+    LabelDefinitionWrite,
+    RelationshipWrite,
+)
 from cognite.client.data_classes.capabilities import (
     AssetsAcl,
     Capability,
     RelationshipsAcl,
 )
-from cognite.client.exceptions import CogniteAPIError
+from cognite.client.exceptions import CogniteAPIError, CogniteDuplicatedError
 
 from cognite.neat.graph._tracking.base import Tracker
 from cognite.neat.graph._tracking.log import LogTracker
@@ -28,33 +31,6 @@ from cognite.neat.utils.upload import UploadResult
 from ._base import _END_OF_CLASS, CDFLoader
 
 
-@dataclass(frozen=True)
-class AssetLoaderMetadataKeys:
-    """Class holding mapping between NEAT metadata key names and their desired names
-    in CDF Asset metadata
-
-    Args:
-        start_time: Start time key name
-        end_time: End time key name
-        update_time: Update time key name
-        resurrection_time: Resurrection time key name
-        identifier: Identifier key name
-        active: Active key name
-        type: Type key name
-    """
-
-    start_time: str = "start_time"
-    end_time: str = "end_time"
-    update_time: str = "update_time"
-    resurrection_time: str = "resurrection_time"
-    identifier: str = "identifier"
-    active: str = "active"
-    type: str = "type"
-
-    def as_aliases(self) -> dict[str, str]:
-        return {str(field.default): getattr(self, field.name) for field in fields(self)}
-
-
 class AssetLoader(CDFLoader[AssetWrite]):
     """Load Assets and their relationships from NeatGraph to Cognite Data Fusions.
 
@@ -66,8 +42,6 @@ class AssetLoader(CDFLoader[AssetWrite]):
                               of the hierarchy. Defaults to False.
         use_labels (bool): Whether to use labels for assets. Defaults to False.
         external_id_prefix (str | None): The prefix to use for the external ids. Defaults to None.
-        metadata_keys (AssetLoaderMetadataKeys | None): Mapping between NEAT metadata key names and
-                                                        their desired names in CDF Asset metadata. Defaults to None.
         create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
         tracker (type[Tracker] | None): The tracker to use. Defaults to None.
     """
@@ -80,7 +54,6 @@ class AssetLoader(CDFLoader[AssetWrite]):
         use_orphanage: bool = False,
         use_labels: bool = False,
         external_id_prefix: str | None = None,
-        metadata_keys: AssetLoaderMetadataKeys | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         tracker: type[Tracker] | None = None,
     ):
@@ -88,6 +61,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
         self.rules = rules
         self.data_set_id = data_set_id
+
         self.use_labels = use_labels
 
         self.orphanage = (
@@ -104,7 +78,6 @@ class AssetLoader(CDFLoader[AssetWrite]):
         )
 
         self.external_id_prefix = external_id_prefix
-        self.metadata_keys = metadata_keys or AssetLoaderMetadataKeys()
 
         self.processed_assets: set[str] = set()
         self._issues = NeatIssueList[NeatIssue](create_issues or [])
@@ -128,12 +101,20 @@ class AssetLoader(CDFLoader[AssetWrite]):
             "classes",
         )
 
+        if self.use_labels:
+            yield from self._create_labels()
+
         if self.orphanage:
             yield self.orphanage
             self.processed_assets.add(cast(str, self.orphanage.external_id))
 
         yield from self._create_assets(ordered_classes, tracker, stop_on_exception)
         yield from self._create_relationship(ordered_classes, tracker, stop_on_exception)
+
+    def _create_labels(self) -> Iterable[Any]:
+        for label in AssetAnalysis(self.rules).define_labels():
+            yield LabelDefinitionWrite(name=label, external_id=label, data_set_id=self.data_set_id)
+        yield _END_OF_CLASS
 
     def _create_assets(
         self,
@@ -153,6 +134,9 @@ class AssetLoader(CDFLoader[AssetWrite]):
                 # set data set id and external id
                 fields["dataSetId"] = self.data_set_id
                 fields["externalId"] = identifier
+
+                if self.use_labels:
+                    fields["labels"] = [class_.suffix]
 
                 if parent_external_id := fields.get("parentExternalId", None):
                     fields["parentExternalId"] = f"{self.external_id_prefix or ''}{parent_external_id}"
@@ -233,7 +217,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     yield error
                     continue
 
-                for _, target_external_ids in relationships.items():
+                for label, target_external_ids in relationships.items():
                     # we can have 1-many relationships
                     for target_external_id in target_external_ids:
                         target_external_id = f"{self.external_id_prefix or ''}{target_external_id}"
@@ -263,6 +247,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                                 source_type="asset",
                                 target_type="asset",
                                 data_set_id=self.data_set_id,
+                                labels=[label] if self.use_labels else None,
                             )
                         except KeyError as e:
                             error = loader_issues.InvalidInstanceError(
@@ -298,7 +283,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
     def _upload_to_cdf(
         self,
         client: CogniteClient,
-        items: list[AssetWrite] | list[RelationshipWrite],
+        items: list[AssetWrite] | list[RelationshipWrite] | list[LabelDefinitionWrite],
         dry_run: bool,
         read_issues: NeatIssueList,
     ) -> Iterable[UploadResult]:
@@ -308,8 +293,33 @@ class AssetLoader(CDFLoader[AssetWrite]):
             yield from self._upload_relationships_to_cdf(
                 client, cast(list[RelationshipWrite], items), dry_run, read_issues
             )
+        elif isinstance(items[0], LabelDefinitionWrite) and all(
+            isinstance(item, LabelDefinitionWrite) for item in items
+        ):
+            yield from self._upload_labels_to_cdf(client, cast(list[LabelDefinitionWrite], items), dry_run, read_issues)
         else:
             raise ValueError(f"Item {items[0]} is not supported. This is a bug in neat please report it.")
+
+    def _upload_labels_to_cdf(
+        self,
+        client: CogniteClient,
+        items: list[LabelDefinitionWrite],
+        dry_run: bool,
+        read_issues: NeatIssueList,
+    ) -> Iterable[UploadResult]:
+        try:
+            created = client.labels.create(items)
+        except (CogniteAPIError, CogniteDuplicatedError) as e:
+            result = UploadResult[str](name="Label", issues=read_issues)
+            result.error_messages.append(str(e))
+            result.failed_created.update(item.external_id for item in e.failed + e.unknown)
+            result.created.update(item.external_id for item in e.successful)
+            yield result
+        else:
+            for label in created:
+                result = UploadResult[str](name="Label", issues=read_issues)
+                result.upserted.add(cast(str, label.external_id))
+                yield result
 
     def _upload_assets_to_cdf(
         self,
@@ -323,8 +333,8 @@ class AssetLoader(CDFLoader[AssetWrite]):
         except CogniteAPIError as e:
             result = UploadResult[str](name="Asset", issues=read_issues)
             result.error_messages.append(str(e))
-            result.failed_upserted.update(item.as_id() for item in e.failed + e.unknown)
-            result.upserted.update(item.as_id() for item in e.successful)
+            result.failed_upserted.update(item.external_id for item in e.failed + e.unknown)
+            result.upserted.update(item.external_id for item in e.successful)
             yield result
         else:
             for asset in upserted:
@@ -344,8 +354,8 @@ class AssetLoader(CDFLoader[AssetWrite]):
         except CogniteAPIError as e:
             result = UploadResult[str](name="Relationship", issues=read_issues)
             result.error_messages.append(str(e))
-            result.failed_upserted.update(item.as_id() for item in e.failed + e.unknown)
-            result.upserted.update(item.as_id() for item in e.successful)
+            result.failed_upserted.update(item.external_id for item in e.failed + e.unknown)
+            result.upserted.update(item.external_id for item in e.successful)
             yield result
         else:
             for relationship in upserted:

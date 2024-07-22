@@ -155,3 +155,19 @@ class AssetAnalysis(BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEnt
                     property_renaming_configuration[property_] = property_
 
         return property_renaming_configuration
+
+    def define_labels(self) -> set:
+        labels = set()
+
+        for _, properties in AssetAnalysis(self.rules).relationship_definition().items():
+            for property_, definition in properties.items():
+                labels.add(
+                    cast(RelationshipEntity, definition.implementation[0]).label
+                    if cast(RelationshipEntity, definition.implementation[0]).label
+                    else property_
+                )
+
+        for class_ in AssetAnalysis(self.rules).asset_definition().keys():
+            labels.add(class_.suffix)
+
+        return labels
