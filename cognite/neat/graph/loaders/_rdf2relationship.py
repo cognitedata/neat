@@ -84,6 +84,7 @@ class RelationshipLoader(CDFLoader[RelationshipWrite]):
                 relationships = _process_properties(properties, property_renaming_config)
 
                 for _, target_external_ids in relationships.items():
+                    # we can have 1-many relationships
                     for target_external_id in target_external_ids:
                         external_id = create_sha256_hash(f"{source_external_id}_{target_external_id}")
                         try:
