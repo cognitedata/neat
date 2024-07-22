@@ -120,7 +120,7 @@ class RelationshipLoader(CDFLoader[RelationshipWrite]):
                             yield error
                             continue
 
-                        external_id = create_sha256_hash(f"relationship_{source_external_id}_{target_external_id}")
+                        external_id = "relationship_" + create_sha256_hash(f"{source_external_id}_{target_external_id}")
                         try:
                             yield RelationshipWrite(
                                 external_id=external_id,
@@ -128,6 +128,7 @@ class RelationshipLoader(CDFLoader[RelationshipWrite]):
                                 target_external_id=target_external_id,
                                 source_type="asset",
                                 target_type="asset",
+                                data_set_id=self.data_set_id,
                             )
                         except KeyError as e:
                             error = loader_issues.InvalidInstanceError(

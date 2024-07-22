@@ -48,18 +48,23 @@ class BaseLoader(ABC, Generic[T_Output]):
 class CDFLoader(BaseLoader[T_Output]):
     _UPLOAD_BATCH_SIZE: ClassVar[int] = 1000
 
-    def load_into_cdf(self, client: CogniteClient, dry_run: bool = False) -> UploadResultList:
-        return UploadResultList(self.load_into_cdf_iterable(client, dry_run))
+    def load_into_cdf(
+        self, client: CogniteClient, dry_run: bool = False, check_client: bool = True
+    ) -> UploadResultList:
+        return UploadResultList(self.load_into_cdf_iterable(client, dry_run, check_client))
 
-    def load_into_cdf_iterable(self, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
-        missing_capabilities = client.iam.verify_capabilities(self._get_required_capabilities())
-        if missing_capabilities:
-            upload_result = UploadResult[Hashable](name=type(self).__name__)
-            upload_result.issues.append(
-                FailedAuthorizationError(action="Upload to CDF", reason=str(missing_capabilities))
-            )
-            yield upload_result
-            return
+    def load_into_cdf_iterable(
+        self, client: CogniteClient, dry_run: bool = False, check_client: bool = True
+    ) -> Iterable[UploadResult]:
+        if check_client:
+            missing_capabilities = client.iam.verify_capabilities(self._get_required_capabilities())
+            if missing_capabilities:
+                upload_result = UploadResult[Hashable](name=type(self).__name__)
+                upload_result.issues.append(
+                    FailedAuthorizationError(action="Upload to CDF", reason=str(missing_capabilities))
+                )
+                yield upload_result
+                return
 
         issues = NeatIssueList[NeatIssue]()
         items: list[T_Output] = []
