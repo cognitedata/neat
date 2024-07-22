@@ -7,7 +7,11 @@ from typing import Any, cast
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes import AssetWrite, RelationshipWrite
-from cognite.client.data_classes.capabilities import AssetsAcl, Capability
+from cognite.client.data_classes.capabilities import (
+    AssetsAcl,
+    Capability,
+    RelationshipsAcl,
+)
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.graph._tracking.base import Tracker
@@ -281,7 +285,14 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     AssetsAcl.Action.Read,
                 ],
                 scope=AssetsAcl.Scope.DataSet([self.data_set_id]),
-            )
+            ),
+            RelationshipsAcl(
+                actions=[
+                    RelationshipsAcl.Action.Write,
+                    RelationshipsAcl.Action.Read,
+                ],
+                scope=RelationshipsAcl.Scope.DataSet([self.data_set_id]),
+            ),
         ]
 
     def _upload_to_cdf(
