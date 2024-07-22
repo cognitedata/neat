@@ -11,6 +11,7 @@ theme:
     primary: indigo
 
 nav:
+  - Home: index.md
   - Data Modeling Principles: data-modeling-principles.md
   - Getting Started:
       - Why NEAT?: gettingstarted/why-neat.md
