@@ -52,7 +52,7 @@ class AssetLoaderMetadataKeys:
 
 
 class AssetLoader(CDFLoader[AssetWrite]):
-    """Load Assets from NeatGraph to Cognite Data Fusions.
+    """Load Assets and their relationships from NeatGraph to Cognite Data Fusions.
 
     Args:
         graph_store (NeatGraphStore): The graph store to load the data into.
@@ -345,7 +345,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
     def write_to_file(self, filepath: Path) -> None:
         if filepath.suffix not in [".json", ".yaml", ".yml"]:
             raise ValueError(f"File format {filepath.suffix} is not supported")
-        dumped: dict[str, list] = {"assets": []}
+        dumped: dict[str, list] = {"assets": [], "relationship": []}
         for item in self.load(stop_on_exception=False):
             key = {
                 AssetWrite: "assets",
