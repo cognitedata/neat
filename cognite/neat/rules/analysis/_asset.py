@@ -128,7 +128,7 @@ class AssetAnalysis(BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEnt
             implementation_type=EntityTypes.relationship,
         )
 
-    def define_property_renaming_config(self, class_: ClassEntity) -> dict[str, str]:
+    def define_asset_property_renaming_config(self, class_: ClassEntity) -> dict[str, str]:
         property_renaming_configuration = {}
 
         if asset_definition := self.asset_definition().get(class_, None):
@@ -139,5 +139,19 @@ class AssetAnalysis(BaseAnalysis[AssetRules, AssetClass, AssetProperty, ClassEnt
                     property_renaming_configuration[property_] = str(asset_property)
                 else:
                     property_renaming_configuration[property_] = f"{asset_property}.{property_}"
+
+        return property_renaming_configuration
+
+    def define_relationship_property_renaming_config(self, class_: ClassEntity) -> dict[str, str]:
+        property_renaming_configuration = {}
+
+        if relationship_definition := self.relationship_definition().get(class_, None):
+            for property_, transformation in relationship_definition.items():
+                relationship = cast(list[RelationshipEntity], transformation.implementation)[0]
+
+                if relationship.label:
+                    property_renaming_configuration[property_] = relationship.label
+                else:
+                    property_renaming_configuration[property_] = property_
 
         return property_renaming_configuration

@@ -34,7 +34,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         data_model (dm.DataModel[dm.View] | None): The data model to load.
         instance_space (str): The instance space to load the data into.
         class_by_view_id (dict[ViewId, str] | None): A mapping from view id to class name. Defaults to None.
-        creat_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
+        create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
         tracker (type[Tracker] | None): The tracker to use. Defaults to None.
     """
 
