@@ -1,10 +1,5 @@
 # Welcome to NEAT
 
-!!! warning annotate "Work in Progress"
-    This page is work in progress and will be updated continuously until version 1.0.0 is released.
-
-
-
 [![release](https://img.shields.io/github/actions/workflow/status/cognitedata/neat/release_pypi.yaml?style=for-the-badge)](https://github.com/cognitedata/neat/actions/workflows/release_pypi.yaml)
 [![Documentation Status](https://readthedocs.com/projects/cognite-neat/badge/?version=latest&style=for-the-badge)](https://cognite-neat.readthedocs-hosted.com/en/latest/?badge=latest)
 [![Github](https://shields.io/badge/github-cognite/neat-green?logo=github&style=for-the-badge)](https://github.com/cognitedata/neat)
@@ -20,7 +15,7 @@ NEAT is [an open source](https://github.com/cognitedata/neat/blob/main/LICENSE),
 
 - semantic data modeling
 - creation, transformation and enrichment of knowledge graphs
-- and ingestion of the models and graphs to solutions such as [Cognite Data Fusion](https://www.cognite.com/en/product/cognite_data_fusion_industrial_dataops_platform)
+- and ingestion of the models and graphs into [Cognite Data Fusion](https://www.cognite.com/en/product/cognite_data_fusion_industrial_dataops_platform)
 
 ![NEAT High Level](./artifacts/figs/neat-high-level.png)
 
