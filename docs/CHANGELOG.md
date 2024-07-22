@@ -16,6 +16,11 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.87.6] - 22-07-24
+### Added
+- Labels generation from NeatGraphStore in AssetLoader
+
+
 ## [0.87.5] - 22-07-24
 ### Added
 - Relationship generation from NeatGraphStore in AssetLoader
