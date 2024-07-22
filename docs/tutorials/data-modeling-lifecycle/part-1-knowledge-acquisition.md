@@ -553,19 +553,19 @@ Alice has to modify the `metadata` sheet to include the CDF specific information
 First, she adds herself as a creator, and then she adds the `space` and `externalId` columns. The `space`
 column is used to define the space in CDF where the data model should be loaded. The `externalId` column is used
 to define the external id of the enterprise data model. This is used to reference the data model from other parts of CDF.
-Note that if Alice got a sheet converted from David using the `To DMS Rules` workflow, the `space` and `externalId`
+Note that if Alice got a sheet converted from David using the `Validate Rules` workflow, the `space` and `externalId`
 will be automatically filled out.
 
 <a id="dms-architect-properties"></a>
 ### The <code>properties</code> Sheet
 
-Using the workflow `To DMS Rules`, Alice will convert the `properties` sheet to a DMS format. This will add
-nine new columns as well as modify the `Value Type` column. The first row of the `properties` sheet for Alice
+Using the workflow `Validate Rules`, Alice will convert the `properties` sheet to a DMS format. This will add
+ten new columns as well as modify the `Value Type` column. The first row of the `properties` sheet for Alice
 might look as follows (more detail available [here](../../terminology/rules.md#properties-sheet)):
 
-| View        | View Property   | Value Type | Connection | Nullable | Is List | Default | Container   | Container Property | Index | Constraints | Class (linage) | Property (linage) |
-|-------------|-----------------|------------|------------|----------|---------|---------|-------------|--------------------|-------|-------------|----------------|-------------------|
-| WindTurbine | name            | Text       |            | False    | False   | Unknown |  PowerAsset | name               | name  |             | WindTurbine    | name              |
+| View        | View Property   | Value Type | Connection | Nullable | Immutable | Is List | Default | Container   | Container Property | Index | Constraints | Class (linage) | Property (linage) |
+|-------------|-----------------|------------|------------|----------|-----------|---------|---------|-------------|--------------------|-------|-------------|----------------|-------------------|
+| WindTurbine | name            | Text       |            | False    | False     | False   | Unknown |  PowerAsset | name               | name  |             | WindTurbine    | name              |
 
 `neat` will fill out all the new columns with suggested values, but Alice can modify them as she sees fit and thus
 she has granular control over how the data should be stored in CDF.
@@ -584,6 +584,10 @@ The columns are as follows:
 * **Nullable**: This only applies to primitive types (not connections). This column is used to specify whether the property is
   required or not. For example, Alice might decide that the `name` property of a `WindTurbine` is required,
   and she will set the `Nullable` column to `False`.
+* **Immutable**: This only applies to primitive types (not connections). This column is used to specify whether the property is
+  field can only be set once. For example, if the `manufacturer` property of a `WindTurbine` were to only be set once
+  and never changed, then Alice would set the `Immutable` column to `True`. In this case, Alice decides to
+  leave the `manufacturer` property as mutable, so she sets the `Immutable` column to `False`.
 * **Is List**: This column is used to specify whether the property is a list or not. For connections, it is used to
   specify if there can be multiple connections.  For example, say a `WindTurbine` can have multiple
 * timeseries measuring the temperature, Alice might have a property
@@ -626,7 +630,7 @@ keep track of the original names.
 <a id="dms-architect-containers-sheet"></a>
 ### The <code>Container</code> Sheet
 
-The output of the `To DMS Rules` will produce two new sheets `Container` and `View`. The `Container` sheet is used
+The output of the `Validate Rules` will produce two new sheets `Container` and `View`. The `Container` sheet is used
 to define constraints between the containers. The first three rows of the `Container` sheet for Alice look
 as follows:
 

@@ -5,11 +5,11 @@ from cognite.neat.utils.cdf.data_classes import NodeApplyDict
 
 class TestCogniteResourceDict:
     TWO_NODES_RAW = """- space: space1
-  instanceType: node
   externalId: externalId1
-- space: space1
   instanceType: node
+- space: space1
   externalId: externalId2
+  instanceType: node
 """
     TWO_NODES = NodeApplyDict.load(TWO_NODES_RAW)
 

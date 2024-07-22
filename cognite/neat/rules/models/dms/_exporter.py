@@ -5,6 +5,7 @@ from typing import Any, cast
 
 from cognite.client.data_classes import data_modeling as dm
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
+from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import (
     SingleEdgeConnectionApply,
     SingleReverseDirectRelationApply,
@@ -282,11 +283,16 @@ class _DMSExporter:
                     type_cls = prop.value_type.dms
                 else:
                     type_cls = dm.DirectRelation
-
-                type_ = type_cls(is_list=prop.is_list or False)
+                type_: dm.PropertyType
+                if issubclass(type_cls, ListablePropertyType):
+                    type_ = type_cls(is_list=prop.is_list or False)
+                else:
+                    type_ = type_cls()
                 container.properties[prop.container_property] = dm.ContainerProperty(
                     type=type_,
+                    # If not set, nullable is True and immutable is False
                     nullable=prop.nullable if prop.nullable is not None else True,
+                    immutable=prop.immutable if prop.immutable is not None else False,
                     default_value=prop.default,
                     name=prop.name,
                     description=prop.description,

@@ -8,6 +8,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
+from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import (
     MultiEdgeConnectionApply,
     MultiReverseDirectRelationApply,
@@ -345,6 +346,7 @@ class DMSImporter(BaseImporter):
             value_type=value_type,
             is_list=self._get_is_list(prop),
             nullable=self._get_nullable(prop),
+            immutable=self._get_immutable(prop),
             default=self._get_default(prop),
             container=ContainerEntity.from_id(prop.container) if isinstance(prop, dm.MappedPropertyApply) else None,
             container_property=prop.container_property_identifier if isinstance(prop, dm.MappedPropertyApply) else None,
@@ -401,9 +403,16 @@ class DMSImporter(BaseImporter):
         else:
             return None
 
+    def _get_immutable(self, prop: ViewPropertyApply) -> bool | None:
+        if isinstance(prop, dm.MappedPropertyApply):
+            return self._container_prop_unsafe(prop).immutable
+        else:
+            return None
+
     def _get_is_list(self, prop: ViewPropertyApply) -> bool | None:
         if isinstance(prop, dm.MappedPropertyApply):
-            return self._container_prop_unsafe(prop).type.is_list
+            prop_type = self._container_prop_unsafe(prop).type
+            return isinstance(prop_type, ListablePropertyType) and prop_type.is_list
         elif isinstance(prop, MultiEdgeConnectionApply | MultiReverseDirectRelationApply):
             return True
         elif isinstance(prop, SingleEdgeConnectionApply | SingleReverseDirectRelationApply):

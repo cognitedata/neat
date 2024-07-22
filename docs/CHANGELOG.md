@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.87.4] - 22-07-24
+### Added
+- Support for `Immutable` in `DMSRules`
+
 ## [0.87.3] - 18-07-24
 ### Added
 - Handling of missing parents when generating assets
