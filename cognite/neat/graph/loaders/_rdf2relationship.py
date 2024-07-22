@@ -32,6 +32,7 @@ class RelationshipLoader(CDFLoader[RelationshipWrite]):
         use_labels (bool): Whether to use labels for assets. Defaults to False.
         relationship_external_id_prefix (str | None): The prefix to use for the external id of the assets.
                                                       Defaults to None.
+        processed_assets (set[str]): A set of assets that have been created in CDF.
         create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
         tracker (type[Tracker] | None): The tracker to use. Defaults to None.
     """
@@ -41,9 +42,9 @@ class RelationshipLoader(CDFLoader[RelationshipWrite]):
         graph_store: NeatGraphStore,
         rules: AssetRules,
         data_set_id: int,
+        processed_assets: set[str],
         use_labels: bool = False,
         relationship_external_id_prefix: str | None = None,
-        processed_assets: set[str] | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         tracker: type[Tracker] | None = None,
     ):
@@ -83,10 +84,43 @@ class RelationshipLoader(CDFLoader[RelationshipWrite]):
             for source_external_id, properties in self.graph_store.read(class_.suffix):
                 relationships = _process_properties(properties, property_renaming_config)
 
+                # check if source asset exists
+                if source_external_id not in self.processed_assets:
+                    error = loader_issues.InvalidInstanceError(
+                        type_="asset",
+                        identifier=source_external_id,
+                        reason=(
+                            f"Asset {source_external_id} does not exist! "
+                            "Aborting creation of relationships which use this asset as the source."
+                        ),
+                    )
+                    tracker.issue(error)
+                    if stop_on_exception:
+                        raise error.as_exception()
+                    yield error
+                    continue
+
                 for _, target_external_ids in relationships.items():
                     # we can have 1-many relationships
                     for target_external_id in target_external_ids:
-                        external_id = create_sha256_hash(f"{source_external_id}_{target_external_id}")
+                        # check if source asset exists
+                        if target_external_id not in self.processed_assets:
+                            error = loader_issues.InvalidInstanceError(
+                                type_="asset",
+                                identifier=target_external_id,
+                                reason=(
+                                    f"Asset {target_external_id} does not exist! "
+                                    f"Cannot create relationship between {source_external_id}"
+                                    f" and {target_external_id}. "
+                                ),
+                            )
+                            tracker.issue(error)
+                            if stop_on_exception:
+                                raise error.as_exception()
+                            yield error
+                            continue
+
+                        external_id = create_sha256_hash(f"relationship_{source_external_id}_{target_external_id}")
                         try:
                             yield RelationshipWrite(
                                 external_id=external_id,
@@ -130,12 +164,12 @@ class RelationshipLoader(CDFLoader[RelationshipWrite]):
             result = UploadResult[str](name="Relationship", issues=read_issues)
             result.error_messages.append(str(e))
             result.failed_upserted.update(item.as_id() for item in e.failed + e.unknown)
-            result.created.update(item.as_id() for item in e.successful)
+            result.upserted.update(item.as_id() for item in e.successful)
             yield result
         else:
             for asset in upserted:
                 result = UploadResult[str](name="relationship", issues=read_issues)
-                result.created.add(cast(str, asset.external_id))
+                result.upserted.add(cast(str, asset.external_id))
                 yield result
 
     def write_to_file(self, filepath: Path) -> None:

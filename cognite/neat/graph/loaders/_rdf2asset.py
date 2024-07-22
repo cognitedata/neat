@@ -103,7 +103,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
         self.asset_external_id_prefix = asset_external_id_prefix
         self.metadata_keys = metadata_keys or AssetLoaderMetadataKeys()
 
-        self._processed_assets: set[str] = set()
+        self.processed_assets: set[str] = set()
         self._issues = NeatIssueList[NeatIssue](create_issues or [])
         self._tracker: type[Tracker] = tracker or LogTracker
 
@@ -125,11 +125,9 @@ class AssetLoader(CDFLoader[AssetWrite]):
             "classes",
         )
 
-        processed_instances = set()
-
         if self.orphanage:
             yield self.orphanage
-            processed_instances.add(self.orphanage.external_id)
+            self.processed_assets.add(cast(str, self.orphanage.external_id))
 
         for class_ in ordered_classes:
             tracker.start(repr(class_.id))
@@ -143,7 +141,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                 fields["externalId"] = identifier
 
                 # check on parent
-                if "parentExternalId" in fields and fields["parentExternalId"] not in processed_instances:
+                if "parentExternalId" in fields and fields["parentExternalId"] not in self.processed_assets:
                     error = loader_issues.InvalidInstanceError(
                         type_="asset",
                         identifier=identifier,
@@ -170,7 +168,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
                 try:
                     yield AssetWrite.load(fields)
-                    processed_instances.add(identifier)
+                    self.processed_assets.add(identifier)
                 except KeyError as e:
                     error = loader_issues.InvalidInstanceError(type_="asset", identifier=identifier, reason=str(e))
                     tracker.issue(error)
