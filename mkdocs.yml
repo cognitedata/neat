@@ -11,10 +11,11 @@ theme:
     primary: indigo
 
 nav:
+  - Data Modeling Principles: data-modeling-principles.md
   - Getting Started:
       - Why NEAT?: gettingstarted/why-neat.md # why NEAT, what is NEAT
       - Installation: gettingstarted/installation.md # how to install as python package, docker
-      - Quick overview: notebooks/quick-overview.ipynb # basic usage, very minimal example/notebook
+#      - Quick overview: notebooks/quick-overview.ipynb # basic usage, very minimal example/notebook
   - Tutorials:
       - Data Modeling Lifecycle:
           - Overview: tutorials/data-modeling-lifecycle/overview.md
@@ -24,50 +25,16 @@ nav:
           - Extending Solution Model: tutorials/data-modeling-lifecycle/part-4-extending-solution-model.md
           - Business Solution Model: tutorials/data-modeling-lifecycle/part-5-business-solution-model.md
           - User Personas: tutorials/data-modeling-lifecycle/user-personas.md
-      - Asset Hierarchy Migration: tutorials/asset_hierarchy_migration.ipynb
-      - Workflows:
-          - Overview: tutorials/workflows/overview.md
-        #   - Steps Library: tutorials/workflows/steps-library.md
-        #   - Examples:
-        #       - Ontology to Data Model: tutorials/workflows/examples/ontology-to-data-model.md
-        #       - Export Rules to Ontology: tutorials/workflows/examples/export-rules-to-ontology.md
-        #       - Extract RDF Graph and Generate Assets: tutorials/workflows/examples/extract-rdf-graph-and-generate-assets.md
-        #       - Extract DEXPI Graph and Export Rules: tutorials/workflows/examples/extract-dexpi-graph-and-export-rules.md
-  - User Guide:
-      - Overview: user-guide/overview.md
-      - Rules Importing:
-          - Excel: notebooks/rules-importing-excel.ipynb
-          - Ontology: notebooks/rules-importing-ontology.ipynb
-          - DMS: notebooks/rules-importing-dms.ipynb
-          - Inference: notebooks/rules-importing-inference.ipynb
-      - Rules Exporting:
-          - Excel: notebooks/rules-exporting-excel.ipynb
-          - Ontology: notebooks/rules-exporting-ontology.ipynb
-          - DMS: notebooks/rules-exporting-dms.ipynb
-      - Graph Store:
-          - Memory Store: notebooks/graph-store-memory.ipynb
-          - Oxigraph Store: notebooks/graph-store-oxigraph.ipynb
-          - External Triple Store: notebooks/graph-store-external.ipynb
-      - Graph Extraction:
-          - RDF: notebooks/graph-extraction-rdf.ipynb
-          - DEXPI: notebooks/graph-extraction-dexpi.ipynb
-          - JSON: notebooks/graph-extraction-json.ipynb
-          - XML: notebooks/graph-extraction-xml.ipynb
-      - Graph Transformation:
-          - RDFPATH: notebooks/graph-transformation-rdfpath.ipynb
-          - CDF: notebooks/graph-transformation-cdf-transformations.ipynb
-      - Graph Loading:
-          - Assets: notebooks/graph-loading-assets.ipynb
-          - DMS Instances: notebooks/graph-loading-dms-instances.ipynb
+      - Data Onboarding:
+        - Asset Hierarchy Migration: tutorials/data-onboarding/asset_hierarchy_migration.ipynb
   - Terminology:
-      - Base Terminology: terminology/base-terminology.md
       - Rules:
           - Overview: terminology/rules.md
           - Model Validation: terminology/rules-validation.md
           - Excel Input: terminology/rules-excel-input.md
           - DMSRules Details: terminology/dmsrules.md
-      - Graph: terminology/graph.md
-  - Reference:
+  - Reference - Code API:
+      - Overview: reference/overview.md
       - Legacy:
           - Rules:
               - Models: reference/legacy/rules/models.md
@@ -85,7 +52,6 @@ nav:
                   - Rules: reference/legacy/workflows/steps/rules.md
                   - Graph: reference/legacy/workflows/steps/graph.md
           - Exceptions: reference/legacy/exceptions.md
-  - Data Modeling Principles: data-modeling-principles.md
   - Changelog​: CHANGELOG.md
 
 markdown_extensions:
