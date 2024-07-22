@@ -1,5 +1,9 @@
 import pytest
-from cognite.client.data_classes import AssetWrite, RelationshipWrite
+from cognite.client.data_classes import (
+    AssetWrite,
+    LabelDefinitionWrite,
+    RelationshipWrite,
+)
 from rdflib import URIRef
 
 from cognite.neat.graph.examples import nordic44_knowledge_graph
@@ -23,9 +27,10 @@ def asset_store(asset_rules) -> NeatGraphStore:
 
 class TestAssetLoader:
     def test_generation_of_assets_and_relationships_no_errors(self, asset_rules, asset_store):
-        loader = AssetLoader(asset_store, asset_rules, 1983, use_orphanage=True)
+        loader = AssetLoader(asset_store, asset_rules, 1983, use_orphanage=True, use_labels=True)
         result = list(loader.load())
 
+        labels = []
         assets = []
         relationships = []
         errors = []
@@ -36,10 +41,13 @@ class TestAssetLoader:
                 assets.append(r)
             elif isinstance(r, RelationshipWrite):
                 relationships.append(r)
+            elif isinstance(r, LabelDefinitionWrite):
+                labels.append(r)
 
         assert len(errors) == 0
         assert len(assets) == 631
         assert len(relationships) == 586
+        assert len(labels) == 7
 
     def test_generation_of_assets_with_orphanage_errors(self, asset_rules, asset_store):
         asset_store.graph.remove(
