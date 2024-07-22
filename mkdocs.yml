@@ -13,9 +13,8 @@ theme:
 nav:
   - Data Modeling Principles: data-modeling-principles.md
   - Getting Started:
-      - Why NEAT?: gettingstarted/why-neat.md # why NEAT, what is NEAT
-      - Installation: gettingstarted/installation.md # how to install as python package, docker
-#      - Quick overview: notebooks/quick-overview.ipynb # basic usage, very minimal example/notebook
+      - Why NEAT?: gettingstarted/why-neat.md
+      - Installation: gettingstarted/installation.md
   - Tutorials:
       - Data Modeling Lifecycle:
           - Overview: tutorials/data-modeling-lifecycle/overview.md
