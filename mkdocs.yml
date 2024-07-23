@@ -27,6 +27,7 @@ nav:
           - User Personas: tutorials/data-modeling-lifecycle/user-personas.md
       - Data Onboarding:
         - Asset Hierarchy Migration: tutorials/data-onboarding/asset_hierarchy_migration.ipynb
+        - Asset Hierarchy Migration with adding Class: tutorials/data-onboarding/asset_hierarchy_migration_with_type.ipynb
   - Terminology:
       - Rules:
           - Overview: terminology/rules.md
