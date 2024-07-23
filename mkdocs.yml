@@ -7,6 +7,7 @@ theme:
     - content.code.copy
     - content.tooltips
   logo: artifacts/figs/logo.png
+  favicon: artifacts/figs/logo.png
   palette:
     primary: indigo
 
