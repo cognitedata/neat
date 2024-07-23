@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Set
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
@@ -10,7 +10,7 @@ from rdflib import RDF, Literal, Namespace
 from cognite.neat.graph.models import Triple
 from cognite.neat.utils.auxiliary import create_sha256_hash
 
-from ._base import ClassicCDFExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
 
 
 class AssetsExtractor(ClassicCDFExtractor[Asset]):
@@ -43,6 +43,7 @@ class AssetsExtractor(ClassicCDFExtractor[Asset]):
         to_type: Callable[[Asset], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
     ):
         total = client.assets.aggregate_count(filter=AssetFilter(data_set_ids=[{"externalId": data_set_external_id}]))
 
@@ -56,6 +57,7 @@ class AssetsExtractor(ClassicCDFExtractor[Asset]):
             total,
             limit,
             unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
         )
 
     @classmethod
@@ -67,6 +69,7 @@ class AssetsExtractor(ClassicCDFExtractor[Asset]):
         to_type: Callable[[Asset], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
     ):
         total = client.assets.aggregate_count(
             filter=AssetFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
@@ -82,6 +85,7 @@ class AssetsExtractor(ClassicCDFExtractor[Asset]):
             total,
             limit,
             unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
         )
 
     @classmethod
@@ -92,13 +96,17 @@ class AssetsExtractor(ClassicCDFExtractor[Asset]):
         to_type: Callable[[Asset], str] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
     ):
+        assets = AssetList.load(Path(file_path).read_text())
         return cls(
-            AssetList.load(Path(file_path).read_text()),
+            assets,
             namespace,
             to_type,
-            limit,
+            total=len(assets),
+            limit=limit,
             unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
         )
 
     def _item2triples(self, asset: Asset) -> list[Triple]:
