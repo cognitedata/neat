@@ -1,39 +1,37 @@
-import json
-from collections.abc import Iterable
+from collections.abc import Callable, Set
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import cast
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import TimeSeries, TimeSeriesList
+from cognite.client.data_classes import TimeSeries, TimeSeriesFilter, TimeSeriesList
 from pydantic import AnyHttpUrl, ValidationError
 from rdflib import RDF, Literal, Namespace, URIRef
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
-from cognite.neat.utils.auxiliary import string_to_ideal_type
+
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
 
 
-class TimeSeriesExtractor(BaseExtractor):
+class TimeSeriesExtractor(ClassicCDFExtractor[TimeSeries]):
     """Extract data from Cognite Data Fusions TimeSeries into Neat.
 
     Args:
-        timeseries (Iterable[TimeSeries]): An iterable of timeseries.
+        items (Iterable[TimeSeries]): An iterable of items.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+        to_type (Callable[[TimeSeries], str | None], optional): A function to convert an item to a type.
+            Defaults to None. If None or if the function returns None, the asset will be set to the default type.
+        total (int, optional): The total number of items to load. If passed, you will get a progress bar if rich
+            is installed. Defaults to None.
+        limit (int, optional): The maximal number of items to load. Defaults to None. This is typically used for
+            testing setup of the extractor. For example, if you are extracting 100 000 assets, you might want to
+            limit the extraction to 1000 assets to test the setup.
         unpack_metadata (bool, optional): Whether to unpack metadata. Defaults to False, which yields the metadata as
             a JSON string.
+        skip_metadata_values (set[str] | frozenset[str] | None, optional): If you are unpacking metadata, then
+           values in this set will be skipped.
     """
 
-    def __init__(
-        self,
-        timeseries: Iterable[TimeSeries],
-        namespace: Namespace | None = None,
-        unpack_metadata: bool = True,
-    ):
-        self.namespace = namespace or DEFAULT_NAMESPACE
-        self.timeseries = timeseries
-        self.unpack_metadata = unpack_metadata
+    _default_rdf_type = "TimeSeries"
 
     @classmethod
     def from_dataset(
@@ -41,15 +39,23 @@ class TimeSeriesExtractor(BaseExtractor):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
+        to_type: Callable[[TimeSeries], str | None] | None = None,
+        limit: int | None = None,
         unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
     ):
+        total = client.time_series.aggregate_count(
+            filter=TimeSeriesFilter(data_set_ids=[{"externalId": data_set_external_id}])
+        )
+
         return cls(
-            cast(
-                Iterable[TimeSeries],
-                client.time_series(data_set_external_ids=data_set_external_id),
-            ),
-            namespace,
-            unpack_metadata,
+            client.time_series(data_set_external_ids=data_set_external_id),
+            total=total,
+            namespace=namespace,
+            to_type=to_type,
+            limit=limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
         )
 
     @classmethod
@@ -57,23 +63,30 @@ class TimeSeriesExtractor(BaseExtractor):
         cls,
         file_path: str,
         namespace: Namespace | None = None,
+        to_type: Callable[[TimeSeries], str | None] | None = None,
+        limit: int | None = None,
         unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
     ):
-        return cls(TimeSeriesList.load(Path(file_path).read_text()), namespace, unpack_metadata)
+        timeseries = TimeSeriesList.load(Path(file_path).read_text())
+        return cls(
+            timeseries,
+            total=len(timeseries),
+            namespace=namespace,
+            to_type=to_type,
+            limit=limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
+        )
 
-    def extract(self) -> Iterable[Triple]:
-        """Extract timeseries as triples."""
-        for timeseries in self.timeseries:
-            yield from self._timeseries2triples(timeseries)
-
-    def _timeseries2triples(self, timeseries: TimeSeries) -> list[Triple]:
+    def _item2triples(self, timeseries: TimeSeries) -> list[Triple]:
         id_ = self.namespace[f"TimeSeries_{timeseries.id}"]
 
         # Set rdf type
-        triples: list[Triple] = [(id_, RDF.type, self.namespace.TimeSeries)]
+        type_ = self._get_rdf_type(timeseries)
+        triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
 
         # Create attributes
-
         if timeseries.external_id:
             triples.append((id_, self.namespace.external_id, Literal(timeseries.external_id)))
 
@@ -84,22 +97,7 @@ class TimeSeriesExtractor(BaseExtractor):
             triples.append((id_, self.namespace.is_string, Literal(timeseries.is_string)))
 
         if timeseries.metadata:
-            if self.unpack_metadata:
-                for key, value in timeseries.metadata.items():
-                    if value:
-                        type_aware_value = string_to_ideal_type(value)
-                        try:
-                            triples.append((id_, self.namespace[key], URIRef(str(AnyHttpUrl(type_aware_value)))))  # type: ignore
-                        except ValidationError:
-                            triples.append((id_, self.namespace[key], Literal(type_aware_value)))
-            else:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.metadata,
-                        Literal(json.dumps(timeseries.metadata)),
-                    )
-                )
+            triples.extend(self._metadata_to_triples(id_, timeseries.metadata))
 
         if timeseries.unit:
             triples.append((id_, self.namespace.unit, Literal(timeseries.unit)))

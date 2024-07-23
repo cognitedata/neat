@@ -15,9 +15,9 @@ class EventsExtractor(ClassicCDFExtractor[Event]):
     """Extract data from Cognite Data Fusions Events into Neat.
 
     Args:
-        items (Iterable[T_CogniteResource]): An iterable of classic resource.
+        items (Iterable[Event]): An iterable of items.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
-        to_type (Callable[[T_CogniteResource], str | None], optional): A function to convert an item to a type.
+        to_type (Callable[[Event], str | None], optional): A function to convert an item to a type.
             Defaults to None. If None or if the function returns None, the asset will be set to the default type.
         total (int, optional): The total number of items to load. If passed, you will get a progress bar if rich
             is installed. Defaults to None.

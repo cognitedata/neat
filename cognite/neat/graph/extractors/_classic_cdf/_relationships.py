@@ -1,34 +1,38 @@
-from collections.abc import Iterable
+from collections.abc import Callable, Set
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import cast
 from urllib.parse import quote
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Relationship, RelationshipList
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
 from cognite.neat.utils.auxiliary import create_sha256_hash
 
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
 
-class RelationshipsExtractor(BaseExtractor):
+
+class RelationshipsExtractor(ClassicCDFExtractor[Relationship]):
     """Extract data from Cognite Data Fusions Relationships into Neat.
 
     Args:
-        relationships (Iterable[Asset]): An iterable of relationships.
+        items (Iterable[Relationship]): An iterable of items.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+        to_type (Callable[[Relationship], str | None], optional): A function to convert an item to a type.
+            Defaults to None. If None or if the function returns None, the asset will be set to the default type.
+        total (int, optional): The total number of items to load. If passed, you will get a progress bar if rich
+            is installed. Defaults to None.
+        limit (int, optional): The maximal number of items to load. Defaults to None. This is typically used for
+            testing setup of the extractor. For example, if you are extracting 100 000 assets, you might want to
+            limit the extraction to 1000 assets to test the setup.
+        unpack_metadata (bool, optional): Whether to unpack metadata. Defaults to False, which yields the metadata as
+            a JSON string.
+        skip_metadata_values (set[str] | frozenset[str] | None, optional): If you are unpacking metadata, then
+           values in this set will be skipped.
     """
 
-    def __init__(
-        self,
-        relationships: Iterable[Relationship],
-        namespace: Namespace | None = None,
-    ):
-        self.namespace = namespace or DEFAULT_NAMESPACE
-        self.relationships = relationships
+    _default_rdf_type = "Relationship"
 
     @classmethod
     def from_dataset(
@@ -36,33 +40,51 @@ class RelationshipsExtractor(BaseExtractor):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
+        to_type: Callable[[Relationship], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
     ):
         return cls(
-            cast(
-                Iterable[Relationship],
-                client.relationships(data_set_external_ids=data_set_external_id),
-            ),
-            namespace,
+            client.relationships(data_set_external_ids=data_set_external_id),
+            namespace=namespace,
+            to_type=to_type,
+            limit=limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
         )
 
     @classmethod
-    def from_file(cls, file_path: str, namespace: Namespace | None = None):
-        return cls(RelationshipList.load(Path(file_path).read_text()), namespace)
+    def from_file(
+        cls,
+        file_path: str,
+        namespace: Namespace | None = None,
+        to_type: Callable[[Relationship], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+    ):
+        relationships = RelationshipList.load(Path(file_path).read_text())
+        return cls(
+            relationships,
+            namespace=namespace,
+            total=len(relationships),
+            to_type=to_type,
+            limit=limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
+        )
 
-    def extract(self) -> Iterable[Triple]:
-        """Extracts an asset with the given asset_id."""
-        for relationship in self.relationships:
-            yield from self._relationship2triples(relationship)
-
-    def _relationship2triples(self, relationship: Relationship) -> list[Triple]:
+    def _item2triples(self, relationship: Relationship) -> list[Triple]:
         """Converts an asset to triples."""
 
         if relationship.external_id and relationship.source_external_id and relationship.target_external_id:
             # relationships do not have an internal id, so we generate one
             id_ = self.namespace[f"Relationship_{create_sha256_hash(relationship.external_id)}"]
 
+            type_ = self._get_rdf_type(relationship)
             # Set rdf type
-            triples: list[Triple] = [(id_, RDF.type, self.namespace["Relationship"])]
+            triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
 
             # Set source and target types
             if source_type := relationship.source_type:
