@@ -14,28 +14,13 @@ from cognite.neat.workflows.utils import get_file_hash
 router = APIRouter()
 
 
-@router.get("/api/cdf/neat-resources")
-def get_neat_resources(resource_type: str | None = None):
-    if NEAT_APP.cdf_store is None:
-        return {"error": "NeatApp is not initialized"}
-    if resource_type is None:
-        return {"error": "Resource type is not specified"}
-    result = NEAT_APP.cdf_store.get_list_of_resources_from_cdf(resource_type=resource_type)
-    logging.debug(f"Got {len(result)} resources")
-    return {"result": result}
-
-
-@router.post("/api/cdf/init-neat-resources")
-def init_neat_cdf_resources(resource_type: str | None = None):
-    if NEAT_APP.cdf_store is None:
-        return {"error": "NeatApp is not initialized"}
-    NEAT_APP.cdf_store.init_cdf_resources(resource_type=resource_type)
-    return {"result": "ok"}
-
-
 @router.post("/api/file/upload/{workflow_name}/{file_type}/{step_id}/{action}")
 async def file_upload_handler(
-    files: list[UploadFile], workflow_name: str, file_type: str, step_id: str, action: str
+    files: list[UploadFile],
+    workflow_name: str,
+    file_type: str,
+    step_id: str,
+    action: str,
 ) -> dict[str, str]:
     if NEAT_APP.cdf_store is None or NEAT_APP.workflow_manager is None:
         return {"error": "NeatApp is not initialized"}
@@ -91,7 +76,12 @@ async def file_upload_handler(
         if workflow is None:
             return {"error": f"Workflow {workflow_name} not found"}
         flow_msg = FlowMessage(
-            payload={"file_name": file_name, "hash": file_version, "full_path": full_path, "file_type": file_type}
+            payload={
+                "file_name": file_name,
+                "hash": file_version,
+                "full_path": full_path,
+                "file_type": file_type,
+            }
         )
         start_step_id = None if step_id == "none" else step_id
 

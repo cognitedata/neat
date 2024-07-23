@@ -1,25 +1,22 @@
 from pathlib import Path
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import Asset, AssetUpdate, Relationship, RelationshipUpdate
+from cognite.client.data_classes import (
+    Asset,
+    AssetUpdate,
+    Relationship,
+    RelationshipUpdate,
+)
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
-from cognite.neat.legacy.graph.stores import NeatGraphStoreBase
-from cognite.neat.legacy.rules.exporters._rules2dms import DMSSchemaComponents
-from cognite.neat.legacy.rules.models.rules import Rules
-from cognite.neat.rules.models import AssetRules, DMSRules, DomainRules, InformationRules
+from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.rules.models import (
+    AssetRules,
+    DMSRules,
+    DomainRules,
+    InformationRules,
+)
 from cognite.neat.workflows.steps.step_model import DataContract
-
-
-class RulesData(DataContract):
-    """
-    This represents the TransformationRules object.
-
-    Args:
-        rules: The TransformationRules object.
-    """
-
-    rules: Rules
 
 
 class MultiRuleData(DataContract):
@@ -53,27 +50,15 @@ class PathData(DataContract):
     excel_file_path: Path
 
 
-class SourceGraph(DataContract):
+class NeatGraph(DataContract):
     """
-    This represents the source graph.
+    This represents the neat graph.
 
     Args:
-        graph: The source graph.
+        graph: The neat graph store.
     """
 
-    graph: NeatGraphStoreBase
-
-
-class SolutionGraph(DataContract):
-    """
-    This represents the solution graph.
-
-    Args:
-        graph (NeatGraphStoreBase): The solution graph.
-
-    """
-
-    graph: NeatGraphStoreBase
+    graph: NeatGraphStore
 
 
 class ClientData(DataContract):
@@ -130,14 +115,3 @@ class Edges(DataContract):
     """
 
     edges: list[EdgeApply]
-
-
-class DMSSchemaComponentsData(DataContract):
-    """
-    This represents DMS Schema Model.
-
-    Args:
-        components: DMS Schema Components model.
-    """
-
-    components: DMSSchemaComponents

@@ -66,6 +66,11 @@ class NeatGraphStore:
 
         self.queries = Queries(self.graph, self.rules)
 
+    @property
+    def type_(self) -> str:
+        "Return type of the graph store"
+        return type(self.graph.store).__name__
+
     def add_rules(self, rules: InformationRules) -> None:
         """This method is used to add rules to the graph store and it is the only correct
         way to add rules to the graph store, after the graph store has been initialized.
