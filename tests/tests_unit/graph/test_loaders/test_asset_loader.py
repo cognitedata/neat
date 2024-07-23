@@ -16,7 +16,7 @@ from cognite.neat.graph.transformers import AddSelfReferenceProperty
 
 @pytest.fixture()
 def asset_store(asset_rules) -> NeatGraphStore:
-    asset_store = NeatGraphStore.from_memory_store()
+    asset_store = NeatGraphStore.from_oxi_store()
     asset_store.write(RdfFileExtractor(nordic44_knowledge_graph, base_uri=URIRef("http://purl.org/nordic44#")))
 
     asset_store.add_rules(asset_rules.as_information_rules())
