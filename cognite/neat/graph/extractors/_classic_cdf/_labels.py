@@ -1,33 +1,37 @@
-from collections.abc import Iterable
+from collections.abc import Callable, Set
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import LabelDefinition, LabelDefinitionList
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
 from cognite.neat.utils.auxiliary import create_sha256_hash
 
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
 
-class LabelsExtractor(BaseExtractor):
+
+class LabelsExtractor(ClassicCDFExtractor[LabelDefinition]):
     """Extract data from Cognite Data Fusions Labels into Neat.
 
     Args:
-        labels (Iterable[LabelDefinition]): An iterable of labels.
+        items (Iterable[LabelDefinition]): An iterable of items.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+        to_type (Callable[[LabelDefinition], str | None], optional): A function to convert an item to a type.
+            Defaults to None. If None or if the function returns None, the asset will be set to the default type.
+        total (int, optional): The total number of items to load. If passed, you will get a progress bar if rich
+            is installed. Defaults to None.
+        limit (int, optional): The maximal number of items to load. Defaults to None. This is typically used for
+            testing setup of the extractor. For example, if you are extracting 100 000 assets, you might want to
+            limit the extraction to 1000 assets to test the setup.
+        unpack_metadata (bool, optional): Whether to unpack metadata. Defaults to False, which yields the metadata as
+            a JSON string.
+        skip_metadata_values (set[str] | frozenset[str] | None, optional): If you are unpacking metadata, then
+           values in this set will be skipped.
     """
 
-    def __init__(
-        self,
-        labels: Iterable[LabelDefinition],
-        namespace: Namespace | None = None,
-    ):
-        self.namespace = namespace or DEFAULT_NAMESPACE
-        self.labels = labels
+    _default_rdf_type = "Label"
 
     @classmethod
     def from_dataset(
@@ -35,57 +39,76 @@ class LabelsExtractor(BaseExtractor):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
+        to_type: Callable[[LabelDefinition], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
     ):
         return cls(
-            cast(
-                Iterable[LabelDefinition],
-                client.labels(data_set_external_ids=data_set_external_id),
-            ),
-            namespace,
+            client.labels(data_set_external_ids=data_set_external_id),
+            namespace=namespace,
+            to_type=to_type,
+            limit=limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
         )
 
     @classmethod
-    def from_file(cls, file_path: str, namespace: Namespace | None = None):
-        return cls(LabelDefinitionList.load(Path(file_path).read_text()), namespace)
+    def from_file(
+        cls,
+        file_path: str,
+        namespace: Namespace | None = None,
+        to_type: Callable[[LabelDefinition], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+    ):
+        labels = LabelDefinitionList.load(Path(file_path).read_text())
+        return cls(
+            labels,
+            total=len(labels),
+            namespace=namespace,
+            to_type=to_type,
+            limit=limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
+        )
 
-    def extract(self) -> Iterable[Triple]:
-        """Extract labels as triples."""
-        for label in self.labels:
-            yield from self._labels2triples(label)
+    def _item2triples(self, label: LabelDefinition) -> list[Triple]:
+        if not label.external_id:
+            return []
 
-    def _labels2triples(self, label: LabelDefinition) -> list[Triple]:
-        if label.external_id:
-            id_ = self.namespace[f"Label_{create_sha256_hash(label.external_id)}"]
+        id_ = self.namespace[f"Label_{create_sha256_hash(label.external_id)}"]
 
-            # Set rdf type
-            triples: list[Triple] = [(id_, RDF.type, self.namespace.Label)]
+        type_ = self._get_rdf_type(label)
+        # Set rdf type
+        triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
 
-            # Create attributes
-            triples.append((id_, self.namespace.external_id, Literal(label.external_id)))
+        # Create attributes
+        triples.append((id_, self.namespace.external_id, Literal(label.external_id)))
 
-            if label.name:
-                triples.append((id_, self.namespace.name, Literal(label.name)))
+        if label.name:
+            triples.append((id_, self.namespace.name, Literal(label.name)))
 
-            if label.description:
-                triples.append((id_, self.namespace.description, Literal(label.description)))
+        if label.description:
+            triples.append((id_, self.namespace.description, Literal(label.description)))
 
-            if label.created_time:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.created_time,
-                        Literal(datetime.fromtimestamp(label.created_time / 1000, timezone.utc)),
-                    )
+        if label.created_time:
+            triples.append(
+                (
+                    id_,
+                    self.namespace.created_time,
+                    Literal(datetime.fromtimestamp(label.created_time / 1000, timezone.utc)),
                 )
+            )
 
-            if label.data_set_id:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.data_set_id,
-                        self.namespace[f"Dataset_{label.data_set_id}"],
-                    )
+        if label.data_set_id:
+            triples.append(
+                (
+                    id_,
+                    self.namespace.data_set_id,
+                    self.namespace[f"Dataset_{label.data_set_id}"],
                 )
+            )
 
-            return triples
-        return []
+        return triples

@@ -1,40 +1,37 @@
-import json
-from collections.abc import Iterable
+from collections.abc import Callable, Set
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import cast
 from urllib.parse import quote
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import FileMetadata, FileMetadataList
-from pydantic import AnyHttpUrl, ValidationError
-from rdflib import RDF, Literal, Namespace, URIRef
+from rdflib import RDF, Literal, Namespace
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
-from cognite.neat.utils.auxiliary import string_to_ideal_type
+
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
 
 
-class FilesExtractor(BaseExtractor):
+class FilesExtractor(ClassicCDFExtractor[FileMetadata]):
     """Extract data from Cognite Data Fusions files metadata into Neat.
 
     Args:
-        files_metadata (Iterable[FileMetadata]): An iterable of files metadata.
+        items (Iterable[FileMetadata]): An iterable of items.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+        to_type (Callable[[FileMetadata], str | None], optional): A function to convert an item to a type.
+            Defaults to None. If None or if the function returns None, the asset will be set to the default type.
+        total (int, optional): The total number of items to load. If passed, you will get a progress bar if rich
+            is installed. Defaults to None.
+        limit (int, optional): The maximal number of items to load. Defaults to None. This is typically used for
+            testing setup of the extractor. For example, if you are extracting 100 000 assets, you might want to
+            limit the extraction to 1000 assets to test the setup.
         unpack_metadata (bool, optional): Whether to unpack metadata. Defaults to False, which yields the metadata as
             a JSON string.
+        skip_metadata_values (set[str] | frozenset[str] | None, optional): If you are unpacking metadata, then
+           values in this set will be skipped.
     """
 
-    def __init__(
-        self,
-        files_metadata: Iterable[FileMetadata],
-        namespace: Namespace | None = None,
-        unpack_metadata: bool = True,
-    ):
-        self.namespace = namespace or DEFAULT_NAMESPACE
-        self.files_metadata = files_metadata
-        self.unpack_metadata = unpack_metadata
+    _default_rdf_type = "File"
 
     @classmethod
     def from_dataset(
@@ -42,15 +39,18 @@ class FilesExtractor(BaseExtractor):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
+        to_type: Callable[[FileMetadata], str | None] | None = None,
+        limit: int | None = None,
         unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
     ):
         return cls(
-            cast(
-                Iterable[FileMetadata],
-                client.files(data_set_external_ids=data_set_external_id),
-            ),
-            namespace,
-            unpack_metadata,
+            client.files(data_set_external_ids=data_set_external_id),
+            namespace=namespace,
+            to_type=to_type,
+            limit=limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
         )
 
     @classmethod
@@ -58,24 +58,29 @@ class FilesExtractor(BaseExtractor):
         cls,
         file_path: str,
         namespace: Namespace | None = None,
+        to_type: Callable[[FileMetadata], str | None] | None = None,
+        limit: int | None = None,
         unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
     ):
+        file_metadata = FileMetadataList.load(Path(file_path).read_text())
         return cls(
-            FileMetadataList.load(Path(file_path).read_text()),
-            namespace,
-            unpack_metadata,
+            file_metadata,
+            namespace=namespace,
+            to_type=to_type,
+            limit=limit,
+            total=len(file_metadata),
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
         )
 
-    def extract(self) -> Iterable[Triple]:
-        """Extract files metadata as triples."""
-        for event in self.files_metadata:
-            yield from self._file2triples(event)
-
-    def _file2triples(self, file: FileMetadata) -> list[Triple]:
+    def _item2triples(self, file: FileMetadata) -> list[Triple]:
         id_ = self.namespace[f"File_{file.id}"]
 
+        type_ = self._get_rdf_type(file)
+
         # Set rdf type
-        triples: list[Triple] = [(id_, RDF.type, self.namespace.File)]
+        triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
 
         # Create attributes
 
@@ -95,16 +100,7 @@ class FilesExtractor(BaseExtractor):
             triples.append((id_, self.namespace.source, Literal(file.source)))
 
         if file.metadata:
-            if self.unpack_metadata:
-                for key, value in file.metadata.items():
-                    if value:
-                        type_aware_value = string_to_ideal_type(value)
-                        try:
-                            triples.append((id_, self.namespace[key], URIRef(str(AnyHttpUrl(type_aware_value)))))  # type: ignore
-                        except ValidationError:
-                            triples.append((id_, self.namespace[key], Literal(type_aware_value)))
-            else:
-                triples.append((id_, self.namespace.metadata, Literal(json.dumps(file.metadata))))
+            triples.extend(self._metadata_to_triples(id_, file.metadata))
 
         if file.source_created_time:
             triples.append(

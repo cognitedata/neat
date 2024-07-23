@@ -8,7 +8,9 @@ from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 def test_events_extractor():
     with monkeypatch_cognite_client() as client_mock:
-        client_mock.events.return_value = EventList.load((CLASSIC_CDF_EXTRACTOR_DATA / "events.yaml").read_text())
+        events = EventList.load((CLASSIC_CDF_EXTRACTOR_DATA / "events.yaml").read_text())
+        client_mock.events.return_value = events
+        client_mock.events.aggregate_count.return_value = len(events)
 
     g = Graph()
 

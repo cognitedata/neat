@@ -1,39 +1,36 @@
-import json
-from collections.abc import Iterable
+from collections.abc import Callable, Set
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import cast
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import Event, EventList
-from pydantic import AnyHttpUrl, ValidationError
-from rdflib import RDF, Literal, Namespace, URIRef
+from cognite.client.data_classes import Event, EventFilter, EventList
+from rdflib import RDF, Literal, Namespace
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
-from cognite.neat.utils.auxiliary import string_to_ideal_type
+
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
 
 
-class EventsExtractor(BaseExtractor):
+class EventsExtractor(ClassicCDFExtractor[Event]):
     """Extract data from Cognite Data Fusions Events into Neat.
 
     Args:
-        events (Iterable[Event]): An iterable of events.
+        items (Iterable[Event]): An iterable of items.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+        to_type (Callable[[Event], str | None], optional): A function to convert an item to a type.
+            Defaults to None. If None or if the function returns None, the asset will be set to the default type.
+        total (int, optional): The total number of items to load. If passed, you will get a progress bar if rich
+            is installed. Defaults to None.
+        limit (int, optional): The maximal number of items to load. Defaults to None. This is typically used for
+            testing setup of the extractor. For example, if you are extracting 100 000 assets, you might want to
+            limit the extraction to 1000 assets to test the setup.
         unpack_metadata (bool, optional): Whether to unpack metadata. Defaults to False, which yields the metadata as
             a JSON string.
+        skip_metadata_values (set[str] | frozenset[str] | None, optional): If you are unpacking metadata, then
+           values in this set will be skipped.
     """
 
-    def __init__(
-        self,
-        events: Iterable[Event],
-        namespace: Namespace | None = None,
-        unpack_metadata: bool = True,
-    ):
-        self.namespace = namespace or DEFAULT_NAMESPACE
-        self.events = events
-        self.unpack_metadata = unpack_metadata
+    _default_rdf_type = "Event"
 
     @classmethod
     def from_dataset(
@@ -41,15 +38,21 @@ class EventsExtractor(BaseExtractor):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
+        to_type: Callable[[Event], str | None] | None = None,
+        limit: int | None = None,
         unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
     ):
+        total = client.events.aggregate_count(filter=EventFilter(data_set_ids=[{"externalId": data_set_external_id}]))
+
         return cls(
-            cast(
-                Iterable[Event],
-                client.events(data_set_external_ids=data_set_external_id),
-            ),
+            client.events(data_set_external_ids=data_set_external_id),
             namespace,
-            unpack_metadata,
+            to_type,
+            total=total,
+            limit=limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
         )
 
     @classmethod
@@ -57,20 +60,30 @@ class EventsExtractor(BaseExtractor):
         cls,
         file_path: str,
         namespace: Namespace | None = None,
+        to_type: Callable[[Event], str | None] | None = None,
+        limit: int | None = None,
         unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
     ):
-        return cls(EventList.load(Path(file_path).read_text()), namespace, unpack_metadata)
+        events = EventList.load(Path(file_path).read_text())
 
-    def extract(self) -> Iterable[Triple]:
-        """Extract events as triples."""
-        for event in self.events:
-            yield from self._event2triples(event)
+        return cls(
+            events,
+            namespace,
+            to_type,
+            total=len(events),
+            limit=limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
+        )
 
-    def _event2triples(self, event: Event) -> list[Triple]:
+    def _item2triples(self, event: Event) -> list[Triple]:
         id_ = self.namespace[f"Event_{event.id}"]
 
+        type_ = self._get_rdf_type(event)
+
         # Set rdf type
-        triples: list[Triple] = [(id_, RDF.type, self.namespace.Event)]
+        triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
 
         # Create attributes
 
@@ -87,16 +100,7 @@ class EventsExtractor(BaseExtractor):
             triples.append((id_, self.namespace.subtype, Literal(event.subtype)))
 
         if event.metadata:
-            if self.unpack_metadata:
-                for key, value in event.metadata.items():
-                    if value:
-                        type_aware_value = string_to_ideal_type(value)
-                        try:
-                            triples.append((id_, self.namespace[key], URIRef(str(AnyHttpUrl(type_aware_value)))))  # type: ignore
-                        except ValidationError:
-                            triples.append((id_, self.namespace[key], Literal(type_aware_value)))
-            else:
-                triples.append((id_, self.namespace.metadata, Literal(json.dumps(event.metadata))))
+            triples.extend(self._metadata_to_triples(id_, event.metadata))
 
         if event.description:
             triples.append((id_, self.namespace.description, Literal(event.description)))

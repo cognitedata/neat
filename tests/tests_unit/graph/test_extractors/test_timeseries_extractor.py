@@ -8,9 +8,9 @@ from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 def test_timeseries_extractor():
     with monkeypatch_cognite_client() as client_mock:
-        client_mock.time_series.return_value = TimeSeriesList.load(
-            (CLASSIC_CDF_EXTRACTOR_DATA / "timeseries.yaml").read_text()
-        )
+        timeseries = TimeSeriesList.load((CLASSIC_CDF_EXTRACTOR_DATA / "timeseries.yaml").read_text())
+        client_mock.time_series.return_value = timeseries
+        client_mock.time_series.aggregate_count.return_value = len(timeseries)
 
     g = Graph()
 
