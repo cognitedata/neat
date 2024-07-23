@@ -16,6 +16,12 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.88.0] - 22-07-24
+### Removed
+- [BREAKING] Legacy neat has been removed from the codebase. This includes `legacy` module,
+  steps, and UI capabilities (such as explorer and rules editor).
+
+
 ## [0.87.6] - 22-07-24
 ### Added
 - Labels generation from NeatGraphStore in AssetLoader
