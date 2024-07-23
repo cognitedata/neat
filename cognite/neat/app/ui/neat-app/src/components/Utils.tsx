@@ -11,7 +11,6 @@ export function setSelectedWorkflowName(workflowName: string) {
 export function getNeatApiRootUrl() {
   let url = localStorage.getItem("neatApiRootUrl");
   if (url == null) {
-    // url = "http://localhost:8000";
     const protocol = window.location.protocol;
     const domain = window.location.hostname;
     const port = window.location.port;
