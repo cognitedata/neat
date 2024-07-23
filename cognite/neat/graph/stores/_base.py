@@ -10,6 +10,7 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
+from cognite.neat.exceptions import NeatValueError
 from cognite.neat.graph._shared import MIMETypes
 from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.graph.models import Triple
@@ -221,7 +222,7 @@ class NeatGraphStore:
         Args:
             filepath : File path to file containing graph data, by default None
             mime_type : MIME type of graph data, by default "application/rdf+xml"
-            add_base_iri : Add base IRI to graph, by default True
+            base_uri : Add base IRI to graph, by default True
         """
 
         # Oxigraph store, do not want to type hint this as it is an optional dependency
@@ -230,6 +231,9 @@ class NeatGraphStore:
             def parse_to_oxi_store():
                 local_import("pyoxigraph", "oxi")
                 from cognite.neat.graph.stores._oxrdflib import OxigraphStore
+
+                if base_uri is None:
+                    raise NeatValueError("Base URI is required to read a file into a Oxigraph store")
 
                 cast(OxigraphStore, self.graph.store)._inner.bulk_load(str(filepath), mime_type, base_iri=base_uri)  # type: ignore[attr-defined]
                 cast(OxigraphStore, self.graph.store)._inner.optimize()  # type: ignore[attr-defined]
