@@ -48,10 +48,7 @@ class AssetsExtractor(ClassicCDFExtractor[Asset]):
         total = client.assets.aggregate_count(filter=AssetFilter(data_set_ids=[{"externalId": data_set_external_id}]))
 
         return cls(
-            cast(
-                Iterable[Asset],
-                client.assets(data_set_external_ids=data_set_external_id),
-            ),
+            client.assets(data_set_external_ids=data_set_external_id),
             namespace,
             to_type,
             total,
