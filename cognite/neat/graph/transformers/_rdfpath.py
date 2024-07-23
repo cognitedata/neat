@@ -1,4 +1,4 @@
-from rdflib import RDF, Graph
+from rdflib import Graph
 
 from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models._rdfpath import RDFPath, SingleProperty
@@ -14,9 +14,7 @@ class ReduceHopTraversal(BaseTransformer):
 
 
 class AddSelfReferenceProperty(BaseTransformer):
-    description: str = (
-        "Adds property that contains id of reference to all references of given class in Rules"
-    )
+    description: str = "Adds property that contains id of reference to all references of given class in Rules"
     _use_only_once: bool = True
     _need_changes = frozenset({})
     _ref_template: str = """SELECT ?s WHERE {{?s a <{type_}>}}"""
@@ -33,15 +31,9 @@ class AddSelfReferenceProperty(BaseTransformer):
             prefix = property_.transformation.traversal.class_.prefix
             suffix = property_.transformation.traversal.class_.suffix
 
-            namespace = (
-                self.rules.prefixes[prefix]
-                if prefix in self.rules.prefixes
-                else self.rules.metadata.namespace
-            )
+            namespace = self.rules.prefixes[prefix] if prefix in self.rules.prefixes else self.rules.metadata.namespace
 
-            for (reference,) in graph.query(
-                self._ref_template.format(type_=namespace[suffix])
-            ):
+            for (reference,) in graph.query(self._ref_template.format(type_=namespace[suffix])):
                 graph.add(
                     (
                         reference,
