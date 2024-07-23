@@ -30,6 +30,8 @@ class AssetsExtractor(BaseExtractor):
             limit the extraction to 1000 assets to test the setup.
         unpack_metadata (bool, optional): Whether to unpack metadata. Defaults to False, which yields the metadata as
             a JSON string.
+        skip_metadata_values (set[str] | frozenset[str] | None, optional): A set of values to skip when unpacking
+            metadata. Defaults to frozenset({"nan", "null", "none", ""}).
     """
 
     _SPACE_PATTERN = re.compile(r"\s+")
@@ -42,6 +44,7 @@ class AssetsExtractor(BaseExtractor):
         total: int | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
+        skip_metadata_values: set[str] | frozenset[str] | None = frozenset({"nan", "null", "none", ""}),
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.assets = assets
@@ -49,6 +52,7 @@ class AssetsExtractor(BaseExtractor):
         self.total = total
         self.limit = min(limit, total) if limit and total else limit
         self.unpack_metadata = unpack_metadata
+        self.skip_metadata_values = skip_metadata_values
 
     @classmethod
     def from_dataset(
@@ -162,7 +166,7 @@ class AssetsExtractor(BaseExtractor):
         if asset.source:
             triples.append((id_, self.namespace.source, Literal(asset.source)))
 
-        # properties ref creation and update
+        # properties' ref creation and update
         triples.append(
             (
                 id_,
@@ -193,7 +197,9 @@ class AssetsExtractor(BaseExtractor):
         if asset.metadata:
             if self.unpack_metadata:
                 for key, value in asset.metadata.items():
-                    if value:
+                    if value and (
+                        self.skip_metadata_values is None or value.casefold() not in self.skip_metadata_values
+                    ):
                         triples.append(
                             (
                                 id_,
