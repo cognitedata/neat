@@ -1,7 +1,7 @@
 import json
 import re
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Set
 from typing import Generic, TypeVar
 
 from cognite.client.data_classes._base import CogniteResource
@@ -13,6 +13,8 @@ from cognite.neat.graph.models import Triple
 from cognite.neat.utils.auxiliary import string_to_ideal_type
 
 T_CogniteResource = TypeVar("T_CogniteResource", bound=CogniteResource)
+
+DEFAULT_SKIP_METADATA_VALUES = frozenset({"nan", "null", "none", ""})
 
 
 class ClassicCDFExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
@@ -47,7 +49,7 @@ class ClassicCDFExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         total: int | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
-        skip_metadata_values: set[str] | frozenset[str] | None = frozenset({"nan", "null", "none", ""}),
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.items = items
