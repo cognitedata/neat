@@ -1,5 +1,3 @@
-import json
-import re
 from collections.abc import Callable, Iterable
 from datetime import datetime, timezone
 from pathlib import Path
@@ -9,17 +7,17 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetFilter, AssetList
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
-from cognite.neat.utils.auxiliary import create_sha256_hash, string_to_ideal_type
+from cognite.neat.utils.auxiliary import create_sha256_hash
+
+from ._base import ClassicCDFExtractor
 
 
-class AssetsExtractor(BaseExtractor):
+class AssetsExtractor(ClassicCDFExtractor[Asset]):
     """Extract data from Cognite Data Fusions Assets into Neat.
 
     Args:
-        assets (Iterable[Asset]): An iterable of assets.
+        items (Iterable[Asset]): An iterable of assets.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
         to_type (Callable[[Asset], str | None], optional): A function to convert an asset to a type. Defaults to None.
             If None or if the function returns None, the asset will be set to the default type "Asset".
@@ -34,25 +32,7 @@ class AssetsExtractor(BaseExtractor):
             metadata. Defaults to frozenset({"nan", "null", "none", ""}).
     """
 
-    _SPACE_PATTERN = re.compile(r"\s+")
-
-    def __init__(
-        self,
-        assets: Iterable[Asset],
-        namespace: Namespace | None = None,
-        to_type: Callable[[Asset], str | None] | None = None,
-        total: int | None = None,
-        limit: int | None = None,
-        unpack_metadata: bool = True,
-        skip_metadata_values: set[str] | frozenset[str] | None = frozenset({"nan", "null", "none", ""}),
-    ):
-        self.namespace = namespace or DEFAULT_NAMESPACE
-        self.assets = assets
-        self.to_type = to_type
-        self.total = total
-        self.limit = min(limit, total) if limit and total else limit
-        self.unpack_metadata = unpack_metadata
-        self.skip_metadata_values = skip_metadata_values
+    _default_rdf_type = "Asset"
 
     @classmethod
     def from_dataset(
@@ -121,35 +101,11 @@ class AssetsExtractor(BaseExtractor):
             unpack_metadata=unpack_metadata,
         )
 
-    def extract(self) -> Iterable[Triple]:
-        """Extracts an asset with the given asset_id."""
-        if self.total:
-            try:
-                from rich.progress import track
-            except ModuleNotFoundError:
-                to_iterate = self.assets
-            else:
-                to_iterate = track(
-                    self.assets,
-                    total=self.limit or self.total,
-                    description="Extracting Assets",
-                )
-        else:
-            to_iterate = self.assets
-        for no, asset in enumerate(to_iterate):
-            yield from self._asset2triples(asset)
-            if self.limit and no >= self.limit:
-                break
-
-    def _asset2triples(self, asset: Asset) -> list[Triple]:
+    def _item2triples(self, asset: Asset) -> list[Triple]:
         """Converts an asset to triples."""
         id_ = self.namespace[f"Asset_{asset.id}"]
 
-        # Set rdf type
-        type_ = "Asset"
-        if self.to_type:
-            type_ = self.to_type(asset) or type_
-        type_ = self._SPACE_PATTERN.sub("_", type_)
+        type_ = self._get_rdf_type(asset)
 
         triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
 
@@ -195,20 +151,7 @@ class AssetsExtractor(BaseExtractor):
                 )
 
         if asset.metadata:
-            if self.unpack_metadata:
-                for key, value in asset.metadata.items():
-                    if value and (
-                        self.skip_metadata_values is None or value.casefold() not in self.skip_metadata_values
-                    ):
-                        triples.append(
-                            (
-                                id_,
-                                self.namespace[key],
-                                Literal(string_to_ideal_type(value)),
-                            )
-                        )
-            else:
-                triples.append((id_, self.namespace.metadata, Literal(json.dumps(asset.metadata))))
+            triples.extend(self._metadata_to_triples(id_, asset.metadata))
 
         # Create connections:
         if asset.parent_id:
