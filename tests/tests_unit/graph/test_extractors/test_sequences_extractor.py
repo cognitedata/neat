@@ -8,9 +8,9 @@ from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 def test_sequences_extractor():
     with monkeypatch_cognite_client() as client_mock:
-        client_mock.sequences.return_value = SequenceList.load(
-            (CLASSIC_CDF_EXTRACTOR_DATA / "sequences.yaml").read_text()
-        )
+        sequences = SequenceList.load((CLASSIC_CDF_EXTRACTOR_DATA / "sequences.yaml").read_text())
+        client_mock.sequences.return_value = sequences
+        client_mock.sequences.aggregate_count.return_value = len(sequences)
 
     g = Graph()
 
