@@ -20,7 +20,7 @@ DEFAULT_SKIP_METADATA_VALUES = frozenset({"nan", "null", "none", ""})
 class ClassicCDFExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     """This is the Base Extractor for all classic CDF resources.
 
-    A classic resource is recognized in that it has a metadata atribute of type dict[str, str].
+    A classic resource is recognized in that it has a metadata attribute of type dict[str, str].
 
     Args:
         items (Iterable[T_CogniteResource]): An iterable of classic resource.
