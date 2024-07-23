@@ -1,4 +1,4 @@
-import re
+from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Literal, cast, overload
@@ -201,6 +201,7 @@ class InferenceImporter(BaseImporter):
         classes: dict[str, dict] = {}
         properties: dict[str, dict] = {}
         prefixes: dict[str, Namespace] = get_default_prefixes()
+        count_by_value_type_by_property: dict[str, dict[str, int]] = defaultdict(Counter)
 
         query = INSTANCE_PROPERTIES_JSON_DEFINITION if self.check_for_json_string else INSTANCE_PROPERTIES_DEFINITION
         # Adds default namespace to prefixes
@@ -255,11 +256,9 @@ class InferenceImporter(BaseImporter):
                             f"{uri_to_short_form(class_definition['reference'], prefixes)}"
                             f"({uri_to_short_form(cast(URIRef, property_uri), prefixes)})"
                         ),
-                        "comment": (
-                            f"Class <{class_id}> has property <{property_id}> with "
-                            f"value type <{value_type_id}> which occurs <1> times in the graph"
-                        ),
                     }
+
+                    count_by_value_type_by_property[id_][value_type_id] += 1
 
                     # USE CASE 1: If property is not present in properties
                     if id_ not in properties:
@@ -268,27 +267,41 @@ class InferenceImporter(BaseImporter):
                     # USE CASE 2: first time redefinition, value type change to multi
                     elif id_ in properties and definition["value_type"] not in properties[id_]["value_type"]:
                         properties[id_]["value_type"] = properties[id_]["value_type"] + " | " + definition["value_type"]
-                        properties[id_]["comment"] = (
-                            properties[id_]["comment"] + ", with" + definition["comment"].split("with")[1]
-                        )
 
                     # USE CASE 3: existing but max count is different
                     elif (
                         id_ in properties
                         and definition["value_type"] in properties[id_]["value_type"]
-                        and not (properties[id_]["max_count"] == definition["max_count"])
+                        and properties[id_]["max_count"] != definition["max_count"]
                     ):
                         properties[id_]["max_count"] = max(properties[id_]["max_count"], definition["max_count"])
 
-                        properties[id_]["comment"] = self._update_value_type_occurrence_in_comment(
-                            definition["value_type"], properties[id_]["comment"]
-                        )
+        # Add comments
+        for id_, property_ in properties.items():
+            if id_ not in count_by_value_type_by_property:
+                continue
 
-                    # USE CASE 4: Just update the comment with occurrence
-                    else:
-                        properties[id_]["comment"] = self._update_value_type_occurrence_in_comment(
-                            definition["value_type"], properties[id_]["comment"]
-                        )
+            count_by_value_type = count_by_value_type_by_property[id_]
+            count_list = sorted(count_by_value_type.items(), key=lambda item: item[1], reverse=True)
+            # Make the comment more readable by adapting to the number of value types
+            base_string = "<{value_type}> which occurs <{count}> times"
+            if len(count_list) == 1:
+                type_, count = count_list[0]
+                counts_str = f"with value type {base_string.format(value_type=type_, count=count)} in the graph"
+            elif len(count_list) == 1:
+                first = base_string.format(value_type=count_list[0][0], count=count_list[0][1])
+                second = base_string.format(value_type=count_list[1][0], count=count_list[1][1])
+                counts_str = f"with value types {first} and {second} in the graph"
+            else:
+                first_part = ", ".join(
+                    base_string.format(value_type=type_, count=count) for type_, count in count_list[:-1]
+                )
+                last = base_string.format(value_type=count_list[-1][0], count=count_list[-1][1])
+                counts_str = f"with value types {first_part} and {last} in the graph"
+
+            class_id = property_["class_"]
+            property_id = property_["property_"]
+            property_["comment"] = f"Class <{class_id}> has property <{property_id}> {counts_str}"
 
         return {
             "metadata": self._default_metadata().model_dump(),
@@ -319,20 +332,3 @@ class InferenceImporter(BaseImporter):
             prefix=self.prefix,
             namespace=DEFAULT_NAMESPACE,
         )
-
-    @classmethod
-    def _update_value_type_occurrence_in_comment(cls, value_type: str, comment: str) -> str:
-        occurrence = cls._read_value_type_occurrence_from_comment(value_type, comment)
-        return comment.replace(
-            f"with value type <{value_type}> which occurs <{occurrence}> times in the graph",
-            f"with value type <{value_type}> which occurs <{occurrence+1}> times in the graph",
-        )
-
-    @classmethod
-    def _read_value_type_occurrence_from_comment(cls, value_type: str, comment: str) -> int:
-        if result := re.search(
-            rf"with value type <{value_type}> which occurs <(\d+)> times in the graph",
-            comment,
-        ):
-            return int(result.group(1))
-        return 0
