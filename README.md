@@ -87,9 +87,6 @@ Open API docs :
 
 `http://localhost:8000/docs`
 
-Prom metrics :
-
-`http://localhost:8000/metrics`
 
 ## Workflows and configurations
 
@@ -135,8 +132,7 @@ cdf_client:
   client_id: "623c2450-cfc2-43d6-9036-10e14dad8ccf"
   client_secret: "my-super-secret"
   base_url: https://az-power-no-northeurope.cognitedata.com
-  scopes:
-    - https://az-power-no-northeurope.cognitedata.com/.default
+  scopes: [https://az-power-no-northeurope.cognitedata.com/.default]
   token_url: https://login.microsoftonline.com/e55e1701-82f8-4c52-af10-28e4d942c589/oauth2/v2.0/token
 
 cdf_default_dataset_id: 2626756768281823
