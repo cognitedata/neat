@@ -16,25 +16,6 @@ class RuleRequest(BaseModel):
     rule: str
 
 
-class UploadToCdfRequest(BaseModel):
-    file_name: str = ""
-    file_type: str = "workflow"
-    comments: str = ""
-    author: str = ""
-    tag: str = ""
-
-
-class DownloadFromCdfRequest(BaseModel):
-    file_name: str = ""
-    file_type: str = "workflow"
-    version: str = ""
-
-
-class LoadGraphRequest(BaseModel):
-    graph_source_template_name: str
-    source_location: str
-
-
 class RunWorkflowRequest(BaseModel):
     name: str
     config: dict

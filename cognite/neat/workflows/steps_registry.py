@@ -12,7 +12,6 @@ from pydantic import BaseModel
 # steps
 import cognite.neat.workflows.steps.lib.current
 import cognite.neat.workflows.steps.lib.io
-import cognite.neat.workflows.steps.lib.legacy
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.config import Config
 from cognite.neat.exceptions import InvalidWorkFlowError
@@ -42,7 +41,11 @@ class StepsRegistry:
         self._step_classes: list[type[Step]] = []
         self.user_steps_path: Path = config.data_store_path / "steps"
         self.data_store_path: str = str(config.data_store_path)
-        self.categorized_steps: dict[str, set] = {"legacy": set(), "current": set(), "io": set()}
+        self.categorized_steps: dict[str, set] = {
+            "legacy": set(),
+            "current": set(),
+            "io": set(),
+        }
 
     def load_step_classes(self):
         if self._step_classes:
@@ -58,11 +61,6 @@ class StepsRegistry:
                 logging.info(f"Loading NEAT step {name}")
                 self._step_classes.append(step_cls)
                 self.categorized_steps["io"].add(name)
-        for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.lib.legacy):
-            if inspect.isclass(step_cls):
-                logging.info(f"Loading NEAT step {name}")
-                self._step_classes.append(step_cls)
-                self.categorized_steps["legacy"].add(name)
         sys.path.append(str(Path(self.data_store_path) / "workflows"))
         try:
             if self.user_steps_path:

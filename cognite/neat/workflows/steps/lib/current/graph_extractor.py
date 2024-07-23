@@ -3,11 +3,15 @@ import logging
 from pathlib import Path
 from typing import ClassVar, cast
 
+from rdflib import URIRef
+
+from cognite.neat.constants import DEFAULT_NAMESPACE
+from cognite.neat.graph.extractors import RdfFileExtractor
 from cognite.neat.graph.extractors._mock_graph_generator import MockGraphGenerator
 from cognite.neat.rules._shared import DMSRules, InformationRules
 from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
-from cognite.neat.workflows.steps.data_contracts import MultiRuleData, SolutionGraph, SourceGraph
+from cognite.neat.workflows.steps.data_contracts import MultiRuleData, NeatGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = ["GraphFromRdfFile", "GraphFromMockData"]
@@ -29,11 +33,16 @@ class GraphFromMockData(Step):
             value="",
             label="Target number of instances for each class",
         ),
-        Configurable(name="Graph", value="solution", label="The name of target graph.", options=["source", "solution"]),
+        Configurable(
+            name="Graph",
+            value="solution",
+            label="The name of target graph.",
+            options=["source", "solution"],
+        ),
     ]
 
     def run(  # type: ignore[override, syntax]
-        self, rules: MultiRuleData, graph_store: SolutionGraph | SourceGraph
+        self, rules: MultiRuleData, graph_store: NeatGraph
     ) -> FlowMessage:
         if self.configs is None:
             raise StepNotInitialized(type(self).__name__)
@@ -55,17 +64,12 @@ class GraphFromMockData(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        if self.configs["Graph"] == "solution":
-            # Todo Anders: Why is the graph fetched from context when it is passed as an argument?
-            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SolutionGraph"])
-        else:
-            graph_store = cast(SourceGraph | SolutionGraph, self.flow_context["SourceGraph"])
+        extractor = MockGraphGenerator(
+            cast(InformationRules | DMSRules, rules.information or rules.dms),
+            class_count,
+        )
 
-        logging.info("Initiated generation of mock triples")
-
-        extractor = MockGraphGenerator(cast(InformationRules | DMSRules, rules.information or rules.dms), class_count)
-
-        graph_store.graph.add_triples(extractor.extract())
+        NeatGraph.graph.write(extractor)
 
         return FlowMessage(output_text=f"Instances loaded to the {graph_store.__class__.__name__}")
 
@@ -104,20 +108,20 @@ class GraphFromRdfFile(Step):
         ),
     ]
 
-    def run(self, source_graph: SourceGraph) -> FlowMessage:  # type: ignore[override, syntax]
+    def run(self, graph_store: NeatGraph) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
             raise StepNotInitialized(type(self).__name__)
-        if source_graph.graph.rdf_store_type.lower() in ("memory", "oxigraph"):
-            if source_file := self.configs["File path"]:
-                source_graph.graph.import_from_file(
-                    self.data_store_path / Path(source_file),
-                    mime_type=self.configs["MIME type"],  # type: ignore[arg-type]
-                    add_base_iri=self.configs["Add base URI"] == "True",
-                )
-                logging.info(f"Loaded {source_file} into source graph.")
-            else:
-                raise ValueError("You need a source_rdf_store.file specified for source_rdf_store.type=memory")
-        else:
-            raise NotImplementedError(f"Graph type {source_graph.graph.rdf_store_type} is not supported.")
 
-        return FlowMessage(output_text="Instances loaded to source graph")
+        if source_file := self.configs["File path"]:
+            NeatGraph.graph.write(
+                RdfFileExtractor(  # type: ignore[abstract]
+                    filepath=self.data_store_path / Path(source_file),
+                    mime_type=self.configs["MIME type"],  # type: ignore[arg-type]
+                    base_uri=(URIRef(DEFAULT_NAMESPACE) if self.configs["Add base URI"] == "True" else None),
+                )
+            )
+
+        else:
+            raise ValueError("You need a valid file path to be specified")
+
+        return FlowMessage(output_text="Instances loaded to NeatGraph!")
