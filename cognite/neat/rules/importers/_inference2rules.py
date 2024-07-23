@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Literal, cast, overload
@@ -201,7 +201,7 @@ class InferenceImporter(BaseImporter):
         classes: dict[str, dict] = {}
         properties: dict[str, dict] = {}
         prefixes: dict[str, Namespace] = get_default_prefixes()
-        count_by_value_type_by_property: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        count_by_value_type_by_property: dict[str, dict[str, int]] = defaultdict(Counter)
 
         query = INSTANCE_PROPERTIES_JSON_DEFINITION if self.check_for_json_string else INSTANCE_PROPERTIES_DEFINITION
         # Adds default namespace to prefixes
