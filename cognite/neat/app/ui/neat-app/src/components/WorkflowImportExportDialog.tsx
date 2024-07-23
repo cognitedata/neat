@@ -6,8 +6,6 @@ import DialogTitle from "@mui/material/DialogTitle"
 import React from "react"
 import { useEffect, useState } from "react"
 import { WorkflowDefinition } from "types/WorkflowTypes"
-import CdfPublisher from "./CdfPublisher"
-import CdfDownloader from "./CdfDownloader"
 import LocalUploader from "./LocalUploader"
 import { getNeatApiRootUrl, getSelectedWorkflowName } from "./Utils"
 import { Box } from "@mui/material"
@@ -55,8 +53,6 @@ return (
 <Dialog open={dialogOpen} onClose={handleDialogCancel}>
 <DialogTitle>Workflow Import/Export</DialogTitle>
 <DialogContent>
-    <CdfPublisher type="workflow" />
-    <CdfDownloader type="workflow-package" onDownloadSuccess={onDownloadSuccess} />
     <Box sx={{width: 500}}>
     <LocalUploader fileType="workflow" action="install" stepId="none" label="Upload to NEAT" workflowName={getSelectedWorkflowName()} onUpload={onDownloadSuccess} />
     </Box>
