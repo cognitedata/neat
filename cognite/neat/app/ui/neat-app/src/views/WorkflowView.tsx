@@ -13,36 +13,32 @@ import ReactFlow, {
   EdgeChange,
 } from 'reactflow';
 // 👇 you need to import the reactflow styles
-import 'reactflow/dist/style.css';
-import Button from '@mui/material/Button';
-import { useState, useEffect } from 'react';
+
+import LinearProgress from '@mui/material/LinearProgress';
+import { Typography } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import { styled } from '@mui/material/styles';
 import Paper from '@mui/material/Paper';
-import { StepRegistry, UIConfig, WorkflowDefinition, WorkflowStepDefinition, WorkflowSystemComponent} from 'types/WorkflowTypes';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { Box } from '@mui/system';
 import MenuItem from '@mui/material/MenuItem';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-import ToggleButton from '@mui/material/ToggleButton';
+
+
+import 'reactflow/dist/style.css';
+import Button from '@mui/material/Button';
+import { useState, useEffect } from 'react';
+
+import { StepRegistry, UIConfig, WorkflowDefinition, WorkflowStepDefinition, WorkflowSystemComponent} from 'types/WorkflowTypes';
 import { getNeatApiRootUrl, getSelectedWorkflowName, setSelectedWorkflowName } from 'components/Utils';
 import WorkflowExecutionReport from 'components/WorkflowExecutionReport';
 import ConfigView from './ConfigView';
-import TransformationTable from './TransformationView';
-import QDataTable from './ExplorerView';
 import OverviewComponentEditorDialog from 'components/OverviewComponentEditorDialog';
 import StepEditorDialog from 'components/StepEditorDialog';
 import WorkflowMetadataDialog from 'components/WorkflowMetadataDialog';
-import LinearProgress from '@mui/material/LinearProgress';
-import { Typography } from '@mui/material';
-import FileEditor from 'components/FileEditor';
-import ContextViewer from 'components/ContextViewer';
 import WorkflowDeleteDialog from 'components/WorkflowDeleteDialog';
-import { ImportExport } from '@mui/icons-material';
 import WorkflowImportExportDialog from 'components/WorkflowImportExportDialog';
-import FilePresentIcon from '@mui/icons-material/FilePresent';
 
 
 export interface ExecutionLog {
@@ -517,22 +513,7 @@ return (
       </FormControl>
       <WorkflowMetadataDialog open = {workflowMetadataDialogOpen} onClose={handleCreateWorkflow}/>
       <WorkflowDeleteDialog name={selectedWorkflow} onDelete = {()=> loadListOfWorkflows()}/>
-      <ToggleButtonGroup
-        color="primary"
-        value={viewType}
-        exclusive
-        size='small'
-        sx={{ marginLeft: 2 }}
-        onChange={handleViewTypeChange}
-        aria-label="View type"
-      >
-        {/* <ToggleButton value="system">Solution overview</ToggleButton> */}
-        <ToggleButton value="steps">Workflow</ToggleButton>
-        {/* <ToggleButton value="configurations">Configurations</ToggleButton> */}
-        <ToggleButton value="transformations">Data model and transformations</ToggleButton>
-        <ToggleButton value="data_explorer">Graph explorer</ToggleButton>
-        <ToggleButton value="src"><FilePresentIcon></FilePresentIcon></ToggleButton>
-      </ToggleButtonGroup>
+
     </Box>
     { editState && (<Typography color={"red"} variant="overline"> {editState} </Typography> ) }
     { errorText && (<Typography color={"red"} variant="caption"> Error messages : {errorText} </Typography> ) }
@@ -569,7 +550,6 @@ return (
             <Button variant="outlined" onClick={saveWorkflow} sx={{ marginTop: 2, marginRight: 1 }}>Save workflow</Button>
             <Button variant="outlined" onClick={reloadWorkflows} sx={{ marginTop: 2, marginRight: 1 }} >Reload</Button>
             <WorkflowImportExportDialog onDownloaded = {()=> reloadWorkflows()} />
-            <ContextViewer />
 
           </div>
 
@@ -581,15 +561,6 @@ return (
     )}
     {viewType == "configurations" && (
       <ConfigView></ConfigView>
-    )}
-    {viewType == "transformations" && (
-      <TransformationTable />
-    )}
-    {viewType == "data_explorer" && (
-      <QDataTable />
-    )}
-    {viewType == "src" && (
-      <FileEditor/>
     )}
 
   </div>

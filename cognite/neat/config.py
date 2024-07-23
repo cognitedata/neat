@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 import yaml
-from pydantic import BaseModel, Field, field_serializer, model_validator
+from pydantic import BaseModel, Field, model_validator
 from yaml import safe_load
 
 from cognite.neat.constants import EXAMPLE_GRAPHS, EXAMPLE_RULES, EXAMPLE_WORKFLOWS
@@ -58,7 +58,8 @@ class Config(BaseModel, arbitrary_types_allowed=True):
     log_level: Literal["ERROR", "WARNING", "INFO", "DEBUG"] = "INFO"
     log_format: str = LOG_FORMAT
     download_workflows_from_cdf: bool = Field(
-        default=False, description="Downloads all workflows from CDF automatically and stores them locally"
+        default=False,
+        description="Downloads all workflows from CDF automatically and stores them locally",
     )
     stop_on_error: bool = False
 
@@ -93,30 +94,43 @@ class Config(BaseModel, arbitrary_types_allowed=True):
                 )
         return data
 
-    @staticmethod
-    @field_serializer("cdf_auth_config", when_used="always", return_type=dict)
-    def backwards_compatible_serialize(cdf_auth_config: EnvironmentVariables) -> dict[str, Any]:
-        output: dict[str, Any] = {}
-        config = cdf_auth_config
-        if config.CDF_PROJECT not in {"Missing", "NOT SET"}:
-            output["project"] = config.CDF_PROJECT
-        if config.CDF_CLUSTER not in {"Missing", "NOT SET"}:
-            output["cluster"] = config.CDF_CLUSTER
-        if config.CDF_URL:
-            output["base_url"] = config.CDF_URL
-        if config.IDP_CLIENT_ID:
-            output["client_id"] = config.IDP_CLIENT_ID
-        if config.IDP_CLIENT_SECRET:
-            output["client_secret"] = config.IDP_CLIENT_SECRET
-        if config.IDP_TOKEN_URL:
-            output["token_url"] = config.IDP_TOKEN_URL
-        if config.IDP_SCOPES:
-            output["scopes"] = config.idp_scopes
-        if config.CDF_TIMEOUT:
-            output["timeout"] = config.CDF_TIMEOUT
-        if config.CDF_MAX_WORKERS:
-            output["max_workers"] = config.CDF_MAX_WORKERS
-        return output
+    def as_legacy_config(
+        self,
+    ) -> dict[str, Any]:
+        config: dict[str, Any] = {}
+
+        config["workflows_store_type"] = self.workflows_store_type
+        config["data_store_path"] = str(self.data_store_path)
+        config["workflows_downloader_filter"] = self.workflow_downloader_filter
+
+        config["cdf_client"] = {}
+        if self.cdf_auth_config.CDF_PROJECT not in {"Missing", "NOT SET"}:
+            config["cdf_client"]["project"] = self.cdf_auth_config.CDF_PROJECT
+        if self.cdf_auth_config.CDF_CLUSTER not in {"Missing", "NOT SET"}:
+            config["cdf_client"]["cluster"] = self.cdf_auth_config.CDF_CLUSTER
+        if self.cdf_auth_config.CDF_URL:
+            config["cdf_client"]["base_url"] = self.cdf_auth_config.CDF_URL
+        if self.cdf_auth_config.IDP_CLIENT_ID:
+            config["cdf_client"]["client_id"] = self.cdf_auth_config.IDP_CLIENT_ID
+        if self.cdf_auth_config.IDP_CLIENT_SECRET:
+            config["cdf_client"]["client_secret"] = self.cdf_auth_config.IDP_CLIENT_SECRET
+        if self.cdf_auth_config.IDP_TOKEN_URL:
+            config["cdf_client"]["token_url"] = self.cdf_auth_config.IDP_TOKEN_URL
+        if self.cdf_auth_config.IDP_SCOPES:
+            config["cdf_client"]["scopes"] = self.cdf_auth_config.idp_scopes
+        if self.cdf_auth_config.CDF_TIMEOUT:
+            config["cdf_client"]["timeout"] = self.cdf_auth_config.CDF_TIMEOUT
+        if self.cdf_auth_config.CDF_MAX_WORKERS:
+            config["cdf_client"]["max_workers"] = self.cdf_auth_config.CDF_MAX_WORKERS
+
+        config["cdf_default_dataset_id"] = self.cdf_default_dataset_id
+        config["load_examples"] = self.load_examples
+        config["log_level"] = self.log_level
+        config["log_format"] = self.log_format
+        config["download_workflows_from_cdf"] = self.download_workflows_from_cdf
+        config["stop_on_error"] = self.stop_on_error
+
+        return config
 
     @property
     def _dir_suffix(self) -> str:
@@ -191,7 +205,10 @@ class Config(BaseModel, arbitrary_types_allowed=True):
             ),
             data_store_path=Path(os.environ.get("NEAT_DATA_PATH", "/app/data")),
             cdf_default_dataset_id=int(os.environ.get("NEAT_CDF_DEFAULT_DATASET_ID", 6476640149881990)),
-            log_level=cast(Literal["ERROR", "WARNING", "INFO", "DEBUG"], os.environ.get("NEAT_LOG_LEVEL", "INFO")),
+            log_level=cast(
+                Literal["ERROR", "WARNING", "INFO", "DEBUG"],
+                os.environ.get("NEAT_LOG_LEVEL", "INFO"),
+            ),
             workflow_downloader_filter=workflow_downloader_filter,
             load_examples=bool(os.environ.get("NEAT_LOAD_EXAMPLES", True) in ["True", "true", "1"]),
         )
