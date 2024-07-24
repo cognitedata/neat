@@ -2,10 +2,10 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 import cognite.neat.rules.issues.spreadsheet
+from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
 from cognite.neat.issues.formatters import BasicHTML
 from cognite.neat.rules import issues as validation
-from cognite.neat.rules.issues import IssueList
 
 
 @pytest.fixture(scope="session")

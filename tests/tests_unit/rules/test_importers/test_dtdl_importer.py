@@ -1,11 +1,10 @@
 import pytest
 
-from cognite.neat.issues import NeatIssue, NeatIssueList
+from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors.resources import MissingIdentifierError
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DTDLImporter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTMI, Interface
-from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models import InformationRules, SchemaCompleteness
 from tests.tests_unit.rules.test_importers.constants import DTDL_IMPORTER_DATA
 
