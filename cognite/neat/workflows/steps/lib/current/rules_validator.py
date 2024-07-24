@@ -5,9 +5,9 @@ from typing import ClassVar
 
 from cognite.client import CogniteClient
 
+from cognite.neat.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.issues.dms import MissingContainerError, MissingSpaceError, MissingViewError
-from cognite.neat.rules.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules.models import DMSRules, SchemaCompleteness
 from cognite.neat.utils.cdf.loaders import ViewLoader
 from cognite.neat.workflows._exceptions import StepNotInitialized
