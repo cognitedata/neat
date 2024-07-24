@@ -16,8 +16,15 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.88.2] - 24-07-24
+### Added
+- IMF rules importer
+### Improved
+- Organization of RDF based importers
+
+
 ## [0.88.1] - 24-07-24
-### Improves
+### Improved
 - Implementation of oxistore is now more robust and based on existing implementation by Oxigraph developer
 ### Removed
 - Removed unused Oxistore implementation
