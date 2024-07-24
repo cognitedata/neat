@@ -108,7 +108,7 @@ class NeatGraphStore:
 
     @classmethod
     def from_memory_store(cls, rules: InformationRules | None = None) -> "Self":
-        return cls(Graph(), rules)
+        return cls(Graph(identifier=DEFAULT_NAMESPACE), rules)
 
     @classmethod
     def from_sparql_store(
@@ -126,16 +126,16 @@ class NeatGraphStore:
             postAsEncoded=False,
             autocommit=False,
         )
-        graph = Graph(store=store)
+        graph = Graph(store=store, identifier=DEFAULT_NAMESPACE)
         return cls(graph, rules)
 
     @classmethod
     def from_oxi_store(cls, storage_dir: Path | None = None, rules: InformationRules | None = None) -> "Self":
         """Creates a NeatGraphStore from an Oxigraph store."""
         local_import("pyoxigraph", "oxi")
+        local_import("oxrdflib", "oxi")
+        import oxrdflib
         import pyoxigraph
-
-        from cognite.neat.graph.stores._oxrdflib import OxigraphStore
 
         # Adding support for both oxigraph in-memory and file-based storage
         for i in range(4):
@@ -149,8 +149,10 @@ class NeatGraphStore:
         else:
             raise Exception("Error initializing Oxigraph store")
 
-        graph = Graph(store=OxigraphStore(store=oxi_store))
-        graph.default_union = True
+        graph = Graph(
+            store=oxrdflib.OxigraphStore(store=oxi_store),
+            identifier=URIRef(DEFAULT_NAMESPACE),
+        )
 
         return cls(graph, rules)
 
@@ -229,10 +231,15 @@ class NeatGraphStore:
 
             def parse_to_oxi_store():
                 local_import("pyoxigraph", "oxi")
-                from cognite.neat.graph.stores._oxrdflib import OxigraphStore
+                import pyoxigraph
 
-                cast(OxigraphStore, self.graph.store)._inner.bulk_load(str(filepath), mime_type, base_iri=base_uri)  # type: ignore[attr-defined]
-                cast(OxigraphStore, self.graph.store)._inner.optimize()  # type: ignore[attr-defined]
+                cast(pyoxigraph.Store, self.graph.store._store).bulk_load(
+                    str(filepath),
+                    mime_type,
+                    base_iri=base_uri,
+                    to_graph=pyoxigraph.NamedNode(self.graph.identifier),
+                )  # type: ignore[attr-defined]
+                cast(pyoxigraph.Store, self.graph.store._store).optimize()  # type: ignore[attr-defined]
 
             parse_to_oxi_store()
 
