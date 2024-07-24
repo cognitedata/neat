@@ -8,6 +8,7 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
 from cognite.neat.issues import NeatError, NeatWarning
+from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues.dms import (
@@ -114,12 +115,12 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 dm.ViewId("my_space", "my_view1", "1"),
                 "View",
             ),
-            ReferredResourceNotFoundError[dm.ContainerId, dm.ViewId](
+            ReferredPropertyNotFoundError[dm.ContainerId, dm.ViewId](
                 dm.ContainerId("my_space", "my_container"),
                 "Container",
                 dm.ViewId("my_space", "my_view1", "1"),
                 "View",
-                property_name="non_existing",
+                "non_existing",
             ),
         ],
         id="Missing container and properties. Container property used multiple times.",
@@ -217,21 +218,21 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             views=ViewApplyDict([view1, view2]),
         ),
         [
-            ReferredResourceNotFoundError[dm.ViewId, dm.ViewId](
+            ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
                 dm.ViewId("my_space", "non_existing", "1"),
                 "View",
                 dm.ViewId("my_space", "my_view1", "1"),
                 "View",
                 property_name="implements",
             ),
-            ReferredResourceNotFoundError[dm.ViewId, dm.ViewId](
+            ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
                 dm.ViewId("my_space", "non_existing", "1"),
                 "View",
                 dm.ViewId("my_space", "my_view1", "1"),
                 "View",
                 property_name="non_existing",
             ),
-            ReferredResourceNotFoundError[dm.ViewId, dm.ViewId](
+            ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
                 dm.ViewId("my_space", "non_existing_edge_view", "1"),
                 "View",
                 dm.ViewId("my_space", "my_view1", "1"),

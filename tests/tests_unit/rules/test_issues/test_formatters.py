@@ -3,7 +3,7 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
+from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.formatters import BasicHTML
 from cognite.neat.rules import issues as validation
 
@@ -26,7 +26,7 @@ def issues() -> IssueList:
                 row_numbers={4, 5},
                 nullable_definitions={True, False},
             ),
-            ReferredResourceNotFoundError[ContainerId, ViewId](
+            ReferredPropertyNotFoundError[ContainerId, ViewId](
                 ContainerId("neat", "Flowable"),
                 "Container",
                 ViewId("neat", "Pump", "1"),

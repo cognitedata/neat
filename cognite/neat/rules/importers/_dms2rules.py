@@ -101,14 +101,28 @@ class DMSImporter(BaseImporter):
 
         user_models = cls._find_model_in_list(data_models, data_model_id)
         if len(user_models) == 0:
-            return cls(DMSSchema(), [issues.importing.NoDataModelError(f"Data model {data_model_id} not found")])
+            return cls(
+                DMSSchema(),
+                [
+                    ResourceNotFoundError[dm.DataModelId](
+                        dm.DataModelId.load(reference_model_id),  # type: ignore[arg-type]
+                        "DataModel",
+                        "Data Model is missing in CDF",
+                    )
+                ],
+            )
         user_model = user_models.latest_version()
 
         if reference_model_id:
             ref_models = cls._find_model_in_list(data_models, reference_model_id)
             if len(ref_models) == 0:
                 return cls(
-                    DMSSchema(), [issues.importing.NoDataModelError(f"Data model {reference_model_id} not found")]
+                    DMSSchema(),
+                    [
+                        ResourceNotFoundError[dm.DataModelId](
+                            dm.DataModelId.load(reference_model_id), "DataModel", "Data Model is missing in CDF"
+                        )
+                    ],
                 )
             ref_model: dm.DataModel[dm.View] | None = ref_models.latest_version()
         else:

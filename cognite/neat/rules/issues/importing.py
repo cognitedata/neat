@@ -2,26 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import Any
 
-from .base import NeatValidationError, ValidationWarning
-
-__all__ = [
-    "ModelImportWarning",
-    "UnknownComponentWarning",
-    "UnknownSubComponentWarning",
-    "IgnoredComponentWarning",
-    "UnknownPropertyWarning",
-    "UnknownValueTypeWarning",
-    "MissingContainerWarning",
-    "MissingContainerPropertyWarning",
-    "MultipleDataModelsWarning",
-    "UnknownPropertyTypeWarning",
-    "FailedToInferValueTypeWarning",
-    "MoreThanOneNonAlphanumericCharacterWarning",
-    "UnknownContainerConstraintWarning",
-    "NoDataModelError",
-    "ModelImportError",
-    "FailedImportWarning",
-]
+from .base import ValidationWarning
 
 
 @dataclass(frozen=True)
@@ -284,39 +265,3 @@ class FailedImportWarning(ModelImportWarning):
 
     def dump(self) -> dict[str, Any]:
         return {"identifier": list(self.identifier)}
-
-
-@dataclass(frozen=True)
-class MoreThanOneNonAlphanumericCharacterWarning(ModelImportWarning):
-    description = """This warning is raised when doing regex validation of strings which either represent class ids,
-    property ids, prefix, data model name, that contain more than one non-alphanumeric character,
-    such as for example '_' or '-'."""
-
-    field_name: str
-    value: str
-
-    def message(self) -> str:
-        return f"Field {self.field_name} with value {self.value} contains more than one non-alphanumeric character!"
-
-    def dump(self) -> dict[str, str]:
-        return {"field_name": self.field_name, "value": self.value}
-
-
-@dataclass(frozen=True)
-class ModelImportError(NeatValidationError, ABC):
-    description = "An error was raised during importing."
-    fix = "No fix is available."
-
-
-@dataclass(frozen=True)
-class NoDataModelError(ModelImportError):
-    description = "No data model found.."
-    fix = "Check if the data model exists in the source."
-
-    error_message: str
-
-    def message(self) -> str:
-        return self.error_message
-
-    def dump(self) -> dict[str, str]:
-        return {"error_message": self.error_message}
