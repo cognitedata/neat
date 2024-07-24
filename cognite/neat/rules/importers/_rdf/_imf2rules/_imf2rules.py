@@ -4,25 +4,26 @@ there are loaders to TransformationRules pydantic class."""
 from pathlib import Path
 from typing import Literal, overload
 
-from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
+from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SH, SKOS, Graph
 
 from cognite.neat.issues import IssueList
 from cognite.neat.rules.importers._base import BaseImporter, Rules
 from cognite.neat.rules.models import InformationRules, RoleTypes
 from cognite.neat.rules.models.data_types import _XSD_TYPES
 
-from ._owl2classes import parse_owl_classes
-from ._owl2metadata import parse_owl_metadata
-from ._owl2properties import parse_owl_properties
+from ._imf2classes import parse_imf_to_classes
+from ._imf2metadata import parse_imf_metadata
+from ._imf2properties import parse_imf_to_properties
 
 
-class OWLImporter(BaseImporter):
-    """Convert OWL ontology to tables/ transformation rules / Excel file.
+class IMFImporter(BaseImporter):
+    """Convert SHACL shapes to tables/ transformation rules / Excel file.
 
         Args:
-            filepath: Path to OWL ontology
+            filepath: Path to RDF file containing the SHACL Shapes
 
     !!! Note
+        Rewrite to fit the SHACL rules we apply
         OWL Ontologies are information models which completeness varies. As such, constructing functional
         data model directly will often be impossible, therefore the produced Rules object will be ill formed.
         To avoid this, neat will automatically attempt to make the imported rules compliant by adding default
@@ -61,11 +62,14 @@ class OWLImporter(BaseImporter):
         graph.bind("dcterms", DCTERMS)
         graph.bind("dc", DC)
         graph.bind("skos", SKOS)
+        graph.bind("sh", SH)
+        graph.bind("xsd", _XSD_TYPES)
+        graph.bind("imf", "http://ns.imfid.org/imf#")
 
         components = {
-            "Metadata": parse_owl_metadata(graph),
-            "Classes": parse_owl_classes(graph),
-            "Properties": parse_owl_properties(graph),
+            "Metadata": parse_imf_metadata(),
+            "Classes": parse_imf_to_classes(graph),
+            "Properties": parse_imf_to_properties(graph),
         }
 
         components = make_components_compliant(components)
