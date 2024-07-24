@@ -8,10 +8,10 @@ from rdflib import URIRef
 
 from cognite.neat.graph.examples import nordic44_knowledge_graph
 from cognite.neat.graph.extractors import RdfFileExtractor
-from cognite.neat.graph.issues.loader import InvalidInstanceError
 from cognite.neat.graph.loaders import AssetLoader
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformers import AddSelfReferenceProperty
+from cognite.neat.issues.errors.resources import InvalidResourceError
 from cognite.neat.rules.models import AssetRules
 
 
@@ -37,7 +37,7 @@ class TestAssetLoader:
         relationships = []
         errors = []
         for r in loader.load():
-            if isinstance(r, InvalidInstanceError):
+            if isinstance(r, InvalidResourceError):
                 errors.append(r)
             elif isinstance(r, AssetWrite):
                 assets.append(r)
@@ -68,7 +68,7 @@ class TestAssetLoader:
         relationships = []
         errors = []
         for r in result:
-            if isinstance(r, InvalidInstanceError):
+            if isinstance(r, InvalidResourceError):
                 errors.append(r)
             elif isinstance(r, AssetWrite):
                 assets.append(r)

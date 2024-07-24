@@ -16,7 +16,7 @@ from pydantic import (
 from pydantic.functional_serializers import PlainSerializer
 from pydantic_core import PydanticCustomError
 
-from cognite.neat.rules.issues.importing import MoreThanOneNonAlphanumericCharacterWarning
+from cognite.neat.issues.neat_warnings.identifier import RegexViolationWarning
 from cognite.neat.rules.issues.spreadsheet import RegexViolationError
 from cognite.neat.utils.regex_patterns import (
     PATTERNS,
@@ -91,7 +91,10 @@ def _property_validation(value: str) -> str:
     if not PATTERNS.property_id_compliance.match(value):
         _raise(RegexViolationError(value, PROPERTY_ID_COMPLIANCE_REGEX).as_pydantic_exception())
     if PATTERNS.more_than_one_alphanumeric.search(value):
-        warnings.warn(MoreThanOneNonAlphanumericCharacterWarning("property", value), stacklevel=2)
+        warnings.warn(
+            RegexViolationWarning(value, PROPERTY_ID_COMPLIANCE_REGEX, "property", "MoreThanOneNonAlphanumeric"),
+            stacklevel=2,
+        )
     return value
 
 

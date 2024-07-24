@@ -1,8 +1,8 @@
 from graphlib import CycleError
 from typing import cast
 
+from cognite.neat.issues import IssueList
 from cognite.neat.rules import issues
-from cognite.neat.rules.issues.base import IssueList
 from cognite.neat.rules.models._base import SheetList
 from cognite.neat.rules.models.asset._rules import AssetProperty, AssetRules
 from cognite.neat.rules.models.entities import AssetEntity, AssetFields, ClassEntity

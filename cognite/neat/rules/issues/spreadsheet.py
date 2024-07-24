@@ -9,7 +9,7 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic_core import ErrorDetails
 from rdflib import Namespace
 
-from cognite.neat.issues import MultiValueError
+from cognite.neat.issues import MultiValueError, NeatError
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
 
 from .base import DefaultPydanticError, NeatValidationError
@@ -59,8 +59,8 @@ class InvalidSheetError(NeatValidationError, ABC):
         errors: list[ErrorDetails],
         read_info_by_sheet: dict[str, SpreadsheetRead] | None = None,
         **kwargs: Any,
-    ) -> "list[NeatValidationError]":
-        output: list[NeatValidationError] = []
+    ) -> "list[NeatError]":
+        output: list[NeatError] = []
         for error in errors:
             if raised_error := error.get("ctx", {}).get("error"):
                 if isinstance(raised_error, MultiValueError):

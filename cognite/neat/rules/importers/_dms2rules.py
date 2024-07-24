@@ -18,9 +18,15 @@ from cognite.client.data_classes.data_modeling.views import (
 )
 from cognite.client.utils import ms_to_datetime
 
+from cognite.neat.issues import IssueList, NeatIssue
+from cognite.neat.issues.errors.resources import ResourceNotFoundError
+from cognite.neat.issues.neat_warnings.properties import (
+    PropertyTypeNotSupportedWarning,
+    ReferredPropertyNotFoundWarning,
+)
+from cognite.neat.issues.neat_warnings.resources import ReferredResourceNotFoundWarning
 from cognite.neat.rules import issues
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
-from cognite.neat.rules.issues import IssueList, ValidationIssue
 from cognite.neat.rules.models import (
     DataModelType,
     DMSRules,
@@ -60,7 +66,7 @@ class DMSImporter(BaseImporter):
     def __init__(
         self,
         schema: DMSSchema,
-        read_issues: Sequence[ValidationIssue] | None = None,
+        read_issues: Sequence[NeatIssue] | None = None,
         metadata: DMSMetadata | None = None,
         ref_metadata: DMSMetadata | None = None,
     ):
@@ -100,14 +106,28 @@ class DMSImporter(BaseImporter):
 
         user_models = cls._find_model_in_list(data_models, data_model_id)
         if len(user_models) == 0:
-            return cls(DMSSchema(), [issues.importing.NoDataModelError(f"Data model {data_model_id} not found")])
+            return cls(
+                DMSSchema(),
+                [
+                    ResourceNotFoundError[dm.DataModelId](
+                        dm.DataModelId.load(reference_model_id),  # type: ignore[arg-type]
+                        "DataModel",
+                        "Data Model is missing in CDF",
+                    )
+                ],
+            )
         user_model = user_models.latest_version()
 
         if reference_model_id:
             ref_models = cls._find_model_in_list(data_models, reference_model_id)
             if len(ref_models) == 0:
                 return cls(
-                    DMSSchema(), [issues.importing.NoDataModelError(f"Data model {reference_model_id} not found")]
+                    DMSSchema(),
+                    [
+                        ResourceNotFoundError[dm.DataModelId](
+                            dm.DataModelId.load(reference_model_id), "DataModel", "Data Model is missing in CDF"
+                        )
+                    ],
                 )
             ref_model: dm.DataModel[dm.View] | None = ref_models.latest_version()
         else:
@@ -200,7 +220,7 @@ class DMSImporter(BaseImporter):
             return self._return_or_raise(self.issue_list, errors)
 
         if not self.root_schema.data_model:
-            self.issue_list.append(issues.importing.NoDataModelError("No data model found."))
+            self.issue_list.append(ResourceNotFoundError[str]("Unknown", "DataModel", "Identifier is missing"))
             return self._return_or_raise(self.issue_list, errors)
         model = self.root_schema.data_model
         with _handle_issues(
@@ -301,10 +321,11 @@ class DMSImporter(BaseImporter):
     ) -> DMSProperty | None:
         if isinstance(prop, dm.MappedPropertyApply) and prop.container not in self._all_containers_by_id:
             self.issue_list.append(
-                issues.importing.MissingContainerWarning(
-                    view_id=str(view_entity),
-                    property_=prop_id,
-                    container_id=str(ContainerEntity.from_id(prop.container)),
+                ReferredResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
+                    dm.ContainerId.load(prop.container),
+                    "Container",
+                    view_entity.to_property_id(prop_id),
+                    "View Property",
                 )
             )
             return None
@@ -313,11 +334,9 @@ class DMSImporter(BaseImporter):
             and prop.container_property_identifier not in self._all_containers_by_id[prop.container].properties
         ):
             self.issue_list.append(
-                issues.importing.MissingContainerPropertyWarning(
-                    view_id=str(view_entity),
-                    property_=prop_id,
-                    container_id=str(ContainerEntity.from_id(prop.container)),
-                )
+                ReferredPropertyNotFoundWarning[dm.ContainerId, dm.ViewId](
+                    prop.container, "Container", view_entity.as_id(), "View", prop_id
+                ),
             )
             return None
         if not isinstance(
@@ -329,7 +348,7 @@ class DMSImporter(BaseImporter):
             | MultiReverseDirectRelationApply,
         ):
             self.issue_list.append(
-                issues.importing.UnknownPropertyTypeWarning(view_entity.versioned_id, prop_id, type(prop).__name__)
+                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "View", prop_id, type(prop).__name__)
             )
             return None
 
@@ -394,7 +413,9 @@ class DMSImporter(BaseImporter):
             else:
                 return DataType.load(container_prop.type._type)
         else:
-            self.issue_list.append(issues.importing.FailedToInferValueTypeWarning(str(view_entity), prop_id))
+            self.issue_list.append(
+                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "View", prop_id, type(prop).__name__)
+            )
             return None
 
     def _get_nullable(self, prop: ViewPropertyApply) -> bool | None:
@@ -453,8 +474,8 @@ class DMSImporter(BaseImporter):
                 continue
             else:
                 self.issue_list.append(
-                    issues.importing.UnknownContainerConstraintWarning(
-                        str(ContainerEntity.from_id(prop.container)), prop_id, type(constraint_obj).__name__
+                    PropertyTypeNotSupportedWarning[dm.ContainerId](
+                        prop.container, "Container", prop_id, type(constraint_obj).__name__
                     )
                 )
         return unique_constraints or None

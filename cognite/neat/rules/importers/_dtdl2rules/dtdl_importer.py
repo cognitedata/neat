@@ -6,12 +6,13 @@ from typing import Literal, overload
 
 from pydantic import ValidationError
 
+from cognite.neat.issues import IssueList, NeatIssue
 from cognite.neat.rules import issues
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
-from cognite.neat.rules.issues import IssueList, ValidationIssue
+from cognite.neat.rules.issues import ValidationIssue
 from cognite.neat.rules.models import InformationRules, RoleTypes, SchemaCompleteness, SheetList
 from cognite.neat.rules.models.information import InformationClass, InformationProperty
 from cognite.neat.utils.text import to_pascal
@@ -36,7 +37,7 @@ class DTDLImporter(BaseImporter):
         self,
         items: Sequence[DTDLBase],
         title: str | None = None,
-        read_issues: list[ValidationIssue] | None = None,
+        read_issues: list[NeatIssue] | None = None,
         schema: SchemaCompleteness = SchemaCompleteness.partial,
     ) -> None:
         self._items = items
@@ -94,10 +95,10 @@ class DTDLImporter(BaseImporter):
     @classmethod
     def from_directory(cls, directory: Path) -> "DTDLImporter":
         items: list[DTDLBase] = []
-        issues: list[ValidationIssue] = []
+        issues: list[NeatIssue] = []
         for filepath in directory.glob("**/*.json"):
             for item in cls._from_file_content(filepath.read_text(), filepath):
-                if isinstance(item, ValidationIssue):
+                if isinstance(item, NeatIssue):
                     issues.append(item)
                 else:
                     items.append(item)
@@ -106,7 +107,7 @@ class DTDLImporter(BaseImporter):
     @classmethod
     def from_zip(cls, zip_file: Path) -> "DTDLImporter":
         items: list[DTDLBase] = []
-        issues: list[ValidationIssue] = []
+        issues: list[NeatIssue] = []
         with zipfile.ZipFile(zip_file) as z:
             for filepath in z.namelist():
                 if filepath.endswith(".json"):

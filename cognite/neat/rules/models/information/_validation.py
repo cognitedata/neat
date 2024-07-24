@@ -2,8 +2,8 @@ import itertools
 from collections import Counter
 from typing import cast
 
+from cognite.neat.issues import IssueList
 from cognite.neat.rules import issues
-from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._base import DataModelType, SchemaCompleteness
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, UnknownEntity
 from cognite.neat.utils.rdf_ import get_inheritance_path

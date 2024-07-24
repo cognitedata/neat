@@ -418,6 +418,9 @@ class ViewEntity(DMSVersionedEntity[ViewId]):
     ) -> ViewId:
         return ViewId(space=self.space, external_id=self.external_id, version=self.version)
 
+    def to_property_id(self, property_id: str) -> PropertyId:
+        return PropertyId(source=self.as_id(), property=property_id)
+
     @classmethod
     def from_id(cls, id: ViewId, default_version: str | None = None) -> "ViewEntity":
         if id.version is not None:
