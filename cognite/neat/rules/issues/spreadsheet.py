@@ -38,6 +38,7 @@ __all__ = [
     "MultiDefaultError",
     "MultiIndexError",
     "MultiUniqueConstraintError",
+    "RegexViolationError",
 ]
 
 
@@ -275,6 +276,24 @@ class PropertiesDefinedForUndefinedClassesError(NeatValidationError):
             f"Classes {', '.join(self.classes)} have properties assigned to them, but"
             " they are not defined in the Classes sheet."
         )
+
+
+@dataclass(frozen=True)
+class RegexViolationError(NeatValidationError):
+    description = "Value, {value} failed regex, {regex}, validation."
+    fix = "Make sure that the name follows the regex pattern."
+
+    value: str
+    regex: str
+
+    def dump(self) -> dict[str, str]:
+        output = super().dump()
+        output["value"] = self.value
+        output["regex"] = self.regex
+        return output
+
+    def message(self) -> str:
+        return self.description.format(name=self.value, regex=self.regex)
 
 
 @dataclass(frozen=True)
