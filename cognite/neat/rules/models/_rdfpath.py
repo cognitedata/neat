@@ -8,7 +8,7 @@ from typing import ClassVar, Literal
 
 from pydantic import BaseModel, field_validator, model_serializer
 
-from cognite.neat.rules import exceptions
+from cognite.neat.rules.issues.tables import NotValidRAWLookUpError, NotValidRDFPathError, NotValidTableLookUpError
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -313,7 +313,7 @@ def parse_traversal(raw: str) -> SelfReferenceProperty | SingleProperty | Hop:
     elif result := HOP_REGEX_COMPILED.match(raw):
         return Hop.from_string(class_=result.group("origin"), traversal=result.group(_traversal))
     else:
-        raise exceptions.NotValidRDFPath(raw).to_pydantic_custom_error()
+        raise NotValidRDFPathError(raw).as_pydantic_exception()
 
 
 def parse_table_lookup(raw: str) -> TableLookup:
@@ -323,7 +323,7 @@ def parse_table_lookup(raw: str) -> TableLookup:
             key=result.group(Lookup.key),
             value=result.group(Lookup.value),
         )
-    raise exceptions.NotValidTableLookUp(raw).to_pydantic_custom_error()
+    raise NotValidTableLookUpError(raw).as_pydantic_exception()
 
 
 def parse_rule(rule_raw: str, rule_type: TransformationRuleType | None) -> RDFPath:
@@ -334,7 +334,7 @@ def parse_rule(rule_raw: str, rule_type: TransformationRuleType | None) -> RDFPa
         case TransformationRuleType.rawlookup:
             rule_raw = rule_raw.replace(" ", "")
             if Counter(rule_raw).get("|") != 1:
-                raise exceptions.NotValidRAWLookUp(rule_raw).to_pydantic_custom_error()
+                raise NotValidRAWLookUpError(rule_raw).as_pydantic_exception()
             traversal, table_lookup = rule_raw.split("|")
             return RawLookup(
                 traversal=parse_traversal(traversal),

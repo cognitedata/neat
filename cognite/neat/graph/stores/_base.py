@@ -210,7 +210,8 @@ class NeatGraphStore:
         property_renaming_config = InformationAnalysis(self.rules).define_property_renaming_config(class_entity)
 
         for instance_id in instance_ids:
-            yield self.queries.describe(instance_id, property_renaming_config)
+            if res := self.queries.describe(instance_id, property_renaming_config):
+                yield res
 
     def _parse_file(
         self,
@@ -223,7 +224,7 @@ class NeatGraphStore:
         Args:
             filepath : File path to file containing graph data, by default None
             mime_type : MIME type of graph data, by default "application/rdf+xml"
-            add_base_iri : Add base IRI to graph, by default True
+            base_uri : Add base IRI to graph, by default True
         """
 
         # Oxigraph store, do not want to type hint this as it is an optional dependency

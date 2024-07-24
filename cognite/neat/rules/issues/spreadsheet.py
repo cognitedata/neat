@@ -38,6 +38,7 @@ __all__ = [
     "MultiDefaultError",
     "MultiIndexError",
     "MultiUniqueConstraintError",
+    "RegexViolationError",
 ]
 
 
@@ -278,6 +279,24 @@ class PropertiesDefinedForUndefinedClassesError(NeatValidationError):
 
 
 @dataclass(frozen=True)
+class RegexViolationError(NeatValidationError):
+    description = "Value, {value} failed regex, {regex}, validation."
+    fix = "Make sure that the name follows the regex pattern."
+
+    value: str
+    regex: str
+
+    def dump(self) -> dict[str, str]:
+        output = super().dump()
+        output["value"] = self.value
+        output["regex"] = self.regex
+        return output
+
+    def message(self) -> str:
+        return self.description.format(value=self.value, regex=self.regex)
+
+
+@dataclass(frozen=True)
 class ClassNoPropertiesNoParentError(NeatValidationError):
     description = "Class has no properties and no parents."
     fix = "Check if the class should have properties or parents."
@@ -293,6 +312,35 @@ class ClassNoPropertiesNoParentError(NeatValidationError):
         if len(self.classes) > 1:
             return f"Classes {', '.join(self.classes)} have no direct or inherited properties. This may be a mistake."
         return f"Class {self.classes[0]} have no direct or inherited properties. This may be a mistake."
+
+
+@dataclass(frozen=True)
+class DefaultValueTypeNotProperError(NeatValidationError):
+    """This exceptions is raised when default value type is not proper, i.e. it is not
+    according to the expected value type set in Rules.
+
+
+    Args:
+        default_value_type: default value type that raised exception
+        expected_value_type: expected value type that raised exception
+
+    """
+
+    description = (
+        "This exceptions is raised when default value type is not proper, i.e. it is not "
+        "according to the expected value type set in Rules."
+    )
+    property_id: str
+    default_value_type: str
+    expected_value_type: str
+
+    def message(self) -> str:
+        message = (
+            f"Default value for property {self.property_id} is of type {self.default_value_type} "
+            f"which is different from the expected value type {self.expected_value_type}!"
+        )
+        message += f"\nDescription: {self.description}"
+        return message
 
 
 @dataclass(frozen=True)

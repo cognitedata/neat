@@ -131,25 +131,24 @@ class SpreadsheetReader:
         names = MANDATORY_SHEETS_BY_ROLE[role]
         return {f"{self._sheet_prefix}{sheet_name}" for sheet_name in names if sheet_name != "Metadata"}
 
-    def read(self, filepath: Path) -> None | ReadResult:
-        with pd.ExcelFile(filepath) as excel_file:
-            self._seen_files.add(filepath)
-            self._seen_sheets.update(map(str, excel_file.sheet_names))
-            metadata: MetadataRaw | None
-            if self.metadata is not None:
-                metadata = self.metadata
-            else:
-                metadata = self._read_metadata(excel_file, filepath)
-                if metadata is None:
-                    # The reading of metadata failed, so we can't continue
-                    return None
-
-            sheets, read_info_by_sheet = self._read_sheets(excel_file, metadata.role)
-            if sheets is None or self.issue_list.has_errors:
+    def read(self, excel_file: pd.ExcelFile, filepath: Path) -> None | ReadResult:
+        self._seen_files.add(filepath)
+        self._seen_sheets.update(map(str, excel_file.sheet_names))
+        metadata: MetadataRaw | None
+        if self.metadata is not None:
+            metadata = self.metadata
+        else:
+            metadata = self._read_metadata(excel_file, filepath)
+            if metadata is None:
+                # The reading of metadata failed, so we can't continue
                 return None
-            sheets["Metadata"] = dict(metadata)
 
-            return ReadResult(sheets, read_info_by_sheet, metadata)
+        sheets, read_info_by_sheet = self._read_sheets(excel_file, metadata.role)
+        if sheets is None or self.issue_list.has_errors:
+            return None
+        sheets["Metadata"] = dict(metadata)
+
+        return ReadResult(sheets, read_info_by_sheet, metadata)
 
     def _read_metadata(self, excel_file: ExcelFile, filepath: Path) -> MetadataRaw | None:
         if self.metadata_sheet_name not in excel_file.sheet_names:
@@ -232,17 +231,21 @@ class ExcelImporter(BaseImporter):
             issue_list.append(issues.spreadsheet_file.SpreadsheetNotFoundError(self.filepath))
             return self._return_or_raise(issue_list, errors)
 
-        user_reader = SpreadsheetReader(issue_list)
-        user_read = user_reader.read(self.filepath)
-        if user_read is None or issue_list.has_errors:
-            return self._return_or_raise(issue_list, errors)
+        with pd.ExcelFile(self.filepath) as excel_file:
+            user_reader = SpreadsheetReader(issue_list)
 
-        last_read: ReadResult | None = None
-        if any(sheet_name.startswith("Last") for sheet_name in user_reader.seen_sheets):
-            last_read = SpreadsheetReader(issue_list, required=False, sheet_prefix="Last").read(self.filepath)
-        reference_read: ReadResult | None = None
-        if any(sheet_name.startswith("Ref") for sheet_name in user_reader.seen_sheets):
-            reference_read = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(self.filepath)
+            user_read = user_reader.read(excel_file, self.filepath)
+            if user_read is None or issue_list.has_errors:
+                return self._return_or_raise(issue_list, errors)
+
+            last_read: ReadResult | None = None
+            if any(sheet_name.startswith("Last") for sheet_name in user_reader.seen_sheets):
+                last_read = SpreadsheetReader(issue_list, required=False, sheet_prefix="Last").read(
+                    excel_file, self.filepath
+                )
+            reference_read: ReadResult | None = None
+            if any(sheet_name.startswith("Ref") for sheet_name in user_reader.seen_sheets):
+                reference_read = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(excel_file, self.filepath)
 
         if issue_list.has_errors:
             return self._return_or_raise(issue_list, errors)

@@ -79,7 +79,7 @@ def test_retry_decorator_t5():
 
 def test_remove_namespace():
     assert remove_namespace_from_uri(
-        "http://www.example.org/index.html#section2", "http://www.example.org/index.html#section3"
-    ) == ("section2", "section3")
+        ["http://www.example.org/index.html#section2", "http://www.example.org/index.html#section3"]
+    ) == ["section2", "section3"]
     assert remove_namespace_from_uri("www.example.org/index.html#section2") == "www.example.org/index.html#section2"
     assert remove_namespace_from_uri("all/hope/is#lost") == "all/hope/is#lost"

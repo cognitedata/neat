@@ -9,8 +9,19 @@ from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespac
 from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
-from cognite.neat.rules import exceptions
 from cognite.neat.rules.analysis import InformationAnalysis
+from cognite.neat.rules.issues.ontology import (
+    MetadataSheetNamespaceNotDefinedError,
+    MissingDataModelPrefixOrNamespaceWarning,
+    OntologyMultiDefinitionPropertyWarning,
+    OntologyMultiDomainPropertyWarning,
+    OntologyMultiLabeledPropertyWarning,
+    OntologyMultiRangePropertyWarning,
+    OntologyMultiTypePropertyWarning,
+    PrefixMissingError,
+    PropertiesDefinedMultipleTimesError,
+    PropertyDefinitionsNotForSamePropertyError,
+)
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
@@ -102,13 +113,15 @@ class Ontology(OntologyModel):
 
         properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
         if properties_redefined:
-            raise exceptions.PropertiesDefinedMultipleTimes(report=generate_exception_report(redefinition_warnings))
+            raise PropertiesDefinedMultipleTimesError(
+                report=generate_exception_report(redefinition_warnings)
+            ).as_exception()
 
         if rules.prefixes is None:
-            raise exceptions.PrefixMissing()
+            raise PrefixMissingError().as_exception()
 
         if rules.metadata.namespace is None:
-            raise exceptions.MissingDataModelPrefixOrNamespace()
+            raise MissingDataModelPrefixOrNamespaceWarning()
 
         class_dict = InformationAnalysis(rules).as_class_dict()
         return cls(
@@ -172,7 +185,7 @@ class Ontology(OntologyModel):
             owl.bind(prefix, namespace)
 
         if self.metadata.namespace is None:
-            raise exceptions.MetadataSheetNamespaceNotDefined()
+            raise MetadataSheetNamespaceNotDefinedError().as_exception()
 
         owl.add((URIRef(self.metadata.namespace), RDF.type, OWL.Ontology))
         for property_ in self.properties:
@@ -221,7 +234,7 @@ class OWLMetadata(InformationMetadata):
     def triples(self) -> list[tuple]:
         # Mandatory triples originating from Metadata mandatory fields
         if self.namespace is None:
-            raise exceptions.MetadataSheetNamespaceNotDefined()
+            raise MetadataSheetNamespaceNotDefinedError().as_exception()
         triples: list[tuple] = [
             (URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version)),
             (URIRef(self.namespace), OWL.versionInfo, Literal(self.version)),
@@ -319,7 +332,7 @@ class OWLProperty(OntologyModel):
         """Here list of properties is a list of properties with the same id, but different definitions."""
 
         if not cls.same_property_id(definitions):
-            raise exceptions.PropertyDefinitionsNotForSameProperty()
+            raise PropertyDefinitionsNotForSamePropertyError().as_exception()
 
         owl_property = cls.model_construct(
             id_=namespace[definitions[0].property_],
@@ -350,10 +363,9 @@ class OWLProperty(OntologyModel):
     def is_multi_type(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                exceptions.OntologyMultiTypeProperty(
+                OntologyMultiTypePropertyWarning(
                     remove_namespace_from_uri(info.data["id_"]), [remove_namespace_from_uri(t) for t in v]
-                ).message,
-                category=exceptions.OntologyMultiTypeProperty,
+                ),
                 stacklevel=2,
             )
         return v
@@ -362,10 +374,9 @@ class OWLProperty(OntologyModel):
     def is_multi_range(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                exceptions.OntologyMultiRangeProperty(
+                OntologyMultiRangePropertyWarning(
                     remove_namespace_from_uri(info.data["id_"]), [remove_namespace_from_uri(t) for t in v]
-                ).message,
-                category=exceptions.OntologyMultiRangeProperty,
+                ),
                 stacklevel=2,
             )
         return v
@@ -374,10 +385,9 @@ class OWLProperty(OntologyModel):
     def is_multi_domain(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                exceptions.OntologyMultiDomainProperty(
+                OntologyMultiDomainPropertyWarning(
                     remove_namespace_from_uri(info.data["id_"]), [remove_namespace_from_uri(t) for t in v]
-                ).message,
-                category=exceptions.OntologyMultiDomainProperty,
+                ),
                 stacklevel=2,
             )
         return v
@@ -386,8 +396,7 @@ class OWLProperty(OntologyModel):
     def has_multi_name(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                exceptions.OntologyMultiLabeledProperty(remove_namespace_from_uri(info.data["id_"]), v).message,
-                category=exceptions.OntologyMultiLabeledProperty,
+                OntologyMultiLabeledPropertyWarning(remove_namespace_from_uri(info.data["id_"]), v),
                 stacklevel=2,
             )
         return v
@@ -396,8 +405,7 @@ class OWLProperty(OntologyModel):
     def has_multi_comment(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                exceptions.OntologyMultiDefinitionProperty(remove_namespace_from_uri(info.data["id_"])).message,
-                category=exceptions.OntologyMultiDefinitionProperty,
+                OntologyMultiDefinitionPropertyWarning(remove_namespace_from_uri(info.data["id_"])),
                 stacklevel=2,
             )
         return v

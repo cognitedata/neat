@@ -1,7 +1,6 @@
-import re
 import warnings
 from collections.abc import Callable
-from typing import Annotated, Any, cast
+from typing import Annotated, Any
 
 import rdflib
 from pydantic import (
@@ -17,11 +16,10 @@ from pydantic import (
 from pydantic.functional_serializers import PlainSerializer
 from pydantic_core import PydanticCustomError
 
-from cognite.neat.rules import exceptions
 from cognite.neat.rules.issues.importing import MoreThanOneNonAlphanumericCharacterWarning
-
-from ._base import (
-    MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX,
+from cognite.neat.rules.issues.spreadsheet import RegexViolationError
+from cognite.neat.utils.regex_patterns import (
+    PATTERNS,
     PREFIX_COMPLIANCE_REGEX,
     PROPERTY_ID_COMPLIANCE_REGEX,
     VERSION_COMPLIANCE_REGEX,
@@ -74,11 +72,7 @@ NamespaceType = Annotated[
 PrefixType = Annotated[
     str,
     StringConstraints(pattern=PREFIX_COMPLIANCE_REGEX),
-    _custom_error(
-        lambda _, value: exceptions.PrefixesRegexViolation(
-            cast(list[str], [value]), PREFIX_COMPLIANCE_REGEX
-        ).to_pydantic_custom_error()
-    ),
+    _custom_error(lambda _, value: RegexViolationError(value, PREFIX_COMPLIANCE_REGEX).as_pydantic_exception()),
 ]
 
 ExternalIdType = Annotated[
@@ -89,18 +83,14 @@ ExternalIdType = Annotated[
 VersionType = Annotated[
     str,
     StringConstraints(pattern=VERSION_COMPLIANCE_REGEX),
-    _custom_error(
-        lambda _, value: exceptions.VersionRegexViolation(
-            version=cast(str, value), regex_expression=VERSION_COMPLIANCE_REGEX
-        ).to_pydantic_custom_error()
-    ),
+    _custom_error(lambda _, value: RegexViolationError(value, VERSION_COMPLIANCE_REGEX).as_pydantic_exception()),
 ]
 
 
 def _property_validation(value: str) -> str:
-    if not re.match(PROPERTY_ID_COMPLIANCE_REGEX, value):
-        _raise(exceptions.PropertyIDRegexViolation(value, PROPERTY_ID_COMPLIANCE_REGEX).to_pydantic_custom_error())
-    if re.search(MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX, value):
+    if not PATTERNS.property_id_compliance.match(value):
+        _raise(RegexViolationError(value, PROPERTY_ID_COMPLIANCE_REGEX).as_pydantic_exception())
+    if PATTERNS.more_than_one_alphanumeric.search(value):
         warnings.warn(MoreThanOneNonAlphanumericCharacterWarning("property", value), stacklevel=2)
     return value
 
