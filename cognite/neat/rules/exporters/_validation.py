@@ -2,8 +2,8 @@ import warnings
 from typing import Literal, overload
 
 from cognite.neat.exceptions import wrangle_warnings
+from cognite.neat.issues.neat_warnings.properties import PropertyRedefinedWarning
 from cognite.neat.rules.issues.dms import EntityIDNotDMSCompliantWarning
-from cognite.neat.rules.issues.importing import PropertyRedefinedWarning
 from cognite.neat.rules.models import InformationRules
 from cognite.neat.utils.regex_patterns import DMS_PROPERTY_ID_COMPLIANCE_REGEX, PATTERNS, VIEW_ID_COMPLIANCE_REGEX
 
@@ -78,7 +78,7 @@ def are_properties_redefined(rules: InformationRules, return_report: bool = Fals
             elif property_.class_ in analyzed_properties[property_.property_]:
                 flag = True
                 warnings.warn(
-                    PropertyRedefinedWarning(property_.property_, property_.class_.versioned_id),
+                    PropertyRedefinedWarning[str](property_.class_.versioned_id, "Class", property_.property_),
                     stacklevel=2,
                 )
 

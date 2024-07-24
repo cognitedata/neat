@@ -28,7 +28,7 @@ from cognite.client.data_classes.transformations.common import Edges, EdgeType, 
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
-from cognite.neat.issues.neat_warnings.resources import MultipleResourcesWarning
+from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
@@ -167,7 +167,7 @@ class DMSSchema:
             warnings.warn(MissingViewInModelWarning(data_model.as_id(), connection_referenced_view_ids), stacklevel=2)
             connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
             if failed := connection_referenced_view_ids - set(connection_referenced_views.as_ids()):
-                warnings.warn(issues.importing.FailedImportWarning({repr(v) for v in failed}), stacklevel=2)
+                warnings.warn(FailedLoadingResourcesWarning[dm.ViewId](frozenset(failed), "View"), stacklevel=2)
             views.extend(connection_referenced_views)
 
         # We need to include parent views in the schema to make sure that the schema is valid.

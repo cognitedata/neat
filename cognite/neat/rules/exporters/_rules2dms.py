@@ -16,6 +16,7 @@ from cognite.client.data_classes.data_modeling import (
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.issues import IssueList
+from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning
 from cognite.neat.rules import issues
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models import InformationRules
@@ -313,7 +314,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         try:
             data_models = loader.client.data_modeling.data_models.list(space=space, limit=25, all_versions=False)
         except CogniteAPIError as e:
-            warnings.warn(issues.importing.APIWarning(str(e)), stacklevel=2)
+            warnings.warn(FailedLoadingResourcesWarning[str](frozenset({space}), "Space", str(e)), stacklevel=2)
             return []
         else:
             return [

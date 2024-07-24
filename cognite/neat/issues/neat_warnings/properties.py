@@ -56,3 +56,22 @@ class ReferredPropertyNotFoundWarning(ResourceWarning, Generic[T_Identifier, T_R
         output["referred_type"] = self.referred_type
         output["property_name"] = self.property_name
         return output
+
+
+@dataclass(frozen=True)
+class PropertyRedefinedWarning(ResourceWarning[T_Identifier]):
+    """The {resource_type} with identifier {identifier} has a property {property_name} redefined."""
+
+    property_id: str
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(
+            resource_type=self.resource_type, identifier=repr(self.identifier), property_name=self.property_id
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["property_id"] = self.property_id
+        output["resource_type"] = self.resource_type
+        output["identifier"] = self.identifier
+        return output

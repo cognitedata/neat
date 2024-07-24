@@ -84,3 +84,29 @@ class MultipleResourcesWarning(NeatWarning, Generic[T_Identifier]):
         output["resource_type"] = self.resource_type
         output["resources"] = self.resources
         return output
+
+
+@dataclass(frozen=True)
+class FailedLoadingResourcesWarning(NeatWarning, Generic[T_Identifier]):
+    """Failed to load resources of type {resource_type} with identifiers {resources}. Continuing without
+    these resources."""
+
+    extra = "The error was: {error}"
+
+    fix = "Check the error."
+
+    resources: frozenset[T_Identifier]
+    resource_type: str
+    error: str | None = None
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(
+            resource_type=self.resource_type,
+            resources=self.resources,
+        ) + (self.extra.format(error=self.error) if self.error else "")
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["resource_type"] = self.resource_type
+        output["resources"] = self.resources
+        return output

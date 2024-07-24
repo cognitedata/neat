@@ -1,6 +1,5 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import Any
 
 from .base import ValidationWarning
 
@@ -100,46 +99,3 @@ class UnknownPropertyWarning(ValidationWarning):
         else:
             prefix = f"Unknown property '{self.property_name}' of component '{self.component_type}'"
         return f"{prefix} This will be ignored in the imports."
-
-
-@dataclass(frozen=True)
-class PropertyRedefinedWarning(ValidationWarning):
-    description = "Property, {property}, redefined in {class_}. This will be ignored in the imports."
-    fix = "Check if the property is defined only once."
-
-    property_id: str
-    class_id: str
-
-    def dump(self) -> dict[str, str]:
-        return {"property_id": self.property_id, "class_id": self.class_id}
-
-    def message(self) -> str:
-        return self.description.format(property=self.property_id, class_=self.class_id)
-
-
-@dataclass(frozen=True)
-class APIWarning(ModelImportWarning):
-    description = "An error was raised."
-    fix = "No fix is available."
-
-    error_message: str
-
-    def message(self) -> str:
-        return self.error_message
-
-    def dump(self) -> dict[str, str]:
-        return {"error_message": self.error_message}
-
-
-@dataclass(frozen=True)
-class FailedImportWarning(ModelImportWarning):
-    description = "Failed to import part of the model."
-    fix = "No fix is available."
-
-    identifier: set[str]
-
-    def message(self) -> str:
-        return f"Failed to import: {self.identifier}. This will be skipped."
-
-    def dump(self) -> dict[str, Any]:
-        return {"identifier": list(self.identifier)}
