@@ -16,6 +16,12 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.88.1] - 24-07-24
+### Improves
+- Implementation of oxistore is now more robust and based on existing implementation by Oxigraph developer
+### Removed
+- Removed unused Oxistore implementation
+
 ## [0.88.0] - 22-07-24
 ### Removed
 - [BREAKING] Legacy neat has been removed from the codebase. This includes `legacy` module,
