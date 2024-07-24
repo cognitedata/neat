@@ -18,9 +18,21 @@ else:
     from typing import Self
 
 
+__all__ = [
+    "NeatIssue",
+    "NeatError",
+    "NeatWarning",
+    "DefaultWarning",
+    "NeatIssueList",
+    "MultiValueError",
+]
+
+
 @total_ordering
 @dataclass(frozen=True)
 class NeatIssue(ABC):
+    """This is the base class for all exceptions and warnings (issues) used in Neat."""
+
     description: ClassVar[str]
     fix: ClassVar[str]
 
@@ -31,7 +43,7 @@ class NeatIssue(ABC):
         It is recommended to override this method in subclasses with a more
         specific message.
         """
-        return self.description
+        return self.__doc__ or "Missing"
 
     @abstractmethod
     def dump(self) -> dict[str, Any]:
@@ -59,9 +71,9 @@ class NeatError(NeatIssue, ABC):
 
     def as_pydantic_exception(self) -> PydanticCustomError:
         return PydanticCustomError(
-            self.__class__.__name__,
+            type(self).__name__,
             self.message(),
-            dict(description=self.description, fix=self.fix),
+            dict(description=self.__doc__, fix=self.fix),
         )
 
 
