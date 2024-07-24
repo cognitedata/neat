@@ -4,7 +4,7 @@ from .base import NeatValidationError
 
 
 @dataclass(frozen=True)
-class NotValidRDFPath(NeatValidationError):
+class NotValidRDFPathError(NeatValidationError):
     """Provided `rdfpath` is not valid, i.e. it cannot be converted to SPARQL query.
 
     Args:
@@ -27,7 +27,7 @@ class NotValidRDFPath(NeatValidationError):
 
 
 @dataclass(frozen=True)
-class NotValidTableLookUp(NeatValidationError):
+class NotValidTableLookUpError(NeatValidationError):
     """Provided `table lookup` is not valid, i.e. it cannot be converted to CDF lookup.
 
     Args:
@@ -50,12 +50,11 @@ class NotValidTableLookUp(NeatValidationError):
 
 
 @dataclass(frozen=True)
-class NotValidRAWLookUp(NeatValidationError):
+class NotValidRAWLookUpError(NeatValidationError):
     """Provided `rawlookup` is not valid, i.e. it cannot be converted to SPARQL query and CDF lookup
 
     Args:
         raw_look_up: `rawlookup` rule that raised exception
-        verbose: flag that indicates whether to provide enhanced exception message, by default False
 
     Notes:
         Get familiar with `rawlookup` and `rdfpath` to avoid this exception.

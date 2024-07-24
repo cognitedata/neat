@@ -293,7 +293,7 @@ class RegexViolationError(NeatValidationError):
         return output
 
     def message(self) -> str:
-        return self.description.format(name=self.value, regex=self.regex)
+        return self.description.format(value=self.value, regex=self.regex)
 
 
 @dataclass(frozen=True)
@@ -315,7 +315,7 @@ class ClassNoPropertiesNoParentError(NeatValidationError):
 
 
 @dataclass(frozen=True)
-class DefaultValueTypeNotProper(NeatValidationError):
+class DefaultValueTypeNotProperError(NeatValidationError):
     """This exceptions is raised when default value type is not proper, i.e. it is not
     according to the expected value type set in Rules.
 
@@ -340,7 +340,6 @@ class DefaultValueTypeNotProper(NeatValidationError):
             f"which is different from the expected value type {self.expected_value_type}!"
         )
         message += f"\nDescription: {self.description}"
-        message += f"\nFix: {self.fix}"
         return message
 
 
