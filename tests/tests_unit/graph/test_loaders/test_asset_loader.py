@@ -12,6 +12,7 @@ from cognite.neat.graph.issues.loader import InvalidInstanceError
 from cognite.neat.graph.loaders import AssetLoader
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformers import AddSelfReferenceProperty
+from cognite.neat.rules.models import AssetRules
 
 
 @pytest.fixture()
@@ -26,15 +27,16 @@ def asset_store(asset_rules) -> NeatGraphStore:
 
 
 class TestAssetLoader:
-    def test_generation_of_assets_and_relationships_no_errors(self, asset_rules, asset_store):
+    def test_generation_of_assets_and_relationships_no_errors(
+        self, asset_rules: AssetRules, asset_store: NeatGraphStore
+    ) -> None:
         loader = AssetLoader(asset_store, asset_rules, 1983, use_orphanage=True, use_labels=True)
-        result = list(loader.load())
 
         labels = []
         assets = []
         relationships = []
         errors = []
-        for r in result:
+        for r in loader.load():
             if isinstance(r, InvalidInstanceError):
                 errors.append(r)
             elif isinstance(r, AssetWrite):
@@ -49,7 +51,9 @@ class TestAssetLoader:
         assert len(relationships) == 586
         assert len(labels) == 7
 
-    def test_generation_of_assets_with_orphanage_errors(self, asset_rules, asset_store):
+    def test_generation_of_assets_with_orphanage_errors(
+        self, asset_rules: AssetRules, asset_store: NeatGraphStore
+    ) -> None:
         asset_store.graph.remove(
             (
                 URIRef("http://purl.org/nordic44#_f17695a9-9aeb-11e5-91da-b8763fd99c5f"),

@@ -209,7 +209,8 @@ class NeatGraphStore:
         property_renaming_config = InformationAnalysis(self.rules).define_property_renaming_config(class_entity)
 
         for instance_id in instance_ids:
-            yield self.queries.describe(instance_id, property_renaming_config)
+            if res := self.queries.describe(instance_id, property_renaming_config):
+                yield res
 
     def _parse_file(
         self,
