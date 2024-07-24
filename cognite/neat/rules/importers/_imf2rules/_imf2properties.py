@@ -5,9 +5,13 @@ import pandas as pd
 from rdflib import Graph, Literal
 
 from cognite.neat.rules.models._base import MatchType
-from cognite.neat.utils.utils import remove_namespace_from_uri
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
-from ._imf2classes import _data_type_property_class, _object_property_class, _thing_class
+from ._imf2classes import (
+    _data_type_property_class,
+    _object_property_class,
+    _thing_class,
+)
 
 
 def parse_imf_to_properties(graph: Graph, language: str = "en") -> list[dict]:
@@ -201,7 +205,7 @@ def make_properties_compliant(properties: pd.DataFrame) -> pd.DataFrame:
     # Replace empty or non-string values in "Comment" column with a default value
     properties["Comment"] = properties["Comment"].fillna("Imported from IMF type by NEAT")
     properties["Comment"] = properties["Comment"].apply(
-        lambda x: "Imported from Ontology by NEAT" if not isinstance(x, str) or len(x) == 0 else x
+        lambda x: ("Imported from Ontology by NEAT" if not isinstance(x, str) or len(x) == 0 else x)
     )
 
     # Reduce length of elements in the "Description" column to 1024 characters

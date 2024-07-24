@@ -5,7 +5,7 @@ import pandas as pd
 from rdflib import OWL, Graph
 
 from cognite.neat.rules.models._base import MatchType
-from cognite.neat.utils.utils import remove_namespace_from_uri
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 
 def parse_imf_to_classes(graph: Graph, language: str = "en") -> list[dict]:
@@ -84,7 +84,15 @@ def parse_imf_to_classes(graph: Graph, language: str = "en") -> list[dict]:
 def _parse_raw_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     df = pd.DataFrame(
         query_results,
-        columns=["Class", "Name", "Description", "Parent Class", "Reference", "Match", "Comment"],
+        columns=[
+            "Class",
+            "Name",
+            "Description",
+            "Parent Class",
+            "Reference",
+            "Match",
+            "Comment",
+        ],
     )
     if df.empty:
         return df
@@ -148,12 +156,15 @@ def make_classes_compliant(classes: pd.DataFrame) -> pd.DataFrame:
     # Replace empty or non-string values in "Comment" column with a default value
     classes["Comment"] = classes["Comment"].fillna("Imported from IMF type by NEAT")
     classes["Comment"] = classes["Comment"].apply(
-        lambda x: "Imported from IMF by NEAT" if not isinstance(x, str) or len(x) == 0 else x
+        lambda x: ("Imported from IMF by NEAT" if not isinstance(x, str) or len(x) == 0 else x)
     )
 
     # Add _object_property_class, _data_type_property_class, _thing_class to the dataframe
     classes = pd.concat(
-        [classes, pd.DataFrame([_object_property_class(), _data_type_property_class(), _thing_class()])],
+        [
+            classes,
+            pd.DataFrame([_object_property_class(), _data_type_property_class(), _thing_class()]),
+        ],
         ignore_index=True,
     )
 

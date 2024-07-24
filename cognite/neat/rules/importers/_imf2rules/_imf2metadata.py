@@ -4,11 +4,11 @@ import re
 from rdflib import Namespace
 
 from cognite.neat.rules.models import RoleTypes, SchemaCompleteness
-from cognite.neat.rules.models._types._base import (
+from cognite.neat.utils.rdf_ import convert_rdflib_content
+from cognite.neat.utils.regex_patterns import (
     PREFIX_COMPLIANCE_REGEX,
     VERSION_COMPLIANCE_REGEX,
 )
-from cognite.neat.utils.utils import convert_rdflib_content
 
 
 def parse_imf_metadata() -> dict:
@@ -25,7 +25,7 @@ def parse_imf_metadata() -> dict:
 
     raw_metadata = convert_rdflib_content(
         {
-            "role": RoleTypes.information_architect,
+            "role": RoleTypes.information,
             "schema": SchemaCompleteness.partial,
             "prefix": "imf",
             "namespace": Namespace("http://posccaesar.org/imf"),
@@ -56,8 +56,16 @@ def make_metadata_compliant(metadata: dict) -> dict:
     metadata = fix_namespace(metadata, default=Namespace("https://posccaesar.org/imf/"))
     metadata = fix_prefix(metadata, default="pca-imf")
     metadata = fix_version(metadata)
-    metadata = fix_date(metadata, date_type="created", default=datetime.datetime.now().replace(microsecond=0))
-    metadata = fix_date(metadata, date_type="updated", default=datetime.datetime.now().replace(microsecond=0))
+    metadata = fix_date(
+        metadata,
+        date_type="created",
+        default=datetime.datetime.now().replace(microsecond=0),
+    )
+    metadata = fix_date(
+        metadata,
+        date_type="updated",
+        default=datetime.datetime.now().replace(microsecond=0),
+    )
     metadata = fix_title(metadata)
     metadata = fix_description(metadata)
     metadata = fix_author(metadata, "creator")
