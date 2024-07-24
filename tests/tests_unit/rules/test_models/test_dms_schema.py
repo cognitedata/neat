@@ -48,10 +48,10 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 view=dm.ViewId("my_space", "my_view1", "1"),
                 referred_by=dm.DataModelId("my_space", "my_data_model", "1"),
             ),
-            ReferredResourceNotFoundError(
-                repr(dm.ViewId("my_space", "my_view1", "1")),
+            ReferredResourceNotFoundError[dm.ViewId, dm.DataModelId](
+                dm.ViewId("my_space", "my_view1", "1"),
                 "View",
-                repr(dm.DataModelId("my_space", "my_data_model", "1")),
+                dm.DataModelId("my_space", "my_data_model", "1"),
                 "DataModel",
             ),
         ],
@@ -108,16 +108,16 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=ContainerApplyDict([container]),
         ),
         [
-            ReferredResourceNotFoundError(
-                repr(dm.ContainerId("my_space", "does_not_exist")),
+            ReferredResourceNotFoundError[dm.ContainerId, dm.ViewId](
+                dm.ContainerId("my_space", "does_not_exist"),
                 "Container",
-                repr(dm.ViewId("my_space", "my_view1", "1")),
+                dm.ViewId("my_space", "my_view1", "1"),
                 "View",
             ),
-            ReferredResourceNotFoundError(
-                repr(dm.ContainerId("my_space", "my_container")),
+            ReferredResourceNotFoundError[dm.ContainerId, dm.ViewId](
+                dm.ContainerId("my_space", "my_container"),
                 "Container",
-                repr(dm.ViewId("my_space", "my_view1", "1")),
+                dm.ViewId("my_space", "my_view1", "1"),
                 "View",
                 property_name="non_existing",
             ),
@@ -160,10 +160,10 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=ContainerApplyDict([container]),
         ),
         [
-            ReferredResourceNotFoundError(
+            ReferredResourceNotFoundError[str, dm.ContainerId](
                 identifier="non_existing_space",
                 resource_type="Space",
-                referred_by=repr(dm.ContainerId("non_existing_space", "my_container")),
+                referred_by=dm.ContainerId("non_existing_space", "my_container"),
                 referred_type="Container",
             ),
             DirectRelationMissingSourceWarning(
@@ -217,24 +217,24 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             views=ViewApplyDict([view1, view2]),
         ),
         [
-            ReferredResourceNotFoundError(
-                repr(dm.ViewId("my_space", "non_existing", "1")),
+            ReferredResourceNotFoundError[dm.ViewId, dm.ViewId](
+                dm.ViewId("my_space", "non_existing", "1"),
                 "View",
-                repr(dm.ViewId("my_space", "my_view1", "1")),
+                dm.ViewId("my_space", "my_view1", "1"),
                 "View",
                 property_name="implements",
             ),
-            ReferredResourceNotFoundError(
-                repr(dm.ViewId("my_space", "non_existing", "1")),
+            ReferredResourceNotFoundError[dm.ViewId, dm.ViewId](
+                dm.ViewId("my_space", "non_existing", "1"),
                 "View",
-                repr(dm.ViewId("my_space", "my_view1", "1")),
+                dm.ViewId("my_space", "my_view1", "1"),
                 "View",
                 property_name="non_existing",
             ),
-            ReferredResourceNotFoundError(
-                repr(dm.ViewId("my_space", "non_existing_edge_view", "1")),
+            ReferredResourceNotFoundError[dm.ViewId, dm.ViewId](
+                dm.ViewId("my_space", "non_existing_edge_view", "1"),
                 "View",
-                repr(dm.ViewId("my_space", "my_view1", "1")),
+                dm.ViewId("my_space", "my_view1", "1"),
                 "View",
                 property_name="non_existing",
             ),

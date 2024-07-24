@@ -26,10 +26,10 @@ def issues() -> IssueList:
                 row_numbers={4, 5},
                 nullable_definitions={True, False},
             ),
-            ReferredResourceNotFoundError(
-                repr(ContainerId("neat", "Flowable")),
+            ReferredResourceNotFoundError[ContainerId, ViewId](
+                ContainerId("neat", "Flowable"),
                 "Container",
-                repr(ViewId("neat", "Pump", "1")),
+                ViewId("neat", "Pump", "1"),
                 "View",
                 property_name="minFlow",
             ),

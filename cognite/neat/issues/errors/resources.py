@@ -1,14 +1,17 @@
+from collections.abc import Hashable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from cognite.neat.issues import NeatError
 
+T_Identifier = TypeVar("T_Identifier", bound=Hashable)
+
 
 @dataclass(frozen=True)
-class ResourceError(NeatError):
+class ResourceError(NeatError, Generic[T_Identifier]):
     """Base class for resource errors"""
 
-    identifier: str
+    identifier: T_Identifier
     resource_type: str
 
 
@@ -21,7 +24,7 @@ class ResourceNotFoundError(ResourceError):
 
     def message(self) -> str:
         return (self.__doc__ or "").format(
-            resource_type=self.resource_type, identifier=self.identifier, reason=self.reason
+            resource_type=self.resource_type, identifier=repr(self.identifier), reason=self.reason
         )
 
     def dump(self) -> dict[str, Any]:
@@ -32,22 +35,25 @@ class ResourceNotFoundError(ResourceError):
         return output
 
 
+T_ReferenceIdentifier = TypeVar("T_ReferenceIdentifier", bound=Hashable)
+
+
 @dataclass(frozen=True)
-class ReferredResourceNotFoundError(ResourceError):
+class ReferredResourceNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} referred by {referred_type} {referred_by} does not exist"""
 
     fix = "Create the {resource_type}"
 
-    referred_by: str
+    referred_by: T_ReferenceIdentifier
     referred_type: str
     property_name: str | None = None
 
     def message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type,
-            identifier=self.identifier,
+            identifier=repr(self.identifier),
             referred_type=self.referred_type,
-            referred_by=self.referred_by,
+            referred_by=repr(self.referred_by),
         )
 
     def dump(self) -> dict[str, Any]:

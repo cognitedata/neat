@@ -3,8 +3,8 @@ from typing import Any, ClassVar
 
 from cognite.client import data_modeling as dm
 
+from cognite.neat.issues import NeatIssue, NeatIssueList
 from cognite.neat.rules import issues
-from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
@@ -29,9 +29,9 @@ class DMSPostValidation:
         self.properties = rules.properties
         self.containers = rules.containers
         self.views = rules.views
-        self.issue_list = IssueList()
+        self.issue_list = NeatIssueList[NeatIssue]()
 
-    def validate(self) -> IssueList:
+    def validate(self) -> NeatIssueList:
         self._validate_raw_filter()
         self._consistent_container_properties()
 

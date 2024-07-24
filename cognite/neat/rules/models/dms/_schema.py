@@ -530,19 +530,21 @@ class DMSSchema:
         for container in self.containers.values():
             if container.space not in defined_spaces:
                 errors.add(
-                    ReferredResourceNotFoundError(container.space, "Space", repr(container.as_id()), "Container")
+                    ReferredResourceNotFoundError[str, dm.ContainerId](
+                        container.space, "Space", container.as_id(), "Container"
+                    )
                 )
 
         for view in self.views.values():
             view_id = view.as_id()
             if view.space not in defined_spaces:
-                errors.add(ReferredResourceNotFoundError(view.space, "Space", repr(view_id), "View"))
+                errors.add(ReferredResourceNotFoundError[str, dm.ViewId](view.space, "Space", view_id, "View"))
 
             for parent in view.implements or []:
                 if parent not in defined_views:
                     errors.add(
-                        ReferredResourceNotFoundError(
-                            repr(parent), "View", repr(view_id), "View", property_name="implements"
+                        ReferredResourceNotFoundError[dm.ViewId, dm.ViewId](
+                            parent, "View", view_id, "View", property_name="implements"
                         )
                     )
 
@@ -551,14 +553,16 @@ class DMSSchema:
                     ref_container = defined_containers.get(prop.container)
                     if ref_container is None:
                         errors.add(
-                            ReferredResourceNotFoundError(repr(prop.container), "Container", repr(view_id), "View")
+                            ReferredResourceNotFoundError[dm.ContainerId, dm.ViewId](
+                                prop.container, "Container", view_id, "View"
+                            )
                         )
                     elif prop.container_property_identifier not in ref_container.properties:
                         errors.add(
-                            ReferredResourceNotFoundError(
-                                repr(prop.container),
+                            ReferredResourceNotFoundError[dm.ContainerId, dm.ViewId](
+                                prop.container,
                                 "Container",
-                                repr(view_id),
+                                view_id,
                                 "View",
                                 property_name=prop.container_property_identifier,
                             )
@@ -573,8 +577,8 @@ class DMSSchema:
 
                 if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
                     errors.add(
-                        ReferredResourceNotFoundError(
-                            repr(prop.source), "View", repr(view_id), "View", property_name=prop_name
+                        ReferredResourceNotFoundError[dm.ViewId, dm.ViewId](
+                            prop.source, "View", view_id, "View", property_name=prop_name
                         )
                     )
 
@@ -584,8 +588,8 @@ class DMSSchema:
                     and prop.edge_source not in defined_views
                 ):
                     errors.add(
-                        ReferredResourceNotFoundError(
-                            repr(prop.edge_source), "View", repr(view_id), "View", property_name=prop_name
+                        ReferredResourceNotFoundError[dm.ViewId, dm.ViewId](
+                            prop.edge_source, "View", view_id, "View", property_name=prop_name
                         )
                     )
 
@@ -622,13 +626,21 @@ class DMSSchema:
         if self.data_model:
             model = self.data_model
             if model.space not in defined_spaces:
-                errors.add(ReferredResourceNotFoundError(model.space, "Space", repr(model.as_id()), "Data Model"))
+                errors.add(
+                    ReferredResourceNotFoundError[str, dm.DataModelId](
+                        model.space, "Space", model.as_id(), "Data Model"
+                    )
+                )
 
             view_counts: dict[dm.ViewId, int] = defaultdict(int)
             for view_id_or_class in model.views or []:
                 view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
                 if view_id not in defined_views:
-                    errors.add(ReferredResourceNotFoundError(repr(view_id), "View", repr(model.as_id()), "DataModel"))
+                    errors.add(
+                        ReferredResourceNotFoundError[dm.ViewId, dm.DataModelId](
+                            view_id, "View", model.as_id(), "DataModel"
+                        )
+                    )
                 view_counts[view_id] += 1
 
             for view_id, count in view_counts.items():
