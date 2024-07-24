@@ -151,7 +151,7 @@ class NeatGraphStore:
 
         graph = Graph(
             store=oxrdflib.OxigraphStore(store=oxi_store),
-            identifier=URIRef(DEFAULT_NAMESPACE),
+            identifier=DEFAULT_NAMESPACE,
         )
 
         return cls(graph, rules)
