@@ -33,7 +33,7 @@ def are_entity_names_dms_compliant(
                 )
                 flag = False
 
-        for row, property_ in enumerate(rules.properties):
+        for _, property_ in enumerate(rules.properties):
             # check class id which would resolve as view/container id
             if not PATTERNS.view_id_compliance.match(property_.class_.suffix):
                 warnings.warn(

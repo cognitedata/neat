@@ -315,6 +315,36 @@ class ClassNoPropertiesNoParentError(NeatValidationError):
 
 
 @dataclass(frozen=True)
+class DefaultValueTypeNotProper(NeatValidationError):
+    """This exceptions is raised when default value type is not proper, i.e. it is not
+    according to the expected value type set in Rules.
+
+
+    Args:
+        default_value_type: default value type that raised exception
+        expected_value_type: expected value type that raised exception
+
+    """
+
+    description = (
+        "This exceptions is raised when default value type is not proper, i.e. it is not "
+        "according to the expected value type set in Rules."
+    )
+    property_id: str
+    default_value_type: str
+    expected_value_type: str
+
+    def message(self) -> str:
+        message = (
+            f"Default value for property {self.property_id} is of type {self.default_value_type} "
+            f"which is different from the expected value type {self.expected_value_type}!"
+        )
+        message += f"\nDescription: {self.description}"
+        message += f"\nFix: {self.fix}"
+        return message
+
+
+@dataclass(frozen=True)
 class AssetRulesHaveCircularDependencyError(NeatValidationError):
     description = "Asset rules have circular dependencies."
     fix = "Linking between classes via property that maps to parent_external_id must yield hierarchy structure."

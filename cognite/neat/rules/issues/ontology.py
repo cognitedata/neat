@@ -30,6 +30,7 @@ class OntologyMultiLabeledProperty(OntologyWarning):
     Notes:
         This would be automatically fixed by taking the first label (aka name) of the property.
     """
+
     description = (
         "This warning occurs when a property is given multiple labels,"
         " typically if the same property is defined for different "
@@ -63,6 +64,7 @@ class OntologyMultiDefinitionProperty(OntologyWarning):
     Notes:
         This would be automatically fixed by concatenating all definitions.
     """
+
     description = (
         "This warning occurs when a property is given multiple human readable definitions,"
         " typically if the same property is defined for different "
@@ -81,6 +83,7 @@ class OntologyMultiDefinitionProperty(OntologyWarning):
         message += f"\nFix: {self.fix}"
         return message
 
+
 @dataclass(frozen=True)
 class OntologyMultiTypeProperty(OntologyWarning):
     """This warning occurs when a same property is define for two object/classes where
@@ -95,13 +98,14 @@ class OntologyMultiTypeProperty(OntologyWarning):
         If a property takes different value types for different objects, simply define
         new property. It is bad practice to have multi type property!
     """
+
     description = (
         "This warning occurs when a same property is define for two object/classes where"
         " its expected value type is different in one definition, e.g. acts as an edge, while in "
         "other definition acts as and attribute"
     )
     fix = "If a property takes different value types for different objects, simply define new property"
-    
+
     property_id: str
     types: list[str] | None = None
 
@@ -113,6 +117,7 @@ class OntologyMultiTypeProperty(OntologyWarning):
         message += f"\nDescription: {self.description}"
         message += f"\nFix: {self.fix}"
         return message
+
 
 @dataclass(frozen=True)
 class OntologyMultiRangeProperty(OntologyWarning):
@@ -157,6 +162,7 @@ class OntologyMultiDomainProperty(OntologyWarning):
         No need to fix this, but make sure that property type is consistent across different
         classes and that ideally takes the same range of values
     """
+
     description = "This warning occurs when a property is reused for more than one classes."
     fix = (
         "No need to fix this, but make sure that property type is consistent"
@@ -192,17 +198,16 @@ class PropertiesDefinedMultipleTimes(OntologyError):
         "DMS schema when properties are defined multiple times for the same class."
     )
     fix = "Make sure to check validation report of Transformation Rules and fix DMS related warnings."
-    
+
     report: str
-    
+
     def message(self) -> str:
-        message = (
-            f"Following properties defined multiple times for the same class(es): {self.report}"
-        )
+        message = f"Following properties defined multiple times for the same class(es): {self.report}"
 
         message += f"\nDescription: {self.description}"
         message += f"\nFix: {self.fix}"
         return message
+
 
 @dataclass(frozen=True)
 class PropertyDefinitionsNotForSameProperty(OntologyError):
@@ -216,13 +221,12 @@ class PropertyDefinitionsNotForSameProperty(OntologyError):
     description = "This error is raised if property definitions are not for linked to the same property id"
 
     def message(self):
-        message = (
-            "All definitions should have the same property_id! Aborting."
-        )
+        message = "All definitions should have the same property_id! Aborting."
 
         message += f"\nDescription: {self.description}"
         message += f"\nFix: {self.fix}"
         return message
+
 
 @dataclass(frozen=True)
 class PrefixMissing(OntologyError):
@@ -232,14 +236,13 @@ class PrefixMissing(OntologyError):
         verbose: flag that indicates whether to provide enhanced exception message, by default False
 
     """
+
     description = "Prefix is missing from the 'Metadata' sheet."
     example = "There is no prefix in the 'Metadata' sheet."
     fix = "Specify the prefix if prefix in the 'Metadata' sheet."
 
     def message(self) -> str:
-        message = (
-            f"Missing prefix stored in 'Metadata' sheet."
-        )
+        message = "Missing prefix stored in 'Metadata' sheet."
         message += f"\nDescription: {self.description}"
         message += f"\nExample: {self.example}"
         message += f"\nFix: {self.fix}"
@@ -256,6 +259,7 @@ class MissingDataModelPrefixOrNamespace(ValidationWarning):
     Notes:
     Add missing prefix and/or namespace in the 'Metadata' sheet
     """
+
     description = "Either prefix or namespace or both are missing in the 'Metadata' sheet"
     fix = "Add missing prefix and/or namespace in the 'Metadata' sheet"
 
@@ -263,7 +267,7 @@ class MissingDataModelPrefixOrNamespace(ValidationWarning):
         message = (
             "Instances sheet is present but prefix and/or namespace are missing in 'Metadata' sheet."
             "Instances sheet will not be processed!"
-    )
+        )
         message += f"\nDescription: {self.description}"
         message += f"\nFix: {self.fix}"
         return message
@@ -282,14 +286,13 @@ class MetadataSheetNamespaceNotDefined(OntologyError):
         containing only allowed characters.
 
     """
+
     description = "namespace, which is in the 'Metadata' sheet, is missing"
     example: ClassVar[str] = "Example of a valid namespace 'http://www.w3.org/ns/sparql#'"
     fix = "Define the 'namespace' in the 'Metadata' sheet."
 
     def message(self) -> str:
-        message = (
-            f"Missing namespace  in 'Metadata' sheet."
-        )
+        message = "Missing namespace  in 'Metadata' sheet."
         message += f"\nDescription: {self.description}"
         message += f"\nExample: {self.example}"
         message += f"\nFix: {self.fix}"
