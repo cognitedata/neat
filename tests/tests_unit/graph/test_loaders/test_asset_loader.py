@@ -75,7 +75,7 @@ class TestAssetLoader:
             elif isinstance(r, RelationshipWrite):
                 relationships.append(r)
 
-        assert len(errors) == 28
+        assert len(errors) == 26
         assert len(assets) == 630
         assert len(relationships) == 572
         assert assets[0] == loader.orphanage

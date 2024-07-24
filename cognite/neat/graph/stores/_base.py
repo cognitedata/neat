@@ -10,7 +10,6 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.exceptions import NeatTypeError
 from cognite.neat.graph._shared import MIMETypes
 from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.graph.models import Triple
@@ -109,7 +108,7 @@ class NeatGraphStore:
 
     @classmethod
     def from_memory_store(cls, rules: InformationRules | None = None) -> "Self":
-        return cls(Graph(), rules)
+        return cls(Graph(identifier=DEFAULT_NAMESPACE), rules)
 
     @classmethod
     def from_sparql_store(
@@ -127,16 +126,16 @@ class NeatGraphStore:
             postAsEncoded=False,
             autocommit=False,
         )
-        graph = Graph(store=store)
+        graph = Graph(store=store, identifier=DEFAULT_NAMESPACE)
         return cls(graph, rules)
 
     @classmethod
     def from_oxi_store(cls, storage_dir: Path | None = None, rules: InformationRules | None = None) -> "Self":
         """Creates a NeatGraphStore from an Oxigraph store."""
         local_import("pyoxigraph", "oxi")
+        local_import("oxrdflib", "oxi")
+        import oxrdflib
         import pyoxigraph
-
-        from cognite.neat.graph.stores._oxrdflib import OxigraphStore
 
         # Adding support for both oxigraph in-memory and file-based storage
         for i in range(4):
@@ -150,8 +149,10 @@ class NeatGraphStore:
         else:
             raise Exception("Error initializing Oxigraph store")
 
-        graph = Graph(store=OxigraphStore(store=oxi_store))
-        graph.default_union = True
+        graph = Graph(
+            store=oxrdflib.OxigraphStore(store=oxi_store),
+            identifier=DEFAULT_NAMESPACE,
+        )
 
         return cls(graph, rules)
 
@@ -231,18 +232,15 @@ class NeatGraphStore:
 
             def parse_to_oxi_store():
                 local_import("pyoxigraph", "oxi")
-                from cognite.neat.graph.stores._oxrdflib import OxigraphStore
+                import pyoxigraph
 
-                try:
-                    cast(OxigraphStore, self.graph.store)._inner.bulk_load(str(filepath), mime_type, base_iri=base_uri)  # type: ignore[attr-defined]
-                except SyntaxError as e:
-                    if base_uri is None:
-                        raise NeatTypeError(
-                            f"Error parsing file {filepath.name}. This is likely "
-                            f"caused by an relative IRI. Suggest setting the parameter base_uri"
-                        ) from e
-                    raise
-                cast(OxigraphStore, self.graph.store)._inner.optimize()  # type: ignore[attr-defined]
+                cast(pyoxigraph.Store, self.graph.store._store).bulk_load(
+                    str(filepath),
+                    mime_type,
+                    base_iri=base_uri,
+                    to_graph=pyoxigraph.NamedNode(self.graph.identifier),
+                )
+                cast(pyoxigraph.Store, self.graph.store._store).optimize()
 
             parse_to_oxi_store()
 
