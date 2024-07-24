@@ -110,3 +110,16 @@ class FailedLoadingResourcesWarning(NeatWarning, Generic[T_Identifier]):
         output["resource_type"] = self.resource_type
         output["resources"] = self.resources
         return output
+
+
+class ResourceTypeNotSupportedWarning(ResourceWarning[T_Identifier]):
+    """The {resource_type} with identifier {identifier} is not supported. This will be ignored."""
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(resource_type=self.resource_type, identifier=repr(self.identifier))
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["resource_type"] = self.resource_type
+        output["identifier"] = self.identifier
+        return output

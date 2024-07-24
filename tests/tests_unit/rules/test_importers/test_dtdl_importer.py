@@ -2,6 +2,8 @@ import pytest
 
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors.resources import MissingIdentifierError
+from cognite.neat.issues.neat_warnings.properties import PropertyTypeNotSupportedWarning
+from cognite.neat.issues.neat_warnings.resources import ResourceTypeNotSupportedWarning
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DTDLImporter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTMI, Interface
@@ -27,16 +29,13 @@ class TestDTDLImporter:
     def test_import_temperature_controller_example_dtdl_v2(self) -> None:
         expected_issues = IssueList(
             [
-                validation.importing.UnknownPropertyWarning(
-                    component_type="Component",
-                    property_name="schema",
-                    instance_name="Device Information interface",
-                    instance_id=None,
+                PropertyTypeNotSupportedWarning(
+                    "Device Information interface",
+                    "Component",
+                    "schema",
+                    "Thermostat",
                 ),
-                validation.importing.IgnoredComponentWarning(
-                    reason="Neat does not have a concept of response for commands. This will be ignored.",
-                    identifier="com_example:Thermostat(version=1).response",
-                ),
+                ResourceTypeNotSupportedWarning[str]("com_example:Thermostat(version=1).response", "Command.Response"),
             ]
         )
         dtdl_importer = DTDLImporter.from_zip(DTDL_IMPORTER_DATA / "TemperatureController.zip")

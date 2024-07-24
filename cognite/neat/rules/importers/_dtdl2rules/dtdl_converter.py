@@ -4,6 +4,8 @@ from collections.abc import Callable, Sequence
 from cognite.neat.issues import IssueList, NeatIssue
 from cognite.neat.issues.errors.properties import PropertyTypeNotSupportedError
 from cognite.neat.issues.errors.resources import MissingIdentifierError, ResourceNotFoundError
+from cognite.neat.issues.neat_warnings.properties import PropertyTypeNotSupportedWarning
+from cognite.neat.issues.neat_warnings.resources import ResourceTypeNotSupportedWarning
 from cognite.neat.rules import issues
 from cognite.neat.rules.importers._dtdl2rules.spec import (
     DTMI,
@@ -96,11 +98,11 @@ class _DTDLConverter:
         for sub_item_or_id in item.contents or []:
             if isinstance(sub_item_or_id, DTMI) and sub_item_or_id not in self._item_by_id:
                 self.issues.append(
-                    issues.importing.UnknownPropertyWarning(
-                        component_type=item.type,
-                        property_name=sub_item_or_id.path[-1],
-                        instance_name=item.display_name,
-                        instance_id=item.id_.model_dump(),
+                    PropertyTypeNotSupportedWarning(
+                        item.id_.model_dump() or item.display_name or "missing",
+                        item.type,
+                        sub_item_or_id.path[-1],
+                        ".".join(sub_item_or_id.path),
                     )
                 )
             elif isinstance(sub_item_or_id, DTMI):
@@ -161,12 +163,7 @@ class _DTDLConverter:
             return None
         if item.response is not None:
             # Currently, we do not know how to handle response
-            self.issues.append(
-                issues.importing.IgnoredComponentWarning(
-                    identifier=f"{parent}.response",
-                    reason="Neat does not have a concept of response for commands. This will be ignored.",
-                )
-            )
+            self.issues.append(ResourceTypeNotSupportedWarning[str](f"{parent}.response", "Command.Response"))
         value_type = self.schema_to_value_type(item.request.schema_, item)
         if value_type is None:
             return
@@ -302,11 +299,11 @@ class _DTDLConverter:
                 return ClassEntity.load(input_type.id_.as_class_id())
         else:
             self.issues.append(
-                issues.importing.UnknownPropertyWarning(
-                    component_type=item.type,
-                    property_name="schema",
-                    instance_name=item.display_name,
-                    instance_id=item.id_.model_dump() if item.id_ else None,
+                PropertyTypeNotSupportedWarning(
+                    item.id_.model_dump() if item.id_ else item.display_name or "missing",
+                    item.type,
+                    "schema",
+                    input_type.type if input_type else "missing",
                 )
             )
             return None
