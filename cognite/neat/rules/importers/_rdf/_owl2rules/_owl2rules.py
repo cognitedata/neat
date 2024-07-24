@@ -6,9 +6,9 @@ from typing import Literal, overload
 
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
+from cognite.neat.issues import IssueList
 from cognite.neat.rules.importers._base import BaseImporter, Rules
 from cognite.neat.rules.importers._rdf._shared import make_components_compliant
-from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models import InformationRules, RoleTypes
 
 from ._owl2classes import parse_owl_classes
