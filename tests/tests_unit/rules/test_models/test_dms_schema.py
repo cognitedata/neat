@@ -7,19 +7,14 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
+from cognite.neat.issues import NeatError, NeatWarning
+from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues.dms import (
     DirectRelationMissingSourceWarning,
     DMSSchemaError,
     DMSSchemaWarning,
     DuplicatedViewInDataModelError,
-    MissingContainerError,
-    MissingContainerPropertyError,
-    MissingEdgeViewError,
-    MissingParentViewError,
-    MissingSourceViewError,
-    MissingSpaceError,
-    MissingViewError,
 )
 from cognite.neat.rules.models import DMSSchema
 from cognite.neat.rules.models.dms import PipelineSchema
@@ -53,9 +48,11 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 view=dm.ViewId("my_space", "my_view1", "1"),
                 referred_by=dm.DataModelId("my_space", "my_data_model", "1"),
             ),
-            MissingViewError(
-                view=dm.ViewId("my_space", "my_view1", "1"),
-                referred_by=dm.DataModelId("my_space", "my_data_model", "1"),
+            ReferredResourceNotFoundError(
+                repr(dm.ViewId("my_space", "my_view1", "1")),
+                "View",
+                repr(dm.DataModelId("my_space", "my_data_model", "1")),
+                "DataModel",
             ),
         ],
         id="Duplicated and missing view in data model",
@@ -111,14 +108,18 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=ContainerApplyDict([container]),
         ),
         [
-            MissingContainerError(
-                container=dm.ContainerId("my_space", "does_not_exist"),
-                referred_by=dm.ViewId("my_space", "my_view1", "1"),
+            ReferredResourceNotFoundError(
+                repr(dm.ContainerId("my_space", "does_not_exist")),
+                "Container",
+                repr(dm.ViewId("my_space", "my_view1", "1")),
+                "View",
             ),
-            MissingContainerPropertyError(
-                container=dm.ContainerId("my_space", "my_container"),
-                property="non_existing",
-                referred_by=dm.ViewId("my_space", "my_view1", "1"),
+            ReferredResourceNotFoundError(
+                repr(dm.ContainerId("my_space", "my_container")),
+                "Container",
+                repr(dm.ViewId("my_space", "my_view1", "1")),
+                "View",
+                property_name="non_existing",
             ),
         ],
         id="Missing container and properties. Container property used multiple times.",
@@ -159,9 +160,11 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=ContainerApplyDict([container]),
         ),
         [
-            MissingSpaceError(
-                space="non_existing_space",
-                referred_by=dm.ContainerId("non_existing_space", "my_container"),
+            ReferredResourceNotFoundError(
+                identifier="non_existing_space",
+                resource_type="Space",
+                referred_by=repr(dm.ContainerId("non_existing_space", "my_container")),
+                referred_type="Container",
             ),
             DirectRelationMissingSourceWarning(
                 view_id=dm.ViewId("my_space", "my_view1", "1"),
@@ -214,19 +217,26 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             views=ViewApplyDict([view1, view2]),
         ),
         [
-            MissingParentViewError(
-                view=dm.ViewId("my_space", "non_existing", "1"),
-                referred_by=dm.ViewId("my_space", "my_view1", "1"),
+            ReferredResourceNotFoundError(
+                repr(dm.ViewId("my_space", "non_existing", "1")),
+                "View",
+                repr(dm.ViewId("my_space", "my_view1", "1")),
+                "View",
+                property_name="implements",
             ),
-            MissingEdgeViewError(
-                view=dm.ViewId("my_space", "non_existing_edge_view", "1"),
-                property="non_existing",
-                referred_by=dm.ViewId("my_space", "my_view1", "1"),
+            ReferredResourceNotFoundError(
+                repr(dm.ViewId("my_space", "non_existing", "1")),
+                "View",
+                repr(dm.ViewId("my_space", "my_view1", "1")),
+                "View",
+                property_name="non_existing",
             ),
-            MissingSourceViewError(
-                view=dm.ViewId("my_space", "non_existing", "1"),
-                property="non_existing",
-                referred_by=dm.ViewId("my_space", "my_view1", "1"),
+            ReferredResourceNotFoundError(
+                repr(dm.ViewId("my_space", "non_existing_edge_view", "1")),
+                "View",
+                repr(dm.ViewId("my_space", "my_view1", "1")),
+                "View",
+                property_name="non_existing",
             ),
         ],
         id="Missing parent view, edge view, and source view",
@@ -335,13 +345,13 @@ class TestDMSSchema:
         list(invalid_schema_test_cases()),
     )
     def test_invalid_schema(self, schema: DMSSchema, expected: list[DMSSchemaError | DMSSchemaWarning]) -> None:
-        expected_errors = [error for error in expected if isinstance(error, DMSSchemaError)]
-        expected_warnings = [warning for warning in expected if isinstance(warning, DMSSchemaWarning)]
+        expected_errors = [error for error in expected if isinstance(error, NeatError)]
+        expected_warnings = [warning for warning in expected if isinstance(warning, NeatWarning)]
         with warnings.catch_warnings(record=True) as warning_logger:
             errors = schema.validate()
-        assert sorted(errors) == sorted(expected_errors)
+        assert set(errors) == set(expected_errors)
         actual_warnings = [warning.message for warning in warning_logger]
-        assert sorted(actual_warnings) == sorted(expected_warnings)
+        assert set(actual_warnings) == set(expected_warnings)
 
     @pytest.mark.parametrize(
         "schema",

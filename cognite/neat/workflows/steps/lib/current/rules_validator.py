@@ -5,9 +5,9 @@ from typing import ClassVar
 
 from cognite.client import CogniteClient
 
+from cognite.neat.issues import NeatIssueList
+from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
 from cognite.neat.issues.formatters import FORMATTER_BY_NAME
-from cognite.neat.rules.issues import IssueList
-from cognite.neat.rules.issues.dms import MissingContainerError, MissingSpaceError, MissingViewError
 from cognite.neat.rules.models import DMSRules, SchemaCompleteness
 from cognite.neat.utils.cdf.loaders import ViewLoader
 from cognite.neat.workflows._exceptions import StepNotInitialized
@@ -61,9 +61,21 @@ class ValidateRulesAgainstCDF(Step):
         if not errors:
             return FlowMessage(output_text="Rules are complete and valid. No need to fetch from CDF.")
 
-        missing_spaces = [error.space for error in errors if isinstance(error, MissingSpaceError)]
-        missing_views = [error.view for error in errors if isinstance(error, MissingViewError)]
-        missing_containers = [error.container for error in errors if isinstance(error, MissingContainerError)]
+        missing_spaces = [
+            error.identifier
+            for error in errors
+            if isinstance(error, ReferredResourceNotFoundError) and error.resource_type == "Space"
+        ]
+        missing_views = [
+            error.identifier
+            for error in errors
+            if isinstance(error, ReferredResourceNotFoundError) and error.resource_type == "View"
+        ]
+        missing_containers = [
+            error.identifier
+            for error in errors
+            if isinstance(error, ReferredResourceNotFoundError) and error.resource_type == "Container"
+        ]
 
         retrieved_spaces = cdf_client.data_modeling.spaces.retrieve(missing_spaces).as_write()
         retrieved_containers = cdf_client.data_modeling.containers.retrieve(missing_containers).as_write()
@@ -87,7 +99,7 @@ class ValidateRulesAgainstCDF(Step):
             output_dir = self.data_store_path / Path("staging")
             report_writer = FORMATTER_BY_NAME[self.configs["Report Formatter"]]()
             report_writer.write_to_file(
-                IssueList(errors, title=dms_rules.metadata.name or dms_rules.metadata.external_id),
+                NeatIssueList(errors, title=dms_rules.metadata.name or dms_rules.metadata.external_id),
                 file_or_dir_path=output_dir,
             )
             report_file = report_writer.default_file_name

@@ -25,20 +25,14 @@ from cognite.client.data_classes.data_modeling.views import (
 )
 from cognite.client.data_classes.transformations.common import Edges, EdgeType, Nodes, ViewInfo
 
+from cognite.neat.issues import NeatError
+from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
     DirectRelationMissingSourceWarning,
-    DMSSchemaError,
     DuplicatedViewInDataModelError,
     IncompleteSchemaError,
-    MissingContainerError,
-    MissingContainerPropertyError,
-    MissingEdgeViewError,
-    MissingParentViewError,
-    MissingSourceViewError,
-    MissingSpaceError,
-    MissingViewError,
     MissingViewInModelWarning,
 )
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
@@ -522,8 +516,8 @@ class DMSSchema:
         else:
             raise ValueError(f"Cannot sort item of type {type(item)}")
 
-    def validate(self) -> list[DMSSchemaError]:
-        errors: set[DMSSchemaError] = set()
+    def validate(self) -> list[NeatError]:
+        errors: set[NeatError] = set()
         defined_spaces = self.spaces.copy()
         defined_containers = self.containers.copy()
         defined_views = self.views.copy()
@@ -535,28 +529,38 @@ class DMSSchema:
 
         for container in self.containers.values():
             if container.space not in defined_spaces:
-                errors.add(MissingSpaceError(space=container.space, referred_by=container.as_id()))
+                errors.add(
+                    ReferredResourceNotFoundError(container.space, "Space", repr(container.as_id()), "Container")
+                )
 
         for view in self.views.values():
             view_id = view.as_id()
             if view.space not in defined_spaces:
-                errors.add(MissingSpaceError(space=view.space, referred_by=view_id))
+                errors.add(ReferredResourceNotFoundError(view.space, "Space", repr(view_id), "View"))
 
             for parent in view.implements or []:
                 if parent not in defined_views:
-                    errors.add(MissingParentViewError(view=parent, referred_by=view_id))
+                    errors.add(
+                        ReferredResourceNotFoundError(
+                            repr(parent), "View", repr(view_id), "View", property_name="implements"
+                        )
+                    )
 
             for prop_name, prop in (view.properties or {}).items():
                 if isinstance(prop, dm.MappedPropertyApply):
                     ref_container = defined_containers.get(prop.container)
                     if ref_container is None:
-                        errors.add(MissingContainerError(container=prop.container, referred_by=view_id))
+                        errors.add(
+                            ReferredResourceNotFoundError(repr(prop.container), "Container", repr(view_id), "View")
+                        )
                     elif prop.container_property_identifier not in ref_container.properties:
                         errors.add(
-                            MissingContainerPropertyError(
-                                container=prop.container,
-                                property=prop.container_property_identifier,
-                                referred_by=view_id,
+                            ReferredResourceNotFoundError(
+                                repr(prop.container),
+                                "Container",
+                                repr(view_id),
+                                "View",
+                                property_name=prop.container_property_identifier,
                             )
                         )
                     else:
@@ -568,14 +572,22 @@ class DMSSchema:
                             )
 
                 if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
-                    errors.add(MissingSourceViewError(view=prop.source, property=prop_name, referred_by=view_id))
+                    errors.add(
+                        ReferredResourceNotFoundError(
+                            repr(prop.source), "View", repr(view_id), "View", property_name=prop_name
+                        )
+                    )
 
                 if (
                     isinstance(prop, dm.EdgeConnectionApply)
                     and prop.edge_source is not None
                     and prop.edge_source not in defined_views
                 ):
-                    errors.add(MissingEdgeViewError(view=prop.edge_source, property=prop_name, referred_by=view_id))
+                    errors.add(
+                        ReferredResourceNotFoundError(
+                            repr(prop.edge_source), "View", repr(view_id), "View", property_name=prop_name
+                        )
+                    )
 
             # This allows for multiple view properties to be mapped to the same container property,
             # as long as they have different external_id, otherwise this will lead to raising
@@ -610,13 +622,13 @@ class DMSSchema:
         if self.data_model:
             model = self.data_model
             if model.space not in defined_spaces:
-                errors.add(MissingSpaceError(space=model.space, referred_by=model.as_id()))
+                errors.add(ReferredResourceNotFoundError(model.space, "Space", repr(model.as_id()), "Data Model"))
 
             view_counts: dict[dm.ViewId, int] = defaultdict(int)
             for view_id_or_class in model.views or []:
                 view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
                 if view_id not in defined_views:
-                    errors.add(MissingViewError(referred_by=model.as_id(), view=view_id))
+                    errors.add(ReferredResourceNotFoundError(repr(view_id), "View", repr(model.as_id()), "DataModel"))
                 view_counts[view_id] += 1
 
             for view_id, count in view_counts.items():

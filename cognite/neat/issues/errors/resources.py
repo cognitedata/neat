@@ -5,13 +5,18 @@ from cognite.neat.issues import NeatError
 
 
 @dataclass(frozen=True)
-class ResourceNotFoundError(NeatError):
-    """The {resource_type} with identifier {identifier} is missing: {reason}"""
-
-    fix = "Check the {type} identifier and try again."
+class ResourceError(NeatError):
+    """Base class for resource errors"""
 
     identifier: str
     resource_type: str
+
+
+@dataclass(frozen=True)
+class ResourceNotFoundError(ResourceError):
+    """The {resource_type} with identifier {identifier} is missing: {reason}"""
+
+    fix = "Check the {resource_type} {identifier} and try again."
     reason: str
 
     def message(self) -> str:
@@ -24,6 +29,33 @@ class ResourceNotFoundError(NeatError):
         output["resource_type"] = self.resource_type
         output["identifier"] = self.identifier
         output["reason"] = self.reason
+        return output
+
+
+@dataclass(frozen=True)
+class ReferredResourceNotFoundError(ResourceError):
+    """The {resource_type} with identifier {identifier} referred by {referred_type} {referred_by} does not exist"""
+
+    fix = "Create the {resource_type}"
+
+    referred_by: str
+    referred_type: str
+    property_name: str | None = None
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(
+            resource_type=self.resource_type,
+            identifier=self.identifier,
+            referred_type=self.referred_type,
+            referred_by=self.referred_by,
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["resource_type"] = self.resource_type
+        output["identifier"] = self.identifier
+        output["referred_by"] = self.referred_by
+        output["referred_type"] = self.referred_type
         return output
 
 

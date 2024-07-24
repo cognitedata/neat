@@ -2,6 +2,7 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 import cognite.neat.rules.issues.spreadsheet
+from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
 from cognite.neat.issues.formatters import BasicHTML
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.issues import IssueList
@@ -25,8 +26,12 @@ def issues() -> IssueList:
                 row_numbers={4, 5},
                 nullable_definitions={True, False},
             ),
-            validation.dms.MissingContainerPropertyError(
-                container=ContainerId("neat", "Flowable"), property="minFlow", referred_by=ViewId("neat", "Pump", "1")
+            ReferredResourceNotFoundError(
+                repr(ContainerId("neat", "Flowable")),
+                "Container",
+                repr(ViewId("neat", "Pump", "1")),
+                "View",
+                property_name="minFlow",
             ),
         ],
         title="Test title",
