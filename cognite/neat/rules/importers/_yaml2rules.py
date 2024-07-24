@@ -3,8 +3,9 @@ from typing import Any, Literal, overload
 
 import yaml
 
+from cognite.neat.issues import IssueList
 from cognite.neat.rules import issues
-from cognite.neat.rules.issues import IssueList, NeatValidationError, ValidationIssue
+from cognite.neat.rules.issues import NeatValidationError, ValidationIssue
 from cognite.neat.rules.models import RULES_PER_ROLE, DMSRules, RoleTypes
 from cognite.neat.rules.models.dms import DMSRulesInput
 

@@ -6,9 +6,9 @@ from pydantic.version import VERSION
 
 import cognite.neat.rules.issues.spreadsheet
 import cognite.neat.rules.issues.spreadsheet_file
+from cognite.neat.issues import IssueList
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
-from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
 from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA

@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from .base import IssueList, NeatValidationError, ValidationWarning
+from ._base import NeatError, NeatIssueList, NeatWarning
 
 __all__ = ["Formatter", "BasicHTML", "FORMATTER_BY_NAME"]
 
@@ -13,14 +13,14 @@ class Formatter(ABC):
     default_file_prefix: str = "validation_report"
 
     @abstractmethod
-    def create_report(self, issues: IssueList) -> str:
+    def create_report(self, issues: NeatIssueList) -> str:
         raise NotImplementedError()
 
     @property
     def default_file_name(self) -> str:
         return f"{self.default_file_prefix}_{type(self).__name__.lower()}{self.file_suffix}"
 
-    def write_to_file(self, issues: IssueList, file_or_dir_path: Path | None = None) -> None:
+    def write_to_file(self, issues: NeatIssueList, file_or_dir_path: Path | None = None) -> None:
         if file_or_dir_path is None:
             file_or_dir_path = Path(self.default_file_name)
         elif file_or_dir_path.is_dir():
@@ -41,9 +41,9 @@ class BasicHTML(Formatter):
         self._doc = ET.Element("html")
         self._body = ET.SubElement(self._doc, "body")
 
-    def create_report(self, issues: IssueList) -> str:
-        errors = [issue for issue in issues if isinstance(issue, NeatValidationError)]
-        warnings_ = [issue for issue in issues if isinstance(issue, ValidationWarning)]
+    def create_report(self, issues: NeatIssueList) -> str:
+        errors = [issue for issue in issues if isinstance(issue, NeatError)]
+        warnings_ = [issue for issue in issues if isinstance(issue, NeatWarning)]
         self._doc.clear()
         self._body = ET.SubElement(self._doc, "body")
         h1 = ET.SubElement(self._body, "h1")
@@ -61,11 +61,11 @@ class BasicHTML(Formatter):
 
         return ET.tostring(self._doc, encoding="unicode")
 
-    def _write_errors_or_warnings(self, issues: list[NeatValidationError] | list[ValidationWarning]) -> None:
-        issue_name = "errors" if isinstance(issues[0], NeatValidationError) else "warnings"
+    def _write_errors_or_warnings(self, issues: list[NeatError] | list[NeatWarning]) -> None:
+        issue_name = "errors" if isinstance(issues[0], NeatError) else "warnings"
         main_categories = {base_ for issue in issues for base_ in type(issue).__bases__}
         for category in main_categories:
-            issues_in_category: list[NeatValidationError] | list[ValidationWarning] = [  # type: ignore[assignment]
+            issues_in_category: list[NeatError] | list[NeatWarning] = [  # type: ignore[assignment]
                 issue for issue in issues if isinstance(issue, category)
             ]
             h3 = ET.SubElement(self._body, "h3")
