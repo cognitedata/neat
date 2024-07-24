@@ -1,6 +1,6 @@
 from cognite.neat.issues import MultiValueError
 
-from . import dms, fileread, importing, spreadsheet, spreadsheet_file
+from . import dms, fileread, spreadsheet, spreadsheet_file
 from .base import (
     DefaultPydanticError,
     NeatValidationError,
@@ -17,7 +17,6 @@ __all__ = [
     "ValidationWarning",
     "dms",
     "fileread",
-    "importing",
     "spreadsheet",
     "spreadsheet_file",
 ]

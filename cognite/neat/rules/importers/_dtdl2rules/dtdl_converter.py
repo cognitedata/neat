@@ -6,7 +6,6 @@ from cognite.neat.issues.errors.properties import PropertyTypeNotSupportedError
 from cognite.neat.issues.errors.resources import MissingIdentifierError, ResourceNotFoundError
 from cognite.neat.issues.neat_warnings.properties import PropertyTypeNotSupportedWarning
 from cognite.neat.issues.neat_warnings.resources import ResourceTypeNotSupportedWarning
-from cognite.neat.rules import issues
 from cognite.neat.rules.importers._dtdl2rules.spec import (
     DTMI,
     Command,
@@ -79,11 +78,10 @@ class _DTDLConverter:
             convert_method(item, parent)
         else:
             self.issues.append(
-                issues.importing.UnknownComponentWarning(
-                    component_type=item.type,
-                    instance_name=item.display_name,
-                    instance_id=item.id_.model_dump() if item.id_ else None,
-                )
+                ResourceTypeNotSupportedWarning[str](
+                    item.id_.model_dump() if item.id_ else item.display_name or "missing",
+                    item.type,
+                ),
             )
 
     def convert_interface(self, item: Interface, _: str | None) -> None:
@@ -153,12 +151,10 @@ class _DTDLConverter:
             return None
         if item.request is None:
             self.issues.append(
-                issues.importing.UnknownSubComponentWarning(
-                    component_type=item.type,
-                    sub_component="request",
-                    instance_name=item.display_name,
-                    instance_id=item.id_.model_dump() if item.id_ else None,
-                )
+                ResourceTypeNotSupportedWarning[str](
+                    item.id_.model_dump() if item.id_ else item.display_name or "missing",
+                    f"{item.type}.request",
+                ),
             )
             return None
         if item.response is not None:

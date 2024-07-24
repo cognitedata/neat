@@ -33,7 +33,7 @@ class TestDTDLImporter:
                     "Device Information interface",
                     "Component",
                     "schema",
-                    "Thermostat",
+                    "missing",
                 ),
                 ResourceTypeNotSupportedWarning[str]("com_example:Thermostat(version=1).response", "Command.Response"),
             ]
