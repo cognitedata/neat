@@ -19,25 +19,6 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-__all__ = [
-    "InvalidSheetError",
-    "InvalidRowError",
-    "InvalidPropertyError",
-    "PrefixNamespaceCollisionError",
-    "InvalidRowUnknownSheetError",
-    "NonExistingContainerError",
-    "NonExistingViewError",
-    "ClassNoPropertiesNoParentError",
-    "InconsistentContainerDefinitionError",
-    "MultiValueTypeError",
-    "MultiValueIsListError",
-    "MultiNullableError",
-    "MultiDefaultError",
-    "MultiIndexError",
-    "MultiUniqueConstraintError",
-    "RegexViolationError",
-]
-
 
 @dataclass(frozen=True)
 class InvalidSheetError(NeatValidationError, ABC):
@@ -524,22 +505,4 @@ class MultiIndexError(InconsistentContainerDefinitionError):
     def dump(self) -> dict[str, Any]:
         output = super().dump()
         output["index_definitions"] = sorted(self.index_definitions)
-        return output
-
-
-@dataclass(frozen=True)
-class MultiUniqueConstraintError(InconsistentContainerDefinitionError):
-    description = "The property has multiple unique constraint definitions"
-    fix = "Use the same unique constraint definition for all properties using the same container."
-    unique_constraint_definitions: set[str]
-
-    def message(self) -> str:
-        return (
-            f"{self.container}.{self.property_name} defined in rows: {sorted(self.row_numbers)} "
-            f"has different unique constraint definitions: {self.unique_constraint_definitions}"
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["unique_constraint_definitions"] = sorted(self.unique_constraint_definitions)
         return output

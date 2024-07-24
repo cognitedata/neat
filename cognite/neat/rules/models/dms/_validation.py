@@ -3,7 +3,8 @@ from typing import Any, ClassVar
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat.issues import IssueList, NeatIssueList
+from cognite.neat.issues import IssueList, NeatError, NeatIssueList
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
@@ -51,7 +52,7 @@ class DMSPostValidation:
             if prop.container and prop.container_property:
                 container_properties_by_id[(prop.container, prop.container_property)].append((prop_no, prop))
 
-        errors: list[issues.spreadsheet.InconsistentContainerDefinitionError] = []
+        errors: list[NeatError] = []
         for (container, prop_name), properties in container_properties_by_id.items():
             if len(properties) == 1:
                 continue
@@ -97,8 +98,12 @@ class DMSPostValidation:
             }
             if len(constraint_definitions) > 1:
                 errors.append(
-                    issues.spreadsheet.MultiUniqueConstraintError(
-                        container_id, prop_name, row_numbers, constraint_definitions
+                    MultiplePropertyDefinitionsError[dm.ContainerId](
+                        container_id,
+                        "Container",
+                        prop_name,
+                        frozenset(constraint_definitions),
+                        tuple(row_numbers),
                     )
                 )
 

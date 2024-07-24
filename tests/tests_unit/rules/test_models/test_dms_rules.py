@@ -8,6 +8,7 @@ from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
 import cognite.neat.rules.issues.spreadsheet
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models import DMSRules, ExtensionCategory, InformationRules
@@ -1253,11 +1254,12 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            cognite.neat.rules.issues.spreadsheet.MultiUniqueConstraintError(
+            MultiplePropertyDefinitionsError[dm.ContainerId](
                 container_id,
+                "Container",
                 "name",
-                {0, 1},
-                {"unique_name", "name"},
+                frozenset({"unique_name", "name"}),
+                (0, 1),
             )
         ],
         id="Inconsistent container definition constraint",
