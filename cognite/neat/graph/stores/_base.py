@@ -239,8 +239,8 @@ class NeatGraphStore:
                     mime_type,
                     base_iri=base_uri,
                     to_graph=pyoxigraph.NamedNode(self.graph.identifier),
-                )  # type: ignore[attr-defined]
-                cast(pyoxigraph.Store, self.graph.store._store).optimize()  # type: ignore[attr-defined]
+                )
+                cast(pyoxigraph.Store, self.graph.store._store).optimize()
 
             parse_to_oxi_store()
 
