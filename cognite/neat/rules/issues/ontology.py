@@ -19,7 +19,7 @@ class OntologyWarning(ValidationWarning, ABC): ...
 
 
 @dataclass(frozen=True)
-class OntologyMultiLabeledProperty(OntologyWarning):
+class OntologyMultiLabeledPropertyWarning(OntologyWarning):
     """This warning occurs when a property is given multiple labels, typically if the
     same property is defined for different classes but different name is given
 
@@ -53,7 +53,7 @@ class OntologyMultiLabeledProperty(OntologyWarning):
 
 
 @dataclass(frozen=True)
-class OntologyMultiDefinitionProperty(OntologyWarning):
+class OntologyMultiDefinitionPropertyWarning(OntologyWarning):
     """This warning occurs when a property is given multiple human readable definitions,
     typically if the same property is defined for different classes where each definition
     is different.
@@ -85,7 +85,7 @@ class OntologyMultiDefinitionProperty(OntologyWarning):
 
 
 @dataclass(frozen=True)
-class OntologyMultiTypeProperty(OntologyWarning):
+class OntologyMultiTypePropertyWarning(OntologyWarning):
     """This warning occurs when a same property is define for two object/classes where
     its expected value type is different in one definition, e.g. acts as an edge, while in
     other definition acts as and attribute
@@ -120,7 +120,7 @@ class OntologyMultiTypeProperty(OntologyWarning):
 
 
 @dataclass(frozen=True)
-class OntologyMultiRangeProperty(OntologyWarning):
+class OntologyMultiRangePropertyWarning(OntologyWarning):
     """This warning occurs when a property takes range of values which consists of union
     of multiple value types
 
@@ -150,7 +150,7 @@ class OntologyMultiRangeProperty(OntologyWarning):
 
 
 @dataclass(frozen=True)
-class OntologyMultiDomainProperty(OntologyWarning):
+class OntologyMultiDomainPropertyWarning(OntologyWarning):
     """This warning occurs when a property is reused for more than one classes
 
     Args:
@@ -181,7 +181,7 @@ class OntologyMultiDomainProperty(OntologyWarning):
 
 
 @dataclass(frozen=True)
-class PropertiesDefinedMultipleTimes(OntologyError):
+class PropertiesDefinedMultipleTimesError(OntologyError):
     """This error is raised during export of Transformation Rules to DMS schema when
     when properties are defined multiple times for the same class.
 
@@ -210,7 +210,7 @@ class PropertiesDefinedMultipleTimes(OntologyError):
 
 
 @dataclass(frozen=True)
-class PropertyDefinitionsNotForSameProperty(OntologyError):
+class PropertyDefinitionsNotForSamePropertyError(OntologyError):
     """This error is raised if property definitions are not for linked to the same
     property id when exporting rules to ontological representation.
 
@@ -224,12 +224,11 @@ class PropertyDefinitionsNotForSameProperty(OntologyError):
         message = "All definitions should have the same property_id! Aborting."
 
         message += f"\nDescription: {self.description}"
-        message += f"\nFix: {self.fix}"
         return message
 
 
 @dataclass(frozen=True)
-class PrefixMissing(OntologyError):
+class PrefixMissingError(OntologyError):
     """Prefix, which is in the 'Metadata' sheet, is missing.
 
     Args:
@@ -250,7 +249,7 @@ class PrefixMissing(OntologyError):
 
 
 @dataclass(frozen=True)
-class MissingDataModelPrefixOrNamespace(ValidationWarning):
+class MissingDataModelPrefixOrNamespaceWarning(ValidationWarning):
     """Prefix and/or namespace are missing in the 'Metadata' sheet
 
     Args:
@@ -274,7 +273,7 @@ class MissingDataModelPrefixOrNamespace(ValidationWarning):
 
 
 @dataclass(frozen=True)
-class MetadataSheetNamespaceNotDefined(OntologyError):
+class MetadataSheetNamespaceNotDefinedError(OntologyError):
     """namespace, which is in the 'Metadata' sheet, is not defined
 
     Args:
