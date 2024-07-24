@@ -116,10 +116,6 @@ def invalid_domain_rules_cases():
 
 
 def incomplete_rules_case():
-    # yield pytest.param(
-    #         },
-    #     },
-    #     "Value error, Metadata.role should be equal to 'information architect'",
     yield pytest.param(
         {
             "Metadata": {

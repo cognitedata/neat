@@ -8,7 +8,7 @@ from tests.data import car
 
 @pytest.fixture()
 def car_case() -> NeatGraphStore:
-    store = NeatGraphStore.from_memory_store()
+    store = NeatGraphStore.from_oxi_store()
 
     for triple in car.TRIPLES:
         store.graph.add(triple)
