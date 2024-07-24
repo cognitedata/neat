@@ -105,6 +105,9 @@ class InvalidWorkFlowError(NeatException):
 class NeatValueError(NeatException, ValueError): ...
 
 
+class NeatTypeError(NeatException, TypeError): ...
+
+
 def wrangle_warnings(list_of_warnings: list[WarningMessage]) -> list[dict]:
     warning_list: list[dict] = []
     for warning in list_of_warnings:
