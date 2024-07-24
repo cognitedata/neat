@@ -1,8 +1,8 @@
 from collections import Counter
 from collections.abc import Callable, Sequence
 
-import cognite.neat.rules.issues.importing
 from cognite.neat.issues import IssueList, NeatIssue
+from cognite.neat.issues.errors.properties import PropertyTypeNotSupportedError
 from cognite.neat.issues.errors.resources import MissingIdentifierError, ResourceNotFoundError
 from cognite.neat.rules import issues
 from cognite.neat.rules.importers._dtdl2rules.spec import (
@@ -279,12 +279,11 @@ class _DTDLConverter:
             return _DATA_TYPE_BY_NAME[input_type.casefold()]()
         elif isinstance(input_type, str):
             self.issues.append(
-                cognite.neat.rules.issues.importing.UnsupportedPropertyTypeError(
-                    component_type=item.type,
-                    property_type=input_type,
-                    property_name="schema",
-                    instance_name=item.display_name,
-                    instance_id=item.id_.model_dump() if item.id_ else None,
+                PropertyTypeNotSupportedError[str](
+                    (item.id_.model_dump() if item.id_ else item.display_name) or "missing",
+                    item.type,
+                    "schema",
+                    input_type,
                 )
             )
             return None

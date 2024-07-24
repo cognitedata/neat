@@ -20,8 +20,6 @@ __all__ = [
     "UnknownContainerConstraintWarning",
     "NoDataModelError",
     "ModelImportError",
-    "UnsupportedPropertyTypeError",
-    "APIError",
     "FailedImportWarning",
 ]
 
@@ -322,49 +320,3 @@ class NoDataModelError(ModelImportError):
 
     def dump(self) -> dict[str, str]:
         return {"error_message": self.error_message}
-
-
-@dataclass(frozen=True)
-class APIError(ModelImportError):
-    description = "An error was raised during importing."
-    fix = "No fix is available."
-
-    error_message: str
-
-    def message(self) -> str:
-        return self.error_message
-
-    def dump(self) -> dict[str, str]:
-        return {"error_message": self.error_message}
-
-
-@dataclass(frozen=True)
-class UnsupportedPropertyTypeError(ModelImportError):
-    description = "The property type is not supported"
-    fix = "Check if the property type is defined in the DTDL file."
-    component_type: str
-    property_name: str
-    property_type: str
-    instance_name: str | None = None
-    instance_id: str | None = None
-
-    def dump(self) -> dict[str, str | None]:
-        output = super().dump()
-        output["component_type"] = self.component_type
-        output["property_name"] = self.property_name
-        output["property_type"] = self.property_type
-        output["instance_name"] = self.instance_name
-        output["instance_id"] = self.instance_id
-        return output
-
-    def message(self) -> str:
-        if self.instance_name:
-            return (
-                f"Property '{self.property_name}' of type '{self.property_type}' "
-                f"of instance '{self.instance_name}' ({self.component_type}) is not supported."
-            )
-        else:
-            return (
-                f"Property '{self.property_name}' of type '{self.property_type}' "
-                f"of instance '{self.instance_id}' ({self.component_type}) is not supported."
-            )

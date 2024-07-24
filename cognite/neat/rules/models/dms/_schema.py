@@ -26,6 +26,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.data_classes.transformations.common import Edges, EdgeType, Nodes, ViewInfo
 
 from cognite.neat.issues import NeatError
+from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues.dms import (
@@ -543,7 +544,7 @@ class DMSSchema:
             for parent in view.implements or []:
                 if parent not in defined_views:
                     errors.add(
-                        ReferredResourceNotFoundError[dm.ViewId, dm.ViewId](
+                        ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
                             parent, "View", view_id, "View", property_name="implements"
                         )
                     )
@@ -559,7 +560,7 @@ class DMSSchema:
                         )
                     elif prop.container_property_identifier not in ref_container.properties:
                         errors.add(
-                            ReferredResourceNotFoundError[dm.ContainerId, dm.ViewId](
+                            ReferredPropertyNotFoundError[dm.ContainerId, dm.ViewId](
                                 prop.container,
                                 "Container",
                                 view_id,
@@ -577,7 +578,7 @@ class DMSSchema:
 
                 if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
                     errors.add(
-                        ReferredResourceNotFoundError[dm.ViewId, dm.ViewId](
+                        ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
                             prop.source, "View", view_id, "View", property_name=prop_name
                         )
                     )
@@ -588,7 +589,7 @@ class DMSSchema:
                     and prop.edge_source not in defined_views
                 ):
                     errors.add(
-                        ReferredResourceNotFoundError[dm.ViewId, dm.ViewId](
+                        ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
                             prop.edge_source, "View", view_id, "View", property_name=prop_name
                         )
                     )

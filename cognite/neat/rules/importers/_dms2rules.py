@@ -19,6 +19,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.issues import IssueList, NeatIssue
+from cognite.neat.issues.errors.resources import ResourceNotFoundError
 from cognite.neat.rules import issues
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
 from cognite.neat.rules.models import (
@@ -200,7 +201,7 @@ class DMSImporter(BaseImporter):
             return self._return_or_raise(self.issue_list, errors)
 
         if not self.root_schema.data_model:
-            self.issue_list.append(issues.importing.NoDataModelError("No data model found."))
+            self.issue_list.append(ResourceNotFoundError[str]("Unknown", "DataModel", "Identifier is missing"))
             return self._return_or_raise(self.issue_list, errors)
         model = self.root_schema.data_model
         with _handle_issues(

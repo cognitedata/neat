@@ -46,7 +46,6 @@ class ReferredResourceNotFoundError(ResourceError, Generic[T_Identifier, T_Refer
 
     referred_by: T_ReferenceIdentifier
     referred_type: str
-    property_name: str | None = None
 
     def message(self) -> str:
         return (self.__doc__ or "").format(
@@ -115,7 +114,7 @@ class MissingIdentifierError(NeatError):
     name: str | None = None
 
     def message(self) -> str:
-        return (self.__doc__ or "").format(resource_type=self.resource_type, name=self.name)
+        return (self.__doc__ or "").format(resource_type=self.resource_type, name=self.name or "unknown")
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
