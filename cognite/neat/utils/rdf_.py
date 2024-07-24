@@ -1,6 +1,8 @@
 import re
-from typing import Any, Literal, TypeAlias, cast, overload
+from collections.abc import Iterable
+from typing import Any, Literal, TypeAlias, overload
 
+from cognite.client.utils.useful_types import SequenceNotStr
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 from rdflib import Literal as RdfLiteral
 from rdflib import Namespace, URIRef
@@ -10,7 +12,8 @@ Triple: TypeAlias = tuple[URIRef, URIRef, RdfLiteral | URIRef]
 
 @overload
 def remove_namespace_from_uri(
-    *URI: URIRef | str,
+    URI: URIRef | str,
+    *,
     special_separator: str = "#_",
     validation: Literal["full", "prefix"] = "prefix",
 ) -> str: ...
@@ -18,17 +21,19 @@ def remove_namespace_from_uri(
 
 @overload
 def remove_namespace_from_uri(
-    *URI: tuple[URIRef | str, ...],
+    URI: SequenceNotStr[URIRef | str],
+    *,
     special_separator: str = "#_",
     validation: Literal["full", "prefix"] = "prefix",
-) -> tuple[str, ...]: ...
+) -> list[str]: ...
 
 
 def remove_namespace_from_uri(
-    *URI: URIRef | str | tuple[URIRef | str, ...],
+    URI: URIRef | str | SequenceNotStr[URIRef | str],
+    *,
     special_separator: str = "#_",
     validation: Literal["full", "prefix"] = "prefix",
-) -> tuple[str, ...] | str:
+) -> str | list[str]:
     """Removes namespace from URI
 
     Args
@@ -51,11 +56,14 @@ def remove_namespace_from_uri(
         >>> remove_namespace_from_uri("http://www.example.org/index.html#section2", "http://www.example.org/index.html#section3")
         ('section2', 'section3')
     """
+    is_single = False
+    uris: Iterable[str | URIRef]
     if isinstance(URI, str | URIRef):
         uris = (URI,)
-    elif isinstance(URI, tuple):
+        is_single = True
+    elif isinstance(URI, SequenceNotStr):
         # Assume that all elements in the tuple are of the same type following type hint
-        uris = cast(tuple[URIRef | str, ...], URI)
+        uris = URI
     else:
         raise TypeError(f"URI must be of type URIRef or str, got {type(URI)}")
 
@@ -73,7 +81,7 @@ def remove_namespace_from_uri(
             else:
                 output.append(str(u))
 
-    return tuple(output) if len(output) > 1 else output[0]
+    return output[0] if is_single else output
 
 
 def get_namespace(URI: URIRef, special_separator: str = "#_") -> str:

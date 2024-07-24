@@ -1,5 +1,5 @@
 from cognite.neat.graph.examples import nordic44_knowledge_graph
-from cognite.neat.graph.extractors import AssetsExtractor
+from cognite.neat.graph.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.importers import InferenceImporter
 from cognite.neat.rules.models.data_types import Json
@@ -8,13 +8,20 @@ from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 
 def test_rdf_inference():
-    rules, _ = InferenceImporter.from_rdf_file(nordic44_knowledge_graph).to_rules(errors="continue")
+    store = NeatGraphStore.from_oxi_store()
+    extractor = RdfFileExtractor(nordic44_knowledge_graph, base_uri="http://nordic44.com/")
+    store.write(extractor)
+
+    rules = InferenceImporter.from_graph_store(store).to_rules(errors="raise")
 
     assert len(rules.properties) == 312
     assert len(rules.classes) == 59
 
     # checking multi-value type
-    assert set(rules.properties.data[19].value_type.types) == set(
+    multi_value_property = "OperatingShare.PowerSystemResource"
+    prop = next((prop for prop in rules.properties if prop.property_ == multi_value_property), None)
+    assert prop is not None, f"Failed to infer expected multi-value property {multi_value_property}"
+    assert set(prop.value_type.types) == set(
         MultiValueTypeInfo.load(
             "inferred:ConformLoad | inferred:NonConformLoad | "
             "inferred:GeneratingUnit | inferred:ACLineSegment | inferred:PowerTransformer"

@@ -98,47 +98,40 @@ class Queries:
         self,
         instance_id: URIRef,
         property_renaming_config: dict | None = None,
-    ) -> tuple[str, dict[str, list[str]]]:
+    ) -> tuple[str, dict[str, list[str]]] | None:
         """DESCRIBE instance for a given class from the graph store
 
         Args:
             instance_id: Instance id for which we want to generate query
-            property_rename_config: Dictionary to rename properties, default None
+            property_renaming_config: Dictionary to rename properties, default None
 
         Returns:
             Dictionary of instance properties
         """
-
         property_values: dict[str, list[str]] = defaultdict(list)
-
-        for subject, predicate, object_ in cast(list[ResultRow], self.graph.query(f"DESCRIBE <{instance_id}>")):
-            if object_.lower() not in [
+        identifier = remove_namespace_from_uri(instance_id, validation="prefix")
+        for _, predicate, object_ in cast(list[ResultRow], self.graph.query(f"DESCRIBE <{instance_id}>")):
+            if object_.lower() in [
                 "",
                 "none",
                 "nan",
                 "null",
             ]:
-                # we are skipping deep validation with Pydantic to remove namespace here
-                # as it reduces time to process triples by 10-15x
-                identifier, value = cast(  # type: ignore[misc]
-                    (str, str),
-                    remove_namespace_from_uri(*(subject, object_), validation="prefix"),
-                )  # type: ignore[misc, index]
+                continue
+            # we are skipping deep validation with Pydantic to remove namespace here
+            # as it reduces time to process triples by 10-15x
+            value = remove_namespace_from_uri(object_, validation="prefix")
 
-                # use-case: calling describe without renaming properties
-                # losing the namespace from the predicate!
-                if not property_renaming_config and predicate != RDF.type:
-                    property_values[remove_namespace_from_uri(predicate, validation="prefix")].append(value)
+            # use-case: calling describe without renaming properties
+            # losing the namespace from the predicate!
+            if not property_renaming_config and predicate != RDF.type:
+                property_values[remove_namespace_from_uri(predicate, validation="prefix")].append(value)
 
-                # use-case: calling describe with renaming properties
-                # renaming the property to the new name, if the property is defined
-                # in the RULES sheet
-                elif property_renaming_config and (property_ := property_renaming_config.get(predicate, None)):
-                    property_values[property_].append(value)
-
-                # use-case: skip the property if it is not defined in property_renaming_config
-                else:
-                    continue
+            # use-case: calling describe with renaming properties
+            # renaming the property to the new name, if the property is defined
+            # in the RULES sheet
+            elif property_renaming_config and (property_ := property_renaming_config.get(predicate, None)):
+                property_values[property_].append(value)
 
         if property_values:
             return (
@@ -146,7 +139,7 @@ class Queries:
                 property_values,
             )
         else:
-            return ()  # type: ignore [return-value]
+            return None
 
     def construct_instances_of_class(
         self,
@@ -177,7 +170,7 @@ class Queries:
             result = self.graph.query(query)
 
             # We cannot include the RDF.type in case there is a neat:type property
-            return [remove_namespace_from_uri(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
+            return [remove_namespace_from_uri(cast(ResultRow, triple)) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
         else:
             warnings.warn(
                 "No rules found for the graph store, returning empty list.",
