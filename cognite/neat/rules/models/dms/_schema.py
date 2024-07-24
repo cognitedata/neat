@@ -28,6 +28,7 @@ from cognite.client.data_classes.transformations.common import Edges, EdgeType, 
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
+from cognite.neat.issues.neat_warnings.resources import MultipleResourcesWarning
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
@@ -423,8 +424,9 @@ class DMSSchema:
                 if attr.name == "data_model":
                     if isinstance(items, list) and len(items) > 1:
                         warnings.warn(
-                            issues.importing.MultipleDataModelsWarning(
-                                [item.get("externalId", "Unknown") for item in items]
+                            MultipleResourcesWarning[str](
+                                frozenset([item.get("externalId", "Unknown") for item in items]),
+                                "DataModel",
                             ),
                             stacklevel=2,
                         )

@@ -20,6 +20,11 @@ from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.issues import IssueList, NeatIssue
 from cognite.neat.issues.errors.resources import ResourceNotFoundError
+from cognite.neat.issues.neat_warnings.properties import (
+    PropertyTypeNotSupportedWarning,
+    ReferredPropertyNotFoundWarning,
+)
+from cognite.neat.issues.neat_warnings.resources import ReferredResourceNotFoundWarning
 from cognite.neat.rules import issues
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
 from cognite.neat.rules.models import (
@@ -316,10 +321,11 @@ class DMSImporter(BaseImporter):
     ) -> DMSProperty | None:
         if isinstance(prop, dm.MappedPropertyApply) and prop.container not in self._all_containers_by_id:
             self.issue_list.append(
-                issues.importing.MissingContainerWarning(
-                    view_id=str(view_entity),
-                    property_=prop_id,
-                    container_id=str(ContainerEntity.from_id(prop.container)),
+                ReferredResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
+                    dm.ContainerId.load(prop.container),
+                    "Container",
+                    view_entity.to_property_id(prop_id),
+                    "View Property",
                 )
             )
             return None
@@ -328,11 +334,9 @@ class DMSImporter(BaseImporter):
             and prop.container_property_identifier not in self._all_containers_by_id[prop.container].properties
         ):
             self.issue_list.append(
-                issues.importing.MissingContainerPropertyWarning(
-                    view_id=str(view_entity),
-                    property_=prop_id,
-                    container_id=str(ContainerEntity.from_id(prop.container)),
-                )
+                ReferredPropertyNotFoundWarning[dm.ContainerId, dm.ViewId](
+                    prop.container, "Container", view_entity.as_id(), "View", prop_id
+                ),
             )
             return None
         if not isinstance(
@@ -344,7 +348,7 @@ class DMSImporter(BaseImporter):
             | MultiReverseDirectRelationApply,
         ):
             self.issue_list.append(
-                issues.importing.UnknownPropertyTypeWarning(view_entity.versioned_id, prop_id, type(prop).__name__)
+                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "View", prop_id, type(prop).__name__)
             )
             return None
 
@@ -409,7 +413,9 @@ class DMSImporter(BaseImporter):
             else:
                 return DataType.load(container_prop.type._type)
         else:
-            self.issue_list.append(issues.importing.FailedToInferValueTypeWarning(str(view_entity), prop_id))
+            self.issue_list.append(
+                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "View", prop_id, type(prop).__name__)
+            )
             return None
 
     def _get_nullable(self, prop: ViewPropertyApply) -> bool | None:
@@ -468,8 +474,8 @@ class DMSImporter(BaseImporter):
                 continue
             else:
                 self.issue_list.append(
-                    issues.importing.UnknownContainerConstraintWarning(
-                        str(ContainerEntity.from_id(prop.container)), prop_id, type(constraint_obj).__name__
+                    PropertyTypeNotSupportedWarning[dm.ContainerId](
+                        prop.container, "Container", prop_id, type(constraint_obj).__name__
                     )
                 )
         return unique_constraints or None
