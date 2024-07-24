@@ -16,7 +16,7 @@ class ResourceError(NeatError, Generic[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class ResourceNotFoundError(ResourceError):
+class ResourceNotFoundError(ResourceError[T_Identifier]):
     """The {resource_type} with identifier {identifier} is missing: {reason}"""
 
     fix = "Check the {resource_type} {identifier} and try again."
@@ -104,4 +104,21 @@ class InvalidResourceError(NeatError):
         output["type"] = self.resource_type
         output["identifier"] = self.identifier
         output["reason"] = self.reason
+        return output
+
+
+@dataclass(frozen=True)
+class MissingIdentifierError(NeatError):
+    """The {resource_type} with name {name} is missing an identifier."""
+
+    resource_type: str
+    name: str | None = None
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(resource_type=self.resource_type, name=self.name)
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["type"] = self.resource_type
+        output["name"] = self.name
         return output

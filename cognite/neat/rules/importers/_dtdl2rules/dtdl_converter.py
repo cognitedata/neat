@@ -2,6 +2,8 @@ from collections import Counter
 from collections.abc import Callable, Sequence
 
 import cognite.neat.rules.issues.importing
+from cognite.neat.issues import IssueList, NeatIssue
+from cognite.neat.issues.errors.resources import MissingIdentifierError, ResourceNotFoundError
 from cognite.neat.rules import issues
 from cognite.neat.rules.importers._dtdl2rules.spec import (
     DTMI,
@@ -9,6 +11,7 @@ from cognite.neat.rules.importers._dtdl2rules.spec import (
     CommandV2,
     Component,
     DTDLBase,
+    DTDLBaseWithName,
     Enum,
     Interface,
     Object,
@@ -19,15 +22,14 @@ from cognite.neat.rules.importers._dtdl2rules.spec import (
     Telemetry,
     TelemetryV2,
 )
-from cognite.neat.rules.issues import IssueList, ValidationIssue
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_NAME, DataType, Json, String
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import InformationClass, InformationProperty
 
 
 class _DTDLConverter:
-    def __init__(self, issues: list[ValidationIssue] | None = None) -> None:
-        self.issues: IssueList = IssueList(issues or [])
+    def __init__(self, issues: list[NeatIssue] | None = None) -> None:
+        self.issues = IssueList(issues or [])
         self.properties: list[InformationProperty] = []
         self.classes: list[InformationClass] = []
         self._item_by_id: dict[DTMI, DTDLBase] = {}
@@ -130,12 +132,10 @@ class _DTDLConverter:
         )
         self.properties.append(prop)
 
-    def _missing_parent_warning(self, item):
+    def _missing_parent_warning(self, item: DTDLBaseWithName):
         self.issues.append(
-            cognite.neat.rules.issues.importing.MissingParentDefinitionError(
-                component_type=item.type,
-                instance_name=item.display_name,
-                instance_id=item.id_.model_dump() if item.id_ else None,
+            ResourceNotFoundError[str](
+                (item.id_.model_dump() if item.id_ else item.display_name) or "missing", item.type, "parent missing"
             )
         )
 
@@ -213,10 +213,9 @@ class _DTDLConverter:
             else:
                 # Falling back to json
                 self.issues.append(
-                    cognite.neat.rules.issues.importing.MissingIdentifierError(
-                        component_type="Unknown",
-                        instance_name=item.target.model_dump(),
-                        instance_id=item.target.model_dump(),
+                    MissingIdentifierError(
+                        "Unknown",
+                        item.target.model_dump(),
                     )
                 )
                 value_type = Json()
@@ -239,9 +238,9 @@ class _DTDLConverter:
     def convert_object(self, item: Object, _: str | None) -> None:
         if item.id_ is None:
             self.issues.append(
-                cognite.neat.rules.issues.importing.MissingIdentifierError(
-                    component_type=item.type,
-                    instance_name=item.display_name,
+                MissingIdentifierError(
+                    resource_type=item.type,
+                    name=item.display_name,
                 )
             )
             return None
@@ -292,9 +291,9 @@ class _DTDLConverter:
         elif isinstance(input_type, Object | Interface):
             if input_type.id_ is None:
                 self.issues.append(
-                    cognite.neat.rules.issues.importing.MissingIdentifierError(
-                        component_type=input_type.type,
-                        instance_name=input_type.display_name,
+                    MissingIdentifierError(
+                        input_type.type,
+                        input_type.display_name,
                     )
                 )
                 return Json()

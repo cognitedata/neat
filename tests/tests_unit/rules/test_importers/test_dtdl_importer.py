@@ -1,7 +1,7 @@
 import pytest
 
-import cognite.neat.rules.issues.importing
-import cognite.neat.rules.issues.spreadsheet
+from cognite.neat.issues import NeatIssue, NeatIssueList
+from cognite.neat.issues.errors.resources import MissingIdentifierError
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DTDLImporter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTMI, Interface
@@ -13,9 +13,9 @@ from tests.tests_unit.rules.test_importers.constants import DTDL_IMPORTER_DATA
 class TestDTDLImporter:
     def test_import_energy_grid_example(self) -> None:
         # In the example data, there is a property with an Object that does not have an identifier.
-        expected_issues = IssueList(
+        expected_issues = NeatIssueList[NeatIssue](
             [
-                cognite.neat.rules.issues.importing.MissingIdentifierError(component_type="Object"),
+                MissingIdentifierError("Object"),
             ]
         )
         dtdl_importer = DTDLImporter.from_directory(DTDL_IMPORTER_DATA / "energy-grid")

@@ -18,9 +18,9 @@ from cognite.client.data_classes.data_modeling.views import (
 )
 from cognite.client.utils import ms_to_datetime
 
+from cognite.neat.issues import IssueList, NeatIssue
 from cognite.neat.rules import issues
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
-from cognite.neat.rules.issues import IssueList, ValidationIssue
 from cognite.neat.rules.models import (
     DataModelType,
     DMSRules,
@@ -60,7 +60,7 @@ class DMSImporter(BaseImporter):
     def __init__(
         self,
         schema: DMSSchema,
-        read_issues: Sequence[ValidationIssue] | None = None,
+        read_issues: Sequence[NeatIssue] | None = None,
         metadata: DMSMetadata | None = None,
         ref_metadata: DMSMetadata | None = None,
     ):

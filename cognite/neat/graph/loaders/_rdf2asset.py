@@ -20,7 +20,7 @@ from cognite.client.exceptions import CogniteAPIError, CogniteDuplicatedError
 from cognite.neat.graph._tracking.base import Tracker
 from cognite.neat.graph._tracking.log import LogTracker
 from cognite.neat.graph.stores import NeatGraphStore
-from cognite.neat.issues import NeatIssue, NeatIssueList
+from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors.resources import InvalidResourceError
 from cognite.neat.rules.analysis._asset import AssetAnalysis
 from cognite.neat.rules.models import AssetRules
@@ -80,7 +80,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
         self.external_id_prefix = external_id_prefix
 
         self.processed_assets: set[str] = set()
-        self._issues = NeatIssueList[NeatIssue](create_issues or [])
+        self._issues = IssueList(create_issues or [])
         self._tracker: type[Tracker] = tracker or LogTracker
 
     def _load(self, stop_on_exception: bool = False) -> Iterable[AssetWrite | NeatIssue | type[_END_OF_CLASS]]:

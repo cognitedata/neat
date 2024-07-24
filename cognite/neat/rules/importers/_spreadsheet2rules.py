@@ -11,8 +11,8 @@ from typing import Literal, cast, overload
 import pandas as pd
 from pandas import ExcelFile
 
+from cognite.neat.issues import IssueList
 from cognite.neat.rules import issues
-from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models import (
     RULES_PER_ROLE,
     AssetRules,

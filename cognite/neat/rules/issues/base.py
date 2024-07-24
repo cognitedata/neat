@@ -4,14 +4,13 @@ from typing import Any
 
 from pydantic_core import ErrorDetails
 
-from cognite.neat.issues import MultiValueError, NeatError, NeatIssue, NeatIssueList, NeatWarning
+from cognite.neat.issues import MultiValueError, NeatError, NeatIssue, NeatWarning
 
 __all__ = [
     "ValidationIssue",
     "NeatValidationError",
     "DefaultPydanticError",
     "ValidationWarning",
-    "IssueList",
     "MultiValueError",
 ]
 
@@ -21,22 +20,7 @@ class ValidationIssue(NeatIssue, ABC): ...
 
 
 @dataclass(frozen=True)
-class NeatValidationError(NeatError, ValidationIssue, ABC):
-    @classmethod
-    def from_pydantic_errors(cls, errors: list[ErrorDetails], **kwargs) -> "list[NeatValidationError]":
-        """Convert a list of pydantic errors to a list of Error instances.
-
-        This is intended to be overridden in subclasses to handle specific error types.
-        """
-        all_errors: list[NeatValidationError] = []
-        for error in errors:
-            if isinstance(ctx := error.get("ctx"), dict) and isinstance(
-                multi_error := ctx.get("error"), MultiValueError
-            ):
-                all_errors.extend(multi_error.errors)  # type: ignore[arg-type]
-            else:
-                all_errors.append(DefaultPydanticError.from_pydantic_error(error))
-        return all_errors
+class NeatValidationError(NeatError, ValidationIssue, ABC): ...
 
 
 @dataclass(frozen=True)
@@ -77,6 +61,3 @@ class DefaultPydanticError(NeatValidationError):
 
 @dataclass(frozen=True)
 class ValidationWarning(NeatWarning, ValidationIssue, ABC): ...
-
-
-class IssueList(NeatIssueList[ValidationIssue]): ...

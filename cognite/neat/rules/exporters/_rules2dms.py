@@ -15,9 +15,9 @@ from cognite.client.data_classes.data_modeling import (
 )
 from cognite.client.exceptions import CogniteAPIError
 
+from cognite.neat.issues import IssueList
 from cognite.neat.rules import issues
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models import InformationRules
 from cognite.neat.rules.models.dms import DMSRules, DMSSchema, PipelineSchema
 from cognite.neat.utils.cdf.loaders import (

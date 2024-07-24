@@ -6,8 +6,8 @@ from typing import Literal, overload
 
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
+from cognite.neat.issues import IssueList
 from cognite.neat.rules.importers._base import BaseImporter, Rules
-from cognite.neat.rules.issues import IssueList
 from cognite.neat.rules.models import InformationRules, RoleTypes
 from cognite.neat.rules.models.data_types import _XSD_TYPES
 

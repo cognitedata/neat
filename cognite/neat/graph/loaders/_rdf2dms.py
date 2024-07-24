@@ -17,7 +17,7 @@ from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 import cognite.neat.issues.errors.resources
 from cognite.neat.graph._tracking import LogTracker, Tracker
 from cognite.neat.graph.stores import NeatGraphStore
-from cognite.neat.issues import NeatIssue, NeatIssueList
+from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors.resources import FailedConvertError, InvalidResourceError, ResourceNotFoundError
 from cognite.neat.issues.neat_warnings.models import InvalidClassWarning
 from cognite.neat.rules.models import DMSRules
@@ -53,7 +53,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self.data_model = data_model
         self.instance_space = instance_space
         self.class_by_view_id = class_by_view_id or {}
-        self._issues = NeatIssueList[NeatIssue](create_issues or [])
+        self._issues = IssueList(create_issues or [])
         self._tracker: type[Tracker] = tracker or LogTracker
 
     @classmethod
@@ -145,7 +145,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     def _create_validation_classes(
         self, view: dm.View
     ) -> tuple[type[BaseModel], dict[str, dm.EdgeConnection], NeatIssueList]:
-        issues = NeatIssueList[NeatIssue]()
+        issues = IssueList()
         field_definitions: dict[str, tuple[type, Any]] = {}
         edge_by_property: dict[str, dm.EdgeConnection] = {}
         validators: dict[str, classmethod] = {}

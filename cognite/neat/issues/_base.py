@@ -9,7 +9,7 @@ from typing import Any, ClassVar, TypeVar
 from warnings import WarningMessage
 
 import pandas as pd
-from pydantic_core import PydanticCustomError
+from pydantic_core import ErrorDetails, PydanticCustomError
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
@@ -75,6 +75,58 @@ class NeatError(NeatIssue, ABC):
             self.message(),
             dict(description=self.__doc__, fix=self.fix),
         )
+
+    @classmethod
+    def from_pydantic_errors(cls, errors: list[ErrorDetails], **kwargs) -> "list[NeatError]":
+        """Convert a list of pydantic errors to a list of Error instances.
+
+        This is intended to be overridden in subclasses to handle specific error types.
+        """
+        all_errors: list[NeatError] = []
+        for error in errors:
+            if isinstance(ctx := error.get("ctx"), dict) and isinstance(
+                multi_error := ctx.get("error"), MultiValueError
+            ):
+                all_errors.extend(multi_error.errors)  # type: ignore[arg-type]
+            else:
+                all_errors.append(DefaultPydanticError.from_pydantic_error(error))
+        return all_errors
+
+
+@dataclass(frozen=True)
+class DefaultPydanticError(NeatError):
+    type: str
+    loc: tuple[int | str, ...]
+    msg: str
+    input: Any
+    ctx: dict[str, Any] | None
+
+    @classmethod
+    def from_pydantic_error(cls, error: ErrorDetails) -> "DefaultPydanticError":
+        return cls(
+            type=error["type"],
+            loc=error["loc"],
+            msg=error["msg"],
+            input=error.get("input"),
+            ctx=error.get("ctx"),
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["type"] = self.type
+        output["loc"] = self.loc
+        output["msg"] = self.msg
+        output["input"] = self.input
+        output["ctx"] = self.ctx
+        return output
+
+    def message(self) -> str:
+        if self.loc and len(self.loc) == 1:
+            return f"{self.loc[0]} sheet: {self.msg}"
+        elif self.loc and len(self.loc) == 2:
+            return f"{self.loc[0]} sheet field/column <{self.loc[1]}>: {self.msg}"
+        else:
+            return self.msg
 
 
 @dataclass(frozen=True)
@@ -168,3 +220,6 @@ class MultiValueError(ValueError):
 
     def __init__(self, errors: Sequence[T_NeatIssue]):
         self.errors = list(errors)
+
+
+class IssueList(NeatIssueList[NeatIssue]): ...

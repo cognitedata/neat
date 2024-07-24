@@ -3,7 +3,7 @@ as
 
 """
 
-from ._base import DefaultWarning, MultiValueError, NeatError, NeatIssue, NeatIssueList, NeatWarning
+from ._base import DefaultWarning, IssueList, MultiValueError, NeatError, NeatIssue, NeatIssueList, NeatWarning
 
 __all__ = [
     "NeatIssue",
@@ -11,5 +11,6 @@ __all__ = [
     "NeatWarning",
     "DefaultWarning",
     "NeatIssueList",
+    "IssueList",
     "MultiValueError",
 ]

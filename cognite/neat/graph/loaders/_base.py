@@ -7,7 +7,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes.capabilities import Capability
 
 from cognite.neat.graph import NeatGraphStore
-from cognite.neat.issues import NeatIssue, NeatIssueList
+from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors.connect import FailedAuthorizationError
 from cognite.neat.utils.auxiliary import class_html_doc
 from cognite.neat.utils.upload import UploadResult, UploadResultList
@@ -66,7 +66,7 @@ class CDFLoader(BaseLoader[T_Output]):
                 yield upload_result
                 return
 
-        issues = NeatIssueList[NeatIssue]()
+        issues = IssueList()
         items: list[T_Output] = []
         for result in self._load(stop_on_exception=False):
             if isinstance(result, NeatIssue):
@@ -79,7 +79,7 @@ class CDFLoader(BaseLoader[T_Output]):
 
             if len(items) >= self._UPLOAD_BATCH_SIZE or result is _END_OF_CLASS:
                 yield from self._upload_to_cdf(client, items, dry_run, issues)
-                issues = NeatIssueList[NeatIssue]()
+                issues = IssueList()
                 items = []
         if items:
             yield from self._upload_to_cdf(client, items, dry_run, issues)
