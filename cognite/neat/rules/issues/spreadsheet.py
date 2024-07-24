@@ -23,10 +23,7 @@ __all__ = [
     "InvalidSheetError",
     "InvalidRowError",
     "InvalidPropertyError",
-    "InvalidClassError",
     "PrefixNamespaceCollisionError",
-    "InvalidContainerError",
-    "InvalidViewError",
     "InvalidRowUnknownSheetError",
     "NonExistingContainerError",
     "NonExistingViewError",
@@ -166,21 +163,6 @@ class InvalidRowError(InvalidSheetError, ABC):
 @dataclass(frozen=True)
 class InvalidPropertyError(InvalidRowError):
     sheet_name = "Properties"
-
-
-@dataclass(frozen=True)
-class InvalidClassError(InvalidRowError):
-    sheet_name = "Classes"
-
-
-@dataclass(frozen=True)
-class InvalidContainerError(InvalidRowError):
-    sheet_name = "Containers"
-
-
-@dataclass(frozen=True)
-class InvalidViewError(InvalidRowError):
-    sheet_name = "Views"
 
 
 @dataclass(frozen=True)
