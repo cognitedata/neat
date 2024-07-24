@@ -1,16 +1,12 @@
 import datetime
-import re
 
 from rdflib import Graph, Namespace
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.rules.models import RoleTypes, SchemaCompleteness
-from cognite.neat.rules.models._types._base import (
-    PREFIX_COMPLIANCE_REGEX,
-    VERSION_COMPLIANCE_REGEX,
-)
 from cognite.neat.utils.collection_ import remove_none_elements_from_set
 from cognite.neat.utils.rdf_ import convert_rdflib_content
+from cognite.neat.utils.regex_patterns import PATTERNS
 
 
 def parse_owl_metadata(graph: Graph) -> dict:
@@ -144,7 +140,7 @@ def fix_description(metadata: dict, default: str = "This model has been inferred
 
 def fix_prefix(metadata: dict, default: str = "neat") -> dict:
     if prefix := metadata.get("prefix", None):
-        if not isinstance(prefix, str) or not re.match(PREFIX_COMPLIANCE_REGEX, prefix):
+        if not isinstance(prefix, str) or not PATTERNS.prefix_compliance.match(prefix):
             metadata["prefix"] = default
     else:
         metadata["prefix"] = default
@@ -189,7 +185,7 @@ def fix_date(
 
 def fix_version(metadata: dict, default: str = "1.0.0") -> dict:
     if version := metadata.get("version", None):
-        if not re.match(VERSION_COMPLIANCE_REGEX, version):
+        if not PATTERNS.version_compliance.match(version):
             metadata["version"] = default
     else:
         metadata["version"] = default

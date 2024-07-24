@@ -127,6 +127,21 @@ class UnknownPropertyWarning(ValidationWarning):
 
 
 @dataclass(frozen=True)
+class PropertyRedefinedWarning(ValidationWarning):
+    description = "Property, {property}, redefined in {class_}. This will be ignored in the imports."
+    fix = "Check if the property is defined only once."
+
+    property_id: str
+    class_id: str
+
+    def dump(self) -> dict[str, str]:
+        return {"property_id": self.property_id, "class_id": self.class_id}
+
+    def message(self) -> str:
+        return self.description.format(property=self.property_id, class_=self.class_id)
+
+
+@dataclass(frozen=True)
 class UnknownValueTypeWarning(ModelImportWarning):
     description = "Unknown value type. This limits validation done by NEAT. "
     fix = "Set the value type"

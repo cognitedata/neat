@@ -9,6 +9,7 @@ from typing import Any, ClassVar, TypeVar
 from warnings import WarningMessage
 
 import pandas as pd
+from pydantic_core import PydanticCustomError
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
@@ -55,6 +56,13 @@ class NeatError(NeatIssue, ABC):
 
     def as_exception(self) -> ValueError:
         return ValueError(self.message())
+
+    def as_pydantic_exception(self) -> PydanticCustomError:
+        return PydanticCustomError(
+            self.__class__.__name__,
+            self.message(),
+            dict(description=self.description, fix=self.fix),
+        )
 
 
 @dataclass(frozen=True)

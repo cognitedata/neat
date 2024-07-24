@@ -1,11 +1,11 @@
-import re
 import warnings
 from typing import Literal, overload
 
 from cognite.neat.exceptions import wrangle_warnings
-from cognite.neat.rules import exceptions
+from cognite.neat.rules.issues.dms import EntityIDNotDMSCompliantWarning
+from cognite.neat.rules.issues.importing import PropertyRedefinedWarning
 from cognite.neat.rules.models import InformationRules
-from cognite.neat.rules.models._types._base import DMS_PROPERTY_ID_COMPLIANCE_REGEX, VIEW_ID_COMPLIANCE_REGEX
+from cognite.neat.utils.regex_patterns import DMS_PROPERTY_ID_COMPLIANCE_REGEX, PATTERNS, VIEW_ID_COMPLIANCE_REGEX
 
 
 @overload
@@ -26,35 +26,30 @@ def are_entity_names_dms_compliant(
     flag: bool = True
     with warnings.catch_warnings(record=True) as validation_warnings:
         for class_ in rules.classes:
-            if not re.match(VIEW_ID_COMPLIANCE_REGEX, str(class_.class_.suffix)):
+            if not PATTERNS.view_id_compliance.match(class_.class_.suffix):
                 warnings.warn(
-                    exceptions.EntityIDNotDMSCompliant(
-                        "Class", class_.class_.versioned_id, f"[Classes/Class/{class_.class_.versioned_id}]"
-                    ).message,
-                    category=exceptions.EntityIDNotDMSCompliant,
+                    EntityIDNotDMSCompliantWarning(class_.class_.versioned_id, "Class", VIEW_ID_COMPLIANCE_REGEX),
                     stacklevel=2,
                 )
                 flag = False
 
-        for row, property_ in enumerate(rules.properties):
+        for _, property_ in enumerate(rules.properties):
             # check class id which would resolve as view/container id
-            if not re.match(VIEW_ID_COMPLIANCE_REGEX, str(property_.class_.suffix)):
+            if not PATTERNS.view_id_compliance.match(property_.class_.suffix):
                 warnings.warn(
-                    exceptions.EntityIDNotDMSCompliant(
-                        "Class", property_.class_.versioned_id, f"[Properties/Class/{row}]"
-                    ).message,
-                    category=exceptions.EntityIDNotDMSCompliant,
+                    EntityIDNotDMSCompliantWarning(
+                        property_.class_.versioned_id,
+                        "Class",
+                        VIEW_ID_COMPLIANCE_REGEX,
+                    ),
                     stacklevel=2,
                 )
                 flag = False
 
             # check property id which would resolve as view/container id
-            if not re.match(DMS_PROPERTY_ID_COMPLIANCE_REGEX, property_.property_):
+            if not PATTERNS.dms_property_id_compliance.match(property_.property_):
                 warnings.warn(
-                    exceptions.EntityIDNotDMSCompliant(
-                        "Property", property_.property_, f"[Properties/Property/{row}]"
-                    ).message,
-                    category=exceptions.EntityIDNotDMSCompliant,
+                    EntityIDNotDMSCompliantWarning(property_.property_, "Property", DMS_PROPERTY_ID_COMPLIANCE_REGEX),
                     stacklevel=2,
                 )
                 flag = False
@@ -83,8 +78,7 @@ def are_properties_redefined(rules: InformationRules, return_report: bool = Fals
             elif property_.class_ in analyzed_properties[property_.property_]:
                 flag = True
                 warnings.warn(
-                    exceptions.PropertyRedefined(property_.property_, property_.class_.versioned_id).message,
-                    category=exceptions.EntityIDNotDMSCompliant,
+                    PropertyRedefinedWarning(property_.property_, property_.class_.versioned_id),
                     stacklevel=2,
                 )
 

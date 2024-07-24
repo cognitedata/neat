@@ -107,9 +107,9 @@ def invalid_domain_rules_cases():
             ],
         },
         (
-            ":GeneratingUnit(cim:name) is not a valid rdfpath!"
-            "\nFor more information visit: "
-            "https://cognite-neat.readthedocs-hosted.com/en/latest/api/exceptions.html#cognite.neat.rules.exceptions.NotValidRDFPath"
+            ":GeneratingUnit(cim:name) is not a valid rdfpath!\n"
+            "Description: Provided `rdfpath` is not valid, i.e. it cannot be converted to SPARQL query\n"
+            "Fix: Get familiar with `rdfpath` and check if provided path is valid!"
         ),
         id="missing_rule",
     )

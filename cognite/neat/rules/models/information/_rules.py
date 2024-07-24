@@ -9,7 +9,8 @@ from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
 from cognite.neat.issues import MultiValueError
-from cognite.neat.rules import exceptions, issues
+from cognite.neat.rules import issues
+from cognite.neat.rules.issues.spreadsheet import DefaultValueTypeNotProperError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
     BaseRules,
@@ -227,11 +228,11 @@ class InformationProperty(SheetEntity):
                         self.default = self.value_type.python(self.default)
 
                 except Exception:
-                    exceptions.DefaultValueTypeNotProper(
+                    raise DefaultValueTypeNotProperError(
                         self.property_,
                         type(self.default),
-                        self.value_type.python,
-                    )
+                        str(self.value_type.python),
+                    ).as_exception() from None
         return self
 
     @property
