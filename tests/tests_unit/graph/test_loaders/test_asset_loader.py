@@ -16,7 +16,7 @@ from cognite.neat.graph.transformers import AddSelfReferenceProperty
 
 @pytest.fixture()
 def asset_store(asset_rules) -> NeatGraphStore:
-    asset_store = NeatGraphStore.from_memory_store()
+    asset_store = NeatGraphStore.from_oxi_store()
     asset_store.write(RdfFileExtractor(nordic44_knowledge_graph, base_uri=URIRef("http://purl.org/nordic44#")))
 
     asset_store.add_rules(asset_rules.as_information_rules())
@@ -71,7 +71,7 @@ class TestAssetLoader:
             elif isinstance(r, RelationshipWrite):
                 relationships.append(r)
 
-        assert len(errors) == 26
+        assert len(errors) == 28
         assert len(assets) == 630
         assert len(relationships) == 572
         assert assets[0] == loader.orphanage
