@@ -19,9 +19,9 @@ from cognite.client.exceptions import CogniteAPIError, CogniteDuplicatedError
 
 from cognite.neat.graph._tracking.base import Tracker
 from cognite.neat.graph._tracking.log import LogTracker
-from cognite.neat.graph.issues import loader as loader_issues
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import NeatIssue, NeatIssueList
+from cognite.neat.issues.errors.resources import InvalidResourceError
 from cognite.neat.rules.analysis._asset import AssetAnalysis
 from cognite.neat.rules.models import AssetRules
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
@@ -143,8 +143,8 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
                 # check on parent
                 if "parentExternalId" in fields and fields["parentExternalId"] not in self.processed_assets:
-                    error = loader_issues.InvalidInstanceError(
-                        type_=EntityTypes.asset,
+                    error = InvalidResourceError(
+                        resource_type=EntityTypes.asset,
                         identifier=identifier,
                         reason=(
                             f"Parent asset {fields['parentExternalId']} does not exist or failed creation"
@@ -171,9 +171,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     yield AssetWrite.load(fields)
                     self.processed_assets.add(identifier)
                 except KeyError as e:
-                    error = loader_issues.InvalidInstanceError(
-                        type_=EntityTypes.asset, identifier=identifier, reason=str(e)
-                    )
+                    error = InvalidResourceError(resource_type=EntityTypes.asset, identifier=identifier, reason=str(e))
                     tracker.issue(error)
                     if stop_on_exception:
                         raise error.as_exception() from e
@@ -203,8 +201,8 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
                 # check if source asset exists
                 if source_external_id not in self.processed_assets:
-                    error = loader_issues.InvalidInstanceError(
-                        type_=EntityTypes.relationship,
+                    error = InvalidResourceError(
+                        resource_type=EntityTypes.relationship,
                         identifier=source_external_id,
                         reason=(
                             f"Asset {source_external_id} does not exist! "
@@ -223,8 +221,8 @@ class AssetLoader(CDFLoader[AssetWrite]):
                         target_external_id = f"{self.external_id_prefix or ''}{target_external_id}"
                         # check if source asset exists
                         if target_external_id not in self.processed_assets:
-                            error = loader_issues.InvalidInstanceError(
-                                type_=EntityTypes.relationship,
+                            error = InvalidResourceError(
+                                resource_type=EntityTypes.relationship,
                                 identifier=target_external_id,
                                 reason=(
                                     f"Asset {target_external_id} does not exist! "
@@ -250,8 +248,8 @@ class AssetLoader(CDFLoader[AssetWrite]):
                                 labels=[label] if self.use_labels else None,
                             )
                         except KeyError as e:
-                            error = loader_issues.InvalidInstanceError(
-                                type_=EntityTypes.relationship,
+                            error = InvalidResourceError(
+                                resource_type=EntityTypes.relationship,
                                 identifier=external_id,
                                 reason=str(e),
                             )

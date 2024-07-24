@@ -121,12 +121,12 @@ def wrangle_warnings(list_of_warnings: list[WarningMessage]) -> list[dict]:
 def _neat_warning_to_dict(warning: WarningMessage) -> dict:
     category: Any = warning.category
     return {
-        "type": category.type_,
+        "type": category.resource_type,
         "loc": (),
         "msg": str(warning.message),
         "input": None,
         "ctx": dict(
-            type_=category.type_,
+            type_=category.resource_type,
             code=category.code,
             description=category.description,
             example=category.example,
