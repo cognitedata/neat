@@ -150,6 +150,21 @@ class InvalidPropertyError(InvalidRowError):
 
 
 @dataclass(frozen=True)
+class InvalidClassError(InvalidRowError):
+    sheet_name = "Classes"
+
+
+@dataclass(frozen=True)
+class InvalidContainerError(InvalidRowError):
+    sheet_name = "Containers"
+
+
+@dataclass(frozen=True)
+class InvalidViewError(InvalidRowError):
+    sheet_name = "Views"
+
+
+@dataclass(frozen=True)
 class InvalidRowUnknownSheetError(InvalidRowError):
     sheet_name = "Unknown"
 
