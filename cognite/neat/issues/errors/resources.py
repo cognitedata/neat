@@ -14,6 +14,12 @@ class ResourceError(NeatError, Generic[T_Identifier]):
     identifier: T_Identifier
     resource_type: str
 
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["resource_type"] = self.resource_type
+        output["identifier"] = self.identifier
+        return output
+
 
 @dataclass(frozen=True)
 class ResourceNotFoundError(ResourceError[T_Identifier]):
@@ -120,4 +126,34 @@ class MissingIdentifierError(NeatError):
         output = super().dump()
         output["type"] = self.resource_type
         output["name"] = self.name
+        return output
+
+
+@dataclass(frozen=True)
+class MultiplePropertyDefinitionsError(ResourceError[T_Identifier]):
+    """The {resource_type} with identifier {identifier} has multiple definitions for the property {property_name}
+    with values {property_values} in {location_name} {locations}
+    """
+
+    property_name: str
+    property_values: frozenset[str | int | float | bool | None | tuple[str | int | float | bool | None, ...]]
+    locations: tuple[str | int, ...]
+    location_name: str
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(
+            resource_type=self.resource_type,
+            identifier=self.identifier,
+            property_name=self.property_name,
+            property_values=self.property_values,
+            locations=self.locations,
+            location_name=self.location_name,
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["property_name"] = self.property_name
+        output["property_values"] = list(self.property_values)
+        output["locations"] = list(self.locations)
+        output["location_name"] = self.location_name
         return output

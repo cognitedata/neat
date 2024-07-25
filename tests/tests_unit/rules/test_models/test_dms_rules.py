@@ -7,7 +7,7 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
-import cognite.neat.rules.issues.spreadsheet
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models import DMSRules, ExtensionCategory, InformationRules
@@ -1045,11 +1045,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            cognite.neat.rules.issues.spreadsheet.MultiValueTypeError(
-                container_id,
-                "maxPower",
-                {0, 1},
-                {"float64", "float32"},
+            MultiplePropertyDefinitionsError[dm.ContainerId](
+                container_id, "Container", "maxPower", frozenset({"float64", "float32"}), (0, 1), "rows"
             )
         ],
         id="Inconsistent container definition value type",
@@ -1097,11 +1094,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            cognite.neat.rules.issues.spreadsheet.MultiValueIsListError(
-                container_id,
-                "maxPower",
-                {0, 1},
-                {True, False},
+            MultiplePropertyDefinitionsError[dm.ContainerId](
+                container_id, "Container", "maxPower", frozenset({True, False}), (0, 1), "rows"
             )
         ],
         id="Inconsistent container definition isList",
@@ -1149,11 +1143,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            cognite.neat.rules.issues.spreadsheet.MultiNullableError(
-                container_id,
-                "maxPower",
-                {0, 1},
-                {True, False},
+            MultiplePropertyDefinitionsError[dm.ContainerId](
+                container_id, "Container", "maxPower", frozenset({True, False}), (0, 1), "rows"
             )
         ],
         id="Inconsistent container definition nullable",
@@ -1201,11 +1192,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            cognite.neat.rules.issues.spreadsheet.MultiIndexError(
-                container_id,
-                "name",
-                {0, 1},
-                {"name", "name_index"},
+            MultiplePropertyDefinitionsError[dm.ContainerId](
+                container_id, "Container", "name", frozenset({"name", "name_index"}), (0, 1), "rows"
             )
         ],
         id="Inconsistent container definition index",
@@ -1253,11 +1241,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            cognite.neat.rules.issues.spreadsheet.MultiUniqueConstraintError(
-                container_id,
-                "name",
-                {0, 1},
-                {"unique_name", "name"},
+            MultiplePropertyDefinitionsError[dm.ContainerId](
+                container_id, "Container", "name", frozenset({"unique_name", "name"}), (0, 1), "rows"
             )
         ],
         id="Inconsistent container definition constraint",

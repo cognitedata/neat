@@ -3,7 +3,8 @@ from typing import Any, ClassVar
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat.issues import IssueList, NeatIssueList
+from cognite.neat.issues import IssueList, NeatError, NeatIssueList
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
@@ -51,7 +52,7 @@ class DMSPostValidation:
             if prop.container and prop.container_property:
                 container_properties_by_id[(prop.container, prop.container_property)].append((prop_no, prop))
 
-        errors: list[issues.spreadsheet.InconsistentContainerDefinitionError] = []
+        errors: list[NeatError] = []
         for (container, prop_name), properties in container_properties_by_id.items():
             if len(properties) == 1:
                 continue
@@ -63,42 +64,78 @@ class DMSPostValidation:
             is_all_direct = all(prop.connection == "direct" for _, prop in properties)
             if len(value_types) > 1 and not is_all_direct:
                 errors.append(
-                    issues.spreadsheet.MultiValueTypeError(
+                    MultiplePropertyDefinitionsError[dm.ContainerId](
                         container_id,
+                        "Container",
                         prop_name,
-                        row_numbers,
-                        {v.dms._type if isinstance(v, DataType) else str(v) for v in value_types},
+                        frozenset({v.dms._type if isinstance(v, DataType) else str(v) for v in value_types}),
+                        tuple(row_numbers),
+                        "rows",
                     )
                 )
             list_definitions = {prop.is_list for _, prop in properties if prop.is_list is not None}
             if len(list_definitions) > 1:
                 errors.append(
-                    issues.spreadsheet.MultiValueIsListError(container_id, prop_name, row_numbers, list_definitions)
+                    MultiplePropertyDefinitionsError[dm.ContainerId](
+                        container_id,
+                        "Container",
+                        prop_name,
+                        frozenset(list_definitions),
+                        tuple(row_numbers),
+                        "rows",
+                    )
                 )
             nullable_definitions = {prop.nullable for _, prop in properties if prop.nullable is not None}
             if len(nullable_definitions) > 1:
                 errors.append(
-                    issues.spreadsheet.MultiNullableError(container_id, prop_name, row_numbers, nullable_definitions)
+                    MultiplePropertyDefinitionsError[dm.ContainerId](
+                        container_id,
+                        "Container",
+                        prop_name,
+                        frozenset(nullable_definitions),
+                        tuple(row_numbers),
+                        "rows",
+                    )
                 )
             default_definitions = {prop.default for _, prop in properties if prop.default is not None}
             if len(default_definitions) > 1:
                 errors.append(
-                    issues.spreadsheet.MultiDefaultError(
-                        container_id, prop_name, row_numbers, list(default_definitions)
+                    MultiplePropertyDefinitionsError[dm.ContainerId](
+                        container_id,
+                        "Container",
+                        prop_name,
+                        frozenset(
+                            tuple(f"{k}:{v}" for k, v in def_.items()) if isinstance(def_, dict) else def_
+                            for def_ in default_definitions
+                        ),
+                        tuple(row_numbers),
+                        "rows",
                     )
                 )
             index_definitions = {",".join(prop.index) for _, prop in properties if prop.index is not None}
             if len(index_definitions) > 1:
                 errors.append(
-                    issues.spreadsheet.MultiIndexError(container_id, prop_name, row_numbers, index_definitions)
+                    MultiplePropertyDefinitionsError[dm.ContainerId](
+                        container_id,
+                        "Container",
+                        prop_name,
+                        frozenset(index_definitions),
+                        tuple(row_numbers),
+                        "rows",
+                    )
                 )
             constraint_definitions = {
                 ",".join(prop.constraint) for _, prop in properties if prop.constraint is not None
             }
             if len(constraint_definitions) > 1:
                 errors.append(
-                    issues.spreadsheet.MultiUniqueConstraintError(
-                        container_id, prop_name, row_numbers, constraint_definitions
+                    MultiplePropertyDefinitionsError[dm.ContainerId](
+                        container_id,
+                        "Container",
+                        prop_name,
+                        frozenset(constraint_definitions),
+                        tuple(row_numbers),
+                        "rows",
                     )
                 )
 

@@ -346,7 +346,7 @@ class DMSRules(BaseRules):
         if issue_list.warnings:
             issue_list.trigger_warnings()
         if issue_list.has_errors:
-            raise MultiValueError([error for error in issue_list if isinstance(error, issues.NeatValidationError)])
+            raise MultiValueError(issue_list.errors)
         return self
 
     def dump(
