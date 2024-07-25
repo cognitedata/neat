@@ -136,7 +136,7 @@ class MultiplePropertyDefinitionsError(ResourceError[T_Identifier]):
     """
 
     property_name: str
-    property_values: frozenset[str | int | float | bool | None]
+    property_values: frozenset[str | int | float | bool | None | tuple[str | int | float | bool | None, ...]]
     locations: tuple[str | int, ...]
     location_name: str
 

@@ -1,9 +1,9 @@
 import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
-import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
 from cognite.neat.issues.formatters import BasicHTML
 from cognite.neat.rules import issues as validation
 
@@ -20,11 +20,13 @@ def issues() -> IssueList:
                 input="Apple",
                 url="https://errors.pydantic.dev/2.6/v/bool_parsing",
             ),
-            cognite.neat.rules.issues.spreadsheet.MultiNullableError(
-                container=ContainerId("neat", "Flowable"),
-                property_name="maxFlow",
-                row_numbers={4, 5},
-                nullable_definitions={True, False},
+            MultiplePropertyDefinitionsError[ContainerId](
+                ContainerId("neat", "Flowable"),
+                "Container",
+                "maxFlow",
+                frozenset({True, False}),
+                (4, 5),
+                location_name="rows",
             ),
             ReferredPropertyNotFoundError[ContainerId, ViewId](
                 ContainerId("neat", "Flowable"),

@@ -7,6 +7,7 @@ from pydantic.version import VERSION
 import cognite.neat.rules.issues.spreadsheet
 import cognite.neat.rules.issues.spreadsheet_file
 from cognite.neat.issues import IssueList
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
@@ -45,12 +46,14 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "inconsistent_container_dms_rules.xlsx",
         IssueList(
             [
-                cognite.neat.rules.issues.spreadsheet.MultiValueTypeError(
-                    container=ContainerId("neat", "Flowable"),
-                    property_name="maxFlow",
-                    row_numbers={3, 4},
-                    value_types={"float32", "float64"},
-                )
+                MultiplePropertyDefinitionsError[ContainerId](
+                    ContainerId("neat", "Flowable"),
+                    "Container",
+                    "maxFlow",
+                    frozenset({"float32", "float64"}),
+                    (3, 4),
+                    "rows",
+                ),
             ]
         ),
         id="Inconsistent container",
