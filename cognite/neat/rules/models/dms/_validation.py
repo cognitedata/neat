@@ -104,6 +104,7 @@ class DMSPostValidation:
                         prop_name,
                         frozenset(constraint_definitions),
                         tuple(row_numbers),
+                        "rows",
                     )
                 )
 

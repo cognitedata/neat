@@ -10,6 +10,7 @@ from pydantic_core import ErrorDetails
 from rdflib import Namespace
 
 from cognite.neat.issues import MultiValueError, NeatError
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
 
 from .base import DefaultPydanticError, NeatValidationError
@@ -51,6 +52,16 @@ class InvalidSheetError(NeatValidationError, ABC):
                             for row_no in row_numbers:
                                 # Adjusting the row number to the actual row number in the spreadsheet
                                 caught_error.row_numbers.add(reader.adjusted_row_number(row_no))
+                        if (
+                            isinstance(caught_error, MultiplePropertyDefinitionsError)
+                            and caught_error.location_name == "rows"
+                        ):
+                            adjusted_row_number = tuple(
+                                reader.adjusted_row_number(row_no) if isinstance(row_no, int) else row_no
+                                for row_no in caught_error.locations
+                            )
+                            # The error is frozen, so we have to use __setattr__ to change the row number
+                            object.__setattr__(caught_error, "locations", adjusted_row_number)
                         if isinstance(caught_error, InvalidRowError):
                             # Adjusting the row number to the actual row number in the spreadsheet
                             new_row = reader.adjusted_row_number(caught_error.row)

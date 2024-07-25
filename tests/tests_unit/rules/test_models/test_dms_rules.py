@@ -1255,11 +1255,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
         },
         [
             MultiplePropertyDefinitionsError[dm.ContainerId](
-                container_id,
-                "Container",
-                "name",
-                frozenset({"unique_name", "name"}),
-                (0, 1),
+                container_id, "Container", "name", frozenset({"unique_name", "name"}), (0, 1), "rows"
             )
         ],
         id="Inconsistent container definition constraint",
