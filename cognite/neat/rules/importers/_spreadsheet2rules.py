@@ -12,6 +12,7 @@ import pandas as pd
 from pandas import ExcelFile
 
 from cognite.neat.issues import IssueList
+from cognite.neat.issues.errors.external import FileReadError
 from cognite.neat.rules import issues
 from cognite.neat.rules.models import (
     RULES_PER_ROLE,
@@ -197,7 +198,7 @@ class SpreadsheetReader:
                     excel_file, source_sheet_name, return_read_info=True, expected_headers=[headers]
                 )
             except Exception as e:
-                self.issue_list.append(issues.spreadsheet_file.ReadSpreadsheetsError(cast(Path, excel_file.io), str(e)))
+                self.issue_list.append(FileReadError(cast(Path, excel_file.io), str(e)))
                 continue
 
         return sheets, read_info_by_sheet

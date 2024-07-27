@@ -5,15 +5,6 @@ from typing import Any, ClassVar
 
 from .base import NeatValidationError
 
-__all__ = [
-    "SpreadsheetFileError",
-    "SpreadsheetNotFoundError",
-    "MetadataSheetMissingOrFailedError",
-    "SheetMissingError",
-    "ReadSpreadsheetsError",
-    "InvalidRoleError",
-]
-
 
 @dataclass(frozen=True)
 class SpreadsheetFileError(NeatValidationError, ABC):
@@ -116,36 +107,4 @@ class SheetMissingError(SpreadsheetFileError):
     def dump(self) -> dict[str, Any]:
         output = super().dump()
         output["missing_spreadsheets"] = self.missing_spreadsheets
-        return output
-
-
-@dataclass(frozen=True)
-class ReadSpreadsheetsError(SpreadsheetFileError):
-    description: ClassVar[str] = "Error reading spreadsheet(s)"
-    fix: ClassVar[str] = "Is the excel document open in another program? Is the file corrupted?"
-
-    error_message: str
-
-    def message(self) -> str:
-        return f"Error reading spreadsheet {self.filepath.name}: {self.error_message}"
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["error_message"] = self.error_message
-        return output
-
-
-@dataclass(frozen=True)
-class InvalidRoleError(NeatValidationError):
-    description: ClassVar[str] = "Invalid role"
-    fix: ClassVar[str] = "Make sure to provide a valid role"
-
-    provided_role: str
-
-    def message(self) -> str:
-        return f"Invalid role: {self.provided_role}"
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["provided_role"] = self.provided_role
         return output

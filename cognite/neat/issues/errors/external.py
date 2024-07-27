@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from cognite.neat.issues import NeatError
@@ -18,4 +19,38 @@ class FailedAuthorizationError(NeatError):
         output = super().dump()
         output["action"] = self.action
         output["reason"] = self.reason
+        return output
+
+
+@dataclass(frozen=True)
+class FileReadError(NeatError):
+    """Error when reading file, {filepath}: {reason}"""
+
+    fix = "Is the {filepath} open in another program? Is the file corrupted?"
+    filepath: Path
+    reason: str
+
+    def message(self) -> str:
+        return self.description.format(filepath=repr(self.filepath), reason=self.reason)
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["filepath"] = self.filepath
+        output["reason"] = self.reason
+        return output
+
+
+@dataclass(frozen=True)
+class NeatFileNotFoundError(NeatError):
+    """File {filepath} not found"""
+
+    fix = "Make sure to provide a valid file"
+    filepath: Path
+
+    def message(self) -> str:
+        return (__doc__ or "").format(filepath=repr(self.filepath))
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["filepath"] = self.filepath
         return output
