@@ -5,7 +5,6 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
 
 import cognite.neat.rules.issues.spreadsheet
-import cognite.neat.rules.issues.spreadsheet_file
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors.external import NeatFileNotFoundError
 from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
