@@ -1,4 +1,5 @@
 import re
+from collections.abc import Sequence
 
 
 def to_camel(string: str) -> str:
@@ -106,3 +107,15 @@ def to_snake(string: str) -> str:
 
 def replace_non_alphanumeric_with_underscore(text: str) -> str:
     return re.sub(r"\W+", "_", text)
+
+
+def humanize_sequence(sequence: Sequence[str], sort: bool = True) -> str:
+    if not sequence:
+        return ""
+    elif len(sequence) == 1:
+        return sequence[0]
+
+    if sort:
+        sequence = sorted(sequence)
+
+    return f"{', '.join(sequence[:-1])} and {sequence[-1]}"

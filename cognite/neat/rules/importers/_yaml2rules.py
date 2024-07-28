@@ -4,6 +4,7 @@ from typing import Any, Literal, overload
 import yaml
 
 from cognite.neat.issues import IssueList
+from cognite.neat.issues.errors.external import FileMissingRequiredFieldError
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import NeatValidationError, ValidationIssue
 from cognite.neat.rules.models import RULES_PER_ROLE, DMSRules, RoleTypes
@@ -75,9 +76,7 @@ class YAMLImporter(BaseImporter):
             metadata_file = metadata_file_nullable or self._filepaths[0]
 
         if "metadata" not in self.raw_data:
-            self._read_issues.append(
-                issues.spreadsheet_file.MetadataSheetMissingOrFailedError(metadata_file, "Metadata not found in file")
-            )
+            self._read_issues.append(FileMissingRequiredFieldError(metadata_file, "section", "metadata"))
             if errors == "raise":
                 raise self._read_issues.as_errors()
             return None, self._read_issues
@@ -85,9 +84,7 @@ class YAMLImporter(BaseImporter):
         metadata = self.raw_data["metadata"]
 
         if "role" not in metadata:
-            self._read_issues.append(
-                issues.spreadsheet_file.MetadataSheetMissingOrFailedError(metadata_file, "Role not found in metadata")
-            )
+            self._read_issues.append(FileMissingRequiredFieldError(metadata, "metadata", "role"))
             if errors == "raise":
                 raise self._read_issues.as_errors()
             return None, self._read_issues

@@ -7,6 +7,7 @@ from pydantic.version import VERSION
 import cognite.neat.rules.issues.spreadsheet
 import cognite.neat.rules.issues.spreadsheet_file
 from cognite.neat.issues import IssueList
+from cognite.neat.issues.errors.external import NeatFileNotFoundError
 from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
@@ -18,9 +19,7 @@ from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 def invalid_rules_filepaths():
     yield pytest.param(
         DOC_RULES / "not-existing.xlsx",
-        IssueList(
-            [cognite.neat.rules.issues.spreadsheet_file.SpreadsheetNotFoundError(DOC_RULES / "not-existing.xlsx")]
-        ),
+        IssueList([NeatFileNotFoundError(DOC_RULES / "not-existing.xlsx")]),
         id="Not existing file",
     )
     major, minor, *_ = VERSION.split(".")

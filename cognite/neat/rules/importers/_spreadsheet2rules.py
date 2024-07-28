@@ -12,7 +12,8 @@ import pandas as pd
 from pandas import ExcelFile
 
 from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors.external import FileReadError
+from cognite.neat.issues.errors.external import FileMissingRequiredFieldError, FileReadError, NeatFileNotFoundError
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
 from cognite.neat.rules import issues
 from cognite.neat.rules.models import (
     RULES_PER_ROLE,
@@ -28,6 +29,7 @@ from cognite.neat.rules.models.dms import DMSRulesInput
 from cognite.neat.rules.models.information import InformationRulesInput
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
+from cognite.neat.utils.text import humanize_sequence
 
 from ._base import BaseImporter, Rules, _handle_issues
 
@@ -78,12 +80,12 @@ class MetadataRaw(UserDict):
 
     def is_valid(self, issue_list: IssueList, filepath: Path) -> bool:
         if not self.has_role_field:
-            issue_list.append(issues.spreadsheet_file.RoleMissingOrUnsupportedError(filepath))
+            issue_list.append(FileMissingRequiredFieldError(filepath, "metadata", "role"))
             return False
 
         # check if there is a schema field if role is not domain expert
         if self.role != RoleTypes.domain_expert and not self.has_schema_field:
-            issue_list.append(issues.spreadsheet_file.SchemaMissingOrUnsupportedError(filepath))
+            issue_list.append(FileMissingRequiredFieldError(filepath, "metadata", "schema"))
             return False
         return True
 
@@ -154,11 +156,7 @@ class SpreadsheetReader:
     def _read_metadata(self, excel_file: ExcelFile, filepath: Path) -> MetadataRaw | None:
         if self.metadata_sheet_name not in excel_file.sheet_names:
             if self.required:
-                self.issue_list.append(
-                    issues.spreadsheet_file.MetadataSheetMissingOrFailedError(
-                        filepath, sheet_name=self.metadata_sheet_name
-                    )
-                )
+                self.issue_list.append(FileMissingRequiredFieldError(filepath, "sheet", self.metadata_sheet_name))
             return None
 
         metadata = MetadataRaw.from_excel(excel_file, self.metadata_sheet_name)
@@ -179,7 +177,9 @@ class SpreadsheetReader:
         if missing_sheets := expected_sheet_names.difference(set(excel_file.sheet_names)):
             if self.required:
                 self.issue_list.append(
-                    issues.spreadsheet_file.SheetMissingError(cast(Path, excel_file.io), list(missing_sheets))
+                    FileMissingRequiredFieldError(
+                        cast(Path, excel_file.io), "sheets", humanize_sequence(list(missing_sheets))
+                    )
                 )
             return None, read_info_by_sheet
 
@@ -229,7 +229,7 @@ class ExcelImporter(BaseImporter):
     ) -> tuple[Rules | None, IssueList] | Rules:
         issue_list = IssueList(title=f"'{self.filepath.name}'")
         if not self.filepath.exists():
-            issue_list.append(issues.spreadsheet_file.SpreadsheetNotFoundError(self.filepath))
+            issue_list.append(NeatFileNotFoundError(self.filepath))
             return self._return_or_raise(issue_list, errors)
 
         with pd.ExcelFile(self.filepath) as excel_file:
@@ -252,7 +252,16 @@ class ExcelImporter(BaseImporter):
             return self._return_or_raise(issue_list, errors)
 
         if reference_read and user_read.role != reference_read.role:
-            issue_list.append(issues.spreadsheet_file.RoleMismatchError(self.filepath))
+            issue_list.append(
+                MultiplePropertyDefinitionsError(
+                    self.filepath.as_posix(),
+                    "Spreadsheet",
+                    "role",
+                    frozenset({user_read.role, reference_read.role}),
+                    ("user", "reference"),
+                    "sheet",
+                )
+            )
             return self._return_or_raise(issue_list, errors)
 
         sheets = user_read.sheets

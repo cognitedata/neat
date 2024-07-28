@@ -54,3 +54,22 @@ class NeatFileNotFoundError(NeatError):
         output = super().dump()
         output["filepath"] = self.filepath
         return output
+
+
+@dataclass(frozen=True)
+class FileMissingRequiredFieldError(NeatError):
+    """Missing required {field_name} in {filepath}: {fields}"""
+
+    filepath: Path
+    field_name: str
+    field: str
+
+    def message(self) -> str:
+        return self.description.format(field_name=self.field, filepath=repr(self.filepath), field_type=self.field_name)
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["field"] = self.field
+        output["filepath"] = self.filepath
+        output["field_type"] = self.field_name
+        return output
