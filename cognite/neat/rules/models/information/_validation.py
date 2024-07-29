@@ -5,7 +5,6 @@ from typing import cast
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors.general import NeatValueError
 from cognite.neat.issues.errors.resources import InvalidResourceError, ResourceNotDefinedError
-from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import DataModelType, SchemaCompleteness
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, UnknownEntity
 from cognite.neat.utils.rdf_ import get_inheritance_path
@@ -95,21 +94,27 @@ class InformationPostValidation:
         if self.metadata.schema_ == SchemaCompleteness.complete and (
             missing_classes := referred_classes.difference(defined_classes)
         ):
-            self.issue_list.append(
-                issues.spreadsheet.PropertiesDefinedForUndefinedClassesError(
-                    [missing.versioned_id for missing in missing_classes]
+            for class_ in missing_classes:
+                self.issue_list.append(
+                    ResourceNotDefinedError[ClassEntity](
+                        resource_type="Class",
+                        identifier=class_,
+                        location="Classes sheet",
+                    )
                 )
-            )
 
         # USE CASE: models are extended (user + last = complete)
         if self.metadata.schema_ == SchemaCompleteness.extended:
             defined_classes |= {class_.class_ for class_ in cast(InformationRules, self.rules.last).classes}
             if missing_classes := referred_classes.difference(defined_classes):
-                self.issue_list.append(
-                    issues.spreadsheet.PropertiesDefinedForUndefinedClassesError(
-                        [missing.versioned_id for missing in missing_classes]
+                for class_ in missing_classes:
+                    self.issue_list.append(
+                        ResourceNotDefinedError[ClassEntity](
+                            resource_type="Class",
+                            identifier=class_,
+                            location="Classes sheet",
+                        )
                     )
-                )
 
     def _referenced_value_types_exist(self) -> None:
         # adding UnknownEntity to the set of defined classes to handle the case where a property references an unknown

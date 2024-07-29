@@ -202,22 +202,3 @@ class InvalidRowUnknownSheetError(InvalidRowError):
 _INVALID_ROW_ERROR_BY_SHEET_NAME = {
     cls_.sheet_name: cls_ for cls_ in InvalidRowError.__subclasses__() if cls_ is not InvalidRowError
 }
-
-
-@dataclass(frozen=True)
-class PropertiesDefinedForUndefinedClassesError(NeatValidationError):
-    description = "Properties are defined for undefined classes."
-    fix = "Make sure to define class in the Classes sheet."
-
-    classes: list[str]
-
-    def dump(self) -> dict[str, list[str]]:
-        output = super().dump()
-        output["classes"] = self.classes
-        return output
-
-    def message(self) -> str:
-        return (
-            f"Classes {', '.join(self.classes)} have properties assigned to them, but"
-            " they are not defined in the Classes sheet."
-        )
