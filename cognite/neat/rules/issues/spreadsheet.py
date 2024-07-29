@@ -243,35 +243,6 @@ class RegexViolationError(NeatValidationError):
 
 
 @dataclass(frozen=True)
-class DefaultValueTypeNotProperError(NeatValidationError):
-    """This exceptions is raised when default value type is not proper, i.e. it is not
-    according to the expected value type set in Rules.
-
-
-    Args:
-        default_value_type: default value type that raised exception
-        expected_value_type: expected value type that raised exception
-
-    """
-
-    description = (
-        "This exceptions is raised when default value type is not proper, i.e. it is not "
-        "according to the expected value type set in Rules."
-    )
-    property_id: str
-    default_value_type: str
-    expected_value_type: str
-
-    def message(self) -> str:
-        message = (
-            f"Default value for property {self.property_id} is of type {self.default_value_type} "
-            f"which is different from the expected value type {self.expected_value_type}!"
-        )
-        message += f"\nDescription: {self.description}"
-        return message
-
-
-@dataclass(frozen=True)
 class PrefixNamespaceCollisionError(NeatValidationError):
     description = "Same namespaces are assigned to different prefixes."
     fix = "Make sure that each unique namespace is assigned to a unique prefix"
