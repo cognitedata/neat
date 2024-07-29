@@ -3,6 +3,7 @@ from collections import Counter
 from typing import cast
 
 from cognite.neat.issues import IssueList
+from cognite.neat.issues.errors.resources import InvalidResourceError
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import DataModelType, SchemaCompleteness
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, UnknownEntity
@@ -58,9 +59,13 @@ class InformationPostValidation:
                 ):
                     dangling_classes.add(class_)
 
-        if dangling_classes:
+        for class_ in dangling_classes:
             self.issue_list.append(
-                issues.spreadsheet.ClassNoPropertiesNoParentError([class_.versioned_id for class_ in dangling_classes])
+                InvalidResourceError[ClassEntity](
+                    resource_type="Class",
+                    identifier=class_,
+                    reason="Class has no properties and is not a parent of any class with properties",
+                )
             )
 
     def _referenced_parent_classes_exist(self) -> None:

@@ -124,18 +124,18 @@ class FailedConvertError(NeatError):
 
 
 @dataclass(frozen=True)
-class InvalidResourceError(NeatError):
-    """The {resource_type} with identifier {identifier} is invalid and will be skipped. {reason}"""
+class InvalidResourceError(NeatError, Generic[T_Identifier]):
+    """The {resource_type} with identifier {identifier} is invalid: {reason}"""
 
     fix = "Check the error message and correct the instance."
 
     resource_type: str
-    identifier: str
+    identifier: T_Identifier
     reason: str
 
     def message(self) -> str:
         return (self.__doc__ or "").format(
-            resource_type=self.resource_type, identifier=self.identifier, reason=self.reason
+            resource_type=self.resource_type, identifier=repr(self.identifier), reason=self.reason
         )
 
     def dump(self) -> dict[str, Any]:

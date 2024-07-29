@@ -243,24 +243,6 @@ class RegexViolationError(NeatValidationError):
 
 
 @dataclass(frozen=True)
-class ClassNoPropertiesNoParentError(NeatValidationError):
-    description = "Class has no properties and no parents."
-    fix = "Check if the class should have properties or parents."
-
-    classes: list[str]
-
-    def dump(self) -> dict[str, list[str]]:
-        output = super().dump()
-        output["classes"] = self.classes
-        return output
-
-    def message(self) -> str:
-        if len(self.classes) > 1:
-            return f"Classes {', '.join(self.classes)} have no direct or inherited properties. This may be a mistake."
-        return f"Class {self.classes[0]} have no direct or inherited properties. This may be a mistake."
-
-
-@dataclass(frozen=True)
 class DefaultValueTypeNotProperError(NeatValidationError):
     """This exceptions is raised when default value type is not proper, i.e. it is not
     according to the expected value type set in Rules.
