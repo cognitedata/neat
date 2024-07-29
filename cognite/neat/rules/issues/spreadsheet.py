@@ -307,24 +307,6 @@ class AssetParentPropertyPointsToDataValueTypeError(NeatValidationError):
 
 
 @dataclass(frozen=True)
-class ParentClassesNotDefinedError(NeatValidationError):
-    description = "Parent classes are not defined."
-    fix = "Check if the parent classes are defined in Classes sheet."
-
-    classes: list[str]
-
-    def dump(self) -> dict[str, list[str]]:
-        output = super().dump()
-        output["classes"] = self.classes
-        return output
-
-    def message(self) -> str:
-        if len(self.classes) > 1:
-            return f"Parent classes {', '.join(self.classes)} are not defined. This may be a mistake."
-        return f"Parent classes {', '.join(self.classes[0])} are not defined. This may be a mistake."
-
-
-@dataclass(frozen=True)
 class PrefixNamespaceCollisionError(NeatValidationError):
     description = "Same namespaces are assigned to different prefixes."
     fix = "Make sure that each unique namespace is assigned to a unique prefix"

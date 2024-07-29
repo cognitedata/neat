@@ -3,7 +3,7 @@ from collections import Counter
 from typing import cast
 
 from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors.resources import InvalidResourceError
+from cognite.neat.issues.errors.resources import InvalidResourceError, ResourceNotDefinedError
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import DataModelType, SchemaCompleteness
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, UnknownEntity
@@ -75,9 +75,15 @@ class InformationPostValidation:
         parents = set(itertools.chain.from_iterable(class_parent_pairs.values()))
 
         if undefined_parents := parents.difference(classes):
-            self.issue_list.append(
-                issues.spreadsheet.ParentClassesNotDefinedError([missing.versioned_id for missing in undefined_parents])
-            )
+            for parent in undefined_parents:
+                # Todo: include row and column number
+                self.issue_list.append(
+                    ResourceNotDefinedError[ClassEntity](
+                        resource_type="Class",
+                        identifier=parent,
+                        location="Classes sheet",
+                    )
+                )
 
     def _referenced_classes_exist(self) -> None:
         # needs to be complete for this validation to pass
