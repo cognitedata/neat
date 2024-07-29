@@ -5,7 +5,6 @@ from functools import total_ordering
 from typing import Any, ClassVar
 
 from pydantic_core import ErrorDetails
-from rdflib import Namespace
 
 from cognite.neat.issues import MultiValueError, NeatError
 from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
@@ -221,43 +220,4 @@ class PropertiesDefinedForUndefinedClassesError(NeatValidationError):
         return (
             f"Classes {', '.join(self.classes)} have properties assigned to them, but"
             " they are not defined in the Classes sheet."
-        )
-
-
-@dataclass(frozen=True)
-class RegexViolationError(NeatValidationError):
-    description = "Value, {value} failed regex, {regex}, validation."
-    fix = "Make sure that the name follows the regex pattern."
-
-    value: str
-    regex: str
-
-    def dump(self) -> dict[str, str]:
-        output = super().dump()
-        output["value"] = self.value
-        output["regex"] = self.regex
-        return output
-
-    def message(self) -> str:
-        return self.description.format(value=self.value, regex=self.regex)
-
-
-@dataclass(frozen=True)
-class PrefixNamespaceCollisionError(NeatValidationError):
-    description = "Same namespaces are assigned to different prefixes."
-    fix = "Make sure that each unique namespace is assigned to a unique prefix"
-
-    namespaces: list[Namespace]
-    prefixes: list[str]
-
-    def dump(self) -> dict[str, list[str]]:
-        output = super().dump()
-        output["prefixes"] = self.prefixes
-        output["namespaces"] = self.namespaces
-        return output
-
-    def message(self) -> str:
-        return (
-            f"Namespaces {', '.join(self.namespaces)} are assigned multiple times."
-            f" Impacted prefixes: {', '.join(self.prefixes)}."
         )

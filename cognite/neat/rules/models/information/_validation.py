@@ -3,6 +3,7 @@ from collections import Counter
 from typing import cast
 
 from cognite.neat.issues import IssueList
+from cognite.neat.issues.errors.general import NeatValueError
 from cognite.neat.issues.errors.resources import InvalidResourceError, ResourceNotDefinedError
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import DataModelType, SchemaCompleteness
@@ -192,7 +193,10 @@ class InformationPostValidation:
             reused_namespaces = [value for value, count in Counter(prefixes.values()).items() if count > 1]
             impacted_prefixes = [key for key, value in prefixes.items() if value in reused_namespaces]
             self.issue_list.append(
-                issues.spreadsheet.PrefixNamespaceCollisionError(
-                    prefixes=impacted_prefixes, namespaces=reused_namespaces
+                NeatValueError(
+                    "Namespace collision detected. The following prefixes "
+                    f"are assigned to the same namespace: {impacted_prefixes}"
+                    f"\nImpacted namespaces: {reused_namespaces}"
+                    "\nMake sure that each unique namespace is assigned to a unique prefix"
                 )
             )
