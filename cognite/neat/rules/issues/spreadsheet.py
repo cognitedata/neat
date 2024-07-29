@@ -272,22 +272,6 @@ class DefaultValueTypeNotProperError(NeatValidationError):
 
 
 @dataclass(frozen=True)
-class AssetRulesHaveCircularDependencyError(NeatValidationError):
-    description = "Asset rules have circular dependencies."
-    fix = "Linking between classes via property that maps to parent_external_id must yield hierarchy structure."
-
-    classes: list[str]
-
-    def dump(self) -> dict[str, list[tuple[str, str]]]:
-        output = super().dump()
-        output["classes"] = self.classes
-        return output
-
-    def message(self) -> str:
-        return f"Asset rules have circular dependencies between classes {', '.join(self.classes)}."
-
-
-@dataclass(frozen=True)
 class PrefixNamespaceCollisionError(NeatValidationError):
     description = "Same namespaces are assigned to different prefixes."
     fix = "Make sure that each unique namespace is assigned to a unique prefix"

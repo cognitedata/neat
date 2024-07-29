@@ -2,8 +2,8 @@ from graphlib import CycleError
 from typing import cast
 
 from cognite.neat.issues import IssueList
+from cognite.neat.issues.errors.general import NeatValueError
 from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
-from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import SheetList
 from cognite.neat.rules.models.asset._rules import AssetProperty, AssetRules
 from cognite.neat.rules.models.entities import AssetEntity, AssetFields, ClassEntity
@@ -41,4 +41,6 @@ class AssetPostValidation(InformationPostValidation):
         try:
             _ = AssetAnalysis(cast(AssetRules, self.rules)).class_topological_sort()
         except CycleError as error:
-            self.issue_list.append(issues.spreadsheet.AssetRulesHaveCircularDependencyError(error.args[1]))
+            self.issue_list.append(
+                NeatValueError(f"Invalid Asset Hierarchy, circular dependency detected: {error.args[1]}")
+            )
