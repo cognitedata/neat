@@ -288,25 +288,6 @@ class AssetRulesHaveCircularDependencyError(NeatValidationError):
 
 
 @dataclass(frozen=True)
-class AssetParentPropertyPointsToDataValueTypeError(NeatValidationError):
-    description = "Parent property points to a data value type instead of a class."
-    fix = "Make sure that the parent property points to a class."
-
-    class_property_with_data_value_type: list[tuple[str, str]]
-
-    def dump(self) -> dict[str, list[tuple[str, str]]]:
-        output = super().dump()
-        output["class_property"] = self.class_property_with_data_value_type
-        return output
-
-    def message(self) -> str:
-        text = [
-            f"class {class_} property {property_}" for class_, property_ in self.class_property_with_data_value_type
-        ]
-        return f"Following  {', and'.join(text)} point to data value type instead to classes. This is a mistake."
-
-
-@dataclass(frozen=True)
 class PrefixNamespaceCollisionError(NeatValidationError):
     description = "Same namespaces are assigned to different prefixes."
     fix = "Make sure that each unique namespace is assigned to a unique prefix"

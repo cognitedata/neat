@@ -6,8 +6,6 @@ from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
-from cognite.neat.issues import MultiValueError
-from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import BaseRules, RoleTypes, SheetList
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
@@ -109,7 +107,7 @@ class AssetRules(BaseRules):
         if issue_list.warnings:
             issue_list.trigger_warnings()
         if issue_list.has_errors:
-            raise MultiValueError([error for error in issue_list if isinstance(error, issues.NeatValidationError)])
+            raise issue_list.as_exception()
         return self
 
     def dump(
