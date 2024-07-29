@@ -4,12 +4,11 @@ from dataclasses import dataclass
 from functools import total_ordering
 from typing import Any, ClassVar
 
-from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic_core import ErrorDetails
 from rdflib import Namespace
 
 from cognite.neat.issues import MultiValueError, NeatError
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
 
 from .base import DefaultPydanticError, NeatValidationError
@@ -60,6 +59,10 @@ class InvalidSheetError(NeatValidationError, ABC):
                             # The error is frozen, so we have to use __setattr__ to change the row number
                             object.__setattr__(caught_error, "row", new_row)
                         output.append(caught_error)  # type: ignore[arg-type]
+                        if isinstance(caught_error, ResourceNotDefinedError):
+                            if isinstance(caught_error.row_number, int) and caught_error.sheet_name == "Properties":
+                                new_row = reader.adjusted_row_number(caught_error.row_number)
+                                object.__setattr__(caught_error, "row_number", new_row)
                     continue
 
             if len(error["loc"]) >= 4:
@@ -200,44 +203,6 @@ class InvalidRowUnknownSheetError(InvalidRowError):
 _INVALID_ROW_ERROR_BY_SHEET_NAME = {
     cls_.sheet_name: cls_ for cls_ in InvalidRowError.__subclasses__() if cls_ is not InvalidRowError
 }
-
-
-@dataclass(frozen=True)
-class NonExistingContainerError(InvalidPropertyError):
-    description = "The container referenced by the property is missing in the container sheet"
-    fix = "Add the container to the container sheet"
-
-    container_id: ContainerId
-
-    def message(self) -> str:
-        return (
-            f"In {self.sheet_name}, row={self.row}, column={self.column}: The container with "
-            f"id {self.container_id} is missing in the container sheet."
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["container_id"] = self.container_id
-        return output
-
-
-@dataclass(frozen=True)
-class NonExistingViewError(InvalidPropertyError):
-    description = "The view referenced by the property is missing in the view sheet"
-    fix = "Add the view to the view sheet"
-
-    view_id: ViewId
-
-    def message(self) -> str:
-        return (
-            f"In {self.sheet_name}, row={self.row}, column={self.column}: The view with "
-            f"id {self.view_id} is missing in the view sheet."
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id
-        return output
 
 
 @dataclass(frozen=True)

@@ -7,7 +7,7 @@ from pydantic.version import VERSION
 import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors.external import NeatFileNotFoundError
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
@@ -60,23 +60,21 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "missing_view_container_dms_rules.xlsx",
         IssueList(
             [
-                cognite.neat.rules.issues.spreadsheet.NonExistingViewError(
-                    column="View",
-                    row=3,
-                    type="value_error.missing",
-                    view_id=ViewId("neat", "Pump", "1"),
-                    msg="",
-                    input=None,
-                    url=None,
+                ResourceNotDefinedError[ViewId](
+                    ViewId("neat", "Pump", "1"),
+                    "View",
+                    location="Views Sheet",
+                    column_name="View",
+                    row_number=3,
+                    sheet_name="Properties",
                 ),
-                cognite.neat.rules.issues.spreadsheet.NonExistingContainerError(
-                    column="Container",
-                    row=3,
-                    type="value_error.missing",
-                    container_id=ContainerId("neat", "Pump"),
-                    msg="",
-                    input=None,
-                    url=None,
+                ResourceNotDefinedError[ContainerId](
+                    ContainerId("neat", "Pump"),
+                    "Container",
+                    location="Containers Sheet",
+                    column_name="Container",
+                    row_number=3,
+                    sheet_name="Properties",
                 ),
             ]
         ),
