@@ -3,9 +3,12 @@ from typing import Any
 
 import pytest
 
+from cognite.neat.issues import NeatError
+from cognite.neat.issues.errors.general import NeatValueError
+from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
 from cognite.neat.rules.models import AssetRules, InformationRules
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.entities import AssetEntity, RelationshipEntity
+from cognite.neat.rules.models.entities import AssetEntity, ClassEntity, RelationshipEntity
 
 
 def case_asset_relationship():
@@ -125,10 +128,10 @@ def case_circular_dependency():
                 },
             ],
         },
-        (
-            "Value error, [AssetRulesHaveCircularDependencyError(classes=[class(prefix=power,"
+        NeatValueError(
+            "Invalid Asset Hierarchy, circular dependency detected: [class(prefix=power,"
             "suffix=GeneratingUnit), class(prefix=power,suffix=ACLineSegment), "
-            "class(prefix=power,suffix=GeneratingUnit)])]"
+            "class(prefix=power,suffix=GeneratingUnit)]"
         ),
         id="circular_dependency",
     )
@@ -195,9 +198,11 @@ def parent_property_points_to_data_type():
                 },
             ],
         },
-        (
-            "Value error, [AssetParentPropertyPointsToDataValueTypeError"
-            "(class_property_with_data_value_type=[('ACLineSegment', 'line')])]"
+        InvalidPropertyDefinitionError[ClassEntity](
+            ClassEntity(prefix="power", suffix="ACLineSegment"),
+            "Class",
+            "line",
+            "parentExternalId is only allowed to point to a Class not String",
         ),
         id="data_type_for_parent_property",
     )
@@ -215,17 +220,17 @@ class TestAssetRules:
         assert asset_rules.model_dump() == information_rules.as_asset_architect_rules().model_dump()
 
     @pytest.mark.parametrize("invalid_rules, expected_exception", list(case_circular_dependency()))
-    def test_circular_dependency(self, invalid_rules: dict[str, dict[str, Any]], expected_exception: str) -> None:
+    def test_circular_dependency(self, invalid_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:
         with pytest.raises(ValueError) as e:
             AssetRules.model_validate(invalid_rules)
-        errors = e.value.errors()
-        assert errors[0]["msg"] == expected_exception
+        errors = NeatError.from_pydantic_errors(e.value.errors())
+        assert errors[0] == expected_exception
 
     @pytest.mark.parametrize("invalid_rules, expected_exception", list(parent_property_points_to_data_type()))
     def test_data_type_for_parent_property(
-        self, invalid_rules: dict[str, dict[str, Any]], expected_exception: str
+        self, invalid_rules: dict[str, dict[str, Any]], expected_exception: NeatError
     ) -> None:
         with pytest.raises(ValueError) as e:
             AssetRules.model_validate(invalid_rules)
-        errors = e.value.errors()
-        assert errors[0]["msg"] == expected_exception
+        errors = NeatError.from_pydantic_errors(e.value.errors())
+        assert errors[0] == expected_exception

@@ -46,7 +46,8 @@ T_ReferenceIdentifier = TypeVar("T_ReferenceIdentifier", bound=Hashable)
 
 @dataclass(frozen=True)
 class ReferredResourceNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIdentifier]):
-    """The {resource_type} with identifier {identifier} referred by {referred_type} {referred_by} does not exist"""
+    """The {resource_type} with identifier {identifier} referred by
+    {referred_type} {referred_by} does not exist"""
 
     fix = "Create the {resource_type}"
 
@@ -71,6 +72,39 @@ class ReferredResourceNotFoundError(ResourceError, Generic[T_Identifier, T_Refer
 
 
 @dataclass(frozen=True)
+class ResourceNotDefinedError(ResourceError[T_Identifier]):
+    """The {resource_type} {identifier} is not defined."""
+
+    extra = "{column_name} {row_number} in {sheet_name}"
+    fix = "Define the {resource_type} {identifier} in {location}."
+
+    location: str
+    column_name: str | None = None
+    row_number: int | None = None
+    sheet_name: str | None = None
+
+    def message(self) -> str:
+        msg = (self.__doc__ or "").format(
+            resource_type=self.resource_type, identifier=repr(self.identifier), location=self.location
+        )
+        if self.column_name and self.row_number and self.sheet_name:
+            msg += self.extra.format(
+                column_name=self.column_name, row_number=self.row_number, sheet_name=self.sheet_name
+            )
+        return msg
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["resource_type"] = self.resource_type
+        output["identifier"] = self.identifier
+        output["location"] = self.location
+        output["column_name"] = self.column_name
+        output["row_number"] = self.row_number
+        output["sheet_name"] = self.sheet_name
+        return output
+
+
+@dataclass(frozen=True)
 class FailedConvertError(NeatError):
     description = "Failed to convert the {identifier} to {target_format}: {reason}"
     fix = "Check the error message and correct the rules."
@@ -90,18 +124,18 @@ class FailedConvertError(NeatError):
 
 
 @dataclass(frozen=True)
-class InvalidResourceError(NeatError):
-    """The {resource_type} with identifier {identifier} is invalid and will be skipped. {reason}"""
+class InvalidResourceError(NeatError, Generic[T_Identifier]):
+    """The {resource_type} with identifier {identifier} is invalid: {reason}"""
 
     fix = "Check the error message and correct the instance."
 
     resource_type: str
-    identifier: str
+    identifier: T_Identifier
     reason: str
 
     def message(self) -> str:
         return (self.__doc__ or "").format(
-            resource_type=self.resource_type, identifier=self.identifier, reason=self.reason
+            resource_type=self.resource_type, identifier=repr(self.identifier), reason=self.reason
         )
 
     def dump(self) -> dict[str, Any]:

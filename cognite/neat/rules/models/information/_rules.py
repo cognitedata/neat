@@ -8,9 +8,7 @@ from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
-from cognite.neat.issues import MultiValueError
-from cognite.neat.rules import issues
-from cognite.neat.rules.issues.spreadsheet import DefaultValueTypeNotProperError
+from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
     BaseRules,
@@ -228,10 +226,11 @@ class InformationProperty(SheetEntity):
                         self.default = self.value_type.python(self.default)
 
                 except Exception:
-                    raise DefaultValueTypeNotProperError(
+                    raise InvalidPropertyDefinitionError[ClassEntity](
+                        self.class_,
+                        "Class",
                         self.property_,
-                        type(self.default),
-                        str(self.value_type.python),
+                        f"Default value {self.default} is not of type {self.value_type.python}",
                     ).as_exception() from None
         return self
 
@@ -306,7 +305,7 @@ class InformationRules(BaseRules):
         if issue_list.warnings:
             issue_list.trigger_warnings()
         if issue_list.has_errors:
-            raise MultiValueError([error for error in issue_list if isinstance(error, issues.NeatValidationError)])
+            raise issue_list.as_exception()
         return self
 
     def dump(

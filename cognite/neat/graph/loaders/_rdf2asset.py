@@ -143,7 +143,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
                 # check on parent
                 if "parentExternalId" in fields and fields["parentExternalId"] not in self.processed_assets:
-                    error = InvalidResourceError(
+                    error = InvalidResourceError[str](
                         resource_type=EntityTypes.asset,
                         identifier=identifier,
                         reason=(
@@ -171,7 +171,9 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     yield AssetWrite.load(fields)
                     self.processed_assets.add(identifier)
                 except KeyError as e:
-                    error = InvalidResourceError(resource_type=EntityTypes.asset, identifier=identifier, reason=str(e))
+                    error = InvalidResourceError[str](
+                        resource_type=EntityTypes.asset, identifier=identifier, reason=str(e)
+                    )
                     tracker.issue(error)
                     if stop_on_exception:
                         raise error.as_exception() from e
@@ -201,7 +203,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
                 # check if source asset exists
                 if source_external_id not in self.processed_assets:
-                    error = InvalidResourceError(
+                    error = InvalidResourceError[str](
                         resource_type=EntityTypes.relationship,
                         identifier=source_external_id,
                         reason=(
@@ -221,7 +223,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                         target_external_id = f"{self.external_id_prefix or ''}{target_external_id}"
                         # check if source asset exists
                         if target_external_id not in self.processed_assets:
-                            error = InvalidResourceError(
+                            error = InvalidResourceError[str](
                                 resource_type=EntityTypes.relationship,
                                 identifier=target_external_id,
                                 reason=(
@@ -248,7 +250,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                                 labels=[label] if self.use_labels else None,
                             )
                         except KeyError as e:
-                            error = InvalidResourceError(
+                            error = InvalidResourceError[str](
                                 resource_type=EntityTypes.relationship,
                                 identifier=external_id,
                                 reason=str(e),

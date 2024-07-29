@@ -16,8 +16,8 @@ from pydantic import (
 from pydantic.functional_serializers import PlainSerializer
 from pydantic_core import PydanticCustomError
 
+from cognite.neat.issues.errors.general import RegexViolationError
 from cognite.neat.issues.neat_warnings.identifier import RegexViolationWarning
-from cognite.neat.rules.issues.spreadsheet import RegexViolationError
 from cognite.neat.utils.regex_patterns import (
     PATTERNS,
     PREFIX_COMPLIANCE_REGEX,

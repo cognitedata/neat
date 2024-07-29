@@ -3,8 +3,8 @@ from typing import Any, ClassVar
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat.issues import IssueList, NeatError, NeatIssueList
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
+from cognite.neat.issues import IssueList, NeatError, NeatIssue, NeatIssueList
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
@@ -162,20 +162,19 @@ class DMSPostValidation:
             defined_views |= {view.view.as_id() for view in self.rules.last.views}
 
         property_count_by_view: dict[dm.ViewId, int] = defaultdict(int)
-        errors: list[issues.ValidationIssue] = []
+        errors: list[NeatIssue] = []
         for prop_no, prop in enumerate(self.properties):
             view_id = prop.view.as_id()
             if view_id not in defined_views:
                 errors.append(
-                    issues.spreadsheet.NonExistingViewError(
-                        column="View",
-                        row=prop_no,
-                        type="value_error.missing",
-                        view_id=view_id,
-                        msg="",
-                        input=None,
-                        url=None,
-                    )
+                    ResourceNotDefinedError[dm.ViewId](
+                        identifier=view_id,
+                        resource_type="View",
+                        location="Views Sheet",
+                        column_name="View",
+                        row_number=prop_no,
+                        sheet_name="Properties",
+                    ),
                 )
             else:
                 property_count_by_view[view_id] += 1
@@ -198,28 +197,26 @@ class DMSPostValidation:
             for prop_no, prop in enumerate(self.properties):
                 if prop.container and (container_id := prop.container.as_id()) not in defined_containers:
                     errors.append(
-                        issues.spreadsheet.NonExistingContainerError(
-                            column="Container",
-                            row=prop_no,
-                            type="value_error.missing",
-                            container_id=container_id,
-                            msg="",
-                            input=None,
-                            url=None,
+                        ResourceNotDefinedError[dm.ContainerId](
+                            identifier=container_id,
+                            resource_type="Container",
+                            location="Containers Sheet",
+                            column_name="Container",
+                            row_number=prop_no,
+                            sheet_name="Properties",
                         )
                     )
             for _container_no, container in enumerate(self.containers or []):
                 for constraint_no, constraint in enumerate(container.constraint or []):
                     if constraint.as_id() not in defined_containers:
                         errors.append(
-                            issues.spreadsheet.NonExistingContainerError(
-                                column="Constraint",
-                                row=constraint_no,
-                                type="value_error.missing",
-                                container_id=constraint.as_id(),
-                                msg="",
-                                input=None,
-                                url=None,
+                            ResourceNotDefinedError[dm.ContainerId](
+                                identifier=constraint.as_id(),
+                                resource_type="Container",
+                                location="Containers Sheet",
+                                column_name="Constraint",
+                                row_number=constraint_no,
+                                sheet_name="Properties",
                             )
                         )
         self.issue_list.extend(errors)

@@ -4,12 +4,10 @@ from dataclasses import dataclass
 from functools import total_ordering
 from typing import Any, ClassVar
 
-from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic_core import ErrorDetails
-from rdflib import Namespace
 
 from cognite.neat.issues import MultiValueError, NeatError
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
 
 from .base import DefaultPydanticError, NeatValidationError
@@ -60,6 +58,10 @@ class InvalidSheetError(NeatValidationError, ABC):
                             # The error is frozen, so we have to use __setattr__ to change the row number
                             object.__setattr__(caught_error, "row", new_row)
                         output.append(caught_error)  # type: ignore[arg-type]
+                        if isinstance(caught_error, ResourceNotDefinedError):
+                            if isinstance(caught_error.row_number, int) and caught_error.sheet_name == "Properties":
+                                new_row = reader.adjusted_row_number(caught_error.row_number)
+                                object.__setattr__(caught_error, "row_number", new_row)
                     continue
 
             if len(error["loc"]) >= 4:
@@ -200,217 +202,3 @@ class InvalidRowUnknownSheetError(InvalidRowError):
 _INVALID_ROW_ERROR_BY_SHEET_NAME = {
     cls_.sheet_name: cls_ for cls_ in InvalidRowError.__subclasses__() if cls_ is not InvalidRowError
 }
-
-
-@dataclass(frozen=True)
-class NonExistingContainerError(InvalidPropertyError):
-    description = "The container referenced by the property is missing in the container sheet"
-    fix = "Add the container to the container sheet"
-
-    container_id: ContainerId
-
-    def message(self) -> str:
-        return (
-            f"In {self.sheet_name}, row={self.row}, column={self.column}: The container with "
-            f"id {self.container_id} is missing in the container sheet."
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["container_id"] = self.container_id
-        return output
-
-
-@dataclass(frozen=True)
-class NonExistingViewError(InvalidPropertyError):
-    description = "The view referenced by the property is missing in the view sheet"
-    fix = "Add the view to the view sheet"
-
-    view_id: ViewId
-
-    def message(self) -> str:
-        return (
-            f"In {self.sheet_name}, row={self.row}, column={self.column}: The view with "
-            f"id {self.view_id} is missing in the view sheet."
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id
-        return output
-
-
-@dataclass(frozen=True)
-class PropertiesDefinedForUndefinedClassesError(NeatValidationError):
-    description = "Properties are defined for undefined classes."
-    fix = "Make sure to define class in the Classes sheet."
-
-    classes: list[str]
-
-    def dump(self) -> dict[str, list[str]]:
-        output = super().dump()
-        output["classes"] = self.classes
-        return output
-
-    def message(self) -> str:
-        return (
-            f"Classes {', '.join(self.classes)} have properties assigned to them, but"
-            " they are not defined in the Classes sheet."
-        )
-
-
-@dataclass(frozen=True)
-class RegexViolationError(NeatValidationError):
-    description = "Value, {value} failed regex, {regex}, validation."
-    fix = "Make sure that the name follows the regex pattern."
-
-    value: str
-    regex: str
-
-    def dump(self) -> dict[str, str]:
-        output = super().dump()
-        output["value"] = self.value
-        output["regex"] = self.regex
-        return output
-
-    def message(self) -> str:
-        return self.description.format(value=self.value, regex=self.regex)
-
-
-@dataclass(frozen=True)
-class ClassNoPropertiesNoParentError(NeatValidationError):
-    description = "Class has no properties and no parents."
-    fix = "Check if the class should have properties or parents."
-
-    classes: list[str]
-
-    def dump(self) -> dict[str, list[str]]:
-        output = super().dump()
-        output["classes"] = self.classes
-        return output
-
-    def message(self) -> str:
-        if len(self.classes) > 1:
-            return f"Classes {', '.join(self.classes)} have no direct or inherited properties. This may be a mistake."
-        return f"Class {self.classes[0]} have no direct or inherited properties. This may be a mistake."
-
-
-@dataclass(frozen=True)
-class DefaultValueTypeNotProperError(NeatValidationError):
-    """This exceptions is raised when default value type is not proper, i.e. it is not
-    according to the expected value type set in Rules.
-
-
-    Args:
-        default_value_type: default value type that raised exception
-        expected_value_type: expected value type that raised exception
-
-    """
-
-    description = (
-        "This exceptions is raised when default value type is not proper, i.e. it is not "
-        "according to the expected value type set in Rules."
-    )
-    property_id: str
-    default_value_type: str
-    expected_value_type: str
-
-    def message(self) -> str:
-        message = (
-            f"Default value for property {self.property_id} is of type {self.default_value_type} "
-            f"which is different from the expected value type {self.expected_value_type}!"
-        )
-        message += f"\nDescription: {self.description}"
-        return message
-
-
-@dataclass(frozen=True)
-class AssetRulesHaveCircularDependencyError(NeatValidationError):
-    description = "Asset rules have circular dependencies."
-    fix = "Linking between classes via property that maps to parent_external_id must yield hierarchy structure."
-
-    classes: list[str]
-
-    def dump(self) -> dict[str, list[tuple[str, str]]]:
-        output = super().dump()
-        output["classes"] = self.classes
-        return output
-
-    def message(self) -> str:
-        return f"Asset rules have circular dependencies between classes {', '.join(self.classes)}."
-
-
-@dataclass(frozen=True)
-class AssetParentPropertyPointsToDataValueTypeError(NeatValidationError):
-    description = "Parent property points to a data value type instead of a class."
-    fix = "Make sure that the parent property points to a class."
-
-    class_property_with_data_value_type: list[tuple[str, str]]
-
-    def dump(self) -> dict[str, list[tuple[str, str]]]:
-        output = super().dump()
-        output["class_property"] = self.class_property_with_data_value_type
-        return output
-
-    def message(self) -> str:
-        text = [
-            f"class {class_} property {property_}" for class_, property_ in self.class_property_with_data_value_type
-        ]
-        return f"Following  {', and'.join(text)} point to data value type instead to classes. This is a mistake."
-
-
-@dataclass(frozen=True)
-class ParentClassesNotDefinedError(NeatValidationError):
-    description = "Parent classes are not defined."
-    fix = "Check if the parent classes are defined in Classes sheet."
-
-    classes: list[str]
-
-    def dump(self) -> dict[str, list[str]]:
-        output = super().dump()
-        output["classes"] = self.classes
-        return output
-
-    def message(self) -> str:
-        if len(self.classes) > 1:
-            return f"Parent classes {', '.join(self.classes)} are not defined. This may be a mistake."
-        return f"Parent classes {', '.join(self.classes[0])} are not defined. This may be a mistake."
-
-
-@dataclass(frozen=True)
-class PrefixNamespaceCollisionError(NeatValidationError):
-    description = "Same namespaces are assigned to different prefixes."
-    fix = "Make sure that each unique namespace is assigned to a unique prefix"
-
-    namespaces: list[Namespace]
-    prefixes: list[str]
-
-    def dump(self) -> dict[str, list[str]]:
-        output = super().dump()
-        output["prefixes"] = self.prefixes
-        output["namespaces"] = self.namespaces
-        return output
-
-    def message(self) -> str:
-        return (
-            f"Namespaces {', '.join(self.namespaces)} are assigned multiple times."
-            f" Impacted prefixes: {', '.join(self.prefixes)}."
-        )
-
-
-@dataclass(frozen=True)
-class ValueTypeNotDefinedError(NeatValidationError):
-    description = "Value types referred by properties are not defined in Rules."
-    fix = "Make sure that all value types are defined in Rules."
-
-    value_types: list[str]
-
-    def dump(self) -> dict[str, list[str]]:
-        output = super().dump()
-        output["classes"] = self.value_types
-        return output
-
-    def message(self) -> str:
-        if len(self.value_types) > 1:
-            return f"Value types {', '.join(self.value_types)} are not defined. This may be a mistake."
-        return f"Value types {', '.join(self.value_types[0])} are not defined. This may be a mistake."

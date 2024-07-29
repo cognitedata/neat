@@ -73,3 +73,25 @@ class PropertyTypeNotSupportedError(ResourceError[T_Identifier]):
         output["property_name"] = self.property_name
         output["property_type"] = self.property_type
         return output
+
+
+@dataclass(frozen=True)
+class InvalidPropertyDefinitionError(ResourceError[T_Identifier]):
+    """Invalid property definition for {resource_type} {identifier}.{property_name}: {reason}"""
+
+    property_name: str
+    reason: str
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(
+            resource_type=self.resource_type,
+            identifier=repr(self.identifier),
+            property_name=self.property_name,
+            reason=self.reason,
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["property_name"] = self.property_name
+        output["reason"] = self.reason
+        return output

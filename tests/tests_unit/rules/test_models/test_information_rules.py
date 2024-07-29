@@ -4,10 +4,12 @@ from typing import Any
 import pytest
 from cognite.client import data_modeling as dm
 
+from cognite.neat.issues import NeatError
+from cognite.neat.issues.errors.resources import ResourceNotDefinedError
 from cognite.neat.rules.models import DMSRules, SheetList, data_types
 from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType, String
-from cognite.neat.rules.models.entities import MultiValueTypeInfo
+from cognite.neat.rules.models.entities import ClassEntity, MultiValueTypeInfo
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationRules,
@@ -156,7 +158,9 @@ def incomplete_rules_case():
                 }
             ],
         },
-        ("Value error, [PropertiesDefinedForUndefinedClassesError(classes=['power:GeneratingUnit2'])]"),
+        ResourceNotDefinedError[ClassEntity](
+            ClassEntity(prefix="power", suffix="GeneratingUnit2"), "Class", "Classes sheet"
+        ),
         id="missing_rule",
     )
 
@@ -183,11 +187,11 @@ class TestInformationRules:
         assert errors[0]["msg"] == expected_exception
 
     @pytest.mark.parametrize("incomplete_rules, expected_exception", list(incomplete_rules_case()))
-    def test_incomplete_rules(self, incomplete_rules: dict[str, dict[str, Any]], expected_exception: str) -> None:
+    def test_incomplete_rules(self, incomplete_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:
         with pytest.raises(ValueError) as e:
             InformationRules.model_validate(incomplete_rules)
-        errors = e.value.errors()
-        assert errors[0]["msg"] == expected_exception
+        errors = NeatError.from_pydantic_errors(e.value.errors())
+        assert errors[0] == expected_exception
 
     @pytest.mark.parametrize("rules, expected_exception", list(case_insensitive_value_types()))
     def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: DataType) -> None:

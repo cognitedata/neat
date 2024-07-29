@@ -13,6 +13,7 @@ from abc import ABC
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeAlias
 
 from pydantic import BaseModel, Field, field_validator, model_serializer, model_validator
+from pydantic.fields import FieldInfo
 
 from cognite.neat.rules.models.entities import ClassEntity
 
@@ -317,6 +318,8 @@ class Interface(DTDLBase):
         if not isinstance(value, list):
             return value
         context = info.data.get("@context", cls.default_context)
+        if isinstance(context, FieldInfo):
+            context = context.default
         spec_version = context.rsplit(";", maxsplit=1)[1]
         try:
             cls_by_type = DTDL_CLS_BY_TYPE_BY_SPEC[spec_version]

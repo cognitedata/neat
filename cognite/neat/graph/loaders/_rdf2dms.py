@@ -114,7 +114,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
-                    error = InvalidResourceError(resource_type="node", identifier=identifier, reason=str(e))
+                    error = InvalidResourceError[str](resource_type="node", identifier=identifier, reason=str(e))
                     tracker.issue(error)
                     if stop_on_exception:
                         raise error.as_exception() from e
@@ -251,7 +251,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 continue
             edge = edge_by_properties[prop]
             if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
-                error = cognite.neat.issues.errors.resources.InvalidResourceError(
+                error = cognite.neat.issues.errors.resources.InvalidResourceError[str](
                     resource_type="edge",
                     identifier=identifier,
                     reason=f"Multiple values for single edge {edge}. Expected only one.",
