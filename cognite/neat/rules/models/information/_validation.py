@@ -123,21 +123,29 @@ class InformationPostValidation:
         if self.metadata.schema_ == SchemaCompleteness.complete and (
             missing_value_types := referred_object_types.difference(defined_classes)
         ):
-            self.issue_list.append(
-                issues.spreadsheet.ValueTypeNotDefinedError(
-                    [cast(ClassEntity, missing).versioned_id for missing in missing_value_types]
+            # Todo: include row and column number
+            for missing in missing_value_types:
+                self.issue_list.append(
+                    ResourceNotDefinedError[ClassEntity](
+                        resource_type="Class",
+                        identifier=cast(ClassEntity, missing),
+                        location="Classes sheet",
+                    )
                 )
-            )
 
         # USE CASE: models are extended (user + last = complete)
         if self.metadata.schema_ == SchemaCompleteness.extended:
             defined_classes |= {class_.class_ for class_ in cast(InformationRules, self.rules.last).classes}
             if missing_value_types := referred_object_types.difference(defined_classes):
-                self.issue_list.append(
-                    issues.spreadsheet.ValueTypeNotDefinedError(
-                        [cast(ClassEntity, missing).versioned_id for missing in missing_value_types]
+                # Todo: include row and column number
+                for missing in missing_value_types:
+                    self.issue_list.append(
+                        ResourceNotDefinedError[ClassEntity](
+                            resource_type="Class",
+                            identifier=cast(ClassEntity, missing),
+                            location="Classes sheet",
+                        )
                     )
-                )
 
     def _class_parent_pairs(self) -> dict[ClassEntity, list[ClassEntity]]:
         class_subclass_pairs: dict[ClassEntity, list[ClassEntity]] = {}

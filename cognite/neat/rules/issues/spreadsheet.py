@@ -325,21 +325,3 @@ class PrefixNamespaceCollisionError(NeatValidationError):
             f"Namespaces {', '.join(self.namespaces)} are assigned multiple times."
             f" Impacted prefixes: {', '.join(self.prefixes)}."
         )
-
-
-@dataclass(frozen=True)
-class ValueTypeNotDefinedError(NeatValidationError):
-    description = "Value types referred by properties are not defined in Rules."
-    fix = "Make sure that all value types are defined in Rules."
-
-    value_types: list[str]
-
-    def dump(self) -> dict[str, list[str]]:
-        output = super().dump()
-        output["classes"] = self.value_types
-        return output
-
-    def message(self) -> str:
-        if len(self.value_types) > 1:
-            return f"Value types {', '.join(self.value_types)} are not defined. This may be a mistake."
-        return f"Value types {', '.join(self.value_types[0])} are not defined. This may be a mistake."
