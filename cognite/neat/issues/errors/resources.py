@@ -22,6 +22,26 @@ class ResourceError(NeatError, Generic[T_Identifier]):
 
 
 @dataclass(frozen=True)
+class DuplicatedResourceError(ResourceError[T_Identifier]):
+    """The {resource_type} with identifier {identifier} is duplicated in {location}"""
+
+    fix = "Remove the duplicate {resource_type} {identifier}."
+    location: str
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(
+            resource_type=self.resource_type, identifier=repr(self.identifier), location=self.location
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["resource_type"] = self.resource_type
+        output["identifier"] = self.identifier
+        output["location"] = self.location
+        return output
+
+
+@dataclass(frozen=True)
 class ResourceNotFoundError(ResourceError[T_Identifier]):
     """The {resource_type} with identifier {identifier} is missing: {reason}"""
 

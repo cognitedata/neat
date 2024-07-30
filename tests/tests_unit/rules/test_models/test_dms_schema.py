@@ -9,12 +9,9 @@ from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, Transf
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
-from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
+from cognite.neat.issues.errors.resources import DuplicatedResourceError, ReferredResourceNotFoundError
 from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
 from cognite.neat.issues.neat_warnings.models import UserModelingWarning
-from cognite.neat.rules.issues.dms import (
-    DuplicatedViewInDataModelError,
-)
 from cognite.neat.rules.models import DMSSchema
 from cognite.neat.rules.models.dms import PipelineSchema
 from cognite.neat.utils.cdf.data_classes import (
@@ -43,9 +40,10 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             data_model=data_model,
         ),
         [
-            DuplicatedViewInDataModelError(
-                view=dm.ViewId("my_space", "my_view1", "1"),
-                referred_by=dm.DataModelId("my_space", "my_data_model", "1"),
+            DuplicatedResourceError(
+                identifier=dm.ViewId("my_space", "my_view1", "1"),
+                resource_type="View",
+                location=repr(dm.DataModelId("my_space", "my_data_model", "1")),
             ),
             ReferredResourceNotFoundError[dm.ViewId, dm.DataModelId](
                 dm.ViewId("my_space", "my_view1", "1"),

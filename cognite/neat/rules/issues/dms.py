@@ -12,24 +12,6 @@ class DMSSchemaError(NeatValidationError, ABC): ...
 
 
 @dataclass(frozen=True)
-class DuplicatedViewInDataModelError(DMSSchemaError):
-    description = "The view is duplicated in the DataModel"
-    fix = "Remove the duplicated view"
-    error_name: ClassVar[str] = "DuplicatedViewInDataModel"
-    referred_by: dm.DataModelId
-    view: dm.ViewId
-
-    def message(self) -> str:
-        return f"The view {self.view} is duplicated in the DataModel {self.referred_by}"
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["referred_by"] = self.referred_by
-        output["view"] = self.view
-        return output
-
-
-@dataclass(frozen=True)
 class ContainerPropertyUsedMultipleTimesError(DMSSchemaError):
     description = "The container property is used multiple times by the same view property"
     fix = "Use unique container properties for when mapping to the same container"

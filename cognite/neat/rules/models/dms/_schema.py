@@ -28,13 +28,16 @@ from cognite.client.data_classes.transformations.common import Edges, EdgeType, 
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors.external import InvalidYamlError
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
-from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError, ResourceNotFoundError
+from cognite.neat.issues.errors.resources import (
+    DuplicatedResourceError,
+    ReferredResourceNotFoundError,
+    ResourceNotFoundError,
+)
 from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
 from cognite.neat.issues.neat_warnings.models import UserModelingWarning
 from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
-    DuplicatedViewInDataModelError,
 )
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.cdf.data_classes import (
@@ -657,7 +660,13 @@ class DMSSchema:
 
             for view_id, count in view_counts.items():
                 if count > 1:
-                    errors.add(DuplicatedViewInDataModelError(referred_by=model.as_id(), view=view_id))
+                    errors.add(
+                        DuplicatedResourceError(
+                            view_id,
+                            "View",
+                            repr(model.as_id()),
+                        )
+                    )
 
         return list(errors)
 
