@@ -6,29 +6,6 @@ from cognite.client.data_classes import data_modeling as dm
 
 from .base import NeatValidationError, ValidationWarning
 
-__all__ = [
-    "DMSSchemaError",
-    "DMSSchemaWarning",
-    "IncompleteSchemaError",
-    "DirectRelationMissingSourceWarning",
-    "ViewModelVersionNotMatchingWarning",
-    "ViewModelSpaceNotMatchingWarning",
-    "ViewMapsToTooManyContainersWarning",
-    "DuplicatedViewInDataModelError",
-    "ContainerPropertyUsedMultipleTimesError",
-    "EmptyContainerWarning",
-    "UnsupportedConnectionWarning",
-    "MultipleReferenceWarning",
-    "HasDataFilterOnNoPropertiesViewWarning",
-    "HasDataFilterAppliedToTooManyContainersWarning",
-    "ReverseRelationMissingOtherSideWarning",
-    "NodeTypeFilterOnParentViewWarning",
-    "MissingViewInModelWarning",
-    "ViewSizeWarning",
-    "ChangingContainerError",
-    "ChangingViewError",
-]
-
 
 @dataclass(frozen=True)
 class DMSSchemaError(NeatValidationError, ABC): ...
@@ -454,51 +431,4 @@ class RawFilterAppliedToViewWarning(DMSSchemaWarning):
     def dump(self) -> dict[str, Any]:
         output = super().dump()
         output["view_id"] = self.view_id.dump()
-        return output
-
-
-@dataclass(frozen=True)
-class NodeTypeFilterOnParentViewWarning(DMSSchemaWarning):
-    description = (
-        "Setting a node type filter on a parent view. This is not "
-        "recommended as parent views are typically used for multiple type of nodes."
-    )
-    fix = "Use a HasData filter instead"
-    error_name: ClassVar[str] = "NodeTypeFilterOnParentViewWarning"
-    view_id: dm.ViewId
-
-    def message(self) -> str:
-        return (
-            f"Setting a node type filter on parent view {self.view_id}. This is not recommended as "
-            "parent views are typically used for multiple types of nodes."
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id.dump()
-        return output
-
-
-@dataclass(frozen=True)
-class HasDataFilterOnViewWithReferencesWarning(DMSSchemaWarning):
-    description = (
-        "Setting a hasData filter on a solution view which reference other containers is not recommended."
-        "This will lead to no nodes being returned when querying the solution view."
-    )
-    fix = "Use a node type filter instead"
-    error_name: ClassVar[str] = "HasDataFilterOnReferencedViewWarning"
-
-    view_id: dm.ViewId
-    references: list[dm.ViewId]
-
-    def message(self) -> str:
-        return (
-            f"Setting a hasData filter on view {self.view_id} which references other views {self.references}. "
-            "This is not recommended as it will lead to no nodes being returned when querying the solution view."
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id.dump()
-        output["references"] = [view.dump() for view in sorted(self.references, key=lambda x: x.as_tuple())]
         return output

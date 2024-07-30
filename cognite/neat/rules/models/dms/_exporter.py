@@ -12,6 +12,7 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
+from cognite.neat.issues.neat_warnings.models import UserModelingWarning
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.data_types import DataType
@@ -25,6 +26,7 @@ from cognite.neat.rules.models.entities import (
 )
 from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
+from cognite.neat.utils.text import humanize_sequence
 
 from ._rules import DMSMetadata, DMSProperty, DMSRules, DMSView
 from ._schema import DMSSchema, PipelineSchema
@@ -213,7 +215,16 @@ class _DMSExporter:
             if isinstance(view_filter, NodeTypeFilter):
                 unique_node_types.update(view_filter.nodes)
                 if view.as_id() in parent_views:
-                    warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
+                    warnings.warn(
+                        UserModelingWarning(
+                            "NodeTypeFilterOnParentViewWarning",
+                            f"Setting a node type filter on parent view {view.as_id()!r}.",
+                            "This is not recommended as parent views are typically used for multiple types of nodes.",
+                            "Use a HasData filter instead",
+                        ),
+                        stacklevel=2,
+                    )
+
             elif isinstance(view_filter, HasDataFilter) and data_model_type == DataModelType.solution:
                 if dms_view and isinstance(dms_view.reference, ReferenceEntity):
                     references = {dms_view.reference.as_view_id()}
@@ -226,7 +237,15 @@ class _DMSExporter:
                 else:
                     continue
                 warnings.warn(
-                    issues.dms.HasDataFilterOnViewWithReferencesWarning(view.as_id(), list(references)), stacklevel=2
+                    UserModelingWarning(
+                        "HasDataFilterOnViewWithReferencesWarning",
+                        f"Setting a hasData filter on view {view.as_id()!r}"
+                        f"which references other views {humanize_sequence([repr(ref) for ref in references])}.",
+                        "This is not recommended as it will lead to no nodes "
+                        "being returned when querying the solution view.",
+                        "Use a NodeType filter instead",
+                    ),
+                    stacklevel=2,
                 )
 
             if data_model_type == DataModelType.enterprise:

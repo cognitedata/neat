@@ -58,3 +58,27 @@ class BreakingModelingPrincipleWarning(NeatWarning):
         output["specific"] = self.specific
         output["principle"] = self.principle
         return output
+
+
+@dataclass(frozen=True)
+class UserModelingWarning(NeatWarning):
+    """{title}: {problem}. {explanation}"""
+
+    extra = "Suggestion: {suggestion}"
+    title: str
+    problem: str
+    explanation: str
+    suggestion: str | None = None
+
+    def message(self) -> str:
+        msg = (self.__doc__ or "").format(title=self.title, problem=self.problem, explanation=self.explanation)
+        if self.suggestion:
+            msg += f"\n{self.extra.format(suggestion=self.suggestion)}"
+        return msg
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["title"] = self.title
+        output["problem"] = self.problem
+        output["explanation"] = self.explanation
+        return output
