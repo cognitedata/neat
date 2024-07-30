@@ -3,10 +3,15 @@ from typing import Any, Literal, overload
 
 import yaml
 
-from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors.external import FileMissingRequiredFieldError
+from cognite.neat.issues import IssueList, NeatIssue
+from cognite.neat.issues.errors.external import (
+    FileMissingRequiredFieldError,
+    FileNotAFileError,
+    NeatFileNotFoundError,
+    UnexpectedFileTypeError,
+)
 from cognite.neat.rules import issues
-from cognite.neat.rules.issues import NeatValidationError, ValidationIssue
+from cognite.neat.rules.issues import NeatValidationError
 from cognite.neat.rules.models import RULES_PER_ROLE, DMSRules, RoleTypes
 from cognite.neat.rules.models.dms import DMSRulesInput
 
@@ -30,7 +35,7 @@ class YAMLImporter(BaseImporter):
     def __init__(
         self,
         raw_data: dict[str, Any],
-        read_issues: list[ValidationIssue] | None = None,
+        read_issues: list[NeatIssue] | None = None,
         filepaths: list[Path] | None = None,
     ) -> None:
         self.raw_data = raw_data
@@ -40,11 +45,11 @@ class YAMLImporter(BaseImporter):
     @classmethod
     def from_file(cls, filepath: Path):
         if not filepath.exists():
-            return cls({}, [issues.fileread.FileNotFoundError(filepath)])
-        if not filepath.is_file():
-            return cls({}, [issues.fileread.FileNotAFileError(filepath)])
+            return cls({}, [NeatFileNotFoundError(filepath)])
+        elif not filepath.is_file():
+            return cls({}, [FileNotAFileError(filepath)])
         elif filepath.suffix not in [".yaml", ".yml"]:
-            return cls({}, [issues.fileread.InvalidFileFormatError(filepath, [".yaml", ".yml"])])
+            return cls({}, [UnexpectedFileTypeError(filepath, [".yaml", ".yml"])])
         return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath])
 
     @overload

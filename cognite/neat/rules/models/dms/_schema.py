@@ -26,6 +26,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.data_classes.transformations.common import Edges, EdgeType, Nodes, ViewInfo
 
 from cognite.neat.issues import NeatError
+from cognite.neat.issues.errors.external import InvalidYamlError
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
 from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
@@ -411,10 +412,10 @@ class DMSSchema:
             try:
                 data_dict = yaml.safe_load(data)
             except Exception as e:
-                raise issues.fileread.FailedStringLoadError(".yaml", str(e)).as_exception() from None
+                raise InvalidYamlError(str(e)).as_exception() from None
             if not isinstance(data_dict, dict) and all(isinstance(v, list) for v in data_dict.values()):
-                raise issues.fileread.FailedStringLoadError(
-                    "dict[str, list[Any]]", f"Invalid data structure: {type(data)}"
+                raise InvalidYamlError(
+                    f"Invalid data structure: {type(data)}", "dict[str, list[Any]]"
                 ).as_exception() from None
         else:
             data_dict = data

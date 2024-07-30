@@ -4,20 +4,6 @@ from pathlib import Path
 
 from .base import NeatValidationError, ValidationWarning
 
-__all__ = [
-    "FileReadWarning",
-    "InvalidFileFormatWarning",
-    "UnsupportedSpecWarning",
-    "UnknownItemWarning",
-    "FailedLoadWarning",
-    "BugInImporterWarning",
-    "FileReadError",
-    "FileNotFoundError",
-    "FileNotAFileError",
-    "InvalidFileFormatError",
-    "FailedStringLoadError",
-]
-
 
 @dataclass(frozen=True)
 class FileReadError(NeatValidationError, ABC):
@@ -135,63 +121,3 @@ class BugInImporterWarning(FileReadWarning):
         output["importer_name"] = self.importer_name
         output["error"] = self.error
         return output
-
-
-@dataclass(frozen=True)
-class FileNotFoundError(FileReadError):
-    description = "The file was not found"
-    fix = "Check if the file exists."
-
-    def message(self) -> str:
-        return f"File {self.filepath} was not found. {self.fix}"
-
-
-@dataclass(frozen=True)
-class FileNotAFileError(FileReadError):
-    description = "The file is not a file"
-    fix = "Check if the file exists."
-
-    def message(self) -> str:
-        return f"{self.filepath} is not a file. {self.fix}"
-
-
-@dataclass(frozen=True)
-class InvalidFileFormatError(FileReadError):
-    description = "The file is not in the expected format"
-    fix = "Check if the file is in the expected format"
-
-    expected_format: list[str]
-
-    def message(self) -> str:
-        return f"{self.filepath} is not in the expected format. Expected format: {self.expected_format}."
-
-
-@dataclass(frozen=True)
-class FailedStringLoadError(NeatValidationError):
-    description = "The file content is invalid"
-    fix = "Check if the file content is valid"
-
-    expected_format: str
-    error_message: str
-
-    def message(self) -> str:
-        return f"Failed to load string. Expected format: {self.expected_format}. Error: {self.error_message}"
-
-    def dump(self) -> dict[str, str | None]:
-        output = super().dump()
-        output["expected_format"] = self.expected_format
-        output["error_message"] = self.error_message
-        return output
-
-
-@dataclass(frozen=True)
-class NoFilesFoundError(FileReadError):
-    description = "No files were found in the directory"
-    fix = "Check if the directory contains files"
-
-    expected_formats: list[str] | None = None
-
-    def message(self) -> str:
-        if self.expected_formats:
-            return f"No files were found in {self.filepath.name}. Expected format: {self.expected_formats}. {self.fix}"
-        return f"No files were found in {self.filepath.name}. {self.fix}"

@@ -67,7 +67,7 @@ class NeatError(NeatIssue, ABC):
     def dump(self) -> dict[str, Any]:
         return {"errorType": type(self).__name__}
 
-    def as_exception(self) -> ValueError:
+    def as_exception(self) -> Exception:
         return ValueError(self.message())
 
     def as_pydantic_exception(self) -> PydanticCustomError:
