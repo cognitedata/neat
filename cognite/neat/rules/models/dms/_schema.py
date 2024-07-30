@@ -28,14 +28,13 @@ from cognite.client.data_classes.transformations.common import Edges, EdgeType, 
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors.external import InvalidYamlError
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
-from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
+from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError, ResourceNotFoundError
 from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
 from cognite.neat.issues.neat_warnings.models import UserModelingWarning
 from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
     DuplicatedViewInDataModelError,
-    IncompleteSchemaError,
 )
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.cdf.data_classes import (
@@ -97,7 +96,9 @@ class DMSSchema:
             if implemented_view := view_by_id.get(view_id):
                 inherited_referenced_containers |= implemented_view.referenced_containers()
             else:
-                raise IncompleteSchemaError(missing_component=view_id).as_exception()
+                raise ResourceNotFoundError(
+                    view_id, "View", "Schema set to complete, expects all views to be in model"
+                ).as_exception()
 
         return directly_referenced_containers | inherited_referenced_containers
 

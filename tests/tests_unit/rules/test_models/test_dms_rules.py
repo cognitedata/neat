@@ -1719,7 +1719,9 @@ def test_dms_rules_validation_error():
 
     errors = e.value.errors()
 
-    assert errors[0]["msg"] == (
-        "Value error, The data model schema is set to be complete, however, "
-        "the referred component ViewId(space='my_space', external_id='Sourceable', version='1') is not preset."
+    assert len(errors) == 1
+    error = str(errors[0]["ctx"]["error"])
+    assert error == (
+        "The View with identifier ViewId(space='my_space', external_id='Sourceable', version='1') "
+        "is missing: Schema set to complete, expects all views to be in model"
     )

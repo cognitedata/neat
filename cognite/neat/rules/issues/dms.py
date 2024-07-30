@@ -12,24 +12,6 @@ class DMSSchemaError(NeatValidationError, ABC): ...
 
 
 @dataclass(frozen=True)
-class IncompleteSchemaError(DMSSchemaError):
-    description = "This error is raised when the schema is claimed to be complete but missing some components"
-    fix = "Either provide the missing components or change the schema to partial"
-    missing_component: dm.ContainerId | dm.ViewId
-
-    def message(self) -> str:
-        return (
-            "The data model schema is set to be complete, however, "
-            f"the referred component {self.missing_component} is not preset."
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["missing_component"] = self.missing_component
-        return output
-
-
-@dataclass(frozen=True)
 class DuplicatedViewInDataModelError(DMSSchemaError):
     description = "The view is duplicated in the DataModel"
     fix = "Remove the duplicated view"
