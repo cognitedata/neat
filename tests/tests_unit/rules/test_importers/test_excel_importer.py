@@ -4,10 +4,10 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
 
-import cognite.neat.rules.issues.spreadsheet
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors.external import NeatFileNotFoundError
 from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
+from cognite.neat.issues.neat_warnings.models import CDFNotSupportedWarning
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
@@ -84,37 +84,17 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "too_many_containers_per_view.xlsx",
         IssueList(
             [
-                cognite.neat.rules.issues.dms.ViewMapsToTooManyContainersWarning(
-                    view_id=ViewId(space="neat", external_id="Asset", version="1"),
-                    container_ids={
-                        ContainerId(space="neat", external_id="Asset1"),
-                        ContainerId(space="neat", external_id="Asset2"),
-                        ContainerId(space="neat", external_id="Asset3"),
-                        ContainerId(space="neat", external_id="Asset4"),
-                        ContainerId(space="neat", external_id="Asset5"),
-                        ContainerId(space="neat", external_id="Asset6"),
-                        ContainerId(space="neat", external_id="Asset7"),
-                        ContainerId(space="neat", external_id="Asset8"),
-                        ContainerId(space="neat", external_id="Asset9"),
-                        ContainerId(space="neat", external_id="Asset10"),
-                        ContainerId(space="neat", external_id="Asset11"),
-                    },
+                CDFNotSupportedWarning(
+                    "More than 10 containers in a view",
+                    f"The view {ViewId(space='neat', external_id='Asset', version='1')!r} "
+                    f"maps to more than 10 containers.",
+                    "Reduce the number of containers the view maps to.",
                 ),
-                cognite.neat.rules.issues.dms.HasDataFilterAppliedToTooManyContainersWarning(
-                    view_id=ViewId(space="neat", external_id="Asset", version="1"),
-                    container_ids={
-                        ContainerId(space="neat", external_id="Asset1"),
-                        ContainerId(space="neat", external_id="Asset2"),
-                        ContainerId(space="neat", external_id="Asset3"),
-                        ContainerId(space="neat", external_id="Asset4"),
-                        ContainerId(space="neat", external_id="Asset5"),
-                        ContainerId(space="neat", external_id="Asset6"),
-                        ContainerId(space="neat", external_id="Asset7"),
-                        ContainerId(space="neat", external_id="Asset8"),
-                        ContainerId(space="neat", external_id="Asset9"),
-                        ContainerId(space="neat", external_id="Asset10"),
-                        ContainerId(space="neat", external_id="Asset11"),
-                    },
+                CDFNotSupportedWarning(
+                    "More than 10 containers in a view",
+                    f"The view {ViewId(space='neat', external_id='Asset', version='1')!r} "
+                    "maps to more than 10 containers.",
+                    "Reduce the number of containers the view maps to.",
                 ),
             ]
         ),

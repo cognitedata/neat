@@ -7,15 +7,20 @@ from typing import Literal, overload
 from pydantic import ValidationError
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.rules import issues
+from cognite.neat.issues.neat_warnings.external import (
+    FileMissingRequiredFieldWarning,
+    FileReadWarning,
+    UnexpectedFileTypeWarning,
+    UnknownItemWarning,
+)
+from cognite.neat.issues.neat_warnings.general import NeatValueWarning
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
-from cognite.neat.rules.issues import ValidationIssue
 from cognite.neat.rules.models import InformationRules, RoleTypes, SchemaCompleteness, SheetList
 from cognite.neat.rules.models.information import InformationClass, InformationProperty
-from cognite.neat.utils.text import to_pascal
+from cognite.neat.utils.text import humanize_sequence, to_pascal
 
 
 class DTDLImporter(BaseImporter):
@@ -46,11 +51,11 @@ class DTDLImporter(BaseImporter):
         self._schema_completeness = schema
 
     @classmethod
-    def _from_file_content(cls, file_content: str, filepath: Path) -> Iterable[DTDLBase | ValidationIssue]:
+    def _from_file_content(cls, file_content: str, filepath: Path) -> Iterable[DTDLBase | NeatIssue]:
         raw = json.loads(file_content)
         if isinstance(raw, dict):
             if (context := raw.get("@context")) is None:
-                yield issues.fileread.InvalidFileFormatWarning(filepath=filepath, reason="Missing '@context' key.")
+                yield FileMissingRequiredFieldWarning(filepath, "@context", "Missing '@context' key.")
                 return
             raw_list = [raw]
         elif isinstance(raw, list):
@@ -58,13 +63,11 @@ class DTDLImporter(BaseImporter):
                 (entry["@context"] for entry in raw if isinstance(entry, dict) and "@context" in entry), None
             )
             if context is None:
-                yield issues.fileread.InvalidFileFormatWarning(filepath=filepath, reason="Missing '@context' key.")
+                yield FileMissingRequiredFieldWarning(filepath, "@context", "Missing '@context' key.")
                 return
             raw_list = raw
         else:
-            yield issues.fileread.InvalidFileFormatWarning(
-                filepath=filepath, reason="Content is not an object or array."
-            )
+            yield UnexpectedFileTypeWarning(filepath, ["dict", "list"], "Content is not an object or array.")
             return
 
         if isinstance(context, list):
@@ -74,23 +77,27 @@ class DTDLImporter(BaseImporter):
         try:
             cls_by_type = DTDL_CLS_BY_TYPE_BY_SPEC[spec_version]
         except KeyError:
-            yield issues.fileread.UnsupportedSpecWarning(filepath=filepath, version=spec_version, spec_name="DTDL")
+            yield NeatValueWarning(
+                f"Unsupported DTDL spec version: {spec_version} in {filepath}. "
+                f"Supported versions are {humanize_sequence(list(DTDL_CLS_BY_TYPE_BY_SPEC.keys()))}."
+                " The file will be skipped."
+            )
             return
 
         for item in raw_list:
             if not (type_ := item.get("@type")):
-                yield issues.fileread.InvalidFileFormatWarning(filepath=filepath, reason="Missing '@type' key.")
+                yield FileMissingRequiredFieldWarning(filepath, "@type", "Missing '@type' key.")
                 continue
             cls_ = cls_by_type.get(type_)
             if cls_ is None:
-                yield issues.fileread.UnknownItemWarning(reason=f"Unknown '@type' {type_}.", filepath=filepath)
+                yield UnknownItemWarning(f"Unknown '@type' {type_}.", filepath=filepath)
                 continue
             try:
                 yield cls_.model_validate(item)
             except ValidationError as e:
-                yield issues.fileread.InvalidFileFormatWarning(filepath=filepath, reason=str(e))
+                yield UnexpectedFileTypeWarning(filepath, [cls.__name__], str(e))
             except Exception as e:
-                yield issues.fileread.BugInImporterWarning(filepath=filepath, error=str(e), importer_name=cls.__name__)
+                yield FileReadWarning(filepath=filepath, reason=str(e))
 
     @classmethod
     def from_directory(cls, directory: Path) -> "DTDLImporter":
@@ -112,7 +119,7 @@ class DTDLImporter(BaseImporter):
             for filepath in z.namelist():
                 if filepath.endswith(".json"):
                     for item in cls._from_file_content(z.read(filepath).decode(), Path(filepath)):
-                        if isinstance(item, ValidationIssue):
+                        if isinstance(item, NeatIssue):
                             issues.append(item)
                         else:
                             items.append(item)

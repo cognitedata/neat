@@ -19,13 +19,13 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.issues import IssueList, NeatIssue
+from cognite.neat.issues.errors.external import UnexpectedFileTypeError
 from cognite.neat.issues.errors.resources import ResourceNotFoundError
 from cognite.neat.issues.neat_warnings.properties import (
     PropertyTypeNotSupportedWarning,
     ReferredPropertyNotFoundWarning,
 )
 from cognite.neat.issues.neat_warnings.resources import ReferredResourceNotFoundWarning
-from cognite.neat.rules import issues
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
 from cognite.neat.rules.models import (
     DataModelType,
@@ -198,7 +198,7 @@ class DMSImporter(BaseImporter):
     @classmethod
     def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
         if Path(zip_file).suffix != ".zip":
-            return cls(DMSSchema(), [issues.fileread.InvalidFileFormatError(Path(zip_file), [".zip"])])
+            return cls(DMSSchema(), [UnexpectedFileTypeError(Path(zip_file), [".zip"])])
         issue_list = IssueList()
         with _handle_issues(issue_list) as _:
             schema = DMSSchema.from_zip(zip_file)

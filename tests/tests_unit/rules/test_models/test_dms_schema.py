@@ -10,7 +10,7 @@ from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, Transf
 from cognite.neat.issues import NeatError, NeatWarning
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
-from cognite.neat.rules import issues
+from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
 from cognite.neat.rules.issues.dms import (
     DirectRelationMissingSourceWarning,
     DMSSchemaError,
@@ -330,10 +330,10 @@ def invalid_raw_str_test_cases() -> Iterable[ParameterSet]:
         raw_str,
         {"views": [Path("my_view_file.yaml")]},
         [
-            issues.fileread.FailedLoadWarning(
-                filepath=Path("my_view_file.yaml"),
-                expected_format="ViewApply",
-                error_message="KeyError('externalId')",
+            UnexpectedFileTypeWarning(
+                Path("my_view_file.yaml"),
+                ["ViewApply"],
+                "KeyError('externalId')",
             )
         ],
         id="Misspelled external_id",

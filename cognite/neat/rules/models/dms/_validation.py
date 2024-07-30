@@ -5,6 +5,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
+from cognite.neat.issues.neat_warnings.models import CDFNotSupportedWarning, UserModelingWarning
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
@@ -288,9 +289,10 @@ class DMSPostValidation:
 
             if mapped_containers and len(mapped_containers) > 10:
                 self.issue_list.append(
-                    issues.dms.ViewMapsToTooManyContainersWarning(
-                        view_id=view_id,
-                        container_ids=mapped_containers,
+                    CDFNotSupportedWarning(
+                        "More than 10 containers in a view",
+                        f"The view {view_id!r} maps to more than 10 containers.",
+                        "Reduce the number of containers the view maps to.",
                     )
                 )
                 if (
@@ -299,9 +301,10 @@ class DMSPostValidation:
                     and len(view.filter.dump()["hasData"]) > 10
                 ):
                     self.issue_list.append(
-                        issues.dms.HasDataFilterAppliedToTooManyContainersWarning(
-                            view_id=view_id,
-                            container_ids=mapped_containers,
+                        CDFNotSupportedWarning(
+                            "More than 10 containers in a view",
+                            f"The view {view_id!r} maps to more than 10 containers.",
+                            "Reduce the number of containers the view maps to.",
                         )
                     )
 
@@ -309,8 +312,11 @@ class DMSPostValidation:
         for view in self.views:
             if view.filter_ and isinstance(view.filter_, RawFilter):
                 self.issue_list.append(
-                    issues.dms.RawFilterAppliedToViewWarning(
-                        view_id=view.view.as_id(),
+                    UserModelingWarning(
+                        "Non-Standard Filter",
+                        f"The view {view.view.as_id()!r} uses a non-standard filter.",
+                        "This will not be validated by Neat, and is thus not recommended.",
+                        "If you can use a HasData or NoteType filter.",
                     )
                 )
 

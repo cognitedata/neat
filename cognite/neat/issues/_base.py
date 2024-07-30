@@ -67,7 +67,7 @@ class NeatError(NeatIssue, ABC):
     def dump(self) -> dict[str, Any]:
         return {"errorType": type(self).__name__}
 
-    def as_exception(self) -> ValueError:
+    def as_exception(self) -> Exception:
         return ValueError(self.message())
 
     def as_pydantic_exception(self) -> PydanticCustomError:
@@ -85,10 +85,11 @@ class NeatError(NeatIssue, ABC):
         """
         all_errors: list[NeatError] = []
         for error in errors:
-            if isinstance(ctx := error.get("ctx"), dict) and isinstance(
-                multi_error := ctx.get("error"), MultiValueError
-            ):
+            ctx = error.get("ctx")
+            if isinstance(ctx, dict) and isinstance(multi_error := ctx.get("error"), MultiValueError):
                 all_errors.extend(multi_error.errors)  # type: ignore[arg-type]
+            elif isinstance(ctx, dict) and isinstance(single_error := ctx.get("error"), NeatError):
+                all_errors.append(single_error)
             else:
                 all_errors.append(DefaultPydanticError.from_pydantic_error(error))
         return all_errors

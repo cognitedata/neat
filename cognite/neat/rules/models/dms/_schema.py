@@ -26,10 +26,11 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.data_classes.transformations.common import Edges, EdgeType, Nodes, ViewInfo
 
 from cognite.neat.issues import NeatError
+from cognite.neat.issues.errors.external import InvalidYamlError
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
+from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
 from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
-from cognite.neat.rules import issues
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
     DirectRelationMissingSourceWarning,
@@ -262,10 +263,9 @@ class DMSSchema:
                     data.setdefault(attr_name, [])
                     context.setdefault(attr_name, [])
                     try:
-                        # Using CSafeLoader over safe_load for ~10x speedup
                         loaded = yaml.safe_load(yaml_file.read_text())
                     except Exception as e:
-                        warnings.warn(issues.fileread.InvalidFileFormatWarning(yaml_file, str(e)), stacklevel=2)
+                        warnings.warn(UnexpectedFileTypeWarning(yaml_file, [".yaml", ".yml"], str(e)), stacklevel=2)
                         continue
 
                     if isinstance(loaded, list):
@@ -355,7 +355,7 @@ class DMSSchema:
                         try:
                             loaded = yaml.safe_load(zip_ref.read(file_info).decode())
                         except Exception as e:
-                            warnings.warn(issues.fileread.InvalidFileFormatWarning(filename, str(e)), stacklevel=2)
+                            warnings.warn(UnexpectedFileTypeWarning(filename, [".yaml", ".yml"], str(e)), stacklevel=2)
                             continue
                         if isinstance(loaded, list):
                             data[attr_name].extend(loaded)
@@ -411,10 +411,10 @@ class DMSSchema:
             try:
                 data_dict = yaml.safe_load(data)
             except Exception as e:
-                raise issues.fileread.FailedStringLoadError(".yaml", str(e)).as_exception() from None
+                raise InvalidYamlError(str(e)).as_exception() from None
             if not isinstance(data_dict, dict) and all(isinstance(v, list) for v in data_dict.values()):
-                raise issues.fileread.FailedStringLoadError(
-                    "dict[str, list[Any]]", f"Invalid data structure: {type(data)}"
+                raise InvalidYamlError(
+                    f"Invalid data structure: {type(data)}", "dict[str, list[Any]]"
                 ).as_exception() from None
         else:
             data_dict = data
@@ -436,7 +436,7 @@ class DMSSchema:
                     except Exception as e:
                         data_model_file = context.get(attr.name, [Path("UNKNOWN")])[0]
                         warnings.warn(
-                            issues.fileread.FailedLoadWarning(data_model_file, dm.DataModelApply.__name__, str(e)),
+                            UnexpectedFileTypeWarning(data_model_file, [dm.DataModelApply.__name__], str(e)),
                             stacklevel=2,
                         )
                 else:
@@ -452,9 +452,7 @@ class DMSSchema:
     def _load_individual_resources(cls, items: list, attr: Field, trigger_error: str, resource_context) -> list[Any]:
         resources = attr.type([])
         if not hasattr(attr.type, "_RESOURCE"):
-            warnings.warn(
-                issues.fileread.FailedLoadWarning(Path("UNKNOWN"), attr.type.__name__, trigger_error), stacklevel=2
-            )
+            warnings.warn(UnexpectedFileTypeWarning(Path("UNKNOWN"), [attr.type.__name__], trigger_error), stacklevel=2)
             return resources
         # Fallback to load individual resources.
         single_cls = attr.type._RESOURCE
@@ -467,7 +465,7 @@ class DMSSchema:
                 except IndexError:
                     filepath = Path("UNKNOWN")
                 # We use repr(e) instead of str(e) to include the exception type in the warning message
-                warnings.warn(issues.fileread.FailedLoadWarning(filepath, single_cls.__name__, repr(e)), stacklevel=2)
+                warnings.warn(UnexpectedFileTypeWarning(filepath, [single_cls.__name__], repr(e)), stacklevel=2)
             else:
                 resources.append(loaded_instance)
         return resources
@@ -852,7 +850,7 @@ class PipelineSchema(DMSSchema):
                 try:
                     loaded = yaml.safe_load(yaml_file.read_text())
                 except Exception as e:
-                    warnings.warn(issues.fileread.InvalidFileFormatWarning(yaml_file, str(e)), stacklevel=2)
+                    warnings.warn(UnexpectedFileTypeWarning(yaml_file, [".yaml", ".yml"], str(e)), stacklevel=2)
                     continue
                 if isinstance(loaded, list):
                     data[attr_name].extend(loaded)
@@ -918,7 +916,7 @@ class PipelineSchema(DMSSchema):
                         try:
                             loaded = yaml.safe_load(zip_ref.read(file_info).decode())
                         except Exception as e:
-                            warnings.warn(issues.fileread.InvalidFileFormatWarning(filepath, str(e)), stacklevel=2)
+                            warnings.warn(UnexpectedFileTypeWarning(filepath, [".yaml", ".yml"], str(e)), stacklevel=2)
                             continue
                         if isinstance(loaded, list):
                             data[attr_name].extend(loaded)

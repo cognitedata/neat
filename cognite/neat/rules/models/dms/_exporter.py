@@ -12,7 +12,8 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
-from cognite.neat.rules import issues
+from cognite.neat.issues.neat_warnings.general import NotSupportedWarning
+from cognite.neat.issues.neat_warnings.models import CDFNotSupportedWarning, UserModelingWarning
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
@@ -25,6 +26,7 @@ from cognite.neat.rules.models.entities import (
 )
 from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
+from cognite.neat.utils.text import humanize_sequence
 
 from ._rules import DMSMetadata, DMSProperty, DMSRules, DMSView
 from ._schema import DMSSchema, PipelineSchema
@@ -213,7 +215,16 @@ class _DMSExporter:
             if isinstance(view_filter, NodeTypeFilter):
                 unique_node_types.update(view_filter.nodes)
                 if view.as_id() in parent_views:
-                    warnings.warn(issues.dms.NodeTypeFilterOnParentViewWarning(view.as_id()), stacklevel=2)
+                    warnings.warn(
+                        UserModelingWarning(
+                            "NodeTypeFilterOnParentViewWarning",
+                            f"Setting a node type filter on parent view {view.as_id()!r}.",
+                            "This is not recommended as parent views are typically used for multiple types of nodes.",
+                            "Use a HasData filter instead",
+                        ),
+                        stacklevel=2,
+                    )
+
             elif isinstance(view_filter, HasDataFilter) and data_model_type == DataModelType.solution:
                 if dms_view and isinstance(dms_view.reference, ReferenceEntity):
                     references = {dms_view.reference.as_view_id()}
@@ -226,7 +237,15 @@ class _DMSExporter:
                 else:
                     continue
                 warnings.warn(
-                    issues.dms.HasDataFilterOnViewWithReferencesWarning(view.as_id(), list(references)), stacklevel=2
+                    UserModelingWarning(
+                        "HasDataFilterOnViewWithReferencesWarning",
+                        f"Setting a hasData filter on view {view.as_id()!r}"
+                        f"which references other views {humanize_sequence([repr(ref) for ref in references])}.",
+                        "This is not recommended as it will lead to no nodes "
+                        "being returned when querying the solution view.",
+                        "Use a NodeType filter instead",
+                    ),
+                    stacklevel=2,
                 )
 
             if data_model_type == DataModelType.enterprise:
@@ -273,7 +292,15 @@ class _DMSExporter:
         for container in containers:
             container_id = container.as_id()
             if not (container_properties := container_properties_by_id.get(container_id)):
-                warnings.warn(issues.dms.EmptyContainerWarning(container_id=container_id), stacklevel=2)
+                warnings.warn(
+                    UserModelingWarning(
+                        "EmptyContainerWarning",
+                        f"Container {container_id!r} is empty and will be skipped.",
+                        "The container does not have any properties",
+                        "Add properties to the container or remove the container",
+                    ),
+                    stacklevel=2,
+                )
                 container_to_drop.add(container_id)
                 continue
             for prop in container_properties:
@@ -409,7 +436,15 @@ class _DMSExporter:
         if not ref_containers or selected_filter_name == HasDataFilter.name:
             # Child filter without container properties
             if selected_filter_name == HasDataFilter.name:
-                warnings.warn(issues.dms.HasDataFilterOnNoPropertiesViewWarning(view.as_id()), stacklevel=2)
+                warnings.warn(
+                    UserModelingWarning(
+                        "HasDataFilterOnNoPropertiesViewWarning",
+                        f"Cannot set hasData filter on view {view.as_id()!r}",
+                        "The view does not have properties in any containers",
+                        "Use a node type filter instead",
+                    ),
+                    stacklevel=2,
+                )
             return NodeTypeFilter(inner=[DMSNodeEntity(space=view.space, externalId=view.external_id)])
         else:
             # HasData or not provided (this is the default)
@@ -493,7 +528,11 @@ class _DMSExporter:
 
             if reverse_prop is None:
                 warnings.warn(
-                    issues.dms.ReverseRelationMissingOtherSideWarning(source_view_id, prop.view_property),
+                    CDFNotSupportedWarning(
+                        "ReverseConnectionWithoutOtherSideWarning",
+                        f"The reverse relation specified in {source_view_id!r}.{prop.view_property} is"
+                        f" missing the other side.",
+                    ),
                     stacklevel=2,
                 )
 
@@ -523,7 +562,6 @@ class _DMSExporter:
 
         elif prop.view and prop.view_property and prop.connection:
             warnings.warn(
-                issues.dms.UnsupportedConnectionWarning(prop.view.as_id(), prop.view_property, prop.connection or ""),
-                stacklevel=2,
+                NotSupportedWarning(f"{prop.connection} in {prop.view.as_id()!r}.{prop.view_property}"), stacklevel=2
             )
         return None
