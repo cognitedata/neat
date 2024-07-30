@@ -11,6 +11,7 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic.main import IncEx
 from pydantic_core.core_schema import ValidationInfo
 
+from cognite.neat.issues.neat_warnings.models import BreakingModelingPrincipleWarning, DataModelingPrinciple
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues import MultiValueError
 from cognite.neat.rules.models._base import (
@@ -320,8 +321,10 @@ class DMSRules(BaseRules):
             raise ValueError("Reference rules cannot have a reference")
         if value.metadata.data_model_type == DataModelType.solution and (metadata := info.data.get("metadata")):
             warnings.warn(
-                issues.dms.SolutionOnTopOfSolutionModelWarning(
-                    metadata.as_data_model_id(), value.metadata.as_data_model_id()
+                BreakingModelingPrincipleWarning(
+                    f"The solution model {metadata.as_data_model_id()} is referencing another "
+                    f"solution model {value.metadata.as_data_model_id()}",
+                    DataModelingPrinciple.SOLUTION_BUILDS_ON_ENTERPRISE,
                 ),
                 stacklevel=2,
             )
