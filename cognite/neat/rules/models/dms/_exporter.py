@@ -12,8 +12,8 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
+from cognite.neat.issues.neat_warnings.general import NotSupportedWarning
 from cognite.neat.issues.neat_warnings.models import CDFNotSupportedWarning, UserModelingWarning
-from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
@@ -292,7 +292,15 @@ class _DMSExporter:
         for container in containers:
             container_id = container.as_id()
             if not (container_properties := container_properties_by_id.get(container_id)):
-                warnings.warn(issues.dms.EmptyContainerWarning(container_id=container_id), stacklevel=2)
+                warnings.warn(
+                    UserModelingWarning(
+                        "EmptyContainerWarning",
+                        f"Container {container_id!r} is empty and will be skipped.",
+                        "The container does not have any properties",
+                        "Add properties to the container or remove the container",
+                    ),
+                    stacklevel=2,
+                )
                 container_to_drop.add(container_id)
                 continue
             for prop in container_properties:
@@ -554,7 +562,6 @@ class _DMSExporter:
 
         elif prop.view and prop.view_property and prop.connection:
             warnings.warn(
-                issues.dms.UnsupportedConnectionWarning(prop.view.as_id(), prop.view_property, prop.connection or ""),
-                stacklevel=2,
+                NotSupportedWarning(f"{prop.connection} in {prop.view.as_id()!r}.{prop.view_property}"), stacklevel=2
             )
         return None
