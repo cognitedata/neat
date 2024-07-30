@@ -273,23 +273,3 @@ class ChangingViewError(DMSSchemaError):
         output["view_id"] = self.view_id.dump()
         output["difference"] = self.changed_properties
         return output
-
-
-@dataclass(frozen=True)
-class EntityIDNotDMSCompliantWarning(DMSSchemaWarning):
-    description = "The entity ID, {entity_id} of type {entity_type}, is not DMS compliant. Violating regex {regex}"
-    fix = "Change the entity ID to be DMS compliant"
-    error_name: ClassVar[str] = "EntityIDNotDMSCompliantWarning"
-    entity_id: str
-    entity_type: str
-    regex: str
-
-    def message(self) -> str:
-        return self.description.format(entity_id=self.entity_id, entity_type=self.entity_type, regex=self.regex)
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["entity_id"] = self.entity_id
-        output["dms_type"] = self.entity_type
-        output["regex"] = self.regex
-        return output

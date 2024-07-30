@@ -2,8 +2,8 @@ import warnings
 from typing import Literal, overload
 
 from cognite.neat.exceptions import wrangle_warnings
+from cognite.neat.issues.neat_warnings.identifier import RegexViolationWarning
 from cognite.neat.issues.neat_warnings.properties import PropertyRedefinedWarning
-from cognite.neat.rules.issues.dms import EntityIDNotDMSCompliantWarning
 from cognite.neat.rules.models import InformationRules
 from cognite.neat.utils.regex_patterns import DMS_PROPERTY_ID_COMPLIANCE_REGEX, PATTERNS, VIEW_ID_COMPLIANCE_REGEX
 
@@ -28,7 +28,13 @@ def are_entity_names_dms_compliant(
         for class_ in rules.classes:
             if not PATTERNS.view_id_compliance.match(class_.class_.suffix):
                 warnings.warn(
-                    EntityIDNotDMSCompliantWarning(class_.class_.versioned_id, "Class", VIEW_ID_COMPLIANCE_REGEX),
+                    RegexViolationWarning(
+                        class_.class_.suffix,
+                        VIEW_ID_COMPLIANCE_REGEX,
+                        "Class",
+                        "View ID",
+                        "The class id should be DMS compliant to write to CDF.",
+                    ),
                     stacklevel=2,
                 )
                 flag = False
@@ -37,10 +43,12 @@ def are_entity_names_dms_compliant(
             # check class id which would resolve as view/container id
             if not PATTERNS.view_id_compliance.match(property_.class_.suffix):
                 warnings.warn(
-                    EntityIDNotDMSCompliantWarning(
-                        property_.class_.versioned_id,
-                        "Class",
+                    RegexViolationWarning(
+                        property_.class_.suffix,
                         VIEW_ID_COMPLIANCE_REGEX,
+                        "Class",
+                        "View ID",
+                        "The class id should be DMS compliant to write to CDF.",
                     ),
                     stacklevel=2,
                 )
@@ -49,7 +57,13 @@ def are_entity_names_dms_compliant(
             # check property id which would resolve as view/container id
             if not PATTERNS.dms_property_id_compliance.match(property_.property_):
                 warnings.warn(
-                    EntityIDNotDMSCompliantWarning(property_.property_, "Property", DMS_PROPERTY_ID_COMPLIANCE_REGEX),
+                    RegexViolationWarning(
+                        property_.property_,
+                        DMS_PROPERTY_ID_COMPLIANCE_REGEX,
+                        "Property",
+                        "DMS Property ID",
+                        "The property id should be DMS compliant to write to CDF.",
+                    ),
                     stacklevel=2,
                 )
                 flag = False
