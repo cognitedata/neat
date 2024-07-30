@@ -6,10 +6,10 @@ from typing import Literal, cast, overload
 from rdflib import Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
-import cognite.neat.rules.issues as issues
 from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import IssueList
+from cognite.neat.issues.errors.external import FileReadError
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
 from cognite.neat.rules.models import InformationRules, RoleTypes
 from cognite.neat.rules.models._base import MatchType
@@ -106,8 +106,8 @@ class InferenceImporter(BaseImporter):
         graph = Graph()
         try:
             graph.parse(filepath)
-        except Exception:
-            issue_list.append(issues.fileread.FileReadError(filepath))
+        except Exception as e:
+            issue_list.append(FileReadError(filepath, str(e)))
 
         return cls(
             issue_list,

@@ -2,20 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from pathlib import Path
 
-from .base import NeatValidationError, ValidationWarning
-
-
-@dataclass(frozen=True)
-class FileReadError(NeatValidationError, ABC):
-    description = "An error was raised during reading."
-    fix = "No fix is available."
-
-    filepath: Path
-
-    def dump(self) -> dict[str, str | None]:
-        output = super().dump()
-        output["filepath"] = str(self.filepath)
-        return output
+from .base import ValidationWarning
 
 
 @dataclass(frozen=True)
