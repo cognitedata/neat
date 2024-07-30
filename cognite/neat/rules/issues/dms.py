@@ -4,15 +4,11 @@ from typing import Any, ClassVar
 
 from cognite.client.data_classes import data_modeling as dm
 
-from .base import NeatValidationError, ValidationWarning
+from .base import NeatValidationError
 
 
 @dataclass(frozen=True)
 class DMSSchemaError(NeatValidationError, ABC): ...
-
-
-@dataclass(frozen=True)
-class DMSSchemaWarning(ValidationWarning, ABC): ...
 
 
 @dataclass(frozen=True)
@@ -48,24 +44,6 @@ class DuplicatedViewInDataModelError(DMSSchemaError):
         output = super().dump()
         output["referred_by"] = self.referred_by
         output["view"] = self.view
-        return output
-
-
-@dataclass(frozen=True)
-class MissingViewInModelWarning(DMSSchemaWarning):
-    description = "The data model contains view pointing to views not present in the data model"
-    fix = "Add the view(s) to the data model"
-    error_name: ClassVar[str] = "MissingViewInModel"
-    data_model_id: dm.DataModelId
-    view_ids: set[dm.ViewId]
-
-    def message(self) -> str:
-        return f"The view(s) {self.view_ids} are missing in the data model {self.data_model_id}"
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["data_model_id"] = self.data_model_id.dump()
-        output["view_id"] = [view_id.dump() for view_id in self.view_ids]
         return output
 
 

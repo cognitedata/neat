@@ -36,7 +36,6 @@ from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
     DuplicatedViewInDataModelError,
     IncompleteSchemaError,
-    MissingViewInModelWarning,
 )
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.cdf.data_classes import (
@@ -165,7 +164,15 @@ class DMSSchema:
             connection_referenced_view_ids |= cls._connection_references(view)
         connection_referenced_view_ids = connection_referenced_view_ids - existing_view_ids
         if connection_referenced_view_ids:
-            warnings.warn(MissingViewInModelWarning(data_model.as_id(), connection_referenced_view_ids), stacklevel=2)
+            for view_id in connection_referenced_view_ids:
+                warnings.warn(
+                    UserModelingWarning(
+                        "Missing connection referenced view",
+                        f"The view {view_id} is referenced by a connection in the data model, {data_model.as_id()}",
+                        "Add the view to the data model",
+                    ),
+                    stacklevel=2,
+                )
             connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
             if failed := connection_referenced_view_ids - set(connection_referenced_views.as_ids()):
                 warnings.warn(FailedLoadingResourcesWarning[dm.ViewId](frozenset(failed), "View"), stacklevel=2)
