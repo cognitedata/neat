@@ -31,7 +31,6 @@ from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
 from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
 from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
-from cognite.neat.rules import issues
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
     DirectRelationMissingSourceWarning,
@@ -264,10 +263,9 @@ class DMSSchema:
                     data.setdefault(attr_name, [])
                     context.setdefault(attr_name, [])
                     try:
-                        # Using CSafeLoader over safe_load for ~10x speedup
                         loaded = yaml.safe_load(yaml_file.read_text())
                     except Exception as e:
-                        warnings.warn(issues.fileread.InvalidFileFormatWarning(yaml_file, str(e)), stacklevel=2)
+                        warnings.warn(UnexpectedFileTypeWarning(yaml_file, [".yaml", ".yml"], str(e)), stacklevel=2)
                         continue
 
                     if isinstance(loaded, list):
@@ -357,7 +355,7 @@ class DMSSchema:
                         try:
                             loaded = yaml.safe_load(zip_ref.read(file_info).decode())
                         except Exception as e:
-                            warnings.warn(issues.fileread.InvalidFileFormatWarning(filename, str(e)), stacklevel=2)
+                            warnings.warn(UnexpectedFileTypeWarning(filename, [".yaml", ".yml"], str(e)), stacklevel=2)
                             continue
                         if isinstance(loaded, list):
                             data[attr_name].extend(loaded)
@@ -852,7 +850,7 @@ class PipelineSchema(DMSSchema):
                 try:
                     loaded = yaml.safe_load(yaml_file.read_text())
                 except Exception as e:
-                    warnings.warn(issues.fileread.InvalidFileFormatWarning(yaml_file, str(e)), stacklevel=2)
+                    warnings.warn(UnexpectedFileTypeWarning(yaml_file, [".yaml", ".yml"], str(e)), stacklevel=2)
                     continue
                 if isinstance(loaded, list):
                     data[attr_name].extend(loaded)
@@ -918,7 +916,7 @@ class PipelineSchema(DMSSchema):
                         try:
                             loaded = yaml.safe_load(zip_ref.read(file_info).decode())
                         except Exception as e:
-                            warnings.warn(issues.fileread.InvalidFileFormatWarning(filepath, str(e)), stacklevel=2)
+                            warnings.warn(UnexpectedFileTypeWarning(filepath, [".yaml", ".yml"], str(e)), stacklevel=2)
                             continue
                         if isinstance(loaded, list):
                             data[attr_name].extend(loaded)

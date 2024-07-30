@@ -10,7 +10,7 @@ from cognite.neat.issues.errors.external import (
     NeatFileNotFoundError,
     UnexpectedFileTypeError,
 )
-from cognite.neat.rules import issues
+from cognite.neat.issues.neat_warnings.general import NeatValueWarning
 from cognite.neat.rules.issues import NeatValidationError
 from cognite.neat.rules.models import RULES_PER_ROLE, DMSRules, RoleTypes
 from cognite.neat.rules.models.dms import DMSRulesInput
@@ -71,8 +71,8 @@ class YAMLImporter(BaseImporter):
 
         if not self._filepaths:
             issue_list.append(
-                issues.fileread.BugInImporterWarning(
-                    importer_name=type(self).__name__, error="No filepaths when there is content", filepath=Path()
+                NeatValueWarning(
+                    f"{type(self).__name__} was called without filepaths when there is content",
                 )
             )
             metadata_file = Path()

@@ -7,6 +7,23 @@ from cognite.neat.utils.text import humanize_sequence
 
 
 @dataclass(frozen=True)
+class FileReadWarning(NeatWarning):
+    """Error when reading file, {filepath}: {reason}"""
+
+    filepath: Path
+    reason: str
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(filepath=repr(self.filepath), reason=self.reason)
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["filepath"] = self.filepath
+        output["reason"] = self.reason
+        return output
+
+
+@dataclass(frozen=True)
 class FileMissingRequiredFieldWarning(NeatWarning):
     """Missing required {field_name} in {filepath}: {field}. The file will be skipped"""
 
