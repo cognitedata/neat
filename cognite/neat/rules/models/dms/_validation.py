@@ -289,9 +289,10 @@ class DMSPostValidation:
 
             if mapped_containers and len(mapped_containers) > 10:
                 self.issue_list.append(
-                    issues.dms.ViewMapsToTooManyContainersWarning(
-                        view_id=view_id,
-                        container_ids=mapped_containers,
+                    CDFNotSupportedWarning(
+                        "More than 10 containers in a view",
+                        f"The view {view_id!r} maps to more than 10 containers.",
+                        "Reduce the number of containers the view maps to.",
                     )
                 )
                 if (

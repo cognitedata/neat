@@ -141,28 +141,6 @@ class ViewModelSpaceNotMatchingWarning(DMSSchemaWarning):
 
 
 @dataclass(frozen=True)
-class ViewMapsToTooManyContainersWarning(DMSSchemaWarning):
-    description = "The view maps to more than 10 containers which impacts read/write performance of data model"
-    fix = "Try to have as few containers as possible to which the view maps to"
-    error_name: ClassVar[str] = "ViewMapsToTooManyContainers"
-    view_id: dm.ViewId
-    container_ids: set[dm.ContainerId]
-
-    def message(self) -> str:
-        return (
-            f"The view {self.view_id} maps to total of {len(self.container_ids)},."
-            "Mapping to more than 10 containers is not recommended and can lead to poor performances."
-            "Re-iterate the data model design to reduce the number of containers to which the view maps to."
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id.dump()
-        output["container_ids"] = [container_id.dump() for container_id in self.container_ids]
-        return output
-
-
-@dataclass(frozen=True)
 class MissingViewInModelWarning(DMSSchemaWarning):
     description = "The data model contains view pointing to views not present in the data model"
     fix = "Add the view(s) to the data model"
