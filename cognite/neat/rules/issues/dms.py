@@ -16,30 +16,6 @@ class DMSSchemaWarning(ValidationWarning, ABC): ...
 
 
 @dataclass(frozen=True)
-class ViewSizeWarning(DMSSchemaWarning):
-    description = (
-        "The number of properties in the {view} view is {count} which is more than "
-        "the recommended limit of {limit} properties. This can lead to performance issues."
-    )
-    fix = "Reduce the size of the view"
-    error_name: ClassVar[str] = "ViewSizeWarning"
-
-    view_id: dm.ViewId
-    limit: int
-    count: int
-
-    def message(self) -> str:
-        return self.description.format(view=repr(self.view_id), count=self.count, limit=self.limit)
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id.dump()
-        output["limit"] = self.limit
-        output["count"] = self.count
-        return output
-
-
-@dataclass(frozen=True)
 class IncompleteSchemaError(DMSSchemaError):
     description = "This error is raised when the schema is claimed to be complete but missing some components"
     fix = "Either provide the missing components or change the schema to partial"
@@ -72,24 +48,6 @@ class DuplicatedViewInDataModelError(DMSSchemaError):
         output = super().dump()
         output["referred_by"] = self.referred_by
         output["view"] = self.view
-        return output
-
-
-@dataclass(frozen=True)
-class DirectRelationMissingSourceWarning(DMSSchemaWarning):
-    description = "The source view referred to by the DirectRelation does not exist"
-    fix = "Create the source view"
-    error_name: ClassVar[str] = "DirectRelationMissingSource"
-    view_id: dm.ViewId
-    property: str
-
-    def message(self) -> str:
-        return f"The source view referred to by '{self.view_id.external_id}.{self.property}' does not exist."
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id
-        output["property"] = self.property
         return output
 
 

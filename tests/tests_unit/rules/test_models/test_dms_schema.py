@@ -11,8 +11,8 @@ from cognite.neat.issues import NeatError, NeatWarning
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
 from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
+from cognite.neat.issues.neat_warnings.models import UserModelingWarning
 from cognite.neat.rules.issues.dms import (
-    DirectRelationMissingSourceWarning,
     DMSSchemaError,
     DMSSchemaWarning,
     DuplicatedViewInDataModelError,
@@ -167,9 +167,12 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 referred_by=dm.ContainerId("non_existing_space", "my_container"),
                 referred_type="Container",
             ),
-            DirectRelationMissingSourceWarning(
-                view_id=dm.ViewId("my_space", "my_view1", "1"),
-                property="direct",
+            UserModelingWarning(
+                "DirectRelationMissingSource",
+                f"The view {dm.ViewId('my_space', 'my_view1', '1')!r}.direct is a direct relation without a source",
+                "Direct relations in views should point to a single other view, if not,"
+                "you end up with a more complex schema than necessary.",
+                "Create the source view",
             ),
         ],
         id="Missing space, and direct relation missing source",

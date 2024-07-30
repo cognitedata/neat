@@ -30,10 +30,10 @@ from cognite.neat.issues.errors.external import InvalidYamlError
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
 from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
+from cognite.neat.issues.neat_warnings.models import UserModelingWarning
 from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
 from cognite.neat.rules.issues.dms import (
     ContainerPropertyUsedMultipleTimesError,
-    DirectRelationMissingSourceWarning,
     DuplicatedViewInDataModelError,
     IncompleteSchemaError,
     MissingViewInModelWarning,
@@ -569,7 +569,14 @@ class DMSSchema:
 
                         if isinstance(container_property.type, dm.DirectRelation) and prop.source is None:
                             warnings.warn(
-                                DirectRelationMissingSourceWarning(view_id=view_id, property=prop_name), stacklevel=2
+                                UserModelingWarning(
+                                    "DirectRelationMissingSource",
+                                    f"The view {view_id}.{prop_name} is a direct relation without a source",
+                                    "Direct relations in views should point to a single other view, if not,"
+                                    "you end up with a more complex schema than necessary.",
+                                    "Create the source view",
+                                ),
+                                stacklevel=2,
                             )
 
                 if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
