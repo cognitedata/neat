@@ -338,24 +338,6 @@ class UnsupportedConnectionWarning(DMSSchemaWarning):
 
 
 @dataclass(frozen=True)
-class ReverseRelationMissingOtherSideWarning(DMSSchemaWarning):
-    description = "The relation is missing the other side"
-    fix = "Add the other side of the relation"
-    error_name: ClassVar[str] = "ReverseRelationMissingOtherSideWarning"
-    view_id: dm.ViewId
-    property: str
-
-    def message(self) -> str:
-        return f"The reverse relation specified in {self.view_id}.{self.property} is missing the other side."
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id.dump()
-        output["property"] = self.property
-        return output
-
-
-@dataclass(frozen=True)
 class MultipleReferenceWarning(DMSSchemaWarning):
     description = "The view is implements multiple views from other spaces"
     fix = "Neat expects maximum one implementation of a view from another space"
@@ -370,65 +352,4 @@ class MultipleReferenceWarning(DMSSchemaWarning):
         output = super().dump()
         output["view_id"] = self.view_id.dump()
         output["implements"] = [view.dump() for view in self.implements]
-        return output
-
-
-@dataclass(frozen=True)
-class HasDataFilterOnNoPropertiesViewWarning(DMSSchemaWarning):
-    description = "Attempting to set a HasData filter on a view without properties."
-    fix = "Add properties to the view or use a node type filter"
-    error_name: ClassVar[str] = "HasDataFilterOnNoPropertiesViewWarning"
-    view_id: dm.ViewId
-
-    def message(self) -> str:
-        return (
-            f"Cannot set hasData filter on view {self.view_id} as it does not have properties in any containers. "
-            "Using a node type filter instead."
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id.dump()
-        return output
-
-
-@dataclass(frozen=True)
-class HasDataFilterAppliedToTooManyContainersWarning(DMSSchemaWarning):
-    description = "The view filter hasData applied to more than 10 containers this will cause DMS API Error"
-    fix = "Do not map to more than 10 containers, alternatively override the filter by using rawFilter"
-    error_name: ClassVar[str] = "HasDataFilterAppliedToTooManyContainers"
-    view_id: dm.ViewId
-    container_ids: set[dm.ContainerId]
-
-    def message(self) -> str:
-        return (
-            f"The view {self.view_id} HasData filter applied to total of {len(self.container_ids)},."
-            "Applying HasData filter to more than 10 containers is not recommended and can lead to DMS API error."
-            "Re-iterate the data model design to reduce the number of containers to which the view maps to."
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id.dump()
-        output["container_ids"] = [container_id.dump() for container_id in self.container_ids]
-        return output
-
-
-@dataclass(frozen=True)
-class RawFilterAppliedToViewWarning(DMSSchemaWarning):
-    description = "Raw filter is applied to a view, which is against the neat data modeling lifecycle."
-    fix = "Do not use raw filter, instead use HasData filter or nodeType filter or change the data model design."
-    error_name: ClassVar[str] = "RawFilterAppliedToView"
-    view_id: dm.ViewId
-
-    def message(self) -> str:
-        return (
-            f"RawFilter applied to the view {self.view_id}."
-            " The usage of RawFilter is against the neat team recommendations and the neat data modeling lifecycle."
-            " When opting for raw filter, the user is responsible for any errors that arise in neat."
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["view_id"] = self.view_id.dump()
         return output

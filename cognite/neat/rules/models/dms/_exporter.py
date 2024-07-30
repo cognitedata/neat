@@ -12,7 +12,7 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
-from cognite.neat.issues.neat_warnings.models import UserModelingWarning
+from cognite.neat.issues.neat_warnings.models import CDFNotSupportedWarning, UserModelingWarning
 from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.data_types import DataType
@@ -428,7 +428,15 @@ class _DMSExporter:
         if not ref_containers or selected_filter_name == HasDataFilter.name:
             # Child filter without container properties
             if selected_filter_name == HasDataFilter.name:
-                warnings.warn(issues.dms.HasDataFilterOnNoPropertiesViewWarning(view.as_id()), stacklevel=2)
+                warnings.warn(
+                    UserModelingWarning(
+                        "HasDataFilterOnNoPropertiesViewWarning",
+                        f"Cannot set hasData filter on view {view.as_id()!r}",
+                        "The view does not have properties in any containers",
+                        "Use a node type filter instead",
+                    ),
+                    stacklevel=2,
+                )
             return NodeTypeFilter(inner=[DMSNodeEntity(space=view.space, externalId=view.external_id)])
         else:
             # HasData or not provided (this is the default)
@@ -512,7 +520,11 @@ class _DMSExporter:
 
             if reverse_prop is None:
                 warnings.warn(
-                    issues.dms.ReverseRelationMissingOtherSideWarning(source_view_id, prop.view_property),
+                    CDFNotSupportedWarning(
+                        "ReverseConnectionWithoutOtherSideWarning",
+                        f"The reverse relation specified in {source_view_id!r}.{prop.view_property} is"
+                        f" missing the other side.",
+                    ),
                     stacklevel=2,
                 )
 

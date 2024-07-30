@@ -81,4 +81,28 @@ class UserModelingWarning(NeatWarning):
         output["title"] = self.title
         output["problem"] = self.problem
         output["explanation"] = self.explanation
+        output["suggestion"] = self.suggestion
+        return output
+
+
+@dataclass(frozen=True)
+class CDFNotSupportedWarning(NeatWarning):
+    """{title} - Will likely fail to write to CDF. {problem}."""
+
+    extra = "Suggestion: {suggestion}"
+    title: str
+    problem: str
+    suggestion: str | None = None
+
+    def message(self) -> str:
+        msg = (self.__doc__ or "").format(title=self.title, problem=self.problem)
+        if self.suggestion:
+            msg += f"\n{self.extra.format(suggestion=self.suggestion)}"
+        return msg
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["title"] = self.title
+        output["problem"] = self.problem
+        output["suggestion"] = self.suggestion
         return output
