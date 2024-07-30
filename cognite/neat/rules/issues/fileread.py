@@ -57,42 +57,6 @@ class UnsupportedSpecWarning(FileReadWarning):
 
 
 @dataclass(frozen=True)
-class UnknownItemWarning(FileReadWarning):
-    description = "The file is missing an implementation"
-    fix = "Check if the file is supported. If not, contact the neat team on Github."
-
-    reason: str
-
-    def message(self) -> str:
-        return f"Skipping file {self.filepath.name}: {self.reason}. {self.fix}"
-
-    def dump(self) -> dict[str, str | None]:
-        output = super().dump()
-        output["reason"] = self.reason
-        return output
-
-
-@dataclass(frozen=True)
-class FailedLoadWarning(FileReadWarning):
-    description = "The file content is invalid"
-    fix = "Check if the file content is valid"
-
-    expected_format: str
-    error_message: str
-
-    def message(self) -> str:
-        return (
-            f"Failed to load {self.filepath.name}. Expected format: {self.expected_format}. Error: {self.error_message}"
-        )
-
-    def dump(self) -> dict[str, str | None]:
-        output = super().dump()
-        output["expected_format"] = self.expected_format
-        output["error_message"] = self.error_message
-        return output
-
-
-@dataclass(frozen=True)
 class BugInImporterWarning(FileReadWarning):
     description = "A bug was raised during reading."
     fix = "No fix is available. Contact the neat team on Github"

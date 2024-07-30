@@ -7,12 +7,12 @@ from typing import Literal, overload
 from pydantic import ValidationError
 
 from cognite.neat.issues import IssueList, NeatIssue
+from cognite.neat.issues.neat_warnings.external import UnknownItemWarning
 from cognite.neat.rules import issues
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
-from cognite.neat.rules.issues import ValidationIssue
 from cognite.neat.rules.models import InformationRules, RoleTypes, SchemaCompleteness, SheetList
 from cognite.neat.rules.models.information import InformationClass, InformationProperty
 from cognite.neat.utils.text import to_pascal
@@ -46,7 +46,7 @@ class DTDLImporter(BaseImporter):
         self._schema_completeness = schema
 
     @classmethod
-    def _from_file_content(cls, file_content: str, filepath: Path) -> Iterable[DTDLBase | ValidationIssue]:
+    def _from_file_content(cls, file_content: str, filepath: Path) -> Iterable[DTDLBase | NeatIssue]:
         raw = json.loads(file_content)
         if isinstance(raw, dict):
             if (context := raw.get("@context")) is None:
@@ -83,7 +83,7 @@ class DTDLImporter(BaseImporter):
                 continue
             cls_ = cls_by_type.get(type_)
             if cls_ is None:
-                yield issues.fileread.UnknownItemWarning(reason=f"Unknown '@type' {type_}.", filepath=filepath)
+                yield UnknownItemWarning(f"Unknown '@type' {type_}.", filepath=filepath)
                 continue
             try:
                 yield cls_.model_validate(item)
@@ -112,7 +112,7 @@ class DTDLImporter(BaseImporter):
             for filepath in z.namelist():
                 if filepath.endswith(".json"):
                     for item in cls._from_file_content(z.read(filepath).decode(), Path(filepath)):
-                        if isinstance(item, ValidationIssue):
+                        if isinstance(item, NeatIssue):
                             issues.append(item)
                         else:
                             items.append(item)

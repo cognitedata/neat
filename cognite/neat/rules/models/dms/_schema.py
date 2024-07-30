@@ -29,6 +29,7 @@ from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors.external import InvalidYamlError
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
+from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
 from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
 from cognite.neat.rules import issues
 from cognite.neat.rules.issues.dms import (
@@ -437,7 +438,7 @@ class DMSSchema:
                     except Exception as e:
                         data_model_file = context.get(attr.name, [Path("UNKNOWN")])[0]
                         warnings.warn(
-                            issues.fileread.FailedLoadWarning(data_model_file, dm.DataModelApply.__name__, str(e)),
+                            UnexpectedFileTypeWarning(data_model_file, [dm.DataModelApply.__name__], str(e)),
                             stacklevel=2,
                         )
                 else:
@@ -453,9 +454,7 @@ class DMSSchema:
     def _load_individual_resources(cls, items: list, attr: Field, trigger_error: str, resource_context) -> list[Any]:
         resources = attr.type([])
         if not hasattr(attr.type, "_RESOURCE"):
-            warnings.warn(
-                issues.fileread.FailedLoadWarning(Path("UNKNOWN"), attr.type.__name__, trigger_error), stacklevel=2
-            )
+            warnings.warn(UnexpectedFileTypeWarning(Path("UNKNOWN"), [attr.type.__name__], trigger_error), stacklevel=2)
             return resources
         # Fallback to load individual resources.
         single_cls = attr.type._RESOURCE
@@ -468,7 +467,7 @@ class DMSSchema:
                 except IndexError:
                     filepath = Path("UNKNOWN")
                 # We use repr(e) instead of str(e) to include the exception type in the warning message
-                warnings.warn(issues.fileread.FailedLoadWarning(filepath, single_cls.__name__, repr(e)), stacklevel=2)
+                warnings.warn(UnexpectedFileTypeWarning(filepath, [single_cls.__name__], repr(e)), stacklevel=2)
             else:
                 resources.append(loaded_instance)
         return resources
