@@ -12,29 +12,6 @@ class DMSSchemaError(NeatValidationError, ABC): ...
 
 
 @dataclass(frozen=True)
-class ContainerPropertyUsedMultipleTimesError(DMSSchemaError):
-    description = "The container property is used multiple times by the same view property"
-    fix = "Use unique container properties for when mapping to the same container"
-    error_name: ClassVar[str] = "ContainerPropertyUsedMultipleTimes"
-    container: dm.ContainerId
-    property: str
-    referred_by: frozenset[tuple[dm.ViewId, str]]
-
-    def message(self) -> str:
-        return (
-            f"The container property {self.property} of {self.container} is used multiple times "
-            f"by the same view {self.referred_by}"
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["container"] = self.container
-        output["property"] = self.property
-        output["referred_by"] = sorted(self.referred_by)
-        return output
-
-
-@dataclass(frozen=True)
 class ChangingContainerError(DMSSchemaError):
     description = "You are adding to an existing model. "
     fix = "Keep the container the same"

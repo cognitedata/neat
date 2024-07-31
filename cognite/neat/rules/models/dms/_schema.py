@@ -29,6 +29,7 @@ from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors.external import InvalidYamlError
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import (
+    DuplicatedMappingError,
     DuplicatedResourceError,
     ReferredResourceNotFoundError,
     ResourceNotFoundError,
@@ -36,9 +37,6 @@ from cognite.neat.issues.errors.resources import (
 from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
 from cognite.neat.issues.neat_warnings.models import UserModelingWarning
 from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
-from cognite.neat.rules.issues.dms import (
-    ContainerPropertyUsedMultipleTimesError,
-)
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.cdf.data_classes import (
     CogniteResourceDict,
@@ -631,10 +629,10 @@ class DMSSchema:
                         == (container_id, container_property_identifier)
                     ]
                     errors.add(
-                        ContainerPropertyUsedMultipleTimesError(
-                            container=container_id,
-                            property=container_property_identifier,
-                            referred_by=frozenset({(view_id, prop_name) for prop_name in view_properties}),
+                        DuplicatedMappingError(
+                            f"{container_id}.{container_property_identifier}",
+                            "Container Property",
+                            frozenset({f"{view_id}.{prop_name}" for prop_name in view_properties}),
                         )
                     )
 

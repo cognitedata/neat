@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, TypeVar
 
 from cognite.neat.issues import NeatError
+from cognite.neat.utils.text import humanize_sequence
 
 T_Identifier = TypeVar("T_Identifier", bound=Hashable)
 
@@ -88,6 +89,28 @@ class ReferredResourceNotFoundError(ResourceError, Generic[T_Identifier, T_Refer
         output["identifier"] = self.identifier
         output["referred_by"] = self.referred_by
         output["referred_type"] = self.referred_type
+        return output
+
+
+@dataclass(frozen=True)
+class DuplicatedMappingError(ResourceError[T_Identifier], Generic[T_Identifier, T_ReferenceIdentifier]):
+    """The {resource_type} with identifier {identifier} is mapped to by: {mappings}. Ensure
+    that there is only one mapping"""
+
+    mappings: frozenset[T_ReferenceIdentifier]
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(
+            resource_type=self.resource_type,
+            identifier=repr(self.identifier),
+            mappings=humanize_sequence([repr(m) for m in self.mappings]),
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["resource_type"] = self.resource_type
+        output["identifier"] = self.identifier
+        output["mappings"] = list(self.mappings)
         return output
 
 
