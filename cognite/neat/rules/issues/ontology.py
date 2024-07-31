@@ -1,13 +1,7 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import ClassVar
 
 from .base import NeatValidationError, ValidationWarning
-
-__all__ = [
-    "OntologyError",
-    "OntologyWarning",
-]
 
 
 @dataclass(frozen=True)
@@ -224,75 +218,4 @@ class PropertyDefinitionsNotForSamePropertyError(OntologyError):
         message = "All definitions should have the same property_id! Aborting."
 
         message += f"\nDescription: {self.description}"
-        return message
-
-
-@dataclass(frozen=True)
-class PrefixMissingError(OntologyError):
-    """Prefix, which is in the 'Metadata' sheet, is missing.
-
-    Args:
-        verbose: flag that indicates whether to provide enhanced exception message, by default False
-
-    """
-
-    description = "Prefix is missing from the 'Metadata' sheet."
-    example = "There is no prefix in the 'Metadata' sheet."
-    fix = "Specify the prefix if prefix in the 'Metadata' sheet."
-
-    def message(self) -> str:
-        message = "Missing prefix stored in 'Metadata' sheet."
-        message += f"\nDescription: {self.description}"
-        message += f"\nExample: {self.example}"
-        message += f"\nFix: {self.fix}"
-        return message
-
-
-@dataclass(frozen=True)
-class MissingDataModelPrefixOrNamespaceWarning(ValidationWarning):
-    """Prefix and/or namespace are missing in the 'Metadata' sheet
-
-    Args:
-        verbose: flag that indicates whether to provide enhanced exception message, by default False
-
-    Notes:
-    Add missing prefix and/or namespace in the 'Metadata' sheet
-    """
-
-    description = "Either prefix or namespace or both are missing in the 'Metadata' sheet"
-    fix = "Add missing prefix and/or namespace in the 'Metadata' sheet"
-
-    def message(self) -> str:
-        message = (
-            "Instances sheet is present but prefix and/or namespace are missing in 'Metadata' sheet."
-            "Instances sheet will not be processed!"
-        )
-        message += f"\nDescription: {self.description}"
-        message += f"\nFix: {self.fix}"
-        return message
-
-
-@dataclass(frozen=True)
-class MetadataSheetNamespaceNotDefinedError(OntologyError):
-    """namespace, which is in the 'Metadata' sheet, is not defined
-
-    Args:
-        namespace: namespace that raised exception
-        verbose: flag that indicates whether to provide enhanced exception message, by default False
-
-    Notes:
-        Check if `namespace` in the `Metadata` sheet is properly constructed as valid URL
-        containing only allowed characters.
-
-    """
-
-    description = "namespace, which is in the 'Metadata' sheet, is missing"
-    example: ClassVar[str] = "Example of a valid namespace 'http://www.w3.org/ns/sparql#'"
-    fix = "Define the 'namespace' in the 'Metadata' sheet."
-
-    def message(self) -> str:
-        message = "Missing namespace  in 'Metadata' sheet."
-        message += f"\nDescription: {self.description}"
-        message += f"\nExample: {self.example}"
-        message += f"\nFix: {self.fix}"
         return message

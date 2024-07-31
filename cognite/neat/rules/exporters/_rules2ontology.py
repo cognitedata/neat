@@ -9,16 +9,14 @@ from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespac
 from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
+from cognite.neat.issues.errors.general import MissingRequiredFieldError
 from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.issues.ontology import (
-    MetadataSheetNamespaceNotDefinedError,
-    MissingDataModelPrefixOrNamespaceWarning,
     OntologyMultiDefinitionPropertyWarning,
     OntologyMultiDomainPropertyWarning,
     OntologyMultiLabeledPropertyWarning,
     OntologyMultiRangePropertyWarning,
     OntologyMultiTypePropertyWarning,
-    PrefixMissingError,
     PropertiesDefinedMultipleTimesError,
     PropertyDefinitionsNotForSamePropertyError,
 )
@@ -118,10 +116,10 @@ class Ontology(OntologyModel):
             ).as_exception()
 
         if rules.prefixes is None:
-            raise PrefixMissingError().as_exception()
+            raise MissingRequiredFieldError("Metadata.prefix", "generating the ontology")
 
         if rules.metadata.namespace is None:
-            raise MissingDataModelPrefixOrNamespaceWarning()
+            raise MissingRequiredFieldError("Metadata.namespace", "generating the ontology")
 
         class_dict = InformationAnalysis(rules).as_class_dict()
         return cls(
@@ -185,7 +183,7 @@ class Ontology(OntologyModel):
             owl.bind(prefix, namespace)
 
         if self.metadata.namespace is None:
-            raise MetadataSheetNamespaceNotDefinedError().as_exception()
+            raise MissingRequiredFieldError("Metadata.namespace", "generating the ontology")
 
         owl.add((URIRef(self.metadata.namespace), RDF.type, OWL.Ontology))
         for property_ in self.properties:
@@ -234,7 +232,7 @@ class OWLMetadata(InformationMetadata):
     def triples(self) -> list[tuple]:
         # Mandatory triples originating from Metadata mandatory fields
         if self.namespace is None:
-            raise MetadataSheetNamespaceNotDefinedError().as_exception()
+            raise MissingRequiredFieldError("Metadata.namespace", "generating the ontology")
         triples: list[tuple] = [
             (URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version)),
             (URIRef(self.namespace), OWL.versionInfo, Literal(self.version)),
