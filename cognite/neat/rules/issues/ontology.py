@@ -201,21 +201,3 @@ class PropertiesDefinedMultipleTimesError(OntologyError):
         message += f"\nDescription: {self.description}"
         message += f"\nFix: {self.fix}"
         return message
-
-
-@dataclass(frozen=True)
-class PropertyDefinitionsNotForSamePropertyError(OntologyError):
-    """This error is raised if property definitions are not for linked to the same
-    property id when exporting rules to ontological representation.
-
-    Args:
-        verbose: flag that indicates whether to provide enhanced exception message, by default False
-    """
-
-    description = "This error is raised if property definitions are not for linked to the same property id"
-
-    def message(self):
-        message = "All definitions should have the same property_id! Aborting."
-
-        message += f"\nDescription: {self.description}"
-        return message

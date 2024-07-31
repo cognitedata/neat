@@ -10,6 +10,7 @@ from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.issues.errors.general import MissingRequiredFieldError
+from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
 from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.issues.ontology import (
     OntologyMultiDefinitionPropertyWarning,
@@ -18,7 +19,6 @@ from cognite.neat.rules.issues.ontology import (
     OntologyMultiRangePropertyWarning,
     OntologyMultiTypePropertyWarning,
     PropertiesDefinedMultipleTimesError,
-    PropertyDefinitionsNotForSamePropertyError,
 )
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import DataType
@@ -31,6 +31,7 @@ from cognite.neat.rules.models.information import (
 )
 from cognite.neat.utils.auxiliary import generate_exception_report
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
+from cognite.neat.utils.text import humanize_sequence
 
 from ._base import BaseExporter
 from ._validation import are_properties_redefined
@@ -321,16 +322,18 @@ class OWLProperty(OntologyModel):
     range_: set[URIRef]
     namespace: Namespace
 
-    @staticmethod
-    def same_property_id(definitions: list[InformationProperty]) -> bool:
-        return len({definition.property_ for definition in definitions}) == 1
-
     @classmethod
     def from_list_of_properties(cls, definitions: list[InformationProperty], namespace: Namespace) -> "OWLProperty":
         """Here list of properties is a list of properties with the same id, but different definitions."""
-
-        if not cls.same_property_id(definitions):
-            raise PropertyDefinitionsNotForSamePropertyError().as_exception()
+        property_ids = {definition.property_ for definition in definitions}
+        if len(property_ids) != 1:
+            raise InvalidPropertyDefinitionError(
+                definitions[0].class_,
+                "Class",
+                definitions[0].property_,
+                "All definitions should have the same property_id! Definitions have different property_id:"
+                f"{humanize_sequence(list(property_ids))}",
+            ).as_exception()
 
         owl_property = cls.model_construct(
             id_=namespace[definitions[0].property_],
