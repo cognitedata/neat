@@ -4,9 +4,12 @@ from typing import Any, ClassVar
 from cognite.client import data_modeling as dm
 
 from cognite.neat.issues import IssueList, NeatError, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
+from cognite.neat.issues.errors.resources import (
+    ChangedResourceError,
+    MultiplePropertyDefinitionsError,
+    ResourceNotDefinedError,
+)
 from cognite.neat.issues.neat_warnings.models import CDFNotSupportedWarning, UserModelingWarning
-from cognite.neat.rules import issues
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
@@ -249,10 +252,11 @@ class DMSPostValidation:
                 new_dumped, existing_dumped
             )
             self.issue_list.append(
-                issues.dms.ChangingContainerError(
-                    container_id=container_id,
-                    changed_properties=changed_properties or None,
-                    changed_attributes=changed_attributes or None,
+                ChangedResourceError(
+                    container_id,
+                    "Container",
+                    changed_properties=frozenset(changed_properties),
+                    changed_attributes=frozenset(changed_attributes),
                 )
             )
 
@@ -278,10 +282,11 @@ class DMSPostValidation:
                 # Only added new properties, no problem
                 continue
             self.issue_list.append(
-                issues.dms.ChangingViewError(
-                    view_id=view_id,
-                    changed_properties=changed_properties or None,
-                    changed_attributes=changed_attributes or None,
+                ChangedResourceError(
+                    view_id,
+                    "View",
+                    changed_properties=frozenset(changed_properties),
+                    changed_attributes=frozenset(changed_attributes),
                 )
             )
 

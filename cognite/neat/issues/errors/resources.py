@@ -234,3 +234,30 @@ class MultiplePropertyDefinitionsError(ResourceError[T_Identifier]):
         output["locations"] = list(self.locations)
         output["location_name"] = self.location_name
         return output
+
+
+@dataclass(frozen=True)
+class ChangedResourceError(ResourceError[T_Identifier]):
+    """The {resource_type} with identifier {identifier} has changed{changed}"""
+
+    changed_properties: frozenset[str]
+    changed_attributes: frozenset[str]
+
+    def message(self) -> str:
+        if self.changed_properties:
+            changed = f" properties {humanize_sequence(list(self.changed_properties))}."
+        elif self.changed_attributes:
+            changed = f" attributes {humanize_sequence(list(self.changed_attributes))}."
+        else:
+            changed = "."
+        return (
+            f"The {self.resource_type} {self.identifier} has changed{changed}"
+            f"When extending model with extension set to addition or reshape, the {self.resource_type} "
+            "properties must remain the same"
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["changed_properties"] = self.changed_properties
+        output["changed_attributes"] = self.changed_attributes
+        return output
