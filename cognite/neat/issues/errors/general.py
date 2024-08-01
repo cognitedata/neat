@@ -48,3 +48,22 @@ class MissingRequiredFieldError(NeatError, ValueError):
 
     def message(self) -> str:
         return (self.__doc__ or "").format(field=self.field, operation=self.operation)
+
+
+@dataclass(frozen=True)
+class NeatImportError(NeatError, ImportError):
+    """The functionality requires {module}. You can include it
+    in your neat installation with `pip install "cognite-neat[{neat_extra}]"`.
+    """
+
+    module: str
+    neat_extra: str
+
+    def dump(self) -> dict[str, str]:
+        output = super().dump()
+        output["module"] = self.module
+        output["neatExtra"] = self.neat_extra
+        return output
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(module=self.module, neat_extra=self.neat_extra)

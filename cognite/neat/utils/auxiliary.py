@@ -11,7 +11,7 @@ from types import ModuleType
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 from pydantic_core import ErrorDetails
 
-from cognite.neat.exceptions import NeatImportError
+from cognite.neat.issues.errors.general import NeatImportError
 
 
 def local_import(module: str, extra: str) -> ModuleType:
