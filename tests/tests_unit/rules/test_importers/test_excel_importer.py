@@ -44,7 +44,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "inconsistent_container_dms_rules.xlsx",
         IssueList(
             [
-                MultiplePropertyDefinitionsError[ContainerId](
+                MultiplePropertyDefinitionsError(
                     ContainerId("neat", "Flowable"),
                     "Container",
                     "maxFlow",
@@ -60,7 +60,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "missing_view_container_dms_rules.xlsx",
         IssueList(
             [
-                ResourceNotDefinedError[ViewId](
+                ResourceNotDefinedError(
                     ViewId("neat", "Pump", "1"),
                     "View",
                     location="Views Sheet",
@@ -68,7 +68,7 @@ def invalid_rules_filepaths():
                     row_number=3,
                     sheet_name="Properties",
                 ),
-                ResourceNotDefinedError[ContainerId](
+                ResourceNotDefinedError(
                     ContainerId("neat", "Pump"),
                     "Container",
                     location="Containers Sheet",
