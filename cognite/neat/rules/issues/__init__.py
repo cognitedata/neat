@@ -5,7 +5,6 @@ from .base import (
     DefaultPydanticError,
     NeatValidationError,
     ValidationIssue,
-    ValidationWarning,
 )
 
 __all__ = [
@@ -14,6 +13,5 @@ __all__ = [
     "NeatValidationError",
     "ValidationIssue",
     "ValidationIssue",
-    "ValidationWarning",
     "spreadsheet",
 ]

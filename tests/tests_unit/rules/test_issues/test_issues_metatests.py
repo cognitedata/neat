@@ -9,11 +9,8 @@ from typing import Any, TypeVar
 
 from rdflib import Namespace
 
-from cognite.neat.rules.issues import (
-    NeatValidationError,
-    ValidationIssue,
-    ValidationWarning,
-)
+from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
+from cognite.neat.issues.neat_warnings.models import DataModelingPrinciple
 
 T_Type = TypeVar("T_Type", bound=type)
 
@@ -26,10 +23,10 @@ def get_all_subclasses(cls: T_Type, only_concrete: bool = False) -> list[T_Type]
 
 
 class IssuesCreator:
-    def __init__(self, data_cls: type[ValidationIssue]) -> None:
+    def __init__(self, data_cls: type[NeatIssue]) -> None:
         self.data_cls = data_cls
 
-    def create_instance(self) -> ValidationIssue:
+    def create_instance(self) -> NeatIssue:
         """Create an instance of the dataclass."""
         kwargs = {field.name: self._create_value(field.type) for field in fields(self.data_cls)}
         return self.data_cls(**kwargs)
@@ -57,6 +54,10 @@ class IssuesCreator:
             return self._create_value(type_.__args__[0])
         elif is_dataclass(type_):
             return IssuesCreator(type_).create_instance()
+        elif type(type_) is TypeVar:
+            return "typevar"
+        elif type_ is DataModelingPrinciple:
+            return DataModelingPrinciple.ONE_MODEL_ONE_SPACE
         else:
             raise NotImplementedError(f"Type {type_} not implemented.")
 
@@ -80,7 +81,7 @@ class IssuesCreator:
 class TestIssuesMeta:
     def test_error_class_names_suffix_error(self) -> None:
         """Test that all classes that inherit from NeatValidationError have the suffix 'Error'."""
-        errors = get_all_subclasses(NeatValidationError)
+        errors = get_all_subclasses(NeatError)
 
         not_error_suffix = [error for error in errors if not error.__name__.endswith("Error")]
 
@@ -88,7 +89,7 @@ class TestIssuesMeta:
 
     def test_warnings_class_names_suffix_warning(self) -> None:
         """Test that all classes that inherit from ValidationWarning have the suffix 'Warning'."""
-        warnings = get_all_subclasses(ValidationWarning)
+        warnings = get_all_subclasses(NeatWarning)
 
         not_warning_suffix = [warning for warning in warnings if not warning.__name__.endswith("Warning")]
 
@@ -96,7 +97,7 @@ class TestIssuesMeta:
 
     def test_all_issues_are_dataclasses(self) -> None:
         """Test that all classes that inherit from NeatValidationError or ValidationWarning are dataclasses."""
-        issues = get_all_subclasses(ValidationIssue)
+        issues = get_all_subclasses(NeatIssue)
 
         not_dataclasses = [issue for issue in issues if not is_dataclass(issue)]
 
@@ -104,7 +105,7 @@ class TestIssuesMeta:
 
     def test_issues_are_sortable(self) -> None:
         """Test that all classes that inherit from ValidationIssue can be sorted with each other."""
-        errors = get_all_subclasses(ValidationIssue, only_concrete=True)
+        errors = get_all_subclasses(NeatIssue, only_concrete=True)
 
         instances = [IssuesCreator(error).create_instance() for error in errors]
 
