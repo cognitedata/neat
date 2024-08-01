@@ -21,3 +21,18 @@ class InvalidWorkFlowError(NeatError, ValueError):
         return (self.__doc__ or "").format(
             step_name=self.step_name, missing_data=humanize_sequence(list(self.missing_data))
         )
+
+
+@dataclass(frozen=True)
+class StepNotInitialized(NeatError, RuntimeError):
+    """Step {step_name} has not been initialized."""
+
+    step_name: str
+
+    def dump(self) -> dict[str, str]:
+        output = super().dump()
+        output["stepName"] = self.step_name
+        return output
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(step_name=self.step_name)

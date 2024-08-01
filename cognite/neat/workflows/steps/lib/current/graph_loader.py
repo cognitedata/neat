@@ -2,7 +2,7 @@ import time
 from pathlib import Path
 from typing import ClassVar
 
-from cognite.neat.workflows._exceptions import StepNotInitialized
+from cognite.neat.issues.errors.workflow import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import NeatGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step

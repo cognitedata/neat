@@ -7,10 +7,10 @@ from cognite.client import CogniteClient
 
 from cognite.neat.issues import NeatIssueList
 from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
+from cognite.neat.issues.errors.workflow import StepNotInitialized
 from cognite.neat.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules.models import DMSRules, SchemaCompleteness
 from cognite.neat.utils.cdf.loaders import ViewLoader
-from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import MultiRuleData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
