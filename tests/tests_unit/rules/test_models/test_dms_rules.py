@@ -7,6 +7,7 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
+from cognite.neat.issues import NeatError, NeatIssue
 from cognite.neat.issues.errors.resources import ChangedResourceError, MultiplePropertyDefinitionsError
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
@@ -1408,7 +1409,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("raw, expected_errors", list(invalid_container_definitions_test_cases()))
     def test_load_inconsistent_container_definitions(
-        self, raw: dict[str, dict[str, Any]], expected_errors: list[validation.NeatValidationError]
+        self, raw: dict[str, dict[str, Any]], expected_errors: list[NeatError]
     ) -> None:
         with pytest.raises(ValueError) as e:
             DMSRulesInput.load(raw).as_rules()
@@ -1547,14 +1548,14 @@ class TestDMSRules:
         assert wind_turbine_name.reference.versioned_id == "power:GeneratingUnit(property=name)"
 
     @pytest.mark.parametrize("rules, expected_issues", list(invalid_extended_rules_test_cases()))
-    def test_load_invalid_extended_rules(self, rules: DMSRules, expected_issues: list[validation.ValidationIssue]):
+    def test_load_invalid_extended_rules(self, rules: DMSRules, expected_issues: list[NeatIssue]):
         raw = rules.dump(by_alias=True)
         raw["Metadata"]["schema"] = "extended"
 
         with pytest.raises(ValidationError) as e:
             DMSRulesInput.load(raw).as_rules()
 
-        actual_issues = validation.NeatValidationError.from_pydantic_errors(e.value.errors())
+        actual_issues = NeatError.from_pydantic_errors(e.value.errors())
 
         assert sorted(actual_issues) == sorted(expected_issues)
 
