@@ -52,3 +52,18 @@ class ConfigurationNotSet(NeatError, RuntimeError):
 
     def message(self) -> str:
         return (self.__doc__ or "").format(config_variable=self.config_variable)
+
+
+@dataclass(frozen=True)
+class InvalidStepOutputException(NeatError, RuntimeError):
+    """Object type {step_type} is not supported as step output."""
+
+    step_type: str
+
+    def dump(self) -> dict[str, str]:
+        output = super().dump()
+        output["stepType"] = self.step_type
+        return output
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(step_type=self.step_type)
