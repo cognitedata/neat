@@ -7,7 +7,7 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
+from cognite.neat.issues.errors.resources import ChangedResourceError, MultiplePropertyDefinitionsError
 from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models import DMSRules, ExtensionCategory, InformationRules
@@ -1312,7 +1312,14 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
 
     yield pytest.param(
         changing_container,
-        [validation.dms.ChangingContainerError(dm.ContainerId("my_space", "Asset"), ["name"])],
+        [
+            ChangedResourceError(
+                dm.ContainerId("my_space", "Asset"),
+                "Container",
+                frozenset({"name"}),
+                frozenset({}),
+            )
+        ],
         id="Addition extension, changing container",
     )
 
@@ -1349,7 +1356,14 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
 
     yield pytest.param(
         changing_view,
-        [validation.dms.ChangingViewError(dm.ViewId("my_space", "Asset", "1"), None, ["description"])],
+        [
+            ChangedResourceError(
+                dm.ViewId("my_space", "Asset", "1"),
+                "View",
+                frozenset({}),
+                frozenset({"description"}),
+            )
+        ],
         id="Addition extension, changing view",
     )
 
@@ -1358,7 +1372,14 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
 
     yield pytest.param(
         changing_container2,
-        [validation.dms.ChangingContainerError(dm.ContainerId("my_space", "Asset"), ["name"])],
+        [
+            ChangedResourceError(
+                dm.ContainerId("my_space", "Asset"),
+                "Container",
+                frozenset({"name"}),
+                frozenset({}),
+            )
+        ],
     )
 
 
@@ -1719,7 +1740,9 @@ def test_dms_rules_validation_error():
 
     errors = e.value.errors()
 
-    assert errors[0]["msg"] == (
-        "Value error, The data model schema is set to be complete, however, "
-        "the referred component ViewId(space='my_space', external_id='Sourceable', version='1') is not preset."
+    assert len(errors) == 1
+    error = str(errors[0]["ctx"]["error"])
+    assert error == (
+        "The View with identifier ViewId(space='my_space', external_id='Sourceable', version='1') "
+        "is missing: Schema set to complete, expects all views to be in model"
     )

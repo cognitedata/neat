@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, TypeVar
 
 from cognite.neat.issues import NeatError
+from cognite.neat.utils.text import humanize_sequence
 
 T_Identifier = TypeVar("T_Identifier", bound=Hashable)
 
@@ -18,6 +19,26 @@ class ResourceError(NeatError, Generic[T_Identifier]):
         output = super().dump()
         output["resource_type"] = self.resource_type
         output["identifier"] = self.identifier
+        return output
+
+
+@dataclass(frozen=True)
+class DuplicatedResourceError(ResourceError[T_Identifier]):
+    """The {resource_type} with identifier {identifier} is duplicated in {location}"""
+
+    fix = "Remove the duplicate {resource_type} {identifier}."
+    location: str
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(
+            resource_type=self.resource_type, identifier=repr(self.identifier), location=self.location
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["resource_type"] = self.resource_type
+        output["identifier"] = self.identifier
+        output["location"] = self.location
         return output
 
 
@@ -68,6 +89,28 @@ class ReferredResourceNotFoundError(ResourceError, Generic[T_Identifier, T_Refer
         output["identifier"] = self.identifier
         output["referred_by"] = self.referred_by
         output["referred_type"] = self.referred_type
+        return output
+
+
+@dataclass(frozen=True)
+class DuplicatedMappingError(ResourceError[T_Identifier], Generic[T_Identifier, T_ReferenceIdentifier]):
+    """The {resource_type} with identifier {identifier} is mapped to by: {mappings}. Ensure
+    that there is only one mapping"""
+
+    mappings: frozenset[T_ReferenceIdentifier]
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(
+            resource_type=self.resource_type,
+            identifier=repr(self.identifier),
+            mappings=humanize_sequence([repr(m) for m in self.mappings]),
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["resource_type"] = self.resource_type
+        output["identifier"] = self.identifier
+        output["mappings"] = list(self.mappings)
         return output
 
 
@@ -190,4 +233,31 @@ class MultiplePropertyDefinitionsError(ResourceError[T_Identifier]):
         output["property_values"] = list(self.property_values)
         output["locations"] = list(self.locations)
         output["location_name"] = self.location_name
+        return output
+
+
+@dataclass(frozen=True)
+class ChangedResourceError(ResourceError[T_Identifier]):
+    """The {resource_type} with identifier {identifier} has changed{changed}"""
+
+    changed_properties: frozenset[str]
+    changed_attributes: frozenset[str]
+
+    def message(self) -> str:
+        if self.changed_properties:
+            changed = f" properties {humanize_sequence(list(self.changed_properties))}."
+        elif self.changed_attributes:
+            changed = f" attributes {humanize_sequence(list(self.changed_attributes))}."
+        else:
+            changed = "."
+        return (
+            f"The {self.resource_type} {self.identifier} has changed{changed}"
+            f"When extending model with extension set to addition or reshape, the {self.resource_type} "
+            "properties must remain the same"
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["changed_properties"] = self.changed_properties
+        output["changed_attributes"] = self.changed_attributes
         return output

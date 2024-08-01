@@ -7,16 +7,11 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
-from cognite.neat.issues import NeatError, NeatWarning
+from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
-from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
+from cognite.neat.issues.errors.resources import DuplicatedResourceError, ReferredResourceNotFoundError
 from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
-from cognite.neat.rules.issues.dms import (
-    DirectRelationMissingSourceWarning,
-    DMSSchemaError,
-    DMSSchemaWarning,
-    DuplicatedViewInDataModelError,
-)
+from cognite.neat.issues.neat_warnings.models import UserModelingWarning
 from cognite.neat.rules.models import DMSSchema
 from cognite.neat.rules.models.dms import PipelineSchema
 from cognite.neat.utils.cdf.data_classes import (
@@ -45,9 +40,10 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             data_model=data_model,
         ),
         [
-            DuplicatedViewInDataModelError(
-                view=dm.ViewId("my_space", "my_view1", "1"),
-                referred_by=dm.DataModelId("my_space", "my_data_model", "1"),
+            DuplicatedResourceError(
+                identifier=dm.ViewId("my_space", "my_view1", "1"),
+                resource_type="View",
+                location=repr(dm.DataModelId("my_space", "my_data_model", "1")),
             ),
             ReferredResourceNotFoundError[dm.ViewId, dm.DataModelId](
                 dm.ViewId("my_space", "my_view1", "1"),
@@ -167,9 +163,12 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 referred_by=dm.ContainerId("non_existing_space", "my_container"),
                 referred_type="Container",
             ),
-            DirectRelationMissingSourceWarning(
-                view_id=dm.ViewId("my_space", "my_view1", "1"),
-                property="direct",
+            UserModelingWarning(
+                "DirectRelationMissingSource",
+                f"The view {dm.ViewId('my_space', 'my_view1', '1')!r}.direct is a direct relation without a source",
+                "Direct relations in views should point to a single other view, if not,"
+                "you end up with a more complex schema than necessary.",
+                "Create the source view",
             ),
         ],
         id="Missing space, and direct relation missing source",
@@ -345,7 +344,7 @@ class TestDMSSchema:
         "schema, expected",
         list(invalid_schema_test_cases()),
     )
-    def test_invalid_schema(self, schema: DMSSchema, expected: list[DMSSchemaError | DMSSchemaWarning]) -> None:
+    def test_invalid_schema(self, schema: DMSSchema, expected: list[NeatIssue]) -> None:
         expected_errors = [error for error in expected if isinstance(error, NeatError)]
         expected_warnings = [warning for warning in expected if isinstance(warning, NeatWarning)]
         with warnings.catch_warnings(record=True) as warning_logger:
@@ -394,7 +393,7 @@ class TestDMSSchema:
         list(invalid_raw_str_test_cases()),
     )
     def test_load_invalid_raw_str(
-        self, raw_str: str, context: dict[str, list[Path]], expected_issues: list[DMSSchemaError | DMSSchemaWarning]
+        self, raw_str: str, context: dict[str, list[Path]], expected_issues: list[NeatIssue]
     ) -> None:
         with warnings.catch_warnings(record=True) as warning_logger:
             _ = DMSSchema.load(raw_str, context)

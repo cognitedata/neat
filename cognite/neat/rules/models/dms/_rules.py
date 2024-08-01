@@ -12,7 +12,6 @@ from pydantic.main import IncEx
 from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.issues.neat_warnings.models import BreakingModelingPrincipleWarning, DataModelingPrinciple
-from cognite.neat.rules import issues
 from cognite.neat.rules.issues import MultiValueError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
@@ -336,9 +335,23 @@ class DMSRules(BaseRules):
             return value
         model_version = metadata.version
         if different_version := [view.view.as_id() for view in value if view.view.version != model_version]:
-            warnings.warn(issues.dms.ViewModelVersionNotMatchingWarning(different_version, model_version), stacklevel=2)
+            for view_id in different_version:
+                warnings.warn(
+                    BreakingModelingPrincipleWarning(
+                        f"The view {view_id!r} has a different version than the data model version, {model_version}",
+                        DataModelingPrinciple.SAME_VERSION,
+                    ),
+                    stacklevel=2,
+                )
         if different_space := [view.view.as_id() for view in value if view.view.space != metadata.space]:
-            warnings.warn(issues.dms.ViewModelSpaceNotMatchingWarning(different_space, metadata.space), stacklevel=2)
+            for view_id in different_space:
+                warnings.warn(
+                    BreakingModelingPrincipleWarning(
+                        f"The view {view_id!r} is in a different space than the data model space, {metadata.space}",
+                        DataModelingPrinciple.SAME_VERSION,
+                    ),
+                    stacklevel=2,
+                )
         return value
 
     @model_validator(mode="after")

@@ -31,3 +31,20 @@ class RegexViolationError(NeatError):
 
     def message(self) -> str:
         return (self.__doc__ or "").format(value=self.value, regex=self.regex)
+
+
+@dataclass(frozen=True)
+class MissingRequiredFieldError(NeatError, ValueError):
+    """The field {field} is required for {operation}"""
+
+    field: str
+    operation: str
+
+    def dump(self) -> dict[str, str]:
+        output = super().dump()
+        output["field"] = self.field
+        output["operation"] = self.operation
+        return output
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(field=self.field, operation=self.operation)

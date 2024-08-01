@@ -28,16 +28,15 @@ from cognite.client.data_classes.transformations.common import Edges, EdgeType, 
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors.external import InvalidYamlError
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
-from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
-from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
-from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
-from cognite.neat.rules.issues.dms import (
-    ContainerPropertyUsedMultipleTimesError,
-    DirectRelationMissingSourceWarning,
-    DuplicatedViewInDataModelError,
-    IncompleteSchemaError,
-    MissingViewInModelWarning,
+from cognite.neat.issues.errors.resources import (
+    DuplicatedMappingError,
+    DuplicatedResourceError,
+    ReferredResourceNotFoundError,
+    ResourceNotFoundError,
 )
+from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
+from cognite.neat.issues.neat_warnings.models import UserModelingWarning
+from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.cdf.data_classes import (
     CogniteResourceDict,
@@ -98,7 +97,9 @@ class DMSSchema:
             if implemented_view := view_by_id.get(view_id):
                 inherited_referenced_containers |= implemented_view.referenced_containers()
             else:
-                raise IncompleteSchemaError(missing_component=view_id).as_exception()
+                raise ResourceNotFoundError(
+                    view_id, "View", "Schema set to complete, expects all views to be in model"
+                ).as_exception()
 
         return directly_referenced_containers | inherited_referenced_containers
 
@@ -165,7 +166,15 @@ class DMSSchema:
             connection_referenced_view_ids |= cls._connection_references(view)
         connection_referenced_view_ids = connection_referenced_view_ids - existing_view_ids
         if connection_referenced_view_ids:
-            warnings.warn(MissingViewInModelWarning(data_model.as_id(), connection_referenced_view_ids), stacklevel=2)
+            for view_id in connection_referenced_view_ids:
+                warnings.warn(
+                    UserModelingWarning(
+                        "Missing connection referenced view",
+                        f"The view {view_id} is referenced by a connection in the data model, {data_model.as_id()}",
+                        "Add the view to the data model",
+                    ),
+                    stacklevel=2,
+                )
             connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
             if failed := connection_referenced_view_ids - set(connection_referenced_views.as_ids()):
                 warnings.warn(FailedLoadingResourcesWarning[dm.ViewId](frozenset(failed), "View"), stacklevel=2)
@@ -569,7 +578,14 @@ class DMSSchema:
 
                         if isinstance(container_property.type, dm.DirectRelation) and prop.source is None:
                             warnings.warn(
-                                DirectRelationMissingSourceWarning(view_id=view_id, property=prop_name), stacklevel=2
+                                UserModelingWarning(
+                                    "DirectRelationMissingSource",
+                                    f"The view {view_id}.{prop_name} is a direct relation without a source",
+                                    "Direct relations in views should point to a single other view, if not,"
+                                    "you end up with a more complex schema than necessary.",
+                                    "Create the source view",
+                                ),
+                                stacklevel=2,
                             )
 
                 if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
@@ -613,10 +629,10 @@ class DMSSchema:
                         == (container_id, container_property_identifier)
                     ]
                     errors.add(
-                        ContainerPropertyUsedMultipleTimesError(
-                            container=container_id,
-                            property=container_property_identifier,
-                            referred_by=frozenset({(view_id, prop_name) for prop_name in view_properties}),
+                        DuplicatedMappingError(
+                            f"{container_id}.{container_property_identifier}",
+                            "Container Property",
+                            frozenset({f"{view_id}.{prop_name}" for prop_name in view_properties}),
                         )
                     )
 
@@ -642,7 +658,13 @@ class DMSSchema:
 
             for view_id, count in view_counts.items():
                 if count > 1:
-                    errors.add(DuplicatedViewInDataModelError(referred_by=model.as_id(), view=view_id))
+                    errors.add(
+                        DuplicatedResourceError(
+                            view_id,
+                            "View",
+                            repr(model.as_id()),
+                        )
+                    )
 
         return list(errors)
 
