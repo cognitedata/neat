@@ -1,6 +1,3 @@
-from typing import Any
-from warnings import WarningMessage
-
 from pydantic_core import ErrorDetails, PydanticCustomError
 
 
@@ -100,46 +97,3 @@ class InvalidWorkFlowError(NeatException):
 
     def __str__(self) -> str:
         return self.message
-
-
-class NeatValueError(NeatException, ValueError): ...
-
-
-class NeatTypeError(NeatException, TypeError): ...
-
-
-def wrangle_warnings(list_of_warnings: list[WarningMessage]) -> list[dict]:
-    warning_list: list[dict] = []
-    for warning in list_of_warnings:
-        if issubclass(warning.message.__class__, NeatWarning):
-            warning_list.append(_neat_warning_to_dict(warning))
-        elif issubclass(warning.message.__class__, Warning):
-            warning_list.append(_python_warning_to_dict(warning))
-    return warning_list
-
-
-def _neat_warning_to_dict(warning: WarningMessage) -> dict:
-    category: Any = warning.category
-    return {
-        "type": category.resource_type,
-        "loc": (),
-        "msg": str(warning.message),
-        "input": None,
-        "ctx": dict(
-            type_=category.resource_type,
-            code=category.code,
-            description=category.description,
-            example=category.example,
-            fix=category.fix,
-        ),
-    }
-
-
-def _python_warning_to_dict(warning: WarningMessage) -> dict:
-    return {
-        "type": warning.category,
-        "loc": (),
-        "msg": str(warning.message),
-        "input": None,
-        "ctx": dict(type_=warning.category, code=None, description=None, example=None, fix=None),
-    }
