@@ -1,6 +1,5 @@
 from cognite.neat.issues import MultiValueError
 
-from . import spreadsheet
 from .base import (
     DefaultPydanticError,
     NeatValidationError,
@@ -13,5 +12,4 @@ __all__ = [
     "NeatValidationError",
     "ValidationIssue",
     "ValidationIssue",
-    "spreadsheet",
 ]

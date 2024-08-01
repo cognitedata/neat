@@ -2,17 +2,18 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 from cognite.neat.issues import IssueList
+from cognite.neat.issues._base import InvalidRowError
 from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
 from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
 from cognite.neat.issues.formatters import BasicHTML
-from cognite.neat.rules import issues as validation
 
 
 @pytest.fixture(scope="session")
 def issues() -> IssueList:
     return IssueList(
         [
-            validation.spreadsheet.InvalidPropertyError(
+            InvalidRowError(
+                sheet_name="Properties",
                 column="IsList",
                 row=4,
                 type="bool_parsing",
