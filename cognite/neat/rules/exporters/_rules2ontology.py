@@ -13,14 +13,8 @@ from cognite.neat.issues import MultiValueError
 from cognite.neat.issues.errors.general import MissingRequiredFieldError
 from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
 from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
+from cognite.neat.issues.neat_warnings.properties import DuplicatedPropertyDefinitionWarning
 from cognite.neat.rules.analysis import InformationAnalysis
-from cognite.neat.rules.issues.ontology import (
-    OntologyMultiDefinitionPropertyWarning,
-    OntologyMultiDomainPropertyWarning,
-    OntologyMultiLabeledPropertyWarning,
-    OntologyMultiRangePropertyWarning,
-    OntologyMultiTypePropertyWarning,
-)
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
@@ -373,8 +367,14 @@ class OWLProperty(OntologyModel):
     def is_multi_type(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                OntologyMultiTypePropertyWarning(
-                    remove_namespace_from_uri(info.data["id_"]), [remove_namespace_from_uri(t) for t in v]
+                DuplicatedPropertyDefinitionWarning(
+                    remove_namespace_from_uri(info.data["id"]),
+                    "type",
+                    frozenset({remove_namespace_from_uri(t) for t in v}),
+                    "This warning occurs when a same property is define for two object/classes where"
+                    " its expected value type is different in one definition, e.g. acts as an edge, while in "
+                    "other definition acts as and attribute",
+                    "If a property takes different value types for different objects, simply define new property",
                 ),
                 stacklevel=2,
             )
@@ -384,8 +384,13 @@ class OWLProperty(OntologyModel):
     def is_multi_range(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                OntologyMultiRangePropertyWarning(
-                    remove_namespace_from_uri(info.data["id_"]), [remove_namespace_from_uri(t) for t in v]
+                DuplicatedPropertyDefinitionWarning(
+                    remove_namespace_from_uri(info.data["id_"]),
+                    "range",
+                    frozenset({remove_namespace_from_uri(t) for t in v}),
+                    "This warning occurs when a property takes range of "
+                    "values which consists of union of multiple value types.",
+                    "If value types for different objects, simply define new property",
                 ),
                 stacklevel=2,
             )
@@ -395,8 +400,14 @@ class OWLProperty(OntologyModel):
     def is_multi_domain(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                OntologyMultiDomainPropertyWarning(
-                    remove_namespace_from_uri(info.data["id_"]), [remove_namespace_from_uri(t) for t in v]
+                DuplicatedPropertyDefinitionWarning(
+                    remove_namespace_from_uri(info.data["id_"]),
+                    "domain",
+                    frozenset({remove_namespace_from_uri(t) for t in v}),
+                    "This warning occurs when a same property is define for two object/classes where"
+                    " its expected value type is different in one definition, e.g. acts as an edge, while in "
+                    "other definition acts as and attribute",
+                    "If value types for different objects, simply define new property",
                 ),
                 stacklevel=2,
             )
@@ -406,7 +417,12 @@ class OWLProperty(OntologyModel):
     def has_multi_name(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                OntologyMultiLabeledPropertyWarning(remove_namespace_from_uri(info.data["id_"]), v),
+                DuplicatedPropertyDefinitionWarning(
+                    remove_namespace_from_uri(info.data["id_"]),
+                    "label",
+                    frozenset(v),
+                    f"Only the first label (name) will be used, {v[0]}",
+                ),
                 stacklevel=2,
             )
         return v
@@ -415,7 +431,12 @@ class OWLProperty(OntologyModel):
     def has_multi_comment(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                OntologyMultiDefinitionPropertyWarning(remove_namespace_from_uri(info.data["id_"])),
+                DuplicatedPropertyDefinitionWarning(
+                    remove_namespace_from_uri(info.data["id_"]),
+                    "comment",
+                    frozenset(v),
+                    "All definitions will be concatenated to form a single definition.",
+                ),
                 stacklevel=2,
             )
         return v
