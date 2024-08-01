@@ -11,8 +11,8 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic.main import IncEx
 from pydantic_core.core_schema import ValidationInfo
 
+from cognite.neat.issues import MultiValueError
 from cognite.neat.issues.neat_warnings.models import BreakingModelingPrincipleWarning, DataModelingPrinciple
-from cognite.neat.rules.issues import MultiValueError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
     BaseRules,

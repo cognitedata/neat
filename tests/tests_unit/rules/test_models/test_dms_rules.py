@@ -7,9 +7,8 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
-from cognite.neat.issues import NeatError, NeatIssue
+from cognite.neat.issues import MultiValueError, NeatError, NeatIssue
 from cognite.neat.issues.errors.resources import ChangedResourceError, MultiplePropertyDefinitionsError
-from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models import DMSRules, ExtensionCategory, InformationRules
 from cognite.neat.rules.models.data_types import String
@@ -1419,7 +1418,7 @@ class TestDMSRules:
         assert len(validation_errors) == 1, "Expected there to be exactly one validation error"
         validation_error = validation_errors[0]
         multi_value_error = validation_error.get("ctx", {}).get("error")
-        assert isinstance(multi_value_error, validation.MultiValueError)
+        assert isinstance(multi_value_error, MultiValueError)
         actual_errors = multi_value_error.errors
 
         assert sorted(actual_errors) == sorted(expected_errors)
