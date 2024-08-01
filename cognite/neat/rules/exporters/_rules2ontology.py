@@ -9,8 +9,10 @@ from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespac
 from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
+from cognite.neat.issues import MultiValueError
 from cognite.neat.issues.errors.general import MissingRequiredFieldError
 from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
+from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
 from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.issues.ontology import (
     OntologyMultiDefinitionPropertyWarning,
@@ -18,7 +20,6 @@ from cognite.neat.rules.issues.ontology import (
     OntologyMultiLabeledPropertyWarning,
     OntologyMultiRangePropertyWarning,
     OntologyMultiTypePropertyWarning,
-    PropertiesDefinedMultipleTimesError,
 )
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import DataType
@@ -29,12 +30,11 @@ from cognite.neat.rules.models.information import (
     InformationProperty,
     InformationRules,
 )
-from cognite.neat.utils.auxiliary import generate_exception_report
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 from cognite.neat.utils.text import humanize_sequence
 
 from ._base import BaseExporter
-from ._validation import are_properties_redefined
+from ._validation import duplicated_properties
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -110,11 +110,20 @@ class Ontology(OntologyModel):
         else:
             raise ValueError(f"{type(input_rules).__name__} cannot be exported to Ontology")
 
-        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
-        if properties_redefined:
-            raise PropertiesDefinedMultipleTimesError(
-                report=generate_exception_report(redefinition_warnings)
-            ).as_exception()
+        if duplicates := duplicated_properties(rules.properties):
+            errors = []
+            for (class_, property_), definitions in duplicates.items():
+                errors.append(
+                    MultiplePropertyDefinitionsError(
+                        class_,
+                        "Class",
+                        property_,
+                        frozenset({str(definition[1].value_type) for definition in definitions}),
+                        tuple(definition[0] for definition in definitions),
+                        "rows",
+                    )
+                )
+            raise MultiValueError(errors)
 
         if rules.prefixes is None:
             raise MissingRequiredFieldError("Metadata.prefix", "generating the ontology")

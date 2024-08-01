@@ -1,11 +1,7 @@
 from abc import ABC
 from dataclasses import dataclass
 
-from .base import NeatValidationError, ValidationWarning
-
-
-@dataclass(frozen=True)
-class OntologyError(NeatValidationError, ABC): ...
+from .base import ValidationWarning
 
 
 @dataclass(frozen=True)
@@ -169,35 +165,6 @@ class OntologyMultiDomainPropertyWarning(OntologyWarning):
         message = (
             f"Currently property '{self.property_id}' is defined for multiple classes: {', '.join(self.classes or [])}"
         )
-        message += f"\nDescription: {self.description}"
-        message += f"\nFix: {self.fix}"
-        return message
-
-
-@dataclass(frozen=True)
-class PropertiesDefinedMultipleTimesError(OntologyError):
-    """This error is raised during export of Transformation Rules to DMS schema when
-    when properties are defined multiple times for the same class.
-
-    Args:
-        report: report on properties which are defined multiple times
-        verbose: flag that indicates whether to provide enhanced exception message, by default False
-
-    Notes:
-       Make sure to check validation report of Transformation Rules and fix DMS related warnings.
-    """
-
-    description = (
-        "This error is raised during export of Transformation Rules to "
-        "DMS schema when properties are defined multiple times for the same class."
-    )
-    fix = "Make sure to check validation report of Transformation Rules and fix DMS related warnings."
-
-    report: str
-
-    def message(self) -> str:
-        message = f"Following properties defined multiple times for the same class(es): {self.report}"
-
         message += f"\nDescription: {self.description}"
         message += f"\nFix: {self.fix}"
         return message

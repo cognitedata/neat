@@ -1,10 +1,13 @@
 import warnings
+from collections import defaultdict
+from collections.abc import Iterable
 from typing import Literal, overload
 
 from cognite.neat.exceptions import wrangle_warnings
 from cognite.neat.issues.neat_warnings.identifier import RegexViolationWarning
-from cognite.neat.issues.neat_warnings.properties import PropertyRedefinedWarning
 from cognite.neat.rules.models import InformationRules
+from cognite.neat.rules.models.entities import ClassEntity
+from cognite.neat.rules.models.information import InformationProperty
 from cognite.neat.utils.regex_patterns import DMS_PROPERTY_ID_COMPLIANCE_REGEX, PATTERNS, VIEW_ID_COMPLIANCE_REGEX
 
 
@@ -74,35 +77,13 @@ def are_entity_names_dms_compliant(
         return flag
 
 
-@overload
-def are_properties_redefined(rules: InformationRules, return_report: Literal[True]) -> tuple[bool, list[dict]]: ...
-
-
-@overload
-def are_properties_redefined(rules: InformationRules, return_report: Literal[False] = False) -> bool: ...
-
-
-def are_properties_redefined(rules: InformationRules, return_report: bool = False) -> bool | tuple[bool, list[dict]]:
-    flag: bool = False
-    with warnings.catch_warnings(record=True) as validation_warnings:
-        analyzed_properties: dict[str, list[str]] = {}
-        for property_ in rules.properties:
-            if property_.property_ not in analyzed_properties:
-                analyzed_properties[property_.property_] = [property_.class_.versioned_id]
-            elif property_.class_ in analyzed_properties[property_.property_]:
-                flag = True
-                warnings.warn(
-                    PropertyRedefinedWarning[str](property_.class_.versioned_id, "Class", property_.property_),
-                    stacklevel=2,
-                )
-
-            else:
-                analyzed_properties[property_.property_].append(property_.class_.versioned_id)
-
-    if return_report:
-        return flag, wrangle_warnings(validation_warnings)
-    else:
-        return flag
+def duplicated_properties(
+    properties: Iterable[InformationProperty],
+) -> dict[tuple[ClassEntity, str], list[tuple[int, InformationProperty]]]:
+    class_properties_by_id: dict[tuple[ClassEntity, str], list[tuple[int, InformationProperty]]] = defaultdict(list)
+    for prop_no, prop in enumerate(properties):
+        class_properties_by_id[(prop.class_, prop.property_)].append((prop_no, prop))
+    return {k: v for k, v in class_properties_by_id.items() if len(v) > 1}
 
 
 def property_ids_camel_case_compliant(rules) -> bool | tuple[bool, list[dict]]:
