@@ -36,3 +36,19 @@ class StepNotInitialized(NeatError, RuntimeError):
 
     def message(self) -> str:
         return (self.__doc__ or "").format(step_name=self.step_name)
+
+
+@dataclass(frozen=True)
+class ConfigurationNotSet(NeatError, RuntimeError):
+    """The configuration variable '{config_variable}' is not set. Please set the configuration
+    before running the workflow."""
+
+    config_variable: str
+
+    def dump(self) -> dict[str, str]:
+        output = super().dump()
+        output["configVariable"] = self.config_variable
+        return output
+
+    def message(self) -> str:
+        return (self.__doc__ or "").format(config_variable=self.config_variable)
