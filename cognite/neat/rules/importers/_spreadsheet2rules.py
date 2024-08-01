@@ -11,10 +11,9 @@ from typing import Literal, cast, overload
 import pandas as pd
 from pandas import ExcelFile
 
-from cognite.neat.issues import IssueList
+from cognite.neat.issues import IssueList, NeatError
 from cognite.neat.issues.errors.external import FileMissingRequiredFieldError, FileReadError, NeatFileNotFoundError
 from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
-from cognite.neat.rules import issues
 from cognite.neat.rules.models import (
     RULES_PER_ROLE,
     AssetRules,
@@ -280,7 +279,7 @@ class ExcelImporter(BaseImporter):
         rules_cls = RULES_PER_ROLE[original_role]
         with _handle_issues(
             issue_list,
-            error_cls=issues.spreadsheet.InvalidSheetError,
+            error_cls=NeatError,
             error_args={"read_info_by_sheet": read_info_by_sheet},
         ) as future:
             rules: Rules
