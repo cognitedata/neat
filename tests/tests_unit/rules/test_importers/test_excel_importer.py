@@ -5,10 +5,10 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
 
 from cognite.neat.issues import IssueList
+from cognite.neat.issues._base import InvalidRowError
 from cognite.neat.issues.errors.external import NeatFileNotFoundError
 from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
 from cognite.neat.issues.neat_warnings.models import CDFNotSupportedWarning
-from cognite.neat.rules import issues as validation
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
 from tests.config import DOC_RULES
@@ -27,7 +27,8 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "invalid_property_dms_rules.xlsx",
         IssueList(
             [
-                validation.spreadsheet.InvalidPropertyError(
+                InvalidRowError(
+                    sheet_name="Properties",
                     column="Is List",
                     row=4,
                     type="bool_parsing",
@@ -44,7 +45,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "inconsistent_container_dms_rules.xlsx",
         IssueList(
             [
-                MultiplePropertyDefinitionsError[ContainerId](
+                MultiplePropertyDefinitionsError(
                     ContainerId("neat", "Flowable"),
                     "Container",
                     "maxFlow",
@@ -60,7 +61,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "missing_view_container_dms_rules.xlsx",
         IssueList(
             [
-                ResourceNotDefinedError[ViewId](
+                ResourceNotDefinedError(
                     ViewId("neat", "Pump", "1"),
                     "View",
                     location="Views Sheet",
@@ -68,7 +69,7 @@ def invalid_rules_filepaths():
                     row_number=3,
                     sheet_name="Properties",
                 ),
-                ResourceNotDefinedError[ContainerId](
+                ResourceNotDefinedError(
                     ContainerId("neat", "Pump"),
                     "Container",
                     location="Containers Sheet",

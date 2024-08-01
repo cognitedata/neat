@@ -11,6 +11,8 @@ from warnings import WarningMessage
 import pandas as pd
 from pydantic_core import ErrorDetails, PydanticCustomError
 
+from cognite.neat.utils.spreadsheet import SpreadsheetRead
+
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
     from typing_extensions import Self
@@ -84,15 +86,47 @@ class NeatError(NeatIssue, ABC):
         This is intended to be overridden in subclasses to handle specific error types.
         """
         all_errors: list[NeatError] = []
+        read_info_by_sheet = kwargs.get("read_info_by_sheet")
+
         for error in errors:
             ctx = error.get("ctx")
             if isinstance(ctx, dict) and isinstance(multi_error := ctx.get("error"), MultiValueError):
+                if read_info_by_sheet:
+                    for caught_error in multi_error.errors:
+                        cls._adjust_row_numbers(caught_error, read_info_by_sheet)  # type: ignore[arg-type]
                 all_errors.extend(multi_error.errors)  # type: ignore[arg-type]
             elif isinstance(ctx, dict) and isinstance(single_error := ctx.get("error"), NeatError):
+                if read_info_by_sheet:
+                    cls._adjust_row_numbers(single_error, read_info_by_sheet)
                 all_errors.append(single_error)
+            elif len(error["loc"]) >= 4 and read_info_by_sheet:
+                all_errors.append(InvalidRowError.from_pydantic_error(error, read_info_by_sheet))
             else:
                 all_errors.append(DefaultPydanticError.from_pydantic_error(error))
         return all_errors
+
+    @staticmethod
+    def _adjust_row_numbers(caught_error: "NeatError", read_info_by_sheet: dict[str, SpreadsheetRead]) -> None:
+        from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
+
+        reader = read_info_by_sheet.get("Properties", SpreadsheetRead())
+
+        if isinstance(caught_error, MultiplePropertyDefinitionsError) and caught_error.location_name == "rows":
+            adjusted_row_number = tuple(
+                reader.adjusted_row_number(row_no) if isinstance(row_no, int) else row_no
+                for row_no in caught_error.locations
+            )
+            # The error is frozen, so we have to use __setattr__ to change the row number
+            object.__setattr__(caught_error, "locations", adjusted_row_number)
+        elif isinstance(caught_error, InvalidRowError):
+            # Adjusting the row number to the actual row number in the spreadsheet
+            new_row = reader.adjusted_row_number(caught_error.row)
+            # The error is frozen, so we have to use __setattr__ to change the row number
+            object.__setattr__(caught_error, "row", new_row)
+        elif isinstance(caught_error, ResourceNotDefinedError):
+            if isinstance(caught_error.row_number, int) and caught_error.sheet_name == "Properties":
+                new_row = reader.adjusted_row_number(caught_error.row_number)
+                object.__setattr__(caught_error, "row_number", new_row)
 
 
 @dataclass(frozen=True)
@@ -129,6 +163,57 @@ class DefaultPydanticError(NeatError):
             return f"{self.loc[0]} sheet field/column <{self.loc[1]}>: {self.msg}"
         else:
             return self.msg
+
+
+@dataclass(frozen=True)
+class InvalidRowError(NeatError):
+    sheet_name: str
+    column: str
+    row: int
+    type: str
+    msg: str
+    input: Any
+    url: str | None
+
+    @classmethod
+    def from_pydantic_error(
+        cls,
+        error: ErrorDetails,
+        read_info_by_sheet: dict[str, SpreadsheetRead] | None = None,
+    ) -> Self:
+        sheet_name, _, row, column, *__ = error["loc"]
+        reader = (read_info_by_sheet or {}).get(str(sheet_name), SpreadsheetRead())
+        return cls(
+            sheet_name=str(sheet_name),
+            column=str(column),
+            row=reader.adjusted_row_number(int(row)),
+            type=error["type"],
+            msg=error["msg"],
+            input=error.get("input"),
+            url=str(url) if (url := error.get("url")) else None,
+        )
+
+    def dump(self) -> dict[str, Any]:
+        output = super().dump()
+        output["sheet_name"] = self.sheet_name
+        output["column"] = self.column
+        output["row"] = self.row
+        output["type"] = self.type
+        output["msg"] = self.msg
+        output["input"] = self.input
+        output["url"] = self.url
+        return output
+
+    def message(self) -> str:
+        input_str = str(self.input) if self.input is not None else ""
+        input_str = input_str[:50] + "..." if len(input_str) > 50 else input_str
+        output = (
+            f"In {self.sheet_name}, row={self.row}, column={self.column}: {self.msg}. "
+            f"[type={self.type}, input_value={input_str}]"
+        )
+        if self.url:
+            output += f" For further information visit {self.url}"
+        return output
 
 
 @dataclass(frozen=True)
@@ -220,7 +305,7 @@ class MultiValueError(ValueError):
 
     """
 
-    def __init__(self, errors: Sequence[T_NeatIssue]):
+    def __init__(self, errors: Sequence[NeatIssue]):
         self.errors = list(errors)
 
 

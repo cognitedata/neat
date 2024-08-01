@@ -11,10 +11,6 @@ from rdflib import Namespace
 
 from cognite.neat.issues import IssueList, NeatError, NeatWarning
 from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.issues.base import (
-    NeatValidationError,
-    ValidationWarning,
-)
 from cognite.neat.rules.models import AssetRules, DMSRules, InformationRules, RoleTypes
 from cognite.neat.utils.auxiliary import class_html_doc
 
@@ -103,8 +99,8 @@ class _FutureResult:
 @contextmanager
 def _handle_issues(
     issues: IssueList,
-    error_cls: type[NeatError] = NeatValidationError,
-    warning_cls: type[NeatWarning] = ValidationWarning,
+    error_cls: type[NeatError] = NeatError,
+    warning_cls: type[NeatWarning] = NeatWarning,
     error_args: dict[str, Any] | None = None,
 ) -> Iterator[_FutureResult]:
     """This is an internal help function to handle issues and warnings.

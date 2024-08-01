@@ -11,7 +11,6 @@ from cognite.neat.issues.errors.external import (
     UnexpectedFileTypeError,
 )
 from cognite.neat.issues.neat_warnings.general import NeatValueWarning
-from cognite.neat.rules.issues import NeatValidationError
 from cognite.neat.rules.models import RULES_PER_ROLE, DMSRules, RoleTypes
 from cognite.neat.rules.models.dms import DMSRulesInput
 
@@ -63,7 +62,7 @@ class YAMLImporter(BaseImporter):
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
     ) -> tuple[Rules | None, IssueList] | Rules:
-        if any(issue for issue in self._read_issues if isinstance(issue, NeatValidationError)) or not self.raw_data:
+        if self._read_issues.has_errors or not self.raw_data:
             if errors == "raise":
                 raise self._read_issues.as_errors()
             return None, self._read_issues

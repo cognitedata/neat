@@ -34,7 +34,7 @@ class FileReadError(NeatError):
     reason: str
 
     def message(self) -> str:
-        return self.description.format(filepath=repr(self.filepath), reason=self.reason)
+        return (self.__doc__ or "").format(filepath=repr(self.filepath), reason=self.reason)
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
@@ -64,14 +64,14 @@ class NeatFileNotFoundError(NeatError):
 
 @dataclass(frozen=True)
 class FileMissingRequiredFieldError(NeatError):
-    """Missing required {field_name} in {filepath}: {fields}"""
+    """Missing required {field_name} in {filepath}: {field}"""
 
     filepath: Path
     field_name: str
     field: str
 
     def message(self) -> str:
-        return self.description.format(field_name=self.field, filepath=repr(self.filepath), field_type=self.field_name)
+        return (self.__doc__ or "").format(field_name=self.field_name, filepath=repr(self.filepath), field=self.field)
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()
