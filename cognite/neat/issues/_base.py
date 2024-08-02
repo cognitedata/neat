@@ -90,9 +90,6 @@ class NeatIssue:
 
 @dataclass(frozen=True)
 class NeatError(NeatIssue):
-    def dump(self) -> dict[str, Any]:
-        return {"errorType": type(self).__name__}
-
     def as_exception(self) -> Exception:
         return ValueError(self.as_message())
 
@@ -171,15 +168,6 @@ class DefaultPydanticError(NeatError):
             ctx=error.get("ctx"),
         )
 
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["type"] = self.type
-        output["loc"] = self.loc
-        output["msg"] = self.msg
-        output["input"] = self.input
-        output["ctx"] = self.ctx
-        return output
-
     def as_message(self) -> str:
         if self.loc and len(self.loc) == 1:
             return f"{self.loc[0]} sheet: {self.msg}"
@@ -217,17 +205,6 @@ class InvalidRowError(NeatError):
             url=str(url) if (url := error.get("url")) else None,
         )
 
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["sheet_name"] = self.sheet_name
-        output["column"] = self.column
-        output["row"] = self.row
-        output["type"] = self.type
-        output["msg"] = self.msg
-        output["input"] = self.input
-        output["url"] = self.url
-        return output
-
     def as_message(self) -> str:
         input_str = str(self.input) if self.input is not None else ""
         input_str = input_str[:50] + "..." if len(input_str) > 50 else input_str
@@ -242,9 +219,6 @@ class InvalidRowError(NeatError):
 
 @dataclass(frozen=True)
 class NeatWarning(NeatIssue, UserWarning):
-    def dump(self) -> dict[str, Any]:
-        return {"warningType": type(self).__name__}
-
     @classmethod
     def from_warning(cls, warning: WarningMessage) -> "NeatWarning":
         return DefaultWarning.from_warning_message(warning)
@@ -258,13 +232,6 @@ class DefaultWarning(NeatWarning):
     warning: str | Warning
     category: type[Warning]
     source: str | None = None
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["msg"] = str(self.warning)
-        output["category"] = self.category.__name__
-        output["source"] = self.source
-        return output
 
     @classmethod
     def from_warning_message(cls, warning: WarningMessage) -> NeatWarning:

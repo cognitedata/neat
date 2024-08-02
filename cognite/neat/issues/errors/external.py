@@ -1,28 +1,17 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from yaml import YAMLError
 
 from cognite.neat.issues import NeatError
-from cognite.neat.utils.text import humanize_sequence
 
 
 @dataclass(frozen=True)
 class FailedAuthorizationError(NeatError):
-    description = "Missing authorization for {action}: {reason}"
+    """Missing authorization for {action}: {reason}"""
 
     action: str
     reason: str
-
-    def as_message(self) -> str:
-        return self.description.format(action=self.action, reason=self.reason)
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["action"] = self.action
-        output["reason"] = self.reason
-        return output
 
 
 @dataclass(frozen=True)
@@ -32,15 +21,6 @@ class FileReadError(NeatError):
     fix = "Is the {filepath} open in another program? Is the file corrupted?"
     filepath: Path
     reason: str
-
-    def as_message(self) -> str:
-        return (self.__doc__ or "").format(filepath=repr(self.filepath), reason=self.reason)
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["filepath"] = self.filepath
-        output["reason"] = self.reason
-        return output
 
 
 @dataclass(frozen=True)
@@ -53,14 +33,6 @@ class NeatFileNotFoundError(NeatError):
     def as_exception(self) -> Exception:
         return FileNotFoundError(self.as_message())
 
-    def as_message(self) -> str:
-        return (__doc__ or "").format(filepath=repr(self.filepath))
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["filepath"] = self.filepath
-        return output
-
 
 @dataclass(frozen=True)
 class FileMissingRequiredFieldError(NeatError):
@@ -69,16 +41,6 @@ class FileMissingRequiredFieldError(NeatError):
     filepath: Path
     field_name: str
     field: str
-
-    def as_message(self) -> str:
-        return (self.__doc__ or "").format(field_name=self.field_name, filepath=repr(self.filepath), field=self.field)
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["field"] = self.field
-        output["filepath"] = self.filepath
-        output["field_type"] = self.field_name
-        return output
 
 
 @dataclass(frozen=True)
@@ -94,18 +56,6 @@ class InvalidYamlError(NeatError):
     def as_exception(self) -> YAMLError:
         return YAMLError(self.as_message())
 
-    def as_message(self) -> str:
-        msg = (self.__doc__ or "").format(reason=self.reason)
-        if self.expected_format:
-            msg += f" {self.extra.format(expected_format=self.expected_format)}"
-        return msg
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["reason"] = self.reason
-        output["expected_format"] = self.expected_format
-        return output
-
 
 @dataclass(frozen=True)
 class UnexpectedFileTypeError(NeatError):
@@ -117,17 +67,6 @@ class UnexpectedFileTypeError(NeatError):
     def as_exception(self) -> Exception:
         return TypeError(self.as_message())
 
-    def as_message(self) -> str:
-        return (__doc__ or "").format(
-            filepath=repr(self.filepath), expected_format=humanize_sequence(self.expected_format)
-        )
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["filepath"] = self.filepath
-        output["expected_format"] = self.expected_format
-        return output
-
 
 @dataclass(frozen=True)
 class FileNotAFileError(NeatError):
@@ -138,8 +77,3 @@ class FileNotAFileError(NeatError):
 
     def as_exception(self) -> Exception:
         return FileNotFoundError(self.as_message())
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["filepath"] = self.filepath
-        return output
