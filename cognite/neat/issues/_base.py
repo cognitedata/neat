@@ -35,17 +35,12 @@ __all__ = [
 class NeatIssue(ABC):
     """This is the base class for all exceptions and warnings (issues) used in Neat."""
 
-    description: ClassVar[str]
     extra: ClassVar[str | None] = None
     fix: ClassVar[str | None] = None
 
     def message(self) -> str:
-        """Return a human-readable message for the issue.
+        """Return a human-readable message for the issue."""
 
-        This is the default implementation, which returns the description.
-        It is recommended to override this method in subclasses with a more
-        specific message.
-        """
         return self.__doc__ or "Missing"
 
     @abstractmethod
