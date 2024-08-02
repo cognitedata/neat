@@ -1,6 +1,7 @@
 """In this test module, we are testing that the implementations of issues
 are consistently implemented."""
 
+import json
 from abc import ABC
 from collections import Counter
 from collections.abc import Iterable
@@ -143,5 +144,8 @@ class TestIssuesMeta:
         dumped = issue.dump()
         assert isinstance(dumped, dict)
         assert dumped != {}, f"Empty dump for {issue.__class__.__name__}"
-        loaded = NeatIssue.load(dumped)
+        # Ensure that the dump can be serialized and deserialized
+        json_dumped = json.dumps(dumped)
+        json_loaded = json.loads(json_dumped)
+        loaded = NeatIssue.load(json_loaded)
         assert issue == loaded, f"Dump and load mismatch for {issue.__class__.__name__}"

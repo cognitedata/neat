@@ -55,10 +55,12 @@ class NeatIssue:
     def dump(self) -> dict[str, Any]:
         """Return a dictionary representation of the issue."""
         variables = vars(self)
-        variables["NeatIssue"] = type(self).__name__
-        return {
-            to_camel(key): list(value) if isinstance(value, Collection) else value for key, value in variables.items()
+        output = {
+            to_camel(key): list(value) if isinstance(value, Collection) and not isinstance(value, str) else value
+            for key, value in variables.items()
         }
+        output["NeatIssue"] = type(self).__name__
+        return output
 
     @classmethod
     def load(cls, data: dict[str, Any]) -> "NeatIssue":

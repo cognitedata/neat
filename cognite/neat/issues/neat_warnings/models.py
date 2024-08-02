@@ -39,6 +39,10 @@ class BreakingModelingPrincipleWarning(NeatWarning):
     specific: str
     principle: DataModelingPrinciple
 
+    def as_message(self) -> str:
+        principle = self.principle.value.replace("_", " ").title()
+        return (self.__doc__ or "").format(specific=self.specific, principle=principle, url=self.principle.url)
+
 
 @dataclass(frozen=True)
 class UserModelingWarning(NeatWarning):
