@@ -3,12 +3,14 @@ are consistently implemented."""
 
 from abc import ABC
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import fields, is_dataclass
 from pathlib import Path
 from types import GenericAlias, UnionType
 from typing import Any, TypeVar
 
 import pytest
+from _pytest.mark import ParameterSet
 from rdflib import Namespace
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
@@ -90,9 +92,14 @@ def issue_instances(issue_classes) -> list[NeatIssue]:
     return [IssuesCreator(cls_).create_instance() for cls_ in issue_classes]
 
 
+def issue_instances_iterator() -> Iterable[ParameterSet]:
+    for cls_ in get_all_subclasses(NeatIssue, only_concrete=True):
+        yield pytest.param(IssuesCreator(cls_).create_instance(), id=cls_.__name__)
+
+
 class TestIssuesMeta:
     def test_error_class_names_suffix_error(self) -> None:
-        """Test that all classes that inherit from NeatValidationError have the suffix 'Error'."""
+        """Test that all classes that inherit from NeatError have the suffix 'Error'."""
         errors = get_all_subclasses(NeatError)
 
         not_error_suffix = [error for error in errors if not error.__name__.endswith("Error")]
@@ -100,7 +107,7 @@ class TestIssuesMeta:
         assert not_error_suffix == [], f"Errors without 'Error' suffix: {not_error_suffix}"
 
     def test_warnings_class_names_suffix_warning(self) -> None:
-        """Test that all classes that inherit from ValidationWarning have the suffix 'Warning'."""
+        """Test that all classes that inherit from NeatWarning have the suffix 'Warning'."""
         warnings = get_all_subclasses(NeatWarning)
 
         not_warning_suffix = [warning for warning in warnings if not warning.__name__.endswith("Warning")]
@@ -108,24 +115,33 @@ class TestIssuesMeta:
         assert not_warning_suffix == [], f"Warnings without 'Warning' suffix: {not_warning_suffix}"
 
     def test_all_issues_are_dataclasses(self, issue_classes: list[type[NeatIssue]]) -> None:
-        """Test that all classes that inherit from NeatValidationError or ValidationWarning are dataclasses."""
+        """Test that all classes that inherit from NeatIssue are dataclasses."""
         not_dataclasses = [issue for issue in issue_classes if not is_dataclass(issue)]
 
         assert not_dataclasses == [], f"Classes that are not dataclasses: {not_dataclasses}"
 
     def test_all_issues_unique(self, issue_classes: list[type[NeatIssue]]) -> None:
-        """Test that all classes that inherit from NeatValidationError or ValidationWarning are unique."""
+        """Test that all classes that inherit from NeatIssue are unique."""
         duplicates = [name for name, count in Counter([issue.__name__ for issue in issue_classes]).items() if count > 1]
 
         assert duplicates == [], f"Duplicate classes: {duplicates}"
 
     def test_issues_are_sortable(self, issue_instances: list[NeatIssue]) -> None:
-        """Test that all classes that inherit from ValidationIssue can be sorted with each other."""
+        """Test that all classes that inherit from NeatIssue can be sorted with each other."""
         assert sorted(issue_instances)
 
-    def test_issues_message(self, issue_instances: list[NeatIssue]) -> None:
-        """Test that all classes that inherit from ValidationIssue have a message."""
-        for issue in issue_instances:
-            message = issue.as_message()
-            assert isinstance(message, str)
-            assert message != ""
+    @pytest.mark.parametrize("issue", issue_instances_iterator())
+    def test_issues_message(self, issue: NeatIssue) -> None:
+        """Test that all classes that inherit from NeatIssue have a message."""
+        message = issue.as_message()
+        assert isinstance(message, str)
+        assert message != "", f"Empty message for {issue.__class__.__name__}"
+
+    @pytest.mark.parametrize("issue", issue_instances_iterator())
+    def test_issues_dump_load(self, issue: NeatIssue) -> None:
+        """Test that all classes that inherit from ValidationIssue can be dumped and loaded."""
+        dumped = issue.dump()
+        assert isinstance(dumped, dict)
+        assert dumped != {}, f"Empty dump for {issue.__class__.__name__}"
+        loaded = NeatIssue.load(dumped)
+        assert issue == loaded, f"Dump and load mismatch for {issue.__class__.__name__}"
