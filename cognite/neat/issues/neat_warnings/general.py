@@ -10,7 +10,7 @@ class NeatValueWarning(NeatWarning):
 
     value: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(value=self.value)
 
     def dump(self) -> dict[str, Any]:
@@ -25,7 +25,7 @@ class NotSupportedWarning(NeatWarning):
 
     feature: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(feature=self.feature)
 
     def dump(self) -> dict[str, Any]:

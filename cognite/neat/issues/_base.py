@@ -1,8 +1,8 @@
 import sys
 import warnings
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import UserList
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from functools import total_ordering
 from typing import Any, ClassVar, TypeVar
@@ -12,6 +12,7 @@ import pandas as pd
 from pydantic_core import ErrorDetails, PydanticCustomError
 
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
+from cognite.neat.utils.text import to_camel, to_snake
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
@@ -32,45 +33,73 @@ __all__ = [
 
 @total_ordering
 @dataclass(frozen=True)
-class NeatIssue(ABC):
+class NeatIssue:
     """This is the base class for all exceptions and warnings (issues) used in Neat."""
 
     extra: ClassVar[str | None] = None
     fix: ClassVar[str | None] = None
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         """Return a human-readable message for the issue."""
+        template = self.__doc__
+        if not template:
+            return "Missing"
+        variables = vars(self)
+        msg = template.format(**variables)
+        if self.extra:
+            msg += "\n" + self.extra.format(**variables)
+        if self.fix:
+            msg += f"\nFix: {self.fix.format(**variables)}"
+        return msg
 
-        return self.__doc__ or "Missing"
-
-    @abstractmethod
     def dump(self) -> dict[str, Any]:
         """Return a dictionary representation of the issue."""
-        raise NotImplementedError()
+        variables = vars(self)
+        variables["NeatIssue"] = type(self).__name__
+        return {
+            to_camel(key): list(value) if isinstance(value, Collection) else value for key, value in variables.items()
+        }
+
+    @classmethod
+    def load(cls, data: dict[str, Any]) -> "NeatIssue":
+        """Create an instance of the issue from a dictionary."""
+        from cognite.neat.issues.errors import _NEAT_ERRORS_BY_NAME, NeatValueError
+        from cognite.neat.issues.neat_warnings import _NEAT_WARNINGS_BY_NAME
+
+        if "NeatIssue" not in data:
+            raise NeatValueError("The data does not contain a NeatIssue key.")
+        issue_type = data.pop("NeatIssue")
+        args = {to_snake(key): value for key, value in data.items()}
+        if issue_type in _NEAT_ERRORS_BY_NAME:
+            return _NEAT_ERRORS_BY_NAME[issue_type](**args)
+        elif issue_type in _NEAT_WARNINGS_BY_NAME:
+            return _NEAT_WARNINGS_BY_NAME[issue_type](**args)
+        else:
+            raise NeatValueError(f"Unknown issue type: {issue_type}")
 
     def __lt__(self, other: "NeatIssue") -> bool:
         if not isinstance(other, NeatIssue):
             return NotImplemented
-        return (type(self).__name__, self.message()) < (type(other).__name__, other.message())
+        return (type(self).__name__, self.as_message()) < (type(other).__name__, other.as_message())
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, NeatIssue):
             return NotImplemented
-        return (type(self).__name__, self.message()) == (type(other).__name__, other.message())
+        return (type(self).__name__, self.as_message()) == (type(other).__name__, other.as_message())
 
 
 @dataclass(frozen=True)
-class NeatError(NeatIssue, ABC):
+class NeatError(NeatIssue):
     def dump(self) -> dict[str, Any]:
         return {"errorType": type(self).__name__}
 
     def as_exception(self) -> Exception:
-        return ValueError(self.message())
+        return ValueError(self.as_message())
 
     def as_pydantic_exception(self) -> PydanticCustomError:
         return PydanticCustomError(
             type(self).__name__,
-            self.message(),
+            self.as_message(),
             dict(description=self.__doc__, fix=self.fix),
         )
 
@@ -151,7 +180,7 @@ class DefaultPydanticError(NeatError):
         output["ctx"] = self.ctx
         return output
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         if self.loc and len(self.loc) == 1:
             return f"{self.loc[0]} sheet: {self.msg}"
         elif self.loc and len(self.loc) == 2:
@@ -199,7 +228,7 @@ class InvalidRowError(NeatError):
         output["url"] = self.url
         return output
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         input_str = str(self.input) if self.input is not None else ""
         input_str = input_str[:50] + "..." if len(input_str) > 50 else input_str
         output = (
@@ -212,7 +241,7 @@ class InvalidRowError(NeatError):
 
 
 @dataclass(frozen=True)
-class NeatWarning(NeatIssue, ABC, UserWarning):
+class NeatWarning(NeatIssue, UserWarning):
     def dump(self) -> dict[str, Any]:
         return {"warningType": type(self).__name__}
 
@@ -248,7 +277,7 @@ class DefaultWarning(NeatWarning):
             source=warning.source,
         )
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return str(self.warning)
 
 
@@ -275,7 +304,7 @@ class NeatIssueList(UserList[T_NeatIssue], ABC):
     def as_errors(self) -> ExceptionGroup:
         return ExceptionGroup(
             "Operation failed",
-            [ValueError(issue.message()) for issue in self if isinstance(issue, NeatError)],
+            [ValueError(issue.as_message()) for issue in self if isinstance(issue, NeatError)],
         )
 
     def trigger_warnings(self) -> None:

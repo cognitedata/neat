@@ -24,7 +24,7 @@ class ResourceNotFoundWarning(ResourceWarning[T_Identifier]):
     fix = "Check the {resource_type} {identifier} and try again."
     reason: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type, identifier=repr(self.identifier), reason=self.reason
         )
@@ -47,7 +47,7 @@ class ReferredResourceNotFoundWarning(ResourceWarning, Generic[T_Identifier, T_R
     referred_by: T_ReferenceIdentifier
     referred_type: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type,
             identifier=repr(self.identifier),
@@ -73,7 +73,7 @@ class MultipleResourcesWarning(NeatWarning, Generic[T_Identifier]):
     resources: frozenset[T_Identifier]
     resource_type: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type,
             resources=self.resources,
@@ -99,7 +99,7 @@ class FailedLoadingResourcesWarning(NeatWarning, Generic[T_Identifier]):
     resource_type: str
     error: str | None = None
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type,
             resources=self.resources,
@@ -115,7 +115,7 @@ class FailedLoadingResourcesWarning(NeatWarning, Generic[T_Identifier]):
 class ResourceTypeNotSupportedWarning(ResourceWarning[T_Identifier]):
     """The {resource_type} with identifier {identifier} is not supported. This will be ignored."""
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(resource_type=self.resource_type, identifier=repr(self.identifier))
 
     def dump(self) -> dict[str, Any]:

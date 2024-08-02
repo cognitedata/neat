@@ -15,7 +15,7 @@ class RegexViolationWarning(NeatWarning):
     pattern_name: str
     motivation: str | None = None
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         msg = (self.__doc__ or "").format(
             value=self.value, pattern=self.pattern, identifier=self.identifier, pattern_name=self.pattern_name
         )

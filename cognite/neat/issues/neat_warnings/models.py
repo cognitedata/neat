@@ -32,7 +32,7 @@ class InvalidClassWarning(NeatWarning):
     class_name: str
     reason: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return self.description.format(class_name=self.class_name, reason=self.reason)
 
     def dump(self) -> dict[str, Any]:
@@ -49,7 +49,7 @@ class BreakingModelingPrincipleWarning(NeatWarning):
     specific: str
     principle: DataModelingPrinciple
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         principle = self.principle.value.replace("_", " ").title()
         return (self.__doc__ or "").format(specific=self.specific, principle=principle, url=self.principle.url)
 
@@ -70,7 +70,7 @@ class UserModelingWarning(NeatWarning):
     explanation: str
     suggestion: str | None = None
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         msg = (self.__doc__ or "").format(title=self.title, problem=self.problem, explanation=self.explanation)
         if self.suggestion:
             msg += f"\n{self.extra.format(suggestion=self.suggestion)}"
@@ -94,7 +94,7 @@ class CDFNotSupportedWarning(NeatWarning):
     problem: str
     suggestion: str | None = None
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         msg = (self.__doc__ or "").format(title=self.title, problem=self.problem)
         if self.suggestion:
             msg += f"\n{self.extra.format(suggestion=self.suggestion)}"

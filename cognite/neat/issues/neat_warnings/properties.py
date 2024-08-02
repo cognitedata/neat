@@ -15,7 +15,7 @@ class PropertyTypeNotSupportedWarning(ResourceWarning[T_Identifier]):
     property_name: str
     property_type: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type,
             identifier=repr(self.identifier),
@@ -42,7 +42,7 @@ class ReferredPropertyNotFoundWarning(ResourceWarning, Generic[T_Identifier, T_R
     referred_type: str
     property_name: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type,
             identifier=repr(self.identifier),
@@ -74,7 +74,7 @@ class DuplicatedPropertyDefinitionWarning(NeatWarning):
     default_action: str
     recommended_action: str | None = None
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         msg = (self.__doc__ or "").format(
             property_id=self.property_id,
             name=self.name,

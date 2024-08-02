@@ -29,7 +29,7 @@ class RegexViolationError(NeatError):
         output["regex"] = self.regex
         return output
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(value=self.value, regex=self.regex)
 
 
@@ -46,7 +46,7 @@ class MissingRequiredFieldError(NeatError, ValueError):
         output["operation"] = self.operation
         return output
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(field=self.field, operation=self.operation)
 
 
@@ -65,5 +65,5 @@ class NeatImportError(NeatError, ImportError):
         output["neatExtra"] = self.neat_extra
         return output
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(module=self.module, neat_extra=self.neat_extra)

@@ -126,6 +126,6 @@ class TestIssuesMeta:
     def test_issues_message(self, issue_instances: list[NeatIssue]) -> None:
         """Test that all classes that inherit from ValidationIssue have a message."""
         for issue in issue_instances:
-            message = issue.message()
+            message = issue.as_message()
             assert isinstance(message, str)
             assert message != ""

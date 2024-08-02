@@ -50,7 +50,7 @@ class TestDMSImporter:
         dms_importer = DMSImporter(schema)
 
         rules, issues = dms_importer.to_rules(errors="continue")
-        issue_str = "\n".join([issue.message() for issue in issues])
+        issue_str = "\n".join([issue.as_message() for issue in issues])
         assert rules is not None, f"Failed to import rules {issue_str}"
         assert isinstance(rules, DMSRules)
         # This information is lost in the conversion to schema

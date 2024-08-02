@@ -29,7 +29,7 @@ class DuplicatedResourceError(ResourceError[T_Identifier]):
     fix = "Remove the duplicate {resource_type} {identifier}."
     location: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type, identifier=repr(self.identifier), location=self.location
         )
@@ -49,7 +49,7 @@ class ResourceNotFoundError(ResourceError[T_Identifier]):
     fix = "Check the {resource_type} {identifier} and try again."
     reason: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type, identifier=repr(self.identifier), reason=self.reason
         )
@@ -75,7 +75,7 @@ class ReferredResourceNotFoundError(ResourceError, Generic[T_Identifier, T_Refer
     referred_by: T_ReferenceIdentifier
     referred_type: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type,
             identifier=repr(self.identifier),
@@ -99,7 +99,7 @@ class DuplicatedMappingError(ResourceError[T_Identifier], Generic[T_Identifier, 
 
     mappings: frozenset[T_ReferenceIdentifier]
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type,
             identifier=repr(self.identifier),
@@ -126,7 +126,7 @@ class ResourceNotDefinedError(ResourceError[T_Identifier]):
     row_number: int | None = None
     sheet_name: str | None = None
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         msg = (self.__doc__ or "").format(
             resource_type=self.resource_type, identifier=repr(self.identifier), location=self.location
         )
@@ -155,7 +155,7 @@ class FailedConvertError(NeatError):
     target_format: str
     reason: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return self.description.format(identifier=self.identifier, target_format=self.target_format, reason=self.reason)
 
     def dump(self) -> dict[str, Any]:
@@ -176,7 +176,7 @@ class InvalidResourceError(NeatError, Generic[T_Identifier]):
     identifier: T_Identifier
     reason: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type, identifier=repr(self.identifier), reason=self.reason
         )
@@ -196,7 +196,7 @@ class MissingIdentifierError(NeatError):
     resource_type: str
     name: str | None = None
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(resource_type=self.resource_type, name=self.name or "unknown")
 
     def dump(self) -> dict[str, Any]:
@@ -217,7 +217,7 @@ class MultiplePropertyDefinitionsError(ResourceError[T_Identifier]):
     locations: tuple[str | int, ...]
     location_name: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type,
             identifier=self.identifier,
@@ -243,7 +243,7 @@ class ChangedResourceError(ResourceError[T_Identifier]):
     changed_properties: frozenset[str]
     changed_attributes: frozenset[str]
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         if self.changed_properties:
             changed = f" properties {humanize_sequence(list(self.changed_properties))}."
         elif self.changed_attributes:

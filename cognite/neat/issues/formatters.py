@@ -75,7 +75,7 @@ class BasicHTML(Formatter):
             ul = ET.SubElement(self._body, "ul")
             for issue in issues_in_category:
                 li = ET.SubElement(ul, "li")
-                li.text = issue.message()
+                li.text = issue.as_message()
 
 
 FORMATTER_BY_NAME: dict[str, type[Formatter]] = {

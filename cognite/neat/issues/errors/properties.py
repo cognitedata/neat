@@ -10,7 +10,7 @@ class PropertyNotFoundError(ResourceError[T_Identifier]):
 
     property_name: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type, identifier=repr(self.identifier), property_name=self.property_name
         )
@@ -33,7 +33,7 @@ class ReferredPropertyNotFoundError(ResourceError, Generic[T_Identifier, T_Refer
     referred_type: str
     property_name: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type,
             identifier=repr(self.identifier),
@@ -60,7 +60,7 @@ class PropertyTypeNotSupportedError(ResourceError[T_Identifier]):
     property_name: str
     property_type: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type,
             identifier=repr(self.identifier),
@@ -82,7 +82,7 @@ class InvalidPropertyDefinitionError(ResourceError[T_Identifier]):
     property_name: str
     reason: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             resource_type=self.resource_type,
             identifier=repr(self.identifier),

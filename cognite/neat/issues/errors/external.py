@@ -15,7 +15,7 @@ class FailedAuthorizationError(NeatError):
     action: str
     reason: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return self.description.format(action=self.action, reason=self.reason)
 
     def dump(self) -> dict[str, Any]:
@@ -33,7 +33,7 @@ class FileReadError(NeatError):
     filepath: Path
     reason: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(filepath=repr(self.filepath), reason=self.reason)
 
     def dump(self) -> dict[str, Any]:
@@ -51,9 +51,9 @@ class NeatFileNotFoundError(NeatError):
     filepath: Path
 
     def as_exception(self) -> Exception:
-        return FileNotFoundError(self.message())
+        return FileNotFoundError(self.as_message())
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (__doc__ or "").format(filepath=repr(self.filepath))
 
     def dump(self) -> dict[str, Any]:
@@ -70,7 +70,7 @@ class FileMissingRequiredFieldError(NeatError):
     field_name: str
     field: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(field_name=self.field_name, filepath=repr(self.filepath), field=self.field)
 
     def dump(self) -> dict[str, Any]:
@@ -92,9 +92,9 @@ class InvalidYamlError(NeatError):
     expected_format: str | None = None
 
     def as_exception(self) -> YAMLError:
-        return YAMLError(self.message())
+        return YAMLError(self.as_message())
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         msg = (self.__doc__ or "").format(reason=self.reason)
         if self.expected_format:
             msg += f" {self.extra.format(expected_format=self.expected_format)}"
@@ -115,9 +115,9 @@ class UnexpectedFileTypeError(NeatError):
     expected_format: list[str]
 
     def as_exception(self) -> Exception:
-        return TypeError(self.message())
+        return TypeError(self.as_message())
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (__doc__ or "").format(
             filepath=repr(self.filepath), expected_format=humanize_sequence(self.expected_format)
         )
@@ -137,10 +137,7 @@ class FileNotAFileError(NeatError):
     filepath: Path
 
     def as_exception(self) -> Exception:
-        return FileNotFoundError(self.message())
-
-    def message(self) -> str:
-        return (__doc__ or "").format(filepath=repr(self.filepath))
+        return FileNotFoundError(self.as_message())
 
     def dump(self) -> dict[str, Any]:
         output = super().dump()

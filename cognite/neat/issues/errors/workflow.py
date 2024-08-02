@@ -17,7 +17,7 @@ class InvalidWorkFlowError(NeatError, ValueError):
         output["missingData"] = self.missing_data
         return output
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(
             step_name=self.step_name, missing_data=humanize_sequence(list(self.missing_data))
         )
@@ -34,7 +34,7 @@ class StepNotInitialized(NeatError, RuntimeError):
         output["stepName"] = self.step_name
         return output
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(step_name=self.step_name)
 
 
@@ -50,7 +50,7 @@ class ConfigurationNotSet(NeatError, RuntimeError):
         output["configVariable"] = self.config_variable
         return output
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(config_variable=self.config_variable)
 
 
@@ -65,5 +65,5 @@ class InvalidStepOutputException(NeatError, RuntimeError):
         output["stepType"] = self.step_type
         return output
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(step_type=self.step_type)

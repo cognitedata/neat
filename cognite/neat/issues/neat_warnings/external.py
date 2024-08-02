@@ -13,7 +13,7 @@ class FileReadWarning(NeatWarning):
     filepath: Path
     reason: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(filepath=repr(self.filepath), reason=self.reason)
 
     def dump(self) -> dict[str, Any]:
@@ -31,7 +31,7 @@ class FileMissingRequiredFieldWarning(NeatWarning):
     field_name: str
     field: str
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(field_name=self.field_name, field=self.field, filepath=self.filepath)
 
     def dump(self) -> dict[str, Any]:
@@ -52,7 +52,7 @@ class UnexpectedFileTypeWarning(NeatWarning):
     expected_format: list[str]
     error_message: str | None = None
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         msg = (__doc__ or "").format(
             filepath=repr(self.filepath), expected_format=humanize_sequence(self.expected_format)
         )
@@ -74,7 +74,7 @@ class UnknownItemWarning(NeatWarning):
     item: str
     filepath: Path
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return (self.__doc__ or "").format(item=self.item, filepath=self.filepath)
 
     def dump(self) -> dict[str, Any]:
