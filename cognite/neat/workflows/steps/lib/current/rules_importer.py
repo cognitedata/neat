@@ -5,11 +5,11 @@ from typing import ClassVar
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
 
+from cognite.neat.issues.errors.workflow import StepNotInitialized
 from cognite.neat.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules import importers
 from cognite.neat.rules.models import RoleTypes
 from cognite.neat.rules.models.entities import DataModelEntity, DMSUnknownEntity
-from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import MultiRuleData
 from cognite.neat.workflows.steps.step_model import Configurable, Step

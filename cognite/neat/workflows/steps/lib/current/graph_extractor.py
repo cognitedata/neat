@@ -8,8 +8,8 @@ from rdflib import URIRef
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors import RdfFileExtractor
 from cognite.neat.graph.extractors._mock_graph_generator import MockGraphGenerator
+from cognite.neat.issues.errors.workflow import StepNotInitialized
 from cognite.neat.rules._shared import DMSRules, InformationRules
-from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import MultiRuleData, NeatGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step

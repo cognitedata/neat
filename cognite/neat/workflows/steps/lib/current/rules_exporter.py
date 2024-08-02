@@ -2,10 +2,10 @@ import time
 from pathlib import Path
 from typing import ClassVar, Literal, cast
 
+from cognite.neat.issues.errors.workflow import StepNotInitialized
 from cognite.neat.rules import exporters
 from cognite.neat.rules._shared import DMSRules, InformationRules, Rules
 from cognite.neat.rules.models import RoleTypes
-from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, MultiRuleData
 from cognite.neat.workflows.steps.step_model import Configurable, Step

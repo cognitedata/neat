@@ -13,9 +13,9 @@ from prometheus_client import Gauge
 
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.config import Config
+from cognite.neat.issues.errors.workflow import ConfigurationNotSet, InvalidStepOutputException
 from cognite.neat.utils.auxiliary import retry_decorator
 from cognite.neat.workflows import cdf_store, utils
-from cognite.neat.workflows._exceptions import ConfigurationNotSet, InvalidStepOutputException
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import (
     FlowMessage,
