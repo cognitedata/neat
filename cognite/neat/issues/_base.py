@@ -2,7 +2,7 @@ import sys
 import warnings
 from abc import ABC
 from collections import UserList
-from collections.abc import Iterable, Sequence
+from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass, fields
 from functools import total_ordering
 from pathlib import Path
@@ -13,7 +13,7 @@ import pandas as pd
 from pydantic_core import ErrorDetails, PydanticCustomError
 
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
-from cognite.neat.utils.text import to_camel, to_snake
+from cognite.neat.utils.text import humanize_collection, to_camel, to_snake
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
@@ -45,9 +45,22 @@ class NeatIssue:
         template = self.__doc__
         if not template:
             return "Missing"
-        variables = vars(self)
+        variables: dict[str, str] = {}
+        has_all_optional = True
+        for name, var_ in vars(self).items():
+            if var_ is None:
+                has_all_optional = False
+            elif isinstance(var_, str):
+                variables[name] = var_
+            elif isinstance(var_, Path):
+                variables[name] = var_.as_posix()
+            elif isinstance(var_, Collection):
+                variables[name] = humanize_collection(var_)
+            else:
+                variables[name] = repr(var_)
+
         msg = template.format(**variables)
-        if self.extra:
+        if self.extra and has_all_optional:
             msg += "\n" + self.extra.format(**variables)
         if self.fix:
             msg += f"\nFix: {self.fix.format(**variables)}"
