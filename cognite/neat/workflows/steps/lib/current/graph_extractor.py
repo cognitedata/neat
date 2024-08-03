@@ -8,7 +8,7 @@ from rdflib import URIRef
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors import RdfFileExtractor
 from cognite.neat.graph.extractors._mock_graph_generator import MockGraphGenerator
-from cognite.neat.issues.errors.workflow import StepNotInitialized
+from cognite.neat.issues.errors.workflow import StepNotInitializedError
 from cognite.neat.rules._shared import DMSRules, InformationRules
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import MultiRuleData, NeatGraph
@@ -45,7 +45,7 @@ class GraphFromMockData(Step):
         self, rules: MultiRuleData, graph_store: NeatGraph
     ) -> FlowMessage:
         if self.configs is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise StepNotInitializedError(type(self).__name__)
 
         if not rules.information and not rules.dms:
             return FlowMessage(
@@ -110,7 +110,7 @@ class GraphFromRdfFile(Step):
 
     def run(self, graph_store: NeatGraph) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise StepNotInitializedError(type(self).__name__)
 
         if source_file := self.configs["File path"]:
             NeatGraph.graph.write(

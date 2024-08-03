@@ -12,14 +12,14 @@ class InvalidWorkFlowError(NeatError, ValueError):
 
 
 @dataclass(frozen=True)
-class StepNotInitialized(NeatError, RuntimeError):
+class StepNotInitializedError(NeatError, RuntimeError):
     """Step {step_name} has not been initialized."""
 
     step_name: str
 
 
 @dataclass(frozen=True)
-class ConfigurationNotSet(NeatError, RuntimeError):
+class ConfigurationNotSetError(NeatError, RuntimeError):
     """The configuration variable '{config_variable}' is not set. Please set the configuration
     before running the workflow."""
 
@@ -27,7 +27,7 @@ class ConfigurationNotSet(NeatError, RuntimeError):
 
 
 @dataclass(frozen=True)
-class InvalidStepOutputException(NeatError, RuntimeError):
+class InvalidStepOutputError(NeatError, RuntimeError):
     """Object type {step_type} is not supported as step output."""
 
     step_type: str

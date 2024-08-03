@@ -2,7 +2,7 @@ import time
 from pathlib import Path
 from typing import ClassVar
 
-from cognite.neat.issues.errors.workflow import StepNotInitialized
+from cognite.neat.issues.errors.workflow import StepNotInitializedError
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import NeatGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -34,7 +34,7 @@ class GraphToRdfFile(Step):
         self, graph: NeatGraph
     ) -> FlowMessage:  # type: ignore[syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise StepNotInitializedError(type(self).__name__)
 
         storage_path = self.data_store_path / Path(self.configs["File path"])
         relative_graph_file_path = str(storage_path).split("/data/")[1]
