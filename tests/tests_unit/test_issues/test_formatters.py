@@ -29,7 +29,7 @@ def issues() -> IssueList:
                 (4, 5),
                 location_name="rows",
             ),
-            ReferredPropertyNotFoundError[ContainerId, ViewId](
+            ReferredPropertyNotFoundError(
                 ContainerId("neat", "Flowable"),
                 "Container",
                 ViewId("neat", "Pump", "1"),

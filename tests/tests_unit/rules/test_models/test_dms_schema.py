@@ -111,7 +111,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 dm.ViewId("my_space", "my_view1", "1"),
                 "View",
             ),
-            ReferredPropertyNotFoundError[dm.ContainerId, dm.ViewId](
+            ReferredPropertyNotFoundError(
                 dm.ContainerId("my_space", "my_container"),
                 "Container",
                 dm.ViewId("my_space", "my_view1", "1"),
@@ -217,21 +217,21 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             views=ViewApplyDict([view1, view2]),
         ),
         [
-            ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
+            ReferredPropertyNotFoundError(
                 dm.ViewId("my_space", "non_existing", "1"),
                 "View",
                 dm.ViewId("my_space", "my_view1", "1"),
                 "View",
                 property_name="implements",
             ),
-            ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
+            ReferredPropertyNotFoundError(
                 dm.ViewId("my_space", "non_existing", "1"),
                 "View",
                 dm.ViewId("my_space", "my_view1", "1"),
                 "View",
                 property_name="non_existing",
             ),
-            ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
+            ReferredPropertyNotFoundError(
                 dm.ViewId("my_space", "non_existing_edge_view", "1"),
                 "View",
                 dm.ViewId("my_space", "my_view1", "1"),

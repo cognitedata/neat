@@ -553,9 +553,7 @@ class DMSSchema:
             for parent in view.implements or []:
                 if parent not in defined_views:
                     errors.add(
-                        ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
-                            parent, "View", view_id, "View", property_name="implements"
-                        )
+                        ReferredPropertyNotFoundError(parent, "View", view_id, "View", property_name="implements")
                     )
 
             for prop_name, prop in (view.properties or {}).items():
@@ -569,7 +567,7 @@ class DMSSchema:
                         )
                     elif prop.container_property_identifier not in ref_container.properties:
                         errors.add(
-                            ReferredPropertyNotFoundError[dm.ContainerId, dm.ViewId](
+                            ReferredPropertyNotFoundError(
                                 prop.container,
                                 "Container",
                                 view_id,
@@ -594,9 +592,7 @@ class DMSSchema:
 
                 if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
                     errors.add(
-                        ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
-                            prop.source, "View", view_id, "View", property_name=prop_name
-                        )
+                        ReferredPropertyNotFoundError(prop.source, "View", view_id, "View", property_name=prop_name)
                     )
 
                 if (
@@ -605,7 +601,7 @@ class DMSSchema:
                     and prop.edge_source not in defined_views
                 ):
                     errors.add(
-                        ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
+                        ReferredPropertyNotFoundError(
                             prop.edge_source, "View", view_id, "View", property_name=prop_name
                         )
                     )
