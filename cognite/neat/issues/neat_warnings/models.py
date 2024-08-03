@@ -1,4 +1,5 @@
 import sys
+from abc import ABC
 from dataclasses import dataclass
 from typing import ClassVar
 
@@ -23,8 +24,9 @@ class InvalidClassWarning(NeatWarning):
 
 
 @dataclass(frozen=True)
-class BreakingModelingPrincipleWarning(NeatWarning):
-    """{specific} violates the {principle} principle. See {url} for more information."""
+class BreakingModelingPrincipleWarning(NeatWarning, ABC):
+    """BreakingModelingPrincipleWarning: {specific} violates the {principle} principle.
+    See {url} for more information."""
 
     url: ClassVar[str]
     specific: str
