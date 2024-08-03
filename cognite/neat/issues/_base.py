@@ -10,7 +10,7 @@ from typing import Any, ClassVar, TypeVar, get_origin
 from warnings import WarningMessage
 
 import pandas as pd
-from pydantic_core import ErrorDetails, PydanticCustomError
+from pydantic_core import ErrorDetails
 
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
 from cognite.neat.utils.text import humanize_collection, to_camel, to_snake
@@ -133,13 +133,6 @@ class NeatIssue:
 @dataclass(frozen=True)
 class NeatError(NeatIssue, Exception):
     """This is the base class for all exceptions (errors) used in Neat."""
-
-    def as_pydantic_exception(self) -> PydanticCustomError:
-        return PydanticCustomError(
-            type(self).__name__,
-            self.as_message(),
-            dict(description=self.__doc__, fix=self.fix),
-        )
 
     @classmethod
     def from_pydantic_errors(cls, errors: list[ErrorDetails], **kwargs) -> "list[NeatError]":
