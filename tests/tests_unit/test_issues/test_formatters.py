@@ -32,9 +32,9 @@ def issues() -> IssueList:
             PropertyNotFoundError(
                 ContainerId("neat", "Flowable"),
                 "Container",
+                "minFlow",
                 ViewId("neat", "Pump", "1"),
                 "View",
-                property_name="minFlow",
             ),
         ],
         title="Test title",

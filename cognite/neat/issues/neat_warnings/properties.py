@@ -16,16 +16,15 @@ class PropertyTypeNotSupportedWarning(ResourceWarning[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class ReferredPropertyNotFoundWarning(ResourceWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
+class PropertyNotFoundWarning(ResourceWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} does not have a property {property_name} referred
     to by {referred_type} {referred_by} does not exist. This will be ignored.
     """
 
     fix = "Ensure the {resource_type} {identifier} has a {property_name} property"
-
+    property_name: str
     referred_by: T_ReferenceIdentifier
     referred_type: str
-    property_name: str
 
 
 @dataclass(frozen=True)

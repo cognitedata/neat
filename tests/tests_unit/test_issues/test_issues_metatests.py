@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from dataclasses import fields, is_dataclass
 from pathlib import Path
 from types import GenericAlias, UnionType
-from typing import Any, TypeVar
+from typing import Any, TypeVar, get_args
 
 import pytest
 from _pytest.mark import ParameterSet
@@ -58,9 +58,7 @@ class IssuesCreator:
             return self._create_values(type_)
         elif isinstance(type_, UnionType):
             return self._create_value(type_.__args__[0])
-        elif is_dataclass(type_):
-            return IssuesCreator(type_).create_instance()
-        elif type(type_) is TypeVar:
+        elif type(type_) is TypeVar or any(type(arg) is TypeVar for arg in get_args(type_)):
             return "typevar"
         elif type_ is DataModelingPrinciple:
             return DataModelingPrinciple.ONE_MODEL_ONE_SPACE

@@ -15,8 +15,8 @@ from .models import (
 )
 from .properties import (
     DuplicatedPropertyDefinitionWarning,
+    PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
-    ReferredPropertyNotFoundWarning,
 )
 from .resources import (
     FailedLoadingResourcesWarning,
@@ -42,7 +42,7 @@ __all__ = [
     "BreakingModelingPrincipleWarning",
     "DuplicatedPropertyDefinitionWarning",
     "PropertyTypeNotSupportedWarning",
-    "ReferredPropertyNotFoundWarning",
+    "PropertyNotFoundWarning",
     "ResourceWarning",
     "MultipleResourcesWarning",
     "ResourceNotFoundWarning",
