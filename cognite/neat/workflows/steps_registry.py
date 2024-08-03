@@ -14,7 +14,7 @@ import cognite.neat.workflows.steps.lib.current
 import cognite.neat.workflows.steps.lib.io
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.config import Config
-from cognite.neat.issues.errors.workflow import ConfigurationNotSet, InvalidWorkFlowError
+from cognite.neat.issues.errors.workflow import ConfigurationNotSetError, InvalidWorkFlowError
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
 from cognite.neat.workflows.steps.step_model import Configurable, DataContract, Step
 
@@ -70,7 +70,7 @@ class StepsRegistry:
 
     def load_workflow_step_classes(self, workflow_name: str):
         if not self.data_store_path:
-            raise ConfigurationNotSet("data_store_path")
+            raise ConfigurationNotSetError("data_store_path")
         workflow_steps_path = Path(self.data_store_path) / "workflows" / workflow_name
         if workflow_steps_path.exists():
             self.load_custom_step_classes(workflow_steps_path, scope="workflow")

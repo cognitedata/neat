@@ -156,7 +156,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     )
                     tracker.issue(error)
                     if stop_on_exception:
-                        raise error.as_exception()
+                        raise error
                     yield error
 
                     # if orphanage is set asset will use orphanage as parent
@@ -176,7 +176,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     )
                     tracker.issue(error)
                     if stop_on_exception:
-                        raise error.as_exception() from e
+                        raise error from e
                     yield error
 
             yield _END_OF_CLASS
@@ -213,7 +213,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     )
                     tracker.issue(error)
                     if stop_on_exception:
-                        raise error.as_exception()
+                        raise error
                     yield error
                     continue
 
@@ -234,7 +234,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                             )
                             tracker.issue(error)
                             if stop_on_exception:
-                                raise error.as_exception()
+                                raise error
                             yield error
                             continue
 
@@ -257,7 +257,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                             )
                             tracker.issue(error)
                             if stop_on_exception:
-                                raise error.as_exception() from e
+                                raise error from e
                             yield error
 
             yield _END_OF_CLASS

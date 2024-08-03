@@ -231,7 +231,7 @@ class InformationProperty(SheetEntity):
                         "Class",
                         self.property_,
                         f"Default value {self.default} is not of type {self.value_type.python}",
-                    ).as_exception() from None
+                    ) from None
         return self
 
     @property

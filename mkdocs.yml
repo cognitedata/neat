@@ -44,6 +44,10 @@ nav:
           -  Extractors: reference/graph/extractors.md
           -  Transformers: reference/graph/transformers.md
           -  Loaders: reference/graph/loaders.md
+      - Issues:
+          - Base: reference/issues/base.md
+          - Errors: reference/issues/errors.md
+          - Warnings: reference/issues/warnings.md
   - Changelog​: CHANGELOG.md
 
 markdown_extensions:

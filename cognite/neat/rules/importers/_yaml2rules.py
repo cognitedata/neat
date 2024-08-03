@@ -48,7 +48,7 @@ class YAMLImporter(BaseImporter):
         elif not filepath.is_file():
             return cls({}, [FileNotAFileError(filepath)])
         elif filepath.suffix not in [".yaml", ".yml"]:
-            return cls({}, [UnexpectedFileTypeError(filepath, [".yaml", ".yml"])])
+            return cls({}, [UnexpectedFileTypeError(filepath, frozenset([".yaml", ".yml"]))])
         return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath])
 
     @overload

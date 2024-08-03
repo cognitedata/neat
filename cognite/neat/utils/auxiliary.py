@@ -3,13 +3,12 @@ import importlib
 import inspect
 import logging
 import time
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
 from types import ModuleType
 
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
-from pydantic_core import ErrorDetails
 
 from cognite.neat.issues.errors.general import NeatImportError
 
@@ -117,38 +116,6 @@ def create_sha256_hash(string: str) -> str:
     hash_value = sha256_hash.hexdigest()
 
     return hash_value
-
-
-# Will likely be removed with legacy code
-def generate_exception_report(exceptions: list[dict] | list[ErrorDetails] | None, category: str = "") -> str:
-    exceptions_as_dict = _order_expectations_by_type(exceptions) if exceptions else {}
-    report = ""
-
-    for exception_type in exceptions_as_dict.keys():
-        title = f"# {category}: {exception_type}" if category else ""
-        warnings = "\n- " + "\n- ".join(exceptions_as_dict[exception_type])
-        report += title + warnings + "\n\n"
-
-    return report
-
-
-def _order_expectations_by_type(
-    exceptions: list[dict] | list[ErrorDetails],
-) -> dict[str, list[str]]:
-    exception_dict: dict[str, list[str]] = {}
-    for exception in exceptions:
-        if not isinstance(exception["loc"], str) and isinstance(exception["loc"], Iterable):
-            location = f"[{'/'.join(str(e) for e in exception['loc'])}]"
-        else:
-            location = ""
-
-        issue = f"{exception['msg']} {location}"
-
-        if exception_dict.get(exception["type"]) is None:
-            exception_dict[exception["type"]] = [issue]
-        else:
-            exception_dict[exception["type"]].append(issue)
-    return exception_dict
 
 
 def string_to_ideal_type(input_string: str) -> int | bool | float | datetime | str:

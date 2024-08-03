@@ -20,7 +20,7 @@ from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConvert
 from cognite.neat.rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
 from cognite.neat.rules.models import InformationRules, RoleTypes, SchemaCompleteness, SheetList
 from cognite.neat.rules.models.information import InformationClass, InformationProperty
-from cognite.neat.utils.text import humanize_sequence, to_pascal
+from cognite.neat.utils.text import humanize_collection, to_pascal
 
 
 class DTDLImporter(BaseImporter):
@@ -67,7 +67,7 @@ class DTDLImporter(BaseImporter):
                 return
             raw_list = raw
         else:
-            yield UnexpectedFileTypeWarning(filepath, ["dict", "list"], "Content is not an object or array.")
+            yield UnexpectedFileTypeWarning(filepath, frozenset(["dict", "list"]), "Content is not an object or array.")
             return
 
         if isinstance(context, list):
@@ -79,7 +79,7 @@ class DTDLImporter(BaseImporter):
         except KeyError:
             yield NeatValueWarning(
                 f"Unsupported DTDL spec version: {spec_version} in {filepath}. "
-                f"Supported versions are {humanize_sequence(list(DTDL_CLS_BY_TYPE_BY_SPEC.keys()))}."
+                f"Supported versions are {humanize_collection(DTDL_CLS_BY_TYPE_BY_SPEC.keys())}."
                 " The file will be skipped."
             )
             return
@@ -95,7 +95,7 @@ class DTDLImporter(BaseImporter):
             try:
                 yield cls_.model_validate(item)
             except ValidationError as e:
-                yield UnexpectedFileTypeWarning(filepath, [cls.__name__], str(e))
+                yield UnexpectedFileTypeWarning(filepath, frozenset([cls.__name__]), str(e))
             except Exception as e:
                 yield FileReadWarning(filepath=filepath, reason=str(e))
 

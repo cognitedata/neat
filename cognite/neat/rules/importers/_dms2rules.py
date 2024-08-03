@@ -198,7 +198,7 @@ class DMSImporter(BaseImporter):
     @classmethod
     def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
         if Path(zip_file).suffix != ".zip":
-            return cls(DMSSchema(), [UnexpectedFileTypeError(Path(zip_file), [".zip"])])
+            return cls(DMSSchema(), [UnexpectedFileTypeError(Path(zip_file), frozenset([".zip"]))])
         issue_list = IssueList()
         with _handle_issues(issue_list) as _:
             schema = DMSSchema.from_zip(zip_file)

@@ -1,17 +1,19 @@
 import sys
 import warnings
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import UserList
-from collections.abc import Sequence
-from dataclasses import dataclass
+from collections.abc import Collection, Iterable, Sequence
+from dataclasses import dataclass, fields
 from functools import total_ordering
-from typing import Any, ClassVar, TypeVar
+from pathlib import Path
+from typing import Any, ClassVar, TypeVar, get_origin
 from warnings import WarningMessage
 
 import pandas as pd
-from pydantic_core import ErrorDetails, PydanticCustomError
+from pydantic_core import ErrorDetails
 
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
+from cognite.neat.utils.text import humanize_collection, to_camel, to_snake
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
@@ -32,52 +34,105 @@ __all__ = [
 
 @total_ordering
 @dataclass(frozen=True)
-class NeatIssue(ABC):
+class NeatIssue:
     """This is the base class for all exceptions and warnings (issues) used in Neat."""
 
-    description: ClassVar[str]
     extra: ClassVar[str | None] = None
     fix: ClassVar[str | None] = None
 
-    def message(self) -> str:
-        """Return a human-readable message for the issue.
+    def as_message(self) -> str:
+        """Return a human-readable message for the issue."""
+        template = self.__doc__
+        if not template:
+            return "Missing"
+        variables: dict[str, str] = {}
+        has_all_optional = True
+        for name, var_ in vars(self).items():
+            if var_ is None:
+                has_all_optional = False
+            elif isinstance(var_, str):
+                variables[name] = var_
+            elif isinstance(var_, Path):
+                variables[name] = var_.as_posix()
+            elif isinstance(var_, Collection):
+                variables[name] = humanize_collection(var_)
+            else:
+                variables[name] = repr(var_)
 
-        This is the default implementation, which returns the description.
-        It is recommended to override this method in subclasses with a more
-        specific message.
-        """
-        return self.__doc__ or "Missing"
+        msg = template.format(**variables)
+        if self.extra and has_all_optional:
+            msg += "\n" + self.extra.format(**variables)
+        if self.fix:
+            msg += f"\nFix: {self.fix.format(**variables)}"
+        return msg
 
-    @abstractmethod
     def dump(self) -> dict[str, Any]:
         """Return a dictionary representation of the issue."""
-        raise NotImplementedError()
+        variables = vars(self)
+        output = {to_camel(key): self._dump_value(value) for key, value in variables.items() if value is not None}
+        output["NeatIssue"] = type(self).__name__
+        return output
+
+    @staticmethod
+    def _dump_value(value: Any) -> list | int | bool | float | str:
+        if isinstance(value, str | int | bool | float):
+            return value
+        elif isinstance(value, frozenset):
+            return list(value)
+        elif isinstance(value, Path):
+            return value.as_posix()
+        elif isinstance(value, tuple):
+            return list(value)
+        raise ValueError(f"Unsupported type: {type(value)}")
+
+    @classmethod
+    def load(cls, data: dict[str, Any]) -> "NeatIssue":
+        """Create an instance of the issue from a dictionary."""
+        from cognite.neat.issues.errors import _NEAT_ERRORS_BY_NAME, NeatValueError
+        from cognite.neat.issues.neat_warnings import _NEAT_WARNINGS_BY_NAME
+
+        if "NeatIssue" not in data:
+            raise NeatValueError("The data does not contain a NeatIssue key.")
+        issue_type = data.pop("NeatIssue")
+        args = {to_snake(key): value for key, value in data.items()}
+        if issue_type in _NEAT_ERRORS_BY_NAME:
+            return cls._load_values(_NEAT_ERRORS_BY_NAME[issue_type], args)
+        elif issue_type in _NEAT_WARNINGS_BY_NAME:
+            return cls._load_values(_NEAT_WARNINGS_BY_NAME[issue_type], args)
+        else:
+            raise NeatValueError(f"Unknown issue type: {issue_type}")
+
+    @staticmethod
+    def _load_values(cls: "type[NeatIssue]", data: dict[str, Any]) -> "NeatIssue":
+        args: dict[str, Any] = {}
+        for f in fields(cls):
+            if f.name not in data:
+                continue
+            value = data[f.name]
+            if f.type is frozenset or get_origin(f.type) is frozenset:
+                args[f.name] = frozenset(value)
+            elif f.type is Path:
+                args[f.name] = Path(value)
+            elif f.type is tuple or get_origin(f.type) is tuple:
+                args[f.name] = tuple(value)
+            else:
+                args[f.name] = value
+        return cls(**args)
 
     def __lt__(self, other: "NeatIssue") -> bool:
         if not isinstance(other, NeatIssue):
             return NotImplemented
-        return (type(self).__name__, self.message()) < (type(other).__name__, other.message())
+        return (type(self).__name__, self.as_message()) < (type(other).__name__, other.as_message())
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, NeatIssue):
             return NotImplemented
-        return (type(self).__name__, self.message()) == (type(other).__name__, other.message())
+        return (type(self).__name__, self.as_message()) == (type(other).__name__, other.as_message())
 
 
 @dataclass(frozen=True)
-class NeatError(NeatIssue, ABC):
-    def dump(self) -> dict[str, Any]:
-        return {"errorType": type(self).__name__}
-
-    def as_exception(self) -> Exception:
-        return ValueError(self.message())
-
-    def as_pydantic_exception(self) -> PydanticCustomError:
-        return PydanticCustomError(
-            type(self).__name__,
-            self.message(),
-            dict(description=self.__doc__, fix=self.fix),
-        )
+class NeatError(NeatIssue, Exception):
+    """This is the base class for all exceptions (errors) used in Neat."""
 
     @classmethod
     def from_pydantic_errors(cls, errors: list[ErrorDetails], **kwargs) -> "list[NeatError]":
@@ -130,12 +185,12 @@ class NeatError(NeatIssue, ABC):
 
 
 @dataclass(frozen=True)
-class DefaultPydanticError(NeatError):
+class DefaultPydanticError(NeatError, ValueError):
+    """{type}: {msg} [loc={loc}]"""
+
     type: str
     loc: tuple[int | str, ...]
     msg: str
-    input: Any
-    ctx: dict[str, Any] | None
 
     @classmethod
     def from_pydantic_error(cls, error: ErrorDetails) -> "DefaultPydanticError":
@@ -143,20 +198,9 @@ class DefaultPydanticError(NeatError):
             type=error["type"],
             loc=error["loc"],
             msg=error["msg"],
-            input=error.get("input"),
-            ctx=error.get("ctx"),
         )
 
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["type"] = self.type
-        output["loc"] = self.loc
-        output["msg"] = self.msg
-        output["input"] = self.input
-        output["ctx"] = self.ctx
-        return output
-
-    def message(self) -> str:
+    def as_message(self) -> str:
         if self.loc and len(self.loc) == 1:
             return f"{self.loc[0]} sheet: {self.msg}"
         elif self.loc and len(self.loc) == 2:
@@ -166,14 +210,18 @@ class DefaultPydanticError(NeatError):
 
 
 @dataclass(frozen=True)
-class InvalidRowError(NeatError):
+class InvalidRowError(NeatError, ValueError):
+    """In {sheet_name}, row={row}, column={column}: {msg}. [type={type}, input_value={input}]"""
+
+    extra = "For further information visit {url}"
+
     sheet_name: str
     column: str
     row: int
     type: str
     msg: str
     input: Any
-    url: str | None
+    url: str | None = None
 
     @classmethod
     def from_pydantic_error(
@@ -193,18 +241,7 @@ class InvalidRowError(NeatError):
             url=str(url) if (url := error.get("url")) else None,
         )
 
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["sheet_name"] = self.sheet_name
-        output["column"] = self.column
-        output["row"] = self.row
-        output["type"] = self.type
-        output["msg"] = self.msg
-        output["input"] = self.input
-        output["url"] = self.url
-        return output
-
-    def message(self) -> str:
+    def as_message(self) -> str:
         input_str = str(self.input) if self.input is not None else ""
         input_str = input_str[:50] + "..." if len(input_str) > 50 else input_str
         output = (
@@ -217,10 +254,7 @@ class InvalidRowError(NeatError):
 
 
 @dataclass(frozen=True)
-class NeatWarning(NeatIssue, ABC, UserWarning):
-    def dump(self) -> dict[str, Any]:
-        return {"warningType": type(self).__name__}
-
+class NeatWarning(NeatIssue, UserWarning):
     @classmethod
     def from_warning(cls, warning: WarningMessage) -> "NeatWarning":
         return DefaultWarning.from_warning_message(warning)
@@ -228,19 +262,13 @@ class NeatWarning(NeatIssue, ABC, UserWarning):
 
 @dataclass(frozen=True)
 class DefaultWarning(NeatWarning):
-    description = "A warning was raised during validation."
-    fix = "No fix is available."
+    """{category}: {warning}"""
 
-    warning: str | Warning
-    category: type[Warning]
+    extra = "Source: {source}"
+
+    warning: str
+    category: str
     source: str | None = None
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["msg"] = str(self.warning)
-        output["category"] = self.category.__name__
-        output["source"] = self.source
-        return output
 
     @classmethod
     def from_warning_message(cls, warning: WarningMessage) -> NeatWarning:
@@ -248,12 +276,12 @@ class DefaultWarning(NeatWarning):
             return warning.message
 
         return cls(
-            warning=warning.message,
-            category=warning.category,
+            warning=str(warning.message),
+            category=warning.category.__name__,
             source=warning.source,
         )
 
-    def message(self) -> str:
+    def as_message(self) -> str:
         return str(self.warning)
 
 
@@ -280,7 +308,7 @@ class NeatIssueList(UserList[T_NeatIssue], ABC):
     def as_errors(self) -> ExceptionGroup:
         return ExceptionGroup(
             "Operation failed",
-            [ValueError(issue.message()) for issue in self if isinstance(issue, NeatError)],
+            [issue for issue in self if isinstance(issue, NeatError)],
         )
 
     def trigger_warnings(self) -> None:
@@ -310,3 +338,15 @@ class MultiValueError(ValueError):
 
 
 class IssueList(NeatIssueList[NeatIssue]): ...
+
+
+T_Cls = TypeVar("T_Cls")
+
+
+def _get_subclasses(cls_: type[T_Cls], include_base: bool = False) -> Iterable[type[T_Cls]]:
+    """Get all subclasses of a class."""
+    if include_base:
+        yield cls_
+    for s in cls_.__subclasses__():
+        yield s
+        yield from _get_subclasses(s, False)

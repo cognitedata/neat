@@ -14,7 +14,6 @@ from pydantic import (
     WrapValidator,
 )
 from pydantic.functional_serializers import PlainSerializer
-from pydantic_core import PydanticCustomError
 
 from cognite.neat.issues.errors.general import RegexViolationError
 from cognite.neat.issues.neat_warnings.identifier import RegexViolationWarning
@@ -34,10 +33,6 @@ def _custom_error(exc_factory: Callable[[str | None, Exception], Any]) -> Any:
             raise exc_factory(ctx.field_name, value) from None
 
     return WrapValidator(_validator)
-
-
-def _raise(exception: PydanticCustomError):
-    raise exception
 
 
 StrOrListType = Annotated[
@@ -72,7 +67,7 @@ NamespaceType = Annotated[
 PrefixType = Annotated[
     str,
     StringConstraints(pattern=PREFIX_COMPLIANCE_REGEX),
-    _custom_error(lambda _, value: RegexViolationError(value, PREFIX_COMPLIANCE_REGEX).as_pydantic_exception()),
+    _custom_error(lambda _, value: RegexViolationError(value, PREFIX_COMPLIANCE_REGEX)),
 ]
 
 ExternalIdType = Annotated[
@@ -83,13 +78,13 @@ ExternalIdType = Annotated[
 VersionType = Annotated[
     str,
     StringConstraints(pattern=VERSION_COMPLIANCE_REGEX),
-    _custom_error(lambda _, value: RegexViolationError(value, VERSION_COMPLIANCE_REGEX).as_pydantic_exception()),
+    _custom_error(lambda _, value: RegexViolationError(value, VERSION_COMPLIANCE_REGEX)),
 ]
 
 
 def _property_validation(value: str) -> str:
     if not PATTERNS.property_id_compliance.match(value):
-        _raise(RegexViolationError(value, PROPERTY_ID_COMPLIANCE_REGEX).as_pydantic_exception())
+        raise RegexViolationError(value, PROPERTY_ID_COMPLIANCE_REGEX)
     if PATTERNS.more_than_one_alphanumeric.search(value):
         warnings.warn(
             RegexViolationWarning(value, PROPERTY_ID_COMPLIANCE_REGEX, "property", "MoreThanOneNonAlphanumeric"),

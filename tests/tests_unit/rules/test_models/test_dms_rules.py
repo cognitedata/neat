@@ -8,7 +8,11 @@ from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
 from cognite.neat.issues import MultiValueError, NeatError, NeatIssue
-from cognite.neat.issues.errors.resources import ChangedResourceError, MultiplePropertyDefinitionsError
+from cognite.neat.issues.errors.resources import (
+    ChangedResourceError,
+    MultiplePropertyDefinitionsError,
+    ResourceNotFoundError,
+)
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models import DMSRules, ExtensionCategory, InformationRules
 from cognite.neat.rules.models.data_types import String
@@ -1710,7 +1714,7 @@ class TestDMSExporter:
 
 
 def test_dms_rules_validation_error():
-    with pytest.raises(ValidationError) as e:
+    with pytest.raises(NeatError) as e:
         dms_rules = DMSRulesInput(
             metadata=DMSMetadataInput(
                 schema_="complete",
@@ -1738,11 +1742,8 @@ def test_dms_rules_validation_error():
 
         dms_rules.as_rules()
 
-    errors = e.value.errors()
-
-    assert len(errors) == 1
-    error = str(errors[0]["ctx"]["error"])
-    assert error == (
-        "The View with identifier ViewId(space='my_space', external_id='Sourceable', version='1') "
-        "is missing: Schema set to complete, expects all views to be in model"
+    assert e.value == ResourceNotFoundError(
+        dm.ViewId(space="my_space", external_id="Sourceable", version="1"),
+        "View",
+        "Schema set to complete, expects all views to be in model",
     )
