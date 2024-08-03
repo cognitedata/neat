@@ -139,6 +139,11 @@ class TestIssuesMeta:
         assert message != "", f"Empty message for {issue.__class__.__name__}"
 
     @pytest.mark.parametrize("issue", issue_instances_iterator())
+    def test_issues_hashable(self, issue: NeatIssue) -> None:
+        """Test that all classes that inherit from NeatIssue are hashable."""
+        hash(issue)
+
+    @pytest.mark.parametrize("issue", issue_instances_iterator())
     def test_issues_dump_load(self, issue: NeatIssue) -> None:
         """Test that all classes that inherit from ValidationIssue can be dumped and loaded."""
         dumped = issue.dump()

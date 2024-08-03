@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, fields
 from functools import total_ordering
 from pathlib import Path
-from typing import Any, ClassVar, TypeVar
+from typing import Any, ClassVar, TypeVar, get_origin
 from warnings import WarningMessage
 
 import pandas as pd
@@ -68,6 +68,8 @@ class NeatIssue:
             return list(value)
         elif isinstance(value, Path):
             return value.as_posix()
+        elif isinstance(value, tuple):
+            return list(value)
         raise ValueError(f"Unsupported type: {type(value)}")
 
     @classmethod
@@ -94,10 +96,12 @@ class NeatIssue:
             if f.name not in data:
                 continue
             value = data[f.name]
-            if f.type is frozenset:
+            if f.type is frozenset or get_origin(f.type) is frozenset:
                 args[f.name] = frozenset(value)
             elif f.type is Path:
                 args[f.name] = Path(value)
+            elif f.type is tuple or get_origin(f.type) is tuple:
+                args[f.name] = tuple(value)
             else:
                 args[f.name] = value
         return cls(**args)
@@ -180,8 +184,6 @@ class DefaultPydanticError(NeatError):
     type: str
     loc: tuple[int | str, ...]
     msg: str
-    input: Any
-    ctx: dict[str, Any] | None
 
     @classmethod
     def from_pydantic_error(cls, error: ErrorDetails) -> "DefaultPydanticError":
@@ -189,8 +191,6 @@ class DefaultPydanticError(NeatError):
             type=error["type"],
             loc=error["loc"],
             msg=error["msg"],
-            input=error.get("input"),
-            ctx=error.get("ctx"),
         )
 
     def as_message(self) -> str:

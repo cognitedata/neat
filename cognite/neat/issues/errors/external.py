@@ -62,7 +62,7 @@ class UnexpectedFileTypeError(NeatError):
     """Unexpected file type: {filepath}. Expected format: {expected_format}"""
 
     filepath: Path
-    expected_format: list[str]
+    expected_format: frozenset[str]
 
     def as_exception(self) -> Exception:
         return TypeError(self.as_message())
