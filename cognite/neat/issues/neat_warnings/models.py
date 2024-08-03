@@ -25,7 +25,8 @@ class DataModelingPrinciple(StrEnum):
 
 @dataclass(frozen=True)
 class InvalidClassWarning(NeatWarning):
-    description = "The class {class_name} is invalid and will be skipped. {reason}"
+    """The {class_name} is invalid and will be skipped. {reason}"""
+
     fix = "Check the error message and correct the class."
 
     class_name: str

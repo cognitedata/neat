@@ -194,6 +194,8 @@ class NeatError(NeatIssue):
 
 @dataclass(frozen=True)
 class DefaultPydanticError(NeatError):
+    """{type}: {msg} [loc={loc}]"""
+
     type: str
     loc: tuple[int | str, ...]
     msg: str
@@ -217,13 +219,17 @@ class DefaultPydanticError(NeatError):
 
 @dataclass(frozen=True)
 class InvalidRowError(NeatError):
+    """In {sheet_name}, row={row}, column={column}: {msg}. [type={type}, input_value={input}]"""
+
+    extra = "For further information visit {url}"
+
     sheet_name: str
     column: str
     row: int
     type: str
     msg: str
     input: Any
-    url: str | None
+    url: str | None = None
 
     @classmethod
     def from_pydantic_error(
@@ -264,8 +270,9 @@ class NeatWarning(NeatIssue, UserWarning):
 
 @dataclass(frozen=True)
 class DefaultWarning(NeatWarning):
-    description = "A warning was raised during validation."
-    fix = "No fix is available."
+    """{category}: {warning}"""
+
+    extra = "Source: {source}"
 
     warning: str
     category: str

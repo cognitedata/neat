@@ -11,7 +11,7 @@ T_ReferenceIdentifier = TypeVar("T_ReferenceIdentifier", bound=Hashable)
 
 @dataclass(frozen=True)
 class ResourceError(NeatError, Generic[T_Identifier]):
-    """Base class for resource errors"""
+    """Base class for resource errors {resource_type} with identifier {identifier}"""
 
     identifier: T_Identifier
     resource_type: str
@@ -73,7 +73,8 @@ class ResourceNotDefinedError(ResourceError[T_Identifier]):
 
 @dataclass(frozen=True)
 class FailedConvertError(NeatError):
-    description = "Failed to convert the {identifier} to {target_format}: {reason}"
+    """Failed to convert the {identifier} to {target_format}: {reason}"""
+
     fix = "Check the error message and correct the rules."
     identifier: str
     target_format: str
@@ -115,6 +116,11 @@ class MultiplePropertyDefinitionsError(ResourceError[T_Identifier]):
 class ChangedResourceError(ResourceError[T_Identifier]):
     """The {resource_type} with identifier {identifier} has changed{changed}"""
 
+    fix = (
+        "When extending model with extension set to addition or reshape, "
+        "the {resource_type} properties must remain the same"
+    )
+
     changed_properties: frozenset[str]
     changed_attributes: frozenset[str]
 
@@ -125,8 +131,6 @@ class ChangedResourceError(ResourceError[T_Identifier]):
             changed = f" attributes {humanize_collection(self.changed_attributes)}."
         else:
             changed = "."
-        return (
-            f"The {self.resource_type} {self.identifier} has changed{changed}"
-            f"When extending model with extension set to addition or reshape, the {self.resource_type} "
-            "properties must remain the same"
-        )
+        msg = (self.__doc__ or "").format(resource_type=self.resource_type, identifier=self.identifier, changed=changed)
+        msg += f"Fix {self.fix.format(resource_type=self.resource_type)}"
+        return msg

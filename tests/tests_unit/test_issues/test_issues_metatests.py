@@ -15,6 +15,7 @@ from _pytest.mark import ParameterSet
 from rdflib import Namespace
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
+from cognite.neat.issues.errors import ChangedResourceError
 from cognite.neat.issues.neat_warnings.models import DataModelingPrinciple
 
 T_Type = TypeVar("T_Type", bound=type)
@@ -127,10 +128,8 @@ class TestIssuesMeta:
 
         assert duplicates == [], f"Duplicate classes: {duplicates}"
 
-    def test_all_variables_in_docstrings(self, issue_classes: list[type[NeatIssue]]) -> None:
+    def test_required_variables_in_docstrings(self, issue_classes: list[type[NeatIssue]]) -> None:
         """Test that all classes that inherit from NeatIssue have all variables in the docstring."""
-        missing_docstring = [issue.__name__ for issue in issue_classes if not issue.__doc__]
-        assert missing_docstring == [], f"Classes without docstring: {missing_docstring}"
         missing_variables = [
             (issue.__name__, missing)
             for issue in issue_classes
@@ -138,11 +137,29 @@ class TestIssuesMeta:
                 missing := [
                     field.name
                     for field in fields(issue)
-                    if f"{{{field.name}}}" not in issue.__doc__ and field.default is not None
+                    if f"{{{field.name}}}" not in (issue.__doc__ or "") and field.default is not None
                 ]
+                # Exclude ChangedResourceError as it has a custom as_message method.
+                and issue not in {ChangedResourceError}
             )
         ]
         assert missing_variables == [], f"Variables missing in docstring: {missing_variables}"
+
+    def test_optional_variables_in_extra(self, issue_classes: list[type[NeatIssue]]) -> None:
+        """Test that all classes that inherit from NeatIssue have all optional variables in the extra attribute."""
+        missing_extra = [
+            (issue.__name__, missing)
+            for issue in issue_classes
+            if issue.extra is not None
+            and (
+                missing := [
+                    field.name
+                    for field in fields(issue)
+                    if f"{{{field.name}}}" not in issue.extra and field.default is None
+                ]
+            )
+        ]
+        assert missing_extra == [], f"Variables missing in extra: {missing_extra}"
 
     def test_issues_are_sortable(self, issue_instances: list[NeatIssue]) -> None:
         """Test that all classes that inherit from NeatIssue can be sorted with each other."""

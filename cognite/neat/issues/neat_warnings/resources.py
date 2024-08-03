@@ -11,7 +11,7 @@ T_ReferenceIdentifier = TypeVar("T_ReferenceIdentifier", bound=Hashable)
 
 @dataclass(frozen=True)
 class ResourceWarning(NeatWarning, Generic[T_Identifier]):
-    """Base class for resource warnings"""
+    """Base class for resource warnings {resource_type} with identifier {identifier}"""
 
     identifier: T_Identifier
     resource_type: str
