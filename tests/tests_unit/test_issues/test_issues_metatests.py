@@ -16,7 +16,6 @@ from rdflib import Namespace
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
 from cognite.neat.issues.errors import ChangedResourceError
-from cognite.neat.issues.neat_warnings.models import DataModelingPrinciple
 
 T_Type = TypeVar("T_Type", bound=type)
 
@@ -60,8 +59,6 @@ class IssuesCreator:
             return self._create_value(type_.__args__[0])
         elif type(type_) is TypeVar or any(type(arg) is TypeVar for arg in get_args(type_)):
             return "typevar"
-        elif type_ is DataModelingPrinciple:
-            return DataModelingPrinciple.ONE_MODEL_ONE_SPACE
         else:
             raise NotImplementedError(f"Type {type_} not implemented.")
 

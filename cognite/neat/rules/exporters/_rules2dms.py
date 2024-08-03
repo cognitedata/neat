@@ -16,7 +16,9 @@ from cognite.client.data_classes.data_modeling import (
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.issues import IssueList
-from cognite.neat.issues.neat_warnings.models import BreakingModelingPrincipleWarning, DataModelingPrinciple
+from cognite.neat.issues.neat_warnings import (
+    OneModelOneSpaceWarning,
+)
 from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models import InformationRules
@@ -298,10 +300,9 @@ class DMSExporter(CDFExporter[DMSSchema]):
         if isinstance(loader, DataModelLoader):
             models = cast(list[DataModelApply], items)
             if other_models := self._exist_other_data_models(loader, models):
-                warning = BreakingModelingPrincipleWarning(
+                warning = OneModelOneSpaceWarning(
                     f"There are multiple data models in the same space {models[0].space}. "
                     f"Other data models in the space are {other_models}.",
-                    DataModelingPrinciple.ONE_MODEL_ONE_SPACE,
                 )
                 if not self.suppress_warnings:
                     warnings.warn(warning, stacklevel=2)

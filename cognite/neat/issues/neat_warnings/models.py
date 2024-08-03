@@ -1,26 +1,15 @@
 import sys
 from dataclasses import dataclass
+from typing import ClassVar
 
 from cognite.neat.issues import NeatWarning
 
 if sys.version_info >= (3, 11):
-    from enum import StrEnum
+    pass
 else:
-    from backports.strenum import StrEnum
+    pass
 
 _BASE_URL = "https://cognite-neat.readthedocs-hosted.com/en/latest/data-modeling-principles.html"
-
-
-class DataModelingPrinciple(StrEnum):
-    """Data modeling principles that are violated by a class."""
-
-    ONE_MODEL_ONE_SPACE = "all-data-models-are-kept-in-its-own-space"
-    SAME_VERSION = "all-views-of-a-data-models-have-the-same-version-and-space-as-the-data-model"
-    SOLUTION_BUILDS_ON_ENTERPRISE = "solution-data-models-should-always-be-referencing-the-enterprise-data-model"
-
-    @property
-    def url(self) -> str:
-        return f"{_BASE_URL}#{self.value}"
 
 
 @dataclass(frozen=True)
@@ -37,12 +26,28 @@ class InvalidClassWarning(NeatWarning):
 class BreakingModelingPrincipleWarning(NeatWarning):
     """{specific} violates the {principle} principle. See {url} for more information."""
 
+    url: ClassVar[str]
     specific: str
-    principle: DataModelingPrinciple
 
     def as_message(self) -> str:
-        principle = self.principle.value.replace("_", " ").title()
-        return (self.__doc__ or "").format(specific=self.specific, principle=principle, url=self.principle.url)
+        principle = type(self).__name__.removesuffix("Warning")
+        url = f"{_BASE_URL}#{self.url}"
+        return (self.__doc__ or "").format(specific=self.specific, principle=principle, url=url)
+
+
+@dataclass(frozen=True)
+class OneModelOneSpaceWarning(BreakingModelingPrincipleWarning):
+    url = "all-data-models-are-kept-in-its-own-space"
+
+
+@dataclass(frozen=True)
+class MatchingSpaceAndVersionWarning(BreakingModelingPrincipleWarning):
+    url = "all-views-of-a-data-models-have-the-same-version-and-space-as-the-data-model"
+
+
+@dataclass(frozen=True)
+class SolutionBuildsOnEnterpriseWarning(BreakingModelingPrincipleWarning):
+    url = "solution-data-models-should-always-be-referencing-the-enterprise-data-model"
 
 
 @dataclass(frozen=True)

@@ -9,8 +9,10 @@ from .identifier import RegexViolationWarning
 from .models import (
     BreakingModelingPrincipleWarning,
     CDFNotSupportedWarning,
-    DataModelingPrinciple,
     InvalidClassWarning,
+    MatchingSpaceAndVersionWarning,
+    OneModelOneSpaceWarning,
+    SolutionBuildsOnEnterpriseWarning,
     UserModelingWarning,
 )
 from .properties import (
@@ -35,7 +37,6 @@ __all__ = [
     "NeatValueWarning",
     "NotSupportedWarning",
     "RegexViolationWarning",
-    "DataModelingPrinciple",
     "UserModelingWarning",
     "CDFNotSupportedWarning",
     "InvalidClassWarning",
@@ -49,6 +50,9 @@ __all__ = [
     "ReferredResourceNotFoundWarning",
     "ResourceTypeNotSupportedWarning",
     "FailedLoadingResourcesWarning",
+    "OneModelOneSpaceWarning",
+    "MatchingSpaceAndVersionWarning",
+    "SolutionBuildsOnEnterpriseWarning",
 ]
 
 _NEAT_WARNINGS_BY_NAME = {warning.__name__: warning for warning in _get_subclasses(NeatWarning, include_base=True)}
