@@ -52,3 +52,4 @@ __all__ = [
 ]
 
 _NEAT_WARNINGS_BY_NAME = {warning.__name__: warning for warning in NeatWarning.__subclasses__()}
+_NEAT_WARNINGS_BY_NAME[NeatWarning.__name__] = NeatWarning

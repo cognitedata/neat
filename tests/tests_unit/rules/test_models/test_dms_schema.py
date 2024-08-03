@@ -331,7 +331,7 @@ def invalid_raw_str_test_cases() -> Iterable[ParameterSet]:
         [
             UnexpectedFileTypeWarning(
                 Path("my_view_file.yaml"),
-                ["ViewApply"],
+                frozenset(["ViewApply"]),
                 "KeyError('externalId')",
             )
         ],

@@ -61,3 +61,4 @@ __all__ = [
 ]
 
 _NEAT_ERRORS_BY_NAME = {error.__name__: error for error in NeatError.__subclasses__()}
+_NEAT_ERRORS_BY_NAME[NeatError.__name__] = NeatError

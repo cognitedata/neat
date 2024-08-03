@@ -2,9 +2,10 @@ import sys
 import warnings
 from abc import ABC
 from collections import UserList
-from collections.abc import Collection, Sequence
-from dataclasses import dataclass
+from collections.abc import Sequence
+from dataclasses import dataclass, fields
 from functools import total_ordering
+from pathlib import Path
 from typing import Any, ClassVar, TypeVar
 from warnings import WarningMessage
 
@@ -55,12 +56,19 @@ class NeatIssue:
     def dump(self) -> dict[str, Any]:
         """Return a dictionary representation of the issue."""
         variables = vars(self)
-        output = {
-            to_camel(key): list(value) if isinstance(value, Collection) and not isinstance(value, str) else value
-            for key, value in variables.items()
-        }
+        output = {to_camel(key): self._dump_value(value) for key, value in variables.items() if value is not None}
         output["NeatIssue"] = type(self).__name__
         return output
+
+    @staticmethod
+    def _dump_value(value: Any) -> list | int | bool | float | str:
+        if isinstance(value, str | int | bool | float):
+            return value
+        elif isinstance(value, frozenset):
+            return list(value)
+        elif isinstance(value, Path):
+            return value.as_posix()
+        raise ValueError(f"Unsupported type: {type(value)}")
 
     @classmethod
     def load(cls, data: dict[str, Any]) -> "NeatIssue":
@@ -73,11 +81,26 @@ class NeatIssue:
         issue_type = data.pop("NeatIssue")
         args = {to_snake(key): value for key, value in data.items()}
         if issue_type in _NEAT_ERRORS_BY_NAME:
-            return _NEAT_ERRORS_BY_NAME[issue_type](**args)
+            return cls._load_values(_NEAT_ERRORS_BY_NAME[issue_type], args)
         elif issue_type in _NEAT_WARNINGS_BY_NAME:
-            return _NEAT_WARNINGS_BY_NAME[issue_type](**args)
+            return cls._load_values(_NEAT_WARNINGS_BY_NAME[issue_type], args)
         else:
             raise NeatValueError(f"Unknown issue type: {issue_type}")
+
+    @staticmethod
+    def _load_values(cls: "type[NeatIssue]", data: dict[str, Any]) -> "NeatIssue":
+        args: dict[str, Any] = {}
+        for f in fields(cls):
+            if f.name not in data:
+                continue
+            value = data[f.name]
+            if f.type is frozenset:
+                args[f.name] = frozenset(value)
+            elif f.type is Path:
+                args[f.name] = Path(value)
+            else:
+                args[f.name] = value
+        return cls(**args)
 
     def __lt__(self, other: "NeatIssue") -> bool:
         if not isinstance(other, NeatIssue):

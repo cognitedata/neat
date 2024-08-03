@@ -28,7 +28,7 @@ class UnexpectedFileTypeWarning(NeatWarning):
     extra = "Error: {error_message}"
 
     filepath: Path
-    expected_format: list[str]
+    expected_format: frozenset[str]
     error_message: str | None = None
 
 

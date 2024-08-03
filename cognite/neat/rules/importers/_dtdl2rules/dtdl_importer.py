@@ -67,7 +67,7 @@ class DTDLImporter(BaseImporter):
                 return
             raw_list = raw
         else:
-            yield UnexpectedFileTypeWarning(filepath, ["dict", "list"], "Content is not an object or array.")
+            yield UnexpectedFileTypeWarning(filepath, frozenset(["dict", "list"]), "Content is not an object or array.")
             return
 
         if isinstance(context, list):
@@ -95,7 +95,7 @@ class DTDLImporter(BaseImporter):
             try:
                 yield cls_.model_validate(item)
             except ValidationError as e:
-                yield UnexpectedFileTypeWarning(filepath, [cls.__name__], str(e))
+                yield UnexpectedFileTypeWarning(filepath, frozenset([cls.__name__]), str(e))
             except Exception as e:
                 yield FileReadWarning(filepath=filepath, reason=str(e))
 
