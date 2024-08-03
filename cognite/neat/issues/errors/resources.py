@@ -60,7 +60,7 @@ class DuplicatedMappingError(ResourceError[T_Identifier], Generic[T_Identifier, 
 
 @dataclass(frozen=True)
 class ResourceNotDefinedError(ResourceError[T_Identifier]):
-    """The {resource_type} {identifier} is not defined."""
+    """The {resource_type} {identifier} is not defined in the {location}"""
 
     extra = "{column_name} {row_number} in {sheet_name}"
     fix = "Define the {resource_type} {identifier} in {location}."

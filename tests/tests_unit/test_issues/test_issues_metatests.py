@@ -121,11 +121,28 @@ class TestIssuesMeta:
 
         assert not_dataclasses == [], f"Classes that are not dataclasses: {not_dataclasses}"
 
-    def test_all_issues_unique(self, issue_classes: list[type[NeatIssue]]) -> None:
+    def test_all_issue_names_unique(self, issue_classes: list[type[NeatIssue]]) -> None:
         """Test that all classes that inherit from NeatIssue are unique."""
         duplicates = [name for name, count in Counter([issue.__name__ for issue in issue_classes]).items() if count > 1]
 
         assert duplicates == [], f"Duplicate classes: {duplicates}"
+
+    def test_all_variables_in_docstrings(self, issue_classes: list[type[NeatIssue]]) -> None:
+        """Test that all classes that inherit from NeatIssue have all variables in the docstring."""
+        missing_docstring = [issue.__name__ for issue in issue_classes if not issue.__doc__]
+        assert missing_docstring == [], f"Classes without docstring: {missing_docstring}"
+        missing_variables = [
+            (issue.__name__, missing)
+            for issue in issue_classes
+            if (
+                missing := [
+                    field.name
+                    for field in fields(issue)
+                    if f"{{{field.name}}}" not in issue.__doc__ and field.default is not None
+                ]
+            )
+        ]
+        assert missing_variables == [], f"Variables missing in docstring: {missing_variables}"
 
     def test_issues_are_sortable(self, issue_instances: list[NeatIssue]) -> None:
         """Test that all classes that inherit from NeatIssue can be sorted with each other."""
