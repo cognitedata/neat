@@ -8,6 +8,7 @@ from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
 from cognite.neat.issues import MultiValueError, NeatError, NeatIssue
+from cognite.neat.issues._base import DefaultPydanticError
 from cognite.neat.issues.errors.resources import ChangedResourceError, MultiplePropertyDefinitionsError
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models import DMSRules, ExtensionCategory, InformationRules
@@ -1738,11 +1739,15 @@ def test_dms_rules_validation_error():
 
         dms_rules.as_rules()
 
-    errors = e.value.errors()
+    errors = NeatError.from_pydantic_errors(e.value.errors())
 
     assert len(errors) == 1
-    error = str(errors[0]["ctx"]["error"])
-    assert error == (
-        "The View with identifier ViewId(space='my_space', external_id='Sourceable', version='1') "
-        "is missing: Schema set to complete, expects all views to be in model"
+    assert errors[0] == DefaultPydanticError(
+        type="value_error",
+        loc=tuple(),
+        msg="Value error, The View with identifier "
+        "ViewId(space='my_space', external_id='Sourceable', version='1') is missing: "
+        "Schema set to complete, expects all views to be in model\n"
+        "Fix: Check the View ViewId(space='my_space', external_id='Sourceable', version='1') "
+        "and try again.",
     )
