@@ -336,7 +336,7 @@ class OWLProperty(OntologyModel):
                 definitions[0].property_,
                 "All definitions should have the same property_id! Definitions have different property_id:"
                 f"{humanize_collection(property_ids)}",
-            ).as_exception()
+            )
 
         owl_property = cls.model_construct(
             id_=namespace[definitions[0].property_],

@@ -7,7 +7,7 @@ from cognite.neat.issues import NeatError
 
 
 @dataclass(frozen=True)
-class FailedAuthorizationError(NeatError):
+class FailedAuthorizationError(NeatError, RuntimeError):
     """Missing authorization for {action}: {reason}"""
 
     action: str
@@ -15,7 +15,7 @@ class FailedAuthorizationError(NeatError):
 
 
 @dataclass(frozen=True)
-class FileReadError(NeatError):
+class FileReadError(NeatError, RuntimeError):
     """Error when reading file, {filepath}: {reason}"""
 
     fix = "Is the {filepath} open in another program? Is the file corrupted?"
@@ -24,18 +24,15 @@ class FileReadError(NeatError):
 
 
 @dataclass(frozen=True)
-class NeatFileNotFoundError(NeatError):
+class NeatFileNotFoundError(NeatError, FileNotFoundError):
     """File {filepath} not found"""
 
     fix = "Make sure to provide a valid file"
     filepath: Path
 
-    def as_exception(self) -> Exception:
-        return FileNotFoundError(self.as_message())
-
 
 @dataclass(frozen=True)
-class FileMissingRequiredFieldError(NeatError):
+class FileMissingRequiredFieldError(NeatError, ValueError):
     """Missing required {field_name} in {filepath}: {field}"""
 
     filepath: Path
@@ -44,7 +41,7 @@ class FileMissingRequiredFieldError(NeatError):
 
 
 @dataclass(frozen=True)
-class InvalidYamlError(NeatError):
+class InvalidYamlError(NeatError, YAMLError):
     """Invalid YAML: {reason}"""
 
     extra = "Expected format: {expected_format}"
@@ -53,27 +50,18 @@ class InvalidYamlError(NeatError):
     reason: str
     expected_format: str | None = None
 
-    def as_exception(self) -> YAMLError:
-        return YAMLError(self.as_message())
-
 
 @dataclass(frozen=True)
-class UnexpectedFileTypeError(NeatError):
+class UnexpectedFileTypeError(NeatError, TypeError):
     """Unexpected file type: {filepath}. Expected format: {expected_format}"""
 
     filepath: Path
     expected_format: frozenset[str]
 
-    def as_exception(self) -> Exception:
-        return TypeError(self.as_message())
-
 
 @dataclass(frozen=True)
-class FileNotAFileError(NeatError):
+class FileNotAFileError(NeatError, FileNotFoundError):
     """{filepath} is not a file"""
 
     fix = "Make sure to provide a valid file"
     filepath: Path
-
-    def as_exception(self) -> Exception:
-        return FileNotFoundError(self.as_message())

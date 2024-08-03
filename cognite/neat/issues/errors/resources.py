@@ -10,7 +10,7 @@ T_ReferenceIdentifier = TypeVar("T_ReferenceIdentifier", bound=Hashable)
 
 
 @dataclass(frozen=True)
-class ResourceError(NeatError, Generic[T_Identifier]):
+class ResourceError(NeatError, Generic[T_Identifier], RuntimeError):
     """Base class for resource errors {resource_type} with identifier {identifier}"""
 
     identifier: T_Identifier
@@ -72,7 +72,7 @@ class ResourceNotDefinedError(ResourceError[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class FailedConvertError(NeatError):
+class FailedConvertError(NeatError, ValueError):
     """Failed to convert the {identifier} to {target_format}: {reason}"""
 
     fix = "Check the error message and correct the rules."
@@ -82,7 +82,7 @@ class FailedConvertError(NeatError):
 
 
 @dataclass(frozen=True)
-class InvalidResourceError(NeatError, Generic[T_Identifier]):
+class InvalidResourceError(NeatError, Generic[T_Identifier], ValueError):
     """The {resource_type} with identifier {identifier} is invalid: {reason}"""
 
     fix = "Check the error message and correct the instance."
@@ -93,7 +93,7 @@ class InvalidResourceError(NeatError, Generic[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class MissingIdentifierError(NeatError):
+class MissingIdentifierError(NeatError, ValueError):
     """The {resource_type} with name {name} is missing an identifier."""
 
     resource_type: str

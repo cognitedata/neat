@@ -114,10 +114,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
-                    error = InvalidResourceError[str](resource_type="node", identifier=identifier, reason=str(e))
+                    error = InvalidResourceError(resource_type="node", identifier=identifier, reason=str(e))
                     tracker.issue(error)
                     if stop_on_exception:
-                        raise error.as_exception() from e
+                        raise error from e
                     yield error
                 yield from self._create_edges(identifier, properties, edge_by_properties, tracker)
             tracker.finish(repr(view_id))

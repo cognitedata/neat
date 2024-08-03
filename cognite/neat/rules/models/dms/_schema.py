@@ -97,9 +97,7 @@ class DMSSchema:
             if implemented_view := view_by_id.get(view_id):
                 inherited_referenced_containers |= implemented_view.referenced_containers()
             else:
-                raise ResourceNotFoundError(
-                    view_id, "View", "Schema set to complete, expects all views to be in model"
-                ).as_exception()
+                raise ResourceNotFoundError(view_id, "View", "Schema set to complete, expects all views to be in model")
 
         return directly_referenced_containers | inherited_referenced_containers
 
@@ -424,11 +422,9 @@ class DMSSchema:
             try:
                 data_dict = yaml.safe_load(data)
             except Exception as e:
-                raise InvalidYamlError(str(e)).as_exception() from None
+                raise InvalidYamlError(str(e)) from None
             if not isinstance(data_dict, dict) and all(isinstance(v, list) for v in data_dict.values()):
-                raise InvalidYamlError(
-                    f"Invalid data structure: {type(data)}", "dict[str, list[Any]]"
-                ).as_exception() from None
+                raise InvalidYamlError(f"Invalid data structure: {type(data)}", "dict[str, list[Any]]") from None
         else:
             data_dict = data
         loaded: dict[str, Any] = {}

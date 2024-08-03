@@ -131,9 +131,8 @@ class NeatIssue:
 
 
 @dataclass(frozen=True)
-class NeatError(NeatIssue):
-    def as_exception(self) -> Exception:
-        return ValueError(self.as_message())
+class NeatError(NeatIssue, Exception):
+    """This is the base class for all exceptions (errors) used in Neat."""
 
     def as_pydantic_exception(self) -> PydanticCustomError:
         return PydanticCustomError(
@@ -193,7 +192,7 @@ class NeatError(NeatIssue):
 
 
 @dataclass(frozen=True)
-class DefaultPydanticError(NeatError):
+class DefaultPydanticError(NeatError, ValueError):
     """{type}: {msg} [loc={loc}]"""
 
     type: str
@@ -218,7 +217,7 @@ class DefaultPydanticError(NeatError):
 
 
 @dataclass(frozen=True)
-class InvalidRowError(NeatError):
+class InvalidRowError(NeatError, ValueError):
     """In {sheet_name}, row={row}, column={column}: {msg}. [type={type}, input_value={input}]"""
 
     extra = "For further information visit {url}"
