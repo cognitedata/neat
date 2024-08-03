@@ -39,16 +39,25 @@ class BreakingModelingPrincipleWarning(NeatWarning, ABC):
 
 @dataclass(frozen=True)
 class OneModelOneSpaceWarning(BreakingModelingPrincipleWarning):
+    """BreakingModelingPrincipleWarning: {specific} violates the {principle} principle.
+    See {url} for more information."""
+
     url = "all-data-models-are-kept-in-its-own-space"
 
 
 @dataclass(frozen=True)
 class MatchingSpaceAndVersionWarning(BreakingModelingPrincipleWarning):
+    """BreakingModelingPrincipleWarning: {specific} violates the {principle} principle.
+    See {url} for more information."""
+
     url = "all-views-of-a-data-models-have-the-same-version-and-space-as-the-data-model"
 
 
 @dataclass(frozen=True)
 class SolutionBuildsOnEnterpriseWarning(BreakingModelingPrincipleWarning):
+    """BreakingModelingPrincipleWarning: {specific} violates the {principle} principle.
+    See {url} for more information."""
+
     url = "solution-data-models-should-always-be-referencing-the-enterprise-data-model"
 
 
