@@ -25,7 +25,7 @@ class InvalidClassWarning(NeatWarning):
 
 @dataclass(frozen=True)
 class BreakingModelingPrincipleWarning(NeatWarning, ABC):
-    """BreakingModelingPrincipleWarning: {specific} violates the {principle} principle.
+    """{warning_class}: {specific} violates the {principle} principle.
     See {url} for more information."""
 
     url: ClassVar[str]
@@ -34,12 +34,17 @@ class BreakingModelingPrincipleWarning(NeatWarning, ABC):
     def as_message(self) -> str:
         principle = type(self).__name__.removesuffix("Warning")
         url = f"{_BASE_URL}#{self.url}"
-        return (self.__doc__ or "").format(specific=self.specific, principle=principle, url=url)
+        return (self.__doc__ or "").format(
+            warning_class=BreakingModelingPrincipleWarning.__name__,
+            specific=self.specific,
+            principle=principle,
+            url=url,
+        )
 
 
 @dataclass(frozen=True)
 class OneModelOneSpaceWarning(BreakingModelingPrincipleWarning):
-    """BreakingModelingPrincipleWarning: {specific} violates the {principle} principle.
+    """{warning_class}: {specific} violates the {principle} principle.
     See {url} for more information."""
 
     url = "all-data-models-are-kept-in-its-own-space"
@@ -47,7 +52,7 @@ class OneModelOneSpaceWarning(BreakingModelingPrincipleWarning):
 
 @dataclass(frozen=True)
 class MatchingSpaceAndVersionWarning(BreakingModelingPrincipleWarning):
-    """BreakingModelingPrincipleWarning: {specific} violates the {principle} principle.
+    """{warning_class}: {specific} violates the {principle} principle.
     See {url} for more information."""
 
     url = "all-views-of-a-data-models-have-the-same-version-and-space-as-the-data-model"
@@ -55,7 +60,7 @@ class MatchingSpaceAndVersionWarning(BreakingModelingPrincipleWarning):
 
 @dataclass(frozen=True)
 class SolutionBuildsOnEnterpriseWarning(BreakingModelingPrincipleWarning):
-    """BreakingModelingPrincipleWarning: {specific} violates the {principle} principle.
+    """{warning_class}: {specific} violates the {principle} principle.
     See {url} for more information."""
 
     url = "solution-data-models-should-always-be-referencing-the-enterprise-data-model"
