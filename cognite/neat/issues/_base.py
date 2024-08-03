@@ -308,7 +308,7 @@ class NeatIssueList(UserList[T_NeatIssue], ABC):
     def as_errors(self) -> ExceptionGroup:
         return ExceptionGroup(
             "Operation failed",
-            [ValueError(issue.as_message()) for issue in self if isinstance(issue, NeatError)],
+            [issue for issue in self if isinstance(issue, NeatError)],
         )
 
     def trigger_warnings(self) -> None:
