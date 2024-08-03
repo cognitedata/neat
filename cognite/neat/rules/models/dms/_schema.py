@@ -27,7 +27,7 @@ from cognite.client.data_classes.transformations.common import Edges, EdgeType, 
 
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors.external import InvalidYamlError
-from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
+from cognite.neat.issues.errors.properties import PropertyNotFoundError
 from cognite.neat.issues.errors.resources import (
     DuplicatedMappingError,
     DuplicatedResourceError,
@@ -552,9 +552,7 @@ class DMSSchema:
 
             for parent in view.implements or []:
                 if parent not in defined_views:
-                    errors.add(
-                        ReferredPropertyNotFoundError(parent, "View", view_id, "View", property_name="implements")
-                    )
+                    errors.add(PropertyNotFoundError(parent, "View", "implements", view_id, "View"))
 
             for prop_name, prop in (view.properties or {}).items():
                 if isinstance(prop, dm.MappedPropertyApply):
@@ -567,12 +565,12 @@ class DMSSchema:
                         )
                     elif prop.container_property_identifier not in ref_container.properties:
                         errors.add(
-                            ReferredPropertyNotFoundError(
+                            PropertyNotFoundError(
                                 prop.container,
                                 "Container",
+                                prop.container_property_identifier,
                                 view_id,
                                 "View",
-                                property_name=prop.container_property_identifier,
                             )
                         )
                     else:
@@ -591,20 +589,14 @@ class DMSSchema:
                             )
 
                 if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
-                    errors.add(
-                        ReferredPropertyNotFoundError(prop.source, "View", view_id, "View", property_name=prop_name)
-                    )
+                    errors.add(PropertyNotFoundError(prop.source, "View", prop_name, view_id, "View"))
 
                 if (
                     isinstance(prop, dm.EdgeConnectionApply)
                     and prop.edge_source is not None
                     and prop.edge_source not in defined_views
                 ):
-                    errors.add(
-                        ReferredPropertyNotFoundError(
-                            prop.edge_source, "View", view_id, "View", property_name=prop_name
-                        )
-                    )
+                    errors.add(PropertyNotFoundError(prop.edge_source, "View", prop_name, view_id, "View"))
 
             # This allows for multiple view properties to be mapped to the same container property,
             # as long as they have different external_id, otherwise this will lead to raising

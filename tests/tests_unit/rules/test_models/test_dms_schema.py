@@ -8,7 +8,7 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
-from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
+from cognite.neat.issues.errors.properties import PropertyNotFoundError
 from cognite.neat.issues.errors.resources import DuplicatedResourceError, ReferredResourceNotFoundError
 from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
 from cognite.neat.issues.neat_warnings.models import UserModelingWarning
@@ -111,7 +111,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 dm.ViewId("my_space", "my_view1", "1"),
                 "View",
             ),
-            ReferredPropertyNotFoundError(
+            PropertyNotFoundError(
                 dm.ContainerId("my_space", "my_container"),
                 "Container",
                 dm.ViewId("my_space", "my_view1", "1"),
@@ -217,21 +217,21 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             views=ViewApplyDict([view1, view2]),
         ),
         [
-            ReferredPropertyNotFoundError(
+            PropertyNotFoundError(
                 dm.ViewId("my_space", "non_existing", "1"),
                 "View",
                 dm.ViewId("my_space", "my_view1", "1"),
                 "View",
                 property_name="implements",
             ),
-            ReferredPropertyNotFoundError(
+            PropertyNotFoundError(
                 dm.ViewId("my_space", "non_existing", "1"),
                 "View",
                 dm.ViewId("my_space", "my_view1", "1"),
                 "View",
                 property_name="non_existing",
             ),
-            ReferredPropertyNotFoundError(
+            PropertyNotFoundError(
                 dm.ViewId("my_space", "non_existing_edge_view", "1"),
                 "View",
                 dm.ViewId("my_space", "my_view1", "1"),

@@ -12,7 +12,6 @@ from .properties import (
     InvalidPropertyDefinitionError,
     PropertyNotFoundError,
     PropertyTypeNotSupportedError,
-    ReferredPropertyNotFoundError,
 )
 from .resources import (
     ChangedResourceError,
@@ -40,9 +39,8 @@ __all__ = [
     "NeatFileNotFoundError",
     "FileMissingRequiredFieldError",
     "InvalidPropertyDefinitionError",
-    "PropertyNotFoundError",
     "PropertyTypeNotSupportedError",
-    "ReferredPropertyNotFoundError",
+    "PropertyNotFoundError",
     "MultiplePropertyDefinitionsError",
     "ChangedResourceError",
     "DuplicatedResourceError",
