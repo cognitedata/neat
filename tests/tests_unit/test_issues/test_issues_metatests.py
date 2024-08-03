@@ -109,10 +109,17 @@ class TestIssuesMeta:
         assert not_error_suffix == [], f"Errors without 'Error' suffix: {not_error_suffix}"
 
     def test_errors_subclass_exception(self) -> None:
-        """Test that all classes that inherit from NeatError are exceptions."""
+        """Test that all classes that inherit from NeatError are exceptions.
+        Note NeatError is an Exception, and each error should subclass a more
+        specific exception in addition to NeatError.
+        """
         errors = get_all_subclasses(NeatError)
 
-        not_exception = [error for error in errors if not issubclass(error, Exception)]
+        not_exception = [
+            error
+            for error in errors
+            if not any(issubclass(base, Exception) and base is not NeatError for base in error.__bases__)
+        ]
 
         assert not_exception == [], f"Errors that are not exceptions: {not_exception}"
 
