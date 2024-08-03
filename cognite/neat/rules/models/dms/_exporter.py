@@ -26,7 +26,7 @@ from cognite.neat.rules.models.entities import (
 )
 from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
-from cognite.neat.utils.text import humanize_sequence
+from cognite.neat.utils.text import humanize_collection
 
 from ._rules import DMSMetadata, DMSProperty, DMSRules, DMSView
 from ._schema import DMSSchema, PipelineSchema
@@ -240,7 +240,7 @@ class _DMSExporter:
                     UserModelingWarning(
                         "HasDataFilterOnViewWithReferencesWarning",
                         f"Setting a hasData filter on view {view.as_id()!r}"
-                        f"which references other views {humanize_sequence([repr(ref) for ref in references])}.",
+                        f"which references other views {humanize_collection([repr(ref) for ref in references])}.",
                         "This is not recommended as it will lead to no nodes "
                         "being returned when querying the solution view.",
                         "Use a NodeType filter instead",

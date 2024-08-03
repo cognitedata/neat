@@ -1,7 +1,7 @@
 """All warnings raised by the neat package are defined here. Note this module is called 'neat_warnings' instead
 of 'warnings' to avoid conflicts with the built-in Python warnings module."""
 
-from cognite.neat.issues import NeatWarning
+from cognite.neat.issues._base import NeatWarning, _get_subclasses
 
 from .external import FileMissingRequiredFieldWarning, FileReadWarning, UnexpectedFileTypeWarning, UnknownItemWarning
 from .general import NeatValueWarning, NotSupportedWarning
@@ -51,5 +51,4 @@ __all__ = [
     "FailedLoadingResourcesWarning",
 ]
 
-_NEAT_WARNINGS_BY_NAME = {warning.__name__: warning for warning in NeatWarning.__subclasses__()}
-_NEAT_WARNINGS_BY_NAME[NeatWarning.__name__] = NeatWarning
+_NEAT_WARNINGS_BY_NAME = {warning.__name__: warning for warning in _get_subclasses(NeatWarning, include_base=True)}

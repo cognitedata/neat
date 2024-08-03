@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, TypeVar
 
 from cognite.neat.issues import NeatError
-from cognite.neat.utils.text import humanize_sequence
+from cognite.neat.utils.text import humanize_collection
 
 T_Identifier = TypeVar("T_Identifier", bound=Hashable)
 T_ReferenceIdentifier = TypeVar("T_ReferenceIdentifier", bound=Hashable)
@@ -120,9 +120,9 @@ class ChangedResourceError(ResourceError[T_Identifier]):
 
     def as_message(self) -> str:
         if self.changed_properties:
-            changed = f" properties {humanize_sequence(list(self.changed_properties))}."
+            changed = f" properties {humanize_collection(self.changed_properties)}."
         elif self.changed_attributes:
-            changed = f" attributes {humanize_sequence(list(self.changed_attributes))}."
+            changed = f" attributes {humanize_collection(self.changed_attributes)}."
         else:
             changed = "."
         return (

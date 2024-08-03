@@ -1,4 +1,4 @@
-from cognite.neat.issues import NeatError
+from cognite.neat.issues._base import NeatError, _get_subclasses
 
 from .external import (
     FailedAuthorizationError,
@@ -60,5 +60,4 @@ __all__ = [
     "InvalidStepOutputError",
 ]
 
-_NEAT_ERRORS_BY_NAME = {error.__name__: error for error in NeatError.__subclasses__()}
-_NEAT_ERRORS_BY_NAME[NeatError.__name__] = NeatError
+_NEAT_ERRORS_BY_NAME = {error.__name__: error for error in _get_subclasses(NeatError, include_base=True)}

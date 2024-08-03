@@ -2,7 +2,7 @@ import sys
 import warnings
 from abc import ABC
 from collections import UserList
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, fields
 from functools import total_ordering
 from pathlib import Path
@@ -254,8 +254,8 @@ class DefaultWarning(NeatWarning):
     description = "A warning was raised during validation."
     fix = "No fix is available."
 
-    warning: str | Warning
-    category: type[Warning]
+    warning: str
+    category: str
     source: str | None = None
 
     @classmethod
@@ -264,8 +264,8 @@ class DefaultWarning(NeatWarning):
             return warning.message
 
         return cls(
-            warning=warning.message,
-            category=warning.category,
+            warning=str(warning.message),
+            category=warning.category.__name__,
             source=warning.source,
         )
 
@@ -326,3 +326,15 @@ class MultiValueError(ValueError):
 
 
 class IssueList(NeatIssueList[NeatIssue]): ...
+
+
+T_Cls = TypeVar("T_Cls")
+
+
+def _get_subclasses(cls_: type[T_Cls], include_base: bool = False) -> Iterable[type[T_Cls]]:
+    """Get all subclasses of a class."""
+    if include_base:
+        yield cls_
+    for s in cls_.__subclasses__():
+        yield s
+        yield from _get_subclasses(s, False)

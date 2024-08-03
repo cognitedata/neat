@@ -25,7 +25,7 @@ from cognite.neat.rules.models.information import (
     InformationRules,
 )
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
-from cognite.neat.utils.text import humanize_sequence
+from cognite.neat.utils.text import humanize_collection
 
 from ._base import BaseExporter
 from ._validation import duplicated_properties
@@ -335,7 +335,7 @@ class OWLProperty(OntologyModel):
                 "Class",
                 definitions[0].property_,
                 "All definitions should have the same property_id! Definitions have different property_id:"
-                f"{humanize_sequence(list(property_ids))}",
+                f"{humanize_collection(property_ids)}",
             ).as_exception()
 
         owl_property = cls.model_construct(
