@@ -2,8 +2,7 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 from cognite.neat.issues import IssueList
-from cognite.neat.issues._base import InvalidRowError
-from cognite.neat.issues.errors import DuplicatedPropertyDefinitionsError, PropertyNotFoundError
+from cognite.neat.issues.errors import DuplicatedPropertyDefinitionsError, InvalidRowError, PropertyNotFoundError
 from cognite.neat.issues.formatters import BasicHTML
 
 

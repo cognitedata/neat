@@ -1,4 +1,4 @@
-from cognite.neat.issues._base import NeatError, _get_subclasses
+from cognite.neat.issues._base import DefaultPydanticError, InvalidRowError, NeatError, _get_subclasses
 
 from ._external import (
     FailedAuthorizationError,
@@ -31,6 +31,7 @@ from ._resources import (
 from ._workflow import ConfigurationNotSetError, InvalidStepOutputError, InvalidWorkFlowError, StepNotInitializedError
 
 __all__ = [
+    "NeatError",
     "NeatValueError",
     "NeatImportError",
     "RegexViolationError",
@@ -59,6 +60,8 @@ __all__ = [
     "InvalidStepOutputError",
     "UnexpectedFileTypeError",
     "FileNotAFileError",
+    "DefaultPydanticError",
+    "InvalidRowError",
 ]
 
 _NEAT_ERRORS_BY_NAME = {error.__name__: error for error in _get_subclasses(NeatError, include_base=True)}
