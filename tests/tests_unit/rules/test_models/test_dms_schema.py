@@ -158,9 +158,9 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
         [
             ReferredResourceNotFoundError(
                 identifier="non_existing_space",
-                resource_type="Space",
+                resource_type="space",
                 referred_by=dm.ContainerId("non_existing_space", "my_container"),
-                referred_type="Container",
+                referred_type="container",
             ),
             DirectRelationMissingSourceWarning(
                 dm.ViewId("my_space", "my_view1", "1"),
