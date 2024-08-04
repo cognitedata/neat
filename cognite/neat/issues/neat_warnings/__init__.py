@@ -24,9 +24,9 @@ from .properties import (
 from .resources import (
     FailedLoadingResourcesWarning,
     MultipleResourcesWarning,
+    NeatResourceWarning,
     ReferredResourceNotFoundWarning,
     ResourceTypeNotSupportedWarning,
-    ResourceWarning,
 )
 
 __all__ = [
@@ -42,7 +42,7 @@ __all__ = [
     "DuplicatedPropertyDefinitionWarning",
     "PropertyTypeNotSupportedWarning",
     "PropertyNotFoundWarning",
-    "ResourceWarning",
+    "NeatResourceWarning",
     "MultipleResourcesWarning",
     "RegexViolationWarning",
     "ReferredResourceNotFoundWarning",

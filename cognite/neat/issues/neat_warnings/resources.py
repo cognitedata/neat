@@ -1,16 +1,11 @@
-from collections.abc import Hashable
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import Generic
 
-from cognite.neat.issues import NeatWarning
-
-T_Identifier = TypeVar("T_Identifier", bound=Hashable)
-
-T_ReferenceIdentifier = TypeVar("T_ReferenceIdentifier", bound=Hashable)
+from cognite.neat.issues._base import NeatWarning, T_Identifier, T_ReferenceIdentifier
 
 
 @dataclass(frozen=True)
-class ResourceWarning(NeatWarning, Generic[T_Identifier]):
+class NeatResourceWarning(NeatWarning, Generic[T_Identifier]):
     """Base class for resource warnings {resource_type} with identifier {identifier}"""
 
     identifier: T_Identifier
@@ -18,7 +13,7 @@ class ResourceWarning(NeatWarning, Generic[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class ReferredResourceNotFoundWarning(ResourceWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
+class ReferredResourceNotFoundWarning(NeatResourceWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} referred by {referred_type} {referred_by} does not exist.
     This will be ignored."""
 
@@ -52,7 +47,7 @@ class FailedLoadingResourcesWarning(NeatWarning, Generic[T_Identifier]):
     error: str | None = None
 
 
-class ResourceTypeNotSupportedWarning(ResourceWarning[T_Identifier]):
+class ResourceTypeNotSupportedWarning(NeatResourceWarning[T_Identifier]):
     """The {resource_type} with identifier {identifier} is not supported. This will be ignored."""
 
     ...

@@ -2,7 +2,7 @@ import sys
 import warnings
 from abc import ABC
 from collections import UserList
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Collection, Hashable, Iterable, Sequence
 from dataclasses import dataclass, fields
 from functools import total_ordering
 from pathlib import Path
@@ -31,6 +31,10 @@ __all__ = [
     "NeatIssueList",
     "MultiValueError",
 ]
+
+T_Identifier = TypeVar("T_Identifier", bound=Hashable)
+
+T_ReferenceIdentifier = TypeVar("T_ReferenceIdentifier", bound=Hashable)
 
 
 @total_ordering

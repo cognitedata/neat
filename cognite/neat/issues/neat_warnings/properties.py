@@ -3,11 +3,11 @@ from typing import Generic
 
 from cognite.neat.issues._base import NeatWarning
 
-from .resources import ResourceWarning, T_Identifier, T_ReferenceIdentifier
+from .resources import NeatResourceWarning, T_Identifier, T_ReferenceIdentifier
 
 
 @dataclass(frozen=True)
-class PropertyTypeNotSupportedWarning(ResourceWarning[T_Identifier]):
+class PropertyTypeNotSupportedWarning(NeatResourceWarning[T_Identifier]):
     """The {resource_type} with identifier {identifier} has a property {property_name}
     of unsupported type {property_type}. This will be ignored."""
 
@@ -16,7 +16,7 @@ class PropertyTypeNotSupportedWarning(ResourceWarning[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class PropertyNotFoundWarning(ResourceWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
+class PropertyNotFoundWarning(NeatResourceWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} does not have a property {property_name} referred
     to by {referred_type} {referred_by} does not exist. This will be ignored.
     """
