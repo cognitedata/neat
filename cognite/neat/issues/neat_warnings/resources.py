@@ -18,14 +18,6 @@ class ResourceWarning(NeatWarning, Generic[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class ResourceNotFoundWarning(ResourceWarning[T_Identifier]):
-    """The {resource_type} with identifier {identifier} is missing: {reason}. This will be ignored."""
-
-    fix = "Check the {resource_type} {identifier} and try again."
-    reason: str
-
-
-@dataclass(frozen=True)
 class ReferredResourceNotFoundWarning(ResourceWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} referred by {referred_type} {referred_by} does not exist.
     This will be ignored."""

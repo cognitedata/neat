@@ -27,7 +27,6 @@ from .resources import (
     FailedLoadingResourcesWarning,
     MultipleResourcesWarning,
     ReferredResourceNotFoundWarning,
-    ResourceNotFoundWarning,
     ResourceTypeNotSupportedWarning,
     ResourceWarning,
 )
