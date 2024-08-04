@@ -6,6 +6,7 @@ from collections.abc import Collection, Hashable, Iterable, Sequence
 from dataclasses import dataclass, fields
 from functools import total_ordering
 from pathlib import Path
+from types import UnionType
 from typing import Any, ClassVar, Literal, TypeAlias, TypeVar, get_args, get_origin
 from warnings import WarningMessage
 
@@ -145,7 +146,10 @@ class NeatIssue:
 
     @classmethod
     def _load_value(cls, type_: type, value: Any) -> Any:
-        if type_ is frozenset or get_origin(type_) is frozenset:
+        if isinstance(type_, UnionType) or get_origin(type_) is UnionType:
+            args = get_args(type_)
+            return cls._load_value(args[0], value)
+        elif type_ is frozenset or get_origin(type_) is frozenset:
             subtype = get_args(type_)[0]
             return frozenset(cls._load_value(subtype, item) for item in value)
         elif type_ is Path:
@@ -299,8 +303,11 @@ class RowError(NeatError, ValueError):
 
 @dataclass(frozen=True)
 class NeatWarning(NeatIssue, UserWarning):
+    """This is the base class for all warnings used in Neat."""
+
     @classmethod
     def from_warning(cls, warning: WarningMessage) -> "NeatWarning":
+        """Create a NeatWarning from a WarningMessage."""
         return DefaultWarning.from_warning_message(warning)
 
 
@@ -333,39 +340,48 @@ T_NeatIssue = TypeVar("T_NeatIssue", bound=NeatIssue)
 
 
 class NeatIssueList(UserList[T_NeatIssue], ABC):
+    """This is a generic list of NeatIssues."""
+
     def __init__(self, issues: Sequence[T_NeatIssue] | None = None, title: str | None = None):
         super().__init__(issues or [])
         self.title = title
 
     @property
     def errors(self) -> Self:
+        """Return all the errors in this list."""
         return type(self)([issue for issue in self if isinstance(issue, NeatError)])  # type: ignore[misc]
 
     @property
     def has_errors(self) -> bool:
+        """Return True if this list contains any errors."""
         return any(isinstance(issue, NeatError) for issue in self)
 
     @property
     def warnings(self) -> Self:
+        """Return all the warnings in this list."""
         return type(self)([issue for issue in self if isinstance(issue, NeatWarning)])  # type: ignore[misc]
 
     def as_errors(self) -> ExceptionGroup:
+        """Return an ExceptionGroup with all the errors in this list."""
         return ExceptionGroup(
             "Operation failed",
             [issue for issue in self if isinstance(issue, NeatError)],
         )
 
     def trigger_warnings(self) -> None:
+        """Trigger all warnings in this list."""
         for warning in [issue for issue in self if isinstance(issue, NeatWarning)]:
             warnings.warn(warning, stacklevel=2)
 
     def to_pandas(self) -> pd.DataFrame:
+        """Return a pandas DataFrame representation of this list."""
         return pd.DataFrame([issue.dump() for issue in self])
 
     def _repr_html_(self) -> str | None:
         return self.to_pandas()._repr_html_()  # type: ignore[operator]
 
     def as_exception(self) -> "MultiValueError":
+        """Return a MultiValueError with all the errors in this list."""
         return MultiValueError(self.errors)
 
 
@@ -381,7 +397,10 @@ class MultiValueError(ValueError):
         self.errors = list(errors)
 
 
-class IssueList(NeatIssueList[NeatIssue]): ...
+class IssueList(NeatIssueList[NeatIssue]):
+    """This is a list of NeatIssues."""
+
+    ...
 
 
 T_Cls = TypeVar("T_Cls")

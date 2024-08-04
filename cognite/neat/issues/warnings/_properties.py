@@ -34,7 +34,7 @@ class PropertyNotFoundWarning(PropertyWarning, Generic[T_Identifier, T_Reference
 
 @dataclass(frozen=True)
 class PropertyDefinitionDuplicatedWarning(PropertyWarning[T_Identifier]):
-    """Duplicated {name} for property {property_name}. Got multiple values: {values}.
+    """Got multiple values for the {resource_type} {identifier}.{property_name} {values}.
     {default_action}"""
 
     extra = "Recommended action: {recommended_action}"
