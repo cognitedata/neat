@@ -17,9 +17,9 @@ from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.neat_warnings import (
+    FailedRetrievingResourcesWarning,
     OneModelOneSpaceWarning,
 )
-from cognite.neat.issues.neat_warnings.resources import FailedRetrievingResourcesWarning
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models import InformationRules
 from cognite.neat.rules.models.dms import DMSRules, DMSSchema, PipelineSchema

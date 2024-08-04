@@ -4,9 +4,9 @@ of 'warnings' to avoid conflicts with the built-in Python warnings module."""
 from cognite.neat.issues._base import NeatWarning, _get_subclasses
 
 from . import user_modeling
-from .external import FileMissingRequiredFieldWarning, FileReadWarning, UnexpectedFileTypeWarning, UnknownItemWarning
-from .general import NeatValueWarning, NotSupportedWarning, RegexViolationWarning
-from .models import (
+from ._external import FileMissingRequiredFieldWarning, FileReadWarning, UnexpectedFileTypeWarning, UnknownItemWarning
+from ._general import NeatValueWarning, NotSupportedWarning, RegexViolationWarning
+from ._models import (
     BreakingModelingPrincipleWarning,
     CDFNotSupportedWarning,
     HasDataFilterLimitWarning,
@@ -16,12 +16,12 @@ from .models import (
     UserModelingWarning,
     ViewContainerLimitWarning,
 )
-from .properties import (
+from ._properties import (
     DuplicatedPropertyDefinitionWarning,
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
 )
-from .resources import (
+from ._resources import (
     DuplicatedResourcesWarning,
     FailedRetrievingResourcesWarning,
     NeatResourceWarning,

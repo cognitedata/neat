@@ -3,7 +3,7 @@ from typing import Generic
 
 from cognite.neat.issues._base import NeatWarning
 
-from .resources import NeatResourceWarning, T_Identifier, T_ReferenceIdentifier
+from ._resources import NeatResourceWarning, T_Identifier, T_ReferenceIdentifier
 
 
 @dataclass(frozen=True)

@@ -10,7 +10,7 @@ from cognite.neat.issues.errors import (
     NeatFileNotFoundError,
     UnexpectedFileTypeError,
 )
-from cognite.neat.issues.neat_warnings.general import NeatValueWarning
+from cognite.neat.issues.neat_warnings import NeatValueWarning
 from cognite.neat.rules.models import RULES_PER_ROLE, DMSRules, RoleTypes
 from cognite.neat.rules.models.dms import DMSRulesInput
 

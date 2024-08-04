@@ -7,13 +7,13 @@ from typing import Literal, overload
 from pydantic import ValidationError
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.neat_warnings.external import (
+from cognite.neat.issues.neat_warnings import (
     FileMissingRequiredFieldWarning,
     FileReadWarning,
+    NeatValueWarning,
     UnexpectedFileTypeWarning,
     UnknownItemWarning,
 )
-from cognite.neat.issues.neat_warnings.general import NeatValueWarning
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter

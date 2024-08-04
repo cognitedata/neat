@@ -2,8 +2,7 @@ import pytest
 
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors import MissingIdentifierError, ResourceNotDefinedError
-from cognite.neat.issues.neat_warnings.properties import PropertyTypeNotSupportedWarning
-from cognite.neat.issues.neat_warnings.resources import ResourceTypeNotSupportedWarning
+from cognite.neat.issues.neat_warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
 from cognite.neat.rules.importers import DTDLImporter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTMI, Interface
 from cognite.neat.rules.models import InformationRules, SchemaCompleteness
