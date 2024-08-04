@@ -18,8 +18,8 @@ import cognite.neat.issues.errors.resources
 from cognite.neat.graph._tracking import LogTracker, Tracker
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors.resources import FailedConvertError, InvalidResourceError, ResourceNotFoundError
-from cognite.neat.issues.neat_warnings.models import InvalidClassWarning
+from cognite.neat.issues.errors import FailedConvertError, InvalidResourceError, ResourceNotFoundError
+from cognite.neat.issues.neat_warnings import PropertyTypeNotSupportedWarning
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
 from cognite.neat.utils.auxiliary import create_sha256_hash
@@ -162,9 +162,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     data_type = _DATA_TYPE_BY_DMS_TYPE.get(prop.type._type)
                     if not data_type:
                         issues.append(
-                            InvalidClassWarning(
-                                class_name=repr(view.as_id()),
-                                reason=f"Unknown data type for property {prop_name}: {prop.type._type}",
+                            PropertyTypeNotSupportedWarning(
+                                view.as_id(),
+                                "View",
+                                prop_name,
+                                prop.type._type,
                             )
                         )
                         continue

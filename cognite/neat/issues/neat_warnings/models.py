@@ -11,16 +11,6 @@ _BASE_URL = "https://cognite-neat.readthedocs-hosted.com/en/latest/data-modeling
 
 
 @dataclass(frozen=True)
-class InvalidClassWarning(NeatWarning):
-    """The {class_name} is invalid and will be skipped. {reason}"""
-
-    fix = "Check the error message and correct the class."
-
-    class_name: str
-    reason: str
-
-
-@dataclass(frozen=True)
 class BreakingModelingPrincipleWarning(NeatWarning, ABC):
     """{warning_class}: {specific} violates the {principle} principle.
     See {url} for more information."""
