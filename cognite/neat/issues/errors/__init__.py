@@ -7,7 +7,7 @@ from .external import (
     InvalidYamlError,
     NeatFileNotFoundError,
 )
-from .general import MissingRequiredFieldError, NeatImportError, NeatValueError, RegexViolationError
+from .general import NeatImportError, NeatValueError, RegexViolationError
 from .properties import (
     InvalidPropertyDefinitionError,
     PropertyNotFoundError,
@@ -16,11 +16,11 @@ from .properties import (
 from .resources import (
     ChangedResourceError,
     DuplicatedMappingError,
+    DuplicatedPropertyDefinitionsError,
     DuplicatedResourceError,
     FailedConvertError,
     InvalidResourceError,
     MissingIdentifierError,
-    MultiplePropertyDefinitionsError,
     ReferredResourceNotFoundError,
     ResourceError,
     ResourceNotDefinedError,
@@ -29,7 +29,6 @@ from .resources import (
 from .workflow import ConfigurationNotSetError, InvalidStepOutputError, InvalidWorkFlowError, StepNotInitializedError
 
 __all__ = [
-    "MissingRequiredFieldError",
     "NeatValueError",
     "NeatImportError",
     "RegexViolationError",
@@ -41,7 +40,7 @@ __all__ = [
     "InvalidPropertyDefinitionError",
     "PropertyTypeNotSupportedError",
     "PropertyNotFoundError",
-    "MultiplePropertyDefinitionsError",
+    "DuplicatedPropertyDefinitionsError",
     "ChangedResourceError",
     "DuplicatedResourceError",
     "ResourceNotFoundError",

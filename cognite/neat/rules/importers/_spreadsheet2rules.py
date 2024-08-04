@@ -13,7 +13,7 @@ from pandas import ExcelFile
 
 from cognite.neat.issues import IssueList, NeatError
 from cognite.neat.issues.errors.external import FileMissingRequiredFieldError, FileReadError, NeatFileNotFoundError
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
+from cognite.neat.issues.errors.resources import DuplicatedPropertyDefinitionsError
 from cognite.neat.rules.models import (
     RULES_PER_ROLE,
     AssetRules,
@@ -252,7 +252,7 @@ class ExcelImporter(BaseImporter):
 
         if reference_read and user_read.role != reference_read.role:
             issue_list.append(
-                MultiplePropertyDefinitionsError(
+                DuplicatedPropertyDefinitionsError(
                     self.filepath.as_posix(),
                     "Spreadsheet",
                     "role",

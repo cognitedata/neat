@@ -629,8 +629,8 @@ class DMSSchema:
                     errors.add(
                         DuplicatedMappingError(
                             f"{container_id}.{container_property_identifier}",
-                            "Container Property",
-                            frozenset({f"{view_id}.{prop_name}" for prop_name in view_properties}),
+                            "ContainerProperty",
+                            frozenset({dm.PropertyId(view_id, prop_name) for prop_name in view_properties}),
                         )
                     )
 

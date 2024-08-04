@@ -1,12 +1,8 @@
-from collections.abc import Hashable
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar
+from typing import Generic
 
-from cognite.neat.issues import NeatError
+from cognite.neat.issues._base import NeatError, T_Identifier, T_ReferenceIdentifier
 from cognite.neat.utils.text import humanize_collection
-
-T_Identifier = TypeVar("T_Identifier", bound=Hashable)
-T_ReferenceIdentifier = TypeVar("T_ReferenceIdentifier", bound=Hashable)
 
 
 @dataclass(frozen=True)
@@ -15,12 +11,6 @@ class ResourceError(NeatError, Generic[T_Identifier], RuntimeError):
 
     identifier: T_Identifier
     resource_type: str
-
-    def dump(self) -> dict[str, Any]:
-        output = super().dump()
-        output["resource_type"] = self.resource_type
-        output["identifier"] = self.identifier
-        return output
 
 
 @dataclass(frozen=True)
@@ -101,7 +91,7 @@ class MissingIdentifierError(NeatError, ValueError):
 
 
 @dataclass(frozen=True)
-class MultiplePropertyDefinitionsError(ResourceError[T_Identifier]):
+class DuplicatedPropertyDefinitionsError(ResourceError[T_Identifier]):
     """The {resource_type} with identifier {identifier} has multiple definitions for the property {property_name}
     with values {property_values} in {location_name} {locations}
     """

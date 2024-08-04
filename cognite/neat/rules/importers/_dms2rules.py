@@ -109,7 +109,7 @@ class DMSImporter(BaseImporter):
             return cls(
                 DMSSchema(),
                 [
-                    ResourceNotFoundError[dm.DataModelId](
+                    ResourceNotFoundError(
                         dm.DataModelId.load(reference_model_id),  # type: ignore[arg-type]
                         "DataModel",
                         "Data Model is missing in CDF",

@@ -4,7 +4,7 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from cognite.neat.issues import IssueList
 from cognite.neat.issues._base import InvalidRowError
 from cognite.neat.issues.errors.properties import PropertyNotFoundError
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
+from cognite.neat.issues.errors.resources import DuplicatedPropertyDefinitionsError
 from cognite.neat.issues.formatters import BasicHTML
 
 
@@ -21,7 +21,7 @@ def issues() -> IssueList:
                 input="Apple",
                 url="https://errors.pydantic.dev/2.6/v/bool_parsing",
             ),
-            MultiplePropertyDefinitionsError[ContainerId](
+            DuplicatedPropertyDefinitionsError[ContainerId](
                 ContainerId("neat", "Flowable"),
                 "Container",
                 "maxFlow",

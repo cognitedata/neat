@@ -19,14 +19,6 @@ class RegexViolationError(NeatError, ValueError):
 
 
 @dataclass(frozen=True)
-class MissingRequiredFieldError(NeatError, ValueError):
-    """The field {field} is required for {operation}"""
-
-    field: str
-    operation: str
-
-
-@dataclass(frozen=True)
 class NeatImportError(NeatError, ImportError):
     """The functionality requires {module}. You can include it
     in your neat installation with `pip install "cognite-neat[{neat_extra}]"`.

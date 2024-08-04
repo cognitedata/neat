@@ -10,10 +10,11 @@ from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.issues import MultiValueError
-from cognite.neat.issues.errors.general import MissingRequiredFieldError
-from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
-from cognite.neat.issues.neat_warnings.properties import DuplicatedPropertyDefinitionWarning
+from cognite.neat.issues.errors import (
+    DuplicatedPropertyDefinitionsError,
+    InvalidPropertyDefinitionError,
+)
+from cognite.neat.issues.neat_warnings import DuplicatedPropertyDefinitionWarning
 from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import DataType
@@ -108,7 +109,7 @@ class Ontology(OntologyModel):
             errors = []
             for (class_, property_), definitions in duplicates.items():
                 errors.append(
-                    MultiplePropertyDefinitionsError(
+                    DuplicatedPropertyDefinitionsError(
                         class_,
                         "Class",
                         property_,
@@ -118,12 +119,6 @@ class Ontology(OntologyModel):
                     )
                 )
             raise MultiValueError(errors)
-
-        if rules.prefixes is None:
-            raise MissingRequiredFieldError("Metadata.prefix", "generating the ontology")
-
-        if rules.metadata.namespace is None:
-            raise MissingRequiredFieldError("Metadata.namespace", "generating the ontology")
 
         class_dict = InformationAnalysis(rules).as_class_dict()
         return cls(
@@ -186,9 +181,6 @@ class Ontology(OntologyModel):
         for prefix, namespace in self.prefixes.items():
             owl.bind(prefix, namespace)
 
-        if self.metadata.namespace is None:
-            raise MissingRequiredFieldError("Metadata.namespace", "generating the ontology")
-
         owl.add((URIRef(self.metadata.namespace), RDF.type, OWL.Ontology))
         for property_ in self.properties:
             for triple in property_.triples:
@@ -235,8 +227,6 @@ class OWLMetadata(InformationMetadata):
     @property
     def triples(self) -> list[tuple]:
         # Mandatory triples originating from Metadata mandatory fields
-        if self.namespace is None:
-            raise MissingRequiredFieldError("Metadata.namespace", "generating the ontology")
         triples: list[tuple] = [
             (URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version)),
             (URIRef(self.namespace), OWL.versionInfo, Literal(self.version)),

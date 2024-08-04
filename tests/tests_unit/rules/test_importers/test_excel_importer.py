@@ -7,7 +7,7 @@ from pydantic.version import VERSION
 from cognite.neat.issues import IssueList
 from cognite.neat.issues._base import InvalidRowError
 from cognite.neat.issues.errors.external import NeatFileNotFoundError
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
+from cognite.neat.issues.errors.resources import DuplicatedPropertyDefinitionsError, ResourceNotDefinedError
 from cognite.neat.issues.neat_warnings.models import (
     HasDataFilterLimitWarning,
     ViewContainerLimitWarning,
@@ -48,7 +48,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "inconsistent_container_dms_rules.xlsx",
         IssueList(
             [
-                MultiplePropertyDefinitionsError(
+                DuplicatedPropertyDefinitionsError(
                     ContainerId("neat", "Flowable"),
                     "Container",
                     "maxFlow",

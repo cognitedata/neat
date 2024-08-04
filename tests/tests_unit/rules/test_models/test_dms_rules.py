@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from cognite.neat.issues import MultiValueError, NeatError, NeatIssue
 from cognite.neat.issues.errors.resources import (
     ChangedResourceError,
-    MultiplePropertyDefinitionsError,
+    DuplicatedPropertyDefinitionsError,
     ResourceNotFoundError,
 )
 from cognite.neat.rules.importers import DMSImporter
@@ -1049,7 +1049,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            MultiplePropertyDefinitionsError[dm.ContainerId](
+            DuplicatedPropertyDefinitionsError[dm.ContainerId](
                 container_id, "Container", "maxPower", frozenset({"float64", "float32"}), (0, 1), "rows"
             )
         ],
@@ -1098,7 +1098,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            MultiplePropertyDefinitionsError[dm.ContainerId](
+            DuplicatedPropertyDefinitionsError[dm.ContainerId](
                 container_id, "Container", "maxPower", frozenset({True, False}), (0, 1), "rows"
             )
         ],
@@ -1147,7 +1147,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            MultiplePropertyDefinitionsError[dm.ContainerId](
+            DuplicatedPropertyDefinitionsError[dm.ContainerId](
                 container_id, "Container", "maxPower", frozenset({True, False}), (0, 1), "rows"
             )
         ],
@@ -1196,7 +1196,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            MultiplePropertyDefinitionsError[dm.ContainerId](
+            DuplicatedPropertyDefinitionsError[dm.ContainerId](
                 container_id, "Container", "name", frozenset({"name", "name_index"}), (0, 1), "rows"
             )
         ],
@@ -1245,7 +1245,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            MultiplePropertyDefinitionsError[dm.ContainerId](
+            DuplicatedPropertyDefinitionsError[dm.ContainerId](
                 container_id, "Container", "name", frozenset({"unique_name", "name"}), (0, 1), "rows"
             )
         ],

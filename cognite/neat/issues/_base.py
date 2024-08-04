@@ -183,11 +183,11 @@ class NeatError(NeatIssue, Exception):
 
     @staticmethod
     def _adjust_row_numbers(caught_error: "NeatError", read_info_by_sheet: dict[str, SpreadsheetRead]) -> None:
-        from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
+        from cognite.neat.issues.errors.resources import DuplicatedPropertyDefinitionsError, ResourceNotDefinedError
 
         reader = read_info_by_sheet.get("Properties", SpreadsheetRead())
 
-        if isinstance(caught_error, MultiplePropertyDefinitionsError) and caught_error.location_name == "rows":
+        if isinstance(caught_error, DuplicatedPropertyDefinitionsError) and caught_error.location_name == "rows":
             adjusted_row_number = tuple(
                 reader.adjusted_row_number(row_no) if isinstance(row_no, int) else row_no
                 for row_no in caught_error.locations
