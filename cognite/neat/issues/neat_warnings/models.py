@@ -1,26 +1,13 @@
-import sys
+from abc import ABC
 from dataclasses import dataclass
+from typing import ClassVar
+
+from cognite.client.data_classes.data_modeling import ViewId
 
 from cognite.neat.issues import NeatWarning
-
-if sys.version_info >= (3, 11):
-    from enum import StrEnum
-else:
-    from backports.strenum import StrEnum
+from cognite.neat.rules.models._constants import DMS_VIEW_CONTAINER_SIZE_LIMIT
 
 _BASE_URL = "https://cognite-neat.readthedocs-hosted.com/en/latest/data-modeling-principles.html"
-
-
-class DataModelingPrinciple(StrEnum):
-    """Data modeling principles that are violated by a class."""
-
-    ONE_MODEL_ONE_SPACE = "all-data-models-are-kept-in-its-own-space"
-    SAME_VERSION = "all-views-of-a-data-models-have-the-same-version-and-space-as-the-data-model"
-    SOLUTION_BUILDS_ON_ENTERPRISE = "solution-data-models-should-always-be-referencing-the-enterprise-data-model"
-
-    @property
-    def url(self) -> str:
-        return f"{_BASE_URL}#{self.value}"
 
 
 @dataclass(frozen=True)
@@ -34,33 +21,82 @@ class InvalidClassWarning(NeatWarning):
 
 
 @dataclass(frozen=True)
-class BreakingModelingPrincipleWarning(NeatWarning):
-    """{specific} violates the {principle} principle. See {url} for more information."""
+class BreakingModelingPrincipleWarning(NeatWarning, ABC):
+    """{warning_class}: {specific} violates the {principle} principle.
+    See {url} for more information."""
 
+    url: ClassVar[str]
     specific: str
-    principle: DataModelingPrinciple
 
     def as_message(self) -> str:
-        principle = self.principle.value.replace("_", " ").title()
-        return (self.__doc__ or "").format(specific=self.specific, principle=principle, url=self.principle.url)
+        principle = type(self).__name__.removesuffix("Warning")
+        url = f"{_BASE_URL}#{self.url}"
+        return (self.__doc__ or "").format(
+            warning_class=BreakingModelingPrincipleWarning.__name__,
+            specific=self.specific,
+            principle=principle,
+            url=url,
+        )
 
 
 @dataclass(frozen=True)
-class UserModelingWarning(NeatWarning):
-    """{title}: {problem}. {explanation}"""
+class OneModelOneSpaceWarning(BreakingModelingPrincipleWarning):
+    """{warning_class}: {specific} violates the {principle} principle.
+    See {url} for more information."""
 
-    extra = "Suggestion: {suggestion}"
-    title: str
-    problem: str
-    explanation: str
-    suggestion: str | None = None
+    url = "all-data-models-are-kept-in-its-own-space"
 
 
 @dataclass(frozen=True)
-class CDFNotSupportedWarning(NeatWarning):
-    """{title} - Will likely fail to write to CDF. {problem}."""
+class MatchingSpaceAndVersionWarning(BreakingModelingPrincipleWarning):
+    """{warning_class}: {specific} violates the {principle} principle.
+    See {url} for more information."""
 
-    extra = "Suggestion: {suggestion}"
-    title: str
-    problem: str
-    suggestion: str | None = None
+    url = "all-views-of-a-data-models-have-the-same-version-and-space-as-the-data-model"
+
+
+@dataclass(frozen=True)
+class SolutionBuildsOnEnterpriseWarning(BreakingModelingPrincipleWarning):
+    """{warning_class}: {specific} violates the {principle} principle.
+    See {url} for more information."""
+
+    url = "solution-data-models-should-always-be-referencing-the-enterprise-data-model"
+
+
+@dataclass(frozen=True)
+class UserModelingWarning(NeatWarning, ABC):
+    """This is a generic warning for user modeling issues.
+    These warnings will not cause the resulting model to be invalid, but
+    will likely lead to suboptimal performance, unnecessary complexity, or other issues."""
+
+    ...
+
+
+@dataclass(frozen=True)
+class CDFNotSupportedWarning(NeatWarning, ABC):
+    """This is a base class for warnings for modeling issues that will
+    likely lead to the CDF API rejecting the model."""
+
+    ...
+
+
+@dataclass(frozen=True)
+class ViewContainerLimitWarning(CDFNotSupportedWarning):
+    """The view {view_id} maps, {count} containers, which is more than the limit {limit}."""
+
+    fix = "Reduce the number of containers the view maps to." ""
+
+    view_id: ViewId
+    count: int
+    limit: int = DMS_VIEW_CONTAINER_SIZE_LIMIT
+
+
+@dataclass(frozen=True)
+class HasDataFilterLimitWarning(CDFNotSupportedWarning):
+    """The view {view_id} uses a hasData filter applied to {count} containers, which is more than the limit {limit}."""
+
+    fix = "Do not map to more than {limit} containers."
+
+    view_id: ViewId
+    count: int
+    limit: int = DMS_VIEW_CONTAINER_SIZE_LIMIT

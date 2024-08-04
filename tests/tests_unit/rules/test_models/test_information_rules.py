@@ -8,7 +8,7 @@ from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors.general import NeatValueError
 from cognite.neat.issues.errors.resources import ResourceNotDefinedError
 from cognite.neat.rules.models import DMSRules, SheetList, data_types
-from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
+from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType, String
 from cognite.neat.rules.models.entities import ClassEntity, MultiValueTypeInfo
 from cognite.neat.rules.models.information import (
@@ -311,7 +311,7 @@ class TestInformationRulesConverter:
                     property_=f"property_{no}",
                     value_type="string",
                 )
-                for no in range(DMS_CONTAINER_SIZE_LIMIT + 1)
+                for no in range(DMS_CONTAINER_PROPERTY_SIZE_LIMIT + 1)
             ],
         ).as_rules()
 

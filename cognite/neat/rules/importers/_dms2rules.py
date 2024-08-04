@@ -22,8 +22,8 @@ from cognite.neat.issues import IssueList, NeatIssue
 from cognite.neat.issues.errors.external import UnexpectedFileTypeError
 from cognite.neat.issues.errors.resources import ResourceNotFoundError
 from cognite.neat.issues.neat_warnings.properties import (
+    PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
-    ReferredPropertyNotFoundWarning,
 )
 from cognite.neat.issues.neat_warnings.resources import ReferredResourceNotFoundWarning
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
@@ -334,9 +334,7 @@ class DMSImporter(BaseImporter):
             and prop.container_property_identifier not in self._all_containers_by_id[prop.container].properties
         ):
             self.issue_list.append(
-                ReferredPropertyNotFoundWarning[dm.ContainerId, dm.ViewId](
-                    prop.container, "Container", view_entity.as_id(), "View", prop_id
-                ),
+                PropertyNotFoundWarning(prop.container, "Container", prop_id, view_entity.as_id(), "View"),
             )
             return None
         if not isinstance(

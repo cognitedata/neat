@@ -47,7 +47,9 @@ nav:
       - Issues:
           - Base: reference/issues/base.md
           - Errors: reference/issues/errors.md
-          - Warnings: reference/issues/warnings.md
+          - Warnings:
+            -  Main: reference/issues/warnings.md
+            -  UserModeling: reference/issues/user_model_warnings.md
   - Changelog​: CHANGELOG.md
 
 markdown_extensions:

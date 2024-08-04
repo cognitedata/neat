@@ -12,7 +12,10 @@ from pydantic.main import IncEx
 from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.issues import MultiValueError
-from cognite.neat.issues.neat_warnings.models import BreakingModelingPrincipleWarning, DataModelingPrinciple
+from cognite.neat.issues.neat_warnings import (
+    MatchingSpaceAndVersionWarning,
+    SolutionBuildsOnEnterpriseWarning,
+)
 from cognite.neat.rules.models._base import (
     BaseMetadata,
     BaseRules,
@@ -320,10 +323,9 @@ class DMSRules(BaseRules):
             raise ValueError("Reference rules cannot have a reference")
         if value.metadata.data_model_type == DataModelType.solution and (metadata := info.data.get("metadata")):
             warnings.warn(
-                BreakingModelingPrincipleWarning(
+                SolutionBuildsOnEnterpriseWarning(
                     f"The solution model {metadata.as_data_model_id()} is referencing another "
                     f"solution model {value.metadata.as_data_model_id()}",
-                    DataModelingPrinciple.SOLUTION_BUILDS_ON_ENTERPRISE,
                 ),
                 stacklevel=2,
             )
@@ -337,18 +339,16 @@ class DMSRules(BaseRules):
         if different_version := [view.view.as_id() for view in value if view.view.version != model_version]:
             for view_id in different_version:
                 warnings.warn(
-                    BreakingModelingPrincipleWarning(
+                    MatchingSpaceAndVersionWarning(
                         f"The view {view_id!r} has a different version than the data model version, {model_version}",
-                        DataModelingPrinciple.SAME_VERSION,
                     ),
                     stacklevel=2,
                 )
         if different_space := [view.view.as_id() for view in value if view.view.space != metadata.space]:
             for view_id in different_space:
                 warnings.warn(
-                    BreakingModelingPrincipleWarning(
+                    MatchingSpaceAndVersionWarning(
                         f"The view {view_id!r} is in a different space than the data model space, {metadata.space}",
-                        DataModelingPrinciple.SAME_VERSION,
                     ),
                     stacklevel=2,
                 )

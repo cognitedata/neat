@@ -3,7 +3,7 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 from cognite.neat.issues import IssueList
 from cognite.neat.issues._base import InvalidRowError
-from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
+from cognite.neat.issues.errors.properties import PropertyNotFoundError
 from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
 from cognite.neat.issues.formatters import BasicHTML
 
@@ -29,12 +29,12 @@ def issues() -> IssueList:
                 (4, 5),
                 location_name="rows",
             ),
-            ReferredPropertyNotFoundError[ContainerId, ViewId](
+            PropertyNotFoundError(
                 ContainerId("neat", "Flowable"),
                 "Container",
+                "minFlow",
                 ViewId("neat", "Pump", "1"),
                 "View",
-                property_name="minFlow",
             ),
         ],
         title="Test title",

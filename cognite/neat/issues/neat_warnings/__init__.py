@@ -3,20 +3,25 @@ of 'warnings' to avoid conflicts with the built-in Python warnings module."""
 
 from cognite.neat.issues._base import NeatWarning, _get_subclasses
 
+from . import user_modeling
 from .external import FileMissingRequiredFieldWarning, FileReadWarning, UnexpectedFileTypeWarning, UnknownItemWarning
 from .general import NeatValueWarning, NotSupportedWarning
 from .identifier import RegexViolationWarning
 from .models import (
     BreakingModelingPrincipleWarning,
     CDFNotSupportedWarning,
-    DataModelingPrinciple,
+    HasDataFilterLimitWarning,
     InvalidClassWarning,
+    MatchingSpaceAndVersionWarning,
+    OneModelOneSpaceWarning,
+    SolutionBuildsOnEnterpriseWarning,
     UserModelingWarning,
+    ViewContainerLimitWarning,
 )
 from .properties import (
     DuplicatedPropertyDefinitionWarning,
+    PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
-    ReferredPropertyNotFoundWarning,
 )
 from .resources import (
     FailedLoadingResourcesWarning,
@@ -35,20 +40,25 @@ __all__ = [
     "NeatValueWarning",
     "NotSupportedWarning",
     "RegexViolationWarning",
-    "DataModelingPrinciple",
     "UserModelingWarning",
     "CDFNotSupportedWarning",
     "InvalidClassWarning",
     "BreakingModelingPrincipleWarning",
     "DuplicatedPropertyDefinitionWarning",
     "PropertyTypeNotSupportedWarning",
-    "ReferredPropertyNotFoundWarning",
+    "PropertyNotFoundWarning",
     "ResourceWarning",
     "MultipleResourcesWarning",
     "ResourceNotFoundWarning",
     "ReferredResourceNotFoundWarning",
     "ResourceTypeNotSupportedWarning",
     "FailedLoadingResourcesWarning",
+    "OneModelOneSpaceWarning",
+    "MatchingSpaceAndVersionWarning",
+    "SolutionBuildsOnEnterpriseWarning",
+    "ViewContainerLimitWarning",
+    "HasDataFilterLimitWarning",
+    "user_modeling",
 ]
 
 _NEAT_WARNINGS_BY_NAME = {warning.__name__: warning for warning in _get_subclasses(NeatWarning, include_base=True)}

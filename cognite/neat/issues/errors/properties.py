@@ -5,23 +5,15 @@ from .resources import ResourceError, T_Identifier, T_ReferenceIdentifier
 
 
 @dataclass(frozen=True)
-class PropertyNotFoundError(ResourceError[T_Identifier]):
+class PropertyNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} does not have a property {property_name}"""
 
-    property_name: str
-
-
-@dataclass(frozen=True)
-class ReferredPropertyNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIdentifier]):
-    """The {resource_type} with identifier {identifier} does not have a property {property_name} referred
-    to by {referred_type} {referred_by} does not exist
-    """
-
+    extra = "referred to by {referred_type} {referred_by} does not exist"
     fix = "Ensure the {resource_type} {identifier} has a {property_name} property"
 
-    referred_by: T_ReferenceIdentifier
-    referred_type: str
     property_name: str
+    referred_by: T_ReferenceIdentifier | None = None
+    referred_type: str | None = None
 
 
 @dataclass(frozen=True)
