@@ -17,7 +17,7 @@ from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 from cognite.neat.graph._tracking import LogTracker, Tracker
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors import FailedConvertError, InvalidResourceError, RetrievalResourceError
+from cognite.neat.issues.errors import FailedConvertError, ResourceValueError, RetrievalResourceError
 from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
@@ -111,7 +111,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
-                    error = InvalidResourceError("node", identifier, reason=str(e))
+                    error = ResourceValueError("node", identifier, reason=str(e))
                     tracker.issue(error)
                     if stop_on_exception:
                         raise error from e
@@ -250,7 +250,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 continue
             edge = edge_by_properties[prop]
             if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
-                error = InvalidResourceError(
+                error = ResourceValueError(
                     resource_type="edge",
                     identifier=identifier,
                     reason=f"Multiple values for single edge {edge}. Expected only one.",

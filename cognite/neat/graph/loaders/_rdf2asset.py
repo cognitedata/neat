@@ -21,7 +21,7 @@ from cognite.neat.graph._tracking.base import Tracker
 from cognite.neat.graph._tracking.log import LogTracker
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors import InvalidResourceError
+from cognite.neat.issues.errors import ResourceValueError
 from cognite.neat.rules.analysis._asset import AssetAnalysis
 from cognite.neat.rules.models import AssetRules
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
@@ -143,7 +143,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
                 # check on parent
                 if "parentExternalId" in fields and fields["parentExternalId"] not in self.processed_assets:
-                    error = InvalidResourceError(
+                    error = ResourceValueError(
                         resource_type=EntityTypes.asset,
                         identifier=identifier,
                         reason=(
@@ -171,9 +171,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     yield AssetWrite.load(fields)
                     self.processed_assets.add(identifier)
                 except KeyError as e:
-                    error = InvalidResourceError[str](
-                        resource_type=EntityTypes.asset, identifier=identifier, reason=str(e)
-                    )
+                    error = ResourceValueError(resource_type=EntityTypes.asset, identifier=identifier, reason=str(e))
                     tracker.issue(error)
                     if stop_on_exception:
                         raise error from e
@@ -203,7 +201,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
                 # check if source asset exists
                 if source_external_id not in self.processed_assets:
-                    error = InvalidResourceError[str](
+                    error = ResourceValueError(
                         resource_type=EntityTypes.relationship,
                         identifier=source_external_id,
                         reason=(
@@ -223,7 +221,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                         target_external_id = f"{self.external_id_prefix or ''}{target_external_id}"
                         # check if source asset exists
                         if target_external_id not in self.processed_assets:
-                            error = InvalidResourceError[str](
+                            error = ResourceValueError(
                                 resource_type=EntityTypes.relationship,
                                 identifier=target_external_id,
                                 reason=(
@@ -250,7 +248,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                                 labels=[label] if self.use_labels else None,
                             )
                         except KeyError as e:
-                            error = InvalidResourceError(
+                            error = ResourceValueError(
                                 resource_type=EntityTypes.relationship,
                                 identifier=external_id,
                                 reason=str(e),

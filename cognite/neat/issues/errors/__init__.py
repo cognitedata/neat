@@ -11,6 +11,7 @@ from ._external import (
 )
 from ._general import NeatImportError, NeatValueError, RegexViolationError
 from ._properties import (
+    DuplicatedPropertyDefinitionsError,
     PropertyDefinitionError,
     PropertyNotFoundError,
     PropertyTypeNotSupportedError,
@@ -18,14 +19,13 @@ from ._properties import (
 from ._resources import (
     ChangedResourceError,
     DuplicatedMappingError,
-    DuplicatedPropertyDefinitionsError,
     DuplicatedResourceError,
     FailedConvertError,
-    InvalidResourceError,
     MissingIdentifierError,
     ResourceError,
     ResourceNotDefinedError,
     ResourceNotFoundError,
+    ResourceValueError,
     RetrievalResourceError,
 )
 from ._workflow import ConfigurationNotSetError, StepNotInitializedError, StepOutputError, WorkFlowMissingDataError
@@ -51,7 +51,7 @@ __all__ = [
     "DuplicatedMappingError",
     "ResourceError",
     "ResourceNotDefinedError",
-    "InvalidResourceError",
+    "ResourceValueError",
     "MissingIdentifierError",
     "FailedConvertError",
     "ConfigurationNotSetError",

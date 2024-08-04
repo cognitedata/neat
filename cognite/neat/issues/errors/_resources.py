@@ -71,14 +71,13 @@ class FailedConvertError(NeatError, ValueError):
     reason: str
 
 
+# This is a generic error that should be used sparingly
 @dataclass(frozen=True)
-class InvalidResourceError(NeatError, Generic[T_Identifier], ValueError):
+class ResourceValueError(ResourceError[T_Identifier], ValueError):
     """The {resource_type} with identifier {identifier} is invalid: {reason}"""
 
     fix = "Check the error message and correct the instance."
 
-    resource_type: ResourceType
-    identifier: T_Identifier
     reason: str
 
 
@@ -88,18 +87,6 @@ class MissingIdentifierError(NeatError, ValueError):
 
     resource_type: ResourceType
     name: str | None = None
-
-
-@dataclass(frozen=True)
-class DuplicatedPropertyDefinitionsError(ResourceError[T_Identifier]):
-    """The {resource_type} with identifier {identifier} has multiple definitions for the property {property_name}
-    with values {property_values} in {location_name} {locations}
-    """
-
-    property_name: str
-    property_values: frozenset[str | int | float | bool | None | tuple[str | int | float | bool | None, ...]]
-    locations: tuple[str | int, ...]
-    location_name: str
 
 
 @dataclass(frozen=True)

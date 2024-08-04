@@ -27,9 +27,22 @@ class PropertyTypeNotSupportedError(ResourceError[T_Identifier]):
     property_type: str
 
 
+# This is a generic error that should be used sparingly
 @dataclass(frozen=True)
 class PropertyDefinitionError(ResourceError[T_Identifier]):
     """Invalid property definition for {resource_type} {identifier}.{property_name}: {reason}"""
 
     property_name: str
     reason: str
+
+
+@dataclass(frozen=True)
+class DuplicatedPropertyDefinitionsError(ResourceError[T_Identifier]):
+    """The {resource_type} with identifier {identifier} has multiple definitions for the property {property_name}
+    with values {property_values} in {location_name} {locations}
+    """
+
+    property_name: str
+    property_values: frozenset[str | int | float | bool | None | tuple[str | int | float | bool | None, ...]]
+    locations: tuple[str | int, ...]
+    location_name: str
