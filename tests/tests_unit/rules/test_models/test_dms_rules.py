@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from cognite.neat.issues import MultiValueError, NeatError, NeatIssue
 from cognite.neat.issues.errors import (
-    DuplicatedPropertyDefinitionsError,
+    PropertyDefinitionDuplicatedError,
     ResourceChangedError,
     ResourceNotFoundError,
 )
@@ -1049,7 +1049,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            DuplicatedPropertyDefinitionsError(
+            PropertyDefinitionDuplicatedError(
                 container_id, "container", "maxPower", frozenset({"float64", "float32"}), (0, 1), "rows"
             )
         ],
@@ -1098,7 +1098,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            DuplicatedPropertyDefinitionsError(
+            PropertyDefinitionDuplicatedError(
                 container_id, "container", "maxPower", frozenset({True, False}), (0, 1), "rows"
             )
         ],
@@ -1147,7 +1147,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            DuplicatedPropertyDefinitionsError(
+            PropertyDefinitionDuplicatedError(
                 container_id, "container", "maxPower", frozenset({True, False}), (0, 1), "rows"
             )
         ],
@@ -1196,7 +1196,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            DuplicatedPropertyDefinitionsError(
+            PropertyDefinitionDuplicatedError(
                 container_id, "container", "name", frozenset({"name", "name_index"}), (0, 1), "rows"
             )
         ],
@@ -1245,7 +1245,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            DuplicatedPropertyDefinitionsError(
+            PropertyDefinitionDuplicatedError(
                 container_id, "container", "name", frozenset({"unique_name", "name"}), (0, 1), "rows"
             )
         ],

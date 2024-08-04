@@ -1,19 +1,19 @@
 from cognite.neat.issues._base import DefaultPydanticError, NeatError, RowError, _get_subclasses
 
 from ._external import (
-    FailedAuthorizationError,
+    AuthorizationError,
     FileMissingRequiredFieldError,
     FileNotAFileError,
+    FileNotFoundNeatError,
     FileReadError,
     FileTypeUnexpectedError,
-    NeatFileNotFoundError,
     NeatYamlError,
 )
 from ._general import NeatImportError, NeatValueError, RegexViolationError
 from ._properties import (
-    DuplicatedPropertyDefinitionsError,
-    DuplicatedPropertyMappingError,
+    PropertyDefinitionDuplicatedError,
     PropertyDefinitionError,
+    PropertyMappingDuplicatedError,
     PropertyNotFoundError,
     PropertyTypeNotSupportedError,
 )
@@ -28,23 +28,28 @@ from ._resources import (
     ResourceNotFoundError,
     ResourceRetrievalError,
 )
-from ._workflow import ConfigurationNotSetError, StepNotInitializedError, StepOutputError, WorkFlowMissingDataError
+from ._workflow import (
+    WorkflowConfigurationNotSetError,
+    WorkFlowMissingDataError,
+    WorkflowStepNotInitializedError,
+    WorkflowStepOutputError,
+)
 
 __all__ = [
     "NeatError",
     "NeatValueError",
     "NeatImportError",
     "RegexViolationError",
-    "FailedAuthorizationError",
+    "AuthorizationError",
     "NeatYamlError",
     "FileReadError",
     "ResourceCreationError",
-    "NeatFileNotFoundError",
+    "FileNotFoundNeatError",
     "FileMissingRequiredFieldError",
     "PropertyDefinitionError",
     "PropertyTypeNotSupportedError",
     "PropertyNotFoundError",
-    "DuplicatedPropertyDefinitionsError",
+    "PropertyDefinitionDuplicatedError",
     "ResourceChangedError",
     "ResourceDuplicatedError",
     "ResourceRetrievalError",
@@ -53,14 +58,14 @@ __all__ = [
     "ResourceNotDefinedError",
     "ResourceMissingIdentifierError",
     "ResourceConvertionError",
-    "ConfigurationNotSetError",
+    "WorkflowConfigurationNotSetError",
     "WorkFlowMissingDataError",
-    "StepNotInitializedError",
-    "StepOutputError",
+    "WorkflowStepNotInitializedError",
+    "WorkflowStepOutputError",
     "FileTypeUnexpectedError",
     "FileNotAFileError",
     "DefaultPydanticError",
-    "DuplicatedPropertyMappingError",
+    "PropertyMappingDuplicatedError",
     "RowError",
 ]
 

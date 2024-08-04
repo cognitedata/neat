@@ -6,7 +6,7 @@ from typing import ClassVar
 from cognite.client import CogniteClient
 
 from cognite.neat.issues import NeatIssueList
-from cognite.neat.issues.errors import ResourceNotFoundError, StepNotInitializedError
+from cognite.neat.issues.errors import ResourceNotFoundError, WorkflowStepNotInitializedError
 from cognite.neat.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules.models import DMSRules, SchemaCompleteness
 from cognite.neat.utils.cdf.loaders import ViewLoader
@@ -41,7 +41,7 @@ class ValidateRulesAgainstCDF(Step):
 
     def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         if not isinstance(rules.dms, DMSRules):
             return FlowMessage(

@@ -11,7 +11,7 @@ from cognite.client.data_classes import Event, FileMetadataUpdate
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
-from cognite.neat.issues.errors import ConfigurationNotSetError
+from cognite.neat.issues.errors import WorkflowConfigurationNotSetError
 from cognite.neat.workflows.model import WorkflowFullStateReport, WorkflowState, WorkflowStepEvent
 from cognite.neat.workflows.utils import get_file_hash
 
@@ -53,7 +53,7 @@ class CdfStore:
     def package_workflow(self, workflow_name: str) -> str:
         """Creates a zip archive from a folder"""
         if self.workflows_storage_path is None:
-            raise ConfigurationNotSetError("workflows_storage_path")
+            raise WorkflowConfigurationNotSetError("workflows_storage_path")
         folder_path = self.workflows_storage_path / workflow_name
         archive_path = self.workflows_storage_path / f"{workflow_name}.zip"
         # Make sure the folder exists
@@ -77,7 +77,7 @@ class CdfStore:
         # Make sure the archive exists
         workflow_name = workflow_name.replace(".zip", "")
         if self.workflows_storage_path is None:
-            raise ConfigurationNotSetError("workflows_storage_path")
+            raise WorkflowConfigurationNotSetError("workflows_storage_path")
         package_full_path = Path(self.workflows_storage_path) / f"{workflow_name}.zip"
         output_folder = Path(self.workflows_storage_path) / workflow_name
         if not package_full_path.is_file():

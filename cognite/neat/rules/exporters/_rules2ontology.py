@@ -11,8 +11,7 @@ from rdflib.collection import Collection as GraphCollection
 from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.issues import MultiValueError
 from cognite.neat.issues.errors import (
-    DuplicatedPropertyDefinitionsError,
-    PropertyDefinitionError,
+    PropertyDefinitionDuplicatedError,
 )
 from cognite.neat.issues.warnings import DuplicatedPropertyDefinitionWarning
 from cognite.neat.rules.analysis import InformationAnalysis
@@ -26,7 +25,6 @@ from cognite.neat.rules.models.information import (
     InformationRules,
 )
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
-from cognite.neat.utils.text import humanize_collection
 
 from ._base import BaseExporter
 from ._validation import duplicated_properties
@@ -109,7 +107,7 @@ class Ontology(OntologyModel):
             errors = []
             for (class_, property_), definitions in duplicates.items():
                 errors.append(
-                    DuplicatedPropertyDefinitionsError(
+                    PropertyDefinitionDuplicatedError(
                         class_,
                         "class",
                         property_,
@@ -320,12 +318,11 @@ class OWLProperty(OntologyModel):
         """Here list of properties is a list of properties with the same id, but different definitions."""
         property_ids = {definition.property_ for definition in definitions}
         if len(property_ids) != 1:
-            raise PropertyDefinitionError(
+            raise PropertyDefinitionDuplicatedError(
                 definitions[0].class_,
                 "class",
                 definitions[0].property_,
-                "All definitions should have the same property_id! Definitions have different property_id:"
-                f"{humanize_collection(property_ids)}",
+                frozenset(property_ids),
             )
 
         owl_property = cls.model_construct(

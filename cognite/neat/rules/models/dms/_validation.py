@@ -5,7 +5,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors import (
-    DuplicatedPropertyDefinitionsError,
+    PropertyDefinitionDuplicatedError,
     ResourceChangedError,
     ResourceNotDefinedError,
 )
@@ -72,7 +72,7 @@ class DMSPostValidation:
             is_all_direct = all(prop.connection == "direct" for _, prop in properties)
             if len(value_types) > 1 and not is_all_direct:
                 errors.append(
-                    DuplicatedPropertyDefinitionsError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
                         "container",
                         prop_name,
@@ -84,7 +84,7 @@ class DMSPostValidation:
             list_definitions = {prop.is_list for _, prop in properties if prop.is_list is not None}
             if len(list_definitions) > 1:
                 errors.append(
-                    DuplicatedPropertyDefinitionsError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
                         "container",
                         prop_name,
@@ -96,7 +96,7 @@ class DMSPostValidation:
             nullable_definitions = {prop.nullable for _, prop in properties if prop.nullable is not None}
             if len(nullable_definitions) > 1:
                 errors.append(
-                    DuplicatedPropertyDefinitionsError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
                         "container",
                         prop_name,
@@ -108,7 +108,7 @@ class DMSPostValidation:
             default_definitions = {prop.default for _, prop in properties if prop.default is not None}
             if len(default_definitions) > 1:
                 errors.append(
-                    DuplicatedPropertyDefinitionsError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
                         "container",
                         prop_name,
@@ -123,7 +123,7 @@ class DMSPostValidation:
             index_definitions = {",".join(prop.index) for _, prop in properties if prop.index is not None}
             if len(index_definitions) > 1:
                 errors.append(
-                    DuplicatedPropertyDefinitionsError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
                         "container",
                         prop_name,
@@ -137,7 +137,7 @@ class DMSPostValidation:
             }
             if len(constraint_definitions) > 1:
                 errors.append(
-                    DuplicatedPropertyDefinitionsError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
                         "container",
                         prop_name,

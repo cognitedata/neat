@@ -202,15 +202,18 @@ class NeatError(NeatIssue, Exception):
 
     @staticmethod
     def _adjust_row_numbers(caught_error: "NeatError", read_info_by_sheet: dict[str, SpreadsheetRead]) -> None:
-        from cognite.neat.issues.errors._properties import DuplicatedPropertyDefinitionsError
+        from cognite.neat.issues.errors._properties import PropertyDefinitionDuplicatedError
         from cognite.neat.issues.errors._resources import ResourceNotDefinedError
 
         reader = read_info_by_sheet.get("Properties", SpreadsheetRead())
 
-        if isinstance(caught_error, DuplicatedPropertyDefinitionsError) and caught_error.location_name == "rows":
-            adjusted_row_number = tuple(
-                reader.adjusted_row_number(row_no) if isinstance(row_no, int) else row_no
-                for row_no in caught_error.locations
+        if isinstance(caught_error, PropertyDefinitionDuplicatedError) and caught_error.location_name == "rows":
+            adjusted_row_number = (
+                tuple(
+                    reader.adjusted_row_number(row_no) if isinstance(row_no, int) else row_no
+                    for row_no in caught_error.locations or []
+                )
+                or None
             )
             # The error is frozen, so we have to use __setattr__ to change the row number
             object.__setattr__(caught_error, "locations", adjusted_row_number)

@@ -27,8 +27,8 @@ from cognite.client.data_classes.transformations.common import Edges, EdgeType, 
 
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors import (
-    DuplicatedPropertyMappingError,
     NeatYamlError,
+    PropertyMappingDuplicatedError,
     PropertyNotFoundError,
     ResourceDuplicatedError,
     ResourceNotFoundError,
@@ -620,7 +620,7 @@ class DMSSchema:
                         == (container_id, container_property_identifier)
                     ]
                     errors.add(
-                        DuplicatedPropertyMappingError(
+                        PropertyMappingDuplicatedError(
                             container_id,
                             "container",
                             container_property_identifier,

@@ -5,7 +5,7 @@ from typing import ClassVar
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
 
-from cognite.neat.issues.errors import StepNotInitializedError
+from cognite.neat.issues.errors import WorkflowStepNotInitializedError
 from cognite.neat.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules import importers
 from cognite.neat.rules.models import RoleTypes
@@ -55,7 +55,7 @@ class ExcelToRules(Step):
 
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         file_name = self.configs.get("File name", None)
         full_path = flow_message.payload.get("full_path", None) if flow_message.payload else None
@@ -124,7 +124,7 @@ class OntologyToRules(Step):
 
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         file_name = self.configs.get("File name", None)
         full_path = flow_message.payload.get("full_path", None) if flow_message.payload else None
@@ -193,7 +193,7 @@ class IMFToRules(Step):
 
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         file_name = self.configs.get("File name", None)
 
@@ -271,7 +271,7 @@ class DMSToRules(Step):
 
     def run(self, cdf_client: CogniteClient) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         datamodel_id_str = self.configs.get("Data model id")
         if datamodel_id_str is None:
@@ -360,7 +360,7 @@ class RulesInferenceFromRdfFile(Step):
 
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         file_path = self.configs.get("File path", None)
         full_path = flow_message.payload.get("full_path", None) if flow_message.payload else None

@@ -12,14 +12,14 @@ class WorkFlowMissingDataError(NeatError, ValueError):
 
 
 @dataclass(frozen=True)
-class StepNotInitializedError(NeatError, RuntimeError):
+class WorkflowStepNotInitializedError(NeatError, RuntimeError):
     """Step {step_name} has not been initialized."""
 
     step_name: str
 
 
 @dataclass(frozen=True)
-class ConfigurationNotSetError(NeatError, RuntimeError):
+class WorkflowConfigurationNotSetError(NeatError, RuntimeError):
     """The configuration variable '{config_variable}' is not set. Please set the configuration
     before running the workflow."""
 
@@ -27,7 +27,7 @@ class ConfigurationNotSetError(NeatError, RuntimeError):
 
 
 @dataclass(frozen=True)
-class StepOutputError(NeatError, RuntimeError):
+class WorkflowStepOutputError(NeatError, RuntimeError):
     """Object type {step_type} is not supported as step output.
 
     Step output must be of type DataContract or a FlowMessage.

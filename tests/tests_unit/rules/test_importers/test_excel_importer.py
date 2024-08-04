@@ -6,8 +6,8 @@ from pydantic.version import VERSION
 
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import (
-    DuplicatedPropertyDefinitionsError,
-    NeatFileNotFoundError,
+    FileNotFoundNeatError,
+    PropertyDefinitionDuplicatedError,
     ResourceNotDefinedError,
     RowError,
 )
@@ -24,7 +24,7 @@ from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 def invalid_rules_filepaths():
     yield pytest.param(
         DOC_RULES / "not-existing.xlsx",
-        IssueList([NeatFileNotFoundError(DOC_RULES / "not-existing.xlsx")]),
+        IssueList([FileNotFoundNeatError(DOC_RULES / "not-existing.xlsx")]),
         id="Not existing file",
     )
     major, minor, *_ = VERSION.split(".")
@@ -51,7 +51,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "inconsistent_container_dms_rules.xlsx",
         IssueList(
             [
-                DuplicatedPropertyDefinitionsError(
+                PropertyDefinitionDuplicatedError(
                     ContainerId("neat", "Flowable"),
                     "container",
                     "maxFlow",

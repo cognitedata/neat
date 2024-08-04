@@ -7,8 +7,8 @@ from cognite.neat.issues import IssueList, NeatIssue
 from cognite.neat.issues.errors import (
     FileMissingRequiredFieldError,
     FileNotAFileError,
+    FileNotFoundNeatError,
     FileTypeUnexpectedError,
-    NeatFileNotFoundError,
 )
 from cognite.neat.issues.warnings import NeatValueWarning
 from cognite.neat.rules.models import RULES_PER_ROLE, DMSRules, RoleTypes
@@ -44,7 +44,7 @@ class YAMLImporter(BaseImporter):
     @classmethod
     def from_file(cls, filepath: Path):
         if not filepath.exists():
-            return cls({}, [NeatFileNotFoundError(filepath)])
+            return cls({}, [FileNotFoundNeatError(filepath)])
         elif not filepath.is_file():
             return cls({}, [FileNotAFileError(filepath)])
         elif filepath.suffix not in [".yaml", ".yml"]:

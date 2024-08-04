@@ -13,10 +13,10 @@ from pandas import ExcelFile
 
 from cognite.neat.issues import IssueList, NeatError
 from cognite.neat.issues.errors import (
-    DuplicatedPropertyDefinitionsError,
     FileMissingRequiredFieldError,
+    FileNotFoundNeatError,
     FileReadError,
-    NeatFileNotFoundError,
+    PropertyDefinitionDuplicatedError,
 )
 from cognite.neat.rules.models import (
     RULES_PER_ROLE,
@@ -232,7 +232,7 @@ class ExcelImporter(BaseImporter):
     ) -> tuple[Rules | None, IssueList] | Rules:
         issue_list = IssueList(title=f"'{self.filepath.name}'")
         if not self.filepath.exists():
-            issue_list.append(NeatFileNotFoundError(self.filepath))
+            issue_list.append(FileNotFoundNeatError(self.filepath))
             return self._return_or_raise(issue_list, errors)
 
         with pd.ExcelFile(self.filepath) as excel_file:
@@ -256,7 +256,7 @@ class ExcelImporter(BaseImporter):
 
         if reference_read and user_read.role != reference_read.role:
             issue_list.append(
-                DuplicatedPropertyDefinitionsError(
+                PropertyDefinitionDuplicatedError(
                     self.filepath.as_posix(),
                     "spreadsheet.metadata",  # type: ignore[arg-type]
                     "role",

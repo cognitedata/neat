@@ -25,7 +25,7 @@ class AssetPostValidation(InformationPostValidation):
                     and not isinstance(property_.value_type, ClassEntity)
                 ):
                     self.issue_list.append(
-                        PropertyDefinitionError[ClassEntity](
+                        PropertyDefinitionError(
                             property_.class_,
                             "class",
                             property_.property_,

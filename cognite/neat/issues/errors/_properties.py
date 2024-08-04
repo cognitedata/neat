@@ -41,18 +41,20 @@ class PropertyDefinitionError(PropertyError[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class DuplicatedPropertyDefinitionsError(PropertyError[T_Identifier]):
+class PropertyDefinitionDuplicatedError(PropertyError[T_Identifier]):
     """The {resource_type} with identifier {identifier} has multiple definitions for the property {property_name}
-    with values {property_values} in {location_name} {locations}
+    with values {property_values}
     """
 
+    extra = "in locations {locations} with name {location_name}"
+
     property_values: frozenset[str | int | float | bool | None | tuple[str | int | float | bool | None, ...]]
-    locations: tuple[str | int, ...]
-    location_name: str
+    locations: tuple[str | int, ...] | None = None
+    location_name: str | None = None
 
 
 @dataclass(frozen=True)
-class DuplicatedPropertyMappingError(PropertyError[T_Identifier], Generic[T_Identifier, T_ReferenceIdentifier]):
+class PropertyMappingDuplicatedError(PropertyError[T_Identifier], Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier}.{property_name} is mapped to by: {mappings}. Ensure
     that only one {mapping_type} maps to {resource_type} {identifier}.{property_name}"""
 
