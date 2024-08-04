@@ -68,9 +68,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         try:
             data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
         except Exception as e:
-            issues.append(
-                ResourceNotFoundError(identifier=repr(data_model_id), resource_type="data model", reason=str(e))
-            )
+            issues.append(ResourceNotFoundError(data_model_id, "data model", str(e)))
 
         return cls(graph_store, data_model, instance_space, {}, issues)
 

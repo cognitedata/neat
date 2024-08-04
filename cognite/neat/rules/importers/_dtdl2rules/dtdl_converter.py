@@ -2,7 +2,11 @@ from collections import Counter
 from collections.abc import Callable, Sequence
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.errors import MissingIdentifierError, PropertyTypeNotSupportedError, ResourceNotFoundError
+from cognite.neat.issues.errors import (
+    MissingIdentifierError,
+    PropertyTypeNotSupportedError,
+    ReferredResourceNotFoundError,
+)
 from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
 from cognite.neat.rules.importers._dtdl2rules.spec import (
     DTMI,
@@ -77,7 +81,7 @@ class _DTDLConverter:
         else:
             self.issues.append(
                 ResourceTypeNotSupportedWarning(
-                    item.id_.model_dump() if item.id_ else item.display_name or "missing",
+                    item.identifier_with_fallback,
                     item.type,
                 ),
             )
@@ -132,8 +136,11 @@ class _DTDLConverter:
 
     def _missing_parent_warning(self, item: DTDLBaseWithName):
         self.issues.append(
-            ResourceNotFoundError[str](
-                (item.id_.model_dump() if item.id_ else item.display_name) or "missing", item.type, "parent missing"
+            ReferredResourceNotFoundError(
+                "UNKNOWN",
+                "parent",
+                item.identifier_with_fallback,
+                item.type,
             )
         )
 
@@ -150,7 +157,7 @@ class _DTDLConverter:
         if item.request is None:
             self.issues.append(
                 ResourceTypeNotSupportedWarning[str](
-                    item.id_.model_dump() if item.id_ else item.display_name or "missing",
+                    item.identifier_with_fallback,
                     f"{item.type}.request",
                 ),
             )
@@ -271,7 +278,7 @@ class _DTDLConverter:
         elif isinstance(input_type, str):
             self.issues.append(
                 PropertyTypeNotSupportedError(
-                    (item.id_.model_dump() if item.id_ else item.display_name) or "missing",
+                    item.identifier_with_fallback,
                     item.type,
                     "schema",
                     input_type,
@@ -294,7 +301,7 @@ class _DTDLConverter:
         else:
             self.issues.append(
                 PropertyTypeNotSupportedWarning(
-                    item.id_.model_dump() if item.id_ else item.display_name or "missing",
+                    item.identifier_with_fallback,
                     item.type,  # type: ignore[arg-type]
                     "schema",
                     input_type.type if input_type else "missing",

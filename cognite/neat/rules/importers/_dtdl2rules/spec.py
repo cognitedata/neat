@@ -135,6 +135,10 @@ class DTDLBase(BaseModel, ABC):
     display_name: str | None = Field(None, alias="displayName")
     description: str | None = None
 
+    @property
+    def identifier_with_fallback(self) -> str:
+        return (self.id_.model_dump() if self.id_ else self.display_name) or "MISSING"
+
 
 PrimitiveSchema: TypeAlias = Literal[
     "boolean", "date", "dateTime", "double", "duration", "float", "integer", "long", "string", "time"

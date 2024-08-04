@@ -31,13 +31,14 @@ class ResourceNotFoundError(ResourceError[T_Identifier]):
 
 @dataclass(frozen=True)
 class ReferredResourceNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIdentifier]):
-    """The {resource_type} with identifier {identifier} referred by
-    {referred_type} {referred_by} does not exist"""
+    """The {resource_type} with identifier {identifier} does not exist"""
 
-    fix = "Create the {resource_type}"
+    extra = " This is expected by {referred_type} {referred_by}."
 
-    referred_by: T_ReferenceIdentifier
-    referred_type: ResourceType
+    fix = "Create the {resource_type} {identifier}"
+
+    referred_by: T_ReferenceIdentifier | None = None
+    referred_type: ResourceType | None = None
 
 
 @dataclass(frozen=True)

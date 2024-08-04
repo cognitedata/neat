@@ -11,7 +11,7 @@ from cognite.neat.issues import MultiValueError, NeatError, NeatIssue
 from cognite.neat.issues.errors import (
     ChangedResourceError,
     DuplicatedPropertyDefinitionsError,
-    ResourceNotFoundError,
+    ReferredResourceNotFoundError,
 )
 from cognite.neat.rules.importers import DMSImporter
 from cognite.neat.rules.models import DMSRules, ExtensionCategory, InformationRules
@@ -1742,8 +1742,9 @@ def test_dms_rules_validation_error():
 
         dms_rules.as_rules()
 
-    assert e.value == ResourceNotFoundError(
+    assert e.value == ReferredResourceNotFoundError(
         dm.ViewId(space="my_space", external_id="Sourceable", version="1"),
         "view",
-        "Schema set to complete, expects all views to be in model",
+        dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
+        "view",
     )

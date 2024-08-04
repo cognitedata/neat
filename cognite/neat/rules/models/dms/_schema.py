@@ -32,7 +32,6 @@ from cognite.neat.issues.errors import (
     InvalidYamlError,
     PropertyNotFoundError,
     ReferredResourceNotFoundError,
-    ResourceNotFoundError,
 )
 from cognite.neat.issues.warnings import (
     DuplicatedResourcesWarning,
@@ -97,11 +96,11 @@ class DMSSchema:
         directly_referenced_containers = view_by_id[view_id].referenced_containers()
         inherited_referenced_containers = set()
 
-        for view_id in view_inheritance:
-            if implemented_view := view_by_id.get(view_id):
+        for parent_id in view_inheritance:
+            if implemented_view := view_by_id.get(parent_id):
                 inherited_referenced_containers |= implemented_view.referenced_containers()
             else:
-                raise ResourceNotFoundError(view_id, "view", "Schema set to complete, expects all views to be in model")
+                raise ReferredResourceNotFoundError(parent_id, "view", view_id, "view")
 
         return directly_referenced_containers | inherited_referenced_containers
 
