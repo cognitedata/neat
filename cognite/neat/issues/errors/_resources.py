@@ -29,7 +29,7 @@ class RetrievalResourceError(ResourceError[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class ReferredResourceNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIdentifier]):
+class ResourceNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} does not exist"""
 
     extra = " This is expected by {referred_type} {referred_by}."

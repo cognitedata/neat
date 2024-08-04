@@ -8,7 +8,7 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
-from cognite.neat.issues.errors import DuplicatedResourceError, PropertyNotFoundError, ReferredResourceNotFoundError
+from cognite.neat.issues.errors import DuplicatedResourceError, PropertyNotFoundError, ResourceNotFoundError
 from cognite.neat.issues.warnings import UnexpectedFileTypeWarning
 from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models import DMSSchema
@@ -44,7 +44,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
                 resource_type="view",
                 location=repr(dm.DataModelId("my_space", "my_data_model", "1")),
             ),
-            ReferredResourceNotFoundError(
+            ResourceNotFoundError(
                 dm.ViewId("my_space", "my_view1", "1"),
                 "view",
                 dm.DataModelId("my_space", "my_data_model", "1"),
@@ -104,7 +104,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=ContainerApplyDict([container]),
         ),
         [
-            ReferredResourceNotFoundError(
+            ResourceNotFoundError(
                 dm.ContainerId("my_space", "does_not_exist"),
                 "container",
                 dm.ViewId("my_space", "my_view1", "1"),
@@ -156,7 +156,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=ContainerApplyDict([container]),
         ),
         [
-            ReferredResourceNotFoundError(
+            ResourceNotFoundError(
                 identifier="non_existing_space",
                 resource_type="space",
                 referred_by=dm.ContainerId("non_existing_space", "my_container"),

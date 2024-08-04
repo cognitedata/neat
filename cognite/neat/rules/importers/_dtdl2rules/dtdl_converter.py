@@ -5,7 +5,7 @@ from cognite.neat.issues import IssueList, NeatIssue
 from cognite.neat.issues.errors import (
     MissingIdentifierError,
     PropertyTypeNotSupportedError,
-    ReferredResourceNotFoundError,
+    ResourceNotFoundError,
 )
 from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
 from cognite.neat.rules.importers._dtdl2rules.spec import (
@@ -136,7 +136,7 @@ class _DTDLConverter:
 
     def _missing_parent_warning(self, item: DTDLBaseWithName):
         self.issues.append(
-            ReferredResourceNotFoundError(
+            ResourceNotFoundError(
                 "UNKNOWN",
                 "parent",
                 item.identifier_with_fallback,

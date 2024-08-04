@@ -23,9 +23,9 @@ from ._resources import (
     FailedConvertError,
     InvalidResourceError,
     MissingIdentifierError,
-    ReferredResourceNotFoundError,
     ResourceError,
     ResourceNotDefinedError,
+    ResourceNotFoundError,
     RetrievalResourceError,
 )
 from ._workflow import ConfigurationNotSetError, InvalidStepOutputError, InvalidWorkFlowError, StepNotInitializedError
@@ -47,7 +47,7 @@ __all__ = [
     "ChangedResourceError",
     "DuplicatedResourceError",
     "RetrievalResourceError",
-    "ReferredResourceNotFoundError",
+    "ResourceNotFoundError",
     "DuplicatedMappingError",
     "ResourceError",
     "ResourceNotDefinedError",

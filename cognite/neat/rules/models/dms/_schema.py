@@ -31,7 +31,7 @@ from cognite.neat.issues.errors import (
     DuplicatedResourceError,
     InvalidYamlError,
     PropertyNotFoundError,
-    ReferredResourceNotFoundError,
+    ResourceNotFoundError,
 )
 from cognite.neat.issues.warnings import (
     DuplicatedResourcesWarning,
@@ -100,7 +100,7 @@ class DMSSchema:
             if implemented_view := view_by_id.get(parent_id):
                 inherited_referenced_containers |= implemented_view.referenced_containers()
             else:
-                raise ReferredResourceNotFoundError(parent_id, "view", view_id, "view")
+                raise ResourceNotFoundError(parent_id, "view", view_id, "view")
 
         return directly_referenced_containers | inherited_referenced_containers
 
@@ -551,15 +551,13 @@ class DMSSchema:
         for container in self.containers.values():
             if container.space not in defined_spaces:
                 errors.add(
-                    ReferredResourceNotFoundError[str, dm.ContainerId](
-                        container.space, "space", container.as_id(), "container"
-                    )
+                    ResourceNotFoundError[str, dm.ContainerId](container.space, "space", container.as_id(), "container")
                 )
 
         for view in self.views.values():
             view_id = view.as_id()
             if view.space not in defined_spaces:
-                errors.add(ReferredResourceNotFoundError(view.space, "space", view_id, "view"))
+                errors.add(ResourceNotFoundError(view.space, "space", view_id, "view"))
 
             for parent in view.implements or []:
                 if parent not in defined_views:
@@ -569,7 +567,7 @@ class DMSSchema:
                 if isinstance(prop, dm.MappedPropertyApply):
                     ref_container = defined_containers.get(prop.container)
                     if ref_container is None:
-                        errors.add(ReferredResourceNotFoundError(prop.container, "container", view_id, "view"))
+                        errors.add(ResourceNotFoundError(prop.container, "container", view_id, "view"))
                     elif prop.container_property_identifier not in ref_container.properties:
                         errors.add(
                             PropertyNotFoundError(
@@ -632,13 +630,13 @@ class DMSSchema:
         if self.data_model:
             model = self.data_model
             if model.space not in defined_spaces:
-                errors.add(ReferredResourceNotFoundError(model.space, "space", model.as_id(), "data model"))
+                errors.add(ResourceNotFoundError(model.space, "space", model.as_id(), "data model"))
 
             view_counts: dict[dm.ViewId, int] = defaultdict(int)
             for view_id_or_class in model.views or []:
                 view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
                 if view_id not in defined_views:
-                    errors.add(ReferredResourceNotFoundError(view_id, "view", model.as_id(), "data model"))
+                    errors.add(ResourceNotFoundError(view_id, "view", model.as_id(), "data model"))
                 view_counts[view_id] += 1
 
             for view_id, count in view_counts.items():
