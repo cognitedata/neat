@@ -12,6 +12,7 @@ from typing import Any, TypeVar, get_args
 
 import pytest
 from _pytest.mark import ParameterSet
+from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from rdflib import Namespace
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
@@ -59,6 +60,10 @@ class IssuesCreator:
             return self._create_value(type_.__args__[0])
         elif type(type_) is TypeVar or any(type(arg) is TypeVar for arg in get_args(type_)):
             return "typevar"
+        elif type_ is ViewId:
+            return ViewId("namespace", "class", "version")
+        elif type_ is ContainerId:
+            return ContainerId("namespace", "class")
         else:
             raise NotImplementedError(f"Type {type_} not implemented.")
 

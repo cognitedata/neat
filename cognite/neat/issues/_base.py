@@ -6,10 +6,11 @@ from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass, fields
 from functools import total_ordering
 from pathlib import Path
-from typing import Any, ClassVar, TypeVar, get_origin
+from typing import Any, ClassVar, TypeVar, get_args, get_origin
 from warnings import WarningMessage
 
 import pandas as pd
+from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic_core import ErrorDetails
 
 from cognite.neat.utils.spreadsheet import SpreadsheetRead
@@ -78,16 +79,18 @@ class NeatIssue:
         output["NeatIssue"] = type(self).__name__
         return output
 
-    @staticmethod
-    def _dump_value(value: Any) -> list | int | bool | float | str:
+    @classmethod
+    def _dump_value(cls, value: Any) -> list | int | bool | float | str | dict:
         if isinstance(value, str | int | bool | float):
             return value
         elif isinstance(value, frozenset):
-            return list(value)
+            return [cls._dump_value(item) for item in value]
         elif isinstance(value, Path):
             return value.as_posix()
         elif isinstance(value, tuple):
-            return list(value)
+            return [cls._dump_value(item) for item in value]
+        elif isinstance(value, ViewId | ContainerId):
+            return value.dump(camel_case=True, include_type=True)
         raise ValueError(f"Unsupported type: {type(value)}")
 
     @classmethod
@@ -107,22 +110,31 @@ class NeatIssue:
         else:
             raise NeatValueError(f"Unknown issue type: {issue_type}")
 
-    @staticmethod
-    def _load_values(cls: "type[NeatIssue]", data: dict[str, Any]) -> "NeatIssue":
+    @classmethod
+    def _load_values(cls, neat_issue_cls: "type[NeatIssue]", data: dict[str, Any]) -> "NeatIssue":
         args: dict[str, Any] = {}
-        for f in fields(cls):
+        for f in fields(neat_issue_cls):
             if f.name not in data:
                 continue
             value = data[f.name]
-            if f.type is frozenset or get_origin(f.type) is frozenset:
-                args[f.name] = frozenset(value)
-            elif f.type is Path:
-                args[f.name] = Path(value)
-            elif f.type is tuple or get_origin(f.type) is tuple:
-                args[f.name] = tuple(value)
-            else:
-                args[f.name] = value
-        return cls(**args)
+            args[f.name] = cls._load_value(f.type, value)
+        return neat_issue_cls(**args)
+
+    @classmethod
+    def _load_value(cls, type_: type, value: Any) -> Any:
+        if type_ is frozenset or get_origin(type_) is frozenset:
+            subtype = get_args(type_)[0]
+            return frozenset(cls._load_value(subtype, item) for item in value)
+        elif type_ is Path:
+            return Path(value)
+        elif type_ is tuple or get_origin(type_) is tuple:
+            subtype = get_args(type_)[0]
+            return tuple(cls._load_value(subtype, item) for item in value)
+        elif type_ is ViewId:
+            return ViewId.load(value)
+        elif type_ is ContainerId:
+            return ContainerId.load(value)
+        return value
 
     def __lt__(self, other: "NeatIssue") -> bool:
         if not isinstance(other, NeatIssue):

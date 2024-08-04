@@ -1,6 +1,7 @@
 """These are user modeling warnings. These warnings will not cause the resulting model
 to be invalid, but will likely lead to suboptimal performance, unnecessary complexity,
 or other issues."""
+# These warnings are usually only used once in the code base.
 
 from dataclasses import dataclass
 
@@ -56,7 +57,7 @@ class EmptyContainerWarning(UserModelingWarning):
 
 @dataclass(frozen=True)
 class HasDataFilterOnNoPropertiesViewWarning(UserModelingWarning):
-    """Cannot set hasData filter on view {view_id!r}.
+    """Cannot set hasData filter on view {view_id}.
     The view does not have properties in any containers.
     Use a node type filter instead."""
 
@@ -90,7 +91,7 @@ class HasDataFilterOnViewWithReferencesWarning(UserModelingWarning):
 @dataclass(frozen=True)
 class ViewPropertyLimitWarning(UserModelingWarning):
     """The number of properties in the {view_id} view is {count} which
-    is more than the API limit {DMS_CONTAINER_SIZE_LIMIT} properties.
+    is more than the API limit {limit} properties.
     This can lead to performance issues.
     Reduce the number of properties in the view."""
 
