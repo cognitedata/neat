@@ -25,7 +25,7 @@ from .resources import (
     FailedLoadingResourcesWarning,
     MultipleResourcesWarning,
     NeatResourceWarning,
-    ReferredResourceNotFoundWarning,
+    ResourceNotFoundWarning,
     ResourceTypeNotSupportedWarning,
 )
 
@@ -45,7 +45,7 @@ __all__ = [
     "NeatResourceWarning",
     "MultipleResourcesWarning",
     "RegexViolationWarning",
-    "ReferredResourceNotFoundWarning",
+    "ResourceNotFoundWarning",
     "ResourceTypeNotSupportedWarning",
     "FailedLoadingResourcesWarning",
     "OneModelOneSpaceWarning",

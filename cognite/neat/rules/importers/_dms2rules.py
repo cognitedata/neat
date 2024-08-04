@@ -25,7 +25,7 @@ from cognite.neat.issues.neat_warnings.properties import (
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
 )
-from cognite.neat.issues.neat_warnings.resources import ReferredResourceNotFoundWarning
+from cognite.neat.issues.neat_warnings.resources import ResourceNotFoundWarning
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
 from cognite.neat.rules.models import (
     DataModelType,
@@ -321,7 +321,7 @@ class DMSImporter(BaseImporter):
     ) -> DMSProperty | None:
         if isinstance(prop, dm.MappedPropertyApply) and prop.container not in self._all_containers_by_id:
             self.issue_list.append(
-                ReferredResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
+                ResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
                     dm.ContainerId.load(prop.container),
                     "Container",
                     view_entity.to_property_id(prop_id),

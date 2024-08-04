@@ -4,6 +4,7 @@ from typing import Generic
 from cognite.neat.issues._base import NeatWarning, T_Identifier, T_ReferenceIdentifier
 
 
+# Name NeatResourceWarning to avoid conflicts with the built-in ResourceWarning
 @dataclass(frozen=True)
 class NeatResourceWarning(NeatWarning, Generic[T_Identifier]):
     """Base class for resource warnings {resource_type} with identifier {identifier}"""
@@ -13,7 +14,7 @@ class NeatResourceWarning(NeatWarning, Generic[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class ReferredResourceNotFoundWarning(NeatResourceWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
+class ResourceNotFoundWarning(NeatResourceWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} referred by {referred_type} {referred_by} does not exist.
     This will be ignored."""
 

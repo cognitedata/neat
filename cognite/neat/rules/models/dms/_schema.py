@@ -37,7 +37,7 @@ from cognite.neat.issues.errors import (
 from cognite.neat.issues.neat_warnings import (
     FailedLoadingResourcesWarning,
     MultipleResourcesWarning,
-    ReferredResourceNotFoundWarning,
+    ResourceNotFoundWarning,
     UnexpectedFileTypeWarning,
 )
 from cognite.neat.issues.neat_warnings.user_modeling import DirectRelationMissingSourceWarning
@@ -170,7 +170,7 @@ class DMSSchema:
         if connection_referenced_view_ids:
             for view_id in connection_referenced_view_ids:
                 warnings.warn(
-                    ReferredResourceNotFoundWarning(view_id, "View", data_model_write.as_id(), "DataModel"),
+                    ResourceNotFoundWarning(view_id, "View", data_model_write.as_id(), "DataModel"),
                     stacklevel=2,
                 )
             connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
