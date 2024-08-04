@@ -5,56 +5,61 @@ import, and should thus not cause a naming conflict."""
 from cognite.neat.issues._base import DefaultWarning, NeatWarning, _get_subclasses
 
 from . import user_modeling
-from ._external import FileMissingRequiredFieldWarning, FileReadWarning, UnexpectedFileTypeWarning, UnknownItemWarning
+from ._external import (
+    FileItemNotSupportedWarning,
+    FileMissingRequiredFieldWarning,
+    FileReadWarning,
+    FileTypeUnexpectedWarning,
+)
 from ._general import NeatValueWarning, NotSupportedWarning, RegexViolationWarning
 from ._models import (
     BreakingModelingPrincipleWarning,
     CDFNotSupportedWarning,
-    HasDataFilterLimitWarning,
-    MatchingSpaceAndVersionWarning,
-    OneModelOneSpaceWarning,
-    SolutionBuildsOnEnterpriseWarning,
+    NotSupportedHasDataFilterLimitWarning,
+    NotSupportedViewContainerLimitWarning,
+    PrincipleMatchingSpaceAndVersionWarning,
+    PrincipleOneModelOneSpaceWarning,
+    PrincipleSolutionBuildsOnEnterpriseWarning,
     UserModelingWarning,
-    ViewContainerLimitWarning,
 )
 from ._properties import (
-    DuplicatedPropertyDefinitionWarning,
+    PropertyDefinitionDuplicatedWarning,
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
 )
 from ._resources import (
-    DuplicatedResourcesWarning,
-    NeatResourceWarning,
+    ResourceNeatWarning,
     ResourceNotFoundWarning,
+    ResourceRetrievalWarning,
+    ResourcesDuplicatedWarning,
     ResourceTypeNotSupportedWarning,
-    RetrievalResourcesWarning,
 )
 
 __all__ = [
     "DefaultWarning",
     "FileReadWarning",
     "FileMissingRequiredFieldWarning",
-    "UnknownItemWarning",
-    "UnexpectedFileTypeWarning",
+    "FileItemNotSupportedWarning",
+    "FileTypeUnexpectedWarning",
     "NeatValueWarning",
     "NotSupportedWarning",
     "UserModelingWarning",
     "CDFNotSupportedWarning",
     "BreakingModelingPrincipleWarning",
-    "DuplicatedPropertyDefinitionWarning",
+    "PropertyDefinitionDuplicatedWarning",
     "PropertyTypeNotSupportedWarning",
     "PropertyNotFoundWarning",
-    "NeatResourceWarning",
-    "DuplicatedResourcesWarning",
+    "ResourceNeatWarning",
+    "ResourcesDuplicatedWarning",
     "RegexViolationWarning",
     "ResourceNotFoundWarning",
     "ResourceTypeNotSupportedWarning",
-    "RetrievalResourcesWarning",
-    "OneModelOneSpaceWarning",
-    "MatchingSpaceAndVersionWarning",
-    "SolutionBuildsOnEnterpriseWarning",
-    "ViewContainerLimitWarning",
-    "HasDataFilterLimitWarning",
+    "ResourceRetrievalWarning",
+    "PrincipleOneModelOneSpaceWarning",
+    "PrincipleMatchingSpaceAndVersionWarning",
+    "PrincipleSolutionBuildsOnEnterpriseWarning",
+    "NotSupportedViewContainerLimitWarning",
+    "NotSupportedHasDataFilterLimitWarning",
     "user_modeling",
 ]
 

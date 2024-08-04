@@ -9,7 +9,7 @@ from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, Transf
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
 from cognite.neat.issues.errors import PropertyNotFoundError, ResourceDuplicatedError, ResourceNotFoundError
-from cognite.neat.issues.warnings import UnexpectedFileTypeWarning
+from cognite.neat.issues.warnings import FileTypeUnexpectedWarning
 from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models import DMSSchema
 from cognite.neat.rules.models.dms import PipelineSchema
@@ -325,7 +325,7 @@ def invalid_raw_str_test_cases() -> Iterable[ParameterSet]:
         raw_str,
         {"views": [Path("my_view_file.yaml")]},
         [
-            UnexpectedFileTypeWarning(
+            FileTypeUnexpectedWarning(
                 Path("my_view_file.yaml"),
                 frozenset(["ViewApply"]),
                 "KeyError('externalId')",

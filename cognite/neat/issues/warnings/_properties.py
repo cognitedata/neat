@@ -1,41 +1,44 @@
 from dataclasses import dataclass
 from typing import Generic
 
-from cognite.neat.issues._base import NeatWarning, ResourceType
+from cognite.neat.issues._base import ResourceType
 
-from ._resources import NeatResourceWarning, T_Identifier, T_ReferenceIdentifier
+from ._resources import ResourceNeatWarning, T_Identifier, T_ReferenceIdentifier
 
 
 @dataclass(frozen=True)
-class PropertyTypeNotSupportedWarning(NeatResourceWarning[T_Identifier]):
+class PropertyWarning(ResourceNeatWarning[T_Identifier]):
+    """Base class for property warnings {resource_type} with identifier {identifier}.{property_name}"""
+
+    property_name: str
+
+
+@dataclass(frozen=True)
+class PropertyTypeNotSupportedWarning(PropertyWarning[T_Identifier]):
     """The {resource_type} with identifier {identifier} has a property {property_name}
     of unsupported type {property_type}. This will be ignored."""
 
-    property_name: str
     property_type: str
 
 
 @dataclass(frozen=True)
-class PropertyNotFoundWarning(NeatResourceWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
+class PropertyNotFoundWarning(PropertyWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} does not have a property {property_name} referred
     to by {referred_type} {referred_by} does not exist. This will be ignored.
     """
 
     fix = "Ensure the {resource_type} {identifier} has a {property_name} property"
-    property_name: str
     referred_by: T_ReferenceIdentifier
     referred_type: ResourceType
 
 
 @dataclass(frozen=True)
-class DuplicatedPropertyDefinitionWarning(NeatWarning):
-    """Duplicated {name} for property {property_id}. Got multiple values: {values}.
+class PropertyDefinitionDuplicatedWarning(PropertyWarning[T_Identifier]):
+    """Duplicated {name} for property {property_name}. Got multiple values: {values}.
     {default_action}"""
 
     extra = "Recommended action: {recommended_action}"
 
-    property_id: str
-    name: str
     values: frozenset[str]
     default_action: str
     recommended_action: str | None = None

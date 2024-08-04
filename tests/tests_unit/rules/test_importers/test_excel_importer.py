@@ -12,8 +12,8 @@ from cognite.neat.issues.errors import (
     RowError,
 )
 from cognite.neat.issues.warnings import (
-    HasDataFilterLimitWarning,
-    ViewContainerLimitWarning,
+    NotSupportedHasDataFilterLimitWarning,
+    NotSupportedViewContainerLimitWarning,
 )
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
@@ -91,11 +91,11 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "too_many_containers_per_view.xlsx",
         IssueList(
             [
-                ViewContainerLimitWarning(
+                NotSupportedViewContainerLimitWarning(
                     ViewId(space="neat", external_id="Asset", version="1"),
                     11,
                 ),
-                HasDataFilterLimitWarning(
+                NotSupportedHasDataFilterLimitWarning(
                     ViewId(space="neat", external_id="Asset", version="1"),
                     11,
                 ),

@@ -13,7 +13,7 @@ from cognite.neat.issues import MultiValueError
 from cognite.neat.issues.errors import (
     PropertyDefinitionDuplicatedError,
 )
-from cognite.neat.issues.warnings import DuplicatedPropertyDefinitionWarning
+from cognite.neat.issues.warnings import PropertyDefinitionDuplicatedWarning
 from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import DataType
@@ -354,8 +354,9 @@ class OWLProperty(OntologyModel):
     def is_multi_type(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                DuplicatedPropertyDefinitionWarning(
+                PropertyDefinitionDuplicatedWarning(
                     remove_namespace_from_uri(info.data["id"]),
+                    "class",
                     "type",
                     frozenset({remove_namespace_from_uri(t) for t in v}),
                     "This warning occurs when a same property is define for two object/classes where"
@@ -371,8 +372,9 @@ class OWLProperty(OntologyModel):
     def is_multi_range(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                DuplicatedPropertyDefinitionWarning(
+                PropertyDefinitionDuplicatedWarning(
                     remove_namespace_from_uri(info.data["id_"]),
+                    "class",
                     "range",
                     frozenset({remove_namespace_from_uri(t) for t in v}),
                     "This warning occurs when a property takes range of "
@@ -387,8 +389,9 @@ class OWLProperty(OntologyModel):
     def is_multi_domain(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                DuplicatedPropertyDefinitionWarning(
+                PropertyDefinitionDuplicatedWarning(
                     remove_namespace_from_uri(info.data["id_"]),
+                    "class",
                     "domain",
                     frozenset({remove_namespace_from_uri(t) for t in v}),
                     "This warning occurs when a same property is define for two object/classes where"
@@ -404,8 +407,9 @@ class OWLProperty(OntologyModel):
     def has_multi_name(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                DuplicatedPropertyDefinitionWarning(
+                PropertyDefinitionDuplicatedWarning(
                     remove_namespace_from_uri(info.data["id_"]),
+                    "class",
                     "label",
                     frozenset(v),
                     f"Only the first label (name) will be used, {v[0]}",
@@ -418,8 +422,9 @@ class OWLProperty(OntologyModel):
     def has_multi_comment(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                DuplicatedPropertyDefinitionWarning(
+                PropertyDefinitionDuplicatedWarning(
                     remove_namespace_from_uri(info.data["id_"]),
+                    "class",
                     "comment",
                     frozenset(v),
                     "All definitions will be concatenated to form a single definition.",

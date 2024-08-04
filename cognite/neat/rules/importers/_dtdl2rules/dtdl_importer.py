@@ -8,11 +8,11 @@ from pydantic import ValidationError
 
 from cognite.neat.issues import IssueList, NeatIssue
 from cognite.neat.issues.warnings import (
+    FileItemNotSupportedWarning,
     FileMissingRequiredFieldWarning,
     FileReadWarning,
+    FileTypeUnexpectedWarning,
     NeatValueWarning,
-    UnexpectedFileTypeWarning,
-    UnknownItemWarning,
 )
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
@@ -67,7 +67,7 @@ class DTDLImporter(BaseImporter):
                 return
             raw_list = raw
         else:
-            yield UnexpectedFileTypeWarning(filepath, frozenset(["dict", "list"]), "Content is not an object or array.")
+            yield FileTypeUnexpectedWarning(filepath, frozenset(["dict", "list"]), "Content is not an object or array.")
             return
 
         if isinstance(context, list):
@@ -90,12 +90,12 @@ class DTDLImporter(BaseImporter):
                 continue
             cls_ = cls_by_type.get(type_)
             if cls_ is None:
-                yield UnknownItemWarning(f"Unknown '@type' {type_}.", filepath=filepath)
+                yield FileItemNotSupportedWarning(f"Unknown '@type' {type_}.", filepath=filepath)
                 continue
             try:
                 yield cls_.model_validate(item)
             except ValidationError as e:
-                yield UnexpectedFileTypeWarning(filepath, frozenset([cls.__name__]), str(e))
+                yield FileTypeUnexpectedWarning(filepath, frozenset([cls.__name__]), str(e))
             except Exception as e:
                 yield FileReadWarning(filepath=filepath, reason=str(e))
 

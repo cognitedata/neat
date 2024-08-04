@@ -10,10 +10,13 @@ from cognite.neat.issues.errors import (
     ResourceNotDefinedError,
 )
 from cognite.neat.issues.warnings import (
-    HasDataFilterLimitWarning,
-    ViewContainerLimitWarning,
+    NotSupportedHasDataFilterLimitWarning,
+    NotSupportedViewContainerLimitWarning,
 )
-from cognite.neat.issues.warnings.user_modeling import NotNeatSupportedFilterWarning, ViewPropertyLimitWarning
+from cognite.neat.issues.warnings.user_modeling import (
+    NotNeatSupportedFilterWarning,
+    ViewPropertyLimitWarning,
+)
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
@@ -292,7 +295,7 @@ class DMSPostValidation:
 
             if mapped_containers and len(mapped_containers) > 10:
                 self.issue_list.append(
-                    ViewContainerLimitWarning(
+                    NotSupportedViewContainerLimitWarning(
                         view_id,
                         len(mapped_containers),
                     )
@@ -303,7 +306,7 @@ class DMSPostValidation:
                     and len(view.filter.dump()["hasData"]) > 10
                 ):
                     self.issue_list.append(
-                        HasDataFilterLimitWarning(
+                        NotSupportedHasDataFilterLimitWarning(
                             view_id,
                             len(view.filter.dump()["hasData"]),
                         )

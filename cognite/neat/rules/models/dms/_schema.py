@@ -34,10 +34,10 @@ from cognite.neat.issues.errors import (
     ResourceNotFoundError,
 )
 from cognite.neat.issues.warnings import (
-    DuplicatedResourcesWarning,
+    FileTypeUnexpectedWarning,
     ResourceNotFoundWarning,
-    RetrievalResourcesWarning,
-    UnexpectedFileTypeWarning,
+    ResourceRetrievalWarning,
+    ResourcesDuplicatedWarning,
 )
 from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
@@ -174,7 +174,7 @@ class DMSSchema:
                 )
             connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
             if failed := connection_referenced_view_ids - set(connection_referenced_views.as_ids()):
-                warnings.warn(RetrievalResourcesWarning(frozenset(failed), "view"), stacklevel=2)
+                warnings.warn(ResourceRetrievalWarning(frozenset(failed), "view"), stacklevel=2)
             views.extend(connection_referenced_views)
 
         # We need to include parent views in the schema to make sure that the schema is valid.
@@ -272,7 +272,7 @@ class DMSSchema:
                         loaded = yaml.safe_load(yaml_file.read_text())
                     except Exception as e:
                         warnings.warn(
-                            UnexpectedFileTypeWarning(yaml_file, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
+                            FileTypeUnexpectedWarning(yaml_file, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
                         )
                         continue
 
@@ -364,7 +364,7 @@ class DMSSchema:
                             loaded = yaml.safe_load(zip_ref.read(file_info).decode())
                         except Exception as e:
                             warnings.warn(
-                                UnexpectedFileTypeWarning(filename, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
+                                FileTypeUnexpectedWarning(filename, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
                             )
                             continue
                         if isinstance(loaded, list):
@@ -436,14 +436,14 @@ class DMSSchema:
                         except Exception as e:
                             data_model_file = context.get(attr.name, [Path("UNKNOWN")])[0]
                             warnings.warn(
-                                UnexpectedFileTypeWarning(
+                                FileTypeUnexpectedWarning(
                                     data_model_file, frozenset([dm.DataModelApply.__name__]), str(e)
                                 ),
                                 stacklevel=2,
                             )
                         else:
                             warnings.warn(
-                                DuplicatedResourcesWarning(
+                                ResourcesDuplicatedWarning(
                                     frozenset(data_model_ids),
                                     "data model",
                                     "Will use the first DataModel.",
@@ -456,7 +456,7 @@ class DMSSchema:
                     except Exception as e:
                         data_model_file = context.get(attr.name, [Path("UNKNOWN")])[0]
                         warnings.warn(
-                            UnexpectedFileTypeWarning(data_model_file, frozenset([dm.DataModelApply.__name__]), str(e)),
+                            FileTypeUnexpectedWarning(data_model_file, frozenset([dm.DataModelApply.__name__]), str(e)),
                             stacklevel=2,
                         )
                 else:
@@ -473,7 +473,7 @@ class DMSSchema:
         resources = attr.type([])
         if not hasattr(attr.type, "_RESOURCE"):
             warnings.warn(
-                UnexpectedFileTypeWarning(Path("UNKNOWN"), frozenset([attr.type.__name__]), trigger_error), stacklevel=2
+                FileTypeUnexpectedWarning(Path("UNKNOWN"), frozenset([attr.type.__name__]), trigger_error), stacklevel=2
             )
             return resources
         # Fallback to load individual resources.
@@ -488,7 +488,7 @@ class DMSSchema:
                     filepath = Path("UNKNOWN")
                 # We use repr(e) instead of str(e) to include the exception type in the warning message
                 warnings.warn(
-                    UnexpectedFileTypeWarning(filepath, frozenset([single_cls.__name__]), repr(e)), stacklevel=2
+                    FileTypeUnexpectedWarning(filepath, frozenset([single_cls.__name__]), repr(e)), stacklevel=2
                 )
             else:
                 resources.append(loaded_instance)
@@ -858,7 +858,7 @@ class PipelineSchema(DMSSchema):
                     loaded = yaml.safe_load(yaml_file.read_text())
                 except Exception as e:
                     warnings.warn(
-                        UnexpectedFileTypeWarning(yaml_file, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
+                        FileTypeUnexpectedWarning(yaml_file, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
                     )
                     continue
                 if isinstance(loaded, list):
@@ -926,7 +926,7 @@ class PipelineSchema(DMSSchema):
                             loaded = yaml.safe_load(zip_ref.read(file_info).decode())
                         except Exception as e:
                             warnings.warn(
-                                UnexpectedFileTypeWarning(filepath, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
+                                FileTypeUnexpectedWarning(filepath, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
                             )
                             continue
                         if isinstance(loaded, list):
