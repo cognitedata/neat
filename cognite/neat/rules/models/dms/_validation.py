@@ -9,11 +9,11 @@ from cognite.neat.issues.errors import (
     DuplicatedPropertyDefinitionsError,
     ResourceNotDefinedError,
 )
-from cognite.neat.issues.neat_warnings import (
+from cognite.neat.issues.warnings import (
     HasDataFilterLimitWarning,
     ViewContainerLimitWarning,
 )
-from cognite.neat.issues.neat_warnings.user_modeling import NotNeatSupportedFilterWarning, ViewPropertyLimitWarning
+from cognite.neat.issues.warnings.user_modeling import NotNeatSupportedFilterWarning, ViewPropertyLimitWarning
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType

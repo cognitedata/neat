@@ -11,7 +11,7 @@ from cognite.neat.issues.errors import (
     NeatFileNotFoundError,
     ResourceNotDefinedError,
 )
-from cognite.neat.issues.neat_warnings import (
+from cognite.neat.issues.warnings import (
     HasDataFilterLimitWarning,
     ViewContainerLimitWarning,
 )

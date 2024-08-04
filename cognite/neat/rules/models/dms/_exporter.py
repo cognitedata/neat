@@ -12,8 +12,8 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
-from cognite.neat.issues.neat_warnings import NotSupportedWarning, PropertyNotFoundWarning
-from cognite.neat.issues.neat_warnings.user_modeling import (
+from cognite.neat.issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
+from cognite.neat.issues.warnings.user_modeling import (
     EmptyContainerWarning,
     HasDataFilterOnNoPropertiesViewWarning,
     HasDataFilterOnViewWithReferencesWarning,

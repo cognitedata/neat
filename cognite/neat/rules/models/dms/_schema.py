@@ -34,13 +34,13 @@ from cognite.neat.issues.errors import (
     ReferredResourceNotFoundError,
     ResourceNotFoundError,
 )
-from cognite.neat.issues.neat_warnings import (
+from cognite.neat.issues.warnings import (
     DuplicatedResourcesWarning,
     FailedRetrievingResourcesWarning,
     ResourceNotFoundWarning,
     UnexpectedFileTypeWarning,
 )
-from cognite.neat.issues.neat_warnings.user_modeling import DirectRelationMissingSourceWarning
+from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.cdf.data_classes import (
     CogniteResourceDict,

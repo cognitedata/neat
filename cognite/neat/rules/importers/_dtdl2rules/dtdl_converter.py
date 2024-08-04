@@ -3,7 +3,7 @@ from collections.abc import Callable, Sequence
 
 from cognite.neat.issues import IssueList, NeatIssue
 from cognite.neat.issues.errors import MissingIdentifierError, PropertyTypeNotSupportedError, ResourceNotFoundError
-from cognite.neat.issues.neat_warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
+from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
 from cognite.neat.rules.importers._dtdl2rules.spec import (
     DTMI,
     Command,

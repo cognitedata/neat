@@ -18,7 +18,7 @@ from cognite.neat.graph._tracking import LogTracker, Tracker
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors import FailedConvertError, InvalidResourceError, ResourceNotFoundError
-from cognite.neat.issues.neat_warnings import PropertyTypeNotSupportedWarning
+from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
 from cognite.neat.utils.auxiliary import create_sha256_hash

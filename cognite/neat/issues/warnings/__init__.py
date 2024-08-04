@@ -1,5 +1,6 @@
-"""All warnings raised by the neat package are defined here. Note this module is called 'neat_warnings' instead
-of 'warnings' to avoid conflicts with the built-in Python warnings module."""
+"""All warnings raised by the neat package are defined here. Note this module is called 'warnings' which
+conflicts with the built-in Python warnings module. However, it is expected to always be used in an absolute
+import, and should thus not cause a naming conflict."""
 
 from cognite.neat.issues._base import DefaultWarning, NeatWarning, _get_subclasses
 

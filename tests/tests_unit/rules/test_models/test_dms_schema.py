@@ -9,8 +9,8 @@ from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, Transf
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
 from cognite.neat.issues.errors import DuplicatedResourceError, PropertyNotFoundError, ReferredResourceNotFoundError
-from cognite.neat.issues.neat_warnings import UnexpectedFileTypeWarning
-from cognite.neat.issues.neat_warnings.user_modeling import DirectRelationMissingSourceWarning
+from cognite.neat.issues.warnings import UnexpectedFileTypeWarning
+from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models import DMSSchema
 from cognite.neat.rules.models.dms import PipelineSchema
 from cognite.neat.utils.cdf.data_classes import (

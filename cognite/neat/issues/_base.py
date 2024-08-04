@@ -101,7 +101,7 @@ class NeatIssue:
     def load(cls, data: dict[str, Any]) -> "NeatIssue":
         """Create an instance of the issue from a dictionary."""
         from cognite.neat.issues.errors import _NEAT_ERRORS_BY_NAME, NeatValueError
-        from cognite.neat.issues.neat_warnings import _NEAT_WARNINGS_BY_NAME
+        from cognite.neat.issues.warnings import _NEAT_WARNINGS_BY_NAME
 
         if "NeatIssue" not in data:
             raise NeatValueError("The data does not contain a NeatIssue key.")

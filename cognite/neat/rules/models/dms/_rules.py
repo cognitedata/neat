@@ -12,7 +12,7 @@ from pydantic.main import IncEx
 from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.issues import MultiValueError
-from cognite.neat.issues.neat_warnings import (
+from cognite.neat.issues.warnings import (
     MatchingSpaceAndVersionWarning,
     SolutionBuildsOnEnterpriseWarning,
 )

@@ -14,7 +14,7 @@ from cognite.neat.issues.errors import (
     DuplicatedPropertyDefinitionsError,
     InvalidPropertyDefinitionError,
 )
-from cognite.neat.issues.neat_warnings import DuplicatedPropertyDefinitionWarning
+from cognite.neat.issues.warnings import DuplicatedPropertyDefinitionWarning
 from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import DataType

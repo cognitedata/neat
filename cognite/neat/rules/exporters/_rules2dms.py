@@ -16,7 +16,7 @@ from cognite.client.data_classes.data_modeling import (
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.issues import IssueList
-from cognite.neat.issues.neat_warnings import (
+from cognite.neat.issues.warnings import (
     FailedRetrievingResourcesWarning,
     OneModelOneSpaceWarning,
 )

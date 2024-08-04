@@ -7,7 +7,7 @@ from typing import Literal, overload
 from pydantic import ValidationError
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.neat_warnings import (
+from cognite.neat.issues.warnings import (
     FileMissingRequiredFieldWarning,
     FileReadWarning,
     NeatValueWarning,

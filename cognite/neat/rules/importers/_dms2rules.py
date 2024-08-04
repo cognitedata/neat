@@ -20,7 +20,7 @@ from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.issues import IssueList, NeatIssue
 from cognite.neat.issues.errors import ResourceNotFoundError, UnexpectedFileTypeError
-from cognite.neat.issues.neat_warnings import (
+from cognite.neat.issues.warnings import (
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
     ResourceNotFoundWarning,
