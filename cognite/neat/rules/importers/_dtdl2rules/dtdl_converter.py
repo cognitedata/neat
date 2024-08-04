@@ -271,7 +271,7 @@ class _DTDLConverter:
             return _DATA_TYPE_BY_NAME[input_type.casefold()]()
         elif isinstance(input_type, str):
             self.issues.append(
-                PropertyTypeNotSupportedError[str](
+                PropertyTypeNotSupportedError(
                     (item.id_.model_dump() if item.id_ else item.display_name) or "missing",
                     item.type,
                     "schema",

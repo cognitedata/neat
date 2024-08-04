@@ -1,6 +1,6 @@
 from cognite.neat.issues._base import NeatError, _get_subclasses
 
-from .external import (
+from ._external import (
     FailedAuthorizationError,
     FileMissingRequiredFieldError,
     FileNotAFileError,
@@ -9,13 +9,13 @@ from .external import (
     NeatFileNotFoundError,
     UnexpectedFileTypeError,
 )
-from .general import NeatImportError, NeatValueError, RegexViolationError
-from .properties import (
+from ._general import NeatImportError, NeatValueError, RegexViolationError
+from ._properties import (
     InvalidPropertyDefinitionError,
     PropertyNotFoundError,
     PropertyTypeNotSupportedError,
 )
-from .resources import (
+from ._resources import (
     ChangedResourceError,
     DuplicatedMappingError,
     DuplicatedPropertyDefinitionsError,
@@ -28,7 +28,7 @@ from .resources import (
     ResourceNotDefinedError,
     ResourceNotFoundError,
 )
-from .workflow import ConfigurationNotSetError, InvalidStepOutputError, InvalidWorkFlowError, StepNotInitializedError
+from ._workflow import ConfigurationNotSetError, InvalidStepOutputError, InvalidWorkFlowError, StepNotInitializedError
 
 __all__ = [
     "NeatValueError",

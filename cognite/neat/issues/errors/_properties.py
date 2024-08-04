@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Generic
 
-from .resources import ResourceError, T_Identifier, T_ReferenceIdentifier
+from ._resources import ResourceError, T_Identifier, T_ReferenceIdentifier
 
 
 @dataclass(frozen=True)

@@ -14,7 +14,6 @@ from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 
-import cognite.neat.issues.errors.resources
 from cognite.neat.graph._tracking import LogTracker, Tracker
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
@@ -253,7 +252,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 continue
             edge = edge_by_properties[prop]
             if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
-                error = cognite.neat.issues.errors.resources.InvalidResourceError[str](
+                error = InvalidResourceError(
                     resource_type="edge",
                     identifier=identifier,
                     reason=f"Multiple values for single edge {edge}. Expected only one.",
