@@ -51,6 +51,7 @@ ResourceType: TypeAlias = (
         "node",
         "unknown",
     ]
+    # String to handle all unknown types in different importers.
     | str
 )
 
