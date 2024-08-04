@@ -6,7 +6,7 @@ from collections.abc import Collection, Hashable, Iterable, Sequence
 from dataclasses import dataclass, fields
 from functools import total_ordering
 from pathlib import Path
-from typing import Any, ClassVar, TypeVar, get_args, get_origin
+from typing import Any, ClassVar, Literal, TypeAlias, TypeVar, get_args, get_origin
 from warnings import WarningMessage
 
 import pandas as pd
@@ -35,6 +35,24 @@ __all__ = [
 T_Identifier = TypeVar("T_Identifier", bound=Hashable)
 
 T_ReferenceIdentifier = TypeVar("T_ReferenceIdentifier", bound=Hashable)
+
+ResourceType: TypeAlias = (
+    Literal[
+        "view",
+        "container",
+        "view property",
+        "container property",
+        "space",
+        "class",
+        "asset",
+        "relationship",
+        "data model",
+        "edge",
+        "node",
+        "unknown",
+    ]
+    | str
+)
 
 
 @total_ordering

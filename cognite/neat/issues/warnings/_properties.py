@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Generic
 
-from cognite.neat.issues._base import NeatWarning
+from cognite.neat.issues._base import NeatWarning, ResourceType
 
 from ._resources import NeatResourceWarning, T_Identifier, T_ReferenceIdentifier
 
@@ -24,7 +24,7 @@ class PropertyNotFoundWarning(NeatResourceWarning, Generic[T_Identifier, T_Refer
     fix = "Ensure the {resource_type} {identifier} has a {property_name} property"
     property_name: str
     referred_by: T_ReferenceIdentifier
-    referred_type: str
+    referred_type: ResourceType
 
 
 @dataclass(frozen=True)

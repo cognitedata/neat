@@ -512,10 +512,10 @@ class _DMSExporter:
                 warnings.warn(
                     PropertyNotFoundWarning(
                         source_view_id,
-                        "View",
+                        "view",
                         reverse_prop_id or "MISSING",
                         dm.PropertyId(prop.view.as_id(), prop.view_property),
-                        "ViewProperty",
+                        "view property",
                     ),
                     stacklevel=2,
                 )

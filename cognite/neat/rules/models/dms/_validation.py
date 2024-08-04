@@ -74,7 +74,7 @@ class DMSPostValidation:
                 errors.append(
                     DuplicatedPropertyDefinitionsError[dm.ContainerId](
                         container_id,
-                        "Container",
+                        "container",
                         prop_name,
                         frozenset({v.dms._type if isinstance(v, DataType) else str(v) for v in value_types}),
                         tuple(row_numbers),
@@ -86,7 +86,7 @@ class DMSPostValidation:
                 errors.append(
                     DuplicatedPropertyDefinitionsError[dm.ContainerId](
                         container_id,
-                        "Container",
+                        "container",
                         prop_name,
                         frozenset(list_definitions),
                         tuple(row_numbers),
@@ -98,7 +98,7 @@ class DMSPostValidation:
                 errors.append(
                     DuplicatedPropertyDefinitionsError[dm.ContainerId](
                         container_id,
-                        "Container",
+                        "container",
                         prop_name,
                         frozenset(nullable_definitions),
                         tuple(row_numbers),
@@ -110,7 +110,7 @@ class DMSPostValidation:
                 errors.append(
                     DuplicatedPropertyDefinitionsError[dm.ContainerId](
                         container_id,
-                        "Container",
+                        "container",
                         prop_name,
                         frozenset(
                             tuple(f"{k}:{v}" for k, v in def_.items()) if isinstance(def_, dict) else def_
@@ -125,7 +125,7 @@ class DMSPostValidation:
                 errors.append(
                     DuplicatedPropertyDefinitionsError[dm.ContainerId](
                         container_id,
-                        "Container",
+                        "container",
                         prop_name,
                         frozenset(index_definitions),
                         tuple(row_numbers),
@@ -139,7 +139,7 @@ class DMSPostValidation:
                 errors.append(
                     DuplicatedPropertyDefinitionsError[dm.ContainerId](
                         container_id,
-                        "Container",
+                        "container",
                         prop_name,
                         frozenset(constraint_definitions),
                         tuple(row_numbers),
@@ -177,7 +177,7 @@ class DMSPostValidation:
                 errors.append(
                     ResourceNotDefinedError[dm.ViewId](
                         identifier=view_id,
-                        resource_type="View",
+                        resource_type="view",
                         location="Views Sheet",
                         column_name="View",
                         row_number=prop_no,
@@ -201,7 +201,7 @@ class DMSPostValidation:
                     errors.append(
                         ResourceNotDefinedError[dm.ContainerId](
                             identifier=container_id,
-                            resource_type="Container",
+                            resource_type="container",
                             location="Containers Sheet",
                             column_name="Container",
                             row_number=prop_no,
@@ -214,7 +214,7 @@ class DMSPostValidation:
                         errors.append(
                             ResourceNotDefinedError[dm.ContainerId](
                                 identifier=constraint.as_id(),
-                                resource_type="Container",
+                                resource_type="container",
                                 location="Containers Sheet",
                                 column_name="Constraint",
                                 row_number=constraint_no,
@@ -250,7 +250,7 @@ class DMSPostValidation:
             self.issue_list.append(
                 ChangedResourceError(
                     container_id,
-                    "Container",
+                    "container",
                     changed_properties=frozenset(changed_properties),
                     changed_attributes=frozenset(changed_attributes),
                 )
@@ -280,7 +280,7 @@ class DMSPostValidation:
             self.issue_list.append(
                 ChangedResourceError(
                     view_id,
-                    "View",
+                    "view",
                     changed_properties=frozenset(changed_properties),
                     changed_attributes=frozenset(changed_attributes),
                 )

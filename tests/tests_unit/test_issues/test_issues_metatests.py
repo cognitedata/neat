@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from dataclasses import fields, is_dataclass
 from pathlib import Path
 from types import GenericAlias, UnionType
-from typing import Any, TypeVar, get_args
+from typing import Any, Literal, TypeVar, get_args, get_origin
 
 import pytest
 from _pytest.mark import ParameterSet
@@ -64,6 +64,9 @@ class IssuesCreator:
             return ViewId("namespace", "class", "version")
         elif type_ is ContainerId:
             return ContainerId("namespace", "class")
+        elif get_origin(type_) is Literal:
+            args = get_args(type_)
+            return args[0]
         else:
             raise NotImplementedError(f"Type {type_} not implemented.")
 

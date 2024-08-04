@@ -258,7 +258,7 @@ class ExcelImporter(BaseImporter):
             issue_list.append(
                 DuplicatedPropertyDefinitionsError(
                     self.filepath.as_posix(),
-                    "Spreadsheet",
+                    "spreadsheet.metadata",  # type: ignore[arg-type]
                     "role",
                     frozenset({user_read.role, reference_read.role}),
                     ("user", "reference"),

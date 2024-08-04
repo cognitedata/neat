@@ -19,7 +19,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.errors import ResourceNotFoundError, UnexpectedFileTypeError
+from cognite.neat.issues.errors import MissingIdentifierError, ResourceNotFoundError, UnexpectedFileTypeError
 from cognite.neat.issues.warnings import (
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
@@ -110,7 +110,7 @@ class DMSImporter(BaseImporter):
                 [
                     ResourceNotFoundError(
                         dm.DataModelId.load(reference_model_id),  # type: ignore[arg-type]
-                        "DataModel",
+                        "data model",
                         "Data Model is missing in CDF",
                     )
                 ],
@@ -124,7 +124,7 @@ class DMSImporter(BaseImporter):
                     DMSSchema(),
                     [
                         ResourceNotFoundError[dm.DataModelId](
-                            dm.DataModelId.load(reference_model_id), "DataModel", "Data Model is missing in CDF"
+                            dm.DataModelId.load(reference_model_id), "data model", "Data Model is missing in CDF"
                         )
                     ],
                 )
@@ -219,7 +219,7 @@ class DMSImporter(BaseImporter):
             return self._return_or_raise(self.issue_list, errors)
 
         if not self.root_schema.data_model:
-            self.issue_list.append(ResourceNotFoundError[str]("Unknown", "DataModel", "Identifier is missing"))
+            self.issue_list.append(MissingIdentifierError("data model", type(self.root_schema).__name__))
             return self._return_or_raise(self.issue_list, errors)
         model = self.root_schema.data_model
         with _handle_issues(
@@ -322,9 +322,9 @@ class DMSImporter(BaseImporter):
             self.issue_list.append(
                 ResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
                     dm.ContainerId.load(prop.container),
-                    "Container",
+                    "container",
                     view_entity.to_property_id(prop_id),
-                    "View Property",
+                    "view property",
                 )
             )
             return None
@@ -333,7 +333,7 @@ class DMSImporter(BaseImporter):
             and prop.container_property_identifier not in self._all_containers_by_id[prop.container].properties
         ):
             self.issue_list.append(
-                PropertyNotFoundWarning(prop.container, "Container", prop_id, view_entity.as_id(), "View"),
+                PropertyNotFoundWarning(prop.container, "container", prop_id, view_entity.as_id(), "view"),
             )
             return None
         if not isinstance(
@@ -345,7 +345,7 @@ class DMSImporter(BaseImporter):
             | MultiReverseDirectRelationApply,
         ):
             self.issue_list.append(
-                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "View", prop_id, type(prop).__name__)
+                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "view", prop_id, type(prop).__name__)
             )
             return None
 
@@ -411,7 +411,7 @@ class DMSImporter(BaseImporter):
                 return DataType.load(container_prop.type._type)
         else:
             self.issue_list.append(
-                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "View", prop_id, type(prop).__name__)
+                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "view", prop_id, type(prop).__name__)
             )
             return None
 
@@ -472,7 +472,7 @@ class DMSImporter(BaseImporter):
             else:
                 self.issue_list.append(
                     PropertyTypeNotSupportedWarning[dm.ContainerId](
-                        prop.container, "Container", prop_id, type(constraint_obj).__name__
+                        prop.container, "container", prop_id, type(constraint_obj).__name__
                     )
                 )
         return unique_constraints or None

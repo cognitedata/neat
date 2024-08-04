@@ -27,7 +27,7 @@ class AssetPostValidation(InformationPostValidation):
                     self.issue_list.append(
                         InvalidPropertyDefinitionError[ClassEntity](
                             property_.class_,
-                            "Class",
+                            "class",
                             property_.property_,
                             "parentExternalId is only allowed to "
                             f"point to a Class not {type(property_.value_type).__name__}",

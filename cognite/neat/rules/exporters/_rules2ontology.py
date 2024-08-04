@@ -111,7 +111,7 @@ class Ontology(OntologyModel):
                 errors.append(
                     DuplicatedPropertyDefinitionsError(
                         class_,
-                        "Class",
+                        "class",
                         property_,
                         frozenset({str(definition[1].value_type) for definition in definitions}),
                         tuple(definition[0] for definition in definitions),
@@ -322,7 +322,7 @@ class OWLProperty(OntologyModel):
         if len(property_ids) != 1:
             raise InvalidPropertyDefinitionError(
                 definitions[0].class_,
-                "Class",
+                "class",
                 definitions[0].property_,
                 "All definitions should have the same property_id! Definitions have different property_id:"
                 f"{humanize_collection(property_ids)}",

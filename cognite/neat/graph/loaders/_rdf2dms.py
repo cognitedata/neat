@@ -69,7 +69,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
         except Exception as e:
             issues.append(
-                ResourceNotFoundError(identifier=repr(data_model_id), resource_type="Data Model", reason=str(e))
+                ResourceNotFoundError(identifier=repr(data_model_id), resource_type="data model", reason=str(e))
             )
 
         return cls(graph_store, data_model, instance_space, {}, issues)
@@ -113,7 +113,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
-                    error = InvalidResourceError(resource_type="node", identifier=identifier, reason=str(e))
+                    error = InvalidResourceError("node", identifier, reason=str(e))
                     tracker.issue(error)
                     if stop_on_exception:
                         raise error from e
@@ -163,7 +163,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                         issues.append(
                             PropertyTypeNotSupportedWarning(
                                 view.as_id(),
-                                "View",
+                                "view",
                                 prop_name,
                                 prop.type._type,
                             )

@@ -205,7 +205,7 @@ class _DTDLConverter:
                 # Falling back to json
                 self.issues.append(
                     MissingIdentifierError(
-                        "Unknown",
+                        "unknown",
                         item.target.model_dump(),
                     )
                 )
@@ -295,7 +295,7 @@ class _DTDLConverter:
             self.issues.append(
                 PropertyTypeNotSupportedWarning(
                     item.id_.model_dump() if item.id_ else item.display_name or "missing",
-                    item.type,
+                    item.type,  # type: ignore[arg-type]
                     "schema",
                     input_type.type if input_type else "missing",
                 )

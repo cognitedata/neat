@@ -319,7 +319,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         try:
             data_models = loader.client.data_modeling.data_models.list(space=space, limit=25, all_versions=False)
         except CogniteAPIError as e:
-            warnings.warn(FailedRetrievingResourcesWarning(frozenset({space}), "Space", str(e)), stacklevel=2)
+            warnings.warn(FailedRetrievingResourcesWarning(frozenset({space}), "space", str(e)), stacklevel=2)
             return []
         else:
             return [

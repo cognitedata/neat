@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Generic
 
+from cognite.neat.issues._base import ResourceType
+
 from ._resources import ResourceError, T_Identifier, T_ReferenceIdentifier
 
 
@@ -13,7 +15,7 @@ class PropertyNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIden
 
     property_name: str
     referred_by: T_ReferenceIdentifier | None = None
-    referred_type: str | None = None
+    referred_type: ResourceType | None = None
 
 
 @dataclass(frozen=True)

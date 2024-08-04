@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Generic
 
-from cognite.neat.issues._base import NeatError, T_Identifier, T_ReferenceIdentifier
+from cognite.neat.issues._base import NeatError, ResourceType, T_Identifier, T_ReferenceIdentifier
 from cognite.neat.utils.text import humanize_collection
 
 
@@ -10,7 +10,7 @@ class ResourceError(NeatError, Generic[T_Identifier], RuntimeError):
     """Base class for resource errors {resource_type} with identifier {identifier}"""
 
     identifier: T_Identifier
-    resource_type: str
+    resource_type: ResourceType
 
 
 @dataclass(frozen=True)
@@ -37,7 +37,7 @@ class ReferredResourceNotFoundError(ResourceError, Generic[T_Identifier, T_Refer
     fix = "Create the {resource_type}"
 
     referred_by: T_ReferenceIdentifier
-    referred_type: str
+    referred_type: ResourceType
 
 
 @dataclass(frozen=True)
@@ -77,7 +77,7 @@ class InvalidResourceError(NeatError, Generic[T_Identifier], ValueError):
 
     fix = "Check the error message and correct the instance."
 
-    resource_type: str
+    resource_type: ResourceType
     identifier: T_Identifier
     reason: str
 
@@ -86,7 +86,7 @@ class InvalidResourceError(NeatError, Generic[T_Identifier], ValueError):
 class MissingIdentifierError(NeatError, ValueError):
     """The {resource_type} with name {name} is missing an identifier."""
 
-    resource_type: str
+    resource_type: ResourceType
     name: str | None = None
 
 

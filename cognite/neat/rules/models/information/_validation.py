@@ -61,7 +61,7 @@ class InformationPostValidation:
         for class_ in dangling_classes:
             self.issue_list.append(
                 InvalidResourceError[ClassEntity](
-                    resource_type="Class",
+                    resource_type="class",
                     identifier=class_,
                     reason="Class has no properties and is not a parent of any class with properties",
                 )
@@ -78,7 +78,7 @@ class InformationPostValidation:
                 # Todo: include row and column number
                 self.issue_list.append(
                     ResourceNotDefinedError[ClassEntity](
-                        resource_type="Class",
+                        resource_type="class",
                         identifier=parent,
                         location="Classes sheet",
                     )
@@ -96,7 +96,7 @@ class InformationPostValidation:
             for class_ in missing_classes:
                 self.issue_list.append(
                     ResourceNotDefinedError[ClassEntity](
-                        resource_type="Class",
+                        resource_type="class",
                         identifier=class_,
                         location="Classes sheet",
                     )
@@ -109,7 +109,7 @@ class InformationPostValidation:
                 for class_ in missing_classes:
                     self.issue_list.append(
                         ResourceNotDefinedError[ClassEntity](
-                            resource_type="Class",
+                            resource_type="class",
                             identifier=class_,
                             location="Classes sheet",
                         )
@@ -132,7 +132,7 @@ class InformationPostValidation:
             for missing in missing_value_types:
                 self.issue_list.append(
                     ResourceNotDefinedError[ClassEntity](
-                        resource_type="Class",
+                        resource_type="class",
                         identifier=cast(ClassEntity, missing),
                         location="Classes sheet",
                     )
@@ -145,8 +145,8 @@ class InformationPostValidation:
                 # Todo: include row and column number
                 for missing in missing_value_types:
                     self.issue_list.append(
-                        ResourceNotDefinedError[ClassEntity](
-                            resource_type="Class",
+                        ResourceNotDefinedError(
+                            resource_type="class",
                             identifier=cast(ClassEntity, missing),
                             location="Classes sheet",
                         )

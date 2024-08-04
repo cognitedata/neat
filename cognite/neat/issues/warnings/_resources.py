@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Generic
 
-from cognite.neat.issues._base import NeatWarning, T_Identifier, T_ReferenceIdentifier
+from cognite.neat.issues._base import NeatWarning, ResourceType, T_Identifier, T_ReferenceIdentifier
 
 
 # Name NeatResourceWarning to avoid conflicts with the built-in ResourceWarning
@@ -10,7 +10,7 @@ class NeatResourceWarning(NeatWarning, Generic[T_Identifier]):
     """Base class for resource warnings {resource_type} with identifier {identifier}"""
 
     identifier: T_Identifier
-    resource_type: str
+    resource_type: ResourceType
 
 
 @dataclass(frozen=True)
@@ -31,7 +31,7 @@ class DuplicatedResourcesWarning(NeatWarning, Generic[T_Identifier]):
     fix = "Remove the duplicate resources"
 
     resources: frozenset[T_Identifier]
-    resource_type: str
+    resource_type: ResourceType
     default_action: str
 
 
@@ -45,11 +45,11 @@ class FailedRetrievingResourcesWarning(NeatWarning, Generic[T_Identifier]):
     fix = "Check the error."
 
     resources: frozenset[T_Identifier]
-    resource_type: str
+    resource_type: ResourceType
     error: str | None = None
 
 
 class ResourceTypeNotSupportedWarning(NeatResourceWarning[T_Identifier]):
     """The {resource_type} with identifier {identifier} is not supported. This will be ignored."""
 
-    ...
+    resource_type: str  # type: ignore[assignment]
