@@ -78,7 +78,7 @@ class _DTDLConverter:
             convert_method(item, parent)
         else:
             self.issues.append(
-                ResourceTypeNotSupportedWarning[str](
+                ResourceTypeNotSupportedWarning(
                     item.id_.model_dump() if item.id_ else item.display_name or "missing",
                     item.type,
                 ),

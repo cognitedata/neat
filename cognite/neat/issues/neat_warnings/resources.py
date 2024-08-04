@@ -25,18 +25,19 @@ class ResourceNotFoundWarning(NeatResourceWarning, Generic[T_Identifier, T_Refer
 
 
 @dataclass(frozen=True)
-class MultipleResourcesWarning(NeatWarning, Generic[T_Identifier]):
-    """Multiple resources of type {resource_type} with identifiers {resources} were found. This will be ignored."""
+class DuplicatedResourcesWarning(NeatWarning, Generic[T_Identifier]):
+    """Duplicated {resource_type} with identifiers {resources} were found. {default_action}"""
 
     fix = "Remove the duplicate resources"
 
     resources: frozenset[T_Identifier]
     resource_type: str
+    default_action: str
 
 
 @dataclass(frozen=True)
-class FailedLoadingResourcesWarning(NeatWarning, Generic[T_Identifier]):
-    """Failed to load resources of type {resource_type} with identifiers {resources}. Continuing without
+class FailedRetrievingResourcesWarning(NeatWarning, Generic[T_Identifier]):
+    """Failed to retrieve {resource_type} with identifiers {resources}. Continuing without
     these resources."""
 
     extra = "The error was: {error}"

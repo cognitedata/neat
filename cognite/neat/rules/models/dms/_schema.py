@@ -35,8 +35,8 @@ from cognite.neat.issues.errors import (
     ResourceNotFoundError,
 )
 from cognite.neat.issues.neat_warnings import (
-    FailedLoadingResourcesWarning,
-    MultipleResourcesWarning,
+    DuplicatedResourcesWarning,
+    FailedRetrievingResourcesWarning,
     ResourceNotFoundWarning,
     UnexpectedFileTypeWarning,
 )
@@ -175,7 +175,7 @@ class DMSSchema:
                 )
             connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
             if failed := connection_referenced_view_ids - set(connection_referenced_views.as_ids()):
-                warnings.warn(FailedLoadingResourcesWarning(frozenset(failed), "View"), stacklevel=2)
+                warnings.warn(FailedRetrievingResourcesWarning(frozenset(failed), "View"), stacklevel=2)
             views.extend(connection_referenced_views)
 
         # We need to include parent views in the schema to make sure that the schema is valid.
@@ -432,13 +432,25 @@ class DMSSchema:
             if items := data_dict.get(attr.name) or data_dict.get(to_camel(attr.name)):
                 if attr.name == "data_model":
                     if isinstance(items, list) and len(items) > 1:
-                        warnings.warn(
-                            MultipleResourcesWarning[str](
-                                frozenset([item.get("externalId", "Unknown") for item in items]),
-                                "DataModel",
-                            ),
-                            stacklevel=2,
-                        )
+                        try:
+                            data_model_ids = [dm.DataModelId.load(item) for item in items]
+                        except Exception as e:
+                            data_model_file = context.get(attr.name, [Path("UNKNOWN")])[0]
+                            warnings.warn(
+                                UnexpectedFileTypeWarning(
+                                    data_model_file, frozenset([dm.DataModelApply.__name__]), str(e)
+                                ),
+                                stacklevel=2,
+                            )
+                        else:
+                            warnings.warn(
+                                DuplicatedResourcesWarning(
+                                    frozenset(data_model_ids),
+                                    "DataModel",
+                                    "Will use the first DataModel.",
+                                ),
+                                stacklevel=2,
+                            )
                     item = items[0] if isinstance(items, list) else items
                     try:
                         loaded[attr.name] = dm.DataModelApply.load(item)
