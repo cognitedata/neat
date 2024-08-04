@@ -38,6 +38,16 @@ class ResourceNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIden
 
     referred_by: T_ReferenceIdentifier | None = None
     referred_type: ResourceType | None = None
+    more: str | None = None
+
+    def as_message(self) -> str:
+        msg = (self.__doc__ or "").format(resource_type=self.resource_type, identifier=self.identifier)
+        if self.referred_by and self.referred_type:
+            msg += self.extra.format(referred_type=self.referred_type, referred_by=self.referred_by)
+        if self.more:
+            msg += f" {self.more}"
+        msg += f" Fix {self.fix.format(resource_type=self.resource_type, identifier=self.identifier)}"
+        return msg
 
 
 @dataclass(frozen=True)
@@ -62,11 +72,10 @@ class ResourceNotDefinedError(ResourceError[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class FailedConvertError(NeatError, ValueError):
+class ResourceConvertionError(ResourceError, ValueError):
     """Failed to convert the {identifier} to {target_format}: {reason}"""
 
     fix = "Check the error message and correct the rules."
-    identifier: str
     target_format: str
     reason: str
 
@@ -79,6 +88,13 @@ class ResourceValueError(ResourceError[T_Identifier], ValueError):
     fix = "Check the error message and correct the instance."
 
     reason: str
+
+
+@dataclass(frozen=True)
+class ResourceCreationError(ResourceError[T_Identifier]):
+    """Failed to create {resource_type} with identifier {identifier}. The error was: {error}"""
+
+    error: str
 
 
 @dataclass(frozen=True)

@@ -17,7 +17,12 @@ from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 from cognite.neat.graph._tracking import LogTracker, Tracker
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors import FailedConvertError, ResourceValueError, RetrievalResourceError
+from cognite.neat.issues.errors import (
+    ResourceConvertionError,
+    ResourceCreationError,
+    ResourceValueError,
+    RetrievalResourceError,
+)
 from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
@@ -80,8 +85,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             data_model = rules.as_schema().as_read_model()
         except Exception as e:
             issues.append(
-                FailedConvertError(
+                ResourceConvertionError(
                     identifier=rules.metadata.as_identifier(),
+                    resource_type="DMS Rules",
                     target_format="read DMS model",
                     reason=str(e),
                 )
@@ -111,7 +117,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
-                    error = ResourceValueError("node", identifier, reason=str(e))
+                    error = ResourceCreationError(identifier, "node", error=str(e))
                     tracker.issue(error)
                     if stop_on_exception:
                         raise error from e
