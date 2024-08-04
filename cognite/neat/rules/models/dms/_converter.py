@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, cast
 
 from rdflib import Namespace
 
-from cognite.neat.issues.neat_warnings.models import UserModelingWarning
+from cognite.neat.issues.neat_warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat.rules.models._base import SheetList
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.domain import DomainRules
@@ -123,11 +123,7 @@ class _DMSRulesConverter:
             return None
         if len(parents_other_namespace) > 1:
             warnings.warn(
-                UserModelingWarning(
-                    "Multiple parents in different spaces",
-                    f"The view {view.view.as_id()} has multiple parents in different space",
-                    "Neat recommends maximum one implementation of a view from another space",
-                ),
+                ParentInDifferentSpaceWarning(view.view.as_id()),
                 stacklevel=2,
             )
         other_parent = parents_other_namespace[0]

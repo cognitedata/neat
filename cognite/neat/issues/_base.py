@@ -45,6 +45,17 @@ class NeatIssue:
         template = self.__doc__
         if not template:
             return "Missing"
+        variables, has_all_optional = self._get_variables()
+
+        msg = template.format(**variables)
+        if self.extra and has_all_optional:
+            msg += "\n" + self.extra.format(**variables)
+        if self.fix:
+            msg += f"\nFix: {self.fix.format(**variables)}"
+        name = type(self).__name__
+        return f"{name}: {msg}"
+
+    def _get_variables(self) -> tuple[dict[str, str], bool]:
         variables: dict[str, str] = {}
         has_all_optional = True
         for name, var_ in vars(self).items():
@@ -58,13 +69,7 @@ class NeatIssue:
                 variables[name] = humanize_collection(var_)
             else:
                 variables[name] = repr(var_)
-
-        msg = template.format(**variables)
-        if self.extra and has_all_optional:
-            msg += "\n" + self.extra.format(**variables)
-        if self.fix:
-            msg += f"\nFix: {self.fix.format(**variables)}"
-        return msg
+        return variables, has_all_optional
 
     def dump(self) -> dict[str, Any]:
         """Return a dictionary representation of the issue."""

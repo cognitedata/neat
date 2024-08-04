@@ -1,14 +1,8 @@
-import sys
 from abc import ABC
 from dataclasses import dataclass
 from typing import ClassVar
 
 from cognite.neat.issues import NeatWarning
-
-if sys.version_info >= (3, 11):
-    pass
-else:
-    pass
 
 _BASE_URL = "https://cognite-neat.readthedocs-hosted.com/en/latest/data-modeling-principles.html"
 
@@ -67,14 +61,12 @@ class SolutionBuildsOnEnterpriseWarning(BreakingModelingPrincipleWarning):
 
 
 @dataclass(frozen=True)
-class UserModelingWarning(NeatWarning):
-    """{title}: {problem}. {explanation}"""
+class UserModelingWarning(NeatWarning, ABC):
+    """This is a generic warning for user modeling issues.
+    These warnings will not cause the resulting model to be invalid, but
+    will likely lead to suboptimal performance, unnecessary complexity, or other issues."""
 
-    extra = "Suggestion: {suggestion}"
-    title: str
-    problem: str
-    explanation: str
-    suggestion: str | None = None
+    ...
 
 
 @dataclass(frozen=True)

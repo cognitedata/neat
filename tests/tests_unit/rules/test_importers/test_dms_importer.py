@@ -4,7 +4,7 @@ from typing import cast
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat.issues.neat_warnings.models import UserModelingWarning
+from cognite.neat.issues.neat_warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.importers import DMSImporter, ExcelImporter
 from cognite.neat.rules.models import DMSRules, DMSSchema, RoleTypes
 from tests.config import DOC_RULES
@@ -17,13 +17,7 @@ class TestDMSImporter:
         rules, issues = importer.to_rules(errors="continue")
 
         assert len(issues) == 1
-        assert issues[0] == UserModelingWarning(
-            "DirectRelationMissingSource",
-            f"The view {dm.ViewId('neat', 'OneView', '1')!r}.direct is a direct " f"relation without a source",
-            "Direct relations in views should point to a single other view, if not,"
-            "you end up with a more complex schema than necessary.",
-            "Create the source view",
-        )
+        assert issues[0] == DirectRelationMissingSourceWarning(dm.ViewId("neat", "OneView", "1"), "direct")
         dms_rules = cast(DMSRules, rules)
         dump_dms = dms_rules.dump()
         assert dump_dms["properties"][0]["value_type"] == "#N/A"

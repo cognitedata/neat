@@ -8,10 +8,9 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
-from cognite.neat.issues.errors.properties import PropertyNotFoundError
-from cognite.neat.issues.errors.resources import DuplicatedResourceError, ReferredResourceNotFoundError
-from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
-from cognite.neat.issues.neat_warnings.models import UserModelingWarning
+from cognite.neat.issues.errors import DuplicatedResourceError, PropertyNotFoundError, ReferredResourceNotFoundError
+from cognite.neat.issues.neat_warnings import UnexpectedFileTypeWarning
+from cognite.neat.issues.neat_warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models import DMSSchema
 from cognite.neat.rules.models.dms import PipelineSchema
 from cognite.neat.utils.cdf.data_classes import (
@@ -157,18 +156,15 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=ContainerApplyDict([container]),
         ),
         [
-            ReferredResourceNotFoundError[str, dm.ContainerId](
+            ReferredResourceNotFoundError(
                 identifier="non_existing_space",
                 resource_type="Space",
                 referred_by=dm.ContainerId("non_existing_space", "my_container"),
                 referred_type="Container",
             ),
-            UserModelingWarning(
-                "DirectRelationMissingSource",
-                f"The view {dm.ViewId('my_space', 'my_view1', '1')!r}.direct is a direct relation without a source",
-                "Direct relations in views should point to a single other view, if not,"
-                "you end up with a more complex schema than necessary.",
-                "Create the source view",
+            DirectRelationMissingSourceWarning(
+                dm.ViewId("my_space", "my_view1", "1"),
+                "direct",
             ),
         ],
         id="Missing space, and direct relation missing source",

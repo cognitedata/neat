@@ -26,17 +26,21 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.data_classes.transformations.common import Edges, EdgeType, Nodes, ViewInfo
 
 from cognite.neat.issues import NeatError
-from cognite.neat.issues.errors.external import InvalidYamlError
-from cognite.neat.issues.errors.properties import PropertyNotFoundError
-from cognite.neat.issues.errors.resources import (
+from cognite.neat.issues.errors import (
     DuplicatedMappingError,
     DuplicatedResourceError,
+    InvalidYamlError,
+    PropertyNotFoundError,
     ReferredResourceNotFoundError,
     ResourceNotFoundError,
 )
-from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
-from cognite.neat.issues.neat_warnings.models import UserModelingWarning
-from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
+from cognite.neat.issues.neat_warnings import (
+    FailedLoadingResourcesWarning,
+    MultipleResourcesWarning,
+    ReferredResourceNotFoundWarning,
+    UnexpectedFileTypeWarning,
+)
+from cognite.neat.issues.neat_warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.cdf.data_classes import (
     CogniteResourceDict,
@@ -166,16 +170,12 @@ class DMSSchema:
         if connection_referenced_view_ids:
             for view_id in connection_referenced_view_ids:
                 warnings.warn(
-                    UserModelingWarning(
-                        "Missing connection referenced view",
-                        f"The view {view_id} is referenced by a connection in the data model, {data_model.as_id()}",
-                        "Add the view to the data model",
-                    ),
+                    ReferredResourceNotFoundWarning(view_id, "View", data_model_write.as_id(), "DataModel"),
                     stacklevel=2,
                 )
             connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
             if failed := connection_referenced_view_ids - set(connection_referenced_views.as_ids()):
-                warnings.warn(FailedLoadingResourcesWarning[dm.ViewId](frozenset(failed), "View"), stacklevel=2)
+                warnings.warn(FailedLoadingResourcesWarning(frozenset(failed), "View"), stacklevel=2)
             views.extend(connection_referenced_views)
 
         # We need to include parent views in the schema to make sure that the schema is valid.
@@ -578,13 +578,7 @@ class DMSSchema:
 
                         if isinstance(container_property.type, dm.DirectRelation) and prop.source is None:
                             warnings.warn(
-                                UserModelingWarning(
-                                    "DirectRelationMissingSource",
-                                    f"The view {view_id}.{prop_name} is a direct relation without a source",
-                                    "Direct relations in views should point to a single other view, if not,"
-                                    "you end up with a more complex schema than necessary.",
-                                    "Create the source view",
-                                ),
+                                DirectRelationMissingSourceWarning(view_id, prop_name),
                                 stacklevel=2,
                             )
 
