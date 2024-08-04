@@ -9,7 +9,7 @@ from rdflib import Literal as RdfLiteral
 from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors.external import FileReadError
+from cognite.neat.issues.errors import FileReadError
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
 from cognite.neat.rules.models import InformationRules, RoleTypes
 from cognite.neat.rules.models._base import MatchType

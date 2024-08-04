@@ -22,7 +22,7 @@ class FileMissingRequiredFieldWarning(NeatWarning):
 
 
 @dataclass(frozen=True)
-class UnexpectedFileTypeWarning(NeatWarning):
+class FileTypeUnexpectedWarning(NeatWarning):
     """Unexpected file type: {filepath}. Expected format: {expected_format}"""
 
     extra = "Error: {error_message}"
@@ -33,8 +33,8 @@ class UnexpectedFileTypeWarning(NeatWarning):
 
 
 @dataclass(frozen=True)
-class UnknownItemWarning(NeatWarning):
-    """Unknown item {item} in {filepath}. The item will be skipped"""
+class FileItemNotSupportedWarning(NeatWarning):
+    """The item {item} in {filepath} is not supported. The item will be skipped"""
 
     item: str
     filepath: Path

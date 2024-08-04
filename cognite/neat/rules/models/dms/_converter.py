@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, cast
 
 from rdflib import Namespace
 
-from cognite.neat.issues.neat_warnings.user_modeling import ParentInDifferentSpaceWarning
+from cognite.neat.issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat.rules.models._base import SheetList
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.domain import DomainRules

@@ -9,7 +9,7 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 
-from .models import UserModelingWarning
+from ._models import UserModelingWarning
 
 __all__ = [
     "DirectRelationMissingSourceWarning",

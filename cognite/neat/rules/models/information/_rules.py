@@ -8,7 +8,7 @@ from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
-from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
+from cognite.neat.issues.errors import PropertyDefinitionError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
     BaseRules,
@@ -226,7 +226,7 @@ class InformationProperty(SheetEntity):
                         self.default = self.value_type.python(self.default)
 
                 except Exception:
-                    raise InvalidPropertyDefinitionError[ClassEntity](
+                    raise PropertyDefinitionError(
                         self.class_,
                         "Class",
                         self.property_,

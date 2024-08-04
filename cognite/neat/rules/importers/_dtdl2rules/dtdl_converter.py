@@ -2,10 +2,12 @@ from collections import Counter
 from collections.abc import Callable, Sequence
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.errors.properties import PropertyTypeNotSupportedError
-from cognite.neat.issues.errors.resources import MissingIdentifierError, ResourceNotFoundError
-from cognite.neat.issues.neat_warnings.properties import PropertyTypeNotSupportedWarning
-from cognite.neat.issues.neat_warnings.resources import ResourceTypeNotSupportedWarning
+from cognite.neat.issues.errors import (
+    PropertyTypeNotSupportedError,
+    ResourceMissingIdentifierError,
+    ResourceNotFoundError,
+)
+from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
 from cognite.neat.rules.importers._dtdl2rules.spec import (
     DTMI,
     Command,
@@ -78,8 +80,8 @@ class _DTDLConverter:
             convert_method(item, parent)
         else:
             self.issues.append(
-                ResourceTypeNotSupportedWarning[str](
-                    item.id_.model_dump() if item.id_ else item.display_name or "missing",
+                ResourceTypeNotSupportedWarning(
+                    item.identifier_with_fallback,
                     item.type,
                 ),
             )
@@ -134,8 +136,11 @@ class _DTDLConverter:
 
     def _missing_parent_warning(self, item: DTDLBaseWithName):
         self.issues.append(
-            ResourceNotFoundError[str](
-                (item.id_.model_dump() if item.id_ else item.display_name) or "missing", item.type, "parent missing"
+            ResourceNotFoundError(
+                "UNKNOWN",
+                "parent",
+                item.identifier_with_fallback,
+                item.type,
             )
         )
 
@@ -152,7 +157,7 @@ class _DTDLConverter:
         if item.request is None:
             self.issues.append(
                 ResourceTypeNotSupportedWarning[str](
-                    item.id_.model_dump() if item.id_ else item.display_name or "missing",
+                    item.identifier_with_fallback,
                     f"{item.type}.request",
                 ),
             )
@@ -206,8 +211,8 @@ class _DTDLConverter:
             else:
                 # Falling back to json
                 self.issues.append(
-                    MissingIdentifierError(
-                        "Unknown",
+                    ResourceMissingIdentifierError(
+                        "unknown",
                         item.target.model_dump(),
                     )
                 )
@@ -231,7 +236,7 @@ class _DTDLConverter:
     def convert_object(self, item: Object, _: str | None) -> None:
         if item.id_ is None:
             self.issues.append(
-                MissingIdentifierError(
+                ResourceMissingIdentifierError(
                     resource_type=item.type,
                     name=item.display_name,
                 )
@@ -272,8 +277,8 @@ class _DTDLConverter:
             return _DATA_TYPE_BY_NAME[input_type.casefold()]()
         elif isinstance(input_type, str):
             self.issues.append(
-                PropertyTypeNotSupportedError[str](
-                    (item.id_.model_dump() if item.id_ else item.display_name) or "missing",
+                PropertyTypeNotSupportedError(
+                    item.identifier_with_fallback,
                     item.type,
                     "schema",
                     input_type,
@@ -283,7 +288,7 @@ class _DTDLConverter:
         elif isinstance(input_type, Object | Interface):
             if input_type.id_ is None:
                 self.issues.append(
-                    MissingIdentifierError(
+                    ResourceMissingIdentifierError(
                         input_type.type,
                         input_type.display_name,
                     )
@@ -296,8 +301,8 @@ class _DTDLConverter:
         else:
             self.issues.append(
                 PropertyTypeNotSupportedWarning(
-                    item.id_.model_dump() if item.id_ else item.display_name or "missing",
-                    item.type,
+                    item.identifier_with_fallback,
+                    item.type,  # type: ignore[arg-type]
                     "schema",
                     input_type.type if input_type else "missing",
                 )

@@ -5,12 +5,15 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
 
 from cognite.neat.issues import IssueList
-from cognite.neat.issues._base import InvalidRowError
-from cognite.neat.issues.errors.external import NeatFileNotFoundError
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
-from cognite.neat.issues.neat_warnings.models import (
-    HasDataFilterLimitWarning,
-    ViewContainerLimitWarning,
+from cognite.neat.issues.errors import (
+    FileNotFoundNeatError,
+    PropertyDefinitionDuplicatedError,
+    ResourceNotDefinedError,
+    RowError,
+)
+from cognite.neat.issues.warnings import (
+    NotSupportedHasDataFilterLimitWarning,
+    NotSupportedViewContainerLimitWarning,
 )
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
@@ -21,7 +24,7 @@ from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 def invalid_rules_filepaths():
     yield pytest.param(
         DOC_RULES / "not-existing.xlsx",
-        IssueList([NeatFileNotFoundError(DOC_RULES / "not-existing.xlsx")]),
+        IssueList([FileNotFoundNeatError(DOC_RULES / "not-existing.xlsx")]),
         id="Not existing file",
     )
     major, minor, *_ = VERSION.split(".")
@@ -30,7 +33,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "invalid_property_dms_rules.xlsx",
         IssueList(
             [
-                InvalidRowError(
+                RowError(
                     sheet_name="Properties",
                     column="Is List",
                     row=4,
@@ -48,9 +51,9 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "inconsistent_container_dms_rules.xlsx",
         IssueList(
             [
-                MultiplePropertyDefinitionsError(
+                PropertyDefinitionDuplicatedError(
                     ContainerId("neat", "Flowable"),
-                    "Container",
+                    "container",
                     "maxFlow",
                     frozenset({"float32", "float64"}),
                     (3, 4),
@@ -66,7 +69,7 @@ def invalid_rules_filepaths():
             [
                 ResourceNotDefinedError(
                     ViewId("neat", "Pump", "1"),
-                    "View",
+                    "view",
                     location="Views Sheet",
                     column_name="View",
                     row_number=3,
@@ -74,7 +77,7 @@ def invalid_rules_filepaths():
                 ),
                 ResourceNotDefinedError(
                     ContainerId("neat", "Pump"),
-                    "Container",
+                    "container",
                     location="Containers Sheet",
                     column_name="Container",
                     row_number=3,
@@ -88,11 +91,11 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "too_many_containers_per_view.xlsx",
         IssueList(
             [
-                ViewContainerLimitWarning(
+                NotSupportedViewContainerLimitWarning(
                     ViewId(space="neat", external_id="Asset", version="1"),
                     11,
                 ),
-                HasDataFilterLimitWarning(
+                NotSupportedHasDataFilterLimitWarning(
                     ViewId(space="neat", external_id="Asset", version="1"),
                     11,
                 ),

@@ -11,7 +11,8 @@ from cognite.neat.graph.extractors import RdfFileExtractor
 from cognite.neat.graph.loaders import AssetLoader
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformers import AddSelfReferenceProperty
-from cognite.neat.issues.errors.resources import InvalidResourceError
+from cognite.neat.issues import NeatError
+from cognite.neat.issues.errors import ResourceCreationError
 from cognite.neat.rules.models import AssetRules
 
 
@@ -37,7 +38,7 @@ class TestAssetLoader:
         relationships = []
         errors = []
         for r in loader.load():
-            if isinstance(r, InvalidResourceError):
+            if isinstance(r, ResourceCreationError):
                 errors.append(r)
             elif isinstance(r, AssetWrite):
                 assets.append(r)
@@ -68,12 +69,14 @@ class TestAssetLoader:
         relationships = []
         errors = []
         for r in result:
-            if isinstance(r, InvalidResourceError):
+            if isinstance(r, NeatError):
                 errors.append(r)
             elif isinstance(r, AssetWrite):
                 assets.append(r)
             elif isinstance(r, RelationshipWrite):
                 relationships.append(r)
+            else:
+                raise ValueError(f"Unexpected result: {r}")
 
         assert len(errors) == 26
         assert len(assets) == 630

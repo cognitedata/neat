@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from dataclasses import fields, is_dataclass
 from pathlib import Path
 from types import GenericAlias, UnionType
-from typing import Any, TypeVar, get_args
+from typing import Any, Literal, TypeVar, Union, get_args, get_origin
 
 import pytest
 from _pytest.mark import ParameterSet
@@ -16,7 +16,7 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from rdflib import Namespace
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
-from cognite.neat.issues.errors import ChangedResourceError
+from cognite.neat.issues.errors import ResourceChangedError, ResourceNotFoundError
 
 T_Type = TypeVar("T_Type", bound=type)
 
@@ -56,14 +56,18 @@ class IssuesCreator:
             return [("Class", "Property")]
         elif isinstance(type_, GenericAlias):
             return self._create_values(type_)
-        elif isinstance(type_, UnionType):
-            return self._create_value(type_.__args__[0])
+        elif isinstance(type_, UnionType) or get_origin(type_) is Union:
+            args = get_args(type_)
+            return self._create_value(args[0])
         elif type(type_) is TypeVar or any(type(arg) is TypeVar for arg in get_args(type_)):
             return "typevar"
         elif type_ is ViewId:
             return ViewId("namespace", "class", "version")
         elif type_ is ContainerId:
             return ContainerId("namespace", "class")
+        elif get_origin(type_) is Literal:
+            args = get_args(type_)
+            return args[0]
         else:
             raise NotImplementedError(f"Type {type_} not implemented.")
 
@@ -155,7 +159,7 @@ class TestIssuesMeta:
                     if f"{{{field.name}}}" not in (issue.__doc__ or "") and field.default is not None
                 ]
                 # Exclude ChangedResourceError as it has a custom as_message method.
-                and issue not in {ChangedResourceError}
+                and issue not in {ResourceChangedError}
             )
         ]
         assert missing_variables == [], f"Variables missing in docstring: {missing_variables}"
@@ -166,6 +170,8 @@ class TestIssuesMeta:
             (issue.__name__, missing)
             for issue in issue_classes
             if issue.extra is not None
+            # Exception as it has a custom as_message method.
+            and issue not in {ResourceNotFoundError}
             and (
                 missing := [
                     field.name

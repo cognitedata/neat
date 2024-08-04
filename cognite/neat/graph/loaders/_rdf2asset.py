@@ -20,8 +20,8 @@ from cognite.client.exceptions import CogniteAPIError, CogniteDuplicatedError
 from cognite.neat.graph._tracking.base import Tracker
 from cognite.neat.graph._tracking.log import LogTracker
 from cognite.neat.graph.stores import NeatGraphStore
-from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors.resources import InvalidResourceError
+from cognite.neat.issues import IssueList, NeatError, NeatIssue, NeatIssueList
+from cognite.neat.issues.errors import ResourceCreationError, ResourceNotFoundError
 from cognite.neat.rules.analysis._asset import AssetAnalysis
 from cognite.neat.rules.models import AssetRules
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
@@ -122,6 +122,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
         tracker: Tracker,
         stop_on_exception: bool,
     ) -> Iterable[Any]:
+        error: NeatError
         for class_ in ordered_classes:
             tracker.start(repr(class_.id))
 
@@ -143,16 +144,14 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
                 # check on parent
                 if "parentExternalId" in fields and fields["parentExternalId"] not in self.processed_assets:
-                    error = InvalidResourceError[str](
-                        resource_type=EntityTypes.asset,
-                        identifier=identifier,
-                        reason=(
-                            f"Parent asset {fields['parentExternalId']} does not exist or failed creation"
-                            f""" {
-                                f', moving the asset {identifier} under orphanage {self.orphanage.external_id}'
-                                if self.orphanage
-                                else ''}"""
-                        ),
+                    error = ResourceNotFoundError(
+                        fields["parentExternalId"],
+                        EntityTypes.asset,
+                        identifier,
+                        EntityTypes.asset,
+                        f"Moving the asset {identifier} under orphanage {self.orphanage.external_id}"
+                        if self.orphanage
+                        else "",
                     )
                     tracker.issue(error)
                     if stop_on_exception:
@@ -171,9 +170,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
                     yield AssetWrite.load(fields)
                     self.processed_assets.add(identifier)
                 except KeyError as e:
-                    error = InvalidResourceError[str](
-                        resource_type=EntityTypes.asset, identifier=identifier, reason=str(e)
-                    )
+                    error = ResourceCreationError(identifier, EntityTypes.asset, error=str(e))
                     tracker.issue(error)
                     if stop_on_exception:
                         raise error from e
@@ -203,10 +200,10 @@ class AssetLoader(CDFLoader[AssetWrite]):
 
                 # check if source asset exists
                 if source_external_id not in self.processed_assets:
-                    error = InvalidResourceError[str](
+                    error = ResourceCreationError(
                         resource_type=EntityTypes.relationship,
                         identifier=source_external_id,
-                        reason=(
+                        error=(
                             f"Asset {source_external_id} does not exist! "
                             "Aborting creation of relationships which use this asset as the source."
                         ),
@@ -223,10 +220,10 @@ class AssetLoader(CDFLoader[AssetWrite]):
                         target_external_id = f"{self.external_id_prefix or ''}{target_external_id}"
                         # check if source asset exists
                         if target_external_id not in self.processed_assets:
-                            error = InvalidResourceError[str](
+                            error = ResourceCreationError(
                                 resource_type=EntityTypes.relationship,
                                 identifier=target_external_id,
-                                reason=(
+                                error=(
                                     f"Asset {target_external_id} does not exist! "
                                     f"Cannot create relationship between {source_external_id}"
                                     f" and {target_external_id}. "
@@ -250,10 +247,10 @@ class AssetLoader(CDFLoader[AssetWrite]):
                                 labels=[label] if self.use_labels else None,
                             )
                         except KeyError as e:
-                            error = InvalidResourceError[str](
+                            error = ResourceCreationError(
                                 resource_type=EntityTypes.relationship,
                                 identifier=external_id,
-                                reason=str(e),
+                                error=str(e),
                             )
                             tracker.issue(error)
                             if stop_on_exception:

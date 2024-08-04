@@ -2,9 +2,7 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 from cognite.neat.issues import IssueList
-from cognite.neat.issues._base import InvalidRowError
-from cognite.neat.issues.errors.properties import PropertyNotFoundError
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
+from cognite.neat.issues.errors import PropertyDefinitionDuplicatedError, PropertyNotFoundError, RowError
 from cognite.neat.issues.formatters import BasicHTML
 
 
@@ -12,7 +10,7 @@ from cognite.neat.issues.formatters import BasicHTML
 def issues() -> IssueList:
     return IssueList(
         [
-            InvalidRowError(
+            RowError(
                 sheet_name="Properties",
                 column="IsList",
                 row=4,
@@ -21,7 +19,7 @@ def issues() -> IssueList:
                 input="Apple",
                 url="https://errors.pydantic.dev/2.6/v/bool_parsing",
             ),
-            MultiplePropertyDefinitionsError[ContainerId](
+            PropertyDefinitionDuplicatedError[ContainerId](
                 ContainerId("neat", "Flowable"),
                 "Container",
                 "maxFlow",

@@ -16,10 +16,10 @@ from cognite.client.data_classes.data_modeling import (
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.issues import IssueList
-from cognite.neat.issues.neat_warnings import (
-    OneModelOneSpaceWarning,
+from cognite.neat.issues.warnings import (
+    PrincipleOneModelOneSpaceWarning,
+    ResourceRetrievalWarning,
 )
-from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning
 from cognite.neat.rules._shared import Rules
 from cognite.neat.rules.models import InformationRules
 from cognite.neat.rules.models.dms import DMSRules, DMSSchema, PipelineSchema
@@ -300,7 +300,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         if isinstance(loader, DataModelLoader):
             models = cast(list[DataModelApply], items)
             if other_models := self._exist_other_data_models(loader, models):
-                warning = OneModelOneSpaceWarning(
+                warning = PrincipleOneModelOneSpaceWarning(
                     f"There are multiple data models in the same space {models[0].space}. "
                     f"Other data models in the space are {other_models}.",
                 )
@@ -319,7 +319,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         try:
             data_models = loader.client.data_modeling.data_models.list(space=space, limit=25, all_versions=False)
         except CogniteAPIError as e:
-            warnings.warn(FailedLoadingResourcesWarning[str](frozenset({space}), "Space", str(e)), stacklevel=2)
+            warnings.warn(ResourceRetrievalWarning(frozenset({space}), "space", str(e)), stacklevel=2)
             return []
         else:
             return [

@@ -8,9 +8,9 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
-from cognite.neat.issues.errors import DuplicatedResourceError, PropertyNotFoundError, ReferredResourceNotFoundError
-from cognite.neat.issues.neat_warnings import UnexpectedFileTypeWarning
-from cognite.neat.issues.neat_warnings.user_modeling import DirectRelationMissingSourceWarning
+from cognite.neat.issues.errors import PropertyNotFoundError, ResourceDuplicatedError, ResourceNotFoundError
+from cognite.neat.issues.warnings import FileTypeUnexpectedWarning
+from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models import DMSSchema
 from cognite.neat.rules.models.dms import PipelineSchema
 from cognite.neat.utils.cdf.data_classes import (
@@ -39,16 +39,16 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             data_model=data_model,
         ),
         [
-            DuplicatedResourceError(
+            ResourceDuplicatedError(
                 identifier=dm.ViewId("my_space", "my_view1", "1"),
-                resource_type="View",
+                resource_type="view",
                 location=repr(dm.DataModelId("my_space", "my_data_model", "1")),
             ),
-            ReferredResourceNotFoundError[dm.ViewId, dm.DataModelId](
+            ResourceNotFoundError(
                 dm.ViewId("my_space", "my_view1", "1"),
-                "View",
+                "view",
                 dm.DataModelId("my_space", "my_data_model", "1"),
-                "DataModel",
+                "data model",
             ),
         ],
         id="Duplicated and missing view in data model",
@@ -104,18 +104,18 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=ContainerApplyDict([container]),
         ),
         [
-            ReferredResourceNotFoundError[dm.ContainerId, dm.ViewId](
+            ResourceNotFoundError(
                 dm.ContainerId("my_space", "does_not_exist"),
-                "Container",
+                "container",
                 dm.ViewId("my_space", "my_view1", "1"),
-                "View",
+                "view",
             ),
             PropertyNotFoundError(
                 dm.ContainerId("my_space", "my_container"),
-                "Container",
+                "container",
                 "non_existing",
                 dm.ViewId("my_space", "my_view1", "1"),
-                "View",
+                "view",
             ),
         ],
         id="Missing container and properties. Container property used multiple times.",
@@ -156,11 +156,11 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=ContainerApplyDict([container]),
         ),
         [
-            ReferredResourceNotFoundError(
+            ResourceNotFoundError(
                 identifier="non_existing_space",
-                resource_type="Space",
+                resource_type="space",
                 referred_by=dm.ContainerId("non_existing_space", "my_container"),
-                referred_type="Container",
+                referred_type="container",
             ),
             DirectRelationMissingSourceWarning(
                 dm.ViewId("my_space", "my_view1", "1"),
@@ -215,24 +215,24 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
         [
             PropertyNotFoundError(
                 dm.ViewId("my_space", "non_existing", "1"),
-                "View",
+                "view",
                 "implements",
                 dm.ViewId("my_space", "my_view1", "1"),
-                "View",
+                "view",
             ),
             PropertyNotFoundError(
                 dm.ViewId("my_space", "non_existing", "1"),
-                "View",
+                "view",
                 "non_existing",
                 dm.ViewId("my_space", "my_view1", "1"),
-                "View",
+                "view",
             ),
             PropertyNotFoundError(
                 dm.ViewId("my_space", "non_existing_edge_view", "1"),
-                "View",
+                "view",
                 "non_existing",
                 dm.ViewId("my_space", "my_view1", "1"),
-                "View",
+                "view",
             ),
         ],
         id="Missing parent view, edge view, and source view",
@@ -325,7 +325,7 @@ def invalid_raw_str_test_cases() -> Iterable[ParameterSet]:
         raw_str,
         {"views": [Path("my_view_file.yaml")]},
         [
-            UnexpectedFileTypeWarning(
+            FileTypeUnexpectedWarning(
                 Path("my_view_file.yaml"),
                 frozenset(["ViewApply"]),
                 "KeyError('externalId')",

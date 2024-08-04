@@ -19,13 +19,12 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.errors.external import UnexpectedFileTypeError
-from cognite.neat.issues.errors.resources import ResourceNotFoundError
-from cognite.neat.issues.neat_warnings.properties import (
+from cognite.neat.issues.errors import FileTypeUnexpectedError, ResourceMissingIdentifierError, ResourceRetrievalError
+from cognite.neat.issues.warnings import (
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
+    ResourceNotFoundWarning,
 )
-from cognite.neat.issues.neat_warnings.resources import ReferredResourceNotFoundWarning
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
 from cognite.neat.rules.models import (
     DataModelType,
@@ -109,9 +108,9 @@ class DMSImporter(BaseImporter):
             return cls(
                 DMSSchema(),
                 [
-                    ResourceNotFoundError[dm.DataModelId](
+                    ResourceRetrievalError(
                         dm.DataModelId.load(reference_model_id),  # type: ignore[arg-type]
-                        "DataModel",
+                        "data model",
                         "Data Model is missing in CDF",
                     )
                 ],
@@ -124,8 +123,8 @@ class DMSImporter(BaseImporter):
                 return cls(
                     DMSSchema(),
                     [
-                        ResourceNotFoundError[dm.DataModelId](
-                            dm.DataModelId.load(reference_model_id), "DataModel", "Data Model is missing in CDF"
+                        ResourceRetrievalError(
+                            dm.DataModelId.load(reference_model_id), "data model", "Data Model is missing in CDF"
                         )
                     ],
                 )
@@ -198,7 +197,7 @@ class DMSImporter(BaseImporter):
     @classmethod
     def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
         if Path(zip_file).suffix != ".zip":
-            return cls(DMSSchema(), [UnexpectedFileTypeError(Path(zip_file), frozenset([".zip"]))])
+            return cls(DMSSchema(), [FileTypeUnexpectedError(Path(zip_file), frozenset([".zip"]))])
         issue_list = IssueList()
         with _handle_issues(issue_list) as _:
             schema = DMSSchema.from_zip(zip_file)
@@ -220,7 +219,7 @@ class DMSImporter(BaseImporter):
             return self._return_or_raise(self.issue_list, errors)
 
         if not self.root_schema.data_model:
-            self.issue_list.append(ResourceNotFoundError[str]("Unknown", "DataModel", "Identifier is missing"))
+            self.issue_list.append(ResourceMissingIdentifierError("data model", type(self.root_schema).__name__))
             return self._return_or_raise(self.issue_list, errors)
         model = self.root_schema.data_model
         with _handle_issues(
@@ -321,11 +320,11 @@ class DMSImporter(BaseImporter):
     ) -> DMSProperty | None:
         if isinstance(prop, dm.MappedPropertyApply) and prop.container not in self._all_containers_by_id:
             self.issue_list.append(
-                ReferredResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
+                ResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
                     dm.ContainerId.load(prop.container),
-                    "Container",
+                    "container",
                     view_entity.to_property_id(prop_id),
-                    "View Property",
+                    "view property",
                 )
             )
             return None
@@ -334,7 +333,7 @@ class DMSImporter(BaseImporter):
             and prop.container_property_identifier not in self._all_containers_by_id[prop.container].properties
         ):
             self.issue_list.append(
-                PropertyNotFoundWarning(prop.container, "Container", prop_id, view_entity.as_id(), "View"),
+                PropertyNotFoundWarning(prop.container, "container", prop_id, view_entity.as_id(), "view"),
             )
             return None
         if not isinstance(
@@ -346,7 +345,7 @@ class DMSImporter(BaseImporter):
             | MultiReverseDirectRelationApply,
         ):
             self.issue_list.append(
-                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "View", prop_id, type(prop).__name__)
+                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "view", prop_id, type(prop).__name__)
             )
             return None
 
@@ -412,7 +411,7 @@ class DMSImporter(BaseImporter):
                 return DataType.load(container_prop.type._type)
         else:
             self.issue_list.append(
-                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "View", prop_id, type(prop).__name__)
+                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "view", prop_id, type(prop).__name__)
             )
             return None
 
@@ -473,7 +472,7 @@ class DMSImporter(BaseImporter):
             else:
                 self.issue_list.append(
                     PropertyTypeNotSupportedWarning[dm.ContainerId](
-                        prop.container, "Container", prop_id, type(constraint_obj).__name__
+                        prop.container, "container", prop_id, type(constraint_obj).__name__
                     )
                 )
         return unique_constraints or None

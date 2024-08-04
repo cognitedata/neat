@@ -7,7 +7,7 @@ from cognite.neat.issues import NeatError
 
 
 @dataclass(frozen=True)
-class FailedAuthorizationError(NeatError, RuntimeError):
+class AuthorizationError(NeatError, RuntimeError):
     """Missing authorization for {action}: {reason}"""
 
     action: str
@@ -24,7 +24,7 @@ class FileReadError(NeatError, RuntimeError):
 
 
 @dataclass(frozen=True)
-class NeatFileNotFoundError(NeatError, FileNotFoundError):
+class FileNotFoundNeatError(NeatError, FileNotFoundError):
     """File {filepath} not found"""
 
     fix = "Make sure to provide a valid file"
@@ -41,7 +41,7 @@ class FileMissingRequiredFieldError(NeatError, ValueError):
 
 
 @dataclass(frozen=True)
-class InvalidYamlError(NeatError, YAMLError):
+class NeatYamlError(NeatError, YAMLError):
     """Invalid YAML: {reason}"""
 
     extra = "Expected format: {expected_format}"
@@ -52,7 +52,7 @@ class InvalidYamlError(NeatError, YAMLError):
 
 
 @dataclass(frozen=True)
-class UnexpectedFileTypeError(NeatError, TypeError):
+class FileTypeUnexpectedError(NeatError, TypeError):
     """Unexpected file type: {filepath}. Expected format: {expected_format}"""
 
     filepath: Path

@@ -14,12 +14,16 @@ from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 
-import cognite.neat.issues.errors.resources
 from cognite.neat.graph._tracking import LogTracker, Tracker
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors.resources import FailedConvertError, InvalidResourceError, ResourceNotFoundError
-from cognite.neat.issues.neat_warnings.models import InvalidClassWarning
+from cognite.neat.issues.errors import (
+    ResourceConvertionError,
+    ResourceCreationError,
+    ResourceDuplicatedError,
+    ResourceRetrievalError,
+)
+from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
 from cognite.neat.utils.auxiliary import create_sha256_hash
@@ -69,9 +73,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         try:
             data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
         except Exception as e:
-            issues.append(
-                ResourceNotFoundError(identifier=repr(data_model_id), resource_type="Data Model", reason=str(e))
-            )
+            issues.append(ResourceRetrievalError(data_model_id, "data model", str(e)))
 
         return cls(graph_store, data_model, instance_space, {}, issues)
 
@@ -83,8 +85,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             data_model = rules.as_schema().as_read_model()
         except Exception as e:
             issues.append(
-                FailedConvertError(
+                ResourceConvertionError(
                     identifier=rules.metadata.as_identifier(),
+                    resource_type="DMS Rules",
                     target_format="read DMS model",
                     reason=str(e),
                 )
@@ -114,7 +117,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
-                    error = InvalidResourceError(resource_type="node", identifier=identifier, reason=str(e))
+                    error = ResourceCreationError(identifier, "node", error=str(e))
                     tracker.issue(error)
                     if stop_on_exception:
                         raise error from e
@@ -162,9 +165,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     data_type = _DATA_TYPE_BY_DMS_TYPE.get(prop.type._type)
                     if not data_type:
                         issues.append(
-                            InvalidClassWarning(
-                                class_name=repr(view.as_id()),
-                                reason=f"Unknown data type for property {prop_name}: {prop.type._type}",
+                            PropertyTypeNotSupportedWarning(
+                                view.as_id(),
+                                "view",
+                                prop_name,
+                                prop.type._type,
                             )
                         )
                         continue
@@ -251,10 +256,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 continue
             edge = edge_by_properties[prop]
             if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
-                error = cognite.neat.issues.errors.resources.InvalidResourceError[str](
+                error = ResourceDuplicatedError(
                     resource_type="edge",
                     identifier=identifier,
-                    reason=f"Multiple values for single edge {edge}. Expected only one.",
+                    location=f"Multiple values for single edge {edge}. Expected only one.",
                 )
                 tracker.issue(error)
                 yield error

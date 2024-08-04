@@ -4,7 +4,7 @@ from typing import cast
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat.issues.neat_warnings.user_modeling import DirectRelationMissingSourceWarning
+from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.importers import DMSImporter, ExcelImporter
 from cognite.neat.rules.models import DMSRules, DMSSchema, RoleTypes
 from tests.config import DOC_RULES

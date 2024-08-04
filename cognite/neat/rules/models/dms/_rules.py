@@ -12,9 +12,9 @@ from pydantic.main import IncEx
 from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.issues import MultiValueError
-from cognite.neat.issues.neat_warnings import (
-    MatchingSpaceAndVersionWarning,
-    SolutionBuildsOnEnterpriseWarning,
+from cognite.neat.issues.warnings import (
+    PrincipleMatchingSpaceAndVersionWarning,
+    PrincipleSolutionBuildsOnEnterpriseWarning,
 )
 from cognite.neat.rules.models._base import (
     BaseMetadata,
@@ -323,7 +323,7 @@ class DMSRules(BaseRules):
             raise ValueError("Reference rules cannot have a reference")
         if value.metadata.data_model_type == DataModelType.solution and (metadata := info.data.get("metadata")):
             warnings.warn(
-                SolutionBuildsOnEnterpriseWarning(
+                PrincipleSolutionBuildsOnEnterpriseWarning(
                     f"The solution model {metadata.as_data_model_id()} is referencing another "
                     f"solution model {value.metadata.as_data_model_id()}",
                 ),
@@ -339,7 +339,7 @@ class DMSRules(BaseRules):
         if different_version := [view.view.as_id() for view in value if view.view.version != model_version]:
             for view_id in different_version:
                 warnings.warn(
-                    MatchingSpaceAndVersionWarning(
+                    PrincipleMatchingSpaceAndVersionWarning(
                         f"The view {view_id!r} has a different version than the data model version, {model_version}",
                     ),
                     stacklevel=2,
@@ -347,7 +347,7 @@ class DMSRules(BaseRules):
         if different_space := [view.view.as_id() for view in value if view.view.space != metadata.space]:
             for view_id in different_space:
                 warnings.warn(
-                    MatchingSpaceAndVersionWarning(
+                    PrincipleMatchingSpaceAndVersionWarning(
                         f"The view {view_id!r} is in a different space than the data model space, {metadata.space}",
                     ),
                     stacklevel=2,

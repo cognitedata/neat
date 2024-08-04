@@ -1,61 +1,72 @@
-from cognite.neat.issues._base import NeatError, _get_subclasses
+from cognite.neat.issues._base import DefaultPydanticError, NeatError, RowError, _get_subclasses
 
-from .external import (
-    FailedAuthorizationError,
+from ._external import (
+    AuthorizationError,
     FileMissingRequiredFieldError,
+    FileNotAFileError,
+    FileNotFoundNeatError,
     FileReadError,
-    InvalidYamlError,
-    NeatFileNotFoundError,
+    FileTypeUnexpectedError,
+    NeatYamlError,
 )
-from .general import MissingRequiredFieldError, NeatImportError, NeatValueError, RegexViolationError
-from .properties import (
-    InvalidPropertyDefinitionError,
+from ._general import NeatImportError, NeatValueError, RegexViolationError
+from ._properties import (
+    PropertyDefinitionDuplicatedError,
+    PropertyDefinitionError,
+    PropertyMappingDuplicatedError,
     PropertyNotFoundError,
     PropertyTypeNotSupportedError,
 )
-from .resources import (
-    ChangedResourceError,
-    DuplicatedMappingError,
-    DuplicatedResourceError,
-    FailedConvertError,
-    InvalidResourceError,
-    MissingIdentifierError,
-    MultiplePropertyDefinitionsError,
-    ReferredResourceNotFoundError,
+from ._resources import (
+    ResourceChangedError,
+    ResourceConvertionError,
+    ResourceCreationError,
+    ResourceDuplicatedError,
     ResourceError,
+    ResourceMissingIdentifierError,
     ResourceNotDefinedError,
     ResourceNotFoundError,
+    ResourceRetrievalError,
 )
-from .workflow import ConfigurationNotSetError, InvalidStepOutputError, InvalidWorkFlowError, StepNotInitializedError
+from ._workflow import (
+    WorkflowConfigurationNotSetError,
+    WorkFlowMissingDataError,
+    WorkflowStepNotInitializedError,
+    WorkflowStepOutputError,
+)
 
 __all__ = [
-    "MissingRequiredFieldError",
+    "NeatError",
     "NeatValueError",
     "NeatImportError",
     "RegexViolationError",
-    "FailedAuthorizationError",
-    "InvalidYamlError",
+    "AuthorizationError",
+    "NeatYamlError",
     "FileReadError",
-    "NeatFileNotFoundError",
+    "ResourceCreationError",
+    "FileNotFoundNeatError",
     "FileMissingRequiredFieldError",
-    "InvalidPropertyDefinitionError",
+    "PropertyDefinitionError",
     "PropertyTypeNotSupportedError",
     "PropertyNotFoundError",
-    "MultiplePropertyDefinitionsError",
-    "ChangedResourceError",
-    "DuplicatedResourceError",
+    "PropertyDefinitionDuplicatedError",
+    "ResourceChangedError",
+    "ResourceDuplicatedError",
+    "ResourceRetrievalError",
     "ResourceNotFoundError",
-    "ReferredResourceNotFoundError",
-    "DuplicatedMappingError",
     "ResourceError",
     "ResourceNotDefinedError",
-    "InvalidResourceError",
-    "MissingIdentifierError",
-    "FailedConvertError",
-    "ConfigurationNotSetError",
-    "InvalidWorkFlowError",
-    "StepNotInitializedError",
-    "InvalidStepOutputError",
+    "ResourceMissingIdentifierError",
+    "ResourceConvertionError",
+    "WorkflowConfigurationNotSetError",
+    "WorkFlowMissingDataError",
+    "WorkflowStepNotInitializedError",
+    "WorkflowStepOutputError",
+    "FileTypeUnexpectedError",
+    "FileNotAFileError",
+    "DefaultPydanticError",
+    "PropertyMappingDuplicatedError",
+    "RowError",
 ]
 
 _NEAT_ERRORS_BY_NAME = {error.__name__: error for error in _get_subclasses(NeatError, include_base=True)}

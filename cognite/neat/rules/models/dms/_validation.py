@@ -5,15 +5,18 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors import (
-    ChangedResourceError,
-    MultiplePropertyDefinitionsError,
+    PropertyDefinitionDuplicatedError,
+    ResourceChangedError,
     ResourceNotDefinedError,
 )
-from cognite.neat.issues.neat_warnings import (
-    HasDataFilterLimitWarning,
-    ViewContainerLimitWarning,
+from cognite.neat.issues.warnings import (
+    NotSupportedHasDataFilterLimitWarning,
+    NotSupportedViewContainerLimitWarning,
 )
-from cognite.neat.issues.neat_warnings.user_modeling import NotNeatSupportedFilterWarning, ViewPropertyLimitWarning
+from cognite.neat.issues.warnings.user_modeling import (
+    NotNeatSupportedFilterWarning,
+    ViewPropertyLimitWarning,
+)
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
@@ -72,9 +75,9 @@ class DMSPostValidation:
             is_all_direct = all(prop.connection == "direct" for _, prop in properties)
             if len(value_types) > 1 and not is_all_direct:
                 errors.append(
-                    MultiplePropertyDefinitionsError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
-                        "Container",
+                        "container",
                         prop_name,
                         frozenset({v.dms._type if isinstance(v, DataType) else str(v) for v in value_types}),
                         tuple(row_numbers),
@@ -84,9 +87,9 @@ class DMSPostValidation:
             list_definitions = {prop.is_list for _, prop in properties if prop.is_list is not None}
             if len(list_definitions) > 1:
                 errors.append(
-                    MultiplePropertyDefinitionsError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
-                        "Container",
+                        "container",
                         prop_name,
                         frozenset(list_definitions),
                         tuple(row_numbers),
@@ -96,9 +99,9 @@ class DMSPostValidation:
             nullable_definitions = {prop.nullable for _, prop in properties if prop.nullable is not None}
             if len(nullable_definitions) > 1:
                 errors.append(
-                    MultiplePropertyDefinitionsError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
-                        "Container",
+                        "container",
                         prop_name,
                         frozenset(nullable_definitions),
                         tuple(row_numbers),
@@ -108,9 +111,9 @@ class DMSPostValidation:
             default_definitions = {prop.default for _, prop in properties if prop.default is not None}
             if len(default_definitions) > 1:
                 errors.append(
-                    MultiplePropertyDefinitionsError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
-                        "Container",
+                        "container",
                         prop_name,
                         frozenset(
                             tuple(f"{k}:{v}" for k, v in def_.items()) if isinstance(def_, dict) else def_
@@ -123,9 +126,9 @@ class DMSPostValidation:
             index_definitions = {",".join(prop.index) for _, prop in properties if prop.index is not None}
             if len(index_definitions) > 1:
                 errors.append(
-                    MultiplePropertyDefinitionsError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
-                        "Container",
+                        "container",
                         prop_name,
                         frozenset(index_definitions),
                         tuple(row_numbers),
@@ -137,9 +140,9 @@ class DMSPostValidation:
             }
             if len(constraint_definitions) > 1:
                 errors.append(
-                    MultiplePropertyDefinitionsError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
-                        "Container",
+                        "container",
                         prop_name,
                         frozenset(constraint_definitions),
                         tuple(row_numbers),
@@ -177,7 +180,7 @@ class DMSPostValidation:
                 errors.append(
                     ResourceNotDefinedError[dm.ViewId](
                         identifier=view_id,
-                        resource_type="View",
+                        resource_type="view",
                         location="Views Sheet",
                         column_name="View",
                         row_number=prop_no,
@@ -201,7 +204,7 @@ class DMSPostValidation:
                     errors.append(
                         ResourceNotDefinedError[dm.ContainerId](
                             identifier=container_id,
-                            resource_type="Container",
+                            resource_type="container",
                             location="Containers Sheet",
                             column_name="Container",
                             row_number=prop_no,
@@ -214,7 +217,7 @@ class DMSPostValidation:
                         errors.append(
                             ResourceNotDefinedError[dm.ContainerId](
                                 identifier=constraint.as_id(),
-                                resource_type="Container",
+                                resource_type="container",
                                 location="Containers Sheet",
                                 column_name="Constraint",
                                 row_number=constraint_no,
@@ -248,9 +251,9 @@ class DMSPostValidation:
                 new_dumped, existing_dumped
             )
             self.issue_list.append(
-                ChangedResourceError(
+                ResourceChangedError(
                     container_id,
-                    "Container",
+                    "container",
                     changed_properties=frozenset(changed_properties),
                     changed_attributes=frozenset(changed_attributes),
                 )
@@ -278,9 +281,9 @@ class DMSPostValidation:
                 # Only added new properties, no problem
                 continue
             self.issue_list.append(
-                ChangedResourceError(
+                ResourceChangedError(
                     view_id,
-                    "View",
+                    "view",
                     changed_properties=frozenset(changed_properties),
                     changed_attributes=frozenset(changed_attributes),
                 )
@@ -292,7 +295,7 @@ class DMSPostValidation:
 
             if mapped_containers and len(mapped_containers) > 10:
                 self.issue_list.append(
-                    ViewContainerLimitWarning(
+                    NotSupportedViewContainerLimitWarning(
                         view_id,
                         len(mapped_containers),
                     )
@@ -303,7 +306,7 @@ class DMSPostValidation:
                     and len(view.filter.dump()["hasData"]) > 10
                 ):
                     self.issue_list.append(
-                        HasDataFilterLimitWarning(
+                        NotSupportedHasDataFilterLimitWarning(
                             view_id,
                             len(view.filter.dump()["hasData"]),
                         )

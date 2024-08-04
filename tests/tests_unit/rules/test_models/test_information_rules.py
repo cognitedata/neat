@@ -5,8 +5,7 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat.issues import NeatError
-from cognite.neat.issues.errors.general import NeatValueError
-from cognite.neat.issues.errors.resources import ResourceNotDefinedError
+from cognite.neat.issues.errors import NeatValueError, ResourceNotDefinedError
 from cognite.neat.rules.models import DMSRules, SheetList, data_types
 from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType, String
@@ -156,7 +155,7 @@ def incomplete_rules_case():
             ],
         },
         ResourceNotDefinedError[ClassEntity](
-            ClassEntity(prefix="power", suffix="GeneratingUnit2"), "Class", "Classes sheet"
+            ClassEntity(prefix="power", suffix="GeneratingUnit2"), "class", "Classes sheet"
         ),
         id="missing_rule",
     )

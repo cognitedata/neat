@@ -11,16 +11,6 @@ _BASE_URL = "https://cognite-neat.readthedocs-hosted.com/en/latest/data-modeling
 
 
 @dataclass(frozen=True)
-class InvalidClassWarning(NeatWarning):
-    """The {class_name} is invalid and will be skipped. {reason}"""
-
-    fix = "Check the error message and correct the class."
-
-    class_name: str
-    reason: str
-
-
-@dataclass(frozen=True)
 class BreakingModelingPrincipleWarning(NeatWarning, ABC):
     """{warning_class}: {specific} violates the {principle} principle.
     See {url} for more information."""
@@ -40,7 +30,7 @@ class BreakingModelingPrincipleWarning(NeatWarning, ABC):
 
 
 @dataclass(frozen=True)
-class OneModelOneSpaceWarning(BreakingModelingPrincipleWarning):
+class PrincipleOneModelOneSpaceWarning(BreakingModelingPrincipleWarning):
     """{warning_class}: {specific} violates the {principle} principle.
     See {url} for more information."""
 
@@ -48,7 +38,7 @@ class OneModelOneSpaceWarning(BreakingModelingPrincipleWarning):
 
 
 @dataclass(frozen=True)
-class MatchingSpaceAndVersionWarning(BreakingModelingPrincipleWarning):
+class PrincipleMatchingSpaceAndVersionWarning(BreakingModelingPrincipleWarning):
     """{warning_class}: {specific} violates the {principle} principle.
     See {url} for more information."""
 
@@ -56,7 +46,7 @@ class MatchingSpaceAndVersionWarning(BreakingModelingPrincipleWarning):
 
 
 @dataclass(frozen=True)
-class SolutionBuildsOnEnterpriseWarning(BreakingModelingPrincipleWarning):
+class PrincipleSolutionBuildsOnEnterpriseWarning(BreakingModelingPrincipleWarning):
     """{warning_class}: {specific} violates the {principle} principle.
     See {url} for more information."""
 
@@ -81,7 +71,7 @@ class CDFNotSupportedWarning(NeatWarning, ABC):
 
 
 @dataclass(frozen=True)
-class ViewContainerLimitWarning(CDFNotSupportedWarning):
+class NotSupportedViewContainerLimitWarning(CDFNotSupportedWarning):
     """The view {view_id} maps, {count} containers, which is more than the limit {limit}."""
 
     fix = "Reduce the number of containers the view maps to." ""
@@ -92,7 +82,7 @@ class ViewContainerLimitWarning(CDFNotSupportedWarning):
 
 
 @dataclass(frozen=True)
-class HasDataFilterLimitWarning(CDFNotSupportedWarning):
+class NotSupportedHasDataFilterLimitWarning(CDFNotSupportedWarning):
     """The view {view_id} uses a hasData filter applied to {count} containers, which is more than the limit {limit}."""
 
     fix = "Do not map to more than {limit} containers."

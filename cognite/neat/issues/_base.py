@@ -2,11 +2,12 @@ import sys
 import warnings
 from abc import ABC
 from collections import UserList
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Collection, Hashable, Iterable, Sequence
 from dataclasses import dataclass, fields
 from functools import total_ordering
 from pathlib import Path
-from typing import Any, ClassVar, TypeVar, get_args, get_origin
+from types import UnionType
+from typing import Any, ClassVar, Literal, TypeAlias, TypeVar, get_args, get_origin
 from warnings import WarningMessage
 
 import pandas as pd
@@ -31,6 +32,29 @@ __all__ = [
     "NeatIssueList",
     "MultiValueError",
 ]
+
+T_Identifier = TypeVar("T_Identifier", bound=Hashable)
+
+T_ReferenceIdentifier = TypeVar("T_ReferenceIdentifier", bound=Hashable)
+
+ResourceType: TypeAlias = (
+    Literal[
+        "view",
+        "container",
+        "view property",
+        "container property",
+        "space",
+        "class",
+        "asset",
+        "relationship",
+        "data model",
+        "edge",
+        "node",
+        "unknown",
+    ]
+    # String to handle all unknown types in different importers.
+    | str
+)
 
 
 @total_ordering
@@ -97,7 +121,7 @@ class NeatIssue:
     def load(cls, data: dict[str, Any]) -> "NeatIssue":
         """Create an instance of the issue from a dictionary."""
         from cognite.neat.issues.errors import _NEAT_ERRORS_BY_NAME, NeatValueError
-        from cognite.neat.issues.neat_warnings import _NEAT_WARNINGS_BY_NAME
+        from cognite.neat.issues.warnings import _NEAT_WARNINGS_BY_NAME
 
         if "NeatIssue" not in data:
             raise NeatValueError("The data does not contain a NeatIssue key.")
@@ -122,7 +146,10 @@ class NeatIssue:
 
     @classmethod
     def _load_value(cls, type_: type, value: Any) -> Any:
-        if type_ is frozenset or get_origin(type_) is frozenset:
+        if isinstance(type_, UnionType) or get_origin(type_) is UnionType:
+            args = get_args(type_)
+            return cls._load_value(args[0], value)
+        elif type_ is frozenset or get_origin(type_) is frozenset:
             subtype = get_args(type_)[0]
             return frozenset(cls._load_value(subtype, item) for item in value)
         elif type_ is Path:
@@ -172,25 +199,29 @@ class NeatError(NeatIssue, Exception):
                     cls._adjust_row_numbers(single_error, read_info_by_sheet)
                 all_errors.append(single_error)
             elif len(error["loc"]) >= 4 and read_info_by_sheet:
-                all_errors.append(InvalidRowError.from_pydantic_error(error, read_info_by_sheet))
+                all_errors.append(RowError.from_pydantic_error(error, read_info_by_sheet))
             else:
                 all_errors.append(DefaultPydanticError.from_pydantic_error(error))
         return all_errors
 
     @staticmethod
     def _adjust_row_numbers(caught_error: "NeatError", read_info_by_sheet: dict[str, SpreadsheetRead]) -> None:
-        from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
+        from cognite.neat.issues.errors._properties import PropertyDefinitionDuplicatedError
+        from cognite.neat.issues.errors._resources import ResourceNotDefinedError
 
         reader = read_info_by_sheet.get("Properties", SpreadsheetRead())
 
-        if isinstance(caught_error, MultiplePropertyDefinitionsError) and caught_error.location_name == "rows":
-            adjusted_row_number = tuple(
-                reader.adjusted_row_number(row_no) if isinstance(row_no, int) else row_no
-                for row_no in caught_error.locations
+        if isinstance(caught_error, PropertyDefinitionDuplicatedError) and caught_error.location_name == "rows":
+            adjusted_row_number = (
+                tuple(
+                    reader.adjusted_row_number(row_no) if isinstance(row_no, int) else row_no
+                    for row_no in caught_error.locations or []
+                )
+                or None
             )
             # The error is frozen, so we have to use __setattr__ to change the row number
             object.__setattr__(caught_error, "locations", adjusted_row_number)
-        elif isinstance(caught_error, InvalidRowError):
+        elif isinstance(caught_error, RowError):
             # Adjusting the row number to the actual row number in the spreadsheet
             new_row = reader.adjusted_row_number(caught_error.row)
             # The error is frozen, so we have to use __setattr__ to change the row number
@@ -227,7 +258,7 @@ class DefaultPydanticError(NeatError, ValueError):
 
 
 @dataclass(frozen=True)
-class InvalidRowError(NeatError, ValueError):
+class RowError(NeatError, ValueError):
     """In {sheet_name}, row={row}, column={column}: {msg}. [type={type}, input_value={input}]"""
 
     extra = "For further information visit {url}"
@@ -272,8 +303,11 @@ class InvalidRowError(NeatError, ValueError):
 
 @dataclass(frozen=True)
 class NeatWarning(NeatIssue, UserWarning):
+    """This is the base class for all warnings used in Neat."""
+
     @classmethod
     def from_warning(cls, warning: WarningMessage) -> "NeatWarning":
+        """Create a NeatWarning from a WarningMessage."""
         return DefaultWarning.from_warning_message(warning)
 
 
@@ -306,39 +340,48 @@ T_NeatIssue = TypeVar("T_NeatIssue", bound=NeatIssue)
 
 
 class NeatIssueList(UserList[T_NeatIssue], ABC):
+    """This is a generic list of NeatIssues."""
+
     def __init__(self, issues: Sequence[T_NeatIssue] | None = None, title: str | None = None):
         super().__init__(issues or [])
         self.title = title
 
     @property
     def errors(self) -> Self:
+        """Return all the errors in this list."""
         return type(self)([issue for issue in self if isinstance(issue, NeatError)])  # type: ignore[misc]
 
     @property
     def has_errors(self) -> bool:
+        """Return True if this list contains any errors."""
         return any(isinstance(issue, NeatError) for issue in self)
 
     @property
     def warnings(self) -> Self:
+        """Return all the warnings in this list."""
         return type(self)([issue for issue in self if isinstance(issue, NeatWarning)])  # type: ignore[misc]
 
     def as_errors(self) -> ExceptionGroup:
+        """Return an ExceptionGroup with all the errors in this list."""
         return ExceptionGroup(
             "Operation failed",
             [issue for issue in self if isinstance(issue, NeatError)],
         )
 
     def trigger_warnings(self) -> None:
+        """Trigger all warnings in this list."""
         for warning in [issue for issue in self if isinstance(issue, NeatWarning)]:
             warnings.warn(warning, stacklevel=2)
 
     def to_pandas(self) -> pd.DataFrame:
+        """Return a pandas DataFrame representation of this list."""
         return pd.DataFrame([issue.dump() for issue in self])
 
     def _repr_html_(self) -> str | None:
         return self.to_pandas()._repr_html_()  # type: ignore[operator]
 
     def as_exception(self) -> "MultiValueError":
+        """Return a MultiValueError with all the errors in this list."""
         return MultiValueError(self.errors)
 
 
@@ -354,7 +397,10 @@ class MultiValueError(ValueError):
         self.errors = list(errors)
 
 
-class IssueList(NeatIssueList[NeatIssue]): ...
+class IssueList(NeatIssueList[NeatIssue]):
+    """This is a list of NeatIssues."""
+
+    ...
 
 
 T_Cls = TypeVar("T_Cls")

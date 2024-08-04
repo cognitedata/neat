@@ -1,9 +1,8 @@
 import pytest
 
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors.resources import MissingIdentifierError, ResourceNotDefinedError
-from cognite.neat.issues.neat_warnings.properties import PropertyTypeNotSupportedWarning
-from cognite.neat.issues.neat_warnings.resources import ResourceTypeNotSupportedWarning
+from cognite.neat.issues.errors import ResourceMissingIdentifierError, ResourceNotDefinedError
+from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
 from cognite.neat.rules.importers import DTDLImporter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTMI, Interface
 from cognite.neat.rules.models import InformationRules, SchemaCompleteness
@@ -15,7 +14,7 @@ class TestDTDLImporter:
         # In the example data, there is a property with an Object that does not have an identifier.
         expected_issues = NeatIssueList[NeatIssue](
             [
-                MissingIdentifierError("Object"),
+                ResourceMissingIdentifierError("Object"),
             ]
         )
         dtdl_importer = DTDLImporter.from_directory(DTDL_IMPORTER_DATA / "energy-grid")

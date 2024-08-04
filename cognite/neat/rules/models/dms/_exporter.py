@@ -12,8 +12,8 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
-from cognite.neat.issues.neat_warnings import NotSupportedWarning, PropertyNotFoundWarning
-from cognite.neat.issues.neat_warnings.user_modeling import (
+from cognite.neat.issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
+from cognite.neat.issues.warnings.user_modeling import (
     EmptyContainerWarning,
     HasDataFilterOnNoPropertiesViewWarning,
     HasDataFilterOnViewWithReferencesWarning,
@@ -512,10 +512,10 @@ class _DMSExporter:
                 warnings.warn(
                     PropertyNotFoundWarning(
                         source_view_id,
-                        "View",
+                        "view",
                         reverse_prop_id or "MISSING",
                         dm.PropertyId(prop.view.as_id(), prop.view_property),
-                        "ViewProperty",
+                        "view property",
                     ),
                     stacklevel=2,
                 )

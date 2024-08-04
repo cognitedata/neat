@@ -2,7 +2,7 @@ import time
 from pathlib import Path
 from typing import ClassVar, Literal, cast
 
-from cognite.neat.issues.errors.workflow import StepNotInitializedError
+from cognite.neat.issues.errors import WorkflowStepNotInitializedError
 from cognite.neat.rules import exporters
 from cognite.neat.rules._shared import DMSRules, InformationRules, Rules
 from cognite.neat.rules.models import RoleTypes
@@ -61,7 +61,7 @@ class DeleteDataModelFromCDF(Step):
 
     def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
         components_to_delete = {
             cast(Literal["all", "spaces", "data_models", "views", "containers"], key)
             for key, value in self.complex_configs["Components"].items()
@@ -168,7 +168,7 @@ class RulesToDMS(Step):
 
     def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
         existing_components_handling = cast(
             Literal["fail", "update", "skip", "force"], self.configs["Existing component handling"]
         )
@@ -291,7 +291,7 @@ class RulesToExcel(Step):
 
     def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         dump_format = self.configs.get("Dump Format", "user")
         styling = cast(exporters.ExcelExporter.Style, self.configs.get("Styling", "default"))
@@ -369,7 +369,7 @@ class RulesToOntology(Step):
 
     def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         if not rules.information and not rules.dms:
             return FlowMessage(
@@ -420,7 +420,7 @@ class RulesToSHACL(Step):
 
     def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         if not rules.information and not rules.dms:
             return FlowMessage(
@@ -471,7 +471,7 @@ class RulesToSemanticDataModel(Step):
 
     def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         if not rules.information and not rules.dms:
             return FlowMessage(
@@ -525,7 +525,7 @@ class RulesToCDFTransformations(Step):
 
     def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitializedError(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         input_rules = rules.dms or rules.information
         if input_rules is None:

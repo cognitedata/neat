@@ -10,10 +10,10 @@ from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.issues import MultiValueError
-from cognite.neat.issues.errors.general import MissingRequiredFieldError
-from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError
-from cognite.neat.issues.neat_warnings.properties import DuplicatedPropertyDefinitionWarning
+from cognite.neat.issues.errors import (
+    PropertyDefinitionDuplicatedError,
+)
+from cognite.neat.issues.warnings import PropertyDefinitionDuplicatedWarning
 from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import DataType
@@ -25,7 +25,6 @@ from cognite.neat.rules.models.information import (
     InformationRules,
 )
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
-from cognite.neat.utils.text import humanize_collection
 
 from ._base import BaseExporter
 from ._validation import duplicated_properties
@@ -108,9 +107,9 @@ class Ontology(OntologyModel):
             errors = []
             for (class_, property_), definitions in duplicates.items():
                 errors.append(
-                    MultiplePropertyDefinitionsError(
+                    PropertyDefinitionDuplicatedError(
                         class_,
-                        "Class",
+                        "class",
                         property_,
                         frozenset({str(definition[1].value_type) for definition in definitions}),
                         tuple(definition[0] for definition in definitions),
@@ -118,12 +117,6 @@ class Ontology(OntologyModel):
                     )
                 )
             raise MultiValueError(errors)
-
-        if rules.prefixes is None:
-            raise MissingRequiredFieldError("Metadata.prefix", "generating the ontology")
-
-        if rules.metadata.namespace is None:
-            raise MissingRequiredFieldError("Metadata.namespace", "generating the ontology")
 
         class_dict = InformationAnalysis(rules).as_class_dict()
         return cls(
@@ -186,9 +179,6 @@ class Ontology(OntologyModel):
         for prefix, namespace in self.prefixes.items():
             owl.bind(prefix, namespace)
 
-        if self.metadata.namespace is None:
-            raise MissingRequiredFieldError("Metadata.namespace", "generating the ontology")
-
         owl.add((URIRef(self.metadata.namespace), RDF.type, OWL.Ontology))
         for property_ in self.properties:
             for triple in property_.triples:
@@ -235,8 +225,6 @@ class OWLMetadata(InformationMetadata):
     @property
     def triples(self) -> list[tuple]:
         # Mandatory triples originating from Metadata mandatory fields
-        if self.namespace is None:
-            raise MissingRequiredFieldError("Metadata.namespace", "generating the ontology")
         triples: list[tuple] = [
             (URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version)),
             (URIRef(self.namespace), OWL.versionInfo, Literal(self.version)),
@@ -330,12 +318,11 @@ class OWLProperty(OntologyModel):
         """Here list of properties is a list of properties with the same id, but different definitions."""
         property_ids = {definition.property_ for definition in definitions}
         if len(property_ids) != 1:
-            raise InvalidPropertyDefinitionError(
+            raise PropertyDefinitionDuplicatedError(
                 definitions[0].class_,
-                "Class",
+                "class",
                 definitions[0].property_,
-                "All definitions should have the same property_id! Definitions have different property_id:"
-                f"{humanize_collection(property_ids)}",
+                frozenset(property_ids),
             )
 
         owl_property = cls.model_construct(
@@ -367,8 +354,9 @@ class OWLProperty(OntologyModel):
     def is_multi_type(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                DuplicatedPropertyDefinitionWarning(
+                PropertyDefinitionDuplicatedWarning(
                     remove_namespace_from_uri(info.data["id"]),
+                    "class",
                     "type",
                     frozenset({remove_namespace_from_uri(t) for t in v}),
                     "This warning occurs when a same property is define for two object/classes where"
@@ -384,8 +372,9 @@ class OWLProperty(OntologyModel):
     def is_multi_range(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                DuplicatedPropertyDefinitionWarning(
+                PropertyDefinitionDuplicatedWarning(
                     remove_namespace_from_uri(info.data["id_"]),
+                    "class",
                     "range",
                     frozenset({remove_namespace_from_uri(t) for t in v}),
                     "This warning occurs when a property takes range of "
@@ -400,8 +389,9 @@ class OWLProperty(OntologyModel):
     def is_multi_domain(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                DuplicatedPropertyDefinitionWarning(
+                PropertyDefinitionDuplicatedWarning(
                     remove_namespace_from_uri(info.data["id_"]),
+                    "class",
                     "domain",
                     frozenset({remove_namespace_from_uri(t) for t in v}),
                     "This warning occurs when a same property is define for two object/classes where"
@@ -417,8 +407,9 @@ class OWLProperty(OntologyModel):
     def has_multi_name(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                DuplicatedPropertyDefinitionWarning(
+                PropertyDefinitionDuplicatedWarning(
                     remove_namespace_from_uri(info.data["id_"]),
+                    "class",
                     "label",
                     frozenset(v),
                     f"Only the first label (name) will be used, {v[0]}",
@@ -431,8 +422,9 @@ class OWLProperty(OntologyModel):
     def has_multi_comment(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                DuplicatedPropertyDefinitionWarning(
+                PropertyDefinitionDuplicatedWarning(
                     remove_namespace_from_uri(info.data["id_"]),
+                    "class",
                     "comment",
                     frozenset(v),
                     "All definitions will be concatenated to form a single definition.",
