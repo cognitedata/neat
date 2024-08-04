@@ -36,7 +36,7 @@ class DuplicatedResourcesWarning(NeatWarning, Generic[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class FailedRetrievingResourcesWarning(NeatWarning, Generic[T_Identifier]):
+class RetrievalResourcesWarning(NeatWarning, Generic[T_Identifier]):
     """Failed to retrieve {resource_type} with identifiers {resources}. Continuing without
     these resources."""
 

@@ -22,11 +22,10 @@ class DuplicatedResourceError(ResourceError[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class ResourceNotFoundError(ResourceError[T_Identifier]):
-    """The {resource_type} with identifier {identifier} is missing: {reason}"""
+class RetrievalResourceError(ResourceError[T_Identifier]):
+    """Failed to retrieve {resource_type} with identifier {identifier}. The error was: {error}"""
 
-    fix = "Check the {resource_type} {identifier} and try again."
-    reason: str
+    error: str
 
 
 @dataclass(frozen=True)

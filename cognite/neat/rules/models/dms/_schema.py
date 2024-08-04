@@ -35,8 +35,8 @@ from cognite.neat.issues.errors import (
 )
 from cognite.neat.issues.warnings import (
     DuplicatedResourcesWarning,
-    FailedRetrievingResourcesWarning,
     ResourceNotFoundWarning,
+    RetrievalResourcesWarning,
     UnexpectedFileTypeWarning,
 )
 from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
@@ -174,7 +174,7 @@ class DMSSchema:
                 )
             connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
             if failed := connection_referenced_view_ids - set(connection_referenced_views.as_ids()):
-                warnings.warn(FailedRetrievingResourcesWarning(frozenset(failed), "view"), stacklevel=2)
+                warnings.warn(RetrievalResourcesWarning(frozenset(failed), "view"), stacklevel=2)
             views.extend(connection_referenced_views)
 
         # We need to include parent views in the schema to make sure that the schema is valid.

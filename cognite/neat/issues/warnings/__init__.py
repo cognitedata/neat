@@ -24,10 +24,10 @@ from ._properties import (
 )
 from ._resources import (
     DuplicatedResourcesWarning,
-    FailedRetrievingResourcesWarning,
     NeatResourceWarning,
     ResourceNotFoundWarning,
     ResourceTypeNotSupportedWarning,
+    RetrievalResourcesWarning,
 )
 
 __all__ = [
@@ -49,7 +49,7 @@ __all__ = [
     "RegexViolationWarning",
     "ResourceNotFoundWarning",
     "ResourceTypeNotSupportedWarning",
-    "FailedRetrievingResourcesWarning",
+    "RetrievalResourcesWarning",
     "OneModelOneSpaceWarning",
     "MatchingSpaceAndVersionWarning",
     "SolutionBuildsOnEnterpriseWarning",

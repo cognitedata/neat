@@ -17,7 +17,7 @@ from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 from cognite.neat.graph._tracking import LogTracker, Tracker
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors import FailedConvertError, InvalidResourceError, ResourceNotFoundError
+from cognite.neat.issues.errors import FailedConvertError, InvalidResourceError, RetrievalResourceError
 from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
@@ -68,7 +68,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         try:
             data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
         except Exception as e:
-            issues.append(ResourceNotFoundError(data_model_id, "data model", str(e)))
+            issues.append(RetrievalResourceError(data_model_id, "data model", str(e)))
 
         return cls(graph_store, data_model, instance_space, {}, issues)
 
