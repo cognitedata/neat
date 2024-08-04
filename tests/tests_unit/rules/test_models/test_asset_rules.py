@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 
 from cognite.neat.issues import NeatError
-from cognite.neat.issues.errors import InvalidPropertyDefinitionError, NeatValueError
+from cognite.neat.issues.errors import NeatValueError, PropertyDefinitionError
 from cognite.neat.rules.models import AssetRules, InformationRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import AssetEntity, ClassEntity, RelationshipEntity
@@ -197,7 +197,7 @@ def parent_property_points_to_data_type():
                 },
             ],
         },
-        InvalidPropertyDefinitionError(
+        PropertyDefinitionError(
             ClassEntity(prefix="power", suffix="ACLineSegment"),
             "class",
             "line",

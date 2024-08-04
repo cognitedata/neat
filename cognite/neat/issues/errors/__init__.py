@@ -11,7 +11,7 @@ from ._external import (
 )
 from ._general import NeatImportError, NeatValueError, RegexViolationError
 from ._properties import (
-    InvalidPropertyDefinitionError,
+    PropertyDefinitionError,
     PropertyNotFoundError,
     PropertyTypeNotSupportedError,
 )
@@ -40,7 +40,7 @@ __all__ = [
     "FileReadError",
     "NeatFileNotFoundError",
     "FileMissingRequiredFieldError",
-    "InvalidPropertyDefinitionError",
+    "PropertyDefinitionError",
     "PropertyTypeNotSupportedError",
     "PropertyNotFoundError",
     "DuplicatedPropertyDefinitionsError",

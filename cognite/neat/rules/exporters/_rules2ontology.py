@@ -12,7 +12,7 @@ from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.issues import MultiValueError
 from cognite.neat.issues.errors import (
     DuplicatedPropertyDefinitionsError,
-    InvalidPropertyDefinitionError,
+    PropertyDefinitionError,
 )
 from cognite.neat.issues.warnings import DuplicatedPropertyDefinitionWarning
 from cognite.neat.rules.analysis import InformationAnalysis
@@ -320,7 +320,7 @@ class OWLProperty(OntologyModel):
         """Here list of properties is a list of properties with the same id, but different definitions."""
         property_ids = {definition.property_ for definition in definitions}
         if len(property_ids) != 1:
-            raise InvalidPropertyDefinitionError(
+            raise PropertyDefinitionError(
                 definitions[0].class_,
                 "class",
                 definitions[0].property_,

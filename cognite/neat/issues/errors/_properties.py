@@ -28,7 +28,7 @@ class PropertyTypeNotSupportedError(ResourceError[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class InvalidPropertyDefinitionError(ResourceError[T_Identifier]):
+class PropertyDefinitionError(ResourceError[T_Identifier]):
     """Invalid property definition for {resource_type} {identifier}.{property_name}: {reason}"""
 
     property_name: str
