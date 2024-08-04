@@ -19,7 +19,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.errors import ResourceMissingIdentifierError, ResourceRetrievalError, UnexpectedFileTypeError
+from cognite.neat.issues.errors import FileTypeUnexpectedError, ResourceMissingIdentifierError, ResourceRetrievalError
 from cognite.neat.issues.warnings import (
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
@@ -197,7 +197,7 @@ class DMSImporter(BaseImporter):
     @classmethod
     def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
         if Path(zip_file).suffix != ".zip":
-            return cls(DMSSchema(), [UnexpectedFileTypeError(Path(zip_file), frozenset([".zip"]))])
+            return cls(DMSSchema(), [FileTypeUnexpectedError(Path(zip_file), frozenset([".zip"]))])
         issue_list = IssueList()
         with _handle_issues(issue_list) as _:
             schema = DMSSchema.from_zip(zip_file)

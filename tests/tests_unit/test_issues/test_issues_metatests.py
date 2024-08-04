@@ -16,7 +16,7 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from rdflib import Namespace
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
-from cognite.neat.issues.errors import ResourceChangedError
+from cognite.neat.issues.errors import ResourceChangedError, ResourceNotFoundError
 
 T_Type = TypeVar("T_Type", bound=type)
 
@@ -170,6 +170,8 @@ class TestIssuesMeta:
             (issue.__name__, missing)
             for issue in issue_classes
             if issue.extra is not None
+            # Exception as it has a custom as_message method.
+            and issue not in {ResourceNotFoundError}
             and (
                 missing := [
                     field.name

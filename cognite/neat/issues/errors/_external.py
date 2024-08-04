@@ -52,7 +52,7 @@ class NeatYamlError(NeatError, YAMLError):
 
 
 @dataclass(frozen=True)
-class UnexpectedFileTypeError(NeatError, TypeError):
+class FileTypeUnexpectedError(NeatError, TypeError):
     """Unexpected file type: {filepath}. Expected format: {expected_format}"""
 
     filepath: Path

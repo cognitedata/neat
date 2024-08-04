@@ -65,7 +65,7 @@ class ResourceNotDefinedError(ResourceError[T_Identifier]):
 
 @dataclass(frozen=True)
 class ResourceConvertionError(ResourceError, ValueError):
-    """Failed to convert the {identifier} to {target_format}: {reason}"""
+    """Failed to convert the {resource_type} {identifier} to {target_format}: {reason}"""
 
     fix = "Check the error message and correct the rules."
     target_format: str

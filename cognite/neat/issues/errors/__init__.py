@@ -5,9 +5,9 @@ from ._external import (
     FileMissingRequiredFieldError,
     FileNotAFileError,
     FileReadError,
+    FileTypeUnexpectedError,
     NeatFileNotFoundError,
     NeatYamlError,
-    UnexpectedFileTypeError,
 )
 from ._general import NeatImportError, NeatValueError, RegexViolationError
 from ._properties import (
@@ -57,7 +57,7 @@ __all__ = [
     "WorkFlowMissingDataError",
     "StepNotInitializedError",
     "StepOutputError",
-    "UnexpectedFileTypeError",
+    "FileTypeUnexpectedError",
     "FileNotAFileError",
     "DefaultPydanticError",
     "DuplicatedPropertyMappingError",
