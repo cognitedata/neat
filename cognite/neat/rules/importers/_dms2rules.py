@@ -19,7 +19,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.errors import MissingIdentifierError, RetrievalResourceError, UnexpectedFileTypeError
+from cognite.neat.issues.errors import ResourceMissingIdentifierError, ResourceRetrievalError, UnexpectedFileTypeError
 from cognite.neat.issues.warnings import (
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
@@ -108,7 +108,7 @@ class DMSImporter(BaseImporter):
             return cls(
                 DMSSchema(),
                 [
-                    RetrievalResourceError(
+                    ResourceRetrievalError(
                         dm.DataModelId.load(reference_model_id),  # type: ignore[arg-type]
                         "data model",
                         "Data Model is missing in CDF",
@@ -123,7 +123,7 @@ class DMSImporter(BaseImporter):
                 return cls(
                     DMSSchema(),
                     [
-                        RetrievalResourceError(
+                        ResourceRetrievalError(
                             dm.DataModelId.load(reference_model_id), "data model", "Data Model is missing in CDF"
                         )
                     ],
@@ -219,7 +219,7 @@ class DMSImporter(BaseImporter):
             return self._return_or_raise(self.issue_list, errors)
 
         if not self.root_schema.data_model:
-            self.issue_list.append(MissingIdentifierError("data model", type(self.root_schema).__name__))
+            self.issue_list.append(ResourceMissingIdentifierError("data model", type(self.root_schema).__name__))
             return self._return_or_raise(self.issue_list, errors)
         model = self.root_schema.data_model
         with _handle_issues(

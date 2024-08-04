@@ -27,10 +27,10 @@ from cognite.client.data_classes.transformations.common import Edges, EdgeType, 
 
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors import (
-    DuplicatedMappingError,
-    DuplicatedResourceError,
+    DuplicatedPropertyMappingError,
     NeatYamlError,
     PropertyNotFoundError,
+    ResourceDuplicatedError,
     ResourceNotFoundError,
 )
 from cognite.neat.issues.warnings import (
@@ -620,10 +620,12 @@ class DMSSchema:
                         == (container_id, container_property_identifier)
                     ]
                     errors.add(
-                        DuplicatedMappingError(
-                            f"{container_id}.{container_property_identifier}",
-                            "container property",
+                        DuplicatedPropertyMappingError(
+                            container_id,
+                            "container",
+                            container_property_identifier,
                             frozenset({dm.PropertyId(view_id, prop_name) for prop_name in view_properties}),
+                            "view property",
                         )
                     )
 
@@ -642,7 +644,7 @@ class DMSSchema:
             for view_id, count in view_counts.items():
                 if count > 1:
                     errors.add(
-                        DuplicatedResourceError(
+                        ResourceDuplicatedError(
                             view_id,
                             "view",
                             repr(model.as_id()),

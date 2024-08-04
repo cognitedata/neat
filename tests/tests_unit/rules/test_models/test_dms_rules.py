@@ -9,8 +9,8 @@ from pydantic import ValidationError
 
 from cognite.neat.issues import MultiValueError, NeatError, NeatIssue
 from cognite.neat.issues.errors import (
-    ChangedResourceError,
     DuplicatedPropertyDefinitionsError,
+    ResourceChangedError,
     ResourceNotFoundError,
 )
 from cognite.neat.rules.importers import DMSImporter
@@ -1317,7 +1317,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         changing_container,
         [
-            ChangedResourceError(
+            ResourceChangedError(
                 dm.ContainerId("my_space", "Asset"),
                 "container",
                 frozenset({"name"}),
@@ -1361,7 +1361,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         changing_view,
         [
-            ChangedResourceError(
+            ResourceChangedError(
                 dm.ViewId("my_space", "Asset", "1"),
                 "view",
                 frozenset({}),
@@ -1377,7 +1377,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         changing_container2,
         [
-            ChangedResourceError(
+            ResourceChangedError(
                 dm.ContainerId("my_space", "Asset"),
                 "container",
                 frozenset({"name"}),

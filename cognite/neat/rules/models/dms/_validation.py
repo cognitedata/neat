@@ -5,8 +5,8 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors import (
-    ChangedResourceError,
     DuplicatedPropertyDefinitionsError,
+    ResourceChangedError,
     ResourceNotDefinedError,
 )
 from cognite.neat.issues.warnings import (
@@ -248,7 +248,7 @@ class DMSPostValidation:
                 new_dumped, existing_dumped
             )
             self.issue_list.append(
-                ChangedResourceError(
+                ResourceChangedError(
                     container_id,
                     "container",
                     changed_properties=frozenset(changed_properties),
@@ -278,7 +278,7 @@ class DMSPostValidation:
                 # Only added new properties, no problem
                 continue
             self.issue_list.append(
-                ChangedResourceError(
+                ResourceChangedError(
                     view_id,
                     "view",
                     changed_properties=frozenset(changed_properties),

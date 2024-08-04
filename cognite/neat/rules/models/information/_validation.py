@@ -3,7 +3,7 @@ from collections import Counter
 from typing import cast
 
 from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors import NeatValueError, ResourceNotDefinedError, ResourceValueError
+from cognite.neat.issues.errors import NeatValueError, ResourceNotDefinedError
 from cognite.neat.rules.models._base import DataModelType, SchemaCompleteness
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, UnknownEntity
 from cognite.neat.utils.rdf_ import get_inheritance_path
@@ -60,11 +60,7 @@ class InformationPostValidation:
 
         for class_ in dangling_classes:
             self.issue_list.append(
-                ResourceValueError(
-                    resource_type="class",
-                    identifier=class_,
-                    reason="Class has no properties and is not a parent of any class with properties",
-                )
+                NeatValueError(f"Class {class_} has no properties and is not a parent of any class with properties")
             )
 
     def _referenced_parent_classes_exist(self) -> None:

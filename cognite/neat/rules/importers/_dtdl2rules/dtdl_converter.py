@@ -3,8 +3,8 @@ from collections.abc import Callable, Sequence
 
 from cognite.neat.issues import IssueList, NeatIssue
 from cognite.neat.issues.errors import (
-    MissingIdentifierError,
     PropertyTypeNotSupportedError,
+    ResourceMissingIdentifierError,
     ResourceNotFoundError,
 )
 from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
@@ -211,7 +211,7 @@ class _DTDLConverter:
             else:
                 # Falling back to json
                 self.issues.append(
-                    MissingIdentifierError(
+                    ResourceMissingIdentifierError(
                         "unknown",
                         item.target.model_dump(),
                     )
@@ -236,7 +236,7 @@ class _DTDLConverter:
     def convert_object(self, item: Object, _: str | None) -> None:
         if item.id_ is None:
             self.issues.append(
-                MissingIdentifierError(
+                ResourceMissingIdentifierError(
                     resource_type=item.type,
                     name=item.display_name,
                 )
@@ -288,7 +288,7 @@ class _DTDLConverter:
         elif isinstance(input_type, Object | Interface):
             if input_type.id_ is None:
                 self.issues.append(
-                    MissingIdentifierError(
+                    ResourceMissingIdentifierError(
                         input_type.type,
                         input_type.display_name,
                     )

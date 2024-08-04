@@ -8,7 +8,7 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
-from cognite.neat.issues.errors import DuplicatedResourceError, PropertyNotFoundError, ResourceNotFoundError
+from cognite.neat.issues.errors import PropertyNotFoundError, ResourceDuplicatedError, ResourceNotFoundError
 from cognite.neat.issues.warnings import UnexpectedFileTypeWarning
 from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models import DMSSchema
@@ -39,7 +39,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             data_model=data_model,
         ),
         [
-            DuplicatedResourceError(
+            ResourceDuplicatedError(
                 identifier=dm.ViewId("my_space", "my_view1", "1"),
                 resource_type="view",
                 location=repr(dm.DataModelId("my_space", "my_data_model", "1")),

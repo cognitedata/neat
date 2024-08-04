@@ -12,22 +12,21 @@ from ._external import (
 from ._general import NeatImportError, NeatValueError, RegexViolationError
 from ._properties import (
     DuplicatedPropertyDefinitionsError,
+    DuplicatedPropertyMappingError,
     PropertyDefinitionError,
     PropertyNotFoundError,
     PropertyTypeNotSupportedError,
 )
 from ._resources import (
-    ChangedResourceError,
-    DuplicatedMappingError,
-    DuplicatedResourceError,
-    MissingIdentifierError,
+    ResourceChangedError,
     ResourceConvertionError,
     ResourceCreationError,
+    ResourceDuplicatedError,
     ResourceError,
+    ResourceMissingIdentifierError,
     ResourceNotDefinedError,
     ResourceNotFoundError,
-    ResourceValueError,
-    RetrievalResourceError,
+    ResourceRetrievalError,
 )
 from ._workflow import ConfigurationNotSetError, StepNotInitializedError, StepOutputError, WorkFlowMissingDataError
 
@@ -46,15 +45,13 @@ __all__ = [
     "PropertyTypeNotSupportedError",
     "PropertyNotFoundError",
     "DuplicatedPropertyDefinitionsError",
-    "ChangedResourceError",
-    "DuplicatedResourceError",
-    "RetrievalResourceError",
+    "ResourceChangedError",
+    "ResourceDuplicatedError",
+    "ResourceRetrievalError",
     "ResourceNotFoundError",
-    "DuplicatedMappingError",
     "ResourceError",
     "ResourceNotDefinedError",
-    "ResourceValueError",
-    "MissingIdentifierError",
+    "ResourceMissingIdentifierError",
     "ResourceConvertionError",
     "ConfigurationNotSetError",
     "WorkFlowMissingDataError",
@@ -63,6 +60,7 @@ __all__ = [
     "UnexpectedFileTypeError",
     "FileNotAFileError",
     "DefaultPydanticError",
+    "DuplicatedPropertyMappingError",
     "RowError",
 ]
 

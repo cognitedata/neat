@@ -14,7 +14,7 @@ class ResourceError(NeatError, Generic[T_Identifier], RuntimeError):
 
 
 @dataclass(frozen=True)
-class DuplicatedResourceError(ResourceError[T_Identifier]):
+class ResourceDuplicatedError(ResourceError[T_Identifier]):
     """The {resource_type} with identifier {identifier} is duplicated in {location}"""
 
     fix = "Remove the duplicate {resource_type} {identifier}."
@@ -22,7 +22,7 @@ class DuplicatedResourceError(ResourceError[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class RetrievalResourceError(ResourceError[T_Identifier]):
+class ResourceRetrievalError(ResourceError[T_Identifier]):
     """Failed to retrieve {resource_type} with identifier {identifier}. The error was: {error}"""
 
     error: str
@@ -51,14 +51,6 @@ class ResourceNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIden
 
 
 @dataclass(frozen=True)
-class DuplicatedMappingError(ResourceError[T_Identifier], Generic[T_Identifier, T_ReferenceIdentifier]):
-    """The {resource_type} with identifier {identifier} is mapped to by: {mappings}. Ensure
-    that there is only one mapping"""
-
-    mappings: frozenset[T_ReferenceIdentifier]
-
-
-@dataclass(frozen=True)
 class ResourceNotDefinedError(ResourceError[T_Identifier]):
     """The {resource_type} {identifier} is not defined in the {location}"""
 
@@ -80,25 +72,15 @@ class ResourceConvertionError(ResourceError, ValueError):
     reason: str
 
 
-# This is a generic error that should be used sparingly
 @dataclass(frozen=True)
-class ResourceValueError(ResourceError[T_Identifier], ValueError):
-    """The {resource_type} with identifier {identifier} is invalid: {reason}"""
-
-    fix = "Check the error message and correct the instance."
-
-    reason: str
-
-
-@dataclass(frozen=True)
-class ResourceCreationError(ResourceError[T_Identifier]):
+class ResourceCreationError(ResourceError[T_Identifier], ValueError):
     """Failed to create {resource_type} with identifier {identifier}. The error was: {error}"""
 
     error: str
 
 
 @dataclass(frozen=True)
-class MissingIdentifierError(NeatError, ValueError):
+class ResourceMissingIdentifierError(NeatError, ValueError):
     """The {resource_type} with name {name} is missing an identifier."""
 
     resource_type: ResourceType
@@ -106,7 +88,7 @@ class MissingIdentifierError(NeatError, ValueError):
 
 
 @dataclass(frozen=True)
-class ChangedResourceError(ResourceError[T_Identifier]):
+class ResourceChangedError(ResourceError[T_Identifier]):
     """The {resource_type} with identifier {identifier} has changed{changed}"""
 
     fix = (

@@ -16,7 +16,7 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from rdflib import Namespace
 
 from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
-from cognite.neat.issues.errors import ChangedResourceError
+from cognite.neat.issues.errors import ResourceChangedError
 
 T_Type = TypeVar("T_Type", bound=type)
 
@@ -159,7 +159,7 @@ class TestIssuesMeta:
                     if f"{{{field.name}}}" not in (issue.__doc__ or "") and field.default is not None
                 ]
                 # Exclude ChangedResourceError as it has a custom as_message method.
-                and issue not in {ChangedResourceError}
+                and issue not in {ResourceChangedError}
             )
         ]
         assert missing_variables == [], f"Variables missing in docstring: {missing_variables}"

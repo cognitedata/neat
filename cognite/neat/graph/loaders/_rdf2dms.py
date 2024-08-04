@@ -20,8 +20,8 @@ from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors import (
     ResourceConvertionError,
     ResourceCreationError,
-    ResourceValueError,
-    RetrievalResourceError,
+    ResourceDuplicatedError,
+    ResourceRetrievalError,
 )
 from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning
 from cognite.neat.rules.models import DMSRules
@@ -73,7 +73,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         try:
             data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
         except Exception as e:
-            issues.append(RetrievalResourceError(data_model_id, "data model", str(e)))
+            issues.append(ResourceRetrievalError(data_model_id, "data model", str(e)))
 
         return cls(graph_store, data_model, instance_space, {}, issues)
 
@@ -256,10 +256,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 continue
             edge = edge_by_properties[prop]
             if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
-                error = ResourceValueError(
+                error = ResourceDuplicatedError(
                     resource_type="edge",
                     identifier=identifier,
-                    reason=f"Multiple values for single edge {edge}. Expected only one.",
+                    location=f"Multiple values for single edge {edge}. Expected only one.",
                 )
                 tracker.issue(error)
                 yield error
