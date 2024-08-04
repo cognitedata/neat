@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from dataclasses import fields, is_dataclass
 from pathlib import Path
 from types import GenericAlias, UnionType
-from typing import Any, Literal, TypeVar, get_args, get_origin
+from typing import Any, Literal, TypeVar, Union, get_args, get_origin
 
 import pytest
 from _pytest.mark import ParameterSet
@@ -56,8 +56,9 @@ class IssuesCreator:
             return [("Class", "Property")]
         elif isinstance(type_, GenericAlias):
             return self._create_values(type_)
-        elif isinstance(type_, UnionType):
-            return self._create_value(type_.__args__[0])
+        elif isinstance(type_, UnionType) or get_origin(type_) is Union:
+            args = get_args(type_)
+            return self._create_value(args[0])
         elif type(type_) is TypeVar or any(type(arg) is TypeVar for arg in get_args(type_)):
             return "typevar"
         elif type_ is ViewId:
