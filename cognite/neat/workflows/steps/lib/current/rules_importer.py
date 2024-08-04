@@ -5,7 +5,7 @@ from typing import ClassVar
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
 
-from cognite.neat.issues.errors.workflow import StepNotInitializedError
+from cognite.neat.issues.errors import StepNotInitializedError
 from cognite.neat.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules import importers
 from cognite.neat.rules.models import RoleTypes

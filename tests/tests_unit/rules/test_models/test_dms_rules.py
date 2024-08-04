@@ -8,7 +8,7 @@ from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
 from cognite.neat.issues import MultiValueError, NeatError, NeatIssue
-from cognite.neat.issues.errors.resources import (
+from cognite.neat.issues.errors import (
     ChangedResourceError,
     DuplicatedPropertyDefinitionsError,
     ResourceNotFoundError,

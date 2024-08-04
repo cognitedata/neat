@@ -11,7 +11,7 @@ from cognite.client.data_classes import Event, FileMetadataUpdate
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
-from cognite.neat.issues.errors.workflow import ConfigurationNotSetError
+from cognite.neat.issues.errors import ConfigurationNotSetError
 from cognite.neat.workflows.model import WorkflowFullStateReport, WorkflowState, WorkflowStepEvent
 from cognite.neat.workflows.utils import get_file_hash
 

@@ -11,7 +11,7 @@ from cognite.neat.graph.extractors import RdfFileExtractor
 from cognite.neat.graph.loaders import AssetLoader
 from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformers import AddSelfReferenceProperty
-from cognite.neat.issues.errors.resources import InvalidResourceError
+from cognite.neat.issues.errors import InvalidResourceError
 from cognite.neat.rules.models import AssetRules
 
 

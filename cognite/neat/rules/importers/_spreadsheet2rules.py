@@ -12,8 +12,12 @@ import pandas as pd
 from pandas import ExcelFile
 
 from cognite.neat.issues import IssueList, NeatError
-from cognite.neat.issues.errors.external import FileMissingRequiredFieldError, FileReadError, NeatFileNotFoundError
-from cognite.neat.issues.errors.resources import DuplicatedPropertyDefinitionsError
+from cognite.neat.issues.errors import (
+    DuplicatedPropertyDefinitionsError,
+    FileMissingRequiredFieldError,
+    FileReadError,
+    NeatFileNotFoundError,
+)
 from cognite.neat.rules.models import (
     RULES_PER_ROLE,
     AssetRules,

@@ -2,8 +2,7 @@ from graphlib import CycleError
 from typing import cast
 
 from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors.general import NeatValueError
-from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
+from cognite.neat.issues.errors import InvalidPropertyDefinitionError, NeatValueError
 from cognite.neat.rules.models._base import SheetList
 from cognite.neat.rules.models.asset._rules import AssetProperty, AssetRules
 from cognite.neat.rules.models.entities import AssetEntity, AssetFields, ClassEntity

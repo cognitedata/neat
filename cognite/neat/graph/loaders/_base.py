@@ -8,7 +8,7 @@ from cognite.client.data_classes.capabilities import Capability
 
 from cognite.neat.graph import NeatGraphStore
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors.external import FailedAuthorizationError
+from cognite.neat.issues.errors import FailedAuthorizationError
 from cognite.neat.utils.auxiliary import class_html_doc
 from cognite.neat.utils.upload import UploadResult, UploadResultList
 

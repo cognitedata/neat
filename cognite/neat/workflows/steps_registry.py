@@ -14,7 +14,7 @@ import cognite.neat.workflows.steps.lib.current
 import cognite.neat.workflows.steps.lib.io
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.config import Config
-from cognite.neat.issues.errors.workflow import ConfigurationNotSetError, InvalidWorkFlowError
+from cognite.neat.issues.errors import ConfigurationNotSetError, InvalidWorkFlowError
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
 from cognite.neat.workflows.steps.step_model import Configurable, DataContract, Step
 

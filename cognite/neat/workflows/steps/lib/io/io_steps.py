@@ -6,7 +6,7 @@ from typing import ClassVar
 import requests
 from cognite.client import CogniteClient
 
-from cognite.neat.issues.errors.workflow import StepNotInitializedError
+from cognite.neat.issues.errors import StepNotInitializedError
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.step_model import Configurable, Step
 

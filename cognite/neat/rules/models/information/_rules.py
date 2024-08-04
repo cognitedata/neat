@@ -8,7 +8,7 @@ from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
-from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
+from cognite.neat.issues.errors import InvalidPropertyDefinitionError
 from cognite.neat.rules.models._base import (
     BaseMetadata,
     BaseRules,

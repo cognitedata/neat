@@ -19,8 +19,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.errors.external import UnexpectedFileTypeError
-from cognite.neat.issues.errors.resources import ResourceNotFoundError
+from cognite.neat.issues.errors import ResourceNotFoundError, UnexpectedFileTypeError
 from cognite.neat.issues.neat_warnings.properties import (
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,

@@ -6,8 +6,11 @@ from pydantic.version import VERSION
 
 from cognite.neat.issues import IssueList
 from cognite.neat.issues._base import InvalidRowError
-from cognite.neat.issues.errors.external import NeatFileNotFoundError
-from cognite.neat.issues.errors.resources import DuplicatedPropertyDefinitionsError, ResourceNotDefinedError
+from cognite.neat.issues.errors import (
+    DuplicatedPropertyDefinitionsError,
+    NeatFileNotFoundError,
+    ResourceNotDefinedError,
+)
 from cognite.neat.issues.neat_warnings.models import (
     HasDataFilterLimitWarning,
     ViewContainerLimitWarning,

@@ -4,7 +4,7 @@ from typing import Any, Literal, overload
 import yaml
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.errors.external import (
+from cognite.neat.issues.errors import (
     FileMissingRequiredFieldError,
     FileNotAFileError,
     NeatFileNotFoundError,

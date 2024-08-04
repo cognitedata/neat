@@ -2,8 +2,7 @@ from collections import Counter
 from collections.abc import Callable, Sequence
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.errors.properties import PropertyTypeNotSupportedError
-from cognite.neat.issues.errors.resources import MissingIdentifierError, ResourceNotFoundError
+from cognite.neat.issues.errors import MissingIdentifierError, PropertyTypeNotSupportedError, ResourceNotFoundError
 from cognite.neat.issues.neat_warnings.properties import PropertyTypeNotSupportedWarning
 from cognite.neat.issues.neat_warnings.resources import ResourceTypeNotSupportedWarning
 from cognite.neat.rules.importers._dtdl2rules.spec import (

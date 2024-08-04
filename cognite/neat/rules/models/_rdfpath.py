@@ -8,7 +8,7 @@ from typing import ClassVar, Literal
 
 from pydantic import BaseModel, field_validator, model_serializer
 
-from cognite.neat.issues.errors.general import NeatValueError
+from cognite.neat.issues.errors import NeatValueError
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum

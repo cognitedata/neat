@@ -3,9 +3,11 @@ from cognite.neat.issues._base import NeatError, _get_subclasses
 from .external import (
     FailedAuthorizationError,
     FileMissingRequiredFieldError,
+    FileNotAFileError,
     FileReadError,
     InvalidYamlError,
     NeatFileNotFoundError,
+    UnexpectedFileTypeError,
 )
 from .general import NeatImportError, NeatValueError, RegexViolationError
 from .properties import (
@@ -55,6 +57,8 @@ __all__ = [
     "InvalidWorkFlowError",
     "StepNotInitializedError",
     "InvalidStepOutputError",
+    "UnexpectedFileTypeError",
+    "FileNotAFileError",
 ]
 
 _NEAT_ERRORS_BY_NAME = {error.__name__: error for error in _get_subclasses(NeatError, include_base=True)}

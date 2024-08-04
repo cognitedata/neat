@@ -2,7 +2,7 @@ import time
 from pathlib import Path
 from typing import ClassVar, Literal, cast
 
-from cognite.neat.issues.errors.workflow import StepNotInitializedError
+from cognite.neat.issues.errors import StepNotInitializedError
 from cognite.neat.rules import exporters
 from cognite.neat.rules._shared import DMSRules, InformationRules, Rules
 from cognite.neat.rules.models import RoleTypes
