@@ -195,7 +195,7 @@ class NeatError(NeatIssue, Exception):
                     cls._adjust_row_numbers(single_error, read_info_by_sheet)
                 all_errors.append(single_error)
             elif len(error["loc"]) >= 4 and read_info_by_sheet:
-                all_errors.append(InvalidRowError.from_pydantic_error(error, read_info_by_sheet))
+                all_errors.append(RowError.from_pydantic_error(error, read_info_by_sheet))
             else:
                 all_errors.append(DefaultPydanticError.from_pydantic_error(error))
         return all_errors
@@ -213,7 +213,7 @@ class NeatError(NeatIssue, Exception):
             )
             # The error is frozen, so we have to use __setattr__ to change the row number
             object.__setattr__(caught_error, "locations", adjusted_row_number)
-        elif isinstance(caught_error, InvalidRowError):
+        elif isinstance(caught_error, RowError):
             # Adjusting the row number to the actual row number in the spreadsheet
             new_row = reader.adjusted_row_number(caught_error.row)
             # The error is frozen, so we have to use __setattr__ to change the row number
@@ -250,7 +250,7 @@ class DefaultPydanticError(NeatError, ValueError):
 
 
 @dataclass(frozen=True)
-class InvalidRowError(NeatError, ValueError):
+class RowError(NeatError, ValueError):
     """In {sheet_name}, row={row}, column={column}: {msg}. [type={type}, input_value={input}]"""
 
     extra = "For further information visit {url}"

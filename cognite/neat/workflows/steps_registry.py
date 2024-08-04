@@ -14,7 +14,7 @@ import cognite.neat.workflows.steps.lib.current
 import cognite.neat.workflows.steps.lib.io
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.config import Config
-from cognite.neat.issues.errors import ConfigurationNotSetError, InvalidWorkFlowError
+from cognite.neat.issues.errors import ConfigurationNotSetError, WorkFlowMissingDataError
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
 from cognite.neat.workflows.steps.step_model import Configurable, DataContract, Step
 
@@ -163,9 +163,9 @@ class StepsRegistry:
                         missing_data.append(parameter.annotation.__name__)
                         continue
                 if not is_valid:
-                    raise InvalidWorkFlowError(step_name, frozenset(missing_data))
+                    raise WorkFlowMissingDataError(step_name, frozenset(missing_data))
                 return step_obj.run(*input_data)
-        raise InvalidWorkFlowError(step_name, frozenset({}))
+        raise WorkFlowMissingDataError(step_name, frozenset({}))
 
     def get_list_of_steps(self) -> list[StepMetadata]:
         steps: list[StepMetadata] = []

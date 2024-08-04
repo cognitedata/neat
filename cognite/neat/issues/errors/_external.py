@@ -41,7 +41,7 @@ class FileMissingRequiredFieldError(NeatError, ValueError):
 
 
 @dataclass(frozen=True)
-class InvalidYamlError(NeatError, YAMLError):
+class NeatYamlError(NeatError, YAMLError):
     """Invalid YAML: {reason}"""
 
     extra = "Expected format: {expected_format}"

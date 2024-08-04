@@ -29,7 +29,7 @@ from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors import (
     DuplicatedMappingError,
     DuplicatedResourceError,
-    InvalidYamlError,
+    NeatYamlError,
     PropertyNotFoundError,
     ResourceNotFoundError,
 )
@@ -421,9 +421,9 @@ class DMSSchema:
             try:
                 data_dict = yaml.safe_load(data)
             except Exception as e:
-                raise InvalidYamlError(str(e)) from None
+                raise NeatYamlError(str(e)) from None
             if not isinstance(data_dict, dict) and all(isinstance(v, list) for v in data_dict.values()):
-                raise InvalidYamlError(f"Invalid data structure: {type(data)}", "dict[str, list[Any]]") from None
+                raise NeatYamlError(f"Invalid data structure: {type(data)}", "dict[str, list[Any]]") from None
         else:
             data_dict = data
         loaded: dict[str, Any] = {}

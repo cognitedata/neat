@@ -1,12 +1,12 @@
-from cognite.neat.issues._base import DefaultPydanticError, InvalidRowError, NeatError, _get_subclasses
+from cognite.neat.issues._base import DefaultPydanticError, NeatError, RowError, _get_subclasses
 
 from ._external import (
     FailedAuthorizationError,
     FileMissingRequiredFieldError,
     FileNotAFileError,
     FileReadError,
-    InvalidYamlError,
     NeatFileNotFoundError,
+    NeatYamlError,
     UnexpectedFileTypeError,
 )
 from ._general import NeatImportError, NeatValueError, RegexViolationError
@@ -28,7 +28,7 @@ from ._resources import (
     ResourceNotFoundError,
     RetrievalResourceError,
 )
-from ._workflow import ConfigurationNotSetError, InvalidStepOutputError, InvalidWorkFlowError, StepNotInitializedError
+from ._workflow import ConfigurationNotSetError, StepNotInitializedError, StepOutputError, WorkFlowMissingDataError
 
 __all__ = [
     "NeatError",
@@ -36,7 +36,7 @@ __all__ = [
     "NeatImportError",
     "RegexViolationError",
     "FailedAuthorizationError",
-    "InvalidYamlError",
+    "NeatYamlError",
     "FileReadError",
     "NeatFileNotFoundError",
     "FileMissingRequiredFieldError",
@@ -55,13 +55,13 @@ __all__ = [
     "MissingIdentifierError",
     "FailedConvertError",
     "ConfigurationNotSetError",
-    "InvalidWorkFlowError",
+    "WorkFlowMissingDataError",
     "StepNotInitializedError",
-    "InvalidStepOutputError",
+    "StepOutputError",
     "UnexpectedFileTypeError",
     "FileNotAFileError",
     "DefaultPydanticError",
-    "InvalidRowError",
+    "RowError",
 ]
 
 _NEAT_ERRORS_BY_NAME = {error.__name__: error for error in _get_subclasses(NeatError, include_base=True)}

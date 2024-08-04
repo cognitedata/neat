@@ -13,7 +13,7 @@ from prometheus_client import Gauge
 
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.config import Config
-from cognite.neat.issues.errors import ConfigurationNotSetError, InvalidStepOutputError
+from cognite.neat.issues.errors import ConfigurationNotSetError, StepOutputError
 from cognite.neat.utils.auxiliary import retry_decorator
 from cognite.neat.workflows import cdf_store, utils
 from cognite.neat.workflows.cdf_store import CdfStore
@@ -316,7 +316,7 @@ class BaseWorkflow:
                         elif isinstance(out_obj, DataContract):
                             self.data[type(out_obj).__name__] = out_obj
                         else:
-                            raise InvalidStepOutputError(step_type=type(out_obj).__name__)
+                            raise StepOutputError(step_type=type(out_obj).__name__)
 
             elif step.stype == StepType.START_WORKFLOW_TASK_STEP:
                 if self.task_builder:

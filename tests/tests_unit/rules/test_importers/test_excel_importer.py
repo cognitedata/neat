@@ -7,9 +7,9 @@ from pydantic.version import VERSION
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import (
     DuplicatedPropertyDefinitionsError,
-    InvalidRowError,
     NeatFileNotFoundError,
     ResourceNotDefinedError,
+    RowError,
 )
 from cognite.neat.issues.warnings import (
     HasDataFilterLimitWarning,
@@ -33,7 +33,7 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "invalid_property_dms_rules.xlsx",
         IssueList(
             [
-                InvalidRowError(
+                RowError(
                     sheet_name="Properties",
                     column="Is List",
                     row=4,
