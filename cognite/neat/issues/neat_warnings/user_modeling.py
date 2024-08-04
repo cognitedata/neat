@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
-from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
+from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 
 from .models import UserModelingWarning
 
@@ -99,7 +99,7 @@ class ViewPropertyLimitWarning(UserModelingWarning):
 
     view_id: ViewId
     count: int
-    limit: int = DMS_CONTAINER_SIZE_LIMIT
+    limit: int = DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 
 
 @dataclass(frozen=True)

@@ -8,7 +8,10 @@ from cognite.neat.issues import IssueList
 from cognite.neat.issues._base import InvalidRowError
 from cognite.neat.issues.errors.external import NeatFileNotFoundError
 from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
-from cognite.neat.issues.neat_warnings.models import CDFNotSupportedWarning
+from cognite.neat.issues.neat_warnings.models import (
+    HasDataFilterLimitWarning,
+    ViewContainerLimitWarning,
+)
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
 from tests.config import DOC_RULES
@@ -85,17 +88,13 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "too_many_containers_per_view.xlsx",
         IssueList(
             [
-                CDFNotSupportedWarning(
-                    "More than 10 containers in a view",
-                    f"The view {ViewId(space='neat', external_id='Asset', version='1')!r} "
-                    f"maps to more than 10 containers.",
-                    "Reduce the number of containers the view maps to.",
+                ViewContainerLimitWarning(
+                    ViewId(space="neat", external_id="Asset", version="1"),
+                    11,
                 ),
-                CDFNotSupportedWarning(
-                    "More than 10 containers in a view",
-                    f"The view {ViewId(space='neat', external_id='Asset', version='1')!r} "
-                    "maps to more than 10 containers.",
-                    "Reduce the number of containers the view maps to.",
+                HasDataFilterLimitWarning(
+                    ViewId(space="neat", external_id="Asset", version="1"),
+                    11,
                 ),
             ]
         ),

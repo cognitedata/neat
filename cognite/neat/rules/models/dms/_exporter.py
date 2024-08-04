@@ -12,7 +12,7 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
-from cognite.neat.issues.neat_warnings import CDFNotSupportedWarning, NotSupportedWarning
+from cognite.neat.issues.neat_warnings import NotSupportedWarning, PropertyNotFoundWarning
 from cognite.neat.issues.neat_warnings.user_modeling import (
     EmptyContainerWarning,
     HasDataFilterOnNoPropertiesViewWarning,
@@ -510,10 +510,12 @@ class _DMSExporter:
 
             if reverse_prop is None:
                 warnings.warn(
-                    CDFNotSupportedWarning(
-                        "ReverseConnectionWithoutOtherSideWarning",
-                        f"The reverse relation specified in {source_view_id!r}.{prop.view_property} is"
-                        f" missing the other side.",
+                    PropertyNotFoundWarning(
+                        source_view_id,
+                        "View",
+                        reverse_prop_id or "MISSING",
+                        dm.PropertyId(prop.view.as_id(), prop.view_property),
+                        "ViewProperty",
                     ),
                     stacklevel=2,
                 )

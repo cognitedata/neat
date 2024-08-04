@@ -12,7 +12,7 @@ from cognite.neat.rules.models._base import (
     SchemaCompleteness,
     SheetList,
 )
-from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
+from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
@@ -266,7 +266,7 @@ class _InformationRulesConverter:
         else:
             container_entity = prop.class_.as_container_entity(default_space)
 
-        while self.property_count_by_container[container_entity] >= DMS_CONTAINER_SIZE_LIMIT:
+        while self.property_count_by_container[container_entity] >= DMS_CONTAINER_PROPERTY_SIZE_LIMIT:
             container_entity.suffix = self._bump_suffix(container_entity.suffix)
 
         self.property_count_by_container[container_entity] += 1

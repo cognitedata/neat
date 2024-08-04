@@ -2,7 +2,10 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import ClassVar
 
+from cognite.client.data_classes.data_modeling import ViewId
+
 from cognite.neat.issues import NeatWarning
+from cognite.neat.rules.models._constants import DMS_VIEW_CONTAINER_SIZE_LIMIT
 
 _BASE_URL = "https://cognite-neat.readthedocs-hosted.com/en/latest/data-modeling-principles.html"
 
@@ -70,10 +73,30 @@ class UserModelingWarning(NeatWarning, ABC):
 
 
 @dataclass(frozen=True)
-class CDFNotSupportedWarning(NeatWarning):
-    """{title} - Will likely fail to write to CDF. {problem}."""
+class CDFNotSupportedWarning(NeatWarning, ABC):
+    """This is a base class for warnings for modeling issues that will
+    likely lead to the CDF API rejecting the model."""
 
-    extra = "Suggestion: {suggestion}"
-    title: str
-    problem: str
-    suggestion: str | None = None
+    ...
+
+
+@dataclass(frozen=True)
+class ViewContainerLimitWarning(CDFNotSupportedWarning):
+    """The view {view_id} maps, {count} containers, which is more than the limit {limit}."""
+
+    fix = "Reduce the number of containers the view maps to." ""
+
+    view_id: ViewId
+    count: int
+    limit: int = DMS_VIEW_CONTAINER_SIZE_LIMIT
+
+
+@dataclass(frozen=True)
+class HasDataFilterLimitWarning(CDFNotSupportedWarning):
+    """The view {view_id} uses a hasData filter applied to {count} containers, which is more than the limit {limit}."""
+
+    fix = "Do not map to more than {limit} containers."
+
+    view_id: ViewId
+    count: int
+    limit: int = DMS_VIEW_CONTAINER_SIZE_LIMIT

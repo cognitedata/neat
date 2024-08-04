@@ -10,11 +10,13 @@ from .identifier import RegexViolationWarning
 from .models import (
     BreakingModelingPrincipleWarning,
     CDFNotSupportedWarning,
+    HasDataFilterLimitWarning,
     InvalidClassWarning,
     MatchingSpaceAndVersionWarning,
     OneModelOneSpaceWarning,
     SolutionBuildsOnEnterpriseWarning,
     UserModelingWarning,
+    ViewContainerLimitWarning,
 )
 from .properties import (
     DuplicatedPropertyDefinitionWarning,
@@ -54,6 +56,8 @@ __all__ = [
     "OneModelOneSpaceWarning",
     "MatchingSpaceAndVersionWarning",
     "SolutionBuildsOnEnterpriseWarning",
+    "ViewContainerLimitWarning",
+    "HasDataFilterLimitWarning",
     "user_modeling",
 ]
 

@@ -9,10 +9,13 @@ from cognite.neat.issues.errors import (
     MultiplePropertyDefinitionsError,
     ResourceNotDefinedError,
 )
-from cognite.neat.issues.neat_warnings import CDFNotSupportedWarning
+from cognite.neat.issues.neat_warnings import (
+    HasDataFilterLimitWarning,
+    ViewContainerLimitWarning,
+)
 from cognite.neat.issues.neat_warnings.user_modeling import NotNeatSupportedFilterWarning, ViewPropertyLimitWarning
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
-from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
+from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ContainerEntity
 from cognite.neat.rules.models.wrapped_entities import RawFilter
@@ -184,7 +187,7 @@ class DMSPostValidation:
             else:
                 property_count_by_view[view_id] += 1
         for view_id, count in property_count_by_view.items():
-            if count > DMS_CONTAINER_SIZE_LIMIT:
+            if count > DMS_CONTAINER_PROPERTY_SIZE_LIMIT:
                 errors.append(ViewPropertyLimitWarning(view_id, count))
         if self.metadata.schema_ is SchemaCompleteness.complete:
             defined_containers = {container.container.as_id() for container in self.containers or []}
@@ -289,10 +292,9 @@ class DMSPostValidation:
 
             if mapped_containers and len(mapped_containers) > 10:
                 self.issue_list.append(
-                    CDFNotSupportedWarning(
-                        "More than 10 containers in a view",
-                        f"The view {view_id!r} maps to more than 10 containers.",
-                        "Reduce the number of containers the view maps to.",
+                    ViewContainerLimitWarning(
+                        view_id,
+                        len(mapped_containers),
                     )
                 )
                 if (
@@ -301,10 +303,9 @@ class DMSPostValidation:
                     and len(view.filter.dump()["hasData"]) > 10
                 ):
                     self.issue_list.append(
-                        CDFNotSupportedWarning(
-                            "More than 10 containers in a view",
-                            f"The view {view_id!r} maps to more than 10 containers.",
-                            "Reduce the number of containers the view maps to.",
+                        HasDataFilterLimitWarning(
+                            view_id,
+                            len(view.filter.dump()["hasData"]),
                         )
                     )
 
