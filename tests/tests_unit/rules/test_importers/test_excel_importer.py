@@ -53,7 +53,7 @@ def invalid_rules_filepaths():
             [
                 DuplicatedPropertyDefinitionsError(
                     ContainerId("neat", "Flowable"),
-                    "Container",
+                    "container",
                     "maxFlow",
                     frozenset({"float32", "float64"}),
                     (3, 4),
@@ -69,7 +69,7 @@ def invalid_rules_filepaths():
             [
                 ResourceNotDefinedError(
                     ViewId("neat", "Pump", "1"),
-                    "View",
+                    "view",
                     location="Views Sheet",
                     column_name="View",
                     row_number=3,
@@ -77,7 +77,7 @@ def invalid_rules_filepaths():
                 ),
                 ResourceNotDefinedError(
                     ContainerId("neat", "Pump"),
-                    "Container",
+                    "container",
                     location="Containers Sheet",
                     column_name="Container",
                     row_number=3,

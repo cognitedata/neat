@@ -197,9 +197,9 @@ def parent_property_points_to_data_type():
                 },
             ],
         },
-        InvalidPropertyDefinitionError[ClassEntity](
+        InvalidPropertyDefinitionError(
             ClassEntity(prefix="power", suffix="ACLineSegment"),
-            "Class",
+            "class",
             "line",
             "parentExternalId is only allowed to point to a Class not String",
         ),

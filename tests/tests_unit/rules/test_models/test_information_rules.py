@@ -155,7 +155,7 @@ def incomplete_rules_case():
             ],
         },
         ResourceNotDefinedError[ClassEntity](
-            ClassEntity(prefix="power", suffix="GeneratingUnit2"), "Class", "Classes sheet"
+            ClassEntity(prefix="power", suffix="GeneratingUnit2"), "class", "Classes sheet"
         ),
         id="missing_rule",
     )

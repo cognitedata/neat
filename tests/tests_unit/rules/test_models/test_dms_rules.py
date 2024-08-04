@@ -1049,8 +1049,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            DuplicatedPropertyDefinitionsError[dm.ContainerId](
-                container_id, "Container", "maxPower", frozenset({"float64", "float32"}), (0, 1), "rows"
+            DuplicatedPropertyDefinitionsError(
+                container_id, "container", "maxPower", frozenset({"float64", "float32"}), (0, 1), "rows"
             )
         ],
         id="Inconsistent container definition value type",
@@ -1098,8 +1098,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            DuplicatedPropertyDefinitionsError[dm.ContainerId](
-                container_id, "Container", "maxPower", frozenset({True, False}), (0, 1), "rows"
+            DuplicatedPropertyDefinitionsError(
+                container_id, "container", "maxPower", frozenset({True, False}), (0, 1), "rows"
             )
         ],
         id="Inconsistent container definition isList",
@@ -1147,8 +1147,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            DuplicatedPropertyDefinitionsError[dm.ContainerId](
-                container_id, "Container", "maxPower", frozenset({True, False}), (0, 1), "rows"
+            DuplicatedPropertyDefinitionsError(
+                container_id, "container", "maxPower", frozenset({True, False}), (0, 1), "rows"
             )
         ],
         id="Inconsistent container definition nullable",
@@ -1196,8 +1196,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            DuplicatedPropertyDefinitionsError[dm.ContainerId](
-                container_id, "Container", "name", frozenset({"name", "name_index"}), (0, 1), "rows"
+            DuplicatedPropertyDefinitionsError(
+                container_id, "container", "name", frozenset({"name", "name_index"}), (0, 1), "rows"
             )
         ],
         id="Inconsistent container definition index",
@@ -1245,8 +1245,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             },
         },
         [
-            DuplicatedPropertyDefinitionsError[dm.ContainerId](
-                container_id, "Container", "name", frozenset({"unique_name", "name"}), (0, 1), "rows"
+            DuplicatedPropertyDefinitionsError(
+                container_id, "container", "name", frozenset({"unique_name", "name"}), (0, 1), "rows"
             )
         ],
         id="Inconsistent container definition constraint",
@@ -1319,7 +1319,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         [
             ChangedResourceError(
                 dm.ContainerId("my_space", "Asset"),
-                "Container",
+                "container",
                 frozenset({"name"}),
                 frozenset({}),
             )
@@ -1363,7 +1363,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         [
             ChangedResourceError(
                 dm.ViewId("my_space", "Asset", "1"),
-                "View",
+                "view",
                 frozenset({}),
                 frozenset({"description"}),
             )
@@ -1379,7 +1379,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         [
             ChangedResourceError(
                 dm.ContainerId("my_space", "Asset"),
-                "Container",
+                "container",
                 frozenset({"name"}),
                 frozenset({}),
             )
@@ -1744,6 +1744,6 @@ def test_dms_rules_validation_error():
 
     assert e.value == ResourceNotFoundError(
         dm.ViewId(space="my_space", external_id="Sourceable", version="1"),
-        "View",
+        "view",
         "Schema set to complete, expects all views to be in model",
     )
