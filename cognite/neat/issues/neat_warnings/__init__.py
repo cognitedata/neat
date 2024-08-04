@@ -5,8 +5,7 @@ from cognite.neat.issues._base import NeatWarning, _get_subclasses
 
 from . import user_modeling
 from .external import FileMissingRequiredFieldWarning, FileReadWarning, UnexpectedFileTypeWarning, UnknownItemWarning
-from .general import NeatValueWarning, NotSupportedWarning
-from .identifier import RegexViolationWarning
+from .general import NeatValueWarning, NotSupportedWarning, RegexViolationWarning
 from .models import (
     BreakingModelingPrincipleWarning,
     CDFNotSupportedWarning,
@@ -38,7 +37,6 @@ __all__ = [
     "UnexpectedFileTypeWarning",
     "NeatValueWarning",
     "NotSupportedWarning",
-    "RegexViolationWarning",
     "UserModelingWarning",
     "CDFNotSupportedWarning",
     "InvalidClassWarning",
@@ -48,7 +46,7 @@ __all__ = [
     "PropertyNotFoundWarning",
     "ResourceWarning",
     "MultipleResourcesWarning",
-    "ResourceNotFoundWarning",
+    "RegexViolationWarning",
     "ReferredResourceNotFoundWarning",
     "ResourceTypeNotSupportedWarning",
     "FailedLoadingResourcesWarning",
