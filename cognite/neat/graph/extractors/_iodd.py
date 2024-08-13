@@ -14,8 +14,8 @@ IODD = Namespace("http://www.io-link.com/IODD/2010/10/")  # All elements have th
 XSI = Namespace("http://www.w3.org/2001/XMLSchema-instance/")
 
 # Not really needed or used right now as * wildcard is used to extract elements with a certain tag
-ET.register_namespace('iodd', IODD.__str__())
-NS = {'iodd': IODD.__str__()}
+ET.register_namespace("iodd", IODD.__str__())
+NS = {"iodd": IODD.__str__()}
 
 
 class IODDExtractor(BaseExtractor):
@@ -32,9 +32,9 @@ class IODDExtractor(BaseExtractor):
     """
 
     def __init__(
-            self,
-            root: Element,
-            namespace: Namespace | None = None,
+        self,
+        root: Element,
+        namespace: Namespace | None = None,
     ):
         self.root = root
         self.namespace = namespace or DEFAULT_NAMESPACE
@@ -56,10 +56,9 @@ class IODDExtractor(BaseExtractor):
             triples.extend(cls._device_identity_to_triples(di_root, namespace))
 
         # Extract VariableCollection triples - this element holds the information about the sensors
-        #TODO
+        # TODO
 
         return triples
-
 
     @classmethod
     def _device_identity_to_triples(cls, di_root: Element, namespace: Namespace) -> list[Triple]:
@@ -69,7 +68,6 @@ class IODDExtractor(BaseExtractor):
 
         """
         triples: list[Triple] = []
-
 
         # Extract element tag and namespace
         deviceId = di_root.attrib.get("deviceId")
@@ -107,7 +105,6 @@ class IODDExtractor(BaseExtractor):
                     triples.append((id_, predicate, Literal(attribute_value)))
 
         return triples
-
 
     def extract(self) -> list[Triple]:
         triples = []
