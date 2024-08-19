@@ -4,7 +4,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.graph.loaders import DMSLoader
 from cognite.neat.rules.importers import InferenceImporter
-from cognite.neat.stores import NeatGraphStore
+from cognite.neat.store import NeatGraphStore
 from tests.data import car
 
 

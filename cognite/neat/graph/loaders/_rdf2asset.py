@@ -24,7 +24,7 @@ from cognite.neat.issues.errors import ResourceCreationError, ResourceNotFoundEr
 from cognite.neat.rules.analysis._asset import AssetAnalysis
 from cognite.neat.rules.models import AssetRules
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
-from cognite.neat.stores import NeatGraphStore
+from cognite.neat.store import NeatGraphStore
 from cognite.neat.utils.auxiliary import create_sha256_hash
 from cognite.neat.utils.upload import UploadResult
 

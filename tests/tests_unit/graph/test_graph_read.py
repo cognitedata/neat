@@ -3,7 +3,7 @@ from cognite.client.testing import monkeypatch_cognite_client
 
 from cognite.neat.graph.extractors import AssetsExtractor
 from cognite.neat.rules.importers import InferenceImporter
-from cognite.neat.stores import NeatGraphStore
+from cognite.neat.store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 

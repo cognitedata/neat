@@ -15,7 +15,7 @@ from cognite.neat.rules.models import (
     DomainRules,
     InformationRules,
 )
-from cognite.neat.stores import NeatGraphStore
+from cognite.neat.store import NeatGraphStore
 from cognite.neat.workflows.steps.step_model import DataContract
 
 

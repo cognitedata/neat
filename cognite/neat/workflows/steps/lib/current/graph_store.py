@@ -1,6 +1,6 @@
 from typing import ClassVar
 
-from cognite.neat.stores import NeatGraphStore
+from cognite.neat.store import NeatGraphStore
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import (
     MultiRuleData,

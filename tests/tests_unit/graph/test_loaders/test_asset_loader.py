@@ -13,7 +13,7 @@ from cognite.neat.graph.transformers import AddSelfReferenceProperty
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors import ResourceCreationError
 from cognite.neat.rules.models import AssetRules
-from cognite.neat.stores import NeatGraphStore
+from cognite.neat.store import NeatGraphStore
 
 
 @pytest.fixture()

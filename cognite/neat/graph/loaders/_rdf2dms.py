@@ -25,7 +25,7 @@ from cognite.neat.issues.errors import (
 from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
-from cognite.neat.stores import NeatGraphStore
+from cognite.neat.store import NeatGraphStore
 from cognite.neat.utils.auxiliary import create_sha256_hash
 from cognite.neat.utils.upload import UploadResult
 

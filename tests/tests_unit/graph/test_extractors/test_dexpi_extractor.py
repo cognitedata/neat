@@ -1,5 +1,5 @@
 from cognite.neat.graph.extractors import DexpiExtractor
-from cognite.neat.stores import NeatGraphStore
+from cognite.neat.store import NeatGraphStore
 from tests import config
 
 
