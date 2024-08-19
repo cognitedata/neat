@@ -3,7 +3,7 @@ from cognite.client.testing import monkeypatch_cognite_client
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors import AssetsExtractor
-from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.store import NeatGraphStore
 from cognite.neat.utils.auxiliary import create_sha256_hash
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 

@@ -7,7 +7,6 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
-from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import FileReadError
 from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
@@ -17,6 +16,7 @@ from cognite.neat.rules.models.information import (
     InformationMetadata,
     InformationRulesInput,
 )
+from cognite.neat.store import NeatGraphStore
 from cognite.neat.utils.rdf_ import get_namespace, remove_namespace_from_uri, uri_to_short_form
 
 ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
