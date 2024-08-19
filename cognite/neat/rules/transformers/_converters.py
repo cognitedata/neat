@@ -2,19 +2,23 @@ import re
 from collections import Counter, defaultdict
 from collections.abc import Collection
 from datetime import date, datetime
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 from cognite.client.data_classes import data_modeling as dms
 
-from cognite.neat.rules.models import data_types
-from cognite.neat.rules.models._base import (
+from cognite.neat.rules.models import (
+    AssetRules,
+    DMSRules,
+    DomainRules,
     ExtensionCategory,
+    InformationRules,
     SchemaCompleteness,
     SheetList,
+    data_types,
 )
 from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.domain import DomainRules
+from cognite.neat.rules.models.dms import DMSMetadata, DMSProperty
 from cognite.neat.rules.models.entities import (
     AssetEntity,
     AssetFields,
@@ -29,12 +33,30 @@ from cognite.neat.rules.models.entities import (
     ViewEntity,
     ViewPropertyEntity,
 )
+from cognite.neat.rules.models.information import InformationClass, InformationMetadata, InformationProperty
 
-from ._rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
+from ._base import RulesTransformer
 
-if TYPE_CHECKING:
-    from cognite.neat.rules.models.asset._rules import AssetRules
-    from cognite.neat.rules.models.dms._rules import DMSMetadata, DMSProperty, DMSRules
+
+class InformationToDMS(RulesTransformer[InformationRules, DMSRules]):
+    """Converts InformationRules to DMSRules."""
+
+    def transform(self, rules: InformationRules) -> DMSRules:
+        return _InformationRulesConverter(rules).as_dms_rules()
+
+
+class InformationToAsset(RulesTransformer[InformationRules, AssetRules]):
+    """Converts InformationRules to AssetRules."""
+
+    def transform(self, rules: InformationRules) -> AssetRules:
+        return _InformationRulesConverter(rules).as_asset_architect_rules()
+
+
+class AssetToInformation(RulesTransformer[AssetRules, InformationRules]):
+    """Converts AssetRules to InformationRules."""
+
+    def transform(self, rules: AssetRules) -> InformationRules:
+        return InformationRules.model_validate(rules.model_dump())
 
 
 class _InformationRulesConverter:

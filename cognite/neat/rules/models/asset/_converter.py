@@ -1,4 +1,4 @@
-from cognite.neat.rules.models.information._converter import _InformationRulesConverter
+from cognite.neat.rules.transformers._converters import _InformationRulesConverter
 
 
 class _AssetRulesConverter(_InformationRulesConverter): ...
