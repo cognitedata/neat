@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from rdflib import Namespace
 
 from cognite.neat.issues import IssueList, NeatError, NeatWarning
-from cognite.neat.rules._shared import Rules
+from cognite.neat.rules._shared import VerifiedRules
 from cognite.neat.rules.models import AssetRules, DMSRules, InformationRules, RoleTypes
 from cognite.neat.utils.auxiliary import class_html_doc
 
@@ -21,19 +21,19 @@ class BaseImporter(ABC):
     """
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]: ...
+    ) -> tuple[VerifiedRules | None, IssueList]: ...
 
     @abstractmethod
     def to_rules(
         self,
         errors: Literal["raise", "continue"] = "continue",
         role: RoleTypes | None = None,
-    ) -> tuple[Rules | None, IssueList] | Rules:
+    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
         """
         Creates `Rules` object from the data for target role.
         """
@@ -42,11 +42,11 @@ class BaseImporter(ABC):
     @classmethod
     def _to_output(
         cls,
-        rules: Rules,
+        rules: VerifiedRules,
         issues: IssueList,
         errors: Literal["raise", "continue"] = "continue",
         role: RoleTypes | None = None,
-    ) -> tuple[Rules | None, IssueList] | Rules:
+    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
         """Converts the rules to the output format."""
 
         if rules.metadata.role is role or role is None:

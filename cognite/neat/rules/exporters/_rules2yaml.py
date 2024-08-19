@@ -5,7 +5,7 @@ from typing import Literal, get_args
 
 import yaml
 
-from cognite.neat.rules._shared import Rules
+from cognite.neat.rules._shared import VerifiedRules
 from cognite.neat.rules.models import RoleTypes
 
 from ._base import BaseExporter
@@ -47,7 +47,7 @@ class YAMLExporter(BaseExporter[str]):
         self.output = output
         self.output_role = output_role
 
-    def export_to_file(self, rules: Rules, filepath: Path) -> None:
+    def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
         """Exports transformation rules to YAML/JSON file(s)."""
         if self.files == "single":
             if filepath.suffix != f".{self.output}":
@@ -57,7 +57,7 @@ class YAMLExporter(BaseExporter[str]):
         else:
             raise NotImplementedError(f"Exporting to {self.files} files is not supported")
 
-    def export(self, rules: Rules) -> str:
+    def export(self, rules: VerifiedRules) -> str:
         """Export rules to YAML (or JSON) format.
 
         Args:

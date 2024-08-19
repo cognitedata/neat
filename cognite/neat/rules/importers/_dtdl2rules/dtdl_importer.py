@@ -14,7 +14,7 @@ from cognite.neat.issues.warnings import (
     FileTypeUnexpectedWarning,
     NeatValueWarning,
 )
-from cognite.neat.rules._shared import Rules
+from cognite.neat.rules._shared import VerifiedRules
 from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
@@ -126,16 +126,16 @@ class DTDLImporter(BaseImporter):
         return cls(items, zip_file.stem, read_issues=issues)
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]: ...
+    ) -> tuple[VerifiedRules | None, IssueList]: ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList] | Rules:
+    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
         converter = _DTDLConverter(self._read_issues)
 
         converter.convert(self._items)

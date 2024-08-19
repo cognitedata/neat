@@ -25,7 +25,7 @@ from cognite.neat.issues.warnings import (
     PropertyTypeNotSupportedWarning,
     ResourceNotFoundWarning,
 )
-from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
+from cognite.neat.rules.importers._base import BaseImporter, VerifiedRules, _handle_issues
 from cognite.neat.rules.models import (
     DataModelType,
     DMSRules,
@@ -204,16 +204,16 @@ class DMSImporter(BaseImporter):
         return cls(schema, issue_list)
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]: ...
+    ) -> tuple[VerifiedRules | None, IssueList]: ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList] | Rules:
+    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
         if self.issue_list.has_errors:
             # In case there were errors during the import, the to_rules method will return None
             return self._return_or_raise(self.issue_list, errors)

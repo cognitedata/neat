@@ -9,7 +9,7 @@ from rdflib import Literal as RdfLiteral
 from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import FileReadError
-from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
+from cognite.neat.rules.importers._base import BaseImporter, VerifiedRules, _handle_issues
 from cognite.neat.rules.models import InformationRules, RoleTypes
 from cognite.neat.rules.models._base import MatchType
 from cognite.neat.rules.models.information import (
@@ -148,20 +148,20 @@ class InferenceImporter(BaseImporter):
         raise NotImplementedError("JSON file format is not supported yet.")
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
 
     @overload
     def to_rules(
         self,
         errors: Literal["continue"] = "continue",
         role: RoleTypes | None = None,
-    ) -> tuple[Rules | None, IssueList]: ...
+    ) -> tuple[VerifiedRules | None, IssueList]: ...
 
     def to_rules(
         self,
         errors: Literal["raise", "continue"] = "continue",
         role: RoleTypes | None = None,
-    ) -> tuple[Rules | None, IssueList] | Rules:
+    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
         """
         Creates `Rules` object from the data for target role.
         """

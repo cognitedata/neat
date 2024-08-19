@@ -12,7 +12,7 @@ from openpyxl.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
 
-from cognite.neat.rules._shared import Rules
+from cognite.neat.rules._shared import VerifiedRules
 from cognite.neat.rules.models import (
     DataModelType,
     ExtensionCategory,
@@ -89,7 +89,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         self.new_model_id = new_model_id
         self.dump_as = dump_as
 
-    def export_to_file(self, rules: Rules, filepath: Path) -> None:
+    def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
         """Exports transformation rules to excel file."""
         data = self.export(rules)
         try:
@@ -98,7 +98,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             data.close()
         return None
 
-    def export(self, rules: Rules) -> Workbook:
+    def export(self, rules: VerifiedRules) -> Workbook:
         rules = self._convert_to_output_role(rules, self.output_role)
         workbook = Workbook()
         # Remove default sheet named "Sheet"
@@ -147,7 +147,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         self,
         workbook: Workbook,
         dumped_rules: dict[str, Any],
-        rules: Rules,
+        rules: VerifiedRules,
         sheet_prefix: str = "",
     ):
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
