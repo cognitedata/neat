@@ -9,13 +9,13 @@ from cognite.client.data_classes import (
 )
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
-from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.rules.models import (
     AssetRules,
     DMSRules,
     DomainRules,
     InformationRules,
 )
+from cognite.neat.stores import NeatGraphStore
 from cognite.neat.workflows.steps.step_model import DataContract
 
 

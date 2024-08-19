@@ -9,11 +9,11 @@ from rdflib import URIRef
 from cognite.neat.graph.examples import nordic44_knowledge_graph
 from cognite.neat.graph.extractors import RdfFileExtractor
 from cognite.neat.graph.loaders import AssetLoader
-from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformers import AddSelfReferenceProperty
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors import ResourceCreationError
 from cognite.neat.rules.models import AssetRules
+from cognite.neat.stores import NeatGraphStore
 
 
 @pytest.fixture()

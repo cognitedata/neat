@@ -15,7 +15,6 @@ from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 
 from cognite.neat.graph._tracking import LogTracker, Tracker
-from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors import (
     ResourceConvertionError,
@@ -26,6 +25,7 @@ from cognite.neat.issues.errors import (
 from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
+from cognite.neat.stores import NeatGraphStore
 from cognite.neat.utils.auxiliary import create_sha256_hash
 from cognite.neat.utils.upload import UploadResult
 

@@ -1,4 +1,4 @@
-from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.stores import NeatGraphStore
 
 
 def test_provenance():
