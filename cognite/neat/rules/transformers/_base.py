@@ -7,7 +7,7 @@ T_RulesIn = TypeVar("T_RulesIn", bound=Rules)
 T_RulesOut = TypeVar("T_RulesOut", bound=Rules)
 
 
-class RuleTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
+class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
     """This is the base class for all rule transformers."""
 
     @abstractmethod
