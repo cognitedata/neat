@@ -4,7 +4,7 @@ from typing import ClassVar, Literal, cast
 
 from cognite.neat.issues.errors import WorkflowStepNotInitializedError
 from cognite.neat.rules import exporters
-from cognite.neat.rules._shared import DMSRules, InformationRules, Rules
+from cognite.neat.rules._shared import DMSRules, InformationRules, VerifiedRules
 from cognite.neat.rules.models import RoleTypes
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, MultiRuleData
@@ -317,7 +317,7 @@ class RulesToExcel(Step):
             new_model_id=new_model_id,
         )
 
-        rule_instance: Rules
+        rule_instance: VerifiedRules
         if rules.domain:
             rule_instance = rules.domain
         elif rules.information:

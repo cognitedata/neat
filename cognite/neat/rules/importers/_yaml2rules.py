@@ -14,7 +14,7 @@ from cognite.neat.issues.warnings import NeatValueWarning
 from cognite.neat.rules.models import RULES_PER_ROLE, DMSRules, RoleTypes
 from cognite.neat.rules.models.dms import DMSRulesInput
 
-from ._base import BaseImporter, Rules, _handle_issues
+from ._base import BaseImporter, VerifiedRules, _handle_issues
 
 
 class YAMLImporter(BaseImporter):
@@ -52,16 +52,16 @@ class YAMLImporter(BaseImporter):
         return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath])
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]: ...
+    ) -> tuple[VerifiedRules | None, IssueList]: ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList] | Rules:
+    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
         if self._read_issues.has_errors or not self.raw_data:
             if errors == "raise":
                 raise self._read_issues.as_errors()
@@ -98,7 +98,7 @@ class YAMLImporter(BaseImporter):
         rules_model = RULES_PER_ROLE[role_enum]
 
         with _handle_issues(issue_list) as future:
-            rules: Rules
+            rules: VerifiedRules
             if rules_model is DMSRules:
                 rules = DMSRulesInput.load(self.raw_data).as_rules()
             else:

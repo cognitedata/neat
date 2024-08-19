@@ -7,7 +7,7 @@ from typing import Literal, overload
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
 from cognite.neat.issues import IssueList
-from cognite.neat.rules.importers._base import BaseImporter, Rules
+from cognite.neat.rules.importers._base import BaseImporter, VerifiedRules
 from cognite.neat.rules.importers._rdf._shared import make_components_compliant
 from cognite.neat.rules.models import InformationRules, RoleTypes
 
@@ -38,18 +38,18 @@ class OWLImporter(BaseImporter):
         self.owl_filepath = filepath
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]: ...
+    ) -> tuple[VerifiedRules | None, IssueList]: ...
 
     def to_rules(
         self,
         errors: Literal["raise", "continue"] = "continue",
         role: RoleTypes | None = None,
-    ) -> tuple[Rules | None, IssueList] | Rules:
+    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)

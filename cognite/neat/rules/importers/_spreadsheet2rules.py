@@ -34,7 +34,7 @@ from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
 from cognite.neat.utils.text import humanize_collection
 
-from ._base import BaseImporter, Rules, _handle_issues
+from ._base import BaseImporter, VerifiedRules, _handle_issues
 
 SOURCE_SHEET__TARGET_FIELD__HEADERS = [
     (
@@ -218,18 +218,18 @@ class ExcelImporter(BaseImporter):
         self.filepath = filepath
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
 
     @overload
     def to_rules(
         self,
         errors: Literal["continue"] = "continue",
         role: RoleTypes | None = None,
-    ) -> tuple[Rules | None, IssueList]: ...
+    ) -> tuple[VerifiedRules | None, IssueList]: ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList] | Rules:
+    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
         issue_list = IssueList(title=f"'{self.filepath.name}'")
         if not self.filepath.exists():
             issue_list.append(FileNotFoundNeatError(self.filepath))
@@ -286,7 +286,7 @@ class ExcelImporter(BaseImporter):
             error_cls=NeatError,
             error_args={"read_info_by_sheet": read_info_by_sheet},
         ) as future:
-            rules: Rules
+            rules: VerifiedRules
             if rules_cls is DMSRules:
                 rules = DMSRulesInput.load(sheets).as_rules()
             elif rules_cls is InformationRules:
@@ -324,16 +324,16 @@ class GoogleSheetImporter(BaseImporter):
         self.skiprows = skiprows
 
     @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
+    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
 
     @overload
     def to_rules(
         self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]: ...
+    ) -> tuple[VerifiedRules | None, IssueList]: ...
 
     def to_rules(
         self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList] | Rules:
+    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
         local_import("gspread", "google")
         import gspread  # type: ignore[import]
 

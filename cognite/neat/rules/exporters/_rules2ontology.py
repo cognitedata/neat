@@ -34,32 +34,32 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-from cognite.neat.rules._shared import Rules
+from cognite.neat.rules._shared import VerifiedRules
 
 
 class GraphExporter(BaseExporter[Graph], ABC):
-    def export_to_file(self, rules: Rules, filepath: Path) -> None:
+    def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
         self.export(rules).serialize(destination=filepath, encoding=self._encoding, newline=self._new_line)
 
 
 class OWLExporter(GraphExporter):
     """Exports rules to an OWL ontology."""
 
-    def export(self, rules: Rules) -> Graph:
+    def export(self, rules: VerifiedRules) -> Graph:
         return Ontology.from_rules(rules).as_owl()
 
 
 class SHACLExporter(GraphExporter):
     """Exports rules to a SHACL graph."""
 
-    def export(self, rules: Rules) -> Graph:
+    def export(self, rules: VerifiedRules) -> Graph:
         return Ontology.from_rules(rules).as_shacl()
 
 
 class SemanticDataModelExporter(GraphExporter):
     """Exports rules to a semantic data model."""
 
-    def export(self, rules: Rules) -> Graph:
+    def export(self, rules: VerifiedRules) -> Graph:
         return Ontology.from_rules(rules).as_semantic_data_model()
 
 
@@ -86,7 +86,7 @@ class Ontology(OntologyModel):
     prefixes: dict[str, Namespace]
 
     @classmethod
-    def from_rules(cls, input_rules: Rules) -> Self:
+    def from_rules(cls, input_rules: VerifiedRules) -> Self:
         """
         Generates an ontology from a set of transformation rules.
 
