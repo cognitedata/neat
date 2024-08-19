@@ -1,4 +1,4 @@
-from typing import TypeAlias
+from typing import TypeAlias, TypeVar
 
 from cognite.neat.rules.models import (
     AssetRules,
@@ -15,3 +15,4 @@ InputRules: TypeAlias = AssetRulesInput | DMSRulesInput | InformationRulesInput
 Rules: TypeAlias = (
     AssetRulesInput | DMSRulesInput | InformationRulesInput | DomainRules | InformationRules | DMSRules | AssetRules
 )
+T_Rules = TypeVar("T_Rules", bound=Rules)
