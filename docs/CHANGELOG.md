@@ -16,6 +16,15 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
+## [0.88.3] - 20-08-24
+### Fixed
+- IMF rules importer failing due to references
+### Improved
+- Handling of references for OWL importer
+### Added
+- Test for IMF importer
+
+
 ## [0.88.2] - 24-07-24
 ### Added
 - IMF rules importer
