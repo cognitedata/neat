@@ -34,6 +34,7 @@ def parse_owl_classes(graph: Graph, language: str = "en") -> list[dict]:
         FILTER (!bound(?parentClass) || !isBlank(?parentClass))
         FILTER (!bound(?name) || LANG(?name) = "" || LANGMATCHES(LANG(?name), "en"))
         FILTER (!bound(?description) || LANG(?description) = "" || LANGMATCHES(LANG(?description), "en"))
+        BIND(?class AS ?reference)
     }
     """
 
