@@ -36,7 +36,7 @@ class IMFImporter(BaseImporter):
     """
 
     def __init__(self, filepath: Path):
-        self.owl_filepath = filepath
+        self.filepath = filepath
 
     @overload
     def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
@@ -47,11 +47,13 @@ class IMFImporter(BaseImporter):
     ) -> tuple[VerifiedRules | None, IssueList]: ...
 
     def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
+        self,
+        errors: Literal["raise", "continue"] = "continue",
+        role: RoleTypes | None = None,
     ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
         graph = Graph()
         try:
-            graph.parse(self.owl_filepath)
+            graph.parse(self.filepath)
         except Exception as e:
             raise Exception(f"Could not parse owl file: {e}") from e
 

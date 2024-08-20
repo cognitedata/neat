@@ -23,13 +23,15 @@ def parse_raw_classes_dataframe(query_results: list[tuple]) -> pd.DataFrame:
             "Comment",
         ],
     )
+
     if df.empty:
         return df
 
     # # remove NaNs
     df.replace(np.nan, "", regex=True, inplace=True)
 
-    df.Reference = df.Class
+    df.Reference = df.Reference if df.Reference.notna().any() else df.Class.copy(deep=True)
+
     df.Class = df.Class.apply(lambda x: remove_namespace_from_uri(x))
     df["Match Type"] = len(df) * [MatchType.exact]
     df["Comment"] = len(df) * [None]
@@ -202,7 +204,7 @@ def parse_raw_properties_dataframe(query_results: list[tuple]) -> pd.DataFrame:
         return df
 
     df.replace(np.nan, "", regex=True, inplace=True)
-    df.Reference = df.Reference if df.Reference.unique() else df.Property.copy(deep=True)
+    df.Reference = df.Reference if df.Reference.notna().any() else df.Property.copy(deep=True)
     df.Class = df.Class.apply(lambda x: remove_namespace_from_uri(x))
     df.Property = df.Property.apply(lambda x: remove_namespace_from_uri(x))
     df["Value Type"] = df["Value Type"].apply(lambda x: remove_namespace_from_uri(x))

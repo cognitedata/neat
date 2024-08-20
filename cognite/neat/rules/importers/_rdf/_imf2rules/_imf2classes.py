@@ -53,7 +53,7 @@ def parse_imf_to_classes(graph: Graph, language: str = "en") -> list[dict]:
         BIND(IF(!bound(?parent) && ?type = imf:AttributeType, imf:Attribute, ?parent) AS ?parentClass)
 
         # Rebind the IRI of the IMF-type to the ?reference variable to align with dataframe column headers
-        # This is solely for readability, the ?imfClass could have been returnered directly instead of ?reference
+        # This is solely for readability, the ?imfClass could have been returned directly instead of ?reference
         BIND(?imfClass AS ?reference)
 
         FILTER (!isBlank(?class))
