@@ -69,6 +69,10 @@ class Change(FrozenNeatObject):
     activity: Activity
     entity: Entity
     description: str
+    # triples that were added to the graph store
+    addition: list[tuple[URIRef, URIRef, URIRef | Literal]] | None = None
+    # triples that were removed from the graph store
+    subtraction: list[tuple[URIRef, URIRef, URIRef | Literal]] | None = None
 
     def as_triples(self):
         return self.agent.as_triples() + self.activity.as_triples() + self.entity.as_triples()
@@ -77,7 +81,12 @@ class Change(FrozenNeatObject):
     def record(cls, activity: str, start: datetime, end: datetime, description: str):
         """User friendly method to record a change that occurred in the graph store."""
         agent = Agent()
-        activity = Activity(used=activity, was_associated_with=agent, started_at_time=start, ended_at_time=end)
+        activity = Activity(
+            used=activity,
+            was_associated_with=agent,
+            started_at_time=start,
+            ended_at_time=end,
+        )
         entity = Entity(was_generated_by=activity, was_attributed_to=agent)
         return cls(agent, activity, entity, description)
 
