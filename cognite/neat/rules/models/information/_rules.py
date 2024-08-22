@@ -341,16 +341,16 @@ class InformationRules(BaseRules):
         return cleaned
 
     def as_domain_rules(self) -> DomainRules:
-        from ._converter import _InformationRulesConverter
+        from cognite.neat.rules.transformers._converters import _InformationRulesConverter
 
         return _InformationRulesConverter(self).as_domain_rules()
 
     def as_asset_architect_rules(self) -> "AssetRules":
-        from ._converter import _InformationRulesConverter
+        from cognite.neat.rules.transformers._converters import _InformationRulesConverter
 
         return _InformationRulesConverter(self).as_asset_architect_rules()
 
     def as_dms_rules(self) -> "DMSRules":
-        from ._converter import _InformationRulesConverter
+        from cognite.neat.rules.transformers._converters import _InformationRulesConverter
 
         return _InformationRulesConverter(self).as_dms_rules()

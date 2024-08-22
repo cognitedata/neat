@@ -279,9 +279,7 @@ class _MetadataCreator:
 
         new_metadata = self._create_new_info(now)
         if isinstance(metadata, DMSMetadata):
-            from cognite.neat.rules.models.information._converter import (
-                _InformationRulesConverter,
-            )
+            from cognite.neat.rules.transformers._converters import _InformationRulesConverter
 
             output_metadata: DMSMetadata | InformationMetadata = _InformationRulesConverter._convert_metadata_to_dms(
                 new_metadata

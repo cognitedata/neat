@@ -15,12 +15,12 @@ from cognite.neat.rules.models.information import (
     InformationRules,
     InformationRulesInput,
 )
-from cognite.neat.rules.models.information._converter import _InformationRulesConverter
 from cognite.neat.rules.models.information._rules_input import (
     InformationClassInput,
     InformationMetadataInput,
     InformationPropertyInput,
 )
+from cognite.neat.rules.transformers._converters import _InformationRulesConverter
 
 
 def case_insensitive_value_types():
