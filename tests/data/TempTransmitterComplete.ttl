@@ -1,0 +1,948 @@
+PREFIX imf:  <http://ns.imfid.org/imf#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sh:   <http://www.w3.org/ns/shacl#>
+PREFIX shsh: <http://www.w3.org/ns/shacl-shacl#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+
+<https://posccaesar.org/imf/attributes/207f210e-1073-40d2-bbac-7620e230b9de>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS1461399891>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A &amp;#39;fill fluid class&amp;#39; that can be used for a capillary tube";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "FILL_FLUID" .
+
+<https://posccaesar.org/imf/blocks/347e53f7-08f3-4e1f-9871-84b66f07a05e>
+        rdf:type         imf:BlockType , sh:NodeShape , rdfs:Class;
+        rdfs:subClassOf  imf:Block;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "IMF Type Block Diaphragm Seal Capilliary in Product aspect.";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Diaphragm Seal Capilliary";
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/9ce1c89b-cc58-41b5-a844-aeba2e0bb96a>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/207f210e-1073-40d2-bbac-7620e230b9de>
+                         ];
+        sh:property      [ sh:hasValue  imf:productAspect;
+                           sh:nodeKind  sh:IRI;
+                           sh:path      imf:hasAspect
+                         ] .
+
+<https://posccaesar.org/imf/attributes/88d15dc3-3207-4af7-bebc-c9e99f266895>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000223>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A MATERIAL SUBCODE is an IDENTIFYING CODE that is derived from either the API-610 or a different specification in order to specify the applicable materials";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "DIAPHRAGM_MATERIAL";
+        <https://posccaesar.org/temp/concerns>
+                <https://posccaesar.org/cfihos/propertyPicklistValue/CFIHOS-60001800> .
+
+<https://posccaesar.org/imf/attributes/0d613e2a-9d1c-46f5-a497-0956002b0a45>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS11706443>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A MATERIAL SUBCODE is an IDENTIFYING CODE that is derived from either the API-610 or a different specification in order to specify the applicable materials";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "ARMOUR_MATERIAL";
+        <https://posccaesar.org/temp/concerns>
+                <http://staging3.data.posccaesar.org/rdl/RDS2220061> .
+
+<https://posccaesar.org/imf/blocks/1ccc23fc-42ca-4b8a-acd5-ef2beddf7f12>
+        rdf:type         imf:BlockType , sh:NodeShape , rdfs:Class;
+        rdfs:subClassOf  imf:Block;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "IMF Type Block Diaphragm Seal in Product aspect.";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Diaphragm Seal";
+        sh:property      [ sh:nodeKind             sh:IRI;
+                           sh:path                 imf:hasTerminal;
+                           sh:qualifiedMaxCount    1;
+                           sh:qualifiedMinCount    0;
+                           sh:qualifiedValueShape  [ sh:class  <https://posccaesar.org/imf/terminals/1f38d8eb-c49c-406f-9894-5081ad4066c7> ]
+                         ];
+        sh:property      [ sh:nodeKind             sh:IRI;
+                           sh:path                 imf:hasPart;
+                           sh:qualifiedMaxCount    1;
+                           sh:qualifiedMinCount    0;
+                           sh:qualifiedValueShape  [ sh:class  <https://posccaesar.org/imf/blocks/347e53f7-08f3-4e1f-9871-84b66f07a05e> ]
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/88d15dc3-3207-4af7-bebc-c9e99f266895>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/6419a767-039b-4e57-967c-295a03160a99>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/b290b5ca-c8ff-4dd1-a567-593bd106afb7>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/9b7a6969-04ec-45e5-aa33-0dd1bb4ee00a>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/612f0e92-b4d7-494b-a9b0-d85b5d1d0a89>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/0d613e2a-9d1c-46f5-a497-0956002b0a45>
+                         ];
+        sh:property      [ sh:hasValue  imf:productAspect;
+                           sh:nodeKind  sh:IRI;
+                           sh:path      imf:hasAspect
+                         ] .
+
+<https://posccaesar.org/imf/attributes/19badb90-6b10-4cae-9bff-52a732db2417>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000591>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "alphanumeric designation of a pressure allowable within a piping system or piece of equipment, which is used for reference purposes";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "CONN_RATING" .
+
+<https://posccaesar.org/imf/attributes/23974c3f-68ec-4dd5-bed6-5485bbd40878>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/b37770fbbcfaed17c1258518003c487f?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "classification of the sealing surface of a flange according to its design code or characteristics";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "FLANGE_FACING" .
+
+<https://posccaesar.org/imf/attributes/9d32bf02-b194-49b3-b0eb-bb63b5f9cd15>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/af3580f8c1a82209c1258518003c4872?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "classification of a process connection according to its fabricated form";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "CONN_TYPE" .
+
+<https://posccaesar.org/imf/attributes/05b76461-746b-4ee5-bf17-ddb3f7de11ef>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000247>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A NOMINAL SIZE is an IndirectProperty that is a SIZE used for purposes of general identification; the actual size of a part will be approximately the same as the nominal size but need not be exactly the same;";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "NOMINAL_SIZE" .
+
+<https://posccaesar.org/imf/attributes/793dee93-d174-49c9-a702-3b65a036e26b>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/e63822d2b2588c17c1258518003c4887?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "standard to which the code of a material refers";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "FLANGE_CODE";
+        <https://posccaesar.org/temp/concerns>
+                <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/c9e0d43f5c67b43cc125771b0048bcfc/618d52873370bfd6c1258518003c549d?OpenDocument> .
+
+<https://posccaesar.org/imf/attributes/afa8761e-2be3-4200-ab30-281ededc2fd1>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS14147894>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A TYPE DESCRIPTION is a CONSTRUCTION FEATURE DESCRIPTION and a MANUFACTURER PRODUCT DESCRIPTION that referes to a particular product type being manufactured";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "THREAD_TYPE";
+        <https://posccaesar.org/temp/concerns>
+                <http://staging3.data.posccaesar.org/rdl/RDS492209> .
+
+<https://posccaesar.org/imf/terminals/1f38d8eb-c49c-406f-9894-5081ad4066c7>
+        rdf:type         imf:TerminalType , sh:NodeShape , rdfs:Class;
+        rdfs:subClassOf  imf:Terminal;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "Terminal ProcessConnection in Product aspect.";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "ProcessConnection";
+        sh:property      [ sh:hasValue  imf:productAspect;
+                           sh:nodeKind  sh:IRI;
+                           sh:path      imf:hasAspect
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/e4ced69a-0c11-488c-871e-aac7c87f5282>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/19badb90-6b10-4cae-9bff-52a732db2417>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/23974c3f-68ec-4dd5-bed6-5485bbd40878>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/9d32bf02-b194-49b3-b0eb-bb63b5f9cd15>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/05b76461-746b-4ee5-bf17-ddb3f7de11ef>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/793dee93-d174-49c9-a702-3b65a036e26b>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/afa8761e-2be3-4200-ab30-281ededc2fd1>
+                         ] .
+
+<https://posccaesar.org/imf/attributes/9b7a6969-04ec-45e5-aa33-0dd1bb4ee00a>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000493>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A DIAMETER is a ShapeDimension that refers to a intercept made by the circumference on a straight line through the centre of a circle";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "DIAMETER" .
+
+<https://posccaesar.org/imf/attributes/5555d624-3c6a-4969-9ddf-935caff979f6>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000536>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A UPPER LIMIT DESIGN TEMPERATURE is an IndirectProperty that refers to a TEMPERATUREthat an object is designed to withstand";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "DESIGN_TEMP_MAX" .
+
+<https://posccaesar.org/imf/attributes/f3d6df36-6a93-494f-9afc-90e921d75696>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/4cac91e435f5ed40c125825e001df11c?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "overall length of that part of a device or component to be found within a containment";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "INSERTION_LENGTH" .
+
+<https://posccaesar.org/imf/attributes/c778a5e1-18fc-465d-824e-e4c06bbf529c>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/2a050a792eee78e1c12575560054b803/2643c6b7fc91ac86c125825e001ddaea?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "properties characterizing the material of which a sheath/additional sleeve is made";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "SHEATH_MATERIAL" .
+
+<https://posccaesar.org/imf/attributes/1b99c6ee-38bf-4393-9f01-8a9e6456a99e>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/78f92f6c2da5ba12c125825e001df26c?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "largest diameter of an insert that guarantees accommodation in a receptacle";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "OUTSIDE_DIAMETER_OF_INSERT_ELEMENT" .
+
+<https://posccaesar.org/imf/attributes/6552a5f4-f9e6-479b-91ed-41a197401188>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/68ff1c411c046c84c1258a7d0039da54?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "material of which the wetted parts of a sensor are made";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "MATERIAL_SOCKET_INLET_PORT" .
+
+<https://posccaesar.org/imf/attributes/96e6e315-085b-45fa-a07c-6b3012b5514d>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/6131eac08ce00d0fc125825e001df2e5?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "length for which a detector or probe is sensitive";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "SENSITIVE_LENGTH" .
+
+<https://posccaesar.org/imf/attributes/639f9904-8e05-4cbe-b690-fd6e1a0f05d1>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000503>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A LOWER LIMIT DESIGN TEMPERATURE is an IndirectProperty that refers to the lowest TEMPERATURE at which a functional or physical object is designed";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "DESIGN_TEMP_MIN" .
+
+<https://posccaesar.org/imf/attributes/49f844b1-839f-492e-83d4-357dc8f957f1>
+        rdf:type                   <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:hasAttributeQualifier  imf:continuousQualifier;
+        imf:predicate              <https://posccaesar.org/cfihos/property/CFIHOS-40000487>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A DESIGN STANDARD is an InformationObject and a STANDARD that governs the design of a product";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "DESIGN_STANDARD" .
+
+<https://posccaesar.org/imf/blocks/ff48f06c-f56a-477d-a102-1a9936ab1f58>
+        rdf:type         rdfs:Class , sh:NodeShape , imf:BlockType;
+        rdfs:subClassOf  imf:Block;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "IMF Type Block Sensing Element in Product aspect.";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Sensing Element";
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/9b7a6969-04ec-45e5-aa33-0dd1bb4ee00a>
+                         ];
+        sh:property      [ sh:nodeKind             sh:IRI;
+                           sh:path                 imf:hasPart;
+                           sh:qualifiedMaxCount    1;
+                           sh:qualifiedMinCount    0;
+                           sh:qualifiedValueShape  [ sh:class  <https://posccaesar.org/imf/blocks/1ccc23fc-42ca-4b8a-acd5-ef2beddf7f12> ]
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/e4ced69a-0c11-488c-871e-aac7c87f5282>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/5555d624-3c6a-4969-9ddf-935caff979f6>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/612f0e92-b4d7-494b-a9b0-d85b5d1d0a89>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/f3d6df36-6a93-494f-9afc-90e921d75696>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/c778a5e1-18fc-465d-824e-e4c06bbf529c>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/e3ccd8eb-192b-4b20-b38f-2c2e18400100>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/b290b5ca-c8ff-4dd1-a567-593bd106afb7>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/49f844b1-839f-492e-83d4-357dc8f957f1>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/639f9904-8e05-4cbe-b690-fd6e1a0f05d1>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/96e6e315-085b-45fa-a07c-6b3012b5514d>
+                         ];
+        sh:property      [ sh:nodeKind             sh:IRI;
+                           sh:path                 imf:hasTerminal;
+                           sh:qualifiedMaxCount    1;
+                           sh:qualifiedMinCount    0;
+                           sh:qualifiedValueShape  [ sh:class  <https://posccaesar.org/imf/terminals/c3c7e672-d7d5-4df6-b0c7-0476040758f4> ]
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/6419a767-039b-4e57-967c-295a03160a99>
+                         ];
+        sh:property      [ sh:hasValue  imf:productAspect;
+                           sh:nodeKind  sh:IRI;
+                           sh:path      imf:hasAspect
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/6552a5f4-f9e6-479b-91ed-41a197401188>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/1b99c6ee-38bf-4393-9f01-8a9e6456a99e>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/17a9cc8f-518c-48b4-aa96-cd218a15cb28>
+                         ];
+        sh:property      [ sh:nodeKind             sh:IRI;
+                           sh:path                 imf:hasTerminal;
+                           sh:qualifiedMaxCount    1;
+                           sh:qualifiedMinCount    0;
+                           sh:qualifiedValueShape  [ sh:class  <https://posccaesar.org/imf/terminals/1f38d8eb-c49c-406f-9894-5081ad4066c7> ]
+                         ] .
+
+<https://posccaesar.org/imf/attributes/57ba6c15-ba94-4dbe-be6d-a52896c862df>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/d8eeabcb8cb408dfc125891300304821?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "minimum value that a current signal can assume and still exhibit linear behaviour";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "SIGNAL_LOWER_LEVEL" .
+
+<https://posccaesar.org/imf/attributes/a587fbbf-075b-4584-bddf-f3d85864a9e5>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/1c414375d3ec921ac1258518003c4a87?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "classification of a cable termination according to its constructional design";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "CABLE_TERMINATION" .
+
+<https://posccaesar.org/imf/attributes/9fa75684-4b62-4de3-966e-4017de23a4d3>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/5133fdab9cc7bdbec125891300304822?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "highest value that a current signal can assume and still exhibit linear behaviour";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "SIGNAL_UPPER_LEVEL" .
+
+<https://posccaesar.org/imf/attributes/de68691d-47c0-48a3-a5c4-2ef2da17f0fd>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000604>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "nominal value of the rated voltage an EM component is designed for";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "RATED_VOLTAGE" .
+
+<https://posccaesar.org/imf/attributes/3bd80ac2-95d7-4b33-9b74-cd95941614fb>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/entityAttributes/CFIHOS-10000258>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A definition of what the tag or equipment class is";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "FUNCTIONAL_CLASS" .
+
+<https://posccaesar.org/imf/attributes/0e11980f-9e05-470a-ab6d-f16a174aa078>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000301>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "The number of cores of the functional or physical object.";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "WIRE_CONFIGURATION" .
+
+<https://posccaesar.org/imf/attributes/07b7be2c-9b35-40df-bbfe-acc44ad7dc05>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000599>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "properties characterizing the communication protocol of a digital communication interface";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "COMMUNICATION_PROTOCOL" .
+
+<https://posccaesar.org/imf/terminals/c3c7e672-d7d5-4df6-b0c7-0476040758f4>
+        rdf:type         imf:TerminalType , sh:NodeShape , rdfs:Class;
+        rdfs:subClassOf  imf:Terminal;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "Terminal CabledConnection in Product aspect.";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "CabledConnection";
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/57ba6c15-ba94-4dbe-be6d-a52896c862df>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/a587fbbf-075b-4584-bddf-f3d85864a9e5>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/9fa75684-4b62-4de3-966e-4017de23a4d3>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/de68691d-47c0-48a3-a5c4-2ef2da17f0fd>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/3bd80ac2-95d7-4b33-9b74-cd95941614fb>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/0e11980f-9e05-470a-ab6d-f16a174aa078>
+                         ];
+        sh:property      [ sh:hasValue  imf:productAspect;
+                           sh:nodeKind  sh:IRI;
+                           sh:path      imf:hasAspect
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/07b7be2c-9b35-40df-bbfe-acc44ad7dc05>
+                         ] .
+
+<https://posccaesar.org/imf/attributes/25c21218-000d-41fc-88e0-d3c8bb52b7ee>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000173>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "extent of protection provided by an enclosure against access to hazardous parts, against ingress of solid foreign objects and/or ingress of water and verified by standardized test methods, expressed as an IP rating";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "IP_GRADE" .
+
+<https://posccaesar.org/imf/attributes/d24e032b-0056-43a4-ae43-7267f1addbbf>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/21bfe6c025cebed3c1258518003c4874?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "hazardous area zone for which the device is designed to be used";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "EX_CLASSIFICATION" .
+
+<https://posccaesar.org/imf/attributes/e4ced69a-0c11-488c-871e-aac7c87f5282>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS11706443>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A MATERIAL SUBCODE is an IDENTIFYING CODE that is derived from either the API-610 or a different specification in order to specify the applicable materials";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "MATERIAL" .
+
+<https://posccaesar.org/imf/attributes/612f0e92-b4d7-494b-a9b0-d85b5d1d0a89>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS11706443>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A MATERIAL SUBCODE is an IDENTIFYING CODE that is derived from either the API-610 or a different specification in order to specify the applicable materials";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "MATERIAL_BOLT";
+        <https://posccaesar.org/temp/concerns>
+                <http://staging3.data.posccaesar.org/rdl/RDS7190114> .
+
+<https://posccaesar.org/imf/attributes/0742bac0-71cc-4f0e-af3f-e21c369e859e>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS1459103321>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A CABLE ENTRY is a FunctionalObject that has a purpose to allow a CABLE ENTERING a space";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "CABLE_ENTRY" .
+
+<https://posccaesar.org/imf/attributes/0e6e05b0-c887-49a4-8287-ceb2a8bc9b2a>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000541>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A STRAIGHT LINEAR DISTANCE describing one of three orthogonal extreme dimensions of a thing relative to a reference system: height";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "WIDTH" .
+
+<https://posccaesar.org/imf/attributes/565b154e-1057-4b15-88ed-3edf89c57377>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/applicationCondition/CFIHOS-68000051>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A REQUIREMENT is a ClassOfRelationship that is required by a STAKEHOLDER";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "MOUNTING_BRACKET_REQ";
+        <https://posccaesar.org/temp/concerns>
+                <https://posccaesar.org/cfihos/equipmentClass/CFIHOS-30000136> .
+
+<https://posccaesar.org/imf/attributes/9ce1c89b-cc58-41b5-a844-aeba2e0bb96a>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000201>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A LENGTH is a Property that is the straight-line longest distance between two points along an object";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "LENGTH" .
+
+<https://posccaesar.org/imf/attributes/6419a767-039b-4e57-967c-295a03160a99>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS11706443>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A MATERIAL SUBCODE is an IDENTIFYING CODE that is derived from either the API-610 or a different specification in order to specify the applicable materials";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "MATERIAL_NUTS";
+        <https://posccaesar.org/temp/concerns>
+                <http://staging3.data.posccaesar.org/rdl/RDS420524> .
+
+<https://posccaesar.org/imf/attributes/bb435060-b8da-4788-b226-e9681d5fad15>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000496>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A HEIGHT is a ShapeDimension that is the distance from the bottom to the top of something standing upright";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "HEIGHT" .
+
+<https://posccaesar.org/imf/attributes/5a55de14-6260-4bb7-afa0-e621ca65b59f>
+        rdf:type                   <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:hasAttributeQualifier  imf:absoluteQualifier , imf:nominalQualifier;
+        imf:predicate              <https://posccaesar.org/cfihos/propertyPicklistValue/CFIHOS-60002428>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "classification of a protective coating according to the type and finish of the coating material";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "PROTECTIVE_COATING" .
+
+<https://posccaesar.org/imf/attributes/22de8aa9-7b7f-4ad0-ad44-007733e961b8>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000223>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "Is a possessed aspect being a role of the substance of an artefact when used to construct the artefact from. Therefore the substance should be in a solid state at the conditions at which the artefact exists.";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "MOUNTING_BRACKET_MATERIAL";
+        <https://posccaesar.org/temp/concerns>
+                <https://posccaesar.org/cfihos/equipmentClass/CFIHOS-30000136> .
+
+<https://posccaesar.org/imf/attributes/e319ec1c-8205-4ced-b9d1-50dadf0d2016>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/2b6cf093759145dec1258518003c48fc?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "design of a device or a device component mounting classified by the type of surface on/to which it will be mounted";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "MOUNTING" .
+
+<https://posccaesar.org/imf/blocks/02edbe04-3da9-4884-b84d-a3126544b217>
+        rdf:type         rdfs:Class , sh:NodeShape , imf:BlockType;
+        rdfs:subClassOf  imf:Block;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "IMF Type Block Instrument Housing in Product aspect.";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Instrument Housing";
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/25c21218-000d-41fc-88e0-d3c8bb52b7ee>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/d24e032b-0056-43a4-ae43-7267f1addbbf>
+                         ];
+        sh:property      [ sh:nodeKind             sh:IRI;
+                           sh:path                 imf:hasTerminal;
+                           sh:qualifiedMaxCount    1;
+                           sh:qualifiedMinCount    0;
+                           sh:qualifiedValueShape  [ sh:class  <https://posccaesar.org/imf/terminals/c3c7e672-d7d5-4df6-b0c7-0476040758f4> ]
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/e4ced69a-0c11-488c-871e-aac7c87f5282>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/612f0e92-b4d7-494b-a9b0-d85b5d1d0a89>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/e319ec1c-8205-4ced-b9d1-50dadf0d2016>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/22de8aa9-7b7f-4ad0-ad44-007733e961b8>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/5a55de14-6260-4bb7-afa0-e621ca65b59f>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/bb435060-b8da-4788-b226-e9681d5fad15>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/6419a767-039b-4e57-967c-295a03160a99>
+                         ];
+        sh:property      [ sh:hasValue  imf:productAspect;
+                           sh:nodeKind  sh:IRI;
+                           sh:path      imf:hasAspect
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/9ce1c89b-cc58-41b5-a844-aeba2e0bb96a>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/565b154e-1057-4b15-88ed-3edf89c57377>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/0e6e05b0-c887-49a4-8287-ceb2a8bc9b2a>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/0742bac0-71cc-4f0e-af3f-e21c369e859e>
+                         ] .
+
+<https://posccaesar.org/imf/attributes/beef3caf-2585-4435-a649-10e8a6f862dc>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS1020240091>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "An ALARM LIMIT HIGH HIGH is an ALARM LIMIT for an acceptable high-high value";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "SETPOINT_HH" .
+
+<https://posccaesar.org/imf/attributes/e3ccd8eb-192b-4b20-b38f-2c2e18400100>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/entityAttributes/CFIHOS-10000158>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A MANUFACTURER NAME is a NAME of a person or organisation who is the manufacturer of an object or a type of objects";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "MANUFACTURER" .
+
+<https://posccaesar.org/imf/attributes/9da83f77-8b5b-4eed-bba5-a1183e83eca3>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS1020249561>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "An ALARM LIMIT HIGH is an ALARM LIMIT for an acceptable high value";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "SETPOINT_H" .
+
+<https://posccaesar.org/imf/attributes/e7113c99-e06b-415f-a22f-a86e74ac89f9>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/e6560a824b4b1c00c125825e001de8c3?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "lowest value of other variable that a device can be adjusted to measure within its specified accuracy limits";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "MEASUREMENT_RANGE_MINIMUM" .
+
+<https://posccaesar.org/imf/attributes/1243c512-9a2b-4a1e-9a70-7788d20bac73>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000533>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A TOTAL WEIGHT is a WEIGHT that is a sum of the weights of identified parts of an assembly";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "TOTAL_WEIGHT" .
+
+<https://posccaesar.org/imf/attributes/9271afa3-f9ee-4c8b-b7bd-d14fa0047d54>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS1020252061>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "An ALARM LIMIT LOW is an ALARM LIMIT for an acceptable low value";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "SETPOINT_L" .
+
+<https://posccaesar.org/imf/attributes/b683762f-8429-410c-8e52-14c5c4f3b41a>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec62683/iec62683.nsf/2e3513b55c903422c12584c70038f54a/570655198cf3f4abc12586620036ddad?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "value of variation of the relevant output signal (analog output value or number of detected output pulses) under specified conditions";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "REPEATABILITY" .
+
+<https://posccaesar.org/imf/attributes/17a9cc8f-518c-48b4-aa96-cd218a15cb28>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/entityAttributes/CFIHOS-10000159>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A MANUFACTURER PRODUCT CODE is a PRODUCT CODE that is assigned by the manufacturer to a product to identify an item or a type of items";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "MANUFACTURER_MODEL_NO" .
+
+<https://posccaesar.org/imf/attributes/b290b5ca-c8ff-4dd1-a567-593bd106afb7>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS14147894>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A TYPE DESCRIPTION is a CONSTRUCTION FEATURE DESCRIPTION and a MANUFACTURER PRODUCT DESCRIPTION that referes to a particular product type being manufactured";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "TYPE" .
+
+<https://posccaesar.org/imf/attributes/7cc04dcf-75b7-4b97-aee6-70e136f8daea>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS1020252711>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "An ALARM LIMIT LOW LOW is an ALARM LIMIT for an acceptable low-low value";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "SETPOINT_LL" .
+
+<https://posccaesar.org/imf/attributes/021a4b91-c986-4f92-a192-953416ddaf3a>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/entities/CFIHOS-00000073>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "engineering units associated with a variable, display, scale, graduation or any other means of indicating a value";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "INTENDED_DATUM_UOM" .
+
+<https://posccaesar.org/imf/attributes/a6b7db04-cf1e-442c-82d6-b5ba04b29377>
+        rdf:type                   <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:hasAttributeQualifier  imf:maximumQualifier;
+        imf:predicate              <https://posccaesar.org/cfihos/property/CFIHOS-40000634>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "values for designation of calibration point";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "CALIBRATION_RANGE_MAXIMUM" .
+
+<https://posccaesar.org/imf/attributes/8f6f3a8f-d38b-4bbb-a1b6-1bc761e0227a>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://cdd.iec.ch/cdd/iec61987/iec61987.nsf/e0e56d2682a34311c12575560058dc1c/7f70b3ed0f48e199c125825e001de8c4?OpenDocument>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "highest value of other variable that a device can be adjusted to measure within its specified accuracy limits";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "MEASUREMENT_RANGE_MAXIMUM" .
+
+<https://posccaesar.org/imf/attributes/89981126-3e1b-4e4c-a1f3-a1f09bb6d71f>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS1416460501>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "An ACCURACY is an IndirectProperty that represents the closeness of agreement between the result of a measurement and the (conventional) true value of the quantity being measured";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "ACCURACY" .
+
+<https://posccaesar.org/imf/attributes/10ae40ca-6cf4-4d2f-9a01-c1bb7ffe99c4>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/nor/RDS8152115>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A T02 2.01 CHARACTERISTIC is assign if the reading is linear";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "CHARACTERISTIC" .
+
+<https://posccaesar.org/imf/attributes/758238cf-7e9a-459c-9cc2-0d44ce66e990>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <http://staging3.data.posccaesar.org/rdl/RDS2224730>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "A REQUIREMENT is a ClassOfRelationship that is required by a STAKEHOLDER";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "INDICATOR_REQ";
+        <https://posccaesar.org/temp/concerns>
+                <http://staging3.data.posccaesar.org/rdl/RDS418499> .
+
+<https://posccaesar.org/imf/attributes/120f58f7-7ceb-4a81-90f9-396c6bb9574a>
+        rdf:type                   <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:hasAttributeQualifier  imf:minimumQualifier;
+        imf:predicate              <https://posccaesar.org/cfihos/property/CFIHOS-40000634>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "values for designation of calibration point";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "CALIBRATION_RANGE_MINIMUM" .
+
+<https://posccaesar.org/imf/attributes/4433a54b-ccf0-42e1-90d7-4cbb1620af11>
+        rdf:type       <http://www.w3.org/2002/07/owl#DatatypeProperty> , imf:AttributeType;
+        imf:predicate  <https://posccaesar.org/cfihos/property/CFIHOS-40000524>;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "guaranteed power consumption of an electric/electronic or electromechanical component.";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "CONSUMPTION" .
+
+<https://posccaesar.org/imf/blocks/cbf83079-a98e-4dd8-86e9-122aae10912f>
+        rdf:type         rdfs:Class , sh:NodeShape , imf:BlockType;
+        rdfs:subClassOf  imf:Block;
+        <http://www.w3.org/2004/02/skos/core#description>
+                "IMF Type Block Temperature Transmitter in Product aspect.";
+        <http://www.w3.org/2004/02/skos/core#prefLabel>
+                "Temperature Transmitter";
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/beef3caf-2585-4435-a649-10e8a6f862dc>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/e3ccd8eb-192b-4b20-b38f-2c2e18400100>
+                         ];
+        sh:property      [ sh:nodeKind             sh:IRI;
+                           sh:path                 imf:hasPart;
+                           sh:qualifiedMaxCount    1;
+                           sh:qualifiedMinCount    0;
+                           sh:qualifiedValueShape  [ sh:class  <https://posccaesar.org/imf/blocks/ff48f06c-f56a-477d-a102-1a9936ab1f58> ]
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/9da83f77-8b5b-4eed-bba5-a1183e83eca3>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/e7113c99-e06b-415f-a22f-a86e74ac89f9>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/1243c512-9a2b-4a1e-9a70-7788d20bac73>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/9271afa3-f9ee-4c8b-b7bd-d14fa0047d54>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/b683762f-8429-410c-8e52-14c5c4f3b41a>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/17a9cc8f-518c-48b4-aa96-cd218a15cb28>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/b290b5ca-c8ff-4dd1-a567-593bd106afb7>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/7cc04dcf-75b7-4b97-aee6-70e136f8daea>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/4433a54b-ccf0-42e1-90d7-4cbb1620af11>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/120f58f7-7ceb-4a81-90f9-396c6bb9574a>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/758238cf-7e9a-459c-9cc2-0d44ce66e990>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/10ae40ca-6cf4-4d2f-9a01-c1bb7ffe99c4>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/89981126-3e1b-4e4c-a1f3-a1f09bb6d71f>
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/8f6f3a8f-d38b-4bbb-a1b6-1bc761e0227a>
+                         ];
+        sh:property      [ sh:hasValue  imf:productAspect;
+                           sh:nodeKind  sh:IRI;
+                           sh:path      imf:hasAspect
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/a6b7db04-cf1e-442c-82d6-b5ba04b29377>
+                         ];
+        sh:property      [ sh:nodeKind             sh:IRI;
+                           sh:path                 imf:hasPart;
+                           sh:qualifiedMaxCount    1;
+                           sh:qualifiedMinCount    0;
+                           sh:qualifiedValueShape  [ sh:class  <https://posccaesar.org/imf/blocks/02edbe04-3da9-4884-b84d-a3126544b217> ]
+                         ];
+        sh:property      [ sh:maxCount  1;
+                           sh:minCount  0;
+                           sh:nodeKind  sh:IRIOrLiteral;
+                           sh:path      <https://posccaesar.org/imf/attributes/021a4b91-c986-4f92-a192-953416ddaf3a>
+                         ] .

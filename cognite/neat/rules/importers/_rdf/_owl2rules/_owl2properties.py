@@ -40,6 +40,7 @@ def parse_owl_properties(graph: Graph, language: str = "en") -> list[dict]:
         FILTER (!bound(?description) || LANG(?description) = "" || LANGMATCHES(LANG(?description), "en"))
         BIND(IF(bound(?minCount), ?minCount, 0) AS ?minCount)
         BIND(IF(bound(?maxCount), ?maxCount, 1) AS ?maxCount)
+        BIND(?property AS ?reference)
     }
     """
 
