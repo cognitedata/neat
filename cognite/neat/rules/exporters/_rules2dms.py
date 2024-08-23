@@ -23,6 +23,7 @@ from cognite.neat.issues.warnings import (
 from cognite.neat.rules._shared import VerifiedRules
 from cognite.neat.rules.models import InformationRules
 from cognite.neat.rules.models.dms import DMSRules, DMSSchema, PipelineSchema
+from cognite.neat.rules.transformers import InformationToDMS
 from cognite.neat.utils.cdf.loaders import (
     ContainerLoader,
     DataModelingLoader,
@@ -121,7 +122,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         if isinstance(rules, DMSRules):
             dms_rules = rules
         elif isinstance(rules, InformationRules):
-            dms_rules = rules.as_dms_rules()
+            dms_rules = InformationToDMS().transform(rules)
         else:
             raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
         return dms_rules.as_schema(include_pipeline=self.export_pipeline, instance_space=self.instance_space)

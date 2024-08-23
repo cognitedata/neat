@@ -1,6 +1,7 @@
 from cognite.neat.graph.extractors import AssetsExtractor
 from cognite.neat.graph.loaders import DMSLoader
 from cognite.neat.rules.importers import InferenceImporter
+from cognite.neat.rules.transformers import InformationToDMS
 from cognite.neat.store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
@@ -14,7 +15,7 @@ def test_metadata_as_json_filed():
     rules, _ = importer.to_rules()
     store.add_rules(rules)
 
-    dms_rules = rules.as_dms_rules()
+    dms_rules = InformationToDMS().transform(rules)
 
     loader = DMSLoader.from_rules(dms_rules, store, dms_rules.metadata.space)
     instances = {instance.external_id: instance for instance in loader._load()}
