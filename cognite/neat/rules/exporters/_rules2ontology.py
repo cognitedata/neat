@@ -24,6 +24,7 @@ from cognite.neat.rules.models.information import (
     InformationProperty,
     InformationRules,
 )
+from cognite.neat.rules.transformers import DMSToInformation
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseExporter
@@ -99,7 +100,7 @@ class Ontology(OntologyModel):
         if isinstance(input_rules, InformationRules):
             rules = input_rules
         elif isinstance(input_rules, DMSRules):
-            rules = input_rules.as_information_rules()
+            rules = DMSToInformation().transform(input_rules)
         else:
             raise ValueError(f"{type(input_rules).__name__} cannot be exported to Ontology")
 

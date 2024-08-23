@@ -7,6 +7,7 @@ from cognite.client import CogniteClient
 
 from cognite.neat.rules._shared import VerifiedRules
 from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes
+from cognite.neat.rules.transformers import DMSToInformation, InformationToDMS
 from cognite.neat.utils.auxiliary import class_html_doc
 from cognite.neat.utils.upload import UploadResult, UploadResultList
 
@@ -29,9 +30,9 @@ class BaseExporter(ABC, Generic[T_Export]):
         if rules.metadata.role is output_role or output_role is None:
             return rules
         elif output_role is RoleTypes.dms and isinstance(rules, InformationRules):
-            return rules.as_dms_rules()
+            return InformationToDMS().transform(rules)
         elif output_role is RoleTypes.information and isinstance(rules, DMSRules):
-            return rules.as_information_rules()
+            return DMSToInformation().transform(rules)
         else:
             raise NotImplementedError(f"Role {output_role} is not supported for {type(rules).__name__} rules")
 

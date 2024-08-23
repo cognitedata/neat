@@ -7,6 +7,7 @@ from cognite.client import data_modeling as dm
 from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.importers import DMSImporter, ExcelImporter
 from cognite.neat.rules.models import DMSRules, DMSSchema, RoleTypes
+from cognite.neat.rules.transformers import DMSToInformation
 from tests.config import DOC_RULES
 
 
@@ -26,7 +27,7 @@ class TestDMSImporter:
         assert dump_dms["views"][0]["name"] == "OneView"
         assert dump_dms["views"][0]["description"] == "One View"
 
-        info_rules = dms_rules.as_information_rules()
+        info_rules = DMSToInformation().transform(rules)
         dump_info = info_rules.dump()
         assert dump_info["properties"][0]["value_type"] == "#N/A"
 

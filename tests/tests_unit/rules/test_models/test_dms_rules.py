@@ -24,6 +24,7 @@ from cognite.neat.rules.models.dms import (
     DMSSchema,
     DMSViewInput,
 )
+from cognite.neat.rules.transformers import DMSToInformation
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 from tests.data import car
 
@@ -1458,7 +1459,7 @@ class TestDMSRules:
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         alice_rules = DMSRulesInput.load(alice_spreadsheet).as_rules()
-        info_rules = alice_rules.as_information_rules()
+        info_rules = DMSToInformation().transform(alice_rules)
 
         assert isinstance(info_rules, InformationRules)
 
@@ -1528,7 +1529,7 @@ class TestDMSRules:
         for view in info_rules_copy.views:
             view.reference = None
 
-        info_rules = olav_dms_rules.as_information_rules()
+        info_rules = DMSToInformation().transform(olav_dms_rules)
 
         assert isinstance(info_rules, InformationRules)
 
