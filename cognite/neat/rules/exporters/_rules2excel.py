@@ -16,7 +16,6 @@ from cognite.neat.rules._shared import VerifiedRules
 from cognite.neat.rules.models import (
     DataModelType,
     ExtensionCategory,
-    RoleTypes,
     SchemaCompleteness,
     SheetEntity,
 )
@@ -27,7 +26,7 @@ from cognite.neat.rules.models.information import InformationMetadata
 from ._base import BaseExporter
 
 
-class ExcelExporter(BaseExporter[Workbook]):
+class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     """Export rules to Excel.
 
     Args:
@@ -73,11 +72,7 @@ class ExcelExporter(BaseExporter[Workbook]):
     dump_options = get_args(DumpOptions)
 
     def __init__(
-        self,
-        styling: Style = "default",
-        output_role: RoleTypes | None = None,
-        dump_as: DumpOptions = "user",
-        new_model_id: tuple[str, str] | None = None,
+        self, styling: Style = "default", dump_as: DumpOptions = "user", new_model_id: tuple[str, str] | None = None
     ):
         if styling not in self.style_options:
             raise ValueError(f"Invalid styling: {styling}. Valid options are {self.style_options}")
@@ -85,7 +80,6 @@ class ExcelExporter(BaseExporter[Workbook]):
             raise ValueError(f"Invalid dump_as: {dump_as}. Valid options are {self.dump_options}")
         self.styling = styling
         self._styling_level = self.style_options.index(styling)
-        self.output_role = output_role
         self.new_model_id = new_model_id
         self.dump_as = dump_as
 
@@ -99,7 +93,6 @@ class ExcelExporter(BaseExporter[Workbook]):
         return None
 
     def export(self, rules: VerifiedRules) -> Workbook:
-        rules = self._convert_to_output_role(rules, self.output_role)
         workbook = Workbook()
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])

@@ -15,7 +15,6 @@ from cognite.neat.issues.errors import (
 )
 from cognite.neat.issues.warnings import PropertyDefinitionDuplicatedWarning
 from cognite.neat.rules.analysis import InformationAnalysis
-from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
 from cognite.neat.rules.models.information import (
@@ -24,7 +23,6 @@ from cognite.neat.rules.models.information import (
     InformationProperty,
     InformationRules,
 )
-from cognite.neat.rules.transformers import DMSToInformation
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseExporter
@@ -35,32 +33,30 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-from cognite.neat.rules._shared import VerifiedRules
 
-
-class GraphExporter(BaseExporter[Graph], ABC):
-    def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
+class GraphExporter(BaseExporter[InformationRules, Graph], ABC):
+    def export_to_file(self, rules: InformationRules, filepath: Path) -> None:
         self.export(rules).serialize(destination=filepath, encoding=self._encoding, newline=self._new_line)
 
 
 class OWLExporter(GraphExporter):
     """Exports rules to an OWL ontology."""
 
-    def export(self, rules: VerifiedRules) -> Graph:
+    def export(self, rules: InformationRules) -> Graph:
         return Ontology.from_rules(rules).as_owl()
 
 
 class SHACLExporter(GraphExporter):
     """Exports rules to a SHACL graph."""
 
-    def export(self, rules: VerifiedRules) -> Graph:
+    def export(self, rules: InformationRules) -> Graph:
         return Ontology.from_rules(rules).as_shacl()
 
 
 class SemanticDataModelExporter(GraphExporter):
     """Exports rules to a semantic data model."""
 
-    def export(self, rules: VerifiedRules) -> Graph:
+    def export(self, rules: InformationRules) -> Graph:
         return Ontology.from_rules(rules).as_semantic_data_model()
 
 
@@ -87,23 +83,16 @@ class Ontology(OntologyModel):
     prefixes: dict[str, Namespace]
 
     @classmethod
-    def from_rules(cls, input_rules: VerifiedRules) -> Self:
+    def from_rules(cls, rules: InformationRules) -> Self:
         """
         Generates an ontology from a set of transformation rules.
 
         Args:
-            input_rules: The rules to generate the ontology from.
+            rules: The rules to generate the ontology from.
 
         Returns:
             An instance of Ontology.
         """
-        if isinstance(input_rules, InformationRules):
-            rules = input_rules
-        elif isinstance(input_rules, DMSRules):
-            rules = DMSToInformation().transform(input_rules)
-        else:
-            raise ValueError(f"{type(input_rules).__name__} cannot be exported to Ontology")
-
         if duplicates := duplicated_properties(rules.properties):
             errors = []
             for (class_, property_), definitions in duplicates.items():

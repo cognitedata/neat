@@ -20,10 +20,7 @@ from cognite.neat.issues.warnings import (
     PrincipleOneModelOneSpaceWarning,
     ResourceRetrievalWarning,
 )
-from cognite.neat.rules._shared import VerifiedRules
-from cognite.neat.rules.models import InformationRules
 from cognite.neat.rules.models.dms import DMSRules, DMSSchema, PipelineSchema
-from cognite.neat.rules.transformers import InformationToDMS
 from cognite.neat.utils.cdf.loaders import (
     ContainerLoader,
     DataModelingLoader,
@@ -42,7 +39,7 @@ from ._base import CDFExporter
 Component: TypeAlias = Literal["all", "spaces", "data_models", "views", "containers", "node_types"]
 
 
-class DMSExporter(CDFExporter[DMSSchema]):
+class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
     """Export rules to Cognite Data Fusion's Data Model Storage (DMS) service.
 
     Args:
@@ -83,7 +80,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
         self.suppress_warnings = suppress_warnings
         self._schema: DMSSchema | None = None
 
-    def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
+    def export_to_file(self, rules: DMSRules, filepath: Path) -> None:
         """Export the rules to a file(s).
 
         If the file is a directory, the components will be exported to separate files, otherwise they will be
@@ -98,12 +95,12 @@ class DMSExporter(CDFExporter[DMSSchema]):
         else:
             self._export_to_zip_file(filepath, rules)
 
-    def _export_to_directory(self, directory: Path, rules: VerifiedRules) -> None:
+    def _export_to_directory(self, directory: Path, rules: DMSRules) -> None:
         schema = self.export(rules)
         exclude = self._create_exclude_set()
         schema.to_directory(directory, exclude=exclude, new_line=self._new_line, encoding=self._encoding)
 
-    def _export_to_zip_file(self, filepath: Path, rules: VerifiedRules) -> None:
+    def _export_to_zip_file(self, filepath: Path, rules: DMSRules) -> None:
         if filepath.suffix not in {".zip"}:
             warnings.warn("File extension is not .zip, adding it to the file name", stacklevel=2)
             filepath = filepath.with_suffix(".zip")
@@ -118,18 +115,10 @@ class DMSExporter(CDFExporter[DMSSchema]):
             exclude = {"spaces", "data_models", "views", "containers", "node_types"} - self.export_components
         return exclude
 
-    def export(self, rules: VerifiedRules) -> DMSSchema:
-        if isinstance(rules, DMSRules):
-            dms_rules = rules
-        elif isinstance(rules, InformationRules):
-            dms_rules = InformationToDMS().transform(rules)
-        else:
-            raise ValueError(f"{type(rules).__name__} cannot be exported to DMS")
-        return dms_rules.as_schema(include_pipeline=self.export_pipeline, instance_space=self.instance_space)
+    def export(self, rules: DMSRules) -> DMSSchema:
+        return rules.as_schema(include_pipeline=self.export_pipeline, instance_space=self.instance_space)
 
-    def delete_from_cdf(
-        self, rules: VerifiedRules, client: CogniteClient, dry_run: bool = False
-    ) -> Iterable[UploadResult]:
+    def delete_from_cdf(self, rules: DMSRules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
         to_export = self._prepare_exporters(rules, client)
 
         # we need to reverse order in which we are picking up the items to delete
@@ -173,7 +162,7 @@ class DMSExporter(CDFExporter[DMSSchema]):
             )
 
     def export_to_cdf_iterable(
-        self, rules: VerifiedRules, client: CogniteClient, dry_run: bool = False
+        self, rules: DMSRules, client: CogniteClient, dry_run: bool = False
     ) -> Iterable[UploadResult]:
         to_export = self._prepare_exporters(rules, client)
 
