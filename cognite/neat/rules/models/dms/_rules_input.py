@@ -1,7 +1,10 @@
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal, cast, overload
+
+from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness, _add_alias
 from cognite.neat.rules.models.data_types import DataType
@@ -14,7 +17,7 @@ from cognite.neat.rules.models.entities import (
     ViewPropertyEntity,
 )
 
-from ._rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
+from ._rules import _DEFAULT_VERSION, DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
 
 
 @dataclass
@@ -65,6 +68,35 @@ class DMSMetadataInput:
             created=self.created or datetime.now(),
             updated=self.updated or datetime.now(),
         )
+
+    @classmethod
+    def from_data_model(cls, data_model: dm.DataModelApply, has_reference: bool) -> "DMSMetadataInput":
+        description, creator = cls._get_description_and_creator(data_model.description)
+        return cls(
+            schema_="complete",
+            data_model_type="solution" if has_reference else "enterprise",
+            space=data_model.space,
+            name=data_model.name or None,
+            description=description,
+            external_id=data_model.external_id,
+            version=data_model.version,
+            creator=",".join(creator),
+            created=datetime.now(),
+            updated=datetime.now(),
+        )
+
+    @classmethod
+    def _get_description_and_creator(cls, description_raw: str | None) -> tuple[str | None, list[str]]:
+        if description_raw and (description_match := re.search(r"Creator: (.+)", description_raw)):
+            creator = description_match.group(1).split(", ")
+            description = description_raw.replace(description_match.string, "").strip() or None
+        elif description_raw:
+            creator = ["MISSING"]
+            description = description_raw
+        else:
+            creator = ["MISSING"]
+            description = None
+        return description, creator
 
 
 @dataclass
@@ -232,6 +264,22 @@ class DMSContainerInput:
             ),
         }
 
+    @classmethod
+    def from_container(cls, container: dm.ContainerApply) -> "DMSContainerInput":
+        constraints: list[str] = []
+        for _, constraint_obj in (container.constraints or {}).items():
+            if isinstance(constraint_obj, dm.RequiresConstraint):
+                constraints.append(str(ContainerEntity.from_id(constraint_obj.require)))
+            # UniquenessConstraint it handled in the properties
+        container_entity = ContainerEntity.from_id(container.as_id())
+        return cls(
+            class_=str(container_entity.as_class()),
+            container=str(container_entity),
+            name=container.name or None,
+            description=container.description,
+            constraint=", ".join(constraints) or None,
+        )
+
 
 @dataclass
 class DMSViewInput:
@@ -299,6 +347,21 @@ class DMSViewInput:
             "Filter": self.filter_,
             "In Model": self.in_model,
         }
+
+    @classmethod
+    def from_view(cls, view: dm.ViewApply, in_model: bool) -> "DMSViewInput":
+        view_entity = ViewEntity.from_id(view.as_id())
+        class_entity = view_entity.as_class(skip_version=True)
+
+        return cls(
+            class_=str(class_entity),
+            view=str(view_entity),
+            description=view.description,
+            name=view.name,
+            implements=", ".join([str(ViewEntity.from_id(parent, _DEFAULT_VERSION)) for parent in view.implements])
+            or None,
+            in_model=in_model,
+        )
 
 
 @dataclass

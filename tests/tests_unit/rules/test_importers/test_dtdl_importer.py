@@ -1,6 +1,6 @@
 import pytest
 
-from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
+from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import ResourceMissingIdentifierError, ResourceNotDefinedError
 from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
 from cognite.neat.rules.importers import DTDLImporter
@@ -13,11 +13,7 @@ from tests.tests_unit.rules.test_importers.constants import DTDL_IMPORTER_DATA
 class TestDTDLImporter:
     def test_import_energy_grid_example(self) -> None:
         # In the example data, there is a property with an Object that does not have an identifier.
-        expected_issues = NeatIssueList[NeatIssue](
-            [
-                ResourceMissingIdentifierError("Object"),
-            ]
-        )
+        expected_issues = IssueList([ResourceMissingIdentifierError("Object")])
         dtdl_importer = DTDLImporter.from_directory(DTDL_IMPORTER_DATA / "energy-grid")
 
         result = ImporterPipeline.try_verify(dtdl_importer)
@@ -35,7 +31,7 @@ class TestDTDLImporter:
                     "schema",
                     "missing",
                 ),
-                ResourceTypeNotSupportedWarning[str]("com_example:Thermostat(version=1).response", "Command.Response"),
+                ResourceTypeNotSupportedWarning("com_example:Thermostat(version=1).response", "Command.Response"),
             ]
         )
         dtdl_importer = DTDLImporter.from_zip(DTDL_IMPORTER_DATA / "TemperatureController.zip")

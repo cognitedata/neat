@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import MutableSequence
 from typing import Generic, TypeVar
 
+from cognite.neat.issues import IssueList, NeatError
 from cognite.neat.issues.errors import NeatTypeError, NeatValueError
 from cognite.neat.rules._shared import (
     InputRules,
@@ -32,10 +33,13 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
         """Try to transform the input rules into the output rules."""
         try:
             result = self.transform(rules)
-        except Exception as e:
-            rules.issues.append(NeatValueError(f"Transformation failed: {e}"))
+        except NeatError:
+            # Any error caught during transformation will be returned as issues
             return MaybeRules(None, rules.issues)
-        return MaybeRules(result.get_rules(), rules.issues)
+        issues = IssueList(rules.issues, title=rules.issues.title)
+        if isinstance(result, MaybeRules):
+            issues.extend(result.issues)
+        return MaybeRules(result.get_rules(), issues)
 
     @classmethod
     def _to_rules(cls, rules: T_RulesIn | OutRules[T_RulesIn]) -> T_RulesIn:

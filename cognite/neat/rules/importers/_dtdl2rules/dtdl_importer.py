@@ -150,4 +150,4 @@ class DTDLImporter(BaseImporter[InformationInputRules]):
             )
         )
 
-        return ReadRules(rules, self._read_issues, {})
+        return ReadRules(rules, converter.issues, {})

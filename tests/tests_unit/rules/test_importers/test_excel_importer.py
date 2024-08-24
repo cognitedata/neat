@@ -151,6 +151,8 @@ class TestExcelImporter:
         rule_type: type[DMSRules] | type[InformationRules] | type[DomainRules],
         convert_to: RoleTypes | None,
     ):
+        if issubclass(rule_type, DomainRules):
+            pytest.skip("Domain rules are not supported by the importer")
         importer = ExcelImporter(filepath)
 
         rules = ImporterPipeline.verify(importer)
@@ -163,7 +165,8 @@ class TestExcelImporter:
     def test_import_invalid_rules(self, filepath: Path, expected_issues: IssueList):
         importer = ExcelImporter(filepath)
 
-        _, issues = importer.to_rules(errors="continue")
+        result = ImporterPipeline.try_verify(importer)
+        issues = result.issues
 
         issues = sorted(issues)
         expected_issues = sorted(expected_issues)

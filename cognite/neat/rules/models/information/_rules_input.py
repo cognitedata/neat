@@ -77,6 +77,8 @@ class InformationMetadataInput:
             description=self.description,
             created=self.created or datetime.now(),
             updated=self.updated or datetime.now(),
+            license=self.license,
+            rights=self.rights,
         )
 
 

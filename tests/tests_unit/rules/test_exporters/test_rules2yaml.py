@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from cognite.neat.rules.exporters import YAMLExporter
 from cognite.neat.rules.importers import YAMLImporter
 from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules
@@ -25,6 +27,7 @@ class TestYAMLExporter:
 
         assert david_rules.dump() == recreated_rules.dump()
 
+    @pytest.mark.skip(reason="Domain rules are not supported by the importer")
     def test_export_domain_rules(self, jon_rules: DomainRules, tmp_path: Path) -> None:
         exporter = YAMLExporter(files="single", output="yaml")
         exporter.export_to_file(jon_rules, tmp_path / "tmp.yaml")

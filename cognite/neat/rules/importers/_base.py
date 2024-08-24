@@ -24,7 +24,7 @@ class BaseImporter(ABC, Generic[T_InputRules]):
         """Creates `Rules` object from the data for target role."""
         raise NotImplementedError()
 
-    def _default_metadata(self):
+    def _default_metadata(self) -> dict[str, Any]:
         return {
             "prefix": "neat",
             "schema": "partial",
