@@ -319,7 +319,7 @@ class DMSInputRules:
     def load(cls, data: None) -> None: ...
 
     @classmethod
-    def load(cls, data: dict | None) -> "DMSRulesInput | None":
+    def load(cls, data: dict | None) -> "DMSInputRules | None":
         if data is None:
             return None
         _add_alias(data, DMSRules)
