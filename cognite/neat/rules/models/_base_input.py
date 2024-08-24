@@ -2,7 +2,7 @@
 
 import sys
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import Field, dataclass, fields
 from typing import Any, Generic, TypeVar, cast, overload
 
 from pydantic import BaseModel
@@ -45,21 +45,29 @@ class InputRules(Generic[T_BaseRules], ABC):
     def load(cls, data: dict | None) -> Self | None:
         if data is None:
             return None
-        _add_alias(data, cls._get_verified_cls())
         return cls._load(data)
 
     @classmethod
-    @abstractmethod
     def _load(cls, data: dict[str, Any]) -> Self:
-        raise NotImplementedError("This method should be implemented in the subclass.")
+        args: dict[str, Any] = {}
+        field_type_by_name = {field_.name: field_.type for field_ in fields(cls)}
+        for field_name, field_ in cls._get_verified_cls().model_fields.items():
+            field_type = field_type_by_name.get(field_name)
+            if field_name in data:
+                args[field_name] = field_type._load(data[field_name])
+            elif field_.alias in data:
+                args[field_name] = field_type._load(data[field_.alias])
+        return cls(**args)
+
+    def _dataclass_fields(self) -> list[Field]:
+        return list(fields(self))
 
     def as_rules(self) -> T_BaseRules:
         cls_ = self._get_verified_cls()
         return cls_.model_validate(self.dump())
 
-    @abstractmethod
     def dump(self) -> dict[str, Any]:
-        raise NotImplementedError("This method should be implemented in the subclass.")
+        return {field_name: getattr(self, field_name).dump() for field_name in self._dataclass_fields()}
 
 
 @dataclass
@@ -88,11 +96,14 @@ class InputComponent(ABC):
         if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
             items = cast(list[dict[str, Any]], data.get("data") if isinstance(data, dict) else data)
             return [loaded for item in items if (loaded := cls.load(item)) is not None]
-        _add_alias(data, cls._get_verified_cls())
-
         return cls._load(data)
 
     @classmethod
-    @abstractmethod
     def _load(cls, data: dict[str, Any]) -> Self:
-        raise NotImplementedError("This method should be implemented in the subclass.")
+        args: dict[str, Any] = {}
+        for field_name, field_ in cls._get_verified_cls().model_fields.items():
+            if field_name in data:
+                args[field_name] = data[field_name]
+            elif field_.alias in data:
+                args[field_name] = data[field_.alias]
+        return cls(**args)

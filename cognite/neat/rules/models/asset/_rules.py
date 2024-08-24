@@ -1,5 +1,5 @@
 import sys
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import Any, ClassVar, Literal, cast
 
 from pydantic import Field, field_validator, model_validator
 from pydantic.main import IncEx
@@ -19,10 +19,6 @@ from cognite.neat.rules.models.information import (
     InformationProperty,
     InformationRules,
 )
-
-if TYPE_CHECKING:
-    pass
-
 
 if sys.version_info >= (3, 11):
     from typing import Self

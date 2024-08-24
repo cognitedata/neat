@@ -1,4 +1,5 @@
 import math
+from dataclasses import dataclass, field
 from typing import Any, ClassVar
 
 from pydantic import Field, field_serializer, field_validator, model_serializer
@@ -14,6 +15,7 @@ from ._base import (
     SheetEntity,
     SheetList,
 )
+from ._base_input import InputComponent, InputRules
 from ._types import PropertyType, StrOrListType
 
 
@@ -76,3 +78,52 @@ class DomainRules(BaseRules):
                 cls.model_dump(**kwargs) for cls in self.classes or []
             ] or None
         return output
+
+
+@dataclass
+class DomainInputMetadata(InputComponent):
+    creator: str
+
+    @classmethod
+    def _get_verified_cls(cls) -> type[DomainMetadata]:
+        return DomainMetadata
+
+
+@dataclass
+class DomainInputProperty(InputComponent):
+    class_: str
+    property_: str
+    name: str | None
+    description: str | None
+    value_type: str
+    min_count: int | None
+    max_count: int | float | None
+
+    @classmethod
+    def _get_verified_cls(cls) -> type[DomainProperty]:
+        return DomainProperty
+
+
+@dataclass
+class DomainInputClass(InputComponent):
+    class_: str
+    name: str | None
+    description: str | None
+    parent: list[str] | None
+
+    @classmethod
+    def _get_verified_cls(cls) -> type[DomainClass]:
+        return DomainClass
+
+
+@dataclass
+class DomainInputRules(InputRules[DomainRules]):
+    metadata: DomainInputMetadata
+    properties: list[DomainInputProperty] = field(default_factory=list)
+    classes: list[DomainInputClass] = field(default_factory=list)
+    last: "DomainInputRules | None" = None
+    reference: "DomainInputRules | None" = None
+
+    @classmethod
+    def _get_verified_cls(cls) -> type[DomainRules]:
+        return DomainRules
