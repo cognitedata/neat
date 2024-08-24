@@ -40,7 +40,7 @@ from cognite.neat.rules.models.entities import (
 )
 from cognite.neat.rules.models.information import InformationClass, InformationMetadata, InformationProperty
 
-from ._base import JustRule, RulesState, RulesTransformer
+from ._base import JustRules, OutRules, RulesTransformer
 
 T_VerifiedInRules = TypeVar("T_VerifiedInRules", bound=VerifiedRules)
 T_VerifiedOutRules = TypeVar("T_VerifiedOutRules", bound=VerifiedRules)
@@ -49,9 +49,9 @@ T_VerifiedOutRules = TypeVar("T_VerifiedOutRules", bound=VerifiedRules)
 class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRules], ABC):
     """Base class for all conversion transformers."""
 
-    def transform(self, rules: T_VerifiedInRules | RulesState[T_VerifiedInRules]) -> JustRule[T_VerifiedOutRules]:
+    def transform(self, rules: T_VerifiedInRules | OutRules[T_VerifiedInRules]) -> JustRules[T_VerifiedOutRules]:
         out = self._transform(self._to_rules(rules))
-        return JustRule(out)
+        return JustRules(out)
 
     @abstractmethod
     def _transform(self, rules: T_VerifiedInRules) -> T_VerifiedOutRules:

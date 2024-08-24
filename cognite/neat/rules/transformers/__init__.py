@@ -1,4 +1,4 @@
-from ._base import JustRule, MaybeRule, RulesPipeline, RulesState, RulesTransformer
+from ._base import JustRules, MaybeRules, OutRules, RulesPipeline, RulesTransformer
 from ._converters import AssetToInformation, DMSToInformation, InformationToAsset, InformationToDMS
 from ._verification import VerifyAssetRules, VerifyDMSRules, VerifyInformationRules
 
@@ -9,9 +9,9 @@ __all__ = [
     "InformationToAsset",
     "AssetToInformation",
     "DMSToInformation",
-    "JustRule",
-    "MaybeRule",
-    "RulesState",
+    "JustRules",
+    "MaybeRules",
+    "OutRules",
     "VerifyAssetRules",
     "VerifyDMSRules",
     "VerifyInformationRules",
