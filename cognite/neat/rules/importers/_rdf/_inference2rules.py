@@ -11,7 +11,6 @@ from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import FileReadError
 from cognite.neat.rules._shared import ReadRules
 from cognite.neat.rules.importers._base import BaseImporter
-from cognite.neat.rules.models import InformationInputRules
 from cognite.neat.rules.models._base import MatchType
 from cognite.neat.rules.models.information import (
     InformationInputRules,

@@ -75,10 +75,10 @@ class VerifyAssetRules(VerificationTransformer[AssetInputRules, AssetRules]):
     _rules_cls = AssetRules
 
 
-class VerifyAnyRules(VerifyInformationRules[InputRules, VerifiedRules]):
+class VerifyAnyRules(VerificationTransformer[InputRules, VerifiedRules]):
     """Class to verify arbitrary rules"""
 
-    def _get_rules_cls(self, in_: T_InputRules) -> type[T_VerifiedRules]:
+    def _get_rules_cls(self, in_: InputRules) -> type[VerifiedRules]:
         if isinstance(in_, InformationInputRules):
             return InformationRules
         elif isinstance(in_, DMSInputRules):

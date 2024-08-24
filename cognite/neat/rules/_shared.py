@@ -50,7 +50,7 @@ class MaybeRules(OutRules[T_Rules]):
     rules: T_Rules | None
     issues: IssueList
 
-    def get_rules(self) -> T_Rules:
+    def get_rules(self) -> T_Rules | None:
         return self.rules
 
 

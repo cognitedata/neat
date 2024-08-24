@@ -86,14 +86,14 @@ class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
         return _DMSRulesConverter(rules).as_information_rules()
 
 
-class ConvertAnyRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
+class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
     """Converts any rules to any rules."""
 
-    def __init__(self, to_rules: type[VerifiedRules]):
-        self._to_rules = to_rules
+    def __init__(self, out_cls: type[VerifiedRules]):
+        self._out_cls = out_cls
 
     def _transform(self, rules: VerifiedRules) -> VerifiedRules:
-        if isinstance(rules, self._to_rules):
+        if isinstance(rules, self._out_cls):
             return rules
         if isinstance(rules, InformationRules) and self._to_rules is DMSRules:
             return InformationToDMS().transform(rules).rules

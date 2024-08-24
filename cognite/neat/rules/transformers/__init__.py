@@ -1,5 +1,5 @@
 from ._base import RulesPipeline, RulesTransformer
-from ._converters import AssetToInformation, ConvertAnyRules, DMSToInformation, InformationToAsset, InformationToDMS
+from ._converters import AssetToInformation, ConvertToRules, DMSToInformation, InformationToAsset, InformationToDMS
 from ._pipelines import ImporterPipeline
 from ._verification import VerifyAnyRules, VerifyAssetRules, VerifyDMSRules, VerifyInformationRules
 
@@ -9,7 +9,7 @@ __all__ = [
     "RulesPipeline",
     "InformationToDMS",
     "InformationToAsset",
-    "ConvertAnyRules",
+    "ConvertToRules",
     "AssetToInformation",
     "DMSToInformation",
     "VerifyAssetRules",
