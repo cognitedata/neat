@@ -9,7 +9,6 @@ from typing import Literal, TypeVar, cast
 from cognite.client.data_classes import data_modeling as dms
 from rdflib import Namespace
 
-from cognite.neat.issues.errors import NeatTypeError, NeatValueError
 from cognite.neat.issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat.rules._shared import VerifiedRules
 from cognite.neat.rules.models import (
@@ -41,7 +40,7 @@ from cognite.neat.rules.models.entities import (
 )
 from cognite.neat.rules.models.information import InformationClass, InformationMetadata, InformationProperty
 
-from ._base import JustRule, MaybeRule, RulesState, RulesTransformer
+from ._base import JustRule, RulesState, RulesTransformer
 
 T_VerifiedInRules = TypeVar("T_VerifiedInRules", bound=VerifiedRules)
 T_VerifiedOutRules = TypeVar("T_VerifiedOutRules", bound=VerifiedRules)
@@ -51,17 +50,7 @@ class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRul
     """Base class for all conversion transformers."""
 
     def transform(self, rules: T_VerifiedInRules | RulesState[T_VerifiedInRules]) -> JustRule[T_VerifiedOutRules]:
-        if isinstance(rules, JustRule):
-            in_ = rules.rule
-        elif isinstance(rules, MaybeRule):
-            if rules.rule is None:
-                raise NeatValueError("Rules is missing cannot convert")
-            in_ = rules.rule
-        elif isinstance(rules, VerifiedRules):
-            in_ = rules
-        else:
-            raise NeatTypeError(f"Unsupported type: {type(rules)}")
-        out = self._transform(in_)
+        out = self._transform(self._to_rules(rules))
         return JustRule(out)
 
     @abstractmethod

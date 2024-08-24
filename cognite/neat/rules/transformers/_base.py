@@ -5,7 +5,7 @@ from typing import Generic, TypeVar
 
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import NeatTypeError, NeatValueError
-from cognite.neat.rules._shared import Rules, T_Rules
+from cognite.neat.rules._shared import InputRules, Rules, T_Rules, VerifiedRules
 
 T_RulesIn = TypeVar("T_RulesIn", bound=Rules)
 T_RulesOut = TypeVar("T_RulesOut", bound=Rules)
@@ -42,6 +42,19 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
     def transform(self, rules: T_RulesIn | RulesState[T_RulesIn]) -> RulesState[T_RulesOut]:
         """Transform the input rules into the output rules."""
         raise NotImplementedError()
+
+    @classmethod
+    def _to_rules(cls, rules: T_RulesIn | RulesState[T_RulesIn]) -> T_RulesIn:
+        if isinstance(rules, JustRule):
+            return rules.rule
+        elif isinstance(rules, MaybeRule):
+            if rules.rule is None:
+                raise NeatValueError("Rules is missing cannot convert")
+            return rules.rule
+        elif isinstance(rules, VerifiedRules | InputRules):
+            return rules  # type: ignore[return-value]
+        else:
+            raise NeatTypeError(f"Unsupported type: {type(rules)}")
 
 
 class RulesPipeline(list, MutableSequence[RulesTransformer], Generic[T_RulesIn, T_RulesOut]):
