@@ -34,7 +34,8 @@ from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
 from cognite.neat.utils.text import humanize_collection
 
-from ._base import BaseImporter, VerifiedRules, _handle_issues
+from ._base import BaseImporter, _handle_issues
+from cognite.neat.rules._shared import T_InputRules, ReadRules
 
 SOURCE_SHEET__TARGET_FIELD__HEADERS = [
     (
@@ -207,7 +208,7 @@ class SpreadsheetReader:
         return sheets, read_info_by_sheet
 
 
-class ExcelImporter(BaseImporter):
+class ExcelImporter(BaseImporter[T_InputRules]):
     """Import rules from an Excel file.
 
     Args:
@@ -217,30 +218,18 @@ class ExcelImporter(BaseImporter):
     def __init__(self, filepath: Path):
         self.filepath = filepath
 
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
-
-    @overload
-    def to_rules(
-        self,
-        errors: Literal["continue"] = "continue",
-        role: RoleTypes | None = None,
-    ) -> tuple[VerifiedRules | None, IssueList]: ...
-
-    def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
+    def to_rules(self) -> ReadRules[T_InputRules]:
         issue_list = IssueList(title=f"'{self.filepath.name}'")
         if not self.filepath.exists():
             issue_list.append(FileNotFoundNeatError(self.filepath))
-            return self._return_or_raise(issue_list, errors)
+            return ReadRules(None, issue_list, {})
 
         with pd.ExcelFile(self.filepath) as excel_file:
             user_reader = SpreadsheetReader(issue_list)
 
             user_read = user_reader.read(excel_file, self.filepath)
             if user_read is None or issue_list.has_errors:
-                return self._return_or_raise(issue_list, errors)
+                return ReadRules(None, issue_list, {})
 
             last_read: ReadResult | None = None
             if any(sheet_name.startswith("Last") for sheet_name in user_reader.seen_sheets):
@@ -252,7 +241,7 @@ class ExcelImporter(BaseImporter):
                 reference_read = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(excel_file, self.filepath)
 
         if issue_list.has_errors:
-            return self._return_or_raise(issue_list, errors)
+            return ReadRules(None, issue_list, {})
 
         if reference_read and user_read.role != reference_read.role:
             issue_list.append(
@@ -265,7 +254,7 @@ class ExcelImporter(BaseImporter):
                     "sheet",
                 )
             )
-            return self._return_or_raise(issue_list, errors)
+            return ReadRules(None, issue_list, {})
 
         sheets = user_read.sheets
         original_role = user_read.role
@@ -281,33 +270,11 @@ class ExcelImporter(BaseImporter):
             read_info_by_sheet.update(reference_read.read_info_by_sheet)
 
         rules_cls = RULES_PER_ROLE[original_role]
-        with _handle_issues(
-            issue_list,
-            error_cls=NeatError,
-            error_args={"read_info_by_sheet": read_info_by_sheet},
-        ) as future:
-            rules: VerifiedRules
-            if rules_cls is DMSRules:
-                rules = DMSInputRules.load(sheets).as_rules()
-            elif rules_cls is InformationRules:
-                rules = InformationInputRules.load(sheets).as_rules()
-            elif rules_cls is AssetRules:
-                rules = AssetInputRules.load(sheets).as_rules()
-            else:
-                rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
-
-        if future.result == "failure" or issue_list.has_errors:
-            return self._return_or_raise(issue_list, errors)
-
-        return self._to_output(
-            rules,
-            issue_list,
-            errors=errors,
-            role=role,
-        )
+        rules = rules_cls.load(sheets)
+        return ReadRules(rules, issue_list, {"read_info_by_sheet": read_info_by_sheet})
 
 
-class GoogleSheetImporter(BaseImporter):
+class GoogleSheetImporter(BaseImporter[T_InputRules]):
     """Import rules from a Google Sheet.
 
     .. warning::
@@ -323,38 +290,13 @@ class GoogleSheetImporter(BaseImporter):
         self.sheet_id = sheet_id
         self.skiprows = skiprows
 
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
-
-    @overload
-    def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[VerifiedRules | None, IssueList]: ...
-
-    def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
-        local_import("gspread", "google")
-        import gspread  # type: ignore[import]
-
-        role = role or RoleTypes.domain_expert
-        rules_model = cast(DomainRules | InformationRules | AssetRules | DMSRules, RULES_PER_ROLE[role])
-
-        client_google = gspread.service_account()
-        google_sheet = client_google.open_by_key(self.sheet_id)
-        sheets = {worksheet.title: pd.DataFrame(worksheet.get_all_records()) for worksheet in google_sheet.worksheets()}
-        sheet_names = {str(name).lower() for name in sheets.keys()}
-
-        if missing_sheets := rules_model.mandatory_fields().difference(sheet_names):
-            raise ValueError(f"Missing mandatory sheets: {missing_sheets}")
-
-        if role == RoleTypes.domain_expert:
-            output = rules_model.model_validate(sheets)
-        elif role == RoleTypes.information:
-            output = rules_model.model_validate(sheets)
-        elif role == RoleTypes.dms:
-            output = rules_model.model_validate(sheets)
-        else:
-            raise ValueError(f"Role {role} is not valid.")
-
-        return self._to_output(output, IssueList(), errors=errors, role=role)
+    def to_rules(self) -> ReadRules[T_InputRules]:
+        # local_import("gspread", "google")
+        # import gspread  # type: ignore[import]
+        #
+        # client_google = gspread.service_account()
+        # google_sheet = client_google.open_by_key(self.sheet_id)
+        # sheets = {worksheet.title: pd.DataFrame(worksheet.get_all_records()) for worksheet in google_sheet.worksheets()}
+        #
+        # issue_list = IssueList(title=f"'{self.sheet_id}'")
+        raise NotImplementedError("Google Sheet Importer is not yet implemented.")
