@@ -9,7 +9,7 @@ from ._external import (
     FileTypeUnexpectedError,
     NeatYamlError,
 )
-from ._general import NeatImportError, NeatValueError, RegexViolationError
+from ._general import NeatImportError, NeatTypeError, NeatValueError, RegexViolationError
 from ._properties import (
     PropertyDefinitionDuplicatedError,
     PropertyDefinitionError,
@@ -67,6 +67,7 @@ __all__ = [
     "DefaultPydanticError",
     "PropertyMappingDuplicatedError",
     "RowError",
+    "NeatTypeError",
 ]
 
 _NEAT_ERRORS_BY_NAME = {error.__name__: error for error in _get_subclasses(NeatError, include_base=True)}

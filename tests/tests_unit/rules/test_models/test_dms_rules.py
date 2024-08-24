@@ -1564,7 +1564,7 @@ class TestDMSRules:
         assert sorted(actual_issues) == sorted(expected_issues)
 
     def test_create_reference(self) -> None:
-        dms_rules = InformationToDMS().transform(car.CAR_RULES)
+        dms_rules = InformationToDMS().transform(car.CAR_RULES).rule
 
         dms_rules.create_reference(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"})
 
@@ -1696,7 +1696,7 @@ class TestDMSExporter:
         assert not missing_properties, f"Missing properties for views: {missing_properties}"
 
     def test_camilla_business_solution_as_schema(self, camilla_information_rules: InformationRules) -> None:
-        dms_rules = InformationToDMS().transform(camilla_information_rules)
+        dms_rules = InformationToDMS().transform(camilla_information_rules).rule
         expected_views = {"TimeseriesForecastProduct", "WindFarm"}
 
         schema = dms_rules.as_schema()

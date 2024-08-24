@@ -43,7 +43,7 @@ class MockGraphGenerator(BaseExtractor):
         allow_isolated_classes: bool = True,
     ):
         if isinstance(rules, DMSRules):
-            self.rules = DMSToInformation().transform(rules)
+            self.rules = DMSToInformation().transform(rules).rule
         elif isinstance(rules, InformationRules):
             self.rules = rules
         else:

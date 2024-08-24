@@ -1,9 +1,11 @@
-from cognite.neat.rules.models.asset import AssetRules
+from cognite.neat.rules.models.asset import AssetRules, AssetRulesInput
 from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.information._rules import InformationRules
+from cognite.neat.rules.models.information._rules_input import InformationRulesInput
 
 from ._base import DataModelType, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
 from .dms._rules import DMSRules
+from .dms._rules_input import DMSRulesInput
 from .dms._schema import DMSSchema
 
 RULES_PER_ROLE: dict[RoleTypes, type[DomainRules] | type[InformationRules] | type[AssetRules] | type[DMSRules]] = {
@@ -16,6 +18,9 @@ RULES_PER_ROLE: dict[RoleTypes, type[DomainRules] | type[InformationRules] | typ
 
 __all__ = [
     "DomainRules",
+    "DMSRulesInput",
+    "InformationRulesInput",
+    "AssetRulesInput",
     "InformationRules",
     "AssetRules",
     "DMSRules",

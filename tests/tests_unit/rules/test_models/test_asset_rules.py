@@ -215,7 +215,7 @@ class TestAssetRules:
 
     def test_conversion_between_roles(self, david_rules: InformationRules) -> None:
         pipeline = RulesPipeline[InformationRules, InformationRules]([InformationToAsset(), AssetToInformation()])
-        recreated = pipeline.run(david_rules)
+        recreated = pipeline.transform(david_rules)
 
         assert recreated.model_dump() == david_rules.model_dump()
 
