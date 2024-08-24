@@ -67,7 +67,7 @@ class InputRules(Generic[T_BaseRules], ABC):
         return cls_.model_validate(self.dump())
 
     def dump(self) -> dict[str, Any]:
-        return {field_name: getattr(self, field_name).dump() for field_name in self._dataclass_fields()}
+        return {field_.name: getattr(self, field_.name).dump() for field_ in self._dataclass_fields()}
 
 
 @dataclass
