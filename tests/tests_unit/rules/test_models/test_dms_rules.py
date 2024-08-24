@@ -1459,7 +1459,7 @@ class TestDMSRules:
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         alice_rules = DMSRulesInput.load(alice_spreadsheet).as_rules()
-        info_rules = DMSToInformation().transform(alice_rules)
+        info_rules = DMSToInformation().transform(alice_rules).rule
 
         assert isinstance(info_rules, InformationRules)
 
@@ -1529,7 +1529,7 @@ class TestDMSRules:
         for view in info_rules_copy.views:
             view.reference = None
 
-        info_rules = DMSToInformation().transform(olav_dms_rules)
+        info_rules = DMSToInformation().transform(olav_dms_rules).rule
 
         assert isinstance(info_rules, InformationRules)
 
