@@ -12,8 +12,8 @@ from cognite.neat.rules.models.data_types import DataType, String
 from cognite.neat.rules.models.entities import ClassEntity, MultiValueTypeInfo
 from cognite.neat.rules.models.information import (
     InformationClass,
+    InformationInputRules,
     InformationRules,
-    InformationRulesInput,
 )
 from cognite.neat.rules.models.information._rules_input import (
     InformationClassInput,
@@ -292,7 +292,7 @@ class TestInformationRulesConverter:
         assert actual == expected
 
     def test_convert_above_container_limit(self) -> None:
-        info = InformationRulesInput(
+        info = InformationInputRules(
             metadata=InformationMetadataInput(
                 schema_="complete",
                 prefix="bad_model",

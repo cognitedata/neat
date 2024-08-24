@@ -115,7 +115,7 @@ class AssetClassInput(InformationClassInput): ...
 
 
 @dataclass
-class AssetRulesInput:
+class AssetInputRules:
     metadata: AssetMetadataInput
     properties: Sequence[AssetPropertyInput]
     classes: Sequence[AssetClassInput]
@@ -124,7 +124,7 @@ class AssetRulesInput:
 
     @classmethod
     @overload
-    def load(cls, data: dict[str, Any]) -> "AssetRulesInput": ...
+    def load(cls, data: dict[str, Any]) -> "AssetInputRules": ...
 
     @classmethod
     @overload
@@ -140,8 +140,8 @@ class AssetRulesInput:
             metadata=AssetMetadataInput.load(data.get("metadata")),  # type: ignore[arg-type]
             properties=AssetPropertyInput.load(data.get("properties")),  # type: ignore[arg-type]
             classes=InformationClassInput.load(data.get("classes")),  # type: ignore[arg-type]
-            last=AssetRulesInput.load(data.get("last")),
-            reference=AssetRulesInput.load(data.get("reference")),
+            last=AssetInputRules.load(data.get("last")),
+            reference=AssetInputRules.load(data.get("reference")),
         )
 
     def as_rules(self) -> AssetRules:
@@ -150,17 +150,17 @@ class AssetRulesInput:
     def dump(self) -> dict[str, Any]:
         default_prefix = self.metadata.prefix
         reference: dict[str, Any] | None = None
-        if isinstance(self.reference, AssetRulesInput):
+        if isinstance(self.reference, AssetInputRules):
             reference = self.reference.dump()
         elif isinstance(self.reference, AssetRules):
             # We need to load through the AssetRulesInput to set the correct default space and version
-            reference = AssetRulesInput.load(self.reference.model_dump()).dump()
+            reference = AssetInputRules.load(self.reference.model_dump()).dump()
         last: dict[str, Any] | None = None
-        if isinstance(self.last, AssetRulesInput):
+        if isinstance(self.last, AssetInputRules):
             last = self.last.dump()
         elif isinstance(self.last, AssetRules):
             # We need to load through the AssetRulesInput to set the correct default space and version
-            last = AssetRulesInput.load(self.last.model_dump()).dump()
+            last = AssetInputRules.load(self.last.model_dump()).dump()
 
         return dict(
             Metadata=self.metadata.dump(),

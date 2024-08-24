@@ -9,12 +9,12 @@ from pydantic import ValidationError
 from cognite.neat.issues import IssueList, NeatError, NeatWarning
 from cognite.neat.rules._shared import MaybeRules, OutRules, ReadRules, T_InputRules, T_VerifiedRules
 from cognite.neat.rules.models import (
+    AssetInputRules,
     AssetRules,
-    AssetRulesInput,
     DMSInputRules,
     DMSRules,
+    InformationInputRules,
     InformationRules,
-    InformationRulesInput,
 )
 
 from ._base import RulesTransformer
@@ -52,13 +52,13 @@ class VerifyDMSRules(VerificationTransformer[DMSInputRules, DMSRules]):
     _rules_cls = DMSRules
 
 
-class VerifyInformationRules(VerificationTransformer[InformationRulesInput, InformationRules]):
+class VerifyInformationRules(VerificationTransformer[InformationInputRules, InformationRules]):
     """Class to verify Information rules."""
 
     _rules_cls = InformationRules
 
 
-class VerifyAssetRules(VerificationTransformer[AssetRulesInput, AssetRules]):
+class VerifyAssetRules(VerificationTransformer[AssetInputRules, AssetRules]):
     """Class to verify Asset rules."""
 
     _rules_cls = AssetRules

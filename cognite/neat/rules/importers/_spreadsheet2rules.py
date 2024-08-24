@@ -27,9 +27,9 @@ from cognite.neat.rules.models import (
     RoleTypes,
     SchemaCompleteness,
 )
-from cognite.neat.rules.models.asset import AssetRulesInput
+from cognite.neat.rules.models.asset import AssetInputRules
 from cognite.neat.rules.models.dms import DMSInputRules
-from cognite.neat.rules.models.information import InformationRulesInput
+from cognite.neat.rules.models.information import InformationInputRules
 from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
 from cognite.neat.utils.text import humanize_collection
@@ -290,9 +290,9 @@ class ExcelImporter(BaseImporter):
             if rules_cls is DMSRules:
                 rules = DMSInputRules.load(sheets).as_rules()
             elif rules_cls is InformationRules:
-                rules = InformationRulesInput.load(sheets).as_rules()
+                rules = InformationInputRules.load(sheets).as_rules()
             elif rules_cls is AssetRules:
-                rules = AssetRulesInput.load(sheets).as_rules()
+                rules = AssetInputRules.load(sheets).as_rules()
             else:
                 rules = rules_cls.model_validate(sheets)  # type: ignore[attr-defined]
 

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Literal, overload
+from typing import Any
 
 import yaml
 
@@ -11,13 +11,13 @@ from cognite.neat.issues.errors import (
     FileTypeUnexpectedError,
 )
 from cognite.neat.issues.warnings import NeatValueWarning
-from cognite.neat.rules.models import RULES_PER_ROLE, DMSRules, RoleTypes
-from cognite.neat.rules.models.dms import DMSInputRules
+from cognite.neat.rules._shared import ReadRules, T_InputRules
+from cognite.neat.rules.models import RULES_PER_ROLE, RoleTypes
 
 from ._base import BaseImporter
 
 
-class YAMLImporter(BaseImporter):
+class YAMLImporter(BaseImporter[T_InputRules]):
     """Imports the rules from a YAML file.
 
     Args:
@@ -51,21 +51,9 @@ class YAMLImporter(BaseImporter):
             return cls({}, [FileTypeUnexpectedError(filepath, frozenset([".yaml", ".yml"]))])
         return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath])
 
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
-
-    @overload
-    def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[VerifiedRules | None, IssueList]: ...
-
-    def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
+    def to_rules(self) -> ReadRules[T_InputRules]:
         if self._read_issues.has_errors or not self.raw_data:
-            if errors == "raise":
-                raise self._read_issues.as_errors()
-            return None, self._read_issues
+            return ReadRules(None, self._read_issues, {})
         issue_list = IssueList(title="YAML Importer", issues=self._read_issues)
 
         if not self._filepaths:
@@ -81,33 +69,18 @@ class YAMLImporter(BaseImporter):
 
         if "metadata" not in self.raw_data:
             self._read_issues.append(FileMissingRequiredFieldError(metadata_file, "section", "metadata"))
-            if errors == "raise":
-                raise self._read_issues.as_errors()
-            return None, self._read_issues
+            return ReadRules(None, self._read_issues, {})
 
         metadata = self.raw_data["metadata"]
 
         if "role" not in metadata:
             self._read_issues.append(FileMissingRequiredFieldError(metadata, "metadata", "role"))
-            if errors == "raise":
-                raise self._read_issues.as_errors()
-            return None, self._read_issues
+            return ReadRules(None, self._read_issues, {})
 
         role_input = RoleTypes(metadata["role"])
         role_enum = RoleTypes(role_input)
-        rules_model = RULES_PER_ROLE[role_enum]
+        rules_cls = RULES_PER_ROLE[role_enum]
 
-        with _handle_issues(issue_list) as future:
-            rules: VerifiedRules
-            if rules_model is DMSRules:
-                rules = DMSInputRules.load(self.raw_data).as_rules()
-            else:
-                rules = rules_model.model_validate(self.raw_data)
+        rules = rules_cls.load(self.raw_data)
 
-        if future.result == "failure":
-            if errors == "continue":
-                return None, issue_list
-            else:
-                raise issue_list.as_errors()
-
-        return self._to_output(rules, issue_list, errors, role)
+        return ReadRules(rules, issue_list, {})

@@ -13,8 +13,8 @@ from cognite.neat.rules.importers._base import BaseImporter, VerifiedRules, _han
 from cognite.neat.rules.models import InformationRules, RoleTypes
 from cognite.neat.rules.models._base import MatchType
 from cognite.neat.rules.models.information import (
+    InformationInputRules,
     InformationMetadata,
-    InformationRulesInput,
 )
 from cognite.neat.store import NeatGraphStore
 from cognite.neat.utils.rdf_ import get_namespace, remove_namespace_from_uri, uri_to_short_form
@@ -174,7 +174,7 @@ class InferenceImporter(BaseImporter):
 
         with _handle_issues(self.issue_list) as future:
             rules: InformationRules
-            rules = InformationRulesInput.load(rules_dict).as_rules()
+            rules = InformationInputRules.load(rules_dict).as_rules()
 
         if future.result == "failure" or self.issue_list.has_errors:
             return self._return_or_raise(self.issue_list, errors)

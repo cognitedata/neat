@@ -9,14 +9,14 @@ from cognite.neat.rules.models import (
     DomainRules,
     InformationRules,
 )
-from cognite.neat.rules.models.asset._rules_input import AssetRulesInput
+from cognite.neat.rules.models.asset._rules_input import AssetInputRules
 from cognite.neat.rules.models.dms._rules_input import DMSInputRules
-from cognite.neat.rules.models.information._rules_input import InformationRulesInput
+from cognite.neat.rules.models.information._rules_input import InformationInputRules
 
 VerifiedRules: TypeAlias = DomainRules | InformationRules | DMSRules | AssetRules
-InputRules: TypeAlias = AssetRulesInput | DMSInputRules | InformationRulesInput
+InputRules: TypeAlias = AssetInputRules | DMSInputRules | InformationInputRules
 Rules: TypeAlias = (
-    AssetRulesInput | DMSInputRules | InformationRulesInput | DomainRules | InformationRules | DMSRules | AssetRules
+    AssetInputRules | DMSInputRules | InformationInputRules | DomainRules | InformationRules | DMSRules | AssetRules
 )
 T_Rules = TypeVar("T_Rules", bound=Rules)
 T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
