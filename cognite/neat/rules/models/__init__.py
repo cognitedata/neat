@@ -1,5 +1,5 @@
 from cognite.neat.rules.models.asset import AssetInputRules, AssetRules
-from cognite.neat.rules.models.domain import DomainRules
+from cognite.neat.rules.models.domain import DomainInputRules, DomainRules
 from cognite.neat.rules.models.information._rules import InformationRules
 from cognite.neat.rules.models.information._rules_input import InformationInputRules
 
@@ -8,14 +8,16 @@ from .dms._rules import DMSRules
 from .dms._rules_input import DMSInputRules
 from .dms._schema import DMSSchema
 
-INPUT_RULES_BY_ROLE: dict[RoleTypes, type[InformationInputRules] | type[AssetInputRules] | type[DMSInputRules]] = {
-    # RoleTypes.domain_expert: DomainRules,
+INPUT_RULES_BY_ROLE: dict[
+    RoleTypes, type[InformationInputRules] | type[AssetInputRules] | type[DMSInputRules] | type[DomainInputRules]
+] = {
+    RoleTypes.domain_expert: DomainInputRules,
     RoleTypes.information: InformationInputRules,
     RoleTypes.asset: AssetInputRules,
     RoleTypes.dms: DMSInputRules,
 }
 VERIFIED_RULES_BY_ROLE: dict[
-    RoleTypes, type[DomainRules] | type[InformationRules] | type[AssetRules] | type[DMSRules]
+    RoleTypes, type[DomainRules] | type[InformationRules] | type[AssetRules] | type[DMSRules] | type[DomainRules]
 ] = {
     RoleTypes.domain_expert: DomainRules,
     RoleTypes.information: InformationRules,

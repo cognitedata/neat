@@ -7,6 +7,7 @@ from typing import Any, Literal
 from pydantic import ValidationError
 
 from cognite.neat.issues import IssueList, NeatError, NeatWarning
+from cognite.neat.issues.errors import NeatTypeError
 from cognite.neat.rules._shared import (
     InputRules,
     MaybeRules,
@@ -21,6 +22,8 @@ from cognite.neat.rules.models import (
     AssetRules,
     DMSInputRules,
     DMSRules,
+    DomainInputRules,
+    DomainRules,
     InformationInputRules,
     InformationRules,
 )
@@ -86,8 +89,10 @@ class VerifyAnyRules(VerificationTransformer[InputRules, VerifiedRules]):
             return DMSRules
         elif isinstance(in_, AssetInputRules):
             return AssetRules
+        elif isinstance(in_, DomainInputRules):
+            return DomainRules
         else:
-            raise NeatError(f"Unsupported rules type: {type(in_)}")
+            raise NeatTypeError(f"Unsupported rules type: {type(in_)}")
 
 
 class _FutureResult:

@@ -93,11 +93,11 @@ class DomainInputMetadata(InputComponent[DomainMetadata]):
 class DomainInputProperty(InputComponent[DomainProperty]):
     class_: str
     property_: str
-    name: str | None
-    description: str | None
     value_type: str
-    min_count: int | None
-    max_count: int | float | None
+    name: str | None = None
+    description: str | None = None
+    min_count: int | None = None
+    max_count: int | float | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DomainProperty]:
@@ -107,9 +107,9 @@ class DomainInputProperty(InputComponent[DomainProperty]):
 @dataclass
 class DomainInputClass(InputComponent[DomainClass]):
     class_: str
-    name: str | None
-    description: str | None
-    parent: list[str] | None
+    name: str | None = None
+    description: str | None = None
+    parent: list[str] | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DomainClass]:
