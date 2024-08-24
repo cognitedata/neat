@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -12,7 +12,7 @@ from cognite.neat.issues.errors import (
 )
 from cognite.neat.issues.warnings import NeatValueWarning
 from cognite.neat.rules._shared import ReadRules, T_InputRules
-from cognite.neat.rules.models import RULES_PER_ROLE, RoleTypes
+from cognite.neat.rules.models import INPUT_RULES_BY_ROLE, RoleTypes
 
 from ._base import BaseImporter
 
@@ -79,8 +79,8 @@ class YAMLImporter(BaseImporter[T_InputRules]):
 
         role_input = RoleTypes(metadata["role"])
         role_enum = RoleTypes(role_input)
-        rules_cls = RULES_PER_ROLE[role_enum]
+        rules_cls = INPUT_RULES_BY_ROLE[role_enum]
 
-        rules = rules_cls.load(self.raw_data)
+        rules = cast(T_InputRules, rules_cls.load(self.raw_data))
 
         return ReadRules(rules, issue_list, {})

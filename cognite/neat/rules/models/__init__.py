@@ -8,11 +8,19 @@ from .dms._rules import DMSRules
 from .dms._rules_input import DMSInputRules
 from .dms._schema import DMSSchema
 
-RULES_PER_ROLE: dict[RoleTypes, type[InformationInputRules] | type[AssetInputRules] | type[DMSInputRules]] = {
+INPUT_RULES_BY_ROLE: dict[RoleTypes, type[InformationInputRules] | type[AssetInputRules] | type[DMSInputRules]] = {
     # RoleTypes.domain_expert: DomainRules,
     RoleTypes.information: InformationInputRules,
     RoleTypes.asset: AssetInputRules,
     RoleTypes.dms: DMSInputRules,
+}
+VERIFIED_RULES_BY_ROLE: dict[
+    RoleTypes, type[DomainRules] | type[InformationRules] | type[AssetRules] | type[DMSRules]
+] = {
+    RoleTypes.domain_expert: DomainRules,
+    RoleTypes.information: InformationRules,
+    RoleTypes.asset: AssetRules,
+    RoleTypes.dms: DMSRules,
 }
 
 
@@ -24,7 +32,7 @@ __all__ = [
     "InformationRules",
     "AssetRules",
     "DMSRules",
-    "RULES_PER_ROLE",
+    "INPUT_RULES_BY_ROLE",
     "DMSSchema",
     "RoleTypes",
     "SchemaCompleteness",

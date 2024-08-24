@@ -20,7 +20,8 @@ from cognite.neat.issues.errors import (
 )
 from cognite.neat.rules._shared import ReadRules, T_InputRules
 from cognite.neat.rules.models import (
-    RULES_PER_ROLE,
+    INPUT_RULES_BY_ROLE,
+    VERIFIED_RULES_BY_ROLE,
     RoleTypes,
     SchemaCompleteness,
 )
@@ -46,7 +47,7 @@ SOURCE_SHEET__TARGET_FIELD__HEADERS = [
 ]
 
 MANDATORY_SHEETS_BY_ROLE: dict[RoleTypes, set[str]] = {
-    role_type: {str(sheet_name) for sheet_name in RULES_PER_ROLE[role_type].mandatory_fields(use_alias=True)}
+    role_type: {str(sheet_name) for sheet_name in VERIFIED_RULES_BY_ROLE[role_type].mandatory_fields(use_alias=True)}
     for role_type in RoleTypes.__members__.values()
 }
 
@@ -261,7 +262,7 @@ class ExcelImporter(BaseImporter[T_InputRules]):
             sheets["reference"] = reference_read.sheets
             read_info_by_sheet.update(reference_read.read_info_by_sheet)
 
-        rules_cls = RULES_PER_ROLE[original_role]
+        rules_cls = INPUT_RULES_BY_ROLE[original_role]
         rules = cast(T_InputRules, rules_cls.load(sheets))
         return ReadRules(rules, issue_list, {"read_info_by_sheet": read_info_by_sheet})
 
