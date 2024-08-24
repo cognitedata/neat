@@ -1,7 +1,6 @@
-from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Literal, cast, overload
+from typing import Any, Literal
 
 from rdflib import Namespace
 
@@ -9,8 +8,8 @@ from cognite.neat.rules.models._base import (
     DataModelType,
     ExtensionCategory,
     SchemaCompleteness,
-    _add_alias,
 )
+from cognite.neat.rules.models._base_input import InputComponent, InputRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
@@ -28,7 +27,7 @@ from ._rules import (
 
 
 @dataclass
-class InformationMetadataInput:
+class InformationMetadataInput(InputComponent[InformationMetadata]):
     schema_: Literal["complete", "partial", "extended"]
     prefix: str
     namespace: str
@@ -44,27 +43,10 @@ class InformationMetadataInput:
     rights: str | None = None
 
     @classmethod
-    def load(cls, data: dict[str, Any] | None) -> "InformationMetadataInput | None":
-        if data is None:
-            return None
-        _add_alias(data, InformationMetadata)
-        return cls(
-            data_model_type=data.get("data_model_type", "enterprise"),
-            extension=data.get("extension", "addition"),
-            schema_=data.get("schema_", "partial"),  # type: ignore[arg-type]
-            version=data.get("version"),  # type: ignore[arg-type]
-            namespace=data.get("namespace"),  # type: ignore[arg-type]
-            prefix=data.get("prefix"),  # type: ignore[arg-type]
-            name=data.get("name"),
-            creator=data.get("creator"),  # type: ignore[arg-type]
-            description=data.get("description"),
-            created=data.get("created"),
-            updated=data.get("updated"),
-            license=data.get("license"),
-            rights=data.get("rights"),
-        )
+    def _get_verified_cls(cls) -> type[InformationMetadata]:
+        return InformationMetadata
 
-    def dump(self) -> dict[str, Any]:
+    def dump(self, **kwargs) -> dict[str, Any]:
         return dict(
             dataModelType=DataModelType(self.data_model_type),
             schema=SchemaCompleteness(self.schema_),
@@ -83,7 +65,7 @@ class InformationMetadataInput:
 
 
 @dataclass
-class InformationPropertyInput:
+class InformationPropertyInput(InputComponent[InformationProperty]):
     class_: str
     property_: str
     value_type: str
@@ -98,47 +80,10 @@ class InformationPropertyInput:
     transformation: str | None = None
 
     @classmethod
-    @overload
-    def load(cls, data: None) -> None: ...
+    def _get_verified_cls(cls) -> type[InformationProperty]:
+        return InformationProperty
 
-    @classmethod
-    @overload
-    def load(cls, data: dict[str, Any]) -> "InformationPropertyInput": ...
-
-    @classmethod
-    @overload
-    def load(cls, data: list[dict[str, Any]]) -> list["InformationPropertyInput"]: ...
-
-    @classmethod
-    def load(
-        cls, data: dict[str, Any] | list[dict[str, Any]] | None
-    ) -> "InformationPropertyInput | list[InformationPropertyInput] | None":
-        if data is None:
-            return None
-        if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
-            items = cast(
-                list[dict[str, Any]],
-                data.get("data") if isinstance(data, dict) else data,
-            )
-            return [loaded for item in items if (loaded := cls.load(item)) is not None]
-
-        _add_alias(data, InformationProperty)
-        return cls(
-            class_=data.get("class_"),  # type: ignore[arg-type]
-            property_=data.get("property_"),  # type: ignore[arg-type]
-            name=data.get("name", None),
-            description=data.get("description", None),
-            comment=data.get("comment", None),
-            value_type=data.get("value_type"),  # type: ignore[arg-type]
-            min_count=data.get("min_count", None),
-            max_count=data.get("max_count", None),
-            default=data.get("default", None),
-            reference=data.get("reference", None),
-            match_type=data.get("match_type", None),
-            transformation=data.get("transformation", None),
-        )
-
-    def dump(self, default_prefix: str) -> dict[str, Any]:
+    def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore[override]
         value_type: MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity
 
         # property holding xsd data type
@@ -175,7 +120,7 @@ class InformationPropertyInput:
 
 
 @dataclass
-class InformationClassInput:
+class InformationClassInput(InputComponent[InformationClass]):
     class_: str
     name: str | None = None
     description: str | None = None
@@ -185,41 +130,10 @@ class InformationClassInput:
     match_type: str | None = None
 
     @classmethod
-    @overload
-    def load(cls, data: None) -> None: ...
+    def _get_verified_cls(cls) -> type[InformationClass]:
+        return InformationClass
 
-    @classmethod
-    @overload
-    def load(cls, data: dict[str, Any]) -> "InformationClassInput": ...
-
-    @classmethod
-    @overload
-    def load(cls, data: list[dict[str, Any]]) -> list["InformationClassInput"]: ...
-
-    @classmethod
-    def load(
-        cls, data: dict[str, Any] | list[dict[str, Any]] | None
-    ) -> "InformationClassInput | list[InformationClassInput] | None":
-        if data is None:
-            return None
-        if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
-            items = cast(
-                list[dict[str, Any]],
-                data.get("data") if isinstance(data, dict) else data,
-            )
-            return [loaded for item in items if (loaded := cls.load(item)) is not None]
-        _add_alias(data, InformationClass)
-        return cls(
-            class_=data.get("class_"),  # type: ignore[arg-type]
-            name=data.get("name", None),
-            description=data.get("description", None),
-            comment=data.get("comment", None),
-            parent=data.get("parent", None),
-            reference=data.get("reference", None),
-            match_type=data.get("match_type", None),
-        )
-
-    def dump(self, default_prefix: str) -> dict[str, Any]:
+    def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore[override]
         return {
             "Class": ClassEntity.load(self.class_, prefix=default_prefix),
             "Name": self.name,
@@ -236,39 +150,17 @@ class InformationClassInput:
 
 
 @dataclass
-class InformationInputRules:
+class InformationInputRules(InputRules[InformationRules]):
     metadata: InformationMetadataInput
-    properties: Sequence[InformationPropertyInput]
-    classes: Sequence[InformationClassInput]
-    prefixes: "dict[str, Namespace] | None" = None
-    last: "InformationInputRules | InformationRules | None" = None
-    reference: "InformationInputRules | InformationRules | None" = None
+    properties: list[InformationPropertyInput] = field(default_factory=list)
+    classes: list[InformationClassInput] = field(default_factory=list)
+    prefixes: dict[str, Namespace] | None = None
+    last: "InformationInputRules | None" = None
+    reference: "InformationInputRules | None" = None
 
     @classmethod
-    @overload
-    def load(cls, data: dict[str, Any]) -> "InformationInputRules": ...
-
-    @classmethod
-    @overload
-    def load(cls, data: None) -> None: ...
-
-    @classmethod
-    def load(cls, data: dict | None) -> "InformationInputRules | None":
-        if data is None:
-            return None
-        _add_alias(data, InformationRules)
-
-        return cls(
-            metadata=InformationMetadataInput.load(data.get("metadata")),  # type: ignore[arg-type]
-            properties=InformationPropertyInput.load(data.get("properties")),  # type: ignore[arg-type]
-            classes=InformationClassInput.load(data.get("classes")),  # type: ignore[arg-type]
-            prefixes=data.get("prefixes"),
-            last=InformationInputRules.load(data.get("last")),
-            reference=InformationInputRules.load(data.get("reference")),
-        )
-
-    def as_rules(self) -> InformationRules:
-        return InformationRules.model_validate(self.dump())
+    def _get_verified_cls(cls) -> type[InformationRules]:
+        return InformationRules
 
     def dump(self) -> dict[str, Any]:
         default_prefix = self.metadata.prefix

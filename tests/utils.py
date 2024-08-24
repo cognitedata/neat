@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 from abc import ABC
 from dataclasses import fields
 from pathlib import Path
@@ -53,21 +54,26 @@ class DataClassCreator:
             return args[0]
         elif dataclasses.is_dataclass(type_):
             return DataClassCreator(type_).create_instance()
+        elif type_ is datetime.datetime:
+            return datetime.datetime.now()
+        elif type_ is datetime.date:
+            return datetime.date.today()
         else:
             raise NotImplementedError(f"Type {type_} not implemented.")
 
     def _create_values(self, field_type: GenericAlias) -> Any:
-        if field_type.__origin__ is list:
+        origin = field_type.__origin__
+        if origin is list:
             return [self._create_value(field_type.__args__[0])]
-        elif field_type.__origin__ is dict:
+        elif origin is dict:
             return {self._create_value(field_type.__args__[0]): self._create_value(field_type.__args__[1])}
-        elif field_type.__origin__ is tuple:
+        elif origin is tuple:
             return (self._create_value(field_type.__args__[0]),)
-        elif field_type.__origin__ is set:
+        elif origin is set:
             return {self._create_value(field_type.__args__[0])}
-        elif field_type.__origin__ is frozenset:
+        elif origin is frozenset:
             return frozenset({self._create_value(field_type.__args__[0])})
-        elif field_type.__origin__ is type and issubclass(field_type.__args__[0], Warning):
+        elif origin is type and issubclass(field_type.__args__[0], Warning):
             return UserWarning
         else:
             raise NotImplementedError(f"Field type {field_type} not implemented.")

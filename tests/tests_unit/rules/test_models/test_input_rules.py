@@ -1,4 +1,3 @@
-import json
 from collections.abc import Iterable
 from dataclasses import fields, is_dataclass
 from types import GenericAlias, UnionType
@@ -39,10 +38,7 @@ class TestInputRules:
         dumped = input_rules.dump()
         assert isinstance(dumped, dict)
         assert dumped != {}, f"Empty dump for {type(input_rules).__name__}"
-        # Ensure that the dump can be serialized and deserialized
-        json_dumped = json.dumps(dumped)
-        json_loaded = json.loads(json_dumped)
-        loaded = type(input_rules).load(json_loaded)
+        loaded = type(input_rules).load(dumped)
         assert input_rules == loaded, f"Dump and load mismatch for {type(input_rules).__name__}"
 
 

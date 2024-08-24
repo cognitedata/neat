@@ -148,5 +148,5 @@ class InputComponent(ABC, Generic[T_RuleModel]):
                 args[field_name] = data[field_.alias]
         return cls(**args)
 
-    def dump(self) -> dict[str, Any]:
+    def dump(self, **kwargs) -> dict[str, Any]:
         return {field_.name: getattr(self, field_.name) for field_ in fields(self)}
