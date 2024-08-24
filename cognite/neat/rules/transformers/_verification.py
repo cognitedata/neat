@@ -17,7 +17,7 @@ from cognite.neat.rules.models import (
     InformationRulesInput,
 )
 
-from ._base import MaybeRule, RulesState, RulesTransformer
+from ._base import MaybeRule, ReadRule, RulesState, RulesTransformer
 
 
 class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], ABC):
@@ -31,8 +31,11 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
     def transform(self, rules: T_InputRules | RulesState[T_InputRules]) -> MaybeRule[T_VerifiedRules]:
         issues = IssueList()
         in_: T_InputRules = self._to_rules(rules)
+        error_args: dict[str, Any] = {}
+        if isinstance(rules, ReadRule):
+            error_args = rules.read_context
         verified_rules: T_VerifiedRules | None = None
-        with _handle_issues(issues, NeatError, NeatWarning, {}) as future:
+        with _handle_issues(issues, NeatError, NeatWarning, error_args) as future:
             verified_rules = self._rules_cls.model_validate(in_.dump())  # type: ignore[assignment]
 
         if (future.result == "failure" or issues.has_errors or verified_rules is None) and self.errors == "raise":

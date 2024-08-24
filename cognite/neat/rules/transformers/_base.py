@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import MutableSequence
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import NeatTypeError, NeatValueError
@@ -29,6 +29,14 @@ class JustRule(RulesState[T_Rules]):
     """This represents a rule that exists"""
 
     rule: T_Rules
+
+
+@dataclass
+class ReadRule(RulesState[T_Rules]):
+    """This represents a rule that does not exist"""
+
+    rule: T_Rules
+    read_context: dict[str, Any]
 
 
 class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
