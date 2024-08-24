@@ -47,7 +47,7 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
 class RulesPipeline(list, MutableSequence[RulesTransformer], Generic[T_RulesIn, T_RulesOut]):
     def transform(self, rules: T_RulesIn | RulesState[T_RulesIn]) -> RulesState[T_RulesOut]:
         for transformer in self:
-            rules, issues = transformer.transform(rules)
+            rules = transformer.transform(rules)
         return rules  # type: ignore[return-value]
 
     def run(self, rules: T_RulesIn | RulesState[T_RulesIn]) -> T_RulesOut:
