@@ -81,7 +81,7 @@ class DomainRules(BaseRules):
 
 
 @dataclass
-class DomainInputMetadata(InputComponent):
+class DomainInputMetadata(InputComponent[DomainMetadata]):
     creator: str
 
     @classmethod
@@ -90,7 +90,7 @@ class DomainInputMetadata(InputComponent):
 
 
 @dataclass
-class DomainInputProperty(InputComponent):
+class DomainInputProperty(InputComponent[DomainProperty]):
     class_: str
     property_: str
     name: str | None
@@ -105,7 +105,7 @@ class DomainInputProperty(InputComponent):
 
 
 @dataclass
-class DomainInputClass(InputComponent):
+class DomainInputClass(InputComponent[DomainClass]):
     class_: str
     name: str | None
     description: str | None

@@ -19,7 +19,9 @@ class DataClassCreator:
         return self.data_cls(**kwargs)
 
     def _create_value(self, type_: type) -> Any:
-        if type_ is str or isinstance(type_, str):
+        if isinstance(type_, str) and type_.startswith(self.data_cls.__name__):
+            return None
+        elif type_ is str or isinstance(type_, str):
             return "string"
         elif type_ is Any:
             return "any"
