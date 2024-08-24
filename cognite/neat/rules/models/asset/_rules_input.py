@@ -119,8 +119,8 @@ class AssetInputRules:
     metadata: AssetMetadataInput
     properties: Sequence[AssetPropertyInput]
     classes: Sequence[AssetClassInput]
-    last: "AssetRulesInput | AssetRules | None" = None
-    reference: "AssetRulesInput | AssetRules | None" = None
+    last: "AssetInputRules | AssetRules | None" = None
+    reference: "AssetInputRules | AssetRules | None" = None
 
     @classmethod
     @overload
@@ -131,7 +131,7 @@ class AssetInputRules:
     def load(cls, data: None) -> None: ...
 
     @classmethod
-    def load(cls, data: dict | None) -> "AssetRulesInput | None":
+    def load(cls, data: dict | None) -> "AssetInputRules | None":
         if data is None:
             return None
         _add_alias(data, AssetRules)

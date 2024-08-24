@@ -1,7 +1,7 @@
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Literal, cast, overload
+from typing import cast
 
 from rdflib import Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
@@ -9,8 +9,9 @@ from rdflib import Literal as RdfLiteral
 from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import FileReadError
-from cognite.neat.rules.importers._base import BaseImporter, VerifiedRules, _handle_issues
-from cognite.neat.rules.models import InformationRules, RoleTypes
+from cognite.neat.rules._shared import ReadRules
+from cognite.neat.rules.importers._base import BaseImporter
+from cognite.neat.rules.models import InformationInputRules
 from cognite.neat.rules.models._base import MatchType
 from cognite.neat.rules.models.information import (
     InformationInputRules,
@@ -44,7 +45,7 @@ INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occur
                                     GROUP BY ?property ?dataType ?objectType"""
 
 
-class InferenceImporter(BaseImporter):
+class InferenceImporter(BaseImporter[InformationInputRules]):
     """Infers rules from a triple store.
 
     Rules inference through analysis of knowledge graph provided in various formats.
@@ -147,44 +148,21 @@ class InferenceImporter(BaseImporter):
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
-
-    @overload
     def to_rules(
         self,
-        errors: Literal["continue"] = "continue",
-        role: RoleTypes | None = None,
-    ) -> tuple[VerifiedRules | None, IssueList]: ...
-
-    def to_rules(
-        self,
-        errors: Literal["raise", "continue"] = "continue",
-        role: RoleTypes | None = None,
-    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
+    ) -> ReadRules[InformationInputRules]:
         """
         Creates `Rules` object from the data for target role.
         """
 
         if self.issue_list.has_errors:
             # In case there were errors during the import, the to_rules method will return None
-            return self._return_or_raise(self.issue_list, errors)
+            return ReadRules(None, self.issue_list, {})
 
         rules_dict = self._to_rules_components()
 
-        with _handle_issues(self.issue_list) as future:
-            rules: InformationRules
-            rules = InformationInputRules.load(rules_dict).as_rules()
-
-        if future.result == "failure" or self.issue_list.has_errors:
-            return self._return_or_raise(self.issue_list, errors)
-
-        return self._to_output(
-            rules,
-            self.issue_list,
-            errors=errors,
-            role=role,
-        )
+        rules = InformationInputRules.load(rules_dict)
+        return ReadRules(rules, self.issue_list, {})
 
     def _to_rules_components(
         self,

@@ -307,8 +307,8 @@ class DMSInputRules:
     properties: Sequence[DMSPropertyInput]
     views: Sequence[DMSViewInput]
     containers: Sequence[DMSContainerInput] | None = None
-    last: "DMSRulesInput | DMSRules | None" = None
-    reference: "DMSRulesInput | DMSRules | None" = None
+    last: "DMSInputRules | DMSRules | None" = None
+    reference: "DMSInputRules | DMSRules | None" = None
 
     @classmethod
     @overload

@@ -251,7 +251,7 @@ class InformationInputRules:
     def load(cls, data: None) -> None: ...
 
     @classmethod
-    def load(cls, data: dict | None) -> "InformationRulesInput | None":
+    def load(cls, data: dict | None) -> "InformationInputRules | None":
         if data is None:
             return None
         _add_alias(data, InformationRules)

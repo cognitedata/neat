@@ -6,36 +6,28 @@ generating a list of rules based on which nodes that form the graph are made.
 from collections import UserDict, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, cast, overload
+from typing import Literal, cast
 
 import pandas as pd
 from pandas import ExcelFile
 
-from cognite.neat.issues import IssueList, NeatError
+from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import (
     FileMissingRequiredFieldError,
     FileNotFoundNeatError,
     FileReadError,
     PropertyDefinitionDuplicatedError,
 )
+from cognite.neat.rules._shared import ReadRules, T_InputRules
 from cognite.neat.rules.models import (
     RULES_PER_ROLE,
-    AssetRules,
-    DMSRules,
-    DomainRules,
-    InformationRules,
     RoleTypes,
     SchemaCompleteness,
 )
-from cognite.neat.rules.models.asset import AssetInputRules
-from cognite.neat.rules.models.dms import DMSInputRules
-from cognite.neat.rules.models.information import InformationInputRules
-from cognite.neat.utils.auxiliary import local_import
 from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
 from cognite.neat.utils.text import humanize_collection
 
-from ._base import BaseImporter, _handle_issues
-from cognite.neat.rules._shared import T_InputRules, ReadRules
+from ._base import BaseImporter
 
 SOURCE_SHEET__TARGET_FIELD__HEADERS = [
     (
@@ -270,7 +262,7 @@ class ExcelImporter(BaseImporter[T_InputRules]):
             read_info_by_sheet.update(reference_read.read_info_by_sheet)
 
         rules_cls = RULES_PER_ROLE[original_role]
-        rules = rules_cls.load(sheets)
+        rules = cast(T_InputRules, rules_cls.load(sheets))
         return ReadRules(rules, issue_list, {"read_info_by_sheet": read_info_by_sheet})
 
 
