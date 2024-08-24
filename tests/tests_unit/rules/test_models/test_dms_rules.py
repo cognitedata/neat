@@ -1459,7 +1459,7 @@ class TestDMSRules:
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         alice_rules = DMSRulesInput.load(alice_spreadsheet).as_rules()
-        info_rules = DMSToInformation().transform(alice_rules).rule
+        info_rules = DMSToInformation().transform(alice_rules).rules
 
         assert isinstance(info_rules, InformationRules)
 
@@ -1529,7 +1529,7 @@ class TestDMSRules:
         for view in info_rules_copy.views:
             view.reference = None
 
-        info_rules = DMSToInformation().transform(olav_dms_rules).rule
+        info_rules = DMSToInformation().transform(olav_dms_rules).rules
 
         assert isinstance(info_rules, InformationRules)
 
@@ -1564,7 +1564,7 @@ class TestDMSRules:
         assert sorted(actual_issues) == sorted(expected_issues)
 
     def test_create_reference(self) -> None:
-        dms_rules = InformationToDMS().transform(car.CAR_RULES).rule
+        dms_rules = InformationToDMS().transform(car.CAR_RULES).rules
 
         dms_rules.create_reference(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"})
 
@@ -1696,7 +1696,7 @@ class TestDMSExporter:
         assert not missing_properties, f"Missing properties for views: {missing_properties}"
 
     def test_camilla_business_solution_as_schema(self, camilla_information_rules: InformationRules) -> None:
-        dms_rules = InformationToDMS().transform(camilla_information_rules).rule
+        dms_rules = InformationToDMS().transform(camilla_information_rules).rules
         expected_views = {"TimeseriesForecastProduct", "WindFarm"}
 
         schema = dms_rules.as_schema()

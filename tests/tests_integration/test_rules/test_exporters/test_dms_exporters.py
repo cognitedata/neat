@@ -190,7 +190,7 @@ class TestDMSExporters:
             export_pipeline=True,
             instance_space="sp_table_example_data",
         )
-        dms_rules = InformationToDMS().transform(table_example).rule
+        dms_rules = InformationToDMS().transform(table_example).rules
         schema = cast(PipelineSchema, exporter.export(dms_rules))
 
         # Write Pipeline to CDF

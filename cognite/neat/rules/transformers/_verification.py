@@ -41,7 +41,7 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
         if (future.result == "failure" or issues.has_errors or verified_rules is None) and self.errors == "raise":
             raise issues.as_errors()
         return MaybeRules(
-            rule=verified_rules,
+            rules=verified_rules,
             issues=issues,
         )
 

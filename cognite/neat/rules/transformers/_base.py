@@ -20,14 +20,14 @@ class OutRules(Generic[T_Rules], ABC):
 class JustRules(OutRules[T_Rules]):
     """This represents a rule that exists"""
 
-    rule: T_Rules
+    rules: T_Rules
 
 
 @dataclass
 class MaybeRules(OutRules[T_Rules]):
     """This represents a rule that may or may not exist"""
 
-    rule: T_Rules | None
+    rules: T_Rules | None
     issues: IssueList
 
 
@@ -35,7 +35,7 @@ class MaybeRules(OutRules[T_Rules]):
 class ReadRules(OutRules[T_Rules]):
     """This represents a rule that does not exist"""
 
-    rule: T_Rules
+    rules: T_Rules
     read_context: dict[str, Any]
 
 
@@ -54,11 +54,11 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
     @classmethod
     def _to_rules(cls, rules: T_RulesIn | OutRules[T_RulesIn]) -> T_RulesIn:
         if isinstance(rules, JustRules):
-            return rules.rule
+            return rules.rules
         elif isinstance(rules, MaybeRules):
-            if rules.rule is None:
+            if rules.rules is None:
                 raise NeatValueError("Rules is missing cannot convert")
-            return rules.rule
+            return rules.rules
         elif isinstance(rules, VerifiedRules | InputRules):
             return rules  # type: ignore[return-value]
         else:
@@ -74,10 +74,10 @@ class RulesPipeline(list, MutableSequence[RulesTransformer], Generic[T_RulesIn, 
     def run(self, rules: T_RulesIn | OutRules[T_RulesIn]) -> T_RulesOut:
         output = self.transform(rules)
         if isinstance(output, MaybeRules):
-            if output.rule is None:
+            if output.rules is None:
                 raise NeatValueError(f"Rule transformation failed: {output.issues}")
-            return output.rule
+            return output.rules
         elif isinstance(output, JustRules):
-            return output.rule
+            return output.rules
         else:
             raise NeatTypeError(f"Rule transformation failed: {output}")

@@ -58,11 +58,11 @@ class BaseImporter(ABC):
         if rules.metadata.role is role or role is None:
             output = rules
         elif isinstance(rules, DMSRules) and role is RoleTypes.information:
-            output = DMSToInformation().transform(rules).rule
+            output = DMSToInformation().transform(rules).rules
         elif isinstance(rules, AssetRules) and role is RoleTypes.information:
-            output = AssetToInformation().transform(rules).rule
+            output = AssetToInformation().transform(rules).rules
         elif isinstance(rules, InformationRules) and role is RoleTypes.dms:
-            output = InformationToDMS().transform(rules).rule
+            output = InformationToDMS().transform(rules).rules
         elif isinstance(rules, AssetRules) and role is RoleTypes.dms:
             output = RulesPipeline[AssetRules, DMSRules](
                 [
