@@ -24,7 +24,7 @@ from cognite.neat.rules.models.dms import (
     DMSSchema,
     DMSViewInput,
 )
-from cognite.neat.rules.transformers import DMSToInformation, InformationToDMS
+from cognite.neat.rules.transformers import DMSToInformation, ImporterPipeline, InformationToDMS
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 from tests.data import car
 
@@ -1430,7 +1430,7 @@ class TestDMSRules:
 
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
-        recreated_rules = DMSImporter(schema).to_rules(errors="raise")
+        recreated_rules = ImporterPipeline.verify(DMSImporter(schema))
 
         # This information is lost in the conversion
         exclude = {"metadata": {"created", "updated"}, "properties": {"data": {"__all__": {"reference"}}}}

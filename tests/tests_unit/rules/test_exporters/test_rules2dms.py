@@ -75,7 +75,7 @@ class TestImportExportDMS:
         ],
     )
     def test_import_excel_export_dms(self, filepath: Path) -> None:
-        dms_rules = ImporterPipeline.verify(importers.ExcelImporter(filepath), out_type=RoleTypes.dms)
+        dms_rules = ImporterPipeline.verify(importers.ExcelImporter(filepath), role=RoleTypes.dms)
 
         exported = DMSExporter().export(dms_rules)
 

@@ -3,6 +3,7 @@ from cognite.neat.graph.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat.rules.importers import InferenceImporter
 from cognite.neat.rules.models.data_types import Json
 from cognite.neat.rules.models.entities import MultiValueTypeInfo
+from cognite.neat.rules.transformers import ImporterPipeline
 from cognite.neat.store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
@@ -12,7 +13,7 @@ def test_rdf_inference():
     extractor = RdfFileExtractor(nordic44_knowledge_graph, base_uri="http://nordic44.com/")
     store.write(extractor)
 
-    rules = InferenceImporter.from_graph_store(store).to_rules(errors="raise")
+    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
 
     assert len(rules.properties) == 312
     assert len(rules.classes) == 59
@@ -39,7 +40,7 @@ def test_json_value_type_inference():
 
     store.write(extractor)
 
-    rules, _ = InferenceImporter.from_graph_store(store, check_for_json_string=True).to_rules(errors="continue")
+    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store, check_for_json_string=True))
 
     properties = {prop.property_: prop for prop in rules.properties}
 

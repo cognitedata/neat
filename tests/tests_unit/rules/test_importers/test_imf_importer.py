@@ -1,11 +1,12 @@
 from cognite.neat.rules import importers
 from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
+from cognite.neat.rules.transformers import ImporterPipeline
 from tests.config import IMF_EXAMPLE
 
 
 def test_imf_importer():
-    rules, _ = importers.IMFImporter(filepath=IMF_EXAMPLE).to_rules()
+    rules = ImporterPipeline.verify(importers.IMFImporter(filepath=IMF_EXAMPLE))
 
     assert len(rules.classes) == 69
     assert len(rules.properties) == 156

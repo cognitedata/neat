@@ -22,32 +22,30 @@ class ImporterPipeline(RulesPipeline[InputRules, VerifiedRules]):
         self._importer = importer
 
     @classmethod
-    def _create_pipeline(
-        cls, importer: BaseImporter[InputRules], out_type: RoleTypes | None = None
-    ) -> "ImporterPipeline":
+    def _create_pipeline(cls, importer: BaseImporter[InputRules], role: RoleTypes | None = None) -> "ImporterPipeline":
         items: list[RulesTransformer] = [VerifyAnyRules(errors="continue")]
-        if out_type is not None:
-            out_cls = VERIFIED_RULES_BY_ROLE[out_type]
+        if role is not None:
+            out_cls = VERIFIED_RULES_BY_ROLE[role]
             items.append(ConvertToRules(out_cls))
         return cls(importer, items)
 
     @classmethod
-    def try_verify(cls, importer: BaseImporter, out_type: RoleTypes | None = None) -> MaybeRules[VerifiedRules]:
+    def try_verify(cls, importer: BaseImporter, role: RoleTypes | None = None) -> MaybeRules[VerifiedRules]:
         """This is a standard pipeline that verifies, convert and return the rules from the importer.
 
         Args:
             importer: The importer to use.
-            out_type: The type of rules to convert to. If None, the rules will not be converted.
+            role: The type of rules to convert to. If None, the rules will not be converted.
 
         Returns:
             The verified rules.
         """
-        return cls._create_pipeline(importer, out_type).try_execute()
+        return cls._create_pipeline(importer, role).try_execute()
 
     @classmethod
-    def verify(cls, importer: BaseImporter, out_type: RoleTypes | None = None) -> VerifiedRules:
+    def verify(cls, importer: BaseImporter, role: RoleTypes | None = None) -> VerifiedRules:
         """Verify the rules."""
-        return cls._create_pipeline(importer, out_type).execute()
+        return cls._create_pipeline(importer, role).execute()
 
     def try_execute(self) -> MaybeRules[VerifiedRules]:
         """Try to execute the pipeline from importer to rules."""

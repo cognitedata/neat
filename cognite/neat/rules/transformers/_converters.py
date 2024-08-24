@@ -95,19 +95,19 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
     def _transform(self, rules: VerifiedRules) -> VerifiedRules:
         if isinstance(rules, self._out_cls):
             return rules
-        if isinstance(rules, InformationRules) and self._to_rules is DMSRules:
+        if isinstance(rules, InformationRules) and self._out_cls is DMSRules:
             return InformationToDMS().transform(rules).rules
-        if isinstance(rules, InformationRules) and self._to_rules is AssetRules:
+        if isinstance(rules, InformationRules) and self._out_cls is AssetRules:
             return InformationToAsset().transform(rules).rules
-        if isinstance(rules, AssetRules) and self._to_rules is InformationRules:
+        if isinstance(rules, AssetRules) and self._out_cls is InformationRules:
             return AssetToInformation().transform(rules).rules
-        if isinstance(rules, AssetRules) and self._to_rules is DMSRules:
+        if isinstance(rules, AssetRules) and self._out_cls is DMSRules:
             return InformationToDMS().transform(AssetToInformation().transform(rules)).rules
-        if isinstance(rules, DMSRules) and self._to_rules is InformationRules:
+        if isinstance(rules, DMSRules) and self._out_cls is InformationRules:
             return DMSToInformation().transform(rules).rules
-        if isinstance(rules, DMSRules) and self._to_rules is AssetRules:
+        if isinstance(rules, DMSRules) and self._out_cls is AssetRules:
             return InformationToAsset().transform(DMSToInformation().transform(rules)).rules
-        raise ValueError(f"Unsupported conversion from {type(rules)} to {self._to_rules}")
+        raise ValueError(f"Unsupported conversion from {type(rules)} to {self._out_cls}")
 
 
 class _InformationRulesConverter:

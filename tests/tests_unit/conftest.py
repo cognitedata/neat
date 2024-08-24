@@ -117,34 +117,34 @@ def emma_rules(emma_spreadsheet: dict[str, dict[str, Any]]) -> DomainRules:
 @pytest.fixture(scope="session")
 def olav_rules() -> InformationRules:
     return ImporterPipeline.verify(
-        ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx"), out_type=RoleTypes.information
+        ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx"), role=RoleTypes.information
     )
 
 
 @pytest.fixture(scope="session")
 def olav_dms_rules() -> DMSRules:
-    return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-analytics-olav.xlsx"), out_type=RoleTypes.dms)
+    return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-analytics-olav.xlsx"), role=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
 def svein_harald_information_rules() -> InformationRules:
     return ImporterPipeline.verify(
-        ExcelImporter(DOC_RULES / "information-addition-svein-harald.xlsx"), out_type=RoleTypes.information
+        ExcelImporter(DOC_RULES / "information-addition-svein-harald.xlsx"), role=RoleTypes.information
     )
 
 
 @pytest.fixture(scope="session")
 def svein_harald_dms_rules() -> DMSRules:
-    return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx"), out_type=RoleTypes.dms)
+    return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx"), role=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
 def olav_rebuild_dms_rules() -> DMSRules:
-    return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx"), out_type=RoleTypes.dms)
+    return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx"), role=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
 def camilla_information_rules() -> InformationRules:
     return ImporterPipeline.verify(
-        ExcelImporter(DOC_RULES / "information-business-camilla.xlsx"), out_type=RoleTypes.information
+        ExcelImporter(DOC_RULES / "information-business-camilla.xlsx"), role=RoleTypes.information
     )

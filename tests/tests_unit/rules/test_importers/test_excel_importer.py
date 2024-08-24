@@ -17,6 +17,7 @@ from cognite.neat.issues.warnings import (
 )
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
+from cognite.neat.rules.transformers import ImporterPipeline
 from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 
@@ -151,10 +152,11 @@ class TestExcelImporter:
         convert_to: RoleTypes | None,
     ):
         importer = ExcelImporter(filepath)
-        rules = importer.to_rules(errors="raise")
+
+        rules = ImporterPipeline.verify(importer)
         assert isinstance(rules, rule_type)
         if convert_to is not None:
-            converted = importer._to_output(rules, IssueList(), errors="raise", role=convert_to)
+            converted = ImporterPipeline.verify(importer, role=convert_to)
             assert converted.metadata.role is convert_to
 
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())
