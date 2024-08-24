@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 
+from cognite.neat.issues.errors import NeatValueError
 from cognite.neat.rules._shared import InputRules, MaybeRules, VerifiedRules
 from cognite.neat.rules.importers import BaseImporter
 from cognite.neat.rules.models import VERIFIED_RULES_BY_ROLE, RoleTypes
@@ -21,7 +22,17 @@ class ImporterPipeline(RulesPipeline[InputRules, VerifiedRules]):
         self._importer = importer
 
     @classmethod
-    def verify(cls, importer: BaseImporter, out_type: RoleTypes | None = None) -> MaybeRules[VerifiedRules]:
+    def _create_pipeline(
+        cls, importer: BaseImporter[InputRules], out_type: RoleTypes | None = None
+    ) -> "ImporterPipeline":
+        items: list[RulesTransformer] = [VerifyAnyRules(errors="continue")]
+        if out_type is not None:
+            out_cls = VERIFIED_RULES_BY_ROLE[out_type]
+            items.append(ConvertToRules(out_cls))
+        return cls(importer, items)
+
+    @classmethod
+    def try_verify(cls, importer: BaseImporter, out_type: RoleTypes | None = None) -> MaybeRules[VerifiedRules]:
         """This is a standard pipeline that verifies, convert and return the rules from the importer.
 
         Args:
@@ -31,13 +42,22 @@ class ImporterPipeline(RulesPipeline[InputRules, VerifiedRules]):
         Returns:
             The verified rules.
         """
-        items: list[RulesTransformer] = [VerifyAnyRules(errors="continue")]
-        if out_type is not None:
-            out_cls = VERIFIED_RULES_BY_ROLE[out_type]
-            items.append(ConvertToRules(out_cls))
-        return cls(importer, items).try_execute()
+        return cls._create_pipeline(importer, out_type).try_execute()
+
+    @classmethod
+    def verify(cls, importer: BaseImporter, out_type: RoleTypes | None = None) -> VerifiedRules:
+        """Verify the rules."""
+        return cls._create_pipeline(importer, out_type).execute()
 
     def try_execute(self) -> MaybeRules[VerifiedRules]:
         """Try to execute the pipeline from importer to rules."""
         rules = self._importer.to_rules()
         return self.try_transform(rules)
+
+    def execute(self) -> VerifiedRules:
+        """Execute the pipeline from importer to rules."""
+        rules = self._importer.to_rules()
+        out = self.transform(rules).get_rules()
+        if out is None:
+            raise NeatValueError("Failed to convert rules")
+        return out

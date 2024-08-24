@@ -12,6 +12,7 @@ from cognite.neat.rules.models import (
     RoleTypes,
 )
 from cognite.neat.rules.models.dms import DMSInputRules
+from cognite.neat.rules.transformers import ImporterPipeline
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DATA_FOLDER, DOC_RULES
 
@@ -115,35 +116,35 @@ def emma_rules(emma_spreadsheet: dict[str, dict[str, Any]]) -> DomainRules:
 
 @pytest.fixture(scope="session")
 def olav_rules() -> InformationRules:
-    return ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx").to_rules(
-        errors="raise", role=RoleTypes.information
+    return ImporterPipeline.verify(
+        ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx"), out_type=RoleTypes.information
     )
 
 
 @pytest.fixture(scope="session")
 def olav_dms_rules() -> DMSRules:
-    return ExcelImporter(DOC_RULES / "dms-analytics-olav.xlsx").to_rules(errors="raise", role=RoleTypes.dms)
+    return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-analytics-olav.xlsx"), out_type=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
 def svein_harald_information_rules() -> InformationRules:
-    return ExcelImporter(DOC_RULES / "information-addition-svein-harald.xlsx").to_rules(
-        errors="raise", role=RoleTypes.information
+    return ImporterPipeline.verify(
+        ExcelImporter(DOC_RULES / "information-addition-svein-harald.xlsx"), out_type=RoleTypes.information
     )
 
 
 @pytest.fixture(scope="session")
 def svein_harald_dms_rules() -> DMSRules:
-    return ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx").to_rules(errors="raise", role=RoleTypes.dms)
+    return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx"), out_type=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
 def olav_rebuild_dms_rules() -> DMSRules:
-    return ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx").to_rules(errors="raise", role=RoleTypes.dms)
+    return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx"), out_type=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
 def camilla_information_rules() -> InformationRules:
-    return ExcelImporter(DOC_RULES / "information-business-camilla.xlsx").to_rules(
-        errors="raise", role=RoleTypes.information
+    return ImporterPipeline.verify(
+        ExcelImporter(DOC_RULES / "information-business-camilla.xlsx"), out_type=RoleTypes.information
     )

@@ -9,9 +9,9 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.rules import importers
 from cognite.neat.rules.exporters import DMSExporter
-from cognite.neat.rules.models import InformationRules
+from cognite.neat.rules.models import RoleTypes
 from cognite.neat.rules.models.dms import DMSRules, PipelineSchema
-from cognite.neat.rules.transformers import InformationToDMS
+from cognite.neat.rules.transformers import ImporterPipeline
 from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
 
 
@@ -75,13 +75,7 @@ class TestImportExportDMS:
         ],
     )
     def test_import_excel_export_dms(self, filepath: Path) -> None:
-        rules = importers.ExcelImporter(filepath).to_rules(errors="raise")
-        if isinstance(rules, DMSRules):
-            dms_rules = rules
-        elif isinstance(rules, InformationRules):
-            dms_rules = InformationToDMS().transform(rules).rules
-        else:
-            raise TypeError("Unsupported rules type")
+        dms_rules = ImporterPipeline.verify(importers.ExcelImporter(filepath), out_type=RoleTypes.dms)
 
         exported = DMSExporter().export(dms_rules)
 

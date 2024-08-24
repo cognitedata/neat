@@ -44,7 +44,8 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
             error_args = rules.read_context
         verified_rules: T_VerifiedRules | None = None
         with _handle_issues(issues, NeatError, NeatWarning, error_args) as future:
-            verified_rules = self._rules_cls.model_validate(in_.dump())  # type: ignore[assignment]
+            rules_cls = self._get_rules_cls(in_)
+            verified_rules = rules_cls.model_validate(in_.dump())  # type: ignore[assignment]
 
         if (future.result == "failure" or issues.has_errors or verified_rules is None) and self.errors == "raise":
             raise issues.as_errors()

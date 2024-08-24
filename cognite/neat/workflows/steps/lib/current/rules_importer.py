@@ -77,7 +77,7 @@ class ExcelToRules(Step):
             role_enum = RoleTypes[role]
 
         excel_importer = importers.ExcelImporter[InputRules](rules_file_path)
-        result = ImporterPipeline.verify(excel_importer, role_enum)
+        result = ImporterPipeline.try_verify(excel_importer, role_enum)
 
         if result.rules is None:
             output_dir = self.config.staging_path
@@ -146,7 +146,7 @@ class OntologyToRules(Step):
             role_enum = RoleTypes[role]
 
         ontology_importer = importers.OWLImporter(filepath=rules_file_path)
-        result = ImporterPipeline.verify(ontology_importer, role_enum)
+        result = ImporterPipeline.try_verify(ontology_importer, role_enum)
 
         if result.rules is None:
             output_dir = self.config.staging_path
@@ -217,7 +217,7 @@ class IMFToRules(Step):
             role_enum = RoleTypes[role]
 
         ontology_importer = importers.IMFImporter(filepath=rules_file_path)
-        result = ImporterPipeline.verify(ontology_importer, role_enum)
+        result = ImporterPipeline.try_verify(ontology_importer, role_enum)
 
         if result.rules is None:
             output_dir = self.config.staging_path
@@ -307,7 +307,7 @@ class DMSToRules(Step):
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
 
-        result = ImporterPipeline.verify(dms_importer, role_enum)
+        result = ImporterPipeline.try_verify(dms_importer, role_enum)
 
         if result.rules is None:
             output_dir = self.config.staging_path
@@ -390,7 +390,7 @@ class RulesInferenceFromRdfFile(Step):
         inference_importer = importers.InferenceImporter.from_rdf_file(
             rdf_file_path, max_number_of_instance=max_number_of_instance
         )
-        result = ImporterPipeline.verify(inference_importer, role_enum)
+        result = ImporterPipeline.try_verify(inference_importer, role_enum)
 
         if result.rules is None:
             output_dir = self.config.staging_path
