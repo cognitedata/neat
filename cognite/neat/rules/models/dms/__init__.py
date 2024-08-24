@@ -1,5 +1,5 @@
 from ._rules import DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
-from ._rules_input import DMSContainerInput, DMSMetadataInput, DMSPropertyInput, DMSRulesInput, DMSViewInput
+from ._rules_input import DMSContainerInput, DMSInputRules, DMSMetadataInput, DMSPropertyInput, DMSViewInput
 from ._schema import DMSSchema, PipelineSchema
 
 __all__ = [
@@ -10,7 +10,7 @@ __all__ = [
     "DMSProperty",
     "DMSContainer",
     "PipelineSchema",
-    "DMSRulesInput",
+    "DMSInputRules",
     "DMSMetadataInput",
     "DMSViewInput",
     "DMSPropertyInput",

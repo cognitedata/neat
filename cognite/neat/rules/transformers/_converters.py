@@ -10,7 +10,7 @@ from cognite.client.data_classes import data_modeling as dms
 from rdflib import Namespace
 
 from cognite.neat.issues.warnings.user_modeling import ParentInDifferentSpaceWarning
-from cognite.neat.rules._shared import VerifiedRules
+from cognite.neat.rules._shared import JustRules, OutRules, VerifiedRules
 from cognite.neat.rules.models import (
     AssetRules,
     DMSRules,
@@ -40,7 +40,7 @@ from cognite.neat.rules.models.entities import (
 )
 from cognite.neat.rules.models.information import InformationClass, InformationMetadata, InformationProperty
 
-from ._base import JustRules, OutRules, RulesTransformer
+from ._base import RulesTransformer
 
 T_VerifiedInRules = TypeVar("T_VerifiedInRules", bound=VerifiedRules)
 T_VerifiedOutRules = TypeVar("T_VerifiedOutRules", bound=VerifiedRules)

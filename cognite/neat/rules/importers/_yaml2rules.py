@@ -12,9 +12,9 @@ from cognite.neat.issues.errors import (
 )
 from cognite.neat.issues.warnings import NeatValueWarning
 from cognite.neat.rules.models import RULES_PER_ROLE, DMSRules, RoleTypes
-from cognite.neat.rules.models.dms import DMSRulesInput
+from cognite.neat.rules.models.dms import DMSInputRules
 
-from ._base import BaseImporter, VerifiedRules, _handle_issues
+from ._base import BaseImporter
 
 
 class YAMLImporter(BaseImporter):
@@ -100,7 +100,7 @@ class YAMLImporter(BaseImporter):
         with _handle_issues(issue_list) as future:
             rules: VerifiedRules
             if rules_model is DMSRules:
-                rules = DMSRulesInput.load(self.raw_data).as_rules()
+                rules = DMSInputRules.load(self.raw_data).as_rules()
             else:
                 rules = rules_model.model_validate(self.raw_data)
 

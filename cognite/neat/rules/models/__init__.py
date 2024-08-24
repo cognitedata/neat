@@ -5,7 +5,7 @@ from cognite.neat.rules.models.information._rules_input import InformationRulesI
 
 from ._base import DataModelType, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
 from .dms._rules import DMSRules
-from .dms._rules_input import DMSRulesInput
+from .dms._rules_input import DMSInputRules
 from .dms._schema import DMSSchema
 
 RULES_PER_ROLE: dict[RoleTypes, type[DomainRules] | type[InformationRules] | type[AssetRules] | type[DMSRules]] = {
@@ -18,7 +18,7 @@ RULES_PER_ROLE: dict[RoleTypes, type[DomainRules] | type[InformationRules] | typ
 
 __all__ = [
     "DomainRules",
-    "DMSRulesInput",
+    "DMSInputRules",
     "InformationRulesInput",
     "AssetRulesInput",
     "InformationRules",

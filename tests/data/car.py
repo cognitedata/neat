@@ -9,9 +9,9 @@ from cognite.neat.rules import importers
 from cognite.neat.rules.models import DMSRules, InformationRules
 from cognite.neat.rules.models.dms import (
     DMSContainerInput,
+    DMSInputRules,
     DMSMetadataInput,
     DMSPropertyInput,
-    DMSRulesInput,
     DMSViewInput,
 )
 
@@ -166,7 +166,7 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     ],
 )
 
-BASE_MODEL: DMSRules = DMSRulesInput(
+BASE_MODEL: DMSRules = DMSInputRules(
     metadata=DMSMetadataInput(
         schema_="partial",
         space="sp_base",

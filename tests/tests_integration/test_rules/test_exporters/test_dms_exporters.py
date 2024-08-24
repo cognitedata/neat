@@ -9,7 +9,7 @@ from cognite.client.data_classes import Row
 from cognite.neat.rules.exporters import DMSExporter
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes, SheetList
-from cognite.neat.rules.models.dms import DMSRulesInput, PipelineSchema
+from cognite.neat.rules.models.dms import DMSInputRules, PipelineSchema
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationMetadata,
@@ -279,7 +279,7 @@ class TestDMSExporters:
         new_space = "power_update"
         dumped["Metadata"]["space"] = new_space
         dumped["Last"]["Metadata"]["space"] = new_space
-        rules = DMSRulesInput.load(dumped).as_rules()
+        rules = DMSInputRules.load(dumped).as_rules()
         schema = rules.as_schema()
         assert schema.referenced_spaces(include_indirect_references=True) == {new_space}
         exporter = DMSExporter(existing_handling="force")
@@ -337,7 +337,7 @@ class TestDMSExporters:
             container["Container"] = container["Container"].replace("power", new_enterprise_space)
             container["Class (linage)"] = container["Class (linage)"].replace("power", new_enterprise_space)
         dumped["Last"]["Reference"] = dumped["Reference"]
-        rules = DMSRulesInput.load(dumped).as_rules()
+        rules = DMSInputRules.load(dumped).as_rules()
         schema = rules.as_schema()
         referenced_spaces = (
             schema.referenced_spaces(True)

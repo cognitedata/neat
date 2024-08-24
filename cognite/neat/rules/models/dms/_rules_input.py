@@ -302,7 +302,7 @@ class DMSViewInput:
 
 
 @dataclass
-class DMSRulesInput:
+class DMSInputRules:
     metadata: DMSMetadataInput
     properties: Sequence[DMSPropertyInput]
     views: Sequence[DMSViewInput]
@@ -312,7 +312,7 @@ class DMSRulesInput:
 
     @classmethod
     @overload
-    def load(cls, data: dict[str, Any]) -> "DMSRulesInput": ...
+    def load(cls, data: dict[str, Any]) -> "DMSInputRules": ...
 
     @classmethod
     @overload
@@ -328,8 +328,8 @@ class DMSRulesInput:
             properties=DMSPropertyInput.load(data.get("properties")),  # type: ignore[arg-type]
             views=DMSViewInput.load(data.get("views")),  # type: ignore[arg-type]
             containers=DMSContainerInput.load(data.get("containers")) or [],
-            last=DMSRulesInput.load(data.get("last")),
-            reference=DMSRulesInput.load(data.get("reference")),
+            last=DMSInputRules.load(data.get("last")),
+            reference=DMSInputRules.load(data.get("reference")),
         )
 
     def as_rules(self) -> DMSRules:
@@ -339,17 +339,17 @@ class DMSRulesInput:
         default_space = self.metadata.space
         default_version = self.metadata.version
         reference: dict[str, Any] | None = None
-        if isinstance(self.reference, DMSRulesInput):
+        if isinstance(self.reference, DMSInputRules):
             reference = self.reference.dump()
         elif isinstance(self.reference, DMSRules):
             # We need to load through the DMSRulesInput to set the correct default space and version
-            reference = DMSRulesInput.load(self.reference.model_dump()).dump()
+            reference = DMSInputRules.load(self.reference.model_dump()).dump()
         last: dict[str, Any] | None = None
-        if isinstance(self.last, DMSRulesInput):
+        if isinstance(self.last, DMSInputRules):
             last = self.last.dump()
         elif isinstance(self.last, DMSRules):
             # We need to load through the DMSRulesInput to set the correct default space and version
-            last = DMSRulesInput.load(self.last.model_dump()).dump()
+            last = DMSInputRules.load(self.last.model_dump()).dump()
 
         return dict(
             Metadata=self.metadata.dump(),

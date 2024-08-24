@@ -11,7 +11,7 @@ from cognite.neat.rules.models import (
     InformationRules,
     RoleTypes,
 )
-from cognite.neat.rules.models.dms import DMSRulesInput
+from cognite.neat.rules.models.dms import DMSInputRules
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DATA_FOLDER, DOC_RULES
 
@@ -30,7 +30,7 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def alice_rules(alice_spreadsheet: dict[str, dict[str, Any]]) -> DMSRules:
-    return DMSRulesInput.load(alice_spreadsheet).as_rules()
+    return DMSInputRules.load(alice_spreadsheet).as_rules()
 
 
 @pytest.fixture(scope="session")

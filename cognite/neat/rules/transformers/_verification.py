@@ -7,17 +7,17 @@ from typing import Any, Literal
 from pydantic import ValidationError
 
 from cognite.neat.issues import IssueList, NeatError, NeatWarning
-from cognite.neat.rules._shared import T_InputRules, T_VerifiedRules
+from cognite.neat.rules._shared import MaybeRules, OutRules, ReadRules, T_InputRules, T_VerifiedRules
 from cognite.neat.rules.models import (
     AssetRules,
     AssetRulesInput,
+    DMSInputRules,
     DMSRules,
-    DMSRulesInput,
     InformationRules,
     InformationRulesInput,
 )
 
-from ._base import MaybeRules, OutRules, ReadRules, RulesTransformer
+from ._base import RulesTransformer
 
 
 class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], ABC):
@@ -46,7 +46,7 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
         )
 
 
-class VerifyDMSRules(VerificationTransformer[DMSRulesInput, DMSRules]):
+class VerifyDMSRules(VerificationTransformer[DMSInputRules, DMSRules]):
     """Class to verify DMS rules."""
 
     _rules_cls = DMSRules

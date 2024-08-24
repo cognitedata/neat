@@ -2,7 +2,7 @@ from collections import Counter
 from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, cast, overload
+from typing import Any, Literal, cast
 
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
@@ -25,13 +25,13 @@ from cognite.neat.issues.warnings import (
     PropertyTypeNotSupportedWarning,
     ResourceNotFoundWarning,
 )
-from cognite.neat.rules.importers._base import BaseImporter, VerifiedRules, _handle_issues
+from cognite.neat.rules._shared import ReadRules
+from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.models import (
     DataModelType,
-    DMSRules,
+    DMSInputRules,
     DMSSchema,
     ExtensionCategory,
-    RoleTypes,
     SchemaCompleteness,
     SheetList,
 )
@@ -51,7 +51,7 @@ from cognite.neat.rules.models.entities import (
 )
 
 
-class DMSImporter(BaseImporter):
+class DMSImporter(BaseImporter[DMSInputRules]):
     """Imports a Data Model from Cognite Data Fusion.
 
     Args:
@@ -203,60 +203,45 @@ class DMSImporter(BaseImporter):
             schema = DMSSchema.from_zip(zip_file)
         return cls(schema, issue_list)
 
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
-
-    @overload
-    def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[VerifiedRules | None, IssueList]: ...
-
-    def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
+    def to_rules(self) -> ReadRules[DMSInputRules]:
         if self.issue_list.has_errors:
             # In case there were errors during the import, the to_rules method will return None
-            return self._return_or_raise(self.issue_list, errors)
+            return ReadRules(None, self.issue_list, {})
 
         if not self.root_schema.data_model:
             self.issue_list.append(ResourceMissingIdentifierError("data model", type(self.root_schema).__name__))
-            return self._return_or_raise(self.issue_list, errors)
+            return ReadRules(None, self.issue_list, {})
+
         model = self.root_schema.data_model
-        with _handle_issues(
-            self.issue_list,
-        ) as future:
-            schema_completeness = SchemaCompleteness.complete
-            data_model_type = DataModelType.enterprise
-            reference: DMSRules | None = None
-            if (ref_schema := self.root_schema.reference) and (ref_model := ref_schema.data_model):
-                # Reference should always be an enterprise model.
-                reference = DMSRules(
-                    **self._create_rule_components(
-                        ref_model,
-                        ref_schema,
-                        self.ref_metadata
-                        or self._create_default_metadata(list(ref_schema.views.values()), is_ref=True),
-                        DataModelType.enterprise,
-                    )
+
+        schema_completeness = SchemaCompleteness.complete
+        data_model_type = DataModelType.enterprise
+        reference: DMSInputRules | None = None
+        if (ref_schema := self.root_schema.reference) and (ref_model := ref_schema.data_model):
+            # Reference should always be an enterprise model.
+            reference = DMSInputRules.load(
+                self._create_rule_components(
+                    ref_model,
+                    ref_schema,
+                    self.ref_metadata or self._create_default_metadata(list(ref_schema.views.values()), is_ref=True),
+                    DataModelType.enterprise,
                 )
-                data_model_type = DataModelType.solution
-
-            user_rules = DMSRules(
-                **self._create_rule_components(
-                    model,
-                    self.root_schema,
-                    self.metadata,
-                    data_model_type,
-                    schema_completeness,
-                    has_reference=reference is not None,
-                ),
-                reference=reference,
             )
+            data_model_type = DataModelType.solution
 
-        if future.result == "failure" or self.issue_list.has_errors:
-            return self._return_or_raise(self.issue_list, errors)
+        user_rules = DMSInputRules.load(
+            self._create_rule_components(
+                model,
+                self.root_schema,
+                self.metadata,
+                data_model_type,
+                schema_completeness,
+                has_reference=reference is not None,
+            )
+        )
+        user_rules.reference = reference
 
-        return self._to_output(user_rules, self.issue_list, errors, role)
+        return ReadRules(user_rules, self.issue_list, {})
 
     def _create_rule_components(
         self,

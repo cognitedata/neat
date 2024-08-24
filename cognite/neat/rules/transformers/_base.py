@@ -1,42 +1,12 @@
 from abc import ABC, abstractmethod
 from collections.abc import MutableSequence
-from dataclasses import dataclass
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 
-from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import NeatTypeError, NeatValueError
-from cognite.neat.rules._shared import InputRules, Rules, T_Rules, VerifiedRules
+from cognite.neat.rules._shared import InputRules, JustRules, MaybeRules, OutRules, Rules, VerifiedRules
 
 T_RulesIn = TypeVar("T_RulesIn", bound=Rules)
 T_RulesOut = TypeVar("T_RulesOut", bound=Rules)
-
-
-@dataclass
-class OutRules(Generic[T_Rules], ABC):
-    """This is a base class for all rule states."""
-
-
-@dataclass
-class JustRules(OutRules[T_Rules]):
-    """This represents a rule that exists"""
-
-    rules: T_Rules
-
-
-@dataclass
-class MaybeRules(OutRules[T_Rules]):
-    """This represents a rule that may or may not exist"""
-
-    rules: T_Rules | None
-    issues: IssueList
-
-
-@dataclass
-class ReadRules(OutRules[T_Rules]):
-    """This represents a rule that does not exist"""
-
-    rules: T_Rules
-    read_context: dict[str, Any]
 
 
 class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
