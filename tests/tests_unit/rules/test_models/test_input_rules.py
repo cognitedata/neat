@@ -53,10 +53,16 @@ def dataclass_to_parameters(input_rules_cls: type[InputRules]) -> dict[str, set[
 
         if is_dataclass(type_):
             output[field_.name] = {subfield.name for subfield in fields(type_)}
-        elif isinstance(type_, GenericAlias) and type_.__origin__ is list and is_dataclass(type_.__args__[0]):
-            output[field_.name] = {subfield.name for subfield in fields(type_.__args__[0])}
-        else:
-            raise TypeError(f"Unsupported type {type_}")
+            continue
+        elif isinstance(type_, GenericAlias):
+            origin = type_.__origin__
+            if origin is list and is_dataclass(type_.__args__[0]):
+                output[field_.name] = {subfield.name for subfield in fields(type_.__args__[0])}
+                continue
+            elif origin is dict:
+                output[field_.name] = set()
+                continue
+        raise TypeError(f"Unsupported type {type_}")
     return output
 
 
@@ -68,6 +74,10 @@ def pydantic_to_parameters(verified_cls: type[BaseModel]) -> dict[str, set[str]]
         type_ = field_.annotation
         if isinstance(type_, UnionType) or get_origin(type_) is Union:
             type_ = get_args(type_)[0]
+
+        if isinstance(type_, GenericAlias) and type_.__origin__ is dict:
+            output[name] = set()
+            continue
 
         if issubclass(type_, SheetList):
             type_ = type_.model_fields["data"].annotation.__args__[0]
