@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Generic, TypeAlias, TypeVar
 
@@ -27,12 +27,20 @@ T_InputRules = TypeVar("T_InputRules", bound=InputRules)
 class OutRules(Generic[T_Rules], ABC):
     """This is a base class for all rule states."""
 
+    @abstractmethod
+    def get_rules(self) -> T_Rules | None:
+        """Get the rules from the state."""
+        raise NotImplementedError()
+
 
 @dataclass
 class JustRules(OutRules[T_Rules]):
     """This represents a rule that exists"""
 
     rules: T_Rules
+
+    def get_rules(self) -> T_Rules:
+        return self.rules
 
 
 @dataclass
@@ -41,6 +49,9 @@ class MaybeRules(OutRules[T_Rules]):
 
     rules: T_Rules | None
     issues: IssueList
+
+    def get_rules(self) -> T_Rules:
+        return self.rules
 
 
 @dataclass

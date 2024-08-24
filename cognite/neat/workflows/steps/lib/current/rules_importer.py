@@ -8,9 +8,10 @@ from cognite.client.data_classes.data_modeling import DataModelId
 from cognite.neat.issues.errors import WorkflowStepNotInitializedError
 from cognite.neat.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules import importers
-from cognite.neat.rules._shared import InputRules
+from cognite.neat.rules._shared import InputRules, MaybeRules
 from cognite.neat.rules.models import RoleTypes
 from cognite.neat.rules.models.entities import DataModelEntity, DMSUnknownEntity
+from cognite.neat.rules.transformers import ImporterPipeline
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import MultiRuleData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -71,14 +72,14 @@ class ExcelToRules(Step):
 
         # if role is None, it will be inferred from the rules file
         role = self.configs.get("Role")
-        role_enum = None
+        out_cls = None
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
 
         excel_importer = importers.ExcelImporter[InputRules](rules_file_path)
-        rules, issues = excel_importer.to_rules(errors="continue", role=role_enum)
+        maybe_rules: MaybeRules[InputRules] = ImporterPipeline.verify(excel_importer, InputRules)
 
-        if rules is None:
+        if maybe_rules.rules is None:
             output_dir = self.config.staging_path
             report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
             report_writer.write_to_file(issues, file_or_dir_path=output_dir)

@@ -1,11 +1,17 @@
 from abc import ABC, abstractmethod
-from collections.abc import MutableSequence, Iterable
-from typing import Generic, TypeVar, Any
+from collections.abc import MutableSequence
+from typing import Generic, TypeVar
 
 from cognite.neat.issues.errors import NeatTypeError, NeatValueError
-from cognite.neat.rules._shared import InputRules, JustRules, MaybeRules, OutRules, Rules, VerifiedRules
-from cognite.neat.rules.importers import BaseImporter
-from cognite.neat.rules.exporters import BaseExporter
+from cognite.neat.rules._shared import (
+    InputRules,
+    JustRules,
+    MaybeRules,
+    OutRules,
+    Rules,
+    VerifiedRules,
+)
+
 T_RulesIn = TypeVar("T_RulesIn", bound=Rules)
 T_RulesOut = TypeVar("T_RulesOut", bound=Rules)
 
@@ -22,6 +28,15 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
         """Transform the input rules into the output rules."""
         raise NotImplementedError()
 
+    def try_transform(self, rules: MaybeRules[T_RulesIn]) -> MaybeRules[T_RulesOut]:
+        """Try to transform the input rules into the output rules."""
+        try:
+            result = self.transform(rules)
+        except Exception as e:
+            rules.issues.append(NeatValueError(f"Transformation failed: {e}"))
+            return MaybeRules(None, rules.issues)
+        return MaybeRules(result.get_rules(), rules.issues)
+
     @classmethod
     def _to_rules(cls, rules: T_RulesIn | OutRules[T_RulesIn]) -> T_RulesIn:
         if isinstance(rules, JustRules):
@@ -37,19 +52,16 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
 
 
 class RulesPipeline(list, MutableSequence[RulesTransformer], Generic[T_RulesIn, T_RulesOut]):
-    def __init__(self, items: Iterable[RulesTransformer[T_RulesIn, T_RulesOut]], importer: BaseImporter[T_RulesIn] | None = None) -> None:
-        super().__init__(items)
-        self._importer = importer
-
-    @classmethod
-    def from_importer(cls, importer: BaseImporter[T_RulesIn]) -> "RulesPipeline[T_RulesIn, T_RulesOut]":
-        """Create a pipeline starting from an importer."""
-        return cls([], importer=importer)
-
     def transform(self, rules: T_RulesIn | OutRules[T_RulesIn]) -> OutRules[T_RulesOut]:
         """Transform the input rules into the output rules."""
         for transformer in self:
             rules = transformer.transform(rules)
+        return rules  # type: ignore[return-value]
+
+    def try_transform(self, rules: MaybeRules[T_RulesIn]) -> MaybeRules[T_RulesOut]:
+        """Try to transform the input rules into the output rules."""
+        for transformer in self:
+            rules = transformer.try_transform(rules)
         return rules  # type: ignore[return-value]
 
     def run(self, rules: T_RulesIn | OutRules[T_RulesIn]) -> T_RulesOut:
@@ -63,17 +75,3 @@ class RulesPipeline(list, MutableSequence[RulesTransformer], Generic[T_RulesIn, 
             return output.rules
         else:
             raise NeatTypeError(f"Rule transformation failed: {output}")
-
-    def execute(self) -> T_RulesOut:
-        """Execute the pipeline from importer to rules."""
-        if self._importer is None:
-            raise NeatTypeError("Cannot execute pipeline without an importer")
-        rules = self._importer.to_rules()
-        return self.run(rules)
-
-    def try_execute(self) -> OutRules[T_RulesOut]:
-        """Try to execute the pipeline from importer to rules."""
-        if self._importer is None:
-            raise NeatTypeError("Cannot execute pipeline without an importer")
-        rules = self._importer.to_rules()
-        return self.transform(rules)

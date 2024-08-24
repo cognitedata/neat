@@ -86,6 +86,30 @@ class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
         return _DMSRulesConverter(rules).as_information_rules()
 
 
+class ConvertAnyRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
+    """Converts any rules to any rules."""
+
+    def __init__(self, to_rules: type[VerifiedRules]):
+        self._to_rules = to_rules
+
+    def _transform(self, rules: VerifiedRules) -> VerifiedRules:
+        if isinstance(rules, self._to_rules):
+            return rules
+        if isinstance(rules, InformationRules) and self._to_rules is DMSRules:
+            return InformationToDMS().transform(rules).rules
+        if isinstance(rules, InformationRules) and self._to_rules is AssetRules:
+            return InformationToAsset().transform(rules).rules
+        if isinstance(rules, AssetRules) and self._to_rules is InformationRules:
+            return AssetToInformation().transform(rules).rules
+        if isinstance(rules, AssetRules) and self._to_rules is DMSRules:
+            return InformationToDMS().transform(AssetToInformation().transform(rules)).rules
+        if isinstance(rules, DMSRules) and self._to_rules is InformationRules:
+            return DMSToInformation().transform(rules).rules
+        if isinstance(rules, DMSRules) and self._to_rules is AssetRules:
+            return InformationToAsset().transform(DMSToInformation().transform(rules)).rules
+        raise ValueError(f"Unsupported conversion from {type(rules)} to {self._to_rules}")
+
+
 class _InformationRulesConverter:
     def __init__(self, information: InformationRules):
         self.rules = information
