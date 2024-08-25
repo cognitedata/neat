@@ -10,13 +10,13 @@ from cognite.neat.rules.models.entities import (
     Unknown,
     UnknownEntity,
 )
-from cognite.neat.rules.models.information._rules_input import InformationClassInput, InformationMetadataInput
+from cognite.neat.rules.models.information._rules_input import InformationInputClass, InformationInputMetadata
 
 from ._rules import AssetProperty, AssetRules
 
 
 @dataclass
-class AssetMetadataInput(InformationMetadataInput): ...
+class AssetInputMetadata(InformationInputMetadata): ...
 
 
 @dataclass
@@ -111,14 +111,14 @@ class AssetPropertyInput:
         }
 
 
-class AssetClassInput(InformationClassInput): ...
+class AssetInputClass(InformationInputClass): ...
 
 
 @dataclass
 class AssetInputRules:
-    metadata: AssetMetadataInput
+    metadata: AssetInputMetadata
     properties: Sequence[AssetPropertyInput]
-    classes: Sequence[AssetClassInput]
+    classes: Sequence[AssetInputClass]
     last: "AssetInputRules | AssetRules | None" = None
     reference: "AssetInputRules | AssetRules | None" = None
 
@@ -137,9 +137,9 @@ class AssetInputRules:
         _add_alias(data, AssetRules)
 
         return cls(
-            metadata=AssetMetadataInput.load(data.get("metadata")),  # type: ignore[arg-type]
+            metadata=AssetInputMetadata.load(data.get("metadata")),  # type: ignore[arg-type]
             properties=AssetPropertyInput.load(data.get("properties")),  # type: ignore[arg-type]
-            classes=InformationClassInput.load(data.get("classes")),  # type: ignore[arg-type]
+            classes=InformationInputClass.load(data.get("classes")),  # type: ignore[arg-type]
             last=AssetInputRules.load(data.get("last")),
             reference=AssetInputRules.load(data.get("reference")),
         )

@@ -9,6 +9,9 @@ from typing import Any, Literal, TypeVar, Union, get_args, get_origin
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from rdflib import Namespace
 
+from cognite.neat.rules.models.data_types import DataType, String
+from cognite.neat.rules.models.entities import ClassEntity
+
 
 class DataClassCreator:
     def __init__(self, data_cls: type) -> None:
@@ -58,6 +61,10 @@ class DataClassCreator:
             return datetime.datetime.now()
         elif type_ is datetime.date:
             return datetime.date.today()
+        elif type_ is ClassEntity:
+            return ClassEntity(prefix="namespace", suffix="class", version="version")
+        elif type_ is DataType:
+            return String()
         else:
             raise NotImplementedError(f"Type {type_} not implemented.")
 

@@ -3,6 +3,7 @@ from typing import Any, ClassVar
 
 from cognite.client import data_modeling as dm
 
+from cognite.neat.constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors import (
     PropertyDefinitionDuplicatedError,
@@ -18,7 +19,6 @@ from cognite.neat.issues.warnings.user_modeling import (
     ViewPropertyLimitWarning,
 )
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
-from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ContainerEntity
 from cognite.neat.rules.models.wrapped_entities import RawFilter

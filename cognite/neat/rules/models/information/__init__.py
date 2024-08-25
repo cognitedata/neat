@@ -1,5 +1,10 @@
 from ._rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
-from ._rules_input import InformationInputRules
+from ._rules_input import (
+    InformationInputClass,
+    InformationInputMetadata,
+    InformationInputProperty,
+    InformationInputRules,
+)
 
 __all__ = [
     "InformationRules",
@@ -7,4 +12,7 @@ __all__ = [
     "InformationClass",
     "InformationProperty",
     "InformationInputRules",
+    "InformationInputMetadata",
+    "InformationInputClass",
+    "InformationInputProperty",
 ]

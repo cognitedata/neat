@@ -4,10 +4,10 @@ from typing import Any
 import pytest
 from cognite.client import data_modeling as dm
 
+from cognite.neat.constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors import NeatValueError, ResourceNotDefinedError
 from cognite.neat.rules.models import DMSRules, SheetList, data_types
-from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType, String
 from cognite.neat.rules.models.entities import ClassEntity, MultiValueTypeInfo
 from cognite.neat.rules.models.information import (
@@ -16,9 +16,9 @@ from cognite.neat.rules.models.information import (
     InformationRules,
 )
 from cognite.neat.rules.models.information._rules_input import (
-    InformationClassInput,
-    InformationMetadataInput,
-    InformationPropertyInput,
+    InformationInputClass,
+    InformationInputMetadata,
+    InformationInputProperty,
 )
 from cognite.neat.rules.transformers._converters import InformationToDMS, _InformationRulesConverter
 
@@ -293,7 +293,7 @@ class TestInformationRulesConverter:
 
     def test_convert_above_container_limit(self) -> None:
         info = InformationInputRules(
-            metadata=InformationMetadataInput(
+            metadata=InformationInputMetadata(
                 schema_="complete",
                 prefix="bad_model",
                 namespace="http://purl.org/cognite/bad_model",
@@ -301,9 +301,9 @@ class TestInformationRulesConverter:
                 version="0.1.0",
                 creator="Anders",
             ),
-            classes=[InformationClassInput(class_="MassiveClass")],
+            classes=[InformationInputClass(class_="MassiveClass")],
             properties=[
-                InformationPropertyInput(
+                InformationInputProperty(
                     class_="MassiveClass",
                     property_=f"property_{no}",
                     value_type="string",

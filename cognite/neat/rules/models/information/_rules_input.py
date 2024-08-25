@@ -4,6 +4,7 @@ from typing import Any, Literal
 
 from rdflib import Namespace
 
+from cognite.neat.issues.errors import NeatTypeError
 from cognite.neat.rules.models._base import (
     DataModelType,
     ExtensionCategory,
@@ -27,7 +28,7 @@ from ._rules import (
 
 
 @dataclass
-class InformationMetadataInput(InputComponent[InformationMetadata]):
+class InformationInputMetadata(InputComponent[InformationMetadata]):
     schema_: Literal["complete", "partial", "extended"]
     prefix: str
     namespace: str
@@ -65,10 +66,10 @@ class InformationMetadataInput(InputComponent[InformationMetadata]):
 
 
 @dataclass
-class InformationPropertyInput(InputComponent[InformationProperty]):
-    class_: str
+class InformationInputProperty(InputComponent[InformationProperty]):
+    class_: ClassEntity | str
     property_: str
-    value_type: str
+    value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity | str
     name: str | None = None
     description: str | None = None
     comment: str | None = None
@@ -78,6 +79,8 @@ class InformationPropertyInput(InputComponent[InformationProperty]):
     reference: str | None = None
     match_type: str | None = None
     transformation: str | None = None
+    # Only used internally
+    inherited: bool = False
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationProperty]:
@@ -86,22 +89,27 @@ class InformationPropertyInput(InputComponent[InformationProperty]):
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore[override]
         value_type: MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity
 
-        # property holding xsd data type
-        # check if it is multi value type
-        if "|" in self.value_type:
-            value_type = MultiValueTypeInfo.load(self.value_type)
-            value_type.set_default_prefix(default_prefix)
+        if isinstance(self.value_type, str):
+            # property holding xsd data type
+            # check if it is multi value type
+            if "|" in self.value_type:
+                value_type = MultiValueTypeInfo.load(self.value_type)
+                value_type.set_default_prefix(default_prefix)
 
-        elif DataType.is_data_type(self.value_type):
-            value_type = DataType.load(self.value_type)
+            elif DataType.is_data_type(self.value_type):
+                value_type = DataType.load(self.value_type)
 
-        # unknown value type
-        elif self.value_type == str(Unknown):
-            value_type = UnknownEntity()
+            # unknown value type
+            elif self.value_type == str(Unknown):
+                value_type = UnknownEntity()
 
-        # property holding link to class
+            # property holding link to class
+            else:
+                value_type = ClassEntity.load(self.value_type, prefix=default_prefix)
+        elif isinstance(self.value_type, DataType):
+            value_type = self.value_type
         else:
-            value_type = ClassEntity.load(self.value_type, prefix=default_prefix)
+            raise NeatTypeError(f"Invalid value type: {self.value_type}")
 
         return {
             "Class": ClassEntity.load(self.class_, prefix=default_prefix),
@@ -120,12 +128,12 @@ class InformationPropertyInput(InputComponent[InformationProperty]):
 
 
 @dataclass
-class InformationClassInput(InputComponent[InformationClass]):
-    class_: str
+class InformationInputClass(InputComponent[InformationClass]):
+    class_: ClassEntity | str
     name: str | None = None
     description: str | None = None
     comment: str | None = None
-    parent: str | None = None
+    parent: str | list[ClassEntity] | None = None
     reference: str | None = None
     match_type: str | None = None
 
@@ -133,7 +141,17 @@ class InformationClassInput(InputComponent[InformationClass]):
     def _get_verified_cls(cls) -> type[InformationClass]:
         return InformationClass
 
+    @property
+    def class_str(self) -> str:
+        return str(self.class_)
+
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore[override]
+        parent: list[ClassEntity] | None = None
+        if isinstance(self.parent, str):
+            parent = [ClassEntity.load(parent, prefix=default_prefix) for parent in self.parent.split(",")]
+        elif isinstance(self.parent, list):
+            parent = [ClassEntity.load(parent_, prefix=default_prefix) for parent_ in self.parent]
+
         return {
             "Class": ClassEntity.load(self.class_, prefix=default_prefix),
             "Name": self.name,
@@ -141,19 +159,15 @@ class InformationClassInput(InputComponent[InformationClass]):
             "Comment": self.comment,
             "Reference": self.reference,
             "Match Type": self.match_type,
-            "Parent Class": (
-                [ClassEntity.load(parent, prefix=default_prefix) for parent in self.parent.split(",")]
-                if self.parent
-                else None
-            ),
+            "Parent Class": parent,
         }
 
 
 @dataclass
 class InformationInputRules(InputRules[InformationRules]):
-    metadata: InformationMetadataInput
-    properties: list[InformationPropertyInput] = field(default_factory=list)
-    classes: list[InformationClassInput] = field(default_factory=list)
+    metadata: InformationInputMetadata
+    properties: list[InformationInputProperty] = field(default_factory=list)
+    classes: list[InformationInputClass] = field(default_factory=list)
     prefixes: dict[str, Namespace] | None = None
     last: "InformationInputRules | None" = None
     reference: "InformationInputRules | None" = None
