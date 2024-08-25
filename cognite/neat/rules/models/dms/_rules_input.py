@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness, _add_alias
+from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models._base_input import InputComponent, InputRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
@@ -38,7 +38,7 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
     def _get_verified_cls(cls) -> type[DMSMetadata]:
         return DMSMetadata
 
-    def dump(self) -> dict[str, Any]:
+    def dump(self) -> dict[str, Any]:  # type: ignore[override]
         return dict(
             schema=SchemaCompleteness(self.schema_),
             extension=ExtensionCategory(self.extension),
@@ -84,7 +84,7 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
 
 
 @dataclass
-class DMSInputProperty(InputComponent[DMSView]):
+class DMSInputProperty(InputComponent[DMSProperty]):
     view: str
     view_property: str | None
     value_type: str | DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity
@@ -107,7 +107,7 @@ class DMSInputProperty(InputComponent[DMSView]):
     def _get_verified_cls(cls) -> type[DMSProperty]:
         return DMSProperty
 
-    def dump(self, default_space: str, default_version: str) -> dict[str, Any]:
+    def dump(self, default_space: str, default_version: str) -> dict[str, Any]:  # type: ignore[override]
         return {
             "View": ViewEntity.load(self.view, space=default_space, version=default_version),
             "View Property": self.view_property,
@@ -150,7 +150,7 @@ class DMSInputContainer(InputComponent[DMSContainer]):
     def _get_verified_cls(cls) -> type[DMSContainer]:
         return DMSContainer
 
-    def dump(self, default_space: str) -> dict[str, Any]:
+    def dump(self, default_space: str) -> dict[str, Any]:  # type: ignore[override]
         container = ContainerEntity.load(self.container, space=default_space)
         return {
             "Container": container,
@@ -202,7 +202,7 @@ class DMSInputView(InputComponent[DMSView]):
     def _get_verified_cls(cls) -> type[DMSView]:
         return DMSView
 
-    def dump(self, default_space: str, default_version: str) -> dict[str, Any]:
+    def dump(self, default_space: str, default_version: str) -> dict[str, Any]:  # type: ignore[override]
         view = ViewEntity.load(self.view, space=default_space, version=default_version)
         return {
             "View": view,

@@ -767,59 +767,45 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
 def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
-        {
-            "metadata": {
-                "schema_": "partial",
-                "space": "my_space",
-                "external_id": "my_data_model",
-                "version": "1",
-                "creator": "Anders",
-                "created": "2021-01-01T00:00:00",
-                "updated": "2021-01-01T00:00:00",
-            },
-            "properties": {
-                "data": [
-                    {
-                        "class_": "WindTurbine",
-                        "property_": "name",
-                        "value_type": "tEXt",
-                        "container": "sp_core:Asset",
-                        "container_property": "name",
-                        "view": "sp_core:Asset",
-                        "view_property": "name",
-                    },
-                    {
-                        "class_": "WindTurbine",
-                        "property_": "ratedPower",
-                        "value_type": "float64",
-                        "container": "GeneratingUnit",
-                        "container_property": "ratedPower",
-                        "view": "WindTurbine",
-                        "view_property": "ratedPower",
-                    },
-                ]
-            },
-            "containers": {
-                "data": [
-                    {"class_": "Asset", "container": "sp_core:Asset"},
-                    {
-                        "class_": "GeneratingUnit",
-                        "container": "GeneratingUnit",
-                        "constraint": "sp_core:Asset",
-                    },
-                ]
-            },
-            "views": {
-                "data": [
-                    {"class_": "Asset", "view": "sp_core:Asset"},
-                    {
-                        "class_": "WindTurbine",
-                        "view": "WindTurbine",
-                        "implements": "sp_core:Asset",
-                    },
-                ]
-            },
-        },
+        DMSInputRules(
+            metadata=DMSInputMetadata(
+                schema_="partial",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator="Anders",
+                created="2021-01-01T00:00:00",
+                updated="2021-01-01T00:00:00",
+            ),
+            properties=[
+                DMSInputProperty(
+                    class_="WindTurbine",
+                    property_="name",
+                    value_type="tEXt",
+                    container="sp_core:Asset",
+                    container_property="name",
+                    view="sp_core:Asset",
+                    view_property="name",
+                ),
+                DMSInputProperty(
+                    class_="WindTurbine",
+                    property_="ratedPower",
+                    value_type="float64",
+                    container="GeneratingUnit",
+                    container_property="ratedPower",
+                    view="WindTurbine",
+                    view_property="ratedPower",
+                ),
+            ],
+            containers=[
+                DMSInputContainer(container="sp_core:Asset", class_="Asset"),
+                DMSInputContainer(container="GeneratingUnit", constraint="sp_core:Asset", class_="GeneratingUnit"),
+            ],
+            views=[
+                DMSInputView(class_="sp_core:Asset", view="sp_core:Asset"),
+                DMSInputView(class_="WindTurbine", view="WindTurbine", implements="sp_core:Asset"),
+            ],
+        ),
         DMSInputRules(
             metadata=DMSInputMetadata(
                 schema_="partial",
@@ -863,84 +849,78 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     )
 
     yield pytest.param(
-        {
-            "metadata": {
-                "schema_": "complete",
-                "space": "my_space",
-                "external_id": "my_data_model",
-                "version": "1",
-                "creator": "Anders",
-                "created": "2021-01-01T00:00:00",
-                "updated": "2021-01-01T00:00:00",
-            },
-            "properties": {
-                "data": [
-                    {
-                        "class_": "Plant",
-                        "property_": "name",
-                        "value_type": "text",
-                        "container": "Asset",
-                        "container_property": "name",
-                        "view": "Asset",
-                        "view_property": "name",
-                    },
-                    {
-                        "class_": "Plant",
-                        "property_": "generators",
-                        "connection": "edge",
-                        "value_type": "Generator",
-                        "view": "Plant",
-                        "view_property": "generators",
-                    },
-                    {
-                        "class_": "Plant",
-                        "property_": "reservoir",
-                        "connection": "direct",
-                        "value_type": "Reservoir",
-                        "container": "Asset",
-                        "container_property": "child",
-                        "view": "Plant",
-                        "view_property": "reservoir",
-                    },
-                    {
-                        "class_": "Generator",
-                        "property_": "name",
-                        "value_type": "text",
-                        "container": "Asset",
-                        "container_property": "name",
-                        "view": "Asset",
-                        "view_property": "name",
-                    },
-                    {
-                        "class_": "Reservoir",
-                        "property_": "name",
-                        "value_type": "text",
-                        "container": "Asset",
-                        "container_property": "name",
-                        "view": "Asset",
-                        "view_property": "name",
-                    },
-                ]
-            },
-            "containers": {
-                "data": [
-                    {"class_": "Asset", "container": "Asset"},
-                    {
-                        "class_": "Plant",
-                        "container": "Plant",
-                        "constraint": "Asset",
-                    },
-                ]
-            },
-            "views": {
-                "data": [
-                    {"class_": "Asset", "view": "Asset"},
-                    {"class_": "Plant", "view": "Plant", "implements": "Asset"},
-                    {"class_": "Generator", "view": "Generator", "implements": "Asset"},
-                    {"class_": "Reservoir", "view": "Reservoir", "implements": "Asset"},
-                ]
-            },
-        },
+        DMSInputRules(
+            metadata=DMSInputMetadata(
+                schema_="complete",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator="Anders",
+                created="2021-01-01T00:00:00",
+                updated="2021-01-01T00:00:00",
+            ),
+            properties=[
+                DMSInputProperty(
+                    class_="Plant",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSInputProperty(
+                    class_="Plant",
+                    property_="generators",
+                    connection="edge",
+                    value_type="Generator",
+                    view="Plant",
+                    view_property="generators",
+                ),
+                DMSInputProperty(
+                    class_="Plant",
+                    property_="reservoir",
+                    connection="direct",
+                    value_type="Reservoir",
+                    container="Asset",
+                    container_property="child",
+                    view="Plant",
+                    view_property="reservoir",
+                ),
+                DMSInputProperty(
+                    class_="Generator",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSInputProperty(
+                    class_="Reservoir",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+            ],
+            containers=[
+                DMSInputContainer(class_="Asset", container="Asset"),
+                DMSInputContainer(
+                    class_="Plant",
+                    container="Plant",
+                    constraint="Asset",
+                ),
+            ],
+            views=[
+                DMSInputView(class_="Asset", view="Asset"),
+                DMSInputView(class_="Plant", view="Plant", implements="Asset"),
+                DMSInputView(class_="Generator", view="Generator", implements="Asset"),
+                DMSInputView(class_="Reservoir", view="Reservoir", implements="Asset"),
+            ],
+        ),
         DMSInputRules(
             metadata=DMSInputMetadata(
                 schema_="complete",
@@ -1393,8 +1373,8 @@ class TestDMSRules:
         assert not missing, f"Missing properties: {missing}"
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
-    def test_load_valid_rules(self, raw: dict[str, dict[str, Any]], expected_rules: DMSRules) -> None:
-        valid_rules = DMSInputRules.load(raw).as_rules()
+    def test_load_valid_rules(self, raw: DMSInputRules, expected_rules: DMSRules) -> None:
+        valid_rules = raw.as_rules()
         assert valid_rules.model_dump() == expected_rules.model_dump()
         # testing case insensitive value types
         assert isinstance(valid_rules.properties.data[0].value_type, String)
