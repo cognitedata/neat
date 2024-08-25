@@ -5,7 +5,6 @@ from typing import Any, Literal
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models._base_input import InputComponent, InputRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
@@ -39,19 +38,12 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
         return DMSMetadata
 
     def dump(self) -> dict[str, Any]:  # type: ignore[override]
-        return dict(
-            schema=SchemaCompleteness(self.schema_),
-            extension=ExtensionCategory(self.extension),
-            space=self.space,
-            externalId=self.external_id,
-            dataModelType=DataModelType(self.data_model_type),
-            creator=self.creator,
-            version=self.version,
-            name=self.name,
-            description=self.description,
-            created=self.created or datetime.now(),
-            updated=self.updated or datetime.now(),
-        )
+        output = super().dump()
+        if self.created is None:
+            output["created"] = datetime.now()
+        if self.updated is None:
+            output["updated"] = datetime.now()
+        return output
 
     @classmethod
     def from_data_model(cls, data_model: dm.DataModelApply, has_reference: bool) -> "DMSInputMetadata":

@@ -1,5 +1,4 @@
 import math
-import re
 import sys
 import warnings
 from datetime import datetime
@@ -136,19 +135,6 @@ class DMSMetadata(BaseMetadata):
 
     def as_identifier(self) -> str:
         return repr(self.as_data_model_id())
-
-    @classmethod
-    def _get_description_and_creator(cls, description_raw: str | None) -> tuple[str | None, list[str]]:
-        if description_raw and (description_match := re.search(r"Creator: (.+)", description_raw)):
-            creator = description_match.group(1).split(", ")
-            description = description_raw.replace(description_match.string, "").strip() or None
-        elif description_raw:
-            creator = ["MISSING"]
-            description = description_raw
-        else:
-            creator = ["MISSING"]
-            description = None
-        return description, creator
 
     def get_prefix(self) -> str:
         return self.space
