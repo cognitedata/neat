@@ -4,11 +4,6 @@ from typing import Any, Literal
 
 from rdflib import Namespace
 
-from cognite.neat.rules.models._base import (
-    DataModelType,
-    ExtensionCategory,
-    SchemaCompleteness,
-)
 from cognite.neat.rules.models._base_input import InputComponent, InputRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
@@ -47,21 +42,12 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
         return InformationMetadata
 
     def dump(self, **kwargs) -> dict[str, Any]:
-        return dict(
-            dataModelType=DataModelType(self.data_model_type),
-            schema=SchemaCompleteness(self.schema_),
-            extension=ExtensionCategory(self.extension),
-            namespace=Namespace(self.namespace),
-            prefix=self.prefix,
-            version=self.version,
-            name=self.name,
-            creator=self.creator,
-            description=self.description,
-            created=self.created or datetime.now(),
-            updated=self.updated or datetime.now(),
-            license=self.license,
-            rights=self.rights,
-        )
+        output = super().dump()
+        if self.created is None:
+            output["created"] = datetime.now()
+        if self.updated is None:
+            output["updated"] = datetime.now()
+        return output
 
 
 @dataclass
@@ -86,20 +72,10 @@ class InformationInputProperty(InputComponent[InformationProperty]):
         return InformationProperty
 
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore[override]
-        return {
-            "Class": ClassEntity.load(self.class_, prefix=default_prefix),
-            "Property": self.property_,
-            "Name": self.name,
-            "Description": self.description,
-            "Comment": self.comment,
-            "Value Type": load_value_type(self.value_type, default_prefix),
-            "Min Count": self.min_count,
-            "Max Count": self.max_count,
-            "Default": self.default,
-            "Reference": self.reference,
-            "Match Type": self.match_type,
-            "Transformation": self.transformation,
-        }
+        output = super().dump()
+        output["Class"] = ClassEntity.load(self.class_, prefix=default_prefix)
+        output["Value Type"] = load_value_type(self.value_type, default_prefix)
+        return output
 
 
 @dataclass
@@ -121,21 +97,15 @@ class InformationInputClass(InputComponent[InformationClass]):
         return str(self.class_)
 
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore[override]
+        output = super().dump()
         parent: list[ClassEntity] | None = None
         if isinstance(self.parent, str):
             parent = [ClassEntity.load(parent, prefix=default_prefix) for parent in self.parent.split(",")]
         elif isinstance(self.parent, list):
             parent = [ClassEntity.load(parent_, prefix=default_prefix) for parent_ in self.parent]
-
-        return {
-            "Class": ClassEntity.load(self.class_, prefix=default_prefix),
-            "Name": self.name,
-            "Description": self.description,
-            "Comment": self.comment,
-            "Reference": self.reference,
-            "Match Type": self.match_type,
-            "Parent Class": parent,
-        }
+        output["Class"] = ClassEntity.load(self.class_, prefix=default_prefix)
+        output["Parent Class"] = parent
+        return output
 
 
 @dataclass
