@@ -8,6 +8,8 @@ The philosophy of the input models is:
   a class, then the prefix from the metadata is used. For views, if the class is not provided, it is assumed to
   be the same as the view.
 
+The base classes are to make it easy to create the input models with default behavior. They are also used for
+testing to ensure that input models correctly map to the verified rules models.
 """
 
 import sys
