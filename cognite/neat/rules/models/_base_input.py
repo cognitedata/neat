@@ -1,4 +1,14 @@
-"""Module for base classes for the input models."""
+"""Module for base classes for the input models.
+
+The philosophy of the input models is:
+
+* Provide an easy way to input rules. The type hints are made to be human-friendly, for example, Literal instead of
+  Enum.
+* The .dump() method should fill out defaults and have shortcuts. For example, if the prefix is not provided for
+  a class, then the prefix from the metadata is used. For views, if the class is not provided, it is assumed to
+  be the same as the view.
+
+"""
 
 import sys
 from abc import ABC, abstractmethod
