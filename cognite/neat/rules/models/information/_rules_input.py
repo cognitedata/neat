@@ -4,7 +4,6 @@ from typing import Any, Literal
 
 from rdflib import Namespace
 
-from cognite.neat.issues.errors import NeatTypeError
 from cognite.neat.rules.models._base import (
     DataModelType,
     ExtensionCategory,
@@ -15,8 +14,8 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     MultiValueTypeInfo,
-    Unknown,
     UnknownEntity,
+    load_value_type,
 )
 
 from ._rules import (
@@ -87,37 +86,13 @@ class InformationInputProperty(InputComponent[InformationProperty]):
         return InformationProperty
 
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore[override]
-        value_type: MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity
-
-        if isinstance(self.value_type, str):
-            # property holding xsd data type
-            # check if it is multi value type
-            if "|" in self.value_type:
-                value_type = MultiValueTypeInfo.load(self.value_type)
-                value_type.set_default_prefix(default_prefix)
-
-            elif DataType.is_data_type(self.value_type):
-                value_type = DataType.load(self.value_type)
-
-            # unknown value type
-            elif self.value_type == str(Unknown):
-                value_type = UnknownEntity()
-
-            # property holding link to class
-            else:
-                value_type = ClassEntity.load(self.value_type, prefix=default_prefix)
-        elif isinstance(self.value_type, MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity):
-            value_type = self.value_type
-        else:
-            raise NeatTypeError(f"Invalid value type: {self.value_type}")
-
         return {
             "Class": ClassEntity.load(self.class_, prefix=default_prefix),
             "Property": self.property_,
             "Name": self.name,
             "Description": self.description,
             "Comment": self.comment,
-            "Value Type": value_type,
+            "Value Type": load_value_type(self.value_type, default_prefix),
             "Min Count": self.min_count,
             "Max Count": self.max_count,
             "Default": self.default,

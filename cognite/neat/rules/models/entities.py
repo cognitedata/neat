@@ -21,6 +21,7 @@ from pydantic import (
     model_validator,
 )
 
+from cognite.neat.issues.errors import NeatTypeError
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.utils.text import replace_non_alphanumeric_with_underscore
 
@@ -615,3 +616,29 @@ URLEntity = Annotated[
     AnyHttpUrl,
     PlainSerializer(lambda v: str(v), return_type=str, when_used="unless-none"),
 ]
+
+
+def load_value_type(
+    raw: str | MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity, default_prefix: str
+) -> MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity:
+    if isinstance(raw, MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity):
+        return raw
+    elif isinstance(raw, str):
+        # property holding xsd data type
+        # check if it is multi value type
+        if "|" in raw:
+            value_type = MultiValueTypeInfo.load(raw)
+            value_type.set_default_prefix(default_prefix)
+            return value_type
+        elif DataType.is_data_type(raw):
+            return DataType.load(raw)
+
+        # unknown value type
+        elif raw == str(Unknown):
+            return UnknownEntity()
+
+        # property holding link to class
+        else:
+            return ClassEntity.load(raw, prefix=default_prefix)
+    else:
+        raise NeatTypeError(f"Invalid value type: {type(raw)}")
