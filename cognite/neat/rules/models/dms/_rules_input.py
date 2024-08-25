@@ -108,33 +108,21 @@ class DMSInputProperty(InputComponent[DMSProperty]):
         return DMSProperty
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:  # type: ignore[override]
-        return {
-            "View": ViewEntity.load(self.view, space=default_space, version=default_version),
-            "View Property": self.view_property,
-            "Value Type": load_dms_value_type(self.value_type, default_space, default_version),
-            "Property (linage)": self.property_ or self.view_property,
-            "Class (linage)": (
-                ClassEntity.load(self.class_ or self.view, prefix=default_space, version=default_version)
-                if self.class_ or self.view
-                else None
-            ),
-            "Name": self.name,
-            "Description": self.description,
-            "Connection": self.connection,
-            "Nullable": self.nullable,
-            "Immutable": self.immutable,
-            "Is List": self.is_list,
-            "Default": self.default,
-            "Reference": self.reference,
-            "Container": (
-                ContainerEntity.load(self.container, space=default_space, version=default_version)
-                if self.container
-                else None
-            ),
-            "Container Property": self.container_property,
-            "Index": self.index,
-            "Constraint": self.constraint,
-        }
+        output = super().dump()
+        output["View"] = ViewEntity.load(self.view, space=default_space, version=default_version)
+        output["Value Type"] = load_dms_value_type(self.value_type, default_space, default_version)
+        output["Property (linage)"] = self.property_ or self.view_property
+        output["Class (linage)"] = (
+            ClassEntity.load(self.class_ or self.view, prefix=default_space, version=default_version)
+            if self.class_ or self.view
+            else None
+        )
+        output["Container"] = (
+            ContainerEntity.load(self.container, space=default_space, version=default_version)
+            if self.container
+            else None
+        )
+        return output
 
 
 @dataclass
@@ -197,28 +185,23 @@ class DMSInputView(InputComponent[DMSView]):
         return DMSView
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:  # type: ignore[override]
+        output = super().dump()
         view = ViewEntity.load(self.view, space=default_space, version=default_version)
-        return {
-            "View": view,
-            "Class (linage)": (
-                ClassEntity.load(self.class_, prefix=default_space, version=default_version)
-                if self.class_
-                else view.as_class()
-            ),
-            "Name": self.name,
-            "Description": self.description,
-            "Implements": (
-                [
-                    ViewEntity.load(implement, space=default_space, version=default_version)
-                    for implement in self.implements.split(",")
-                ]
-                if self.implements
-                else None
-            ),
-            "Reference": self.reference,
-            "Filter": self.filter_,
-            "In Model": self.in_model,
-        }
+        output["View"] = view
+        output["Class (linage)"] = (
+            ClassEntity.load(self.class_, prefix=default_space, version=default_version)
+            if self.class_
+            else view.as_class()
+        )
+        output["Implements"] = (
+            [
+                ViewEntity.load(implement, space=default_space, version=default_version)
+                for implement in self.implements.split(",")
+            ]
+            if self.implements
+            else None
+        )
+        return output
 
     @classmethod
     def from_view(cls, view: dm.ViewApply, in_model: bool) -> "DMSInputView":

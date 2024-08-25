@@ -142,6 +142,8 @@ class InputComponent(ABC, Generic[T_RuleModel]):
     def _load(cls, data: dict[str, Any]) -> Self:
         args: dict[str, Any] = {}
         for field_name, field_ in cls._get_verified_cls().model_fields.items():  # type: ignore[attr-defined]
+            if field_.exclude:
+                continue
             if field_name in data:
                 args[field_name] = data[field_name]
             elif field_.alias in data:
@@ -149,4 +151,8 @@ class InputComponent(ABC, Generic[T_RuleModel]):
         return cls(**args)
 
     def dump(self, **kwargs) -> dict[str, Any]:
-        return {field_.name: getattr(self, field_.name) for field_ in fields(self)}
+        return {
+            field_.alias or name: getattr(self, name)
+            for name, field_ in self._get_verified_cls().model_fields.items()
+            if not field_.exclude
+        }
