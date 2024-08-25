@@ -151,24 +151,18 @@ class DMSInputContainer(InputComponent[DMSContainer]):
         return DMSContainer
 
     def dump(self, default_space: str) -> dict[str, Any]:  # type: ignore[override]
+        output = super().dump()
         container = ContainerEntity.load(self.container, space=default_space)
-        return {
-            "Container": container,
-            "Class (linage)": (
-                ClassEntity.load(self.class_, prefix=default_space) if self.class_ else container.as_class()
-            ),
-            "Name": self.name,
-            "Description": self.description,
-            "Reference": self.reference,
-            "Constraint": (
-                [
-                    ContainerEntity.load(constraint.strip(), space=default_space)
-                    for constraint in self.constraint.split(",")
-                ]
-                if self.constraint
-                else None
-            ),
-        }
+        output["Container"] = container
+        output["Class (linage)"] = (
+            ClassEntity.load(self.class_, prefix=default_space) if self.class_ else container.as_class()
+        )
+        output["Constraint"] = (
+            [ContainerEntity.load(constraint.strip(), space=default_space) for constraint in self.constraint.split(",")]
+            if self.constraint
+            else None
+        )
+        return output
 
     @classmethod
     def from_container(cls, container: dm.ContainerApply) -> "DMSInputContainer":

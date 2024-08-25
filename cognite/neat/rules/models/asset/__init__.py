@@ -1,5 +1,5 @@
 from ._rules import AssetClass, AssetMetadata, AssetProperty, AssetRules
-from ._rules_input import AssetInputClass, AssetInputMetadata, AssetInputRules, AssetPropertyInput
+from ._rules_input import AssetInputClass, AssetInputMetadata, AssetInputProperty, AssetInputRules
 
 __all__ = [
     "AssetRules",
@@ -9,5 +9,5 @@ __all__ = [
     "AssetInputRules",
     "AssetInputMetadata",
     "AssetInputClass",
-    "AssetPropertyInput",
+    "AssetInputProperty",
 ]

@@ -150,22 +150,6 @@ class DMSMetadata(BaseMetadata):
             description = None
         return description, creator
 
-    @classmethod
-    def from_data_model(cls, data_model: dm.DataModelApply, has_reference: bool) -> "DMSMetadata":
-        description, creator = cls._get_description_and_creator(data_model.description)
-        return cls(
-            schema_=SchemaCompleteness.complete,
-            data_model_type=DataModelType.solution if has_reference else DataModelType.enterprise,
-            space=data_model.space,
-            name=data_model.name or None,
-            description=description,
-            external_id=data_model.external_id,
-            version=data_model.version,
-            creator=creator,
-            created=datetime.now(),
-            updated=datetime.now(),
-        )
-
     def get_prefix(self) -> str:
         return self.space
 
@@ -244,22 +228,6 @@ class DMSContainer(SheetEntity):
             properties={},
         )
 
-    @classmethod
-    def from_container(cls, container: dm.ContainerApply) -> "DMSContainer":
-        constraints: list[ContainerEntity] = []
-        for _, constraint_obj in (container.constraints or {}).items():
-            if isinstance(constraint_obj, dm.RequiresConstraint):
-                constraints.append(ContainerEntity.from_id(constraint_obj.require))
-            # UniquenessConstraint it handled in the properties
-        container_entity = ContainerEntity.from_id(container.as_id())
-        return cls(
-            class_=container_entity.as_class(),
-            container=container_entity,
-            name=container.name or None,
-            description=container.description,
-            constraint=constraints or None,
-        )
-
 
 class DMSView(SheetEntity):
     view: ViewEntity = Field(alias="View")
@@ -288,20 +256,6 @@ class DMSView(SheetEntity):
             description=self.description,
             implements=implements,
             properties={},
-        )
-
-    @classmethod
-    def from_view(cls, view: dm.ViewApply, in_model: bool) -> "DMSView":
-        view_entity = ViewEntity.from_id(view.as_id())
-        class_entity = view_entity.as_class(skip_version=True)
-
-        return cls(
-            class_=class_entity,
-            view=view_entity,
-            description=view.description,
-            name=view.name,
-            implements=[ViewEntity.from_id(parent, _DEFAULT_VERSION) for parent in view.implements] or None,
-            in_model=in_model,
         )
 
 

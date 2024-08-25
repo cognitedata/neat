@@ -24,7 +24,7 @@ class AssetInputMetadata(InformationInputMetadata):
 
 
 @dataclass
-class AssetPropertyInput(InputComponent[AssetProperty]):
+class AssetInputProperty(InputComponent[AssetProperty]):
     class_: ClassEntity | str
     property_: str
     value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity | str
@@ -46,21 +46,10 @@ class AssetPropertyInput(InputComponent[AssetProperty]):
         return AssetProperty
 
     def dump(self, default_prefix: str) -> dict[str, Any]:  # type: ignore[override]
-        return {
-            "Class": ClassEntity.load(self.class_, prefix=default_prefix),
-            "Property": self.property_,
-            "Name": self.name,
-            "Description": self.description,
-            "Comment": self.comment,
-            "Value Type": load_value_type(self.value_type, default_prefix),
-            "Min Count": self.min_count,
-            "Max Count": self.max_count,
-            "Default": self.default,
-            "Reference": self.reference,
-            "Match Type": self.match_type,
-            "Transformation": self.transformation,
-            "Implementation": self.implementation,
-        }
+        output = super().dump()
+        output["Class"] = ClassEntity.load(self.class_, prefix=default_prefix)
+        output["Value Type"] = load_value_type(self.value_type, default_prefix)
+        return output
 
 
 @dataclass
@@ -73,7 +62,7 @@ class AssetInputClass(InformationInputClass):
 @dataclass
 class AssetInputRules(InputRules[AssetRules]):
     metadata: AssetInputMetadata
-    properties: list[AssetPropertyInput]
+    properties: list[AssetInputProperty]
     classes: list[AssetInputClass]
     prefixes: dict[str, Namespace] | None = None
     last: "AssetInputRules | None" = None
