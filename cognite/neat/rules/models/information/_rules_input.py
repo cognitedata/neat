@@ -106,7 +106,7 @@ class InformationInputProperty(InputComponent[InformationProperty]):
             # property holding link to class
             else:
                 value_type = ClassEntity.load(self.value_type, prefix=default_prefix)
-        elif isinstance(self.value_type, DataType):
+        elif isinstance(self.value_type, MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity):
             value_type = self.value_type
         else:
             raise NeatTypeError(f"Invalid value type: {self.value_type}")

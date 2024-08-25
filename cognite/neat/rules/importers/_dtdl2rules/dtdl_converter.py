@@ -305,7 +305,7 @@ class _DTDLConverter:
             else:
                 if isinstance(input_type, Object):
                     self.convert_object(input_type, None)
-                return ClassEntity.load(input_type.id_.as_class_id())
+                return input_type.id_.as_class_id()
         else:
             self.issues.append(
                 PropertyTypeNotSupportedWarning(
