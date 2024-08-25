@@ -642,3 +642,20 @@ def load_value_type(
             return ClassEntity.load(raw, prefix=default_prefix)
     else:
         raise NeatTypeError(f"Invalid value type: {type(raw)}")
+
+
+def load_dms_value_type(
+    raw: str | DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity, default_space: str, default_version: str
+) -> DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity:
+    if isinstance(raw, DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity):
+        return raw
+    elif isinstance(raw, str):
+        if DataType.is_data_type(raw):
+            return DataType.load(raw)
+        elif raw == str(Unknown):
+            return DMSUnknownEntity()
+        try:
+            return ViewPropertyEntity.load(raw, space=default_space, version=default_version)
+        except ValueError:
+            return ViewEntity.load(raw, space=default_space, version=default_version)
+    raise NeatTypeError(f"Invalid value type: {type(raw)}")

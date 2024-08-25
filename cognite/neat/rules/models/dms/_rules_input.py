@@ -1,27 +1,27 @@
 import re
-from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Literal, cast, overload
+from typing import Any, Literal
 
 from cognite.client import data_modeling as dm
 
 from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness, _add_alias
+from cognite.neat.rules.models._base_input import InputComponent, InputRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     DMSUnknownEntity,
-    Unknown,
     ViewEntity,
     ViewPropertyEntity,
+    load_dms_value_type,
 )
 
 from ._rules import _DEFAULT_VERSION, DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
 
 
 @dataclass
-class DMSMetadataInput:
+class DMSInputMetadata(InputComponent[DMSMetadata]):
     schema_: Literal["complete", "partial", "extended"]
     space: str
     external_id: str
@@ -35,24 +35,8 @@ class DMSMetadataInput:
     updated: datetime | str | None = None
 
     @classmethod
-    def load(cls, data: dict[str, Any] | None) -> "DMSMetadataInput | None":
-        if data is None:
-            return None
-        _add_alias(data, DMSMetadata)
-        return cls(
-            schema_=data.get("schema_"),  # type: ignore[arg-type]
-            space=data.get("space"),  # type: ignore[arg-type]
-            external_id=data.get("external_id"),  # type: ignore[arg-type]
-            creator=data.get("creator"),  # type: ignore[arg-type]
-            version=data.get("version"),  # type: ignore[arg-type]
-            # safeguard from empty cell, i.e. if key provided by value None
-            extension=data.get("extension", "addition") or "addition",
-            data_model_type=data.get("data_model_type", "solution") or "solution",
-            name=data.get("name"),
-            description=data.get("description"),
-            created=data.get("created"),
-            updated=data.get("updated"),
-        )
+    def _get_verified_cls(cls) -> type[DMSMetadata]:
+        return DMSMetadata
 
     def dump(self) -> dict[str, Any]:
         return dict(
@@ -70,7 +54,7 @@ class DMSMetadataInput:
         )
 
     @classmethod
-    def from_data_model(cls, data_model: dm.DataModelApply, has_reference: bool) -> "DMSMetadataInput":
+    def from_data_model(cls, data_model: dm.DataModelApply, has_reference: bool) -> "DMSInputMetadata":
         description, creator = cls._get_description_and_creator(data_model.description)
         return cls(
             schema_="complete",
@@ -100,10 +84,10 @@ class DMSMetadataInput:
 
 
 @dataclass
-class DMSPropertyInput:
+class DMSInputProperty(InputComponent[DMSView]):
     view: str
     view_property: str | None
-    value_type: str
+    value_type: str | DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity
     property_: str | None
     class_: str | None = None
     name: str | None = None
@@ -120,64 +104,14 @@ class DMSPropertyInput:
     constraint: str | list[str] | None = None
 
     @classmethod
-    @overload
-    def load(cls, data: None) -> None: ...
-
-    @classmethod
-    @overload
-    def load(cls, data: dict[str, Any]) -> "DMSPropertyInput": ...
-
-    @classmethod
-    @overload
-    def load(cls, data: list[dict[str, Any]]) -> list["DMSPropertyInput"]: ...
-
-    @classmethod
-    def load(
-        cls, data: dict[str, Any] | list[dict[str, Any]] | None
-    ) -> "DMSPropertyInput | list[DMSPropertyInput] | None":
-        if data is None:
-            return None
-        if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
-            items = cast(list[dict[str, Any]], data.get("data") if isinstance(data, dict) else data)
-            return [loaded for item in items if (loaded := cls.load(item)) is not None]
-
-        _add_alias(data, DMSProperty)
-        return cls(
-            view=data.get("view"),  # type: ignore[arg-type]
-            view_property=data.get("view_property"),  # type: ignore[arg-type]
-            value_type=data.get("value_type"),  # type: ignore[arg-type]
-            property_=data.get("property_"),
-            class_=data.get("class_"),
-            name=data.get("name"),
-            description=data.get("description"),
-            connection=data.get("connection"),
-            nullable=data.get("nullable"),
-            immutable=data.get("immutable"),
-            is_list=data.get("is_list"),
-            default=data.get("default"),
-            reference=data.get("reference"),
-            container=data.get("container"),
-            container_property=data.get("container_property"),
-            index=data.get("index"),
-            constraint=data.get("constraint"),
-        )
+    def _get_verified_cls(cls) -> type[DMSProperty]:
+        return DMSProperty
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:
-        value_type: DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity
-        if DataType.is_data_type(self.value_type):
-            value_type = DataType.load(self.value_type)
-        elif self.value_type == str(Unknown):
-            value_type = DMSUnknownEntity()
-        else:
-            try:
-                value_type = ViewPropertyEntity.load(self.value_type, space=default_space, version=default_version)
-            except ValueError:
-                value_type = ViewEntity.load(self.value_type, space=default_space, version=default_version)
-
         return {
             "View": ViewEntity.load(self.view, space=default_space, version=default_version),
             "View Property": self.view_property,
-            "Value Type": value_type,
+            "Value Type": load_dms_value_type(self.value_type, default_space, default_version),
             "Property (linage)": self.property_ or self.view_property,
             "Class (linage)": (
                 ClassEntity.load(self.class_ or self.view, prefix=default_space, version=default_version)
@@ -204,7 +138,7 @@ class DMSPropertyInput:
 
 
 @dataclass
-class DMSContainerInput:
+class DMSInputContainer(InputComponent[DMSContainer]):
     container: str
     class_: str | None = None
     name: str | None = None
@@ -213,36 +147,8 @@ class DMSContainerInput:
     constraint: str | None = None
 
     @classmethod
-    @overload
-    def load(cls, data: None) -> None: ...
-
-    @classmethod
-    @overload
-    def load(cls, data: dict[str, Any]) -> "DMSContainerInput": ...
-
-    @classmethod
-    @overload
-    def load(cls, data: list[dict[str, Any]]) -> list["DMSContainerInput"]: ...
-
-    @classmethod
-    def load(
-        cls, data: dict[str, Any] | list[dict[str, Any]] | None
-    ) -> "DMSContainerInput | list[DMSContainerInput] | None":
-        if data is None:
-            return None
-        if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
-            items = cast(list[dict[str, Any]], data.get("data") if isinstance(data, dict) else data)
-            return [loaded for item in items if (loaded := cls.load(item)) is not None]
-
-        _add_alias(data, DMSContainer)
-        return cls(
-            container=data.get("container"),  # type: ignore[arg-type]
-            class_=data.get("class_"),
-            name=data.get("name"),
-            description=data.get("description"),
-            reference=data.get("reference"),
-            constraint=data.get("constraint"),
-        )
+    def _get_verified_cls(cls) -> type[DMSContainer]:
+        return DMSContainer
 
     def dump(self, default_space: str) -> dict[str, Any]:
         container = ContainerEntity.load(self.container, space=default_space)
@@ -265,7 +171,7 @@ class DMSContainerInput:
         }
 
     @classmethod
-    def from_container(cls, container: dm.ContainerApply) -> "DMSContainerInput":
+    def from_container(cls, container: dm.ContainerApply) -> "DMSInputContainer":
         constraints: list[str] = []
         for _, constraint_obj in (container.constraints or {}).items():
             if isinstance(constraint_obj, dm.RequiresConstraint):
@@ -282,7 +188,7 @@ class DMSContainerInput:
 
 
 @dataclass
-class DMSViewInput:
+class DMSInputView(InputComponent[DMSView]):
     view: str
     class_: str | None = None
     name: str | None = None
@@ -293,36 +199,8 @@ class DMSViewInput:
     in_model: bool = True
 
     @classmethod
-    @overload
-    def load(cls, data: None) -> None: ...
-
-    @classmethod
-    @overload
-    def load(cls, data: dict[str, Any]) -> "DMSViewInput": ...
-
-    @classmethod
-    @overload
-    def load(cls, data: list[dict[str, Any]]) -> list["DMSViewInput"]: ...
-
-    @classmethod
-    def load(cls, data: dict[str, Any] | list[dict[str, Any]] | None) -> "DMSViewInput | list[DMSViewInput] | None":
-        if data is None:
-            return None
-        if isinstance(data, list) or (isinstance(data, dict) and isinstance(data.get("data"), list)):
-            items = cast(list[dict[str, Any]], data.get("data") if isinstance(data, dict) else data)
-            return [loaded for item in items if (loaded := cls.load(item)) is not None]
-        _add_alias(data, DMSView)
-
-        return cls(
-            view=data.get("view"),  # type: ignore[arg-type]
-            class_=data.get("class"),
-            name=data.get("name"),
-            description=data.get("description"),
-            implements=data.get("implements"),
-            reference=data.get("reference"),
-            filter_=data.get("filter_"),
-            in_model=data.get("in_model", True),
-        )
+    def _get_verified_cls(cls) -> type[DMSView]:
+        return DMSView
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:
         view = ViewEntity.load(self.view, space=default_space, version=default_version)
@@ -349,7 +227,7 @@ class DMSViewInput:
         }
 
     @classmethod
-    def from_view(cls, view: dm.ViewApply, in_model: bool) -> "DMSViewInput":
+    def from_view(cls, view: dm.ViewApply, in_model: bool) -> "DMSInputView":
         view_entity = ViewEntity.from_id(view.as_id())
         class_entity = view_entity.as_class(skip_version=True)
 
@@ -365,38 +243,17 @@ class DMSViewInput:
 
 
 @dataclass
-class DMSInputRules:
-    metadata: DMSMetadataInput
-    properties: Sequence[DMSPropertyInput]
-    views: Sequence[DMSViewInput]
-    containers: Sequence[DMSContainerInput] | None = None
-    last: "DMSInputRules | DMSRules | None" = None
-    reference: "DMSInputRules | DMSRules | None" = None
+class DMSInputRules(InputRules[DMSRules]):
+    metadata: DMSInputMetadata
+    properties: list[DMSInputProperty]
+    views: list[DMSInputView]
+    containers: list[DMSInputContainer] | None = None
+    last: "DMSInputRules | None" = None
+    reference: "DMSInputRules | None" = None
 
     @classmethod
-    @overload
-    def load(cls, data: dict[str, Any]) -> "DMSInputRules": ...
-
-    @classmethod
-    @overload
-    def load(cls, data: None) -> None: ...
-
-    @classmethod
-    def load(cls, data: dict | None) -> "DMSInputRules | None":
-        if data is None:
-            return None
-        _add_alias(data, DMSRules)
-        return cls(
-            metadata=DMSMetadataInput.load(data.get("metadata")),  # type: ignore[arg-type]
-            properties=DMSPropertyInput.load(data.get("properties")),  # type: ignore[arg-type]
-            views=DMSViewInput.load(data.get("views")),  # type: ignore[arg-type]
-            containers=DMSContainerInput.load(data.get("containers")) or [],
-            last=DMSInputRules.load(data.get("last")),
-            reference=DMSInputRules.load(data.get("reference")),
-        )
-
-    def as_rules(self) -> DMSRules:
-        return DMSRules.model_validate(self.dump())
+    def _get_verified_cls(cls) -> type[DMSRules]:
+        return DMSRules
 
     def dump(self) -> dict[str, Any]:
         default_space = self.metadata.space
