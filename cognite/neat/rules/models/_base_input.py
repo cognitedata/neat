@@ -16,8 +16,6 @@ from dataclasses import Field, dataclass, fields, is_dataclass
 from types import GenericAlias, UnionType
 from typing import Any, Generic, TypeVar, Union, cast, get_args, get_origin, overload
 
-from pydantic import BaseModel
-
 from ._base import BaseRules, RuleModel
 
 if sys.version_info >= (3, 11):
@@ -27,12 +25,6 @@ else:
 
 T_BaseRules = TypeVar("T_BaseRules", bound=BaseRules)
 T_RuleModel = TypeVar("T_RuleModel", bound=RuleModel)
-
-
-def _add_alias(data: dict[str, Any], base_model: type[BaseModel]) -> None:
-    for field_name, field_ in base_model.model_fields.items():
-        if field_name not in data and field_.alias in data:
-            data[field_name] = data[field_.alias]
 
 
 @dataclass
