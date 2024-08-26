@@ -196,6 +196,7 @@ class DMSContainer(SheetEntity):
     description: str | None = Field(alias="Description", default=None)
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     constraint: ContainerEntityList | None = Field(None, alias="Constraint")
+    used_for: Literal["node", "edge", "all"] | None = Field("all", alias="Used For")
     class_: ClassEntity = Field(alias="Class (linage)")
 
     def as_container(self) -> dm.ContainerApply:

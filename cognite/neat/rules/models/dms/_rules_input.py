@@ -125,6 +125,7 @@ class DMSInputContainer(InputComponent[DMSContainer]):
     description: str | None = None
     reference: str | None = None
     constraint: str | None = None
+    used_for: Literal["node", "edge", "all"] | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSContainer]:
