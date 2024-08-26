@@ -36,6 +36,7 @@ from cognite.neat.rules.models.entities import (
     ContainerEntity,
     ContainerEntityList,
     DMSUnknownEntity,
+    EdgeViewEntity,
     ReferenceEntity,
     URLEntity,
     ViewEntity,
@@ -146,7 +147,9 @@ class DMSProperty(SheetEntity):
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     connection: Literal["direct", "edge", "reverse"] | None = Field(None, alias="Connection")
-    value_type: DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
+    value_type: DataType | ViewPropertyEntity | EdgeViewEntity | ViewEntity | DMSUnknownEntity = Field(
+        alias="Value Type"
+    )
     nullable: bool | None = Field(default=None, alias="Nullable")
     immutable: bool | None = Field(default=None, alias="Immutable")
     is_list: bool | None = Field(default=None, alias="Is List")

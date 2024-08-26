@@ -17,9 +17,11 @@ from pydantic import (
     BeforeValidator,
     Field,
     PlainSerializer,
+    field_validator,
     model_serializer,
     model_validator,
 )
+from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.issues.errors import NeatTypeError
 from cognite.neat.rules.models.data_types import DataType
@@ -57,6 +59,7 @@ class EntityTypes(StrEnum):
     multi_value_type = "multi_value_type"
     asset = "asset"
     relationship = "relationship"
+    edge_properties = "edge_properties"
 
 
 # ALLOWED
@@ -504,6 +507,19 @@ class DMSNodeEntity(DMSEntity[NodeId]):
         return cls(space=id.space, externalId=id.external_id)
 
 
+class EdgeViewEntity(ViewEntity):
+    type_: ClassVar[EntityTypes] = EntityTypes.edge_properties
+    properties: ViewEntity
+    edge_type: DMSNodeEntity = Field(alias="type")
+
+    @field_validator("properties", "edge_type", mode="before")
+    def parse_string(cls, value: Any, info: ValidationInfo) -> Any:
+        if isinstance(value, str) and isinstance(info.field_name, str):
+            if field_cls := cls.model_fields[info.field_name].annotation:
+                return field_cls.load(value, space=info.data.get("prefix"), version=info.data.get("version"))
+        return value
+
+
 class ReferenceEntity(ClassEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
     prefix: str
@@ -645,9 +661,11 @@ def load_value_type(
 
 
 def load_dms_value_type(
-    raw: str | DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity, default_space: str, default_version: str
-) -> DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity:
-    if isinstance(raw, DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity):
+    raw: str | DataType | ViewPropertyEntity | EdgeViewEntity | ViewEntity | DMSUnknownEntity,
+    default_space: str,
+    default_version: str,
+) -> DataType | ViewPropertyEntity | EdgeViewEntity | ViewEntity | DMSUnknownEntity:
+    if isinstance(raw, DataType | ViewPropertyEntity | EdgeViewEntity | ViewEntity | DMSUnknownEntity):
         return raw
     elif isinstance(raw, str):
         if DataType.is_data_type(raw):
@@ -657,5 +675,8 @@ def load_dms_value_type(
         try:
             return ViewPropertyEntity.load(raw, space=default_space, version=default_version)
         except ValueError:
-            return ViewEntity.load(raw, space=default_space, version=default_version)
+            try:
+                return EdgeViewEntity.load(raw, space=default_space, version=default_version)
+            except ValueError:
+                return ViewEntity.load(raw, space=default_space, version=default_version)
     raise NeatTypeError(f"Invalid value type: {type(raw)}")
