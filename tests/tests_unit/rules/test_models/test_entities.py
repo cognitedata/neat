@@ -133,6 +133,17 @@ class TestEntities:
                     space=DEFAULT_SPACE,
                 ),
             ),
+            (
+                EdgeViewEntity,
+                "sp_custom:Toy(properties=Owns(version=34), type=ownership, version=v42)",
+                EdgeViewEntity(
+                    externalId="Toy",
+                    properties=ViewEntity(space=DEFAULT_SPACE, version="34", externalId="Owns"),
+                    type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
+                    version="v42",
+                    space="sp_custom",
+                ),
+            ),
         ],
     )
     def test_load(self, cls_: type[Entity], raw: Any, expected: Entity) -> None:
