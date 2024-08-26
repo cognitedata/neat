@@ -7,17 +7,25 @@ from typing import Any, Literal
 from pydantic import ValidationError
 
 from cognite.neat.issues import IssueList, NeatError, NeatWarning
-from cognite.neat.rules._shared import T_InputRules, T_VerifiedRules
+from cognite.neat.rules._shared import (
+    InputRules,
+    MaybeRules,
+    OutRules,
+    ReadRules,
+    T_InputRules,
+    T_VerifiedRules,
+    VerifiedRules,
+)
 from cognite.neat.rules.models import (
+    AssetInputRules,
     AssetRules,
-    AssetRulesInput,
+    DMSInputRules,
     DMSRules,
-    DMSRulesInput,
+    InformationInputRules,
     InformationRules,
-    InformationRulesInput,
 )
 
-from ._base import MaybeRules, OutRules, ReadRules, RulesTransformer
+from ._base import RulesTransformer
 
 
 class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], ABC):
@@ -36,32 +44,50 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
             error_args = rules.read_context
         verified_rules: T_VerifiedRules | None = None
         with _handle_issues(issues, NeatError, NeatWarning, error_args) as future:
-            verified_rules = self._rules_cls.model_validate(in_.dump())  # type: ignore[assignment]
+            rules_cls = self._get_rules_cls(in_)
+            verified_rules = rules_cls.model_validate(in_.dump())  # type: ignore[assignment]
 
         if (future.result == "failure" or issues.has_errors or verified_rules is None) and self.errors == "raise":
             raise issues.as_errors()
-        return MaybeRules(
+        return MaybeRules[T_VerifiedRules](
             rules=verified_rules,
             issues=issues,
         )
 
+    def _get_rules_cls(self, in_: T_InputRules) -> type[T_VerifiedRules]:
+        return self._rules_cls
 
-class VerifyDMSRules(VerificationTransformer[DMSRulesInput, DMSRules]):
+
+class VerifyDMSRules(VerificationTransformer[DMSInputRules, DMSRules]):
     """Class to verify DMS rules."""
 
     _rules_cls = DMSRules
 
 
-class VerifyInformationRules(VerificationTransformer[InformationRulesInput, InformationRules]):
+class VerifyInformationRules(VerificationTransformer[InformationInputRules, InformationRules]):
     """Class to verify Information rules."""
 
     _rules_cls = InformationRules
 
 
-class VerifyAssetRules(VerificationTransformer[AssetRulesInput, AssetRules]):
+class VerifyAssetRules(VerificationTransformer[AssetInputRules, AssetRules]):
     """Class to verify Asset rules."""
 
     _rules_cls = AssetRules
+
+
+class VerifyAnyRules(VerificationTransformer[InputRules, VerifiedRules]):
+    """Class to verify arbitrary rules"""
+
+    def _get_rules_cls(self, in_: InputRules) -> type[VerifiedRules]:
+        if isinstance(in_, InformationInputRules):
+            return InformationRules
+        elif isinstance(in_, DMSInputRules):
+            return DMSRules
+        elif isinstance(in_, AssetInputRules):
+            return AssetRules
+        else:
+            raise NeatError(f"Unsupported rules type: {type(in_)}")
 
 
 class _FutureResult:

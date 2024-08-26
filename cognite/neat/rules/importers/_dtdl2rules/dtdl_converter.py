@@ -1,7 +1,7 @@
 from collections import Counter
 from collections.abc import Callable, Sequence
 
-from cognite.neat.issues import IssueList, NeatIssue
+from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import (
     PropertyTypeNotSupportedError,
     ResourceMissingIdentifierError,
@@ -31,7 +31,7 @@ from cognite.neat.rules.models.information import InformationClass, InformationP
 
 
 class _DTDLConverter:
-    def __init__(self, issues: list[NeatIssue] | None = None) -> None:
+    def __init__(self, issues: IssueList | None = None) -> None:
         self.issues = IssueList(issues or [])
         self.properties: list[InformationProperty] = []
         self.classes: list[InformationClass] = []

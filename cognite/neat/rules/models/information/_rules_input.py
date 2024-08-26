@@ -77,6 +77,8 @@ class InformationMetadataInput:
             description=self.description,
             created=self.created or datetime.now(),
             updated=self.updated or datetime.now(),
+            license=self.license,
+            rights=self.rights,
         )
 
 
@@ -234,24 +236,24 @@ class InformationClassInput:
 
 
 @dataclass
-class InformationRulesInput:
+class InformationInputRules:
     metadata: InformationMetadataInput
     properties: Sequence[InformationPropertyInput]
     classes: Sequence[InformationClassInput]
     prefixes: "dict[str, Namespace] | None" = None
-    last: "InformationRulesInput | InformationRules | None" = None
-    reference: "InformationRulesInput | InformationRules | None" = None
+    last: "InformationInputRules | InformationRules | None" = None
+    reference: "InformationInputRules | InformationRules | None" = None
 
     @classmethod
     @overload
-    def load(cls, data: dict[str, Any]) -> "InformationRulesInput": ...
+    def load(cls, data: dict[str, Any]) -> "InformationInputRules": ...
 
     @classmethod
     @overload
     def load(cls, data: None) -> None: ...
 
     @classmethod
-    def load(cls, data: dict | None) -> "InformationRulesInput | None":
+    def load(cls, data: dict | None) -> "InformationInputRules | None":
         if data is None:
             return None
         _add_alias(data, InformationRules)
@@ -261,8 +263,8 @@ class InformationRulesInput:
             properties=InformationPropertyInput.load(data.get("properties")),  # type: ignore[arg-type]
             classes=InformationClassInput.load(data.get("classes")),  # type: ignore[arg-type]
             prefixes=data.get("prefixes"),
-            last=InformationRulesInput.load(data.get("last")),
-            reference=InformationRulesInput.load(data.get("reference")),
+            last=InformationInputRules.load(data.get("last")),
+            reference=InformationInputRules.load(data.get("reference")),
         )
 
     def as_rules(self) -> InformationRules:
@@ -271,17 +273,17 @@ class InformationRulesInput:
     def dump(self) -> dict[str, Any]:
         default_prefix = self.metadata.prefix
         reference: dict[str, Any] | None = None
-        if isinstance(self.reference, InformationRulesInput):
+        if isinstance(self.reference, InformationInputRules):
             reference = self.reference.dump()
         elif isinstance(self.reference, InformationRules):
             # We need to load through the InformationRulesInput to set the correct default space and version
-            reference = InformationRulesInput.load(self.reference.model_dump()).dump()
+            reference = InformationInputRules.load(self.reference.model_dump()).dump()
         last: dict[str, Any] | None = None
-        if isinstance(self.last, InformationRulesInput):
+        if isinstance(self.last, InformationInputRules):
             last = self.last.dump()
         elif isinstance(self.last, InformationRules):
             # We need to load through the InformationRulesInput to set the correct default space and version
-            last = InformationRulesInput.load(self.last.model_dump()).dump()
+            last = InformationInputRules.load(self.last.model_dump()).dump()
 
         return dict(
             Metadata=self.metadata.dump(),

@@ -10,7 +10,7 @@ from cognite.client.data_classes import data_modeling as dms
 from rdflib import Namespace
 
 from cognite.neat.issues.warnings.user_modeling import ParentInDifferentSpaceWarning
-from cognite.neat.rules._shared import VerifiedRules
+from cognite.neat.rules._shared import JustRules, OutRules, VerifiedRules
 from cognite.neat.rules.models import (
     AssetRules,
     DMSRules,
@@ -40,7 +40,7 @@ from cognite.neat.rules.models.entities import (
 )
 from cognite.neat.rules.models.information import InformationClass, InformationMetadata, InformationProperty
 
-from ._base import JustRules, OutRules, RulesTransformer
+from ._base import RulesTransformer
 
 T_VerifiedInRules = TypeVar("T_VerifiedInRules", bound=VerifiedRules)
 T_VerifiedOutRules = TypeVar("T_VerifiedOutRules", bound=VerifiedRules)
@@ -84,6 +84,30 @@ class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
 
     def _transform(self, rules: DMSRules) -> InformationRules:
         return _DMSRulesConverter(rules).as_information_rules()
+
+
+class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
+    """Converts any rules to any rules."""
+
+    def __init__(self, out_cls: type[VerifiedRules]):
+        self._out_cls = out_cls
+
+    def _transform(self, rules: VerifiedRules) -> VerifiedRules:
+        if isinstance(rules, self._out_cls):
+            return rules
+        if isinstance(rules, InformationRules) and self._out_cls is DMSRules:
+            return InformationToDMS().transform(rules).rules
+        if isinstance(rules, InformationRules) and self._out_cls is AssetRules:
+            return InformationToAsset().transform(rules).rules
+        if isinstance(rules, AssetRules) and self._out_cls is InformationRules:
+            return AssetToInformation().transform(rules).rules
+        if isinstance(rules, AssetRules) and self._out_cls is DMSRules:
+            return InformationToDMS().transform(AssetToInformation().transform(rules)).rules
+        if isinstance(rules, DMSRules) and self._out_cls is InformationRules:
+            return DMSToInformation().transform(rules).rules
+        if isinstance(rules, DMSRules) and self._out_cls is AssetRules:
+            return InformationToAsset().transform(DMSToInformation().transform(rules)).rules
+        raise ValueError(f"Unsupported conversion from {type(rules)} to {self._out_cls}")
 
 
 class _InformationRulesConverter:

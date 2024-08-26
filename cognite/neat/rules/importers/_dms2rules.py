@@ -2,7 +2,7 @@ from collections import Counter
 from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, cast, overload
+from typing import Literal, cast
 
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
@@ -25,22 +25,20 @@ from cognite.neat.issues.warnings import (
     PropertyTypeNotSupportedWarning,
     ResourceNotFoundWarning,
 )
-from cognite.neat.rules.importers._base import BaseImporter, VerifiedRules, _handle_issues
+from cognite.neat.rules._shared import ReadRules
+from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.models import (
     DataModelType,
-    DMSRules,
+    DMSInputRules,
     DMSSchema,
-    ExtensionCategory,
-    RoleTypes,
     SchemaCompleteness,
-    SheetList,
 )
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.dms import (
-    DMSContainer,
-    DMSMetadata,
-    DMSProperty,
-    DMSView,
+    DMSContainerInput,
+    DMSMetadataInput,
+    DMSPropertyInput,
+    DMSViewInput,
 )
 from cognite.neat.rules.models.entities import (
     ClassEntity,
@@ -51,7 +49,7 @@ from cognite.neat.rules.models.entities import (
 )
 
 
-class DMSImporter(BaseImporter):
+class DMSImporter(BaseImporter[DMSInputRules]):
     """Imports a Data Model from Cognite Data Fusion.
 
     Args:
@@ -66,8 +64,8 @@ class DMSImporter(BaseImporter):
         self,
         schema: DMSSchema,
         read_issues: Sequence[NeatIssue] | None = None,
-        metadata: DMSMetadata | None = None,
-        ref_metadata: DMSMetadata | None = None,
+        metadata: DMSMetadataInput | None = None,
+        ref_metadata: DMSMetadataInput | None = None,
     ):
         # Calling this root schema to distinguish it from
         # * User Schema
@@ -162,8 +160,8 @@ class DMSImporter(BaseImporter):
         cls,
         model: dm.DataModel[dm.View] | dm.DataModelApply,
         has_reference: bool = False,
-    ) -> DMSMetadata:
-        description, creator = DMSMetadata._get_description_and_creator(model.description)
+    ) -> DMSMetadataInput:
+        description, creator = DMSMetadataInput._get_description_and_creator(model.description)
 
         if isinstance(model, dm.DataModel):
             created = ms_to_datetime(model.created_time)
@@ -172,17 +170,17 @@ class DMSImporter(BaseImporter):
             now = datetime.now().replace(microsecond=0)
             created = now
             updated = now
-        return DMSMetadata(
-            schema_=SchemaCompleteness.complete,
-            data_model_type=DataModelType.solution if has_reference else DataModelType.enterprise,
-            extension=ExtensionCategory.addition,
+        return DMSMetadataInput(
+            schema_="complete",
+            data_model_type="solution" if has_reference else "enterprise",
+            extension="addition",
             space=model.space,
             external_id=model.external_id,
             name=model.name or model.external_id,
             version=model.version or "0.1.0",
             updated=updated,
             created=created,
-            creator=creator,
+            creator=",".join(creator),
             description=description,
         )
 
@@ -203,71 +201,52 @@ class DMSImporter(BaseImporter):
             schema = DMSSchema.from_zip(zip_file)
         return cls(schema, issue_list)
 
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> VerifiedRules: ...
-
-    @overload
-    def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[VerifiedRules | None, IssueList]: ...
-
-    def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[VerifiedRules | None, IssueList] | VerifiedRules:
+    def to_rules(self) -> ReadRules[DMSInputRules]:
         if self.issue_list.has_errors:
             # In case there were errors during the import, the to_rules method will return None
-            return self._return_or_raise(self.issue_list, errors)
+            return ReadRules(None, self.issue_list, {})
 
         if not self.root_schema.data_model:
             self.issue_list.append(ResourceMissingIdentifierError("data model", type(self.root_schema).__name__))
-            return self._return_or_raise(self.issue_list, errors)
+            return ReadRules(None, self.issue_list, {})
+
         model = self.root_schema.data_model
-        with _handle_issues(
-            self.issue_list,
-        ) as future:
-            schema_completeness = SchemaCompleteness.complete
-            data_model_type = DataModelType.enterprise
-            reference: DMSRules | None = None
-            if (ref_schema := self.root_schema.reference) and (ref_model := ref_schema.data_model):
-                # Reference should always be an enterprise model.
-                reference = DMSRules(
-                    **self._create_rule_components(
-                        ref_model,
-                        ref_schema,
-                        self.ref_metadata
-                        or self._create_default_metadata(list(ref_schema.views.values()), is_ref=True),
-                        DataModelType.enterprise,
-                    )
-                )
-                data_model_type = DataModelType.solution
 
-            user_rules = DMSRules(
-                **self._create_rule_components(
-                    model,
-                    self.root_schema,
-                    self.metadata,
-                    data_model_type,
-                    schema_completeness,
-                    has_reference=reference is not None,
-                ),
-                reference=reference,
+        schema_completeness = SchemaCompleteness.complete
+        data_model_type = DataModelType.enterprise
+        reference: DMSInputRules | None = None
+        if (ref_schema := self.root_schema.reference) and (ref_model := ref_schema.data_model):
+            # Reference should always be an enterprise model.
+            reference = self._create_rule_components(
+                ref_model,
+                ref_schema,
+                self.ref_metadata or self._create_default_metadata(list(ref_schema.views.values()), is_ref=True),
+                DataModelType.enterprise,
             )
+            data_model_type = DataModelType.solution
 
-        if future.result == "failure" or self.issue_list.has_errors:
-            return self._return_or_raise(self.issue_list, errors)
+        user_rules = self._create_rule_components(
+            model,
+            self.root_schema,
+            self.metadata,
+            data_model_type,
+            schema_completeness,
+            has_reference=reference is not None,
+        )
+        user_rules.reference = reference
 
-        return self._to_output(user_rules, self.issue_list, errors, role)
+        return ReadRules(user_rules, self.issue_list, {})
 
     def _create_rule_components(
         self,
         data_model: dm.DataModelApply,
         schema: DMSSchema,
-        metadata: DMSMetadata | None = None,
+        metadata: DMSMetadataInput | None = None,
         data_model_type: DataModelType | None = None,
         schema_completeness: SchemaCompleteness | None = None,
         has_reference: bool = False,
-    ) -> dict[str, Any]:
-        properties = SheetList[DMSProperty]()
+    ) -> DMSInputRules:
+        properties: list[DMSPropertyInput] = []
         for view_id, view in schema.views.items():
             view_entity = ViewEntity.from_id(view_id)
             class_entity = view_entity.as_class()
@@ -280,44 +259,42 @@ class DMSImporter(BaseImporter):
             view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
         }
 
-        metadata = metadata or DMSMetadata.from_data_model(data_model, has_reference)
+        metadata = metadata or DMSMetadataInput.from_data_model(data_model, has_reference)
         if data_model_type is not None:
-            metadata.data_model_type = data_model_type
+            metadata.data_model_type = str(data_model_type)  # type: ignore[assignment]
         if schema_completeness is not None:
-            metadata.schema_ = schema_completeness
-        return dict(
+            metadata.schema_ = str(schema_completeness)  # type: ignore[assignment]
+        return DMSInputRules(
             metadata=metadata,
             properties=properties,
-            containers=SheetList[DMSContainer](
-                data=[DMSContainer.from_container(container) for container in schema.containers.values()]
-            ),
-            views=SheetList[DMSView](
-                data=[
-                    DMSView.from_view(view, in_model=view_id in data_model_view_ids)
-                    for view_id, view in schema.views.items()
-                ]
-            ),
+            containers=[DMSContainerInput.from_container(container) for container in schema.containers.values()],
+            views=[
+                DMSViewInput.from_view(view, in_model=view_id in data_model_view_ids)
+                for view_id, view in schema.views.items()
+            ],
         )
 
     @classmethod
-    def _create_default_metadata(cls, views: Sequence[dm.View | dm.ViewApply], is_ref: bool = False) -> DMSMetadata:
+    def _create_default_metadata(
+        cls, views: Sequence[dm.View | dm.ViewApply], is_ref: bool = False
+    ) -> DMSMetadataInput:
         now = datetime.now().replace(microsecond=0)
         space = Counter(view.space for view in views).most_common(1)[0][0]
-        return DMSMetadata(
-            schema_=SchemaCompleteness.complete,
-            extension=ExtensionCategory.addition,
-            data_model_type=DataModelType.enterprise if is_ref else DataModelType.solution,
+        return DMSMetadataInput(
+            schema_="complete",
+            extension="addition",
+            data_model_type="enterprise" if is_ref else "solution",
             space=space,
             external_id="Unknown",
             version="0.1.0",
-            creator=["Unknown"],
+            creator="Unknown",
             created=now,
             updated=now,
         )
 
     def _create_dms_property(
         self, prop_id: str, prop: ViewPropertyApply, view_entity: ViewEntity, class_entity: ClassEntity
-    ) -> DMSProperty | None:
+    ) -> DMSPropertyInput | None:
         if isinstance(prop, dm.MappedPropertyApply) and prop.container not in self._all_containers_by_id:
             self.issue_list.append(
                 ResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
@@ -353,20 +330,22 @@ class DMSImporter(BaseImporter):
         if value_type is None:
             return None
 
-        return DMSProperty(
-            class_=class_entity,
+        return DMSPropertyInput(
+            class_=str(class_entity),
             property_=prop_id,
             description=prop.description,
             name=prop.name,
             connection=self._get_relation_type(prop),
-            value_type=value_type,
+            value_type=str(value_type),
             is_list=self._get_is_list(prop),
             nullable=self._get_nullable(prop),
             immutable=self._get_immutable(prop),
             default=self._get_default(prop),
-            container=ContainerEntity.from_id(prop.container) if isinstance(prop, dm.MappedPropertyApply) else None,
+            container=str(ContainerEntity.from_id(prop.container))
+            if isinstance(prop, dm.MappedPropertyApply)
+            else None,
             container_property=prop.container_property_identifier if isinstance(prop, dm.MappedPropertyApply) else None,
-            view=view_entity,
+            view=str(view_entity),
             view_property=prop_id,
             index=self._get_index(prop, prop_id),
             constraint=self._get_constraint(prop, prop_id),

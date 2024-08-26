@@ -7,7 +7,7 @@ from cognite.client import data_modeling as dm
 from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.importers import DMSImporter, ExcelImporter
 from cognite.neat.rules.models import DMSRules, DMSSchema, RoleTypes
-from cognite.neat.rules.transformers import DMSToInformation
+from cognite.neat.rules.transformers import DMSToInformation, ImporterPipeline
 from tests.config import DOC_RULES
 
 
@@ -15,8 +15,9 @@ class TestDMSImporter:
     def test_import_with_direct_relation_none(self) -> None:
         importer = DMSImporter(SCHEMA_WITH_DIRECT_RELATION_NONE)
 
-        rules, issues = importer.to_rules(errors="continue")
-
+        result = ImporterPipeline.try_verify(importer)
+        rules = result.rules
+        issues = result.issues
         assert len(issues) == 1
         assert issues[0] == DirectRelationMissingSourceWarning(dm.ViewId("neat", "OneView", "1"), "direct")
         dms_rules = cast(DMSRules, rules)
@@ -39,12 +40,13 @@ class TestDMSImporter:
         ],
     )
     def test_import_rules_from_tutorials(self, filepath: Path) -> None:
-        dms_rules = cast(DMSRules, ExcelImporter(filepath).to_rules(errors="raise", role=RoleTypes.dms))
+        dms_rules = cast(DMSRules, ImporterPipeline.verify(ExcelImporter(filepath), role=RoleTypes.dms))
         # We must have the reference to be able to convert back to schema
         schema = dms_rules.as_schema()
         dms_importer = DMSImporter(schema)
 
-        rules, issues = dms_importer.to_rules(errors="continue")
+        result = ImporterPipeline.try_verify(dms_importer)
+        rules, issues = result.rules, result.issues
         issue_str = "\n".join([issue.as_message() for issue in issues])
         assert rules is not None, f"Failed to import rules {issue_str}"
         assert isinstance(rules, DMSRules)

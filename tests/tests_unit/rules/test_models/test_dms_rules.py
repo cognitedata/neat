@@ -18,20 +18,20 @@ from cognite.neat.rules.models import DMSRules, ExtensionCategory, InformationRu
 from cognite.neat.rules.models.data_types import String
 from cognite.neat.rules.models.dms import (
     DMSContainerInput,
+    DMSInputRules,
     DMSMetadataInput,
     DMSPropertyInput,
-    DMSRulesInput,
     DMSSchema,
     DMSViewInput,
 )
-from cognite.neat.rules.transformers import DMSToInformation, InformationToDMS
+from cognite.neat.rules.transformers import DMSToInformation, ImporterPipeline, InformationToDMS
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 from tests.data import car
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
-        DMSRulesInput(
+        DMSInputRules(
             metadata=DMSMetadataInput(
                 schema_="complete",
                 space="my_space",
@@ -172,7 +172,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Two properties, one container, one view",
     )
 
-    dms_rules = DMSRulesInput(
+    dms_rules = DMSInputRules(
         metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
@@ -296,7 +296,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Property with list of direct relations",
     )
 
-    dms_rules = DMSRulesInput(
+    dms_rules = DMSInputRules(
         metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
@@ -398,7 +398,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="View not in model",
     )
 
-    dms_rules = DMSRulesInput(
+    dms_rules = DMSInputRules(
         metadata=DMSMetadataInput(
             # This is a complete schema, but we do not want to trigger the full validation
             schema_="partial",
@@ -614,7 +614,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Multiple relations and reverse relations",
     )
 
-    dms_rules = DMSRulesInput(
+    dms_rules = DMSInputRules(
         metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
@@ -687,7 +687,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Explict set NodeType Filter",
     )
 
-    dms_rules = DMSRulesInput(
+    dms_rules = DMSInputRules(
         metadata=DMSMetadataInput(
             schema_="complete",
             space="sp_solution",
@@ -813,7 +813,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
-        DMSRulesInput(
+        DMSInputRules(
             metadata=DMSMetadataInput(
                 schema_="partial",
                 space="my_space",
@@ -934,7 +934,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ]
             },
         },
-        DMSRulesInput(
+        DMSInputRules(
             metadata=DMSMetadataInput(
                 schema_="complete",
                 space="my_space",
@@ -1255,7 +1255,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
 
 
 def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
-    last_rules = DMSRulesInput(
+    last_rules = DMSInputRules(
         metadata=DMSMetadataInput(
             schema_="complete",
             space="my_space",
@@ -1284,7 +1284,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         ],
     ).as_rules()
 
-    changing_container = DMSRulesInput(
+    changing_container = DMSInputRules(
         metadata=DMSMetadataInput(
             schema_="complete",
             extension="addition",
@@ -1328,7 +1328,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         id="Addition extension, changing container",
     )
 
-    changing_view = DMSRulesInput(
+    changing_view = DMSInputRules(
         metadata=DMSMetadataInput(
             schema_="complete",
             extension="addition",
@@ -1390,7 +1390,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
 
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = DMSRulesInput.load(alice_spreadsheet).as_rules()
+        valid_rules = DMSInputRules.load(alice_spreadsheet).as_rules()
 
         assert isinstance(valid_rules, DMSRules)
 
@@ -1406,7 +1406,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
     def test_load_valid_rules(self, raw: dict[str, dict[str, Any]], expected_rules: DMSRules) -> None:
-        valid_rules = DMSRulesInput.load(raw).as_rules()
+        valid_rules = DMSInputRules.load(raw).as_rules()
         assert valid_rules.model_dump() == expected_rules.model_dump()
         # testing case insensitive value types
         assert isinstance(valid_rules.properties.data[0].value_type, String)
@@ -1416,7 +1416,7 @@ class TestDMSRules:
         self, raw: dict[str, dict[str, Any]], expected_errors: list[NeatError]
     ) -> None:
         with pytest.raises(ValueError) as e:
-            DMSRulesInput.load(raw).as_rules()
+            DMSInputRules.load(raw).as_rules()
 
         assert isinstance(e.value, ValidationError)
         validation_errors = e.value.errors()
@@ -1430,14 +1430,14 @@ class TestDMSRules:
 
     def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
-        recreated_rules = DMSImporter(schema).to_rules(errors="raise")
+        recreated_rules = ImporterPipeline.verify(DMSImporter(schema))
 
         # This information is lost in the conversion
         exclude = {"metadata": {"created", "updated"}, "properties": {"data": {"__all__": {"reference"}}}}
         assert recreated_rules.dump(exclude=exclude) == alice_rules.dump(exclude=exclude)
 
     @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
-    def test_as_schema(self, input_rules: DMSRulesInput, expected_schema: DMSSchema) -> None:
+    def test_as_schema(self, input_rules: DMSInputRules, expected_schema: DMSSchema) -> None:
         rules = input_rules.as_rules()
         actual_schema = rules.as_schema()
 
@@ -1458,13 +1458,13 @@ class TestDMSRules:
         assert actual_schema.node_types.dump() == expected_schema.node_types.dump()
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        alice_rules = DMSRulesInput.load(alice_spreadsheet).as_rules()
+        alice_rules = DMSInputRules.load(alice_spreadsheet).as_rules()
         info_rules = DMSToInformation().transform(alice_rules).rules
 
         assert isinstance(info_rules, InformationRules)
 
     def test_dump_skip_default_space_and_version(self) -> None:
-        dms_rules = DMSRulesInput(
+        dms_rules = DMSInputRules(
             metadata=DMSMetadataInput(
                 schema_="partial",
                 space="my_space",
@@ -1557,7 +1557,7 @@ class TestDMSRules:
         raw["Metadata"]["schema"] = "extended"
 
         with pytest.raises(ValidationError) as e:
-            DMSRulesInput.load(raw).as_rules()
+            DMSInputRules.load(raw).as_rules()
 
         actual_issues = NeatError.from_pydantic_errors(e.value.errors())
 
@@ -1716,7 +1716,7 @@ class TestDMSExporter:
 
 def test_dms_rules_validation_error():
     with pytest.raises(NeatError) as e:
-        dms_rules = DMSRulesInput(
+        dms_rules = DMSInputRules(
             metadata=DMSMetadataInput(
                 schema_="complete",
                 space="my_space",

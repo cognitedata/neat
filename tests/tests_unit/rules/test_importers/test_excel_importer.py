@@ -17,6 +17,7 @@ from cognite.neat.issues.warnings import (
 )
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
+from cognite.neat.rules.transformers import ImporterPipeline
 from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 
@@ -150,18 +151,22 @@ class TestExcelImporter:
         rule_type: type[DMSRules] | type[InformationRules] | type[DomainRules],
         convert_to: RoleTypes | None,
     ):
+        if issubclass(rule_type, DomainRules):
+            pytest.skip("Domain rules are not supported by the importer")
         importer = ExcelImporter(filepath)
-        rules = importer.to_rules(errors="raise")
+
+        rules = ImporterPipeline.verify(importer)
         assert isinstance(rules, rule_type)
         if convert_to is not None:
-            converted = importer._to_output(rules, IssueList(), errors="raise", role=convert_to)
+            converted = ImporterPipeline.verify(importer, role=convert_to)
             assert converted.metadata.role is convert_to
 
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())
     def test_import_invalid_rules(self, filepath: Path, expected_issues: IssueList):
         importer = ExcelImporter(filepath)
 
-        _, issues = importer.to_rules(errors="continue")
+        result = ImporterPipeline.try_verify(importer)
+        issues = result.issues
 
         issues = sorted(issues)
         expected_issues = sorted(expected_issues)

@@ -9,11 +9,12 @@ from cognite.neat.rules import importers
 from cognite.neat.rules.models import DMSRules, InformationRules
 from cognite.neat.rules.models.dms import (
     DMSContainerInput,
+    DMSInputRules,
     DMSMetadataInput,
     DMSPropertyInput,
-    DMSRulesInput,
     DMSViewInput,
 )
+from cognite.neat.rules.transformers import ImporterPipeline
 
 _neat = DEFAULT_NAMESPACE
 TRIPLES = tuple(
@@ -60,9 +61,9 @@ CONTAINERS = dm.ContainerApplyList(
     ]
 )
 
-CAR_RULES: InformationRules = importers.ExcelImporter(
-    Path(__file__).resolve().parent / "info-arch-car-rules.xlsx"
-).to_rules(errors="raise")
+CAR_RULES: InformationRules = ImporterPipeline.verify(
+    importers.ExcelImporter(Path(__file__).resolve().parent / "info-arch-car-rules.xlsx")
+)
 
 CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     space=MODEL_SPACE,
@@ -166,7 +167,7 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     ],
 )
 
-BASE_MODEL: DMSRules = DMSRulesInput(
+BASE_MODEL: DMSRules = DMSInputRules(
     metadata=DMSMetadataInput(
         schema_="partial",
         space="sp_base",
