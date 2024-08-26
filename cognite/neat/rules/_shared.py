@@ -17,3 +17,4 @@ Rules: TypeAlias = (
 )
 T_Rules = TypeVar("T_Rules", bound=Rules)
 T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
+T_InputRules = TypeVar("T_InputRules", bound=InputRules)

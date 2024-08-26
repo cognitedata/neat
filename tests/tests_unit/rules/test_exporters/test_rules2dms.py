@@ -79,7 +79,7 @@ class TestImportExportDMS:
         if isinstance(rules, DMSRules):
             dms_rules = rules
         elif isinstance(rules, InformationRules):
-            dms_rules = InformationToDMS().transform(rules)
+            dms_rules = InformationToDMS().transform(rules).rules
         else:
             raise TypeError("Unsupported rules type")
 

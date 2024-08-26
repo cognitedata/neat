@@ -11,6 +11,13 @@ class NeatValueError(NeatError, ValueError):
 
 
 @dataclass(frozen=True)
+class NeatTypeError(NeatError, TypeError):
+    """{raw_message}"""
+
+    raw_message: str
+
+
+@dataclass(frozen=True)
 class RegexViolationError(NeatError, ValueError):
     """Value, {value} failed regex, {regex}, validation. Make sure that the name follows the regex pattern."""
 

@@ -1,14 +1,16 @@
 import re
 import warnings
+from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from collections.abc import Collection
 from datetime import date, datetime
-from typing import Literal, cast
+from typing import Literal, TypeVar, cast
 
 from cognite.client.data_classes import data_modeling as dms
 from rdflib import Namespace
 
 from cognite.neat.issues.warnings.user_modeling import ParentInDifferentSpaceWarning
+from cognite.neat.rules._shared import VerifiedRules
 from cognite.neat.rules.models import (
     AssetRules,
     DMSRules,
@@ -38,34 +40,49 @@ from cognite.neat.rules.models.entities import (
 )
 from cognite.neat.rules.models.information import InformationClass, InformationMetadata, InformationProperty
 
-from ._base import RulesTransformer
+from ._base import JustRules, OutRules, RulesTransformer
+
+T_VerifiedInRules = TypeVar("T_VerifiedInRules", bound=VerifiedRules)
+T_VerifiedOutRules = TypeVar("T_VerifiedOutRules", bound=VerifiedRules)
 
 
-class InformationToDMS(RulesTransformer[InformationRules, DMSRules]):
+class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRules], ABC):
+    """Base class for all conversion transformers."""
+
+    def transform(self, rules: T_VerifiedInRules | OutRules[T_VerifiedInRules]) -> JustRules[T_VerifiedOutRules]:
+        out = self._transform(self._to_rules(rules))
+        return JustRules(out)
+
+    @abstractmethod
+    def _transform(self, rules: T_VerifiedInRules) -> T_VerifiedOutRules:
+        raise NotImplementedError()
+
+
+class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
-    def transform(self, rules: InformationRules) -> DMSRules:
+    def _transform(self, rules: InformationRules) -> DMSRules:
         return _InformationRulesConverter(rules).as_dms_rules()
 
 
-class InformationToAsset(RulesTransformer[InformationRules, AssetRules]):
+class InformationToAsset(ConversionTransformer[InformationRules, AssetRules]):
     """Converts InformationRules to AssetRules."""
 
-    def transform(self, rules: InformationRules) -> AssetRules:
+    def _transform(self, rules: InformationRules) -> AssetRules:
         return _InformationRulesConverter(rules).as_asset_architect_rules()
 
 
-class AssetToInformation(RulesTransformer[AssetRules, InformationRules]):
+class AssetToInformation(ConversionTransformer[AssetRules, InformationRules]):
     """Converts AssetRules to InformationRules."""
 
-    def transform(self, rules: AssetRules) -> InformationRules:
+    def _transform(self, rules: AssetRules) -> InformationRules:
         return InformationRules.model_validate(rules.model_dump())
 
 
-class DMSToInformation(RulesTransformer[DMSRules, InformationRules]):
+class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
     """Converts DMSRules to InformationRules."""
 
-    def transform(self, rules: DMSRules) -> InformationRules:
+    def _transform(self, rules: DMSRules) -> InformationRules:
         return _DMSRulesConverter(rules).as_information_rules()
 
 

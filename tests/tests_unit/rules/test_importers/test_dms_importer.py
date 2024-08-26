@@ -27,7 +27,7 @@ class TestDMSImporter:
         assert dump_dms["views"][0]["name"] == "OneView"
         assert dump_dms["views"][0]["description"] == "One View"
 
-        info_rules = DMSToInformation().transform(rules)
+        info_rules = DMSToInformation().transform(rules).rules
         dump_info = info_rules.dump()
         assert dump_info["properties"][0]["value_type"] == "#N/A"
 

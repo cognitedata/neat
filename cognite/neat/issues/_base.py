@@ -339,7 +339,7 @@ class DefaultWarning(NeatWarning):
 T_NeatIssue = TypeVar("T_NeatIssue", bound=NeatIssue)
 
 
-class NeatIssueList(UserList[T_NeatIssue], ABC):
+class NeatIssueList(UserList[T_NeatIssue], Sequence[T_NeatIssue], ABC):
     """This is a generic list of NeatIssues."""
 
     def __init__(self, issues: Sequence[T_NeatIssue] | None = None, title: str | None = None):
