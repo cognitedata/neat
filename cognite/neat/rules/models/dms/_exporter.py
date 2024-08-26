@@ -478,6 +478,9 @@ class _DMSExporter:
                     "If this error occurs it is a bug in NEAT, please report"
                     f"Debug Info, Invalid valueType edge: {prop.model_dump_json()}"
                 )
+            edge_source: dm.ViewId | None = None
+            if isinstance(prop.value_type, EdgeViewEntity) and prop.value_type.properties:
+                edge_source = prop.value_type.properties.as_id()
             edge_cls: type[dm.EdgeConnectionApply] = dm.MultiEdgeConnectionApply
             # If is_list is not set, we default to a MultiEdgeConnection
             if prop.is_list is False:
@@ -489,10 +492,15 @@ class _DMSExporter:
                 direction="outwards",
                 name=prop.name,
                 description=prop.description,
+                edge_source=edge_source,
             )
         elif prop.connection == "reverse":
             reverse_prop_id: str | None = None
-            if isinstance(prop.value_type, ViewPropertyEntity):
+            edge_source = None
+            if isinstance(prop.value_type, EdgeViewEntity) and prop.value_type.properties:
+                edge_source = prop.value_type.properties.as_id()
+                source_view_id = prop.value_type.as_id()
+            elif isinstance(prop.value_type, ViewPropertyEntity):
                 source_view_id = prop.value_type.as_view_id()
                 reverse_prop_id = prop.value_type.property_
             elif isinstance(prop.value_type, ViewEntity):
@@ -536,6 +544,7 @@ class _DMSExporter:
                     name=prop.name,
                     description=prop.description,
                     direction="inwards",
+                    edge_source=edge_source,
                 )
             elif reverse_prop_id and reverse_prop and reverse_prop.connection == "direct":
                 reverse_direct_cls = (

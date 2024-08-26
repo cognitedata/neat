@@ -52,46 +52,51 @@ _WINDTURBINE_CONTAINER = CONTAINERS[0].as_id()
 _METMAST_CONTAINER = CONTAINERS[1].as_id()
 _DISTANCE_CONTAINER = CONTAINERS[2].as_id()
 
+WIND_TURBINE = dm.ViewApply(
+    space=_SPACE,
+    external_id="WindTurbine",
+    version="v1",
+    properties={
+        "name": dm.MappedPropertyApply(_WINDTURBINE_CONTAINER, "name"),
+        "capacity": dm.MappedPropertyApply(_WINDTURBINE_CONTAINER, "capacity"),
+        "metmasts": dm.MultiEdgeConnectionApply(
+            type=dm.DirectRelationReference(_SPACE, "distance"),
+            source=dm.ViewId(_SPACE, "MetMast", "v1"),
+            edge_source=dm.ViewId(_SPACE, "Distance", "v1"),
+            direction="outwards",
+        ),
+    },
+)
+
+METMAST = dm.ViewApply(
+    space=_SPACE,
+    external_id="MetMast",
+    version="v1",
+    properties={
+        "name": dm.MappedPropertyApply(_METMAST_CONTAINER, "name"),
+        "windSpeed": dm.MappedPropertyApply(_METMAST_CONTAINER, "windSpeed"),
+        "windTurbines": dm.MultiEdgeConnectionApply(
+            type=dm.DirectRelationReference(_SPACE, "distance"),
+            source=dm.ViewId(_SPACE, "WindTurbine", "v1"),
+            edge_source=dm.ViewId(_SPACE, "Distance", "v1"),
+            direction="inwards",
+        ),
+    },
+)
+DISTANCE = dm.ViewApply(
+    space=_SPACE,
+    external_id="Distance",
+    version="v1",
+    properties={
+        "distance": dm.MappedPropertyApply(_DISTANCE_CONTAINER, "distance"),
+    },
+)
+
 VIEWS = dm.ViewApplyList(
     [
-        dm.ViewApply(
-            space=_SPACE,
-            external_id="WindTurbine",
-            version="v1",
-            properties={
-                "name": dm.MappedPropertyApply(_WINDTURBINE_CONTAINER, "name"),
-                "capacity": dm.MappedPropertyApply(_WINDTURBINE_CONTAINER, "capacity"),
-                "metmasts": dm.MultiEdgeConnectionApply(
-                    type=dm.DirectRelationReference(_SPACE, "distance"),
-                    source=dm.ViewId(_SPACE, "MetMast", "v1"),
-                    edge_source=dm.ViewId(_SPACE, "Distance", "v1"),
-                    direction="outwards",
-                ),
-            },
-        ),
-        dm.ViewApply(
-            space=_SPACE,
-            external_id="MetMast",
-            version="v1",
-            properties={
-                "name": dm.MappedPropertyApply(_METMAST_CONTAINER, "name"),
-                "windSpeed": dm.MappedPropertyApply(_METMAST_CONTAINER, "windSpeed"),
-                "windTurbines": dm.MultiEdgeConnectionApply(
-                    type=dm.DirectRelationReference(_SPACE, "distance"),
-                    source=dm.ViewId(_SPACE, "WindTurbine", "v1"),
-                    edge_source=dm.ViewId(_SPACE, "Distance", "v1"),
-                    direction="inwards",
-                ),
-            },
-        ),
-        dm.ViewApply(
-            space=_SPACE,
-            external_id="Distance",
-            version="v1",
-            properties={
-                "distance": dm.MappedPropertyApply(_DISTANCE_CONTAINER, "distance"),
-            },
-        ),
+        WIND_TURBINE,
+        METMAST,
+        DISTANCE,
     ]
 )
 

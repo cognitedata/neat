@@ -374,7 +374,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     def _get_value_type(
         self, prop: ViewPropertyApply, view_entity: ViewEntity, prop_id
     ) -> DataType | ViewEntity | EdgeViewEntity | ViewPropertyEntity | DMSUnknownEntity | None:
-        if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "outwards":
+        if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply):
             return EdgeViewEntity(
                 space=prop.source.space,
                 externalId=prop.source.external_id,
@@ -384,8 +384,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             )
         elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):
             return ViewPropertyEntity.from_id(prop.through)
-        elif isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "inwards":
-            return ViewEntity.from_id(prop.source)
         elif isinstance(prop, dm.MappedPropertyApply):
             container_prop = self._container_prop_unsafe(cast(dm.MappedPropertyApply, prop))
             if isinstance(container_prop.type, dm.DirectRelation):
