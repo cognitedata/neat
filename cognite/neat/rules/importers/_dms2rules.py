@@ -337,7 +337,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             property_=prop_id,
             description=prop.description,
             name=prop.name,
-            connection=self._get_relation_type(prop),
+            connection=self._get_connection_type(prop),
             value_type=str(value_type),
             is_list=self._get_is_list(prop),
             nullable=self._get_nullable(prop),
@@ -357,7 +357,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         """This method assumes you have already checked that the container with property exists."""
         return self._all_containers_by_id[prop.container].properties[prop.container_property_identifier]
 
-    def _get_relation_type(self, prop: ViewPropertyApply) -> Literal["edge", "reverse", "direct"] | None:
+    def _get_connection_type(self, prop: ViewPropertyApply) -> Literal["edge", "reverse", "direct"] | None:
         if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "outwards":
             return "edge"
         elif isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "inwards":
@@ -378,7 +378,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             return EdgeViewEntity(
                 space=prop.source.space,
                 externalId=prop.source.external_id,
-                version=prop.source.external_id,
+                version=prop.source.version or "MISSING",
                 properties=ViewEntity.from_id(prop.edge_source) if prop.edge_source else None,
                 type=DMSNodeEntity.from_reference(prop.type),
             )
