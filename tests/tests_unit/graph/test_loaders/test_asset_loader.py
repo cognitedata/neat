@@ -13,6 +13,7 @@ from cognite.neat.graph.transformers import AddSelfReferenceProperty
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors import ResourceCreationError
 from cognite.neat.rules.models import AssetRules
+from cognite.neat.rules.transformers import AssetToInformation
 from cognite.neat.store import NeatGraphStore
 
 
@@ -21,7 +22,7 @@ def asset_store(asset_rules) -> NeatGraphStore:
     asset_store = NeatGraphStore.from_oxi_store()
     asset_store.write(RdfFileExtractor(nordic44_knowledge_graph, base_uri=URIRef("http://purl.org/nordic44#")))
 
-    asset_store.add_rules(asset_rules.as_information_rules())
+    asset_store.add_rules(AssetToInformation().transform(asset_rules))
     asset_store.transform(AddSelfReferenceProperty(rules=asset_store.rules))
 
     return asset_store

@@ -12,6 +12,12 @@ from rdflib import Namespace
 from cognite.neat.issues import IssueList, NeatError, NeatWarning
 from cognite.neat.rules._shared import VerifiedRules
 from cognite.neat.rules.models import AssetRules, DMSRules, InformationRules, RoleTypes
+from cognite.neat.rules.transformers import (
+    AssetToInformation,
+    DMSToInformation,
+    InformationToDMS,
+    RulesPipeline,
+)
 from cognite.neat.utils.auxiliary import class_html_doc
 
 
@@ -51,10 +57,14 @@ class BaseImporter(ABC):
 
         if rules.metadata.role is role or role is None:
             output = rules
-        elif isinstance(rules, DMSRules) or isinstance(rules, AssetRules) and role is RoleTypes.information:
-            output = rules.as_information_rules()
-        elif isinstance(rules, InformationRules) or isinstance(rules, AssetRules) and role is RoleTypes.dms:
-            output = rules.as_dms_rules()
+        elif isinstance(rules, DMSRules) and role is RoleTypes.information:
+            output = DMSToInformation().transform(rules)
+        elif isinstance(rules, AssetRules) and role is RoleTypes.information:
+            output = AssetToInformation().transform(rules)
+        elif isinstance(rules, InformationRules) and role is RoleTypes.dms:
+            output = InformationToDMS().transform(rules)
+        elif isinstance(rules, AssetRules) and role is RoleTypes.dms:
+            output = RulesPipeline[AssetRules, DMSRules]([AssetToInformation(), InformationToDMS()]).run(rules)
         else:
             raise NotImplementedError(f"Role {role} is not supported for {type(rules).__name__} rules")
 

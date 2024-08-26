@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Changed
+- [BREAKING CHANGE] All conversion of rules object methods, for example, `InformationRules.as_dms_rules()`, have 
+  been removed. Instead, use the `cognite.neat.rules.transformers` module to get an appropriate transformar
+  and use the `transform` method to convert the rules object.
 
 ## [0.88.3] - 20-08-24
 ### Fixed

@@ -20,7 +20,7 @@ from cognite.neat.rules.models.information._rules_input import (
     InformationMetadataInput,
     InformationPropertyInput,
 )
-from cognite.neat.rules.transformers._converters import _InformationRulesConverter
+from cognite.neat.rules.transformers._converters import InformationToDMS, _InformationRulesConverter
 
 
 def case_insensitive_value_types():
@@ -196,7 +196,7 @@ class TestInformationRules:
 
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         david_rules = InformationRules.model_validate(david_spreadsheet)
-        dms_rules = david_rules.as_dms_rules()
+        dms_rules = InformationToDMS().transform(david_rules)
 
         assert isinstance(dms_rules, DMSRules)
 
@@ -212,8 +212,7 @@ class TestInformationRules:
             new_classes.append(cls_)
         olav_rules_copy.classes = new_classes
         ## End of temporary code
-
-        dms_rules = olav_rules_copy.as_dms_rules()
+        dms_rules = InformationToDMS().transform(olav_rules_copy)
 
         assert isinstance(dms_rules, DMSRules)
         schema = dms_rules.as_schema()
@@ -280,8 +279,7 @@ class TestInformationRulesConverter:
             "WindFarm": {"EnergyArea"},
             "WindTurbine": {"GeneratingUnit"},
         }
-
-        dms_rules = svein_harald_information_rules.as_dms_rules()
+        dms_rules = InformationToDMS().transform(svein_harald_information_rules)
 
         assert isinstance(dms_rules, DMSRules)
         assert dms_rules.last is not None
@@ -314,7 +312,7 @@ class TestInformationRulesConverter:
             ],
         ).as_rules()
 
-        dms_rules = info.as_dms_rules()
+        dms_rules = InformationToDMS().transform(info)
 
         assert len(dms_rules.containers) == 2
 

@@ -33,7 +33,6 @@ from cognite.neat.rules.models._types import (
     VersionType,
 )
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
@@ -50,7 +49,7 @@ from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFi
 from ._schema import DMSSchema
 
 if TYPE_CHECKING:
-    from cognite.neat.rules.models.information._rules import InformationRules
+    pass
 
 if sys.version_info >= (3, 11):
     pass
@@ -401,16 +400,6 @@ class DMSRules(BaseRules):
         from ._exporter import _DMSExporter
 
         return _DMSExporter(self, include_pipeline, instance_space).to_schema()
-
-    def as_information_rules(self) -> "InformationRules":
-        from ._converter import _DMSRulesConverter
-
-        return _DMSRulesConverter(self).as_information_rules()
-
-    def as_domain_expert_rules(self) -> DomainRules:
-        from ._converter import _DMSRulesConverter
-
-        return _DMSRulesConverter(self).as_domain_rules()
 
     def create_reference(
         self, reference: "DMSRules", view_extension_mapping: dict[str, str], default_extension: str | None = None

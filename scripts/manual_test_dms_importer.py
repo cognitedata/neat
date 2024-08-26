@@ -38,6 +38,8 @@ from cognite.neat.rules.exporters import DMSExporter
 from pathlib import Path
 from rich import print
 
+from cognite.neat.rules.transformers import DMSToInformation
+
 TMP_FOLDER = Path(__file__).parent / 'tmp'
 TMP_FOLDER.mkdir(exist_ok=True)
 
@@ -73,7 +75,7 @@ def main():
             warning += 1
         assert isinstance(rules, DMSRules)
         try:
-            information = rules.as_information_rules()
+            information = DMSToInformation().transform(rules)
         except Exception as e:
             print(f"[red]Failed[/red] to convert rules to information architect rules: {e}")
             print(Panel(traceback.format_exc(), expand=False))
