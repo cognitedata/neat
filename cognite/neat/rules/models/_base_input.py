@@ -156,7 +156,7 @@ class InputComponent(ABC, Generic[T_RuleModel]):
 
     def dump(self, **kwargs) -> dict[str, Any]:
         return {
-            field_.alias or name: getattr(self, name)
+            field_.alias or name: value
             for name, field_ in self._get_verified_cls().model_fields.items()
-            if not field_.exclude
+            if not field_.exclude and (value := getattr(self, name)) is not None
         }

@@ -1,7 +1,20 @@
 """This is a DMS Model which contains edge with properties"""
 
+import datetime
+from typing import Any
+
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.data_types import UnitReference
+
+from cognite.neat.rules.models.dms import (
+    DMSInputContainer,
+    DMSInputMetadata,
+    DMSInputProperty,
+    DMSInputRules,
+    DMSInputView,
+    DMSSchema,
+)
+from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 
 _SPACE = "sp_windturbine"
 
@@ -87,4 +100,46 @@ MODEL = dm.DataModelApply(
     external_id="WindTurbineModel",
     version="v1",
     views=VIEWS.as_ids(),
+)
+
+SCHEMA = DMSSchema(
+    data_model=MODEL,
+    spaces=SpaceApplyDict.from_iterable([dm.SpaceApply(space=_SPACE)]),
+    containers=ContainerApplyDict.from_iterable(CONTAINERS),
+    views=ViewApplyDict.from_iterable(VIEWS),
+)
+
+_TODAY = datetime.datetime.now()
+
+_DEFAULTS: dict[str, Any] = dict(immutable=False, nullable=True, is_list=False)
+INPUT_RULES = DMSInputRules(
+    metadata=DMSInputMetadata(
+        "complete",
+        _SPACE,
+        "WindTurbineModel",
+        "MISSING",
+        "v1",
+        data_model_type="enterprise",
+        updated=_TODAY,
+        created=_TODAY,
+    ),
+    properties=[
+        DMSInputProperty(
+            "WindTurbine", "name", "text", container="WindTurbine", container_property="name", **_DEFAULTS
+        ),
+        DMSInputProperty(
+            "WindTurbine", "capacity", "float64", container="WindTurbine", container_property="capacity", **_DEFAULTS
+        ),
+        DMSInputProperty("WindTurbine", "metmasts", "MetMast", connection="edge", is_list=True),
+        DMSInputProperty("MetMast", "name", "text", container="MetMast", container_property="name", **_DEFAULTS),
+        DMSInputProperty(
+            "MetMast", "windSpeed", "timeseries", container="MetMast", container_property="windSpeed", **_DEFAULTS
+        ),
+        DMSInputProperty("MetMast", "windTurbines", "WindTurbine", connection="reverse", is_list=True),
+        DMSInputProperty(
+            "Distance", "distance", "float64", container="Distance", container_property="distance", **_DEFAULTS
+        ),
+    ],
+    views=[DMSInputView("WindTurbine"), DMSInputView("MetMast"), DMSInputView("Distance")],
+    containers=[DMSInputContainer("WindTurbine"), DMSInputContainer("MetMast"), DMSInputContainer("Distance")],
 )

@@ -9,6 +9,7 @@ from cognite.neat.rules.importers import DMSImporter, ExcelImporter
 from cognite.neat.rules.models import DMSRules, DMSSchema, RoleTypes
 from cognite.neat.rules.transformers import DMSToInformation, ImporterPipeline
 from tests.config import DOC_RULES
+from tests.data import windturbine
 
 
 class TestDMSImporter:
@@ -58,6 +59,14 @@ class TestDMSImporter:
             "views": {"data": {"__all__": {"reference"}}},
         }
         assert rules.dump(exclude=exclude) == dms_rules.dump(exclude=exclude)
+
+    def test_import_rules_edge_with_properties(self) -> None:
+        exporter = DMSImporter(windturbine.SCHEMA, metadata=windturbine.INPUT_RULES.metadata)
+
+        result = exporter.to_rules()
+
+        assert result.rules is not None
+        assert result.rules.dump() == windturbine.INPUT_RULES.dump()
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
