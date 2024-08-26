@@ -150,8 +150,8 @@ INPUT_RULES = DMSInputRules(
     ],
     views=[DMSInputView("WindTurbine"), DMSInputView("MetMast"), DMSInputView("Distance")],
     containers=[
-        DMSInputContainer("WindTurbine"),
-        DMSInputContainer("MetMast"),
+        DMSInputContainer("WindTurbine", used_for="node"),
+        DMSInputContainer("MetMast", used_for="node"),
         DMSInputContainer("Distance", used_for="edge"),
     ],
 )

@@ -160,6 +160,7 @@ class DMSInputContainer(InputComponent[DMSContainer]):
             name=container.name or None,
             description=container.description,
             constraint=", ".join(constraints) or None,
+            used_for=container.used_for,
         )
 
 

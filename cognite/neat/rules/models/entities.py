@@ -5,6 +5,7 @@ from functools import total_ordering
 from types import UnionType
 from typing import Annotated, Any, ClassVar, Generic, TypeVar, Union, cast, get_args, get_origin
 
+from cognite.client.data_classes.data_modeling import DirectRelationReference
 from cognite.client.data_classes.data_modeling.ids import (
     ContainerId,
     DataModelId,
@@ -519,6 +520,10 @@ class DMSNodeEntity(DMSEntity[NodeId]):
     @classmethod
     def from_id(cls, id: NodeId) -> "DMSNodeEntity":
         return cls(space=id.space, externalId=id.external_id)
+
+    @classmethod
+    def from_reference(cls, ref: DirectRelationReference) -> "DMSNodeEntity":
+        return cls(space=ref.space, externalId=ref.external_id)
 
 
 class EdgeViewEntity(ViewEntity):

@@ -43,7 +43,9 @@ from cognite.neat.rules.models.dms import (
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
+    DMSNodeEntity,
     DMSUnknownEntity,
+    EdgeViewEntity,
     ViewEntity,
     ViewPropertyEntity,
 )
@@ -371,9 +373,15 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
     def _get_value_type(
         self, prop: ViewPropertyApply, view_entity: ViewEntity, prop_id
-    ) -> DataType | ViewEntity | ViewPropertyEntity | DMSUnknownEntity | None:
+    ) -> DataType | ViewEntity | EdgeViewEntity | ViewPropertyEntity | DMSUnknownEntity | None:
         if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "outwards":
-            return ViewEntity.from_id(prop.source)
+            return EdgeViewEntity(
+                space=prop.source.space,
+                externalId=prop.source.external_id,
+                version=prop.source.external_id,
+                properties=ViewEntity.from_id(prop.edge_source) if prop.edge_source else None,
+                type=DMSNodeEntity.from_reference(prop.type),
+            )
         elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):
             return ViewPropertyEntity.from_id(prop.through)
         elif isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "inwards":
@@ -382,7 +390,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             container_prop = self._container_prop_unsafe(cast(dm.MappedPropertyApply, prop))
             if isinstance(container_prop.type, dm.DirectRelation):
                 if prop.source is None or prop.source not in self._all_view_ids:
-                    # The warning is issued when the DMS Rules are created.
                     return DMSUnknownEntity()
                 else:
                     return ViewEntity.from_id(prop.source)
