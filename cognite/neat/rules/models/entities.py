@@ -18,11 +18,9 @@ from pydantic import (
     BeforeValidator,
     Field,
     PlainSerializer,
-    field_validator,
     model_serializer,
     model_validator,
 )
-from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.issues.errors import NeatTypeError
 from cognite.neat.rules.models.data_types import DataType
@@ -527,13 +525,6 @@ class EdgeViewEntity(ViewEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.edge_properties
     edge_type: DMSNodeEntity = Field(alias="type")
     properties: ViewEntity | None = None
-
-    @field_validator("properties", "edge_type", mode="before")
-    def parse_string(cls, value: Any, info: ValidationInfo) -> Any:
-        if isinstance(value, str) and isinstance(info.field_name, str):
-            if field_cls := cls.model_fields[info.field_name].annotation:
-                return field_cls.load(value, space=info.data.get("prefix"), version=info.data.get("version"))
-        return value
 
 
 class ReferenceEntity(ClassEntity):
