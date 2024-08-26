@@ -8,11 +8,11 @@ from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.rules import importers
 from cognite.neat.rules.models import DMSRules, InformationRules
 from cognite.neat.rules.models.dms import (
-    DMSContainerInput,
+    DMSInputContainer,
+    DMSInputMetadata,
+    DMSInputProperty,
     DMSInputRules,
-    DMSMetadataInput,
-    DMSPropertyInput,
-    DMSViewInput,
+    DMSInputView,
 )
 from cognite.neat.rules.transformers import ImporterPipeline
 
@@ -168,7 +168,7 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
 )
 
 BASE_MODEL: DMSRules = DMSInputRules(
-    metadata=DMSMetadataInput(
+    metadata=DMSInputMetadata(
         schema_="partial",
         space="sp_base",
         external_id="Base",
@@ -177,10 +177,10 @@ BASE_MODEL: DMSRules = DMSInputRules(
         data_model_type="enterprise",
         creator="Anders",
     ),
-    views=[DMSViewInput(view="Entity")],
-    containers=[DMSContainerInput(container="Entity")],
+    views=[DMSInputView(view="Entity")],
+    containers=[DMSInputContainer(container="Entity")],
     properties=[
-        DMSPropertyInput(
+        DMSInputProperty(
             view="Entity",
             view_property="name",
             value_type="text",

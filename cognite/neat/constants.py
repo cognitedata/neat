@@ -30,3 +30,6 @@ def get_default_prefixes() -> dict[str, Namespace]:
 DEFAULT_URI = ""
 
 DEFAULT_DOCS_URL = "https://cognite-neat.readthedocs-hosted.com/en/latest/"
+
+DMS_CONTAINER_PROPERTY_SIZE_LIMIT = 100
+DMS_VIEW_CONTAINER_SIZE_LIMIT = 10

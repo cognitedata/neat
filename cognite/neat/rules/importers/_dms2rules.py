@@ -35,10 +35,10 @@ from cognite.neat.rules.models import (
 )
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.dms import (
-    DMSContainerInput,
-    DMSMetadataInput,
-    DMSPropertyInput,
-    DMSViewInput,
+    DMSInputContainer,
+    DMSInputMetadata,
+    DMSInputProperty,
+    DMSInputView,
 )
 from cognite.neat.rules.models.entities import (
     ClassEntity,
@@ -64,8 +64,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         self,
         schema: DMSSchema,
         read_issues: Sequence[NeatIssue] | None = None,
-        metadata: DMSMetadataInput | None = None,
-        ref_metadata: DMSMetadataInput | None = None,
+        metadata: DMSInputMetadata | None = None,
+        ref_metadata: DMSInputMetadata | None = None,
     ):
         # Calling this root schema to distinguish it from
         # * User Schema
@@ -160,8 +160,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         cls,
         model: dm.DataModel[dm.View] | dm.DataModelApply,
         has_reference: bool = False,
-    ) -> DMSMetadataInput:
-        description, creator = DMSMetadataInput._get_description_and_creator(model.description)
+    ) -> DMSInputMetadata:
+        description, creator = DMSInputMetadata._get_description_and_creator(model.description)
 
         if isinstance(model, dm.DataModel):
             created = ms_to_datetime(model.created_time)
@@ -170,7 +170,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             now = datetime.now().replace(microsecond=0)
             created = now
             updated = now
-        return DMSMetadataInput(
+        return DMSInputMetadata(
             schema_="complete",
             data_model_type="solution" if has_reference else "enterprise",
             extension="addition",
@@ -241,12 +241,12 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         self,
         data_model: dm.DataModelApply,
         schema: DMSSchema,
-        metadata: DMSMetadataInput | None = None,
+        metadata: DMSInputMetadata | None = None,
         data_model_type: DataModelType | None = None,
         schema_completeness: SchemaCompleteness | None = None,
         has_reference: bool = False,
     ) -> DMSInputRules:
-        properties: list[DMSPropertyInput] = []
+        properties: list[DMSInputProperty] = []
         for view_id, view in schema.views.items():
             view_entity = ViewEntity.from_id(view_id)
             class_entity = view_entity.as_class()
@@ -259,7 +259,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
         }
 
-        metadata = metadata or DMSMetadataInput.from_data_model(data_model, has_reference)
+        metadata = metadata or DMSInputMetadata.from_data_model(data_model, has_reference)
         if data_model_type is not None:
             metadata.data_model_type = str(data_model_type)  # type: ignore[assignment]
         if schema_completeness is not None:
@@ -267,9 +267,9 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         return DMSInputRules(
             metadata=metadata,
             properties=properties,
-            containers=[DMSContainerInput.from_container(container) for container in schema.containers.values()],
+            containers=[DMSInputContainer.from_container(container) for container in schema.containers.values()],
             views=[
-                DMSViewInput.from_view(view, in_model=view_id in data_model_view_ids)
+                DMSInputView.from_view(view, in_model=view_id in data_model_view_ids)
                 for view_id, view in schema.views.items()
             ],
         )
@@ -277,10 +277,10 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     @classmethod
     def _create_default_metadata(
         cls, views: Sequence[dm.View | dm.ViewApply], is_ref: bool = False
-    ) -> DMSMetadataInput:
+    ) -> DMSInputMetadata:
         now = datetime.now().replace(microsecond=0)
         space = Counter(view.space for view in views).most_common(1)[0][0]
-        return DMSMetadataInput(
+        return DMSInputMetadata(
             schema_="complete",
             extension="addition",
             data_model_type="enterprise" if is_ref else "solution",
@@ -294,7 +294,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
     def _create_dms_property(
         self, prop_id: str, prop: ViewPropertyApply, view_entity: ViewEntity, class_entity: ClassEntity
-    ) -> DMSPropertyInput | None:
+    ) -> DMSInputProperty | None:
         if isinstance(prop, dm.MappedPropertyApply) and prop.container not in self._all_containers_by_id:
             self.issue_list.append(
                 ResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
@@ -330,7 +330,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         if value_type is None:
             return None
 
-        return DMSPropertyInput(
+        return DMSInputProperty(
             class_=str(class_entity),
             property_=prop_id,
             description=prop.description,

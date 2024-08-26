@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 from collections.abc import Iterable
 from typing import Any
@@ -14,15 +15,15 @@ from cognite.neat.issues.errors import (
     ResourceNotFoundError,
 )
 from cognite.neat.rules.importers import DMSImporter
-from cognite.neat.rules.models import DMSRules, ExtensionCategory, InformationRules
+from cognite.neat.rules.models import DMSRules, InformationRules
 from cognite.neat.rules.models.data_types import String
 from cognite.neat.rules.models.dms import (
-    DMSContainerInput,
+    DMSInputContainer,
+    DMSInputMetadata,
+    DMSInputProperty,
     DMSInputRules,
-    DMSMetadataInput,
-    DMSPropertyInput,
+    DMSInputView,
     DMSSchema,
-    DMSViewInput,
 )
 from cognite.neat.rules.transformers import (
     DMSToInformation,
@@ -38,7 +39,7 @@ from tests.data import car
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
-            metadata=DMSMetadataInput(
+            metadata=DMSInputMetadata(
                 schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
@@ -49,7 +50,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSPropertyInput(
+                DMSInputProperty(
                     class_="WindTurbine",
                     property_="name",
                     value_type="text",
@@ -58,7 +59,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     view="Asset",
                     view_property="name",
                 ),
-                DMSPropertyInput(
+                DMSInputProperty(
                     class_="WindTurbine",
                     property_="ratedPower",
                     value_type="float64",
@@ -67,7 +68,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     view="WindTurbine",
                     view_property="ratedPower",
                 ),
-                DMSPropertyInput(
+                DMSInputProperty(
                     class_="WindFarm",
                     property_="WindTurbines",
                     value_type="WindTurbine",
@@ -77,13 +78,13 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             containers=[
-                DMSContainerInput(container="Asset", class_="Asset"),
-                DMSContainerInput(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
+                DMSInputContainer(container="Asset", class_="Asset"),
+                DMSInputContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="Asset"),
             ],
             views=[
-                DMSViewInput("Asset"),
-                DMSViewInput(view="WindTurbine", implements="Asset"),
-                DMSViewInput(view="WindFarm"),
+                DMSInputView("Asset"),
+                DMSInputView(view="WindTurbine", implements="Asset"),
+                DMSInputView(view="WindFarm"),
             ],
         ),
         DMSSchema(
@@ -179,7 +180,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     )
 
     dms_rules = DMSInputRules(
-        metadata=DMSMetadataInput(
+        metadata=DMSInputMetadata(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
@@ -189,7 +190,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2024-03-16T23:00:00",
         ),
         properties=[
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="WindFarm",
                 property_="name",
                 value_type="text",
@@ -198,7 +199,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="WindFarm",
                 view_property="name",
             ),
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="WindFarm",
                 property_="windTurbines",
                 value_type="WindTurbine",
@@ -209,7 +210,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="WindFarm",
                 view_property="windTurbines",
             ),
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="WindTurbine",
                 property_="name",
                 value_type="text",
@@ -220,12 +221,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ],
         views=[
-            DMSViewInput(view="WindFarm", class_="WindFarm"),
-            DMSViewInput(view="WindTurbine", class_="WindTurbine"),
+            DMSInputView(view="WindFarm", class_="WindFarm"),
+            DMSInputView(view="WindTurbine", class_="WindTurbine"),
         ],
         containers=[
-            DMSContainerInput(container="Asset", class_="Asset"),
-            DMSContainerInput(class_="WindFarm", container="WindFarm", constraint="Asset"),
+            DMSInputContainer(container="Asset", class_="Asset"),
+            DMSInputContainer(class_="WindFarm", container="WindFarm", constraint="Asset"),
         ],
     )
     expected_schema = DMSSchema(
@@ -303,7 +304,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     )
 
     dms_rules = DMSInputRules(
-        metadata=DMSMetadataInput(
+        metadata=DMSInputMetadata(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
@@ -313,7 +314,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2024-03-17T08:30:00",
         ),
         properties=[
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="Asset",
                 property_="name",
                 value_type="text",
@@ -322,7 +323,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Asset",
                 view_property="name",
             ),
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="WindTurbine",
                 property_="maxPower",
                 value_type="float64",
@@ -333,12 +334,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ],
         views=[
-            DMSViewInput(view="Asset", class_="Asset", in_model=False),
-            DMSViewInput(view="WindTurbine", class_="WindTurbine", implements="Asset"),
+            DMSInputView(view="Asset", class_="Asset", in_model=False),
+            DMSInputView(view="WindTurbine", class_="WindTurbine", implements="Asset"),
         ],
         containers=[
-            DMSContainerInput(container="Asset", class_="Asset"),
-            DMSContainerInput(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
+            DMSInputContainer(container="Asset", class_="Asset"),
+            DMSInputContainer(class_="WindTurbine", container="WindTurbine", constraint="Asset"),
         ],
     )
     expected_schema = DMSSchema(
@@ -405,7 +406,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     )
 
     dms_rules = DMSInputRules(
-        metadata=DMSMetadataInput(
+        metadata=DMSInputMetadata(
             # This is a complete schema, but we do not want to trigger the full validation
             schema_="partial",
             space="my_space",
@@ -416,7 +417,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2024-03-17T11:00:00",
         ),
         properties=[
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="Asset",
                 property_="name",
                 value_type="text",
@@ -425,7 +426,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Asset",
                 view_property="name",
             ),
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="Asset",
                 property_="timeseries",
                 value_type="Timeseries(property=asset)",
@@ -434,7 +435,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Asset",
                 view_property="timeseries",
             ),
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="Asset",
                 property_="root",
                 value_type="Asset",
@@ -444,7 +445,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Asset",
                 view_property="root",
             ),
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="Asset",
                 property_="children",
                 value_type="Asset(property=root)",
@@ -453,7 +454,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Asset",
                 view_property="children",
             ),
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="Timeseries",
                 property_="name",
                 value_type="text",
@@ -462,7 +463,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Timeseries",
                 view_property="name",
             ),
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="Timeseries",
                 property_="asset",
                 value_type="Asset",
@@ -472,7 +473,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Timeseries",
                 view_property="asset",
             ),
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="Timeseries",
                 property_="activities",
                 value_type="Activity",
@@ -483,7 +484,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="Timeseries",
                 view_property="activities",
             ),
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="Activity",
                 property_="timeseries",
                 value_type="Timeseries(property=activities)",
@@ -494,14 +495,14 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ],
         views=[
-            DMSViewInput(view="Asset", class_="Asset"),
-            DMSViewInput(view="Timeseries", class_="Timeseries"),
-            DMSViewInput(view="Activity", class_="Activity"),
+            DMSInputView(view="Asset", class_="Asset"),
+            DMSInputView(view="Timeseries", class_="Timeseries"),
+            DMSInputView(view="Activity", class_="Activity"),
         ],
         containers=[
-            DMSContainerInput(container="Asset", class_="Asset"),
-            DMSContainerInput(container="Timeseries", class_="Timeseries"),
-            DMSContainerInput(container="Activity", class_="Activity"),
+            DMSInputContainer(container="Asset", class_="Asset"),
+            DMSInputContainer(container="Timeseries", class_="Timeseries"),
+            DMSInputContainer(container="Activity", class_="Activity"),
         ],
     )
 
@@ -621,7 +622,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     )
 
     dms_rules = DMSInputRules(
-        metadata=DMSMetadataInput(
+        metadata=DMSInputMetadata(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
@@ -631,7 +632,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2024-03-17T11:00:00",
         ),
         properties=[
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="generating_unit",
                 property_="display_name",
                 value_type="text",
@@ -642,10 +643,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             )
         ],
         views=[
-            DMSViewInput(view="generating_unit", class_="generating_unit", filter_="NodeType(sp_other:wind_turbine)"),
+            DMSInputView(view="generating_unit", class_="generating_unit", filter_="NodeType(sp_other:wind_turbine)"),
         ],
         containers=[
-            DMSContainerInput(container="generating_unit", class_="generating_unit"),
+            DMSInputContainer(container="generating_unit", class_="generating_unit"),
         ],
     )
 
@@ -694,7 +695,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     )
 
     dms_rules = DMSInputRules(
-        metadata=DMSMetadataInput(
+        metadata=DMSInputMetadata(
             schema_="complete",
             space="sp_solution",
             external_id="solution_model",
@@ -704,7 +705,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2021-01-01T00:00:00",
         ),
         properties=[
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="Asset",
                 property_="kinderen",
                 value_type="Asset",
@@ -715,7 +716,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ],
         views=[
-            DMSViewInput(view="Asset", class_="Asset"),
+            DMSInputView(view="Asset", class_="Asset"),
         ],
     )
 
@@ -766,61 +767,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
 def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
-        {
-            "metadata": {
-                "schema_": "partial",
-                "space": "my_space",
-                "external_id": "my_data_model",
-                "version": "1",
-                "creator": "Anders",
-                "created": "2021-01-01T00:00:00",
-                "updated": "2021-01-01T00:00:00",
-            },
-            "properties": {
-                "data": [
-                    {
-                        "class_": "WindTurbine",
-                        "property_": "name",
-                        "value_type": "tEXt",
-                        "container": "sp_core:Asset",
-                        "container_property": "name",
-                        "view": "sp_core:Asset",
-                        "view_property": "name",
-                    },
-                    {
-                        "class_": "WindTurbine",
-                        "property_": "ratedPower",
-                        "value_type": "float64",
-                        "container": "GeneratingUnit",
-                        "container_property": "ratedPower",
-                        "view": "WindTurbine",
-                        "view_property": "ratedPower",
-                    },
-                ]
-            },
-            "containers": {
-                "data": [
-                    {"class_": "Asset", "container": "sp_core:Asset"},
-                    {
-                        "class_": "GeneratingUnit",
-                        "container": "GeneratingUnit",
-                        "constraint": "sp_core:Asset",
-                    },
-                ]
-            },
-            "views": {
-                "data": [
-                    {"class_": "Asset", "view": "sp_core:Asset"},
-                    {
-                        "class_": "WindTurbine",
-                        "view": "WindTurbine",
-                        "implements": "sp_core:Asset",
-                    },
-                ]
-            },
-        },
         DMSInputRules(
-            metadata=DMSMetadataInput(
+            metadata=DMSInputMetadata(
                 schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
@@ -830,16 +778,16 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSPropertyInput(
+                DMSInputProperty(
                     class_="WindTurbine",
                     property_="name",
-                    value_type="text",
+                    value_type="tEXt",
                     container="sp_core:Asset",
                     container_property="name",
-                    view="sp_core:Asset(version=1)",
+                    view="sp_core:Asset",
                     view_property="name",
                 ),
-                DMSPropertyInput(
+                DMSInputProperty(
                     class_="WindTurbine",
                     property_="ratedPower",
                     value_type="float64",
@@ -850,98 +798,59 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             containers=[
-                DMSContainerInput(container="sp_core:Asset", class_="Asset"),
-                DMSContainerInput(class_="GeneratingUnit", container="GeneratingUnit", constraint="sp_core:Asset"),
+                DMSInputContainer(container="sp_core:Asset", class_="Asset"),
+                DMSInputContainer(container="GeneratingUnit", constraint="sp_core:Asset", class_="GeneratingUnit"),
             ],
             views=[
-                DMSViewInput(view="sp_core:Asset(version=1)"),
-                DMSViewInput(class_="WindTurbine", view="WindTurbine", implements="sp_core:Asset(version=1)"),
+                DMSInputView(class_="sp_core:Asset", view="sp_core:Asset"),
+                DMSInputView(class_="WindTurbine", view="WindTurbine", implements="sp_core:Asset"),
+            ],
+        ),
+        DMSInputRules(
+            metadata=DMSInputMetadata(
+                schema_="partial",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator="Anders",
+                created="2021-01-01T00:00:00",
+                updated="2021-01-01T00:00:00",
+            ),
+            properties=[
+                DMSInputProperty(
+                    class_="WindTurbine",
+                    property_="name",
+                    value_type="text",
+                    container="sp_core:Asset",
+                    container_property="name",
+                    view="sp_core:Asset(version=1)",
+                    view_property="name",
+                ),
+                DMSInputProperty(
+                    class_="WindTurbine",
+                    property_="ratedPower",
+                    value_type="float64",
+                    container="GeneratingUnit",
+                    container_property="ratedPower",
+                    view="WindTurbine",
+                    view_property="ratedPower",
+                ),
+            ],
+            containers=[
+                DMSInputContainer(container="sp_core:Asset", class_="Asset"),
+                DMSInputContainer(class_="GeneratingUnit", container="GeneratingUnit", constraint="sp_core:Asset"),
+            ],
+            views=[
+                DMSInputView(view="sp_core:Asset(version=1)"),
+                DMSInputView(class_="WindTurbine", view="WindTurbine", implements="sp_core:Asset(version=1)"),
             ],
         ).as_rules(),
         id="Two properties, two containers, two views. Primary data types, no relations.",
     )
 
     yield pytest.param(
-        {
-            "metadata": {
-                "schema_": "complete",
-                "space": "my_space",
-                "external_id": "my_data_model",
-                "version": "1",
-                "creator": "Anders",
-                "created": "2021-01-01T00:00:00",
-                "updated": "2021-01-01T00:00:00",
-            },
-            "properties": {
-                "data": [
-                    {
-                        "class_": "Plant",
-                        "property_": "name",
-                        "value_type": "text",
-                        "container": "Asset",
-                        "container_property": "name",
-                        "view": "Asset",
-                        "view_property": "name",
-                    },
-                    {
-                        "class_": "Plant",
-                        "property_": "generators",
-                        "connection": "edge",
-                        "value_type": "Generator",
-                        "view": "Plant",
-                        "view_property": "generators",
-                    },
-                    {
-                        "class_": "Plant",
-                        "property_": "reservoir",
-                        "connection": "direct",
-                        "value_type": "Reservoir",
-                        "container": "Asset",
-                        "container_property": "child",
-                        "view": "Plant",
-                        "view_property": "reservoir",
-                    },
-                    {
-                        "class_": "Generator",
-                        "property_": "name",
-                        "value_type": "text",
-                        "container": "Asset",
-                        "container_property": "name",
-                        "view": "Asset",
-                        "view_property": "name",
-                    },
-                    {
-                        "class_": "Reservoir",
-                        "property_": "name",
-                        "value_type": "text",
-                        "container": "Asset",
-                        "container_property": "name",
-                        "view": "Asset",
-                        "view_property": "name",
-                    },
-                ]
-            },
-            "containers": {
-                "data": [
-                    {"class_": "Asset", "container": "Asset"},
-                    {
-                        "class_": "Plant",
-                        "container": "Plant",
-                        "constraint": "Asset",
-                    },
-                ]
-            },
-            "views": {
-                "data": [
-                    {"class_": "Asset", "view": "Asset"},
-                    {"class_": "Plant", "view": "Plant", "implements": "Asset"},
-                    {"class_": "Generator", "view": "Generator", "implements": "Asset"},
-                    {"class_": "Reservoir", "view": "Reservoir", "implements": "Asset"},
-                ]
-            },
-        },
         DMSInputRules(
-            metadata=DMSMetadataInput(
+            metadata=DMSInputMetadata(
                 schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
@@ -951,7 +860,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSPropertyInput(
+                DMSInputProperty(
                     class_="Plant",
                     property_="name",
                     value_type="text",
@@ -960,25 +869,25 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     view="Asset",
                     view_property="name",
                 ),
-                DMSPropertyInput(
+                DMSInputProperty(
                     class_="Plant",
                     property_="generators",
-                    value_type="Generator",
                     connection="edge",
+                    value_type="Generator",
                     view="Plant",
                     view_property="generators",
                 ),
-                DMSPropertyInput(
+                DMSInputProperty(
                     class_="Plant",
                     property_="reservoir",
-                    value_type="Reservoir",
                     connection="direct",
+                    value_type="Reservoir",
                     container="Asset",
                     container_property="child",
                     view="Plant",
                     view_property="reservoir",
                 ),
-                DMSPropertyInput(
+                DMSInputProperty(
                     class_="Generator",
                     property_="name",
                     value_type="text",
@@ -987,7 +896,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     view="Asset",
                     view_property="name",
                 ),
-                DMSPropertyInput(
+                DMSInputProperty(
                     class_="Reservoir",
                     property_="name",
                     value_type="text",
@@ -998,14 +907,86 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             containers=[
-                DMSContainerInput(container="Asset", class_="Asset"),
-                DMSContainerInput(class_="Plant", container="Plant", constraint="Asset"),
+                DMSInputContainer(class_="Asset", container="Asset"),
+                DMSInputContainer(
+                    class_="Plant",
+                    container="Plant",
+                    constraint="Asset",
+                ),
             ],
             views=[
-                DMSViewInput(view="Asset", class_="Asset"),
-                DMSViewInput(class_="Plant", view="Plant", implements="Asset"),
-                DMSViewInput(class_="Generator", view="Generator", implements="Asset"),
-                DMSViewInput(class_="Reservoir", view="Reservoir", implements="Asset"),
+                DMSInputView(class_="Asset", view="Asset"),
+                DMSInputView(class_="Plant", view="Plant", implements="Asset"),
+                DMSInputView(class_="Generator", view="Generator", implements="Asset"),
+                DMSInputView(class_="Reservoir", view="Reservoir", implements="Asset"),
+            ],
+        ),
+        DMSInputRules(
+            metadata=DMSInputMetadata(
+                schema_="complete",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator="Anders",
+                created="2021-01-01T00:00:00",
+                updated="2021-01-01T00:00:00",
+            ),
+            properties=[
+                DMSInputProperty(
+                    class_="Plant",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSInputProperty(
+                    class_="Plant",
+                    property_="generators",
+                    value_type="Generator",
+                    connection="edge",
+                    view="Plant",
+                    view_property="generators",
+                ),
+                DMSInputProperty(
+                    class_="Plant",
+                    property_="reservoir",
+                    value_type="Reservoir",
+                    connection="direct",
+                    container="Asset",
+                    container_property="child",
+                    view="Plant",
+                    view_property="reservoir",
+                ),
+                DMSInputProperty(
+                    class_="Generator",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+                DMSInputProperty(
+                    class_="Reservoir",
+                    property_="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
+                    view="Asset",
+                    view_property="name",
+                ),
+            ],
+            containers=[
+                DMSInputContainer(container="Asset", class_="Asset"),
+                DMSInputContainer(class_="Plant", container="Plant", constraint="Asset"),
+            ],
+            views=[
+                DMSInputView(view="Asset", class_="Asset"),
+                DMSInputView(class_="Plant", view="Plant", implements="Asset"),
+                DMSInputView(class_="Generator", view="Generator", implements="Asset"),
+                DMSInputView(class_="Reservoir", view="Reservoir", implements="Asset"),
             ],
         ).as_rules(),
         id="Five properties, two containers, four views. Direct relations and Multiedge.",
@@ -1015,46 +996,42 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
 def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     container_id = dm.ContainerId("my_space", "GeneratingUnit")
     yield pytest.param(
-        {
-            "metadata": {
-                "schema_": "partial",
-                "space": "my_space",
-                "external_id": "my_data_model",
-                "version": "1",
-                "creator": "Anders",
-                "created": "2021-01-01T00:00:00",
-                "updated": "2021-01-01T00:00:00",
-            },
-            "properties": {
-                "data": [
-                    {
-                        "class_": "WindTurbine",
-                        "property_": "maxPower",
-                        "value_type": "float64",
-                        "is_list": "false",
-                        "container": "GeneratingUnit",
-                        "container_property": "maxPower",
-                        "view": "sp_core:Asset",
-                        "view_property": "maxPower",
-                    },
-                    {
-                        "class_": "HydroGenerator",
-                        "property_": "maxPower",
-                        "value_type": "float32",
-                        "container": "GeneratingUnit",
-                        "container_property": "maxPower",
-                        "view": "sp_core:Asset",
-                        "view_property": "maxPower",
-                    },
-                ]
-            },
-            "views": {
-                "data": [
-                    {"view": "WindTurbine", "class_": "WindTurbine"},
-                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
-                ]
-            },
-        },
+        DMSInputRules(
+            metadata=DMSInputMetadata(
+                schema_="partial",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator="Anders",
+                created="2021-01-01T00:00:00",
+                updated="2021-01-01T00:00:00",
+            ),
+            properties=[
+                DMSInputProperty(
+                    class_="WindTurbine",
+                    property_="maxPower",
+                    value_type="float64",
+                    is_list=False,
+                    container="GeneratingUnit",
+                    container_property="maxPower",
+                    view="sp_core:Asset",
+                    view_property="maxPower",
+                ),
+                DMSInputProperty(
+                    class_="HydroGenerator",
+                    property_="maxPower",
+                    value_type="float32",
+                    container="GeneratingUnit",
+                    container_property="maxPower",
+                    view="sp_core:Asset",
+                    view_property="maxPower",
+                ),
+            ],
+            views=[
+                DMSInputView(view="WindTurbine"),
+                DMSInputView(view="sp_core:Asset"),
+            ],
+        ),
         [
             PropertyDefinitionDuplicatedError(
                 container_id, "container", "maxPower", frozenset({"float64", "float32"}), (0, 1), "rows"
@@ -1062,48 +1039,45 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
         ],
         id="Inconsistent container definition value type",
     )
+
     yield pytest.param(
-        {
-            "metadata": {
-                "schema_": "partial",
-                "space": "my_space",
-                "external_id": "my_data_model",
-                "version": "1",
-                "creator": "Anders",
-                "created": "2021-01-01T00:00:00",
-                "updated": "2021-01-01T00:00:00",
-            },
-            "properties": {
-                "data": [
-                    {
-                        "class_": "WindTurbine",
-                        "property_": "maxPower",
-                        "value_type": "float64",
-                        "is_list": "true",
-                        "container": "GeneratingUnit",
-                        "container_property": "maxPower",
-                        "view": "sp_core:Asset",
-                        "view_property": "maxPower",
-                    },
-                    {
-                        "class_": "HydroGenerator",
-                        "property_": "maxPower",
-                        "value_type": "float64",
-                        "is_list": "false",
-                        "container": "GeneratingUnit",
-                        "container_property": "maxPower",
-                        "view": "sp_core:Asset",
-                        "view_property": "maxPower",
-                    },
-                ]
-            },
-            "views": {
-                "data": [
-                    {"view": "WindTurbine", "class_": "WindTurbine"},
-                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
-                ]
-            },
-        },
+        DMSInputRules(
+            metadata=DMSInputMetadata(
+                schema_="partial",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator="Anders",
+                created="2021-01-01T00:00:00",
+                updated="2021-01-01T00:00:00",
+            ),
+            properties=[
+                DMSInputProperty(
+                    class_="WindTurbine",
+                    property_="maxPower",
+                    value_type="float64",
+                    is_list=True,
+                    container="GeneratingUnit",
+                    container_property="maxPower",
+                    view="sp_core:Asset",
+                    view_property="maxPower",
+                ),
+                DMSInputProperty(
+                    class_="HydroGenerator",
+                    property_="maxPower",
+                    value_type="float64",
+                    is_list=False,
+                    container="GeneratingUnit",
+                    container_property="maxPower",
+                    view="sp_core:Asset",
+                    view_property="maxPower",
+                ),
+            ],
+            views=[
+                DMSInputView(view="WindTurbine"),
+                DMSInputView(view="sp_core:Asset"),
+            ],
+        ),
         [
             PropertyDefinitionDuplicatedError(
                 container_id, "container", "maxPower", frozenset({True, False}), (0, 1), "rows"
@@ -1112,47 +1086,43 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
         id="Inconsistent container definition isList",
     )
     yield pytest.param(
-        {
-            "metadata": {
-                "schema_": "partial",
-                "space": "my_space",
-                "external_id": "my_data_model",
-                "version": "1",
-                "creator": "Anders",
-                "created": "2021-01-01T00:00:00",
-                "updated": "2021-01-01T00:00:00",
-            },
-            "properties": {
-                "data": [
-                    {
-                        "class_": "WindTurbine",
-                        "property_": "maxPower",
-                        "value_type": "float64",
-                        "nullable": "true",
-                        "container": "GeneratingUnit",
-                        "container_property": "maxPower",
-                        "view": "sp_core:Asset",
-                        "view_property": "maxPower",
-                    },
-                    {
-                        "class_": "HydroGenerator",
-                        "property_": "maxPower",
-                        "value_type": "float64",
-                        "nullable": "false",
-                        "container": "GeneratingUnit",
-                        "container_property": "maxPower",
-                        "view": "sp_core:Asset",
-                        "view_property": "maxPower",
-                    },
-                ]
-            },
-            "views": {
-                "data": [
-                    {"view": "WindTurbine", "class_": "WindTurbine"},
-                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
-                ]
-            },
-        },
+        DMSInputRules(
+            metadata=DMSInputMetadata(
+                schema_="partial",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator="Anders",
+                created="2021-01-01T00:00:00",
+                updated="2021-01-01T00:00:00",
+            ),
+            properties=[
+                DMSInputProperty(
+                    class_="WindTurbine",
+                    property_="maxPower",
+                    value_type="float64",
+                    nullable=True,
+                    container="GeneratingUnit",
+                    container_property="maxPower",
+                    view="sp_core:Asset",
+                    view_property="maxPower",
+                ),
+                DMSInputProperty(
+                    class_="HydroGenerator",
+                    property_="maxPower",
+                    value_type="float64",
+                    nullable=False,
+                    container="GeneratingUnit",
+                    container_property="maxPower",
+                    view="sp_core:Asset",
+                    view_property="maxPower",
+                ),
+            ],
+            views=[
+                DMSInputView(view="WindTurbine"),
+                DMSInputView(view="sp_core:Asset"),
+            ],
+        ),
         [
             PropertyDefinitionDuplicatedError(
                 container_id, "container", "maxPower", frozenset({True, False}), (0, 1), "rows"
@@ -1161,47 +1131,43 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
         id="Inconsistent container definition nullable",
     )
     yield pytest.param(
-        {
-            "metadata": {
-                "schema_": "partial",
-                "space": "my_space",
-                "external_id": "my_data_model",
-                "version": "1",
-                "creator": "Anders",
-                "created": "2021-01-01T00:00:00",
-                "updated": "2021-01-01T00:00:00",
-            },
-            "properties": {
-                "data": [
-                    {
-                        "class_": "WindTurbine",
-                        "property_": "name",
-                        "value_type": "text",
-                        "container": "GeneratingUnit",
-                        "container_property": "name",
-                        "view": "sp_core:Asset",
-                        "view_property": "maxPower",
-                        "index": "name",
-                    },
-                    {
-                        "class_": "HydroGenerator",
-                        "property_": "name",
-                        "value_type": "text",
-                        "container": "GeneratingUnit",
-                        "container_property": "name",
-                        "view": "sp_core:Asset",
-                        "view_property": "maxPower",
-                        "index": "name_index",
-                    },
-                ]
-            },
-            "views": {
-                "data": [
-                    {"view": "WindTurbine", "class_": "WindTurbine"},
-                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
-                ]
-            },
-        },
+        DMSInputRules(
+            metadata=DMSInputMetadata(
+                schema_="partial",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator="Anders",
+                created="2021-01-01T00:00:00",
+                updated="2021-01-01T00:00:00",
+            ),
+            properties=[
+                DMSInputProperty(
+                    class_="WindTurbine",
+                    property_="name",
+                    value_type="text",
+                    container="GeneratingUnit",
+                    container_property="name",
+                    view="sp_core:Asset",
+                    view_property="maxPower",
+                    index="name",
+                ),
+                DMSInputProperty(
+                    class_="HydroGenerator",
+                    property_="name",
+                    value_type="text",
+                    container="GeneratingUnit",
+                    container_property="name",
+                    view="sp_core:Asset",
+                    view_property="maxPower",
+                    index="name_index",
+                ),
+            ],
+            views=[
+                DMSInputView(view="WindTurbine"),
+                DMSInputView(view="sp_core:Asset"),
+            ],
+        ),
         [
             PropertyDefinitionDuplicatedError(
                 container_id, "container", "name", frozenset({"name", "name_index"}), (0, 1), "rows"
@@ -1210,47 +1176,43 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
         id="Inconsistent container definition index",
     )
     yield pytest.param(
-        {
-            "metadata": {
-                "schema_": "partial",
-                "space": "my_space",
-                "external_id": "my_data_model",
-                "version": "1",
-                "creator": "Anders",
-                "created": "2021-01-01T00:00:00",
-                "updated": "2021-01-01T00:00:00",
-            },
-            "properties": {
-                "data": [
-                    {
-                        "class_": "WindTurbine",
-                        "property_": "name",
-                        "value_type": "text",
-                        "container": "GeneratingUnit",
-                        "container_property": "name",
-                        "view": "sp_core:Asset",
-                        "view_property": "maxPower",
-                        "constraint": "unique_name",
-                    },
-                    {
-                        "class_": "HydroGenerator",
-                        "property_": "name",
-                        "value_type": "text",
-                        "container": "GeneratingUnit",
-                        "container_property": "name",
-                        "view": "sp_core:Asset",
-                        "view_property": "maxPower",
-                        "constraint": "name",
-                    },
-                ]
-            },
-            "views": {
-                "data": [
-                    {"view": "WindTurbine", "class_": "WindTurbine"},
-                    {"view": "sp_core:Asset", "class_": "sp_core:Asset"},
-                ]
-            },
-        },
+        DMSInputRules(
+            metadata=DMSInputMetadata(
+                schema_="partial",
+                space="my_space",
+                external_id="my_data_model",
+                version="1",
+                creator="Anders",
+                created="2021-01-01T00:00:00",
+                updated="2021-01-01T00:00:00",
+            ),
+            properties=[
+                DMSInputProperty(
+                    class_="WindTurbine",
+                    property_="name",
+                    value_type="text",
+                    container="GeneratingUnit",
+                    container_property="name",
+                    view="sp_core:Asset",
+                    view_property="maxPower",
+                    constraint="unique_name",
+                ),
+                DMSInputProperty(
+                    class_="HydroGenerator",
+                    property_="name",
+                    value_type="text",
+                    container="GeneratingUnit",
+                    container_property="name",
+                    view="sp_core:Asset",
+                    view_property="maxPower",
+                    constraint="name",
+                ),
+            ],
+            views=[
+                DMSInputView(view="WindTurbine"),
+                DMSInputView(view="sp_core:Asset"),
+            ],
+        ),
         [
             PropertyDefinitionDuplicatedError(
                 container_id, "container", "name", frozenset({"unique_name", "name"}), (0, 1), "rows"
@@ -1262,7 +1224,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
 
 def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
     last_rules = DMSInputRules(
-        metadata=DMSMetadataInput(
+        metadata=DMSInputMetadata(
             schema_="complete",
             space="my_space",
             external_id="my_data_model",
@@ -1272,7 +1234,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             updated="2021-01-01T00:00:00",
         ),
         properties=[
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="WindTurbine",
                 property_="name",
                 value_type="text",
@@ -1283,15 +1245,15 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             ),
         ],
         containers=[
-            DMSContainerInput(container="Asset", class_="Asset"),
+            DMSInputContainer(container="Asset", class_="Asset"),
         ],
         views=[
-            DMSViewInput(view="Asset", class_="Asset"),
+            DMSInputView(view="Asset", class_="Asset"),
         ],
-    ).as_rules()
+    )
 
     changing_container = DMSInputRules(
-        metadata=DMSMetadataInput(
+        metadata=DMSInputMetadata(
             schema_="complete",
             extension="addition",
             space="my_space",
@@ -1302,7 +1264,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             updated="2021-01-01T00:00:00",
         ),
         properties=[
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="WindTurbine",
                 property_="name",
                 value_type="json",
@@ -1313,13 +1275,13 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             ),
         ],
         containers=[
-            DMSContainerInput(container="Asset", class_="Asset"),
+            DMSInputContainer(container="Asset", class_="Asset"),
         ],
         views=[
-            DMSViewInput(view="Asset", class_="Asset"),
+            DMSInputView(view="Asset", class_="Asset"),
         ],
         last=last_rules,
-    ).as_rules()
+    )
 
     yield pytest.param(
         changing_container,
@@ -1335,7 +1297,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
     )
 
     changing_view = DMSInputRules(
-        metadata=DMSMetadataInput(
+        metadata=DMSInputMetadata(
             schema_="complete",
             extension="addition",
             space="my_space",
@@ -1346,7 +1308,7 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             updated="2021-01-01T00:00:00",
         ),
         properties=[
-            DMSPropertyInput(
+            DMSInputProperty(
                 class_="WindTurbine",
                 property_="name",
                 value_type="text",
@@ -1357,13 +1319,13 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
             ),
         ],
         containers=[
-            DMSContainerInput(container="Asset", class_="Asset"),
+            DMSInputContainer(container="Asset", class_="Asset"),
         ],
         views=[
-            DMSViewInput(view="Asset", class_="Asset", description="Change not allowed"),
+            DMSInputView(view="Asset", class_="Asset", description="Change not allowed"),
         ],
         last=last_rules,
-    ).as_rules()
+    )
 
     yield pytest.param(
         changing_view,
@@ -1378,8 +1340,8 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
         id="Addition extension, changing view",
     )
 
-    changing_container2 = changing_container.model_copy(deep=True)
-    changing_container2.metadata.extension = ExtensionCategory.reshape
+    changing_container2 = dataclasses.replace(changing_container)
+    changing_container2.metadata.extension = "reshape"
 
     yield pytest.param(
         changing_container2,
@@ -1411,18 +1373,18 @@ class TestDMSRules:
         assert not missing, f"Missing properties: {missing}"
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
-    def test_load_valid_rules(self, raw: dict[str, dict[str, Any]], expected_rules: DMSRules) -> None:
-        valid_rules = DMSInputRules.load(raw).as_rules()
+    def test_load_valid_rules(self, raw: DMSInputRules, expected_rules: DMSRules) -> None:
+        valid_rules = raw.as_rules()
         assert valid_rules.model_dump() == expected_rules.model_dump()
         # testing case insensitive value types
         assert isinstance(valid_rules.properties.data[0].value_type, String)
 
     @pytest.mark.parametrize("raw, expected_errors", list(invalid_container_definitions_test_cases()))
     def test_load_inconsistent_container_definitions(
-        self, raw: dict[str, dict[str, Any]], expected_errors: list[NeatError]
+        self, raw: DMSInputRules, expected_errors: list[NeatError]
     ) -> None:
         with pytest.raises(ValueError) as e:
-            DMSInputRules.load(raw).as_rules()
+            raw.as_rules()
 
         assert isinstance(e.value, ValidationError)
         validation_errors = e.value.errors()
@@ -1471,7 +1433,7 @@ class TestDMSRules:
 
     def test_dump_skip_default_space_and_version(self) -> None:
         dms_rules = DMSInputRules(
-            metadata=DMSMetadataInput(
+            metadata=DMSInputMetadata(
                 schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
@@ -1481,7 +1443,7 @@ class TestDMSRules:
                 updated="2024-03-16",
             ),
             properties=[
-                DMSPropertyInput(
+                DMSInputProperty(
                     class_="WindFarm",
                     property_="name",
                     value_type="text",
@@ -1491,8 +1453,8 @@ class TestDMSRules:
                     view_property="name",
                 ),
             ],
-            views=[DMSViewInput(view="WindFarm", class_="WindFarm", implements="Sourceable,Describable")],
-            containers=[DMSContainerInput(container="Asset", class_="Asset", constraint="Sourceable,Describable")],
+            views=[DMSInputView(view="WindFarm", class_="WindFarm", implements="Sourceable,Describable")],
+            containers=[DMSInputContainer(container="Asset", class_="Asset", constraint="Sourceable,Describable")],
         ).as_rules()
         expected_dump = {
             "metadata": {
@@ -1558,8 +1520,8 @@ class TestDMSRules:
         assert wind_turbine_name.reference.versioned_id == "power:GeneratingUnit(property=name)"
 
     @pytest.mark.parametrize("rules, expected_issues", list(invalid_extended_rules_test_cases()))
-    def test_load_invalid_extended_rules(self, rules: DMSRules, expected_issues: list[NeatIssue]):
-        raw = rules.dump(by_alias=True)
+    def test_load_invalid_extended_rules(self, rules: DMSInputRules, expected_issues: list[NeatIssue]):
+        raw = rules.dump()
         raw["Metadata"]["schema"] = "extended"
 
         with pytest.raises(ValidationError) as e:
@@ -1727,7 +1689,7 @@ class TestDMSExporter:
 def test_dms_rules_validation_error():
     with pytest.raises(NeatError) as e:
         dms_rules = DMSInputRules(
-            metadata=DMSMetadataInput(
+            metadata=DMSInputMetadata(
                 schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
@@ -1737,7 +1699,7 @@ def test_dms_rules_validation_error():
                 updated="2024-03-16",
             ),
             properties=[
-                DMSPropertyInput(
+                DMSInputProperty(
                     class_="WindFarm",
                     property_="name",
                     value_type="text",
@@ -1747,8 +1709,8 @@ def test_dms_rules_validation_error():
                     view_property="name",
                 ),
             ],
-            views=[DMSViewInput(view="WindFarm", class_="WindFarm", implements="Sourceable,Describable")],
-            containers=[DMSContainerInput(container="Asset", class_="Asset", constraint="Sourceable,Describable")],
+            views=[DMSInputView(view="WindFarm", class_="WindFarm", implements="Sourceable,Describable")],
+            containers=[DMSInputContainer(container="Asset", class_="Asset", constraint="Sourceable,Describable")],
         )
 
         dms_rules.as_rules()

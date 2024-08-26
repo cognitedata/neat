@@ -9,6 +9,7 @@ from typing import Literal, TypeVar, cast
 from cognite.client.data_classes import data_modeling as dms
 from rdflib import Namespace
 
+from cognite.neat.constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat.rules._shared import JustRules, OutRules, VerifiedRules
 from cognite.neat.rules.models import (
@@ -21,7 +22,6 @@ from cognite.neat.rules.models import (
     SheetList,
     data_types,
 )
-from cognite.neat.rules.models._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.dms import DMSMetadata, DMSProperty, DMSView
 from cognite.neat.rules.models.entities import (

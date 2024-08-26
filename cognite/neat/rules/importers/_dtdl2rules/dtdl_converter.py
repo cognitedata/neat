@@ -27,17 +27,20 @@ from cognite.neat.rules.importers._dtdl2rules.spec import (
 )
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_NAME, DataType, Json, String
 from cognite.neat.rules.models.entities import ClassEntity
-from cognite.neat.rules.models.information import InformationClass, InformationProperty
+from cognite.neat.rules.models.information import (
+    InformationInputClass,
+    InformationInputProperty,
+)
 
 
 class _DTDLConverter:
     def __init__(self, issues: IssueList | None = None) -> None:
         self.issues = IssueList(issues or [])
-        self.properties: list[InformationProperty] = []
-        self.classes: list[InformationClass] = []
+        self.properties: list[InformationInputProperty] = []
+        self.classes: list[InformationInputClass] = []
         self._item_by_id: dict[DTMI, DTDLBase] = {}
 
-        self._method_by_type: dict[type[DTDLBase], Callable[[DTDLBase, str | None], None]] = {
+        self._method_by_type = {
             Interface: self.convert_interface,  # type: ignore[dict-item]
             Property: self.convert_property,  # type: ignore[dict-item]
             PropertyV2: self.convert_property,  # type: ignore[dict-item]
@@ -53,7 +56,11 @@ class _DTDLConverter:
     def get_most_common_prefix(self) -> str:
         if not self.classes:
             raise ValueError("No classes found")
-        counted = Counter(cls_.class_.prefix for cls_ in self.classes if isinstance(cls_.class_.prefix, str))
+        counted = Counter(
+            class_.prefix
+            for class_ in (cls_.class_ for cls_ in self.classes)
+            if isinstance(class_, ClassEntity) and isinstance(class_.prefix, str)
+        )
         if not counted:
             raise ValueError("No prefixes found")
         return counted.most_common(1)[0][0]
@@ -75,7 +82,8 @@ class _DTDLConverter:
             self.convert_item(item)
 
     def convert_item(self, item: DTDLBase, parent: str | None = None) -> None:
-        convert_method = self._method_by_type.get(type(item))
+        # Bug in mypy https://github.com/python/mypy/issues/17478
+        convert_method: Callable[[DTDLBase, str | None], None] | None = self._method_by_type.get(type(item))  # type: ignore[assignment]
         if convert_method is not None:
             convert_method(item, parent)
         else:
@@ -87,7 +95,7 @@ class _DTDLConverter:
             )
 
     def convert_interface(self, item: Interface, _: str | None) -> None:
-        class_ = InformationClass(
+        class_ = InformationInputClass(
             class_=item.id_.as_class_id(),
             name=item.display_name,
             description=item.description,
@@ -107,9 +115,9 @@ class _DTDLConverter:
                 )
             elif isinstance(sub_item_or_id, DTMI):
                 sub_item = self._item_by_id[sub_item_or_id]
-                self.convert_item(sub_item, class_.class_.versioned_id)
+                self.convert_item(sub_item, class_.class_str)
             else:
-                self.convert_item(sub_item_or_id, class_.class_.versioned_id)
+                self.convert_item(sub_item_or_id, class_.class_str)
         # interface.schema objects are handled in the convert method
 
     def convert_property(
@@ -122,7 +130,7 @@ class _DTDLConverter:
         if value_type is None:
             return None
 
-        prop = InformationProperty(
+        prop = InformationInputProperty(
             class_=ClassEntity.load(parent),
             property_=item.name,
             name=item.display_name,
@@ -168,7 +176,7 @@ class _DTDLConverter:
         value_type = self.schema_to_value_type(item.request.schema_, item)
         if value_type is None:
             return
-        prop = InformationProperty(
+        prop = InformationInputProperty(
             class_=ClassEntity.load(parent),
             property_=item.name,
             name=item.display_name,
@@ -188,7 +196,7 @@ class _DTDLConverter:
         value_type = self.schema_to_value_type(item.schema_, item)
         if value_type is None:
             return
-        prop = InformationProperty(
+        prop = InformationInputProperty(
             class_=ClassEntity.load(parent),
             property_=item.name,
             name=item.display_name,
@@ -218,7 +226,7 @@ class _DTDLConverter:
                 )
                 value_type = Json()
 
-            prop = InformationProperty(
+            prop = InformationInputProperty(
                 class_=ClassEntity.load(parent),
                 property_=item.name,
                 name=item.display_name,
@@ -243,7 +251,7 @@ class _DTDLConverter:
             )
             return None
 
-        class_ = InformationClass(
+        class_ = InformationInputClass(
             class_=item.id_.as_class_id(),
             name=item.display_name,
             description=item.description,
@@ -255,7 +263,7 @@ class _DTDLConverter:
             value_type = self.schema_to_value_type(field_.schema_, item)
             if value_type is None:
                 continue
-            prop = InformationProperty(
+            prop = InformationInputProperty(
                 class_=class_.class_,
                 name=field_.name,
                 description=field_.description,
@@ -297,7 +305,7 @@ class _DTDLConverter:
             else:
                 if isinstance(input_type, Object):
                     self.convert_object(input_type, None)
-                return ClassEntity.load(input_type.id_.as_class_id())
+                return input_type.id_.as_class_id()
         else:
             self.issues.append(
                 PropertyTypeNotSupportedWarning(

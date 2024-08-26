@@ -10,7 +10,7 @@ import types
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator
 from functools import wraps
-from typing import Annotated, Any, ClassVar, Generic, Literal, TypeAlias, TypeVar
+from typing import Annotated, Any, ClassVar, Generic, Literal, TypeVar
 
 import pandas as pd
 from pydantic import (
@@ -19,7 +19,6 @@ from pydantic import (
     ConfigDict,
     Field,
     PlainSerializer,
-    constr,
     field_validator,
     model_serializer,
     model_validator,
@@ -34,12 +33,6 @@ else:
 
 
 METADATA_VALUE_MAX_LENGTH = 5120
-
-
-def _add_alias(data: dict[str, Any], base_model: type[BaseModel]) -> None:
-    for field_name, field_ in base_model.model_fields.items():
-        if field_name not in data and field_.alias in data:
-            data[field_name] = data[field_.alias]
 
 
 def replace_nan_floats_with_default(values: dict, model_fields: dict[str, FieldInfo]) -> dict:
@@ -124,10 +117,6 @@ def _get_required_fields(model: type[BaseModel], use_alias: bool = False) -> set
         else:
             required_fields.add(name)
     return required_fields
-
-
-Space: TypeAlias = str
-Description: TypeAlias = constr(min_length=1, max_length=1024)  # type: ignore[valid-type]
 
 
 class SchemaCompleteness(StrEnum):

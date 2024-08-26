@@ -17,8 +17,8 @@ from cognite.neat.rules._shared import ReadRules
 from cognite.neat.rules.importers._base import BaseImporter
 from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
-from cognite.neat.rules.models import InformationInputRules, SchemaCompleteness, SheetList
-from cognite.neat.rules.models.information import InformationClass, InformationProperty
+from cognite.neat.rules.models import InformationInputRules, SchemaCompleteness
+from cognite.neat.rules.models.information import InformationInputMetadata
 from cognite.neat.utils.text import humanize_collection, to_pascal
 
 
@@ -142,12 +142,10 @@ class DTDLImporter(BaseImporter[InformationInputRules]):
         else:
             metadata["prefix"] = most_common_prefix
 
-        rules = InformationInputRules.load(
-            dict(
-                metadata=metadata,
-                properties=SheetList[InformationProperty](data=converter.properties).model_dump(),
-                classes=SheetList[InformationClass](data=converter.classes).model_dump(),
-            )
+        rules = InformationInputRules(
+            metadata=InformationInputMetadata.load(metadata),
+            properties=converter.properties,
+            classes=converter.classes,
         )
 
         return ReadRules(rules, converter.issues, {})
