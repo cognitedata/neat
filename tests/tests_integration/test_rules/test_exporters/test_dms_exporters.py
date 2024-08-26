@@ -15,6 +15,7 @@ from cognite.neat.rules.models.information import (
     InformationMetadata,
     InformationProperty,
 )
+from cognite.neat.rules.transformers import InformationToDMS
 from cognite.neat.utils.cdf.loaders import RawTableLoader, TransformationLoader
 from tests.config import DOC_RULES
 
@@ -189,10 +190,11 @@ class TestDMSExporters:
             export_pipeline=True,
             instance_space="sp_table_example_data",
         )
-        schema = cast(PipelineSchema, exporter.export(table_example))
+        dms_rules = InformationToDMS().transform(table_example)
+        schema = cast(PipelineSchema, exporter.export(dms_rules))
 
         # Write Pipeline to CDF
-        uploaded = exporter.export_to_cdf(table_example, cognite_client, dry_run=False)
+        uploaded = exporter.export_to_cdf(dms_rules, cognite_client, dry_run=False)
 
         # Verify Raw Tables are written
         assert uploaded

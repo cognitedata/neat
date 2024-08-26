@@ -16,3 +16,4 @@ Rules: TypeAlias = (
     AssetRulesInput | DMSRulesInput | InformationRulesInput | DomainRules | InformationRules | DMSRules | AssetRules
 )
 T_Rules = TypeVar("T_Rules", bound=Rules)
+T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
