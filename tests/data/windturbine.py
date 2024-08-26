@@ -160,3 +160,16 @@ INPUT_RULES = DMSInputRules(
         DMSInputContainer("Distance", used_for="edge"),
     ],
 )
+
+if __name__ == "__main__":
+    from pathlib import Path
+
+    from cognite.neat.rules.exporters import ExcelExporter
+    from cognite.neat.rules.importers import DMSImporter
+    from cognite.neat.rules.transformers import ImporterPipeline
+
+    ROOT = Path(__file__).resolve().parent.parent.parent / "playground"
+
+    dms_rules = ImporterPipeline.verify(DMSImporter(SCHEMA, metadata=INPUT_RULES.metadata))
+
+    ExcelExporter().export_to_file(dms_rules, ROOT / "windturbine.xlsx")

@@ -87,13 +87,16 @@ class _DMSRulesSerializer:
                     continue
                 if value := prop.get(field_name):
                     prop[field_name] = value.removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
-            # Value type can have a property as well
+            # Value type can have a version and/or type as well
             default_type = f"type={self.default_space}{prop[self.view_view]}.{prop[self.prop_view_property]}"
+            default_type_space = f"type={self.default_space}"
+            default_properties = f"properties={self.default_space}"
             prop[self.prop_value_type] = (
                 prop[self.prop_value_type]
-                .removeprefix(self.default_space)
                 .replace(self.default_version, "")
                 .replace(default_type, "")
+                .replace(default_type_space, "type=")
+                .replace(default_properties, "properties=")
                 .replace("()", "")
                 .replace("(,)", "")
                 .replace("(,", "(")
