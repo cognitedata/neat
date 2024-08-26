@@ -11,7 +11,7 @@ from ._base import BaseExporter
 
 
 class YAMLExporter(BaseExporter[VerifiedRules, str]):
-    """Export rules to YAML.
+    """Export rules (Information, DMS or Domain) to YAML.
 
     Args:
         files: The number of files to output. Defaults to "single".
