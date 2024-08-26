@@ -2,7 +2,8 @@ import re
 import sys
 from abc import ABC, abstractmethod
 from functools import total_ordering
-from typing import Annotated, Any, ClassVar, Generic, TypeVar, cast
+from types import UnionType
+from typing import Annotated, Any, ClassVar, Generic, TypeVar, Union, cast, get_args, get_origin
 
 from cognite.client.data_classes.data_modeling.ids import (
     ContainerId,
@@ -79,8 +80,12 @@ _CLASS_ID_REGEX = rf"(?P<{EntityTypes.class_}>{_ENTITY_ID_REGEX})"
 _CLASS_ID_REGEX_COMPILED = re.compile(rf"^{_CLASS_ID_REGEX}$")
 _PROPERTY_ID_REGEX = rf"\((?P<{EntityTypes.property_}>{_ENTITY_ID_REGEX})\)"
 
-_ENTITY_PATTERN = re.compile(r"^(?P<prefix>.*?):?(?P<suffix>[^(:]*)(\((?P<content>[^)]+)\))?$")
+_ENTITY_PATTERN = re.compile(r"^(?P<prefix>.*?):?(?P<suffix>[^(:]*)(\((?P<content>.+)\))?$")
 _MULTI_VALUE_TYPE_PATTERN = re.compile(r"^(?P<types>.*?)(\((?P<content>[^)]+)\))?$")
+# This pattern ignores commas inside brackets
+_SPLIT_ON_COMMA_PATTERN = re.compile(r",(?![^(]*\))")
+# This pattern ignores equal signs inside brackets
+_SPLIT_ON_EQUAL_PATTERN = re.compile(r"=(?![^(]*\))")
 
 
 class _UndefinedType(BaseModel): ...
@@ -112,7 +117,7 @@ class Entity(BaseModel, extra="ignore"):
         elif isinstance(data, str) and data == str(Unknown):
             return UnknownEntity(prefix=Undefined, suffix=Unknown)
         if defaults and isinstance(defaults, dict):
-            # This is trick to pass in default values
+            # This is is a trick to pass in default values
             return cls.model_validate({_PARSE: data, "defaults": defaults})
         else:
             return cls.model_validate(data)
@@ -136,7 +141,7 @@ class Entity(BaseModel, extra="ignore"):
         elif data == str(Unknown):
             raise ValueError(f"Unknown is not allowed for {cls.type_} entity")
 
-        result = cls._parse(data)
+        result = cls._parse(data, defaults)
         output = defaults.copy()
         # Populate by alias
         for field_name, field_ in cls.model_fields.items():
@@ -152,7 +157,7 @@ class Entity(BaseModel, extra="ignore"):
         return str(self)
 
     @classmethod
-    def _parse(cls, raw: str) -> dict:
+    def _parse(cls, raw: str, defaults: dict) -> dict:
         if not (result := _ENTITY_PATTERN.match(raw)):
             return dict(prefix=Undefined, suffix=Unknown)
         prefix = result.group("prefix") or Undefined
@@ -160,12 +165,23 @@ class Entity(BaseModel, extra="ignore"):
         content = result.group("content")
         if content is None:
             return dict(prefix=prefix, suffix=suffix)
-        extra_args = dict(pair.strip().split("=") for pair in content.split(","))
-        expected_args = {field_.alias or field_name for field_name, field_ in cls.model_fields.items()}
+        extra_args = dict(
+            _SPLIT_ON_EQUAL_PATTERN.split(pair.strip()) for pair in _SPLIT_ON_COMMA_PATTERN.split(content)
+        )
+        expected_args = {
+            field_.alias or field_name: field_.annotation for field_name, field_ in cls.model_fields.items()
+        }
         for key in list(extra_args):
             if key not in expected_args:
                 # Todo Warning about unknown key
                 del extra_args[key]
+                continue
+            annotation = expected_args[key]
+            if isinstance(annotation, UnionType) or get_origin(annotation) is Union:
+                annotation = get_args(annotation)[0]
+
+            if issubclass(annotation, Entity):  # type: ignore[arg-type]
+                extra_args[key] = annotation.load(extra_args[key], **defaults)  # type: ignore[union-attr]
         return dict(prefix=prefix, suffix=suffix, **extra_args)
 
     def dump(self) -> str:
@@ -509,8 +525,8 @@ class DMSNodeEntity(DMSEntity[NodeId]):
 
 class EdgeViewEntity(ViewEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.edge_properties
-    properties: ViewEntity
     edge_type: DMSNodeEntity = Field(alias="type")
+    properties: ViewEntity | None = None
 
     @field_validator("properties", "edge_type", mode="before")
     def parse_string(cls, value: Any, info: ValidationInfo) -> Any:

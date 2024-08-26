@@ -4,6 +4,7 @@ import pytest
 from cognite.client.data_classes.data_modeling import DataModelId, PropertyId, ViewId
 
 from cognite.neat.rules.models.entities import (
+    _ENTITY_PATTERN,
     AssetEntity,
     ClassEntity,
     DataModelEntity,
@@ -150,6 +151,31 @@ class TestEntities:
         loaded = cls_.load(raw, space=DEFAULT_SPACE, version=DEFAULT_VERSION)
 
         assert loaded == expected
+
+
+class TestEntityPattern:
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            ("test:TestGraphQL1(version=3)", {"prefix": "test", "suffix": "TestGraphQL1", "content": "version=3"}),
+            ("MyValue", {"prefix": "", "suffix": "MyValue", "content": None}),
+            ("test:TestGraphQL1", {"prefix": "test", "suffix": "TestGraphQL1", "content": None}),
+            (
+                "test:TestGraphQL1(property=prop1)",
+                {"prefix": "test", "suffix": "TestGraphQL1", "content": "property=prop1"},
+            ),
+            (
+                "test:TestGraphQL1(property=test:prop1)",
+                {"prefix": "test", "suffix": "TestGraphQL1", "content": "property=test:prop1"},
+            ),
+            (
+                "MyValue(properties=prefix:suffix(version=v3), version=3)",
+                {"prefix": "", "suffix": "MyValue", "content": "properties=prefix:suffix(version=v3), version=3"},
+            ),
+        ],
+    )
+    def test_match(self, raw: str, expected: dict[str, str]) -> None:
+        assert _ENTITY_PATTERN.match(raw).groupdict() == expected
 
 
 class TestDataModelEntity:
