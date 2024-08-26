@@ -40,7 +40,7 @@ class GraphExporter(BaseExporter[InformationRules, Graph], ABC):
 
 
 class OWLExporter(GraphExporter):
-    """Exports rules to an OWL ontology."""
+    """Exports verified information rules to an OWL ontology."""
 
     def export(self, rules: InformationRules) -> Graph:
         return Ontology.from_rules(rules).as_owl()
