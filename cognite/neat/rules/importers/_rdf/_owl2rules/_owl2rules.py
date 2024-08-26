@@ -18,7 +18,7 @@ from ._owl2properties import parse_owl_properties
 
 
 class OWLImporter(BaseImporter[InformationInputRules]):
-    """Convert OWL ontology to information rules.
+    """Convert OWL ontology to tables/ transformation rules / Excel file.
 
         Args:
             filepath: Path to OWL ontology

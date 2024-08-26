@@ -24,7 +24,13 @@ from cognite.neat.rules.models.dms import (
     DMSSchema,
     DMSViewInput,
 )
-from cognite.neat.rules.transformers import DMSToInformation, ImporterPipeline, InformationToDMS
+from cognite.neat.rules.transformers import (
+    DMSToInformation,
+    ImporterPipeline,
+    InformationToDMS,
+    MapOneToOne,
+    RulesPipeline,
+)
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 from tests.data import car
 
@@ -1564,9 +1570,13 @@ class TestDMSRules:
         assert sorted(actual_issues) == sorted(expected_issues)
 
     def test_create_reference(self) -> None:
-        dms_rules = InformationToDMS().transform(car.CAR_RULES).rules
-
-        dms_rules.create_reference(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"})
+        pipeline = RulesPipeline[InformationRules, DMSRules](
+            [
+                InformationToDMS(),
+                MapOneToOne(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"}),
+            ]
+        )
+        dms_rules = pipeline.run(car.CAR_RULES)
 
         schema = dms_rules.as_schema()
         view_by_external_id = {view.external_id: view for view in schema.views.values()}
