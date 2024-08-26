@@ -268,6 +268,10 @@ class ViewApplyDict(CogniteResourceDict[ViewId, ViewApply]):
     def _as_id(cls, resource: ViewApply) -> ViewId:
         return resource.as_id()
 
+    @classmethod
+    def from_iterable(cls, iterable: Iterable[ViewApply]) -> "ViewApplyDict":
+        return cls({view.as_id(): view for view in iterable})
+
 
 class SpaceApplyDict(CogniteResourceDict[str, SpaceApply]):
     _RESOURCE = SpaceApply
@@ -275,6 +279,10 @@ class SpaceApplyDict(CogniteResourceDict[str, SpaceApply]):
     @classmethod
     def _as_id(cls, resource: SpaceApply) -> str:
         return resource.space
+
+    @classmethod
+    def from_iterable(cls, iterable: Iterable[SpaceApply]) -> "SpaceApplyDict":
+        return cls({space.space: space for space in iterable})
 
 
 class ContainerApplyDict(CogniteResourceDict[ContainerId, ContainerApply]):
@@ -284,6 +292,10 @@ class ContainerApplyDict(CogniteResourceDict[ContainerId, ContainerApply]):
     def _as_id(cls, resource: ContainerApply) -> ContainerId:
         return resource.as_id()
 
+    @classmethod
+    def from_iterable(cls, iterable: Iterable[ContainerApply]) -> "ContainerApplyDict":
+        return cls({container.as_id(): container for container in iterable})
+
 
 class DataModelApplyDict(CogniteResourceDict[DataModelId, DataModelApply]):
     _RESOURCE = DataModelApply
@@ -292,6 +304,10 @@ class DataModelApplyDict(CogniteResourceDict[DataModelId, DataModelApply]):
     def _as_id(cls, resource: DataModelApply) -> DataModelId:
         return resource.as_id()
 
+    @classmethod
+    def from_iterable(cls, iterable: Iterable[DataModelApply]) -> "DataModelApplyDict":
+        return cls({data_model.as_id(): data_model for data_model in iterable})
+
 
 class NodeApplyDict(CogniteResourceDict[NodeId, NodeApply]):
     _RESOURCE = NodeApply
@@ -299,3 +315,7 @@ class NodeApplyDict(CogniteResourceDict[NodeId, NodeApply]):
     @classmethod
     def _as_id(cls, resource: NodeApply) -> NodeId:
         return resource.as_id()
+
+    @classmethod
+    def from_iterable(cls, iterable: Iterable[NodeApply]) -> "NodeApplyDict":
+        return cls({node.as_id(): node for node in iterable})
