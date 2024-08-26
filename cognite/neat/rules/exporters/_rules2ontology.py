@@ -54,7 +54,7 @@ class SHACLExporter(GraphExporter):
 
 
 class SemanticDataModelExporter(GraphExporter):
-    """Exports rules to a semantic data model."""
+    """Exports verified information rules to a semantic data model."""
 
     def export(self, rules: InformationRules) -> Graph:
         return Ontology.from_rules(rules).as_semantic_data_model()
