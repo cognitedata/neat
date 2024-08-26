@@ -12,6 +12,7 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
+from cognite.neat.issues.errors import NeatTypeError
 from cognite.neat.issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
 from cognite.neat.issues.warnings.user_modeling import (
     EmptyContainerWarning,
@@ -25,6 +26,7 @@ from cognite.neat.rules.models.entities import (
     ContainerEntity,
     DMSNodeEntity,
     DMSUnknownEntity,
+    EdgeViewEntity,
     ReferenceEntity,
     ViewEntity,
     ViewPropertyEntity,
@@ -254,8 +256,12 @@ class _DMSExporter:
         if isinstance(prop.reference, ReferenceEntity):
             ref_view_prop = prop.reference.as_view_property_id()
             return cls._create_edge_type_from_view_id(cast(dm.ViewId, ref_view_prop.source), ref_view_prop.property)
-        else:
+        elif isinstance(prop.value_type, EdgeViewEntity):
+            return prop.value_type.edge_type.as_reference()
+        elif isinstance(prop.value_type, ViewEntity):
             return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
+        else:
+            raise NeatTypeError(f"Invalid valueType {prop.value_type!r}")
 
     @staticmethod
     def _create_edge_type_from_view_id(view_id: dm.ViewId, property_: str) -> dm.DirectRelationReference:

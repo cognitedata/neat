@@ -88,7 +88,16 @@ class _DMSRulesSerializer:
                 if value := prop.get(field_name):
                     prop[field_name] = value.removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
             # Value type can have a property as well
-            prop[self.prop_value_type] = prop[self.prop_value_type].replace(self.default_version, "")
+            default_type = f"type={self.default_space}{prop[self.view_view]}.{prop[self.prop_view_property]}"
+            prop[self.prop_value_type] = (
+                prop[self.prop_value_type]
+                .removeprefix(self.default_space)
+                .replace(self.default_version, "")
+                .replace(default_type, "")
+                .replace("()", "")
+                .replace("(,)", "")
+                .replace("(,", "(")
+            )
 
         for view in dumped[self.view_name]:
             if as_reference:

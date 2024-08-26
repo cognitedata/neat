@@ -225,12 +225,15 @@ class Entity(BaseModel, extra="ignore"):
     @property
     def id(self) -> str:
         # We have overwritten the serialization to str, so we need to do it manually
-        model_dump = (
+        model_dump = [
             (field.alias or field_name, v)
             for field_name, field in self.model_fields.items()
             if (v := getattr(self, field_name)) is not None and field_name not in {"prefix", "suffix"}
-        )
-        args = ",".join([f"{k}={v}" for k, v in model_dump])
+        ]
+        if len(model_dump) == 1:
+            args = f"{model_dump[0][0]}={model_dump[0][1]}"
+        else:
+            args = ",".join([f"{k}={v}" for k, v in model_dump])
         if self.prefix == Undefined:
             base_id = str(self.suffix)
         else:
@@ -516,6 +519,9 @@ class DMSNodeEntity(DMSEntity[NodeId]):
 
     def as_id(self) -> NodeId:
         return NodeId(space=self.space, external_id=self.external_id)
+
+    def as_reference(self) -> DirectRelationReference:
+        return DirectRelationReference(space=self.space, external_id=self.external_id)
 
     @classmethod
     def from_id(cls, id: NodeId) -> "DMSNodeEntity":
