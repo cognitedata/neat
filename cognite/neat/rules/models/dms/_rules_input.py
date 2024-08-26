@@ -80,7 +80,7 @@ class DMSInputProperty(InputComponent[DMSProperty]):
     view: str
     view_property: str | None
     value_type: str | DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity
-    property_: str | None
+    property_: str | None = None
     class_: str | None = None
     name: str | None = None
     description: str | None = None
