@@ -37,16 +37,20 @@ def parse_imf_to_classes(graph: Graph, language: str = "en") -> list[dict]:
     query = """
     SELECT ?class ?name ?description ?parentClass ?reference ?match ?comment
     WHERE {
-        #Finding IMF - elements
+        # Finding IMF - elements
         VALUES ?type { imf:BlockType imf:TerminalType imf:AttributeType }
         ?imfClass a ?type .
         OPTIONAL {?imfClass rdfs:subClassOf ?parent }.
         OPTIONAL {?imfClass rdfs:label | skos:prefLabel ?name }.
-        OPTIONAL {?imfClass rdfs:comment | skos:description ?description} .
+
+        # Note: Bug in PCA has lead to the use non-existing term skos:description. This will be replaced
+        # with the correct skos:definition in the near future, so both terms are included here.
+        OPTIONAL {?imfClass rdfs:comment | skos:definition | skos:description ?description} .
 
         # Finding the last segment of the class IRI
         BIND(STR(?imfClass) AS ?classString)
-        BIND(REPLACE(?classString, "^.*[/#]([^/#]*)$", "$1") AS ?classSegment)
+        BIND(REPLACE(?classString, "^.*[/#]([^/#]*)$", "$1") AS ?tempSegment)
+        BIND(REPLACE(?tempSegment, "-", "_") AS ?classSegment)
         BIND(IF(CONTAINS(?classString, "imf/"), CONCAT("IMF_", ?classSegment) , ?classSegment) AS ?class)
 
         # Add imf:Attribute as parent class
