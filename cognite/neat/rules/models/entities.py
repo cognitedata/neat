@@ -59,7 +59,7 @@ class EntityTypes(StrEnum):
     multi_value_type = "multi_value_type"
     asset = "asset"
     relationship = "relationship"
-    dms_edge = "dms_edge"
+    edge = "edge"
 
 
 # ALLOWED
@@ -533,7 +533,7 @@ class DMSNodeEntity(DMSEntity[NodeId]):
 
 
 class EdgeEntity(DMSEntity[None]):
-    type_: ClassVar[EntityTypes] = EntityTypes.dms_edge
+    type_: ClassVar[EntityTypes] = EntityTypes.edge
     prefix: _UndefinedType = Undefined  # type: ignore[assignment]
     suffix: str = "edge"
     edge_type: DMSNodeEntity | None = Field(None, alias="type")
