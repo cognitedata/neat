@@ -535,7 +535,7 @@ class DMSNodeEntity(DMSEntity[NodeId]):
 class EdgeEntity(DMSEntity[None]):
     type_: ClassVar[EntityTypes] = EntityTypes.edge
     prefix: _UndefinedType = Undefined  # type: ignore[assignment]
-    suffix: str = "edge"
+    suffix: Literal["edge"] = "edge"
     edge_type: DMSNodeEntity | None = Field(None, alias="type")
     properties: ViewEntity | None = None
 

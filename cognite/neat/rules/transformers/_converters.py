@@ -288,7 +288,7 @@ class _InformationRulesConverter:
         connection: Literal["direct", "reverse"] | EdgeEntity | None = None
         if isinstance(value_type, ViewEntity | ViewPropertyEntity):
             # Default connection type.
-            connection = "direct"
+            connection = EdgeEntity() if prop.is_list else "direct"
 
         container: ContainerEntity | None = None
         container_property: str | None = None
