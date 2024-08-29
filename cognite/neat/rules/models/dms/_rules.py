@@ -36,7 +36,7 @@ from cognite.neat.rules.models.entities import (
     ContainerEntity,
     ContainerEntityList,
     DMSUnknownEntity,
-    EdgeViewEntity,
+    EdgeEntity,
     ReferenceEntity,
     URLEntity,
     ViewEntity,
@@ -147,9 +147,7 @@ class DMSProperty(SheetEntity):
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     connection: Literal["direct", "edge", "reverse"] | None = Field(None, alias="Connection")
-    value_type: DataType | ViewPropertyEntity | EdgeViewEntity | ViewEntity | DMSUnknownEntity = Field(
-        alias="Value Type"
-    )
+    value_type: DataType | ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     immutable: bool | None = Field(default=None, alias="Immutable")
     is_list: bool | None = Field(default=None, alias="Is List")
@@ -170,13 +168,13 @@ class DMSProperty(SheetEntity):
 
     @field_validator("value_type", mode="after")
     def connections_value_type(
-        cls, value: ViewPropertyEntity | EdgeViewEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
-    ) -> DataType | ViewPropertyEntity | EdgeViewEntity | ViewEntity | DMSUnknownEntity:
+        cls, value: ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
+    ) -> DataType | ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity:
         if (connection := info.data.get("connection")) is None:
             return value
         if connection == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
             raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
-        elif connection == "edge" and not isinstance(value, ViewEntity | EdgeViewEntity):
+        elif connection == "edge" and not isinstance(value, ViewEntity | EdgeEntity):
             raise ValueError(f"Edge connection must have a value type that points to a view, got {value}")
         elif connection == "reverse" and not isinstance(value, ViewPropertyEntity | ViewEntity):
             raise ValueError(
@@ -186,7 +184,7 @@ class DMSProperty(SheetEntity):
 
     @field_serializer("value_type", when_used="always")
     @staticmethod
-    def as_dms_type(value_type: DataType | ViewPropertyEntity | EdgeViewEntity | ViewEntity) -> str:
+    def as_dms_type(value_type: DataType | ViewPropertyEntity | EdgeEntity | ViewEntity) -> str:
         if isinstance(value_type, DataType):
             return value_type.dms._type
         else:

@@ -26,7 +26,7 @@ from cognite.neat.rules.models.entities import (
     ContainerEntity,
     DMSNodeEntity,
     DMSUnknownEntity,
-    EdgeViewEntity,
+    EdgeEntity,
     ReferenceEntity,
     ViewEntity,
     ViewPropertyEntity,
@@ -256,7 +256,7 @@ class _DMSExporter:
         if isinstance(prop.reference, ReferenceEntity):
             ref_view_prop = prop.reference.as_view_property_id()
             return cls._create_edge_type_from_view_id(cast(dm.ViewId, ref_view_prop.source), ref_view_prop.property)
-        elif isinstance(prop.value_type, EdgeViewEntity):
+        elif isinstance(prop.value_type, EdgeEntity):
             return prop.value_type.edge_type.as_reference()
         elif isinstance(prop.value_type, ViewEntity):
             return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
@@ -479,7 +479,7 @@ class _DMSExporter:
                     f"Debug Info, Invalid valueType edge: {prop.model_dump_json()}"
                 )
             edge_source: dm.ViewId | None = None
-            if isinstance(prop.value_type, EdgeViewEntity) and prop.value_type.properties:
+            if isinstance(prop.value_type, EdgeEntity) and prop.value_type.properties:
                 edge_source = prop.value_type.properties.as_id()
             edge_cls: type[dm.EdgeConnectionApply] = dm.MultiEdgeConnectionApply
             # If is_list is not set, we default to a MultiEdgeConnection
@@ -497,7 +497,7 @@ class _DMSExporter:
         elif prop.connection == "reverse":
             reverse_prop_id: str | None = None
             edge_source = None
-            if isinstance(prop.value_type, EdgeViewEntity) and prop.value_type.properties:
+            if isinstance(prop.value_type, EdgeEntity) and prop.value_type.properties:
                 edge_source = prop.value_type.properties.as_id()
                 source_view_id = prop.value_type.as_id()
             elif isinstance(prop.value_type, ViewPropertyEntity):

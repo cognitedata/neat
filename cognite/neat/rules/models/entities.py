@@ -59,7 +59,7 @@ class EntityTypes(StrEnum):
     multi_value_type = "multi_value_type"
     asset = "asset"
     relationship = "relationship"
-    edge_properties = "edge_properties"
+    dms_edge = "dms_edge"
 
 
 # ALLOWED
@@ -532,10 +532,19 @@ class DMSNodeEntity(DMSEntity[NodeId]):
         return cls(space=ref.space, externalId=ref.external_id)
 
 
-class EdgeViewEntity(ViewEntity):
-    type_: ClassVar[EntityTypes] = EntityTypes.edge_properties
-    edge_type: DMSNodeEntity = Field(alias="type")
+class EdgeEntity(DMSEntity[None]):
+    type_: ClassVar[EntityTypes] = EntityTypes.dms_edge
+    prefix: _UndefinedType = Undefined  # type: ignore[assignment]
+    suffix: str = "edge"
+    edge_type: DMSNodeEntity | None = Field(None, alias="type")
     properties: ViewEntity | None = None
+
+    def as_id(self) -> None:
+        return None
+
+    @classmethod
+    def from_id(cls, id: None) -> Self:
+        return cls()
 
 
 class ReferenceEntity(ClassEntity):
@@ -679,11 +688,11 @@ def load_value_type(
 
 
 def load_dms_value_type(
-    raw: str | DataType | ViewPropertyEntity | EdgeViewEntity | ViewEntity | DMSUnknownEntity,
+    raw: str | DataType | ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity,
     default_space: str,
     default_version: str,
-) -> DataType | ViewPropertyEntity | EdgeViewEntity | ViewEntity | DMSUnknownEntity:
-    if isinstance(raw, DataType | ViewPropertyEntity | EdgeViewEntity | ViewEntity | DMSUnknownEntity):
+) -> DataType | ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity:
+    if isinstance(raw, DataType | ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity):
         return raw
     elif isinstance(raw, str):
         if DataType.is_data_type(raw):
@@ -694,7 +703,7 @@ def load_dms_value_type(
             return ViewPropertyEntity.load(raw, space=default_space, version=default_version)
         except ValueError:
             try:
-                return EdgeViewEntity.load(raw, space=default_space, version=default_version)
+                return EdgeEntity.load(raw, space=default_space, version=default_version)
             except ValueError:
                 return ViewEntity.load(raw, space=default_space, version=default_version)
     raise NeatTypeError(f"Invalid value type: {type(raw)}")

@@ -45,7 +45,7 @@ from cognite.neat.rules.models.entities import (
     ContainerEntity,
     DMSNodeEntity,
     DMSUnknownEntity,
-    EdgeViewEntity,
+    EdgeEntity,
     ViewEntity,
     ViewPropertyEntity,
 )
@@ -373,9 +373,9 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
     def _get_value_type(
         self, prop: ViewPropertyApply, view_entity: ViewEntity, prop_id
-    ) -> DataType | ViewEntity | EdgeViewEntity | ViewPropertyEntity | DMSUnknownEntity | None:
+    ) -> DataType | ViewEntity | EdgeEntity | ViewPropertyEntity | DMSUnknownEntity | None:
         if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply):
-            return EdgeViewEntity(
+            return EdgeEntity(
                 space=prop.source.space,
                 externalId=prop.source.external_id,
                 version=prop.source.version or "MISSING",

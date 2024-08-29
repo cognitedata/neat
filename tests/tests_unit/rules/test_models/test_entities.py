@@ -8,7 +8,7 @@ from cognite.neat.rules.models.entities import (
     DataModelEntity,
     DMSNodeEntity,
     DMSUnknownEntity,
-    EdgeViewEntity,
+    EdgeEntity,
     Entity,
     ReferenceEntity,
     RelationshipEntity,
@@ -119,9 +119,9 @@ TEST_CASES = [
         RelationshipEntity(label="cool-label"),
     ),
     (
-        EdgeViewEntity,
+        EdgeEntity,
         "Toy(properties=Owns, type=sp_my_space:ownership)",
-        EdgeViewEntity(
+        EdgeEntity(
             externalId="Toy",
             properties=ViewEntity(space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="Owns"),
             type=DMSNodeEntity(space="sp_my_space", externalId="ownership"),
@@ -130,9 +130,9 @@ TEST_CASES = [
         ),
     ),
     (
-        EdgeViewEntity,
+        EdgeEntity,
         "sp_custom:Toy(properties=Owns(version=34), type=ownership, version=v42)",
-        EdgeViewEntity(
+        EdgeEntity(
             externalId="Toy",
             properties=ViewEntity(space=DEFAULT_SPACE, version="34", externalId="Owns"),
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
@@ -141,9 +141,9 @@ TEST_CASES = [
         ),
     ),
     (
-        EdgeViewEntity,
+        EdgeEntity,
         "Toy(type=ownership)",
-        EdgeViewEntity(
+        EdgeEntity(
             externalId="Toy",
             properties=None,
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),

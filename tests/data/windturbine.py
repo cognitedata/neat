@@ -136,7 +136,7 @@ INPUT_RULES = DMSInputRules(
             "WindTurbine", "capacity", "float64", container="WindTurbine", container_property="capacity", **_DEFAULTS
         ),
         DMSInputProperty(
-            "WindTurbine", "metmasts", "MetMast(properties=Distance, type=distance)", connection="edge", is_list=True
+            "WindTurbine", "metmasts", "MetMast", connection="edge(properties=Distance, type=distance)", is_list=True
         ),
         DMSInputProperty("MetMast", "name", "text", container="MetMast", container_property="name", **_DEFAULTS),
         DMSInputProperty(
@@ -145,7 +145,7 @@ INPUT_RULES = DMSInputRules(
         DMSInputProperty(
             "MetMast",
             "windTurbines",
-            "WindTurbine(properties=Distance, type=distance)",
+            "WindTurbine",
             connection="reverse",
             is_list=True,
         ),
