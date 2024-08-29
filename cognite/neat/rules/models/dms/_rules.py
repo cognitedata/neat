@@ -146,8 +146,8 @@ class DMSProperty(SheetEntity):
     view_property: str = Field(alias="View Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    connection: Literal["direct", "edge", "reverse"] | None = Field(None, alias="Connection")
-    value_type: DataType | ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
+    connection: Literal["direct", "reverse"] | EdgeEntity | None = Field(None, alias="Connection")
+    value_type: DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     immutable: bool | None = Field(default=None, alias="Immutable")
     is_list: bool | None = Field(default=None, alias="Is List")
@@ -174,7 +174,7 @@ class DMSProperty(SheetEntity):
             return value
         if connection == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
             raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
-        elif connection == "edge" and not isinstance(value, ViewEntity | EdgeEntity):
+        elif isinstance(connection, EdgeEntity) and not isinstance(value, ViewEntity | EdgeEntity):
             raise ValueError(f"Edge connection must have a value type that points to a view, got {value}")
         elif connection == "reverse" and not isinstance(value, ViewPropertyEntity | ViewEntity):
             raise ValueError(

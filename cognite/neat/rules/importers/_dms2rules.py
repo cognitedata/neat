@@ -43,9 +43,7 @@ from cognite.neat.rules.models.dms import (
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
-    DMSNodeEntity,
     DMSUnknownEntity,
-    EdgeEntity,
     ViewEntity,
     ViewPropertyEntity,
 )
@@ -373,15 +371,9 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
     def _get_value_type(
         self, prop: ViewPropertyApply, view_entity: ViewEntity, prop_id
-    ) -> DataType | ViewEntity | EdgeEntity | ViewPropertyEntity | DMSUnknownEntity | None:
+    ) -> DataType | ViewEntity | ViewPropertyEntity | DMSUnknownEntity | None:
         if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply):
-            return EdgeEntity(
-                space=prop.source.space,
-                externalId=prop.source.external_id,
-                version=prop.source.version or "MISSING",
-                properties=ViewEntity.from_id(prop.edge_source) if prop.edge_source else None,
-                type=DMSNodeEntity.from_reference(prop.type),
-            )
+            return ViewEntity.from_id(prop.source)
         elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):
             return ViewPropertyEntity.from_id(prop.through)
         elif isinstance(prop, dm.MappedPropertyApply):

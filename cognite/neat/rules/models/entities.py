@@ -3,7 +3,7 @@ import sys
 from abc import ABC, abstractmethod
 from functools import total_ordering
 from types import UnionType
-from typing import Annotated, Any, ClassVar, Generic, TypeVar, Union, cast, get_args, get_origin
+from typing import Annotated, Any, ClassVar, Generic, Literal, TypeVar, Union, cast, get_args, get_origin
 
 from cognite.client.data_classes.data_modeling import DirectRelationReference
 from cognite.client.data_classes.data_modeling.ids import (
@@ -688,11 +688,11 @@ def load_value_type(
 
 
 def load_dms_value_type(
-    raw: str | DataType | ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity,
+    raw: str | DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity,
     default_space: str,
     default_version: str,
-) -> DataType | ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity:
-    if isinstance(raw, DataType | ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity):
+) -> DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity:
+    if isinstance(raw, DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity):
         return raw
     elif isinstance(raw, str):
         if DataType.is_data_type(raw):
@@ -702,8 +702,17 @@ def load_dms_value_type(
         try:
             return ViewPropertyEntity.load(raw, space=default_space, version=default_version)
         except ValueError:
-            try:
-                return EdgeEntity.load(raw, space=default_space, version=default_version)
-            except ValueError:
-                return ViewEntity.load(raw, space=default_space, version=default_version)
+            return ViewEntity.load(raw, space=default_space, version=default_version)
     raise NeatTypeError(f"Invalid value type: {type(raw)}")
+
+
+def load_connection(
+    raw: Literal["direct", "reverse"] | EdgeEntity | str | None,
+    default_space: str,
+    default_version: str,
+) -> Literal["direct", "reverse"] | EdgeEntity | None:
+    if isinstance(raw, EdgeEntity) or raw is None or (isinstance(raw, str) and raw in {"direct", "reverse"}):
+        return raw  # type: ignore[return-value]
+    elif isinstance(raw, str) and raw.startswith("edge"):
+        return EdgeEntity.load(raw, space=default_space, version=default_version)  # type: ignore[return-value]
+    raise NeatTypeError(f"Invalid connection: {type(raw)}")

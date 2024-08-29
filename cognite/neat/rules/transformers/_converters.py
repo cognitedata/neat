@@ -30,6 +30,7 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     DMSUnknownEntity,
+    EdgeEntity,
     EntityTypes,
     MultiValueTypeInfo,
     ReferenceEntity,
@@ -284,17 +285,18 @@ class _InformationRulesConverter:
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
-        relation: Literal["direct", "edge", "reverse"] | None = None
+        connection: Literal["direct", "reverse"] | EdgeEntity | None = None
         if isinstance(value_type, ViewEntity | ViewPropertyEntity):
-            relation = "edge" if prop.is_list else "direct"
+            # Default connection type.
+            connection = "direct"
 
         container: ContainerEntity | None = None
         container_property: str | None = None
         is_list: bool | None = prop.is_list
         nullable: bool | None = not prop.is_mandatory
-        if relation == "edge":
+        if isinstance(connection, EdgeEntity):
             nullable = None
-        elif relation == "direct":
+        elif connection == "direct":
             nullable = True
             container, container_property = self._get_container(prop, default_space)
         else:
@@ -307,7 +309,7 @@ class _InformationRulesConverter:
             value_type=value_type,
             nullable=nullable,
             is_list=is_list,
-            connection=relation,
+            connection=connection,
             default=prop.default,
             reference=prop.reference,
             container=container,

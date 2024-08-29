@@ -14,6 +14,7 @@ from cognite.neat.rules.models.entities import (
     EdgeEntity,
     ViewEntity,
     ViewPropertyEntity,
+    load_connection,
     load_dms_value_type,
 )
 
@@ -80,12 +81,12 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
 class DMSInputProperty(InputComponent[DMSProperty]):
     view: str
     view_property: str | None
-    value_type: str | DataType | ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity
+    value_type: str | DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity
     property_: str | None = None
     class_: str | None = None
     name: str | None = None
     description: str | None = None
-    connection: Literal["direct", "edge", "reverse"] | None = None
+    connection: Literal["direct", "reverse"] | EdgeEntity | str | None = None
     nullable: bool | None = None
     immutable: bool | None = None
     is_list: bool | None = None
@@ -104,6 +105,7 @@ class DMSInputProperty(InputComponent[DMSProperty]):
         output = super().dump()
         output["View"] = ViewEntity.load(self.view, space=default_space, version=default_version)
         output["Value Type"] = load_dms_value_type(self.value_type, default_space, default_version)
+        output["Connection"] = load_connection(self.connection, default_space, default_version)
         output["Property (linage)"] = self.property_ or self.view_property
         output["Class (linage)"] = (
             ClassEntity.load(self.class_ or self.view, prefix=default_space, version=default_version)
