@@ -120,35 +120,25 @@ TEST_CASES = [
     ),
     (
         EdgeEntity,
-        "Toy(properties=Owns, type=sp_my_space:ownership)",
+        "edge(properties=Owns, type=sp_my_space:ownership)",
         EdgeEntity(
-            externalId="Toy",
             properties=ViewEntity(space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="Owns"),
             type=DMSNodeEntity(space="sp_my_space", externalId="ownership"),
-            version=DEFAULT_VERSION,
-            space=DEFAULT_SPACE,
         ),
     ),
     (
         EdgeEntity,
-        "sp_custom:Toy(properties=Owns(version=34), type=ownership, version=v42)",
+        "edge(properties=Owns(version=34), type=ownership)",
         EdgeEntity(
-            externalId="Toy",
             properties=ViewEntity(space=DEFAULT_SPACE, version="34", externalId="Owns"),
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
-            version="v42",
-            space="sp_custom",
         ),
     ),
     (
         EdgeEntity,
-        "Toy(type=ownership)",
+        "edge(type=ownership)",
         EdgeEntity(
-            externalId="Toy",
-            properties=None,
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
-            version=DEFAULT_VERSION,
-            space=DEFAULT_SPACE,
         ),
     ),
 ]
