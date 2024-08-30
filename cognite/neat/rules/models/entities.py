@@ -526,7 +526,7 @@ class ReverseEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.reverse
     prefix: _UndefinedType = Undefined
     suffix: Literal["reverse"] = "reverse"
-    property_: str
+    property_: str = Field(alias="property")
 
 
 class ReferenceEntity(ClassEntity):
@@ -691,7 +691,7 @@ def load_connection(
     default_space: str,
     default_version: str,
 ) -> Literal["direct"] | ReverseEntity | EdgeEntity | None:
-    if isinstance(raw, EdgeEntity | ReferenceEntity) or raw is None or (isinstance(raw, str) and raw == "direct"):
+    if isinstance(raw, EdgeEntity | ReverseEntity) or raw is None or (isinstance(raw, str) and raw == "direct"):
         return raw  # type: ignore[return-value]
     elif isinstance(raw, str) and raw.startswith("edge"):
         return EdgeEntity.load(raw, space=default_space, version=default_version)  # type: ignore[return-value]

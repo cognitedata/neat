@@ -496,9 +496,6 @@ class _DMSExporter:
             )
         elif isinstance(prop.connection, ReverseEntity):
             reverse_prop_id = prop.connection.property_
-            if True:
-                raise NotImplementedError("ReverseEntity is not supported")
-            edge_source = None
             if isinstance(prop.value_type, ViewEntity):
                 source_view_id = prop.value_type.as_id()
             else:
@@ -508,6 +505,7 @@ class _DMSExporter:
                     f"Debug Info, Invalid valueType reverse connection: {prop.model_dump_json()}"
                 )
             reverse_prop: DMSProperty | None = None
+            edge_source = None
             if reverse_prop_id is not None:
                 reverse_prop = next(
                     (
@@ -517,6 +515,12 @@ class _DMSExporter:
                     ),
                     None,
                 )
+                if (
+                    reverse_prop
+                    and isinstance(reverse_prop.connection, EdgeEntity)
+                    and reverse_prop.connection.properties is not None
+                ):
+                    edge_source = reverse_prop.connection.properties.as_id()
 
             if reverse_prop is None:
                 warnings.warn(
@@ -530,7 +534,7 @@ class _DMSExporter:
                     stacklevel=2,
                 )
 
-            if reverse_prop is None or reverse_prop.connection == "edge":
+            if reverse_prop is None or isinstance(reverse_prop.connection, EdgeEntity):
                 inwards_edge_cls = (
                     dm.MultiEdgeConnectionApply if prop.is_list in [True, None] else SingleEdgeConnectionApply
                 )

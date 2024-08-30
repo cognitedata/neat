@@ -24,6 +24,7 @@ from cognite.neat.issues.warnings import (
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
     ResourceNotFoundWarning,
+    ResourcesDuplicatedWarning,
 )
 from cognite.neat.rules._shared import ReadRules
 from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
@@ -337,7 +338,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             property_=prop_id,
             description=prop.description,
             name=prop.name,
-            connection=self._get_connection_type(prop),
+            connection=self._get_connection_type(prop_id, prop, view_entity.as_id()),
             value_type=str(value_type),
             is_list=self._get_is_list(prop),
             nullable=self._get_nullable(prop),
@@ -357,20 +358,22 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         """This method assumes you have already checked that the container with property exists."""
         return self._all_containers_by_id[prop.container].properties[prop.container_property_identifier]
 
-    def _get_connection_type(self, prop: ViewPropertyApply) -> Literal["direct"] | ReverseEntity | EdgeEntity | None:
+    def _get_connection_type(
+        self, prop_id: str, prop: ViewPropertyApply, view_id: dm.ViewId
+    ) -> Literal["direct"] | ReverseEntity | EdgeEntity | None:
         if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "outwards":
             properties = ViewEntity.from_id(prop.edge_source) if prop.edge_source is not None else None
             return EdgeEntity(properties=properties, type=DMSNodeEntity.from_reference(prop.type), direction="outwards")
         elif isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "inwards":
-            if reverse_prop := self._find_reverse_edge(prop):
-                return ReverseEntity(property_=reverse_prop)
+            if reverse_prop := self._find_reverse_edge(prop_id, prop, view_id):
+                return ReverseEntity(property=reverse_prop)
             else:
                 properties = ViewEntity.from_id(prop.source) if prop.edge_source is not None else None
                 return EdgeEntity(
                     properties=properties, type=DMSNodeEntity.from_reference(prop.type), direction="inwards"
                 )
         elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):
-            return ReverseEntity(property_=prop.through.property)
+            return ReverseEntity(property=prop.through.property)
         elif isinstance(prop, dm.MappedPropertyApply) and isinstance(
             self._container_prop_unsafe(prop).type, dm.DirectRelation
         ):
@@ -466,5 +469,40 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 )
         return unique_constraints or None
 
-    def _find_reverse_edge(self, prop: SingleEdgeConnectionApply | MultiEdgeConnectionApply) -> str | None:
-        raise NotImplementedError("This method is not implemented yet.")
+    def _find_reverse_edge(
+        self, prop_id: str, prop: SingleEdgeConnectionApply | MultiEdgeConnectionApply, view_id: dm.ViewId
+    ) -> str | None:
+        if prop.source not in self._all_views_by_id:
+            return None
+        view = self._all_views_by_id[prop.source]
+        candidates = []
+        for prop_name, reverse_prop in (view.properties or {}).items():
+            if isinstance(reverse_prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply):
+                if (
+                    reverse_prop.type == prop.type
+                    and reverse_prop.source == view_id
+                    and reverse_prop.direction != prop.direction
+                ):
+                    candidates.append(prop_name)
+        if len(candidates) == 0:
+            self.issue_list.append(
+                PropertyNotFoundWarning(
+                    prop.source,
+                    "view property",
+                    f"reverse edge of {prop_id}",
+                    dm.PropertyId(view_id, prop_id),
+                    "view property",
+                )
+            )
+            return None
+        if len(candidates) > 1:
+            self.issue_list.append(
+                ResourcesDuplicatedWarning(
+                    frozenset(dm.PropertyId(view.as_id(), candidate) for candidate in candidates),
+                    "view property",
+                    default_action="Multiple reverse edges found for "
+                    f"{dm.PropertyId(view_id, prop_id)!r}. Will use {candidates[0]}",
+                )
+            )
+
+        return candidates[0]
