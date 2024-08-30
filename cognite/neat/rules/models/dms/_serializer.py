@@ -46,6 +46,7 @@ class _DMSRulesSerializer:
             self.prop_container = DMSProperty.model_fields[self.prop_container].alias or self.prop_container
             self.prop_view_property = DMSProperty.model_fields[self.prop_view_property].alias or self.prop_view_property
             self.prop_value_type = DMSProperty.model_fields[self.prop_value_type].alias or self.prop_value_type
+            self.prop_connection = DMSProperty.model_fields[self.prop_connection].alias or self.prop_connection
             self.view_view = DMSView.model_fields[self.view_view].alias or self.view_view
             self.view_implements = DMSView.model_fields[self.view_implements].alias or self.view_implements
             self.container_container = (
