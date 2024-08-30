@@ -36,7 +36,7 @@ def parse_imf_to_properties(graph: Graph, language: str = "en") -> list[dict]:
     """
 
     query = """
-    SELECT ?class ?property ?name ?description ?valueType ?minCount ?maxCount ?default ?reference
+    SELECT DISTINCT ?class ?property ?name ?description ?valueType ?minCount ?maxCount ?default ?reference
     ?match ?comment ?propertyType
     WHERE
     {
@@ -48,7 +48,7 @@ def parse_imf_to_properties(graph: Graph, language: str = "en") -> list[dict]:
                 ?propertyShape sh:path ?imfProperty .
 
             OPTIONAL { ?imfProperty skos:prefLabel ?name . }
-            OPTIONAL { ?imfProperty skos:description ?description . }
+            OPTIONAL { ?imfProperty skos:definition | skos:description ?description . }
             OPTIONAL { ?imfProperty rdfs:range ?range . }
             OPTIONAL { ?imfProperty a ?type . }
             OPTIONAL { ?propertyShape sh:minCount ?minCardinality} .
@@ -62,22 +62,24 @@ def parse_imf_to_properties(graph: Graph, language: str = "en") -> list[dict]:
             ?imfClass a imf:AttributeType ;
                 ?imfProperty ?default .
 
-            # imf:predicate is required
-            BIND(IF(?imfProperty = <http://ns.imfid.org/imf#predicate>, 1, 0) AS ?minCardinality)
-
             # The following information is used to describe the attribute when it is connected to a block or a terminal
             # and not duplicated here.
-            FILTER(?imfProperty != rdf:type && ?imfProperty != skos:prefLabel && ?imfProperty != skos:description)
+            # Note: Bug in PCA has lead to the use non-existing term skos:description. This will be replaced
+            # with the correct skos:definition in the near future, so both terms are included here.
+            FILTER(?imfProperty != rdf:type && ?imfProperty != skos:prefLabel &&
+                ?imfProperty != skos:defintion && ?imfProperty != skos:description)
         }
 
         # Finding the last segment of the class IRI
         BIND(STR(?imfClass) AS ?classString)
-        BIND(REPLACE(?classString, "^.*[/#]([^/#]*)$", "$1") AS ?classSegment)
+        BIND(REPLACE(?classString, "^.*[/#]([^/#]*)$", "$1") AS ?tempClassSegment)
+        BIND(REPLACE(?tempClassSegment, "-", "_") AS ?classSegment)
         BIND(IF(CONTAINS(?classString, "imf/"), CONCAT("IMF_", ?classSegment) , ?classSegment) AS ?class)
 
         # Finding the last segment of the property IRI
         BIND(STR(?imfProperty) AS ?propertyString)
-        BIND(REPLACE(?propertyString, "^.*[/#]([^/#]*)$", "$1") AS ?propertySegment)
+        BIND(REPLACE(?propertyString, "^.*[/#]([^/#]*)$", "$1") AS ?tempPropertySegment)
+        BIND(REPLACE(?tempPropertySegment, "-", "_") AS ?propertySegment)
         BIND(IF(CONTAINS(?propertyString, "imf/"), CONCAT("IMF_", ?propertySegment) , ?propertySegment) AS ?property)
 
         # Set the value type for the property based on sh:class, sh:qualifiedValueType or rdfs:range
@@ -85,12 +87,17 @@ def parse_imf_to_properties(graph: Graph, language: str = "en") -> list[dict]:
 
         # Finding the last segment of value types
         BIND(STR(?valueIriType) AS ?valueTypeString)
-        BIND(REPLACE(?valueTypeString, "^.*[/#]([^/#]*)$", "$1") AS ?valueTypeSegment)
+        BIND(REPLACE(?valueTypeString, "^.*[/#]([^/#]*)$", "$1") AS ?tempValueTypeSegment)
+        BIND(REPLACE(?tempValueTypeSegment, "-", "_") AS ?valueTypeSegment)
         BIND(IF(CONTAINS(?valueTypeString, "imf/"), CONCAT("IMF_", ?valueTypeSegment) , ?valueTypeSegment)
             AS ?valueType)
 
-        # Helper variable to set property type if value type is not already set.
-        BIND(IF(BOUND(?type) && ?type = owl:DatatypeProperty, ?type , owl:ObjectProperty) AS ?propertyType)
+        # Helper variable to set owl datatype- or object-property if this is not already set.
+        BIND(IF( EXISTS {?imfProperty a ?tempPropertyType . FILTER(?tempPropertyType = owl:DatatypeProperty) },
+            owl:DatatypeProperty,
+            owl:ObjectProperty
+            )
+        AS ?propertyType)
 
         # Assert cardinality values if they do not exist
         BIND(IF(BOUND(?minCardinality), ?minCardinality, 0) AS ?minCount)
