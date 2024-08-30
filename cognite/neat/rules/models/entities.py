@@ -1,3 +1,4 @@
+import inspect
 import re
 import sys
 from abc import ABC, abstractmethod
@@ -180,8 +181,8 @@ class Entity(BaseModel, extra="ignore"):
             if isinstance(annotation, UnionType) or get_origin(annotation) is Union:
                 annotation = get_args(annotation)[0]
 
-            if issubclass(annotation, Entity):  # type: ignore[arg-type]
-                extra_args[key] = annotation.load(extra_args[key], **defaults)  # type: ignore[union-attr]
+            if inspect.isclass(annotation) and issubclass(annotation, Entity):  # type: ignore[arg-type]
+                extra_args[key] = annotation.load(extra_args[key], **defaults)  # type: ignore[union-attr, assignment]
         return dict(prefix=prefix, suffix=suffix, **extra_args)
 
     def dump(self) -> str:
