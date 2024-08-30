@@ -79,6 +79,7 @@ class TestDMSImporter:
         assert dms_recreated.views[turbine].dump()["properties"] == windturbine.WIND_TURBINE.dump()["properties"]
         metmast = windturbine.METMAST.as_id()
         assert dms_recreated.views[metmast].dump()["properties"] == windturbine.METMAST.dump()["properties"]
+        assert [v.dump() for v in dms_recreated.node_types.values()] == [windturbine.NODE_TYPE.dump()]
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
