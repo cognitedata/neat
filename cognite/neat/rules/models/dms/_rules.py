@@ -177,9 +177,7 @@ class DMSProperty(SheetEntity):
         elif isinstance(connection, EdgeEntity) and not isinstance(value, ViewEntity):
             raise ValueError(f"Edge connection must have a value type that points to a view, got {value}")
         elif isinstance(connection, ReverseEntity) and not isinstance(value, ViewEntity):
-            raise ValueError(
-                f"Reverse connection must have a value type that points to a view or view property, got {value}"
-            )
+            raise ValueError(f"Reverse connection must have a value type that points to a view, got {value}")
         return value
 
     @field_serializer("value_type", when_used="always")
