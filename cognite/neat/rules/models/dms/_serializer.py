@@ -105,6 +105,7 @@ class _DMSRulesSerializer:
                     .replace("(,)", "")
                     .replace("(,,)", "")
                     .replace("(,", "(")
+                    .replace(",)", ")")
                 )
 
         for view in dumped[self.view_name]:
