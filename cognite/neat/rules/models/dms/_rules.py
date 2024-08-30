@@ -252,6 +252,9 @@ class DMSNodeType(SheetEntity):
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
 
+    def as_node(self) -> dm.NodeApply:
+        return dm.NodeApply(space=self.node_type.space, external_id=self.node_type.external_id)
+
 
 class DMSRules(BaseRules):
     metadata: DMSMetadata = Field(alias="Metadata")

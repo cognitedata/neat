@@ -115,7 +115,13 @@ class _DMSExporter:
 
         containers = self._create_containers(container_properties_by_id)
 
-        views, node_types = self._create_views_with_node_types(view_properties_by_id)
+        views, default_node_types = self._create_views_with_node_types(view_properties_by_id)
+        if rules.node_types:
+            node_types = NodeApplyDict(
+                [node.as_node() for node in rules.node_types] + list(default_node_types.values())
+            )
+        else:
+            node_types = default_node_types
 
         last_schema: DMSSchema | None = None
         if self.rules.last:

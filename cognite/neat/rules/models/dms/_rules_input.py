@@ -226,6 +226,10 @@ class DMSInputNodeType(InputComponent[DMSNodeType]):
     def _get_verified_cls(cls) -> type[DMSNodeType]:
         return DMSNodeType
 
+    @classmethod
+    def from_node_type(cls, node_type: dm.NodeApply) -> "DMSInputNodeType":
+        return cls(node_type=f"{node_type.space}:{node_type.external_id}")
+
 
 @dataclass
 class DMSInputRules(InputRules[DMSRules]):
