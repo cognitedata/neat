@@ -43,9 +43,11 @@ from cognite.neat.rules.models.dms import (
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
+    DMSNodeEntity,
     DMSUnknownEntity,
+    EdgeEntity,
+    ReverseEntity,
     ViewEntity,
-    ViewPropertyEntity, EdgeEntity, DMSNodeEntity,
 )
 
 
@@ -75,10 +77,10 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         self.ref_metadata = ref_metadata
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = schema.containers.copy()
-        self._all_view_ids = set(self.root_schema.views.keys())
+        self._all_views_by_id = schema.views.copy()
         if self.root_schema.reference:
-            self._all_containers_by_id.update(self.root_schema.reference.containers)
-            self._all_view_ids.update(self.root_schema.reference.views.keys())
+            self._all_containers_by_id.update(schema.reference.containers.items())
+            self._all_views_by_id.update(schema.reference.views.items())
 
     @classmethod
     def from_data_model_id(
@@ -355,14 +357,20 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         """This method assumes you have already checked that the container with property exists."""
         return self._all_containers_by_id[prop.container].properties[prop.container_property_identifier]
 
-    def _get_connection_type(self, prop: ViewPropertyApply) -> Literal["reverse", "direct"] | EdgeEntity | None:
+    def _get_connection_type(self, prop: ViewPropertyApply) -> Literal["direct"] | ReverseEntity | EdgeEntity | None:
         if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "outwards":
             properties = ViewEntity.from_id(prop.edge_source) if prop.edge_source is not None else None
-            return EdgeEntity(properties=properties, type=DMSNodeEntity.from_reference(prop.type))
+            return EdgeEntity(properties=properties, type=DMSNodeEntity.from_reference(prop.type), direction="outwards")
         elif isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "inwards":
-            return "reverse"
+            if reverse_prop := self._find_reverse_edge(prop):
+                return ReverseEntity(property_=reverse_prop)
+            else:
+                properties = ViewEntity.from_id(prop.source) if prop.edge_source is not None else None
+                return EdgeEntity(
+                    properties=properties, type=DMSNodeEntity.from_reference(prop.type), direction="inwards"
+                )
         elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):
-            return "reverse"
+            return ReverseEntity(property_=prop.through.property)
         elif isinstance(prop, dm.MappedPropertyApply) and isinstance(
             self._container_prop_unsafe(prop).type, dm.DirectRelation
         ):
@@ -372,15 +380,19 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
     def _get_value_type(
         self, prop: ViewPropertyApply, view_entity: ViewEntity, prop_id
-    ) -> DataType | ViewEntity | ViewPropertyEntity | DMSUnknownEntity | None:
-        if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply):
+    ) -> DataType | ViewEntity | DMSUnknownEntity | None:
+        if isinstance(
+            prop,
+            SingleEdgeConnectionApply
+            | MultiEdgeConnectionApply
+            | SingleReverseDirectRelationApply
+            | MultiReverseDirectRelationApply,
+        ):
             return ViewEntity.from_id(prop.source)
-        elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):
-            return ViewPropertyEntity.from_id(prop.through)
         elif isinstance(prop, dm.MappedPropertyApply):
             container_prop = self._container_prop_unsafe(cast(dm.MappedPropertyApply, prop))
             if isinstance(container_prop.type, dm.DirectRelation):
-                if prop.source is None or prop.source not in self._all_view_ids:
+                if prop.source is None or prop.source not in self._all_views_by_id:
                     return DMSUnknownEntity()
                 else:
                     return ViewEntity.from_id(prop.source)
@@ -453,3 +465,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                     )
                 )
         return unique_constraints or None
+
+    def _find_reverse_edge(self, prop: SingleEdgeConnectionApply | MultiEdgeConnectionApply) -> str | None:
+        raise NotImplementedError("This method is not implemented yet.")

@@ -14,7 +14,6 @@ from cognite.neat.rules.models.entities import (
     RelationshipEntity,
     UnknownEntity,
     ViewEntity,
-    ViewPropertyEntity,
 )
 
 DEFAULT_SPACE = "sp_my_space"
@@ -44,62 +43,7 @@ TEST_CASES = [
         ViewEntity(space=DEFAULT_SPACE, externalId="Person", version="3"),
     ),
     (
-        ViewPropertyEntity,
-        "Person(property=name)",
-        ViewPropertyEntity(
-            space=DEFAULT_SPACE,
-            externalId="Person",
-            version=DEFAULT_VERSION,
-            property="name",
-        ),
-    ),
-    (
-        ViewPropertyEntity,
-        "Person(property=name, version=1)",
-        ViewPropertyEntity(
-            space=DEFAULT_SPACE,
-            externalId="Person",
-            version="1",
-            property="name",
-        ),
-    ),
-    (
-        ViewPropertyEntity,
-        "Person(property=name,version=1)",
-        ViewPropertyEntity(
-            space=DEFAULT_SPACE,
-            externalId="Person",
-            version="1",
-            property="name",
-        ),
-    ),
-    (
-        ViewPropertyEntity,
-        "sp_my_space:Person(property=name, version=1)",
-        ViewPropertyEntity(
-            space="sp_my_space",
-            externalId="Person",
-            version="1",
-            property="name",
-        ),
-    ),
-    (
-        ViewPropertyEntity,
-        "sp_my_space:Person(version=1, property=name)",
-        ViewPropertyEntity(
-            space="sp_my_space",
-            externalId="Person",
-            version="1",
-            property="name",
-        ),
-    ),
-    (
         ViewEntity,
-        "#N/A",
-        DMSUnknownEntity.from_id(None),
-    ),
-    (
-        ViewPropertyEntity,
         "#N/A",
         DMSUnknownEntity.from_id(None),
     ),
@@ -195,41 +139,6 @@ class TestDataModelEntity:
     )
     def test_load(self, raw: str, expected: DataModelEntity, expected_id: DataModelId) -> None:
         actual = DataModelEntity.load(raw, space=DEFAULT_SPACE, version=DEFAULT_VERSION)
-
-        assert actual == expected
-        assert actual.as_id() == expected_id
-
-
-class TestViewPropertyEntity:
-    @pytest.mark.parametrize(
-        "raw, expected, expected_id",
-        [
-            pytest.param(
-                "test:TestGraphQL1(version=3, property=prop1)",
-                ViewPropertyEntity(
-                    space="test",
-                    externalId="TestGraphQL1",
-                    version="3",
-                    property="prop1",
-                ),
-                PropertyId(ViewId("test", "TestGraphQL1", "3"), "prop1"),
-                id="Prefix, suffix, version and prop",
-            ),
-            pytest.param(
-                "test:TestGraphQL1(property=prop1)",
-                ViewPropertyEntity(
-                    space="test",
-                    externalId="TestGraphQL1",
-                    version=DEFAULT_VERSION,
-                    property="prop1",
-                ),
-                PropertyId(ViewId("test", "TestGraphQL1", DEFAULT_VERSION), "prop1"),
-                id="Prefix, suffix and prop. Skip version",
-            ),
-        ],
-    )
-    def test_load(self, raw: str, expected: ViewPropertyEntity, expected_id: PropertyId) -> None:
-        actual = ViewPropertyEntity.load(raw, space=DEFAULT_SPACE, version=DEFAULT_VERSION)
 
         assert actual == expected
         assert actual.as_id() == expected_id

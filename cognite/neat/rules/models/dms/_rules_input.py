@@ -12,8 +12,8 @@ from cognite.neat.rules.models.entities import (
     ContainerEntity,
     DMSUnknownEntity,
     EdgeEntity,
+    ReverseEntity,
     ViewEntity,
-    ViewPropertyEntity,
     load_connection,
     load_dms_value_type,
 )
@@ -81,12 +81,12 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
 class DMSInputProperty(InputComponent[DMSProperty]):
     view: str
     view_property: str | None
-    value_type: str | DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity
+    value_type: str | DataType | ViewEntity | DMSUnknownEntity
     property_: str | None = None
     class_: str | None = None
     name: str | None = None
     description: str | None = None
-    connection: Literal["direct", "reverse"] | EdgeEntity | str | None = None
+    connection: Literal["direct"] | ReverseEntity | EdgeEntity | str | None = None
     nullable: bool | None = None
     immutable: bool | None = None
     is_list: bool | None = None

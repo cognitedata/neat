@@ -38,10 +38,10 @@ from cognite.neat.rules.models.entities import (
     DMSUnknownEntity,
     EdgeEntity,
     ReferenceEntity,
+    ReverseEntity,
     URLEntity,
     ViewEntity,
     ViewEntityList,
-    ViewPropertyEntity,
 )
 from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFilter, RawFilter
 
@@ -168,15 +168,15 @@ class DMSProperty(SheetEntity):
 
     @field_validator("value_type", mode="after")
     def connections_value_type(
-        cls, value: ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
-    ) -> DataType | ViewPropertyEntity | EdgeEntity | ViewEntity | DMSUnknownEntity:
+        cls, value:  EdgeEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
+    ) -> DataType | EdgeEntity | ViewEntity | DMSUnknownEntity:
         if (connection := info.data.get("connection")) is None:
             return value
         if connection == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
             raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
-        elif isinstance(connection, EdgeEntity) and not isinstance(value, ViewEntity | EdgeEntity):
+        elif isinstance(connection, EdgeEntity) and not isinstance(value, ViewEntity):
             raise ValueError(f"Edge connection must have a value type that points to a view, got {value}")
-        elif connection == "reverse" and not isinstance(value, ViewPropertyEntity | ViewEntity):
+        elif isinstance(connection, ReverseEntity) and not isinstance(value, ViewEntity):
             raise ValueError(
                 f"Reverse connection must have a value type that points to a view or view property, got {value}"
             )
@@ -184,7 +184,7 @@ class DMSProperty(SheetEntity):
 
     @field_serializer("value_type", when_used="always")
     @staticmethod
-    def as_dms_type(value_type: DataType | ViewPropertyEntity | EdgeEntity | ViewEntity) -> str:
+    def as_dms_type(value_type: DataType | EdgeEntity | ViewEntity) -> str:
         if isinstance(value_type, DataType):
             return value_type.dms._type
         else:

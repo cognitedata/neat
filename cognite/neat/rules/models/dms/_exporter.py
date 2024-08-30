@@ -29,7 +29,7 @@ from cognite.neat.rules.models.entities import (
     EdgeEntity,
     ReferenceEntity,
     ViewEntity,
-    ViewPropertyEntity,
+    ReverseEntity,
 )
 from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
@@ -494,13 +494,12 @@ class _DMSExporter:
                 description=prop.description,
                 edge_source=edge_source,
             )
-        elif prop.connection == "reverse":
-            reverse_prop_id: str | None = None
+        elif isinstance(prop.connection, ReverseEntity):
+            reverse_prop_id = prop.connection.property_
+            if True:
+                raise NotImplementedError("ReverseEntity is not supported")
             edge_source = None
-            if isinstance(prop.value_type, ViewPropertyEntity):
-                source_view_id = prop.value_type.as_view_id()
-                reverse_prop_id = prop.value_type.property_
-            elif isinstance(prop.value_type, ViewEntity):
+            if isinstance(prop.value_type, ViewEntity):
                 source_view_id = prop.value_type.as_id()
             else:
                 # Should have been validated.

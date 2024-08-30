@@ -37,7 +37,7 @@ from cognite.neat.rules.models.entities import (
     RelationshipEntity,
     UnknownEntity,
     ViewEntity,
-    ViewPropertyEntity,
+
 )
 from cognite.neat.rules.models.information import InformationClass, InformationMetadata, InformationProperty
 
@@ -273,7 +273,7 @@ class _InformationRulesConverter:
         from cognite.neat.rules.models.dms._rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
-        value_type: DataType | ViewEntity | ViewPropertyEntity | DMSUnknownEntity
+        value_type: DataType | ViewEntity | DMSUnknownEntity
         if isinstance(prop.value_type, DataType):
             value_type = prop.value_type
         elif isinstance(prop.value_type, UnknownEntity):
@@ -285,8 +285,8 @@ class _InformationRulesConverter:
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
-        connection: Literal["direct", "reverse"] | EdgeEntity | None = None
-        if isinstance(value_type, ViewEntity | ViewPropertyEntity):
+        connection: Literal["direct"] | ReferenceEntity | EdgeEntity | None = None
+        if isinstance(value_type, ViewEntity):
             # Default connection type.
             connection = EdgeEntity() if prop.is_list else "direct"
 
@@ -447,7 +447,7 @@ class _DMSRulesConverter:
         for property_ in self.dms.properties:
             if isinstance(property_.value_type, DataType):
                 value_type = property_.value_type
-            elif isinstance(property_.value_type, ViewEntity | ViewPropertyEntity):
+            elif isinstance(property_.value_type, ViewEntity):
                 value_type = ClassEntity(
                     prefix=property_.value_type.prefix,
                     suffix=property_.value_type.suffix,

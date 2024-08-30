@@ -60,6 +60,7 @@ class EntityTypes(StrEnum):
     asset = "asset"
     relationship = "relationship"
     edge = "edge"
+    reverse = "reverse"
 
 
 # ALLOWED
@@ -474,33 +475,6 @@ class DMSUnknownEntity(DMSEntity[None]):
         return str(Unknown)
 
 
-class ViewPropertyEntity(DMSVersionedEntity[PropertyId]):
-    type_: ClassVar[EntityTypes] = EntityTypes.property_
-    property_: str = Field(alias="property")
-
-    def as_id(self) -> PropertyId:
-        return PropertyId(
-            source=ViewId(self.space, self.external_id, self.version),
-            property=self.property_,
-        )
-
-    def as_view_id(self) -> ViewId:
-        return ViewId(space=self.space, external_id=self.external_id, version=self.version)
-
-    @classmethod
-    def from_id(cls, id: PropertyId) -> "ViewPropertyEntity":
-        if isinstance(id.source, ContainerId):
-            raise ValueError("Only view source are supported")
-        if id.source.version is None:
-            raise ValueError("Version must be specified")
-        return cls(
-            space=id.source.space,
-            externalId=id.source.external_id,
-            version=id.source.version,
-            property=id.property,
-        )
-
-
 class DataModelEntity(DMSVersionedEntity[DataModelId]):
     type_: ClassVar[EntityTypes] = EntityTypes.datamodel
 
@@ -538,6 +512,7 @@ class EdgeEntity(DMSEntity[None]):
     suffix: Literal["edge"] = "edge"
     edge_type: DMSNodeEntity | None = Field(None, alias="type")
     properties: ViewEntity | None = None
+    direction: Literal["outwards", "inwards"] = "outwards"
 
     def as_id(self) -> None:
         return None
@@ -545,6 +520,13 @@ class EdgeEntity(DMSEntity[None]):
     @classmethod
     def from_id(cls, id: None) -> Self:
         return cls()
+
+
+class ReverseEntity(Entity):
+    type_ = ClassVar[EntityTypes] = EntityTypes.reverse
+    prefix: _UndefinedType = Undefined
+    suffix: Literal["reverse"] = "reverse"
+    property_: str
 
 
 class ReferenceEntity(ClassEntity):
@@ -688,31 +670,31 @@ def load_value_type(
 
 
 def load_dms_value_type(
-    raw: str | DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity,
+    raw: str | DataType | ViewEntity | DMSUnknownEntity,
     default_space: str,
     default_version: str,
-) -> DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity:
-    if isinstance(raw, DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity):
+) -> DataType | ViewEntity | DMSUnknownEntity:
+    if isinstance(raw, DataType | ViewEntity | DMSUnknownEntity):
         return raw
     elif isinstance(raw, str):
         if DataType.is_data_type(raw):
             return DataType.load(raw)
         elif raw == str(Unknown):
             return DMSUnknownEntity()
-        try:
-            return ViewPropertyEntity.load(raw, space=default_space, version=default_version)
-        except ValueError:
+        else:
             return ViewEntity.load(raw, space=default_space, version=default_version)
     raise NeatTypeError(f"Invalid value type: {type(raw)}")
 
 
 def load_connection(
-    raw: Literal["direct", "reverse"] | EdgeEntity | str | None,
+    raw: Literal["direct"] | ReverseEntity | EdgeEntity | str | None,
     default_space: str,
     default_version: str,
-) -> Literal["direct", "reverse"] | EdgeEntity | None:
-    if isinstance(raw, EdgeEntity) or raw is None or (isinstance(raw, str) and raw in {"direct", "reverse"}):
+) -> Literal["direct"] | ReverseEntity | EdgeEntity | None:
+    if isinstance(raw, EdgeEntity | ReferenceEntity) or raw is None or (isinstance(raw, str) and raw == "direct"):
         return raw  # type: ignore[return-value]
     elif isinstance(raw, str) and raw.startswith("edge"):
         return EdgeEntity.load(raw, space=default_space, version=default_version)  # type: ignore[return-value]
+    elif isinstance(raw, str) and raw.startswith("reverse"):
+        return ReverseEntity.load(raw)  # type: ignore[return-value]
     raise NeatTypeError(f"Invalid connection: {type(raw)}")
