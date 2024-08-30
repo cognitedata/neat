@@ -35,6 +35,7 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     ContainerEntityList,
+    DMSNodeEntity,
     DMSUnknownEntity,
     EdgeEntity,
     ReferenceEntity,
@@ -246,11 +247,18 @@ class DMSView(SheetEntity):
         )
 
 
+class DMSNodeType(SheetEntity):
+    node_type: DMSNodeEntity = Field(alias="Node Type")
+    name: str | None = Field(alias="Name", default=None)
+    description: str | None = Field(alias="Description", default=None)
+
+
 class DMSRules(BaseRules):
     metadata: DMSMetadata = Field(alias="Metadata")
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     views: SheetList[DMSView] = Field(alias="Views")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
+    node_types: SheetList[DMSNodeType] | None = Field(None, alias="Node Types")
     last: "DMSRules | None" = Field(None, alias="Last", description="The previous version of the data model")
     reference: "DMSRules | None" = Field(None, alias="Reference")
 

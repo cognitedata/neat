@@ -18,7 +18,7 @@ from cognite.neat.rules.models.entities import (
     load_dms_value_type,
 )
 
-from ._rules import _DEFAULT_VERSION, DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
+from ._rules import _DEFAULT_VERSION, DMSContainer, DMSMetadata, DMSNodeType, DMSProperty, DMSRules, DMSView
 
 
 @dataclass
@@ -217,11 +217,23 @@ class DMSInputView(InputComponent[DMSView]):
 
 
 @dataclass
+class DMSInputNodeType(InputComponent[DMSNodeType]):
+    node_type: str
+    name: str | None = None
+    description: str | None = None
+
+    @classmethod
+    def _get_verified_cls(cls) -> type[DMSNodeType]:
+        return DMSNodeType
+
+
+@dataclass
 class DMSInputRules(InputRules[DMSRules]):
     metadata: DMSInputMetadata
     properties: list[DMSInputProperty]
     views: list[DMSInputView]
     containers: list[DMSInputContainer] | None = None
+    node_types: list[DMSInputNodeType] | None = None
     last: "DMSInputRules | None" = None
     reference: "DMSInputRules | None" = None
 

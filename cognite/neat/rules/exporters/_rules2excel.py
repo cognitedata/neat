@@ -67,6 +67,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         "Classes": "Definition of Classes",
         "Views": "Definition of Views",
         "Containers": "Definition of Containers",
+        "Node Types": "Definition of Node Types",
     }
     style_options = get_args(Style)
     dump_options = get_args(DumpOptions)
