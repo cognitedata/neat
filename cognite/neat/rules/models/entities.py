@@ -523,7 +523,7 @@ class EdgeEntity(DMSEntity[None]):
 
 
 class ReverseEntity(Entity):
-    type_ = ClassVar[EntityTypes] = EntityTypes.reverse
+    type_: ClassVar[EntityTypes] = EntityTypes.reverse
     prefix: _UndefinedType = Undefined
     suffix: Literal["reverse"] = "reverse"
     property_: str

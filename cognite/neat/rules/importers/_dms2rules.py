@@ -78,7 +78,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = schema.containers.copy()
         self._all_views_by_id = schema.views.copy()
-        if self.root_schema.reference:
+        if schema.reference:
             self._all_containers_by_id.update(schema.reference.containers.items())
             self._all_views_by_id.update(schema.reference.views.items())
 

@@ -28,8 +28,8 @@ from cognite.neat.rules.models.entities import (
     DMSUnknownEntity,
     EdgeEntity,
     ReferenceEntity,
-    ViewEntity,
     ReverseEntity,
+    ViewEntity,
 )
 from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict

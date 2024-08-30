@@ -1,5 +1,5 @@
 import pytest
-from cognite.client.data_classes.data_modeling import DataModelId, PropertyId, ViewId
+from cognite.client.data_classes.data_modeling import DataModelId
 
 from cognite.neat.rules.models.entities import (
     _ENTITY_PATTERN,

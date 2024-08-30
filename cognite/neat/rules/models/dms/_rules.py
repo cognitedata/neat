@@ -168,7 +168,7 @@ class DMSProperty(SheetEntity):
 
     @field_validator("value_type", mode="after")
     def connections_value_type(
-        cls, value:  EdgeEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
+        cls, value: EdgeEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
     ) -> DataType | EdgeEntity | ViewEntity | DMSUnknownEntity:
         if (connection := info.data.get("connection")) is None:
             return value
