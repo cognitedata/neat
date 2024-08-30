@@ -45,7 +45,7 @@ from cognite.neat.rules.models.entities import (
     ContainerEntity,
     DMSUnknownEntity,
     ViewEntity,
-    ViewPropertyEntity,
+    ViewPropertyEntity, EdgeEntity, DMSNodeEntity,
 )
 
 
@@ -355,9 +355,10 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         """This method assumes you have already checked that the container with property exists."""
         return self._all_containers_by_id[prop.container].properties[prop.container_property_identifier]
 
-    def _get_connection_type(self, prop: ViewPropertyApply) -> Literal["edge", "reverse", "direct"] | None:
+    def _get_connection_type(self, prop: ViewPropertyApply) -> Literal["reverse", "direct"] | EdgeEntity | None:
         if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "outwards":
-            return "edge"
+            properties = ViewEntity.from_id(prop.edge_source) if prop.edge_source is not None else None
+            return EdgeEntity(properties=properties, type=DMSNodeEntity.from_reference(prop.type))
         elif isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "inwards":
             return "reverse"
         elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):

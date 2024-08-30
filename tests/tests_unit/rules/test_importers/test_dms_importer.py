@@ -70,6 +70,7 @@ class TestDMSImporter:
         assert result.rules.dump() == windturbine.INPUT_RULES.dump()
 
         rules = VerifyDMSRules(errors="raise").transform(result).get_rules()
+        assert isinstance(rules, DMSRules)
 
         dms_recreated = DMSExporter().export(rules)
         # We cannot compare the whole schema, as the DMS Exporter makes things like

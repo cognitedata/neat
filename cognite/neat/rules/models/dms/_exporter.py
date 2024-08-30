@@ -253,11 +253,11 @@ class _DMSExporter:
 
     @classmethod
     def _create_edge_type_from_prop(cls, prop: DMSProperty) -> dm.DirectRelationReference:
-        if isinstance(prop.reference, ReferenceEntity):
+        if isinstance(prop.connection, EdgeEntity) and prop.connection.edge_type is not None:
+            return prop.connection.edge_type.as_reference()
+        elif isinstance(prop.reference, ReferenceEntity):
             ref_view_prop = prop.reference.as_view_property_id()
             return cls._create_edge_type_from_view_id(cast(dm.ViewId, ref_view_prop.source), ref_view_prop.property)
-        elif isinstance(prop.value_type, EdgeEntity):
-            return prop.value_type.edge_type.as_reference()
         elif isinstance(prop.value_type, ViewEntity):
             return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
         else:
@@ -469,7 +469,7 @@ class _DMSExporter:
                 description=prop.description,
                 **extra_args,
             )
-        elif prop.connection == "edge":
+        elif isinstance(prop.connection, EdgeEntity):
             if isinstance(prop.value_type, ViewEntity):
                 source_view_id = prop.value_type.as_id()
             else:
@@ -479,8 +479,8 @@ class _DMSExporter:
                     f"Debug Info, Invalid valueType edge: {prop.model_dump_json()}"
                 )
             edge_source: dm.ViewId | None = None
-            if isinstance(prop.value_type, EdgeEntity) and prop.value_type.properties:
-                edge_source = prop.value_type.properties.as_id()
+            if prop.connection.properties is not None:
+                edge_source = prop.connection.properties.as_id()
             edge_cls: type[dm.EdgeConnectionApply] = dm.MultiEdgeConnectionApply
             # If is_list is not set, we default to a MultiEdgeConnection
             if prop.is_list is False:
@@ -497,10 +497,7 @@ class _DMSExporter:
         elif prop.connection == "reverse":
             reverse_prop_id: str | None = None
             edge_source = None
-            if isinstance(prop.value_type, EdgeEntity) and prop.value_type.properties:
-                edge_source = prop.value_type.properties.as_id()
-                source_view_id = prop.value_type.as_id()
-            elif isinstance(prop.value_type, ViewPropertyEntity):
+            if isinstance(prop.value_type, ViewPropertyEntity):
                 source_view_id = prop.value_type.as_view_id()
                 reverse_prop_id = prop.value_type.property_
             elif isinstance(prop.value_type, ViewEntity):
