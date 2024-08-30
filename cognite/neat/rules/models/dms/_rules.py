@@ -256,9 +256,6 @@ class DMSRules(BaseRules):
     last: "DMSRules | None" = Field(None, alias="Last", description="The previous version of the data model")
     reference: "DMSRules | None" = Field(None, alias="Reference")
 
-    def verify_reverse_connections(self) -> IssuesList:
-        ...
-
     @field_validator("reference")
     def check_reference_of_reference(cls, value: "DMSRules | None", info: ValidationInfo) -> "DMSRules | None":
         if value is None:

@@ -146,7 +146,7 @@ INPUT_RULES = DMSInputRules(
             "MetMast",
             "windTurbines",
             "WindTurbine",
-            connection="reverse",
+            connection="reverse(property=metmasts)",
             is_list=True,
         ),
         DMSInputProperty(
