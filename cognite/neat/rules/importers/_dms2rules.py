@@ -8,7 +8,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
-from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
+from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType, PropertyTypeWithUnit
 from cognite.client.data_classes.data_modeling.views import (
     MultiEdgeConnectionApply,
     MultiReverseDirectRelationApply,
@@ -401,6 +401,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                     return DMSUnknownEntity()
                 else:
                     return ViewEntity.from_id(prop.source)
+            elif isinstance(container_prop.type, PropertyTypeWithUnit) and container_prop.type.unit:
+                return DataType.load(f"{container_prop.type._type}(unit={container_prop.type.unit.external_id})")
             else:
                 return DataType.load(container_prop.type._type)
         else:
