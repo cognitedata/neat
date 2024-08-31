@@ -23,6 +23,7 @@ from ._base import (
 from ._constants import EntityTypes
 from ._loaders import load_connection, load_dms_value_type, load_value_type
 from ._types import CdfResourceEntityList, ClassEntityList, ContainerEntityList, URLEntity, ViewEntityList
+from ._wrapped import DMSFilter, HasDataFilter, NodeTypeFilter, RawFilter, WrappedEntity
 
 __all__ = [
     "Entity",
@@ -54,4 +55,9 @@ __all__ = [
     "load_value_type",
     "load_dms_value_type",
     "load_connection",
+    "WrappedEntity",
+    "NodeTypeFilter",
+    "DMSFilter",
+    "HasDataFilter",
+    "RawFilter",
 ]

@@ -38,13 +38,15 @@ from cognite.neat.rules.models.entities import (
     DMSNodeEntity,
     DMSUnknownEntity,
     EdgeEntity,
+    HasDataFilter,
+    NodeTypeFilter,
+    RawFilter,
     ReferenceEntity,
     ReverseConnectionEntity,
     URLEntity,
     ViewEntity,
     ViewEntityList,
 )
-from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFilter, RawFilter
 
 from ._schema import DMSSchema
 

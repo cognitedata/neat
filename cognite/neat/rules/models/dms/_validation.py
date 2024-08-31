@@ -20,8 +20,7 @@ from cognite.neat.issues.warnings.user_modeling import (
 )
 from cognite.neat.rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.entities import ContainerEntity
-from cognite.neat.rules.models.wrapped_entities import RawFilter
+from cognite.neat.rules.models.entities import ContainerEntity, RawFilter
 
 from ._rules import DMSProperty, DMSRules
 from ._schema import DMSSchema
