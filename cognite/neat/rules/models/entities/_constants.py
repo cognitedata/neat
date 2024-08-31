@@ -35,6 +35,7 @@ class EntityTypes(StrEnum):
     relationship = "relationship"
     edge = "edge"
     reverse = "reverse"
+    unit = "unit"
 
 
 # ALLOWED

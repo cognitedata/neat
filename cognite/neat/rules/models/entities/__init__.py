@@ -2,6 +2,7 @@ from ._constants import EntityTypes, Undefined, Unknown
 from ._loaders import load_connection, load_dms_value_type, load_value_type
 from ._multi_value import MultiValueTypeInfo
 from ._single_value import (
+    UnitEntity,
     AssetEntity,
     AssetFields,
     ClassEntity,
@@ -25,6 +26,7 @@ from ._wrapped import DMSFilter, HasDataFilter, NodeTypeFilter, RawFilter, Wrapp
 
 __all__ = [
     "Entity",
+    "UnitEntity",
     "DMSVersionedEntity",
     "RelationshipEntity",
     "EdgeEntity",

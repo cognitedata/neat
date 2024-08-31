@@ -13,7 +13,9 @@ from cognite.neat.rules.models.entities import (
     RelationshipEntity,
     UnknownEntity,
     ViewEntity,
+    UnitEntity,
 )
+
 from cognite.neat.rules.models.entities._constants import ENTITY_PATTERN
 
 DEFAULT_SPACE = "sp_my_space"
@@ -21,6 +23,16 @@ DEFAULT_VERSION = "vDefault"
 
 
 TEST_CASES = [
+    (
+        UnitEntity,
+        "acceleration:ft-per-sec2",
+        UnitEntity(prefix="acceleration", suffix="ft-per-sec2"),
+    ),
+    (
+        UnitEntity,
+        "length:m",
+        UnitEntity(prefix="length", suffix="m"),
+    ),
     (
         ClassEntity,
         "subject:person",
