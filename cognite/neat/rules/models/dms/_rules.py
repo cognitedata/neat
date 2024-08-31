@@ -187,7 +187,7 @@ class DMSProperty(SheetEntity):
     @staticmethod
     def as_dms_type(value_type: DataType | EdgeEntity | ViewEntity) -> str:
         if isinstance(value_type, DataType):
-            return value_type.dms._type
+            return value_type._suffix_extra_args(value_type.dms._type)
         else:
             return str(value_type)
 

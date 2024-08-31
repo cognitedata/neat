@@ -101,6 +101,9 @@ class DataType(BaseModel):
             base = self.dms._type
         else:
             base = self.model_fields["name"].default
+        return self._suffix_extra_args(base)
+
+    def _suffix_extra_args(self, base: str) -> str:
         extra_fields: dict[str, str] = {}
         for field_id, field_ in self.model_fields.items():
             if field_id == "name":
