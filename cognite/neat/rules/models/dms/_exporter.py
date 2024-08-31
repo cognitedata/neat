@@ -21,7 +21,7 @@ from cognite.neat.issues.warnings.user_modeling import (
     NodeTypeFilterOnParentViewWarning,
 )
 from cognite.neat.rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
-from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.data_types import DataType, Double, Float
 from cognite.neat.rules.models.entities import (
     ContainerEntity,
     DMSFilter,
@@ -32,6 +32,7 @@ from cognite.neat.rules.models.entities import (
     NodeTypeFilter,
     ReferenceEntity,
     ReverseEntity,
+    UnitEntity,
     ViewEntity,
 )
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
@@ -310,11 +311,13 @@ class _DMSExporter:
                     type_cls = prop.value_type.dms
                 else:
                     type_cls = dm.DirectRelation
-                type_: dm.PropertyType
+                args: dict[str, Any] = {}
                 if issubclass(type_cls, ListablePropertyType):
-                    type_ = type_cls(is_list=prop.is_list or False)
-                else:
-                    type_ = type_cls()
+                    args["is_list"] = prop.is_list or False
+                if isinstance(prop.value_type, Double | Float) and isinstance(prop.value_type.unit, UnitEntity):
+                    args["unit"] = prop.value_type.unit.as_reference()
+
+                type_ = type_cls(**args)
                 container.properties[prop.container_property] = dm.ContainerProperty(
                     type=type_,
                     # If not set, nullable is True and immutable is False
