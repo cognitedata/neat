@@ -229,6 +229,12 @@ class UnknownEntity(ClassEntity):
         return str(Unknown)
 
 
+class UnitEntity(Entity):
+    type_: ClassVar[EntityTypes] = EntityTypes.unit
+    prefix: str
+    suffix: str
+
+
 class AssetFields(StrEnum):
     externalId = "externalId"
     name = "name"
