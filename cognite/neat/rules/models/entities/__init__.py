@@ -1,11 +1,8 @@
 from ._base import (
     AssetEntity,
     AssetFields,
-    CdfResourceEntityList,
     ClassEntity,
-    ClassEntityList,
     ContainerEntity,
-    ContainerEntityList,
     DataModelEntity,
     DMSEntity,
     DMSNodeEntity,
@@ -21,12 +18,11 @@ from ._base import (
     Undefined,
     Unknown,
     UnknownEntity,
-    URLEntity,
     ViewEntity,
-    ViewEntityList,
 )
 from ._constants import EntityTypes
 from ._loaders import load_connection, load_dms_value_type, load_value_type
+from ._types import CdfResourceEntityList, ClassEntityList, ContainerEntityList, URLEntity, ViewEntityList
 
 __all__ = [
     "Entity",
