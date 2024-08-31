@@ -14,11 +14,9 @@ else:
 
 
 class DataType(BaseModel):
-    # These are necessary for Pydantic to work
-    # pydantic gets confused as we have no fields.
+    # Do not know why pydantic requires these, but it does.
     __pydantic_extra__ = None
     __pydantic_fields_set__ = set()
-    __pydantic_private__ = {}
 
     python: ClassVar[type]
     dms: ClassVar[type[dms.PropertyType]]
