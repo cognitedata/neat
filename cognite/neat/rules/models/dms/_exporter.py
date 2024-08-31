@@ -20,7 +20,7 @@ from cognite.neat.issues.warnings.user_modeling import (
     HasDataFilterOnViewWithReferencesWarning,
     NodeTypeFilterOnParentViewWarning,
 )
-from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
+from cognite.neat.rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ContainerEntity,
