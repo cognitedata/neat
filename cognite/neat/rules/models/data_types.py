@@ -1,3 +1,4 @@
+import re
 import sys
 import typing
 from datetime import date, datetime
@@ -7,10 +8,17 @@ from cognite.client.data_classes import data_modeling as dms
 from pydantic import BaseModel, model_serializer, model_validator
 from pydantic.functional_validators import ModelWrapValidatorHandler
 
+from cognite.neat.rules.models.entities._single_value import UnitEntity
+from cognite.neat.utils.regex_patterns import SPLIT_ON_COMMA_PATTERN, SPLIT_ON_EQUAL_PATTERN
+
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
+
+# This patterns matches a string that is a data type, with optional content in parentheses.
+# For example, it matches "float(unit=power:megaw)" as name="float" and content="unit=power:megaw"
+_DATATYPE_PATTERN = re.compile(r"^(?P<name>[^(:]*)(\((?P<content>.+)\))?$")
 
 
 class DataType(BaseModel):
@@ -63,12 +71,25 @@ class DataType(BaseModel):
         if isinstance(value, cls | dict):
             return value
         elif isinstance(value, str):
-            value_standardized = value.casefold()
-            if cls_ := _DATA_TYPE_BY_DMS_TYPE.get(value_standardized):
-                return cls_()
-            elif cls_ := _DATA_TYPE_BY_NAME.get(value_standardized):
-                return cls_()
-            raise ValueError(f"Unknown literal type: {value}") from None
+            if match := _DATATYPE_PATTERN.match(value):
+                name = match.group("name").casefold()
+                cls_: type[DataType]
+                if name in _DATA_TYPE_BY_DMS_TYPE:
+                    cls_ = _DATA_TYPE_BY_DMS_TYPE[name]
+                elif name in _DATA_TYPE_BY_NAME:
+                    cls_ = _DATA_TYPE_BY_NAME[name]
+                else:
+                    raise ValueError(f"Unknown literal type: {value}") from None
+                content = match.group("content")
+                if content is None:
+                    return cls_()
+                extra_args: dict[str, Any] = dict(
+                    SPLIT_ON_EQUAL_PATTERN.split(pair.strip()) for pair in SPLIT_ON_COMMA_PATTERN.split(content)
+                )
+                # Todo? Raise warning if extra_args contains keys that are not in the model fields
+                return cls_(**extra_args)
+            else:
+                raise ValueError(f"Unknown data type: {value}")
         raise ValueError(f"Cannot load {cls.__name__} from {value}")
 
     @model_serializer(when_used="unless-none", return_type=str)
@@ -106,6 +127,7 @@ class Float(DataType):
     sql = "FLOAT"
 
     name: typing.Literal["float"] = "float"
+    unit: UnitEntity | None = None
 
 
 class Double(DataType):
@@ -116,6 +138,7 @@ class Double(DataType):
     sql = "FLOAT"
 
     name: typing.Literal["double"] = "double"
+    unit: UnitEntity | None = None
 
 
 class Integer(DataType):
