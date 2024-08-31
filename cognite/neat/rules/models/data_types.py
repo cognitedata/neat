@@ -113,8 +113,8 @@ class DataType(BaseModel):
                 continue
             extra_fields[field_.alias or field_id] = str(value)
         if extra_fields:
-            return f"{base}({', '.join(f'{key}={value}' for key, value in
-                                       sorted(extra_fields.items(), key=lambda x: x[0]))})"
+            content = {", ".join(f"{key}={value}" for key, value in sorted(extra_fields.items(), key=lambda x: x[0]))}
+            return f"{base}({content})"
         return base
 
     def __eq__(self, other: Any) -> bool:
