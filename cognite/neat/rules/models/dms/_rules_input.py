@@ -10,6 +10,7 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
+    DMSNodeEntity,
     DMSUnknownEntity,
     EdgeEntity,
     ReverseEntity,
@@ -230,6 +231,11 @@ class DMSInputNodeType(InputComponent[DMSNodeType]):
     def from_node_type(cls, node_type: dm.NodeApply) -> "DMSInputNodeType":
         return cls(node_type=f"{node_type.space}:{node_type.external_id}")
 
+    def dump(self, default_space: str, **_) -> dict[str, Any]:  # type: ignore[override]
+        output = super().dump()
+        output["Node Type"] = DMSNodeEntity.load(self.node_type, space=default_space)
+        return output
+
 
 @dataclass
 class DMSInputRules(InputRules[DMSRules]):
@@ -261,12 +267,12 @@ class DMSInputRules(InputRules[DMSRules]):
             # We need to load through the DMSRulesInput to set the correct default space and version
             last = DMSInputRules.load(self.last.model_dump()).dump()
 
-        return dict(
-            Metadata=self.metadata.dump(),
-            Properties=[prop.dump(default_space, default_version) for prop in self.properties],
-            Views=[view.dump(default_space, default_version) for view in self.views],
-            Containers=[container.dump(default_space) for container in self.containers or []] or None,
-            NodeTypes=[node_type.dump() for node_type in self.node_types or []] or None,
-            Last=last,
-            Reference=reference,
-        )
+        return {
+            "Metadata": self.metadata.dump(),
+            "Properties": [prop.dump(default_space, default_version) for prop in self.properties],
+            "Views": [view.dump(default_space, default_version) for view in self.views],
+            "Containers": [container.dump(default_space) for container in self.containers or []] or None,
+            "Node Types": [node_type.dump(default_space) for node_type in self.node_types or []] or None,
+            "Last": last,
+            "Reference": reference,
+        }
