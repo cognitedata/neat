@@ -11,11 +11,10 @@ from cognite.neat.rules.models.data_types import (
     Double,
     Float,
     Integer,
-    Literal,
     NonNegativeInteger,
     NonPositiveInteger,
 )
-from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity, URLEntity
+from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity, UnitEntity, URLEntity
 
 
 class DemoProperty(BaseModel):
@@ -35,6 +34,8 @@ class TestDataTypes:
     @pytest.mark.parametrize(
         "raw, expected",
         [
+            ("float(unit=power:megaw)", Float(unit=UnitEntity(prefix="power", suffix="megaw"))),
+            ("float64(unit=length:m)", Double(unit=UnitEntity(prefix="length", suffix="m"))),
             ("boolean", Boolean()),
             ("float", Float()),
             ("double", Double()),
@@ -43,8 +44,8 @@ class TestDataTypes:
             ("nonNegativeInteger", NonNegativeInteger()),
         ],
     )
-    def test_load(self, raw: str, expected: Literal):
-        loaded = Literal.load(raw)
+    def test_load(self, raw: str, expected: DataType):
+        loaded = DataType.load(raw)
 
         assert loaded == expected
 

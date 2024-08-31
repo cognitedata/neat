@@ -19,6 +19,12 @@ PROPERTY_ID_COMPLIANCE_REGEX = r"^(\*)|(?!^(Property|property)$)(^[a-zA-Z][a-zA-
 VERSION_COMPLIANCE_REGEX = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
 
 
+# This pattern ignores commas inside brackets
+SPLIT_ON_COMMA_PATTERN = re.compile(r",(?![^(]*\))")
+# This pattern ignores equal signs inside brackets
+SPLIT_ON_EQUAL_PATTERN = re.compile(r"=(?![^(]*\))")
+
+
 class _Patterns:
     @cached_property
     def more_than_one_alphanumeric(self) -> re.Pattern:
