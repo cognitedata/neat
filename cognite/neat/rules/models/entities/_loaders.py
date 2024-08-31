@@ -2,16 +2,17 @@ from typing import Literal
 
 from cognite.neat.issues.errors import NeatTypeError
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.entities import (
+
+from ._base import (
     ClassEntity,
     DMSUnknownEntity,
     EdgeEntity,
-    MultiValueTypeInfo,
     ReverseEntity,
     Unknown,
     UnknownEntity,
     ViewEntity,
 )
+from ._multi_value import MultiValueTypeInfo
 
 
 def load_value_type(
