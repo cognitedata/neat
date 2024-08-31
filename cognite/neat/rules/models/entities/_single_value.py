@@ -6,6 +6,7 @@ from types import UnionType
 from typing import Any, ClassVar, Generic, Literal, TypeVar, Union, cast, get_args, get_origin
 
 from cognite.client.data_classes.data_modeling import DirectRelationReference
+from cognite.client.data_classes.data_modeling.data_types import UnitReference
 from cognite.client.data_classes.data_modeling.ids import (
     ContainerId,
     DataModelId,
@@ -233,6 +234,9 @@ class UnitEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.unit
     prefix: str
     suffix: str
+
+    def as_reference(self) -> UnitReference:
+        return UnitReference(external_id=f"{self.prefix}:{self.suffix}")
 
 
 class AssetFields(StrEnum):
