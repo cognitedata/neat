@@ -48,6 +48,7 @@ class TestDataTypes:
         loaded = DataType.load(raw)
 
         assert loaded == expected
+        assert str(loaded) == raw
 
     def test_set_unit(self) -> None:
         unit = UnitEntity(prefix="power", suffix="megaw")
