@@ -5,10 +5,11 @@ from typing import Any
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import NodeApply
-from cognite.client.data_classes.data_modeling.data_types import UnitReference
+from cognite.client.data_classes.data_modeling.data_types import Enum, EnumValue, UnitReference
 
 from cognite.neat.rules.models.dms import (
     DMSInputContainer,
+    DMSInputEnum,
     DMSInputMetadata,
     DMSInputNodeType,
     DMSInputProperty,
@@ -29,6 +30,15 @@ CONTAINERS = dm.ContainerApplyList(
             properties={
                 "name": dm.ContainerProperty(dm.Text()),
                 "capacity": dm.ContainerProperty(dm.Float64(unit=UnitReference("power:megaw"))),
+                "category": dm.ContainerProperty(
+                    Enum(
+                        {
+                            "onshore": EnumValue("Onshore"),
+                            "offshore": EnumValue("Offshore"),
+                        },
+                        unknown_value="onshore",
+                    )
+                ),
             },
         ),
         dm.ContainerApply(
@@ -64,6 +74,7 @@ WIND_TURBINE = dm.ViewApply(
     properties={
         "name": dm.MappedPropertyApply(WINDTURBINE_CONTAINER_ID, "name"),
         "capacity": dm.MappedPropertyApply(WINDTURBINE_CONTAINER_ID, "capacity"),
+        "category": dm.MappedPropertyApply(WINDTURBINE_CONTAINER_ID, "category"),
         "metmasts": dm.MultiEdgeConnectionApply(
             type=dm.DirectRelationReference(_SPACE, "distance"),
             source=dm.ViewId(_SPACE, "MetMast", "v1"),
@@ -149,6 +160,14 @@ INPUT_RULES = DMSInputRules(
             **_DEFAULTS,
         ),
         DMSInputProperty(
+            "WindTurbine",
+            "category",
+            "category",
+            container="WindTurbine",
+            container_property="category",
+            **_DEFAULTS,
+        ),
+        DMSInputProperty(
             "WindTurbine", "metmasts", "MetMast", connection="edge(properties=Distance, type=distance)", is_list=True
         ),
         DMSInputProperty("MetMast", "name", "text", container="MetMast", container_property="name", **_DEFAULTS),
@@ -178,6 +197,10 @@ INPUT_RULES = DMSInputRules(
         DMSInputContainer("Distance", used_for="edge"),
     ],
     node_types=[DMSInputNodeType("distance")],
+    enum=[
+        DMSInputEnum("category", "onshore", "Onshore"),
+        DMSInputEnum("category", "offshore", "Offshore"),
+    ],
 )
 
 if __name__ == "__main__":

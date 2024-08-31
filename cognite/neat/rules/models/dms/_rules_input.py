@@ -237,12 +237,13 @@ class DMSInputNodeType(InputComponent[DMSNodeType]):
         return output
 
 
+@dataclass
 class DMSInputEnum(InputComponent[DMSEnum]):
     enum_id: str
     value: str
-    name: str | None
-    description: str | None
-    unknown_value: str | None
+    name: str | None = None
+    description: str | None = None
+    unknown_value: str | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSEnum]:
