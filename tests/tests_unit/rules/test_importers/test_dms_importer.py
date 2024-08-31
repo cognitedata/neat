@@ -84,6 +84,15 @@ class TestDMSImporter:
         # The DMS Exporter dumps all node types, so we only check that the windturbine node type is present
         assert windturbine.NODE_TYPE.as_id() in dms_recreated.node_types
 
+        assert (
+            dms_recreated.containers[windturbine.WINDTURBINE_CONTAINER_ID].dump()
+            == windturbine.WINDTURBINE_CONTAINER.dump()
+        )
+        assert dms_recreated.containers[windturbine.METMAST_CONTAINER_ID].dump() == windturbine.METMAST_CONTAINER.dump()
+        assert (
+            dms_recreated.containers[windturbine.DISTANCE_CONTAINER_ID].dump() == windturbine.DISTANCE_CONTAINER.dump()
+        )
+
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
     data_model=dm.DataModelApply(

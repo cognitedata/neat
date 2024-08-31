@@ -107,7 +107,10 @@ class DataType(BaseModel):
 
     @classmethod
     def is_data_type(cls, value: str) -> bool:
-        return value.casefold() in _DATA_TYPE_BY_NAME or value.casefold() in _DATA_TYPE_BY_DMS_TYPE
+        if match := _DATATYPE_PATTERN.match(value):
+            name = match.group("name").casefold()
+            return name in _DATA_TYPE_BY_NAME or name in _DATA_TYPE_BY_DMS_TYPE
+        return False
 
 
 class Boolean(DataType):
