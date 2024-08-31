@@ -258,11 +258,20 @@ class DMSNodeType(SheetEntity):
         return dm.NodeApply(space=self.node_type.space, external_id=self.node_type.external_id)
 
 
+class DMSEnum(SheetEntity):
+    enum_id: str = Field(alias="Enum")
+    value: str = Field(alias="Value")
+    name: str | None = Field(alias="Name", default=None)
+    description: str | None = Field(alias="Description", default=None)
+    unknown_value: str | None = Field(alias="Unknown Value", default=None)
+
+
 class DMSRules(BaseRules):
     metadata: DMSMetadata = Field(alias="Metadata")
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     views: SheetList[DMSView] = Field(alias="Views")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
+    enum: SheetList[DMSEnum] | None = Field(None, alias="Enum")
     node_types: SheetList[DMSNodeType] | None = Field(None, alias="Node Types")
     last: "DMSRules | None" = Field(None, alias="Last", description="The previous version of the data model")
     reference: "DMSRules | None" = Field(None, alias="Reference")
