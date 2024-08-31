@@ -22,10 +22,6 @@ _DATATYPE_PATTERN = re.compile(r"^(?P<name>[^(:]*)(\((?P<content>.+)\))?$")
 
 
 class DataType(BaseModel):
-    # Do not know why pydantic requires these, but it does.
-    __pydantic_extra__ = None
-    __pydantic_fields_set__ = set()
-
     python: ClassVar[type]
     dms: ClassVar[type[dms.PropertyType]]
     graphql: ClassVar[str]
@@ -68,28 +64,26 @@ class DataType(BaseModel):
 
     @model_validator(mode="wrap")
     def _load(cls, value: Any, handler: ModelWrapValidatorHandler["DataType"]) -> Any:
-        if isinstance(value, cls | dict):
-            return value
-        elif isinstance(value, str):
-            if match := _DATATYPE_PATTERN.match(value):
-                name = match.group("name").casefold()
-                cls_: type[DataType]
-                if name in _DATA_TYPE_BY_DMS_TYPE:
-                    cls_ = _DATA_TYPE_BY_DMS_TYPE[name]
-                elif name in _DATA_TYPE_BY_NAME:
-                    cls_ = _DATA_TYPE_BY_NAME[name]
-                else:
-                    raise ValueError(f"Unknown literal type: {value}") from None
-                content = match.group("content")
-                if content is None:
-                    return cls_()
-                extra_args: dict[str, Any] = dict(
+        if cls is not DataType or isinstance(value, DataType):
+            # This is a subclass, let the subclass handle it
+            return handler(value)
+        elif isinstance(value, str) and (match := _DATATYPE_PATTERN.match(value)):
+            name = match.group("name").casefold()
+            cls_: type[DataType]
+            if name in _DATA_TYPE_BY_DMS_TYPE:
+                cls_ = _DATA_TYPE_BY_DMS_TYPE[name]
+            elif name in _DATA_TYPE_BY_NAME:
+                cls_ = _DATA_TYPE_BY_NAME[name]
+            else:
+                raise ValueError(f"Unknown data type: {value}") from None
+            extra_args: dict[str, Any] = {}
+            if content := match.group("content"):
+                extra_args = dict(
                     SPLIT_ON_EQUAL_PATTERN.split(pair.strip()) for pair in SPLIT_ON_COMMA_PATTERN.split(content)
                 )
                 # Todo? Raise warning if extra_args contains keys that are not in the model fields
-                return cls_(**extra_args)
-            else:
-                raise ValueError(f"Unknown data type: {value}")
+            instance = cls_(**extra_args)
+            return handler(instance)
         raise ValueError(f"Cannot load {cls.__name__} from {value}")
 
     @model_serializer(when_used="unless-none", return_type=str)
