@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from rdflib import OWL, Literal, Namespace
 
-from cognite.neat.rules.models._base import MatchType
+from cognite.neat.rules.models._base_rules import MatchType
 from cognite.neat.rules.models.data_types import _XSD_TYPES
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 from cognite.neat.utils.regex_patterns import PATTERNS

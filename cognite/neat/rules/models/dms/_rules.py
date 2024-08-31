@@ -14,7 +14,7 @@ from cognite.neat.issues.warnings import (
     PrincipleMatchingSpaceAndVersionWarning,
     PrincipleSolutionBuildsOnEnterpriseWarning,
 )
-from cognite.neat.rules.models._base import (
+from cognite.neat.rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
     DataModelType,

@@ -6,7 +6,7 @@ from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
-from cognite.neat.rules.models._base import BaseRules, RoleTypes, SheetList
+from cognite.neat.rules.models._base_rules import BaseRules, RoleTypes, SheetList
 from cognite.neat.rules.models.entities import (
     CdfResourceEntityList,
     ClassEntity,
