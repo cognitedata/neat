@@ -24,11 +24,9 @@ from ._base import (
     URLEntity,
     ViewEntity,
     ViewEntityList,
-    load_connection,
-    load_dms_value_type,
-    load_value_type,
 )
 from ._constants import EntityTypes
+from ._loaders import load_connection, load_dms_value_type, load_value_type
 
 __all__ = [
     "Entity",
@@ -58,6 +56,6 @@ __all__ = [
     "ContainerEntityList",
     "URLEntity",
     "load_value_type",
-    "load_connection",
     "load_dms_value_type",
+    "load_connection",
 ]
