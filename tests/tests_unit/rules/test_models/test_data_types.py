@@ -49,6 +49,12 @@ class TestDataTypes:
 
         assert loaded == expected
 
+    def test_set_unit(self) -> None:
+        unit = UnitEntity(prefix="power", suffix="megaw")
+        float_ = Float(unit=unit)
+
+        assert float_.unit == unit
+
     @pytest.mark.parametrize(
         "raw, expected",
         [
