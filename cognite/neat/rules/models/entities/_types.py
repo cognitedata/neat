@@ -6,7 +6,7 @@ from pydantic import (
     PlainSerializer,
 )
 
-from ._base import AssetEntity, ClassEntity, ContainerEntity, RelationshipEntity, ViewEntity
+from ._single_value import AssetEntity, ClassEntity, ContainerEntity, RelationshipEntity, ViewEntity
 
 
 def _split_str(v: Any) -> list[str]:
