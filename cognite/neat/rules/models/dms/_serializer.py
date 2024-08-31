@@ -23,6 +23,7 @@ class _DMSRulesSerializer:
         self.view_name = "views"
         self.container_name = "containers"
         self.metadata_name = "metadata"
+        self.node_types_name = "node_types"
         self.prop_view = "view"
         self.prop_container = "container"
         self.prop_view_property = "view_property"
@@ -32,6 +33,7 @@ class _DMSRulesSerializer:
         self.view_implements = "implements"
         self.container_container = "container"
         self.container_constraint = "constraint"
+        self.node_type_node_type = "node_type"
         self.reference = "Reference" if by_alias else "reference"
 
         if by_alias:
@@ -59,6 +61,8 @@ class _DMSRulesSerializer:
             self.view_name = DMSRules.model_fields[self.view_name].alias or self.view_name
             self.container_name = DMSRules.model_fields[self.container_name].alias or self.container_name
             self.metadata_name = DMSRules.model_fields[self.metadata_name].alias or self.metadata_name
+            self.node_types_name = DMSRules.model_fields[self.node_types_name].alias or self.node_types_name
+            self.node_type_node_type = DMSRules.model_fields[self.node_type_node_type].alias or self.node_type_node_type
 
     def clean(self, dumped: dict[str, Any], as_reference: bool) -> dict[str, Any]:
         # Sorting to get a deterministic order
@@ -70,6 +74,11 @@ class _DMSRulesSerializer:
             dumped[self.container_name] = sorted(container_data["data"], key=lambda c: c[self.container_container])
         else:
             dumped.pop(self.container_name, None)
+
+        if node_types_data := dumped.get(self.node_types_name):
+            dumped[self.node_types_name] = sorted(node_types_data["data"], key=lambda n: n[self.node_type_node_type])
+        else:
+            dumped.pop(self.node_types_name, None)
 
         for prop in dumped[self.prop_name]:
             if as_reference:
@@ -132,4 +141,7 @@ class _DMSRulesSerializer:
                 container[self.container_constraint] = ",".join(
                     constraint.strip().removeprefix(self.default_space) for constraint in value.split(",")
                 )
+
+        for node in dumped.get(self.node_types_name, []):
+            node[self.node_type_node_type] = node[self.node_type_node_type].removeprefix(self.default_space)
         return dumped

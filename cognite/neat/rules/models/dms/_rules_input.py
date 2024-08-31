@@ -266,6 +266,7 @@ class DMSInputRules(InputRules[DMSRules]):
             Properties=[prop.dump(default_space, default_version) for prop in self.properties],
             Views=[view.dump(default_space, default_version) for view in self.views],
             Containers=[container.dump(default_space) for container in self.containers or []] or None,
+            NodeTypes=[node_type.dump() for node_type in self.node_types or []] or None,
             Last=last,
             Reference=reference,
         )

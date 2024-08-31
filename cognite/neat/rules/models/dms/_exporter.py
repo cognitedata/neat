@@ -115,13 +115,14 @@ class _DMSExporter:
 
         containers = self._create_containers(container_properties_by_id)
 
-        views, default_node_types = self._create_views_with_node_types(view_properties_by_id)
+        views, view_node_type_filters = self._create_views_with_node_types(view_properties_by_id)
         if rules.node_types:
             node_types = NodeApplyDict(
-                [node.as_node() for node in rules.node_types] + list(default_node_types.values())
+                [node.as_node() for node in rules.node_types]
+                + [dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters]
             )
         else:
-            node_types = default_node_types
+            node_types = NodeApplyDict([dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters])
 
         last_schema: DMSSchema | None = None
         if self.rules.last:
@@ -192,7 +193,7 @@ class _DMSExporter:
     def _create_views_with_node_types(
         self,
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
-    ) -> tuple[ViewApplyDict, NodeApplyDict]:
+    ) -> tuple[ViewApplyDict, set[dm.NodeId]]:
         input_views = list(self.rules.views)
         if self.rules.last:
             existing = {view.view.as_id() for view in input_views}
@@ -253,9 +254,7 @@ class _DMSExporter:
                 # as they are expected for the solution model.
                 unique_node_types.add(dm.NodeId(space=view.space, external_id=view.external_id))
 
-        return views, NodeApplyDict(
-            [dm.NodeApply(space=node.space, external_id=node.external_id) for node in unique_node_types]
-        )
+        return views, unique_node_types
 
     @classmethod
     def _create_edge_type_from_prop(cls, prop: DMSProperty) -> dm.DirectRelationReference:
