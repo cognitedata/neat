@@ -3,7 +3,8 @@ from typing import Literal
 from cognite.neat.issues.errors import NeatTypeError
 from cognite.neat.rules.models.data_types import DataType
 
-from ._base import (
+from ._multi_value import MultiValueTypeInfo
+from ._single_value import (
     ClassEntity,
     DMSUnknownEntity,
     EdgeEntity,
@@ -12,7 +13,6 @@ from ._base import (
     UnknownEntity,
     ViewEntity,
 )
-from ._multi_value import MultiValueTypeInfo
 
 
 def load_value_type(

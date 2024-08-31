@@ -9,7 +9,7 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerId, NodeId
 from pydantic import BaseModel, model_serializer, model_validator
 
-from ._base import ContainerEntity, DMSNodeEntity, Entity
+from ._single_value import ContainerEntity, DMSNodeEntity, Entity
 
 
 @total_ordering

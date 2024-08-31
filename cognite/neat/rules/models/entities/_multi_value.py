@@ -8,8 +8,8 @@ from pydantic import (
 
 from cognite.neat.rules.models.data_types import DataType
 
-from ._base import ClassEntity, UnknownEntity
 from ._constants import _PARSE, EntityTypes, Undefined
+from ._single_value import ClassEntity, UnknownEntity
 
 
 class MultiValueTypeInfo(BaseModel):
