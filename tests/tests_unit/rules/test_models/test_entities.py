@@ -11,11 +11,10 @@ from cognite.neat.rules.models.entities import (
     Entity,
     ReferenceEntity,
     RelationshipEntity,
+    UnitEntity,
     UnknownEntity,
     ViewEntity,
-    UnitEntity,
 )
-
 from cognite.neat.rules.models.entities._constants import ENTITY_PATTERN
 
 DEFAULT_SPACE = "sp_my_space"
