@@ -1,5 +1,4 @@
 import inspect
-import re
 import sys
 from abc import ABC, abstractmethod
 from functools import total_ordering
@@ -35,58 +34,7 @@ else:
     from backports.strenum import StrEnum
     from typing_extensions import Self
 
-
-class EntityTypes(StrEnum):
-    view_non_versioned = "view_non_versioned"
-    subject = "subject"
-    predicate = "predicate"
-    object = "object"
-    class_ = "class"
-    parent_class = "parent_class"
-    property_ = "property"
-    object_property = "ObjectProperty"
-    data_property = "DatatypeProperty"
-    annotation_property = "AnnotationProperty"
-    object_value_type = "object_value_type"
-    data_value_type = "data_value_type"  # these are strings, floats, ...
-    xsd_value_type = "xsd_value_type"
-    dms_value_type = "dms_value_type"
-    dms_node = "dms_node"
-    view = "view"
-    reference_entity = "reference_entity"
-    container = "container"
-    datamodel = "datamodel"
-    undefined = "undefined"
-    multi_value_type = "multi_value_type"
-    asset = "asset"
-    relationship = "relationship"
-    edge = "edge"
-    reverse_connection = "reverse"
-
-
-# ALLOWED
-_ALLOWED_PATTERN = r"[^a-zA-Z0-9-_.]"
-
-# FOR PARSING STRINGS:
-_PREFIX_REGEX = r"[a-zA-Z]+[a-zA-Z0-9-_.]*[a-zA-Z0-9]+"
-_SUFFIX_REGEX = r"[a-zA-Z0-9-_.]+[a-zA-Z0-9]|[-_.]*[a-zA-Z0-9]+"
-_VERSION_REGEX = r"[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?"
-_PROPERTY_REGEX = r"[a-zA-Z0-9][a-zA-Z0-9_-]*[a-zA-Z0-9]?"
-_ENTITY_ID_REGEX = rf"{_PREFIX_REGEX}:({_SUFFIX_REGEX})"
-_ENTITY_ID_REGEX_COMPILED = re.compile(rf"^(?P<prefix>{_PREFIX_REGEX}):(?P<suffix>{_SUFFIX_REGEX})$")
-_VERSIONED_ENTITY_REGEX_COMPILED = re.compile(
-    rf"^(?P<prefix>{_PREFIX_REGEX}):(?P<suffix>{_SUFFIX_REGEX})\(version=(?P<version>{_VERSION_REGEX})\)$"
-)
-_CLASS_ID_REGEX = rf"(?P<{EntityTypes.class_}>{_ENTITY_ID_REGEX})"
-_CLASS_ID_REGEX_COMPILED = re.compile(rf"^{_CLASS_ID_REGEX}$")
-_PROPERTY_ID_REGEX = rf"\((?P<{EntityTypes.property_}>{_ENTITY_ID_REGEX})\)"
-
-_ENTITY_PATTERN = re.compile(r"^(?P<prefix>.*?):?(?P<suffix>[^(:]*)(\((?P<content>.+)\))?$")
-_MULTI_VALUE_TYPE_PATTERN = re.compile(r"^(?P<types>.*?)(\((?P<content>[^)]+)\))?$")
-# This pattern ignores commas inside brackets
-_SPLIT_ON_COMMA_PATTERN = re.compile(r",(?![^(]*\))")
-# This pattern ignores equal signs inside brackets
-_SPLIT_ON_EQUAL_PATTERN = re.compile(r"=(?![^(]*\))")
+from ._constants import ENTITY_PATTERN, SPLIT_ON_COMMA_PATTERN, SPLIT_ON_EQUAL_PATTERN, EntityTypes
 
 
 class _UndefinedType(BaseModel): ...
@@ -159,16 +107,14 @@ class Entity(BaseModel, extra="ignore"):
 
     @classmethod
     def _parse(cls, raw: str, defaults: dict) -> dict:
-        if not (result := _ENTITY_PATTERN.match(raw)):
+        if not (result := ENTITY_PATTERN.match(raw)):
             return dict(prefix=Undefined, suffix=Unknown)
         prefix = result.group("prefix") or Undefined
         suffix = result.group("suffix")
         content = result.group("content")
         if content is None:
             return dict(prefix=prefix, suffix=suffix)
-        extra_args = dict(
-            _SPLIT_ON_EQUAL_PATTERN.split(pair.strip()) for pair in _SPLIT_ON_COMMA_PATTERN.split(content)
-        )
+        extra_args = dict(SPLIT_ON_EQUAL_PATTERN.split(pair.strip()) for pair in SPLIT_ON_COMMA_PATTERN.split(content))
         expected_args = {
             field_.alias or field_name: field_.annotation for field_name, field_ in cls.model_fields.items()
         }
@@ -523,8 +469,8 @@ class EdgeEntity(DMSEntity[None]):
         return cls()
 
 
-class ReverseConnectionEntity(Entity):
-    type_: ClassVar[EntityTypes] = EntityTypes.reverse_connection
+class ReverseEntity(Entity):
+    type_: ClassVar[EntityTypes] = EntityTypes.reverse
     prefix: _UndefinedType = Undefined
     suffix: Literal["reverse"] = "reverse"
     property_: str = Field(alias="property")
@@ -688,18 +634,14 @@ def load_dms_value_type(
 
 
 def load_connection(
-    raw: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | str | None,
+    raw: Literal["direct"] | ReverseEntity | EdgeEntity | str | None,
     default_space: str,
     default_version: str,
-) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
-    if (
-        isinstance(raw, EdgeEntity | ReverseConnectionEntity)
-        or raw is None
-        or (isinstance(raw, str) and raw == "direct")
-    ):
+) -> Literal["direct"] | ReverseEntity | EdgeEntity | None:
+    if isinstance(raw, EdgeEntity | ReverseEntity) or raw is None or (isinstance(raw, str) and raw == "direct"):
         return raw  # type: ignore[return-value]
     elif isinstance(raw, str) and raw.startswith("edge"):
         return EdgeEntity.load(raw, space=default_space, version=default_version)  # type: ignore[return-value]
     elif isinstance(raw, str) and raw.startswith("reverse"):
-        return ReverseConnectionEntity.load(raw)  # type: ignore[return-value]
+        return ReverseEntity.load(raw)  # type: ignore[return-value]
     raise NeatTypeError(f"Invalid connection: {type(raw)}")
