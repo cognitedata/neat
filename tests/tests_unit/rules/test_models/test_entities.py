@@ -2,7 +2,6 @@ import pytest
 from cognite.client.data_classes.data_modeling import DataModelId
 
 from cognite.neat.rules.models.entities import (
-    _ENTITY_PATTERN,
     AssetEntity,
     ClassEntity,
     DataModelEntity,
@@ -15,6 +14,7 @@ from cognite.neat.rules.models.entities import (
     UnknownEntity,
     ViewEntity,
 )
+from cognite.neat.rules.models.entities._constants import ENTITY_PATTERN
 
 DEFAULT_SPACE = "sp_my_space"
 DEFAULT_VERSION = "vDefault"
@@ -118,7 +118,7 @@ class TestEntityPattern:
         ],
     )
     def test_match(self, raw: str, expected: dict[str, str]) -> None:
-        assert _ENTITY_PATTERN.match(raw).groupdict() == expected
+        assert ENTITY_PATTERN.match(raw).groupdict() == expected
 
 
 class TestDataModelEntity:
