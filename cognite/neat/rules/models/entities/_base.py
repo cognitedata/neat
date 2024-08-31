@@ -20,7 +20,6 @@ from pydantic import (
     model_validator,
 )
 
-from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.utils.text import replace_non_alphanumeric_with_underscore
 
 if sys.version_info >= (3, 11):
@@ -30,21 +29,17 @@ else:
     from backports.strenum import StrEnum
     from typing_extensions import Self
 
-from ._constants import ENTITY_PATTERN, SPLIT_ON_COMMA_PATTERN, SPLIT_ON_EQUAL_PATTERN, EntityTypes
-
-
-class _UndefinedType(BaseModel): ...
-
-
-class _UnknownType(BaseModel):
-    def __str__(self) -> str:
-        return "#N/A"
-
-
-# This is a trick to make Undefined and Unknown singletons
-Undefined = _UndefinedType()
-Unknown = _UnknownType()
-_PARSE = object()
+from ._constants import (
+    _PARSE,
+    ENTITY_PATTERN,
+    SPLIT_ON_COMMA_PATTERN,
+    SPLIT_ON_EQUAL_PATTERN,
+    EntityTypes,
+    Undefined,
+    Unknown,
+    _UndefinedType,
+    _UnknownType,
+)
 
 
 @total_ordering
@@ -257,61 +252,6 @@ class RelationshipEntity(Entity):
 
 
 T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId | NodeId | None)
-
-
-class MultiValueTypeInfo(BaseModel):
-    type_: ClassVar[EntityTypes] = EntityTypes.multi_value_type
-    types: list[DataType | ClassEntity]
-
-    def __str__(self) -> str:
-        return " | ".join([str(t) for t in self.types])
-
-    @model_serializer(when_used="unless-none", return_type=str)
-    def as_str(self) -> str:
-        return str(self)
-
-    @classmethod
-    def load(cls, data: Any) -> "MultiValueTypeInfo":
-        # already instance of MultiValueTypeInfo
-        if isinstance(data, cls):
-            return data
-
-        # it is a raw string that needs to be parsed
-        elif isinstance(data, str):
-            return cls.model_validate({_PARSE: data})
-
-        # it is dict that needs to be parsed
-        else:
-            return cls.model_validate(data)
-
-    @model_validator(mode="before")
-    def _load(cls, data: Any) -> "dict | MultiValueTypeInfo":
-        if isinstance(data, dict) and _PARSE in data:
-            data = data[_PARSE]
-        elif isinstance(data, dict):
-            return data
-        else:
-            raise ValueError(f"Cannot load {cls.__name__} from {data}")
-
-        result = cls._parse(data)
-        return result
-
-    @classmethod
-    def _parse(cls, raw: str) -> dict:
-        if not (types := [type_.strip() for type_ in raw.split("|")]):
-            return {"types": [UnknownEntity()]}
-        else:
-            return {
-                "types": [
-                    (DataType.load(type_) if DataType.is_data_type(type_) else ClassEntity.load(type_))
-                    for type_ in types
-                ]
-            }
-
-    def set_default_prefix(self, prefix: str):
-        for type_ in self.types:
-            if isinstance(type_, ClassEntity) and type_.prefix is Undefined:
-                type_.prefix = prefix
 
 
 class DMSEntity(Entity, Generic[T_ID], ABC):

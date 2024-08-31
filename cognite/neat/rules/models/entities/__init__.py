@@ -10,18 +10,16 @@ from ._base import (
     DMSVersionedEntity,
     EdgeEntity,
     Entity,
-    MultiValueTypeInfo,
     ReferenceEntity,
     RelationshipEntity,
     ReverseEntity,
     T_Entity,
-    Undefined,
-    Unknown,
     UnknownEntity,
     ViewEntity,
 )
-from ._constants import EntityTypes
+from ._constants import EntityTypes, Undefined, Unknown
 from ._loaders import load_connection, load_dms_value_type, load_value_type
+from ._multi_value import MultiValueTypeInfo
 from ._types import CdfResourceEntityList, ClassEntityList, ContainerEntityList, URLEntity, ViewEntityList
 from ._wrapped import DMSFilter, HasDataFilter, NodeTypeFilter, RawFilter, WrappedEntity
 

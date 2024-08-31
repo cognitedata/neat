@@ -1,6 +1,8 @@
 import re
 import sys
 
+from pydantic import BaseModel
+
 if sys.version_info >= (3, 11):
     from enum import StrEnum
 else:
@@ -58,3 +60,17 @@ MULTI_VALUE_TYPE_PATTERN = re.compile(r"^(?P<types>.*?)(\((?P<content>[^)]+)\))?
 SPLIT_ON_COMMA_PATTERN = re.compile(r",(?![^(]*\))")
 # This pattern ignores equal signs inside brackets
 SPLIT_ON_EQUAL_PATTERN = re.compile(r"=(?![^(]*\))")
+
+
+class _UndefinedType(BaseModel): ...
+
+
+class _UnknownType(BaseModel):
+    def __str__(self) -> str:
+        return "#N/A"
+
+
+# This is a trick to make Undefined and Unknown singletons
+Undefined = _UndefinedType()
+Unknown = _UnknownType()
+_PARSE = object()
