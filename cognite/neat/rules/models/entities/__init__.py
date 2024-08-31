@@ -2,7 +2,6 @@ from ._constants import EntityTypes, Undefined, Unknown
 from ._loaders import load_connection, load_dms_value_type, load_value_type
 from ._multi_value import MultiValueTypeInfo
 from ._single_value import (
-    UnitEntity,
     AssetEntity,
     AssetFields,
     ClassEntity,
@@ -18,6 +17,7 @@ from ._single_value import (
     RelationshipEntity,
     ReverseConnectionEntity,
     T_Entity,
+    UnitEntity,
     UnknownEntity,
     ViewEntity,
 )
