@@ -150,7 +150,7 @@ class DMSProperty(SheetEntity):
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     connection: Literal["direct"] | ReverseEntity | EdgeEntity | None = Field(None, alias="Connection")
-    value_type: DataType | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
+    value_type: DataType | ViewEntity | DMSUnknownEntity = Field(alias="Value Type", union_mode="left_to_right")
     nullable: bool | None = Field(default=None, alias="Nullable")
     immutable: bool | None = Field(default=None, alias="Immutable")
     is_list: bool | None = Field(default=None, alias="Is List")
