@@ -58,6 +58,8 @@ class TestDMSImporter:
             "properties": {"data": {"__all__": {"reference"}}},
             "reference": {"__all__"},
             "views": {"data": {"__all__": {"reference"}}},
+            # The Exporter adds node types for each view
+            "node_types": "__all__",
         }
         assert rules.dump(exclude=exclude) == dms_rules.dump(exclude=exclude)
 
