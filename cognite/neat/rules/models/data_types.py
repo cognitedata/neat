@@ -5,10 +5,11 @@ from datetime import date, datetime
 from typing import Any, ClassVar
 
 from cognite.client.data_classes import data_modeling as dms
+from cognite.client.data_classes.data_modeling.data_types import Enum as DMSEnum
 from pydantic import BaseModel, model_serializer, model_validator
 from pydantic.functional_validators import ModelWrapValidatorHandler
 
-from cognite.neat.rules.models.entities._single_value import UnitEntity
+from cognite.neat.rules.models.entities._single_value import ClassEntity, UnitEntity
 from cognite.neat.utils.regex_patterns import SPLIT_ON_COMMA_PATTERN, SPLIT_ON_EQUAL_PATTERN
 
 if sys.version_info >= (3, 11):
@@ -53,6 +54,7 @@ class DataType(BaseModel):
         "file",
         "sequence",
         "json",
+        "enum",
         "",
     ] = ""
 
@@ -360,6 +362,19 @@ class Json(DataType):
     sql = "STRING"
 
     name: typing.Literal["json"] = "json"
+
+
+class Enum(DataType):
+    python = str
+    dms = DMSEnum
+    graphql = "Enum"
+    xsd = "string"
+    sql = "STRING"
+
+    name: typing.Literal["enum"] = "enum"
+
+    collection: ClassEntity
+    unknown_value: str | None = None
 
 
 _DATA_TYPE_BY_NAME = {cls.model_fields["name"].default.casefold(): cls for cls in DataType.__subclasses__()}
