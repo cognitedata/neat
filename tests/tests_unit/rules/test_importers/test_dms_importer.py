@@ -63,7 +63,7 @@ class TestDMSImporter:
         }
         assert rules.dump(exclude=exclude) == dms_rules.dump(exclude=exclude)
 
-    def test_import_rules_edge_with_properties(self) -> None:
+    def test_import_rules_edge_with_properties_and_properties_with_units(self) -> None:
         exporter = DMSImporter(windturbine.SCHEMA, metadata=windturbine.INPUT_RULES.metadata)
 
         result = exporter.to_rules()
@@ -83,6 +83,15 @@ class TestDMSImporter:
         assert dms_recreated.views[metmast].dump()["properties"] == windturbine.METMAST.dump()["properties"]
         # The DMS Exporter dumps all node types, so we only check that the windturbine node type is present
         assert windturbine.NODE_TYPE.as_id() in dms_recreated.node_types
+
+        assert (
+            dms_recreated.containers[windturbine.WINDTURBINE_CONTAINER_ID].dump()
+            == windturbine.WINDTURBINE_CONTAINER.dump()
+        )
+        assert dms_recreated.containers[windturbine.METMAST_CONTAINER_ID].dump() == windturbine.METMAST_CONTAINER.dump()
+        assert (
+            dms_recreated.containers[windturbine.DISTANCE_CONTAINER_ID].dump() == windturbine.DISTANCE_CONTAINER.dump()
+        )
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(

@@ -17,6 +17,7 @@ from ._single_value import (
     RelationshipEntity,
     ReverseConnectionEntity,
     T_Entity,
+    UnitEntity,
     UnknownEntity,
     ViewEntity,
 )
@@ -25,6 +26,7 @@ from ._wrapped import DMSFilter, HasDataFilter, NodeTypeFilter, RawFilter, Wrapp
 
 __all__ = [
     "Entity",
+    "UnitEntity",
     "DMSVersionedEntity",
     "RelationshipEntity",
     "EdgeEntity",

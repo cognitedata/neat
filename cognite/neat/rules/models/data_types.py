@@ -1,3 +1,4 @@
+import re
 import sys
 import typing
 from datetime import date, datetime
@@ -7,22 +8,26 @@ from cognite.client.data_classes import data_modeling as dms
 from pydantic import BaseModel, model_serializer, model_validator
 from pydantic.functional_validators import ModelWrapValidatorHandler
 
+from cognite.neat.rules.models.entities._single_value import UnitEntity
+from cognite.neat.utils.regex_patterns import SPLIT_ON_COMMA_PATTERN, SPLIT_ON_EQUAL_PATTERN
+
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
 
+# This patterns matches a string that is a data type, with optional content in parentheses.
+# For example, it matches "float(unit=power:megaw)" as name="float" and content="unit=power:megaw"
+_DATATYPE_PATTERN = re.compile(r"^(?P<name>[^(:]*)(\((?P<content>.+)\))?$")
+
 
 class DataType(BaseModel):
-    # Do not know why pydantic requires these, but it does.
-    __pydantic_extra__ = None
-    __pydantic_fields_set__ = set()
-
     python: ClassVar[type]
     dms: ClassVar[type[dms.PropertyType]]
     graphql: ClassVar[str]
     xsd: ClassVar[str]
     sql: ClassVar[str]
+    _dms_loaded: bool = False
     # Repeat all here, just to make mypy happy
     name: typing.Literal[
         "boolean",
@@ -60,15 +65,31 @@ class DataType(BaseModel):
 
     @model_validator(mode="wrap")
     def _load(cls, value: Any, handler: ModelWrapValidatorHandler["DataType"]) -> Any:
-        if isinstance(value, cls | dict):
-            return value
-        elif isinstance(value, str):
-            value_standardized = value.casefold()
-            if cls_ := _DATA_TYPE_BY_DMS_TYPE.get(value_standardized):
-                return cls_()
-            elif cls_ := _DATA_TYPE_BY_NAME.get(value_standardized):
-                return cls_()
-            raise ValueError(f"Unknown literal type: {value}") from None
+        if cls is not DataType or isinstance(value, DataType):
+            # This is a subclass, let the subclass handle it
+            return handler(value)
+        elif isinstance(value, str) and (match := _DATATYPE_PATTERN.match(value)):
+            name = match.group("name").casefold()
+            cls_: type[DataType]
+            if name in _DATA_TYPE_BY_DMS_TYPE:
+                cls_ = _DATA_TYPE_BY_DMS_TYPE[name]
+                dms_loaded = True
+            elif name in _DATA_TYPE_BY_NAME:
+                cls_ = _DATA_TYPE_BY_NAME[name]
+                dms_loaded = False
+            else:
+                raise ValueError(f"Unknown data type: {value}") from None
+            extra_args: dict[str, Any] = {}
+            if content := match.group("content"):
+                extra_args = dict(
+                    SPLIT_ON_EQUAL_PATTERN.split(pair.strip()) for pair in SPLIT_ON_COMMA_PATTERN.split(content)
+                )
+                # Todo? Raise warning if extra_args contains keys that are not in the model fields
+            instance = cls_(**extra_args)
+            created = handler(instance)
+            # Private attributes are not validated or set. We need to set it manually
+            created._dms_loaded = dms_loaded
+            return created
         raise ValueError(f"Cannot load {cls.__name__} from {value}")
 
     @model_serializer(when_used="unless-none", return_type=str)
@@ -76,17 +97,38 @@ class DataType(BaseModel):
         return str(self)
 
     def __str__(self) -> str:
-        return self.model_fields["name"].default
+        if self._dms_loaded:
+            base = self.dms._type
+        else:
+            base = self.model_fields["name"].default
+        return self._suffix_extra_args(base)
+
+    def _suffix_extra_args(self, base: str) -> str:
+        extra_fields: dict[str, str] = {}
+        for field_id, field_ in self.model_fields.items():
+            if field_id == "name":
+                continue
+            value = getattr(self, field_id)
+            if value is None:
+                continue
+            extra_fields[field_.alias or field_id] = str(value)
+        if extra_fields:
+            content = ",".join(f"{key}={value}" for key, value in sorted(extra_fields.items(), key=lambda x: x[0]))
+            return f"{base}({content})"
+        return base
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, type(self))
+        return isinstance(other, type(self)) and str(self) == str(other)
 
     def __hash__(self) -> int:
         return hash(str(self))
 
     @classmethod
     def is_data_type(cls, value: str) -> bool:
-        return value.casefold() in _DATA_TYPE_BY_NAME or value.casefold() in _DATA_TYPE_BY_DMS_TYPE
+        if match := _DATATYPE_PATTERN.match(value):
+            name = match.group("name").casefold()
+            return name in _DATA_TYPE_BY_NAME or name in _DATA_TYPE_BY_DMS_TYPE
+        return False
 
 
 class Boolean(DataType):
@@ -106,6 +148,7 @@ class Float(DataType):
     sql = "FLOAT"
 
     name: typing.Literal["float"] = "float"
+    unit: UnitEntity | None = None
 
 
 class Double(DataType):
@@ -116,6 +159,7 @@ class Double(DataType):
     sql = "FLOAT"
 
     name: typing.Literal["double"] = "double"
+    unit: UnitEntity | None = None
 
 
 class Integer(DataType):

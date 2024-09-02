@@ -11,6 +11,7 @@ from cognite.neat.rules.models.entities import (
     Entity,
     ReferenceEntity,
     RelationshipEntity,
+    UnitEntity,
     UnknownEntity,
     ViewEntity,
 )
@@ -21,6 +22,16 @@ DEFAULT_VERSION = "vDefault"
 
 
 TEST_CASES = [
+    (
+        UnitEntity,
+        "acceleration:ft-per-sec2",
+        UnitEntity(prefix="acceleration", suffix="ft-per-sec2"),
+    ),
+    (
+        UnitEntity,
+        "length:m",
+        UnitEntity(prefix="length", suffix="m"),
+    ),
     (
         ClassEntity,
         "subject:person",

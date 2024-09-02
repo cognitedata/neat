@@ -50,17 +50,20 @@ CONTAINERS = dm.ContainerApplyList(
         ),
     ]
 )
-_WINDTURBINE_CONTAINER = CONTAINERS[0].as_id()
-_METMAST_CONTAINER = CONTAINERS[1].as_id()
-_DISTANCE_CONTAINER = CONTAINERS[2].as_id()
+WINDTURBINE_CONTAINER = CONTAINERS[0]
+METMAST_CONTAINER = CONTAINERS[1]
+DISTANCE_CONTAINER = CONTAINERS[2]
+WINDTURBINE_CONTAINER_ID = CONTAINERS[0].as_id()
+METMAST_CONTAINER_ID = CONTAINERS[1].as_id()
+DISTANCE_CONTAINER_ID = CONTAINERS[2].as_id()
 
 WIND_TURBINE = dm.ViewApply(
     space=_SPACE,
     external_id="WindTurbine",
     version="v1",
     properties={
-        "name": dm.MappedPropertyApply(_WINDTURBINE_CONTAINER, "name"),
-        "capacity": dm.MappedPropertyApply(_WINDTURBINE_CONTAINER, "capacity"),
+        "name": dm.MappedPropertyApply(WINDTURBINE_CONTAINER_ID, "name"),
+        "capacity": dm.MappedPropertyApply(WINDTURBINE_CONTAINER_ID, "capacity"),
         "metmasts": dm.MultiEdgeConnectionApply(
             type=dm.DirectRelationReference(_SPACE, "distance"),
             source=dm.ViewId(_SPACE, "MetMast", "v1"),
@@ -75,8 +78,8 @@ METMAST = dm.ViewApply(
     external_id="MetMast",
     version="v1",
     properties={
-        "name": dm.MappedPropertyApply(_METMAST_CONTAINER, "name"),
-        "windSpeed": dm.MappedPropertyApply(_METMAST_CONTAINER, "windSpeed"),
+        "name": dm.MappedPropertyApply(METMAST_CONTAINER_ID, "name"),
+        "windSpeed": dm.MappedPropertyApply(METMAST_CONTAINER_ID, "windSpeed"),
         "windTurbines": dm.MultiEdgeConnectionApply(
             type=dm.DirectRelationReference(_SPACE, "distance"),
             source=dm.ViewId(_SPACE, "WindTurbine", "v1"),
@@ -90,7 +93,7 @@ DISTANCE = dm.ViewApply(
     external_id="Distance",
     version="v1",
     properties={
-        "distance": dm.MappedPropertyApply(_DISTANCE_CONTAINER, "distance"),
+        "distance": dm.MappedPropertyApply(DISTANCE_CONTAINER_ID, "distance"),
     },
 )
 
@@ -138,7 +141,12 @@ INPUT_RULES = DMSInputRules(
             "WindTurbine", "name", "text", container="WindTurbine", container_property="name", **_DEFAULTS
         ),
         DMSInputProperty(
-            "WindTurbine", "capacity", "float64", container="WindTurbine", container_property="capacity", **_DEFAULTS
+            "WindTurbine",
+            "capacity",
+            "float64(unit=power:megaw)",
+            container="WindTurbine",
+            container_property="capacity",
+            **_DEFAULTS,
         ),
         DMSInputProperty(
             "WindTurbine", "metmasts", "MetMast", connection="edge(properties=Distance, type=distance)", is_list=True
@@ -155,7 +163,12 @@ INPUT_RULES = DMSInputRules(
             is_list=True,
         ),
         DMSInputProperty(
-            "Distance", "distance", "float64", container="Distance", container_property="distance", **_DEFAULTS
+            "Distance",
+            "distance",
+            "float64(unit=length:m)",
+            container="Distance",
+            container_property="distance",
+            **_DEFAULTS,
         ),
     ],
     views=[DMSInputView("WindTurbine"), DMSInputView("MetMast"), DMSInputView("Distance")],

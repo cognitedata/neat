@@ -11,11 +11,10 @@ from cognite.neat.rules.models.data_types import (
     Double,
     Float,
     Integer,
-    Literal,
     NonNegativeInteger,
     NonPositiveInteger,
 )
-from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity, URLEntity
+from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity, UnitEntity, URLEntity
 
 
 class DemoProperty(BaseModel):
@@ -32,9 +31,17 @@ class DemoProperty(BaseModel):
 
 
 class TestDataTypes:
+    case_2 = Double(unit=UnitEntity(prefix="length", suffix="m"))
+    # The loaded attribute is used to determine how to serialize the object
+    # Typically, when instantiating the object, it is assumed to never be DMS.
+    # However, for testing purposes, we can set it to True to as test case 2 is DMS loaded.
+    case_2._dms_loaded = True
+
     @pytest.mark.parametrize(
         "raw, expected",
         [
+            ("float(unit=power:megaw)", Float(unit=UnitEntity(prefix="power", suffix="megaw"))),
+            ("float64(unit=length:m)", case_2),
             ("boolean", Boolean()),
             ("float", Float()),
             ("double", Double()),
@@ -43,10 +50,23 @@ class TestDataTypes:
             ("nonNegativeInteger", NonNegativeInteger()),
         ],
     )
-    def test_load(self, raw: str, expected: Literal):
-        loaded = Literal.load(raw)
-
+    def test_load(self, raw: str, expected: DataType):
+        loaded = DataType.load(raw)
         assert loaded == expected
+        assert str(loaded) == raw
+        assert loaded.model_dump() == raw
+
+    def test_set_unit(self) -> None:
+        unit = UnitEntity(prefix="power", suffix="megaw")
+        float_ = Float(unit=unit)
+
+        assert float_.unit == unit
+
+    def test_with_without_unit_not_equal(self) -> None:
+        float_ = Float()
+        float_with_unit = Float(unit=UnitEntity(prefix="power", suffix="megaw"))
+
+        assert float_ != float_with_unit
 
     @pytest.mark.parametrize(
         "raw, expected",

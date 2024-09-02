@@ -35,6 +35,7 @@ class EntityTypes(StrEnum):
     relationship = "relationship"
     edge = "edge"
     reverse = "reverse"
+    unit = "unit"
 
 
 # ALLOWED
@@ -56,10 +57,6 @@ _PROPERTY_ID_REGEX = rf"\((?P<{EntityTypes.property_}>{_ENTITY_ID_REGEX})\)"
 
 ENTITY_PATTERN = re.compile(r"^(?P<prefix>.*?):?(?P<suffix>[^(:]*)(\((?P<content>.+)\))?$")
 MULTI_VALUE_TYPE_PATTERN = re.compile(r"^(?P<types>.*?)(\((?P<content>[^)]+)\))?$")
-# This pattern ignores commas inside brackets
-SPLIT_ON_COMMA_PATTERN = re.compile(r",(?![^(]*\))")
-# This pattern ignores equal signs inside brackets
-SPLIT_ON_EQUAL_PATTERN = re.compile(r"=(?![^(]*\))")
 
 
 class _UndefinedType(BaseModel): ...
