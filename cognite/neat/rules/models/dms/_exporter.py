@@ -327,7 +327,7 @@ class _DMSExporter:
                 if isinstance(prop.value_type, Enum):
                     if prop.value_type.collection not in enum_values_by_collection:
                         raise ResourceNotFoundError(
-                            prop.value_type.collection, "enum collection", prop.view_property, "view property"
+                            prop.value_type.collection, "enum collection", prop.container, "container"
                         )
                     args["unknown_value"] = prop.value_type.unknown_value
                     args["values"] = {
