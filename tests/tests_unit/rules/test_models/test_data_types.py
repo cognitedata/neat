@@ -1,3 +1,4 @@
+from collections import Counter
 from typing import Any
 
 import pytest
@@ -105,3 +106,10 @@ class TestDataTypes:
 
         assert loaded == expected
         assert loaded.dump() == raw
+
+    def test_unique_names(self) -> None:
+        counted = Counter(cls_.model_fields["name"].default for cls_ in DataType.__subclasses__())
+
+        duplicates = {name for name, count in counted.items() if count > 1}
+
+        assert not duplicates, f"Duplicate names found: {duplicates}"

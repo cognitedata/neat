@@ -1,4 +1,5 @@
 import sys
+import typing
 from datetime import date, datetime
 from typing import Any, ClassVar
 
@@ -13,18 +14,42 @@ else:
 
 
 class DataType(BaseModel):
-    # These are necessary for Pydantic to work
-    # pydantic gets confused as we have no fields.
+    # Do not know why pydantic requires these, but it does.
     __pydantic_extra__ = None
     __pydantic_fields_set__ = set()
-    __pydantic_private__ = {}
 
-    name: ClassVar[str]
     python: ClassVar[type]
     dms: ClassVar[type[dms.PropertyType]]
     graphql: ClassVar[str]
     xsd: ClassVar[str]
     sql: ClassVar[str]
+    # Repeat all here, just to make mypy happy
+    name: typing.Literal[
+        "boolean",
+        "token",
+        "float",
+        "double",
+        "integer",
+        "nonPositiveInteger",
+        "nonNegativeInteger",
+        "long",
+        "negativeInteger",
+        "string",
+        "langString",
+        "anyURI",
+        "normalizedString",
+        "dateTime",
+        "timestamp",
+        "dateTimeStamp",
+        "date",
+        "plainLiteral",
+        "Literal",
+        "timeseries",
+        "file",
+        "sequence",
+        "json",
+        "",
+    ] = ""
 
     @classmethod
     def load(cls, data: Any) -> Self:
@@ -51,7 +76,7 @@ class DataType(BaseModel):
         return str(self)
 
     def __str__(self) -> str:
-        return self.name
+        return self.model_fields["name"].default
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, type(self))
@@ -65,213 +90,235 @@ class DataType(BaseModel):
 
 
 class Boolean(DataType):
-    name = "boolean"
     python = bool
     dms = dms.Boolean
     graphql = "Boolean"
     xsd = "boolean"
     sql = "BOOLEAN"
+    name: typing.Literal["boolean"] = "boolean"
 
 
 class Float(DataType):
-    name = "float"
     python = float
     dms = dms.Float32
     graphql = "Float"
     xsd = "float"
     sql = "FLOAT"
 
+    name: typing.Literal["float"] = "float"
+
 
 class Double(DataType):
-    name = "double"
     python = float
     dms = dms.Float64
     graphql = "Float"
     xsd = "double"
     sql = "FLOAT"
 
+    name: typing.Literal["double"] = "double"
+
 
 class Integer(DataType):
-    name = "integer"
     python = int
     dms = dms.Int32
     graphql = "Int"
     xsd = "integer"
     sql = "INTEGER"
 
+    name: typing.Literal["integer"] = "integer"
+
 
 class NonPositiveInteger(DataType):
-    name = "nonPositiveInteger"
     python = int
     dms = dms.Int32
     graphql = "Int"
     xsd = "nonPositiveInteger"
     sql = "INTEGER"
 
+    name: typing.Literal["nonPositiveInteger"] = "nonPositiveInteger"
+
 
 class NonNegativeInteger(DataType):
-    name = "nonNegativeInteger"
     python = int
     dms = dms.Int32
     graphql = "Int"
     xsd = "nonNegativeInteger"
     sql = "INTEGER"
 
+    name: typing.Literal["nonNegativeInteger"] = "nonNegativeInteger"
+
 
 class NegativeInteger(DataType):
-    name = "negativeInteger"
     python = int
     dms = dms.Int32
     graphql = "Int"
     xsd = "negativeInteger"
     sql = "INTEGER"
 
+    name: typing.Literal["negativeInteger"] = "negativeInteger"
+
 
 class Long(DataType):
-    name = "long"
     python = int
     dms = dms.Int64
     graphql = "Int"
     xsd = "long"
     sql = "BIGINT"
 
+    name: typing.Literal["long"] = "long"
+
 
 class String(DataType):
-    name = "string"
     python = str
     dms = dms.Text
     graphql = "String"
     xsd = "string"
     sql = "STRING"
+
+    name: typing.Literal["string"] = "string"
 
 
 class LangString(DataType):
-    name = "langString"
     python = str
     dms = dms.Text
     graphql = "String"
     xsd = "string"
     sql = "STRING"
 
+    name: typing.Literal["langString"] = "langString"
+
 
 class AnyURI(DataType):
-    name = "anyURI"
     python = str
     dms = dms.Text
     graphql = "String"
     xsd = "anyURI"
     sql = "STRING"
 
+    name: typing.Literal["anyURI"] = "anyURI"
+
 
 class NormalizedString(DataType):
-    name = "normalizedString"
     python = str
     dms = dms.Text
     graphql = "String"
     xsd = "normalizedString"
     sql = "STRING"
 
+    name: typing.Literal["normalizedString"] = "normalizedString"
+
 
 class Token(DataType):
-    name = "token"
     python = str
     dms = dms.Text
     graphql = "String"
     xsd = "string"
     sql = "STRING"
 
+    name: typing.Literal["token"] = "token"
+
 
 class DateTime(DataType):
-    name = "dateTime"
     python = datetime
     dms = dms.Timestamp
     graphql = "Timestamp"
     xsd = "dateTimeStamp"
     sql = "TIMESTAMP"
+
+    name: typing.Literal["dateTime"] = "dateTime"
 
 
 class Timestamp(DataType):
-    name = "timestamp"
     python = datetime
     dms = dms.Timestamp
     graphql = "Timestamp"
     xsd = "dateTimeStamp"
     sql = "TIMESTAMP"
+
+    name: typing.Literal["timestamp"] = "timestamp"
 
 
 class DateTimeStamp(DataType):
-    name = "dateTimeStamp"
     python = datetime
     dms = dms.Timestamp
     graphql = "Timestamp"
     xsd = "dateTimeStamp"
     sql = "TIMESTAMP"
 
+    name: typing.Literal["dateTimeStamp"] = "dateTimeStamp"
+
 
 class Date(DataType):
-    name = "date"
     python = date
     dms = dms.Date
     graphql = "String"
     xsd = "date"
     sql = "DATE"
 
+    name: typing.Literal["date"] = "date"
+
 
 class PlainLiteral(DataType):
-    name = "PlainLiteral"
     python = str
     dms = dms.Text
     graphql = "String"
     xsd = "plainLiteral"
     sql = "STRING"
 
+    name: typing.Literal["plainLiteral"] = "plainLiteral"
+
 
 class Literal(DataType):
-    name = "Literal"
     python = str
     dms = dms.Text
     graphql = "String"
     xsd = "string"
     sql = "STRING"
 
+    name: typing.Literal["Literal"] = "Literal"
+
 
 class Timeseries(DataType):
-    name = "timeseries"
     python = str
     dms = dms.TimeSeriesReference
     graphql = "TimeSeries"
     xsd = "string"
     sql = "STRING"
 
+    name: typing.Literal["timeseries"] = "timeseries"
+
 
 class File(DataType):
-    name = "file"
     python = str
     dms = dms.FileReference
     graphql = "File"
     xsd = "string"
     sql = "STRING"
 
+    name: typing.Literal["file"] = "file"
+
 
 class Sequence(DataType):
-    name = "sequence"
     python = str
     dms = dms.SequenceReference
     graphql = "Sequence"
     xsd = "string"
     sql = "STRING"
 
+    name: typing.Literal["sequence"] = "sequence"
+
 
 class Json(DataType):
-    name = "json"
     python = dict
     dms = dms.Json
     graphql = "Json"
     xsd = "json"
     sql = "STRING"
 
+    name: typing.Literal["json"] = "json"
 
-_DATA_TYPE_BY_NAME = {cls.name.casefold(): cls for cls in DataType.__subclasses__()}
+
+_DATA_TYPE_BY_NAME = {cls.model_fields["name"].default.casefold(): cls for cls in DataType.__subclasses__()}
 _seen = set()
 _DATA_TYPE_BY_DMS_TYPE = {
     cls.dms._type.casefold(): cls
