@@ -13,7 +13,7 @@ from cognite.neat.rules.models.entities import (
     DMSNodeEntity,
     DMSUnknownEntity,
     EdgeEntity,
-    ReverseEntity,
+    ReverseConnectionEntity,
     ViewEntity,
     load_connection,
     load_dms_value_type,
@@ -87,7 +87,7 @@ class DMSInputProperty(InputComponent[DMSProperty]):
     class_: str | None = None
     name: str | None = None
     description: str | None = None
-    connection: Literal["direct"] | ReverseEntity | EdgeEntity | str | None = None
+    connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | str | None = None
     nullable: bool | None = None
     immutable: bool | None = None
     is_list: bool | None = None
