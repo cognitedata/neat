@@ -265,7 +265,7 @@ class DMSNode(SheetEntity):
 
 
 class DMSEnum(SheetEntity):
-    collection: str = Field(alias="Collection")
+    collection: ClassEntity = Field(alias="Collection")
     value: str = Field(alias="Value")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)

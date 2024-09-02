@@ -1,10 +1,11 @@
 import warnings
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from typing import Any, cast
 
 from cognite.client.data_classes import data_modeling as dm
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
+from cognite.client.data_classes.data_modeling.data_types import EnumValue as DMSEnumValue
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import (
     SingleEdgeConnectionApply,
@@ -12,7 +13,7 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
-from cognite.neat.issues.errors import NeatTypeError
+from cognite.neat.issues.errors import NeatTypeError, ResourceNotFoundError
 from cognite.neat.issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
 from cognite.neat.issues.warnings.user_modeling import (
     EmptyContainerWarning,
@@ -21,8 +22,9 @@ from cognite.neat.issues.warnings.user_modeling import (
     NodeTypeFilterOnParentViewWarning,
 )
 from cognite.neat.rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
-from cognite.neat.rules.models.data_types import DataType, Double, Float
+from cognite.neat.rules.models.data_types import DataType, Double, Enum, Float
 from cognite.neat.rules.models.entities import (
+    ClassEntity,
     ContainerEntity,
     DMSFilter,
     DMSNodeEntity,
@@ -37,7 +39,7 @@ from cognite.neat.rules.models.entities import (
 )
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 
-from ._rules import DMSMetadata, DMSProperty, DMSRules, DMSView
+from ._rules import DMSEnum, DMSMetadata, DMSProperty, DMSRules, DMSView
 from ._schema import DMSSchema, PipelineSchema
 
 
@@ -116,7 +118,7 @@ class _DMSExporter:
             ]
             self._update_with_properties(selected_properties, container_properties_by_id, None)
 
-        containers = self._create_containers(container_properties_by_id)
+        containers = self._create_containers(container_properties_by_id, rules.enum)  # type: ignore[arg-type]
 
         views, view_node_type_filters = self._create_views_with_node_types(view_properties_by_id)
         if rules.nodes:
@@ -282,7 +284,12 @@ class _DMSExporter:
     def _create_containers(
         self,
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
+        enum: Collection[DMSEnum] | None,
     ) -> ContainerApplyDict:
+        enum_values_by_collection: dict[ClassEntity, list[DMSEnum]] = defaultdict(list)
+        for enum_value in enum or []:
+            enum_values_by_collection[enum_value.collection].append(enum_value)
+
         containers = list(self.rules.containers or [])
         if self.rules.last:
             existing = {container.container.as_id() for container in containers}
@@ -311,11 +318,25 @@ class _DMSExporter:
                     type_cls = prop.value_type.dms
                 else:
                     type_cls = dm.DirectRelation
+
                 args: dict[str, Any] = {}
                 if issubclass(type_cls, ListablePropertyType):
                     args["is_list"] = prop.is_list or False
                 if isinstance(prop.value_type, Double | Float) and isinstance(prop.value_type.unit, UnitEntity):
                     args["unit"] = prop.value_type.unit.as_reference()
+                if isinstance(prop.value_type, Enum):
+                    if prop.value_type.collection not in enum_values_by_collection:
+                        raise ResourceNotFoundError(
+                            prop.value_type.collection, "enum collection", prop.view_property, "view property"
+                        )
+                    args["unknown_value"] = prop.value_type.unknown_value
+                    args["values"] = {
+                        value.value: DMSEnumValue(
+                            name=value.name,
+                            description=value.description,
+                        )
+                        for value in enum_values_by_collection[prop.value_type.collection]
+                    }
 
                 type_ = type_cls(**args)
                 container.properties[prop.container_property] = dm.ContainerProperty(

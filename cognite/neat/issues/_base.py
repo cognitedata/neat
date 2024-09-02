@@ -50,6 +50,7 @@ ResourceType: TypeAlias = (
         "data model",
         "edge",
         "node",
+        "enum collection",
         "unknown",
     ]
     # String to handle all unknown types in different importers.

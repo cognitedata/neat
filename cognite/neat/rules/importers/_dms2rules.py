@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Literal, cast
@@ -8,6 +8,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
+from cognite.client.data_classes.data_modeling.data_types import Enum as DMSEnum
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType, PropertyTypeWithUnit
 from cognite.client.data_classes.data_modeling.views import (
     MultiEdgeConnectionApply,
@@ -34,9 +35,10 @@ from cognite.neat.rules.models import (
     DMSSchema,
     SchemaCompleteness,
 )
-from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.data_types import DataType, Enum
 from cognite.neat.rules.models.dms import (
     DMSInputContainer,
+    DMSInputEnum,
     DMSInputMetadata,
     DMSInputNode,
     DMSInputProperty,
@@ -268,6 +270,9 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             metadata.data_model_type = str(data_model_type)  # type: ignore[assignment]
         if schema_completeness is not None:
             metadata.schema_ = str(schema_completeness)  # type: ignore[assignment]
+
+        enum = self._create_enum_collections(schema.containers.values())
+
         return DMSInputRules(
             metadata=metadata,
             properties=properties,
@@ -277,6 +282,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 for view_id, view in schema.views.items()
             ],
             nodes=[DMSInputNode.from_node_type(node_type) for node_type in schema.node_types.values()],
+            enum=enum,
         )
 
     @classmethod
@@ -403,6 +409,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                     return ViewEntity.from_id(prop.source)
             elif isinstance(container_prop.type, PropertyTypeWithUnit) and container_prop.type.unit:
                 return DataType.load(f"{container_prop.type._type}(unit={container_prop.type.unit.external_id})")
+            elif isinstance(container_prop.type, DMSEnum):
+                return Enum(collection=ClassEntity(suffix=prop_id), unknown_value=container_prop.type.unknown_value)
             else:
                 return DataType.load(container_prop.type._type)
         else:
@@ -510,3 +518,17 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             )
 
         return candidates[0]
+
+    @staticmethod
+    def _create_enum_collections(containers: Collection[dm.ContainerApply]) -> list[DMSInputEnum] | None:
+        enum_collections: list[DMSInputEnum] = []
+        for container in containers:
+            for prop_id, prop in container.properties.items():
+                if isinstance(prop.type, DMSEnum):
+                    for identifier, value in prop.type.values.items():
+                        enum_collections.append(
+                            DMSInputEnum(
+                                collection=prop_id, value=identifier, name=value.name, description=value.description
+                            )
+                        )
+        return enum_collections
