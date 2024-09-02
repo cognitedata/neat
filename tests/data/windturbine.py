@@ -164,7 +164,7 @@ INPUT_RULES = DMSInputRules(
         DMSInputContainer("MetMast", used_for="node"),
         DMSInputContainer("Distance", used_for="edge"),
     ],
-    nodes=[DMSInputNode("distance")],
+    nodes=[DMSInputNode("distance", "type")],
 )
 
 if __name__ == "__main__":
