@@ -265,11 +265,10 @@ class DMSNode(SheetEntity):
 
 
 class DMSEnum(SheetEntity):
-    enum_id: str = Field(alias="Enum")
+    collection: str = Field(alias="Collection")
     value: str = Field(alias="Value")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    unknown_value: str | None = Field(alias="Unknown Value", default=None)
 
 
 class DMSRules(BaseRules):
