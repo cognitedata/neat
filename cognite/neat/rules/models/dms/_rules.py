@@ -14,7 +14,7 @@ from cognite.neat.issues.warnings import (
     PrincipleMatchingSpaceAndVersionWarning,
     PrincipleSolutionBuildsOnEnterpriseWarning,
 )
-from cognite.neat.rules.models._base import (
+from cognite.neat.rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
     DataModelType,
@@ -38,13 +38,15 @@ from cognite.neat.rules.models.entities import (
     DMSNodeEntity,
     DMSUnknownEntity,
     EdgeEntity,
+    HasDataFilter,
+    NodeTypeFilter,
+    RawFilter,
     ReferenceEntity,
     ReverseConnectionEntity,
     URLEntity,
     ViewEntity,
     ViewEntityList,
 )
-from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFilter, RawFilter
 
 from ._schema import DMSSchema
 

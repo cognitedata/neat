@@ -4,9 +4,10 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat.rules import importers
-from cognite.neat.rules.models.entities import ContainerEntity, DMSNodeEntity
-from cognite.neat.rules.models.wrapped_entities import (
+from cognite.neat.rules.models.entities import (
+    ContainerEntity,
     DMSFilter,
+    DMSNodeEntity,
     HasDataFilter,
     NodeTypeFilter,
     RawFilter,

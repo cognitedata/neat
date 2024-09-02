@@ -18,7 +18,7 @@ from dataclasses import Field, dataclass, fields, is_dataclass
 from types import GenericAlias, UnionType
 from typing import Any, Generic, TypeVar, Union, cast, get_args, get_origin, overload
 
-from ._base import BaseRules, RuleModel
+from ._base_rules import BaseRules, RuleModel
 
 if sys.version_info >= (3, 11):
     from typing import Self

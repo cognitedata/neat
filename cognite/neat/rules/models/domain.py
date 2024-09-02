@@ -8,14 +8,14 @@ from pydantic_core.core_schema import SerializationInfo
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ClassEntity, ClassEntityList
 
-from ._base import (
+from ._base_input import InputComponent, InputRules
+from ._base_rules import (
     BaseMetadata,
     BaseRules,
     RoleTypes,
     SheetEntity,
     SheetList,
 )
-from ._base_input import InputComponent, InputRules
 from ._types import PropertyType, StrOrListType
 
 

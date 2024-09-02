@@ -9,7 +9,7 @@ from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
 from cognite.neat.issues.errors import PropertyDefinitionError
-from cognite.neat.rules.models._base import (
+from cognite.neat.rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
     DataModelType,

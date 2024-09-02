@@ -9,7 +9,7 @@ from typing import Generic, TypeVar
 import pandas as pd
 from pydantic import BaseModel
 
-from cognite.neat.rules.models._base import BaseRules
+from cognite.neat.rules.models._base_rules import BaseRules
 from cognite.neat.rules.models._rdfpath import RDFPath
 from cognite.neat.rules.models.entities import (
     ClassEntity,

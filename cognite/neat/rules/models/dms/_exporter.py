@@ -20,18 +20,20 @@ from cognite.neat.issues.warnings.user_modeling import (
     HasDataFilterOnViewWithReferencesWarning,
     NodeTypeFilterOnParentViewWarning,
 )
-from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
+from cognite.neat.rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ContainerEntity,
+    DMSFilter,
     DMSNodeEntity,
     DMSUnknownEntity,
     EdgeEntity,
+    HasDataFilter,
+    NodeTypeFilter,
     ReferenceEntity,
     ReverseConnectionEntity,
     ViewEntity,
 )
-from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 
 from ._rules import DMSMetadata, DMSProperty, DMSRules, DMSView
