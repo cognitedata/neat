@@ -61,7 +61,7 @@ class EntityTypes(StrEnum):
     asset = "asset"
     relationship = "relationship"
     edge = "edge"
-    reverse = "reverse"
+    reverse_connection = "reverse"
 
 
 # ALLOWED
@@ -523,8 +523,8 @@ class EdgeEntity(DMSEntity[None]):
         return cls()
 
 
-class ReverseEntity(Entity):
-    type_: ClassVar[EntityTypes] = EntityTypes.reverse
+class ReverseConnectionEntity(Entity):
+    type_: ClassVar[EntityTypes] = EntityTypes.reverse_connection
     prefix: _UndefinedType = Undefined
     suffix: Literal["reverse"] = "reverse"
     property_: str = Field(alias="property")
@@ -688,14 +688,18 @@ def load_dms_value_type(
 
 
 def load_connection(
-    raw: Literal["direct"] | ReverseEntity | EdgeEntity | str | None,
+    raw: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | str | None,
     default_space: str,
     default_version: str,
-) -> Literal["direct"] | ReverseEntity | EdgeEntity | None:
-    if isinstance(raw, EdgeEntity | ReverseEntity) or raw is None or (isinstance(raw, str) and raw == "direct"):
+) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
+    if (
+        isinstance(raw, EdgeEntity | ReverseConnectionEntity)
+        or raw is None
+        or (isinstance(raw, str) and raw == "direct")
+    ):
         return raw  # type: ignore[return-value]
     elif isinstance(raw, str) and raw.startswith("edge"):
         return EdgeEntity.load(raw, space=default_space, version=default_version)  # type: ignore[return-value]
     elif isinstance(raw, str) and raw.startswith("reverse"):
-        return ReverseEntity.load(raw)  # type: ignore[return-value]
+        return ReverseConnectionEntity.load(raw)  # type: ignore[return-value]
     raise NeatTypeError(f"Invalid connection: {type(raw)}")

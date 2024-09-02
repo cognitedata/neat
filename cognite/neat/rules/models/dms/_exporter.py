@@ -28,7 +28,7 @@ from cognite.neat.rules.models.entities import (
     DMSUnknownEntity,
     EdgeEntity,
     ReferenceEntity,
-    ReverseEntity,
+    ReverseConnectionEntity,
     ViewEntity,
 )
 from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
@@ -494,7 +494,7 @@ class _DMSExporter:
                 description=prop.description,
                 edge_source=edge_source,
             )
-        elif isinstance(prop.connection, ReverseEntity):
+        elif isinstance(prop.connection, ReverseConnectionEntity):
             reverse_prop_id = prop.connection.property_
             if isinstance(prop.value_type, ViewEntity):
                 source_view_id = prop.value_type.as_id()

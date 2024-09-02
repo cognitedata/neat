@@ -38,7 +38,7 @@ from cognite.neat.rules.models.entities import (
     DMSUnknownEntity,
     EdgeEntity,
     ReferenceEntity,
-    ReverseEntity,
+    ReverseConnectionEntity,
     URLEntity,
     ViewEntity,
     ViewEntityList,
@@ -146,7 +146,7 @@ class DMSProperty(SheetEntity):
     view_property: str = Field(alias="View Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    connection: Literal["direct"] | ReverseEntity | EdgeEntity | None = Field(None, alias="Connection")
+    connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = Field(None, alias="Connection")
     value_type: DataType | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     immutable: bool | None = Field(default=None, alias="Immutable")
@@ -176,7 +176,7 @@ class DMSProperty(SheetEntity):
             raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
         elif isinstance(connection, EdgeEntity) and not isinstance(value, ViewEntity):
             raise ValueError(f"Edge connection must have a value type that points to a view, got {value}")
-        elif isinstance(connection, ReverseEntity) and not isinstance(value, ViewEntity):
+        elif isinstance(connection, ReverseConnectionEntity) and not isinstance(value, ViewEntity):
             raise ValueError(f"Reverse connection must have a value type that points to a view, got {value}")
         return value
 
