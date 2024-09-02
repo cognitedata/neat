@@ -5,10 +5,12 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
+from cognite.neat.rules.exporters import DMSExporter
 from cognite.neat.rules.importers import DMSImporter, ExcelImporter
 from cognite.neat.rules.models import DMSRules, DMSSchema, RoleTypes
-from cognite.neat.rules.transformers import DMSToInformation, ImporterPipeline
+from cognite.neat.rules.transformers import DMSToInformation, ImporterPipeline, VerifyDMSRules
 from tests.config import DOC_RULES
+from tests.data import windturbine
 
 
 class TestDMSImporter:
@@ -58,6 +60,25 @@ class TestDMSImporter:
             "views": {"data": {"__all__": {"reference"}}},
         }
         assert rules.dump(exclude=exclude) == dms_rules.dump(exclude=exclude)
+
+    def test_import_rules_edge_with_properties(self) -> None:
+        exporter = DMSImporter(windturbine.SCHEMA, metadata=windturbine.INPUT_RULES.metadata)
+
+        result = exporter.to_rules()
+
+        assert result.rules is not None
+        assert result.rules.dump() == windturbine.INPUT_RULES.dump()
+
+        rules = VerifyDMSRules(errors="raise").transform(result).get_rules()
+        assert isinstance(rules, DMSRules)
+
+        dms_recreated = DMSExporter().export(rules)
+        # We cannot compare the whole schema, as the DMS Exporter makes things like
+        # node types explicit along with filters. Thus, we compare selected parts
+        turbine = windturbine.WIND_TURBINE.as_id()
+        assert dms_recreated.views[turbine].dump()["properties"] == windturbine.WIND_TURBINE.dump()["properties"]
+        metmast = windturbine.METMAST.as_id()
+        assert dms_recreated.views[metmast].dump()["properties"] == windturbine.METMAST.dump()["properties"]
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(

@@ -21,13 +21,16 @@ Changes are grouped as follows:
   been removed. Instead, use the `cognite.neat.rules.transformers` module to get an appropriate transformar
   and use the `transform` method to convert the rules object.
 
+### Added
+- Support for edges with properties in DMS rules.
+
 ## [0.88.4] - 29-08-24
 ### Fixed
 - IMF rules importer failed to publish to CDF due to non-compliant identifiers
 - Duplicate generation of properties
 ### Improved
 - Handling of cardinality for attribute properties
-- Handling of multiple preducicates used for concept definitions
+- Handling of multiple predicates used for concept definitions
 
 ## [0.88.3] - 20-08-24
 ### Fixed

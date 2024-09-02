@@ -30,13 +30,14 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     DMSUnknownEntity,
+    EdgeEntity,
     EntityTypes,
     MultiValueTypeInfo,
     ReferenceEntity,
     RelationshipEntity,
+    ReverseConnectionEntity,
     UnknownEntity,
     ViewEntity,
-    ViewPropertyEntity,
 )
 from cognite.neat.rules.models.information import InformationClass, InformationMetadata, InformationProperty
 
@@ -272,7 +273,7 @@ class _InformationRulesConverter:
         from cognite.neat.rules.models.dms._rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
-        value_type: DataType | ViewEntity | ViewPropertyEntity | DMSUnknownEntity
+        value_type: DataType | ViewEntity | DMSUnknownEntity
         if isinstance(prop.value_type, DataType):
             value_type = prop.value_type
         elif isinstance(prop.value_type, UnknownEntity):
@@ -284,17 +285,18 @@ class _InformationRulesConverter:
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
-        relation: Literal["direct", "edge", "reverse"] | None = None
-        if isinstance(value_type, ViewEntity | ViewPropertyEntity):
-            relation = "edge" if prop.is_list else "direct"
+        connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = None
+        if isinstance(value_type, ViewEntity):
+            # Default connection type.
+            connection = EdgeEntity() if prop.is_list else "direct"
 
         container: ContainerEntity | None = None
         container_property: str | None = None
         is_list: bool | None = prop.is_list
         nullable: bool | None = not prop.is_mandatory
-        if relation == "edge":
+        if isinstance(connection, EdgeEntity):
             nullable = None
-        elif relation == "direct":
+        elif connection == "direct":
             nullable = True
             container, container_property = self._get_container(prop, default_space)
         else:
@@ -307,7 +309,7 @@ class _InformationRulesConverter:
             value_type=value_type,
             nullable=nullable,
             is_list=is_list,
-            connection=relation,
+            connection=connection,
             default=prop.default,
             reference=prop.reference,
             container=container,
@@ -445,7 +447,7 @@ class _DMSRulesConverter:
         for property_ in self.dms.properties:
             if isinstance(property_.value_type, DataType):
                 value_type = property_.value_type
-            elif isinstance(property_.value_type, ViewEntity | ViewPropertyEntity):
+            elif isinstance(property_.value_type, ViewEntity):
                 value_type = ClassEntity(
                     prefix=property_.value_type.prefix,
                     suffix=property_.value_type.suffix,

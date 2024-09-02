@@ -12,6 +12,7 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
+from cognite.neat.issues.errors import NeatTypeError
 from cognite.neat.issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
 from cognite.neat.issues.warnings.user_modeling import (
     EmptyContainerWarning,
@@ -25,9 +26,10 @@ from cognite.neat.rules.models.entities import (
     ContainerEntity,
     DMSNodeEntity,
     DMSUnknownEntity,
+    EdgeEntity,
     ReferenceEntity,
+    ReverseConnectionEntity,
     ViewEntity,
-    ViewPropertyEntity,
 )
 from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
@@ -251,11 +253,15 @@ class _DMSExporter:
 
     @classmethod
     def _create_edge_type_from_prop(cls, prop: DMSProperty) -> dm.DirectRelationReference:
-        if isinstance(prop.reference, ReferenceEntity):
+        if isinstance(prop.connection, EdgeEntity) and prop.connection.edge_type is not None:
+            return prop.connection.edge_type.as_reference()
+        elif isinstance(prop.reference, ReferenceEntity):
             ref_view_prop = prop.reference.as_view_property_id()
             return cls._create_edge_type_from_view_id(cast(dm.ViewId, ref_view_prop.source), ref_view_prop.property)
-        else:
+        elif isinstance(prop.value_type, ViewEntity):
             return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
+        else:
+            raise NeatTypeError(f"Invalid valueType {prop.value_type!r}")
 
     @staticmethod
     def _create_edge_type_from_view_id(view_id: dm.ViewId, property_: str) -> dm.DirectRelationReference:
@@ -463,7 +469,7 @@ class _DMSExporter:
                 description=prop.description,
                 **extra_args,
             )
-        elif prop.connection == "edge":
+        elif isinstance(prop.connection, EdgeEntity):
             if isinstance(prop.value_type, ViewEntity):
                 source_view_id = prop.value_type.as_id()
             else:
@@ -472,6 +478,9 @@ class _DMSExporter:
                     "If this error occurs it is a bug in NEAT, please report"
                     f"Debug Info, Invalid valueType edge: {prop.model_dump_json()}"
                 )
+            edge_source: dm.ViewId | None = None
+            if prop.connection.properties is not None:
+                edge_source = prop.connection.properties.as_id()
             edge_cls: type[dm.EdgeConnectionApply] = dm.MultiEdgeConnectionApply
             # If is_list is not set, we default to a MultiEdgeConnection
             if prop.is_list is False:
@@ -483,13 +492,11 @@ class _DMSExporter:
                 direction="outwards",
                 name=prop.name,
                 description=prop.description,
+                edge_source=edge_source,
             )
-        elif prop.connection == "reverse":
-            reverse_prop_id: str | None = None
-            if isinstance(prop.value_type, ViewPropertyEntity):
-                source_view_id = prop.value_type.as_view_id()
-                reverse_prop_id = prop.value_type.property_
-            elif isinstance(prop.value_type, ViewEntity):
+        elif isinstance(prop.connection, ReverseConnectionEntity):
+            reverse_prop_id = prop.connection.property_
+            if isinstance(prop.value_type, ViewEntity):
                 source_view_id = prop.value_type.as_id()
             else:
                 # Should have been validated.
@@ -498,6 +505,7 @@ class _DMSExporter:
                     f"Debug Info, Invalid valueType reverse connection: {prop.model_dump_json()}"
                 )
             reverse_prop: DMSProperty | None = None
+            edge_source = None
             if reverse_prop_id is not None:
                 reverse_prop = next(
                     (
@@ -507,6 +515,12 @@ class _DMSExporter:
                     ),
                     None,
                 )
+                if (
+                    reverse_prop
+                    and isinstance(reverse_prop.connection, EdgeEntity)
+                    and reverse_prop.connection.properties is not None
+                ):
+                    edge_source = reverse_prop.connection.properties.as_id()
 
             if reverse_prop is None:
                 warnings.warn(
@@ -520,7 +534,7 @@ class _DMSExporter:
                     stacklevel=2,
                 )
 
-            if reverse_prop is None or reverse_prop.connection == "edge":
+            if reverse_prop is None or isinstance(reverse_prop.connection, EdgeEntity):
                 inwards_edge_cls = (
                     dm.MultiEdgeConnectionApply if prop.is_list in [True, None] else SingleEdgeConnectionApply
                 )
@@ -530,6 +544,7 @@ class _DMSExporter:
                     name=prop.name,
                     description=prop.description,
                     direction="inwards",
+                    edge_source=edge_source,
                 )
             elif reverse_prop_id and reverse_prop and reverse_prop.connection == "direct":
                 reverse_direct_cls = (

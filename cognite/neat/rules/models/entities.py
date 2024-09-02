@@ -1,9 +1,12 @@
+import inspect
 import re
 import sys
 from abc import ABC, abstractmethod
 from functools import total_ordering
-from typing import Annotated, Any, ClassVar, Generic, TypeVar, cast
+from types import UnionType
+from typing import Annotated, Any, ClassVar, Generic, Literal, TypeVar, Union, cast, get_args, get_origin
 
+from cognite.client.data_classes.data_modeling import DirectRelationReference
 from cognite.client.data_classes.data_modeling.ids import (
     ContainerId,
     DataModelId,
@@ -57,6 +60,8 @@ class EntityTypes(StrEnum):
     multi_value_type = "multi_value_type"
     asset = "asset"
     relationship = "relationship"
+    edge = "edge"
+    reverse_connection = "reverse"
 
 
 # ALLOWED
@@ -76,8 +81,12 @@ _CLASS_ID_REGEX = rf"(?P<{EntityTypes.class_}>{_ENTITY_ID_REGEX})"
 _CLASS_ID_REGEX_COMPILED = re.compile(rf"^{_CLASS_ID_REGEX}$")
 _PROPERTY_ID_REGEX = rf"\((?P<{EntityTypes.property_}>{_ENTITY_ID_REGEX})\)"
 
-_ENTITY_PATTERN = re.compile(r"^(?P<prefix>.*?):?(?P<suffix>[^(:]*)(\((?P<content>[^)]+)\))?$")
+_ENTITY_PATTERN = re.compile(r"^(?P<prefix>.*?):?(?P<suffix>[^(:]*)(\((?P<content>.+)\))?$")
 _MULTI_VALUE_TYPE_PATTERN = re.compile(r"^(?P<types>.*?)(\((?P<content>[^)]+)\))?$")
+# This pattern ignores commas inside brackets
+_SPLIT_ON_COMMA_PATTERN = re.compile(r",(?![^(]*\))")
+# This pattern ignores equal signs inside brackets
+_SPLIT_ON_EQUAL_PATTERN = re.compile(r"=(?![^(]*\))")
 
 
 class _UndefinedType(BaseModel): ...
@@ -109,7 +118,7 @@ class Entity(BaseModel, extra="ignore"):
         elif isinstance(data, str) and data == str(Unknown):
             return UnknownEntity(prefix=Undefined, suffix=Unknown)
         if defaults and isinstance(defaults, dict):
-            # This is trick to pass in default values
+            # This is is a trick to pass in default values
             return cls.model_validate({_PARSE: data, "defaults": defaults})
         else:
             return cls.model_validate(data)
@@ -133,7 +142,7 @@ class Entity(BaseModel, extra="ignore"):
         elif data == str(Unknown):
             raise ValueError(f"Unknown is not allowed for {cls.type_} entity")
 
-        result = cls._parse(data)
+        result = cls._parse(data, defaults)
         output = defaults.copy()
         # Populate by alias
         for field_name, field_ in cls.model_fields.items():
@@ -149,7 +158,7 @@ class Entity(BaseModel, extra="ignore"):
         return str(self)
 
     @classmethod
-    def _parse(cls, raw: str) -> dict:
+    def _parse(cls, raw: str, defaults: dict) -> dict:
         if not (result := _ENTITY_PATTERN.match(raw)):
             return dict(prefix=Undefined, suffix=Unknown)
         prefix = result.group("prefix") or Undefined
@@ -157,12 +166,23 @@ class Entity(BaseModel, extra="ignore"):
         content = result.group("content")
         if content is None:
             return dict(prefix=prefix, suffix=suffix)
-        extra_args = dict(pair.strip().split("=") for pair in content.split(","))
-        expected_args = {field_.alias or field_name for field_name, field_ in cls.model_fields.items()}
+        extra_args = dict(
+            _SPLIT_ON_EQUAL_PATTERN.split(pair.strip()) for pair in _SPLIT_ON_COMMA_PATTERN.split(content)
+        )
+        expected_args = {
+            field_.alias or field_name: field_.annotation for field_name, field_ in cls.model_fields.items()
+        }
         for key in list(extra_args):
             if key not in expected_args:
                 # Todo Warning about unknown key
                 del extra_args[key]
+                continue
+            annotation = expected_args[key]
+            if isinstance(annotation, UnionType) or get_origin(annotation) is Union:
+                annotation = get_args(annotation)[0]
+
+            if inspect.isclass(annotation) and issubclass(annotation, Entity):  # type: ignore[arg-type]
+                extra_args[key] = annotation.load(extra_args[key], **defaults)  # type: ignore[union-attr, assignment]
         return dict(prefix=prefix, suffix=suffix, **extra_args)
 
     def dump(self) -> str:
@@ -207,12 +227,15 @@ class Entity(BaseModel, extra="ignore"):
     @property
     def id(self) -> str:
         # We have overwritten the serialization to str, so we need to do it manually
-        model_dump = (
+        model_dump = [
             (field.alias or field_name, v)
             for field_name, field in self.model_fields.items()
             if (v := getattr(self, field_name)) is not None and field_name not in {"prefix", "suffix"}
-        )
-        args = ",".join([f"{k}={v}" for k, v in model_dump])
+        ]
+        if len(model_dump) == 1:
+            args = f"{model_dump[0][0]}={model_dump[0][1]}"
+        else:
+            args = ",".join([f"{k}={v}" for k, v in model_dump])
         if self.prefix == Undefined:
             base_id = str(self.suffix)
         else:
@@ -453,33 +476,6 @@ class DMSUnknownEntity(DMSEntity[None]):
         return str(Unknown)
 
 
-class ViewPropertyEntity(DMSVersionedEntity[PropertyId]):
-    type_: ClassVar[EntityTypes] = EntityTypes.property_
-    property_: str = Field(alias="property")
-
-    def as_id(self) -> PropertyId:
-        return PropertyId(
-            source=ViewId(self.space, self.external_id, self.version),
-            property=self.property_,
-        )
-
-    def as_view_id(self) -> ViewId:
-        return ViewId(space=self.space, external_id=self.external_id, version=self.version)
-
-    @classmethod
-    def from_id(cls, id: PropertyId) -> "ViewPropertyEntity":
-        if isinstance(id.source, ContainerId):
-            raise ValueError("Only view source are supported")
-        if id.source.version is None:
-            raise ValueError("Version must be specified")
-        return cls(
-            space=id.source.space,
-            externalId=id.source.external_id,
-            version=id.source.version,
-            property=id.property,
-        )
-
-
 class DataModelEntity(DMSVersionedEntity[DataModelId]):
     type_: ClassVar[EntityTypes] = EntityTypes.datamodel
 
@@ -499,9 +495,39 @@ class DMSNodeEntity(DMSEntity[NodeId]):
     def as_id(self) -> NodeId:
         return NodeId(space=self.space, external_id=self.external_id)
 
+    def as_reference(self) -> DirectRelationReference:
+        return DirectRelationReference(space=self.space, external_id=self.external_id)
+
     @classmethod
     def from_id(cls, id: NodeId) -> "DMSNodeEntity":
         return cls(space=id.space, externalId=id.external_id)
+
+    @classmethod
+    def from_reference(cls, ref: DirectRelationReference) -> "DMSNodeEntity":
+        return cls(space=ref.space, externalId=ref.external_id)
+
+
+class EdgeEntity(DMSEntity[None]):
+    type_: ClassVar[EntityTypes] = EntityTypes.edge
+    prefix: _UndefinedType = Undefined  # type: ignore[assignment]
+    suffix: Literal["edge"] = "edge"
+    edge_type: DMSNodeEntity | None = Field(None, alias="type")
+    properties: ViewEntity | None = None
+    direction: Literal["outwards", "inwards"] = "outwards"
+
+    def as_id(self) -> None:
+        return None
+
+    @classmethod
+    def from_id(cls, id: None) -> Self:
+        return cls()
+
+
+class ReverseConnectionEntity(Entity):
+    type_: ClassVar[EntityTypes] = EntityTypes.reverse_connection
+    prefix: _UndefinedType = Undefined
+    suffix: Literal["reverse"] = "reverse"
+    property_: str = Field(alias="property")
 
 
 class ReferenceEntity(ClassEntity):
@@ -645,17 +671,35 @@ def load_value_type(
 
 
 def load_dms_value_type(
-    raw: str | DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity, default_space: str, default_version: str
-) -> DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity:
-    if isinstance(raw, DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity):
+    raw: str | DataType | ViewEntity | DMSUnknownEntity,
+    default_space: str,
+    default_version: str,
+) -> DataType | ViewEntity | DMSUnknownEntity:
+    if isinstance(raw, DataType | ViewEntity | DMSUnknownEntity):
         return raw
     elif isinstance(raw, str):
         if DataType.is_data_type(raw):
             return DataType.load(raw)
         elif raw == str(Unknown):
             return DMSUnknownEntity()
-        try:
-            return ViewPropertyEntity.load(raw, space=default_space, version=default_version)
-        except ValueError:
+        else:
             return ViewEntity.load(raw, space=default_space, version=default_version)
     raise NeatTypeError(f"Invalid value type: {type(raw)}")
+
+
+def load_connection(
+    raw: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | str | None,
+    default_space: str,
+    default_version: str,
+) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
+    if (
+        isinstance(raw, EdgeEntity | ReverseConnectionEntity)
+        or raw is None
+        or (isinstance(raw, str) and raw == "direct")
+    ):
+        return raw  # type: ignore[return-value]
+    elif isinstance(raw, str) and raw.startswith("edge"):
+        return EdgeEntity.load(raw, space=default_space, version=default_version)  # type: ignore[return-value]
+    elif isinstance(raw, str) and raw.startswith("reverse"):
+        return ReverseConnectionEntity.load(raw)  # type: ignore[return-value]
+    raise NeatTypeError(f"Invalid connection: {type(raw)}")

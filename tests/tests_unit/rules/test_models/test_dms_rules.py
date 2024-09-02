@@ -429,8 +429,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             DMSInputProperty(
                 class_="Asset",
                 property_="timeseries",
-                value_type="Timeseries(property=asset)",
-                connection="reverse",
+                value_type="CogniteTimeseries",
+                connection="reverse(property=asset)",
                 is_list=True,
                 view="Asset",
                 view_property="timeseries",
@@ -448,60 +448,60 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             DMSInputProperty(
                 class_="Asset",
                 property_="children",
-                value_type="Asset(property=root)",
-                connection="reverse",
+                value_type="Asset",
+                connection="reverse(property=root)",
                 is_list=True,
                 view="Asset",
                 view_property="children",
             ),
             DMSInputProperty(
-                class_="Timeseries",
+                class_="CogniteTimeseries",
                 property_="name",
                 value_type="text",
-                container="Timeseries",
+                container="CogniteTimeseries",
                 container_property="name",
-                view="Timeseries",
+                view="CogniteTimeseries",
                 view_property="name",
             ),
             DMSInputProperty(
-                class_="Timeseries",
+                class_="CogniteTimeseries",
                 property_="asset",
                 value_type="Asset",
                 connection="direct",
-                container="Timeseries",
+                container="CogniteTimeseries",
                 container_property="asset",
-                view="Timeseries",
+                view="CogniteTimeseries",
                 view_property="asset",
             ),
             DMSInputProperty(
-                class_="Timeseries",
+                class_="CogniteTimeseries",
                 property_="activities",
                 value_type="Activity",
                 connection="direct",
                 is_list=True,
-                container="Timeseries",
+                container="CogniteTimeseries",
                 container_property="activities",
-                view="Timeseries",
+                view="CogniteTimeseries",
                 view_property="activities",
             ),
             DMSInputProperty(
                 class_="Activity",
                 property_="timeseries",
-                value_type="Timeseries(property=activities)",
+                value_type="CogniteTimeseries",
                 is_list=True,
-                connection="reverse",
+                connection="reverse(property=activities)",
                 view="Activity",
                 view_property="timeseries",
             ),
         ],
         views=[
             DMSInputView(view="Asset", class_="Asset"),
-            DMSInputView(view="Timeseries", class_="Timeseries"),
+            DMSInputView(view="CogniteTimeseries", class_="CogniteTimeseries"),
             DMSInputView(view="Activity", class_="Activity"),
         ],
         containers=[
             DMSInputContainer(container="Asset", class_="Asset"),
-            DMSInputContainer(container="Timeseries", class_="Timeseries"),
+            DMSInputContainer(container="CogniteTimeseries", class_="CogniteTimeseries"),
             DMSInputContainer(container="Activity", class_="Activity"),
         ],
     )
@@ -515,7 +515,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             description="Creator: Anders",
             views=[
                 dm.ViewId(space="my_space", external_id="Asset", version="1"),
-                dm.ViewId(space="my_space", external_id="Timeseries", version="1"),
+                dm.ViewId(space="my_space", external_id="CogniteTimeseries", version="1"),
                 dm.ViewId(space="my_space", external_id="Activity", version="1"),
             ],
         ),
@@ -530,8 +530,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
                         ),
                         "timeseries": dm.MultiReverseDirectRelationApply(
-                            source=dm.ViewId("my_space", "Timeseries", "1"),
-                            through=dm.PropertyId(source=dm.ViewId("my_space", "Timeseries", "1"), property="asset"),
+                            source=dm.ViewId("my_space", "CogniteTimeseries", "1"),
+                            through=dm.PropertyId(
+                                source=dm.ViewId("my_space", "CogniteTimeseries", "1"), property="asset"
+                            ),
                         ),
                         "root": dm.MappedPropertyApply(
                             container=dm.ContainerId("my_space", "Asset"),
@@ -547,24 +549,25 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
                 dm.ViewApply(
                     space="my_space",
-                    external_id="Timeseries",
+                    external_id="CogniteTimeseries",
                     version="1",
                     properties={
                         "name": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Timeseries"), container_property_identifier="name"
+                            container=dm.ContainerId("my_space", "CogniteTimeseries"),
+                            container_property_identifier="name",
                         ),
                         "asset": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Timeseries"),
+                            container=dm.ContainerId("my_space", "CogniteTimeseries"),
                             container_property_identifier="asset",
                             source=dm.ViewId("my_space", "Asset", "1"),
                         ),
                         "activities": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Timeseries"),
+                            container=dm.ContainerId("my_space", "CogniteTimeseries"),
                             container_property_identifier="activities",
                             source=dm.ViewId("my_space", "Activity", "1"),
                         ),
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Timeseries")]),
+                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "CogniteTimeseries")]),
                 ),
                 dm.ViewApply(
                     space="my_space",
@@ -572,9 +575,9 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     version="1",
                     properties={
                         "timeseries": dm.MultiReverseDirectRelationApply(
-                            source=dm.ViewId("my_space", "Timeseries", "1"),
+                            source=dm.ViewId("my_space", "CogniteTimeseries", "1"),
                             through=dm.PropertyId(
-                                source=dm.ViewId("my_space", "Timeseries", "1"), property="activities"
+                                source=dm.ViewId("my_space", "CogniteTimeseries", "1"), property="activities"
                             ),
                         )
                     },
@@ -600,7 +603,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
                 dm.ContainerApply(
                     space="my_space",
-                    external_id="Timeseries",
+                    external_id="CogniteTimeseries",
                     properties={
                         "name": dm.ContainerProperty(type=dm.Text(), nullable=True),
                         "asset": dm.ContainerProperty(type=dm.DirectRelation(), nullable=True),

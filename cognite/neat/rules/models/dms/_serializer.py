@@ -27,6 +27,7 @@ class _DMSRulesSerializer:
         self.prop_container = "container"
         self.prop_view_property = "view_property"
         self.prop_value_type = "value_type"
+        self.prop_connection = "connection"
         self.view_view = "view"
         self.view_implements = "implements"
         self.container_container = "container"
@@ -45,6 +46,7 @@ class _DMSRulesSerializer:
             self.prop_container = DMSProperty.model_fields[self.prop_container].alias or self.prop_container
             self.prop_view_property = DMSProperty.model_fields[self.prop_view_property].alias or self.prop_view_property
             self.prop_value_type = DMSProperty.model_fields[self.prop_value_type].alias or self.prop_value_type
+            self.prop_connection = DMSProperty.model_fields[self.prop_connection].alias or self.prop_connection
             self.view_view = DMSView.model_fields[self.view_view].alias or self.view_view
             self.view_implements = DMSView.model_fields[self.view_implements].alias or self.view_implements
             self.container_container = (
@@ -87,8 +89,25 @@ class _DMSRulesSerializer:
                     continue
                 if value := prop.get(field_name):
                     prop[field_name] = value.removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
-            # Value type can have a property as well
-            prop[self.prop_value_type] = prop[self.prop_value_type].replace(self.default_version, "")
+            if isinstance(prop.get(self.prop_connection), str):
+                # Remove default values from connection (type, direction, properties)
+                default_type = f"type={self.default_space}{prop[self.view_view]}.{prop[self.prop_view_property]}"
+                default_type_space = f"type={self.default_space}"
+                default_properties = f"properties={self.default_space}"
+                default_direction = "direction=outwards"
+                prop[self.prop_connection] = (
+                    prop[self.prop_connection]
+                    .replace(self.default_version, "")
+                    .replace(default_type, "")
+                    .replace(default_type_space, "type=")
+                    .replace(default_properties, "properties=")
+                    .replace(default_direction, "")
+                    .replace("()", "")
+                    .replace("(,)", "")
+                    .replace("(,,)", "")
+                    .replace("(,", "(")
+                    .replace(",)", ")")
+                )
 
         for view in dumped[self.view_name]:
             if as_reference:
