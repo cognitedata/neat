@@ -68,24 +68,25 @@ class IODDExtractor(BaseExtractor):
         raise ValueError(f"Unable to resolve value for textId {text_id}")
 
     def _textid_elements2triples(self, di_root: Element, id: URIRef) -> list[Triple]:
-        triples: list[Triple] = []
+        triples: set[Triple] = set()
         for element in iterate_tree(di_root):
             if "textId" in element.attrib:
                 tag = to_camel(remove_element_tag_namespace(element.tag))
 
-                # Create TextID node
                 text_id_str = element.attrib["textId"]
-                triples.append((id, IODD[tag], Literal(self._resolve_text_id_value(text_id_str))))
+                rdf_object = Literal(self._resolve_text_id_value(text_id_str))
+                triples.add((id, IODD[tag], rdf_object))
 
+                # Create TextID node
                 if self.with_text_id_nodes:
                     text_id_ = URIRef(text_id_str)
-                    triples.append((text_id_, RDF.type, as_neat_compliant_uri(IODD["Text"])))
+                    triples.add((text_id_, RDF.type, as_neat_compliant_uri(IODD["Text"])))
+                    triples.add((text_id_, IODD.value, rdf_object))
 
-                    # Create connection to device node
-                    if self.with_text_id_nodes:
-                        triples.append((id, IODD[tag], text_id_))
+                    # Create connection from device to textId node
+                    triples.add((id, IODD[tag], text_id_))
 
-        return triples
+        return list(triples)
 
     # TODO
     def _process_data_collection2triples(self, pc_root: Element) -> list[Triple]:
