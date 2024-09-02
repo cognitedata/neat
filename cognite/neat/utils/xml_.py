@@ -1,8 +1,6 @@
 from collections.abc import Generator
 from xml.etree.ElementTree import Element
 
-from lxml.etree import QName
-
 
 def iterate_tree(node: Element, skip_root: bool = False) -> Generator:
     """Iterate over all elements in an XML tree.
@@ -40,19 +38,17 @@ def get_children(element: Element, child_tag: str, no_children: int = -1) -> lis
     return children
 
 
-def split_element_tag_namespace(element: Element) -> tuple[str, str]:
-    """Split namespace and tag of an XML element.
+def remove_element_tag_namespace(element_tag: str) -> str:
+    """Remove namespace prefix from tag of an XML element.
 
     Args:
         element: XML element to extract namespace and tag from.
 
-    Returns: Instance of ElementTag with tag and namespace.
+    Returns: The element tag as a string
 
     Example:
 
-    >>> split_element_tag_namespace("{http://www.example.org/index.html}section2")
-    ('section2', 'http://www.example.org/index.html')
-
+    >>> remove_element_tag_namespace("{http://www.example.org/index.html}section2")
+    'section2'
     """
-    resource = QName(element.tag)
-    return (resource.localname, resource.namespace)
+    return element_tag.split("}", 1)[1]

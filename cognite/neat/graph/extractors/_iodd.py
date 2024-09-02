@@ -2,66 +2,104 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from xml.etree.ElementTree import Element
 
-from rdflib import RDF, Literal, Namespace
+from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
 from cognite.neat.utils.rdf_ import as_neat_compliant_uri
-from cognite.neat.utils.xml_ import iterate_tree, split_element_tag_namespace
+from cognite.neat.utils.text import to_camel
+from cognite.neat.utils.xml_ import iterate_tree, remove_element_tag_namespace
 
-IODD = Namespace("http://www.io-link.com/IODD/2010/10/")  # All elements have this namespace as prefix
+IODD = Namespace("http://www.io-link.com/IODD/2010/10/")
 XSI = Namespace("http://www.w3.org/2001/XMLSchema-instance/")
-
-# Not really needed or used right now as * wildcard is used to extract elements with a certain tag
-ET.register_namespace("iodd", IODD.__str__())
-NS = {"iodd": IODD.__str__()}
 
 
 class IODDExtractor(BaseExtractor):
     """
     IODD-XML extractor of RDF triples
 
-    Each IODD sheet describes the device identity. Goal is to extract the DeviceIdentity field along with variables (time series defs)
-    for that device
+    Each IODD sheet describes an IODD device. We want to extract triples that describes the device, and the
+    sensors connected to the device.
+    This data is described under the elements "DeviceIdentity" and "ProcessDataCollection".
+    We can also extend the IODDExtractor to extract triples from other elements related to the device such as
+    "EventCollection".
 
     Args:
         root: XML root element of IODD XML file.
         namespace: Optional custom namespace to use for extracted triples that define data
                     model instances. Defaults to DEFAULT_NAMESPACE.
+        with_text_id_nodes: bool that configures the extractor to create nodes for the text elements as part of the
+                            graph, or resolve their values immediately without these nodes (default).
     """
 
-    def __init__(
-        self,
-        root: Element,
-        namespace: Namespace | None = None,
-    ):
+    def __init__(self, root: Element, namespace: Namespace | None = None, with_text_id_nodes: bool = False):
         self.root = root
         self.namespace = namespace or DEFAULT_NAMESPACE
+        self.with_text_id_nodes = with_text_id_nodes
 
-        # self.text_instances = root.findall(".//{*}Text")
-        # self.variable_instances = root.findall(".//{*}Variable")
-
-    @classmethod
-    def from_file(cls, filepath: str | Path, namespace: Namespace | None = None):
-        return cls(ET.parse(filepath).getroot(), namespace)
+        self.text_elements = root.find(
+            ".//{*}ExternalTextCollection"
+        )  # this property is used to resolve textId references
 
     @classmethod
-    def _element2triples(cls, element: Element, namespace: Namespace) -> list[Triple]:
+    def from_file(cls, filepath: str | Path, namespace: Namespace | None = None, with_text_id_nodes: bool = False):
+        return cls(ET.parse(filepath).getroot(), namespace, with_text_id_nodes)
+
+    def _element2triples(self) -> list[Triple]:
         """Converts an element to triples."""
         triples: list[Triple] = []
 
         # Extract DeviceIdentity triples
-        if di_root := element.find(".//{*}DeviceIdentity"):
-            triples.extend(cls._device_identity_to_triples(di_root, namespace))
+        if di_root := self.root.find(".//{*}DeviceIdentity"):
+            triples.extend(self._device_identity2triples(di_root))
 
-        # Extract VariableCollection triples - this element holds the information about the sensors
-        # TODO
+        # Extract ProcessDataCollection triples -
+        # this element holds the information about the sensors with data coming from MQTT
+        if pc_root := self.root.find(".//{*}ProcessDataCollection"):
+            triples.extend(self._process_data_collection2triples(pc_root))
 
         return triples
 
-    @classmethod
-    def _device_identity_to_triples(cls, di_root: Element, namespace: Namespace) -> list[Triple]:
+    def _resolve_text_id_value(self, text_id: str) -> str:
+        for element in iterate_tree(self.text_elements):
+            if text_id == element.attrib.get("id"):
+                return element.attrib["value"]
+        raise ValueError(f"Unable to resolve value for textId {text_id}")
+
+    def _textid_elements2triples(self, di_root: Element, id: URIRef) -> list[Triple]:
+        triples: list[Triple] = []
+        for element in iterate_tree(di_root):
+            if "textId" in element.attrib:
+                tag = to_camel(remove_element_tag_namespace(element.tag))
+
+                # Create TextID node
+                text_id_str = element.attrib["textId"]
+                triples.append((id, IODD[tag], Literal(self._resolve_text_id_value(text_id_str))))
+
+                if self.with_text_id_nodes:
+                    text_id_ = URIRef(text_id_str)
+                    triples.append((text_id_, RDF.type, as_neat_compliant_uri(IODD["Text"])))
+
+                    # Create connection to device node
+                    if self.with_text_id_nodes:
+                        triples.append((id, IODD[tag], text_id_))
+
+        return triples
+
+    # TODO
+    def _process_data_collection2triples(self, pc_root: Element) -> list[Triple]:
+        """
+        ProcessDataCollection contains both ProcessDataIn and ProcessDataOut. Here, we are interested in the elements
+        that corresponds to actual sensor values that we will rececive from the MQTT connection.
+
+        Most likely this is ProcessDataOut elements (to be verified).
+        """
+        triples: list[Triple] = []
+
+        return triples
+
+    def _device_identity2triples(self, di_root: Element) -> list[Triple]:
         """
         Properties and metadata related to the IO Device are described under the 'DeviceIdentity' element in the XML.
         This method extracts the triples related to the DeviceIdentity element and its child elements.
@@ -70,39 +108,24 @@ class IODDExtractor(BaseExtractor):
         triples: list[Triple] = []
 
         # Extract element tag and namespace
-        deviceId = di_root.attrib.get("deviceId")
-        id_ = namespace[deviceId]
-        triples.append((id_, IODD.tag, Literal("DeviceIdentity")))
+        deviceId = di_root.attrib["deviceId"]
+        id_ = URIRef(deviceId)
 
-        # Create rdf type triple from DeviceIdentity
-        triples.append(
-            (
-                id_,
-                RDF.type,
-                as_neat_compliant_uri(DEFAULT_NAMESPACE["DeviceIdentity"]),
-            )
-        )
-
-        # add DeviceIdentity attributes triples
         for attribute_name, attribute_value in di_root.attrib.items():
-            triples.append((id_, IODD[attribute_name], Literal(attribute_value)))
-
-        # add children elements triples
-        for element in di_root:
-            tag, namespace = split_element_tag_namespace(element)
-            if tag == "DeviceVariantCollection":
-                children = iterate_tree(element, skip_root=True)
-                for child in children:
-                    child_tag, child_namespace = split_element_tag_namespace(child)
-                    triples.append((id_, IODD.tag, Literal(child_tag)))
-                    for attribute_name, attribute_value in child.attrib.items():
-                        predicate = DEFAULT_NAMESPACE[f"{child_tag}/{attribute_name}"]
-                        triples.append((id_, predicate, Literal(attribute_value)))
+            if attribute_name == "deviceId":
+                # Create rdf type triple for IODD
+                triples.append(
+                    (
+                        id_,
+                        RDF.type,
+                        as_neat_compliant_uri(IODD["IoddDevice"]),
+                    )
+                )
             else:
-                triples.append((id_, IODD.tag, Literal(tag)))
-                for attribute_name, attribute_value in element.attrib.items():
-                    predicate = DEFAULT_NAMESPACE[f"{tag}/{attribute_name}"]
-                    triples.append((id_, predicate, Literal(attribute_value)))
+                # Collect attributes at root element
+                triples.append((id_, IODD[attribute_name], Literal(attribute_value)))
+
+        triples.extend(self._textid_elements2triples(di_root, id_))
 
         return triples
 
@@ -110,6 +133,6 @@ class IODDExtractor(BaseExtractor):
         triples = []
 
         # Extract triples from IODD device XML
-        triples.extend(self._element2triples(self.root, self.namespace))
+        triples.extend(self._element2triples())
 
         return triples
