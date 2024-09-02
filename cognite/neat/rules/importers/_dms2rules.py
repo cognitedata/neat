@@ -38,6 +38,7 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
+    DMSInputNode,
     DMSInputProperty,
     DMSInputView,
 )
@@ -275,6 +276,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 DMSInputView.from_view(view, in_model=view_id in data_model_view_ids)
                 for view_id, view in schema.views.items()
             ],
+            nodes=[DMSInputNode.from_node_type(node_type) for node_type in schema.node_types.values()],
         )
 
     @classmethod

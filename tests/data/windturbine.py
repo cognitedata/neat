@@ -4,17 +4,19 @@ import datetime
 from typing import Any
 
 from cognite.client import data_modeling as dm
+from cognite.client.data_classes.data_modeling import NodeApply
 from cognite.client.data_classes.data_modeling.data_types import UnitReference
 
 from cognite.neat.rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
+    DMSInputNode,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
     DMSSchema,
 )
-from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
+from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 
 _SPACE = "sp_windturbine"
 
@@ -106,17 +108,20 @@ MODEL = dm.DataModelApply(
     version="v1",
     views=VIEWS.as_ids(),
 )
-
+NODE_TYPE = NodeApply(space=_SPACE, external_id="distance")
 SCHEMA = DMSSchema(
     data_model=MODEL,
     spaces=SpaceApplyDict.from_iterable([dm.SpaceApply(space=_SPACE)]),
     containers=ContainerApplyDict.from_iterable(CONTAINERS),
     views=ViewApplyDict.from_iterable(VIEWS),
+    node_types=NodeApplyDict([NODE_TYPE]),
 )
 
 _TODAY = datetime.datetime.now()
 
 _DEFAULTS: dict[str, Any] = dict(immutable=False, nullable=True, is_list=False)
+
+
 INPUT_RULES = DMSInputRules(
     metadata=DMSInputMetadata(
         "complete",
@@ -159,6 +164,7 @@ INPUT_RULES = DMSInputRules(
         DMSInputContainer("MetMast", used_for="node"),
         DMSInputContainer("Distance", used_for="edge"),
     ],
+    nodes=[DMSInputNode("distance", "type")],
 )
 
 if __name__ == "__main__":

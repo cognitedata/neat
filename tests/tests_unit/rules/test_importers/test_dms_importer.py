@@ -58,6 +58,8 @@ class TestDMSImporter:
             "properties": {"data": {"__all__": {"reference"}}},
             "reference": {"__all__"},
             "views": {"data": {"__all__": {"reference"}}},
+            # The Exporter adds node types for each view
+            "nodes": "__all__",
         }
         assert rules.dump(exclude=exclude) == dms_rules.dump(exclude=exclude)
 
@@ -79,6 +81,8 @@ class TestDMSImporter:
         assert dms_recreated.views[turbine].dump()["properties"] == windturbine.WIND_TURBINE.dump()["properties"]
         metmast = windturbine.METMAST.as_id()
         assert dms_recreated.views[metmast].dump()["properties"] == windturbine.METMAST.dump()["properties"]
+        # The DMS Exporter dumps all node types, so we only check that the windturbine node type is present
+        assert windturbine.NODE_TYPE.as_id() in dms_recreated.node_types
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(

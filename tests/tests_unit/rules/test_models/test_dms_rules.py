@@ -1403,8 +1403,13 @@ class TestDMSRules:
         schema = alice_rules.as_schema()
         recreated_rules = ImporterPipeline.verify(DMSImporter(schema))
 
-        # This information is lost in the conversion
-        exclude = {"metadata": {"created", "updated"}, "properties": {"data": {"__all__": {"reference"}}}}
+        exclude = {
+            # This information is lost in the conversion
+            "metadata": {"created", "updated"},
+            "properties": {"data": {"__all__": {"reference"}}},
+            # The Exporter adds node types for each view as this is an Enterprise model.
+            "nodes": "__all__",
+        }
         assert recreated_rules.dump(exclude=exclude) == alice_rules.dump(exclude=exclude)
 
     @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())

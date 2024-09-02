@@ -35,6 +35,7 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     ContainerEntityList,
+    DMSNodeEntity,
     DMSUnknownEntity,
     EdgeEntity,
     ReferenceEntity,
@@ -246,11 +247,27 @@ class DMSView(SheetEntity):
         )
 
 
+class DMSNode(SheetEntity):
+    node: DMSNodeEntity = Field(alias="Node")
+    usage: Literal["type", "collection"] = Field(alias="Usage")
+    name: str | None = Field(alias="Name", default=None)
+    description: str | None = Field(alias="Description", default=None)
+
+    def as_node(self) -> dm.NodeApply:
+        if self.usage == "type":
+            return dm.NodeApply(space=self.node.space, external_id=self.node.external_id)
+        elif self.usage == "collection":
+            raise NotImplementedError("Collection nodes are not supported yet")
+        else:
+            raise ValueError(f"Unknown usage {self.usage}")
+
+
 class DMSRules(BaseRules):
     metadata: DMSMetadata = Field(alias="Metadata")
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     views: SheetList[DMSView] = Field(alias="Views")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
+    nodes: SheetList[DMSNode] | None = Field(None, alias="Nodes")
     last: "DMSRules | None" = Field(None, alias="Last", description="The previous version of the data model")
     reference: "DMSRules | None" = Field(None, alias="Reference")
 

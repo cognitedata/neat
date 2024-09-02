@@ -1,7 +1,7 @@
 from typing import Any, ClassVar, cast
 
 from cognite.neat.rules.models import DMSRules
-from cognite.neat.rules.models.dms import DMSContainer, DMSProperty, DMSView
+from cognite.neat.rules.models.dms import DMSContainer, DMSNode, DMSProperty, DMSView
 from cognite.neat.rules.models.entities import ReferenceEntity, ViewEntity
 
 
@@ -23,6 +23,7 @@ class _DMSRulesSerializer:
         self.view_name = "views"
         self.container_name = "containers"
         self.metadata_name = "metadata"
+        self.nodes_name = "nodes"
         self.prop_view = "view"
         self.prop_container = "container"
         self.prop_view_property = "view_property"
@@ -32,6 +33,7 @@ class _DMSRulesSerializer:
         self.view_implements = "implements"
         self.container_container = "container"
         self.container_constraint = "constraint"
+        self.nodes_node = "node"
         self.reference = "Reference" if by_alias else "reference"
 
         if by_alias:
@@ -55,10 +57,13 @@ class _DMSRulesSerializer:
             self.container_constraint = (
                 DMSContainer.model_fields[self.container_constraint].alias or self.container_constraint
             )
+            self.nodes_node = DMSNode.model_fields[self.nodes_node].alias or self.nodes_node
+
             self.prop_name = DMSRules.model_fields[self.prop_name].alias or self.prop_name
             self.view_name = DMSRules.model_fields[self.view_name].alias or self.view_name
             self.container_name = DMSRules.model_fields[self.container_name].alias or self.container_name
             self.metadata_name = DMSRules.model_fields[self.metadata_name].alias or self.metadata_name
+            self.nodes_name = DMSRules.model_fields[self.nodes_name].alias or self.nodes_name
 
     def clean(self, dumped: dict[str, Any], as_reference: bool) -> dict[str, Any]:
         # Sorting to get a deterministic order
@@ -70,6 +75,11 @@ class _DMSRulesSerializer:
             dumped[self.container_name] = sorted(container_data["data"], key=lambda c: c[self.container_container])
         else:
             dumped.pop(self.container_name, None)
+
+        if node_types_data := dumped.get(self.nodes_name):
+            dumped[self.nodes_name] = sorted(node_types_data["data"], key=lambda n: n[self.nodes_node])
+        else:
+            dumped.pop(self.nodes_name, None)
 
         for prop in dumped[self.prop_name]:
             if as_reference:
@@ -132,4 +142,7 @@ class _DMSRulesSerializer:
                 container[self.container_constraint] = ",".join(
                     constraint.strip().removeprefix(self.default_space) for constraint in value.split(",")
                 )
+
+        for node in dumped.get(self.nodes_name, []):
+            node[self.nodes_node] = node[self.nodes_node].removeprefix(self.default_space)
         return dumped

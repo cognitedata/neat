@@ -10,6 +10,7 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
+    DMSNodeEntity,
     DMSUnknownEntity,
     EdgeEntity,
     ReverseConnectionEntity,
@@ -18,7 +19,7 @@ from cognite.neat.rules.models.entities import (
     load_dms_value_type,
 )
 
-from ._rules import _DEFAULT_VERSION, DMSContainer, DMSMetadata, DMSProperty, DMSRules, DMSView
+from ._rules import _DEFAULT_VERSION, DMSContainer, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
 
 
 @dataclass
@@ -217,11 +218,33 @@ class DMSInputView(InputComponent[DMSView]):
 
 
 @dataclass
+class DMSInputNode(InputComponent[DMSNode]):
+    node: str
+    usage: Literal["type", "collocation"]
+    name: str | None = None
+    description: str | None = None
+
+    @classmethod
+    def _get_verified_cls(cls) -> type[DMSNode]:
+        return DMSNode
+
+    @classmethod
+    def from_node_type(cls, node_type: dm.NodeApply) -> "DMSInputNode":
+        return cls(node=f"{node_type.space}:{node_type.external_id}", usage="type")
+
+    def dump(self, default_space: str, **_) -> dict[str, Any]:  # type: ignore[override]
+        output = super().dump()
+        output["Node"] = DMSNodeEntity.load(self.node, space=default_space)
+        return output
+
+
+@dataclass
 class DMSInputRules(InputRules[DMSRules]):
     metadata: DMSInputMetadata
     properties: list[DMSInputProperty]
     views: list[DMSInputView]
     containers: list[DMSInputContainer] | None = None
+    nodes: list[DMSInputNode] | None = None
     last: "DMSInputRules | None" = None
     reference: "DMSInputRules | None" = None
 
@@ -245,11 +268,12 @@ class DMSInputRules(InputRules[DMSRules]):
             # We need to load through the DMSRulesInput to set the correct default space and version
             last = DMSInputRules.load(self.last.model_dump()).dump()
 
-        return dict(
-            Metadata=self.metadata.dump(),
-            Properties=[prop.dump(default_space, default_version) for prop in self.properties],
-            Views=[view.dump(default_space, default_version) for view in self.views],
-            Containers=[container.dump(default_space) for container in self.containers or []] or None,
-            Last=last,
-            Reference=reference,
-        )
+        return {
+            "Metadata": self.metadata.dump(),
+            "Properties": [prop.dump(default_space, default_version) for prop in self.properties],
+            "Views": [view.dump(default_space, default_version) for view in self.views],
+            "Containers": [container.dump(default_space) for container in self.containers or []] or None,
+            "Nodes": [node_type.dump(default_space) for node_type in self.nodes or []] or None,
+            "Last": last,
+            "Reference": reference,
+        }
