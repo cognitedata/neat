@@ -11,7 +11,7 @@ from cognite.neat.rules.models.dms import (
     DMSInputContainer,
     DMSInputEnum,
     DMSInputMetadata,
-    DMSInputNodeType,
+    DMSInputNode,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
@@ -196,7 +196,7 @@ INPUT_RULES = DMSInputRules(
         DMSInputContainer("MetMast", used_for="node"),
         DMSInputContainer("Distance", used_for="edge"),
     ],
-    node_types=[DMSInputNodeType("distance")],
+    nodes=[DMSInputNode("distance", "type")],
     enum=[
         DMSInputEnum("category", "onshore", "Onshore"),
         DMSInputEnum("category", "offshore", "Offshore"),

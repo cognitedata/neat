@@ -35,7 +35,7 @@ from cognite.neat.rules.models.entities import (
     MultiValueTypeInfo,
     ReferenceEntity,
     RelationshipEntity,
-    ReverseEntity,
+    ReverseConnectionEntity,
     UnknownEntity,
     ViewEntity,
 )
@@ -285,7 +285,7 @@ class _InformationRulesConverter:
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
-        connection: Literal["direct"] | ReverseEntity | EdgeEntity | None = None
+        connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = None
         if isinstance(value_type, ViewEntity):
             # Default connection type.
             connection = EdgeEntity() if prop.is_list else "direct"
