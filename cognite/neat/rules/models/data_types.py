@@ -6,7 +6,7 @@ from typing import Any, ClassVar
 
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling.data_types import Enum as DMSEnum
-from pydantic import BaseModel, model_serializer, model_validator
+from pydantic import BaseModel, Field, model_serializer, model_validator
 from pydantic.functional_validators import ModelWrapValidatorHandler
 
 from cognite.neat.rules.models.entities._single_value import ClassEntity, UnitEntity
@@ -374,7 +374,7 @@ class Enum(DataType):
     name: typing.Literal["enum"] = "enum"
 
     collection: ClassEntity
-    unknown_value: str | None = None
+    unknown_value: str | None = Field(None, alias="unknownValue")
 
 
 _DATA_TYPE_BY_NAME = {cls.model_fields["name"].default.casefold(): cls for cls in DataType.__subclasses__()}

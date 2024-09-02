@@ -410,7 +410,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             elif isinstance(container_prop.type, PropertyTypeWithUnit) and container_prop.type.unit:
                 return DataType.load(f"{container_prop.type._type}(unit={container_prop.type.unit.external_id})")
             elif isinstance(container_prop.type, DMSEnum):
-                return Enum(collection=ClassEntity(suffix=prop_id), unknown_value=container_prop.type.unknown_value)
+                return Enum(collection=ClassEntity(suffix=prop_id), unknownValue=container_prop.type.unknown_value)
             else:
                 return DataType.load(container_prop.type._type)
         else:
