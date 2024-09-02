@@ -162,7 +162,7 @@ INPUT_RULES = DMSInputRules(
         DMSInputProperty(
             "WindTurbine",
             "category",
-            "enum(collection=category, unknown_value=onshore)",
+            "enum(collection=category, unknownValue=onshore)",
             container="WindTurbine",
             container_property="category",
             **_DEFAULTS,
