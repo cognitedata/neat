@@ -10,7 +10,7 @@ from cognite.client.data_classes.data_modeling.data_types import UnitReference
 from cognite.neat.rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
-    DMSInputNodeType,
+    DMSInputNode,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
@@ -164,7 +164,7 @@ INPUT_RULES = DMSInputRules(
         DMSInputContainer("MetMast", used_for="node"),
         DMSInputContainer("Distance", used_for="edge"),
     ],
-    node_types=[DMSInputNodeType("distance")],
+    nodes=[DMSInputNode("distance")],
 )
 
 if __name__ == "__main__":

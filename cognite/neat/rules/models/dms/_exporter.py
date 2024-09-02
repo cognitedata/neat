@@ -116,9 +116,9 @@ class _DMSExporter:
         containers = self._create_containers(container_properties_by_id)
 
         views, view_node_type_filters = self._create_views_with_node_types(view_properties_by_id)
-        if rules.node_types:
+        if rules.nodes:
             node_types = NodeApplyDict(
-                [node.as_node() for node in rules.node_types]
+                [node.as_node() for node in rules.nodes]
                 + [dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters]
             )
         else:

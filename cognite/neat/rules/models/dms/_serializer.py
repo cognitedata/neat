@@ -1,7 +1,7 @@
 from typing import Any, ClassVar, cast
 
 from cognite.neat.rules.models import DMSRules
-from cognite.neat.rules.models.dms import DMSContainer, DMSNodeType, DMSProperty, DMSView
+from cognite.neat.rules.models.dms import DMSContainer, DMSNode, DMSProperty, DMSView
 from cognite.neat.rules.models.entities import ReferenceEntity, ViewEntity
 
 
@@ -57,9 +57,7 @@ class _DMSRulesSerializer:
             self.container_constraint = (
                 DMSContainer.model_fields[self.container_constraint].alias or self.container_constraint
             )
-            self.node_type_node_type = (
-                DMSNodeType.model_fields[self.node_type_node_type].alias or self.node_type_node_type
-            )
+            self.node_type_node_type = DMSNode.model_fields[self.node_type_node_type].alias or self.node_type_node_type
 
             self.prop_name = DMSRules.model_fields[self.prop_name].alias or self.prop_name
             self.view_name = DMSRules.model_fields[self.view_name].alias or self.view_name

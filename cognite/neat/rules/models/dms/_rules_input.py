@@ -19,7 +19,7 @@ from cognite.neat.rules.models.entities import (
     load_dms_value_type,
 )
 
-from ._rules import _DEFAULT_VERSION, DMSContainer, DMSMetadata, DMSNodeType, DMSProperty, DMSRules, DMSView
+from ._rules import _DEFAULT_VERSION, DMSContainer, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
 
 
 @dataclass
@@ -218,22 +218,23 @@ class DMSInputView(InputComponent[DMSView]):
 
 
 @dataclass
-class DMSInputNodeType(InputComponent[DMSNodeType]):
-    node_type: str
+class DMSInputNode(InputComponent[DMSNode]):
+    node: str
+    usage: Literal["type", "collocation"]
     name: str | None = None
     description: str | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSNodeType]:
-        return DMSNodeType
+    def _get_verified_cls(cls) -> type[DMSNode]:
+        return DMSNode
 
     @classmethod
-    def from_node_type(cls, node_type: dm.NodeApply) -> "DMSInputNodeType":
-        return cls(node_type=f"{node_type.space}:{node_type.external_id}")
+    def from_node_type(cls, node_type: dm.NodeApply) -> "DMSInputNode":
+        return cls(node=f"{node_type.space}:{node_type.external_id}", usage="type")
 
     def dump(self, default_space: str, **_) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
-        output["Node Type"] = DMSNodeEntity.load(self.node_type, space=default_space)
+        output["Node"] = DMSNodeEntity.load(self.node, space=default_space)
         return output
 
 
@@ -243,7 +244,7 @@ class DMSInputRules(InputRules[DMSRules]):
     properties: list[DMSInputProperty]
     views: list[DMSInputView]
     containers: list[DMSInputContainer] | None = None
-    node_types: list[DMSInputNodeType] | None = None
+    nodes: list[DMSInputNode] | None = None
     last: "DMSInputRules | None" = None
     reference: "DMSInputRules | None" = None
 
@@ -272,7 +273,7 @@ class DMSInputRules(InputRules[DMSRules]):
             "Properties": [prop.dump(default_space, default_version) for prop in self.properties],
             "Views": [view.dump(default_space, default_version) for view in self.views],
             "Containers": [container.dump(default_space) for container in self.containers or []] or None,
-            "Node Types": [node_type.dump(default_space) for node_type in self.node_types or []] or None,
+            "Nodes": [node_type.dump(default_space) for node_type in self.nodes or []] or None,
             "Last": last,
             "Reference": reference,
         }
