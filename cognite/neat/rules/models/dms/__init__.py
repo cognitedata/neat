@@ -1,8 +1,8 @@
-from ._rules import DMSContainer, DMSMetadata, DMSNodeType, DMSProperty, DMSRules, DMSView
+from ._rules import DMSContainer, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
 from ._rules_input import (
     DMSInputContainer,
     DMSInputMetadata,
-    DMSInputNodeType,
+    DMSInputNode,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
@@ -16,12 +16,12 @@ __all__ = [
     "DMSView",
     "DMSProperty",
     "DMSContainer",
-    "DMSNodeType",
+    "DMSNode",
     "PipelineSchema",
     "DMSInputRules",
     "DMSInputMetadata",
     "DMSInputView",
     "DMSInputProperty",
     "DMSInputContainer",
-    "DMSInputNodeType",
+    "DMSInputNode",
 ]

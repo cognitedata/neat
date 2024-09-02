@@ -38,7 +38,7 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
-    DMSInputNodeType,
+    DMSInputNode,
     DMSInputProperty,
     DMSInputView,
 )
@@ -48,7 +48,7 @@ from cognite.neat.rules.models.entities import (
     DMSNodeEntity,
     DMSUnknownEntity,
     EdgeEntity,
-    ReverseEntity,
+    ReverseConnectionEntity,
     ViewEntity,
 )
 
@@ -276,7 +276,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 DMSInputView.from_view(view, in_model=view_id in data_model_view_ids)
                 for view_id, view in schema.views.items()
             ],
-            node_types=[DMSInputNodeType.from_node_type(node_type) for node_type in schema.node_types.values()],
+            nodes=[DMSInputNode.from_node_type(node_type) for node_type in schema.node_types.values()],
         )
 
     @classmethod
@@ -362,20 +362,20 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
     def _get_connection_type(
         self, prop_id: str, prop: ViewPropertyApply, view_id: dm.ViewId
-    ) -> Literal["direct"] | ReverseEntity | EdgeEntity | None:
+    ) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
         if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "outwards":
             properties = ViewEntity.from_id(prop.edge_source) if prop.edge_source is not None else None
             return EdgeEntity(properties=properties, type=DMSNodeEntity.from_reference(prop.type), direction="outwards")
         elif isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "inwards":
             if reverse_prop := self._find_reverse_edge(prop_id, prop, view_id):
-                return ReverseEntity(property=reverse_prop)
+                return ReverseConnectionEntity(property=reverse_prop)
             else:
                 properties = ViewEntity.from_id(prop.source) if prop.edge_source is not None else None
                 return EdgeEntity(
                     properties=properties, type=DMSNodeEntity.from_reference(prop.type), direction="inwards"
                 )
         elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):
-            return ReverseEntity(property=prop.through.property)
+            return ReverseConnectionEntity(property=prop.through.property)
         elif isinstance(prop, dm.MappedPropertyApply) and isinstance(
             self._container_prop_unsafe(prop).type, dm.DirectRelation
         ):

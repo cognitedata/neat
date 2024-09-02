@@ -1408,7 +1408,7 @@ class TestDMSRules:
             "metadata": {"created", "updated"},
             "properties": {"data": {"__all__": {"reference"}}},
             # The Exporter adds node types for each view as this is an Enterprise model.
-            "node_types": "__all__",
+            "nodes": "__all__",
         }
         assert recreated_rules.dump(exclude=exclude) == alice_rules.dump(exclude=exclude)
 

@@ -42,7 +42,7 @@ from cognite.neat.rules.models.entities import (
     NodeTypeFilter,
     RawFilter,
     ReferenceEntity,
-    ReverseEntity,
+    ReverseConnectionEntity,
     URLEntity,
     ViewEntity,
     ViewEntityList,
@@ -149,7 +149,7 @@ class DMSProperty(SheetEntity):
     view_property: str = Field(alias="View Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    connection: Literal["direct"] | ReverseEntity | EdgeEntity | None = Field(None, alias="Connection")
+    connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = Field(None, alias="Connection")
     value_type: DataType | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     immutable: bool | None = Field(default=None, alias="Immutable")
@@ -179,7 +179,7 @@ class DMSProperty(SheetEntity):
             raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
         elif isinstance(connection, EdgeEntity) and not isinstance(value, ViewEntity):
             raise ValueError(f"Edge connection must have a value type that points to a view, got {value}")
-        elif isinstance(connection, ReverseEntity) and not isinstance(value, ViewEntity):
+        elif isinstance(connection, ReverseConnectionEntity) and not isinstance(value, ViewEntity):
             raise ValueError(f"Reverse connection must have a value type that points to a view, got {value}")
         return value
 
@@ -249,13 +249,19 @@ class DMSView(SheetEntity):
         )
 
 
-class DMSNodeType(SheetEntity):
-    node_type: DMSNodeEntity = Field(alias="Node Type")
+class DMSNode(SheetEntity):
+    node: DMSNodeEntity = Field(alias="Node")
+    usage: Literal["type", "collection"] = Field(alias="Usage")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
 
     def as_node(self) -> dm.NodeApply:
-        return dm.NodeApply(space=self.node_type.space, external_id=self.node_type.external_id)
+        if self.usage == "type":
+            return dm.NodeApply(space=self.node.space, external_id=self.node.external_id)
+        elif self.usage == "collection":
+            raise NotImplementedError("Collection nodes are not supported yet")
+        else:
+            raise ValueError(f"Unknown usage {self.usage}")
 
 
 class DMSRules(BaseRules):
@@ -263,7 +269,7 @@ class DMSRules(BaseRules):
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     views: SheetList[DMSView] = Field(alias="Views")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
-    node_types: SheetList[DMSNodeType] | None = Field(None, alias="Node Types")
+    nodes: SheetList[DMSNode] | None = Field(None, alias="Nodes")
     last: "DMSRules | None" = Field(None, alias="Last", description="The previous version of the data model")
     reference: "DMSRules | None" = Field(None, alias="Reference")
 
