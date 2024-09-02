@@ -1,7 +1,7 @@
 from typing import Any, ClassVar, cast
 
 from cognite.neat.rules.models import DMSRules
-from cognite.neat.rules.models.dms import DMSContainer, DMSNode, DMSProperty, DMSView
+from cognite.neat.rules.models.dms import DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView
 from cognite.neat.rules.models.entities import ReferenceEntity, ViewEntity
 
 
@@ -23,6 +23,7 @@ class _DMSRulesSerializer:
         self.view_name = "views"
         self.container_name = "containers"
         self.metadata_name = "metadata"
+        self.enum_name = "enum"
         self.nodes_name = "nodes"
         self.prop_view = "view"
         self.prop_container = "container"
@@ -34,6 +35,7 @@ class _DMSRulesSerializer:
         self.container_container = "container"
         self.container_constraint = "constraint"
         self.nodes_node = "node"
+        self.enum_collection = "collection"
         self.reference = "Reference" if by_alias else "reference"
 
         if by_alias:
@@ -64,6 +66,8 @@ class _DMSRulesSerializer:
             self.container_name = DMSRules.model_fields[self.container_name].alias or self.container_name
             self.metadata_name = DMSRules.model_fields[self.metadata_name].alias or self.metadata_name
             self.nodes_name = DMSRules.model_fields[self.nodes_name].alias or self.nodes_name
+            self.enum_name = DMSRules.model_fields[self.enum_name].alias or self.enum_name
+            self.enum_collection = DMSEnum.model_fields[self.enum_collection].alias or self.enum_collection
 
     def clean(self, dumped: dict[str, Any], as_reference: bool) -> dict[str, Any]:
         # Sorting to get a deterministic order
@@ -75,6 +79,11 @@ class _DMSRulesSerializer:
             dumped[self.container_name] = sorted(container_data["data"], key=lambda c: c[self.container_container])
         else:
             dumped.pop(self.container_name, None)
+
+        if enum_data := dumped.get(self.enum_name):
+            dumped[self.enum_name] = sorted(enum_data["data"], key=lambda e: e[self.enum_collection])
+        else:
+            dumped.pop(self.enum_name, None)
 
         if node_types_data := dumped.get(self.nodes_name):
             dumped[self.nodes_name] = sorted(node_types_data["data"], key=lambda n: n[self.nodes_node])
