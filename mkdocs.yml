@@ -34,7 +34,8 @@ nav:
           - Overview: terminology/rules.md
           - Model Validation: terminology/rules-validation.md
           - Excel Input: terminology/rules-excel-input.md
-          - DMSRules Details: terminology/dmsrules.md
+          - DMSRules: terminology/dmsrules.md
+          - Units: terminology/units.md
   - Reference - Code API:
       - Overview: reference/overview.md
       - Rules:

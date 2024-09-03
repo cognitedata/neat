@@ -194,7 +194,7 @@ For more information about how these different `Rules` objects are used, see the
     | Name               | Human readable name of the property                                                                                              |                                           | No        |
     | Description        | Short description of the property                                                                                                |                                           | Yes       |
     | Value Type         | Value type that the property can hold. It takes either subset of CDF primitive types (see note below) or a View id (== Class id) | CDF Primitive Types of ViewID/ClassID     | Yes       |
-    | Connection         | Only applies to relationships between classes (== views). It specify how relationship should be implemented in CDF.              | `direct`, `edge`, or `reverse`            | No        |
+    | Connection         | Only applies to connection between classes (== views). It specify how the connection should be implemented in CDF.               | `direct`, `edge(...)`, or `reverse(...)`  | No        |
     | Nullable           | Used to indicate whether the property is required or not. Only applies to primitive type.                                        |                                           | No        |
     | Immutable          | Used to indicate whether the property is can only be set once. Only applies to primitive type.                                   |                                           | No        |
     | Is List            | Used to indicate whether the property holds single or multiple values (list). Only applies to primitive types                    |                                           | No        |
@@ -242,17 +242,39 @@ This sheet is only used for the DMS/CDF Architect, and it is mandatory. The shee
 ## Containers sheet
 This sheet is only used for the DMS/CDF Architect, and it is optional. The sheet should have the following columns:
 
-| Column         | Description                                                                                                        | Predefined Value              | Mandatory |
-|----------------|--------------------------------------------------------------------------------------------------------------------|-------------------------------|-----------|
-| Class (linage) | Class id, originally coming from Information Architect sheet, used for linage. strongly advised to PascalCase usage|                               | Yes       |
-| Container      | Container id, strongly advised to PascalCase usage                                                                 |                               | Yes       |
-| Name           | Human readable name of the container being defined                                                                 |                               | No        |
-| Description    | Short description of the view being defined                                                                        |                               | No        |
-| Constraint     | Constraint to be applied on the container being defined                                                            |                               | No        |
+| Column         | Description                                                                                                         | Predefined Value      | Mandatory |
+|----------------|---------------------------------------------------------------------------------------------------------------------|-----------------------|-----------|
+| Class (linage) | Class id, originally coming from Information Architect sheet, used for linage. strongly advised to PascalCase usage |                       | Yes       |
+| Container      | Container id, strongly advised to PascalCase usage                                                                  |                       | Yes       |
+| Name           | Human readable name of the container being defined                                                                  |                       | No        |
+| Description    | Short description of the node being defined                                                                         |                       | No        |
+| Constraint     | Constraint to be applied on the container being defined                                                             |                       | No        |
+| Used For       | Whether the container is used for nodes, edges or all                                                               | `node`, `edge`, `all` | No        |
 
 
 !!! tip annotate "Usage"
     More details on **DMS Architect** Profile **Containers sheet**  usage can be found [here](../tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md#dms-architect-containers-sheet)!
+
+## Node sheet
+This sheet is only used for the DMS Architect, and it is optional. The sheet should have the following columns:
+
+| Column      | Description                                     | Predefined Value | Mandatory |
+|-------------|-------------------------------------------------|------------------|-----------|
+| Node        | The type of the node                            |                  | Yes       |
+| Usage       | What the usage of the node is in the data model | `type`           | Yes       |
+| Name        | Human readable name of the node being defined   |                  | No        |
+| Description | Short description of the node being defined     |                  | No        |
+
+## Enum sheet
+This sheet is only used for the DMS Architect, and it is optional. The sheet should have the following columns:
+It is used to define the enumeration values for a property.
+
+| Column      | Description                                         | Predefined Value | Mandatory |
+|-------------|-----------------------------------------------------|------------------|-----------|
+| Collection  | The collection this enum value belongs to           |                  | Yes       |
+| Value       | The enum value                                      |                  | Yes       |
+| Name        | Human readable name of the enum value being defined |                  | No        |
+| Description | Short description of the enum value being defined   |                  | No        |
 
 
 ## Prefixes sheet
