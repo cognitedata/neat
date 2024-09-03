@@ -16,7 +16,7 @@ For the most up-to-date list of units, please refer to the [units catalog]({UNIT
 
 QUANTITY_SECTION_TEMPL = """## {quantity}
 
-| externalId  | name       | longName                  | symbol      | source           |
+| externalId  | name       | longName                  | symbol      | source             |
 |-------------|------------|---------------------------|-------------|--------------------|
 {rows}
 
@@ -42,7 +42,7 @@ def generate_units_md() -> None:
                 name=unit.name,
                 longName=unit.long_name,
                 symbol=unit.symbol,
-                qudt=f"[{unit.source}]({unit.source_reference})" if unit.source_reference else ""
+                qudt=f"[{unit.source_reference}]({unit.source_reference})" if unit.source_reference else ""
             ))
         doc.append(QUANTITY_SECTION_TEMPL.format(quantity=quantity, rows="\n".join(rows)))
     DESTINATION_FILE.write_text("\n".join(doc), encoding="utf-8")
