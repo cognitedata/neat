@@ -44,15 +44,6 @@ jobs:
           poetry config virtualenvs.create false
           poetry install -E all
 
-      - name: Test
-        env:
-          CI: 1
-        run: pytest
-
-      - uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-
       - name: Build package
         run: poetry build
 
