@@ -16,7 +16,7 @@ For the most up-to-date list of units, please refer to the [units catalog]({UNIT
 
 QUANTITY_SECTION_TEMPL = """## {quantity}
 
-| externalId  | name       | longName                  | symbol      | qudt.org           |
+| externalId  | name       | longName                  | symbol      | source           |
 |-------------|------------|---------------------------|-------------|--------------------|
 {rows}
 

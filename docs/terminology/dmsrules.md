@@ -9,13 +9,13 @@ views, neat uses `camelCase` for data properties. This makes it easier to distin
 at the `Value Type` column in the `Properties` sheet.
 
 ### Data Property
-A data property is used to specify the data that is stored on the node. Below is an example of a data property:
+A data property is used to specify the data that is stored on the node (also know as node attributes). Below is an example of a data property:
 
 | View        | View Property | Value Type                | Container      | Container Property |
 |-------------|---------------|---------------------------|----------------|--------------------|
 | WindTurbine | capacity      | float64(unit=power:megaw) | GeneratingUnit | capacity           |
 
-This data property specifies that the `WindTurbine` view has a property called `capacity` that is a float64 with the unit
+This data property specifies that the `WindTurbine` view has a property called `capacity` that is a holding vLUW of type float64 with the unit
 `power:megaw`. The data is stored in the `GeneratingUnit` container with the property `capacity`.
 
 To see which value types are supported, see the 
