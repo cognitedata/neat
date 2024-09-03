@@ -514,23 +514,17 @@ class _DMSExporter:
                     "If this error occurs it is a bug in NEAT, please report"
                     f"Debug Info, Invalid valueType reverse connection: {prop.model_dump_json()}"
                 )
-            reverse_prop: DMSProperty | None = None
             edge_source = None
-            if reverse_prop_id is not None:
-                reverse_prop = next(
-                    (
-                        prop
-                        for prop in view_properties_by_id.get(source_view_id, [])
-                        if prop.property_ == reverse_prop_id
-                    ),
-                    None,
-                )
-                if (
-                    reverse_prop
-                    and isinstance(reverse_prop.connection, EdgeEntity)
-                    and reverse_prop.connection.properties is not None
-                ):
-                    edge_source = reverse_prop.connection.properties.as_id()
+            reverse_prop = next(
+                (prop for prop in view_properties_by_id.get(source_view_id, []) if prop.property_ == reverse_prop_id),
+                None,
+            )
+            if (
+                reverse_prop
+                and isinstance(reverse_prop.connection, EdgeEntity)
+                and reverse_prop.connection.properties is not None
+            ):
+                edge_source = reverse_prop.connection.properties.as_id()
 
             if reverse_prop is None:
                 warnings.warn(
@@ -556,9 +550,11 @@ class _DMSExporter:
                     direction="inwards",
                     edge_source=edge_source,
                 )
-            elif reverse_prop_id and reverse_prop and reverse_prop.connection == "direct":
+            elif reverse_prop and reverse_prop.connection == "direct":
                 reverse_direct_cls = (
-                    dm.MultiReverseDirectRelationApply if prop.is_list is True else SingleReverseDirectRelationApply
+                    dm.MultiReverseDirectRelationApply
+                    if prop.is_list in [True, None]
+                    else SingleReverseDirectRelationApply
                 )
                 return reverse_direct_cls(
                     source=source_view_id,
