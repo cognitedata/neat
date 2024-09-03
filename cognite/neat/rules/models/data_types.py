@@ -24,7 +24,7 @@ _DATATYPE_PATTERN = re.compile(r"^(?P<name>[^(:]*)(\((?P<content>.+)\))?$")
 
 class DataType(BaseModel):
     python: ClassVar[type]
-    dms: ClassVar[type[dms.PropertyType]]
+    dms: (ClassVar)[type[dms.PropertyType]]
     graphql: ClassVar[str]
     xsd: ClassVar[str]
     sql: ClassVar[str]
