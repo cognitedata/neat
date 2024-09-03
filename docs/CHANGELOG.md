@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.89.0] - 02-09-24
 ### Changed
 - [BREAKING CHANGE] All conversion of rules object methods, for example, `InformationRules.as_dms_rules()`, have
   been removed. Instead, use the `cognite.neat.rules.transformers` module to get an appropriate transformar
@@ -23,6 +23,9 @@ Changes are grouped as follows:
 
 ### Added
 - Support for edges with properties in DMS rules.
+- Support for explicitly setting node types in DMS Rules.
+- Support for units on `fload64` and `float32` in DMS Rules.
+- Support for enum in DMS Rules.
 
 ## [0.88.4] - 29-08-24
 ### Fixed

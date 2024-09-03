@@ -19,7 +19,7 @@ from cognite.neat.rules.models.entities import (
     load_dms_value_type,
 )
 
-from ._rules import _DEFAULT_VERSION, DMSContainer, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
+from ._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
 
 
 @dataclass
@@ -239,11 +239,24 @@ class DMSInputNode(InputComponent[DMSNode]):
 
 
 @dataclass
+class DMSInputEnum(InputComponent[DMSEnum]):
+    collection: str
+    value: str
+    name: str | None = None
+    description: str | None = None
+
+    @classmethod
+    def _get_verified_cls(cls) -> type[DMSEnum]:
+        return DMSEnum
+
+
+@dataclass
 class DMSInputRules(InputRules[DMSRules]):
     metadata: DMSInputMetadata
     properties: list[DMSInputProperty]
     views: list[DMSInputView]
     containers: list[DMSInputContainer] | None = None
+    enum: list[DMSInputEnum] | None = None
     nodes: list[DMSInputNode] | None = None
     last: "DMSInputRules | None" = None
     reference: "DMSInputRules | None" = None
@@ -273,6 +286,7 @@ class DMSInputRules(InputRules[DMSRules]):
             "Properties": [prop.dump(default_space, default_version) for prop in self.properties],
             "Views": [view.dump(default_space, default_version) for view in self.views],
             "Containers": [container.dump(default_space) for container in self.containers or []] or None,
+            "Enum": [enum.dump() for enum in self.enum or []] or None,
             "Nodes": [node_type.dump(default_space) for node_type in self.nodes or []] or None,
             "Last": last,
             "Reference": reference,

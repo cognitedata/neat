@@ -68,6 +68,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         "Views": "Definition of Views",
         "Containers": "Definition of Containers",
         "Nodes": "Definition of Nodes",
+        "Enum": "Definition of Enum Collections",
     }
     style_options = get_args(Style)
     dump_options = get_args(DumpOptions)

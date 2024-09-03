@@ -63,7 +63,7 @@ class TestDMSImporter:
         }
         assert rules.dump(exclude=exclude) == dms_rules.dump(exclude=exclude)
 
-    def test_import_rules_edge_with_properties_and_properties_with_units(self) -> None:
+    def test_import_rules_properties_with_edge_properties_units_and_enum(self) -> None:
         exporter = DMSImporter(windturbine.SCHEMA, metadata=windturbine.INPUT_RULES.metadata)
 
         result = exporter.to_rules()
