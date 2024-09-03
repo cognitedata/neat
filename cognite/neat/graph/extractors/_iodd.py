@@ -59,7 +59,7 @@ class IODDExtractor(BaseExtractor):
         return triples
 
     @classmethod
-    def _text_elements2edges(self, di_root: Element, id: URIRef) -> list[Triple]:
+    def _text_elements2edges(cls, di_root: Element, id: URIRef) -> list[Triple]:
         """
         Create edges to elements under DeviceId that references a Text node.
         """
