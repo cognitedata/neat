@@ -3,15 +3,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import cast
 
-from rdflib import Graph, Namespace, URIRef
+from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import FileReadError
+from cognite.neat.issues.warnings import PropertyValueTypeUndefined
 from cognite.neat.rules._shared import ReadRules
 from cognite.neat.rules.importers._base import BaseImporter
 from cognite.neat.rules.models._base_rules import MatchType
+from cognite.neat.rules.models.entities._single_value import UnknownEntity
 from cognite.neat.rules.models.information import (
     InformationInputRules,
     InformationMetadata,
@@ -210,17 +212,33 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
                 for property_uri, occurrence, data_type_uri, object_type_uri in self.graph.query(  # type: ignore[misc]
                     query.replace("instance_id", instance)
                 ):  # type: ignore[misc]
+                    # this is to skip rdf:type property
+                    if property_uri == RDF.type:
+                        continue
+
                     property_id = remove_namespace_from_uri(property_uri)
 
                     self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
-                    value_type_uri = data_type_uri if data_type_uri else object_type_uri
 
-                    # this is to skip rdf:type property
-                    if not value_type_uri:
-                        continue
+                    if value_type_uri := (data_type_uri or object_type_uri):
+                        self._add_uri_namespace_to_prefixes(cast(URIRef, value_type_uri), prefixes)
 
-                    self._add_uri_namespace_to_prefixes(cast(URIRef, value_type_uri), prefixes)
-                    value_type_id = remove_namespace_from_uri(value_type_uri)
+                        value_type_id = remove_namespace_from_uri(value_type_uri)
+
+                    # this handles situations when property points to node that is not present in graph
+                    else:
+                        value_type_id = str(UnknownEntity())
+
+                        self.issue_list.append(
+                            PropertyValueTypeUndefined(
+                                resource_type="Property",
+                                identifier=f"{class_id}{property_id}",
+                                property_name=property_id,
+                                default_action="Remove the property from the rules",
+                                recommended_action="Make sure that graph is complete",
+                            )
+                        )
+
                     id_ = f"{class_id}:{property_id}"
 
                     definition = {

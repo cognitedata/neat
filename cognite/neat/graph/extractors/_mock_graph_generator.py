@@ -17,7 +17,6 @@ from cognite.neat.rules.models import DMSRules, InformationRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
 from cognite.neat.rules.models.information import InformationProperty
-from cognite.neat.rules.transformers import DMSToInformation
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseExtractor
@@ -43,6 +42,8 @@ class MockGraphGenerator(BaseExtractor):
         allow_isolated_classes: bool = True,
     ):
         if isinstance(rules, DMSRules):
+            from cognite.neat.rules.transformers import DMSToInformation
+
             self.rules = DMSToInformation().transform(rules).rules
         elif isinstance(rules, InformationRules):
             self.rules = rules

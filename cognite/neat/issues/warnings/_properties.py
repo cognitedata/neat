@@ -42,3 +42,15 @@ class PropertyDefinitionDuplicatedWarning(PropertyWarning[T_Identifier]):
     values: frozenset[str]
     default_action: str
     recommended_action: str | None = None
+
+
+@dataclass(frozen=True)
+class PropertyValueTypeUndefined(PropertyWarning[T_Identifier]):
+    """The {resource_type} with identifier {identifier} has a property {property_name}
+    which has undefined value type . This may result in unexpected behavior when exporting rules.
+    """
+
+    extra = "Recommended action: {recommended_action}"
+
+    default_action: str
+    recommended_action: str | None = None
