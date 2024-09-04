@@ -37,6 +37,25 @@ def get_children(element: Element, child_tag: str, no_children: int = -1) -> lis
                 children.append(child)
     return children
 
+def get_children_from_tag(element: Element,
+                          child_tag: str,
+                          ignore_namespace: bool= False,
+                          no_children: int = -1) -> Element | list[Element]:
+    """Get children of an XML element.
+
+    Args:
+        element: XML element to get children from.
+        child_tag: Tag of the children to get.
+        no_children: Max number of children to get. Defaults to -1 (all).
+
+    Returns:
+        List of XML elements if no_children > 1, otherwise XML element.
+    """
+    if ignore_namespace:
+        children = element.findall(f".//{{*}}{child_tag}")
+    else:
+        children = element.findall(f".//{child_tag}")
+    return children[:no_children] if no_children > 0  else children
 
 def remove_element_tag_namespace(element_tag: str) -> str:
     """Remove namespace prefix from tag of an XML element.

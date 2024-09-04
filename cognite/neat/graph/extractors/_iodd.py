@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from typing import Iterable
 from xml.etree.ElementTree import Element
 
 from rdflib import RDF, Literal, Namespace, URIRef
@@ -9,11 +10,10 @@ from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
 from cognite.neat.utils.rdf_ import as_neat_compliant_uri
 from cognite.neat.utils.text import to_camel
-from cognite.neat.utils.xml_ import iterate_tree, remove_element_tag_namespace
+from cognite.neat.utils.xml_ import iterate_tree, get_children_from_tag
 
 IODD = Namespace("http://www.io-link.com/IODD/2010/10/")
 XSI = Namespace("http://www.w3.org/2001/XMLSchema-instance/")
-
 
 class IODDExtractor(BaseExtractor):
     """
@@ -64,12 +64,15 @@ class IODDExtractor(BaseExtractor):
         Create edges to elements under DeviceId that references a Text node.
         """
         triples: list[Triple] = []
+        # To make it explicit what we want to extract
+        child_elements = ["VendorText", "VendorUrl", "DeviceName", "DeviceFamily"]
 
-        for element in iterate_tree(di_root):
-            if text_id := element.attrib.get("textId"):
-                # Create connection from device to textId node
-                tag = to_camel(remove_element_tag_namespace(element.tag))
-                triples.append((id, IODD[tag], namespace[text_id])) #should be neat compliant?
+        for child_tag in child_elements:
+            if child := get_children_from_tag(di_root, child_tag=child_tag, ignore_namespace=True, no_children=1):
+                if text_id := child[0].attrib.get("textId"):
+                    # Create connection from device to textId node
+                    tag = to_camel(child_tag)
+                    triples.append((id, IODD[tag], namespace[text_id]))
 
         return triples
 
@@ -81,16 +84,17 @@ class IODDExtractor(BaseExtractor):
         """
         triples: list[Triple] = []
 
-        for element in iterate_tree(et_root):
-            if t_id := element.attrib.get("id"):
-                text_id = namespace[t_id]
+        if text_elements := get_children_from_tag(et_root, child_tag="Text", ignore_namespace=True):
+            for element in text_elements:
+                if t_id := element.attrib.get("id"):
+                    text_id = namespace[t_id]
 
-                # Create Text node
-                triples.append((text_id, RDF.type, as_neat_compliant_uri(IODD["Text"])))
+                    # Create Text node
+                    triples.append((text_id, RDF.type, as_neat_compliant_uri(IODD["Text"])))
 
-                # Resolve text value related to the text item
-                if value := element.attrib.get("value"):
-                    triples.append((text_id, IODD.value, Literal(value)))
+                    # Resolve text value related to the text item
+                    if value := element.attrib.get("value"):
+                        triples.append((text_id, IODD.value, Literal(value)))
 
         return triples
 
@@ -135,6 +139,7 @@ class IODDExtractor(BaseExtractor):
         triples.extend(cls._text_elements2edges(di_root, id_, namespace))
         return triples
 
-    def extract(self) -> list[Triple]:
+    def extract(self) -> Iterable[Triple]:
         # Extract triples from IODD device XML
-        return self._element2triples(self.root, self.namespace)
+        for element in iterate_tree(self.root):
+            yield from self._element2triples(self.root, self.namespace)
