@@ -42,6 +42,7 @@ class MockGraphGenerator(BaseExtractor):
         allow_isolated_classes: bool = True,
     ):
         if isinstance(rules, DMSRules):
+            # fixes potential issues with circular dependencies
             from cognite.neat.rules.transformers import DMSToInformation
 
             self.rules = DMSToInformation().transform(rules).rules
@@ -153,21 +154,33 @@ def generate_triples(
     # generate triples for connected classes
     for class_ in generation_order:
         triples += _generate_triples_per_class(
-            class_, class_property_pairs, sym_pairs, instance_ids, namespace, stop_on_exception
+            class_,
+            class_property_pairs,
+            sym_pairs,
+            instance_ids,
+            namespace,
+            stop_on_exception,
         )
 
     # generate triples for isolated classes
     if allow_isolated_classes:
         for class_ in set(class_count.keys()) - set(generation_order):
             triples += _generate_triples_per_class(
-                class_, class_property_pairs, sym_pairs, instance_ids, namespace, stop_on_exception
+                class_,
+                class_property_pairs,
+                sym_pairs,
+                instance_ids,
+                namespace,
+                stop_on_exception,
             )
 
     return triples
 
 
 def _get_generation_order(
-    class_linkage: pd.DataFrame, parent_col: str = "source_class", child_col: str = "target_class"
+    class_linkage: pd.DataFrame,
+    parent_col: str = "source_class",
+    child_col: str = "target_class",
 ) -> dict:
     parent_child_list: list[list[str]] = class_linkage[[parent_col, child_col]].values.tolist()
     # Build a directed graph and a list of all names that have no parent
@@ -245,7 +258,10 @@ def _remove_non_requested_sym_pairs(class_linkage: pd.DataFrame, class_count: di
 
 
 def _generate_mock_data_property_triples(
-    instance_ids: list[URIRef], property_: str, namespace: Namespace, value_type: DataType
+    instance_ids: list[URIRef],
+    property_: str,
+    namespace: Namespace,
+    value_type: DataType,
 ) -> list[tuple[URIRef, URIRef, Literal]]:
     """Generates triples for data properties."""
 
@@ -255,7 +271,13 @@ def _generate_mock_data_property_triples(
         if python_type is int:
             triples.append((id_, URIRef(namespace[property_]), Literal(random.randint(1, 1983))))
         elif python_type is float:
-            triples.append((id_, URIRef(namespace[property_]), Literal(numpy.float32(random.uniform(1, 1983)))))
+            triples.append(
+                (
+                    id_,
+                    URIRef(namespace[property_]),
+                    Literal(numpy.float32(random.uniform(1, 1983))),
+                )
+            )
         # generate string
         else:
             triples.append(
@@ -294,7 +316,12 @@ def _generate_mock_object_property_triples(
 
     if tuple((class_, property_definition.value_type)) in sym_pairs:
         symmetric_class_properties = class_property_pairs[cast(ClassEntity, property_definition.value_type)]
-        candidates = list(filter(lambda instance: instance.value_type == class_, symmetric_class_properties))
+        candidates = list(
+            filter(
+                lambda instance: instance.value_type == class_,
+                symmetric_class_properties,
+            )
+        )
         symmetric_property = candidates[0]
         if len(candidates) > 1:
             warnings.warn(
@@ -311,10 +338,22 @@ def _generate_mock_object_property_triples(
         target = instance_ids[cast(ClassEntity, property_definition.value_type)][
             i % len(instance_ids[cast(ClassEntity, property_definition.value_type)])
         ]
-        triples += [(URIRef(source), URIRef(namespace[property_definition.property_]), URIRef(target))]
+        triples += [
+            (
+                URIRef(source),
+                URIRef(namespace[property_definition.property_]),
+                URIRef(target),
+            )
+        ]
 
         if symmetric_property:
-            triples += [(URIRef(target), URIRef(namespace[symmetric_property.property_]), URIRef(source))]
+            triples += [
+                (
+                    URIRef(target),
+                    URIRef(namespace[symmetric_property.property_]),
+                    URIRef(source),
+                )
+            ]
 
     if symmetric_property:
         class_property_pairs[cast(ClassEntity, property_definition.value_type)].remove(symmetric_property)
