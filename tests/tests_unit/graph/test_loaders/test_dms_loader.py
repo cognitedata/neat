@@ -1,5 +1,3 @@
-import pytest
-
 from cognite.neat.graph.extractors import AssetsExtractor
 from cognite.neat.graph.loaders import DMSLoader
 from cognite.neat.rules.importers import InferenceImporter
@@ -8,7 +6,6 @@ from cognite.neat.store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 
-@pytest.mark.skip(reason="requires update to code base")
 def test_metadata_as_json_filed():
     store = NeatGraphStore.from_memory_store()
     store.write(AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml", unpack_metadata=False))

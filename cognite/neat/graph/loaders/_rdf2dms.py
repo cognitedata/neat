@@ -215,7 +215,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
-                if cls.model_fields[info.field_name].annotation is list:
+                if list.__name__ in _get_field_value_types(cls, info):
                     return [{"space": self.instance_space, "externalId": v} for v in value]
                 elif value:
                     return {"space": self.instance_space, "externalId": value[0]}
