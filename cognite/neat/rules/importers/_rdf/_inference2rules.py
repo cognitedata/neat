@@ -3,15 +3,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import cast
 
-from rdflib import Graph, Namespace, URIRef
+from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import FileReadError
+from cognite.neat.issues.warnings import PropertyValueTypeUndefinedWarning
 from cognite.neat.rules._shared import ReadRules
 from cognite.neat.rules.importers._base import BaseImporter
 from cognite.neat.rules.models._base_rules import MatchType
+from cognite.neat.rules.models.entities._single_value import UnknownEntity
 from cognite.neat.rules.models.information import (
     InformationInputRules,
     InformationMetadata,
@@ -24,16 +26,6 @@ ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            group by ?class order by DESC(?instances)"""
 
 INSTANCES_OF_CLASS_QUERY = """SELECT ?s WHERE { ?s a <class> . }"""
-
-INSTANCE_PROPERTIES_JSON_DEFINITION = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
-                                    WHERE {<instance_id> ?property ?value .
-
-                                           BIND(IF(REGEX(?value, "^\u007b(.*)\u007d$"),
-                                           <http://www.w3.org/2001/XMLSchema#json>,
-                                           datatype(?value)) AS ?dataType)
-
-                                           OPTIONAL {?value rdf:type ?objectType .}}
-                                    GROUP BY ?property ?dataType ?objectType"""
 
 INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
                                     WHERE {<instance_id> ?property ?value .
@@ -65,15 +57,11 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         graph: Graph,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
-        check_for_json_string: bool = False,
     ) -> None:
         self.issue_list = issue_list
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
         self.prefix = prefix
-        self.check_for_json_string = (
-            check_for_json_string if graph.store.__class__.__name__ != "OxigraphStore" else False
-        )
 
     @classmethod
     def from_graph_store(
@@ -81,7 +69,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         store: NeatGraphStore,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
-        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         issue_list = IssueList(title="Inferred from graph store")
 
@@ -90,7 +77,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
             store.graph,
             max_number_of_instance=max_number_of_instance,
             prefix=prefix,
-            check_for_json_string=check_for_json_string,
         )
 
     @classmethod
@@ -99,7 +85,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         filepath: Path,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
-        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         issue_list = IssueList(title=f"'{filepath.name}'")
 
@@ -114,7 +99,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
             graph,
             max_number_of_instance=max_number_of_instance,
             prefix=prefix,
-            check_for_json_string=check_for_json_string,
         )
 
     @classmethod
@@ -123,7 +107,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         filepath: Path,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
-        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
@@ -133,7 +116,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         filepath: Path,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
-        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         raise NotImplementedError("YAML file format is not supported yet.")
 
@@ -143,7 +125,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         filepath: Path,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
-        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
@@ -180,7 +161,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         prefixes: dict[str, Namespace] = get_default_prefixes()
         count_by_value_type_by_property: dict[str, dict[str, int]] = defaultdict(Counter)
 
-        query = INSTANCE_PROPERTIES_JSON_DEFINITION if self.check_for_json_string else INSTANCE_PROPERTIES_DEFINITION
         # Adds default namespace to prefixes
         prefixes[self._default_metadata().prefix] = self._default_metadata().namespace
 
@@ -208,19 +188,35 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
                 + f" LIMIT {self.max_number_of_instance}"
             ):
                 for property_uri, occurrence, data_type_uri, object_type_uri in self.graph.query(  # type: ignore[misc]
-                    query.replace("instance_id", instance)
+                    INSTANCE_PROPERTIES_DEFINITION.replace("instance_id", instance)
                 ):  # type: ignore[misc]
+                    # this is to skip rdf:type property
+                    if property_uri == RDF.type:
+                        continue
+
                     property_id = remove_namespace_from_uri(property_uri)
 
                     self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
-                    value_type_uri = data_type_uri if data_type_uri else object_type_uri
 
-                    # this is to skip rdf:type property
-                    if not value_type_uri:
-                        continue
+                    if value_type_uri := (data_type_uri or object_type_uri):
+                        self._add_uri_namespace_to_prefixes(cast(URIRef, value_type_uri), prefixes)
 
-                    self._add_uri_namespace_to_prefixes(cast(URIRef, value_type_uri), prefixes)
-                    value_type_id = remove_namespace_from_uri(value_type_uri)
+                        value_type_id = remove_namespace_from_uri(value_type_uri)
+
+                    # this handles situations when property points to node that is not present in graph
+                    else:
+                        value_type_id = str(UnknownEntity())
+
+                        self.issue_list.append(
+                            PropertyValueTypeUndefinedWarning(
+                                resource_type="Property",
+                                identifier=f"{class_id}{property_id}",
+                                property_name=property_id,
+                                default_action="Remove the property from the rules",
+                                recommended_action="Make sure that graph is complete",
+                            )
+                        )
+
                     id_ = f"{class_id}:{property_id}"
 
                     definition = {
@@ -265,7 +261,7 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
             if len(count_list) == 1:
                 type_, count = count_list[0]
                 counts_str = f"with value type {base_string.format(value_type=type_, count=count)} in the graph"
-            elif len(count_list) == 1:
+            elif len(count_list) == 2:
                 first = base_string.format(value_type=count_list[0][0], count=count_list[0][1])
                 second = base_string.format(value_type=count_list[1][0], count=count_list[1][1])
                 counts_str = f"with value types {first} and {second} in the graph"

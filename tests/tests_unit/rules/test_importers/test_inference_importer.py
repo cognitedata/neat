@@ -3,9 +3,10 @@ from cognite.neat.graph.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat.rules.importers import InferenceImporter
 from cognite.neat.rules.models.data_types import Json
 from cognite.neat.rules.models.entities import MultiValueTypeInfo
+from cognite.neat.rules.models.entities._single_value import UnknownEntity
 from cognite.neat.rules.transformers import ImporterPipeline
 from cognite.neat.store import NeatGraphStore
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
+from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, DATA_FOLDER
 
 
 def test_rdf_inference():
@@ -15,7 +16,7 @@ def test_rdf_inference():
 
     rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
 
-    assert len(rules.properties) == 312
+    assert len(rules.properties) == 332
     assert len(rules.classes) == 59
 
     # checking multi-value type
@@ -33,6 +34,21 @@ def test_rdf_inference():
     assert len([prop_ for prop_ in rules.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]) == 4
 
 
+def test_rdf_inference_with_none_existing_node():
+    store = NeatGraphStore.from_oxi_store()
+    extractor = RdfFileExtractor(DATA_FOLDER / "low-quality-graph.ttl", mime_type="text/turtle")
+    store.write(extractor)
+
+    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
+
+    assert len(rules.properties) == 14
+    assert len(rules.classes) == 6
+
+    assert {prop.property_: prop.value_type for prop in rules.properties}[
+        "Location.CoordinateSystem"
+    ] == UnknownEntity()
+
+
 def test_json_value_type_inference():
     store = NeatGraphStore.from_memory_store()
 
@@ -40,11 +56,11 @@ def test_json_value_type_inference():
 
     store.write(extractor)
 
-    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store, check_for_json_string=True))
+    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
 
     properties = {prop.property_: prop for prop in rules.properties}
 
-    assert len(rules.properties) == 5
+    assert len(rules.properties) == 9
     assert len(rules.classes) == 1
 
     assert isinstance(properties["metadata"].value_type, Json)

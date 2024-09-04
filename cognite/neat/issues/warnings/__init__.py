@@ -26,6 +26,7 @@ from ._properties import (
     PropertyDefinitionDuplicatedWarning,
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
+    PropertyValueTypeUndefinedWarning,
 )
 from ._resources import (
     ResourceNeatWarning,
@@ -49,6 +50,7 @@ __all__ = [
     "PropertyDefinitionDuplicatedWarning",
     "PropertyTypeNotSupportedWarning",
     "PropertyNotFoundWarning",
+    "PropertyValueTypeUndefinedWarning",
     "ResourceNeatWarning",
     "ResourcesDuplicatedWarning",
     "RegexViolationWarning",

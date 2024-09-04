@@ -45,6 +45,7 @@ ResourceType: TypeAlias = (
         "container property",
         "space",
         "class",
+        "property",
         "asset",
         "relationship",
         "data model",
