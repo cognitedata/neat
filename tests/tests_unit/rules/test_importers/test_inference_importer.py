@@ -3,9 +3,10 @@ from cognite.neat.graph.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat.rules.importers import InferenceImporter
 from cognite.neat.rules.models.data_types import Json
 from cognite.neat.rules.models.entities import MultiValueTypeInfo
+from cognite.neat.rules.models.entities._single_value import UnknownEntity
 from cognite.neat.rules.transformers import ImporterPipeline
 from cognite.neat.store import NeatGraphStore
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
+from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, DATA_FOLDER
 
 
 def test_rdf_inference():
@@ -31,6 +32,21 @@ def test_rdf_inference():
 
     # we should have 4 multi-value property
     assert len([prop_ for prop_ in rules.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]) == 4
+
+
+def test_rdf_inference_low_quality_graph():
+    store = NeatGraphStore.from_oxi_store()
+    extractor = RdfFileExtractor(DATA_FOLDER / "low-quality-graph.ttl", mime_type="text/turtle")
+    store.write(extractor)
+
+    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
+
+    assert len(rules.properties) == 14
+    assert len(rules.classes) == 6
+
+    assert {prop.property_: prop.value_type for prop in rules.properties}[
+        "Location.CoordinateSystem"
+    ] == UnknownEntity()
 
 
 def test_json_value_type_inference():
