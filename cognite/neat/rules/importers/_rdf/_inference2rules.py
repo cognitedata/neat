@@ -9,7 +9,7 @@ from rdflib import Literal as RdfLiteral
 from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import FileReadError
-from cognite.neat.issues.warnings import PropertyValueTypeUndefined
+from cognite.neat.issues.warnings import PropertyValueTypeUndefinedWarning
 from cognite.neat.rules._shared import ReadRules
 from cognite.neat.rules.importers._base import BaseImporter
 from cognite.neat.rules.models._base_rules import MatchType
@@ -208,7 +208,7 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
                         value_type_id = str(UnknownEntity())
 
                         self.issue_list.append(
-                            PropertyValueTypeUndefined(
+                            PropertyValueTypeUndefinedWarning(
                                 resource_type="Property",
                                 identifier=f"{class_id}{property_id}",
                                 property_name=property_id,

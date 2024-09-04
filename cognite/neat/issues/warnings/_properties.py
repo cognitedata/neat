@@ -45,10 +45,10 @@ class PropertyDefinitionDuplicatedWarning(PropertyWarning[T_Identifier]):
 
 
 @dataclass(frozen=True)
-class PropertyValueTypeUndefined(PropertyWarning[T_Identifier]):
+class PropertyValueTypeUndefinedWarning(PropertyWarning[T_Identifier]):
     """The {resource_type} with identifier {identifier} has a property {property_name}
-    which has undefined value type . This may result in unexpected behavior when exporting rules.
-    """
+    which has undefined value type. This may result in unexpected behavior when exporting rules.
+    {default_action}"""
 
     extra = "Recommended action: {recommended_action}"
 

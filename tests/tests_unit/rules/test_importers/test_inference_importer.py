@@ -16,7 +16,7 @@ def test_rdf_inference():
 
     rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
 
-    assert len(rules.properties) == 312
+    assert len(rules.properties) == 332
     assert len(rules.classes) == 59
 
     # checking multi-value type
@@ -56,11 +56,11 @@ def test_json_value_type_inference():
 
     store.write(extractor)
 
-    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store, check_for_json_string=True))
+    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
 
     properties = {prop.property_: prop for prop in rules.properties}
 
-    assert len(rules.properties) == 5
+    assert len(rules.properties) == 9
     assert len(rules.classes) == 1
 
     assert isinstance(properties["metadata"].value_type, Json)
