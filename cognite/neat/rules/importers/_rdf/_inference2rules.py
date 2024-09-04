@@ -283,7 +283,7 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
             if len(count_list) == 1:
                 type_, count = count_list[0]
                 counts_str = f"with value type {base_string.format(value_type=type_, count=count)} in the graph"
-            elif len(count_list) == 1:
+            elif len(count_list) == 2:
                 first = base_string.format(value_type=count_list[0][0], count=count_list[0][1])
                 second = base_string.format(value_type=count_list[1][0], count=count_list[1][1])
                 counts_str = f"with value types {first} and {second} in the graph"
