@@ -27,16 +27,6 @@ ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
 
 INSTANCES_OF_CLASS_QUERY = """SELECT ?s WHERE { ?s a <class> . }"""
 
-INSTANCE_PROPERTIES_JSON_DEFINITION = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
-                                    WHERE {<instance_id> ?property ?value .
-
-                                           BIND(IF(REGEX(?value, "^\u007b(.*)\u007d$"),
-                                           <http://www.w3.org/2001/XMLSchema#json>,
-                                           datatype(?value)) AS ?dataType)
-
-                                           OPTIONAL {?value rdf:type ?objectType .}}
-                                    GROUP BY ?property ?dataType ?objectType"""
-
 INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
                                     WHERE {<instance_id> ?property ?value .
 
@@ -67,15 +57,11 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         graph: Graph,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
-        check_for_json_string: bool = False,
     ) -> None:
         self.issue_list = issue_list
         self.graph = graph
         self.max_number_of_instance = max_number_of_instance
         self.prefix = prefix
-        self.check_for_json_string = (
-            check_for_json_string if graph.store.__class__.__name__ != "OxigraphStore" else False
-        )
 
     @classmethod
     def from_graph_store(
@@ -83,7 +69,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         store: NeatGraphStore,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
-        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         issue_list = IssueList(title="Inferred from graph store")
 
@@ -92,7 +77,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
             store.graph,
             max_number_of_instance=max_number_of_instance,
             prefix=prefix,
-            check_for_json_string=check_for_json_string,
         )
 
     @classmethod
@@ -101,7 +85,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         filepath: Path,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
-        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         issue_list = IssueList(title=f"'{filepath.name}'")
 
@@ -116,7 +99,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
             graph,
             max_number_of_instance=max_number_of_instance,
             prefix=prefix,
-            check_for_json_string=check_for_json_string,
         )
 
     @classmethod
@@ -125,7 +107,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         filepath: Path,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
-        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
@@ -135,7 +116,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         filepath: Path,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
-        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         raise NotImplementedError("YAML file format is not supported yet.")
 
@@ -145,7 +125,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         filepath: Path,
         max_number_of_instance: int = -1,
         prefix: str = "inferred",
-        check_for_json_string: bool = False,
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
@@ -182,7 +161,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         prefixes: dict[str, Namespace] = get_default_prefixes()
         count_by_value_type_by_property: dict[str, dict[str, int]] = defaultdict(Counter)
 
-        query = INSTANCE_PROPERTIES_JSON_DEFINITION if self.check_for_json_string else INSTANCE_PROPERTIES_DEFINITION
         # Adds default namespace to prefixes
         prefixes[self._default_metadata().prefix] = self._default_metadata().namespace
 
@@ -210,7 +188,7 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
                 + f" LIMIT {self.max_number_of_instance}"
             ):
                 for property_uri, occurrence, data_type_uri, object_type_uri in self.graph.query(  # type: ignore[misc]
-                    query.replace("instance_id", instance)
+                    INSTANCE_PROPERTIES_DEFINITION.replace("instance_id", instance)
                 ):  # type: ignore[misc]
                     # this is to skip rdf:type property
                     if property_uri == RDF.type:
