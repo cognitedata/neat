@@ -34,7 +34,7 @@ def test_rdf_inference():
     assert len([prop_ for prop_ in rules.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]) == 4
 
 
-def test_rdf_inference_low_quality_graph():
+def test_rdf_inference_with_none_existing_node():
     store = NeatGraphStore.from_oxi_store()
     extractor = RdfFileExtractor(DATA_FOLDER / "low-quality-graph.ttl", mime_type="text/turtle")
     store.write(extractor)
