@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Iterable
 from typing import cast
 
@@ -9,8 +10,14 @@ from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.constants import DEFAULT_SPACE_URI
 from cognite.neat.graph.models import Triple
+from cognite.neat.issues.errors import ResourceRetrievalError
 
 from ._base import BaseExtractor
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 
 class DMSExtractor(BaseExtractor):
@@ -39,18 +46,42 @@ class DMSExtractor(BaseExtractor):
         self._namespace_by_space: dict[str, Namespace] = {}
 
     @classmethod
-    def from_space(cls, client: CogniteClient, space: str, limit: int | None = None) -> "DMSExtractor":
-        raise NotImplementedError()
-
-    @classmethod
     def from_data_model(
         cls, client: CogniteClient, data_model: DataModelIdentifier, limit: int | None = None
     ) -> "DMSExtractor":
-        raise NotImplementedError()
+        retrieved = client.data_modeling.data_models.retrieve(data_model, inline_views=True)
+        if not retrieved:
+            raise ResourceRetrievalError(dm.DataModelId.load(data_model), "data model", "Data Model is missing in CDF")
+        return cls.from_views(client, retrieved.latest_version().views, limit)
+
+    class _InstanceIterator:
+        def __init__(self, client: CogniteClient, views: Iterable[dm.View]):
+            self.client = client
+            self.views = views
+
+        def __iter__(self) -> Self:
+            return self
+
+        def __next__(self) -> Iterable[Instance]:
+            for view in self.views:
+                # All nodes and edges with properties
+                yield from self.client.data_modeling.instances(chunk_size=None, instance_type="node", sources=[view])
+                yield from self.client.data_modeling.instances(chunk_size=None, instance_type="edge", sources=[view])
+
+                for prop in view.properties.values():
+                    if isinstance(prop, dm.EdgeConnection):
+                        # Get all edges with properties
+                        yield from self.client.data_modeling.instances(
+                            chunk_size=None,
+                            instance_type="edge",
+                            filter=dm.filters.Equals(
+                                ["edge", "type"], {"space": prop.type.space, "externalId": prop.type.external_id}
+                            ),
+                        )
 
     @classmethod
     def from_views(cls, client: CogniteClient, views: Iterable[dm.View], limit: int | None = None) -> "DMSExtractor":
-        raise NotImplementedError()
+        return cls(cls._InstanceIterator(client, views), total=None, limit=limit)
 
     def extract(self) -> Iterable[Triple]:
         for count, item in enumerate(self.items, 1):
