@@ -110,7 +110,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         for view in self.data_model.views:
             view_id = view.as_id()
             tracker.start(repr(view_id))
-            pydantic_cls, edge_by_properties, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
+            pydantic_cls, edge_by_type, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
             yield from issues
             tracker.issue(issues)
             class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
@@ -124,7 +124,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     if stop_on_exception:
                         raise error from e
                     yield error
-                yield from self._create_edges(identifier, properties, edge_by_properties, tracker)
+                yield from self._create_edges(identifier, properties, edge_by_type, tracker)
             tracker.finish(repr(view_id))
 
     def write_to_file(self, filepath: Path) -> None:
@@ -149,16 +149,16 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def _create_validation_classes(
         self, view: dm.View
-    ) -> tuple[type[BaseModel], dict[str, dm.EdgeConnection], NeatIssueList]:
+    ) -> tuple[type[BaseModel], dict[str, tuple[str, dm.EdgeConnection]], NeatIssueList]:
         issues = IssueList()
         field_definitions: dict[str, tuple[type, Any]] = {}
-        edge_by_property: dict[str, dm.EdgeConnection] = {}
+        edge_by_property: dict[str, tuple[str, dm.EdgeConnection]] = {}
         validators: dict[str, classmethod] = {}
         direct_relation_by_property: dict[str, dm.DirectRelation] = {}
         json_fields: list[str] = []
         for prop_name, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
-                edge_by_property[prop_name] = prop
+                edge_by_property[prop.type.external_id] = prop_name, prop
             if isinstance(prop, dm.MappedProperty):
                 if isinstance(prop.type, dm.DirectRelation):
                     direct_relation_by_property[prop_name] = prop.type
@@ -251,13 +251,13 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self,
         identifier: str,
         properties: dict[str, list[str]],
-        edge_by_properties: dict[str, dm.EdgeConnection],
+        edge_by_type: dict[str, tuple[str, dm.EdgeConnection]],
         tracker: Tracker,
     ) -> Iterable[dm.EdgeApply | NeatIssue]:
-        for prop, values in properties.items():
-            if prop not in edge_by_properties:
+        for predicate, values in properties.items():
+            if predicate not in edge_by_type:
                 continue
-            edge = edge_by_properties[prop]
+            prop_id, edge = edge_by_type[predicate]
             if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
                 error = ResourceDuplicatedError(
                     resource_type="edge",
@@ -267,7 +267,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 tracker.issue(error)
                 yield error
             for target in values:
-                external_id = f"{identifier}.{prop}.{target}"
+                external_id = f"{identifier}.{prop_id}.{target}"
                 yield dm.EdgeApply(
                     space=self.instance_space,
                     external_id=(external_id if len(external_id) < 256 else create_sha256_hash(external_id)),

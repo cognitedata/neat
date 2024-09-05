@@ -233,7 +233,7 @@ INSTANCES = [
     ),
     dm.EdgeApply(
         space=INSTANCE_SPACE,
-        external_id="Car2.Car.Manufacturer.Ford",
+        external_id="Car2.make.Ford",
         start_node=dm.DirectRelationReference(INSTANCE_SPACE, "Car2"),
         type=dm.DirectRelationReference(MODEL_SPACE, "Car.Manufacturer"),
         end_node=dm.DirectRelationReference(INSTANCE_SPACE, "Ford"),
