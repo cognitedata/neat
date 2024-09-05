@@ -25,7 +25,7 @@ TRIPLES = tuple(
         (_neat["Blue"], _neat["name"], Literal("blue")),
         (_neat["Car1"], RDF.type, _neat["Car"]),
         (_neat["Car1"], _neat["make"], _neat["Toyota"]),
-        (_neat["Car1"], _neat["year"], Literal("2020")),
+        (_neat["Car1"], _neat["year"], Literal(2020)),
         (_neat["Car1"], _neat["color"], _neat["Blue"]),
         (_neat["Ford"], RDF.type, _neat["Manufacturer"]),
         (_neat["Ford"], _neat["name"], Literal("Ford")),
@@ -33,7 +33,7 @@ TRIPLES = tuple(
         (_neat["Red"], _neat["name"], Literal("red")),
         (_neat["Car2"], RDF.type, _neat["Car"]),
         (_neat["Car2"], _neat["make"], _neat["Ford"]),
-        (_neat["Car2"], _neat["year"], Literal("2018")),
+        (_neat["Car2"], _neat["year"], Literal(2018)),
         (_neat["Car2"], _neat["color"], _neat["Red"]),
     ]
 )
