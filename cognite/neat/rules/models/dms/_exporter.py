@@ -344,7 +344,8 @@ class _DMSExporter:
                     # If not set, nullable is True and immutable is False
                     nullable=prop.nullable if prop.nullable is not None else True,
                     immutable=prop.immutable if prop.immutable is not None else False,
-                    default_value=prop.default,
+                    # Guarding against default value being set for connection properties
+                    default_value=prop.default if not prop.connection else None,
                     name=prop.name,
                     description=prop.description,
                 )
