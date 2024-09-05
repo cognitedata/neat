@@ -240,7 +240,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         return dm.NodeApply(
             space=self.instance_space,
             external_id=identifier,
-            # type=#RDF type
+            type=None,
             sources=[dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump().items()))],
         )
 

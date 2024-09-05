@@ -126,7 +126,8 @@ class Queries:
             # losing the namespace from the predicate!
             if not property_renaming_config and predicate != RDF.type:
                 property_values[remove_namespace_from_uri(predicate, validation="prefix")].append(value)
-
+            elif predicate == RDF.type:
+                property_values[RDF.type].append(value)
             # use-case: calling describe with renaming properties
             # renaming the property to the new name, if the property is defined
             # in the RULES sheet

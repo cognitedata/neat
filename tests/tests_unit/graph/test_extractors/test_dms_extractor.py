@@ -11,7 +11,10 @@ from tests.data import car
 
 class TestDMSExtractor:
     def test_extract_instances(self) -> None:
-        extractor = DMSExtractor(instance_apply_to_read(car.INSTANCES), overwrite_namespace=DEFAULT_NAMESPACE)
+        extractor = DMSExtractor(
+            instance_apply_to_read(car.INSTANCES),
+            overwrite_namespace=DEFAULT_NAMESPACE,
+        )
         expected_triples = set(car.TRIPLES)
 
         triples = set(extractor.extract())

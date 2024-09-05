@@ -7,6 +7,7 @@ from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.data_classes.data_modeling.instances import Instance, PropertyValue
 from rdflib import RDF, Literal, Namespace, URIRef
 
+from cognite.neat.constants import DEFAULT_SPACE_URI
 from cognite.neat.graph.models import Triple
 
 from ._base import BaseExtractor
@@ -28,11 +29,13 @@ class DMSExtractor(BaseExtractor):
         total: int | None = None,
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
+        default_rdf_type: URIRef | None = None,
     ) -> None:
         self.items = items
         self.total = total
         self.limit = limit
         self.overwrite_namespace = overwrite_namespace
+        self.default_rdf_type = default_rdf_type
         self._namespace_by_space: dict[str, Namespace] = {}
 
     @classmethod
@@ -57,12 +60,18 @@ class DMSExtractor(BaseExtractor):
 
     def _extract_instance(self, instance: Instance) -> Iterable[Triple]:
         if isinstance(instance, dm.Edge):
-            yield (
-                self._as_uri_ref(instance.start_node),
-                self._as_uri_ref(instance.type),
-                self._as_uri_ref(instance.end_node),
-            )
-            # Todo: What about properties on edges?
+            if not instance.properties:
+                yield (
+                    self._as_uri_ref(instance.start_node),
+                    self._as_uri_ref(instance.type),
+                    self._as_uri_ref(instance.end_node),
+                )
+                return
+            else:
+                id_ = self._as_uri_ref(instance)
+                yield id_, RDF.type, self._as_uri_ref(instance.type)
+                yield id_, RDF.type, self._as_uri_ref(dm.DirectRelationReference(instance.space, "Edge"))
+
         elif isinstance(instance, dm.Node):
             id_ = self._as_uri_ref(instance)
             if instance.type:
@@ -71,14 +80,14 @@ class DMSExtractor(BaseExtractor):
                 type_ = self._as_uri_ref(dm.DirectRelationReference(instance.space, "Node"))
 
             yield id_, RDF.type, type_
-
-            for view_id, properties in instance.properties.items():
-                namespace = self._get_namespace(view_id.space)
-                for key, value in properties.items():
-                    for object_ in self._get_objects(value):
-                        yield id_, namespace[key], object_
         else:
             raise NotImplementedError(f"Unknown instance type {type(instance)}")
+
+        for view_id, properties in instance.properties.items():
+            namespace = self._get_namespace(view_id.space)
+            for key, value in properties.items():
+                for object_ in self._get_objects(value):
+                    yield id_, namespace[key], object_
 
     def _get_objects(self, value: PropertyValue) -> Iterable[Literal | URIRef]:
         if isinstance(value, str | float | bool | int):
@@ -86,6 +95,7 @@ class DMSExtractor(BaseExtractor):
         elif isinstance(value, dict) and "space" in value and "externalId" in value:
             yield self._as_uri_ref(dm.DirectRelationReference.load(value))
         elif isinstance(value, dict):
+            # This object is a json object.
             yield Literal(str(value))
         elif isinstance(value, list):
             for item in value:
@@ -98,5 +108,5 @@ class DMSExtractor(BaseExtractor):
         if self.overwrite_namespace:
             return self.overwrite_namespace
         if space not in self._namespace_by_space:
-            self._namespace_by_space[space] = Namespace(space)
+            self._namespace_by_space[space] = Namespace(DEFAULT_SPACE_URI.format(space=space))
         return self._namespace_by_space[space]
