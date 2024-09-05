@@ -1,5 +1,5 @@
 import sys
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from typing import cast
 
 from cognite.client import CogniteClient
@@ -15,9 +15,9 @@ from cognite.neat.issues.errors import ResourceRetrievalError
 from ._base import BaseExtractor
 
 if sys.version_info >= (3, 11):
-    from typing import Self
+    pass
 else:
-    from typing_extensions import Self
+    pass
 
 
 class DMSExtractor(BaseExtractor):
@@ -49,20 +49,27 @@ class DMSExtractor(BaseExtractor):
     def from_data_model(
         cls, client: CogniteClient, data_model: DataModelIdentifier, limit: int | None = None
     ) -> "DMSExtractor":
+        """Create an extractor from a data model.
+
+        Args:
+            client: The Cognite client to use.
+            data_model: The data model to extract.
+            limit: The maximum number of instances to extract.
+        """
         retrieved = client.data_modeling.data_models.retrieve(data_model, inline_views=True)
         if not retrieved:
             raise ResourceRetrievalError(dm.DataModelId.load(data_model), "data model", "Data Model is missing in CDF")
         return cls.from_views(client, retrieved.latest_version().views, limit)
 
-    class _InstanceIterator:
+    class _InstanceIterator(Iterator[Instance]):
         def __init__(self, client: CogniteClient, views: Iterable[dm.View]):
             self.client = client
             self.views = views
 
-        def __iter__(self) -> Self:
+        def __iter__(self) -> Iterator[Instance]:
             return self
 
-        def __next__(self) -> Iterable[Instance]:
+        def __next__(self) -> Instance:  # type: ignore[misc]
             for view in self.views:
                 # All nodes and edges with properties
                 yield from self.client.data_modeling.instances(chunk_size=None, instance_type="node", sources=[view])
@@ -81,6 +88,13 @@ class DMSExtractor(BaseExtractor):
 
     @classmethod
     def from_views(cls, client: CogniteClient, views: Iterable[dm.View], limit: int | None = None) -> "DMSExtractor":
+        """Create an extractor from a set of views.
+
+        Args:
+            client: The Cognite client to use.
+            views: The views to extract.
+            limit: The maximum number of instances to extract.
+        """
         return cls(cls._InstanceIterator(client, views), total=None, limit=limit)
 
     def extract(self) -> Iterable[Triple]:
