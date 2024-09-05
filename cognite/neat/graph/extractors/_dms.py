@@ -1,7 +1,9 @@
 from collections.abc import Iterable
 from typing import cast
 
+from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
+from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.data_classes.data_modeling.instances import Instance, PropertyValue
 from rdflib import RDF, Literal, Namespace, URIRef
 
@@ -33,6 +35,20 @@ class DMSExtractor(BaseExtractor):
         self.overwrite_namespace = overwrite_namespace
         self._namespace_by_space: dict[str, Namespace] = {}
 
+    @classmethod
+    def from_space(cls, client: CogniteClient, space: str, limit: int | None = None) -> "DMSExtractor":
+        raise NotImplementedError()
+
+    @classmethod
+    def from_data_model(
+        cls, client: CogniteClient, data_model: DataModelIdentifier, limit: int | None = None
+    ) -> "DMSExtractor":
+        raise NotImplementedError()
+
+    @classmethod
+    def from_views(cls, client: CogniteClient, views: Iterable[dm.View], limit: int | None = None) -> "DMSExtractor":
+        raise NotImplementedError()
+
     def extract(self) -> Iterable[Triple]:
         for count, item in enumerate(self.items, 1):
             if self.limit and count > self.limit:
@@ -46,6 +62,7 @@ class DMSExtractor(BaseExtractor):
                 self._as_uri_ref(instance.type),
                 self._as_uri_ref(instance.end_node),
             )
+            # Todo: What about properties on edges?
         elif isinstance(instance, dm.Node):
             id_ = self._as_uri_ref(instance)
             if instance.type:
