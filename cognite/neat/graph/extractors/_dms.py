@@ -5,7 +5,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.data_classes.data_modeling.instances import Instance, PropertyValue
-from rdflib import RDF, Literal, Namespace, URIRef
+from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import DEFAULT_SPACE_URI
 from cognite.neat.graph.models import Triple
@@ -30,14 +30,11 @@ class DMSExtractor(BaseExtractor):
         total: int | None = None,
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
-        default_rdf_type: URIRef | None = None,
     ) -> None:
         self.items = items
         self.total = total
         self.limit = limit
         self.overwrite_namespace = overwrite_namespace
-        self.default_rdf_type = default_rdf_type
-        self._namespace_by_space: dict[str, Namespace] = {}
 
     @classmethod
     def from_data_model(
@@ -85,7 +82,7 @@ class DMSExtractor(BaseExtractor):
                 # If the edge has properties, we create a node for the edge and connect it to the start and end nodes.
                 id_ = self._as_uri_ref(instance)
                 yield id_, RDF.type, self._as_uri_ref(instance.type)
-                yield id_, RDF.type, self._as_uri_ref(dm.DirectRelationReference(instance.space, "Edge"))
+                yield id_, RDF.type, self._get_namespace(instance.space).Edge
                 yield (
                     id_,
                     self._as_uri_ref(dm.DirectRelationReference(instance.space, "startNode")),
@@ -102,7 +99,7 @@ class DMSExtractor(BaseExtractor):
             if instance.type:
                 type_ = self._as_uri_ref(cast(dm.DirectRelationReference, instance.type))
             else:
-                type_ = self._as_uri_ref(dm.DirectRelationReference(instance.space, "Node"))
+                type_ = self._get_namespace(instance.space).Node
 
             yield id_, RDF.type, type_
         else:
@@ -121,7 +118,7 @@ class DMSExtractor(BaseExtractor):
             yield self._as_uri_ref(dm.DirectRelationReference.load(value))
         elif isinstance(value, dict):
             # This object is a json object.
-            yield Literal(str(value))
+            yield Literal(str(value), datatype=XSD._NS["json"])
         elif isinstance(value, list):
             for item in value:
                 yield from self._get_objects(item)
@@ -132,9 +129,7 @@ class DMSExtractor(BaseExtractor):
     def _get_namespace(self, space: str) -> Namespace:
         if self.overwrite_namespace:
             return self.overwrite_namespace
-        if space not in self._namespace_by_space:
-            self._namespace_by_space[space] = Namespace(DEFAULT_SPACE_URI.format(space=space))
-        return self._namespace_by_space[space]
+        return Namespace(DEFAULT_SPACE_URI.format(space=space))
 
 
 class _InstanceIterator(Iterator[Instance]):
