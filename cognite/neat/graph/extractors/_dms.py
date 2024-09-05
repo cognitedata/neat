@@ -68,9 +68,20 @@ class DMSExtractor(BaseExtractor):
                 )
                 return
             else:
+                # If the edge has properties, we create a node for the edge and connect it to the start and end nodes.
                 id_ = self._as_uri_ref(instance)
                 yield id_, RDF.type, self._as_uri_ref(instance.type)
                 yield id_, RDF.type, self._as_uri_ref(dm.DirectRelationReference(instance.space, "Edge"))
+                yield (
+                    id_,
+                    self._as_uri_ref(dm.DirectRelationReference(instance.space, "startNode")),
+                    self._as_uri_ref(instance.start_node),
+                )
+                yield (
+                    id_,
+                    self._as_uri_ref(dm.DirectRelationReference(instance.space, "endNode")),
+                    self._as_uri_ref(instance.end_node),
+                )
 
         elif isinstance(instance, dm.Node):
             id_ = self._as_uri_ref(instance)

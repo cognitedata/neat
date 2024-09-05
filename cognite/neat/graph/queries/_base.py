@@ -6,6 +6,7 @@ from rdflib import RDF, Graph, URIRef
 from rdflib import Literal as RdfLiteral
 from rdflib.query import ResultRow
 
+from cognite.neat.graph.models import InstanceType
 from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import InformationRules
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
@@ -98,7 +99,7 @@ class Queries:
         self,
         instance_id: URIRef,
         property_renaming_config: dict | None = None,
-    ) -> tuple[str, dict[str, list[str]]] | None:
+    ) -> tuple[str, dict[str | InstanceType, list[str]]] | None:
         """DESCRIBE instance for a given class from the graph store
 
         Args:

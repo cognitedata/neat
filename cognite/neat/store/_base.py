@@ -12,7 +12,7 @@ from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph._shared import MIMETypes
 from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
-from cognite.neat.graph.models import Triple
+from cognite.neat.graph.models import InstanceType, Triple
 from cognite.neat.graph.queries import Queries
 from cognite.neat.graph.transformers import Transformers
 from cognite.neat.rules.analysis import InformationAnalysis
@@ -173,7 +173,7 @@ class NeatGraphStore:
             )
         )
 
-    def read(self, class_: str) -> Iterable[tuple[str, dict[str, list[str]]]]:
+    def read(self, class_: str) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
         """Read instances for given view from the graph store."""
 
         if not self.rules:

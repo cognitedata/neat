@@ -13,8 +13,10 @@ from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
+from rdflib import RDF
 
 from cognite.neat.graph._tracking import LogTracker, Tracker
+from cognite.neat.graph.models import InstanceType
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors import (
     ResourceConvertionError,
@@ -231,16 +233,17 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     def _create_node(
         self,
         identifier: str,
-        properties: dict[str, list[str]],
+        properties: dict[str | InstanceType, list[str]],
         pydantic_cls: type[BaseModel],
         view_id: dm.ViewId,
     ) -> dm.InstanceApply:
+        type_ = properties.pop(RDF.type, [None])[0]
         created = pydantic_cls.model_validate(properties)
 
         return dm.NodeApply(
             space=self.instance_space,
             external_id=identifier,
-            type=None,
+            type=dm.DirectRelationReference(view_id.space, type_) if type_ else None,
             sources=[dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump().items()))],
         )
 
