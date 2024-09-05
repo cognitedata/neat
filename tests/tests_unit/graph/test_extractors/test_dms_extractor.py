@@ -4,17 +4,18 @@ from typing import cast
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.instances import Instance
 
+from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors import DMSExtractor
 from tests.data import car
 
 
 class TestDMSExtractor:
     def test_extract_instances(self) -> None:
-        extractor = DMSExtractor(instance_apply_to_read(car.INSTANCES))
+        extractor = DMSExtractor(instance_apply_to_read(car.INSTANCES), overwrite_namespace=DEFAULT_NAMESPACE)
 
-        triples = list(extractor.extract())
+        triples = set(extractor.extract())
 
-        assert len(triples) == len(car.TRIPLES)
+        assert set(car.TRIPLES) == triples
 
 
 def instance_apply_to_read(instances: Iterable[dm.NodeApply | dm.EdgeApply]) -> Iterable[Instance]:

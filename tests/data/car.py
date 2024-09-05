@@ -208,6 +208,7 @@ INSTANCES = [
                 properties={"year": 2020, "color": {"space": INSTANCE_SPACE, "externalId": "Blue"}},
             )
         ],
+        type=dm.DirectRelationReference(MODEL_SPACE, "Car"),
     ),
     dm.EdgeApply(
         space=INSTANCE_SPACE,
@@ -225,6 +226,7 @@ INSTANCES = [
                 properties={"year": 2018, "color": {"space": INSTANCE_SPACE, "externalId": "Red"}},
             )
         ],
+        type=dm.DirectRelationReference(MODEL_SPACE, "Car"),
     ),
     dm.EdgeApply(
         space=INSTANCE_SPACE,
@@ -237,20 +239,24 @@ INSTANCES = [
         space=INSTANCE_SPACE,
         external_id="Ford",
         sources=[dm.NodeOrEdgeData(source=CAR_MODEL.views[1].as_id(), properties={"name": "Ford"})],
+        type=dm.DirectRelationReference(MODEL_SPACE, "Manufacturer"),
     ),
     dm.NodeApply(
         space=INSTANCE_SPACE,
         external_id="Toyota",
         sources=[dm.NodeOrEdgeData(source=CAR_MODEL.views[1].as_id(), properties={"name": "Toyota"})],
+        type=dm.DirectRelationReference(MODEL_SPACE, "Manufacturer"),
     ),
     dm.NodeApply(
         space=INSTANCE_SPACE,
         external_id="Blue",
         sources=[dm.NodeOrEdgeData(source=CAR_MODEL.views[2].as_id(), properties={"name": "blue"})],
+        type=dm.DirectRelationReference(MODEL_SPACE, "Color"),
     ),
     dm.NodeApply(
         space=INSTANCE_SPACE,
         external_id="Red",
         sources=[dm.NodeOrEdgeData(source=CAR_MODEL.views[2].as_id(), properties={"name": "red"})],
+        type=dm.DirectRelationReference(MODEL_SPACE, "Color"),
     ),
 ]

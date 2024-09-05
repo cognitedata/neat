@@ -11,12 +11,26 @@ from ._base import BaseExtractor
 
 
 class DMSExtractor(BaseExtractor):
-    """Extract data from Cognite Data Fusion DMS instances into Neat."""
+    """Extract data from Cognite Data Fusion DMS instances into Neat.
 
-    def __init__(self, items: Iterable[Instance], total: int | None = None, limit: int | None = None) -> None:
+    Args:
+        items: The items to extract.
+        total: The total number of items to extract. If provided, this will be used to estimate the progress.
+        limit: The maximum number of items to extract.
+        overwrite_namespace: If provided, this will overwrite the space of the extracted items.
+    """
+
+    def __init__(
+        self,
+        items: Iterable[Instance],
+        total: int | None = None,
+        limit: int | None = None,
+        overwrite_namespace: Namespace | None = None,
+    ) -> None:
         self.items = items
         self.total = total
         self.limit = limit
+        self.overwrite_namespace = overwrite_namespace
         self._namespace_by_space: dict[str, Namespace] = {}
 
     def extract(self) -> Iterable[Triple]:
@@ -61,6 +75,8 @@ class DMSExtractor(BaseExtractor):
         return self._get_namespace(instance.space)[instance.external_id]
 
     def _get_namespace(self, space: str) -> Namespace:
+        if self.overwrite_namespace:
+            return self.overwrite_namespace
         if space not in self._namespace_by_space:
             self._namespace_by_space[space] = Namespace(space)
         return self._namespace_by_space[space]
