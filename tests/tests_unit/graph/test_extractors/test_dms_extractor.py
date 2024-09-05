@@ -12,10 +12,14 @@ from tests.data import car
 class TestDMSExtractor:
     def test_extract_instances(self) -> None:
         extractor = DMSExtractor(instance_apply_to_read(car.INSTANCES), overwrite_namespace=DEFAULT_NAMESPACE)
+        expected_triples = set(car.TRIPLES)
 
         triples = set(extractor.extract())
 
-        assert set(car.TRIPLES) == triples
+        missing_triples = expected_triples - triples
+        assert not missing_triples, f"Missing triples: {missing_triples}"
+        extra_triples = triples - expected_triples
+        assert not extra_triples, f"Extra triples: {extra_triples}"
 
 
 def instance_apply_to_read(instances: Iterable[dm.NodeApply | dm.EdgeApply]) -> Iterable[Instance]:

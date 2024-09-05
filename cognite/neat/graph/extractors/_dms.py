@@ -40,25 +40,28 @@ class DMSExtractor(BaseExtractor):
             yield from self._extract_instance(item)
 
     def _extract_instance(self, instance: Instance) -> Iterable[Triple]:
-        id_ = self._as_uri_ref(instance)
-        if isinstance(instance, dm.Edge) or (isinstance(instance, dm.Node) and instance.type):
-            type_ = self._as_uri_ref(cast(dm.DirectRelationReference, instance.type))
+        if isinstance(instance, dm.Edge):
+            yield (
+                self._as_uri_ref(instance.start_node),
+                self._as_uri_ref(instance.type),
+                self._as_uri_ref(instance.end_node),
+            )
         elif isinstance(instance, dm.Node):
-            type_ = self._as_uri_ref(dm.DirectRelationReference(instance.space, "Node"))
+            id_ = self._as_uri_ref(instance)
+            if instance.type:
+                type_ = self._as_uri_ref(cast(dm.DirectRelationReference, instance.type))
+            else:
+                type_ = self._as_uri_ref(dm.DirectRelationReference(instance.space, "Node"))
+
+            yield id_, RDF.type, type_
+
+            for view_id, properties in instance.properties.items():
+                namespace = self._get_namespace(view_id.space)
+                for key, value in properties.items():
+                    for object_ in self._get_objects(value):
+                        yield id_, namespace[key], object_
         else:
             raise NotImplementedError(f"Unknown instance type {type(instance)}")
-
-        yield id_, RDF.type, type_
-
-        for view_id, properties in instance.properties.items():
-            namespace = self._get_namespace(view_id.space)
-            for key, value in properties.items():
-                for object_ in self._get_objects(value):
-                    yield id_, namespace[key], object_
-
-        if isinstance(instance, dm.Edge):
-            yield id_, self._get_namespace("Edge").startNode, self._as_uri_ref(instance.start_node)
-            yield id_, self._get_namespace("Edge").endNode, self._as_uri_ref(instance.end_node)
 
     def _get_objects(self, value: PropertyValue) -> Iterable[Literal | URIRef]:
         if isinstance(value, str | float | bool | int):
