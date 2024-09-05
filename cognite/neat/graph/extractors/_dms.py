@@ -42,6 +42,10 @@ class DMSExtractor(BaseExtractor):
                 for object_ in self._get_objects(value):
                     yield id_, namespace[key], object_
 
+        if isinstance(instance, dm.Edge):
+            yield id_, self._get_namespace("Edge").startNode, self._as_uri_ref(instance.start_node)
+            yield id_, self._get_namespace("Edge").endNode, self._as_uri_ref(instance.end_node)
+
     def _get_objects(self, value: PropertyValue) -> Iterable[Literal | URIRef]:
         if isinstance(value, str | float | bool | int):
             yield Literal(value)
