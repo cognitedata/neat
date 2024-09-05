@@ -55,31 +55,6 @@ class DMSExtractor(BaseExtractor):
             raise ResourceRetrievalError(dm.DataModelId.load(data_model), "data model", "Data Model is missing in CDF")
         return cls.from_views(client, retrieved.latest_version().views, limit)
 
-    class _InstanceIterator(Iterator[Instance]):
-        def __init__(self, client: CogniteClient, views: Iterable[dm.View]):
-            self.client = client
-            self.views = views
-
-        def __iter__(self) -> Iterator[Instance]:
-            return self
-
-        def __next__(self) -> Instance:  # type: ignore[misc]
-            for view in self.views:
-                # All nodes and edges with properties
-                yield from self.client.data_modeling.instances(chunk_size=None, instance_type="node", sources=[view])
-                yield from self.client.data_modeling.instances(chunk_size=None, instance_type="edge", sources=[view])
-
-                for prop in view.properties.values():
-                    if isinstance(prop, dm.EdgeConnection):
-                        # Get all edges with properties
-                        yield from self.client.data_modeling.instances(
-                            chunk_size=None,
-                            instance_type="edge",
-                            filter=dm.filters.Equals(
-                                ["edge", "type"], {"space": prop.type.space, "externalId": prop.type.external_id}
-                            ),
-                        )
-
     @classmethod
     def from_views(cls, client: CogniteClient, views: Iterable[dm.View], limit: int | None = None) -> "DMSExtractor":
         """Create an extractor from a set of views.
@@ -89,7 +64,7 @@ class DMSExtractor(BaseExtractor):
             views: The views to extract.
             limit: The maximum number of instances to extract.
         """
-        return cls(cls._InstanceIterator(client, views), total=None, limit=limit)
+        return cls(_InstanceIterator(client, views), total=None, limit=limit)
 
     def extract(self) -> Iterable[Triple]:
         for count, item in enumerate(self.items, 1):
@@ -160,3 +135,29 @@ class DMSExtractor(BaseExtractor):
         if space not in self._namespace_by_space:
             self._namespace_by_space[space] = Namespace(DEFAULT_SPACE_URI.format(space=space))
         return self._namespace_by_space[space]
+
+
+class _InstanceIterator(Iterator[Instance]):
+    def __init__(self, client: CogniteClient, views: Iterable[dm.View]):
+        self.client = client
+        self.views = views
+
+    def __iter__(self) -> Iterator[Instance]:
+        return self
+
+    def __next__(self) -> Instance:  # type: ignore[misc]
+        for view in self.views:
+            # All nodes and edges with properties
+            yield from self.client.data_modeling.instances(chunk_size=None, instance_type="node", sources=[view])
+            yield from self.client.data_modeling.instances(chunk_size=None, instance_type="edge", sources=[view])
+
+            for prop in view.properties.values():
+                if isinstance(prop, dm.EdgeConnection):
+                    # Get all edges with properties
+                    yield from self.client.data_modeling.instances(
+                        chunk_size=None,
+                        instance_type="edge",
+                        filter=dm.filters.Equals(
+                            ["edge", "type"], {"space": prop.type.space, "externalId": prop.type.external_id}
+                        ),
+                    )
