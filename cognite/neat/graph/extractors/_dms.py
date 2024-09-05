@@ -1,4 +1,3 @@
-import sys
 from collections.abc import Iterable, Iterator
 from typing import cast
 
@@ -13,11 +12,6 @@ from cognite.neat.graph.models import Triple
 from cognite.neat.issues.errors import ResourceRetrievalError
 
 from ._base import BaseExtractor
-
-if sys.version_info >= (3, 11):
-    pass
-else:
-    pass
 
 
 class DMSExtractor(BaseExtractor):
