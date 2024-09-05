@@ -25,6 +25,7 @@ from cognite.neat.rules.models.dms import (
     DMSInputView,
     DMSSchema,
 )
+from cognite.neat.rules.models.entities._single_value import UnknownEntity
 from cognite.neat.rules.transformers import (
     DMSToInformation,
     ImporterPipeline,
@@ -1359,6 +1360,63 @@ def invalid_extended_rules_test_cases() -> Iterable[ParameterSet]:
     )
 
 
+def case_unknown_value_types():
+    yield pytest.param(
+        {
+            "Metadata": {
+                "role": "information architect",
+                "schema": "complete",
+                "creator": "Jon, Emma, David",
+                "namespace": "http://purl.org/cognite/power2consumer",
+                "prefix": "power",
+                "created": datetime.datetime(2024, 2, 9, 0, 0),
+                "updated": datetime.datetime(2024, 2, 9, 0, 0),
+                "version": "0.1.0",
+                "title": "Power to Consumer Data Model",
+                "license": "CC-BY 4.0",
+                "rights": "Free for use",
+            },
+            "Classes": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
+                    "Match": "exact",
+                }
+            ],
+            "Properties": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Property": "name",
+                    "Description": None,
+                    "Value Type": "StrING",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Transformation": None,
+                },
+                {
+                    "Class": "GeneratingUnit",
+                    "Property": "voltage",
+                    "Description": None,
+                    "Value Type": UnknownEntity(),
+                    "Min Count": None,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Transformation": None,
+                },
+            ],
+        },
+        1,
+        id="case_unknown_value_type",
+    )
+
+
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = DMSInputRules.load(alice_spreadsheet).as_rules()
@@ -1374,6 +1432,12 @@ class TestDMSRules:
             f"{prop.class_.versioned_id}.{prop.property_}" for prop in valid_rules.properties
         }
         assert not missing, f"Missing properties: {missing}"
+
+    @pytest.mark.parametrize("raw, no_properties", list(case_unknown_value_types()))
+    def test_case_unknown_value_types(self, raw: dict[str, dict[str, Any]], no_properties: int) -> None:
+        rules = InformationRules.model_validate(raw)
+        dms_rules = InformationToDMS(ignore_undefined_value_types=True).transform(rules).rules
+        assert len(dms_rules.properties) == no_properties
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
     def test_load_valid_rules(self, raw: DMSInputRules, expected_rules: DMSRules) -> None:

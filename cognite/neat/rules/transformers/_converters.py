@@ -62,8 +62,11 @@ class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRul
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
+    def __init__(self, ignore_undefined_value_types: bool = False):
+        self.ignore_undefined_value_types = ignore_undefined_value_types
+
     def _transform(self, rules: InformationRules) -> DMSRules:
-        return _InformationRulesConverter(rules).as_dms_rules()
+        return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types)
 
 
 class InformationToAsset(ConversionTransformer[InformationRules, AssetRules]):
@@ -153,7 +156,7 @@ class _InformationRulesConverter:
             prefixes=self.rules.prefixes,
         )
 
-    def as_dms_rules(self) -> "DMSRules":
+    def as_dms_rules(self, ignore_undefined_value_types: bool = False) -> "DMSRules":
         from cognite.neat.rules.models.dms._rules import (
             DMSContainer,
             DMSProperty,
@@ -169,6 +172,8 @@ class _InformationRulesConverter:
         properties_by_class: dict[ClassEntity, list[DMSProperty]] = defaultdict(list)
         referenced_containers: dict[ContainerEntity, Counter[ClassEntity]] = defaultdict(Counter)
         for prop in self.rules.properties:
+            if ignore_undefined_value_types and isinstance(prop.value_type, UnknownEntity):
+                continue
             dms_property = self._as_dms_property(prop, default_space, default_version)
             properties_by_class[prop.class_].append(dms_property)
             if dms_property.container:
