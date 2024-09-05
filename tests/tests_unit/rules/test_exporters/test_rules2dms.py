@@ -17,14 +17,23 @@ from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
 
 class TestDMSExporter:
     def test_export_dms_schema_has_names_description(self, alice_rules: DMSRules) -> None:
+        rules = alice_rules.model_copy(deep=True)
+
+        # purposely setting default value for connection that should not be
+        # considered when exporting DMS rules to DMS schema
+        rules.properties.data[3].default = "Norway"
+
         exporter = DMSExporter()
-        schema = exporter.export(alice_rules)
+        schema = exporter.export(rules)
 
         first_view = next(iter(schema.views.values()))
         assert first_view.name == "Generating Unit"
         assert first_view.description == "An asset that is creating power"
         assert first_view.properties["activePower"].name == "active power"
         assert first_view.properties["activePower"].description == "Active power of generating unit"
+
+        first_container = next(iter(schema.containers.values()))
+        assert first_container.properties["geoLocation"].default_value is None
 
     def test_export_dms_schema_to_zip(self, alice_rules: DMSRules, tmp_path: Path) -> None:
         exporter = DMSExporter()
