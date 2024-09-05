@@ -243,7 +243,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         return dm.NodeApply(
             space=self.instance_space,
             external_id=identifier,
-            type=dm.DirectRelationReference(view_id.space, type_) if type_ else None,
+            type=dm.DirectRelationReference(view_id.space, type_) if type_ is not None else None,
             sources=[dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump().items()))],
         )
 
