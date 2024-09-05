@@ -2,7 +2,6 @@ from collections.abc import Iterable
 from typing import cast
 
 from cognite.client import data_modeling as dm
-from cognite.client.data_classes.data_modeling import InstanceApply
 from cognite.client.data_classes.data_modeling.instances import Instance
 
 from cognite.neat.graph.extractors import DMSExtractor
@@ -18,7 +17,7 @@ class TestDMSExtractor:
         assert len(triples) == len(car.TRIPLES)
 
 
-def instance_apply_to_read(instances: Iterable[InstanceApply]) -> Iterable[Instance]:
+def instance_apply_to_read(instances: Iterable[dm.NodeApply | dm.EdgeApply]) -> Iterable[Instance]:
     for instance in instances:
         if isinstance(instance, dm.NodeApply):
             yield dm.Node(
