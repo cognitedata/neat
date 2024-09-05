@@ -15,6 +15,14 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.90.0] - 05-09-24
+### Added
+- `DMSExtractor` added to extract instances from CDF into NeatStore.
+- `DMSLoader` now sets the node type for instances.
+
+### Fixed
+- `DMSLoader` now correctly identifies edges based on type.
+
 ## [0.89.0] - 02-09-24
 ### Changed
 - [BREAKING CHANGE] All conversion of rules object methods, for example, `InformationRules.as_dms_rules()`, have

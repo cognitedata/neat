@@ -48,7 +48,6 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         graph: Knowledge graph
         max_number_of_instance: Maximum number of instances to be used in inference
         prefix: Prefix to be used for the inferred model
-        check_for_json_string: Check if values are JSON strings
     """
 
     def __init__(

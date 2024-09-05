@@ -11,6 +11,7 @@ EXAMPLE_RULES = PACKAGE_DIRECTORY / "rules" / "examples"
 EXAMPLE_GRAPHS = PACKAGE_DIRECTORY / "graph" / "examples"
 EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "workflows" / "examples"
 
+DEFAULT_SPACE_URI = "http://purl.org/cognite/{space}#"
 DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/neat#")
 
 
