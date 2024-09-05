@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from typing import cast
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import InstanceApply
@@ -20,8 +21,28 @@ class TestDMSExtractor:
 def instance_apply_to_read(instances: Iterable[InstanceApply]) -> Iterable[Instance]:
     for instance in instances:
         if isinstance(instance, dm.NodeApply):
-            raise ValueError("NodeApply is not supported")
+            yield dm.Node(
+                space=instance.space,
+                external_id=instance.external_id,
+                type=instance.type,
+                last_updated_time=0,
+                created_time=0,
+                version=instance.existing_version,
+                deleted_time=None,
+                properties={cast(dm.ViewId, source.source): source.properties for source in instance.sources or []},
+            )
         elif isinstance(instance, dm.EdgeApply):
-            raise ValueError("EdgeApply is not supported")
+            yield dm.Edge(
+                space=instance.space,
+                external_id=instance.external_id,
+                type=instance.type,
+                start_node=instance.start_node,
+                end_node=instance.end_node,
+                last_updated_time=0,
+                created_time=0,
+                version=instance.existing_version,
+                deleted_time=None,
+                properties={cast(dm.ViewId, source.source): source.properties for source in instance.sources or []},
+            )
         else:
             raise NotImplementedError(f'Unknown instance type "{type(instance)}"')
