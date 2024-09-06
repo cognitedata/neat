@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.90.1] - 06-09-24
+### Fixed
+- Fix issue with step doing file upload leading to blank screen in UI
+- Fix issue with graph store step config, leading to not being able to load triples
+
+
 ## [0.90.0] - 05-09-24
 ### Added
 - `DMSExtractor` added to extract instances from CDF into NeatStore.
@@ -29,11 +35,21 @@ Changes are grouped as follows:
   been removed. Instead, use the `cognite.neat.rules.transformers` module to get an appropriate transformar
   and use the `transform` method to convert the rules object.
 
+### Fixed
+- Circular dependency
+
+### Improved
+- Handling Default for connections in DMS rules
+- Updated InformationToDMS to allow for dropping of properties with unknown value types
+- Handling of properties which point to non-existing nodes when doing data model inference
+- Handling of conversion of Information to DMS rules which contain properties with `Unknown` value type (defaulting to connection =`direct`, with no value type)
+
 ### Added
 - Support for edges with properties in DMS rules.
 - Support for explicitly setting node types in DMS Rules.
 - Support for units on `fload64` and `float32` in DMS Rules.
 - Support for enum in DMS Rules.
+
 
 ## [0.88.4] - 29-08-24
 ### Fixed
