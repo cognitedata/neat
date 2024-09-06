@@ -182,7 +182,7 @@ class NeatGraphStore:
 
         class_entity = ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
 
-        if class_entity not in [definition.class_ for definition in self.rules.classes.data]:
+        if class_entity not in [definition.class_ for definition in self.rules.classes]:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return None
 

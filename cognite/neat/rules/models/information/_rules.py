@@ -18,8 +18,8 @@ from cognite.neat.rules.models._base_rules import (
     MatchType,
     RoleTypes,
     SchemaCompleteness,
-    SheetEntity,
     SheetList,
+    SheetRow,
 )
 from cognite.neat.rules.models._rdfpath import (
     RDFPath,
@@ -115,7 +115,7 @@ class InformationMetadata(BaseMetadata):
         return self.prefix
 
 
-class InformationClass(SheetEntity):
+class InformationClass(SheetRow):
     """
     Class is a category of things that share a common set of attributes and relationships.
 
@@ -136,7 +136,7 @@ class InformationClass(SheetEntity):
     comment: str | None = Field(alias="Comment", default=None)
 
 
-class InformationProperty(SheetEntity):
+class InformationProperty(SheetRow):
     """
     A property is a characteristic of a class. It is a named attribute of a class that describes a range of values
     or a relationship to another class.

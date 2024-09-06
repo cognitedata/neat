@@ -151,7 +151,7 @@ class InformationPostValidation:
     def _class_parent_pairs(self) -> dict[ClassEntity, list[ClassEntity]]:
         class_subclass_pairs: dict[ClassEntity, list[ClassEntity]] = {}
 
-        classes = self.rules.model_copy(deep=True).classes.data
+        classes = self.rules.model_copy(deep=True).classes
 
         # USE CASE: Solution model being extended (user + last + reference = complete)
         if (
@@ -159,8 +159,8 @@ class InformationPostValidation:
             and self.metadata.data_model_type == DataModelType.solution
         ):
             classes += (
-                cast(InformationRules, self.rules.last).model_copy(deep=True).classes.data
-                + cast(InformationRules, self.rules.reference).model_copy(deep=True).classes.data
+                cast(InformationRules, self.rules.last).model_copy(deep=True).classes
+                + cast(InformationRules, self.rules.reference).model_copy(deep=True).classes
             )
 
         # USE CASE: Solution model being created from scratch (user + reference = complete)
@@ -168,14 +168,14 @@ class InformationPostValidation:
             self.metadata.schema_ == SchemaCompleteness.complete
             and self.metadata.data_model_type == DataModelType.solution
         ):
-            classes += cast(InformationRules, self.rules.reference).model_copy(deep=True).classes.data
+            classes += cast(InformationRules, self.rules.reference).model_copy(deep=True).classes
 
         # USE CASE: Enterprise model being extended (user + last = complete)
         elif (
             self.metadata.schema_ == SchemaCompleteness.extended
             and self.metadata.data_model_type == DataModelType.enterprise
         ):
-            classes += cast(InformationRules, self.rules.last).model_copy(deep=True).classes.data
+            classes += cast(InformationRules, self.rules.last).model_copy(deep=True).classes
 
         for class_ in classes:
             class_subclass_pairs[class_.class_] = []

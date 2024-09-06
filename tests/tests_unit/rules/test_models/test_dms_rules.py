@@ -1444,7 +1444,7 @@ class TestDMSRules:
         valid_rules = raw.as_rules()
         assert valid_rules.model_dump() == expected_rules.model_dump()
         # testing case insensitive value types
-        assert isinstance(valid_rules.properties.data[0].value_type, String)
+        assert isinstance(valid_rules.properties[0].value_type, String)
 
     @pytest.mark.parametrize("raw, expected_errors", list(invalid_container_definitions_test_cases()))
     def test_load_inconsistent_container_definitions(

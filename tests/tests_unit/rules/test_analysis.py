@@ -38,13 +38,10 @@ class TestInformationRulesAnalysis:
         assert len(InformationAnalysis(david_rules).symmetrically_connected_classes(consider_inheritance=False)) == 0
 
     def test_subset_rules(self, david_rules: InformationRules) -> None:
-        assert InformationAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes.data[
+        assert InformationAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes[
             0
         ].class_ == ClassEntity.load("power:GeoLocation")
-        assert (
-            len(InformationAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes.data)
-            == 1
-        )
+        assert len(InformationAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes) == 1
 
 
 class TestAssetRulesAnalysis:

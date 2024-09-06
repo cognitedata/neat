@@ -7,8 +7,8 @@ from __future__ import annotations
 import sys
 import types
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator
-from typing import Annotated, Any, ClassVar, Generic, Literal, TypeVar
+from collections.abc import Callable, MutableSequence
+from typing import Annotated, Any, ClassVar, Literal, TypeVar, get_args
 
 import pandas as pd
 from pydantic import (
@@ -16,12 +16,13 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
+    GetCoreSchemaHandler,
     PlainSerializer,
     field_validator,
     model_serializer,
-    model_validator,
 )
 from pydantic.main import IncEx
+from pydantic_core import core_schema
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -89,7 +90,7 @@ class MatchType(StrEnum):
     partial = "partial"
 
 
-class RuleModel(BaseModel):
+class NeatModel(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True,
         str_strip_whitespace=True,
@@ -131,7 +132,8 @@ class RuleModel(BaseModel):
                 if isinstance(annotation, type) and issubclass(annotation, SheetList):
                     # We know that this is a SheetList, so we can safely access the annotation
                     # which is the concrete type of the SheetEntity.
-                    model_fields = annotation.model_fields["data"].annotation.__args__[0].model_fields  # type: ignore[union-attr]
+                    args = get_args(annotation)
+                    model_fields = ards[0].model_fields  # type: ignore[union-attr]
                 elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
                     model_fields = annotation.model_fields
                 else:
@@ -148,7 +150,7 @@ class RuleModel(BaseModel):
         return headers_by_sheet
 
 
-class BaseMetadata(RuleModel):
+class BaseMetadata(NeatModel):
     """
     Metadata model for data model
     """
@@ -183,7 +185,7 @@ class BaseMetadata(RuleModel):
         raise NotImplementedError()
 
 
-class BaseRules(RuleModel, ABC):
+class BaseRules(NeatModel, ABC):
     """
     Rules is a core concept in `neat`. This represents fusion of data model
     definitions and (optionally) the transformation rules used to transform the data/graph
@@ -223,8 +225,7 @@ class BaseRules(RuleModel, ABC):
         )
 
 
-# An sheet entity is either a class or a property.
-class SheetEntity(RuleModel):
+class SheetRow(NeatModel):
     @field_validator("*", mode="before")
     def strip_string(cls, value: Any) -> Any:
         if isinstance(value, str):
@@ -232,36 +233,28 @@ class SheetEntity(RuleModel):
         return value
 
 
-T_Entity = TypeVar("T_Entity", bound=SheetEntity)
+T_SheetRow = TypeVar("T_SheetRow", bound=SheetRow)
 
 
-class SheetList(BaseModel, Generic[T_Entity]):
-    data: list[T_Entity] = Field(default_factory=list)
+class SheetList(list, MutableSequence[T_SheetRow]):
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source: Any, handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
+        instance_schema = core_schema.is_instance_schema(cls)
 
-    @model_validator(mode="before")
-    def from_list_format(cls, values: Any) -> Any:
-        if isinstance(values, list):
-            return {"data": values}
-        return values
+        args = get_args(source)
+        if args:
+            # replace the type and rely on Pydantic to generate the right schema
+            # for `Sequence`
+            sequence_t_schema = handler.generate_schema(MutableSequence[args[0]])
+        else:
+            sequence_t_schema = handler.generate_schema(MutableSequence)
 
-    def __contains__(self, item: str) -> bool:
-        return item in self.data
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def __iter__(self) -> Iterator[T_Entity]:  # type: ignore[override]
-        return iter(self.data)
-
-    def append(self, value: T_Entity) -> None:
-        self.data.append(value)
-
-    def extend(self, values: list[T_Entity]) -> None:
-        self.data.extend(values)
+        non_instance_schema = core_schema.no_info_after_validator_function(SheetList, sequence_t_schema)
+        return core_schema.union_schema([instance_schema, non_instance_schema])
 
     def to_pandas(self, drop_na_columns: bool = True, include: list[str] | None = None) -> pd.DataFrame:
         """Converts ResourceDict to pandas DataFrame."""
-        df = pd.DataFrame([entity.model_dump() for entity in self.data])
+        df = pd.DataFrame([entity.model_dump() for entity in self])
         if drop_na_columns:
             df = df.dropna(axis=1, how="all")
         if include is not None:
@@ -271,11 +264,6 @@ class SheetList(BaseModel, Generic[T_Entity]):
     def _repr_html_(self) -> str:
         """Returns HTML representation of ResourceDict."""
         return self.to_pandas(drop_na_columns=True)._repr_html_()  # type: ignore[operator]
-
-    @classmethod
-    def mandatory_fields(cls, use_alias=False) -> set[str]:
-        """Returns a set of mandatory fields for the model."""
-        return _get_required_fields(cls, use_alias)
 
 
 ExtensionCategoryType = Annotated[

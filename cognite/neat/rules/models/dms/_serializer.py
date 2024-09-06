@@ -72,21 +72,21 @@ class _DMSRulesSerializer:
     def clean(self, dumped: dict[str, Any], as_reference: bool) -> dict[str, Any]:
         # Sorting to get a deterministic order
         dumped[self.prop_name] = sorted(
-            dumped[self.prop_name]["data"], key=lambda p: (p[self.prop_view], p[self.prop_view_property])
+            dumped[self.prop_name], key=lambda p: (p[self.prop_view], p[self.prop_view_property])
         )
-        dumped[self.view_name] = sorted(dumped[self.view_name]["data"], key=lambda v: v[self.view_view])
+        dumped[self.view_name] = sorted(dumped[self.view_name], key=lambda v: v[self.view_view])
         if container_data := dumped.get(self.container_name):
-            dumped[self.container_name] = sorted(container_data["data"], key=lambda c: c[self.container_container])
+            dumped[self.container_name] = sorted(container_data, key=lambda c: c[self.container_container])
         else:
             dumped.pop(self.container_name, None)
 
         if enum_data := dumped.get(self.enum_name):
-            dumped[self.enum_name] = sorted(enum_data["data"], key=lambda e: e[self.enum_collection])
+            dumped[self.enum_name] = sorted(enum_data, key=lambda e: e[self.enum_collection])
         else:
             dumped.pop(self.enum_name, None)
 
         if node_types_data := dumped.get(self.nodes_name):
-            dumped[self.nodes_name] = sorted(node_types_data["data"], key=lambda n: n[self.nodes_node])
+            dumped[self.nodes_name] = sorted(node_types_data, key=lambda n: n[self.nodes_node])
         else:
             dumped.pop(self.nodes_name, None)
 

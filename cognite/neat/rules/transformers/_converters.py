@@ -227,11 +227,9 @@ class _InformationRulesConverter:
 
         return DMSRules(
             metadata=metadata,
-            properties=SheetList[DMSProperty](
-                data=[prop for prop_set in properties_by_class.values() for prop in prop_set]
-            ),
-            views=SheetList[DMSView](data=views),
-            containers=SheetList[DMSContainer](data=containers),
+            properties=SheetList[DMSProperty]([prop for prop_set in properties_by_class.values() for prop in prop_set]),
+            views=SheetList[DMSView](views),
+            containers=SheetList[DMSContainer](containers),
             last=last_dms_rules,
             reference=ref_dms_rules,
         )
@@ -481,8 +479,8 @@ class _DMSRulesConverter:
 
         return InformationRules(
             metadata=metadata,
-            properties=SheetList[InformationProperty](data=properties),
-            classes=SheetList[InformationClass](data=classes),
+            properties=SheetList[InformationProperty](properties),
+            classes=SheetList[InformationClass](classes),
             last=_DMSRulesConverter(self.dms.last).as_information_rules() if self.dms.last else None,
             reference=_DMSRulesConverter(self.dms.reference).as_information_rules() if self.dms.reference else None,
         )
