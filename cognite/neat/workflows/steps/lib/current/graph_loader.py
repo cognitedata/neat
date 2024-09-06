@@ -31,7 +31,7 @@ class GraphToRdfFile(Step):
     ]
 
     def run(  # type: ignore[override, syntax]
-        self, graph: NeatGraph
+        self, store: NeatGraph
     ) -> FlowMessage:  # type: ignore[syntax]
         if self.configs is None or self.data_store_path is None:
             raise WorkflowStepNotInitializedError(type(self).__name__)
@@ -39,7 +39,7 @@ class GraphToRdfFile(Step):
         storage_path = self.data_store_path / Path(self.configs["File path"])
         relative_graph_file_path = str(storage_path).split("/data/")[1]
 
-        graph.graph.graph.serialize(str(storage_path), format="turtle")
+        store.graph.graph.serialize(str(storage_path), format="turtle")
 
         output_text = (
             "<p></p>"
