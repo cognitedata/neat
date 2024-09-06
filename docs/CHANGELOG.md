@@ -15,6 +15,15 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.90.2] - 06-09-24
+### Improved
+- Visualize data model chapter in Knowledge Acquisition tutorial reduce to only export of data model to ontology
+- New video made for the Export Semantic Data Model chapter in Knowledge Acquisition tutorial
+- Workflow `Visualize_Semantic_Data_Model` renamed to `Export_Semantic_Data_Model` and reduce to only export
+
+### Removed
+- `Visualize_Data_Model_Using_Mock_Graph` removed since UI has been reduced to only have workflow builder & executor feature
+
 ## [0.90.1] - 06-09-24
 ### Fixed
 - Fix issue with step doing file upload leading to blank screen in UI

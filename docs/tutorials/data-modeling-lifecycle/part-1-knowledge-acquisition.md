@@ -396,7 +396,7 @@ Nevertheless, this hard work pays off since the enterprise data model can be now
 
 
 
-### Visualize Semantic Data Model
+### Export Semantic Data Model
 Due to additional information that David as an information architect has added to the enterprise data model,
 David can exported Rules as semantic data model which consists of:
 
@@ -408,79 +408,16 @@ This file can be used in any ontology tool, such as [Protégé](https://protege.
 both OWL and SHACL can be used to in a tool such as [SHACL Play!](https://shacl-play.sparna.fr/play/).
 
 For purpose of this demonstration David will actually use `neat` to load generated semantic data model into
-internal RDF store and visualize it using `neat` UI. To do this, David selects `Visualize Semantic Data Model` workflow
+internal RDF store and visualize it using `neat` UI. To do this, David selects `Export Semantic Data Model` workflow
 which unlike the previous is a bit more demanding as it requires configuration of additional steps, specifically:
 
 - `RulesToSemanticDataModel` : which will convert `Rules` into semantic data model and store it as a Turtle file
-- `GraphStoreConfiguration`: which will configure the internal RDF store
-- `GraphFromRdfFile` : which will load the semantic data model (the Turtle file) into the internal RDF store
 
 The process of configuration and execution of these steps is shown in the video below:
 
-<iframe width="840" height="472" src="https://www.youtube.com/embed/_iTQatLBpns?si=CM8mcFsd9NlGZCGi" title="Semantic Data Model Generation and Visualization" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 
-David is using following styling of nodes and edges to make the visualization more readable in neat,
-which he copy/paste under `Node Style Editor` in `Graph Explorer`:
-
-```JSON
-{
-  "Class": {
-    "color": "#FF5733",
-    "size": 5
-  },
-  "NodeShape": {
-    "color": "#33FF57",
-    "size": 5
-  },
-  "ObjectProperty": {
-    "color": "#3357FF",
-    "size": 5
-  },
-  "DatatypeProperty": {
-    "color": "#F3FF33",
-    "size": 5
-  },
-  "Ontology": {
-    "color": "#FF33F6",
-    "size": 5
-  }
-}
-```
-
-### Visualize Data Model through Mock Graph
-To fully comprehend semantic data mode, one needs to understand basic semantic concepts.
-But `neat` offer alternative way of visualizing the semantic data model, which is through
-generation of mock graph based on the data model described in spreadsheets, and optionally
-desired number of instances per class defined in the data model.
-
-David selects `Visualize Data Model Using Mock Graph` which has been configured to create
-the following mock graph, which is part `Generate Mock Graph` step:
-
-```JSON
-{"WindTurbine" : 10,
-"WindFarm" : 1,
-"OffshoreSubstation" : 1,
-"DistributionSubstation" : 1,
-"OnshoreSubstation" : 1,
-"ArrayCable" : 1,
-"ExportCable" : 1,
-"Transmission" : 1,
-"DistributionLine" : 1,
-"Meter" : 1,
-"ElectricCarCharger" : 1}
-```
-
-David uses the following style to color nodes in `Graph Explorer`:
-
-
-```JSON
-{"WindTurbine":{"color":"#FF0000","size":5},"WindFarm":{"color":"#00FF00","size":5},"OffshoreSubstation":{"color":"#0000FF","size":5},"TransmissionSubstation":{"color":"#FFFF00","size":5},"DistributionSubstation":{"color":"#00FFFF","size":5},"OnshoreSubstation":{"color":"#FF00FF","size":5},"ArrayCable":{"color":"#C0C0C0","size":5},"ExportCable":{"color":"#808080","size":5},"Transmission":{"color":"#800000","size":5},"DistributionLine":{"color":"#808000","size":5},"Meter":{"color":"#008080","size":5},"ElectricCarCharger":{"color":"#800080","size":5}}
-```
-
-The whole process of running this workflow is shown in the video below:
-
-<iframe width="840" height="472" src="https://www.youtube.com/embed/D98AaPW_FXI?si=M3aVCj1bhvjXXWCf" title="Visualize data model using mock graph" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<iframe width="840" height="472" src="https://www.youtube.com/embed/rB9Orq46usA?si=9og4HWJDpJEgjrQL" title="Semantic Data Model Generation and Visualization" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 
 ### Summary
@@ -497,8 +434,7 @@ The whole process of running this workflow is shown in the video below:
 **Information Architect usage of `neat`**:
 
 1. Validate the sheet using the `neat` UI.
-2. Visualize the sheet using the `neat` UI.
-3. Export the ontology to an open standard format (e.g., OWL, SHACL, RDF).
+2. Export data model to an open standard format (e.g., OWL, SHACL, RDF).
 
 
 ## DMS Architect: Alice

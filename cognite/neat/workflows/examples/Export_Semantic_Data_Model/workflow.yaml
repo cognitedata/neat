@@ -1,7 +1,7 @@
 configs: []
 description: null
 implementation_module: null
-name: Visualize Semantic Data Model
+name: Export Semantic Data Model
 steps:
 -   complex_configs: {}
     configs: {}
@@ -63,49 +63,4 @@ steps:
     ui_config:
         pos_x: 497
         pos_y: 323
--   complex_configs: {}
-    configs:
-        Disk storage directory: semantic-data-model
-        Graph: source
-        Graph store type: oxigraph
-        GraphDB API root URL: ''
-        Init procedure: reset
-        Query URL: ''
-        Update URL: ''
-    description: null
-    enabled: true
-    id: step_configure_graph_store
-    label: Configure Graph Store
-    max_retries: 0
-    method: GraphStoreConfiguration
-    params: {}
-    retry_delay: 3
-    stype: stdstep
-    system_component_id: null
-    transition_to:
-    - step_load_semantic_data_model
-    trigger: false
-    ui_config:
-        pos_x: 495
-        pos_y: 399
--   complex_configs: {}
-    configs:
-        Add base URI: 'False'
-        File path: staging/semantic-data-model.ttl
-        MIME type: text/turtle
-    description: null
-    enabled: true
-    id: step_load_semantic_data_model
-    label: Load Semantic Data Model
-    max_retries: 0
-    method: GraphFromRdfFile
-    params: {}
-    retry_delay: 3
-    stype: stdstep
-    system_component_id: null
-    transition_to: []
-    trigger: false
-    ui_config:
-        pos_x: 495
-        pos_y: 476
 system_components: []
