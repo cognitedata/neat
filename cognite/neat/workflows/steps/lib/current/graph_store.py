@@ -1,5 +1,7 @@
 from typing import ClassVar
 
+from rdflib import Literal, URIRef
+
 from cognite.neat.store import NeatGraphStore
 from cognite.neat.workflows.model import FlowMessage
 from cognite.neat.workflows.steps.data_contracts import (
@@ -37,6 +39,16 @@ class GraphStoreConfiguration(Step):
 
         if store_type == "oxigraph":
             store = NeatGraph(graph=NeatGraphStore.from_oxi_store(rules=rules_data.information if rules_data else None))
+            store.graph.graph.add(
+                (
+                    URIRef("http://example.org/"),
+                    URIRef("http://example.org/"),
+                    Literal("example"),
+                )
+            )
+            print(50 * "#")
+            print(50 * "#")
+            print(list(store.graph.graph))
         else:
             store = NeatGraph(
                 graph=NeatGraphStore.from_memory_store(rules=rules_data.information if rules_data else None)
