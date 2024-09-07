@@ -8,7 +8,7 @@ import sys
 import types
 from abc import ABC, abstractmethod
 from collections.abc import Callable, MutableSequence, Sequence
-from typing import Annotated, Any, ClassVar, Literal, TypeVar, get_args
+from typing import Annotated, Any, ClassVar, Literal, TypeVar, get_args, get_origin
 
 import pandas as pd
 from pydantic import (
@@ -129,11 +129,10 @@ class NeatModel(BaseModel):
                 annotation = annotation.__args__[0]
 
             try:
-                if isinstance(annotation, type) and issubclass(annotation, SheetList):
+                if isinstance(annotation, types.GenericAlias) and get_origin(annotation) is SheetList:
                     # We know that this is a SheetList, so we can safely access the annotation
                     # which is the concrete type of the SheetEntity.
-                    args = get_args(annotation)
-                    model_fields = args[0].model_fields  # type: ignore[union-attr]
+                    model_fields = get_args(annotation)[0].model_fields  # type: ignore[union-attr]
                 elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
                     model_fields = annotation.model_fields
                 else:
