@@ -106,48 +106,6 @@ class NeatModel(BaseModel):
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
 
-    @classmethod
-    def sheets(cls, by_alias: bool = False) -> list[str]:
-        """Returns a list of sheet names for the model."""
-        return [
-            (field.alias or field_name) if by_alias else field_name
-            for field_name, field in cls.model_fields.items()
-            if field_name != "validators_to_skip"
-        ]
-
-    @classmethod
-    def headers_by_sheet(cls, by_alias: bool = False) -> dict[str, list[str]]:
-        """Returns a list of headers for the model."""
-        headers_by_sheet: dict[str, list[str]] = {}
-        for field_name, field in cls.model_fields.items():
-            if field_name == "validators_to_skip":
-                continue
-            sheet_name = (field.alias or field_name) if by_alias else field_name
-            annotation = field.annotation
-
-            if isinstance(annotation, types.UnionType):
-                annotation = annotation.__args__[0]
-
-            try:
-                if isinstance(annotation, types.GenericAlias) and get_origin(annotation) is SheetList:
-                    # We know that this is a SheetList, so we can safely access the annotation
-                    # which is the concrete type of the SheetEntity.
-                    model_fields = get_args(annotation)[0].model_fields  # type: ignore[union-attr]
-                elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
-                    model_fields = annotation.model_fields
-                else:
-                    model_fields = {}
-            except TypeError:
-                # Python 3.10 raises TypeError: issubclass() arg 1 must be a class
-                # when calling issubclass(annotation, SheetList) with the dict annotation
-                model_fields = {}
-            headers_by_sheet[sheet_name] = [
-                (field.alias or field_name) if by_alias else field_name
-                for field_name, field in model_fields.items()
-                if field_name != "validators_to_skip"
-            ]
-        return headers_by_sheet
-
 
 class BaseMetadata(NeatModel):
     """
@@ -222,6 +180,39 @@ class BaseRules(NeatModel, ABC):
             exclude_unset=exclude_unset,
             exclude_defaults=exclude_defaults,
         )
+
+    @classmethod
+    def headers_by_sheet(cls, by_alias: bool = False) -> dict[str, list[str]]:
+        """Returns a list of headers for the model."""
+        headers_by_sheet: dict[str, list[str]] = {}
+        for field_name, field in cls.model_fields.items():
+            if field_name == "validators_to_skip":
+                continue
+            sheet_name = (field.alias or field_name) if by_alias else field_name
+            annotation = field.annotation
+
+            if isinstance(annotation, types.UnionType):
+                annotation = annotation.__args__[0]
+
+            try:
+                if isinstance(annotation, types.GenericAlias) and get_origin(annotation) is SheetList:
+                    # We know that this is a SheetList, so we can safely access the annotation
+                    # which is the concrete type of the SheetEntity.
+                    model_fields = get_args(annotation)[0].model_fields  # type: ignore[union-attr]
+                elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                    model_fields = annotation.model_fields
+                else:
+                    model_fields = {}
+            except TypeError:
+                # Python 3.10 raises TypeError: issubclass() arg 1 must be a class
+                # when calling issubclass(annotation, SheetList) with the dict annotation
+                model_fields = {}
+            headers_by_sheet[sheet_name] = [
+                (field.alias or field_name) if by_alias else field_name
+                for field_name, field in model_fields.items()
+                if field_name != "validators_to_skip"
+            ]
+        return headers_by_sheet
 
 
 class SheetRow(NeatModel):
