@@ -45,7 +45,7 @@ from cognite.neat.rules.models.entities import (
     ReverseConnectionEntity,
     URLEntity,
     ViewEntity,
-    ViewEntityList,
+    ViewEntityList, DMSEntity, Entity,
 )
 
 from ._schema import DMSSchema
@@ -192,6 +192,13 @@ class DMSProperty(SheetRow):
             return value_type.dump(space=info.context.space, version=info.context.version)
         return str(value_type)
 
+    @staticmethod
+    @field_serializer("view", "connection", "reference", "container", "class_", when_used="always")
+    def remove_default_space(value: str, info: SerializationInfo) -> str:
+        if isinstance(value, DMSEntity) and isinstance(info.context, DMSMetadata):
+            return value.dump(space=info.context.space, version=info.context.version)
+        return str(value)
+
 
 class DMSContainer(SheetRow):
     container: ContainerEntity = Field(alias="Container")
@@ -218,6 +225,14 @@ class DMSContainer(SheetRow):
             properties={},
             used_for=self.used_for,
         )
+
+    @field_serializer("container", "class_", when_used="always")
+    def remove_default_space(self, value: str, info: SerializationInfo) -> str:
+        if isinstance(value, DMSEntity) and isinstance(info.context, DMSMetadata):
+            return value.dump(space=info.context.space, version=info.context.version)
+        elif isinstance(value, Entity) and isinstance(info.context, DMSMetadata):
+            return value.dump(prefix=info.context.space, version=info.context.version)
+        return str(value)
 
 
 class DMSView(SheetRow):
@@ -343,9 +358,7 @@ class DMSRules(BaseRules):
         as_reference: bool = False,
         entities_exclude_defaults: bool = True,
     ) -> dict[str, Any]:
-        from ._serializer import _DMSRulesSerializer
-
-        dumped = self.model_dump(
+        return self.model_dump(
             mode=mode,
             by_alias=by_alias,
             exclude=exclude,
@@ -354,17 +367,6 @@ class DMSRules(BaseRules):
             exclude_defaults=exclude_defaults,
             context=self.metadata if entities_exclude_defaults else None,
         )
-        space, version = self.metadata.space, self.metadata.version
-        serializer = _DMSRulesSerializer(by_alias, space, version)
-        clean = serializer.clean(dumped, as_reference)
-        last = "Last" if by_alias else "last"
-        if last_dump := clean.get(last):
-            clean[last] = serializer.clean(last_dump, False)
-        reference = "Reference" if by_alias else "reference"
-        if self.reference and (ref_dump := clean.get(reference)):
-            space, version = self.reference.metadata.space, self.reference.metadata.version
-            clean[reference] = _DMSRulesSerializer(by_alias, space, version).clean(ref_dump, True)
-        return clean
 
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         from ._exporter import _DMSExporter
