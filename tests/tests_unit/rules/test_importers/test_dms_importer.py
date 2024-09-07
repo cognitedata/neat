@@ -61,7 +61,8 @@ class TestDMSImporter:
             # The Exporter adds node types for each view
             "nodes": {"__all__"},
         }
-        assert rules.dump(exclude=exclude) == dms_rules.dump(exclude=exclude)
+        args = dict(exclude_none=True, exclude_unset=True, exclude_defaults=True, exclude=exclude)
+        assert rules.dump(**args) == dms_rules.dump(**args)
 
     def test_import_rules_properties_with_edge_properties_units_and_enum(self) -> None:
         exporter = DMSImporter(windturbine.SCHEMA, metadata=windturbine.INPUT_RULES.metadata)

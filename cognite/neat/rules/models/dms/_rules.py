@@ -1,12 +1,12 @@
 import math
 import sys
 import warnings
+from collections.abc import Hashable
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from cognite.client import data_modeling as dm
 from pydantic import Field, field_serializer, field_validator, model_validator
-from pydantic.main import IncEx
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat.issues import MultiValueError
@@ -93,8 +93,7 @@ class DMSMetadata(BaseMetadata):
         return value
 
     @field_serializer("schema_", "extension", "data_model_type", when_used="always")
-    @staticmethod
-    def as_string(value: SchemaCompleteness | ExtensionCategory | DataModelType) -> str:
+    def as_string(self, value: SchemaCompleteness | ExtensionCategory | DataModelType) -> str:
         return str(value)
 
     @field_validator("schema_", mode="plain")
@@ -165,6 +164,9 @@ class DMSProperty(SheetRow):
     class_: ClassEntity = Field(alias="Class (linage)")
     property_: PropertyType = Field(alias="Property (linage)")
 
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return self.view, self.view_property
+
     @field_validator("nullable")
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
         if info.data.get("connection") == "direct" and value is False:
@@ -193,12 +195,19 @@ class DMSProperty(SheetRow):
             return value_type.dump(space=info.context.space, version=info.context.version)
         return str(value_type)
 
-    @field_serializer("view", "connection", "reference", "container", "class_", when_used="always")
+    @field_serializer("view", "reference", "container", "class_", when_used="always")
     def remove_default_space(self, value: str, info: SerializationInfo) -> str:
         if isinstance(value, DMSEntity) and isinstance(info.context, DMSMetadata):
             return value.dump(space=info.context.space, version=info.context.version)
         elif isinstance(value, Entity) and isinstance(info.context, DMSMetadata):
             return value.dump(prefix=info.context.space, version=info.context.version)
+        return str(value)
+
+    @field_serializer("connection", when_used="unless-none")
+    def remove_defaults(self, value: Any, info: SerializationInfo) -> str:
+        if isinstance(value, Entity) and isinstance(info.context, DMSMetadata):
+            default_type = f"{info.context.space}{self.view.external_id}.{self.view_property}"
+            return value.dump(space=info.context.space, version=info.context.version, type=default_type)
         return str(value)
 
 
@@ -210,6 +219,9 @@ class DMSContainer(SheetRow):
     constraint: ContainerEntityList | None = Field(None, alias="Constraint")
     used_for: Literal["node", "edge", "all"] | None = Field("all", alias="Used For")
     class_: ClassEntity = Field(alias="Class (linage)")
+
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return (self.container,)
 
     def as_container(self) -> dm.ContainerApply:
         container_id = self.container.as_id()
@@ -258,6 +270,9 @@ class DMSView(SheetRow):
     in_model: bool = Field(True, alias="In Model")
     class_: ClassEntity = Field(alias="Class (linage)")
 
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return (self.view,)
+
     @field_serializer("view", "class_", "reference", when_used="unless-none")
     def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
         if isinstance(value, DMSEntity) and isinstance(info.context, DMSMetadata):
@@ -303,6 +318,9 @@ class DMSNode(SheetRow):
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
 
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return (self.node,)
+
     def as_node(self) -> dm.NodeApply:
         if self.usage == "type":
             return dm.NodeApply(space=self.node.space, external_id=self.node.external_id)
@@ -323,6 +341,9 @@ class DMSEnum(SheetRow):
     value: str = Field(alias="Value")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
+
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return self.collection, self.value
 
     @field_serializer("collection", when_used="unless-none")
     def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
@@ -390,27 +411,6 @@ class DMSRules(BaseRules):
         if issue_list.has_errors:
             raise MultiValueError(issue_list.errors)
         return self
-
-    def dump(
-        self,
-        mode: Literal["python", "json"] = "python",
-        by_alias: bool = False,
-        exclude: IncEx = None,
-        exclude_none: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        as_reference: bool = False,
-        entities_exclude_defaults: bool = True,
-    ) -> dict[str, Any]:
-        return self.model_dump(
-            mode=mode,
-            by_alias=by_alias,
-            exclude=exclude,
-            exclude_none=exclude_none,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            context=self.metadata if entities_exclude_defaults else None,
-        )
 
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         from ._exporter import _DMSExporter

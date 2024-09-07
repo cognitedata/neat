@@ -7,7 +7,7 @@ from __future__ import annotations
 import sys
 import types
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator, MutableSequence, Sequence
+from collections.abc import Callable, Hashable, Iterator, MutableSequence, Sequence
 from typing import Annotated, Any, ClassVar, Literal, SupportsIndex, TypeVar, get_args, get_origin, overload
 
 import pandas as pd
@@ -147,8 +147,8 @@ class BaseRules(NeatModel, ABC):
     Rules is a core concept in `neat`. This represents fusion of data model
     definitions and (optionally) the transformation rules used to transform the data/graph
     from the source representation to the target representation defined by the data model.
-    The rules are defined in a Excel sheet and then parsed into a `Rules` object. The
-    `Rules` object is then used to generate data model and the`RDF` graph made of data
+    The rules are defined in an Excel sheet and then parsed into a `Rules` object. The
+    `Rules` object is then used to generate data model and the `RDF` graph made of data
     model instances.
 
     Args:
@@ -167,11 +167,17 @@ class BaseRules(NeatModel, ABC):
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         as_reference: bool = False,
+        entities_exclude_defaults: bool = True,
     ) -> dict[str, Any]:
         """Dump the model to a dictionary.
 
         This is used in the Exporters to dump rules in the required format.
         """
+        for field_name in self.model_fields.keys():
+            value = getattr(self, field_name)
+            if isinstance(value, SheetList):
+                value.sort(key=lambda x: x._identifier())
+
         return self.model_dump(
             mode=mode,
             by_alias=by_alias,
@@ -179,6 +185,7 @@ class BaseRules(NeatModel, ABC):
             exclude_none=exclude_none,
             exclude_unset=exclude_unset,
             exclude_defaults=exclude_defaults,
+            context=self.metadata if entities_exclude_defaults else None,
         )
 
     @classmethod
@@ -221,6 +228,10 @@ class SheetRow(NeatModel):
         if isinstance(value, str):
             return value.strip()
         return value
+
+    @abstractmethod
+    def _identifier(self) -> tuple[Hashable, ...]:
+        raise NotImplementedError()
 
 
 T_SheetRow = TypeVar("T_SheetRow", bound=SheetRow)

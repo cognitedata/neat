@@ -1,4 +1,5 @@
 import math
+from collections.abc import Hashable
 from dataclasses import dataclass, field
 from typing import Any, ClassVar
 
@@ -39,6 +40,9 @@ class DomainProperty(SheetRow):
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
 
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return self.class_, self.property_
+
     @field_serializer("max_count", when_used="json-unless-none")
     def serialize_max_count(self, value: int | float | None) -> int | float | None | str:
         if isinstance(value, float) and math.isinf(value):
@@ -57,6 +61,9 @@ class DomainClass(SheetRow):
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(None, alias="Description")
     parent: ClassEntityList | None = Field(alias="Parent Class")
+
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return (self.class_,)
 
 
 class DomainRules(BaseRules):

@@ -1463,7 +1463,7 @@ class TestDMSRules:
 
         assert sorted(actual_errors) == sorted(expected_errors)
 
-    def test_alice_to_and_from_DMS(self, alice_rules: DMSRules) -> None:
+    def test_alice_to_and_from_dms(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
         recreated_rules = ImporterPipeline.verify(DMSImporter(schema))
 

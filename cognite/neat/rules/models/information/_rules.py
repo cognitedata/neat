@@ -1,10 +1,10 @@
 import math
 import sys
+from collections.abc import Hashable
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import Field, field_serializer, field_validator, model_validator
-from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
@@ -135,6 +135,9 @@ class InformationClass(SheetRow):
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     comment: str | None = Field(alias="Comment", default=None)
 
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return (self.class_,)
+
 
 class InformationProperty(SheetRow):
     """
@@ -174,6 +177,9 @@ class InformationProperty(SheetRow):
         alias="Inherited",
         description="Flag to indicate if the property is inherited, only use for internal purposes",
     )
+
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return self.class_, self.property_
 
     @field_serializer("max_count", when_used="json-unless-none")
     def serialize_max_count(self, value: int | float | None) -> int | float | None | str:
@@ -306,38 +312,6 @@ class InformationRules(BaseRules):
         if issue_list.has_errors:
             raise issue_list.as_exception()
         return self
-
-    def dump(
-        self,
-        mode: Literal["python", "json"] = "python",
-        by_alias: bool = False,
-        exclude: IncEx = None,
-        exclude_none: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        as_reference: bool = False,
-    ) -> dict[str, Any]:
-        from ._serializer import _InformationRulesSerializer
-
-        dumped = self.model_dump(
-            mode=mode,
-            by_alias=by_alias,
-            exclude=exclude,
-            exclude_none=exclude_none,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-        )
-        prefix = self.metadata.prefix
-        serializer = _InformationRulesSerializer(by_alias, prefix)
-        cleaned = serializer.clean(dumped, as_reference)
-        last = "Last" if by_alias else "last"
-        if last_dump := cleaned.get(last):
-            cleaned[last] = serializer.clean(last_dump, False)
-        reference = "Reference" if by_alias else "reference"
-        if self.reference and (ref_dump := cleaned.get(reference)):
-            prefix = self.reference.metadata.prefix
-            cleaned[reference] = _InformationRulesSerializer(by_alias, prefix).clean(ref_dump, True)
-        return cleaned
 
     def as_dms_rules(self) -> "DMSRules":
         from cognite.neat.rules.transformers._converters import _InformationRulesConverter
