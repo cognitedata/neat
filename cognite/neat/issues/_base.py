@@ -190,6 +190,10 @@ class NeatError(NeatIssue, Exception):
         read_info_by_sheet = kwargs.get("read_info_by_sheet")
 
         for error in errors:
+            if error["type"] == "is_instance_of" and error["loc"][1] == "is-instance[SheetList]":
+                # Skip the error for SheetList, as it is not relevant for the user. This is an
+                # internal class used to have helper methods for a lists as .to_pandas()
+                continue
             ctx = error.get("ctx")
             if isinstance(ctx, dict) and isinstance(multi_error := ctx.get("error"), MultiValueError):
                 if read_info_by_sheet:

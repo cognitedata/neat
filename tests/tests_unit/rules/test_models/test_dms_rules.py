@@ -1470,9 +1470,9 @@ class TestDMSRules:
         exclude = {
             # This information is lost in the conversion
             "metadata": {"created", "updated"},
-            "properties": {"data": {"__all__": {"reference"}}},
+            "properties": {"__all__": {"reference"}},
             # The Exporter adds node types for each view as this is an Enterprise model.
-            "nodes": "__all__",
+            "nodes": {"__all__"},
         }
         assert recreated_rules.dump(exclude=exclude) == alice_rules.dump(exclude=exclude)
 
