@@ -62,7 +62,11 @@ class TestDMSImporter:
             "nodes": {"__all__"},
         }
         args = dict(exclude_none=True, exclude_unset=True, exclude_defaults=True, exclude=exclude)
-        assert rules.dump(**args) == dms_rules.dump(**args)
+        dumped = rules.dump(**args)
+        # The exclude above leaves an empty list for nodes, so we set it to None, to match the input.
+        if not dumped.get("nodes"):
+            dumped.pop("nodes", None)
+        assert dumped == dms_rules.dump(**args)
 
     def test_import_rules_properties_with_edge_properties_units_and_enum(self) -> None:
         exporter = DMSImporter(windturbine.SCHEMA, metadata=windturbine.INPUT_RULES.metadata)

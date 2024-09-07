@@ -1474,7 +1474,12 @@ class TestDMSRules:
             # The Exporter adds node types for each view as this is an Enterprise model.
             "nodes": {"__all__"},
         }
-        assert recreated_rules.dump(exclude=exclude) == alice_rules.dump(exclude=exclude)
+        args = {"exclude_none": True, "exclude_unset": True, "exclude_defaults": True, "exclude": exclude}
+        dumped = recreated_rules.dump(**args)
+        # The exclude above leaves an empty list for nodes, so we set it to None, to match the input.
+        if not dumped.get("nodes"):
+            dumped.pop("nodes", None)
+        assert dumped == alice_rules.dump(**args)
 
     @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, input_rules: DMSInputRules, expected_schema: DMSSchema) -> None:
