@@ -269,6 +269,29 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
     prefix: str = Field(alias="space")
     suffix: str = Field(alias="externalId")
 
+    def dump(self, **defaults: Any) -> str:
+        if not isinstance(defaults, dict):
+            return super().dump()
+
+        # We have overwritten the serialization to str, so we need to do it manually
+        model_dump = {
+            (field.alias or field_name): v
+            for field_name, field in self.model_fields.items()
+            if (v := getattr(self, field_name)) is not None and field_name not in {"prefix", "suffix"}
+        }
+        if "version" in model_dump and model_dump["version"] == defaults.get("version"):
+            del model_dump["version"]
+
+        args = ",".join([f"{k}={v}" for k, v in model_dump.items()])
+        if defaults.get("space") == self.prefix:
+            base_id = str(self.suffix)
+        else:
+            base_id = f"{self.prefix}:{self.suffix!s}"
+        if args:
+            return f"{base_id}({args})"
+        else:
+            return base_id
+
     @classmethod
     def load(cls: "type[T_DMSEntity]", data: Any, **defaults) -> "T_DMSEntity | DMSUnknownEntity":  # type: ignore[override]
         if isinstance(data, str) and data == str(Unknown):

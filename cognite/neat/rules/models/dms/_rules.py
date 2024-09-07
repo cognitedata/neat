@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 from cognite.client import data_modeling as dm
 from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic.main import IncEx
-from pydantic_core.core_schema import ValidationInfo
+from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat.issues import MultiValueError
 from cognite.neat.issues.warnings import (
@@ -183,13 +183,14 @@ class DMSProperty(SheetRow):
             raise ValueError(f"Reverse connection must have a value type that points to a view, got {value}")
         return value
 
-    @field_serializer("value_type", when_used="always")
     @staticmethod
-    def as_dms_type(value_type: DataType | EdgeEntity | ViewEntity) -> str:
+    @field_serializer("value_type", when_used="always")
+    def as_dms_type(value_type: DataType | EdgeEntity | ViewEntity, info: SerializationInfo) -> str:
         if isinstance(value_type, DataType):
             return value_type._suffix_extra_args(value_type.dms._type)
-        else:
-            return str(value_type)
+        elif isinstance(value_type, EdgeEntity | ViewEntity) and isinstance(info.context, DMSMetadata):
+            return value_type.dump(space=info.context.space, version=info.context.version)
+        return str(value_type)
 
 
 class DMSContainer(SheetRow):
@@ -340,6 +341,7 @@ class DMSRules(BaseRules):
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         as_reference: bool = False,
+        entities_exclude_defaults: bool = True,
     ) -> dict[str, Any]:
         from ._serializer import _DMSRulesSerializer
 
@@ -350,6 +352,7 @@ class DMSRules(BaseRules):
             exclude_none=exclude_none,
             exclude_unset=exclude_unset,
             exclude_defaults=exclude_defaults,
+            context=self.metadata if entities_exclude_defaults else None,
         )
         space, version = self.metadata.space, self.metadata.version
         serializer = _DMSRulesSerializer(by_alias, space, version)
