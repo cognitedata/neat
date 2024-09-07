@@ -35,9 +35,11 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     ContainerEntityList,
+    DMSEntity,
     DMSNodeEntity,
     DMSUnknownEntity,
     EdgeEntity,
+    Entity,
     HasDataFilter,
     NodeTypeFilter,
     RawFilter,
@@ -45,7 +47,7 @@ from cognite.neat.rules.models.entities import (
     ReverseConnectionEntity,
     URLEntity,
     ViewEntity,
-    ViewEntityList, DMSEntity, Entity,
+    ViewEntityList,
 )
 
 from ._schema import DMSSchema
@@ -183,20 +185,20 @@ class DMSProperty(SheetRow):
             raise ValueError(f"Reverse connection must have a value type that points to a view, got {value}")
         return value
 
-    @staticmethod
     @field_serializer("value_type", when_used="always")
-    def as_dms_type(value_type: DataType | EdgeEntity | ViewEntity, info: SerializationInfo) -> str:
+    def as_dms_type(self, value_type: DataType | EdgeEntity | ViewEntity, info: SerializationInfo) -> str:
         if isinstance(value_type, DataType):
             return value_type._suffix_extra_args(value_type.dms._type)
         elif isinstance(value_type, EdgeEntity | ViewEntity) and isinstance(info.context, DMSMetadata):
             return value_type.dump(space=info.context.space, version=info.context.version)
         return str(value_type)
 
-    @staticmethod
     @field_serializer("view", "connection", "reference", "container", "class_", when_used="always")
-    def remove_default_space(value: str, info: SerializationInfo) -> str:
+    def remove_default_space(self, value: str, info: SerializationInfo) -> str:
         if isinstance(value, DMSEntity) and isinstance(info.context, DMSMetadata):
             return value.dump(space=info.context.space, version=info.context.version)
+        elif isinstance(value, Entity) and isinstance(info.context, DMSMetadata):
+            return value.dump(prefix=info.context.space, version=info.context.version)
         return str(value)
 
 
@@ -226,12 +228,23 @@ class DMSContainer(SheetRow):
             used_for=self.used_for,
         )
 
-    @field_serializer("container", "class_", when_used="always")
-    def remove_default_space(self, value: str, info: SerializationInfo) -> str:
+    @field_serializer("container", "class_", when_used="unless-none")
+    def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
         if isinstance(value, DMSEntity) and isinstance(info.context, DMSMetadata):
             return value.dump(space=info.context.space, version=info.context.version)
         elif isinstance(value, Entity) and isinstance(info.context, DMSMetadata):
             return value.dump(prefix=info.context.space, version=info.context.version)
+        return str(value)
+
+    @field_serializer("constraint", when_used="unless-none")
+    def remove_default_spaces(self, value: Any, info: SerializationInfo) -> str:
+        if isinstance(value, list) and isinstance(info.context, DMSMetadata):
+            return ",".join(
+                constraint.dump(space=info.context.space, version=info.context.version)
+                if isinstance(constraint, DMSEntity)
+                else str(constraint)
+                for constraint in value
+            )
         return str(value)
 
 
@@ -244,6 +257,25 @@ class DMSView(SheetRow):
     filter_: HasDataFilter | NodeTypeFilter | RawFilter | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="In Model")
     class_: ClassEntity = Field(alias="Class (linage)")
+
+    @field_serializer("view", "class_", "reference", when_used="unless-none")
+    def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
+        if isinstance(value, DMSEntity) and isinstance(info.context, DMSMetadata):
+            return value.dump(space=info.context.space, version=info.context.version)
+        elif isinstance(value, Entity) and isinstance(info.context, DMSMetadata):
+            return value.dump(prefix=info.context.space, version=info.context.version)
+        return str(value)
+
+    @field_serializer("implements", when_used="unless-none")
+    def remove_default_spaces(self, value: Any, info: SerializationInfo) -> str:
+        if isinstance(value, list) and isinstance(info.context, DMSMetadata):
+            return ",".join(
+                constraint.dump(space=info.context.space, version=info.context.version)
+                if isinstance(constraint, DMSEntity)
+                else str(constraint)
+                for constraint in value
+            )
+        return str(value)
 
     def as_view(self) -> dm.ViewApply:
         view_id = self.view.as_id()
@@ -279,12 +311,24 @@ class DMSNode(SheetRow):
         else:
             raise ValueError(f"Unknown usage {self.usage}")
 
+    @field_serializer("node", when_used="unless-none")
+    def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
+        if isinstance(value, DMSEntity) and isinstance(info.context, DMSMetadata):
+            return value.dump(space=info.context.space, version=info.context.version)
+        return str(value)
+
 
 class DMSEnum(SheetRow):
     collection: ClassEntity = Field(alias="Collection")
     value: str = Field(alias="Value")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
+
+    @field_serializer("collection", when_used="unless-none")
+    def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
+        if isinstance(value, DMSEntity) and isinstance(info.context, DMSMetadata):
+            return value.dump(space=info.context.space, version=info.context.version)
+        return str(value)
 
 
 class DMSRules(BaseRules):

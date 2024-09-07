@@ -124,7 +124,7 @@ class Entity(BaseModel, extra="ignore"):
         return dict(prefix=prefix, suffix=suffix, **extra_args)
 
     def dump(self, **defaults: Any) -> str:
-        return str(self)
+        return self._as_str(**defaults)
 
     def as_tuple(self) -> tuple[str, ...]:
         # We haver overwritten the serialization to str, so we need to do it manually
@@ -177,6 +177,8 @@ class Entity(BaseModel, extra="ignore"):
             for key, value in defaults.items():
                 if key in model_dump and value == defaults.get(key):
                     del model_dump[key]
+                elif isinstance(value, Entity):
+                    raise ValueError(f"Cannot use entity as default value: {value}")
 
         args = ",".join(f"{k}={v}" for k, v in model_dump.items())
         if self.prefix == Undefined or (isinstance(defaults, dict) and self.prefix == defaults.get("prefix")):
