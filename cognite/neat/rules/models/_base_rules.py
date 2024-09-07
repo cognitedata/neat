@@ -175,8 +175,13 @@ class BaseRules(NeatModel, ABC):
         """
         for field_name in self.model_fields.keys():
             value = getattr(self, field_name)
+            # Ensure deterministic order of properties
             if isinstance(value, SheetList):
                 value.sort(key=lambda x: x._identifier())
+
+        context: dict[str, Any] = {"as_reference": as_reference}
+        if entities_exclude_defaults:
+            context["metadata"] = self.metadata
 
         return self.model_dump(
             mode=mode,
@@ -185,7 +190,7 @@ class BaseRules(NeatModel, ABC):
             exclude_none=exclude_none,
             exclude_unset=exclude_unset,
             exclude_defaults=exclude_defaults,
-            context=self.metadata if entities_exclude_defaults else None,
+            context=context,
         )
 
     @classmethod
