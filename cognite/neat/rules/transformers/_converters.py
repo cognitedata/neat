@@ -138,7 +138,7 @@ class _InformationRulesConverter:
         from cognite.neat.rules.models.asset._rules import AssetClass, AssetMetadata, AssetProperty, AssetRules
 
         classes: SheetList[AssetClass] = SheetList[AssetClass](
-            data=[AssetClass(**class_.model_dump()) for class_ in self.rules.classes]
+            [AssetClass(**class_.model_dump()) for class_ in self.rules.classes]
         )
         properties: SheetList[AssetProperty] = SheetList[AssetProperty]()
         for prop_ in self.rules.properties:

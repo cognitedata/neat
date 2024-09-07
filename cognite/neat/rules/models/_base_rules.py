@@ -133,7 +133,7 @@ class NeatModel(BaseModel):
                     # We know that this is a SheetList, so we can safely access the annotation
                     # which is the concrete type of the SheetEntity.
                     args = get_args(annotation)
-                    model_fields = ards[0].model_fields  # type: ignore[union-attr]
+                    model_fields = args[0].model_fields  # type: ignore[union-attr]
                 elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
                     model_fields = annotation.model_fields
                 else:
@@ -244,8 +244,8 @@ class SheetList(list, MutableSequence[T_SheetRow]):
         args = get_args(source)
         if args:
             # replace the type and rely on Pydantic to generate the right schema
-            # for `Sequence`
-            sequence_t_schema = handler.generate_schema(MutableSequence[args[0]])
+            # for `T_SheetRow`
+            sequence_t_schema = handler.generate_schema(MutableSequence[args[0]])  # type: ignore[valid-type]
         else:
             sequence_t_schema = handler.generate_schema(MutableSequence)
 
