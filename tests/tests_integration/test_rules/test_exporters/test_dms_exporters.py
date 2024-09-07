@@ -71,7 +71,7 @@ def table_example() -> InformationRules:
             creator=["Anders"],
         ),
         properties=SheetList[InformationProperty](
-            data=[
+            [
                 InformationProperty(
                     class_="Table",
                     property_="color",
@@ -117,7 +117,7 @@ def table_example() -> InformationRules:
             ]
         ),
         classes=SheetList[InformationClass](
-            data=[
+            [
                 InformationClass(class_="Table", name="Table"),
                 InformationClass(class_="Item", name="Item"),
             ]
