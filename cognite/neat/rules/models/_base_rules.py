@@ -7,7 +7,7 @@ from __future__ import annotations
 import sys
 import types
 from abc import ABC, abstractmethod
-from collections.abc import Callable, MutableSequence
+from collections.abc import Callable, MutableSequence, Sequence
 from typing import Annotated, Any, ClassVar, Literal, TypeVar, get_args
 
 import pandas as pd
@@ -239,17 +239,16 @@ T_SheetRow = TypeVar("T_SheetRow", bound=SheetRow)
 class SheetList(list, MutableSequence[T_SheetRow]):
     @classmethod
     def __get_pydantic_core_schema__(cls, source: Any, handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
-        instance_schema = core_schema.is_instance_schema(cls)
-
-        args = get_args(source)
-        if args:
-            # replace the type and rely on Pydantic to generate the right schema
-            # for `T_SheetRow`
-            sequence_t_schema = handler.generate_schema(MutableSequence[args[0]])  # type: ignore[valid-type]
+        if args := get_args(source):
+            item_type = args[0]
         else:
-            sequence_t_schema = handler.generate_schema(MutableSequence)
+            # Someone use SheetList without specifying the type
+            raise TypeError("SheetList must be used with a type argument, e.g., SheetList[InformationProperty]")
 
-        non_instance_schema = core_schema.no_info_after_validator_function(SheetList, sequence_t_schema)
+        instance_schema = core_schema.is_instance_schema(cls)
+        sequence_row_schema = handler.generate_schema(Sequence[item_type])  # type: ignore[valid-type]
+
+        non_instance_schema = core_schema.no_info_after_validator_function(SheetList, sequence_row_schema)
         return core_schema.union_schema([instance_schema, non_instance_schema])
 
     def to_pandas(self, drop_na_columns: bool = True, include: list[str] | None = None) -> pd.DataFrame:
