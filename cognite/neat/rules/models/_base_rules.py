@@ -7,8 +7,8 @@ from __future__ import annotations
 import sys
 import types
 from abc import ABC, abstractmethod
-from collections.abc import Callable, MutableSequence, Sequence
-from typing import Annotated, Any, ClassVar, Literal, TypeVar, get_args, get_origin
+from collections.abc import Callable, Iterator, MutableSequence, Sequence
+from typing import Annotated, Any, ClassVar, Literal, SupportsIndex, TypeVar, get_args, get_origin, overload
 
 import pandas as pd
 from pydantic import (
@@ -253,6 +253,21 @@ class SheetList(list, MutableSequence[T_SheetRow]):
     def _repr_html_(self) -> str:
         """Returns HTML representation of ResourceDict."""
         return self.to_pandas(drop_na_columns=True)._repr_html_()  # type: ignore[operator]
+
+    # Implemented to get correct type hints
+    def __iter__(self) -> Iterator[T_SheetRow]:
+        return super().__iter__()
+
+    @overload
+    def __getitem__(self, index: SupportsIndex) -> T_SheetRow: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> SheetList[T_SheetRow]: ...
+
+    def __getitem__(self, index: SupportsIndex | slice, /) -> T_SheetRow | SheetList[T_SheetRow]:
+        if isinstance(index, slice):
+            return SheetList[T_SheetRow](super().__getitem__(index))
+        return super().__getitem__(index)
 
 
 ExtensionCategoryType = Annotated[
