@@ -81,8 +81,8 @@ def pydantic_to_parameters(verified_cls: type[BaseModel]) -> dict[str, set[str]]
             output[name] = set()
             continue
 
-        if issubclass(type_, SheetList):
-            type_ = type_.model_fields["data"].annotation.__args__[0]
+        if isinstance(type_, GenericAlias) and type_.__origin__ is SheetList:
+            type_ = get_args(type_)[0]
 
         if issubclass(type_, BaseModel):
             output[name] = {k for k in type_.model_fields.keys() if k != "validators_to_skip"}

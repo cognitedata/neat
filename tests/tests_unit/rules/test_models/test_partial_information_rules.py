@@ -9,8 +9,8 @@ def test_partial_to_complete_mode():
     rules2 = ImporterPipeline.verify(importers.OWLImporter(PARTIAL_MODEL_TEST_DATA / "part2.ttl"))
     rules3 = ImporterPipeline.verify(importers.YAMLImporter.from_file(PARTIAL_MODEL_TEST_DATA / "part3.yaml"))
 
-    rules1.classes.data += rules2.classes.data + rules3.classes.data
-    rules1.properties.data += rules2.properties.data + rules3.properties.data
+    rules1.classes += rules2.classes + rules3.classes
+    rules1.properties += rules2.properties + rules3.properties
     rules1.metadata.schema_ = "complete"
     rules1.metadata.data_model_type = "enterprise"
 
