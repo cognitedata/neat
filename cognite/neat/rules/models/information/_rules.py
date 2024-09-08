@@ -174,6 +174,7 @@ class InformationProperty(SheetRow):
     comment: str | None = Field(alias="Comment", default=None)
     inherited: bool = Field(
         default=False,
+        exclude=True,
         alias="Inherited",
         description="Flag to indicate if the property is inherited, only use for internal purposes",
     )

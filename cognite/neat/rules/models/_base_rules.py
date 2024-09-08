@@ -190,7 +190,7 @@ class BaseRules(NeatModel, ABC):
             headers_by_sheet[sheet_name] = [
                 (field.alias or field_name) if by_alias else field_name
                 for field_name, field in model_fields.items()
-                if field_name != "validators_to_skip"
+                if field_name != "validators_to_skip" and not field.exclude
             ]
         return headers_by_sheet
 
@@ -223,7 +223,7 @@ class BaseRules(NeatModel, ABC):
             exclude_input: IncEx
             if isinstance(exclude, dict):
                 exclude_input = exclude.copy()
-                exclude_input["reference"] = {}  # type: ignore[index]
+                exclude_input["reference"] = {"__all__"}  # type: ignore[index]
             elif isinstance(exclude, set):
                 exclude_input = exclude.copy()
                 exclude_input.add("reference")  # type: ignore[arg-type]
@@ -241,7 +241,7 @@ class BaseRules(NeatModel, ABC):
             exclude_defaults=exclude_defaults,
             context=context,
         )
-        if self.reference is not None:
+        if self.reference is not None and not (isinstance(exclude, dict | set) and "reference" in exclude):
             output["Reference" if by_alias else "reference"] = self.reference.dump(
                 mode=mode,
                 by_alias=by_alias,
