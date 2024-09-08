@@ -66,7 +66,7 @@ class YAMLExporter(BaseExporter[VerifiedRules, str]):
         """
         # model_dump_json ensures that the output is in JSON format,
         # if we don't do this, we will get Enums and other types that are not serializable to YAML
-        json_output = rules.dump(mode="json")
+        json_output = rules.dump(mode="json", exclude_none=True, exclude_unset=True)
         if self.output == "json":
             return json.dumps(json_output)
         elif self.output == "yaml":
