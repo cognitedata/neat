@@ -66,7 +66,19 @@ class ClassicExtractor(BaseExtractor):
             yield from self._extract_subextractor(extractor, resource_type)
 
         for resource_type, source_external_ids in self._resource_external_ids_by_type.items():
-            for chunk in chunker(list(source_external_ids), chunk_size=1000):
+            to_iterate: Iterable = chunker(list(source_external_ids), chunk_size=1000)
+            try:
+                from rich.progress import track
+            except ModuleNotFoundError:
+                ...
+            else:
+                to_iterate = track(
+                    to_iterate,
+                    total=(len(source_external_ids) // 1000) + 1,
+                    description=f"Extracting {resource_type.removesuffix('_')} relationships",
+                )
+
+            for chunk in to_iterate:
                 relationship_iterator = self._client.relationships(
                     source_external_ids=list(chunk), source_types=[resource_type.removesuffix("_")]
                 )
