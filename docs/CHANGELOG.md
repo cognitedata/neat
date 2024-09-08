@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Added
+- `ClassicExtactor` to extract all classic resource types from CDF from a given data set or root asset.
+
 ## [0.91.0] - 11-09-24
 ### Added
 - IODDExtractor for IO-link standard: https://io-link.com/
