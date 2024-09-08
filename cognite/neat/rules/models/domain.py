@@ -1,10 +1,9 @@
 import math
 from collections.abc import Hashable
 from dataclasses import dataclass, field
-from typing import Any, ClassVar
+from typing import ClassVar
 
-from pydantic import Field, field_serializer, field_validator, model_serializer
-from pydantic_core.core_schema import SerializationInfo
+from pydantic import Field, field_serializer, field_validator
 
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ClassEntity, ClassEntityList
@@ -65,6 +64,10 @@ class DomainClass(SheetRow):
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.class_,)
 
+    @field_serializer("parent", when_used="unless-none")
+    def serialize_parent(self, value: list[ClassEntity]) -> str:
+        return ",".join([str(entry) for entry in value])
+
 
 class DomainRules(BaseRules):
     metadata: DomainMetadata = Field(alias="Metadata")
@@ -72,19 +75,6 @@ class DomainRules(BaseRules):
     classes: SheetList[DomainClass] | None = Field(None, alias="Classes")
     last: "DomainRules | None" = Field(None, alias="Last")
     reference: "DomainRules | None" = Field(None, alias="Reference")
-
-    @model_serializer(mode="plain", when_used="always")
-    def domain_rules_serializer(self, info: SerializationInfo) -> dict[str, Any]:
-        kwargs = vars(info)
-        output: dict[str, Any] = {
-            "Metadata" if info.by_alias else "metadata": self.metadata.model_dump(**kwargs),
-            "Properties" if info.by_alias else "properties": [prop.model_dump(**kwargs) for prop in self.properties],
-        }
-        if self.classes or not info.exclude_none:
-            output["Classes" if info.by_alias else "classes"] = [
-                cls.model_dump(**kwargs) for cls in self.classes or []
-            ] or None
-        return output
 
 
 @dataclass
