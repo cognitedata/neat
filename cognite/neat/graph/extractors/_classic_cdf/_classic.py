@@ -8,6 +8,7 @@ from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
 from cognite.neat.utils.collection_ import chunker
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._assets import AssetsExtractor
 from ._base import Prefix, _ClassicCDFBaseExtractor
@@ -29,7 +30,6 @@ class ClassicExtractor(BaseExtractor):
         data_set_external_id: str | None = None,
         root_asset_external_id: str | None = None,
         namespace: Namespace | None = None,
-        progress_bar: bool = False,
     ):
         self._client = client
         if sum([bool(data_set_external_id), bool(root_asset_external_id)]) != 1:
@@ -37,7 +37,6 @@ class ClassicExtractor(BaseExtractor):
         self._root_asset_external_id = root_asset_external_id
         self._data_set_external_id = data_set_external_id
         self._namespace = namespace or DEFAULT_NAMESPACE
-        self._progress_bar = progress_bar
 
         self._resource_external_ids_by_type: dict[str, set[str]] = defaultdict(set)
         self._labels: set[str] = set()
@@ -85,9 +84,9 @@ class ClassicExtractor(BaseExtractor):
     def _extract_subextractor(self, extractor: _ClassicCDFBaseExtractor, resource_type: str) -> Iterable[Triple]:
         for triple in extractor.extract():
             if triple[1] == self._namespace.external_id:
-                self._resource_external_ids_by_type[resource_type].add(str(triple[2]))
+                self._resource_external_ids_by_type[resource_type].add(remove_namespace_from_uri(triple[2]))
             elif triple[1] == self._namespace.label:
-                self._labels.add(triple[2].removeprefix(Prefix.label))
+                self._labels.add(remove_namespace_from_uri(triple[2]).removeprefix(Prefix.label))
             elif triple[1] == self._namespace.dataset:
-                self._data_set_ids.add(int(triple[2].removeprefix(Prefix.data_set)))
+                self._data_set_ids.add(int(remove_namespace_from_uri(triple[2]).removeprefix(Prefix.data_set)))
             yield triple
