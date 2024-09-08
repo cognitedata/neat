@@ -177,6 +177,6 @@ class EventsExtractor(_ClassicCDFBaseExtractor[Event]):
 
         if event.asset_ids:
             for asset_id in event.asset_ids:
-                triples.append((id_, self.namespace.asset, self.namespace[f"{Prefix.data_set}{asset_id}"]))
+                triples.append((id_, self.namespace.asset, self.namespace[f"{Prefix.asset}{asset_id}"]))
 
         return triples

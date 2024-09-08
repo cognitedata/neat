@@ -146,7 +146,7 @@ class SequencesExtractor(_ClassicCDFBaseExtractor[Sequence]):
                 (
                     id_,
                     self.namespace.data_set_id,
-                    self.namespace[f"{Prefix.sequence}{sequence.data_set_id}"],
+                    self.namespace[f"{Prefix.data_set}{sequence.data_set_id}"],
                 )
             )
 
