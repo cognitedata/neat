@@ -2,11 +2,12 @@ from collections import defaultdict
 from collections.abc import Iterable
 
 from cognite.client import CogniteClient
-from rdflib import RDF, Namespace
+from rdflib import Namespace
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
+from cognite.neat.utils.collection_ import chunker
 
 from ._assets import AssetsExtractor
 from ._base import Prefix, _ClassicCDFBaseExtractor
@@ -14,6 +15,7 @@ from ._data_sets import DataSetExtractor
 from ._events import EventsExtractor
 from ._files import FilesExtractor
 from ._labels import LabelsExtractor
+from ._relationships import RelationshipsExtractor
 from ._sequences import SequencesExtractor
 from ._timeseries import TimeSeriesExtractor
 
@@ -37,7 +39,7 @@ class ClassicExtractor(BaseExtractor):
         self._namespace = namespace or DEFAULT_NAMESPACE
         self._progress_bar = progress_bar
 
-        self._resource_ids_by_type: dict[str, set[int]] = defaultdict(set)
+        self._resource_external_ids_by_type: dict[str, set[str]] = defaultdict(set)
         self._labels: set[str] = set()
         self._data_set_ids: set[int] = set()
 
@@ -64,6 +66,15 @@ class ClassicExtractor(BaseExtractor):
 
             yield from self._extract_subextractor(extractor, resource_type)
 
+        for resource_type, source_external_ids in self._resource_external_ids_by_type.items():
+            for chunk in chunker(list(source_external_ids), chunk_size=1000):
+                relationship_iterator = self._client.relationships(
+                    source_external_ids=list(chunk), source_types=[resource_type.removesuffix("_")]
+                )
+                yield from RelationshipsExtractor(
+                    relationship_iterator, self._namespace, unpack_metadata=False
+                ).extract()
+
         label_iterator = self._client.labels.retrieve(external_id=list(self._labels), ignore_unknown_ids=True)
         yield from LabelsExtractor(label_iterator, self._namespace, total=len(label_iterator)).extract()
         data_set_iterator = self._client.data_sets.retrieve_multiple(ids=list(self._data_set_ids))
@@ -71,12 +82,10 @@ class ClassicExtractor(BaseExtractor):
             data_set_iterator, self._namespace, total=len(data_set_iterator), unpack_metadata=False
         ).extract()
 
-    def _extract_subextractor(
-        self, extractor: _ClassicCDFBaseExtractor, resource_type: str | None = None
-    ) -> Iterable[Triple]:
+    def _extract_subextractor(self, extractor: _ClassicCDFBaseExtractor, resource_type: str) -> Iterable[Triple]:
         for triple in extractor.extract():
-            if triple[1] == RDF.type and resource_type is not None:
-                self._resource_ids_by_type[resource_type].add(int(triple[0].removeprefix(resource_type)))
+            if triple[1] == self._namespace.external_id:
+                self._resource_external_ids_by_type[resource_type].add(str(triple[2]))
             elif triple[1] == self._namespace.label:
                 self._labels.add(triple[2].removeprefix(Prefix.label))
             elif triple[1] == self._namespace.dataset:
