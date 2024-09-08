@@ -8,7 +8,7 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
 
 
 class EventsExtractor(_ClassicCDFBaseExtractor[Event]):
@@ -103,7 +103,7 @@ class EventsExtractor(_ClassicCDFBaseExtractor[Event]):
         )
 
     def _item2triples(self, event: Event) -> list[Triple]:
-        id_ = self.namespace[f"Event_{event.id}"]
+        id_ = self.namespace[f"{Prefix.event}{event.id}"]
 
         type_ = self._get_rdf_type(event)
 
@@ -171,12 +171,12 @@ class EventsExtractor(_ClassicCDFBaseExtractor[Event]):
                 (
                     id_,
                     self.namespace.data_set_id,
-                    self.namespace[f"Dataset_{event.data_set_id}"],
+                    self.namespace[f"{Prefix.data_set}{event.data_set_id}"],
                 )
             )
 
         if event.asset_ids:
             for asset_id in event.asset_ids:
-                triples.append((id_, self.namespace.asset, self.namespace[f"Asset_{asset_id}"]))
+                triples.append((id_, self.namespace.asset, self.namespace[f"{Prefix.data_set}{asset_id}"]))
 
         return triples

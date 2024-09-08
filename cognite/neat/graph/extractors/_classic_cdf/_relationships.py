@@ -1,7 +1,6 @@
 from collections.abc import Callable, Set
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import quote
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Relationship, RelationshipList
@@ -10,7 +9,7 @@ from rdflib import RDF, Literal, Namespace
 from cognite.neat.graph.models import Triple
 from cognite.neat.utils.auxiliary import create_sha256_hash
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
 
 
 class RelationshipsExtractor(_ClassicCDFBaseExtractor[Relationship]):
@@ -80,7 +79,7 @@ class RelationshipsExtractor(_ClassicCDFBaseExtractor[Relationship]):
 
         if relationship.external_id and relationship.source_external_id and relationship.target_external_id:
             # relationships do not have an internal id, so we generate one
-            id_ = self.namespace[f"Relationship_{create_sha256_hash(relationship.external_id)}"]
+            id_ = self.namespace[f"{Prefix.relationship}{create_sha256_hash(relationship.external_id)}"]
 
             type_ = self._get_rdf_type(relationship)
             # Set rdf type
@@ -178,7 +177,7 @@ class RelationshipsExtractor(_ClassicCDFBaseExtractor[Relationship]):
                         (
                             id_,
                             self.namespace.label,
-                            self.namespace[f"Label_{quote(label.dump()['externalId'])}"],
+                            self.namespace[f"{Prefix.label}{self._label_id(label)}"],
                         )
                     )
 
@@ -188,7 +187,7 @@ class RelationshipsExtractor(_ClassicCDFBaseExtractor[Relationship]):
                     (
                         id_,
                         self.namespace.dataset,
-                        self.namespace[f"Dataset_{relationship.data_set_id}"],
+                        self.namespace[f"{Prefix.data_set}{relationship.data_set_id}"],
                     )
                 )
 

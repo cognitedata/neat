@@ -9,7 +9,7 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
 
 
 class DataSetExtractor(_ClassicCDFBaseExtractor[DataSet]):
@@ -69,7 +69,7 @@ class DataSetExtractor(_ClassicCDFBaseExtractor[DataSet]):
 
     def _item2triples(self, item: DataSet) -> list[Triple]:
         """Converts an asset to triples."""
-        id_ = self.namespace[f"DataSet_{item.id}"]
+        id_ = self.namespace[f"{Prefix.data_set}{item.id}"]
 
         type_ = self._get_rdf_type(item)
 

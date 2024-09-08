@@ -1,7 +1,6 @@
 from collections.abc import Callable, Set
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import quote
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import FileMetadata, FileMetadataFilter, FileMetadataList
@@ -9,7 +8,7 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
 
 
 class FilesExtractor(_ClassicCDFBaseExtractor[FileMetadata]):
@@ -100,7 +99,7 @@ class FilesExtractor(_ClassicCDFBaseExtractor[FileMetadata]):
         )
 
     def _item2triples(self, file: FileMetadata) -> list[Triple]:
-        id_ = self.namespace[f"File_{file.id}"]
+        id_ = self.namespace[f"{Prefix.file}{file.id}"]
 
         type_ = self._get_rdf_type(file)
 
@@ -178,7 +177,7 @@ class FilesExtractor(_ClassicCDFBaseExtractor[FileMetadata]):
                     (
                         id_,
                         self.namespace.label,
-                        self.namespace[f"Label_{quote(label.dump()['externalId'])}"],
+                        self.namespace[f"{Prefix.label}{self._label_id(label)}"],
                     )
                 )
 
@@ -191,12 +190,12 @@ class FilesExtractor(_ClassicCDFBaseExtractor[FileMetadata]):
                 (
                     id_,
                     self.namespace.data_set_id,
-                    self.namespace[f"Dataset_{file.data_set_id}"],
+                    self.namespace[f"{Prefix.data_set}{file.data_set_id}"],
                 )
             )
 
         if file.asset_ids:
             for asset_id in file.asset_ids:
-                triples.append((id_, self.namespace.asset, self.namespace[f"Asset_{asset_id}"]))
+                triples.append((id_, self.namespace.asset, self.namespace[f"{Prefix.asset}{asset_id}"]))
 
         return triples

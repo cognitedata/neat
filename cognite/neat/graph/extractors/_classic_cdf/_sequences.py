@@ -8,7 +8,7 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
 
 
 class SequencesExtractor(_ClassicCDFBaseExtractor[Sequence]):
@@ -103,7 +103,7 @@ class SequencesExtractor(_ClassicCDFBaseExtractor[Sequence]):
         )
 
     def _item2triples(self, sequence: Sequence) -> list[Triple]:
-        id_ = self.namespace[f"Sequence_{sequence.id}"]
+        id_ = self.namespace[f"{Prefix.sequence}{sequence.id}"]
 
         type_ = self._get_rdf_type(sequence)
         # Set rdf type
@@ -146,7 +146,7 @@ class SequencesExtractor(_ClassicCDFBaseExtractor[Sequence]):
                 (
                     id_,
                     self.namespace.data_set_id,
-                    self.namespace[f"Dataset_{sequence.data_set_id}"],
+                    self.namespace[f"{Prefix.sequence}{sequence.data_set_id}"],
                 )
             )
 
@@ -155,7 +155,7 @@ class SequencesExtractor(_ClassicCDFBaseExtractor[Sequence]):
                 (
                     id_,
                     self.namespace.asset,
-                    self.namespace[f"Asset_{sequence.asset_id}"],
+                    self.namespace[f"{Prefix.asset}{sequence.asset_id}"],
                 )
             )
 

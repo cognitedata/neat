@@ -150,7 +150,7 @@ class AssetsExtractor(_ClassicCDFBaseExtractor[Asset]):
                     (
                         id_,
                         self.namespace.label,
-                        self.namespace[f"{Prefix.label}{label.external_id}"],
+                        self.namespace[f"{Prefix.label}{self._label_id(label)}"],
                     )
                 )
 

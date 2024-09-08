@@ -7,9 +7,8 @@ from cognite.client.data_classes import LabelDefinition, LabelDefinitionList
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
-from cognite.neat.utils.auxiliary import create_sha256_hash
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
 
 
 class LabelsExtractor(_ClassicCDFBaseExtractor[LabelDefinition]):
@@ -78,7 +77,7 @@ class LabelsExtractor(_ClassicCDFBaseExtractor[LabelDefinition]):
         if not label.external_id:
             return []
 
-        id_ = self.namespace[f"Label_{create_sha256_hash(label.external_id)}"]
+        id_ = self.namespace[f"{Prefix.label}{self._label_id(label)}"]
 
         type_ = self._get_rdf_type(label)
         # Set rdf type
@@ -107,7 +106,7 @@ class LabelsExtractor(_ClassicCDFBaseExtractor[LabelDefinition]):
                 (
                     id_,
                     self.namespace.data_set_id,
-                    self.namespace[f"Dataset_{label.data_set_id}"],
+                    self.namespace[f"{Prefix.data_set}{label.data_set_id}"],
                 )
             )
 
