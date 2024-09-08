@@ -4,7 +4,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import FileMetadata, FileMetadataList
+from cognite.client.data_classes import FileMetadata, FileMetadataFilter, FileMetadataList
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
@@ -49,6 +49,31 @@ class FilesExtractor(_ClassicCDFBaseExtractor[FileMetadata]):
             namespace=namespace,
             to_type=to_type,
             limit=limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
+        )
+
+    @classmethod
+    def from_hierarchy(
+        cls,
+        client: CogniteClient,
+        root_asset_external_id: str,
+        namespace: Namespace | None = None,
+        to_type: Callable[[FileMetadata], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+    ):
+        total = client.files.aggregate(
+            filter=FileMetadataFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
+        )[0].count
+
+        return cls(
+            client.files(asset_subtree_external_ids=[root_asset_external_id]),
+            namespace,
+            to_type,
+            total,
+            limit,
             unpack_metadata=unpack_metadata,
             skip_metadata_values=skip_metadata_values,
         )

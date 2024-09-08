@@ -59,6 +59,31 @@ class TimeSeriesExtractor(_ClassicCDFBaseExtractor[TimeSeries]):
         )
 
     @classmethod
+    def from_hierarchy(
+        cls,
+        client: CogniteClient,
+        root_asset_external_id: str,
+        namespace: Namespace | None = None,
+        to_type: Callable[[TimeSeries], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+    ):
+        total = client.time_series.aggregate_count(
+            filter=TimeSeriesFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
+        )
+
+        return cls(
+            client.time_series(asset_external_ids=[root_asset_external_id]),
+            namespace,
+            to_type,
+            total,
+            limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
+        )
+
+    @classmethod
     def from_file(
         cls,
         file_path: str,

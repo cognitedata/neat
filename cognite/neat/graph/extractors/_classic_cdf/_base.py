@@ -1,5 +1,6 @@
 import json
 import re
+import sys
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Set
 from typing import Generic, TypeVar
@@ -15,6 +16,22 @@ from cognite.neat.utils.auxiliary import string_to_ideal_type
 T_CogniteResource = TypeVar("T_CogniteResource", bound=CogniteResource)
 
 DEFAULT_SKIP_METADATA_VALUES = frozenset({"nan", "null", "none", ""})
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from backports.strenum import StrEnum
+
+
+class Prefix(StrEnum):
+    asset = "Asset_"
+    label = "Label_"
+    relationship = "Relationship_"
+    sequence = "Sequence_"
+    file = "File_"
+    time_series = "TimeSeries_"
+    event = "Event_"
+    data_set = "DataSet_"
 
 
 class _ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):

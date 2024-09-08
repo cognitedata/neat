@@ -8,9 +8,8 @@ from cognite.client.data_classes import Asset, AssetFilter, AssetList
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
-from cognite.neat.utils.auxiliary import create_sha256_hash
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
 
 
 class AssetsExtractor(_ClassicCDFBaseExtractor[Asset]):
@@ -108,7 +107,7 @@ class AssetsExtractor(_ClassicCDFBaseExtractor[Asset]):
 
     def _item2triples(self, asset: Asset) -> list[Triple]:
         """Converts an asset to triples."""
-        id_ = self.namespace[f"Asset_{asset.id}"]
+        id_ = self.namespace[f"{Prefix.asset}{asset.id}"]
 
         type_ = self._get_rdf_type(asset)
 
@@ -151,7 +150,7 @@ class AssetsExtractor(_ClassicCDFBaseExtractor[Asset]):
                     (
                         id_,
                         self.namespace.label,
-                        self.namespace[f"Label_{create_sha256_hash(label.dump()['externalId'])}"],
+                        self.namespace[f"{Prefix.label}{label.external_id}"],
                     )
                 )
 
@@ -160,17 +159,17 @@ class AssetsExtractor(_ClassicCDFBaseExtractor[Asset]):
 
         # Create connections:
         if asset.parent_id:
-            triples.append((id_, self.namespace.parent, self.namespace[f"Asset_{asset.parent_id}"]))
+            triples.append((id_, self.namespace.parent, self.namespace[f"{Prefix.asset}{asset.parent_id}"]))
 
         if asset.root_id:
-            triples.append((id_, self.namespace.root, self.namespace[f"Asset_{asset.root_id}"]))
+            triples.append((id_, self.namespace.root, self.namespace[f"{Prefix.asset}{asset.root_id}"]))
 
         if asset.data_set_id:
             triples.append(
                 (
                     id_,
                     self.namespace.dataset,
-                    self.namespace[f"Dataset_{asset.data_set_id}"],
+                    self.namespace[f"{Prefix.data_set}{asset.data_set_id}"],
                 )
             )
 
