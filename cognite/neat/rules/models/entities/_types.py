@@ -41,11 +41,6 @@ def _generate_cdf_resource_list(v: Any) -> list[AssetEntity | RelationshipEntity
 ClassEntityList = Annotated[
     list[ClassEntity],
     BeforeValidator(_split_str),
-    PlainSerializer(
-        _join_str,
-        return_type=str,
-        when_used="unless-none",
-    ),
 ]
 
 
