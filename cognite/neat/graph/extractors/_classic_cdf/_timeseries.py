@@ -9,10 +9,10 @@ from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, _ClassicCDFBaseExtractor
 
 
-class TimeSeriesExtractor(ClassicCDFExtractor[TimeSeries]):
+class TimeSeriesExtractor(_ClassicCDFBaseExtractor[TimeSeries]):
     """Extract data from Cognite Data Fusions TimeSeries into Neat.
 
     Args:

@@ -9,10 +9,10 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, _ClassicCDFBaseExtractor
 
 
-class FilesExtractor(ClassicCDFExtractor[FileMetadata]):
+class FilesExtractor(_ClassicCDFBaseExtractor[FileMetadata]):
     """Extract data from Cognite Data Fusions files metadata into Neat.
 
     Args:

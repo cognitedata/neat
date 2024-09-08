@@ -9,10 +9,10 @@ from rdflib import RDF, Literal, Namespace
 from cognite.neat.graph.models import Triple
 from cognite.neat.utils.auxiliary import create_sha256_hash
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, _ClassicCDFBaseExtractor
 
 
-class LabelsExtractor(ClassicCDFExtractor[LabelDefinition]):
+class LabelsExtractor(_ClassicCDFBaseExtractor[LabelDefinition]):
     """Extract data from Cognite Data Fusions Labels into Neat.
 
     Args:

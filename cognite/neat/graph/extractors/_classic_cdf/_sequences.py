@@ -8,10 +8,10 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, _ClassicCDFBaseExtractor
 
 
-class SequencesExtractor(ClassicCDFExtractor[Sequence]):
+class SequencesExtractor(_ClassicCDFBaseExtractor[Sequence]):
     """Extract data from Cognite Data Fusions Sequences into Neat.
 
     Args:

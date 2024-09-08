@@ -8,10 +8,10 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, _ClassicCDFBaseExtractor
 
 
-class EventsExtractor(ClassicCDFExtractor[Event]):
+class EventsExtractor(_ClassicCDFBaseExtractor[Event]):
     """Extract data from Cognite Data Fusions Events into Neat.
 
     Args:

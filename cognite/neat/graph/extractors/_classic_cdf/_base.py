@@ -17,7 +17,7 @@ T_CogniteResource = TypeVar("T_CogniteResource", bound=CogniteResource)
 DEFAULT_SKIP_METADATA_VALUES = frozenset({"nan", "null", "none", ""})
 
 
-class ClassicCDFExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
+class _ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     """This is the Base Extractor for all classic CDF resources.
 
     A classic resource is recognized in that it has a metadata attribute of type dict[str, str].
