@@ -26,8 +26,10 @@ from pydantic_core import core_schema
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
+    from typing import Self
 else:
     from backports.strenum import StrEnum
+    from typing_extensions import Self
 
 
 METADATA_VALUE_MAX_LENGTH = 5120
@@ -157,41 +159,7 @@ class BaseRules(NeatModel, ABC):
     """
 
     metadata: BaseMetadata
-
-    def dump(
-        self,
-        mode: Literal["python", "json"] = "python",
-        by_alias: bool = False,
-        exclude: IncEx = None,
-        exclude_none: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        as_reference: bool = False,
-        entities_exclude_defaults: bool = True,
-    ) -> dict[str, Any]:
-        """Dump the model to a dictionary.
-
-        This is used in the Exporters to dump rules in the required format.
-        """
-        for field_name in self.model_fields.keys():
-            value = getattr(self, field_name)
-            # Ensure deterministic order of properties
-            if isinstance(value, SheetList):
-                value.sort(key=lambda x: x._identifier())
-
-        context: dict[str, Any] = {"as_reference": as_reference}
-        if entities_exclude_defaults:
-            context["metadata"] = self.metadata
-
-        return self.model_dump(
-            mode=mode,
-            by_alias=by_alias,
-            exclude=exclude,
-            exclude_none=exclude_none,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            context=context,
-        )
+    reference: Self | None = Field(None, alias="Reference")
 
     @classmethod
     def headers_by_sheet(cls, by_alias: bool = False) -> dict[str, list[str]]:
@@ -225,6 +193,66 @@ class BaseRules(NeatModel, ABC):
                 if field_name != "validators_to_skip"
             ]
         return headers_by_sheet
+
+    def dump(
+        self,
+        mode: Literal["python", "json"] = "python",
+        by_alias: bool = False,
+        exclude: IncEx = None,
+        exclude_none: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        as_reference: bool = False,
+        entities_exclude_defaults: bool = True,
+    ) -> dict[str, Any]:
+        """Dump the model to a dictionary.
+
+        This is used in the Exporters to dump rules in the required format.
+        """
+        for field_name in self.model_fields.keys():
+            value = getattr(self, field_name)
+            # Ensure deterministic order of properties
+            if isinstance(value, SheetList):
+                value.sort(key=lambda x: x._identifier())
+
+        context: dict[str, Any] = {"as_reference": as_reference}
+        if entities_exclude_defaults:
+            context["metadata"] = self.metadata
+
+        if self.reference is not None:
+            exclude_input: IncEx
+            if isinstance(exclude, dict):
+                exclude_input = exclude.copy()
+                exclude_input["reference"] = {}  # type: ignore[index]
+            elif isinstance(exclude, set):
+                exclude_input = exclude.copy()
+                exclude_input.add("reference")  # type: ignore[arg-type]
+            else:
+                exclude_input = {"reference"}
+        else:
+            exclude_input = exclude
+
+        output = self.model_dump(
+            mode=mode,
+            by_alias=by_alias,
+            exclude=exclude_input,
+            exclude_none=exclude_none,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            context=context,
+        )
+        if self.reference is not None:
+            output["Reference" if by_alias else "reference"] = self.reference.dump(
+                mode=mode,
+                by_alias=by_alias,
+                exclude=exclude,
+                exclude_none=exclude_none,
+                exclude_unset=exclude_unset,
+                exclude_defaults=exclude_defaults,
+                entities_exclude_defaults=entities_exclude_defaults,
+                as_reference=True,
+            )
+        return output
 
 
 class SheetRow(NeatModel):
