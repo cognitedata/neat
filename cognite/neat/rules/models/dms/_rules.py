@@ -214,7 +214,7 @@ class DMSProperty(SheetRow):
             return value_type.dump(space=metadata.space, version=metadata.version)
         return str(value_type)
 
-    @field_serializer("view", "container", "class_", when_used="always")
+    @field_serializer("view", "container", "class_", when_used="unless-none")
     def remove_default_space(self, value: str, info: SerializationInfo) -> str:
         if (metadata := _metadata(info.context)) and isinstance(value, Entity):
             if info.field_name == "container" and info.context.get("as_reference") is True:

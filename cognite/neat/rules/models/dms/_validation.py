@@ -201,7 +201,7 @@ class DMSPostValidation:
             for prop_no, prop in enumerate(self.properties):
                 if prop.container and (container_id := prop.container.as_id()) not in defined_containers:
                     errors.append(
-                        ResourceNotDefinedError[dm.ContainerId](
+                        ResourceNotDefinedError(
                             identifier=container_id,
                             resource_type="container",
                             location="Containers Sheet",
@@ -214,7 +214,7 @@ class DMSPostValidation:
                 for constraint_no, constraint in enumerate(container.constraint or []):
                     if constraint.as_id() not in defined_containers:
                         errors.append(
-                            ResourceNotDefinedError[dm.ContainerId](
+                            ResourceNotDefinedError(
                                 identifier=constraint.as_id(),
                                 resource_type="container",
                                 location="Containers Sheet",

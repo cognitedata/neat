@@ -279,7 +279,8 @@ class TestDMSExporters:
         new_space = "power_update"
         dumped["Metadata"]["space"] = new_space
         dumped["Last"]["Metadata"]["space"] = new_space
-        rules = DMSInputRules.load(dumped).as_rules()
+        reloaded = DMSInputRules.load(dumped)
+        rules = reloaded.as_rules()
         schema = rules.as_schema()
         assert schema.referenced_spaces(include_indirect_references=True) == {new_space}
         exporter = DMSExporter(existing_handling="force")
