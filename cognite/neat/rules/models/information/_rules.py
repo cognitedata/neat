@@ -117,7 +117,7 @@ class InformationMetadata(BaseMetadata):
         return self.prefix
 
 
-def _metadata(context: Any) -> InformationMetadata | None:
+def _get_metadata(context: Any) -> InformationMetadata | None:
     if isinstance(context, dict) and isinstance(context.get("metadata"), InformationMetadata):
         return context["metadata"]
     return None
@@ -154,13 +154,13 @@ class InformationClass(SheetRow):
 
     @field_serializer("class_", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
-        if (metadata := _metadata(info.context)) and isinstance(value, Entity):
+        if (metadata := _get_metadata(info.context)) and isinstance(value, Entity):
             return value.dump(prefix=metadata.prefix, version=metadata.version)
         return str(value)
 
     @field_serializer("parent", when_used="unless-none")
     def remove_default_prefixes(self, value: Any, info: SerializationInfo) -> str:
-        if isinstance(value, list) and (metadata := _metadata(info.context)):
+        if isinstance(value, list) and (metadata := _get_metadata(info.context)):
             return ",".join(
                 parent.dump(prefix=metadata.prefix, version=metadata.version)
                 if isinstance(parent, Entity)
@@ -273,6 +273,7 @@ class InformationProperty(SheetRow):
 
     @field_serializer("reference", when_used="always")
     def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
+        # When rules as dumped as reference, we set the reference to the class
         if isinstance(info.context, dict) and info.context.get("as_reference") is True:
             return str(
                 ReferenceEntity(
@@ -285,7 +286,7 @@ class InformationProperty(SheetRow):
 
     @field_serializer("class_", "value_type", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
-        if (metadata := _metadata(info.context)) and isinstance(value, Entity):
+        if (metadata := _get_metadata(info.context)) and isinstance(value, Entity):
             return value.dump(prefix=metadata.prefix, version=metadata.version)
         return str(value)
 
