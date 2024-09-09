@@ -38,6 +38,7 @@ TripleExtractors = (
     | LabelsExtractor
     | RdfFileExtractor
     | DexpiExtractor
+    | IODDExtractor
 )
 
 

@@ -10,7 +10,7 @@ from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
 from cognite.neat.utils.rdf_ import as_neat_compliant_uri
 from cognite.neat.utils.text import to_camel
-from cognite.neat.utils.xml_ import get_children_from_tag
+from cognite.neat.utils.xml_ import get_children
 
 IODD = Namespace("http://www.io-link.com/IODD/2010/10/")
 XSI = Namespace("http://www.w3.org/2001/XMLSchema-instance/")
@@ -51,16 +51,16 @@ class IODDExtractor(BaseExtractor):
         triples: list[Triple] = []
 
         # Extract DeviceIdentity triples
-        if di_root := root.find(".//{*}DeviceIdentity"):
-            triples.extend(cls._iodd_device_identity2triples(di_root, namespace))
+        if di_root := get_children(root, "DeviceIdentity", ignore_namespace=True, no_children=1):
+            triples.extend(cls._iodd_device_identity2triples(di_root[0], namespace))
 
         # Extract ProcessDataCollection triples -
         # this element holds the information about the sensors with data coming from MQTT
-        if pc_root := root.find(".//{*}ProcessDataCollection"):
-            triples.extend(cls._process_data_collection2triples(pc_root, namespace))
+        if pc_root := get_children(root, "ProcessDataCollection", ignore_namespace=True, no_children=1):
+            triples.extend(cls._process_data_collection2triples(pc_root[0], namespace))
 
-        if et_root := root.find(".//{*}ExternalTextCollection"):
-            triples.extend(cls._text_elements2triples(et_root, namespace))
+        if et_root := get_children(root, "ExternalTextCollection", ignore_namespace=True, no_children=1):
+            triples.extend(cls._text_elements2triples(et_root[0], namespace))
 
         return triples
 
@@ -72,7 +72,7 @@ class IODDExtractor(BaseExtractor):
         triples: list[Triple] = []
 
         for element_tag in cls.device_elements_with_text_nodes:
-            if child := get_children_from_tag(di_root, child_tag=element_tag, ignore_namespace=True, no_children=1):
+            if child := get_children(di_root, child_tag=element_tag, ignore_namespace=True, no_children=1):
                 if text_id := child[0].attrib.get("textId"):
                     # Create connection from device to textId node
                     element_tag = to_camel(element_tag)
@@ -88,7 +88,7 @@ class IODDExtractor(BaseExtractor):
         """
         triples: list[Triple] = []
 
-        if text_elements := get_children_from_tag(et_root, child_tag="Text", ignore_namespace=True):
+        if text_elements := get_children(et_root, child_tag="Text", ignore_namespace=True):
             for element in text_elements:
                 if id := element.attrib.get("id"):
                     text_id = namespace[id]
@@ -125,23 +125,24 @@ class IODDExtractor(BaseExtractor):
         """
         triples: list[Triple] = []
 
-        id_ = namespace[di_root.attrib["deviceId"]]
+        if device_id := di_root.attrib.get("deviceId", None):
+            id_ = namespace[device_id]
 
-        for attribute_name, attribute_value in di_root.attrib.items():
-            if attribute_name == "deviceId":
-                # Create rdf type triple for IODD
-                triples.append(
-                    (
-                        id_,
-                        RDF.type,
-                        as_neat_compliant_uri(IODD["IoddDevice"]),
+            for attribute_name, attribute_value in di_root.attrib.items():
+                if attribute_name == device_id:
+                    # Create rdf type triple for IODD
+                    triples.append(
+                        (
+                            id_,
+                            RDF.type,
+                            as_neat_compliant_uri(IODD["IoddDevice"]),
+                        )
                     )
-                )
-            else:
-                # Collect attributes at root element
-                triples.append((id_, IODD[attribute_name], Literal(attribute_value)))
+                else:
+                    # Collect attributes at root element
+                    triples.append((id_, IODD[attribute_name], Literal(attribute_value)))
 
-        triples.extend(cls._device_2text_elements_edges(di_root, id_, namespace))
+            triples.extend(cls._device_2text_elements_edges(di_root, id_, namespace))
         return triples
 
     def extract(self) -> list[Triple]:

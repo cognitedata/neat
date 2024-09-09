@@ -202,13 +202,13 @@ class DexpiExtractor(BaseExtractor):
 
     @classmethod
     def _get_element_label(cls, element: Element) -> str | None:
-        if children := get_children(element, "Label", 1):
-            if grandchildren := get_children(children[0], "Text", 1):
+        if children := get_children(element, "Label", no_children=1):
+            if grandchildren := get_children(children[0], "Text", no_children=1):
                 if "String" in grandchildren[0].attrib:
                     return grandchildren[0].attrib["String"]
 
         # extension for schema version 3.3, where text is used to "label" without a <label> parent
-        elif children := get_children(element, "Text", 1):
+        elif children := get_children(element, "Text", no_children=1):
             if "String" in children[0].attrib:
                 return children[0].attrib["String"]
 
@@ -219,7 +219,7 @@ class DexpiExtractor(BaseExtractor):
         # TODO: This requires more work as there are multiple groupings of GenericAttributes
 
         attributes = defaultdict(list)
-        if children := get_children(element, "GenericAttributes", 1):
+        if children := get_children(element, "GenericAttributes", no_children=1):
             if grandchildren := get_children(children[0], "GenericAttribute"):
                 for generic_attribute in grandchildren:
                     # extension for schema version 3.3, where "AttributeURI" is not included
