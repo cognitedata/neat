@@ -92,7 +92,7 @@ class MatchType(StrEnum):
     partial = "partial"
 
 
-class NeatModel(BaseModel):
+class SchemaModel(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True,
         str_strip_whitespace=True,
@@ -109,7 +109,7 @@ class NeatModel(BaseModel):
         return _get_required_fields(cls, use_alias)
 
 
-class BaseMetadata(NeatModel):
+class BaseMetadata(SchemaModel):
     """
     Metadata model for data model
     """
@@ -144,7 +144,7 @@ class BaseMetadata(NeatModel):
         raise NotImplementedError()
 
 
-class BaseRules(NeatModel, ABC):
+class BaseRules(SchemaModel, ABC):
     """
     Rules is a core concept in `neat`. This represents fusion of data model
     definitions and (optionally) the transformation rules used to transform the data/graph
@@ -278,7 +278,7 @@ class BaseRules(NeatModel, ABC):
         return output
 
 
-class SheetRow(NeatModel):
+class SheetRow(SchemaModel):
     @field_validator("*", mode="before")
     def strip_string(cls, value: Any) -> Any:
         if isinstance(value, str):
