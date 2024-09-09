@@ -163,7 +163,7 @@ class BaseRules(NeatModel, ABC):
 
     @classmethod
     def headers_by_sheet(cls, by_alias: bool = False) -> dict[str, list[str]]:
-        """Returns a list of headers for the model."""
+        """Returns a list of headers for the model, typically used by ExcelExporter"""
         headers_by_sheet: dict[str, list[str]] = {}
         for field_name, field in cls.model_fields.items():
             if field_name == "validators_to_skip":
@@ -196,22 +196,39 @@ class BaseRules(NeatModel, ABC):
 
     def dump(
         self,
+        entities_exclude_defaults: bool = True,
+        as_reference: bool = False,
         mode: Literal["python", "json"] = "python",
         by_alias: bool = False,
         exclude: IncEx = None,
         exclude_none: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
-        as_reference: bool = False,
-        entities_exclude_defaults: bool = True,
     ) -> dict[str, Any]:
         """Dump the model to a dictionary.
 
         This is used in the Exporters to dump rules in the required format.
+
+        Args:
+            entities_exclude_defaults: Whether to exclude default prefix (and version) for entities.
+                For example, given a class that is dumped as 'my_prefix:MyClass', if the prefix for the rules
+                set in metadata.prefix = 'my_prefix', then this class will be dumped as 'MyClass' when this flag is set.
+                Defaults to True.
+            as_reference (bool, optional): Whether to dump as reference. For Information and DMS rules, this will
+                set the reference column/field to the reference of that entity. This is used in the ExcelExporter
+                to dump a reference model.
+            mode: The mode in which `to_python` should run.
+                If mode is 'json', the output will only contain JSON serializable types.
+                If mode is 'python', the output may contain non-JSON-serializable Python objects.
+            by_alias: Whether to use the field's alias in the dictionary key if defined.
+            exclude: A set of fields to exclude from the output.
+            exclude_none: Whether to exclude fields that have a value of `None`.
+            exclude_unset: Whether to exclude fields that have not been explicitly set.
+            exclude_defaults: Whether to exclude fields that are set to their default value.
         """
         for field_name in self.model_fields.keys():
             value = getattr(self, field_name)
-            # Ensure deterministic order of properties
+            # Ensure deterministic order of properties, classes, views, and so on
             if isinstance(value, SheetList):
                 value.sort(key=lambda x: x._identifier())
 
@@ -219,8 +236,13 @@ class BaseRules(NeatModel, ABC):
         if entities_exclude_defaults:
             context["metadata"] = self.metadata
 
-        if self.reference is not None:
-            exclude_input: IncEx
+        exclude_input: IncEx
+        if self.reference is None:
+            exclude_input = exclude
+        else:
+            # If the rules has a reference, we dump that separately with the as_reference flag set to True.
+            # We don't want to include the reference in the main dump, so we exclude it here.
+            # This is to include whatever is in the exclude set from the user.
             if isinstance(exclude, dict):
                 exclude_input = exclude.copy()
                 exclude_input["reference"] = {"__all__"}  # type: ignore[index]
@@ -229,8 +251,6 @@ class BaseRules(NeatModel, ABC):
                 exclude_input.add("reference")  # type: ignore[arg-type]
             else:
                 exclude_input = {"reference"}
-        else:
-            exclude_input = exclude
 
         output = self.model_dump(
             mode=mode,
@@ -241,7 +261,10 @@ class BaseRules(NeatModel, ABC):
             exclude_defaults=exclude_defaults,
             context=context,
         )
-        if self.reference is not None and not (isinstance(exclude, dict | set) and "reference" in exclude):
+        is_reference_user_excluded = isinstance(exclude, dict | set) and "reference" in exclude
+        if self.reference is not None and not is_reference_user_excluded:
+            # If the rules has a reference, we dump that separately with the as_reference flag set to True.
+            # Unless the user has explicitly excluded the reference.
             output["Reference" if by_alias else "reference"] = self.reference.dump(
                 mode=mode,
                 by_alias=by_alias,
