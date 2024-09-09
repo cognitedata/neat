@@ -7,16 +7,10 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
-from cognite.neat.issues import NeatError, NeatWarning
-from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
-from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
-from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
-from cognite.neat.rules.issues.dms import (
-    DirectRelationMissingSourceWarning,
-    DMSSchemaError,
-    DMSSchemaWarning,
-    DuplicatedViewInDataModelError,
-)
+from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
+from cognite.neat.issues.errors import PropertyNotFoundError, ResourceDuplicatedError, ResourceNotFoundError
+from cognite.neat.issues.warnings import FileTypeUnexpectedWarning
+from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models import DMSSchema
 from cognite.neat.rules.models.dms import PipelineSchema
 from cognite.neat.utils.cdf.data_classes import (
@@ -45,15 +39,16 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             data_model=data_model,
         ),
         [
-            DuplicatedViewInDataModelError(
-                view=dm.ViewId("my_space", "my_view1", "1"),
-                referred_by=dm.DataModelId("my_space", "my_data_model", "1"),
+            ResourceDuplicatedError(
+                identifier=dm.ViewId("my_space", "my_view1", "1"),
+                resource_type="view",
+                location=repr(dm.DataModelId("my_space", "my_data_model", "1")),
             ),
-            ReferredResourceNotFoundError[dm.ViewId, dm.DataModelId](
+            ResourceNotFoundError(
                 dm.ViewId("my_space", "my_view1", "1"),
-                "View",
+                "view",
                 dm.DataModelId("my_space", "my_data_model", "1"),
-                "DataModel",
+                "data model",
             ),
         ],
         id="Duplicated and missing view in data model",
@@ -109,18 +104,18 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=ContainerApplyDict([container]),
         ),
         [
-            ReferredResourceNotFoundError[dm.ContainerId, dm.ViewId](
+            ResourceNotFoundError(
                 dm.ContainerId("my_space", "does_not_exist"),
-                "Container",
+                "container",
                 dm.ViewId("my_space", "my_view1", "1"),
-                "View",
+                "view",
             ),
-            ReferredPropertyNotFoundError[dm.ContainerId, dm.ViewId](
+            PropertyNotFoundError(
                 dm.ContainerId("my_space", "my_container"),
-                "Container",
-                dm.ViewId("my_space", "my_view1", "1"),
-                "View",
+                "container",
                 "non_existing",
+                dm.ViewId("my_space", "my_view1", "1"),
+                "view",
             ),
         ],
         id="Missing container and properties. Container property used multiple times.",
@@ -161,15 +156,15 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             containers=ContainerApplyDict([container]),
         ),
         [
-            ReferredResourceNotFoundError[str, dm.ContainerId](
+            ResourceNotFoundError(
                 identifier="non_existing_space",
-                resource_type="Space",
+                resource_type="space",
                 referred_by=dm.ContainerId("non_existing_space", "my_container"),
-                referred_type="Container",
+                referred_type="container",
             ),
             DirectRelationMissingSourceWarning(
-                view_id=dm.ViewId("my_space", "my_view1", "1"),
-                property="direct",
+                dm.ViewId("my_space", "my_view1", "1"),
+                "direct",
             ),
         ],
         id="Missing space, and direct relation missing source",
@@ -218,26 +213,26 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             views=ViewApplyDict([view1, view2]),
         ),
         [
-            ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
+            PropertyNotFoundError(
                 dm.ViewId("my_space", "non_existing", "1"),
-                "View",
+                "view",
+                "implements",
                 dm.ViewId("my_space", "my_view1", "1"),
-                "View",
-                property_name="implements",
+                "view",
             ),
-            ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
+            PropertyNotFoundError(
                 dm.ViewId("my_space", "non_existing", "1"),
-                "View",
+                "view",
+                "non_existing",
                 dm.ViewId("my_space", "my_view1", "1"),
-                "View",
-                property_name="non_existing",
+                "view",
             ),
-            ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
+            PropertyNotFoundError(
                 dm.ViewId("my_space", "non_existing_edge_view", "1"),
-                "View",
+                "view",
+                "non_existing",
                 dm.ViewId("my_space", "my_view1", "1"),
-                "View",
-                property_name="non_existing",
+                "view",
             ),
         ],
         id="Missing parent view, edge view, and source view",
@@ -330,9 +325,9 @@ def invalid_raw_str_test_cases() -> Iterable[ParameterSet]:
         raw_str,
         {"views": [Path("my_view_file.yaml")]},
         [
-            UnexpectedFileTypeWarning(
+            FileTypeUnexpectedWarning(
                 Path("my_view_file.yaml"),
-                ["ViewApply"],
+                frozenset(["ViewApply"]),
                 "KeyError('externalId')",
             )
         ],
@@ -345,7 +340,7 @@ class TestDMSSchema:
         "schema, expected",
         list(invalid_schema_test_cases()),
     )
-    def test_invalid_schema(self, schema: DMSSchema, expected: list[DMSSchemaError | DMSSchemaWarning]) -> None:
+    def test_invalid_schema(self, schema: DMSSchema, expected: list[NeatIssue]) -> None:
         expected_errors = [error for error in expected if isinstance(error, NeatError)]
         expected_warnings = [warning for warning in expected if isinstance(warning, NeatWarning)]
         with warnings.catch_warnings(record=True) as warning_logger:
@@ -394,7 +389,7 @@ class TestDMSSchema:
         list(invalid_raw_str_test_cases()),
     )
     def test_load_invalid_raw_str(
-        self, raw_str: str, context: dict[str, list[Path]], expected_issues: list[DMSSchemaError | DMSSchemaWarning]
+        self, raw_str: str, context: dict[str, list[Path]], expected_issues: list[NeatIssue]
     ) -> None:
         with warnings.catch_warnings(record=True) as warning_logger:
             _ = DMSSchema.load(raw_str, context)

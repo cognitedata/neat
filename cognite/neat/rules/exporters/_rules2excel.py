@@ -12,11 +12,10 @@ from openpyxl.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
 
-from cognite.neat.rules._shared import Rules
+from cognite.neat.rules._shared import VerifiedRules
 from cognite.neat.rules.models import (
     DataModelType,
     ExtensionCategory,
-    RoleTypes,
     SchemaCompleteness,
     SheetEntity,
 )
@@ -27,7 +26,7 @@ from cognite.neat.rules.models.information import InformationMetadata
 from ._base import BaseExporter
 
 
-class ExcelExporter(BaseExporter[Workbook]):
+class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     """Export rules to Excel.
 
     Args:
@@ -68,16 +67,14 @@ class ExcelExporter(BaseExporter[Workbook]):
         "Classes": "Definition of Classes",
         "Views": "Definition of Views",
         "Containers": "Definition of Containers",
+        "Nodes": "Definition of Nodes",
+        "Enum": "Definition of Enum Collections",
     }
     style_options = get_args(Style)
     dump_options = get_args(DumpOptions)
 
     def __init__(
-        self,
-        styling: Style = "default",
-        output_role: RoleTypes | None = None,
-        dump_as: DumpOptions = "user",
-        new_model_id: tuple[str, str] | None = None,
+        self, styling: Style = "default", dump_as: DumpOptions = "user", new_model_id: tuple[str, str] | None = None
     ):
         if styling not in self.style_options:
             raise ValueError(f"Invalid styling: {styling}. Valid options are {self.style_options}")
@@ -85,11 +82,10 @@ class ExcelExporter(BaseExporter[Workbook]):
             raise ValueError(f"Invalid dump_as: {dump_as}. Valid options are {self.dump_options}")
         self.styling = styling
         self._styling_level = self.style_options.index(styling)
-        self.output_role = output_role
         self.new_model_id = new_model_id
         self.dump_as = dump_as
 
-    def export_to_file(self, rules: Rules, filepath: Path) -> None:
+    def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
         """Exports transformation rules to excel file."""
         data = self.export(rules)
         try:
@@ -98,8 +94,7 @@ class ExcelExporter(BaseExporter[Workbook]):
             data.close()
         return None
 
-    def export(self, rules: Rules) -> Workbook:
-        rules = self._convert_to_output_role(rules, self.output_role)
+    def export(self, rules: VerifiedRules) -> Workbook:
         workbook = Workbook()
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
@@ -147,7 +142,7 @@ class ExcelExporter(BaseExporter[Workbook]):
         self,
         workbook: Workbook,
         dumped_rules: dict[str, Any],
-        rules: Rules,
+        rules: VerifiedRules,
         sheet_prefix: str = "",
     ):
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
@@ -279,9 +274,7 @@ class _MetadataCreator:
 
         new_metadata = self._create_new_info(now)
         if isinstance(metadata, DMSMetadata):
-            from cognite.neat.rules.models.information._converter import (
-                _InformationRulesConverter,
-            )
+            from cognite.neat.rules.transformers._converters import _InformationRulesConverter
 
             output_metadata: DMSMetadata | InformationMetadata = _InformationRulesConverter._convert_metadata_to_dms(
                 new_metadata

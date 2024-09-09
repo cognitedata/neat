@@ -1,5 +1,4 @@
 import json
-import logging
 from pathlib import Path
 from typing import ClassVar, cast
 
@@ -8,8 +7,8 @@ from rdflib import URIRef
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors import RdfFileExtractor
 from cognite.neat.graph.extractors._mock_graph_generator import MockGraphGenerator
+from cognite.neat.issues.errors import WorkflowStepNotInitializedError
 from cognite.neat.rules._shared import DMSRules, InformationRules
-from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import MultiRuleData, NeatGraph
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -42,10 +41,10 @@ class GraphFromMockData(Step):
     ]
 
     def run(  # type: ignore[override, syntax]
-        self, rules: MultiRuleData, graph_store: NeatGraph
+        self, rules: MultiRuleData, store: NeatGraph
     ) -> FlowMessage:
         if self.configs is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         if not rules.information and not rules.dms:
             return FlowMessage(
@@ -53,9 +52,6 @@ class GraphFromMockData(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        logging.info(50 * "#")
-        logging.info(50 * "#")
-        logging.info(self.configs["Class count"])
         try:
             class_count = json.loads(self.configs["Class count"]) if self.configs["Class count"] else {}
         except Exception:
@@ -69,9 +65,9 @@ class GraphFromMockData(Step):
             class_count,
         )
 
-        NeatGraph.graph.write(extractor)
+        store.graph.write(extractor)
 
-        return FlowMessage(output_text=f"Instances loaded to the {graph_store.__class__.__name__}")
+        return FlowMessage(output_text=f"Instances loaded to the {store.__class__.__name__}")
 
 
 class GraphFromRdfFile(Step):
@@ -108,12 +104,12 @@ class GraphFromRdfFile(Step):
         ),
     ]
 
-    def run(self, graph_store: NeatGraph) -> FlowMessage:  # type: ignore[override, syntax]
+    def run(self, store: NeatGraph) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         if source_file := self.configs["File path"]:
-            NeatGraph.graph.write(
+            store.graph.write(
                 RdfFileExtractor(  # type: ignore[abstract]
                     filepath=self.data_store_path / Path(source_file),
                     mime_type=self.configs["MIME type"],  # type: ignore[arg-type]

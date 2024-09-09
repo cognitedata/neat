@@ -4,24 +4,23 @@ from typing import Any
 import pytest
 from cognite.client import data_modeling as dm
 
+from cognite.neat.constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.issues import NeatError
-from cognite.neat.issues.errors.general import NeatValueError
-from cognite.neat.issues.errors.resources import ResourceNotDefinedError
+from cognite.neat.issues.errors import NeatValueError, ResourceNotDefinedError
 from cognite.neat.rules.models import DMSRules, SheetList, data_types
-from cognite.neat.rules.models._constants import DMS_CONTAINER_SIZE_LIMIT
 from cognite.neat.rules.models.data_types import DataType, String
 from cognite.neat.rules.models.entities import ClassEntity, MultiValueTypeInfo
 from cognite.neat.rules.models.information import (
     InformationClass,
+    InformationInputRules,
     InformationRules,
-    InformationRulesInput,
 )
-from cognite.neat.rules.models.information._converter import _InformationRulesConverter
 from cognite.neat.rules.models.information._rules_input import (
-    InformationClassInput,
-    InformationMetadataInput,
-    InformationPropertyInput,
+    InformationInputClass,
+    InformationInputMetadata,
+    InformationInputProperty,
 )
+from cognite.neat.rules.transformers._converters import InformationToDMS, _InformationRulesConverter
 
 
 def case_insensitive_value_types():
@@ -156,7 +155,7 @@ def incomplete_rules_case():
             ],
         },
         ResourceNotDefinedError[ClassEntity](
-            ClassEntity(prefix="power", suffix="GeneratingUnit2"), "Class", "Classes sheet"
+            ClassEntity(prefix="power", suffix="GeneratingUnit2"), "class", "Classes sheet"
         ),
         id="missing_rule",
     )
@@ -197,7 +196,7 @@ class TestInformationRules:
 
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         david_rules = InformationRules.model_validate(david_spreadsheet)
-        dms_rules = david_rules.as_dms_rules()
+        dms_rules = InformationToDMS().transform(david_rules).rules
 
         assert isinstance(dms_rules, DMSRules)
 
@@ -213,8 +212,7 @@ class TestInformationRules:
             new_classes.append(cls_)
         olav_rules_copy.classes = new_classes
         ## End of temporary code
-
-        dms_rules = olav_rules_copy.as_dms_rules()
+        dms_rules = InformationToDMS().transform(olav_rules_copy).rules
 
         assert isinstance(dms_rules, DMSRules)
         schema = dms_rules.as_schema()
@@ -281,8 +279,7 @@ class TestInformationRulesConverter:
             "WindFarm": {"EnergyArea"},
             "WindTurbine": {"GeneratingUnit"},
         }
-
-        dms_rules = svein_harald_information_rules.as_dms_rules()
+        dms_rules = InformationToDMS().transform(svein_harald_information_rules).rules
 
         assert isinstance(dms_rules, DMSRules)
         assert dms_rules.last is not None
@@ -295,8 +292,8 @@ class TestInformationRulesConverter:
         assert actual == expected
 
     def test_convert_above_container_limit(self) -> None:
-        info = InformationRulesInput(
-            metadata=InformationMetadataInput(
+        info = InformationInputRules(
+            metadata=InformationInputMetadata(
                 schema_="complete",
                 prefix="bad_model",
                 namespace="http://purl.org/cognite/bad_model",
@@ -304,18 +301,18 @@ class TestInformationRulesConverter:
                 version="0.1.0",
                 creator="Anders",
             ),
-            classes=[InformationClassInput(class_="MassiveClass")],
+            classes=[InformationInputClass(class_="MassiveClass")],
             properties=[
-                InformationPropertyInput(
+                InformationInputProperty(
                     class_="MassiveClass",
                     property_=f"property_{no}",
                     value_type="string",
                 )
-                for no in range(DMS_CONTAINER_SIZE_LIMIT + 1)
+                for no in range(DMS_CONTAINER_PROPERTY_SIZE_LIMIT + 1)
             ],
         ).as_rules()
 
-        dms_rules = info.as_dms_rules()
+        dms_rules = InformationToDMS().transform(info).rules
 
         assert len(dms_rules.containers) == 2
 

@@ -6,11 +6,10 @@ from typing import ClassVar
 from cognite.client import CogniteClient
 
 from cognite.neat.issues import NeatIssueList
-from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
+from cognite.neat.issues.errors import ResourceNotFoundError, WorkflowStepNotInitializedError
 from cognite.neat.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules.models import DMSRules, SchemaCompleteness
 from cognite.neat.utils.cdf.loaders import ViewLoader
-from cognite.neat.workflows._exceptions import StepNotInitialized
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import MultiRuleData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -42,7 +41,7 @@ class ValidateRulesAgainstCDF(Step):
 
     def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         if not isinstance(rules.dms, DMSRules):
             return FlowMessage(
@@ -64,17 +63,17 @@ class ValidateRulesAgainstCDF(Step):
         missing_spaces = [
             error.identifier
             for error in errors
-            if isinstance(error, ReferredResourceNotFoundError) and error.resource_type == "Space"
+            if isinstance(error, ResourceNotFoundError) and error.resource_type == "Space"
         ]
         missing_views = [
             error.identifier
             for error in errors
-            if isinstance(error, ReferredResourceNotFoundError) and error.resource_type == "View"
+            if isinstance(error, ResourceNotFoundError) and error.resource_type == "View"
         ]
         missing_containers = [
             error.identifier
             for error in errors
-            if isinstance(error, ReferredResourceNotFoundError) and error.resource_type == "Container"
+            if isinstance(error, ResourceNotFoundError) and error.resource_type == "Container"
         ]
 
         retrieved_spaces = cdf_client.data_modeling.spaces.retrieve(missing_spaces).as_write()

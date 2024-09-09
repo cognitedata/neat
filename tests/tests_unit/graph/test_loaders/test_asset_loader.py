@@ -9,10 +9,12 @@ from rdflib import URIRef
 from cognite.neat.graph.examples import nordic44_knowledge_graph
 from cognite.neat.graph.extractors import RdfFileExtractor
 from cognite.neat.graph.loaders import AssetLoader
-from cognite.neat.graph.stores import NeatGraphStore
 from cognite.neat.graph.transformers import AddSelfReferenceProperty
-from cognite.neat.issues.errors.resources import InvalidResourceError
+from cognite.neat.issues import NeatError
+from cognite.neat.issues.errors import ResourceCreationError
 from cognite.neat.rules.models import AssetRules
+from cognite.neat.rules.transformers import AssetToInformation
+from cognite.neat.store import NeatGraphStore
 
 
 @pytest.fixture()
@@ -20,7 +22,7 @@ def asset_store(asset_rules) -> NeatGraphStore:
     asset_store = NeatGraphStore.from_oxi_store()
     asset_store.write(RdfFileExtractor(nordic44_knowledge_graph, base_uri=URIRef("http://purl.org/nordic44#")))
 
-    asset_store.add_rules(asset_rules.as_information_rules())
+    asset_store.add_rules(AssetToInformation().transform(asset_rules).rules)
     asset_store.transform(AddSelfReferenceProperty(rules=asset_store.rules))
 
     return asset_store
@@ -37,7 +39,7 @@ class TestAssetLoader:
         relationships = []
         errors = []
         for r in loader.load():
-            if isinstance(r, InvalidResourceError):
+            if isinstance(r, ResourceCreationError):
                 errors.append(r)
             elif isinstance(r, AssetWrite):
                 assets.append(r)
@@ -68,12 +70,14 @@ class TestAssetLoader:
         relationships = []
         errors = []
         for r in result:
-            if isinstance(r, InvalidResourceError):
+            if isinstance(r, NeatError):
                 errors.append(r)
             elif isinstance(r, AssetWrite):
                 assets.append(r)
             elif isinstance(r, RelationshipWrite):
                 relationships.append(r)
+            else:
+                raise ValueError(f"Unexpected result: {r}")
 
         assert len(errors) == 26
         assert len(assets) == 630

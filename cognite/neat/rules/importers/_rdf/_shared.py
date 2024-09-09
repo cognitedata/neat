@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from rdflib import OWL, Literal, Namespace
 
-from cognite.neat.rules.models._base import MatchType
+from cognite.neat.rules.models._base_rules import MatchType
 from cognite.neat.rules.models.data_types import _XSD_TYPES
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 from cognite.neat.utils.regex_patterns import PATTERNS
@@ -23,13 +23,13 @@ def parse_raw_classes_dataframe(query_results: list[tuple]) -> pd.DataFrame:
             "Comment",
         ],
     )
+
     if df.empty:
         return df
 
     # # remove NaNs
     df.replace(np.nan, "", regex=True, inplace=True)
 
-    df.Reference = df.Class
     df.Class = df.Class.apply(lambda x: remove_namespace_from_uri(x))
     df["Match Type"] = len(df) * [MatchType.exact]
     df["Comment"] = len(df) * [None]
@@ -202,7 +202,7 @@ def parse_raw_properties_dataframe(query_results: list[tuple]) -> pd.DataFrame:
         return df
 
     df.replace(np.nan, "", regex=True, inplace=True)
-    df.Reference = df.Reference if df.Reference.unique() else df.Property.copy(deep=True)
+
     df.Class = df.Class.apply(lambda x: remove_namespace_from_uri(x))
     df.Property = df.Property.apply(lambda x: remove_namespace_from_uri(x))
     df["Value Type"] = df["Value Type"].apply(lambda x: remove_namespace_from_uri(x))
@@ -231,7 +231,7 @@ def clean_up_properties(df: pd.DataFrame) -> pd.DataFrame:
                     "Min Count": property_grouped_df["Min Count"].unique()[0],
                     "Max Count": property_grouped_df["Max Count"].unique()[0],
                     "Default": property_grouped_df["Default"].unique()[0],
-                    "Reference": property_grouped_df["Reference"].unique()[0] or property_,
+                    "Reference": property_grouped_df["Reference"].unique()[0],
                     "Match Type": property_grouped_df["Match Type"].unique()[0],
                     "Comment": property_grouped_df["Comment"].unique()[0],
                     "_property_type": property_grouped_df["_property_type"].unique()[0],

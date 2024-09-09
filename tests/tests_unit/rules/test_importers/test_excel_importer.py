@@ -5,12 +5,19 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
 
 from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors.external import NeatFileNotFoundError
-from cognite.neat.issues.errors.resources import MultiplePropertyDefinitionsError, ResourceNotDefinedError
-from cognite.neat.issues.neat_warnings.models import CDFNotSupportedWarning
-from cognite.neat.rules import issues as validation
+from cognite.neat.issues.errors import (
+    FileNotFoundNeatError,
+    PropertyDefinitionDuplicatedError,
+    ResourceNotDefinedError,
+    RowError,
+)
+from cognite.neat.issues.warnings import (
+    NotSupportedHasDataFilterLimitWarning,
+    NotSupportedViewContainerLimitWarning,
+)
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
+from cognite.neat.rules.transformers import ImporterPipeline
 from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 
@@ -18,7 +25,7 @@ from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 def invalid_rules_filepaths():
     yield pytest.param(
         DOC_RULES / "not-existing.xlsx",
-        IssueList([NeatFileNotFoundError(DOC_RULES / "not-existing.xlsx")]),
+        IssueList([FileNotFoundNeatError(DOC_RULES / "not-existing.xlsx")]),
         id="Not existing file",
     )
     major, minor, *_ = VERSION.split(".")
@@ -27,7 +34,8 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "invalid_property_dms_rules.xlsx",
         IssueList(
             [
-                validation.spreadsheet.InvalidPropertyError(
+                RowError(
+                    sheet_name="Properties",
                     column="Is List",
                     row=4,
                     type="bool_parsing",
@@ -44,9 +52,9 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "inconsistent_container_dms_rules.xlsx",
         IssueList(
             [
-                MultiplePropertyDefinitionsError[ContainerId](
+                PropertyDefinitionDuplicatedError(
                     ContainerId("neat", "Flowable"),
-                    "Container",
+                    "container",
                     "maxFlow",
                     frozenset({"float32", "float64"}),
                     (3, 4),
@@ -60,17 +68,17 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "missing_view_container_dms_rules.xlsx",
         IssueList(
             [
-                ResourceNotDefinedError[ViewId](
+                ResourceNotDefinedError(
                     ViewId("neat", "Pump", "1"),
-                    "View",
+                    "view",
                     location="Views Sheet",
                     column_name="View",
                     row_number=3,
                     sheet_name="Properties",
                 ),
-                ResourceNotDefinedError[ContainerId](
+                ResourceNotDefinedError(
                     ContainerId("neat", "Pump"),
-                    "Container",
+                    "container",
                     location="Containers Sheet",
                     column_name="Container",
                     row_number=3,
@@ -84,17 +92,13 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "too_many_containers_per_view.xlsx",
         IssueList(
             [
-                CDFNotSupportedWarning(
-                    "More than 10 containers in a view",
-                    f"The view {ViewId(space='neat', external_id='Asset', version='1')!r} "
-                    f"maps to more than 10 containers.",
-                    "Reduce the number of containers the view maps to.",
+                NotSupportedViewContainerLimitWarning(
+                    ViewId(space="neat", external_id="Asset", version="1"),
+                    11,
                 ),
-                CDFNotSupportedWarning(
-                    "More than 10 containers in a view",
-                    f"The view {ViewId(space='neat', external_id='Asset', version='1')!r} "
-                    "maps to more than 10 containers.",
-                    "Reduce the number of containers the view maps to.",
+                NotSupportedHasDataFilterLimitWarning(
+                    ViewId(space="neat", external_id="Asset", version="1"),
+                    11,
                 ),
             ]
         ),
@@ -148,17 +152,19 @@ class TestExcelImporter:
         convert_to: RoleTypes | None,
     ):
         importer = ExcelImporter(filepath)
-        rules = importer.to_rules(errors="raise")
+
+        rules = ImporterPipeline.verify(importer)
         assert isinstance(rules, rule_type)
         if convert_to is not None:
-            converted = importer._to_output(rules, IssueList(), errors="raise", role=convert_to)
+            converted = ImporterPipeline.verify(importer, role=convert_to)
             assert converted.metadata.role is convert_to
 
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())
     def test_import_invalid_rules(self, filepath: Path, expected_issues: IssueList):
         importer = ExcelImporter(filepath)
 
-        _, issues = importer.to_rules(errors="continue")
+        result = ImporterPipeline.try_verify(importer)
+        issues = result.issues
 
         issues = sorted(issues)
         expected_issues = sorted(expected_issues)

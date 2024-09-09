@@ -4,76 +4,27 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Any, Literal, overload
+from typing import Any, Generic, Literal
 
 from pydantic import ValidationError
 from rdflib import Namespace
 
 from cognite.neat.issues import IssueList, NeatError, NeatWarning
-from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.issues.base import (
-    NeatValidationError,
-    ValidationWarning,
-)
-from cognite.neat.rules.models import AssetRules, DMSRules, InformationRules, RoleTypes
+from cognite.neat.rules._shared import ReadRules, T_InputRules
 from cognite.neat.utils.auxiliary import class_html_doc
 
 
-class BaseImporter(ABC):
+class BaseImporter(ABC, Generic[T_InputRules]):
     """
     BaseImporter class which all importers inherit from.
     """
 
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
-
-    @overload
-    def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]: ...
-
     @abstractmethod
-    def to_rules(
-        self,
-        errors: Literal["raise", "continue"] = "continue",
-        role: RoleTypes | None = None,
-    ) -> tuple[Rules | None, IssueList] | Rules:
-        """
-        Creates `Rules` object from the data for target role.
-        """
-        ...
+    def to_rules(self) -> ReadRules[T_InputRules]:
+        """Creates `Rules` object from the data for target role."""
+        raise NotImplementedError()
 
-    @classmethod
-    def _to_output(
-        cls,
-        rules: Rules,
-        issues: IssueList,
-        errors: Literal["raise", "continue"] = "continue",
-        role: RoleTypes | None = None,
-    ) -> tuple[Rules | None, IssueList] | Rules:
-        """Converts the rules to the output format."""
-
-        if rules.metadata.role is role or role is None:
-            output = rules
-        elif isinstance(rules, DMSRules) or isinstance(rules, AssetRules) and role is RoleTypes.information:
-            output = rules.as_information_rules()
-        elif isinstance(rules, InformationRules) or isinstance(rules, AssetRules) and role is RoleTypes.dms:
-            output = rules.as_dms_rules()
-        else:
-            raise NotImplementedError(f"Role {role} is not supported for {type(rules).__name__} rules")
-
-        if errors == "raise":
-            return output
-        else:
-            return output, issues
-
-    @classmethod
-    def _return_or_raise(cls, issue_list: IssueList, errors: Literal["raise", "continue"]) -> tuple[None, IssueList]:
-        if errors == "raise":
-            raise issue_list.as_errors()
-        return None, issue_list
-
-    def _default_metadata(self):
+    def _default_metadata(self) -> dict[str, Any]:
         return {
             "prefix": "neat",
             "schema": "partial",
@@ -103,8 +54,8 @@ class _FutureResult:
 @contextmanager
 def _handle_issues(
     issues: IssueList,
-    error_cls: type[NeatError] = NeatValidationError,
-    warning_cls: type[NeatWarning] = ValidationWarning,
+    error_cls: type[NeatError] = NeatError,
+    warning_cls: type[NeatWarning] = NeatWarning,
     error_args: dict[str, Any] | None = None,
 ) -> Iterator[_FutureResult]:
     """This is an internal help function to handle issues and warnings.

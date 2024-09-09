@@ -26,18 +26,20 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.data_classes.transformations.common import Edges, EdgeType, Nodes, ViewInfo
 
 from cognite.neat.issues import NeatError
-from cognite.neat.issues.errors.external import InvalidYamlError
-from cognite.neat.issues.errors.properties import ReferredPropertyNotFoundError
-from cognite.neat.issues.errors.resources import ReferredResourceNotFoundError
-from cognite.neat.issues.neat_warnings.external import UnexpectedFileTypeWarning
-from cognite.neat.issues.neat_warnings.resources import FailedLoadingResourcesWarning, MultipleResourcesWarning
-from cognite.neat.rules.issues.dms import (
-    ContainerPropertyUsedMultipleTimesError,
-    DirectRelationMissingSourceWarning,
-    DuplicatedViewInDataModelError,
-    IncompleteSchemaError,
-    MissingViewInModelWarning,
+from cognite.neat.issues.errors import (
+    NeatYamlError,
+    PropertyMappingDuplicatedError,
+    PropertyNotFoundError,
+    ResourceDuplicatedError,
+    ResourceNotFoundError,
 )
+from cognite.neat.issues.warnings import (
+    FileTypeUnexpectedWarning,
+    ResourceNotFoundWarning,
+    ResourceRetrievalWarning,
+    ResourcesDuplicatedWarning,
+)
+from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat.utils.cdf.data_classes import (
     CogniteResourceDict,
@@ -94,11 +96,11 @@ class DMSSchema:
         directly_referenced_containers = view_by_id[view_id].referenced_containers()
         inherited_referenced_containers = set()
 
-        for view_id in view_inheritance:
-            if implemented_view := view_by_id.get(view_id):
+        for parent_id in view_inheritance:
+            if implemented_view := view_by_id.get(parent_id):
                 inherited_referenced_containers |= implemented_view.referenced_containers()
             else:
-                raise IncompleteSchemaError(missing_component=view_id).as_exception()
+                raise ResourceNotFoundError(parent_id, "view", view_id, "view")
 
         return directly_referenced_containers | inherited_referenced_containers
 
@@ -165,10 +167,14 @@ class DMSSchema:
             connection_referenced_view_ids |= cls._connection_references(view)
         connection_referenced_view_ids = connection_referenced_view_ids - existing_view_ids
         if connection_referenced_view_ids:
-            warnings.warn(MissingViewInModelWarning(data_model.as_id(), connection_referenced_view_ids), stacklevel=2)
+            for view_id in connection_referenced_view_ids:
+                warnings.warn(
+                    ResourceNotFoundWarning(view_id, "view", data_model_write.as_id(), "data model"),
+                    stacklevel=2,
+                )
             connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
             if failed := connection_referenced_view_ids - set(connection_referenced_views.as_ids()):
-                warnings.warn(FailedLoadingResourcesWarning[dm.ViewId](frozenset(failed), "View"), stacklevel=2)
+                warnings.warn(ResourceRetrievalWarning(frozenset(failed), "view"), stacklevel=2)
             views.extend(connection_referenced_views)
 
         # We need to include parent views in the schema to make sure that the schema is valid.
@@ -265,7 +271,9 @@ class DMSSchema:
                     try:
                         loaded = yaml.safe_load(yaml_file.read_text())
                     except Exception as e:
-                        warnings.warn(UnexpectedFileTypeWarning(yaml_file, [".yaml", ".yml"], str(e)), stacklevel=2)
+                        warnings.warn(
+                            FileTypeUnexpectedWarning(yaml_file, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
+                        )
                         continue
 
                     if isinstance(loaded, list):
@@ -355,7 +363,9 @@ class DMSSchema:
                         try:
                             loaded = yaml.safe_load(zip_ref.read(file_info).decode())
                         except Exception as e:
-                            warnings.warn(UnexpectedFileTypeWarning(filename, [".yaml", ".yml"], str(e)), stacklevel=2)
+                            warnings.warn(
+                                FileTypeUnexpectedWarning(filename, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
+                            )
                             continue
                         if isinstance(loaded, list):
                             data[attr_name].extend(loaded)
@@ -411,11 +421,9 @@ class DMSSchema:
             try:
                 data_dict = yaml.safe_load(data)
             except Exception as e:
-                raise InvalidYamlError(str(e)).as_exception() from None
+                raise NeatYamlError(str(e)) from None
             if not isinstance(data_dict, dict) and all(isinstance(v, list) for v in data_dict.values()):
-                raise InvalidYamlError(
-                    f"Invalid data structure: {type(data)}", "dict[str, list[Any]]"
-                ).as_exception() from None
+                raise NeatYamlError(f"Invalid data structure: {type(data)}", "dict[str, list[Any]]") from None
         else:
             data_dict = data
         loaded: dict[str, Any] = {}
@@ -423,20 +431,32 @@ class DMSSchema:
             if items := data_dict.get(attr.name) or data_dict.get(to_camel(attr.name)):
                 if attr.name == "data_model":
                     if isinstance(items, list) and len(items) > 1:
-                        warnings.warn(
-                            MultipleResourcesWarning[str](
-                                frozenset([item.get("externalId", "Unknown") for item in items]),
-                                "DataModel",
-                            ),
-                            stacklevel=2,
-                        )
+                        try:
+                            data_model_ids = [dm.DataModelId.load(item) for item in items]
+                        except Exception as e:
+                            data_model_file = context.get(attr.name, [Path("UNKNOWN")])[0]
+                            warnings.warn(
+                                FileTypeUnexpectedWarning(
+                                    data_model_file, frozenset([dm.DataModelApply.__name__]), str(e)
+                                ),
+                                stacklevel=2,
+                            )
+                        else:
+                            warnings.warn(
+                                ResourcesDuplicatedWarning(
+                                    frozenset(data_model_ids),
+                                    "data model",
+                                    "Will use the first DataModel.",
+                                ),
+                                stacklevel=2,
+                            )
                     item = items[0] if isinstance(items, list) else items
                     try:
                         loaded[attr.name] = dm.DataModelApply.load(item)
                     except Exception as e:
                         data_model_file = context.get(attr.name, [Path("UNKNOWN")])[0]
                         warnings.warn(
-                            UnexpectedFileTypeWarning(data_model_file, [dm.DataModelApply.__name__], str(e)),
+                            FileTypeUnexpectedWarning(data_model_file, frozenset([dm.DataModelApply.__name__]), str(e)),
                             stacklevel=2,
                         )
                 else:
@@ -452,7 +472,9 @@ class DMSSchema:
     def _load_individual_resources(cls, items: list, attr: Field, trigger_error: str, resource_context) -> list[Any]:
         resources = attr.type([])
         if not hasattr(attr.type, "_RESOURCE"):
-            warnings.warn(UnexpectedFileTypeWarning(Path("UNKNOWN"), [attr.type.__name__], trigger_error), stacklevel=2)
+            warnings.warn(
+                FileTypeUnexpectedWarning(Path("UNKNOWN"), frozenset([attr.type.__name__]), trigger_error), stacklevel=2
+            )
             return resources
         # Fallback to load individual resources.
         single_cls = attr.type._RESOURCE
@@ -465,7 +487,9 @@ class DMSSchema:
                 except IndexError:
                     filepath = Path("UNKNOWN")
                 # We use repr(e) instead of str(e) to include the exception type in the warning message
-                warnings.warn(UnexpectedFileTypeWarning(filepath, [single_cls.__name__], repr(e)), stacklevel=2)
+                warnings.warn(
+                    FileTypeUnexpectedWarning(filepath, frozenset([single_cls.__name__]), repr(e)), stacklevel=2
+                )
             else:
                 resources.append(loaded_instance)
         return resources
@@ -527,41 +551,31 @@ class DMSSchema:
         for container in self.containers.values():
             if container.space not in defined_spaces:
                 errors.add(
-                    ReferredResourceNotFoundError[str, dm.ContainerId](
-                        container.space, "Space", container.as_id(), "Container"
-                    )
+                    ResourceNotFoundError[str, dm.ContainerId](container.space, "space", container.as_id(), "container")
                 )
 
         for view in self.views.values():
             view_id = view.as_id()
             if view.space not in defined_spaces:
-                errors.add(ReferredResourceNotFoundError[str, dm.ViewId](view.space, "Space", view_id, "View"))
+                errors.add(ResourceNotFoundError(view.space, "space", view_id, "view"))
 
             for parent in view.implements or []:
                 if parent not in defined_views:
-                    errors.add(
-                        ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
-                            parent, "View", view_id, "View", property_name="implements"
-                        )
-                    )
+                    errors.add(PropertyNotFoundError(parent, "view", "implements", view_id, "view"))
 
             for prop_name, prop in (view.properties or {}).items():
                 if isinstance(prop, dm.MappedPropertyApply):
                     ref_container = defined_containers.get(prop.container)
                     if ref_container is None:
-                        errors.add(
-                            ReferredResourceNotFoundError[dm.ContainerId, dm.ViewId](
-                                prop.container, "Container", view_id, "View"
-                            )
-                        )
+                        errors.add(ResourceNotFoundError(prop.container, "container", view_id, "view"))
                     elif prop.container_property_identifier not in ref_container.properties:
                         errors.add(
-                            ReferredPropertyNotFoundError[dm.ContainerId, dm.ViewId](
+                            PropertyNotFoundError(
                                 prop.container,
-                                "Container",
+                                "container",
+                                prop.container_property_identifier,
                                 view_id,
-                                "View",
-                                property_name=prop.container_property_identifier,
+                                "view",
                             )
                         )
                     else:
@@ -569,26 +583,19 @@ class DMSSchema:
 
                         if isinstance(container_property.type, dm.DirectRelation) and prop.source is None:
                             warnings.warn(
-                                DirectRelationMissingSourceWarning(view_id=view_id, property=prop_name), stacklevel=2
+                                DirectRelationMissingSourceWarning(view_id, prop_name),
+                                stacklevel=2,
                             )
 
                 if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
-                    errors.add(
-                        ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
-                            prop.source, "View", view_id, "View", property_name=prop_name
-                        )
-                    )
+                    errors.add(PropertyNotFoundError(prop.source, "view", prop_name, view_id, "view"))
 
                 if (
                     isinstance(prop, dm.EdgeConnectionApply)
                     and prop.edge_source is not None
                     and prop.edge_source not in defined_views
                 ):
-                    errors.add(
-                        ReferredPropertyNotFoundError[dm.ViewId, dm.ViewId](
-                            prop.edge_source, "View", view_id, "View", property_name=prop_name
-                        )
-                    )
+                    errors.add(PropertyNotFoundError(prop.edge_source, "view", prop_name, view_id, "view"))
 
             # This allows for multiple view properties to be mapped to the same container property,
             # as long as they have different external_id, otherwise this will lead to raising
@@ -613,36 +620,36 @@ class DMSSchema:
                         == (container_id, container_property_identifier)
                     ]
                     errors.add(
-                        ContainerPropertyUsedMultipleTimesError(
-                            container=container_id,
-                            property=container_property_identifier,
-                            referred_by=frozenset({(view_id, prop_name) for prop_name in view_properties}),
+                        PropertyMappingDuplicatedError(
+                            container_id,
+                            "container",
+                            container_property_identifier,
+                            frozenset({dm.PropertyId(view_id, prop_name) for prop_name in view_properties}),
+                            "view property",
                         )
                     )
 
         if self.data_model:
             model = self.data_model
             if model.space not in defined_spaces:
-                errors.add(
-                    ReferredResourceNotFoundError[str, dm.DataModelId](
-                        model.space, "Space", model.as_id(), "Data Model"
-                    )
-                )
+                errors.add(ResourceNotFoundError(model.space, "space", model.as_id(), "data model"))
 
             view_counts: dict[dm.ViewId, int] = defaultdict(int)
             for view_id_or_class in model.views or []:
                 view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
                 if view_id not in defined_views:
-                    errors.add(
-                        ReferredResourceNotFoundError[dm.ViewId, dm.DataModelId](
-                            view_id, "View", model.as_id(), "DataModel"
-                        )
-                    )
+                    errors.add(ResourceNotFoundError(view_id, "view", model.as_id(), "data model"))
                 view_counts[view_id] += 1
 
             for view_id, count in view_counts.items():
                 if count > 1:
-                    errors.add(DuplicatedViewInDataModelError(referred_by=model.as_id(), view=view_id))
+                    errors.add(
+                        ResourceDuplicatedError(
+                            view_id,
+                            "view",
+                            repr(model.as_id()),
+                        )
+                    )
 
         return list(errors)
 
@@ -850,7 +857,9 @@ class PipelineSchema(DMSSchema):
                 try:
                     loaded = yaml.safe_load(yaml_file.read_text())
                 except Exception as e:
-                    warnings.warn(UnexpectedFileTypeWarning(yaml_file, [".yaml", ".yml"], str(e)), stacklevel=2)
+                    warnings.warn(
+                        FileTypeUnexpectedWarning(yaml_file, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
+                    )
                     continue
                 if isinstance(loaded, list):
                     data[attr_name].extend(loaded)
@@ -916,7 +925,9 @@ class PipelineSchema(DMSSchema):
                         try:
                             loaded = yaml.safe_load(zip_ref.read(file_info).decode())
                         except Exception as e:
-                            warnings.warn(UnexpectedFileTypeWarning(filepath, [".yaml", ".yml"], str(e)), stacklevel=2)
+                            warnings.warn(
+                                FileTypeUnexpectedWarning(filepath, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
+                            )
                             continue
                         if isinstance(loaded, list):
                             data[attr_name].extend(loaded)

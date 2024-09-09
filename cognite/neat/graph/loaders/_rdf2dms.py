@@ -13,15 +13,21 @@ from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
+from rdflib import RDF
 
-import cognite.neat.issues.errors.resources
 from cognite.neat.graph._tracking import LogTracker, Tracker
-from cognite.neat.graph.stores import NeatGraphStore
+from cognite.neat.graph.models import InstanceType
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors.resources import FailedConvertError, InvalidResourceError, ResourceNotFoundError
-from cognite.neat.issues.neat_warnings.models import InvalidClassWarning
+from cognite.neat.issues.errors import (
+    ResourceConvertionError,
+    ResourceCreationError,
+    ResourceDuplicatedError,
+    ResourceRetrievalError,
+)
+from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
+from cognite.neat.store import NeatGraphStore
 from cognite.neat.utils.auxiliary import create_sha256_hash
 from cognite.neat.utils.upload import UploadResult
 
@@ -69,9 +75,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         try:
             data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
         except Exception as e:
-            issues.append(
-                ResourceNotFoundError(identifier=repr(data_model_id), resource_type="Data Model", reason=str(e))
-            )
+            issues.append(ResourceRetrievalError(data_model_id, "data model", str(e)))
 
         return cls(graph_store, data_model, instance_space, {}, issues)
 
@@ -83,8 +87,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             data_model = rules.as_schema().as_read_model()
         except Exception as e:
             issues.append(
-                FailedConvertError(
+                ResourceConvertionError(
                     identifier=rules.metadata.as_identifier(),
+                    resource_type="DMS Rules",
                     target_format="read DMS model",
                     reason=str(e),
                 )
@@ -105,7 +110,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         for view in self.data_model.views:
             view_id = view.as_id()
             tracker.start(repr(view_id))
-            pydantic_cls, edge_by_properties, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
+            pydantic_cls, edge_by_type, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
             yield from issues
             tracker.issue(issues)
             class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
@@ -114,12 +119,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
-                    error = InvalidResourceError[str](resource_type="node", identifier=identifier, reason=str(e))
+                    error = ResourceCreationError(identifier, "node", error=str(e))
                     tracker.issue(error)
                     if stop_on_exception:
-                        raise error.as_exception() from e
+                        raise error from e
                     yield error
-                yield from self._create_edges(identifier, properties, edge_by_properties, tracker)
+                yield from self._create_edges(identifier, properties, edge_by_type, tracker)
             tracker.finish(repr(view_id))
 
     def write_to_file(self, filepath: Path) -> None:
@@ -144,16 +149,16 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def _create_validation_classes(
         self, view: dm.View
-    ) -> tuple[type[BaseModel], dict[str, dm.EdgeConnection], NeatIssueList]:
+    ) -> tuple[type[BaseModel], dict[str, tuple[str, dm.EdgeConnection]], NeatIssueList]:
         issues = IssueList()
         field_definitions: dict[str, tuple[type, Any]] = {}
-        edge_by_property: dict[str, dm.EdgeConnection] = {}
+        edge_by_property: dict[str, tuple[str, dm.EdgeConnection]] = {}
         validators: dict[str, classmethod] = {}
         direct_relation_by_property: dict[str, dm.DirectRelation] = {}
         json_fields: list[str] = []
         for prop_name, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
-                edge_by_property[prop_name] = prop
+                edge_by_property[prop.type.external_id] = prop_name, prop
             if isinstance(prop, dm.MappedProperty):
                 if isinstance(prop.type, dm.DirectRelation):
                     direct_relation_by_property[prop_name] = prop.type
@@ -162,9 +167,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     data_type = _DATA_TYPE_BY_DMS_TYPE.get(prop.type._type)
                     if not data_type:
                         issues.append(
-                            InvalidClassWarning(
-                                class_name=repr(view.as_id()),
-                                reason=f"Unknown data type for property {prop_name}: {prop.type._type}",
+                            PropertyTypeNotSupportedWarning(
+                                view.as_id(),
+                                "view",
+                                prop_name,
+                                prop.type._type,
                             )
                         )
                         continue
@@ -210,7 +217,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
-                if cls.model_fields[info.field_name].annotation is list:
+                if list.__name__ in _get_field_value_types(cls, info):
                     return [{"space": self.instance_space, "externalId": v} for v in value]
                 elif value:
                     return {"space": self.instance_space, "externalId": value[0]}
@@ -226,16 +233,17 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     def _create_node(
         self,
         identifier: str,
-        properties: dict[str, list[str]],
+        properties: dict[str | InstanceType, list[str]],
         pydantic_cls: type[BaseModel],
         view_id: dm.ViewId,
     ) -> dm.InstanceApply:
+        type_ = properties.pop(RDF.type, [None])[0]
         created = pydantic_cls.model_validate(properties)
 
         return dm.NodeApply(
             space=self.instance_space,
             external_id=identifier,
-            # type=#RDF type
+            type=dm.DirectRelationReference(view_id.space, type_) if type_ is not None else None,
             sources=[dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump().items()))],
         )
 
@@ -243,23 +251,23 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self,
         identifier: str,
         properties: dict[str, list[str]],
-        edge_by_properties: dict[str, dm.EdgeConnection],
+        edge_by_type: dict[str, tuple[str, dm.EdgeConnection]],
         tracker: Tracker,
     ) -> Iterable[dm.EdgeApply | NeatIssue]:
-        for prop, values in properties.items():
-            if prop not in edge_by_properties:
+        for predicate, values in properties.items():
+            if predicate not in edge_by_type:
                 continue
-            edge = edge_by_properties[prop]
+            prop_id, edge = edge_by_type[predicate]
             if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
-                error = cognite.neat.issues.errors.resources.InvalidResourceError[str](
+                error = ResourceDuplicatedError(
                     resource_type="edge",
                     identifier=identifier,
-                    reason=f"Multiple values for single edge {edge}. Expected only one.",
+                    location=f"Multiple values for single edge {edge}. Expected only one.",
                 )
                 tracker.issue(error)
                 yield error
             for target in values:
-                external_id = f"{identifier}.{prop}.{target}"
+                external_id = f"{identifier}.{prop_id}.{target}"
                 yield dm.EdgeApply(
                     space=self.instance_space,
                     external_id=(external_id if len(external_id) < 256 else create_sha256_hash(external_id)),

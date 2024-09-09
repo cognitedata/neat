@@ -9,20 +9,12 @@ from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespac
 from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
-from cognite.neat.rules.analysis import InformationAnalysis
-from cognite.neat.rules.issues.ontology import (
-    MetadataSheetNamespaceNotDefinedError,
-    MissingDataModelPrefixOrNamespaceWarning,
-    OntologyMultiDefinitionPropertyWarning,
-    OntologyMultiDomainPropertyWarning,
-    OntologyMultiLabeledPropertyWarning,
-    OntologyMultiRangePropertyWarning,
-    OntologyMultiTypePropertyWarning,
-    PrefixMissingError,
-    PropertiesDefinedMultipleTimesError,
-    PropertyDefinitionsNotForSamePropertyError,
+from cognite.neat.issues import MultiValueError
+from cognite.neat.issues.errors import (
+    PropertyDefinitionDuplicatedError,
 )
-from cognite.neat.rules.models import DMSRules
+from cognite.neat.issues.warnings import PropertyDefinitionDuplicatedWarning
+from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
 from cognite.neat.rules.models.information import (
@@ -31,43 +23,40 @@ from cognite.neat.rules.models.information import (
     InformationProperty,
     InformationRules,
 )
-from cognite.neat.utils.auxiliary import generate_exception_report
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseExporter
-from ._validation import are_properties_redefined
+from ._validation import duplicated_properties
 
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
 
-from cognite.neat.rules._shared import Rules
 
-
-class GraphExporter(BaseExporter[Graph], ABC):
-    def export_to_file(self, rules: Rules, filepath: Path) -> None:
+class GraphExporter(BaseExporter[InformationRules, Graph], ABC):
+    def export_to_file(self, rules: InformationRules, filepath: Path) -> None:
         self.export(rules).serialize(destination=filepath, encoding=self._encoding, newline=self._new_line)
 
 
 class OWLExporter(GraphExporter):
-    """Exports rules to an OWL ontology."""
+    """Exports verified information rules to an OWL ontology."""
 
-    def export(self, rules: Rules) -> Graph:
+    def export(self, rules: InformationRules) -> Graph:
         return Ontology.from_rules(rules).as_owl()
 
 
 class SHACLExporter(GraphExporter):
     """Exports rules to a SHACL graph."""
 
-    def export(self, rules: Rules) -> Graph:
+    def export(self, rules: InformationRules) -> Graph:
         return Ontology.from_rules(rules).as_shacl()
 
 
 class SemanticDataModelExporter(GraphExporter):
-    """Exports rules to a semantic data model."""
+    """Exports verified information rules to a semantic data model."""
 
-    def export(self, rules: Rules) -> Graph:
+    def export(self, rules: InformationRules) -> Graph:
         return Ontology.from_rules(rules).as_semantic_data_model()
 
 
@@ -94,34 +83,30 @@ class Ontology(OntologyModel):
     prefixes: dict[str, Namespace]
 
     @classmethod
-    def from_rules(cls, input_rules: Rules) -> Self:
+    def from_rules(cls, rules: InformationRules) -> Self:
         """
         Generates an ontology from a set of transformation rules.
 
         Args:
-            input_rules: The rules to generate the ontology from.
+            rules: The rules to generate the ontology from.
 
         Returns:
             An instance of Ontology.
         """
-        if isinstance(input_rules, InformationRules):
-            rules = input_rules
-        elif isinstance(input_rules, DMSRules):
-            rules = input_rules.as_information_rules()
-        else:
-            raise ValueError(f"{type(input_rules).__name__} cannot be exported to Ontology")
-
-        properties_redefined, redefinition_warnings = are_properties_redefined(rules, return_report=True)
-        if properties_redefined:
-            raise PropertiesDefinedMultipleTimesError(
-                report=generate_exception_report(redefinition_warnings)
-            ).as_exception()
-
-        if rules.prefixes is None:
-            raise PrefixMissingError().as_exception()
-
-        if rules.metadata.namespace is None:
-            raise MissingDataModelPrefixOrNamespaceWarning()
+        if duplicates := duplicated_properties(rules.properties):
+            errors = []
+            for (class_, property_), definitions in duplicates.items():
+                errors.append(
+                    PropertyDefinitionDuplicatedError(
+                        class_,
+                        "class",
+                        property_,
+                        frozenset({str(definition[1].value_type) for definition in definitions}),
+                        tuple(definition[0] for definition in definitions),
+                        "rows",
+                    )
+                )
+            raise MultiValueError(errors)
 
         class_dict = InformationAnalysis(rules).as_class_dict()
         return cls(
@@ -184,9 +169,6 @@ class Ontology(OntologyModel):
         for prefix, namespace in self.prefixes.items():
             owl.bind(prefix, namespace)
 
-        if self.metadata.namespace is None:
-            raise MetadataSheetNamespaceNotDefinedError().as_exception()
-
         owl.add((URIRef(self.metadata.namespace), RDF.type, OWL.Ontology))
         for property_ in self.properties:
             for triple in property_.triples:
@@ -233,8 +215,6 @@ class OWLMetadata(InformationMetadata):
     @property
     def triples(self) -> list[tuple]:
         # Mandatory triples originating from Metadata mandatory fields
-        if self.namespace is None:
-            raise MetadataSheetNamespaceNotDefinedError().as_exception()
         triples: list[tuple] = [
             (URIRef(self.namespace), DCTERMS.hasVersion, Literal(self.version)),
             (URIRef(self.namespace), OWL.versionInfo, Literal(self.version)),
@@ -323,16 +303,17 @@ class OWLProperty(OntologyModel):
     range_: set[URIRef]
     namespace: Namespace
 
-    @staticmethod
-    def same_property_id(definitions: list[InformationProperty]) -> bool:
-        return len({definition.property_ for definition in definitions}) == 1
-
     @classmethod
     def from_list_of_properties(cls, definitions: list[InformationProperty], namespace: Namespace) -> "OWLProperty":
         """Here list of properties is a list of properties with the same id, but different definitions."""
-
-        if not cls.same_property_id(definitions):
-            raise PropertyDefinitionsNotForSamePropertyError().as_exception()
+        property_ids = {definition.property_ for definition in definitions}
+        if len(property_ids) != 1:
+            raise PropertyDefinitionDuplicatedError(
+                definitions[0].class_,
+                "class",
+                definitions[0].property_,
+                frozenset(property_ids),
+            )
 
         owl_property = cls.model_construct(
             id_=namespace[definitions[0].property_],
@@ -363,8 +344,15 @@ class OWLProperty(OntologyModel):
     def is_multi_type(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                OntologyMultiTypePropertyWarning(
-                    remove_namespace_from_uri(info.data["id_"]), [remove_namespace_from_uri(t) for t in v]
+                PropertyDefinitionDuplicatedWarning(
+                    remove_namespace_from_uri(info.data["id"]),
+                    "class",
+                    "type",
+                    frozenset({remove_namespace_from_uri(t) for t in v}),
+                    "This warning occurs when a same property is define for two object/classes where"
+                    " its expected value type is different in one definition, e.g. acts as an edge, while in "
+                    "other definition acts as and attribute",
+                    "If a property takes different value types for different objects, simply define new property",
                 ),
                 stacklevel=2,
             )
@@ -374,8 +362,14 @@ class OWLProperty(OntologyModel):
     def is_multi_range(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                OntologyMultiRangePropertyWarning(
-                    remove_namespace_from_uri(info.data["id_"]), [remove_namespace_from_uri(t) for t in v]
+                PropertyDefinitionDuplicatedWarning(
+                    remove_namespace_from_uri(info.data["id_"]),
+                    "class",
+                    "range",
+                    frozenset({remove_namespace_from_uri(t) for t in v}),
+                    "This warning occurs when a property takes range of "
+                    "values which consists of union of multiple value types.",
+                    "If value types for different objects, simply define new property",
                 ),
                 stacklevel=2,
             )
@@ -385,8 +379,15 @@ class OWLProperty(OntologyModel):
     def is_multi_domain(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                OntologyMultiDomainPropertyWarning(
-                    remove_namespace_from_uri(info.data["id_"]), [remove_namespace_from_uri(t) for t in v]
+                PropertyDefinitionDuplicatedWarning(
+                    remove_namespace_from_uri(info.data["id_"]),
+                    "class",
+                    "domain",
+                    frozenset({remove_namespace_from_uri(t) for t in v}),
+                    "This warning occurs when a same property is define for two object/classes where"
+                    " its expected value type is different in one definition, e.g. acts as an edge, while in "
+                    "other definition acts as and attribute",
+                    "If value types for different objects, simply define new property",
                 ),
                 stacklevel=2,
             )
@@ -396,7 +397,13 @@ class OWLProperty(OntologyModel):
     def has_multi_name(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                OntologyMultiLabeledPropertyWarning(remove_namespace_from_uri(info.data["id_"]), v),
+                PropertyDefinitionDuplicatedWarning(
+                    remove_namespace_from_uri(info.data["id_"]),
+                    "class",
+                    "label",
+                    frozenset(v),
+                    f"Only the first label (name) will be used, {v[0]}",
+                ),
                 stacklevel=2,
             )
         return v
@@ -405,7 +412,13 @@ class OWLProperty(OntologyModel):
     def has_multi_comment(cls, v, info: ValidationInfo):
         if len(v) > 1:
             warnings.warn(
-                OntologyMultiDefinitionPropertyWarning(remove_namespace_from_uri(info.data["id_"])),
+                PropertyDefinitionDuplicatedWarning(
+                    remove_namespace_from_uri(info.data["id_"]),
+                    "class",
+                    "comment",
+                    frozenset(v),
+                    "All definitions will be concatenated to form a single definition.",
+                ),
                 stacklevel=2,
             )
         return v

@@ -9,12 +9,13 @@ from cognite.client.data_classes import Row
 from cognite.neat.rules.exporters import DMSExporter
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes, SheetList
-from cognite.neat.rules.models.dms import DMSRulesInput, PipelineSchema
+from cognite.neat.rules.models.dms import DMSInputRules, PipelineSchema
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationMetadata,
     InformationProperty,
 )
+from cognite.neat.rules.transformers import ImporterPipeline, InformationToDMS
 from cognite.neat.utils.cdf.loaders import RawTableLoader, TransformationLoader
 from tests.config import DOC_RULES
 
@@ -25,7 +26,7 @@ def alice_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms)
+    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
@@ -34,7 +35,7 @@ def olav_dms_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms)
+    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
@@ -43,7 +44,7 @@ def olav_rebuilt_dms_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms)
+    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
@@ -52,7 +53,7 @@ def svein_harald_dms_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules(errors="raise", role=RoleTypes.dms)
+    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
 
 
 @pytest.fixture(scope="session")
@@ -189,10 +190,11 @@ class TestDMSExporters:
             export_pipeline=True,
             instance_space="sp_table_example_data",
         )
-        schema = cast(PipelineSchema, exporter.export(table_example))
+        dms_rules = InformationToDMS().transform(table_example).rules
+        schema = cast(PipelineSchema, exporter.export(dms_rules))
 
         # Write Pipeline to CDF
-        uploaded = exporter.export_to_cdf(table_example, cognite_client, dry_run=False)
+        uploaded = exporter.export_to_cdf(dms_rules, cognite_client, dry_run=False)
 
         # Verify Raw Tables are written
         assert uploaded
@@ -277,7 +279,7 @@ class TestDMSExporters:
         new_space = "power_update"
         dumped["Metadata"]["space"] = new_space
         dumped["Last"]["Metadata"]["space"] = new_space
-        rules = DMSRulesInput.load(dumped).as_rules()
+        rules = DMSInputRules.load(dumped).as_rules()
         schema = rules.as_schema()
         assert schema.referenced_spaces(include_indirect_references=True) == {new_space}
         exporter = DMSExporter(existing_handling="force")
@@ -335,7 +337,7 @@ class TestDMSExporters:
             container["Container"] = container["Container"].replace("power", new_enterprise_space)
             container["Class (linage)"] = container["Class (linage)"].replace("power", new_enterprise_space)
         dumped["Last"]["Reference"] = dumped["Reference"]
-        rules = DMSRulesInput.load(dumped).as_rules()
+        rules = DMSInputRules.load(dumped).as_rules()
         schema = rules.as_schema()
         referenced_spaces = (
             schema.referenced_spaces(True)

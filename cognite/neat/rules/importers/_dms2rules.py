@@ -1,14 +1,15 @@
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, cast, overload
+from typing import Literal, cast
 
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
-from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
+from cognite.client.data_classes.data_modeling.data_types import Enum as DMSEnum
+from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType, PropertyTypeWithUnit
 from cognite.client.data_classes.data_modeling.views import (
     MultiEdgeConnectionApply,
     MultiReverseDirectRelationApply,
@@ -19,40 +20,42 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.errors.external import UnexpectedFileTypeError
-from cognite.neat.issues.errors.resources import ResourceNotFoundError
-from cognite.neat.issues.neat_warnings.properties import (
+from cognite.neat.issues.errors import FileTypeUnexpectedError, ResourceMissingIdentifierError, ResourceRetrievalError
+from cognite.neat.issues.warnings import (
+    PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
-    ReferredPropertyNotFoundWarning,
+    ResourceNotFoundWarning,
+    ResourcesDuplicatedWarning,
 )
-from cognite.neat.issues.neat_warnings.resources import ReferredResourceNotFoundWarning
-from cognite.neat.rules.importers._base import BaseImporter, Rules, _handle_issues
+from cognite.neat.rules._shared import ReadRules
+from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat.rules.models import (
     DataModelType,
-    DMSRules,
+    DMSInputRules,
     DMSSchema,
-    ExtensionCategory,
-    RoleTypes,
     SchemaCompleteness,
-    SheetList,
 )
-from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.data_types import DataType, Enum
 from cognite.neat.rules.models.dms import (
-    DMSContainer,
-    DMSMetadata,
-    DMSProperty,
-    DMSView,
+    DMSInputContainer,
+    DMSInputEnum,
+    DMSInputMetadata,
+    DMSInputNode,
+    DMSInputProperty,
+    DMSInputView,
 )
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
+    DMSNodeEntity,
     DMSUnknownEntity,
+    EdgeEntity,
+    ReverseConnectionEntity,
     ViewEntity,
-    ViewPropertyEntity,
 )
 
 
-class DMSImporter(BaseImporter):
+class DMSImporter(BaseImporter[DMSInputRules]):
     """Imports a Data Model from Cognite Data Fusion.
 
     Args:
@@ -67,8 +70,8 @@ class DMSImporter(BaseImporter):
         self,
         schema: DMSSchema,
         read_issues: Sequence[NeatIssue] | None = None,
-        metadata: DMSMetadata | None = None,
-        ref_metadata: DMSMetadata | None = None,
+        metadata: DMSInputMetadata | None = None,
+        ref_metadata: DMSInputMetadata | None = None,
     ):
         # Calling this root schema to distinguish it from
         # * User Schema
@@ -78,10 +81,10 @@ class DMSImporter(BaseImporter):
         self.ref_metadata = ref_metadata
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = schema.containers.copy()
-        self._all_view_ids = set(self.root_schema.views.keys())
-        if self.root_schema.reference:
-            self._all_containers_by_id.update(self.root_schema.reference.containers)
-            self._all_view_ids.update(self.root_schema.reference.views.keys())
+        self._all_views_by_id = schema.views.copy()
+        if schema.reference:
+            self._all_containers_by_id.update(schema.reference.containers.items())
+            self._all_views_by_id.update(schema.reference.views.items())
 
     @classmethod
     def from_data_model_id(
@@ -109,9 +112,9 @@ class DMSImporter(BaseImporter):
             return cls(
                 DMSSchema(),
                 [
-                    ResourceNotFoundError[dm.DataModelId](
-                        dm.DataModelId.load(reference_model_id),  # type: ignore[arg-type]
-                        "DataModel",
+                    ResourceRetrievalError(
+                        dm.DataModelId.load(data_model_id),  # type: ignore[arg-type]
+                        "data model",
                         "Data Model is missing in CDF",
                     )
                 ],
@@ -124,8 +127,8 @@ class DMSImporter(BaseImporter):
                 return cls(
                     DMSSchema(),
                     [
-                        ResourceNotFoundError[dm.DataModelId](
-                            dm.DataModelId.load(reference_model_id), "DataModel", "Data Model is missing in CDF"
+                        ResourceRetrievalError(
+                            dm.DataModelId.load(reference_model_id), "data model", "Data Model is missing in CDF"
                         )
                     ],
                 )
@@ -163,8 +166,8 @@ class DMSImporter(BaseImporter):
         cls,
         model: dm.DataModel[dm.View] | dm.DataModelApply,
         has_reference: bool = False,
-    ) -> DMSMetadata:
-        description, creator = DMSMetadata._get_description_and_creator(model.description)
+    ) -> DMSInputMetadata:
+        description, creator = DMSInputMetadata._get_description_and_creator(model.description)
 
         if isinstance(model, dm.DataModel):
             created = ms_to_datetime(model.created_time)
@@ -173,17 +176,17 @@ class DMSImporter(BaseImporter):
             now = datetime.now().replace(microsecond=0)
             created = now
             updated = now
-        return DMSMetadata(
-            schema_=SchemaCompleteness.complete,
-            data_model_type=DataModelType.solution if has_reference else DataModelType.enterprise,
-            extension=ExtensionCategory.addition,
+        return DMSInputMetadata(
+            schema_="complete",
+            data_model_type="solution" if has_reference else "enterprise",
+            extension="addition",
             space=model.space,
             external_id=model.external_id,
             name=model.name or model.external_id,
             version=model.version or "0.1.0",
             updated=updated,
             created=created,
-            creator=creator,
+            creator=",".join(creator),
             description=description,
         )
 
@@ -198,77 +201,58 @@ class DMSImporter(BaseImporter):
     @classmethod
     def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
         if Path(zip_file).suffix != ".zip":
-            return cls(DMSSchema(), [UnexpectedFileTypeError(Path(zip_file), [".zip"])])
+            return cls(DMSSchema(), [FileTypeUnexpectedError(Path(zip_file), frozenset([".zip"]))])
         issue_list = IssueList()
         with _handle_issues(issue_list) as _:
             schema = DMSSchema.from_zip(zip_file)
         return cls(schema, issue_list)
 
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
-
-    @overload
-    def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]: ...
-
-    def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList] | Rules:
+    def to_rules(self) -> ReadRules[DMSInputRules]:
         if self.issue_list.has_errors:
             # In case there were errors during the import, the to_rules method will return None
-            return self._return_or_raise(self.issue_list, errors)
+            return ReadRules(None, self.issue_list, {})
 
         if not self.root_schema.data_model:
-            self.issue_list.append(ResourceNotFoundError[str]("Unknown", "DataModel", "Identifier is missing"))
-            return self._return_or_raise(self.issue_list, errors)
+            self.issue_list.append(ResourceMissingIdentifierError("data model", type(self.root_schema).__name__))
+            return ReadRules(None, self.issue_list, {})
+
         model = self.root_schema.data_model
-        with _handle_issues(
-            self.issue_list,
-        ) as future:
-            schema_completeness = SchemaCompleteness.complete
-            data_model_type = DataModelType.enterprise
-            reference: DMSRules | None = None
-            if (ref_schema := self.root_schema.reference) and (ref_model := ref_schema.data_model):
-                # Reference should always be an enterprise model.
-                reference = DMSRules(
-                    **self._create_rule_components(
-                        ref_model,
-                        ref_schema,
-                        self.ref_metadata
-                        or self._create_default_metadata(list(ref_schema.views.values()), is_ref=True),
-                        DataModelType.enterprise,
-                    )
-                )
-                data_model_type = DataModelType.solution
 
-            user_rules = DMSRules(
-                **self._create_rule_components(
-                    model,
-                    self.root_schema,
-                    self.metadata,
-                    data_model_type,
-                    schema_completeness,
-                    has_reference=reference is not None,
-                ),
-                reference=reference,
+        schema_completeness = SchemaCompleteness.complete
+        data_model_type = DataModelType.enterprise
+        reference: DMSInputRules | None = None
+        if (ref_schema := self.root_schema.reference) and (ref_model := ref_schema.data_model):
+            # Reference should always be an enterprise model.
+            reference = self._create_rule_components(
+                ref_model,
+                ref_schema,
+                self.ref_metadata or self._create_default_metadata(list(ref_schema.views.values()), is_ref=True),
+                DataModelType.enterprise,
             )
+            data_model_type = DataModelType.solution
 
-        if future.result == "failure" or self.issue_list.has_errors:
-            return self._return_or_raise(self.issue_list, errors)
+        user_rules = self._create_rule_components(
+            model,
+            self.root_schema,
+            self.metadata,
+            data_model_type,
+            schema_completeness,
+            has_reference=reference is not None,
+        )
+        user_rules.reference = reference
 
-        return self._to_output(user_rules, self.issue_list, errors, role)
+        return ReadRules(user_rules, self.issue_list, {})
 
     def _create_rule_components(
         self,
         data_model: dm.DataModelApply,
         schema: DMSSchema,
-        metadata: DMSMetadata | None = None,
+        metadata: DMSInputMetadata | None = None,
         data_model_type: DataModelType | None = None,
         schema_completeness: SchemaCompleteness | None = None,
         has_reference: bool = False,
-    ) -> dict[str, Any]:
-        properties = SheetList[DMSProperty]()
+    ) -> DMSInputRules:
+        properties: list[DMSInputProperty] = []
         for view_id, view in schema.views.items():
             view_entity = ViewEntity.from_id(view_id)
             class_entity = view_entity.as_class()
@@ -281,51 +265,54 @@ class DMSImporter(BaseImporter):
             view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
         }
 
-        metadata = metadata or DMSMetadata.from_data_model(data_model, has_reference)
+        metadata = metadata or DMSInputMetadata.from_data_model(data_model, has_reference)
         if data_model_type is not None:
-            metadata.data_model_type = data_model_type
+            metadata.data_model_type = str(data_model_type)  # type: ignore[assignment]
         if schema_completeness is not None:
-            metadata.schema_ = schema_completeness
-        return dict(
+            metadata.schema_ = str(schema_completeness)  # type: ignore[assignment]
+
+        enum = self._create_enum_collections(schema.containers.values())
+
+        return DMSInputRules(
             metadata=metadata,
             properties=properties,
-            containers=SheetList[DMSContainer](
-                data=[DMSContainer.from_container(container) for container in schema.containers.values()]
-            ),
-            views=SheetList[DMSView](
-                data=[
-                    DMSView.from_view(view, in_model=view_id in data_model_view_ids)
-                    for view_id, view in schema.views.items()
-                ]
-            ),
+            containers=[DMSInputContainer.from_container(container) for container in schema.containers.values()],
+            views=[
+                DMSInputView.from_view(view, in_model=view_id in data_model_view_ids)
+                for view_id, view in schema.views.items()
+            ],
+            nodes=[DMSInputNode.from_node_type(node_type) for node_type in schema.node_types.values()],
+            enum=enum,
         )
 
     @classmethod
-    def _create_default_metadata(cls, views: Sequence[dm.View | dm.ViewApply], is_ref: bool = False) -> DMSMetadata:
+    def _create_default_metadata(
+        cls, views: Sequence[dm.View | dm.ViewApply], is_ref: bool = False
+    ) -> DMSInputMetadata:
         now = datetime.now().replace(microsecond=0)
         space = Counter(view.space for view in views).most_common(1)[0][0]
-        return DMSMetadata(
-            schema_=SchemaCompleteness.complete,
-            extension=ExtensionCategory.addition,
-            data_model_type=DataModelType.enterprise if is_ref else DataModelType.solution,
+        return DMSInputMetadata(
+            schema_="complete",
+            extension="addition",
+            data_model_type="enterprise" if is_ref else "solution",
             space=space,
             external_id="Unknown",
             version="0.1.0",
-            creator=["Unknown"],
+            creator="Unknown",
             created=now,
             updated=now,
         )
 
     def _create_dms_property(
         self, prop_id: str, prop: ViewPropertyApply, view_entity: ViewEntity, class_entity: ClassEntity
-    ) -> DMSProperty | None:
+    ) -> DMSInputProperty | None:
         if isinstance(prop, dm.MappedPropertyApply) and prop.container not in self._all_containers_by_id:
             self.issue_list.append(
-                ReferredResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
+                ResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
                     dm.ContainerId.load(prop.container),
-                    "Container",
+                    "container",
                     view_entity.to_property_id(prop_id),
-                    "View Property",
+                    "view property",
                 )
             )
             return None
@@ -334,9 +321,7 @@ class DMSImporter(BaseImporter):
             and prop.container_property_identifier not in self._all_containers_by_id[prop.container].properties
         ):
             self.issue_list.append(
-                ReferredPropertyNotFoundWarning[dm.ContainerId, dm.ViewId](
-                    prop.container, "Container", view_entity.as_id(), "View", prop_id
-                ),
+                PropertyNotFoundWarning(prop.container, "container", prop_id, view_entity.as_id(), "view"),
             )
             return None
         if not isinstance(
@@ -348,7 +333,7 @@ class DMSImporter(BaseImporter):
             | MultiReverseDirectRelationApply,
         ):
             self.issue_list.append(
-                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "View", prop_id, type(prop).__name__)
+                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "view", prop_id, type(prop).__name__)
             )
             return None
 
@@ -356,20 +341,22 @@ class DMSImporter(BaseImporter):
         if value_type is None:
             return None
 
-        return DMSProperty(
-            class_=class_entity,
+        return DMSInputProperty(
+            class_=str(class_entity),
             property_=prop_id,
             description=prop.description,
             name=prop.name,
-            connection=self._get_relation_type(prop),
-            value_type=value_type,
+            connection=self._get_connection_type(prop_id, prop, view_entity.as_id()),
+            value_type=str(value_type),
             is_list=self._get_is_list(prop),
             nullable=self._get_nullable(prop),
             immutable=self._get_immutable(prop),
             default=self._get_default(prop),
-            container=ContainerEntity.from_id(prop.container) if isinstance(prop, dm.MappedPropertyApply) else None,
+            container=str(ContainerEntity.from_id(prop.container))
+            if isinstance(prop, dm.MappedPropertyApply)
+            else None,
             container_property=prop.container_property_identifier if isinstance(prop, dm.MappedPropertyApply) else None,
-            view=view_entity,
+            view=str(view_entity),
             view_property=prop_id,
             index=self._get_index(prop, prop_id),
             constraint=self._get_constraint(prop, prop_id),
@@ -379,13 +366,22 @@ class DMSImporter(BaseImporter):
         """This method assumes you have already checked that the container with property exists."""
         return self._all_containers_by_id[prop.container].properties[prop.container_property_identifier]
 
-    def _get_relation_type(self, prop: ViewPropertyApply) -> Literal["edge", "reverse", "direct"] | None:
+    def _get_connection_type(
+        self, prop_id: str, prop: ViewPropertyApply, view_id: dm.ViewId
+    ) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
         if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "outwards":
-            return "edge"
+            properties = ViewEntity.from_id(prop.edge_source) if prop.edge_source is not None else None
+            return EdgeEntity(properties=properties, type=DMSNodeEntity.from_reference(prop.type), direction="outwards")
         elif isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "inwards":
-            return "reverse"
+            if reverse_prop := self._find_reverse_edge(prop_id, prop, view_id):
+                return ReverseConnectionEntity(property=reverse_prop)
+            else:
+                properties = ViewEntity.from_id(prop.source) if prop.edge_source is not None else None
+                return EdgeEntity(
+                    properties=properties, type=DMSNodeEntity.from_reference(prop.type), direction="inwards"
+                )
         elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):
-            return "reverse"
+            return ReverseConnectionEntity(property=prop.through.property)
         elif isinstance(prop, dm.MappedPropertyApply) and isinstance(
             self._container_prop_unsafe(prop).type, dm.DirectRelation
         ):
@@ -395,26 +391,31 @@ class DMSImporter(BaseImporter):
 
     def _get_value_type(
         self, prop: ViewPropertyApply, view_entity: ViewEntity, prop_id
-    ) -> DataType | ViewEntity | ViewPropertyEntity | DMSUnknownEntity | None:
-        if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "outwards":
-            return ViewEntity.from_id(prop.source)
-        elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):
-            return ViewPropertyEntity.from_id(prop.through)
-        elif isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "inwards":
+    ) -> DataType | ViewEntity | DMSUnknownEntity | None:
+        if isinstance(
+            prop,
+            SingleEdgeConnectionApply
+            | MultiEdgeConnectionApply
+            | SingleReverseDirectRelationApply
+            | MultiReverseDirectRelationApply,
+        ):
             return ViewEntity.from_id(prop.source)
         elif isinstance(prop, dm.MappedPropertyApply):
             container_prop = self._container_prop_unsafe(cast(dm.MappedPropertyApply, prop))
             if isinstance(container_prop.type, dm.DirectRelation):
-                if prop.source is None or prop.source not in self._all_view_ids:
-                    # The warning is issued when the DMS Rules are created.
+                if prop.source is None or prop.source not in self._all_views_by_id:
                     return DMSUnknownEntity()
                 else:
                     return ViewEntity.from_id(prop.source)
+            elif isinstance(container_prop.type, PropertyTypeWithUnit) and container_prop.type.unit:
+                return DataType.load(f"{container_prop.type._type}(unit={container_prop.type.unit.external_id})")
+            elif isinstance(container_prop.type, DMSEnum):
+                return Enum(collection=ClassEntity(suffix=prop_id), unknownValue=container_prop.type.unknown_value)
             else:
                 return DataType.load(container_prop.type._type)
         else:
             self.issue_list.append(
-                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "View", prop_id, type(prop).__name__)
+                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "view", prop_id, type(prop).__name__)
             )
             return None
 
@@ -475,7 +476,59 @@ class DMSImporter(BaseImporter):
             else:
                 self.issue_list.append(
                     PropertyTypeNotSupportedWarning[dm.ContainerId](
-                        prop.container, "Container", prop_id, type(constraint_obj).__name__
+                        prop.container, "container", prop_id, type(constraint_obj).__name__
                     )
                 )
         return unique_constraints or None
+
+    def _find_reverse_edge(
+        self, prop_id: str, prop: SingleEdgeConnectionApply | MultiEdgeConnectionApply, view_id: dm.ViewId
+    ) -> str | None:
+        if prop.source not in self._all_views_by_id:
+            return None
+        view = self._all_views_by_id[prop.source]
+        candidates = []
+        for prop_name, reverse_prop in (view.properties or {}).items():
+            if isinstance(reverse_prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply):
+                if (
+                    reverse_prop.type == prop.type
+                    and reverse_prop.source == view_id
+                    and reverse_prop.direction != prop.direction
+                ):
+                    candidates.append(prop_name)
+        if len(candidates) == 0:
+            self.issue_list.append(
+                PropertyNotFoundWarning(
+                    prop.source,
+                    "view property",
+                    f"reverse edge of {prop_id}",
+                    dm.PropertyId(view_id, prop_id),
+                    "view property",
+                )
+            )
+            return None
+        if len(candidates) > 1:
+            self.issue_list.append(
+                ResourcesDuplicatedWarning(
+                    frozenset(dm.PropertyId(view.as_id(), candidate) for candidate in candidates),
+                    "view property",
+                    default_action="Multiple reverse edges found for "
+                    f"{dm.PropertyId(view_id, prop_id)!r}. Will use {candidates[0]}",
+                )
+            )
+
+        return candidates[0]
+
+    @staticmethod
+    def _create_enum_collections(containers: Collection[dm.ContainerApply]) -> list[DMSInputEnum] | None:
+        enum_collections: list[DMSInputEnum] = []
+        for container in containers:
+            for prop_id, prop in container.properties.items():
+                if isinstance(prop.type, DMSEnum):
+                    for identifier, value in prop.type.values.items():
+                        enum_collections.append(
+                            DMSInputEnum(
+                                collection=prop_id, value=identifier, name=value.name, description=value.description
+                            )
+                        )
+        return enum_collections

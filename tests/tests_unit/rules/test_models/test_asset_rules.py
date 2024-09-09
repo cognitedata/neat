@@ -4,11 +4,11 @@ from typing import Any
 import pytest
 
 from cognite.neat.issues import NeatError
-from cognite.neat.issues.errors.general import NeatValueError
-from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
+from cognite.neat.issues.errors import NeatValueError, PropertyDefinitionError
 from cognite.neat.rules.models import AssetRules, InformationRules
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import AssetEntity, ClassEntity, RelationshipEntity
+from cognite.neat.rules.transformers import AssetToInformation, InformationToAsset, RulesPipeline
 
 
 def case_asset_relationship():
@@ -198,9 +198,9 @@ def parent_property_points_to_data_type():
                 },
             ],
         },
-        InvalidPropertyDefinitionError[ClassEntity](
+        PropertyDefinitionError(
             ClassEntity(prefix="power", suffix="ACLineSegment"),
-            "Class",
+            "class",
             "line",
             "parentExternalId is only allowed to point to a Class not String",
         ),
@@ -214,10 +214,10 @@ class TestAssetRules:
         assert AssetRules.model_validate(rules).properties.data[0].implementation == expected_exception
 
     def test_conversion_between_roles(self, david_rules: InformationRules) -> None:
-        asset_rules = david_rules.as_asset_architect_rules()
-        information_rules = asset_rules.as_information_rules()
+        pipeline = RulesPipeline[InformationRules, InformationRules]([InformationToAsset(), AssetToInformation()])
+        recreated = pipeline.run(david_rules)
 
-        assert asset_rules.model_dump() == information_rules.as_asset_architect_rules().model_dump()
+        assert recreated.model_dump() == david_rules.model_dump()
 
     @pytest.mark.parametrize("invalid_rules, expected_exception", list(case_circular_dependency()))
     def test_circular_dependency(self, invalid_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:

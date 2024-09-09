@@ -13,9 +13,9 @@ from prometheus_client import Gauge
 
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.config import Config
+from cognite.neat.issues.errors import WorkflowConfigurationNotSetError, WorkflowStepOutputError
 from cognite.neat.utils.auxiliary import retry_decorator
 from cognite.neat.workflows import cdf_store, utils
-from cognite.neat.workflows._exceptions import ConfigurationNotSet, InvalidStepOutputException
 from cognite.neat.workflows.cdf_store import CdfStore
 from cognite.neat.workflows.model import (
     FlowMessage,
@@ -316,7 +316,7 @@ class BaseWorkflow:
                         elif isinstance(out_obj, DataContract):
                             self.data[type(out_obj).__name__] = out_obj
                         else:
-                            raise InvalidStepOutputException(step_type=type(out_obj).__name__)
+                            raise WorkflowStepOutputError(step_type=type(out_obj).__name__)
 
             elif step.stype == StepType.START_WORKFLOW_TASK_STEP:
                 if self.task_builder:
@@ -510,7 +510,7 @@ class BaseWorkflow:
         if storage_type == "transformation_rules":
             self.rules_storage_path = Path(storage_path)
             if self.default_dataset_id is None:
-                raise ConfigurationNotSet("default_dataset_id")
+                raise WorkflowConfigurationNotSetError("default_dataset_id")
             self.cdf_store = cdf_store.CdfStore(
                 self.cdf_client, data_set_id=self.default_dataset_id, rules_storage_path=self.rules_storage_path
             )
@@ -576,7 +576,7 @@ class BaseWorkflow:
 
         file_list: list[Path] = []
         if self.data_store_path is None:
-            raise ConfigurationNotSet("data_store_path")
+            raise WorkflowConfigurationNotSetError("data_store_path")
         workflow_data_path = Path(self.data_store_path) / "workflows" / self.name
         try:
             for root, _dirs, files in os.walk(workflow_data_path):

@@ -1,7 +1,7 @@
 from typing import Any, ClassVar, cast
 
 from cognite.neat.rules.models import DMSRules
-from cognite.neat.rules.models.dms import DMSContainer, DMSProperty, DMSView
+from cognite.neat.rules.models.dms import DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView
 from cognite.neat.rules.models.entities import ReferenceEntity, ViewEntity
 
 
@@ -23,14 +23,19 @@ class _DMSRulesSerializer:
         self.view_name = "views"
         self.container_name = "containers"
         self.metadata_name = "metadata"
+        self.enum_name = "enum"
+        self.nodes_name = "nodes"
         self.prop_view = "view"
         self.prop_container = "container"
         self.prop_view_property = "view_property"
         self.prop_value_type = "value_type"
+        self.prop_connection = "connection"
         self.view_view = "view"
         self.view_implements = "implements"
         self.container_container = "container"
         self.container_constraint = "constraint"
+        self.nodes_node = "node"
+        self.enum_collection = "collection"
         self.reference = "Reference" if by_alias else "reference"
 
         if by_alias:
@@ -45,6 +50,7 @@ class _DMSRulesSerializer:
             self.prop_container = DMSProperty.model_fields[self.prop_container].alias or self.prop_container
             self.prop_view_property = DMSProperty.model_fields[self.prop_view_property].alias or self.prop_view_property
             self.prop_value_type = DMSProperty.model_fields[self.prop_value_type].alias or self.prop_value_type
+            self.prop_connection = DMSProperty.model_fields[self.prop_connection].alias or self.prop_connection
             self.view_view = DMSView.model_fields[self.view_view].alias or self.view_view
             self.view_implements = DMSView.model_fields[self.view_implements].alias or self.view_implements
             self.container_container = (
@@ -53,10 +59,15 @@ class _DMSRulesSerializer:
             self.container_constraint = (
                 DMSContainer.model_fields[self.container_constraint].alias or self.container_constraint
             )
+            self.nodes_node = DMSNode.model_fields[self.nodes_node].alias or self.nodes_node
+
             self.prop_name = DMSRules.model_fields[self.prop_name].alias or self.prop_name
             self.view_name = DMSRules.model_fields[self.view_name].alias or self.view_name
             self.container_name = DMSRules.model_fields[self.container_name].alias or self.container_name
             self.metadata_name = DMSRules.model_fields[self.metadata_name].alias or self.metadata_name
+            self.nodes_name = DMSRules.model_fields[self.nodes_name].alias or self.nodes_name
+            self.enum_name = DMSRules.model_fields[self.enum_name].alias or self.enum_name
+            self.enum_collection = DMSEnum.model_fields[self.enum_collection].alias or self.enum_collection
 
     def clean(self, dumped: dict[str, Any], as_reference: bool) -> dict[str, Any]:
         # Sorting to get a deterministic order
@@ -68,6 +79,16 @@ class _DMSRulesSerializer:
             dumped[self.container_name] = sorted(container_data["data"], key=lambda c: c[self.container_container])
         else:
             dumped.pop(self.container_name, None)
+
+        if enum_data := dumped.get(self.enum_name):
+            dumped[self.enum_name] = sorted(enum_data["data"], key=lambda e: e[self.enum_collection])
+        else:
+            dumped.pop(self.enum_name, None)
+
+        if node_types_data := dumped.get(self.nodes_name):
+            dumped[self.nodes_name] = sorted(node_types_data["data"], key=lambda n: n[self.nodes_node])
+        else:
+            dumped.pop(self.nodes_name, None)
 
         for prop in dumped[self.prop_name]:
             if as_reference:
@@ -87,8 +108,25 @@ class _DMSRulesSerializer:
                     continue
                 if value := prop.get(field_name):
                     prop[field_name] = value.removeprefix(self.default_space).removesuffix(self.default_version_wrapped)
-            # Value type can have a property as well
-            prop[self.prop_value_type] = prop[self.prop_value_type].replace(self.default_version, "")
+            if isinstance(prop.get(self.prop_connection), str):
+                # Remove default values from connection (type, direction, properties)
+                default_type = f"type={self.default_space}{prop[self.view_view]}.{prop[self.prop_view_property]}"
+                default_type_space = f"type={self.default_space}"
+                default_properties = f"properties={self.default_space}"
+                default_direction = "direction=outwards"
+                prop[self.prop_connection] = (
+                    prop[self.prop_connection]
+                    .replace(self.default_version, "")
+                    .replace(default_type, "")
+                    .replace(default_type_space, "type=")
+                    .replace(default_properties, "properties=")
+                    .replace(default_direction, "")
+                    .replace("()", "")
+                    .replace("(,)", "")
+                    .replace("(,,)", "")
+                    .replace("(,", "(")
+                    .replace(",)", ")")
+                )
 
         for view in dumped[self.view_name]:
             if as_reference:
@@ -113,4 +151,7 @@ class _DMSRulesSerializer:
                 container[self.container_constraint] = ",".join(
                     constraint.strip().removeprefix(self.default_space) for constraint in value.split(",")
                 )
+
+        for node in dumped.get(self.nodes_name, []):
+            node[self.nodes_node] = node[self.nodes_node].removeprefix(self.default_space)
         return dumped

@@ -9,20 +9,31 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.rules import importers
 from cognite.neat.rules.exporters import DMSExporter
+from cognite.neat.rules.models import RoleTypes
 from cognite.neat.rules.models.dms import DMSRules, PipelineSchema
+from cognite.neat.rules.transformers import ImporterPipeline
 from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
 
 
 class TestDMSExporter:
     def test_export_dms_schema_has_names_description(self, alice_rules: DMSRules) -> None:
+        rules = alice_rules.model_copy(deep=True)
+
+        # purposely setting default value for connection that should not be
+        # considered when exporting DMS rules to DMS schema
+        rules.properties.data[3].default = "Norway"
+
         exporter = DMSExporter()
-        schema = exporter.export(alice_rules)
+        schema = exporter.export(rules)
 
         first_view = next(iter(schema.views.values()))
         assert first_view.name == "Generating Unit"
         assert first_view.description == "An asset that is creating power"
         assert first_view.properties["activePower"].name == "active power"
         assert first_view.properties["activePower"].description == "Active power of generating unit"
+
+        first_container = next(iter(schema.containers.values()))
+        assert first_container.properties["geoLocation"].default_value is None
 
     def test_export_dms_schema_to_zip(self, alice_rules: DMSRules, tmp_path: Path) -> None:
         exporter = DMSExporter()
@@ -73,9 +84,9 @@ class TestImportExportDMS:
         ],
     )
     def test_import_excel_export_dms(self, filepath: Path) -> None:
-        rules = importers.ExcelImporter(filepath).to_rules(errors="raise")
+        dms_rules = ImporterPipeline.verify(importers.ExcelImporter(filepath), role=RoleTypes.dms)
 
-        exported = DMSExporter().export(rules)
+        exported = DMSExporter().export(dms_rules)
 
         assert len(exported.views) == 1
         first_view = next(iter(exported.views.values()))

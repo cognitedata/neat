@@ -15,6 +15,67 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.90.2] - 06-09-24
+### Improved
+- Visualize data model chapter in Knowledge Acquisition tutorial reduce to only export of data model to ontology
+- New video made for the Export Semantic Data Model chapter in Knowledge Acquisition tutorial
+- Workflow `Visualize_Semantic_Data_Model` renamed to `Export_Semantic_Data_Model` and reduce to only export
+
+### Removed
+- `Visualize_Data_Model_Using_Mock_Graph` removed since UI has been reduced to only have workflow builder & executor feature
+
+## [0.90.1] - 06-09-24
+### Fixed
+- Fix issue with step doing file upload leading to blank screen in UI
+- Fix issue with graph store step config, leading to not being able to load triples
+
+
+## [0.90.0] - 05-09-24
+### Added
+- `DMSExtractor` added to extract instances from CDF into NeatStore.
+- `DMSLoader` now sets the node type for instances.
+
+### Fixed
+- `DMSLoader` now correctly identifies edges based on type.
+
+## [0.89.0] - 02-09-24
+### Changed
+- [BREAKING CHANGE] All conversion of rules object methods, for example, `InformationRules.as_dms_rules()`, have
+  been removed. Instead, use the `cognite.neat.rules.transformers` module to get an appropriate transformar
+  and use the `transform` method to convert the rules object.
+
+### Fixed
+- Circular dependency
+
+### Improved
+- Handling Default for connections in DMS rules
+- Updated InformationToDMS to allow for dropping of properties with unknown value types
+- Handling of properties which point to non-existing nodes when doing data model inference
+- Handling of conversion of Information to DMS rules which contain properties with `Unknown` value type (defaulting to connection =`direct`, with no value type)
+
+### Added
+- Support for edges with properties in DMS rules.
+- Support for explicitly setting node types in DMS Rules.
+- Support for units on `fload64` and `float32` in DMS Rules.
+- Support for enum in DMS Rules.
+
+
+## [0.88.4] - 29-08-24
+### Fixed
+- IMF rules importer failed to publish to CDF due to non-compliant identifiers
+- Duplicate generation of properties
+### Improved
+- Handling of cardinality for attribute properties
+- Handling of multiple predicates used for concept definitions
+
+## [0.88.3] - 20-08-24
+### Fixed
+- IMF rules importer failing due to references
+### Improved
+- Handling of references for OWL importer
+### Added
+- Test for IMF importer
+
 
 ## [0.88.2] - 24-07-24
 ### Added

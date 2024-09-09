@@ -14,8 +14,7 @@ import cognite.neat.workflows.steps.lib.current
 import cognite.neat.workflows.steps.lib.io
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat.config import Config
-from cognite.neat.exceptions import InvalidWorkFlowError
-from cognite.neat.workflows._exceptions import ConfigurationNotSet
+from cognite.neat.issues.errors import WorkflowConfigurationNotSetError, WorkFlowMissingDataError
 from cognite.neat.workflows.model import FlowMessage, WorkflowConfigs
 from cognite.neat.workflows.steps.step_model import Configurable, DataContract, Step
 
@@ -71,7 +70,7 @@ class StepsRegistry:
 
     def load_workflow_step_classes(self, workflow_name: str):
         if not self.data_store_path:
-            raise ConfigurationNotSet("data_store_path")
+            raise WorkflowConfigurationNotSetError("data_store_path")
         workflow_steps_path = Path(self.data_store_path) / "workflows" / workflow_name
         if workflow_steps_path.exists():
             self.load_custom_step_classes(workflow_steps_path, scope="workflow")
@@ -164,9 +163,9 @@ class StepsRegistry:
                         missing_data.append(parameter.annotation.__name__)
                         continue
                 if not is_valid:
-                    raise InvalidWorkFlowError(step_name, missing_data)
+                    raise WorkFlowMissingDataError(step_name, frozenset(missing_data))
                 return step_obj.run(*input_data)
-        raise InvalidWorkFlowError(step_name, [])
+        raise WorkFlowMissingDataError(step_name, frozenset({}))
 
     def get_list_of_steps(self) -> list[StepMetadata]:
         steps: list[StepMetadata] = []

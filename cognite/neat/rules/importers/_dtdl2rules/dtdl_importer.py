@@ -2,28 +2,27 @@ import json
 import zipfile
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Literal, overload
 
 from pydantic import ValidationError
 
 from cognite.neat.issues import IssueList, NeatIssue
-from cognite.neat.issues.neat_warnings.external import (
+from cognite.neat.issues.warnings import (
+    FileItemNotSupportedWarning,
     FileMissingRequiredFieldWarning,
     FileReadWarning,
-    UnexpectedFileTypeWarning,
-    UnknownItemWarning,
+    FileTypeUnexpectedWarning,
+    NeatValueWarning,
 )
-from cognite.neat.issues.neat_warnings.general import NeatValueWarning
-from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.importers._base import BaseImporter, _handle_issues
+from cognite.neat.rules._shared import ReadRules
+from cognite.neat.rules.importers._base import BaseImporter
 from cognite.neat.rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
-from cognite.neat.rules.models import InformationRules, RoleTypes, SchemaCompleteness, SheetList
-from cognite.neat.rules.models.information import InformationClass, InformationProperty
-from cognite.neat.utils.text import humanize_sequence, to_pascal
+from cognite.neat.rules.models import InformationInputRules, SchemaCompleteness
+from cognite.neat.rules.models.information import InformationInputMetadata
+from cognite.neat.utils.text import humanize_collection, to_pascal
 
 
-class DTDLImporter(BaseImporter):
+class DTDLImporter(BaseImporter[InformationInputRules]):
     """Importer from Azure Digital Twin - DTDL (Digital Twin Definition Language).
 
     This importer supports DTDL v2.0 and v3.0.
@@ -47,7 +46,7 @@ class DTDLImporter(BaseImporter):
     ) -> None:
         self._items = items
         self.title = title
-        self._read_issues = read_issues
+        self._read_issues = IssueList(read_issues)
         self._schema_completeness = schema
 
     @classmethod
@@ -67,7 +66,7 @@ class DTDLImporter(BaseImporter):
                 return
             raw_list = raw
         else:
-            yield UnexpectedFileTypeWarning(filepath, ["dict", "list"], "Content is not an object or array.")
+            yield FileTypeUnexpectedWarning(filepath, frozenset(["dict", "list"]), "Content is not an object or array.")
             return
 
         if isinstance(context, list):
@@ -79,7 +78,7 @@ class DTDLImporter(BaseImporter):
         except KeyError:
             yield NeatValueWarning(
                 f"Unsupported DTDL spec version: {spec_version} in {filepath}. "
-                f"Supported versions are {humanize_sequence(list(DTDL_CLS_BY_TYPE_BY_SPEC.keys()))}."
+                f"Supported versions are {humanize_collection(DTDL_CLS_BY_TYPE_BY_SPEC.keys())}."
                 " The file will be skipped."
             )
             return
@@ -90,12 +89,12 @@ class DTDLImporter(BaseImporter):
                 continue
             cls_ = cls_by_type.get(type_)
             if cls_ is None:
-                yield UnknownItemWarning(f"Unknown '@type' {type_}.", filepath=filepath)
+                yield FileItemNotSupportedWarning(f"Unknown '@type' {type_}.", filepath=filepath)
                 continue
             try:
                 yield cls_.model_validate(item)
             except ValidationError as e:
-                yield UnexpectedFileTypeWarning(filepath, [cls.__name__], str(e))
+                yield FileTypeUnexpectedWarning(filepath, frozenset([cls.__name__]), str(e))
             except Exception as e:
                 yield FileReadWarning(filepath=filepath, reason=str(e))
 
@@ -125,17 +124,7 @@ class DTDLImporter(BaseImporter):
                             items.append(item)
         return cls(items, zip_file.stem, read_issues=issues)
 
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
-
-    @overload
-    def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]: ...
-
-    def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList] | Rules:
+    def to_rules(self) -> ReadRules[InformationInputRules]:
         converter = _DTDLConverter(self._read_issues)
 
         converter.convert(self._items)
@@ -152,16 +141,11 @@ class DTDLImporter(BaseImporter):
             ...
         else:
             metadata["prefix"] = most_common_prefix
-        with _handle_issues(converter.issues) as future:
-            rules = InformationRules(
-                metadata=metadata,
-                properties=SheetList[InformationProperty](data=converter.properties),
-                classes=SheetList[InformationClass](data=converter.classes),
-            )
-        if future.result == "failure":
-            if errors == "continue":
-                return None, converter.issues
-            else:
-                raise converter.issues.as_errors()
 
-        return self._to_output(rules, converter.issues, errors, role)
+        rules = InformationInputRules(
+            metadata=InformationInputMetadata.load(metadata),
+            properties=converter.properties,
+            classes=converter.classes,
+        )
+
+        return ReadRules(rules, converter.issues, {})

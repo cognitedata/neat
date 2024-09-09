@@ -34,7 +34,8 @@ nav:
           - Overview: terminology/rules.md
           - Model Validation: terminology/rules-validation.md
           - Excel Input: terminology/rules-excel-input.md
-          - DMSRules Details: terminology/dmsrules.md
+          - DMSRules: terminology/dmsrules.md
+          - Units: terminology/units.md
   - Reference - Code API:
       - Overview: reference/overview.md
       - Rules:
@@ -44,6 +45,12 @@ nav:
           -  Extractors: reference/graph/extractors.md
           -  Transformers: reference/graph/transformers.md
           -  Loaders: reference/graph/loaders.md
+      - Issues:
+          - Base: reference/issues/base.md
+          - Errors: reference/issues/errors.md
+          - Warnings:
+            -  Main: reference/issues/warnings.md
+            -  UserModeling: reference/issues/user_model_warnings.md
   - Changelog​: CHANGELOG.md
 
 markdown_extensions:

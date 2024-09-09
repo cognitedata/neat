@@ -2,9 +2,8 @@ from graphlib import CycleError
 from typing import cast
 
 from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors.general import NeatValueError
-from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
-from cognite.neat.rules.models._base import SheetList
+from cognite.neat.issues.errors import NeatValueError, PropertyDefinitionError
+from cognite.neat.rules.models._base_rules import SheetList
 from cognite.neat.rules.models.asset._rules import AssetProperty, AssetRules
 from cognite.neat.rules.models.entities import AssetEntity, AssetFields, ClassEntity
 from cognite.neat.rules.models.information._validation import InformationPostValidation
@@ -26,9 +25,9 @@ class AssetPostValidation(InformationPostValidation):
                     and not isinstance(property_.value_type, ClassEntity)
                 ):
                     self.issue_list.append(
-                        InvalidPropertyDefinitionError[ClassEntity](
+                        PropertyDefinitionError(
                             property_.class_,
-                            "Class",
+                            "class",
                             property_.property_,
                             "parentExternalId is only allowed to "
                             f"point to a Class not {type(property_.value_type).__name__}",

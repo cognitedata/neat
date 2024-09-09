@@ -5,14 +5,13 @@ from typing import Literal, get_args
 
 import yaml
 
-from cognite.neat.rules._shared import Rules
-from cognite.neat.rules.models import RoleTypes
+from cognite.neat.rules._shared import VerifiedRules
 
 from ._base import BaseExporter
 
 
-class YAMLExporter(BaseExporter[str]):
-    """Export rules to YAML.
+class YAMLExporter(BaseExporter[VerifiedRules, str]):
+    """Export rules (Information, DMS or Domain) to YAML.
 
     Args:
         files: The number of files to output. Defaults to "single".
@@ -38,16 +37,15 @@ class YAMLExporter(BaseExporter[str]):
     file_option = get_args(Files)
     format_option = get_args(Format)
 
-    def __init__(self, files: Files = "single", output: Format = "yaml", output_role: RoleTypes | None = None):
+    def __init__(self, files: Files = "single", output: Format = "yaml"):
         if files not in self.file_option:
             raise ValueError(f"Invalid files: {files}. Valid options are {self.file_option}")
         if output not in self.format_option:
             raise ValueError(f"Invalid output: {output}. Valid options are {self.format_option}")
         self.files = files
         self.output = output
-        self.output_role = output_role
 
-    def export_to_file(self, rules: Rules, filepath: Path) -> None:
+    def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
         """Exports transformation rules to YAML/JSON file(s)."""
         if self.files == "single":
             if filepath.suffix != f".{self.output}":
@@ -57,7 +55,7 @@ class YAMLExporter(BaseExporter[str]):
         else:
             raise NotImplementedError(f"Exporting to {self.files} files is not supported")
 
-    def export(self, rules: Rules) -> str:
+    def export(self, rules: VerifiedRules) -> str:
         """Export rules to YAML (or JSON) format.
 
         Args:
@@ -66,7 +64,6 @@ class YAMLExporter(BaseExporter[str]):
         Returns:
             str: The rules in YAML (or JSON) format.
         """
-        rules = self._convert_to_output_role(rules, self.output_role)
         # model_dump_json ensures that the output is in JSON format,
         # if we don't do this, we will get Enums and other types that are not serializable to YAML
         json_output = rules.dump(mode="json")

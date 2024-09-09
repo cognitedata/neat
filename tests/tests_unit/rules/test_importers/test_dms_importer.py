@@ -4,18 +4,22 @@ from typing import cast
 import pytest
 from cognite.client import data_modeling as dm
 
+from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
+from cognite.neat.rules.exporters import DMSExporter
 from cognite.neat.rules.importers import DMSImporter, ExcelImporter
-from cognite.neat.rules.issues.dms import DirectRelationMissingSourceWarning
 from cognite.neat.rules.models import DMSRules, DMSSchema, RoleTypes
+from cognite.neat.rules.transformers import DMSToInformation, ImporterPipeline, VerifyDMSRules
 from tests.config import DOC_RULES
+from tests.data import windturbine
 
 
 class TestDMSImporter:
     def test_import_with_direct_relation_none(self) -> None:
         importer = DMSImporter(SCHEMA_WITH_DIRECT_RELATION_NONE)
 
-        rules, issues = importer.to_rules(errors="continue")
-
+        result = ImporterPipeline.try_verify(importer)
+        rules = result.rules
+        issues = result.issues
         assert len(issues) == 1
         assert issues[0] == DirectRelationMissingSourceWarning(dm.ViewId("neat", "OneView", "1"), "direct")
         dms_rules = cast(DMSRules, rules)
@@ -26,7 +30,7 @@ class TestDMSImporter:
         assert dump_dms["views"][0]["name"] == "OneView"
         assert dump_dms["views"][0]["description"] == "One View"
 
-        info_rules = dms_rules.as_information_rules()
+        info_rules = DMSToInformation().transform(rules).rules
         dump_info = info_rules.dump()
         assert dump_info["properties"][0]["value_type"] == "#N/A"
 
@@ -38,13 +42,14 @@ class TestDMSImporter:
         ],
     )
     def test_import_rules_from_tutorials(self, filepath: Path) -> None:
-        dms_rules = cast(DMSRules, ExcelImporter(filepath).to_rules(errors="raise", role=RoleTypes.dms))
+        dms_rules = cast(DMSRules, ImporterPipeline.verify(ExcelImporter(filepath), role=RoleTypes.dms))
         # We must have the reference to be able to convert back to schema
         schema = dms_rules.as_schema()
         dms_importer = DMSImporter(schema)
 
-        rules, issues = dms_importer.to_rules(errors="continue")
-        issue_str = "\n".join([issue.message() for issue in issues])
+        result = ImporterPipeline.try_verify(dms_importer)
+        rules, issues = result.rules, result.issues
+        issue_str = "\n".join([issue.as_message() for issue in issues])
         assert rules is not None, f"Failed to import rules {issue_str}"
         assert isinstance(rules, DMSRules)
         # This information is lost in the conversion to schema
@@ -53,8 +58,40 @@ class TestDMSImporter:
             "properties": {"data": {"__all__": {"reference"}}},
             "reference": {"__all__"},
             "views": {"data": {"__all__": {"reference"}}},
+            # The Exporter adds node types for each view
+            "nodes": "__all__",
         }
         assert rules.dump(exclude=exclude) == dms_rules.dump(exclude=exclude)
+
+    def test_import_rules_properties_with_edge_properties_units_and_enum(self) -> None:
+        exporter = DMSImporter(windturbine.SCHEMA, metadata=windturbine.INPUT_RULES.metadata)
+
+        result = exporter.to_rules()
+
+        assert result.rules is not None
+        assert result.rules.dump() == windturbine.INPUT_RULES.dump()
+
+        rules = VerifyDMSRules(errors="raise").transform(result).get_rules()
+        assert isinstance(rules, DMSRules)
+
+        dms_recreated = DMSExporter().export(rules)
+        # We cannot compare the whole schema, as the DMS Exporter makes things like
+        # node types explicit along with filters. Thus, we compare selected parts
+        turbine = windturbine.WIND_TURBINE.as_id()
+        assert dms_recreated.views[turbine].dump()["properties"] == windturbine.WIND_TURBINE.dump()["properties"]
+        metmast = windturbine.METMAST.as_id()
+        assert dms_recreated.views[metmast].dump()["properties"] == windturbine.METMAST.dump()["properties"]
+        # The DMS Exporter dumps all node types, so we only check that the windturbine node type is present
+        assert windturbine.NODE_TYPE.as_id() in dms_recreated.node_types
+
+        assert (
+            dms_recreated.containers[windturbine.WINDTURBINE_CONTAINER_ID].dump()
+            == windturbine.WINDTURBINE_CONTAINER.dump()
+        )
+        assert dms_recreated.containers[windturbine.METMAST_CONTAINER_ID].dump() == windturbine.METMAST_CONTAINER.dump()
+        assert (
+            dms_recreated.containers[windturbine.DISTANCE_CONTAINER_ID].dump() == windturbine.DISTANCE_CONTAINER.dump()
+        )
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(

@@ -5,11 +5,13 @@ from typing import ClassVar
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
 
+from cognite.neat.issues.errors import WorkflowStepNotInitializedError
 from cognite.neat.issues.formatters import FORMATTER_BY_NAME
 from cognite.neat.rules import importers
+from cognite.neat.rules._shared import InputRules
 from cognite.neat.rules.models import RoleTypes
 from cognite.neat.rules.models.entities import DataModelEntity, DMSUnknownEntity
-from cognite.neat.workflows._exceptions import StepNotInitialized
+from cognite.neat.rules.transformers import ImporterPipeline
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import MultiRuleData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -55,7 +57,7 @@ class ExcelToRules(Step):
 
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         file_name = self.configs.get("File name", None)
         full_path = flow_message.payload.get("full_path", None) if flow_message.payload else None
@@ -70,17 +72,17 @@ class ExcelToRules(Step):
 
         # if role is None, it will be inferred from the rules file
         role = self.configs.get("Role")
-        role_enum = None
+        role_enum: RoleTypes | None = None
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
 
-        excel_importer = importers.ExcelImporter(rules_file_path)
-        rules, issues = excel_importer.to_rules(errors="continue", role=role_enum)
+        excel_importer = importers.ExcelImporter[InputRules](rules_file_path)
+        result = ImporterPipeline.try_verify(excel_importer, role_enum)
 
-        if rules is None:
+        if result.rules is None:
             output_dir = self.config.staging_path
             report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
-            report_writer.write_to_file(issues, file_or_dir_path=output_dir)
+            report_writer.write_to_file(result.issues, file_or_dir_path=output_dir)
             report_file = report_writer.default_file_name
             error_text = (
                 "<p></p>"
@@ -91,7 +93,7 @@ class ExcelToRules(Step):
 
         output_text = "Rules validation passed successfully!"
 
-        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(rules)
+        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(result.rules)
 
 
 class OntologyToRules(Step):
@@ -124,7 +126,7 @@ class OntologyToRules(Step):
 
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         file_name = self.configs.get("File name", None)
         full_path = flow_message.payload.get("full_path", None) if flow_message.payload else None
@@ -144,12 +146,12 @@ class OntologyToRules(Step):
             role_enum = RoleTypes[role]
 
         ontology_importer = importers.OWLImporter(filepath=rules_file_path)
-        rules, issues = ontology_importer.to_rules(errors="continue", role=role_enum)
+        result = ImporterPipeline.try_verify(ontology_importer, role_enum)
 
-        if rules is None:
+        if result.rules is None:
             output_dir = self.config.staging_path
             report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
-            report_writer.write_to_file(issues, file_or_dir_path=output_dir)
+            report_writer.write_to_file(result.issues, file_or_dir_path=output_dir)
             report_file = report_writer.default_file_name
             error_text = (
                 "<p></p>"
@@ -160,7 +162,7 @@ class OntologyToRules(Step):
 
         output_text = "Rules validation passed successfully!"
 
-        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(rules)
+        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(result.rules)
 
 
 class IMFToRules(Step):
@@ -193,7 +195,7 @@ class IMFToRules(Step):
 
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         file_name = self.configs.get("File name", None)
 
@@ -215,12 +217,12 @@ class IMFToRules(Step):
             role_enum = RoleTypes[role]
 
         ontology_importer = importers.IMFImporter(filepath=rules_file_path)
-        rules, issues = ontology_importer.to_rules(errors="continue", role=role_enum)
+        result = ImporterPipeline.try_verify(ontology_importer, role_enum)
 
-        if rules is None:
+        if result.rules is None:
             output_dir = self.config.staging_path
             report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
-            report_writer.write_to_file(issues, file_or_dir_path=output_dir)
+            report_writer.write_to_file(result.issues, file_or_dir_path=output_dir)
             report_file = report_writer.default_file_name
             error_text = (
                 "<p></p>"
@@ -231,7 +233,7 @@ class IMFToRules(Step):
 
         output_text = "Rules validation passed successfully!"
 
-        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(rules)
+        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(result.rules)
 
 
 class DMSToRules(Step):
@@ -271,7 +273,7 @@ class DMSToRules(Step):
 
     def run(self, cdf_client: CogniteClient) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         datamodel_id_str = self.configs.get("Data model id")
         if datamodel_id_str is None:
@@ -305,12 +307,12 @@ class DMSToRules(Step):
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
 
-        rules, issues = dms_importer.to_rules(errors="continue", role=role_enum)
+        result = ImporterPipeline.try_verify(dms_importer, role_enum)
 
-        if rules is None:
+        if result.rules is None:
             output_dir = self.config.staging_path
             report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
-            report_writer.write_to_file(issues, file_or_dir_path=output_dir)
+            report_writer.write_to_file(result.issues, file_or_dir_path=output_dir)
             report_file = report_writer.default_file_name
             error_text = (
                 "<p></p>"
@@ -321,7 +323,7 @@ class DMSToRules(Step):
 
         output_text = "Rules import and validation passed successfully!"
 
-        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(rules)
+        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(result.rules)
 
 
 class RulesInferenceFromRdfFile(Step):
@@ -360,7 +362,7 @@ class RulesInferenceFromRdfFile(Step):
 
     def run(self, flow_message: FlowMessage) -> (FlowMessage, MultiRuleData):  # type: ignore[syntax, override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         file_path = self.configs.get("File path", None)
         full_path = flow_message.payload.get("full_path", None) if flow_message.payload else None
@@ -388,12 +390,12 @@ class RulesInferenceFromRdfFile(Step):
         inference_importer = importers.InferenceImporter.from_rdf_file(
             rdf_file_path, max_number_of_instance=max_number_of_instance
         )
-        rules, issues = inference_importer.to_rules(errors="continue", role=role_enum)
+        result = ImporterPipeline.try_verify(inference_importer, role_enum)
 
-        if rules is None:
+        if result.rules is None:
             output_dir = self.config.staging_path
             report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
-            report_writer.write_to_file(issues, file_or_dir_path=output_dir)
+            report_writer.write_to_file(result.issues, file_or_dir_path=output_dir)
             report_file = report_writer.default_file_name
             error_text = (
                 "<p></p>"
@@ -404,4 +406,4 @@ class RulesInferenceFromRdfFile(Step):
 
         output_text = "Rules validation passed successfully!"
 
-        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(rules)
+        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(result.rules)

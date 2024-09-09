@@ -2,10 +2,17 @@ import time
 from pathlib import Path
 from typing import ClassVar, Literal, cast
 
+from cognite.neat.issues.errors import WorkflowStepNotInitializedError
 from cognite.neat.rules import exporters
-from cognite.neat.rules._shared import DMSRules, InformationRules, Rules
-from cognite.neat.rules.models import RoleTypes
-from cognite.neat.workflows._exceptions import StepNotInitialized
+from cognite.neat.rules._shared import DMSRules, InformationRules, VerifiedRules
+from cognite.neat.rules.models import AssetRules, RoleTypes
+from cognite.neat.rules.transformers import (
+    AssetToInformation,
+    DMSToInformation,
+    InformationToAsset,
+    InformationToDMS,
+    RulesPipeline,
+)
 from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat.workflows.steps.data_contracts import CogniteClient, MultiRuleData
 from cognite.neat.workflows.steps.step_model import Configurable, Step
@@ -61,7 +68,7 @@ class DeleteDataModelFromCDF(Step):
 
     def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
         components_to_delete = {
             cast(Literal["all", "spaces", "data_models", "views", "containers"], key)
             for key, value in self.complex_configs["Components"].items()
@@ -75,26 +82,30 @@ class DeleteDataModelFromCDF(Step):
                 error_text="No DMS Schema components selected for removal! Please select minimum one!",
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
-        input_rules = rules.dms or rules.information
+        input_rules = rules.dms or rules.information or rules.asset
         if input_rules is None:
             return FlowMessage(
                 error_text="Missing DMS or Information rules in the input data! "
                 "Please ensure that a DMS or Information rules is provided!",
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
+        if isinstance(input_rules, DMSRules):
+            dms_rules = input_rules
+        elif isinstance(input_rules, InformationRules):
+            dms_rules = InformationToDMS().transform(input_rules).rules
+        elif isinstance(input_rules, AssetRules):
+            dms_rules = RulesPipeline[AssetRules, DMSRules]([AssetToInformation(), InformationToDMS()]).run(input_rules)
+        else:
+            raise NotImplementedError(f"Unsupported rules type {type(input_rules)}")
 
         dms_exporter = exporters.DMSExporter(
             export_components=frozenset(components_to_delete),
-            include_space=(
-                None
-                if multi_space_components_delete
-                else {input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix}
-            ),
+            include_space=(None if multi_space_components_delete else {dms_rules.metadata.space}),
         )
 
         report_lines = ["# Data Model Deletion from CDF\n\n"]
         errors = []
-        for result in dms_exporter.delete_from_cdf(rules=input_rules, client=cdf_client, dry_run=dry_run):
+        for result in dms_exporter.delete_from_cdf(rules=dms_rules, client=cdf_client, dry_run=dry_run):
             report_lines.append(str(result))
             errors.extend(result.error_messages)
 
@@ -168,7 +179,7 @@ class RulesToDMS(Step):
 
     def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
         existing_components_handling = cast(
             Literal["fail", "update", "skip", "force"], self.configs["Existing component handling"]
         )
@@ -192,14 +203,18 @@ class RulesToDMS(Step):
                 "Please ensure that a DMS or Information rules is provided!",
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
+        if isinstance(input_rules, DMSRules):
+            dms_rules = input_rules
+        elif isinstance(input_rules, InformationRules):
+            dms_rules = InformationToDMS().transform(input_rules).rules
+        elif isinstance(input_rules, AssetRules):
+            dms_rules = RulesPipeline[AssetRules, DMSRules]([AssetToInformation(), InformationToDMS()]).run(input_rules)
+        else:
+            raise NotImplementedError(f"Unsupported rules type {type(input_rules)}")
 
         dms_exporter = exporters.DMSExporter(
             export_components=frozenset(components_to_create),
-            include_space=(
-                None
-                if multi_space_components_create
-                else {input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix}
-            ),
+            include_space=(None if multi_space_components_create else {dms_rules.metadata.space}),
             existing_handling=existing_components_handling,
         )
 
@@ -212,11 +227,11 @@ class RulesToDMS(Step):
         )
         schema_zip = f"{file_name}.zip"
         schema_full_path = output_dir / schema_zip
-        dms_exporter.export_to_file(input_rules, schema_full_path)
+        dms_exporter.export_to_file(dms_rules, schema_full_path)
 
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
-        for result in dms_exporter.export_to_cdf_iterable(rules=input_rules, client=cdf_client, dry_run=dry_run):
+        for result in dms_exporter.export_to_cdf_iterable(rules=dms_rules, client=cdf_client, dry_run=dry_run):
             report_lines.append(str(result))
             errors.extend(result.error_messages)
 
@@ -291,12 +306,12 @@ class RulesToExcel(Step):
 
     def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         dump_format = self.configs.get("Dump Format", "user")
         styling = cast(exporters.ExcelExporter.Style, self.configs.get("Styling", "default"))
         role = self.configs.get("Output role format")
-        output_role = None
+        output_role: RoleTypes | None = None
         if role != "input" and role is not None:
             output_role = RoleTypes[role]
 
@@ -310,23 +325,52 @@ class RulesToExcel(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        excel_exporter = exporters.ExcelExporter(
-            styling=styling,
-            output_role=output_role,
-            dump_as=dump_format,  # type: ignore[arg-type]
-            new_model_id=new_model_id,
-        )
+        excel_exporter = exporters.ExcelExporter(styling=styling, dump_as=dump_format, new_model_id=new_model_id)  # type: ignore[arg-type]
 
-        rule_instance: Rules
+        # Todo - Move the conversion to a separate workflow step.
+        rule_instance: VerifiedRules
         if rules.domain:
             rule_instance = rules.domain
         elif rules.information:
             rule_instance = rules.information
         elif rules.dms:
             rule_instance = rules.dms
+        elif rules.asset:
+            rule_instance = rules.asset
         else:
             output_errors = "No rules provided for export!"
             return FlowMessage(error_text=output_errors, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+
+        if rule_instance.metadata.role is output_role or output_role is None:
+            ...
+        elif output_role is RoleTypes.dms:
+            if isinstance(rule_instance, InformationRules):
+                rule_instance = InformationToDMS().transform(rule_instance).rules
+            elif isinstance(rule_instance, AssetRules):
+                rule_instance = RulesPipeline[AssetRules, DMSRules]([AssetToInformation(), InformationToDMS()]).run(
+                    rule_instance
+                )
+            else:
+                raise NotImplementedError(f"Role {output_role} is not supported for {type(rules).__name__} rules")
+        elif output_role is RoleTypes.information:
+            if isinstance(rule_instance, DMSRules):
+                rule_instance = DMSToInformation().transform(rule_instance).rules
+            elif isinstance(rule_instance, AssetRules):
+                rule_instance = AssetToInformation().transform(rule_instance).rules
+            else:
+                raise NotImplementedError(f"Role {output_role} is not supported for {type(rules).__name__} rules")
+        elif output_role is RoleTypes.asset:
+            if isinstance(rule_instance, InformationRules):
+                rule_instance = InformationToAsset().transform(rule_instance).rules
+            elif isinstance(rule_instance, DMSRules):
+                rule_instance = RulesPipeline[DMSRules, AssetRules]([DMSToInformation(), InformationToAsset()]).run(
+                    rule_instance
+                )
+            else:
+                raise NotImplementedError(f"Role {output_role} is not supported for {type(rules).__name__} rules")
+        else:
+            raise NotImplementedError(f"Role {output_role} is not supported for {type(rules).__name__} rules")
+
         if output_role is None:
             output_role = rule_instance.metadata.role
         output_dir = self.data_store_path / Path("staging")
@@ -369,7 +413,7 @@ class RulesToOntology(Step):
 
     def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         if not rules.information and not rules.dms:
             return FlowMessage(
@@ -384,8 +428,16 @@ class RulesToOntology(Step):
         )
         storage_path.parent.mkdir(parents=True, exist_ok=True)
 
+        input_rules = rules.information or rules.dms
+        if isinstance(input_rules, DMSRules):
+            info_rules = DMSToInformation().transform(input_rules).rules
+        elif isinstance(input_rules, InformationRules):
+            info_rules = input_rules
+        else:
+            raise NotImplementedError(f"Unsupported rules type {type(input_rules)}")
+
         exporter = exporters.OWLExporter()
-        exporter.export_to_file(cast(InformationRules | DMSRules, rules.information or rules.dms), storage_path)
+        exporter.export_to_file(info_rules, storage_path)
 
         relative_file_path = "/".join(storage_path.relative_to(self.data_store_path).parts)
 
@@ -420,7 +472,7 @@ class RulesToSHACL(Step):
 
     def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         if not rules.information and not rules.dms:
             return FlowMessage(
@@ -435,8 +487,16 @@ class RulesToSHACL(Step):
         )
         storage_path.parent.mkdir(parents=True, exist_ok=True)
 
+        input_rules = rules.information or rules.dms
+        if isinstance(input_rules, DMSRules):
+            info_rules = DMSToInformation().transform(input_rules).rules
+        elif isinstance(input_rules, InformationRules):
+            info_rules = input_rules
+        else:
+            raise NotImplementedError(f"Unsupported rules type {type(input_rules)}")
+
         exporter = exporters.SHACLExporter()
-        exporter.export_to_file(cast(InformationRules | DMSRules, rules.information or rules.dms), storage_path)
+        exporter.export_to_file(info_rules, storage_path)
 
         relative_file_path = "/".join(storage_path.relative_to(self.data_store_path).parts)
 
@@ -471,7 +531,7 @@ class RulesToSemanticDataModel(Step):
 
     def run(self, rules: MultiRuleData) -> FlowMessage:  # type: ignore[override, syntax]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         if not rules.information and not rules.dms:
             return FlowMessage(
@@ -485,9 +545,15 @@ class RulesToSemanticDataModel(Step):
             self.data_store_path / Path(self.configs["File path"]) if self.configs["File path"] else default_path
         )
         storage_path.parent.mkdir(parents=True, exist_ok=True)
-
+        input_rules = rules.information or rules.dms
+        if isinstance(input_rules, DMSRules):
+            info_rules = DMSToInformation().transform(input_rules).rules
+        elif isinstance(input_rules, InformationRules):
+            info_rules = input_rules
+        else:
+            raise NotImplementedError(f"Unsupported rules type {type(input_rules)}")
         exporter = exporters.SemanticDataModelExporter()
-        exporter.export_to_file(cast(InformationRules | DMSRules, rules.information or rules.dms), storage_path)
+        exporter.export_to_file(info_rules, storage_path)
 
         relative_file_path = "/".join(storage_path.relative_to(self.data_store_path).parts)
 
@@ -525,7 +591,7 @@ class RulesToCDFTransformations(Step):
 
     def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override]
         if self.configs is None or self.data_store_path is None:
-            raise StepNotInitialized(type(self).__name__)
+            raise WorkflowStepNotInitializedError(type(self).__name__)
 
         input_rules = rules.dms or rules.information
         if input_rules is None:
@@ -534,28 +600,31 @@ class RulesToCDFTransformations(Step):
                 "Please ensure that a DMS or Information rules is provided!",
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
-        default_instance_space = (
-            input_rules.metadata.space if isinstance(input_rules, DMSRules) else input_rules.metadata.prefix
-        )
-        instance_space = self.configs.get("Instance space") or default_instance_space
+        if isinstance(input_rules, DMSRules):
+            dms_rules = input_rules
+        elif isinstance(input_rules, InformationRules):
+            dms_rules = InformationToDMS().transform(input_rules).rules
+        elif isinstance(input_rules, AssetRules):
+            dms_rules = RulesPipeline[AssetRules, DMSRules]([AssetToInformation(), InformationToDMS()]).run(input_rules)
+        else:
+            raise NotImplementedError(f"Unsupported rules type {type(input_rules)}")
+
+        instance_space = self.configs.get("Instance space") or dms_rules.metadata.space
         dry_run = self.configs.get("Dry run", "False") == "True"
         dms_exporter = exporters.DMSExporter(
             export_pipeline=True, instance_space=instance_space, export_components=["spaces"]
         )
         output_dir = self.config.staging_path
         output_dir.mkdir(parents=True, exist_ok=True)
-        file_name = (
-            input_rules.metadata.external_id
-            if isinstance(input_rules, DMSRules)
-            else input_rules.metadata.name.replace(" ", "_").lower()
-        )
+        file_name = dms_rules.metadata.external_id.replace(":", "_")
         schema_zip = f"{file_name}_pipeline.zip"
         schema_full_path = output_dir / schema_zip
-        dms_exporter.export_to_file(input_rules, schema_full_path)
+
+        dms_exporter.export_to_file(dms_rules, schema_full_path)
 
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
-        for result in dms_exporter.export_to_cdf_iterable(rules=input_rules, client=cdf_client, dry_run=dry_run):
+        for result in dms_exporter.export_to_cdf_iterable(rules=dms_rules, client=cdf_client, dry_run=dry_run):
             report_lines.append(str(result))
             errors.extend(result.error_messages)
 

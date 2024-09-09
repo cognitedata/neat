@@ -1,13 +1,12 @@
 import sys
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import Any, ClassVar, Literal, cast
 
 from pydantic import Field, field_validator, model_validator
 from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
-from cognite.neat.rules.models._base import BaseRules, RoleTypes, SheetList
-from cognite.neat.rules.models.domain import DomainRules
+from cognite.neat.rules.models._base_rules import BaseRules, RoleTypes, SheetList
 from cognite.neat.rules.models.entities import (
     CdfResourceEntityList,
     ClassEntity,
@@ -20,10 +19,6 @@ from cognite.neat.rules.models.information import (
     InformationProperty,
     InformationRules,
 )
-
-if TYPE_CHECKING:
-    from cognite.neat.rules.models.dms._rules import DMSRules
-
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -141,16 +136,3 @@ class AssetRules(BaseRules):
             prefix = self.reference.metadata.prefix
             cleaned[reference] = _AssetRulesSerializer(by_alias, prefix).clean(ref_dump, True)
         return cleaned
-
-    def as_domain_rules(self) -> DomainRules:
-        from ._converter import _AssetRulesConverter
-
-        return _AssetRulesConverter(self.as_information_rules()).as_domain_rules()
-
-    def as_dms_rules(self) -> "DMSRules":
-        from ._converter import _AssetRulesConverter
-
-        return _AssetRulesConverter(self.as_information_rules()).as_dms_rules()
-
-    def as_information_rules(self) -> InformationRules:
-        return InformationRules.model_validate(self.model_dump())

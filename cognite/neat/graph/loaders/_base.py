@@ -6,9 +6,9 @@ from typing import ClassVar, Generic, TypeVar
 from cognite.client import CogniteClient
 from cognite.client.data_classes.capabilities import Capability
 
-from cognite.neat.graph import NeatGraphStore
 from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors.external import FailedAuthorizationError
+from cognite.neat.issues.errors import AuthorizationError
+from cognite.neat.store import NeatGraphStore
 from cognite.neat.utils.auxiliary import class_html_doc
 from cognite.neat.utils.upload import UploadResult, UploadResultList
 
@@ -61,7 +61,7 @@ class CDFLoader(BaseLoader[T_Output]):
             if missing_capabilities:
                 upload_result = UploadResult[Hashable](name=type(self).__name__)
                 upload_result.issues.append(
-                    FailedAuthorizationError(action="Upload to CDF", reason=str(missing_capabilities))
+                    AuthorizationError(action="Upload to CDF", reason=str(missing_capabilities))
                 )
                 yield upload_result
                 return

@@ -8,8 +8,8 @@ from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
-from cognite.neat.issues.errors.properties import InvalidPropertyDefinitionError
-from cognite.neat.rules.models._base import (
+from cognite.neat.issues.errors import PropertyDefinitionError
+from cognite.neat.rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
     DataModelType,
@@ -34,7 +34,6 @@ from cognite.neat.rules.models._types import (
     VersionType,
 )
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ClassEntityList,
@@ -47,7 +46,7 @@ from cognite.neat.rules.models.entities import (
 )
 
 if TYPE_CHECKING:
-    from cognite.neat.rules.models import AssetRules, DMSRules
+    from cognite.neat.rules.models import DMSRules
 
 
 if sys.version_info >= (3, 11):
@@ -226,12 +225,12 @@ class InformationProperty(SheetEntity):
                         self.default = self.value_type.python(self.default)
 
                 except Exception:
-                    raise InvalidPropertyDefinitionError[ClassEntity](
+                    raise PropertyDefinitionError(
                         self.class_,
                         "Class",
                         self.property_,
                         f"Default value {self.default} is not of type {self.value_type.python}",
-                    ).as_exception() from None
+                    ) from None
         return self
 
     @property
@@ -340,17 +339,7 @@ class InformationRules(BaseRules):
             cleaned[reference] = _InformationRulesSerializer(by_alias, prefix).clean(ref_dump, True)
         return cleaned
 
-    def as_domain_rules(self) -> DomainRules:
-        from ._converter import _InformationRulesConverter
-
-        return _InformationRulesConverter(self).as_domain_rules()
-
-    def as_asset_architect_rules(self) -> "AssetRules":
-        from ._converter import _InformationRulesConverter
-
-        return _InformationRulesConverter(self).as_asset_architect_rules()
-
     def as_dms_rules(self) -> "DMSRules":
-        from ._converter import _InformationRulesConverter
+        from cognite.neat.rules.transformers._converters import _InformationRulesConverter
 
         return _InformationRulesConverter(self).as_dms_rules()

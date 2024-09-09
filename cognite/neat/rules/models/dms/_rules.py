@@ -1,8 +1,6 @@
 import math
-import re
 import sys
 import warnings
-from collections import defaultdict
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
@@ -11,10 +9,12 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic.main import IncEx
 from pydantic_core.core_schema import ValidationInfo
 
-from cognite.neat.issues.neat_warnings.models import BreakingModelingPrincipleWarning, DataModelingPrinciple
-from cognite.neat.rules import issues
-from cognite.neat.rules.issues import MultiValueError
-from cognite.neat.rules.models._base import (
+from cognite.neat.issues import MultiValueError
+from cognite.neat.issues.warnings import (
+    PrincipleMatchingSpaceAndVersionWarning,
+    PrincipleSolutionBuildsOnEnterpriseWarning,
+)
+from cognite.neat.rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
     DataModelType,
@@ -31,24 +31,27 @@ from cognite.neat.rules.models._types import (
     VersionType,
 )
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.domain import DomainRules
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     ContainerEntityList,
+    DMSNodeEntity,
     DMSUnknownEntity,
+    EdgeEntity,
+    HasDataFilter,
+    NodeTypeFilter,
+    RawFilter,
     ReferenceEntity,
+    ReverseConnectionEntity,
     URLEntity,
     ViewEntity,
     ViewEntityList,
-    ViewPropertyEntity,
 )
-from cognite.neat.rules.models.wrapped_entities import HasDataFilter, NodeTypeFilter, RawFilter
 
 from ._schema import DMSSchema
 
 if TYPE_CHECKING:
-    from cognite.neat.rules.models.information._rules import InformationRules
+    pass
 
 if sys.version_info >= (3, 11):
     pass
@@ -137,35 +140,6 @@ class DMSMetadata(BaseMetadata):
     def as_identifier(self) -> str:
         return repr(self.as_data_model_id())
 
-    @classmethod
-    def _get_description_and_creator(cls, description_raw: str | None) -> tuple[str | None, list[str]]:
-        if description_raw and (description_match := re.search(r"Creator: (.+)", description_raw)):
-            creator = description_match.group(1).split(", ")
-            description = description_raw.replace(description_match.string, "").strip() or None
-        elif description_raw:
-            creator = ["MISSING"]
-            description = description_raw
-        else:
-            creator = ["MISSING"]
-            description = None
-        return description, creator
-
-    @classmethod
-    def from_data_model(cls, data_model: dm.DataModelApply, has_reference: bool) -> "DMSMetadata":
-        description, creator = cls._get_description_and_creator(data_model.description)
-        return cls(
-            schema_=SchemaCompleteness.complete,
-            data_model_type=DataModelType.solution if has_reference else DataModelType.enterprise,
-            space=data_model.space,
-            name=data_model.name or None,
-            description=description,
-            external_id=data_model.external_id,
-            version=data_model.version,
-            creator=creator,
-            created=datetime.now(),
-            updated=datetime.now(),
-        )
-
     def get_prefix(self) -> str:
         return self.space
 
@@ -175,8 +149,8 @@ class DMSProperty(SheetEntity):
     view_property: str = Field(alias="View Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    connection: Literal["direct", "edge", "reverse"] | None = Field(None, alias="Connection")
-    value_type: DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
+    connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = Field(None, alias="Connection")
+    value_type: DataType | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
     nullable: bool | None = Field(default=None, alias="Nullable")
     immutable: bool | None = Field(default=None, alias="Immutable")
     is_list: bool | None = Field(default=None, alias="Is List")
@@ -197,25 +171,23 @@ class DMSProperty(SheetEntity):
 
     @field_validator("value_type", mode="after")
     def connections_value_type(
-        cls, value: ViewPropertyEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
-    ) -> DataType | ViewPropertyEntity | ViewEntity | DMSUnknownEntity:
+        cls, value: EdgeEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
+    ) -> DataType | EdgeEntity | ViewEntity | DMSUnknownEntity:
         if (connection := info.data.get("connection")) is None:
             return value
         if connection == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
             raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
-        elif connection == "edge" and not isinstance(value, ViewEntity):
+        elif isinstance(connection, EdgeEntity) and not isinstance(value, ViewEntity):
             raise ValueError(f"Edge connection must have a value type that points to a view, got {value}")
-        elif connection == "reverse" and not isinstance(value, ViewPropertyEntity | ViewEntity):
-            raise ValueError(
-                f"Reverse connection must have a value type that points to a view or view property, got {value}"
-            )
+        elif isinstance(connection, ReverseConnectionEntity) and not isinstance(value, ViewEntity):
+            raise ValueError(f"Reverse connection must have a value type that points to a view, got {value}")
         return value
 
     @field_serializer("value_type", when_used="always")
     @staticmethod
-    def as_dms_type(value_type: DataType | ViewPropertyEntity | ViewEntity) -> str:
+    def as_dms_type(value_type: DataType | EdgeEntity | ViewEntity) -> str:
         if isinstance(value_type, DataType):
-            return value_type.dms._type
+            return value_type._suffix_extra_args(value_type.dms._type)
         else:
             return str(value_type)
 
@@ -226,6 +198,7 @@ class DMSContainer(SheetEntity):
     description: str | None = Field(alias="Description", default=None)
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     constraint: ContainerEntityList | None = Field(None, alias="Constraint")
+    used_for: Literal["node", "edge", "all"] | None = Field("all", alias="Used For")
     class_: ClassEntity = Field(alias="Class (linage)")
 
     def as_container(self) -> dm.ContainerApply:
@@ -242,22 +215,7 @@ class DMSContainer(SheetEntity):
             description=self.description,
             constraints=constraints or None,
             properties={},
-        )
-
-    @classmethod
-    def from_container(cls, container: dm.ContainerApply) -> "DMSContainer":
-        constraints: list[ContainerEntity] = []
-        for _, constraint_obj in (container.constraints or {}).items():
-            if isinstance(constraint_obj, dm.RequiresConstraint):
-                constraints.append(ContainerEntity.from_id(constraint_obj.require))
-            # UniquenessConstraint it handled in the properties
-        container_entity = ContainerEntity.from_id(container.as_id())
-        return cls(
-            class_=container_entity.as_class(),
-            container=container_entity,
-            name=container.name or None,
-            description=container.description,
-            constraint=constraints or None,
+            used_for=self.used_for,
         )
 
 
@@ -290,19 +248,27 @@ class DMSView(SheetEntity):
             properties={},
         )
 
-    @classmethod
-    def from_view(cls, view: dm.ViewApply, in_model: bool) -> "DMSView":
-        view_entity = ViewEntity.from_id(view.as_id())
-        class_entity = view_entity.as_class(skip_version=True)
 
-        return cls(
-            class_=class_entity,
-            view=view_entity,
-            description=view.description,
-            name=view.name,
-            implements=[ViewEntity.from_id(parent, _DEFAULT_VERSION) for parent in view.implements] or None,
-            in_model=in_model,
-        )
+class DMSNode(SheetEntity):
+    node: DMSNodeEntity = Field(alias="Node")
+    usage: Literal["type", "collection"] = Field(alias="Usage")
+    name: str | None = Field(alias="Name", default=None)
+    description: str | None = Field(alias="Description", default=None)
+
+    def as_node(self) -> dm.NodeApply:
+        if self.usage == "type":
+            return dm.NodeApply(space=self.node.space, external_id=self.node.external_id)
+        elif self.usage == "collection":
+            raise NotImplementedError("Collection nodes are not supported yet")
+        else:
+            raise ValueError(f"Unknown usage {self.usage}")
+
+
+class DMSEnum(SheetEntity):
+    collection: ClassEntity = Field(alias="Collection")
+    value: str = Field(alias="Value")
+    name: str | None = Field(alias="Name", default=None)
+    description: str | None = Field(alias="Description", default=None)
 
 
 class DMSRules(BaseRules):
@@ -310,6 +276,8 @@ class DMSRules(BaseRules):
     properties: SheetList[DMSProperty] = Field(alias="Properties")
     views: SheetList[DMSView] = Field(alias="Views")
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
+    enum: SheetList[DMSEnum] | None = Field(None, alias="Enum")
+    nodes: SheetList[DMSNode] | None = Field(None, alias="Nodes")
     last: "DMSRules | None" = Field(None, alias="Last", description="The previous version of the data model")
     reference: "DMSRules | None" = Field(None, alias="Reference")
 
@@ -321,10 +289,9 @@ class DMSRules(BaseRules):
             raise ValueError("Reference rules cannot have a reference")
         if value.metadata.data_model_type == DataModelType.solution and (metadata := info.data.get("metadata")):
             warnings.warn(
-                BreakingModelingPrincipleWarning(
+                PrincipleSolutionBuildsOnEnterpriseWarning(
                     f"The solution model {metadata.as_data_model_id()} is referencing another "
                     f"solution model {value.metadata.as_data_model_id()}",
-                    DataModelingPrinciple.SOLUTION_BUILDS_ON_ENTERPRISE,
                 ),
                 stacklevel=2,
             )
@@ -336,9 +303,21 @@ class DMSRules(BaseRules):
             return value
         model_version = metadata.version
         if different_version := [view.view.as_id() for view in value if view.view.version != model_version]:
-            warnings.warn(issues.dms.ViewModelVersionNotMatchingWarning(different_version, model_version), stacklevel=2)
+            for view_id in different_version:
+                warnings.warn(
+                    PrincipleMatchingSpaceAndVersionWarning(
+                        f"The view {view_id!r} has a different version than the data model version, {model_version}",
+                    ),
+                    stacklevel=2,
+                )
         if different_space := [view.view.as_id() for view in value if view.view.space != metadata.space]:
-            warnings.warn(issues.dms.ViewModelSpaceNotMatchingWarning(different_space, metadata.space), stacklevel=2)
+            for view_id in different_space:
+                warnings.warn(
+                    PrincipleMatchingSpaceAndVersionWarning(
+                        f"The view {view_id!r} is in a different space than the data model space, {metadata.space}",
+                    ),
+                    stacklevel=2,
+                )
         return value
 
     @model_validator(mode="after")
@@ -388,82 +367,3 @@ class DMSRules(BaseRules):
         from ._exporter import _DMSExporter
 
         return _DMSExporter(self, include_pipeline, instance_space).to_schema()
-
-    def as_information_rules(self) -> "InformationRules":
-        from ._converter import _DMSRulesConverter
-
-        return _DMSRulesConverter(self).as_information_rules()
-
-    def as_domain_expert_rules(self) -> DomainRules:
-        from ._converter import _DMSRulesConverter
-
-        return _DMSRulesConverter(self).as_domain_rules()
-
-    def create_reference(
-        self, reference: "DMSRules", view_extension_mapping: dict[str, str], default_extension: str | None = None
-    ) -> None:
-        """Takes this data models and makes it into an extension of the reference data model.
-
-        The argument view_extension_mapping is a dictionary where the keys are views of this data model,
-        and each value is the view of the reference data model that the view should extend. For example:
-
-        ```python
-        view_extension_mapping = {"Pump": "Asset"}
-        ```
-
-        This would make the view "Pump" in this data model extend the view "Asset" in the reference data model.
-        Note that all the keys in the dictionary must be external ids of views in this data model,
-        and all the values must be external ids of views in the reference data model.
-
-        Args:
-            reference: The reference data model
-            view_extension_mapping: A dictionary mapping views in this data model to views in the reference data model
-            default_extension: The default view in the reference data model that views in this
-                data model should extend if no mapping is provided.
-
-        """
-        if self.reference is not None:
-            raise ValueError("Reference already exists")
-        self.reference = reference
-        view_by_external_id = {view.view.external_id: view for view in self.views}
-        ref_view_by_external_id = {view.view.external_id: view for view in reference.views}
-
-        if invalid_views := set(view_extension_mapping.keys()) - set(view_by_external_id.keys()):
-            raise ValueError(f"Views are not in this dat model {invalid_views}")
-        if invalid_views := set(view_extension_mapping.values()) - set(ref_view_by_external_id.keys()):
-            raise ValueError(f"Views are not in the reference data model {invalid_views}")
-        if default_extension and default_extension not in ref_view_by_external_id:
-            raise ValueError(f"Default extension view not in the reference data model {default_extension}")
-
-        properties_by_view_external_id: dict[str, dict[str, DMSProperty]] = defaultdict(dict)
-        for prop in self.properties:
-            properties_by_view_external_id[prop.view.external_id][prop.view_property] = prop
-
-        ref_properties_by_view_external_id: dict[str, dict[str, DMSProperty]] = defaultdict(dict)
-        for prop in reference.properties:
-            ref_properties_by_view_external_id[prop.view.external_id][prop.view_property] = prop
-
-        for view_external_id, view in view_by_external_id.items():
-            if view_external_id in view_extension_mapping:
-                ref_external_id = view_extension_mapping[view_external_id]
-            elif default_extension:
-                ref_external_id = default_extension
-            else:
-                continue
-
-            ref_view = ref_view_by_external_id[ref_external_id]
-            shared_properties = set(properties_by_view_external_id[view_external_id].keys()) & set(
-                ref_properties_by_view_external_id[ref_external_id].keys()
-            )
-            if shared_properties:
-                if view.implements is None:
-                    view.implements = [ref_view.view]
-                elif isinstance(view.implements, list) and ref_view.view not in view.implements:
-                    view.implements.append(ref_view.view)
-            for prop_name in shared_properties:
-                prop = properties_by_view_external_id[view_external_id][prop_name]
-                ref_prop = ref_properties_by_view_external_id[ref_external_id][prop_name]
-                if ref_prop.container and ref_prop.container_property:
-                    prop.container = ref_prop.container
-                    prop.container_property = ref_prop.container_property
-                prop.reference = ReferenceEntity.from_entity(ref_prop.view, ref_prop.view_property)

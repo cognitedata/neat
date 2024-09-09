@@ -8,12 +8,13 @@ from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.rules import importers
 from cognite.neat.rules.models import DMSRules, InformationRules
 from cognite.neat.rules.models.dms import (
-    DMSContainerInput,
-    DMSMetadataInput,
-    DMSPropertyInput,
-    DMSRulesInput,
-    DMSViewInput,
+    DMSInputContainer,
+    DMSInputMetadata,
+    DMSInputProperty,
+    DMSInputRules,
+    DMSInputView,
 )
+from cognite.neat.rules.transformers import ImporterPipeline
 
 _neat = DEFAULT_NAMESPACE
 TRIPLES = tuple(
@@ -23,16 +24,16 @@ TRIPLES = tuple(
         (_neat["Blue"], RDF.type, _neat["Color"]),
         (_neat["Blue"], _neat["name"], Literal("blue")),
         (_neat["Car1"], RDF.type, _neat["Car"]),
-        (_neat["Car1"], _neat["make"], _neat["Toyota"]),
-        (_neat["Car1"], _neat["year"], Literal("2020")),
+        (_neat["Car1"], _neat["Car.Manufacturer"], _neat["Toyota"]),
+        (_neat["Car1"], _neat["year"], Literal(2020)),
         (_neat["Car1"], _neat["color"], _neat["Blue"]),
         (_neat["Ford"], RDF.type, _neat["Manufacturer"]),
         (_neat["Ford"], _neat["name"], Literal("Ford")),
         (_neat["Red"], RDF.type, _neat["Color"]),
         (_neat["Red"], _neat["name"], Literal("red")),
         (_neat["Car2"], RDF.type, _neat["Car"]),
-        (_neat["Car2"], _neat["make"], _neat["Ford"]),
-        (_neat["Car2"], _neat["year"], Literal("2018")),
+        (_neat["Car2"], _neat["Car.Manufacturer"], _neat["Ford"]),
+        (_neat["Car2"], _neat["year"], Literal(2018)),
         (_neat["Car2"], _neat["color"], _neat["Red"]),
     ]
 )
@@ -60,9 +61,9 @@ CONTAINERS = dm.ContainerApplyList(
     ]
 )
 
-CAR_RULES: InformationRules = importers.ExcelImporter(
-    Path(__file__).resolve().parent / "info-arch-car-rules.xlsx"
-).to_rules(errors="raise")
+CAR_RULES: InformationRules = ImporterPipeline.verify(
+    importers.ExcelImporter(Path(__file__).resolve().parent / "info-arch-car-rules.xlsx")
+)
 
 CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     space=MODEL_SPACE,
@@ -166,8 +167,8 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     ],
 )
 
-BASE_MODEL: DMSRules = DMSRulesInput(
-    metadata=DMSMetadataInput(
+BASE_MODEL: DMSRules = DMSInputRules(
+    metadata=DMSInputMetadata(
         schema_="partial",
         space="sp_base",
         external_id="Base",
@@ -176,10 +177,10 @@ BASE_MODEL: DMSRules = DMSRulesInput(
         data_model_type="enterprise",
         creator="Anders",
     ),
-    views=[DMSViewInput(view="Entity")],
-    containers=[DMSContainerInput(container="Entity")],
+    views=[DMSInputView(view="Entity")],
+    containers=[DMSInputContainer(container="Entity")],
     properties=[
-        DMSPropertyInput(
+        DMSInputProperty(
             view="Entity",
             view_property="name",
             value_type="text",
@@ -207,12 +208,13 @@ INSTANCES = [
                 properties={"year": 2020, "color": {"space": INSTANCE_SPACE, "externalId": "Blue"}},
             )
         ],
+        type=dm.DirectRelationReference(MODEL_SPACE, "Car"),
     ),
     dm.EdgeApply(
         space=INSTANCE_SPACE,
         external_id="Car1.make.Toyota",
-        type=dm.DirectRelationReference(MODEL_SPACE, "Car.Manufacturer"),
         start_node=dm.DirectRelationReference(INSTANCE_SPACE, "Car1"),
+        type=dm.DirectRelationReference(MODEL_SPACE, "Car.Manufacturer"),
         end_node=dm.DirectRelationReference(INSTANCE_SPACE, "Toyota"),
     ),
     dm.NodeApply(
@@ -221,35 +223,43 @@ INSTANCES = [
         sources=[
             dm.NodeOrEdgeData(
                 source=CAR_MODEL.views[0].as_id(),
-                properties={"year": 2018, "color": {"space": INSTANCE_SPACE, "externalId": "Red"}},
+                properties={
+                    "year": 2018,
+                    "color": {"space": INSTANCE_SPACE, "externalId": "Red"},
+                },
             )
         ],
+        type=dm.DirectRelationReference(MODEL_SPACE, "Car"),
     ),
     dm.EdgeApply(
         space=INSTANCE_SPACE,
         external_id="Car2.make.Ford",
-        type=dm.DirectRelationReference(MODEL_SPACE, "Car.Manufacturer"),
         start_node=dm.DirectRelationReference(INSTANCE_SPACE, "Car2"),
+        type=dm.DirectRelationReference(MODEL_SPACE, "Car.Manufacturer"),
         end_node=dm.DirectRelationReference(INSTANCE_SPACE, "Ford"),
     ),
     dm.NodeApply(
         space=INSTANCE_SPACE,
         external_id="Ford",
         sources=[dm.NodeOrEdgeData(source=CAR_MODEL.views[1].as_id(), properties={"name": "Ford"})],
+        type=dm.DirectRelationReference(MODEL_SPACE, "Manufacturer"),
     ),
     dm.NodeApply(
         space=INSTANCE_SPACE,
         external_id="Toyota",
         sources=[dm.NodeOrEdgeData(source=CAR_MODEL.views[1].as_id(), properties={"name": "Toyota"})],
+        type=dm.DirectRelationReference(MODEL_SPACE, "Manufacturer"),
     ),
     dm.NodeApply(
         space=INSTANCE_SPACE,
         external_id="Blue",
         sources=[dm.NodeOrEdgeData(source=CAR_MODEL.views[2].as_id(), properties={"name": "blue"})],
+        type=dm.DirectRelationReference(MODEL_SPACE, "Color"),
     ),
     dm.NodeApply(
         space=INSTANCE_SPACE,
         external_id="Red",
         sources=[dm.NodeOrEdgeData(source=CAR_MODEL.views[2].as_id(), properties={"name": "red"})],
+        type=dm.DirectRelationReference(MODEL_SPACE, "Color"),
     ),
 ]

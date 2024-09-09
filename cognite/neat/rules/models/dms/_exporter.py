@@ -1,10 +1,11 @@
 import warnings
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from typing import Any, cast
 
 from cognite.client.data_classes import data_modeling as dm
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
+from cognite.client.data_classes.data_modeling.data_types import EnumValue as DMSEnumValue
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import (
     SingleEdgeConnectionApply,
@@ -12,23 +13,33 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
-from cognite.neat.issues.neat_warnings.general import NotSupportedWarning
-from cognite.neat.issues.neat_warnings.models import CDFNotSupportedWarning, UserModelingWarning
-from cognite.neat.rules.models._base import DataModelType, ExtensionCategory, SchemaCompleteness
-from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.issues.errors import NeatTypeError, ResourceNotFoundError
+from cognite.neat.issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
+from cognite.neat.issues.warnings.user_modeling import (
+    EmptyContainerWarning,
+    HasDataFilterOnNoPropertiesViewWarning,
+    HasDataFilterOnViewWithReferencesWarning,
+    NodeTypeFilterOnParentViewWarning,
+)
+from cognite.neat.rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
+from cognite.neat.rules.models.data_types import DataType, Double, Enum, Float
 from cognite.neat.rules.models.entities import (
+    ClassEntity,
     ContainerEntity,
+    DMSFilter,
     DMSNodeEntity,
     DMSUnknownEntity,
+    EdgeEntity,
+    HasDataFilter,
+    NodeTypeFilter,
     ReferenceEntity,
+    ReverseConnectionEntity,
+    UnitEntity,
     ViewEntity,
-    ViewPropertyEntity,
 )
-from cognite.neat.rules.models.wrapped_entities import DMSFilter, HasDataFilter, NodeTypeFilter
 from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
-from cognite.neat.utils.text import humanize_sequence
 
-from ._rules import DMSMetadata, DMSProperty, DMSRules, DMSView
+from ._rules import DMSEnum, DMSMetadata, DMSProperty, DMSRules, DMSView
 from ._schema import DMSSchema, PipelineSchema
 
 
@@ -107,9 +118,16 @@ class _DMSExporter:
             ]
             self._update_with_properties(selected_properties, container_properties_by_id, None)
 
-        containers = self._create_containers(container_properties_by_id)
+        containers = self._create_containers(container_properties_by_id, rules.enum)  # type: ignore[arg-type]
 
-        views, node_types = self._create_views_with_node_types(view_properties_by_id)
+        views, view_node_type_filters = self._create_views_with_node_types(view_properties_by_id)
+        if rules.nodes:
+            node_types = NodeApplyDict(
+                [node.as_node() for node in rules.nodes]
+                + [dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters]
+            )
+        else:
+            node_types = NodeApplyDict([dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters])
 
         last_schema: DMSSchema | None = None
         if self.rules.last:
@@ -180,7 +198,7 @@ class _DMSExporter:
     def _create_views_with_node_types(
         self,
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
-    ) -> tuple[ViewApplyDict, NodeApplyDict]:
+    ) -> tuple[ViewApplyDict, set[dm.NodeId]]:
         input_views = list(self.rules.views)
         if self.rules.last:
             existing = {view.view.as_id() for view in input_views}
@@ -216,12 +234,7 @@ class _DMSExporter:
                 unique_node_types.update(view_filter.nodes)
                 if view.as_id() in parent_views:
                     warnings.warn(
-                        UserModelingWarning(
-                            "NodeTypeFilterOnParentViewWarning",
-                            f"Setting a node type filter on parent view {view.as_id()!r}.",
-                            "This is not recommended as parent views are typically used for multiple types of nodes.",
-                            "Use a HasData filter instead",
-                        ),
+                        NodeTypeFilterOnParentViewWarning(view.as_id()),
                         stacklevel=2,
                     )
 
@@ -237,14 +250,7 @@ class _DMSExporter:
                 else:
                     continue
                 warnings.warn(
-                    UserModelingWarning(
-                        "HasDataFilterOnViewWithReferencesWarning",
-                        f"Setting a hasData filter on view {view.as_id()!r}"
-                        f"which references other views {humanize_sequence([repr(ref) for ref in references])}.",
-                        "This is not recommended as it will lead to no nodes "
-                        "being returned when querying the solution view.",
-                        "Use a NodeType filter instead",
-                    ),
+                    HasDataFilterOnViewWithReferencesWarning(view.as_id(), frozenset(references)),
                     stacklevel=2,
                 )
 
@@ -253,17 +259,19 @@ class _DMSExporter:
                 # as they are expected for the solution model.
                 unique_node_types.add(dm.NodeId(space=view.space, external_id=view.external_id))
 
-        return views, NodeApplyDict(
-            [dm.NodeApply(space=node.space, external_id=node.external_id) for node in unique_node_types]
-        )
+        return views, unique_node_types
 
     @classmethod
     def _create_edge_type_from_prop(cls, prop: DMSProperty) -> dm.DirectRelationReference:
-        if isinstance(prop.reference, ReferenceEntity):
+        if isinstance(prop.connection, EdgeEntity) and prop.connection.edge_type is not None:
+            return prop.connection.edge_type.as_reference()
+        elif isinstance(prop.reference, ReferenceEntity):
             ref_view_prop = prop.reference.as_view_property_id()
             return cls._create_edge_type_from_view_id(cast(dm.ViewId, ref_view_prop.source), ref_view_prop.property)
-        else:
+        elif isinstance(prop.value_type, ViewEntity):
             return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
+        else:
+            raise NeatTypeError(f"Invalid valueType {prop.value_type!r}")
 
     @staticmethod
     def _create_edge_type_from_view_id(view_id: dm.ViewId, property_: str) -> dm.DirectRelationReference:
@@ -276,7 +284,12 @@ class _DMSExporter:
     def _create_containers(
         self,
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
+        enum: Collection[DMSEnum] | None,
     ) -> ContainerApplyDict:
+        enum_values_by_collection: dict[ClassEntity, list[DMSEnum]] = defaultdict(list)
+        for enum_value in enum or []:
+            enum_values_by_collection[enum_value.collection].append(enum_value)
+
         containers = list(self.rules.containers or [])
         if self.rules.last:
             existing = {container.container.as_id() for container in containers}
@@ -293,12 +306,7 @@ class _DMSExporter:
             container_id = container.as_id()
             if not (container_properties := container_properties_by_id.get(container_id)):
                 warnings.warn(
-                    UserModelingWarning(
-                        "EmptyContainerWarning",
-                        f"Container {container_id!r} is empty and will be skipped.",
-                        "The container does not have any properties",
-                        "Add properties to the container or remove the container",
-                    ),
+                    EmptyContainerWarning(container_id),
                     stacklevel=2,
                 )
                 container_to_drop.add(container_id)
@@ -310,17 +318,34 @@ class _DMSExporter:
                     type_cls = prop.value_type.dms
                 else:
                     type_cls = dm.DirectRelation
-                type_: dm.PropertyType
+
+                args: dict[str, Any] = {}
                 if issubclass(type_cls, ListablePropertyType):
-                    type_ = type_cls(is_list=prop.is_list or False)
-                else:
-                    type_ = type_cls()
+                    args["is_list"] = prop.is_list or False
+                if isinstance(prop.value_type, Double | Float) and isinstance(prop.value_type.unit, UnitEntity):
+                    args["unit"] = prop.value_type.unit.as_reference()
+                if isinstance(prop.value_type, Enum):
+                    if prop.value_type.collection not in enum_values_by_collection:
+                        raise ResourceNotFoundError(
+                            prop.value_type.collection, "enum collection", prop.container, "container"
+                        )
+                    args["unknown_value"] = prop.value_type.unknown_value
+                    args["values"] = {
+                        value.value: DMSEnumValue(
+                            name=value.name,
+                            description=value.description,
+                        )
+                        for value in enum_values_by_collection[prop.value_type.collection]
+                    }
+
+                type_ = type_cls(**args)
                 container.properties[prop.container_property] = dm.ContainerProperty(
                     type=type_,
                     # If not set, nullable is True and immutable is False
                     nullable=prop.nullable if prop.nullable is not None else True,
                     immutable=prop.immutable if prop.immutable is not None else False,
-                    default_value=prop.default,
+                    # Guarding against default value being set for connection properties
+                    default_value=prop.default if not prop.connection else None,
                     name=prop.name,
                     description=prop.description,
                 )
@@ -437,12 +462,7 @@ class _DMSExporter:
             # Child filter without container properties
             if selected_filter_name == HasDataFilter.name:
                 warnings.warn(
-                    UserModelingWarning(
-                        "HasDataFilterOnNoPropertiesViewWarning",
-                        f"Cannot set hasData filter on view {view.as_id()!r}",
-                        "The view does not have properties in any containers",
-                        "Use a node type filter instead",
-                    ),
+                    HasDataFilterOnNoPropertiesViewWarning(view.as_id()),
                     stacklevel=2,
                 )
             return NodeTypeFilter(inner=[DMSNodeEntity(space=view.space, externalId=view.external_id)])
@@ -481,7 +501,7 @@ class _DMSExporter:
                 description=prop.description,
                 **extra_args,
             )
-        elif prop.connection == "edge":
+        elif isinstance(prop.connection, EdgeEntity):
             if isinstance(prop.value_type, ViewEntity):
                 source_view_id = prop.value_type.as_id()
             else:
@@ -490,6 +510,9 @@ class _DMSExporter:
                     "If this error occurs it is a bug in NEAT, please report"
                     f"Debug Info, Invalid valueType edge: {prop.model_dump_json()}"
                 )
+            edge_source: dm.ViewId | None = None
+            if prop.connection.properties is not None:
+                edge_source = prop.connection.properties.as_id()
             edge_cls: type[dm.EdgeConnectionApply] = dm.MultiEdgeConnectionApply
             # If is_list is not set, we default to a MultiEdgeConnection
             if prop.is_list is False:
@@ -501,13 +524,11 @@ class _DMSExporter:
                 direction="outwards",
                 name=prop.name,
                 description=prop.description,
+                edge_source=edge_source,
             )
-        elif prop.connection == "reverse":
-            reverse_prop_id: str | None = None
-            if isinstance(prop.value_type, ViewPropertyEntity):
-                source_view_id = prop.value_type.as_view_id()
-                reverse_prop_id = prop.value_type.property_
-            elif isinstance(prop.value_type, ViewEntity):
+        elif isinstance(prop.connection, ReverseConnectionEntity):
+            reverse_prop_id = prop.connection.property_
+            if isinstance(prop.value_type, ViewEntity):
                 source_view_id = prop.value_type.as_id()
             else:
                 # Should have been validated.
@@ -515,28 +536,31 @@ class _DMSExporter:
                     "If this error occurs it is a bug in NEAT, please report"
                     f"Debug Info, Invalid valueType reverse connection: {prop.model_dump_json()}"
                 )
-            reverse_prop: DMSProperty | None = None
-            if reverse_prop_id is not None:
-                reverse_prop = next(
-                    (
-                        prop
-                        for prop in view_properties_by_id.get(source_view_id, [])
-                        if prop.property_ == reverse_prop_id
-                    ),
-                    None,
-                )
+            edge_source = None
+            reverse_prop = next(
+                (prop for prop in view_properties_by_id.get(source_view_id, []) if prop.property_ == reverse_prop_id),
+                None,
+            )
+            if (
+                reverse_prop
+                and isinstance(reverse_prop.connection, EdgeEntity)
+                and reverse_prop.connection.properties is not None
+            ):
+                edge_source = reverse_prop.connection.properties.as_id()
 
             if reverse_prop is None:
                 warnings.warn(
-                    CDFNotSupportedWarning(
-                        "ReverseConnectionWithoutOtherSideWarning",
-                        f"The reverse relation specified in {source_view_id!r}.{prop.view_property} is"
-                        f" missing the other side.",
+                    PropertyNotFoundWarning(
+                        source_view_id,
+                        "view",
+                        reverse_prop_id or "MISSING",
+                        dm.PropertyId(prop.view.as_id(), prop.view_property),
+                        "view property",
                     ),
                     stacklevel=2,
                 )
 
-            if reverse_prop is None or reverse_prop.connection == "edge":
+            if reverse_prop is None or isinstance(reverse_prop.connection, EdgeEntity):
                 inwards_edge_cls = (
                     dm.MultiEdgeConnectionApply if prop.is_list in [True, None] else SingleEdgeConnectionApply
                 )
@@ -546,10 +570,13 @@ class _DMSExporter:
                     name=prop.name,
                     description=prop.description,
                     direction="inwards",
+                    edge_source=edge_source,
                 )
-            elif reverse_prop_id and reverse_prop and reverse_prop.connection == "direct":
+            elif reverse_prop and reverse_prop.connection == "direct":
                 reverse_direct_cls = (
-                    dm.MultiReverseDirectRelationApply if prop.is_list is True else SingleReverseDirectRelationApply
+                    dm.MultiReverseDirectRelationApply
+                    if prop.is_list in [True, None]
+                    else SingleReverseDirectRelationApply
                 )
                 return reverse_direct_cls(
                     source=source_view_id,

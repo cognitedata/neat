@@ -2,21 +2,22 @@
 there are loaders to TransformationRules pydantic class."""
 
 from pathlib import Path
-from typing import Literal, overload
 
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
 
 from cognite.neat.issues import IssueList
-from cognite.neat.rules.importers._base import BaseImporter, Rules
+from cognite.neat.issues.errors import FileReadError
+from cognite.neat.rules._shared import ReadRules
+from cognite.neat.rules.importers._base import BaseImporter
 from cognite.neat.rules.importers._rdf._shared import make_components_compliant
-from cognite.neat.rules.models import InformationRules, RoleTypes
+from cognite.neat.rules.models import InformationInputRules
 
 from ._owl2classes import parse_owl_classes
 from ._owl2metadata import parse_owl_metadata
 from ._owl2properties import parse_owl_properties
 
 
-class OWLImporter(BaseImporter):
+class OWLImporter(BaseImporter[InformationInputRules]):
     """Convert OWL ontology to tables/ transformation rules / Excel file.
 
         Args:
@@ -37,24 +38,12 @@ class OWLImporter(BaseImporter):
     def __init__(self, filepath: Path):
         self.owl_filepath = filepath
 
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
-
-    @overload
-    def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]: ...
-
-    def to_rules(
-        self,
-        errors: Literal["raise", "continue"] = "continue",
-        role: RoleTypes | None = None,
-    ) -> tuple[Rules | None, IssueList] | Rules:
+    def to_rules(self) -> ReadRules[InformationInputRules]:
         graph = Graph()
         try:
             graph.parse(self.owl_filepath)
         except Exception as e:
-            raise Exception(f"Could not parse owl file: {e}") from e
+            return ReadRules(None, IssueList([FileReadError(self.owl_filepath, f"Could not parse owl file: {e}")]), {})
 
         # bind key namespaces
         graph.bind("owl", OWL)
@@ -72,5 +61,5 @@ class OWLImporter(BaseImporter):
 
         components = make_components_compliant(components)
 
-        rules = InformationRules.model_validate(components)
-        return self._to_output(rules, IssueList(), errors, role)
+        rules = InformationInputRules.load(components)
+        return ReadRules(rules, IssueList(), {})

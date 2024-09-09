@@ -2,13 +2,14 @@
 there are loaders to TransformationRules pydantic class."""
 
 from pathlib import Path
-from typing import Literal, overload
 
 from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SH, SKOS, Graph
 
 from cognite.neat.issues import IssueList
-from cognite.neat.rules.importers._base import BaseImporter, Rules
-from cognite.neat.rules.models import InformationRules, RoleTypes
+from cognite.neat.issues.errors import FileReadError
+from cognite.neat.rules._shared import ReadRules
+from cognite.neat.rules.importers._base import BaseImporter
+from cognite.neat.rules.models import InformationInputRules
 from cognite.neat.rules.models.data_types import _XSD_TYPES
 
 from ._imf2classes import parse_imf_to_classes
@@ -16,7 +17,7 @@ from ._imf2metadata import parse_imf_metadata
 from ._imf2properties import parse_imf_to_properties
 
 
-class IMFImporter(BaseImporter):
+class IMFImporter(BaseImporter[InformationInputRules]):
     """Convert SHACL shapes to tables/ transformation rules / Excel file.
 
         Args:
@@ -36,24 +37,16 @@ class IMFImporter(BaseImporter):
     """
 
     def __init__(self, filepath: Path):
-        self.owl_filepath = filepath
-
-    @overload
-    def to_rules(self, errors: Literal["raise"], role: RoleTypes | None = None) -> Rules: ...
-
-    @overload
-    def to_rules(
-        self, errors: Literal["continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList]: ...
+        self.filepath = filepath
 
     def to_rules(
-        self, errors: Literal["raise", "continue"] = "continue", role: RoleTypes | None = None
-    ) -> tuple[Rules | None, IssueList] | Rules:
+        self,
+    ) -> ReadRules[InformationInputRules]:
         graph = Graph()
         try:
-            graph.parse(self.owl_filepath)
+            graph.parse(self.filepath)
         except Exception as e:
-            raise Exception(f"Could not parse owl file: {e}") from e
+            return ReadRules(None, IssueList([FileReadError(self.filepath, f"Could not parse owl file: {e}")]), {})
 
         # bind key namespaces
         graph.bind("owl", OWL)
@@ -74,8 +67,8 @@ class IMFImporter(BaseImporter):
 
         components = make_components_compliant(components)
 
-        rules = InformationRules.model_validate(components)
-        return self._to_output(rules, IssueList(), errors, role)
+        rules = InformationInputRules.load(components)
+        return ReadRules(rules, IssueList(), {})
 
 
 def make_components_compliant(components: dict) -> dict:

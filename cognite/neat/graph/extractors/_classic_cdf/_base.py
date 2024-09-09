@@ -5,7 +5,7 @@ from collections.abc import Callable, Iterable, Set
 from typing import Generic, TypeVar
 
 from cognite.client.data_classes._base import CogniteResource
-from rdflib import Literal, Namespace, URIRef
+from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
@@ -93,7 +93,7 @@ class ClassicCDFExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                         Literal(string_to_ideal_type(value)),
                     )
         else:
-            yield id_, self.namespace.metadata, Literal(json.dumps(metadata))
+            yield id_, self.namespace.metadata, Literal(json.dumps(metadata), datatype=XSD._NS["json"])
 
     def _get_rdf_type(self, item: T_CogniteResource) -> str:
         type_ = self._default_rdf_type

@@ -1,26 +1,23 @@
 import pytest
 
-from cognite.neat.issues import IssueList, NeatIssue, NeatIssueList
-from cognite.neat.issues.errors.resources import MissingIdentifierError, ResourceNotDefinedError
-from cognite.neat.issues.neat_warnings.properties import PropertyTypeNotSupportedWarning
-from cognite.neat.issues.neat_warnings.resources import ResourceTypeNotSupportedWarning
+from cognite.neat.issues import IssueList
+from cognite.neat.issues.errors import ResourceMissingIdentifierError, ResourceNotDefinedError
+from cognite.neat.issues.warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
 from cognite.neat.rules.importers import DTDLImporter
 from cognite.neat.rules.importers._dtdl2rules.spec import DTMI, Interface
 from cognite.neat.rules.models import InformationRules, SchemaCompleteness
+from cognite.neat.rules.transformers import ImporterPipeline
 from tests.tests_unit.rules.test_importers.constants import DTDL_IMPORTER_DATA
 
 
 class TestDTDLImporter:
     def test_import_energy_grid_example(self) -> None:
         # In the example data, there is a property with an Object that does not have an identifier.
-        expected_issues = NeatIssueList[NeatIssue](
-            [
-                MissingIdentifierError("Object"),
-            ]
-        )
+        expected_issues = IssueList([ResourceMissingIdentifierError("Object")])
         dtdl_importer = DTDLImporter.from_directory(DTDL_IMPORTER_DATA / "energy-grid")
 
-        rules, issues = dtdl_importer.to_rules(errors="continue")
+        result = ImporterPipeline.try_verify(dtdl_importer)
+        rules, issues = result.rules, result.issues
 
         assert issues == expected_issues
         assert isinstance(rules, InformationRules)
@@ -34,12 +31,13 @@ class TestDTDLImporter:
                     "schema",
                     "missing",
                 ),
-                ResourceTypeNotSupportedWarning[str]("com_example:Thermostat(version=1).response", "Command.Response"),
+                ResourceTypeNotSupportedWarning("com_example:Thermostat(version=1).response", "Command.Response"),
             ]
         )
         dtdl_importer = DTDLImporter.from_zip(DTDL_IMPORTER_DATA / "TemperatureController.zip")
 
-        rules, issues = dtdl_importer.to_rules(errors="continue")
+        result = ImporterPipeline.try_verify(dtdl_importer)
+        rules, issues = result.rules, result.issues
 
         assert issues == expected_issues
         assert isinstance(rules, InformationRules)
@@ -61,7 +59,8 @@ class TestDTDLImporter:
             schema=SchemaCompleteness.complete,
         )
 
-        rules, issues = dtdl_importer.to_rules(errors="continue")
+        result = ImporterPipeline.try_verify(dtdl_importer)
+        rules, issues = result.rules, result.issues
 
         assert rules is None
         assert len(issues) == 1
