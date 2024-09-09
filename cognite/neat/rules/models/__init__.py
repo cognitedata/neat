@@ -4,7 +4,7 @@ from cognite.neat.rules.models.domain import DomainInputRules, DomainRules
 from cognite.neat.rules.models.information._rules import InformationRules
 from cognite.neat.rules.models.information._rules_input import InformationInputRules
 
-from ._base_rules import DataModelType, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetEntity, SheetList
+from ._base_rules import DataModelType, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetList, SheetRow
 from .dms._rules import DMSRules
 from .dms._rules_input import DMSInputRules
 from .dms._schema import DMSSchema
@@ -42,5 +42,5 @@ __all__ = [
     "ExtensionCategory",
     "DataModelType",
     "SheetList",
-    "SheetEntity",
+    "SheetRow",
 ]

@@ -4,13 +4,11 @@ its sub-models and validators.
 
 from __future__ import annotations
 
-import math
 import sys
 import types
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator
-from functools import wraps
-from typing import Annotated, Any, ClassVar, Generic, Literal, TypeVar
+from collections.abc import Callable, MutableSequence, Sequence
+from typing import Annotated, Any, ClassVar, Literal, TypeVar, get_args, get_origin
 
 import pandas as pd
 from pydantic import (
@@ -18,13 +16,13 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
+    GetCoreSchemaHandler,
     PlainSerializer,
     field_validator,
     model_serializer,
-    model_validator,
 )
-from pydantic.fields import FieldInfo
 from pydantic.main import IncEx
+from pydantic_core import core_schema
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -33,62 +31,6 @@ else:
 
 
 METADATA_VALUE_MAX_LENGTH = 5120
-
-
-def replace_nan_floats_with_default(values: dict, model_fields: dict[str, FieldInfo]) -> dict:
-    output = {}
-    for field_name, value in values.items():
-        is_nan_float = isinstance(value, float) and math.isnan(value)
-        if not is_nan_float:
-            output[field_name] = value
-            continue
-        if field_name in model_fields:
-            output[field_name] = model_fields[field_name].default
-        else:
-            # field_name may be an alias
-            source_name = next((name for name, field in model_fields.items() if field.alias == field_name), None)
-            if source_name:
-                output[field_name] = model_fields[source_name].default
-            else:
-                # Just pass it through if it is not an alias.
-                output[field_name] = value
-    return output
-
-
-def skip_field_validator(validators_field):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(cls, value, values):
-            if isinstance(values, dict):
-                to_skip = values.get(validators_field, set())
-            else:
-                try:
-                    to_skip = values.data.get(validators_field, set())
-                except Exception:
-                    to_skip = set()
-
-            if "all" in to_skip or func.__name__ in to_skip:
-                return value
-            return func(cls, value, values)
-
-        return wrapper
-
-    return decorator
-
-
-def skip_model_validator(validators_field):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(self):
-            to_skip = getattr(self, validators_field, set())
-            if "all" in to_skip or func.__name__ in to_skip:
-                return self
-
-            return func(self)
-
-        return wrapper
-
-    return decorator
 
 
 def _get_required_fields(model: type[BaseModel], use_alias: bool = False) -> set[str]:
@@ -148,7 +90,7 @@ class MatchType(StrEnum):
     partial = "partial"
 
 
-class RuleModel(BaseModel):
+class NeatModel(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True,
         str_strip_whitespace=True,
@@ -164,50 +106,8 @@ class RuleModel(BaseModel):
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
 
-    @classmethod
-    def sheets(cls, by_alias: bool = False) -> list[str]:
-        """Returns a list of sheet names for the model."""
-        return [
-            (field.alias or field_name) if by_alias else field_name
-            for field_name, field in cls.model_fields.items()
-            if field_name != "validators_to_skip"
-        ]
 
-    @classmethod
-    def headers_by_sheet(cls, by_alias: bool = False) -> dict[str, list[str]]:
-        """Returns a list of headers for the model."""
-        headers_by_sheet: dict[str, list[str]] = {}
-        for field_name, field in cls.model_fields.items():
-            if field_name == "validators_to_skip":
-                continue
-            sheet_name = (field.alias or field_name) if by_alias else field_name
-            annotation = field.annotation
-
-            if isinstance(annotation, types.UnionType):
-                annotation = annotation.__args__[0]
-
-            try:
-                if isinstance(annotation, type) and issubclass(annotation, SheetList):
-                    # We know that this is a SheetList, so we can safely access the annotation
-                    # which is the concrete type of the SheetEntity.
-                    model_fields = annotation.model_fields["data"].annotation.__args__[0].model_fields  # type: ignore[union-attr]
-                elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
-                    model_fields = annotation.model_fields
-                else:
-                    model_fields = {}
-            except TypeError:
-                # Python 3.10 raises TypeError: issubclass() arg 1 must be a class
-                # when calling issubclass(annotation, SheetList) with the dict annotation
-                model_fields = {}
-            headers_by_sheet[sheet_name] = [
-                (field.alias or field_name) if by_alias else field_name
-                for field_name, field in model_fields.items()
-                if field_name != "validators_to_skip"
-            ]
-        return headers_by_sheet
-
-
-class BaseMetadata(RuleModel):
+class BaseMetadata(NeatModel):
     """
     Metadata model for data model
     """
@@ -242,7 +142,7 @@ class BaseMetadata(RuleModel):
         raise NotImplementedError()
 
 
-class BaseRules(RuleModel, ABC):
+class BaseRules(NeatModel, ABC):
     """
     Rules is a core concept in `neat`. This represents fusion of data model
     definitions and (optionally) the transformation rules used to transform the data/graph
@@ -281,9 +181,41 @@ class BaseRules(RuleModel, ABC):
             exclude_defaults=exclude_defaults,
         )
 
+    @classmethod
+    def headers_by_sheet(cls, by_alias: bool = False) -> dict[str, list[str]]:
+        """Returns a list of headers for the model."""
+        headers_by_sheet: dict[str, list[str]] = {}
+        for field_name, field in cls.model_fields.items():
+            if field_name == "validators_to_skip":
+                continue
+            sheet_name = (field.alias or field_name) if by_alias else field_name
+            annotation = field.annotation
 
-# An sheet entity is either a class or a property.
-class SheetEntity(RuleModel):
+            if isinstance(annotation, types.UnionType):
+                annotation = annotation.__args__[0]
+
+            try:
+                if isinstance(annotation, types.GenericAlias) and get_origin(annotation) is SheetList:
+                    # We know that this is a SheetList, so we can safely access the annotation
+                    # which is the concrete type of the SheetEntity.
+                    model_fields = get_args(annotation)[0].model_fields  # type: ignore[union-attr]
+                elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                    model_fields = annotation.model_fields
+                else:
+                    model_fields = {}
+            except TypeError:
+                # Python 3.10 raises TypeError: issubclass() arg 1 must be a class
+                # when calling issubclass(annotation, SheetList) with the dict annotation
+                model_fields = {}
+            headers_by_sheet[sheet_name] = [
+                (field.alias or field_name) if by_alias else field_name
+                for field_name, field in model_fields.items()
+                if field_name != "validators_to_skip"
+            ]
+        return headers_by_sheet
+
+
+class SheetRow(NeatModel):
     @field_validator("*", mode="before")
     def strip_string(cls, value: Any) -> Any:
         if isinstance(value, str):
@@ -291,36 +223,27 @@ class SheetEntity(RuleModel):
         return value
 
 
-T_Entity = TypeVar("T_Entity", bound=SheetEntity)
+T_SheetRow = TypeVar("T_SheetRow", bound=SheetRow)
 
 
-class SheetList(BaseModel, Generic[T_Entity]):
-    data: list[T_Entity] = Field(default_factory=list)
+class SheetList(list, MutableSequence[T_SheetRow]):
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source: Any, handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
+        if args := get_args(source):
+            item_type = args[0]
+        else:
+            # Someone use SheetList without specifying the type
+            raise TypeError("SheetList must be used with a type argument, e.g., SheetList[InformationProperty]")
 
-    @model_validator(mode="before")
-    def from_list_format(cls, values: Any) -> Any:
-        if isinstance(values, list):
-            return {"data": values}
-        return values
+        instance_schema = core_schema.is_instance_schema(cls)
+        sequence_row_schema = handler.generate_schema(Sequence[item_type])  # type: ignore[valid-type]
 
-    def __contains__(self, item: str) -> bool:
-        return item in self.data
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def __iter__(self) -> Iterator[T_Entity]:  # type: ignore[override]
-        return iter(self.data)
-
-    def append(self, value: T_Entity) -> None:
-        self.data.append(value)
-
-    def extend(self, values: list[T_Entity]) -> None:
-        self.data.extend(values)
+        non_instance_schema = core_schema.no_info_after_validator_function(SheetList, sequence_row_schema)
+        return core_schema.union_schema([instance_schema, non_instance_schema])
 
     def to_pandas(self, drop_na_columns: bool = True, include: list[str] | None = None) -> pd.DataFrame:
         """Converts ResourceDict to pandas DataFrame."""
-        df = pd.DataFrame([entity.model_dump() for entity in self.data])
+        df = pd.DataFrame([entity.model_dump() for entity in self])
         if drop_na_columns:
             df = df.dropna(axis=1, how="all")
         if include is not None:
@@ -330,11 +253,6 @@ class SheetList(BaseModel, Generic[T_Entity]):
     def _repr_html_(self) -> str:
         """Returns HTML representation of ResourceDict."""
         return self.to_pandas(drop_na_columns=True)._repr_html_()  # type: ignore[operator]
-
-    @classmethod
-    def mandatory_fields(cls, use_alias=False) -> set[str]:
-        """Returns a set of mandatory fields for the model."""
-        return _get_required_fields(cls, use_alias)
 
 
 ExtensionCategoryType = Annotated[

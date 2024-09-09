@@ -211,7 +211,7 @@ def parent_property_points_to_data_type():
 class TestAssetRules:
     @pytest.mark.parametrize("rules, expected_exception", list(case_asset_relationship()))
     def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: DataType) -> None:
-        assert AssetRules.model_validate(rules).properties.data[0].implementation == expected_exception
+        assert AssetRules.model_validate(rules).properties[0].implementation == expected_exception
 
     def test_conversion_between_roles(self, david_rules: InformationRules) -> None:
         pipeline = RulesPipeline[InformationRules, InformationRules]([InformationToAsset(), AssetToInformation()])

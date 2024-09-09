@@ -41,9 +41,9 @@ class _InformationRulesSerializer:
     def clean(self, dumped: dict[str, Any], as_reference: bool) -> dict[str, Any]:
         # Sorting to get a deterministic order
         dumped[self.prop_name] = sorted(
-            dumped[self.prop_name]["data"], key=lambda p: (p[self.prop_class], p[self.prop_property])
+            dumped[self.prop_name], key=lambda p: (p[self.prop_class], p[self.prop_property])
         )
-        dumped[self.class_name] = sorted(dumped[self.class_name]["data"], key=lambda v: v[self.prop_class])
+        dumped[self.class_name] = sorted(dumped[self.class_name], key=lambda v: v[self.prop_class])
 
         for prop in dumped[self.prop_name]:
             if as_reference:

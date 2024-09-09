@@ -21,8 +21,8 @@ from cognite.neat.rules.models._base_rules import (
     ExtensionCategory,
     RoleTypes,
     SchemaCompleteness,
-    SheetEntity,
     SheetList,
+    SheetRow,
 )
 from cognite.neat.rules.models._types import (
     ExternalIdType,
@@ -144,7 +144,7 @@ class DMSMetadata(BaseMetadata):
         return self.space
 
 
-class DMSProperty(SheetEntity):
+class DMSProperty(SheetRow):
     view: ViewEntity = Field(alias="View")
     view_property: str = Field(alias="View Property")
     name: str | None = Field(alias="Name", default=None)
@@ -192,7 +192,7 @@ class DMSProperty(SheetEntity):
             return str(value_type)
 
 
-class DMSContainer(SheetEntity):
+class DMSContainer(SheetRow):
     container: ContainerEntity = Field(alias="Container")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
@@ -219,7 +219,7 @@ class DMSContainer(SheetEntity):
         )
 
 
-class DMSView(SheetEntity):
+class DMSView(SheetRow):
     view: ViewEntity = Field(alias="View")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
@@ -249,7 +249,7 @@ class DMSView(SheetEntity):
         )
 
 
-class DMSNode(SheetEntity):
+class DMSNode(SheetRow):
     node: DMSNodeEntity = Field(alias="Node")
     usage: Literal["type", "collection"] = Field(alias="Usage")
     name: str | None = Field(alias="Name", default=None)
@@ -264,7 +264,7 @@ class DMSNode(SheetEntity):
             raise ValueError(f"Unknown usage {self.usage}")
 
 
-class DMSEnum(SheetEntity):
+class DMSEnum(SheetRow):
     collection: ClassEntity = Field(alias="Collection")
     value: str = Field(alias="Value")
     name: str | None = Field(alias="Name", default=None)

@@ -17,7 +17,7 @@ from cognite.neat.rules.models import (
     DataModelType,
     ExtensionCategory,
     SchemaCompleteness,
-    SheetEntity,
+    SheetRow,
 )
 from cognite.neat.rules.models.dms import DMSMetadata
 from cognite.neat.rules.models.domain import DomainMetadata
@@ -210,14 +210,14 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 cell.font = Font(bold=True, size=12)
 
     @classmethod
-    def _get_item_class(cls, annotation: GenericAlias) -> type[SheetEntity]:
+    def _get_item_class(cls, annotation: GenericAlias) -> type[SheetRow]:
         if not isinstance(annotation, GenericAlias):
             raise ValueError(f"Expected annotation to be a GenericAlias, but got {type(annotation)}")
         args = get_args(annotation)
         if len(args) != 1:
             raise ValueError(f"Expected annotation to have exactly one argument, but got {len(args)}")
         arg = args[0]
-        if not issubclass(arg, SheetEntity):
+        if not issubclass(arg, SheetRow):
             raise ValueError(f"Expected annotation to have a BaseModel argument, but got {type(arg)}")
         return arg
 

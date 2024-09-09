@@ -125,7 +125,7 @@ class TestWrappedEntities:
             importers.ExcelImporter(config.DOC_RULES / "dms-architect-rules-raw-filter-example.xlsx")
         )
 
-        assert rules.views.data[0].filter_ == RawFilter.load(
+        assert rules.views[0].filter_ == RawFilter.load(
             """rawFilter({"equals": {"property": ["node", "type"],
                 "value": {"space": "power", "externalId": "WindTurbine"}}})"""
         )

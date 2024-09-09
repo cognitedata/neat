@@ -192,7 +192,7 @@ class TestInformationRules:
 
     @pytest.mark.parametrize("rules, expected_exception", list(case_insensitive_value_types()))
     def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: DataType) -> None:
-        assert InformationRules.model_validate(rules).properties.data[0].value_type == expected_exception
+        assert InformationRules.model_validate(rules).properties[0].value_type == expected_exception
 
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         david_rules = InformationRules.model_validate(david_spreadsheet)
@@ -203,7 +203,7 @@ class TestInformationRules:
     def test_olav_as_dms(self, olav_rules: InformationRules) -> None:
         olav_rules_copy = olav_rules.model_copy(deep=True)
         # Todo: Remove this line when Olav's Information .xlsx file is available
-        new_classes = SheetList[InformationClass](data=[])
+        new_classes = SheetList[InformationClass]([])
         for cls_ in olav_rules_copy.classes:
             if cls_.class_.versioned_id == "power_analytics:GeoLocation":
                 continue

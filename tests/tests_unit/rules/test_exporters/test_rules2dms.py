@@ -21,7 +21,7 @@ class TestDMSExporter:
 
         # purposely setting default value for connection that should not be
         # considered when exporting DMS rules to DMS schema
-        rules.properties.data[3].default = "Norway"
+        rules.properties[3].default = "Norway"
 
         exporter = DMSExporter()
         schema = exporter.export(rules)
