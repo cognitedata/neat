@@ -123,8 +123,8 @@ class Entity(BaseModel, extra="ignore"):
                 extra_args[key] = annotation.load(extra_args[key], **defaults)  # type: ignore[union-attr, assignment]
         return dict(prefix=prefix, suffix=suffix, **extra_args)
 
-    def dump(self) -> str:
-        return str(self)
+    def dump(self, **defaults: Any) -> str:
+        return self._as_str(**defaults)
 
     def as_tuple(self) -> tuple[str, ...]:
         # We haver overwritten the serialization to str, so we need to do it manually
@@ -164,17 +164,22 @@ class Entity(BaseModel, extra="ignore"):
 
     @property
     def id(self) -> str:
+        return self._as_str()
+
+    def _as_str(self, **defaults: Any) -> str:
         # We have overwritten the serialization to str, so we need to do it manually
-        model_dump = [
-            (field.alias or field_name, v)
+        model_dump = {
+            field.alias or field_name: v.dump(**defaults) if isinstance(v, Entity) else v
             for field_name, field in self.model_fields.items()
             if (v := getattr(self, field_name)) is not None and field_name not in {"prefix", "suffix"}
-        ]
-        if len(model_dump) == 1:
-            args = f"{model_dump[0][0]}={model_dump[0][1]}"
-        else:
-            args = ",".join([f"{k}={v}" for k, v in model_dump])
-        if self.prefix == Undefined:
+        }
+        if isinstance(defaults, dict):
+            for key, value in defaults.items():
+                if key in model_dump and value == defaults.get(key):
+                    del model_dump[key]
+
+        args = ",".join(f"{k}={v}" for k, v in model_dump.items())
+        if self.prefix == Undefined or (isinstance(defaults, dict) and self.prefix == defaults.get("prefix")):
             base_id = str(self.suffix)
         else:
             base_id = f"{self.prefix}:{self.suffix!s}"
@@ -268,6 +273,11 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: str = Field(alias="space")
     suffix: str = Field(alias="externalId")
+
+    def dump(self, **defaults: Any) -> str:
+        if isinstance(defaults, dict) and "space" in defaults:
+            defaults["prefix"] = defaults.pop("space")
+        return super().dump(**defaults)
 
     @classmethod
     def load(cls: "type[T_DMSEntity]", data: Any, **defaults) -> "T_DMSEntity | DMSUnknownEntity":  # type: ignore[override]
@@ -406,6 +416,10 @@ class EdgeEntity(DMSEntity[None]):
     edge_type: DMSNodeEntity | None = Field(None, alias="type")
     properties: ViewEntity | None = None
     direction: Literal["outwards", "inwards"] = "outwards"
+
+    def dump(self, **defaults: Any) -> str:
+        # Add default direction
+        return super().dump(**defaults, direction="outwards")
 
     def as_id(self) -> None:
         return None

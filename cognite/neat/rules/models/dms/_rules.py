@@ -1,13 +1,13 @@
 import math
 import sys
 import warnings
+from collections.abc import Hashable
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from cognite.client import data_modeling as dm
 from pydantic import Field, field_serializer, field_validator, model_validator
-from pydantic.main import IncEx
-from pydantic_core.core_schema import ValidationInfo
+from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat.issues import MultiValueError
 from cognite.neat.issues.warnings import (
@@ -35,9 +35,11 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     ContainerEntityList,
+    DMSEntity,
     DMSNodeEntity,
     DMSUnknownEntity,
     EdgeEntity,
+    Entity,
     HasDataFilter,
     NodeTypeFilter,
     RawFilter,
@@ -91,8 +93,7 @@ class DMSMetadata(BaseMetadata):
         return value
 
     @field_serializer("schema_", "extension", "data_model_type", when_used="always")
-    @staticmethod
-    def as_string(value: SchemaCompleteness | ExtensionCategory | DataModelType) -> str:
+    def as_string(self, value: SchemaCompleteness | ExtensionCategory | DataModelType) -> str:
         return str(value)
 
     @field_validator("schema_", mode="plain")
@@ -144,6 +145,12 @@ class DMSMetadata(BaseMetadata):
         return self.space
 
 
+def _metadata(context: Any) -> DMSMetadata | None:
+    if isinstance(context, dict) and isinstance(context.get("metadata"), DMSMetadata):
+        return context["metadata"]
+    return None
+
+
 class DMSProperty(SheetRow):
     view: ViewEntity = Field(alias="View")
     view_property: str = Field(alias="View Property")
@@ -162,6 +169,9 @@ class DMSProperty(SheetRow):
     constraint: StrListType | None = Field(None, alias="Constraint")
     class_: ClassEntity = Field(alias="Class (linage)")
     property_: PropertyType = Field(alias="Property (linage)")
+
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return self.view, self.view_property
 
     @field_validator("nullable")
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
@@ -183,13 +193,43 @@ class DMSProperty(SheetRow):
             raise ValueError(f"Reverse connection must have a value type that points to a view, got {value}")
         return value
 
+    @field_serializer("reference", when_used="always")
+    def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
+        if isinstance(info.context, dict) and info.context.get("as_reference") is True:
+            return str(
+                ReferenceEntity(
+                    prefix=self.view.prefix,
+                    suffix=self.view.suffix,
+                    version=self.view.version,
+                    property=self.view_property,
+                )
+            )
+        return str(value) if value is not None else None
+
     @field_serializer("value_type", when_used="always")
-    @staticmethod
-    def as_dms_type(value_type: DataType | EdgeEntity | ViewEntity) -> str:
+    def as_dms_type(self, value_type: DataType | EdgeEntity | ViewEntity, info: SerializationInfo) -> str:
         if isinstance(value_type, DataType):
             return value_type._suffix_extra_args(value_type.dms._type)
-        else:
-            return str(value_type)
+        elif isinstance(value_type, EdgeEntity | ViewEntity) and (metadata := _metadata(info.context)):
+            return value_type.dump(space=metadata.space, version=metadata.version)
+        return str(value_type)
+
+    @field_serializer("view", "container", "class_", when_used="unless-none")
+    def remove_default_space(self, value: str, info: SerializationInfo) -> str:
+        if (metadata := _metadata(info.context)) and isinstance(value, Entity):
+            if info.field_name == "container" and info.context.get("as_reference") is True:
+                # When dumping as reference, the container should keep the default space for easy copying
+                # over to user sheets.
+                return value.dump()
+            return value.dump(prefix=metadata.space, version=metadata.version)
+        return str(value)
+
+    @field_serializer("connection", when_used="unless-none")
+    def remove_defaults(self, value: Any, info: SerializationInfo) -> str:
+        if isinstance(value, Entity) and (metadata := _metadata(info.context)):
+            default_type = f"{metadata.space}{self.view.external_id}.{self.view_property}"
+            return value.dump(space=metadata.space, version=metadata.version, type=default_type)
+        return str(value)
 
 
 class DMSContainer(SheetRow):
@@ -200,6 +240,9 @@ class DMSContainer(SheetRow):
     constraint: ContainerEntityList | None = Field(None, alias="Constraint")
     used_for: Literal["node", "edge", "all"] | None = Field("all", alias="Used For")
     class_: ClassEntity = Field(alias="Class (linage)")
+
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return (self.container,)
 
     def as_container(self) -> dm.ContainerApply:
         container_id = self.container.as_id()
@@ -218,6 +261,32 @@ class DMSContainer(SheetRow):
             used_for=self.used_for,
         )
 
+    @field_serializer("reference", when_used="always")
+    def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
+        if isinstance(info.context, dict) and info.context.get("as_reference") is True:
+            return self.container.dump()
+        return str(value) if value is not None else None
+
+    @field_serializer("container", "class_", when_used="unless-none")
+    def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
+        if metadata := _metadata(info.context):
+            if isinstance(value, DMSEntity):
+                return value.dump(space=metadata.space, version=metadata.version)
+            elif isinstance(value, Entity):
+                return value.dump(prefix=metadata.space, version=metadata.version)
+        return str(value)
+
+    @field_serializer("constraint", when_used="unless-none")
+    def remove_default_spaces(self, value: Any, info: SerializationInfo) -> str:
+        if isinstance(value, list) and (metadata := _metadata(info.context)):
+            return ",".join(
+                constraint.dump(space=metadata.space, version=metadata.version)
+                if isinstance(constraint, DMSEntity)
+                else str(constraint)
+                for constraint in value
+            )
+        return ",".join(str(value) for value in value)
+
 
 class DMSView(SheetRow):
     view: ViewEntity = Field(alias="View")
@@ -228,6 +297,32 @@ class DMSView(SheetRow):
     filter_: HasDataFilter | NodeTypeFilter | RawFilter | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="In Model")
     class_: ClassEntity = Field(alias="Class (linage)")
+
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return (self.view,)
+
+    @field_serializer("reference", when_used="always")
+    def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
+        if isinstance(info.context, dict) and info.context.get("as_reference") is True:
+            return self.view.dump()
+        return str(value) if value is not None else None
+
+    @field_serializer("view", "class_", when_used="unless-none")
+    def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
+        if (metadata := _metadata(info.context)) and isinstance(value, Entity):
+            return value.dump(prefix=metadata.space, version=metadata.version)
+        return str(value)
+
+    @field_serializer("implements", when_used="unless-none")
+    def remove_default_spaces(self, value: Any, info: SerializationInfo) -> str:
+        if isinstance(value, list) and (metadata := _metadata(info.context)):
+            return ",".join(
+                parent.dump(space=metadata.space, version=metadata.version)
+                if isinstance(parent, DMSEntity)
+                else str(parent)
+                for parent in value
+            )
+        return ",".join(str(value) for value in value) if isinstance(value, list) else value
 
     def as_view(self) -> dm.ViewApply:
         view_id = self.view.as_id()
@@ -255,6 +350,9 @@ class DMSNode(SheetRow):
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
 
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return (self.node,)
+
     def as_node(self) -> dm.NodeApply:
         if self.usage == "type":
             return dm.NodeApply(space=self.node.space, external_id=self.node.external_id)
@@ -263,12 +361,27 @@ class DMSNode(SheetRow):
         else:
             raise ValueError(f"Unknown usage {self.usage}")
 
+    @field_serializer("node", when_used="unless-none")
+    def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
+        if isinstance(value, DMSEntity) and (metadata := _metadata(info.context)):
+            return value.dump(space=metadata.space, version=metadata.version)
+        return str(value)
+
 
 class DMSEnum(SheetRow):
     collection: ClassEntity = Field(alias="Collection")
     value: str = Field(alias="Value")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
+
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return self.collection, self.value
+
+    @field_serializer("collection", when_used="unless-none")
+    def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
+        if isinstance(value, DMSEntity) and (metadata := _metadata(info.context)):
+            return value.dump(space=metadata.space, version=metadata.version)
+        return str(value)
 
 
 class DMSRules(BaseRules):
@@ -330,38 +443,6 @@ class DMSRules(BaseRules):
         if issue_list.has_errors:
             raise MultiValueError(issue_list.errors)
         return self
-
-    def dump(
-        self,
-        mode: Literal["python", "json"] = "python",
-        by_alias: bool = False,
-        exclude: IncEx = None,
-        exclude_none: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        as_reference: bool = False,
-    ) -> dict[str, Any]:
-        from ._serializer import _DMSRulesSerializer
-
-        dumped = self.model_dump(
-            mode=mode,
-            by_alias=by_alias,
-            exclude=exclude,
-            exclude_none=exclude_none,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-        )
-        space, version = self.metadata.space, self.metadata.version
-        serializer = _DMSRulesSerializer(by_alias, space, version)
-        clean = serializer.clean(dumped, as_reference)
-        last = "Last" if by_alias else "last"
-        if last_dump := clean.get(last):
-            clean[last] = serializer.clean(last_dump, False)
-        reference = "Reference" if by_alias else "reference"
-        if self.reference and (ref_dump := clean.get(reference)):
-            space, version = self.reference.metadata.space, self.reference.metadata.version
-            clean[reference] = _DMSRulesSerializer(by_alias, space, version).clean(ref_dump, True)
-        return clean
 
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         from ._exporter import _DMSExporter

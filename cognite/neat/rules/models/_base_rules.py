@@ -7,8 +7,8 @@ from __future__ import annotations
 import sys
 import types
 from abc import ABC, abstractmethod
-from collections.abc import Callable, MutableSequence, Sequence
-from typing import Annotated, Any, ClassVar, Literal, TypeVar, get_args, get_origin
+from collections.abc import Callable, Hashable, Iterator, MutableSequence, Sequence
+from typing import Annotated, Any, ClassVar, Literal, SupportsIndex, TypeVar, get_args, get_origin, overload
 
 import pandas as pd
 from pydantic import (
@@ -26,8 +26,10 @@ from pydantic_core import core_schema
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
+    from typing import Self
 else:
     from backports.strenum import StrEnum
+    from typing_extensions import Self
 
 
 METADATA_VALUE_MAX_LENGTH = 5120
@@ -90,7 +92,7 @@ class MatchType(StrEnum):
     partial = "partial"
 
 
-class NeatModel(BaseModel):
+class SchemaModel(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(
         populate_by_name=True,
         str_strip_whitespace=True,
@@ -107,7 +109,7 @@ class NeatModel(BaseModel):
         return _get_required_fields(cls, use_alias)
 
 
-class BaseMetadata(NeatModel):
+class BaseMetadata(SchemaModel):
     """
     Metadata model for data model
     """
@@ -142,13 +144,13 @@ class BaseMetadata(NeatModel):
         raise NotImplementedError()
 
 
-class BaseRules(NeatModel, ABC):
+class BaseRules(SchemaModel, ABC):
     """
     Rules is a core concept in `neat`. This represents fusion of data model
     definitions and (optionally) the transformation rules used to transform the data/graph
     from the source representation to the target representation defined by the data model.
-    The rules are defined in a Excel sheet and then parsed into a `Rules` object. The
-    `Rules` object is then used to generate data model and the`RDF` graph made of data
+    The rules are defined in an Excel sheet and then parsed into a `Rules` object. The
+    `Rules` object is then used to generate data model and the `RDF` graph made of data
     model instances.
 
     Args:
@@ -157,33 +159,11 @@ class BaseRules(NeatModel, ABC):
     """
 
     metadata: BaseMetadata
-
-    def dump(
-        self,
-        mode: Literal["python", "json"] = "python",
-        by_alias: bool = False,
-        exclude: IncEx = None,
-        exclude_none: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        as_reference: bool = False,
-    ) -> dict[str, Any]:
-        """Dump the model to a dictionary.
-
-        This is used in the Exporters to dump rules in the required format.
-        """
-        return self.model_dump(
-            mode=mode,
-            by_alias=by_alias,
-            exclude=exclude,
-            exclude_none=exclude_none,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-        )
+    reference: Self | None = Field(None, alias="Reference")
 
     @classmethod
     def headers_by_sheet(cls, by_alias: bool = False) -> dict[str, list[str]]:
-        """Returns a list of headers for the model."""
+        """Returns a list of headers for the model, typically used by ExcelExporter"""
         headers_by_sheet: dict[str, list[str]] = {}
         for field_name, field in cls.model_fields.items():
             if field_name == "validators_to_skip":
@@ -210,17 +190,104 @@ class BaseRules(NeatModel, ABC):
             headers_by_sheet[sheet_name] = [
                 (field.alias or field_name) if by_alias else field_name
                 for field_name, field in model_fields.items()
-                if field_name != "validators_to_skip"
+                if field_name != "validators_to_skip" and not field.exclude
             ]
         return headers_by_sheet
 
+    def dump(
+        self,
+        entities_exclude_defaults: bool = True,
+        as_reference: bool = False,
+        mode: Literal["python", "json"] = "python",
+        by_alias: bool = False,
+        exclude: IncEx = None,
+        exclude_none: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+    ) -> dict[str, Any]:
+        """Dump the model to a dictionary.
 
-class SheetRow(NeatModel):
+        This is used in the Exporters to dump rules in the required format.
+
+        Args:
+            entities_exclude_defaults: Whether to exclude default prefix (and version) for entities.
+                For example, given a class that is dumped as 'my_prefix:MyClass', if the prefix for the rules
+                set in metadata.prefix = 'my_prefix', then this class will be dumped as 'MyClass' when this flag is set.
+                Defaults to True.
+            as_reference (bool, optional): Whether to dump as reference. For Information and DMS rules, this will
+                set the reference column/field to the reference of that entity. This is used in the ExcelExporter
+                to dump a reference model.
+            mode: The mode in which `to_python` should run.
+                If mode is 'json', the output will only contain JSON serializable types.
+                If mode is 'python', the output may contain non-JSON-serializable Python objects.
+            by_alias: Whether to use the field's alias in the dictionary key if defined.
+            exclude: A set of fields to exclude from the output.
+            exclude_none: Whether to exclude fields that have a value of `None`.
+            exclude_unset: Whether to exclude fields that have not been explicitly set.
+            exclude_defaults: Whether to exclude fields that are set to their default value.
+        """
+        for field_name in self.model_fields.keys():
+            value = getattr(self, field_name)
+            # Ensure deterministic order of properties, classes, views, and so on
+            if isinstance(value, SheetList):
+                value.sort(key=lambda x: x._identifier())
+
+        context: dict[str, Any] = {"as_reference": as_reference}
+        if entities_exclude_defaults:
+            context["metadata"] = self.metadata
+
+        exclude_input: IncEx
+        if self.reference is None:
+            exclude_input = exclude
+        else:
+            # If the rules has a reference, we dump that separately with the as_reference flag set to True.
+            # We don't want to include the reference in the main dump, so we exclude it here.
+            # This is to include whatever is in the exclude set from the user.
+            if isinstance(exclude, dict):
+                exclude_input = exclude.copy()
+                exclude_input["reference"] = {"__all__"}  # type: ignore[index]
+            elif isinstance(exclude, set):
+                exclude_input = exclude.copy()
+                exclude_input.add("reference")  # type: ignore[arg-type]
+            else:
+                exclude_input = {"reference"}
+
+        output = self.model_dump(
+            mode=mode,
+            by_alias=by_alias,
+            exclude=exclude_input,
+            exclude_none=exclude_none,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            context=context,
+        )
+        is_reference_user_excluded = isinstance(exclude, dict | set) and "reference" in exclude
+        if self.reference is not None and not is_reference_user_excluded:
+            # If the rules has a reference, we dump that separately with the as_reference flag set to True.
+            # Unless the user has explicitly excluded the reference.
+            output["Reference" if by_alias else "reference"] = self.reference.dump(
+                mode=mode,
+                by_alias=by_alias,
+                exclude=exclude,
+                exclude_none=exclude_none,
+                exclude_unset=exclude_unset,
+                exclude_defaults=exclude_defaults,
+                entities_exclude_defaults=entities_exclude_defaults,
+                as_reference=True,
+            )
+        return output
+
+
+class SheetRow(SchemaModel):
     @field_validator("*", mode="before")
     def strip_string(cls, value: Any) -> Any:
         if isinstance(value, str):
             return value.strip()
         return value
+
+    @abstractmethod
+    def _identifier(self) -> tuple[Hashable, ...]:
+        raise NotImplementedError()
 
 
 T_SheetRow = TypeVar("T_SheetRow", bound=SheetRow)
@@ -253,6 +320,21 @@ class SheetList(list, MutableSequence[T_SheetRow]):
     def _repr_html_(self) -> str:
         """Returns HTML representation of ResourceDict."""
         return self.to_pandas(drop_na_columns=True)._repr_html_()  # type: ignore[operator]
+
+    # Implemented to get correct type hints
+    def __iter__(self) -> Iterator[T_SheetRow]:
+        return super().__iter__()
+
+    @overload
+    def __getitem__(self, index: SupportsIndex) -> T_SheetRow: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> SheetList[T_SheetRow]: ...
+
+    def __getitem__(self, index: SupportsIndex | slice, /) -> T_SheetRow | SheetList[T_SheetRow]:
+        if isinstance(index, slice):
+            return SheetList[T_SheetRow](super().__getitem__(index))
+        return super().__getitem__(index)
 
 
 ExtensionCategoryType = Annotated[

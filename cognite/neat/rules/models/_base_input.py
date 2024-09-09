@@ -18,7 +18,7 @@ from dataclasses import Field, dataclass, fields, is_dataclass
 from types import GenericAlias, UnionType
 from typing import Any, Generic, TypeVar, Union, cast, get_args, get_origin, overload
 
-from ._base_rules import BaseRules, NeatModel
+from ._base_rules import BaseRules, SchemaModel
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -26,7 +26,7 @@ else:
     from typing_extensions import Self
 
 T_BaseRules = TypeVar("T_BaseRules", bound=BaseRules)
-T_RuleModel = TypeVar("T_RuleModel", bound=NeatModel)
+T_RuleModel = TypeVar("T_RuleModel", bound=SchemaModel)
 
 
 @dataclass

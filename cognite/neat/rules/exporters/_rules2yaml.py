@@ -58,6 +58,10 @@ class YAMLExporter(BaseExporter[VerifiedRules, str]):
     def export(self, rules: VerifiedRules) -> str:
         """Export rules to YAML (or JSON) format.
 
+        This will export the rules to YAML format if the output is set to "yaml" and JSON format if the output is set.
+        All None and Unset values are excluded from the output to keep the output clean, i.e., only the values the user
+        has set.
+
         Args:
             rules: The rules to be exported.
 
@@ -66,7 +70,7 @@ class YAMLExporter(BaseExporter[VerifiedRules, str]):
         """
         # model_dump_json ensures that the output is in JSON format,
         # if we don't do this, we will get Enums and other types that are not serializable to YAML
-        json_output = rules.dump(mode="json")
+        json_output = rules.dump(mode="json", exclude_none=True, exclude_unset=True)
         if self.output == "json":
             return json.dumps(json_output)
         elif self.output == "yaml":

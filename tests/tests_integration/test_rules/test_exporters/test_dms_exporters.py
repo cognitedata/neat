@@ -279,7 +279,8 @@ class TestDMSExporters:
         new_space = "power_update"
         dumped["Metadata"]["space"] = new_space
         dumped["Last"]["Metadata"]["space"] = new_space
-        rules = DMSInputRules.load(dumped).as_rules()
+        reloaded = DMSInputRules.load(dumped)
+        rules = reloaded.as_rules()
         schema = rules.as_schema()
         assert schema.referenced_spaces(include_indirect_references=True) == {new_space}
         exporter = DMSExporter(existing_handling="force")
@@ -326,9 +327,9 @@ class TestDMSExporters:
             if view["Implements"]:
                 view["Implements"] = view["Implements"].replace("power", new_enterprise_space)
         for container in itertools.chain(
-            dumped.get("Containers", []),
-            dumped["Last"].get("Containers", []),
-            dumped["Reference"].get("Containers", []),
+            dumped.get("Containers", []) or [],
+            dumped["Last"].get("Containers", []) or [],
+            dumped["Reference"].get("Containers", []) or [],
         ):
             if container["Reference"]:
                 container["Reference"] = container["Reference"].replace("power", new_enterprise_space)

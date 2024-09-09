@@ -1,8 +1,7 @@
 import sys
-from typing import Any, ClassVar, Literal, cast
+from typing import Any, ClassVar, cast
 
 from pydantic import Field, field_validator, model_validator
-from pydantic.main import IncEx
 from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
@@ -104,35 +103,3 @@ class AssetRules(BaseRules):
         if issue_list.has_errors:
             raise issue_list.as_exception()
         return self
-
-    def dump(
-        self,
-        mode: Literal["python", "json"] = "python",
-        by_alias: bool = False,
-        exclude: IncEx = None,
-        exclude_none: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        as_reference: bool = False,
-    ) -> dict[str, Any]:
-        from ._serializer import _AssetRulesSerializer
-
-        dumped = self.model_dump(
-            mode=mode,
-            by_alias=by_alias,
-            exclude=exclude,
-            exclude_none=exclude_none,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-        )
-        prefix = self.metadata.prefix
-        serializer = _AssetRulesSerializer(by_alias, prefix)
-        cleaned = serializer.clean(dumped, as_reference)
-        last = "Last" if by_alias else "last"
-        if last_dump := cleaned.get(last):
-            cleaned[last] = serializer.clean(last_dump, False)
-        reference = "Reference" if by_alias else "reference"
-        if self.reference and (ref_dump := cleaned.get(reference)):
-            prefix = self.reference.metadata.prefix
-            cleaned[reference] = _AssetRulesSerializer(by_alias, prefix).clean(ref_dump, True)
-        return cleaned

@@ -55,7 +55,11 @@ class ImporterPipeline(RulesPipeline[InputRules, VerifiedRules]):
     def execute(self) -> VerifiedRules:
         """Execute the pipeline from importer to rules."""
         rules = self._importer.to_rules()
-        out = self.transform(rules).get_rules()
-        if out is None:
-            raise NeatValueError("Failed to convert rules")
-        return out
+        out = self.transform(rules)
+        if isinstance(out, MaybeRules) and out.rules is None:
+            raise out.issues.as_errors("Failed to convert rules")
+
+        rules = out.get_rules()
+        if rules is None:
+            raise NeatValueError("Rules is missing cannot convert")
+        return rules

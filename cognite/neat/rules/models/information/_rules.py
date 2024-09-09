@@ -1,10 +1,11 @@
 import math
 import sys
+from collections.abc import Hashable
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import Field, field_serializer, field_validator, model_validator
-from pydantic.main import IncEx
+from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
@@ -37,6 +38,7 @@ from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
     ClassEntity,
     ClassEntityList,
+    Entity,
     EntityTypes,
     MultiValueTypeInfo,
     ReferenceEntity,
@@ -115,6 +117,12 @@ class InformationMetadata(BaseMetadata):
         return self.prefix
 
 
+def _get_metadata(context: Any) -> InformationMetadata | None:
+    if isinstance(context, dict) and isinstance(context.get("metadata"), InformationMetadata):
+        return context["metadata"]
+    return None
+
+
 class InformationClass(SheetRow):
     """
     Class is a category of things that share a common set of attributes and relationships.
@@ -134,6 +142,32 @@ class InformationClass(SheetRow):
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     match_type: MatchType | None = Field(alias="Match Type", default=None)
     comment: str | None = Field(alias="Comment", default=None)
+
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return (self.class_,)
+
+    @field_serializer("reference", when_used="always")
+    def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
+        if isinstance(info.context, dict) and info.context.get("as_reference") is True:
+            return self.class_.dump()
+        return str(value) if value is not None else None
+
+    @field_serializer("class_", when_used="unless-none")
+    def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
+        if (metadata := _get_metadata(info.context)) and isinstance(value, Entity):
+            return value.dump(prefix=metadata.prefix, version=metadata.version)
+        return str(value)
+
+    @field_serializer("parent", when_used="unless-none")
+    def remove_default_prefixes(self, value: Any, info: SerializationInfo) -> str:
+        if isinstance(value, list) and (metadata := _get_metadata(info.context)):
+            return ",".join(
+                parent.dump(prefix=metadata.prefix, version=metadata.version)
+                if isinstance(parent, Entity)
+                else str(parent)
+                for parent in value
+            )
+        return ",".join(str(value) for value in value)
 
 
 class InformationProperty(SheetRow):
@@ -171,15 +205,13 @@ class InformationProperty(SheetRow):
     comment: str | None = Field(alias="Comment", default=None)
     inherited: bool = Field(
         default=False,
+        exclude=True,
         alias="Inherited",
         description="Flag to indicate if the property is inherited, only use for internal purposes",
     )
 
-    @field_serializer("max_count", when_used="json-unless-none")
-    def serialize_max_count(self, value: int | float | None) -> int | float | None | str:
-        if isinstance(value, float) and math.isinf(value):
-            return None
-        return value
+    def _identifier(self) -> tuple[Hashable, ...]:
+        return self.class_, self.property_
 
     @field_validator("max_count", mode="before")
     def parse_max_count(cls, value: int | float | None) -> int | float | None:
@@ -232,6 +264,31 @@ class InformationProperty(SheetRow):
                         f"Default value {self.default} is not of type {self.value_type.python}",
                     ) from None
         return self
+
+    @field_serializer("max_count", when_used="json-unless-none")
+    def serialize_max_count(self, value: int | float | None) -> int | float | None | str:
+        if isinstance(value, float) and math.isinf(value):
+            return None
+        return value
+
+    @field_serializer("reference", when_used="always")
+    def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
+        # When rules as dumped as reference, we set the reference to the class
+        if isinstance(info.context, dict) and info.context.get("as_reference") is True:
+            return str(
+                ReferenceEntity(
+                    prefix=str(self.class_.prefix),
+                    suffix=self.class_.suffix,
+                    property=self.property_,
+                )
+            )
+        return str(value) if value is not None else None
+
+    @field_serializer("class_", "value_type", when_used="unless-none")
+    def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
+        if (metadata := _get_metadata(info.context)) and isinstance(value, Entity):
+            return value.dump(prefix=metadata.prefix, version=metadata.version)
+        return str(value)
 
     @property
     def type_(self) -> EntityTypes:
@@ -306,38 +363,6 @@ class InformationRules(BaseRules):
         if issue_list.has_errors:
             raise issue_list.as_exception()
         return self
-
-    def dump(
-        self,
-        mode: Literal["python", "json"] = "python",
-        by_alias: bool = False,
-        exclude: IncEx = None,
-        exclude_none: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        as_reference: bool = False,
-    ) -> dict[str, Any]:
-        from ._serializer import _InformationRulesSerializer
-
-        dumped = self.model_dump(
-            mode=mode,
-            by_alias=by_alias,
-            exclude=exclude,
-            exclude_none=exclude_none,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-        )
-        prefix = self.metadata.prefix
-        serializer = _InformationRulesSerializer(by_alias, prefix)
-        cleaned = serializer.clean(dumped, as_reference)
-        last = "Last" if by_alias else "last"
-        if last_dump := cleaned.get(last):
-            cleaned[last] = serializer.clean(last_dump, False)
-        reference = "Reference" if by_alias else "reference"
-        if self.reference and (ref_dump := cleaned.get(reference)):
-            prefix = self.reference.metadata.prefix
-            cleaned[reference] = _InformationRulesSerializer(by_alias, prefix).clean(ref_dump, True)
-        return cleaned
 
     def as_dms_rules(self) -> "DMSRules":
         from cognite.neat.rules.transformers._converters import _InformationRulesConverter

@@ -367,10 +367,10 @@ class NeatIssueList(UserList[T_NeatIssue], Sequence[T_NeatIssue], ABC):
         """Return all the warnings in this list."""
         return type(self)([issue for issue in self if isinstance(issue, NeatWarning)])  # type: ignore[misc]
 
-    def as_errors(self) -> ExceptionGroup:
+    def as_errors(self, operation: str = "Operation failed") -> ExceptionGroup:
         """Return an ExceptionGroup with all the errors in this list."""
         return ExceptionGroup(
-            "Operation failed",
+            operation,
             [issue for issue in self if isinstance(issue, NeatError)],
         )
 
