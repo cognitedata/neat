@@ -8,6 +8,7 @@ from ._classic_cdf._sequences import SequencesExtractor
 from ._classic_cdf._timeseries import TimeSeriesExtractor
 from ._dexpi import DexpiExtractor
 from ._dms import DMSExtractor
+from ._iodd import IODDExtractor
 from ._mock_graph_generator import MockGraphGenerator
 from ._rdf_file import RdfFileExtractor
 
@@ -24,6 +25,7 @@ __all__ = [
     "RdfFileExtractor",
     "DexpiExtractor",
     "DMSExtractor",
+    "IODDExtractor",
 ]
 
 
@@ -38,6 +40,7 @@ TripleExtractors = (
     | LabelsExtractor
     | RdfFileExtractor
     | DexpiExtractor
+    | IODDExtractor
 )
 
 
