@@ -15,6 +15,14 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.91.0] - 11-09-24
+### Added
+- IODDExtractor for IO-link standard: https://io-link.com/
+- The extractor will parse XML files that follow the IO-link standard for an IODD device, and create rdf triples 
+that will form the knowledge graph for the device.
+- Improved XML utils method `get_children` to be able to extract nested children as well as direct children, and ignore
+namespace prefix of each tag element if the XML contains namespaces.
+
 ## [0.90.2] - 06-09-24
 ### Improved
 - Visualize data model chapter in Knowledge Acquisition tutorial reduce to only export of data model to ontology
