@@ -1,5 +1,5 @@
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from typing import ClassVar, NamedTuple
 
 from cognite.client import CogniteClient
@@ -23,7 +23,13 @@ from ._timeseries import TimeSeriesExtractor
 
 
 class _ClassicCoreType(NamedTuple):
-    extractor_cls: type[_ClassicCDFBaseExtractor]
+    extractor_cls: (
+        type[AssetsExtractor]
+        | type[TimeSeriesExtractor]
+        | type[SequencesExtractor]
+        | type[EventsExtractor]
+        | type[FilesExtractor]
+    )
     resource_type: Prefix
     api_name: str
 
@@ -98,87 +104,73 @@ class ClassicGraphExtractor(BaseExtractor):
 
     def extract(self) -> Iterable[Triple]:
         """Extracts all classic CDF Resources."""
-        extractor: AssetsExtractor | TimeSeriesExtractor | SequencesExtractor | EventsExtractor | FilesExtractor
-        for extractor, resource_type in [  # type: ignore[assignment]
-            (AssetsExtractor, Prefix.asset),
-            (TimeSeriesExtractor, Prefix.time_series),
-            (SequencesExtractor, Prefix.sequence),
-            (EventsExtractor, Prefix.event),
-            (FilesExtractor, Prefix.file),
-        ]:
+        yield from self._extract_core_start_nodes()
+
+        yield from self._extract_start_node_relationships()
+
+        yield from self._extract_core_end_nodes()
+
+        yield from self._extract_labels()
+        yield from self._extract_data_sets()
+
+    def _extract_core_start_nodes(self):
+        for core_node in self._classic_node_types:
             if self._data_set_external_id:
-                extractor = extractor.from_dataset(
+                extractor = core_node.extractor_cls.from_dataset(
                     self._client, self._data_set_external_id, self._namespace, unpack_metadata=False
                 )
             elif self._root_asset_external_id:
-                extractor = extractor.from_hierarchy(
+                extractor = core_node.extractor_cls.from_hierarchy(
                     self._client, self._root_asset_external_id, self._namespace, unpack_metadata=False
                 )
             else:
                 raise ValueError("Exactly one of data_set_external_id or root_asset_external_id must be set.")
 
-            yield from self._extract_subextractor(extractor, resource_type)
+            yield from self._extract_with_logging_label_dataset(extractor, core_node.resource_type)
 
-        for resource_type, source_external_ids in self._source_external_ids_by_type.items():
-            to_iterate: Iterable = chunker(list(source_external_ids), chunk_size=1000)
-            try:
-                from rich.progress import track
-            except ModuleNotFoundError:
-                ...
-            else:
-                to_iterate = track(
-                    to_iterate,
-                    total=(len(source_external_ids) // 1000) + 1,
-                    description=f"Extracting {resource_type.removesuffix('_')} relationships",
-                )
-
-            for chunk in to_iterate:
+    def _extract_start_node_relationships(self):
+        for start_resource_type, source_external_ids in self._source_external_ids_by_type.items():
+            start_type = start_resource_type.removesuffix("_")
+            for chunk in self._chunk(list(source_external_ids), description=f"Extracting {start_type} relationships"):
                 relationship_iterator = self._client.relationships(
-                    source_external_ids=list(chunk), source_types=[resource_type.removesuffix("_")]
+                    source_external_ids=list(chunk), source_types=[start_type]
                 )
-                for triple in RelationshipsExtractor(
-                    relationship_iterator, self._namespace, unpack_metadata=False
-                ).extract():
-                    if triple[1] == self._namespace.target_external_id:
-                        external_id = remove_namespace_from_uri(triple[2])
-                        if external_id not in self._source_external_ids_by_type[resource_type]:
-                            self._target_external_ids_by_type[resource_type].add(external_id)
-                    yield triple
+                extractor = RelationshipsExtractor(relationship_iterator, self._namespace, unpack_metadata=False)
+                # This is a private attribute, but we need to set it to log the target nodes.
+                extractor._log_target_nodes = True
 
-        for resource_type, target_external_ids in self._target_external_ids_by_type.items():
-            to_iterate = chunker(list(target_external_ids), chunk_size=1000)
-            try:
-                from rich.progress import track
-            except ModuleNotFoundError:
-                ...
-            else:
-                to_iterate = track(
-                    to_iterate,
-                    total=(len(target_external_ids) // 1000) + 1,
-                    description=f"Extracting Target {resource_type.removesuffix('_')}",
-                )
+                yield from extractor.extract()
 
-            api, extractor_cls = {
-                Prefix.asset: (self._client.assets, AssetsExtractor),
-                Prefix.time_series: (self._client.time_series, TimeSeriesExtractor),
-                Prefix.sequence: (self._client.sequences, SequencesExtractor),
-                Prefix.event: (self._client.events, EventsExtractor),
-                Prefix.file: (self._client.files, FilesExtractor),
-            }[resource_type]
+                # After the extraction is done, we need to update all the new target nodes so
+                # we can extract them in the next step.
+                for end_type, target_external_ids in extractor._target_external_ids_by_type.items():
+                    for external_id in target_external_ids:
+                        if external_id not in self._source_external_ids_by_type[end_type]:
+                            self._target_external_ids_by_type[end_type].add(external_id)
 
-            for chunk in to_iterate:
-                resource_iterator = api.retrieve_multiple(external_ids=list(chunk), ignore_unknown_ids=True)  # type: ignore[attr-defined]
-                extractor = extractor_cls(resource_iterator, self._namespace, unpack_metadata=False)
-                yield from self._extract_subextractor(extractor, resource_type)
+    def _extract_core_end_nodes(self):
+        for core_node in self._classic_node_types:
+            target_external_ids = self._target_external_ids_by_type[core_node.resource_type]
+            api = getattr(self._client, core_node.api_name)
+            for chunk in self._chunk(
+                list(target_external_ids),
+                description=f"Extracting end nodes {core_node.resource_type.removesuffix('_')}",
+            ):
+                resource_iterator = api.retrieve_multiple(external_ids=list(chunk), ignore_unknown_ids=True)
+                extractor = core_node.extractor_cls(resource_iterator, self._namespace, unpack_metadata=False)
+                yield from self._extract_with_logging_label_dataset(extractor)
 
-        label_iterator = self._client.labels.retrieve(external_id=list(self._labels), ignore_unknown_ids=True)
-        yield from LabelsExtractor(label_iterator, self._namespace, total=len(label_iterator)).extract()
-        data_set_iterator = self._client.data_sets.retrieve_multiple(ids=list(self._data_set_ids))
-        yield from DataSetExtractor(
-            data_set_iterator, self._namespace, total=len(data_set_iterator), unpack_metadata=False
-        ).extract()
+    def _extract_labels(self):
+        for chunk in self._chunk(list(self._labels), description="Extracting labels"):
+            label_iterator = self._client.labels.retrieve(external_id=list(chunk), ignore_unknown_ids=True)
+            yield from LabelsExtractor(label_iterator, self._namespace).extract()
 
-    def _extract_subextractor(
+    def _extract_data_sets(self):
+        for chunk in self._chunk(list(self._data_set_ids), description="Extracting data sets"):
+            data_set_iterator = self._client.data_sets.retrieve_multiple(ids=list(chunk), ignore_unknown_ids=True)
+            yield from DataSetExtractor(data_set_iterator, self._namespace, unpack_metadata=False).extract()
+
+    def _extract_with_logging_label_dataset(
         self, extractor: _ClassicCDFBaseExtractor, resource_type: Prefix | None = None
     ) -> Iterable[Triple]:
         for triple in extractor.extract():
@@ -189,3 +181,18 @@ class ClassicGraphExtractor(BaseExtractor):
             elif triple[1] == self._namespace.dataset:
                 self._data_set_ids.add(int(remove_namespace_from_uri(triple[2]).removeprefix(Prefix.data_set)))
             yield triple
+
+    @staticmethod
+    def _chunk(items: Sequence, description: str) -> Iterable:
+        to_iterate: Iterable = chunker(items, chunk_size=1000)
+        try:
+            from rich.progress import track
+        except ModuleNotFoundError:
+            ...
+        else:
+            to_iterate = track(
+                to_iterate,
+                total=(len(items) // 1000) + 1,
+                description=description,
+            )
+        return to_iterate

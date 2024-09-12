@@ -1,4 +1,5 @@
-from collections.abc import Callable, Set
+from collections import defaultdict
+from collections.abc import Callable, Iterable, Set
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -32,6 +33,31 @@ class RelationshipsExtractor(_ClassicCDFBaseExtractor[Relationship]):
     """
 
     _default_rdf_type = "Relationship"
+
+    def __init__(
+        self,
+        items: Iterable[Relationship],
+        namespace: Namespace | None = None,
+        to_type: Callable[[Relationship], str | None] | None = None,
+        total: int | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+    ):
+        super().__init__(
+            items,
+            namespace=namespace,
+            to_type=to_type,
+            total=total,
+            limit=limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
+        )
+        # This is used by the ClassicExtractor to log the target nodes, such
+        # that it can extract them.
+        # It is private to avoid exposing it to the user.
+        self._log_target_nodes = False
+        self._target_external_ids_by_type: dict[Prefix, set[str]] = defaultdict(set)
 
     @classmethod
     def from_dataset(
@@ -78,6 +104,11 @@ class RelationshipsExtractor(_ClassicCDFBaseExtractor[Relationship]):
         """Converts an asset to triples."""
 
         if relationship.external_id and relationship.source_external_id and relationship.target_external_id:
+            if self._log_target_nodes and relationship.target_type and relationship.target_external_id:
+                self._target_external_ids_by_type[f"{relationship.target_type.title()}_"].add(  # type: ignore[index]
+                    relationship.target_external_id
+                )
+
             # relationships do not have an internal id, so we generate one
             id_ = self.namespace[f"{Prefix.relationship}{create_sha256_hash(relationship.external_id)}"]
 
