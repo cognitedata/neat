@@ -1,5 +1,6 @@
 from collections import defaultdict
 from collections.abc import Iterable
+from typing import ClassVar, NamedTuple
 
 from cognite.client import CogniteClient
 from rdflib import Namespace
@@ -21,8 +22,60 @@ from ._sequences import SequencesExtractor
 from ._timeseries import TimeSeriesExtractor
 
 
-class ClassicExtractor(BaseExtractor):
-    """This extractor extracts all classic CDF Resources."""
+class _ClassicCoreType(NamedTuple):
+    extractor_cls: type[_ClassicCDFBaseExtractor]
+    resource_type: Prefix
+    api_name: str
+
+
+class ClassicGraphExtractor(BaseExtractor):
+    """This extractor extracts all classic CDF Resources.
+
+    The Classic Graph consists of the following core resource type.
+
+    Classic Node CDF Resources:
+     - Assets
+     - TimeSeries
+     - Sequences
+     - Events
+     - Files
+
+    All the classic node CDF resources can have one or more connections to one or more assets. This
+    will match a direct relationship in the data modeling of CDF.
+
+    In addition, you have relationships between the classic node CDF resources. This matches an edge
+    in the data modeling of CDF.
+
+    Finally, you have labels and data sets that to organize the graph. In which data sets have a similar,
+    but different, role as a space in data modeling. While labels can be compared to node types in data modeling,
+    used to quickly filter and find nodes/edges.
+
+    This extractor will extract the classic CDF graph into Neat starting from either a data set or a root asset.
+
+    It works as follows:
+
+    1. Extract all core nodes (assets, time series, sequences, events, files) filtered by the given data set or
+       root asset.
+    2. Extract all relationships starting from any of the extracted core nodes.
+    3. Extract all core nodes that are targets of the relationships that are not already extracted.
+    4. Extract all labels that are connected to the extracted core nodes/relationships.
+    5. Extract all data sets that are connected to the extracted core nodes/relationships.
+
+    Args:
+        client (CogniteClient): The Cognite client to use.
+        data_set_external_id (str, optional): The data set external id to extract from. Defaults to None.
+        root_asset_external_id (str, optional): The root asset external id to extract from. Defaults to None.
+        namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
+    """
+
+    # These are the core resource types in the classic CDF.
+    _classic_node_types: ClassVar[tuple[_ClassicCoreType, ...]] = (
+        _ClassicCoreType(AssetsExtractor, Prefix.asset, "assets"),
+        _ClassicCoreType(TimeSeriesExtractor, Prefix.time_series, "time_series"),
+        _ClassicCoreType(SequencesExtractor, Prefix.sequence, "sequences"),
+        _ClassicCoreType(EventsExtractor, Prefix.event, "events"),
+        _ClassicCoreType(FilesExtractor, Prefix.file, "files"),
+    )
 
     def __init__(
         self,

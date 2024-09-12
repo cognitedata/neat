@@ -1,6 +1,6 @@
 from ._base import BaseExtractor
 from ._classic_cdf._assets import AssetsExtractor
-from ._classic_cdf._classic import ClassicExtractor
+from ._classic_cdf._classic import ClassicGraphExtractor
 from ._classic_cdf._events import EventsExtractor
 from ._classic_cdf._files import FilesExtractor
 from ._classic_cdf._labels import LabelsExtractor
@@ -16,7 +16,7 @@ from ._rdf_file import RdfFileExtractor
 __all__ = [
     "BaseExtractor",
     "AssetsExtractor",
-    "ClassicExtractor",
+    "ClassicGraphExtractor",
     "MockGraphGenerator",
     "RelationshipsExtractor",
     "TimeSeriesExtractor",
