@@ -12,11 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - id: version
-        name: NEAT Version
-        # Read the version from the cognite/neat/_version.py file
-        run: echo "version=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' cognite/neat/_version.py)" >> $GITHUB_ENV
-      - run: echo "${{ env.version }}"
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
