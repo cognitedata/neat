@@ -1,14 +1,40 @@
-name: Build and Publish Neat Docker Container on Release
+---
+name: Release NEAT
 
 on:
-  # push:
-  #   branches:
-  #     - docker-builder-publisher
-  release:
-    types: [created]
+  push:
+    branches:
+      - release
+
+env:
+  PYTHON_VERSION: "3.11"
 
 jobs:
-  build-and-publish:
+  release-to-pypi:
+    runs-on: ubuntu-latest
+    environment: CD
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install core dependencies
+        run: |
+          python3 -m pip install --upgrade pip poetry
+          poetry config virtualenvs.create false
+          poetry install -E all
+
+      - name: Build package
+        run: poetry build
+
+      - name: Release to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: twine upload --skip-existing --verbose dist/*
+
+  release-to-docker-hub:
     runs-on: ubuntu-latest
     environment: CD
     steps:
@@ -42,7 +68,7 @@ jobs:
           push: true
           tags: cognite/neat:latest, cognite/neat:${{ github.ref_name }}
 
-  build-and-push-f25e:
+  release-to-f25e:
     runs-on: ubuntu-latest
     environment: main
     permissions:
