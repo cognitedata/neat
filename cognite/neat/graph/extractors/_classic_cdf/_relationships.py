@@ -105,7 +105,7 @@ class RelationshipsExtractor(_ClassicCDFBaseExtractor[Relationship]):
 
         if relationship.external_id and relationship.source_external_id and relationship.target_external_id:
             if self._log_target_nodes and relationship.target_type and relationship.target_external_id:
-                self._target_external_ids_by_type[f"{relationship.target_type.title()}_"].add(  # type: ignore[index]
+                self._target_external_ids_by_type[Prefix.from_str(relationship.target_type)].add(
                     relationship.target_external_id
                 )
 

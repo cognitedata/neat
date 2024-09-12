@@ -35,6 +35,14 @@ class Prefix(StrEnum):
     event = "Event_"
     data_set = "DataSet_"
 
+    @classmethod
+    def from_str(cls, raw: str) -> "Prefix":
+        raw = raw.title() + "_"
+        if raw == "Timeseries_":
+            return cls.time_series
+        else:
+            return cls(raw)
+
 
 class _ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     """This is the Base Extractor for all classic CDF resources.

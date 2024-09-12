@@ -145,7 +145,15 @@ class ClassicGraphExtractor(BaseExtractor):
                 # we can extract them in the next step.
                 for end_type, target_external_ids in extractor._target_external_ids_by_type.items():
                     for external_id in target_external_ids:
-                        if external_id not in self._source_external_ids_by_type[end_type]:
+                        # We only want to extract the target nodes that are not already extracted.
+                        # Even though _source_external_ids_by_type is a defaultdict, we have to check if the key exists.
+                        # This is because we might not have extracted any nodes of that type yet, and looking up
+                        # a key that does not exist will create it. We are iterating of this dictionary, and
+                        # we do not want to create new keys while iterating.
+                        if (
+                            end_type not in self._source_external_ids_by_type
+                            or external_id not in self._source_external_ids_by_type[end_type]
+                        ):
                             self._target_external_ids_by_type[end_type].add(external_id)
 
     def _extract_core_end_nodes(self):
