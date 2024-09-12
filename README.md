@@ -1,6 +1,6 @@
 # kNowlEdge grAph Transformer (NEAT)
 
-[![release](https://img.shields.io/github/actions/workflow/status/cognitedata/neat/release_pypi.yaml?style=for-the-badge)](https://github.com/cognitedata/neat/actions/workflows/release_pypi.yaml)
+[![release](https://img.shields.io/github/actions/workflow/status/cognitedata/neat/release.yaml?style=for-the-badge)](https://github.com/cognitedata/neat/actions/workflows/release.yaml)
 [![Documentation Status](https://readthedocs.com/projects/cognite-neat/badge/?version=latest&style=for-the-badge)](https://cognite-neat.readthedocs-hosted.com/en/latest/?badge=latest)
 [![Github](https://shields.io/badge/github-cognite/neat-green?logo=github&style=for-the-badge)](https://github.com/cognitedata/neat)
 [![PyPI](https://img.shields.io/pypi/v/cognite-neat?style=for-the-badge)](https://pypi.org/project/cognite-neat/)

@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.92.1] - 12-09-24
+### Fixed
+- The version of the released docker image was not updated correctly. This is now fixed.
+
 ## [0.92.0] - 12-09-24
 ### Added
 - `ClassicExtactor` to extract all classic resource types from CDF from a given data set or root asset.
