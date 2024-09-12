@@ -4,9 +4,7 @@ import sys
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Set
 from typing import Generic, TypeVar
-from urllib.parse import quote
 
-from cognite.client.data_classes import Label, LabelDefinition
 from cognite.client.data_classes._base import CogniteResource
 from rdflib import XSD, Literal, Namespace, URIRef
 
@@ -25,7 +23,7 @@ else:
     from backports.strenum import StrEnum
 
 
-class Prefix(StrEnum):
+class InstanceIdPrefix(StrEnum):
     asset = "Asset_"
     label = "Label_"
     relationship = "Relationship_"
@@ -36,7 +34,7 @@ class Prefix(StrEnum):
     data_set = "DataSet_"
 
     @classmethod
-    def from_str(cls, raw: str) -> "Prefix":
+    def from_str(cls, raw: str) -> "InstanceIdPrefix":
         raw = raw.title() + "_"
         if raw == "Timeseries_":
             return cls.time_series
@@ -44,7 +42,7 @@ class Prefix(StrEnum):
             return cls(raw)
 
 
-class _ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
+class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     """This is the Base Extractor for all classic CDF resources.
 
     A classic resource is recognized in that it has a metadata attribute of type dict[str, str].
@@ -127,10 +125,3 @@ class _ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         if self.to_type:
             type_ = self.to_type(item) or type_
         return self._SPACE_PATTERN.sub("_", type_)
-
-    def _label_id(self, label: Label | LabelDefinition) -> str:
-        # external_id can create ill-formed URIs, so we create websafe URIs
-        # since labels do not have internal ids, we use the external_id as the id
-        if label.external_id is None:
-            raise ValueError("External id must be set of the label")
-        return quote(label.external_id)

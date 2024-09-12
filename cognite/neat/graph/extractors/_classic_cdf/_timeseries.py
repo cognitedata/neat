@@ -9,10 +9,10 @@ from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 
 
-class TimeSeriesExtractor(_ClassicCDFBaseExtractor[TimeSeries]):
+class TimeSeriesExtractor(ClassicCDFBaseExtractor[TimeSeries]):
     """Extract data from Cognite Data Fusions TimeSeries into Neat.
 
     Args:
@@ -105,7 +105,7 @@ class TimeSeriesExtractor(_ClassicCDFBaseExtractor[TimeSeries]):
         )
 
     def _item2triples(self, timeseries: TimeSeries) -> list[Triple]:
-        id_ = self.namespace[f"{Prefix.time_series}{timeseries.id}"]
+        id_ = self.namespace[f"{InstanceIdPrefix.time_series}{timeseries.id}"]
 
         # Set rdf type
         type_ = self._get_rdf_type(timeseries)
@@ -183,7 +183,7 @@ class TimeSeriesExtractor(_ClassicCDFBaseExtractor[TimeSeries]):
                 (
                     id_,
                     self.namespace.dataset,
-                    self.namespace[f"{Prefix.data_set}{timeseries.data_set_id}"],
+                    self.namespace[f"{InstanceIdPrefix.data_set}{timeseries.data_set_id}"],
                 )
             )
 
@@ -192,7 +192,7 @@ class TimeSeriesExtractor(_ClassicCDFBaseExtractor[TimeSeries]):
                 (
                     id_,
                     self.namespace.asset,
-                    self.namespace[f"{Prefix.asset}{timeseries.asset_id}"],
+                    self.namespace[f"{InstanceIdPrefix.asset}{timeseries.asset_id}"],
                 )
             )
 

@@ -1,17 +1,18 @@
 from collections.abc import Callable, Set
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import LabelDefinition, LabelDefinitionList
+from cognite.client.data_classes import Label, LabelDefinition, LabelDefinitionList
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 
 
-class LabelsExtractor(_ClassicCDFBaseExtractor[LabelDefinition]):
+class LabelsExtractor(ClassicCDFBaseExtractor[LabelDefinition]):
     """Extract data from Cognite Data Fusions Labels into Neat.
 
     Args:
@@ -77,7 +78,7 @@ class LabelsExtractor(_ClassicCDFBaseExtractor[LabelDefinition]):
         if not label.external_id:
             return []
 
-        id_ = self.namespace[f"{Prefix.label}{self._label_id(label)}"]
+        id_ = self.namespace[f"{InstanceIdPrefix.label}{self._label_id(label)}"]
 
         type_ = self._get_rdf_type(label)
         # Set rdf type
@@ -106,8 +107,16 @@ class LabelsExtractor(_ClassicCDFBaseExtractor[LabelDefinition]):
                 (
                     id_,
                     self.namespace.data_set_id,
-                    self.namespace[f"{Prefix.data_set}{label.data_set_id}"],
+                    self.namespace[f"{InstanceIdPrefix.data_set}{label.data_set_id}"],
                 )
             )
 
         return triples
+
+    @staticmethod
+    def _label_id(label: Label | LabelDefinition) -> str:
+        # external_id can create ill-formed URIs, so we create websafe URIs
+        # since labels do not have internal ids, we use the external_id as the id
+        if label.external_id is None:
+            raise ValueError("External id must be set of the label")
+        return quote(label.external_id)

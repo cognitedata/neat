@@ -9,11 +9,11 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 
 
-class DataSetExtractor(_ClassicCDFBaseExtractor[DataSet]):
-    """Extract data from Cognite Data Fusions Assets into Neat.
+class DataSetExtractor(ClassicCDFBaseExtractor[DataSet]):
+    """Extract DataSets from Cognite Data Fusions into Neat.
 
     Args:
         items (Iterable[Asset]): An iterable of assets.
@@ -69,7 +69,7 @@ class DataSetExtractor(_ClassicCDFBaseExtractor[DataSet]):
 
     def _item2triples(self, item: DataSet) -> list[Triple]:
         """Converts an asset to triples."""
-        id_ = self.namespace[f"{Prefix.data_set}{item.id}"]
+        id_ = self.namespace[f"{InstanceIdPrefix.data_set}{item.id}"]
 
         type_ = self._get_rdf_type(item)
 

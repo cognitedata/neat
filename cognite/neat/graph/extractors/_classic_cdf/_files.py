@@ -8,10 +8,11 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
+from ._labels import LabelsExtractor
 
 
-class FilesExtractor(_ClassicCDFBaseExtractor[FileMetadata]):
+class FilesExtractor(ClassicCDFBaseExtractor[FileMetadata]):
     """Extract data from Cognite Data Fusions files metadata into Neat.
 
     Args:
@@ -99,7 +100,7 @@ class FilesExtractor(_ClassicCDFBaseExtractor[FileMetadata]):
         )
 
     def _item2triples(self, file: FileMetadata) -> list[Triple]:
-        id_ = self.namespace[f"{Prefix.file}{file.id}"]
+        id_ = self.namespace[f"{InstanceIdPrefix.file}{file.id}"]
 
         type_ = self._get_rdf_type(file)
 
@@ -177,7 +178,7 @@ class FilesExtractor(_ClassicCDFBaseExtractor[FileMetadata]):
                     (
                         id_,
                         self.namespace.label,
-                        self.namespace[f"{Prefix.label}{self._label_id(label)}"],
+                        self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(label)}"],
                     )
                 )
 
@@ -190,12 +191,12 @@ class FilesExtractor(_ClassicCDFBaseExtractor[FileMetadata]):
                 (
                     id_,
                     self.namespace.data_set_id,
-                    self.namespace[f"{Prefix.data_set}{file.data_set_id}"],
+                    self.namespace[f"{InstanceIdPrefix.data_set}{file.data_set_id}"],
                 )
             )
 
         if file.asset_ids:
             for asset_id in file.asset_ids:
-                triples.append((id_, self.namespace.asset, self.namespace[f"{Prefix.asset}{asset_id}"]))
+                triples.append((id_, self.namespace.asset, self.namespace[f"{InstanceIdPrefix.asset}{asset_id}"]))
 
         return triples

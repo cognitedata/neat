@@ -9,10 +9,11 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
+from ._labels import LabelsExtractor
 
 
-class AssetsExtractor(_ClassicCDFBaseExtractor[Asset]):
+class AssetsExtractor(ClassicCDFBaseExtractor[Asset]):
     """Extract data from Cognite Data Fusions Assets into Neat.
 
     Args:
@@ -107,7 +108,7 @@ class AssetsExtractor(_ClassicCDFBaseExtractor[Asset]):
 
     def _item2triples(self, asset: Asset) -> list[Triple]:
         """Converts an asset to triples."""
-        id_ = self.namespace[f"{Prefix.asset}{asset.id}"]
+        id_ = self.namespace[f"{InstanceIdPrefix.asset}{asset.id}"]
 
         type_ = self._get_rdf_type(asset)
 
@@ -150,7 +151,7 @@ class AssetsExtractor(_ClassicCDFBaseExtractor[Asset]):
                     (
                         id_,
                         self.namespace.label,
-                        self.namespace[f"{Prefix.label}{self._label_id(label)}"],
+                        self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(label)}"],
                     )
                 )
 
@@ -159,17 +160,17 @@ class AssetsExtractor(_ClassicCDFBaseExtractor[Asset]):
 
         # Create connections:
         if asset.parent_id:
-            triples.append((id_, self.namespace.parent, self.namespace[f"{Prefix.asset}{asset.parent_id}"]))
+            triples.append((id_, self.namespace.parent, self.namespace[f"{InstanceIdPrefix.asset}{asset.parent_id}"]))
 
         if asset.root_id:
-            triples.append((id_, self.namespace.root, self.namespace[f"{Prefix.asset}{asset.root_id}"]))
+            triples.append((id_, self.namespace.root, self.namespace[f"{InstanceIdPrefix.asset}{asset.root_id}"]))
 
         if asset.data_set_id:
             triples.append(
                 (
                     id_,
                     self.namespace.dataset,
-                    self.namespace[f"{Prefix.data_set}{asset.data_set_id}"],
+                    self.namespace[f"{InstanceIdPrefix.data_set}{asset.data_set_id}"],
                 )
             )
 

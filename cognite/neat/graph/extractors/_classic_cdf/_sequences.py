@@ -8,10 +8,10 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 
 
-class SequencesExtractor(_ClassicCDFBaseExtractor[Sequence]):
+class SequencesExtractor(ClassicCDFBaseExtractor[Sequence]):
     """Extract data from Cognite Data Fusions Sequences into Neat.
 
     Args:
@@ -103,7 +103,7 @@ class SequencesExtractor(_ClassicCDFBaseExtractor[Sequence]):
         )
 
     def _item2triples(self, sequence: Sequence) -> list[Triple]:
-        id_ = self.namespace[f"{Prefix.sequence}{sequence.id}"]
+        id_ = self.namespace[f"{InstanceIdPrefix.sequence}{sequence.id}"]
 
         type_ = self._get_rdf_type(sequence)
         # Set rdf type
@@ -146,7 +146,7 @@ class SequencesExtractor(_ClassicCDFBaseExtractor[Sequence]):
                 (
                     id_,
                     self.namespace.data_set_id,
-                    self.namespace[f"{Prefix.data_set}{sequence.data_set_id}"],
+                    self.namespace[f"{InstanceIdPrefix.data_set}{sequence.data_set_id}"],
                 )
             )
 
@@ -155,7 +155,7 @@ class SequencesExtractor(_ClassicCDFBaseExtractor[Sequence]):
                 (
                     id_,
                     self.namespace.asset,
-                    self.namespace[f"{Prefix.asset}{sequence.asset_id}"],
+                    self.namespace[f"{InstanceIdPrefix.asset}{sequence.asset_id}"],
                 )
             )
 

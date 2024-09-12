@@ -10,10 +10,11 @@ from rdflib import RDF, Literal, Namespace
 from cognite.neat.graph.models import Triple
 from cognite.neat.utils.auxiliary import create_sha256_hash
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, Prefix, _ClassicCDFBaseExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
+from ._labels import LabelsExtractor
 
 
-class RelationshipsExtractor(_ClassicCDFBaseExtractor[Relationship]):
+class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
     """Extract data from Cognite Data Fusions Relationships into Neat.
 
     Args:
@@ -57,7 +58,7 @@ class RelationshipsExtractor(_ClassicCDFBaseExtractor[Relationship]):
         # that it can extract them.
         # It is private to avoid exposing it to the user.
         self._log_target_nodes = False
-        self._target_external_ids_by_type: dict[Prefix, set[str]] = defaultdict(set)
+        self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
 
     @classmethod
     def from_dataset(
@@ -105,12 +106,12 @@ class RelationshipsExtractor(_ClassicCDFBaseExtractor[Relationship]):
 
         if relationship.external_id and relationship.source_external_id and relationship.target_external_id:
             if self._log_target_nodes and relationship.target_type and relationship.target_external_id:
-                self._target_external_ids_by_type[Prefix.from_str(relationship.target_type)].add(
+                self._target_external_ids_by_type[InstanceIdPrefix.from_str(relationship.target_type)].add(
                     relationship.target_external_id
                 )
 
             # relationships do not have an internal id, so we generate one
-            id_ = self.namespace[f"{Prefix.relationship}{create_sha256_hash(relationship.external_id)}"]
+            id_ = self.namespace[f"{InstanceIdPrefix.relationship}{create_sha256_hash(relationship.external_id)}"]
 
             type_ = self._get_rdf_type(relationship)
             # Set rdf type
@@ -208,7 +209,7 @@ class RelationshipsExtractor(_ClassicCDFBaseExtractor[Relationship]):
                         (
                             id_,
                             self.namespace.label,
-                            self.namespace[f"{Prefix.label}{self._label_id(label)}"],
+                            self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(label)}"],
                         )
                     )
 
@@ -218,7 +219,7 @@ class RelationshipsExtractor(_ClassicCDFBaseExtractor[Relationship]):
                     (
                         id_,
                         self.namespace.dataset,
-                        self.namespace[f"{Prefix.data_set}{relationship.data_set_id}"],
+                        self.namespace[f"{InstanceIdPrefix.data_set}{relationship.data_set_id}"],
                     )
                 )
 

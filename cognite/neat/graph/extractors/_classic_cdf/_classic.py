@@ -12,7 +12,7 @@ from cognite.neat.utils.collection_ import chunker
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._assets import AssetsExtractor
-from ._base import Prefix, _ClassicCDFBaseExtractor
+from ._base import ClassicCDFBaseExtractor, InstanceIdPrefix
 from ._data_sets import DataSetExtractor
 from ._events import EventsExtractor
 from ._files import FilesExtractor
@@ -30,7 +30,7 @@ class _ClassicCoreType(NamedTuple):
         | type[EventsExtractor]
         | type[FilesExtractor]
     )
-    resource_type: Prefix
+    resource_type: InstanceIdPrefix
     api_name: str
 
 
@@ -76,11 +76,11 @@ class ClassicGraphExtractor(BaseExtractor):
 
     # These are the core resource types in the classic CDF.
     _classic_node_types: ClassVar[tuple[_ClassicCoreType, ...]] = (
-        _ClassicCoreType(AssetsExtractor, Prefix.asset, "assets"),
-        _ClassicCoreType(TimeSeriesExtractor, Prefix.time_series, "time_series"),
-        _ClassicCoreType(SequencesExtractor, Prefix.sequence, "sequences"),
-        _ClassicCoreType(EventsExtractor, Prefix.event, "events"),
-        _ClassicCoreType(FilesExtractor, Prefix.file, "files"),
+        _ClassicCoreType(AssetsExtractor, InstanceIdPrefix.asset, "assets"),
+        _ClassicCoreType(TimeSeriesExtractor, InstanceIdPrefix.time_series, "time_series"),
+        _ClassicCoreType(SequencesExtractor, InstanceIdPrefix.sequence, "sequences"),
+        _ClassicCoreType(EventsExtractor, InstanceIdPrefix.event, "events"),
+        _ClassicCoreType(FilesExtractor, InstanceIdPrefix.file, "files"),
     )
 
     def __init__(
@@ -97,8 +97,8 @@ class ClassicGraphExtractor(BaseExtractor):
         self._data_set_external_id = data_set_external_id
         self._namespace = namespace or DEFAULT_NAMESPACE
 
-        self._source_external_ids_by_type: dict[Prefix, set[str]] = defaultdict(set)
-        self._target_external_ids_by_type: dict[Prefix, set[str]] = defaultdict(set)
+        self._source_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
+        self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
         self._labels: set[str] = set()
         self._data_set_ids: set[int] = set()
 
@@ -179,15 +179,17 @@ class ClassicGraphExtractor(BaseExtractor):
             yield from DataSetExtractor(data_set_iterator, self._namespace, unpack_metadata=False).extract()
 
     def _extract_with_logging_label_dataset(
-        self, extractor: _ClassicCDFBaseExtractor, resource_type: Prefix | None = None
+        self, extractor: ClassicCDFBaseExtractor, resource_type: InstanceIdPrefix | None = None
     ) -> Iterable[Triple]:
         for triple in extractor.extract():
             if triple[1] == self._namespace.external_id and resource_type is not None:
                 self._source_external_ids_by_type[resource_type].add(remove_namespace_from_uri(triple[2]))
             elif triple[1] == self._namespace.label:
-                self._labels.add(remove_namespace_from_uri(triple[2]).removeprefix(Prefix.label))
+                self._labels.add(remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.label))
             elif triple[1] == self._namespace.dataset:
-                self._data_set_ids.add(int(remove_namespace_from_uri(triple[2]).removeprefix(Prefix.data_set)))
+                self._data_set_ids.add(
+                    int(remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.data_set))
+                )
             yield triple
 
     @staticmethod
