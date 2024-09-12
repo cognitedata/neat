@@ -1,5 +1,6 @@
 import json
 import re
+import sys
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Set
 from typing import Generic, TypeVar
@@ -16,8 +17,32 @@ T_CogniteResource = TypeVar("T_CogniteResource", bound=CogniteResource)
 
 DEFAULT_SKIP_METADATA_VALUES = frozenset({"nan", "null", "none", ""})
 
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from backports.strenum import StrEnum
 
-class ClassicCDFExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
+
+class InstanceIdPrefix(StrEnum):
+    asset = "Asset_"
+    label = "Label_"
+    relationship = "Relationship_"
+    sequence = "Sequence_"
+    file = "File_"
+    time_series = "TimeSeries_"
+    event = "Event_"
+    data_set = "DataSet_"
+
+    @classmethod
+    def from_str(cls, raw: str) -> "InstanceIdPrefix":
+        raw = raw.title() + "_"
+        if raw == "Timeseries_":
+            return cls.time_series
+        else:
+            return cls(raw)
+
+
+class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     """This is the Base Extractor for all classic CDF resources.
 
     A classic resource is recognized in that it has a metadata attribute of type dict[str, str].

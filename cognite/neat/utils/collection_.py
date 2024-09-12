@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import TypeVar
 
 T_Element = TypeVar("T_Element")
@@ -14,5 +14,6 @@ def most_occurring_element(list_of_elements: list[T_Element]) -> T_Element:
     return counts.most_common(1)[0][0]
 
 
-def chunker(sequence: Sequence[T_Element], chunk_size: int) -> list[Sequence[T_Element]]:
-    return [sequence[i : i + chunk_size] for i in range(0, len(sequence), chunk_size)]
+def chunker(sequence: Sequence[T_Element], chunk_size: int) -> Iterable[Sequence[T_Element]]:
+    for i in range(0, len(sequence), chunk_size):
+        yield sequence[i : i + chunk_size]

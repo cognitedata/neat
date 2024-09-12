@@ -8,10 +8,10 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 
 
-class EventsExtractor(ClassicCDFExtractor[Event]):
+class EventsExtractor(ClassicCDFBaseExtractor[Event]):
     """Extract data from Cognite Data Fusions Events into Neat.
 
     Args:
@@ -56,6 +56,31 @@ class EventsExtractor(ClassicCDFExtractor[Event]):
         )
 
     @classmethod
+    def from_hierarchy(
+        cls,
+        client: CogniteClient,
+        root_asset_external_id: str,
+        namespace: Namespace | None = None,
+        to_type: Callable[[Event], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+    ):
+        total = client.events.aggregate_count(
+            filter=EventFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
+        )
+
+        return cls(
+            client.events(asset_subtree_external_ids=[root_asset_external_id]),
+            namespace,
+            to_type,
+            total,
+            limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
+        )
+
+    @classmethod
     def from_file(
         cls,
         file_path: str,
@@ -78,7 +103,7 @@ class EventsExtractor(ClassicCDFExtractor[Event]):
         )
 
     def _item2triples(self, event: Event) -> list[Triple]:
-        id_ = self.namespace[f"Event_{event.id}"]
+        id_ = self.namespace[f"{InstanceIdPrefix.event}{event.id}"]
 
         type_ = self._get_rdf_type(event)
 
@@ -146,12 +171,12 @@ class EventsExtractor(ClassicCDFExtractor[Event]):
                 (
                     id_,
                     self.namespace.data_set_id,
-                    self.namespace[f"Dataset_{event.data_set_id}"],
+                    self.namespace[f"{InstanceIdPrefix.data_set}{event.data_set_id}"],
                 )
             )
 
         if event.asset_ids:
             for asset_id in event.asset_ids:
-                triples.append((id_, self.namespace.asset, self.namespace[f"Asset_{asset_id}"]))
+                triples.append((id_, self.namespace.asset, self.namespace[f"{InstanceIdPrefix.asset}{asset_id}"]))
 
         return triples

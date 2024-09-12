@@ -1,18 +1,18 @@
 from collections.abc import Callable, Set
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import quote
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes import FileMetadata, FileMetadataList
+from cognite.client.data_classes import FileMetadata, FileMetadataFilter, FileMetadataList
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
+from ._labels import LabelsExtractor
 
 
-class FilesExtractor(ClassicCDFExtractor[FileMetadata]):
+class FilesExtractor(ClassicCDFBaseExtractor[FileMetadata]):
     """Extract data from Cognite Data Fusions files metadata into Neat.
 
     Args:
@@ -54,6 +54,31 @@ class FilesExtractor(ClassicCDFExtractor[FileMetadata]):
         )
 
     @classmethod
+    def from_hierarchy(
+        cls,
+        client: CogniteClient,
+        root_asset_external_id: str,
+        namespace: Namespace | None = None,
+        to_type: Callable[[FileMetadata], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+    ):
+        total = client.files.aggregate(
+            filter=FileMetadataFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
+        )[0].count
+
+        return cls(
+            client.files(asset_subtree_external_ids=[root_asset_external_id]),
+            namespace,
+            to_type,
+            total,
+            limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
+        )
+
+    @classmethod
     def from_file(
         cls,
         file_path: str,
@@ -75,7 +100,7 @@ class FilesExtractor(ClassicCDFExtractor[FileMetadata]):
         )
 
     def _item2triples(self, file: FileMetadata) -> list[Triple]:
-        id_ = self.namespace[f"File_{file.id}"]
+        id_ = self.namespace[f"{InstanceIdPrefix.file}{file.id}"]
 
         type_ = self._get_rdf_type(file)
 
@@ -153,7 +178,7 @@ class FilesExtractor(ClassicCDFExtractor[FileMetadata]):
                     (
                         id_,
                         self.namespace.label,
-                        self.namespace[f"Label_{quote(label.dump()['externalId'])}"],
+                        self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(label)}"],
                     )
                 )
 
@@ -166,12 +191,12 @@ class FilesExtractor(ClassicCDFExtractor[FileMetadata]):
                 (
                     id_,
                     self.namespace.data_set_id,
-                    self.namespace[f"Dataset_{file.data_set_id}"],
+                    self.namespace[f"{InstanceIdPrefix.data_set}{file.data_set_id}"],
                 )
             )
 
         if file.asset_ids:
             for asset_id in file.asset_ids:
-                triples.append((id_, self.namespace.asset, self.namespace[f"Asset_{asset_id}"]))
+                triples.append((id_, self.namespace.asset, self.namespace[f"{InstanceIdPrefix.asset}{asset_id}"]))
 
         return triples
