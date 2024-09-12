@@ -62,7 +62,7 @@ jobs:
       - id: version
         name: NEAT Version
         # Read the version from the cognite/neat/_version.py file
-        run: echo "version=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' cognite/neat/_version.py)"  >> $GITHUB_ENV
+        run: echo "version=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' cognite/neat/_version.py)" >> $GITHUB_ENV
 
       - name: Build and push
         uses: docker/build-push-action@v4
