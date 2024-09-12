@@ -205,12 +205,32 @@ class NeatGraphStore:
             )
             return None
 
-        instance_ids = self.queries.list_instances_ids_of_class(self.rules.metadata.namespace[class_])
+        # we need to handle optional renamings
+        if not (most_frequent_class := analysis.most_occurring_class_in_transformations(class_entity)):
+            most_frequent_class = class_entity
+
+        if (
+            most_frequent_class.prefix != self.rules.metadata.prefix
+            and most_frequent_class.prefix not in self.rules.prefixes
+        ):
+            warnings.warn(
+                "Most frequent class not found in rules prefixes, returning empty list.",
+                stacklevel=2,
+            )
+            return
+
+        namespace = (
+            self.rules.prefixes[cast(str, most_frequent_class.prefix)]
+            if most_frequent_class.prefix in self.rules.prefixes
+            else self.rules.metadata.namespace
+        )
+
+        instance_ids = self.queries.list_instances_ids_of_class(namespace[most_frequent_class.suffix])
 
         property_renaming_config = analysis.define_property_renaming_config(class_entity)
 
         for instance_id in instance_ids:
-            if res := self.queries.describe(instance_id, property_renaming_config):
+            if res := self.queries.describe(instance_id, property_renaming_config, instance_type=class_):
                 yield res
 
     def _parse_file(

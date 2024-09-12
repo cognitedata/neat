@@ -18,6 +18,7 @@ from cognite.neat.rules.models.information import (
     InformationProperty,
     InformationRules,
 )
+from cognite.neat.utils.collection_ import most_occurring_element
 from cognite.neat.utils.rdf_ import get_inheritance_path
 
 from ._base import BaseAnalysis
@@ -112,6 +113,18 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
                 property_types[property_id] = definition.type_
 
         return property_types
+
+    def most_occurring_class_in_transformations(self, class_: ClassEntity) -> ClassEntity | None:
+        classes = []
+        if class_property_pairs := self.class_property_pairs(consider_inheritance=True, only_rdfpath=True).get(
+            class_, None
+        ):
+            for property_ in class_property_pairs.values():
+                classes.append(cast(RDFPath, property_.transformation).traversal.class_)
+
+            return cast(ClassEntity, most_occurring_element(classes))
+        else:
+            return None
 
     def subset_rules(self, desired_classes: set[ClassEntity]) -> InformationRules:
         """
