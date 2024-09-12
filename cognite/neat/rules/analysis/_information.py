@@ -12,7 +12,7 @@ from cognite.neat.rules.models._rdfpath import (
     SelfReferenceProperty,
     SingleProperty,
 )
-from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
+from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, ReferenceEntity
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationProperty,
@@ -104,6 +104,14 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
                     property_renaming_configuration[property_id] = property_id
 
         return property_renaming_configuration
+
+    def property_types(self, class_: ClassEntity) -> dict[str, EntityTypes]:
+        property_types = {}
+        if definitions := self.class_property_pairs(consider_inheritance=True).get(class_, None):
+            for property_id, definition in definitions.items():
+                property_types[property_id] = definition.type_
+
+        return property_types
 
     def subset_rules(self, desired_classes: set[ClassEntity]) -> InformationRules:
         """
