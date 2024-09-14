@@ -45,6 +45,9 @@ TripleExtractors = (
     | RdfFileExtractor
     | DexpiExtractor
     | IODDExtractor
+    | DMSExtractor
+    | ClassicGraphExtractor
+    | DataSetExtractor
 )
 
 

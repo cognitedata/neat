@@ -1,5 +1,6 @@
 import pytest
 
+from cognite.neat.constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat.graph.extractors import (
     AssetsExtractor,
     DataSetExtractor,
@@ -19,14 +20,14 @@ from tests.data import classic_windfarm
 def loaded_store() -> NeatGraphStore:
     store = NeatGraphStore.from_oxi_store()
     for extractor in [
-        DataSetExtractor(classic_windfarm.DATASETS),
-        AssetsExtractor(classic_windfarm.ASSETS),
-        RelationshipsExtractor(classic_windfarm.RELATIONSHIPS),
-        TimeSeriesExtractor(classic_windfarm.TIME_SERIES),
-        SequencesExtractor(classic_windfarm.SEQUENCES),
-        FilesExtractor(classic_windfarm.FILES),
-        LabelsExtractor(classic_windfarm.LABELS),
-        EventsExtractor(classic_windfarm.EVENTS),
+        DataSetExtractor(classic_windfarm.DATASETS, namespace=CLASSIC_CDF_NAMESPACE),
+        AssetsExtractor(classic_windfarm.ASSETS, namespace=CLASSIC_CDF_NAMESPACE),
+        RelationshipsExtractor(classic_windfarm.RELATIONSHIPS, namespace=CLASSIC_CDF_NAMESPACE),
+        TimeSeriesExtractor(classic_windfarm.TIME_SERIES, namespace=CLASSIC_CDF_NAMESPACE),
+        SequencesExtractor(classic_windfarm.SEQUENCES, namespace=CLASSIC_CDF_NAMESPACE),
+        FilesExtractor(classic_windfarm.FILES, namespace=CLASSIC_CDF_NAMESPACE),
+        LabelsExtractor(classic_windfarm.LABELS, namespace=CLASSIC_CDF_NAMESPACE),
+        EventsExtractor(classic_windfarm.EVENTS, namespace=CLASSIC_CDF_NAMESPACE),
     ]:
         store.write(extractor)
     return store

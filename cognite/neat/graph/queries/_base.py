@@ -2,7 +2,7 @@ import warnings
 from collections import defaultdict
 from typing import Literal, cast, overload
 
-from rdflib import RDF, Graph, URIRef
+from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 from rdflib.query import ResultRow
 
@@ -94,6 +94,42 @@ class Queries:
                 stacklevel=2,
             )
             return []
+
+    def types_with_property(self, property_uri: URIRef) -> list[URIRef]:
+        """Check if a property exists in the graph store
+
+        Args:
+            property_uri: Property URI to check
+
+        Returns:
+            True if property exists, False otherwise
+        """
+        query = f"SELECT DISTINCT ?t WHERE {{ ?s <{property_uri}> ?o ; a ?t}}"
+        return cast(list[URIRef], [t[0] for t in self.graph.query(query)])  # type: ignore[index]
+
+    def has_namespace(self, namespace: Namespace) -> bool:
+        """Check if a namespace exists in the graph store
+
+        Args:
+            namespace: Namespace to check
+
+        Returns:
+            True if namespace exists, False otherwise
+        """
+        query = f"ASK WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?p), STR(<{namespace}>))) }}"
+        return bool(self.graph.query(query))
+
+    def has_type(self, type_: URIRef) -> bool:
+        """Check if a type exists in the graph store
+
+        Args:
+            type_: Type to check
+
+        Returns:
+            True if type exists, False otherwise
+        """
+        query = f"ASK WHERE {{ ?s a <{type_}> }}"
+        return bool(self.graph.query(query))
 
     def describe(
         self,
