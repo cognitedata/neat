@@ -100,14 +100,132 @@ class CDFClassicGraphImporter(BaseImporter[InformationInputRules]):
         rules.properties.extend(
             [
                 InformationInputProperty("Asset", "name", "string"),
+                InformationInputProperty("Asset", "external_id", "string"),
+                InformationInputProperty(
+                    "Asset",
+                    "parent_id",
+                    "Asset",
+                    transformation="classic_cdf:Asset(parent_id) -> classic_cdf:Asset(parent)",
+                ),
+                InformationInputProperty("Asset", "description", "string"),
+                InformationInputProperty(
+                    "Asset",
+                    "dataSet",
+                    "DataSet",
+                    transformation="classic_cdf:Asset(dataSet_id) -> classic_cdf:Asset(dataSet)",
+                ),
+                InformationInputProperty("Asset", "metadata", "json"),
+                InformationInputProperty("Asset", "source", "SourceSystem"),
+                InformationInputProperty(
+                    "Asset",
+                    "tags",
+                    "string",
+                    max_count=10,
+                    transformation="classic_cdf:Asset(labels) -> classic_cdf:Asset(tags)",
+                ),
+            ]
+        )
+        # Todo Deal with GeoLocation
+
+    def _add_event(self, rules: InformationInputRules) -> None:
+        from cognite.neat.graph.extractors import EventsExtractor
+
+        if not self._store.queries.has_type(CLASSIC_CDF_NAMESPACE[EventsExtractor._default_rdf_type]):
+            return
+
+        rules.classes.append(
+            InformationInputClass(
+                class_="Event",
+                parent="cdf_cdm:CogniteActivity",
+            ),
+        )
+
+        rules.properties.extend(
+            [
+                InformationInputProperty("Event", "external_id", "string"),
+                InformationInputProperty("Event", "description", "string"),
+                InformationInputProperty(
+                    "Event",
+                    "dataSet",
+                    "DataSet",
+                    transformation="classic_cdf:Asset(dataSet_id) -> classic_cdf:Asset(dataSet)",
+                ),
+                InformationInputProperty("Event", "metadata", "json"),
+                InformationInputProperty("Event", "source", "SourceSystem"),
+                InformationInputProperty(
+                    "Event",
+                    "tags",
+                    "string",
+                    max_count=10,
+                    transformation="classic_cdf:Asset(labels) -> classic_cdf:Asset(tags)",
+                ),
+                InformationInputProperty("Event", "type", "string"),
+                InformationInputProperty("Event", "subtype", "string"),
+                InformationInputProperty("Event", "start_time", "datetime"),
+                InformationInputProperty("Event", "end_time", "datetime"),
+                InformationInputProperty(
+                    "Event",
+                    "assets",
+                    "Asset",
+                    max_count=10_000,
+                    transformation="classic_cdf:Asset(asset_ids) -> classic_cdf:Asset(assets)",
+                ),
             ]
         )
 
-    def _add_event(self, rules: InformationInputRules) -> None:
-        pass
-
     def _add_sequence(self, rules: InformationInputRules) -> None:
-        pass
+        from cognite.neat.graph.extractors import SequencesExtractor
+
+        if not self._store.queries.has_type(CLASSIC_CDF_NAMESPACE[SequencesExtractor._default_rdf_type]):
+            return
+
+        rules.classes.append(
+            InformationInputClass(
+                class_="Sequence",
+                parent=None,
+            ),
+        )
+
+        rules.properties.extend(
+            [
+                InformationInputProperty("Sequence", "external_id", "string"),
+            ]
+        )
 
     def _add_file(self, rules: InformationInputRules) -> None:
-        pass
+        from cognite.neat.graph.extractors import FilesExtractor
+
+        if not self._store.queries.has_type(CLASSIC_CDF_NAMESPACE[FilesExtractor._default_rdf_type]):
+            return
+
+        rules.classes.append(
+            InformationInputClass(
+                class_="File",
+                parent="cdf_cdm:CogniteFile",
+            ),
+        )
+
+        rules.properties.extend(
+            [
+                InformationInputProperty("File", "external_id", "string"),
+            ]
+        )
+
+    def _add_timeseries(self, rules: InformationInputRules) -> None:
+        from cognite.neat.graph.extractors import TimeSeriesExtractor
+
+        if not self._store.queries.has_type(CLASSIC_CDF_NAMESPACE[TimeSeriesExtractor._default_rdf_type]):
+            return
+
+        rules.classes.append(
+            InformationInputClass(
+                class_="TimeSeries",
+                parent="cdf_cdm:CogniteTimeSeries",
+            ),
+        )
+
+        rules.properties.extend(
+            [
+                InformationInputProperty("TimeSeries", "external_id", "string"),
+            ]
+        )
