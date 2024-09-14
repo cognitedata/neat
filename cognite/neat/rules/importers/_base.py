@@ -1,4 +1,3 @@
-import getpass
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
@@ -26,7 +25,9 @@ class BaseImporter(ABC, Generic[T_InputRules]):
 
     def _default_metadata(self) -> dict[str, Any]:
         creator = "UNKNOWN"
-        with suppress(KeyError):
+        with suppress(KeyError, ImportError):
+            import getpass
+
             creator = getpass.getuser()
 
         return {
