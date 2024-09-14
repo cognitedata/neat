@@ -11,6 +11,8 @@ from cognite.client.data_classes import (
     TimeSeries,
 )
 
+# This is a knowledge graph built on top of the classic CDF resources. It is used to test the CDFClassicGraphImporter.
+
 ds_source = DataSet(
     external_id="source_ds",
     name="Source DS",
