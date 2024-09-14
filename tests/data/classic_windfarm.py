@@ -51,6 +51,8 @@ ds_maintenance = DataSet(
     last_updated_time=6,
 )
 
+DATASETS = [ds_source, ds_analysis, ds_maintenance]
+
 
 root = Asset(
     external_id="Utsira",
@@ -123,6 +125,8 @@ metmast = Asset(
     last_updated_time=10,
 )
 
+ASSETS = [root, wind_turbine, wind_turbine2, measurment_root, metmast]
+
 turbine_to_metmast = Relationship(
     external_id="WT-01_to_MetMast",
     source_external_id=wind_turbine.external_id,
@@ -144,6 +148,8 @@ turbine_to_metmast2 = Relationship(
     labels=[Label("metMast")],
     confidence=1.0,
 )
+
+RELATIONSHIPS = [turbine_to_metmast, turbine_to_metmast2]
 
 power_curve = Sequence(
     id=1,
@@ -169,7 +175,9 @@ power_curve = Sequence(
     ],
 )
 
-label_definitions = [
+SEQUENCES = [power_curve]
+
+LABELS = [
     LabelDefinition(
         external_id="PowerGeneratingUnit",
         name="Power generating unit",
@@ -252,6 +260,13 @@ wind_turbine_forecast2 = TimeSeries(
     last_updated_time=8,
 )
 
+TIME_SERIES = [
+    wind_turbine_production,
+    wind_turbine_production2,
+    wind_turbine_forecast,
+    wind_turbine_forecast2,
+]
+
 maintenance = Event(
     external_id="planned:WT-01:2022-01-01",
     description="Planned maintenance",
@@ -268,6 +283,8 @@ maintenance = Event(
     last_updated_time=2,
 )
 
+EVENTS = [maintenance]
+
 data_sheet = FileMetadata(
     external_id="WT-01_datasheet",
     name="WT-01 datasheet",
@@ -279,3 +296,5 @@ data_sheet = FileMetadata(
     created_time=1,
     last_updated_time=2,
 )
+
+FILES = [data_sheet]
