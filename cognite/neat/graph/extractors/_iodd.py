@@ -35,6 +35,7 @@ class IODDExtractor(BaseExtractor):
     """
 
     device_elements_with_text_nodes: ClassVar[list[str]] = ["VendorText", "VendorUrl", "DeviceName", "DeviceFamily"]
+    std_variable_elements_to_extract: ClassVar[list[str]] = ["V_SerialNumber", "V_ApplicationSpecificTag"]
 
     def __init__(self, root: Element, namespace: Namespace | None = None):
         self.root = root
@@ -128,6 +129,23 @@ class IODDExtractor(BaseExtractor):
         raise NeatValueError("Unable to extract device ID from IODD sheet. Exiting.")
 
     @classmethod
+    def _std_variables2triples(cls, vc_root: Element, namespace: Namespace, device_id: URIRef) -> list[Triple]:
+        """
+        For simplicity, only extract the two items we want for this use case - V_ApplicationSpecificTag and
+        V_SerialNumber
+        """
+        triples: list[Triple] = []
+
+        if std_variable_elements := get_children(vc_root, child_tag="StdVariableRef", ignore_namespace=True):
+            for element in std_variable_elements:
+                if id := element.attrib.get("id"):
+                    if id in cls.std_variable_elements_to_extract:
+                        predicate = to_camel(id.replace("V_", ""))
+                        object = element.attrib.get("defaultValue", "")
+                        triples.append((device_id, IODD[predicate], Literal(object)))
+        return triples
+
+    @classmethod
     def _variables_data_collection2triples(
         cls, vc_root: Element, namespace: Namespace, device_id: URIRef
     ) -> list[Triple]:
@@ -138,6 +156,35 @@ class IODDExtractor(BaseExtractor):
         The Variable elements are descriptions of the sensors collecting data for the device.
         """
         triples: list[Triple] = []
+
+        # StdVariableRef elements of interest
+        triples.extend(cls._std_variables2triples(vc_root, namespace, device_id))
+
+        # Variable elements (these are the descriptions of the sensors)
+        if variable_elements := get_children(vc_root, child_tag="Variable", ignore_namespace=True):
+            for element in variable_elements:
+                if id := element.attrib.get("id"):
+                    variable_id = namespace[id]
+
+                    # Create Variable node
+                    triples.append((variable_id, RDF.type, as_neat_compliant_uri(IODD["Variable"])))
+
+                    # Create connection from device to variable
+                    triples.append((device_id, IODD["variable"], variable_id))
+
+                    # Get variable name
+                    if name_element := get_children(element, child_tag="Name", ignore_namespace=True, no_children=1):
+                        if text_id := name_element[0].attrib.get("textId"):
+                            # Create connection from Variable node to textId node
+                            triples.append((variable_id, IODD["name"], namespace[text_id]))
+
+                    # Get variable description
+                    if description_element := get_children(
+                        element, child_tag="Description", ignore_namespace=True, no_children=1
+                    ):
+                        if text_id := description_element[0].attrib.get("textId"):
+                            # Create connection from Variable node to textId node
+                            triples.append((variable_id, IODD["description"], namespace[text_id]))
 
         return triples
 
