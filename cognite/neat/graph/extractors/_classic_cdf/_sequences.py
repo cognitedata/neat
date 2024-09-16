@@ -8,10 +8,10 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 
 
-class SequencesExtractor(ClassicCDFExtractor[Sequence]):
+class SequencesExtractor(ClassicCDFBaseExtractor[Sequence]):
     """Extract data from Cognite Data Fusions Sequences into Neat.
 
     Args:
@@ -57,6 +57,31 @@ class SequencesExtractor(ClassicCDFExtractor[Sequence]):
         )
 
     @classmethod
+    def from_hierarchy(
+        cls,
+        client: CogniteClient,
+        root_asset_external_id: str,
+        namespace: Namespace | None = None,
+        to_type: Callable[[Sequence], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+    ):
+        total = client.sequences.aggregate_count(
+            filter=SequenceFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
+        )
+
+        return cls(
+            client.sequences(asset_subtree_external_ids=[root_asset_external_id]),
+            namespace,
+            to_type,
+            total,
+            limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
+        )
+
+    @classmethod
     def from_file(
         cls,
         file_path: str,
@@ -78,7 +103,7 @@ class SequencesExtractor(ClassicCDFExtractor[Sequence]):
         )
 
     def _item2triples(self, sequence: Sequence) -> list[Triple]:
-        id_ = self.namespace[f"Sequence_{sequence.id}"]
+        id_ = self.namespace[f"{InstanceIdPrefix.sequence}{sequence.id}"]
 
         type_ = self._get_rdf_type(sequence)
         # Set rdf type
@@ -121,7 +146,7 @@ class SequencesExtractor(ClassicCDFExtractor[Sequence]):
                 (
                     id_,
                     self.namespace.data_set_id,
-                    self.namespace[f"Dataset_{sequence.data_set_id}"],
+                    self.namespace[f"{InstanceIdPrefix.data_set}{sequence.data_set_id}"],
                 )
             )
 
@@ -130,7 +155,7 @@ class SequencesExtractor(ClassicCDFExtractor[Sequence]):
                 (
                     id_,
                     self.namespace.asset,
-                    self.namespace[f"Asset_{sequence.asset_id}"],
+                    self.namespace[f"{InstanceIdPrefix.asset}{sequence.asset_id}"],
                 )
             )
 

@@ -9,10 +9,10 @@ from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.graph.models import Triple
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFExtractor
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 
 
-class TimeSeriesExtractor(ClassicCDFExtractor[TimeSeries]):
+class TimeSeriesExtractor(ClassicCDFBaseExtractor[TimeSeries]):
     """Extract data from Cognite Data Fusions TimeSeries into Neat.
 
     Args:
@@ -59,6 +59,31 @@ class TimeSeriesExtractor(ClassicCDFExtractor[TimeSeries]):
         )
 
     @classmethod
+    def from_hierarchy(
+        cls,
+        client: CogniteClient,
+        root_asset_external_id: str,
+        namespace: Namespace | None = None,
+        to_type: Callable[[TimeSeries], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+    ):
+        total = client.time_series.aggregate_count(
+            filter=TimeSeriesFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
+        )
+
+        return cls(
+            client.time_series(asset_external_ids=[root_asset_external_id]),
+            namespace,
+            to_type,
+            total,
+            limit,
+            unpack_metadata=unpack_metadata,
+            skip_metadata_values=skip_metadata_values,
+        )
+
+    @classmethod
     def from_file(
         cls,
         file_path: str,
@@ -80,7 +105,7 @@ class TimeSeriesExtractor(ClassicCDFExtractor[TimeSeries]):
         )
 
     def _item2triples(self, timeseries: TimeSeries) -> list[Triple]:
-        id_ = self.namespace[f"TimeSeries_{timeseries.id}"]
+        id_ = self.namespace[f"{InstanceIdPrefix.time_series}{timeseries.id}"]
 
         # Set rdf type
         type_ = self._get_rdf_type(timeseries)
@@ -158,7 +183,7 @@ class TimeSeriesExtractor(ClassicCDFExtractor[TimeSeries]):
                 (
                     id_,
                     self.namespace.dataset,
-                    self.namespace[f"Dataset_{timeseries.data_set_id}"],
+                    self.namespace[f"{InstanceIdPrefix.data_set}{timeseries.data_set_id}"],
                 )
             )
 
@@ -167,7 +192,7 @@ class TimeSeriesExtractor(ClassicCDFExtractor[TimeSeries]):
                 (
                     id_,
                     self.namespace.asset,
-                    self.namespace[f"Asset_{timeseries.asset_id}"],
+                    self.namespace[f"{InstanceIdPrefix.asset}{timeseries.asset_id}"],
                 )
             )
 
