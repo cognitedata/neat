@@ -1,4 +1,3 @@
-import logging
 import warnings
 from typing import Any, cast
 
@@ -169,11 +168,9 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
         possible_classes = possible_classes.union(parents)
 
         if not possible_classes:
-            logging.error("None of the desired classes are defined in the data model!")
             raise ValueError("None of the desired classes are defined in the data model!")
 
         if impossible_classes:
-            logging.warning(f"Could not find the following classes defined in the data model: {impossible_classes}")
             warnings.warn(
                 f"Could not find the following classes defined in the data model: {impossible_classes}",
                 stacklevel=2,
@@ -186,7 +183,6 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
             "properties": [],
         }
 
-        logging.info(f"Reducing data model to only include the following classes: {possible_classes}")
         for class_ in possible_classes:
             reduced_data_model["classes"].append(class_as_dict[str(class_.suffix)])
 
