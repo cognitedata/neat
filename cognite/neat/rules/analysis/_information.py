@@ -210,7 +210,7 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
             class_: instance of ClassEntity
 
         Returns:
-            Namespace: Namespace of the class entity or None if not found
+            URIRef of the class entity or None if not found
         """
 
         # we need to handle optional renamings and we do this
