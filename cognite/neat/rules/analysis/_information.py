@@ -202,3 +202,31 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
             warnings.warn(f"Reduced data model is not complete: {e}", stacklevel=2)
             reduced_data_model["metadata"].schema_ = SchemaCompleteness.partial
             return type(self.rules).model_construct(**reduced_data_model)
+
+    def class_uri(self, class_: ClassEntity) -> URIRef | None:
+        """Get URI for a class entity based on the rules.
+
+        Args:
+            class_: instance of ClassEntity
+
+        Returns:
+            Namespace: Namespace of the class entity or None if not found
+        """
+
+        # we need to handle optional renamings and we do this
+        # by checking if the most occurring class in transformations alternatively
+        # in cases when we are not specifying transformations we default to the class entity
+        if not (most_frequent_class := self.most_occurring_class_in_transformations(class_)):
+            most_frequent_class = class_
+
+        # case 1 class prefix in rules.prefixes
+        if most_frequent_class.prefix in self.rules.prefixes:
+            return self.rules.prefixes[cast(str, most_frequent_class.prefix)][most_frequent_class.suffix]
+
+        # case 2 class prefix equal to rules.metadata.prefix
+        elif most_frequent_class.prefix == self.rules.metadata.prefix:
+            return self.rules.metadata.namespace[most_frequent_class.suffix]
+
+        # case 3 when class prefix is not found in prefixes of rules
+        else:
+            return None

@@ -186,9 +186,17 @@ class NeatGraphStore:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return None
 
-        analysis = InformationAnalysis(self.rules)
-        has_hop_transformations = analysis.has_hop_transformations()
-        has_self_reference_transformations = analysis.has_self_reference_property_transformations()
+        if not (class_uri := InformationAnalysis(self.rules).class_uri(class_entity)):
+            warnings.warn(
+                f"Class {class_} does not have namespace defined for prefix {class_entity.prefix} Rules!",
+                stacklevel=2,
+            )
+            return None
+
+        has_hop_transformations = InformationAnalysis(self.rules).has_hop_transformations()
+        has_self_reference_transformations = InformationAnalysis(
+            self.rules
+        ).has_self_reference_property_transformations()
         if has_hop_transformations or has_self_reference_transformations:
             msg = (
                 f"Rules contain [{'Hop' if has_hop_transformations else '' }"
@@ -205,32 +213,22 @@ class NeatGraphStore:
             )
             return None
 
-        # we need to handle optional renamings
-        if not (most_frequent_class := analysis.most_occurring_class_in_transformations(class_entity)):
-            most_frequent_class = class_entity
+        # get all the instances for give class_uri
+        instance_ids = self.queries.list_instances_ids_of_class(class_uri)
 
-        if (
-            most_frequent_class.prefix != self.rules.metadata.prefix
-            and most_frequent_class.prefix not in self.rules.prefixes
-        ):
-            warnings.warn(
-                "Most frequent class not found in rules prefixes, returning empty list.",
-                stacklevel=2,
-            )
-            return
+        # get potential property renaming config
+        property_renaming_config = InformationAnalysis(self.rules).define_property_renaming_config(class_entity)
 
-        namespace = (
-            self.rules.prefixes[cast(str, most_frequent_class.prefix)]
-            if most_frequent_class.prefix in self.rules.prefixes
-            else self.rules.metadata.namespace
-        )
-
-        instance_ids = self.queries.list_instances_ids_of_class(namespace[most_frequent_class.suffix])
-
-        property_renaming_config = analysis.define_property_renaming_config(class_entity)
+        # get property types to guide process of removing or not namespaces from results
+        property_types = InformationAnalysis(self.rules).property_types(class_entity)
 
         for instance_id in instance_ids:
-            if res := self.queries.describe(instance_id, property_renaming_config, instance_type=class_):
+            if res := self.queries.describe(
+                instance_id=instance_id,
+                instance_type=class_,
+                property_renaming_config=property_renaming_config,
+                property_types=property_types,
+            ):
                 yield res
 
     def _parse_file(
