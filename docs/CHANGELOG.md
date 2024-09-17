@@ -15,10 +15,22 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.92.2] - 17-09-24
+### Added
+- Method in `InformationAnalysis` which returns class URI based on class entity
+- Method in `InformationAnalysis` which returns definition of property types for give class entity
+- Allow different class entity in transformations then classes for which transformation are written(typical use case when we are renaming classes from source to target graph)
+
+### Improved
+- Handling of namespace removal in Describe query (now only values which are of URIRef type or values of properties defined as object property get get namespace removed)
+
+### Removed
+- logging from `InformationAnalysis` module
+
 ### Fixed
 - NEAT can now run in a minimal environment without raising a `KeyError` when using the default
   configuration in NEAT importers.
+
 
 ## [0.92.1] - 12-09-24
 ### Fixed
@@ -31,7 +43,7 @@ Changes are grouped as follows:
 ## [0.91.0] - 11-09-24
 ### Added
 - IODDExtractor for IO-link standard: https://io-link.com/
-- The extractor will parse XML files that follow the IO-link standard for an IODD device, and create rdf triples 
+- The extractor will parse XML files that follow the IO-link standard for an IODD device, and create rdf triples
 that will form the knowledge graph for the device.
 - Improved XML utils method `get_children` to be able to extract nested children as well as direct children, and ignore
 namespace prefix of each tag element if the XML contains namespaces.

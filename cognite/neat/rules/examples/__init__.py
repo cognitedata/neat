@@ -7,3 +7,4 @@ from pathlib import Path
 
 _EXAMPLES = Path(__file__).parent
 wind_energy_ontology = _EXAMPLES / "wind-energy.owl"
+imf_info_rules = _EXAMPLES / "info-rules-imf.xlsx"
