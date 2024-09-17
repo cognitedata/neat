@@ -98,15 +98,15 @@ class DMSMetadata(BaseMetadata):
 
     @field_validator("schema_", mode="plain")
     def as_enum_schema(cls, value: str) -> SchemaCompleteness:
-        return SchemaCompleteness(value)
+        return SchemaCompleteness(value.strip())
 
     @field_validator("extension", mode="plain")
     def as_enum_extension(cls, value: str) -> ExtensionCategory:
-        return ExtensionCategory(value)
+        return ExtensionCategory(value.strip())
 
     @field_validator("data_model_type", mode="plain")
     def as_enum_model_type(cls, value: str) -> DataModelType:
-        return DataModelType(value)
+        return DataModelType(value.strip())
 
     @field_validator("description", mode="before")
     def nan_as_none(cls, value):

@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.92.3] - 17-09-24
+### Fixed
+- Prefixes not being imported or exported to Excel
+- Trailing whitespace in Excel files causing issues with importing
+
 ## [0.92.2] - 17-09-24
 ### Added
 - Method in `InformationAnalysis` which returns class URI based on class entity
@@ -30,6 +35,7 @@ Changes are grouped as follows:
 ### Fixed
 - NEAT can now run in a minimal environment without raising a `KeyError` when using the default
   configuration in NEAT importers.
+- NEAT now strips extra whitespace in all imported strings.
 
 
 ## [0.92.1] - 12-09-24

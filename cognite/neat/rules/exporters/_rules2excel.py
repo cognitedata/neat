@@ -11,6 +11,7 @@ from openpyxl import Workbook
 from openpyxl.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
+from rdflib import Namespace
 
 from cognite.neat.rules._shared import VerifiedRules
 from cognite.neat.rules.models import (
@@ -22,6 +23,7 @@ from cognite.neat.rules.models import (
 from cognite.neat.rules.models.dms import DMSMetadata
 from cognite.neat.rules.models.domain import DomainMetadata
 from cognite.neat.rules.models.information import InformationMetadata
+from cognite.neat.rules.models.information._rules import InformationRules
 
 from ._base import BaseExporter
 
@@ -133,6 +135,9 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             self._write_sheets(workbook, dumped_reference_rules, rules, sheet_prefix="Ref")
             self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix="Ref")
 
+        if isinstance(rules, InformationRules) and rules.prefixes:
+            self._write_prefixes_sheet(workbook, rules.prefixes)
+
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)
 
@@ -203,6 +208,16 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         metadata_sheet = workbook.create_sheet(f"{sheet_prefix}Metadata")
         for key, value in metadata.items():
+            metadata_sheet.append([key, value])
+
+        if self._styling_level > 1:
+            for cell in metadata_sheet["A"]:
+                cell.font = Font(bold=True, size=12)
+
+    def _write_prefixes_sheet(self, workbook: Workbook, prefixes: dict[str, Namespace]) -> None:
+        metadata_sheet = workbook.create_sheet("Prefixes")
+        metadata_sheet.append(["Prefix", "Namespace"])
+        for key, value in prefixes.items():
             metadata_sheet.append([key, value])
 
         if self._styling_level > 1:

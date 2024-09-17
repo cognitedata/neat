@@ -100,15 +100,15 @@ class InformationMetadata(BaseMetadata):
 
     @field_validator("schema_", mode="plain")
     def as_enum_schema(cls, value: str) -> SchemaCompleteness:
-        return SchemaCompleteness(value)
+        return SchemaCompleteness(value.strip())
 
     @field_validator("extension", mode="plain")
     def as_enum_extension(cls, value: str) -> ExtensionCategory:
-        return ExtensionCategory(value)
+        return ExtensionCategory(value.strip())
 
     @field_validator("data_model_type", mode="plain")
     def as_enum_model_type(cls, value: str) -> DataModelType:
-        return DataModelType(value)
+        return DataModelType(value.strip())
 
     def as_identifier(self) -> str:
         return f"{self.prefix}:{self.name}"
