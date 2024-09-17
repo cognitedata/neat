@@ -15,9 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.92.3] - 17-09-24
 ### Fixed
 - Prefixes not being imported or exported to Excel
+- Trailing whitespace in Excel files causing issues with importing
 
 ## [0.92.2] - 17-09-24
 ### Added
