@@ -108,6 +108,14 @@ class SchemaModel(BaseModel):
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
 
+    @field_validator("*", mode="before")
+    def strip_string(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return value.strip()
+        elif isinstance(value, list):
+            return [entry.strip() if isinstance(entry, str) else entry for entry in value]
+        return value
+
 
 class BaseMetadata(SchemaModel):
     """
@@ -279,12 +287,6 @@ class BaseRules(SchemaModel, ABC):
 
 
 class SheetRow(SchemaModel):
-    @field_validator("*", mode="before")
-    def strip_string(cls, value: Any) -> Any:
-        if isinstance(value, str):
-            return value.strip()
-        return value
-
     @abstractmethod
     def _identifier(self) -> tuple[Hashable, ...]:
         raise NotImplementedError()

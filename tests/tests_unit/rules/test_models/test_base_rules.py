@@ -8,8 +8,8 @@ class TestBaseRules:
         meta = InformationMetadata.model_validate(
             {
                 "role": "  information architect  ",
-                "dataModelType": "  enterprise ",
-                "schema": "   partial   ",
+                "dataModelType": "   enterprise   ",
+                "schema": "     partial   ",
                 "prefix": "  my-prefix  ",
                 "namespace": "http://purl.org/cognite/neat/",
                 "version": "  0.1.0  ",
@@ -24,5 +24,5 @@ class TestBaseRules:
         assert meta.prefix == "my-prefix"
         assert meta.schema_ == "partial"
         assert meta.role == "information architect"
-        assert meta.dataModelType == "enterprise"
+        assert meta.data_model_type == "enterprise"
         assert meta.creator == ["Me", "Myself", "I"]
