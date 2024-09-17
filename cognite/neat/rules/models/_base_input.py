@@ -66,11 +66,15 @@ class InputRules(Generic[T_BaseRules], ABC):
                 candidate = type_
             elif isinstance(type_, GenericAlias) and type_.__origin__ is list and is_dataclass(type_.__args__[0]):
                 candidate = type_.__args__[0]
+
+            # this handles prefixes
+            elif isinstance(type_, GenericAlias) and type_.__origin__ is dict:
+                candidate = type_
             else:
                 continue
 
-            if hasattr(candidate, "_load"):
-                output[field_.name] = candidate
+            output[field_.name] = candidate
+
         return output
 
     @classmethod
@@ -88,10 +92,16 @@ class InputRules(Generic[T_BaseRules], ABC):
             else:
                 continue
 
-            if isinstance(value, dict):
-                args[field_name] = field_type._load(value)  # type: ignore[attr-defined]
-            elif isinstance(value, list) and value and isinstance(value[0], dict):
-                args[field_name] = [field_type._load(item) for item in value]  # type: ignore[attr-defined]
+            # Handles the case where the field is a dataclass
+            if hasattr(field_type, "_load"):
+                if isinstance(value, dict):
+                    args[field_name] = field_type._load(value)  # type: ignore[attr-defined]
+                elif isinstance(value, list) and value and isinstance(value[0], dict):
+                    args[field_name] = [field_type._load(item) for item in value]  # type: ignore[attr-defined]
+            # Handles the case where the field holds non-dataclass values, e.g. a prefixes dict
+            else:
+                args[field_name] = value
+
         return cls(**args)
 
     def _dataclass_fields(self) -> list[Field]:
