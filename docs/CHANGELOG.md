@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.92.2] - 17-09-24
 ### Added
 - Method in `InformationAnalysis` which returns class URI based on class entity
 - Method in `InformationAnalysis` which returns definition of property types for give class entity
