@@ -20,6 +20,7 @@ from cognite.neat.issues.errors import (
     FileReadError,
     PropertyDefinitionDuplicatedError,
 )
+from cognite.neat.issues.warnings import FileMissingRequiredFieldWarning
 from cognite.neat.rules._shared import ReadRules, T_InputRules
 from cognite.neat.rules.models import (
     INPUT_RULES_BY_ROLE,
@@ -161,7 +162,7 @@ class SpreadsheetReader:
             and not self._sheet_prefix
             and (prefixes := self._read_prefixes(excel_file, filepath))
         ):
-            sheets["Prefixes"] = None
+            sheets["Prefixes"] = prefixes
 
         return ReadResult(sheets, read_info_by_sheet, metadata)
 
@@ -182,24 +183,18 @@ class SpreadsheetReader:
             return None
 
         else:
-            prefix_sheet = (
-                pd.read_excel(excel_file, "Prefixes", header=0)
-                .replace(float("nan"), None)
-                .apply(lambda x: x.str.strip() if x.dtype == "object" else x)
-            )
+            prefixes = {}
 
-            header = prefix_sheet.columns.tolist()
-            has_prefix_column = "Prefix" in header
-            has_namespace_column = "Namespace" in header
-
-            if not has_prefix_column or not has_namespace_column:
-                if not has_prefix_column:
-                    self.issue_list.append(FileMissingRequiredFieldError(filepath, "prefixes", "prefix"))
-                if not has_namespace_column:
-                    self.issue_list.append(FileMissingRequiredFieldError(filepath, "prefixes", "namespace"))
-                return None
-
-            return prefix_sheet.set_index("Prefix").to_dict()["Namespace"]
+            for row in read_individual_sheet(excel_file, "Prefixes", expected_headers=["Prefix", "Namespace"]):
+                if "Prefixes" in row and "Namespace" in row:
+                    prefixes[row["Prefix"]] = row["Namespace"]
+                else:
+                    if "Prefix" not in row:
+                        self.issue_list.append(FileMissingRequiredFieldWarning(filepath, "prefixes", "prefix"))
+                    if "Namespace" not in row:
+                        self.issue_list.append(FileMissingRequiredFieldWarning(filepath, "prefixes", "namespace"))
+                    return None
+            return prefixes
 
     def _read_sheets(
         self, excel_file: ExcelFile, read_role: RoleTypes
