@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Fixed
+- NEAT can now run in a minimal environment without raising a `KeyError` when using the default
+  configuration in NEAT importers.
+
 ## [0.92.1] - 12-09-24
 ### Fixed
 - The version of the released docker image was not updated correctly. This is now fixed.
