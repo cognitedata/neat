@@ -34,6 +34,6 @@ class TestBaseRules:
 
         class_ = InformationClass.model_validate(row.dump(default_prefix="neat"))
 
-        assert class_.class_.suffix == "MyClass"
+        assert class_.class_.suffix == "My Class"
         assert class_.name == "My Class Name"
         assert class_.description == "My Class Description"
