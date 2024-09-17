@@ -37,7 +37,7 @@ def test_imf_attribute_nodes():
     store.write(RdfFileExtractor(IMF_EXAMPLE, mime_type="text/turtle"))
 
     loader = DMSLoader.from_rules(dms_rules, store, instance_space="knowledge")
-    knowledge_nodes = list(loader._load())
+    knowledge_nodes = list(loader.load())
 
     assert len(knowledge_nodes) == 56
     assert knowledge_nodes[0].sources[0].properties["predicate"].startswith("http://")
