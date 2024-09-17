@@ -214,9 +214,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             for cell in metadata_sheet["A"]:
                 cell.font = Font(bold=True, size=12)
 
-    def _write_prefixes_sheet(
-        self, workbook: Workbook, prefixes: dict[str, Namespace]
-    ) -> None:
+    def _write_prefixes_sheet(self, workbook: Workbook, prefixes: dict[str, Namespace]) -> None:
         metadata_sheet = workbook.create_sheet("Prefixes")
         metadata_sheet.append(["Prefix", "Namespace"])
         for key, value in prefixes.items():

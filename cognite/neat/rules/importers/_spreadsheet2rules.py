@@ -177,9 +177,7 @@ class SpreadsheetReader:
             return None
         return metadata
 
-    def _read_prefixes(
-        self, excel_file: ExcelFile, filepath: Path
-    ) -> dict[str, Namespace] | None:
+    def _read_prefixes(self, excel_file: ExcelFile, filepath: Path) -> dict[str, Namespace] | None:
         if self.prefixes_sheet_name not in excel_file.sheet_names:
             return None
 
@@ -196,13 +194,9 @@ class SpreadsheetReader:
 
             if not has_prefix_column or not has_namespace_column:
                 if not has_prefix_column:
-                    self.issue_list.append(
-                        FileMissingRequiredFieldError(filepath, "prefixes", "prefix")
-                    )
+                    self.issue_list.append(FileMissingRequiredFieldError(filepath, "prefixes", "prefix"))
                 if not has_namespace_column:
-                    self.issue_list.append(
-                        FileMissingRequiredFieldError(filepath, "prefixes", "namespace")
-                    )
+                    self.issue_list.append(FileMissingRequiredFieldError(filepath, "prefixes", "namespace"))
                 return None
 
             return prefix_sheet.set_index("Prefix").to_dict()["Namespace"]
