@@ -34,6 +34,7 @@ Changes are grouped as follows:
 ### Fixed
 - NEAT can now run in a minimal environment without raising a `KeyError` when using the default
   configuration in NEAT importers.
+- NEAT now strips extra whitespace in all imported strings.
 
 
 ## [0.92.1] - 12-09-24

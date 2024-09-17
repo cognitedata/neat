@@ -17,6 +17,7 @@ from cognite.client.data_classes.data_modeling.ids import (
 from pydantic import (
     BaseModel,
     Field,
+    field_validator,
     model_serializer,
     model_validator,
 )
@@ -96,6 +97,14 @@ class Entity(BaseModel, extra="ignore"):
     @model_serializer(when_used="unless-none", return_type=str)
     def as_str(self) -> str:
         return str(self)
+
+    @field_validator("*", mode="before")
+    def strip_string(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return value.strip()
+        elif isinstance(value, list):
+            return [entry.strip() if isinstance(entry, str) else entry for entry in value]
+        return value
 
     @classmethod
     def _parse(cls, raw: str, defaults: dict) -> dict:
