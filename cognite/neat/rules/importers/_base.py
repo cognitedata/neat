@@ -1,8 +1,7 @@
-import getpass
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from datetime import datetime
 from typing import Any, Generic, Literal
 
@@ -25,6 +24,12 @@ class BaseImporter(ABC, Generic[T_InputRules]):
         raise NotImplementedError()
 
     def _default_metadata(self) -> dict[str, Any]:
+        creator = "UNKNOWN"
+        with suppress(KeyError, ImportError):
+            import getpass
+
+            creator = getpass.getuser()
+
         return {
             "prefix": "neat",
             "schema": "partial",
@@ -33,7 +38,7 @@ class BaseImporter(ABC, Generic[T_InputRules]):
             "title": "Neat Imported Data Model",
             "created": datetime.now().replace(microsecond=0).isoformat(),
             "updated": datetime.now().replace(microsecond=0).isoformat(),
-            "creator": getpass.getuser(),
+            "creator": creator,
             "description": f"Imported using {type(self).__name__}",
         }
 
