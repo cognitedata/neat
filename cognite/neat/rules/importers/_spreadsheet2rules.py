@@ -186,7 +186,7 @@ class SpreadsheetReader:
             prefixes = {}
 
             for row in read_individual_sheet(excel_file, "Prefixes", expected_headers=["Prefix", "Namespace"]):
-                if "Prefixes" in row and "Namespace" in row:
+                if "Prefix" in row and "Namespace" in row:
                     prefixes[row["Prefix"]] = row["Namespace"]
                 else:
                     if "Prefix" not in row:
@@ -194,6 +194,7 @@ class SpreadsheetReader:
                     if "Namespace" not in row:
                         self.issue_list.append(FileMissingRequiredFieldWarning(filepath, "prefixes", "namespace"))
                     return None
+
             return prefixes
 
     def _read_sheets(
@@ -267,11 +268,6 @@ class ExcelImporter(BaseImporter[T_InputRules]):
             if any(sheet_name.startswith("Ref") for sheet_name in user_reader.seen_sheets):
                 reference_read = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(excel_file, self.filepath)
 
-            _prefixes: dict[str, Namespace] = {}
-            print(user_read.sheets)
-            if "Prefixes" in user_read.sheets:
-                print("Prefixes")
-
         if issue_list.has_errors:
             return ReadRules(None, issue_list, {})
 
@@ -303,7 +299,6 @@ class ExcelImporter(BaseImporter[T_InputRules]):
 
         rules_cls = INPUT_RULES_BY_ROLE[original_role]
         rules = cast(T_InputRules, rules_cls.load(sheets))
-        print(sheets.keys())
         return ReadRules(rules, issue_list, {"read_info_by_sheet": read_info_by_sheet})
 
 
