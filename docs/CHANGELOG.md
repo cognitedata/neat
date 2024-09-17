@@ -27,6 +27,10 @@ Changes are grouped as follows:
 ### Removed
 - logging from `InformationAnalysis` module
 
+### Fixed
+- NEAT can now run in a minimal environment without raising a `KeyError` when using the default
+  configuration in NEAT importers.
+
 
 ## [0.92.1] - 12-09-24
 ### Fixed
