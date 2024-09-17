@@ -11,6 +11,7 @@ from typing import Literal, cast
 import pandas as pd
 from cognite.client.utils._importing import local_import
 from pandas import ExcelFile
+from rdflib import Namespace
 
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import (
@@ -19,6 +20,7 @@ from cognite.neat.issues.errors import (
     FileReadError,
     PropertyDefinitionDuplicatedError,
 )
+from cognite.neat.issues.warnings import FileMissingRequiredFieldWarning
 from cognite.neat.rules._shared import ReadRules, T_InputRules
 from cognite.neat.rules.models import (
     INPUT_RULES_BY_ROLE,
@@ -93,6 +95,7 @@ class ReadResult:
     sheets: dict[str, dict | list]
     read_info_by_sheet: dict[str, SpreadsheetRead]
     metadata: MetadataRaw
+    prefixes: dict[str, Namespace] | None = None
 
     @property
     def role(self) -> RoleTypes:
@@ -123,6 +126,10 @@ class SpreadsheetReader:
         return f"{self._sheet_prefix}Metadata"
 
     @property
+    def prefixes_sheet_name(self) -> str:
+        return "Prefixes"
+
+    @property
     def seen_sheets(self) -> set[str]:
         if not self._seen_files:
             raise ValueError("No files have been read yet.")
@@ -149,6 +156,14 @@ class SpreadsheetReader:
             return None
         sheets["Metadata"] = dict(metadata)
 
+        # Special case for reading prefixes as they are suppose to be read only once
+        if (
+            self.prefixes_sheet_name in excel_file.sheet_names
+            and not self._sheet_prefix
+            and (prefixes := self._read_prefixes(excel_file, filepath))
+        ):
+            sheets["Prefixes"] = prefixes
+
         return ReadResult(sheets, read_info_by_sheet, metadata)
 
     def _read_metadata(self, excel_file: ExcelFile, filepath: Path) -> MetadataRaw | None:
@@ -162,6 +177,25 @@ class SpreadsheetReader:
         if not metadata.is_valid(self.issue_list, filepath):
             return None
         return metadata
+
+    def _read_prefixes(self, excel_file: ExcelFile, filepath: Path) -> dict[str, Namespace] | None:
+        if self.prefixes_sheet_name not in excel_file.sheet_names:
+            return None
+
+        else:
+            prefixes = {}
+
+            for row in read_individual_sheet(excel_file, "Prefixes", expected_headers=["Prefix", "Namespace"]):
+                if "Prefix" in row and "Namespace" in row:
+                    prefixes[row["Prefix"]] = row["Namespace"]
+                else:
+                    if "Prefix" not in row:
+                        self.issue_list.append(FileMissingRequiredFieldWarning(filepath, "prefixes", "prefix"))
+                    if "Namespace" not in row:
+                        self.issue_list.append(FileMissingRequiredFieldWarning(filepath, "prefixes", "namespace"))
+                    return None
+
+            return prefixes
 
     def _read_sheets(
         self, excel_file: ExcelFile, read_role: RoleTypes
