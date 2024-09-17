@@ -1,14 +1,15 @@
+import uuid
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import ClassVar
 from xml.etree.ElementTree import Element
 
-from rdflib import RDF, Literal, Namespace, URIRef
+from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
-from cognite.neat.issues.errors import FileReadError, NeatValueError
+from cognite.neat.issues.errors import FileReadError
 from cognite.neat.utils.rdf_ import as_neat_compliant_uri
 from cognite.neat.utils.text import to_camel
 from cognite.neat.utils.xml_ import get_children
@@ -32,22 +33,28 @@ class IODDExtractor(BaseExtractor):
         root: XML root element of IODD XML file.
         namespace: Optional custom namespace to use for extracted triples that define data
                     model instances. Defaults to DEFAULT_NAMESPACE.
+        device_tag: Optional user specified unique tag for actual equipment instance. If not provided, a randomly
+        generated UUID will be used.
     """
 
     device_elements_with_text_nodes: ClassVar[list[str]] = ["VendorText", "VendorUrl", "DeviceName", "DeviceFamily"]
     std_variable_elements_to_extract: ClassVar[list[str]] = ["V_SerialNumber", "V_ApplicationSpecificTag"]
 
-    def __init__(self, root: Element, namespace: Namespace | None = None):
+    def __init__(self, root: Element, namespace: Namespace | None = None, device_tag: str | None = None):
         self.root = root
         self.namespace = namespace or DEFAULT_NAMESPACE
 
+        if not device_tag:
+            device_tag = str(uuid.uuid4())[:8]
+        self._device_tag = self.namespace[device_tag]
+
     @classmethod
-    def from_file(cls, filepath: str | Path, namespace: Namespace | None = None):
+    def from_file(cls, filepath: str | Path, namespace: Namespace | None = None, device_tag: str | None = None):
         if isinstance(filepath, str):
             filepath = Path(filepath)
         if filepath.suffix != ".xml":
             raise FileReadError(filepath, "File is not XML.")
-        return cls(ET.parse(filepath).getroot(), namespace)
+        return cls(ET.parse(filepath).getroot(), namespace, device_tag)
 
     @classmethod
     def _from_root2triples(cls, root: Element, namespace: Namespace, device_id: URIRef) -> list[Triple]:
@@ -70,10 +77,41 @@ class IODDExtractor(BaseExtractor):
         ):
             triples.extend(cls._variables_data_collection2triples(vc_root[0], namespace, device_id))
 
+        if pc_root := get_children(
+            root, "ProcessDataCollection", ignore_namespace=True, include_nested_children=True, no_children=1
+        ):
+            triples.extend(cls._process_data_collection2triples(pc_root[0], namespace, device_id))
+
         if et_root := get_children(
             root, "ExternalTextCollection", ignore_namespace=True, include_nested_children=True, no_children=1
         ):
             triples.extend(cls._text_elements2triples(et_root[0], namespace))
+
+        return triples
+
+    @classmethod
+    def _process_data_collection2triples(
+        cls, pc_root: Element, namespace: Namespace, device_id: URIRef
+    ) -> list[Triple]:
+        """
+        Only collect ProcessDataIn at this point
+        """
+        triples: list[Triple] = []
+
+        if process_data_in := get_children(
+            pc_root, "ProcessDataIn", ignore_namespace=True, include_nested_children=True
+        ):
+            for element in process_data_in:
+                if id := element.attrib.get("id"):
+                    process_data_in_id = namespace[id]
+
+                    # Create ProcessDataIn node
+                    triples.append((process_data_in_id, RDF.type, as_neat_compliant_uri(IODD["ProcessDataIn"])))
+
+                    # Create connection from device to node
+                    triples.append((device_id, IODD["processDataIn"], process_data_in_id))
+
+                    triples.extend(cls._process_data_in_records2triples(process_data_in_id, pc_in_root=element))
 
         return triples
 
@@ -111,7 +149,7 @@ class IODDExtractor(BaseExtractor):
                     text_id = namespace[id]
 
                     # Create Text node
-                    triples.append((text_id, RDF.type, as_neat_compliant_uri(IODD["Text"])))
+                    triples.append((text_id, RDF.type, as_neat_compliant_uri(IODD["TextObject"])))
 
                     # Resolve text value related to the text item
                     if value := element.attrib.get("value"):
@@ -119,14 +157,9 @@ class IODDExtractor(BaseExtractor):
 
         return triples
 
-    def _get_device_id(self) -> URIRef:
-        if di_root := get_children(
-            self.root, "DeviceIdentity", ignore_namespace=True, include_nested_children=True, no_children=1
-        ):
-            if device_id := di_root[0].attrib.get("deviceId"):
-                id = self.namespace[device_id]
-                return id
-        raise NeatValueError("Unable to extract device ID from IODD sheet. Exiting.")
+    def _generate_device_id(self) -> URIRef:
+        self.device_id = str(uuid.uuid4())
+        return self.namespace[self.device_id]
 
     @classmethod
     def _std_variables2triples(cls, vc_root: Element, namespace: Namespace, device_id: URIRef) -> list[Triple]:
@@ -164,27 +197,10 @@ class IODDExtractor(BaseExtractor):
         if variable_elements := get_children(vc_root, child_tag="Variable", ignore_namespace=True):
             for element in variable_elements:
                 if id := element.attrib.get("id"):
-                    variable_id = namespace[id]
+                    variable_id = f"{device_id}_{id}"
 
-                    # Create Variable node
-                    triples.append((variable_id, RDF.type, as_neat_compliant_uri(IODD["Variable"])))
-
-                    # Create connection from device to variable
-                    triples.append((device_id, IODD["variable"], variable_id))
-
-                    # Get variable name
-                    if name_element := get_children(element, child_tag="Name", ignore_namespace=True, no_children=1):
-                        if text_id := name_element[0].attrib.get("textId"):
-                            # Create connection from Variable node to textId node
-                            triples.append((variable_id, IODD["name"], namespace[text_id]))
-
-                    # Get variable description
-                    if description_element := get_children(
-                        element, child_tag="Description", ignore_namespace=True, no_children=1
-                    ):
-                        if text_id := description_element[0].attrib.get("textId"):
-                            # Create connection from Variable node to textId node
-                            triples.append((variable_id, IODD["description"], namespace[text_id]))
+                    # Create connection from device node to time series
+                    triples.append((device_id, IODD.variable, Literal(variable_id, datatype=XSD["timeseries"])))
 
         return triples
 
@@ -198,24 +214,29 @@ class IODDExtractor(BaseExtractor):
         """
         triples: list[Triple] = []
 
+        # Create rdf type triple for IODD
+        triples.append(
+            (
+                device_id,
+                RDF.type,
+                as_neat_compliant_uri(IODD["IoddDevice"]),
+            )
+        )
+
         for attribute_name, attribute_value in di_root.attrib.items():
-            if attribute_name == "deviceId":
-                # Create rdf type triple for IODD
-                triples.append(
-                    (
-                        device_id,
-                        RDF.type,
-                        as_neat_compliant_uri(IODD["IoddDevice"]),
-                    )
-                )
-            else:
-                # Collect attributes at root element
-                triples.append((device_id, IODD[attribute_name], Literal(attribute_value)))
+            triples.append((device_id, IODD[attribute_name], Literal(attribute_value)))
 
         triples.extend(cls._device_2text_elements_edges(di_root, device_id, namespace))
         return triples
 
+    @classmethod
+    def _process_data_in_records2triples(cls, process_data_in_id, pc_in_root: Element):
+        """
+        #TODO: Use index of each record item to create a predicate for each record item and point to a time series
+        """
+        triples: list[Triple] = []
+        return triples
+
     def extract(self) -> list[Triple]:
-        device_id = self._get_device_id()
         # Extract triples from IODD device XML
-        return self._from_root2triples(self.root, self.namespace, device_id)
+        return self._from_root2triples(self.root, self.namespace, self._device_tag)
