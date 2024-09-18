@@ -7,7 +7,7 @@ from rdflib import Literal as RdfLiteral
 from rdflib.query import ResultRow
 
 from cognite.neat.graph.models import InstanceType
-from cognite.neat.rules.models.entities import ClassEntity
+from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
 from cognite.neat.rules.models.information import InformationRules
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
@@ -98,13 +98,18 @@ class Queries:
     def describe(
         self,
         instance_id: URIRef,
+        instance_type: str | None = None,
         property_renaming_config: dict | None = None,
+        property_types: dict[str, EntityTypes] | None = None,
     ) -> tuple[str, dict[str | InstanceType, list[str]]] | None:
         """DESCRIBE instance for a given class from the graph store
 
         Args:
             instance_id: Instance id for which we want to generate query
-            property_renaming_config: Dictionary to rename properties, default None
+            instance_type: Type of the instance, default None (will be inferred from triples)
+            property_renaming_config: Dictionary to rename properties, default None (no renaming)
+            property_types: Dictionary of property types, default None (helper for removal of namespace)
+
 
         Returns:
             Dictionary of instance properties
@@ -119,21 +124,52 @@ class Queries:
                 "null",
             ]:
                 continue
-            # we are skipping deep validation with Pydantic to remove namespace here
-            # as it reduces time to process triples by 10-15x
-            value = remove_namespace_from_uri(object_, validation="prefix")
 
-            # use-case: calling describe without renaming properties
-            # losing the namespace from the predicate!
-            if not property_renaming_config and predicate != RDF.type:
-                property_values[remove_namespace_from_uri(predicate, validation="prefix")].append(value)
-            elif predicate == RDF.type:
-                property_values[RDF.type].append(value)
-            # use-case: calling describe with renaming properties
-            # renaming the property to the new name, if the property is defined
-            # in the RULES sheet
-            elif property_renaming_config and (property_ := property_renaming_config.get(predicate, None)):
+            # set property
+            if property_renaming_config and predicate != RDF.type:
+                property_ = property_renaming_config.get(
+                    predicate, remove_namespace_from_uri(predicate, validation="prefix")
+                )
+            elif not property_renaming_config and predicate != RDF.type:
+                property_ = remove_namespace_from_uri(predicate, validation="prefix")
+            else:
+                property_ = RDF.type
+
+            # set value
+            # if it is URIRef and property type is object property, we need to remove namespace
+            # if it URIref but we are doing this into data type property, we do not remove namespace
+            # case 1 for RDF type we remove namespace
+            if property_ == RDF.type:
+                value = remove_namespace_from_uri(object_, validation="prefix")
+
+            # case 2 for define object properties we remove namespace
+            elif (
+                isinstance(object_, URIRef)
+                and property_types
+                and property_types.get(property_, None) == EntityTypes.object_property
+            ):
+                value = remove_namespace_from_uri(object_, validation="prefix")
+
+            # case 3 when property type is not defined and returned value is URIRef we remove namespace
+            elif isinstance(object_, URIRef) and not property_types:
+                value = remove_namespace_from_uri(object_, validation="prefix")
+
+            # case 4 for data type properties we do not remove namespace but keep the entire value
+            # but we drop the datatype part, and keep everything to be string (data loader will do the conversion)
+            # for value type it expects (if possible)
+            else:
+                value = str(object_)
+
+            # add type to the dictionary
+            if predicate != RDF.type:
                 property_values[property_].append(value)
+            else:
+                # guarding against multiple rdf:type values as this is not allowed in CDF
+                if RDF.type not in property_values:
+                    property_values[RDF.type].append(instance_type if instance_type else value)
+                else:
+                    # we should not have multiple rdf:type values
+                    continue
 
         if property_values:
             return (

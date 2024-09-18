@@ -1,4 +1,3 @@
-import logging
 import warnings
 from typing import Any, cast
 
@@ -12,12 +11,13 @@ from cognite.neat.rules.models._rdfpath import (
     SelfReferenceProperty,
     SingleProperty,
 )
-from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
+from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, ReferenceEntity
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationProperty,
     InformationRules,
 )
+from cognite.neat.utils.collection_ import most_occurring_element
 from cognite.neat.utils.rdf_ import get_inheritance_path
 
 from ._base import BaseAnalysis
@@ -105,6 +105,26 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
 
         return property_renaming_configuration
 
+    def property_types(self, class_: ClassEntity) -> dict[str, EntityTypes]:
+        property_types = {}
+        if definitions := self.class_property_pairs(consider_inheritance=True).get(class_, None):
+            for property_id, definition in definitions.items():
+                property_types[property_id] = definition.type_
+
+        return property_types
+
+    def most_occurring_class_in_transformations(self, class_: ClassEntity) -> ClassEntity | None:
+        classes = []
+        if class_property_pairs := self.class_property_pairs(consider_inheritance=True, only_rdfpath=True).get(
+            class_, None
+        ):
+            for property_ in class_property_pairs.values():
+                classes.append(cast(RDFPath, property_.transformation).traversal.class_)
+
+            return cast(ClassEntity, most_occurring_element(classes))
+        else:
+            return None
+
     def subset_rules(self, desired_classes: set[ClassEntity]) -> InformationRules:
         """
         Subset rules to only include desired classes and their properties.
@@ -148,11 +168,9 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
         possible_classes = possible_classes.union(parents)
 
         if not possible_classes:
-            logging.error("None of the desired classes are defined in the data model!")
             raise ValueError("None of the desired classes are defined in the data model!")
 
         if impossible_classes:
-            logging.warning(f"Could not find the following classes defined in the data model: {impossible_classes}")
             warnings.warn(
                 f"Could not find the following classes defined in the data model: {impossible_classes}",
                 stacklevel=2,
@@ -165,7 +183,6 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
             "properties": [],
         }
 
-        logging.info(f"Reducing data model to only include the following classes: {possible_classes}")
         for class_ in possible_classes:
             reduced_data_model["classes"].append(class_as_dict[str(class_.suffix)])
 
@@ -181,3 +198,31 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
             warnings.warn(f"Reduced data model is not complete: {e}", stacklevel=2)
             reduced_data_model["metadata"].schema_ = SchemaCompleteness.partial
             return type(self.rules).model_construct(**reduced_data_model)
+
+    def class_uri(self, class_: ClassEntity) -> URIRef | None:
+        """Get URI for a class entity based on the rules.
+
+        Args:
+            class_: instance of ClassEntity
+
+        Returns:
+            URIRef of the class entity or None if not found
+        """
+
+        # we need to handle optional renamings and we do this
+        # by checking if the most occurring class in transformations alternatively
+        # in cases when we are not specifying transformations we default to the class entity
+        if not (most_frequent_class := self.most_occurring_class_in_transformations(class_)):
+            most_frequent_class = class_
+
+        # case 1 class prefix in rules.prefixes
+        if most_frequent_class.prefix in self.rules.prefixes:
+            return self.rules.prefixes[cast(str, most_frequent_class.prefix)][most_frequent_class.suffix]
+
+        # case 2 class prefix equal to rules.metadata.prefix
+        elif most_frequent_class.prefix == self.rules.metadata.prefix:
+            return self.rules.metadata.namespace[most_frequent_class.suffix]
+
+        # case 3 when class prefix is not found in prefixes of rules
+        else:
+            return None

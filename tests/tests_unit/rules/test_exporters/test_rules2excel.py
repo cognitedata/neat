@@ -82,13 +82,25 @@ class TestExcelExporter:
     @pytest.mark.parametrize(
         "dump_as, expected_sheet_names",
         [
-            ("user", {"Metadata", "Classes", "Properties", "RefMetadata", "RefClasses", "RefProperties"}),
+            (
+                "user",
+                {
+                    "Metadata",
+                    "Classes",
+                    "Properties",
+                    "Prefixes",
+                    "RefMetadata",
+                    "RefClasses",
+                    "RefProperties",
+                },
+            ),
             (
                 "last",
                 {
                     "Metadata",
                     "Classes",
                     "Properties",
+                    "Prefixes",
                     "LastClasses",
                     "LastProperties",
                     "LastMetadata",

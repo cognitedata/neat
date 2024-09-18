@@ -186,9 +186,17 @@ class NeatGraphStore:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return None
 
-        analysis = InformationAnalysis(self.rules)
-        has_hop_transformations = analysis.has_hop_transformations()
-        has_self_reference_transformations = analysis.has_self_reference_property_transformations()
+        if not (class_uri := InformationAnalysis(self.rules).class_uri(class_entity)):
+            warnings.warn(
+                f"Class {class_} does not have namespace defined for prefix {class_entity.prefix} Rules!",
+                stacklevel=2,
+            )
+            return None
+
+        has_hop_transformations = InformationAnalysis(self.rules).has_hop_transformations()
+        has_self_reference_transformations = InformationAnalysis(
+            self.rules
+        ).has_self_reference_property_transformations()
         if has_hop_transformations or has_self_reference_transformations:
             msg = (
                 f"Rules contain [{'Hop' if has_hop_transformations else '' }"
@@ -205,12 +213,22 @@ class NeatGraphStore:
             )
             return None
 
-        instance_ids = self.queries.list_instances_ids_of_class(self.rules.metadata.namespace[class_])
+        # get all the instances for give class_uri
+        instance_ids = self.queries.list_instances_ids_of_class(class_uri)
 
+        # get potential property renaming config
         property_renaming_config = InformationAnalysis(self.rules).define_property_renaming_config(class_entity)
 
+        # get property types to guide process of removing or not namespaces from results
+        property_types = InformationAnalysis(self.rules).property_types(class_entity)
+
         for instance_id in instance_ids:
-            if res := self.queries.describe(instance_id, property_renaming_config):
+            if res := self.queries.describe(
+                instance_id=instance_id,
+                instance_type=class_,
+                property_renaming_config=property_renaming_config,
+                property_types=property_types,
+            ):
                 yield res
 
     def _parse_file(
