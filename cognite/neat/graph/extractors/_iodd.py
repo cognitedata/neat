@@ -10,7 +10,6 @@ from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
 from cognite.neat.issues.errors import FileReadError
-from cognite.neat.utils.rdf_ import as_neat_compliant_uri
 from cognite.neat.utils.text import to_camel
 from cognite.neat.utils.xml_ import get_children
 
@@ -44,14 +43,14 @@ class IODDExtractor(BaseExtractor):
         self.root = root
         self.namespace = namespace or DEFAULT_NAMESPACE
 
-        if not device_tag:
-            device_tag = str(uuid.uuid4())[:8]
-        self._device_tag = self.namespace[device_tag]
+        self.device_id = (
+            self.namespace[device_tag]
+            if device_tag
+            else self.namespace[f"Device_{str(uuid.uuid4()).replace('-', '_')}"]
+        )
 
     @classmethod
-    def from_file(cls, filepath: str | Path, namespace: Namespace | None = None, device_tag: str | None = None):
-        if isinstance(filepath, str):
-            filepath = Path(filepath)
+    def from_file(cls, filepath: Path, namespace: Namespace | None = None, device_tag: str | None = None):
         if filepath.suffix != ".xml":
             raise FileReadError(filepath, "File is not XML.")
         return cls(ET.parse(filepath).getroot(), namespace, device_tag)
@@ -107,10 +106,10 @@ class IODDExtractor(BaseExtractor):
                     process_data_in_id = namespace[f"{device_id!s}_{id}"]
 
                     # Create ProcessDataIn node
-                    triples.append((process_data_in_id, RDF.type, as_neat_compliant_uri(IODD["ProcessDataIn"])))
+                    triples.append((process_data_in_id, RDF.type, IODD.ProcessDataIn))
 
                     # Create connection from device to node
-                    triples.append((device_id, IODD["processDataIn"], process_data_in_id))
+                    triples.append((device_id, IODD.processDataIn, process_data_in_id))
 
                     # Connect record items (essentially an array of indexed variables) to the ProcessDataIn node
                     triples.extend(cls._process_data_in_records2triples(process_data_element, process_data_in_id))
@@ -151,7 +150,7 @@ class IODDExtractor(BaseExtractor):
                     text_id = namespace[id]
 
                     # Create Text node
-                    triples.append((text_id, RDF.type, as_neat_compliant_uri(IODD["TextObject"])))
+                    triples.append((text_id, RDF.type, IODD.TextObject))
 
                     # Resolve text value related to the text item
                     if value := element.attrib.get("value"):
@@ -171,9 +170,9 @@ class IODDExtractor(BaseExtractor):
             for element in std_variable_elements:
                 if id := element.attrib.get("id"):
                     if id in cls.std_variable_elements_to_extract:
-                        predicate = to_camel(id.replace("V_", ""))
-                        object = element.attrib.get("defaultValue", "")
-                        triples.append((device_id, IODD[predicate], Literal(object)))
+                        if object := element.attrib.get("defaultValue"):
+                            predicate = to_camel(id.replace("V_", ""))
+                            triples.append((device_id, IODD[predicate], Literal(object)))
         return triples
 
     @classmethod
@@ -217,7 +216,7 @@ class IODDExtractor(BaseExtractor):
             (
                 device_id,
                 RDF.type,
-                as_neat_compliant_uri(IODD["IoddDevice"]),
+                IODD.IoddDevice,
             )
         )
 
@@ -248,4 +247,4 @@ class IODDExtractor(BaseExtractor):
         """
         Extract RDF triples from IODD XML
         """
-        return self._from_root2triples(self.root, self.namespace, self._device_tag)
+        return self._from_root2triples(self.root, self.namespace, self.device_id)
