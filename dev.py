@@ -1,5 +1,6 @@
 """This is an internal CLI for the development team. It is intended for automating development tasks."""
 
+from datetime import date
 from pathlib import Path
 
 import typer
@@ -8,6 +9,9 @@ from packaging.version import Version, parse
 from cognite.neat._version import __version__
 
 REPO_ROOT = Path(__file__).parent
+CHANGELOG = REPO_ROOT / "docs" / "CHANGELOG.md"
+
+TBD_HEADING = "## TBD"
 
 dev_app = typer.Typer(
     add_completion=False,
@@ -59,6 +63,20 @@ def bump(
         new_version = Version(f"{version.major}.{version.minor}.{version.micro}{suffix}")
     else:
         raise typer.BadParameter("You must specify one of major, minor, patch, alpha, or beta.")
+
+    # Update the changelog
+    changelog = CHANGELOG.read_text()
+    if TBD_HEADING not in changelog:
+        raise ValueError(
+            f"There are no changes to release. The changelog does not contain a TBD section: {TBD_HEADING}."
+        )
+
+    today = date.today().strftime("%d-%m-%Y")
+    new_heading = f"## [{new_version}] - {today}"
+
+    changelog = changelog.replace(TBD_HEADING, new_heading)
+    CHANGELOG.write_text(changelog)
+    typer.echo(f"Updated changelog with new heading: {new_heading}")
 
     for file in version_files:
         file.write_text(file.read_text().replace(str(version), str(new_version), 1))
