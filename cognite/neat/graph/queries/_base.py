@@ -104,7 +104,7 @@ class Queries:
         Returns:
             True if property exists, False otherwise
         """
-        query = f"SELECT DISTINCT ?t WHERE {{ ?s <{property_uri}> ?o ; a ?t}}"
+        query = f"SELECT DISTINCT ?t WHERE {{ ?s <{property_uri}> ?o ; a ?t}} Limit 1"
         return cast(list[URIRef], [t[0] for t in self.graph.query(query)])  # type: ignore[index]
 
     def has_namespace(self, namespace: Namespace) -> bool:
