@@ -94,15 +94,16 @@ class IODDExtractor(BaseExtractor):
         cls, pc_root: Element, namespace: Namespace, device_id: URIRef
     ) -> list[Triple]:
         """
-        Only collect ProcessDataIn at this point
+        Will only collect ProcessDataIn elements at this point. The data from the IO-master is transmitted as an
+        array related to a ProcessDataIn item.
         """
         triples: list[Triple] = []
 
         if process_data_in := get_children(
             pc_root, "ProcessDataIn", ignore_namespace=True, include_nested_children=True
         ):
-            for element in process_data_in:
-                if id := element.attrib.get("id"):
+            for process_data_element in process_data_in:
+                if id := process_data_element.attrib.get("id"):
                     process_data_in_id = namespace[f"{device_id!s}_{id}"]
 
                     # Create ProcessDataIn node
@@ -111,7 +112,8 @@ class IODDExtractor(BaseExtractor):
                     # Create connection from device to node
                     triples.append((device_id, IODD["processDataIn"], process_data_in_id))
 
-                    triples.extend(cls._process_data_in_records2triples(process_data_in_id, pc_in_root=element))
+                    # Connect record items (essentially an array of indexed variables) to the ProcessDataIn node
+                    triples.extend(cls._process_data_in_records2triples(process_data_element, process_data_in_id))
 
         return triples
 
@@ -156,10 +158,6 @@ class IODDExtractor(BaseExtractor):
                         triples.append((text_id, IODD.value, Literal(value)))
 
         return triples
-
-    def _generate_device_id(self) -> URIRef:
-        self.device_id = str(uuid.uuid4())
-        return self.namespace[self.device_id]
 
     @classmethod
     def _std_variables2triples(cls, vc_root: Element, namespace: Namespace, device_id: URIRef) -> list[Triple]:
@@ -230,8 +228,11 @@ class IODDExtractor(BaseExtractor):
         return triples
 
     @classmethod
-    def _process_data_in_records2triples(cls, process_data_in_id, pc_in_root: Element):
-        """ """
+    def _process_data_in_records2triples(cls, pc_in_root: Element, process_data_in_id: URIRef):
+        """
+        Extract RecordItems related to a ProcessDataIn element. Each record item is indexed. Will use this index
+        as the identifier for the time series in CDF.
+        """
         triples: list[Triple] = []
 
         if record_items := get_children(pc_in_root, "RecordItem", ignore_namespace=True, include_nested_children=True):
@@ -244,5 +245,7 @@ class IODDExtractor(BaseExtractor):
         return triples
 
     def extract(self) -> list[Triple]:
-        # Extract triples from IODD device XML
+        """
+        Extract RDF triples from IODD XML
+        """
         return self._from_root2triples(self.root, self.namespace, self._device_tag)
