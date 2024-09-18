@@ -11,7 +11,7 @@ from cognite.neat.graph.extractors import (
     SequencesExtractor,
     TimeSeriesExtractor,
 )
-from cognite.neat.rules.importers import CDFClassicGraphImporter
+from cognite.neat.rules.importers._cdf_classic import CDFClassicGraphImporter
 from cognite.neat.store import NeatGraphStore
 from tests.data import classic_windfarm
 
