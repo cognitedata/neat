@@ -1,3 +1,4 @@
+import re
 import uuid
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -9,7 +10,7 @@ from rdflib import RDF, XSD, Literal, Namespace, URIRef
 from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
-from cognite.neat.issues.errors import FileReadError
+from cognite.neat.issues.errors import FileReadError, NeatValueError
 from cognite.neat.utils.text import to_camel
 from cognite.neat.utils.xml_ import get_children
 
@@ -32,28 +33,30 @@ class IODDExtractor(BaseExtractor):
         root: XML root element of IODD XML file.
         namespace: Optional custom namespace to use for extracted triples that define data
                     model instances. Defaults to DEFAULT_NAMESPACE.
-        device_tag: Optional user specified unique tag for actual equipment instance. If not provided, a randomly
-        generated UUID will be used.
+        device_id: Optional user specified unique id/tag for actual equipment instance. If not provided, a randomly
+        generated UUID will be used. The device_id must be WEB compliant,
+        meaning that the characters /&?=: % are not allowed
     """
 
     device_elements_with_text_nodes: ClassVar[list[str]] = ["VendorText", "VendorUrl", "DeviceName", "DeviceFamily"]
     std_variable_elements_to_extract: ClassVar[list[str]] = ["V_SerialNumber", "V_ApplicationSpecificTag"]
 
-    def __init__(self, root: Element, namespace: Namespace | None = None, device_tag: str | None = None):
+    def __init__(self, root: Element, namespace: Namespace | None = None, device_id: str | None = None):
         self.root = root
         self.namespace = namespace or DEFAULT_NAMESPACE
 
+        if device_id and device_id != re.sub(r"[^a-zA-Z0-9-_.]", "", device_id):
+            raise NeatValueError("Specified device_id is not web compliant. Please exclude characters: /&?=: %")
+
         self.device_id = (
-            self.namespace[device_tag]
-            if device_tag
-            else self.namespace[f"Device_{str(uuid.uuid4()).replace('-', '_')}"]
+            self.namespace[device_id] if device_id else self.namespace[f"Device_{str(uuid.uuid4()).replace('-', '_')}"]
         )
 
     @classmethod
-    def from_file(cls, filepath: Path, namespace: Namespace | None = None, device_tag: str | None = None):
+    def from_file(cls, filepath: Path, namespace: Namespace | None = None, device_id: str | None = None):
         if filepath.suffix != ".xml":
             raise FileReadError(filepath, "File is not XML.")
-        return cls(ET.parse(filepath).getroot(), namespace, device_tag)
+        return cls(ET.parse(filepath).getroot(), namespace, device_id)
 
     @classmethod
     def _from_root2triples(cls, root: Element, namespace: Namespace, device_id: URIRef) -> list[Triple]:
