@@ -11,6 +11,7 @@ on:
         options:
           - patch
           - minor
+          # Major version is intentionally omitted, as it should be done manually
 
 env:
   MAIN_PYTHON_VERSION: 3.11
