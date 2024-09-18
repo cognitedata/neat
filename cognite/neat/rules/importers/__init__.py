@@ -1,5 +1,4 @@
 from ._base import BaseImporter
-from ._cdf_classic import CDFClassicGraphImporter
 from ._dms2rules import DMSImporter
 from ._dtdl2rules import DTDLImporter
 from ._rdf._imf2rules import IMFImporter
@@ -18,7 +17,6 @@ __all__ = [
     "DTDLImporter",
     "YAMLImporter",
     "InferenceImporter",
-    "CDFClassicGraphImporter",
 ]
 
 
