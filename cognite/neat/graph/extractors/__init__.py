@@ -1,6 +1,7 @@
 from ._base import BaseExtractor
 from ._classic_cdf._assets import AssetsExtractor
 from ._classic_cdf._classic import ClassicGraphExtractor
+from ._classic_cdf._data_sets import DataSetExtractor
 from ._classic_cdf._events import EventsExtractor
 from ._classic_cdf._files import FilesExtractor
 from ._classic_cdf._labels import LabelsExtractor
@@ -17,6 +18,7 @@ __all__ = [
     "BaseExtractor",
     "AssetsExtractor",
     "ClassicGraphExtractor",
+    "DataSetExtractor",
     "MockGraphGenerator",
     "RelationshipsExtractor",
     "TimeSeriesExtractor",
@@ -43,6 +45,9 @@ TripleExtractors = (
     | RdfFileExtractor
     | DexpiExtractor
     | IODDExtractor
+    | DMSExtractor
+    | ClassicGraphExtractor
+    | DataSetExtractor
 )
 
 
