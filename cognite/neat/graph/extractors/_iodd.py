@@ -103,7 +103,7 @@ class IODDExtractor(BaseExtractor):
         ):
             for element in process_data_in:
                 if id := element.attrib.get("id"):
-                    process_data_in_id = namespace[id]
+                    process_data_in_id = namespace[f"{device_id!s}_{id}"]
 
                     # Create ProcessDataIn node
                     triples.append((process_data_in_id, RDF.type, as_neat_compliant_uri(IODD["ProcessDataIn"])))
@@ -231,10 +231,16 @@ class IODDExtractor(BaseExtractor):
 
     @classmethod
     def _process_data_in_records2triples(cls, process_data_in_id, pc_in_root: Element):
-        """
-        #TODO: Use index of each record item to create a predicate for each record item and point to a time series
-        """
+        """ """
         triples: list[Triple] = []
+
+        if record_items := get_children(pc_in_root, "RecordItem", ignore_namespace=True, include_nested_children=True):
+            for record in record_items:
+                if index := record.attrib.get("subindex"):
+                    record_id = f"{process_data_in_id!s}_{index}"
+                    # Create connection from device node to time series
+                    triples.append((process_data_in_id, IODD.variable, Literal(record_id, datatype=XSD["timeseries"])))
+
         return triples
 
     def extract(self) -> list[Triple]:
