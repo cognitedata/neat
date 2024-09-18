@@ -43,12 +43,12 @@ jobs:
       - name: Bump Minor Version
         if: ${{ github.event.inputs.bump == 'patch' }}
         run:
-          python dev.py --patch
+          python dev.py --patch --verbose
 
       - name: Bump Minor Version
         if: ${{ github.event.inputs.bump == 'minor' }}
         run:
-          python dev.py --minor
+          python dev.py --minor --verbose
 
       - id: version
         name: Pick up the new version
