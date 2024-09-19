@@ -6,7 +6,7 @@ from tests.config import IMF_EXAMPLE
 
 
 def test_imf_importer():
-    rules = ImporterPipeline.verify(importers.IMFImporter(filepath=IMF_EXAMPLE))
+    rules = ImporterPipeline.verify(importers.IMFImporter.from_file(IMF_EXAMPLE, "imf"))
 
     assert len(rules.classes) == 69
     assert len(rules.properties) == 156

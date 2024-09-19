@@ -4,7 +4,7 @@ from cognite.neat.rules.importers._rdf._shared import make_metadata_compliant
 from cognite.neat.rules.models import RoleTypes, SchemaCompleteness
 
 
-def parse_imf_metadata() -> dict:
+def parse_imf_metadata(prefix: str = "pcaimf") -> dict:
     """Provide hardcoded IMF metadata to dict.
 
     Returns:
@@ -19,7 +19,7 @@ def parse_imf_metadata() -> dict:
     raw_metadata = {
         "role": RoleTypes.information,
         "schema": SchemaCompleteness.partial,
-        "prefix": "pcaimf",
+        "prefix": prefix,
         "namespace": Namespace("https://posccaesar.org/imf/"),
         "version": None,
         "created": None,

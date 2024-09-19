@@ -216,7 +216,7 @@ class IMFToRules(Step):
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
 
-        ontology_importer = importers.IMFImporter(filepath=rules_file_path)
+        ontology_importer = importers.IMFImporter.from_file(rules_file_path)
         result = ImporterPipeline.try_verify(ontology_importer, role_enum)
 
         if result.rules is None:
@@ -387,7 +387,7 @@ class RulesInferenceFromRdfFile(Step):
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
 
-        inference_importer = importers.InferenceImporter.from_rdf_file(
+        inference_importer = importers.InferenceImporter.from_file(
             rdf_file_path, max_number_of_instance=max_number_of_instance
         )
         result = ImporterPipeline.try_verify(inference_importer, role_enum)
