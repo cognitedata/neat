@@ -15,11 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [TBD] - 18-09-24
+## TBD
 ### Improved
 - IODD extractor to also extract XML elements that should map to time series data type
 - This includes extracting `VariableCollection` elements and `ProcessDataIn` elements
 - Will probably need to revise how the tag/id of the time series is created
+- Interfaces for InferenceImporter and IMFImporter are leveraging BaseRDFImporter
 
 ## [0.92.3] - 17-09-24
 ### Fixed
