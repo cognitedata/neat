@@ -22,7 +22,7 @@ from cognite.neat.rules.models import (
     SheetList,
     data_types,
 )
-from cognite.neat.rules.models.data_types import DataType
+from cognite.neat.rules.models.data_types import DataType, String
 from cognite.neat.rules.models.dms import DMSMetadata, DMSProperty, DMSView
 from cognite.neat.rules.models.entities import (
     AssetEntity,
@@ -57,6 +57,43 @@ class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRul
     @abstractmethod
     def _transform(self, rules: T_VerifiedInRules) -> T_VerifiedOutRules:
         raise NotImplementedError()
+
+
+class MultiObjectTypeToUnknownType(ConversionTransformer[InformationRules, InformationRules]):
+    """Converts multi object value type to unknown type to aid in conversion to DMSRules
+    which would be resolved as a direct connection without a value type."""
+
+    def _transform(self, rules: InformationRules) -> InformationRules:
+        for property_ in rules.properties:
+            if isinstance(property_.value_type, MultiValueTypeInfo) and all(
+                isinstance(t, ClassEntity) for t in property_.value_type.types
+            ):
+                property_.comment = (
+                    f"{property_.comment}. Converted to UnknownEntity from {property_.value_type}."
+                    if property_.comment
+                    else f"Converted to UnknownEntity from {property_.value_type}."
+                )
+                property_.value_type = UnknownEntity()
+        return rules
+
+
+class MixedValueTypeToStringType(ConversionTransformer[InformationRules, InformationRules]):
+    """Converts multi value type which contain both objects and data types to string type."""
+
+    def _transform(self, rules: InformationRules) -> InformationRules:
+        for property_ in rules.properties:
+            if (
+                isinstance(property_.value_type, MultiValueTypeInfo)
+                and not all(isinstance(t, ClassEntity) for t in property_.value_type.types)
+                and not all(isinstance(t, DataType) for t in property_.value_type.types)
+            ):
+                property_.comment = (
+                    f"{property_.comment}. Converted to string from {property_.value_type}."
+                    if property_.comment
+                    else f"Converted to string from {property_.value_type}."
+                )
+                property_.value_type = String()
+        return rules
 
 
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
