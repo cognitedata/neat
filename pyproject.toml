@@ -120,7 +120,7 @@ docs = [
 ]
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 oxi = ["oxrdflib", "pyoxigraph"]
-service = ["uvicorn", "prometheus-client", "fastapi", "schedule"]
+service = ["uvicorn", "prometheus-client", "fastapi", "schedule", "python-multipart"]
 graphql = ["jinja2"]
 jupyter = ["rich"]
 
@@ -132,6 +132,7 @@ all = [
     "prometheus-client",
     "fastapi",
     "schedule",
+    "python-multipart",
 ]
 
 [tool.poetry.dev-dependencies]
