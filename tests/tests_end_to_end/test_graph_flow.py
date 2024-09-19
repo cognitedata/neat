@@ -1,6 +1,5 @@
 from typing import Any
 
-import pytest
 import yaml
 from cognite.client.data_classes.data_modeling import InstanceApply
 from pytest_regressions.data_regression import DataRegressionFixture
@@ -35,13 +34,16 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
-    @pytest.mark.freeze_time("2024-09-19")
     def test_classic_to_dms(self, data_regression: DataRegressionFixture) -> None:
         store = NeatGraphStore.from_oxi_store()
         for extractor in classic_windfarm.create_extractors():
             store.write(extractor)
 
         read_rules = InferenceImporter.from_graph_store(store).to_rules()
+        # Ensure deterministic output
+        read_rules.rules.metadata.created = "2024-09-19T00:00:00Z"
+        read_rules.rules.metadata.updated = "2024-09-19T00:00:00Z"
+
         # We need to rename the classes to non-reserved names
         naming_mapping: dict[str, str] = {}
         for cls_ in read_rules.rules.classes:
