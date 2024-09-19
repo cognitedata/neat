@@ -6,7 +6,7 @@ from tests.config import PARTIAL_MODEL_TEST_DATA
 
 def test_partial_to_complete_mode():
     rules1 = ImporterPipeline.verify(importers.ExcelImporter(PARTIAL_MODEL_TEST_DATA / "part1.xlsx"))
-    rules2 = ImporterPipeline.verify(importers.OWLImporter(PARTIAL_MODEL_TEST_DATA / "part2.ttl"))
+    rules2 = ImporterPipeline.verify(importers.OWLImporter.from_file(PARTIAL_MODEL_TEST_DATA / "part2.ttl"))
     rules3 = ImporterPipeline.verify(importers.YAMLImporter.from_file(PARTIAL_MODEL_TEST_DATA / "part3.yaml"))
 
     rules1.classes += rules2.classes + rules3.classes

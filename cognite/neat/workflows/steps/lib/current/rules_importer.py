@@ -145,7 +145,7 @@ class OntologyToRules(Step):
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
 
-        ontology_importer = importers.OWLImporter(filepath=rules_file_path)
+        ontology_importer = importers.OWLImporter.from_file(filepath=rules_file_path)
         result = ImporterPipeline.try_verify(ontology_importer, role_enum)
 
         if result.rules is None:
