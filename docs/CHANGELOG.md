@@ -20,7 +20,7 @@ Changes are grouped as follows:
 - IODD extractor to also extract XML elements that should map to time series data type
 - This includes extracting `VariableCollection` elements and `ProcessDataIn` elements
 - Will probably need to revise how the tag/id of the time series is created
-- Interfaces for InferenceImporter and IMFImporter are leveraging BaseRDFImporter
+- Interfaces for InferenceImporter, IMFImporter and OWLImporter are leveraging BaseRDFImporter
 - Renamed rules.examples to rules.catalog to start building catalog od data models
 - Improved IMF rules that will handle IMF AttributeType onboarding
 
