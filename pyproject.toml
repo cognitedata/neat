@@ -140,7 +140,7 @@ twine = "*"
 pytest = { version = ">=8.0, <8.1" }
 pytest-cov = "*"
 pytest-notebook = "*"
-freezegun = "^1.5.1"
+pytest-freezegun = "0.4.2"
 pytest-xdist = "^3.6.1"
 pre-commit = "*"
 jupyter = "*"

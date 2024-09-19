@@ -208,7 +208,7 @@ class BaseRules(SchemaModel, ABC):
         as_reference: bool = False,
         mode: Literal["python", "json"] = "python",
         by_alias: bool = False,
-        exclude: IncEx = None,
+        exclude: IncEx | None = None,
         exclude_none: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -244,7 +244,7 @@ class BaseRules(SchemaModel, ABC):
         if entities_exclude_defaults:
             context["metadata"] = self.metadata
 
-        exclude_input: IncEx
+        exclude_input: IncEx | None
         if self.reference is None:
             exclude_input = exclude
         else:

@@ -87,7 +87,9 @@ def create_neat_app() -> NeatApp:
 
     configure_logging(config.log_level, config.log_format)
     logging.info(f" Starting NEAT version {neat.__version__}")
-    logging.debug(f" Config: {config.model_dump(exclude={'cdf_client': {'client_secret': ...}})}")
+    logging.debug(
+        f" Config: {config.model_dump(exclude={'cdf_client': {'client_secret': ...}})}"  # type: ignore[arg-type]
+    )
 
     return NeatApp(config)
 
