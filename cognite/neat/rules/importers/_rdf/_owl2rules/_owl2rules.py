@@ -1,23 +1,15 @@
 """This module performs importing of various formats to one of serializations for which
 there are loaders to TransformationRules pydantic class."""
 
-from pathlib import Path
-
-from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SKOS, Graph
-
-from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors import FileReadError
-from cognite.neat.rules._shared import ReadRules
-from cognite.neat.rules.importers._base import BaseImporter
+from cognite.neat.rules.importers._rdf._base import BaseRDFImporter
 from cognite.neat.rules.importers._rdf._shared import make_components_compliant
-from cognite.neat.rules.models import InformationInputRules
 
 from ._owl2classes import parse_owl_classes
 from ._owl2metadata import parse_owl_metadata
 from ._owl2properties import parse_owl_properties
 
 
-class OWLImporter(BaseImporter[InformationInputRules]):
+class OWLImporter(BaseRDFImporter):
     """Convert OWL ontology to tables/ transformation rules / Excel file.
 
         Args:
@@ -35,31 +27,13 @@ class OWLImporter(BaseImporter[InformationInputRules]):
 
     """
 
-    def __init__(self, filepath: Path):
-        self.owl_filepath = filepath
-
-    def to_rules(self) -> ReadRules[InformationInputRules]:
-        graph = Graph()
-        try:
-            graph.parse(self.owl_filepath)
-        except Exception as e:
-            return ReadRules(None, IssueList([FileReadError(self.owl_filepath, f"Could not parse owl file: {e}")]), {})
-
-        # bind key namespaces
-        graph.bind("owl", OWL)
-        graph.bind("rdf", RDF)
-        graph.bind("rdfs", RDFS)
-        graph.bind("dcterms", DCTERMS)
-        graph.bind("dc", DC)
-        graph.bind("skos", SKOS)
-
+    def _to_rules_components(
+        self,
+    ) -> dict:
         components = {
-            "Metadata": parse_owl_metadata(graph),
-            "Classes": parse_owl_classes(graph),
-            "Properties": parse_owl_properties(graph),
+            "Metadata": parse_owl_metadata(self.graph),
+            "Classes": parse_owl_classes(self.graph),
+            "Properties": parse_owl_properties(self.graph),
         }
 
-        components = make_components_compliant(components)
-
-        rules = InformationInputRules.load(components)
-        return ReadRules(rules, IssueList(), {})
+        return make_components_compliant(components)

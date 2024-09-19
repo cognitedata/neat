@@ -5,7 +5,7 @@ from cognite.neat.rules.transformers import ImporterPipeline
 
 
 def test_owl_importer():
-    rules = ImporterPipeline.verify(importers.OWLImporter(filepath="https://data.nobelprize.org/terms.rdf"))
+    rules = ImporterPipeline.verify(importers.OWLImporter.from_file(filepath="https://data.nobelprize.org/terms.rdf"))
 
     assert len(rules.classes) == 11
     assert len(rules.properties) == 16
