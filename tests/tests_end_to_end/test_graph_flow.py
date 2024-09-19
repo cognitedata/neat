@@ -51,8 +51,7 @@ class TestExtractToLoadFlow:
             naming_mapping[cls_.class_] = new_name
             cls_.class_ = new_name
 
-        # We need to filter out the externalID property from the rules
-        # as these are reserved in DMS.
+        # We need to filter out the DMS reserved properties from the rules
         new_properties: list[InformationInputProperty] = []
         for prop in read_rules.rules.properties:
             if prop.property_ not in RESERVED_PROPERTIES:
