@@ -1,15 +1,7 @@
 """This module performs importing of various formats to one of serializations for which
 there are loaders to TransformationRules pydantic class."""
 
-from pathlib import Path
-
-from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SH, SKOS, Graph
-
-from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors import FileReadError
-from cognite.neat.rules._shared import ReadRules
-from cognite.neat.rules.importers._base import BaseImporter
-from cognite.neat.rules.models import InformationInputRules
+from cognite.neat.rules.importers._rdf._base import BaseRDFImporter
 from cognite.neat.rules.models.data_types import _XSD_TYPES
 
 from ._imf2classes import parse_imf_to_classes
@@ -17,7 +9,7 @@ from ._imf2metadata import parse_imf_metadata
 from ._imf2properties import parse_imf_to_properties
 
 
-class IMFImporter(BaseImporter[InformationInputRules]):
+class IMFImporter(BaseRDFImporter):
     """Convert SHACL shapes to tables/ transformation rules / Excel file.
 
         Args:
@@ -36,39 +28,16 @@ class IMFImporter(BaseImporter[InformationInputRules]):
 
     """
 
-    def __init__(self, filepath: Path):
-        self.filepath = filepath
-
-    def to_rules(
+    def _to_rules_components(
         self,
-    ) -> ReadRules[InformationInputRules]:
-        graph = Graph()
-        try:
-            graph.parse(self.filepath)
-        except Exception as e:
-            return ReadRules(None, IssueList([FileReadError(self.filepath, f"Could not parse owl file: {e}")]), {})
-
-        # bind key namespaces
-        graph.bind("owl", OWL)
-        graph.bind("rdf", RDF)
-        graph.bind("rdfs", RDFS)
-        graph.bind("dcterms", DCTERMS)
-        graph.bind("dc", DC)
-        graph.bind("skos", SKOS)
-        graph.bind("sh", SH)
-        graph.bind("xsd", _XSD_TYPES)
-        graph.bind("imf", "http://ns.imfid.org/imf#")
-
+    ) -> dict:
         components = {
             "Metadata": parse_imf_metadata(),
-            "Classes": parse_imf_to_classes(graph),
-            "Properties": parse_imf_to_properties(graph),
+            "Classes": parse_imf_to_classes(self.graph),
+            "Properties": parse_imf_to_properties(self.graph),
         }
 
-        components = make_components_compliant(components)
-
-        rules = InformationInputRules.load(components)
-        return ReadRules(rules, IssueList(), {})
+        return make_components_compliant(components)
 
 
 def make_components_compliant(components: dict) -> dict:

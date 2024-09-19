@@ -3,23 +3,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import cast
 
-from rdflib import RDF, Graph, Namespace, URIRef
+from rdflib import RDF, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
 from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
-from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors import FileReadError
 from cognite.neat.issues.warnings import PropertyValueTypeUndefinedWarning
-from cognite.neat.rules._shared import ReadRules
-from cognite.neat.rules.importers._base import BaseImporter
 from cognite.neat.rules.models._base_rules import MatchType
 from cognite.neat.rules.models.entities._single_value import UnknownEntity
 from cognite.neat.rules.models.information import (
-    InformationInputRules,
     InformationMetadata,
 )
 from cognite.neat.store import NeatGraphStore
 from cognite.neat.utils.rdf_ import get_namespace, remove_namespace_from_uri, uri_to_short_form
+
+from ._base import BaseRDFImporter
 
 ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class . }
@@ -36,7 +33,7 @@ INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occur
                                     GROUP BY ?property ?dataType ?objectType"""
 
 
-class InferenceImporter(BaseImporter[InformationInputRules]):
+class InferenceImporter(BaseRDFImporter):
     """Infers rules from a triple store.
 
     Rules inference through analysis of knowledge graph provided in various formats.
@@ -50,62 +47,30 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
         prefix: Prefix to be used for the inferred model
     """
 
-    def __init__(
-        self,
-        issue_list: IssueList,
-        graph: Graph,
-        max_number_of_instance: int = -1,
-        prefix: str = "inferred",
-    ) -> None:
-        self.issue_list = issue_list
-        self.graph = graph
-        self.max_number_of_instance = max_number_of_instance
-        self.prefix = prefix
-
     @classmethod
     def from_graph_store(
         cls,
         store: NeatGraphStore,
-        max_number_of_instance: int = -1,
         prefix: str = "inferred",
+        max_number_of_instance: int = -1,
     ) -> "InferenceImporter":
-        issue_list = IssueList(title="Inferred from graph store")
-
-        return cls(
-            issue_list,
-            store.graph,
-            max_number_of_instance=max_number_of_instance,
-            prefix=prefix,
-        )
+        return super().from_graph_store(store, prefix, max_number_of_instance)
 
     @classmethod
-    def from_rdf_file(
+    def from_file(
         cls,
         filepath: Path,
-        max_number_of_instance: int = -1,
         prefix: str = "inferred",
+        max_number_of_instance: int = -1,
     ) -> "InferenceImporter":
-        issue_list = IssueList(title=f"'{filepath.name}'")
-
-        graph = Graph()
-        try:
-            graph.parse(filepath)
-        except Exception as e:
-            issue_list.append(FileReadError(filepath, str(e)))
-
-        return cls(
-            issue_list,
-            graph,
-            max_number_of_instance=max_number_of_instance,
-            prefix=prefix,
-        )
+        return super().from_file(filepath, prefix, max_number_of_instance)
 
     @classmethod
     def from_json_file(
         cls,
         filepath: Path,
-        max_number_of_instance: int = -1,
         prefix: str = "inferred",
+        max_number_of_instance: int = -1,
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
@@ -113,8 +78,8 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
     def from_yaml_file(
         cls,
         filepath: Path,
-        max_number_of_instance: int = -1,
         prefix: str = "inferred",
+        max_number_of_instance: int = -1,
     ) -> "InferenceImporter":
         raise NotImplementedError("YAML file format is not supported yet.")
 
@@ -122,26 +87,10 @@ class InferenceImporter(BaseImporter[InformationInputRules]):
     def from_xml_file(
         cls,
         filepath: Path,
-        max_number_of_instance: int = -1,
         prefix: str = "inferred",
+        max_number_of_instance: int = -1,
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
-
-    def to_rules(
-        self,
-    ) -> ReadRules[InformationInputRules]:
-        """
-        Creates `Rules` object from the data for target role.
-        """
-
-        if self.issue_list.has_errors:
-            # In case there were errors during the import, the to_rules method will return None
-            return ReadRules(None, self.issue_list, {})
-
-        rules_dict = self._to_rules_components()
-
-        rules = InformationInputRules.load(rules_dict)
-        return ReadRules(rules, self.issue_list, {})
 
     def _to_rules_components(
         self,
