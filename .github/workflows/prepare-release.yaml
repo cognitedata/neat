@@ -17,7 +17,7 @@ env:
   MAIN_PYTHON_VERSION: 3.11
 
 jobs:
-  create_excel:
+  create_prepare_branch:
     runs-on: ubuntu-latest
     environment: dev_read
     permissions:
@@ -36,11 +36,10 @@ jobs:
 
       - name: Install required dependencies
         run: |
-          python3 -m pip install --upgrade pip poetry
-          poetry config virtualenvs.create false
-          poetry install
+          python -m pip install --upgrade pip
+          pip install typer
 
-      - name: Bump Minor Version
+      - name: Bump Patch Version
         if: ${{ github.event.inputs.bump == 'patch' }}
         run:
           python dev.py --patch --verbose
