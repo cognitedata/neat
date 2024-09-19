@@ -23,6 +23,7 @@ Changes are grouped as follows:
 - Interfaces for InferenceImporter and IMFImporter are leveraging BaseRDFImporter
 - Renamed rules.examples to rules.catalog to start building catalog od data models
 - Improved IMF rules that will handle IMF AttributeType onboarding
+- Add two new Rules transformers to handle multi value types
 
 ## [0.92.3] - 17-09-24
 ### Fixed
