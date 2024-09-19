@@ -40,14 +40,14 @@ class InputRules(Generic[T_BaseRules], ABC):
 
     @classmethod
     @overload
-    def load(cls, data: dict[str, Any]) -> Self: ...
+    def load(cls: "type[T_InputRules]", data: dict[str, Any]) -> "T_InputRules": ...
 
     @classmethod
     @overload
-    def load(cls, data: None) -> None: ...
+    def load(cls: "type[T_InputRules]", data: None) -> None: ...
 
     @classmethod
-    def load(cls, data: dict | None) -> Self | None:
+    def load(cls: "type[T_InputRules]", data: dict | None) -> "T_InputRules | None":
         if data is None:
             return None
         return cls._load(data)
@@ -122,6 +122,9 @@ class InputRules(Generic[T_BaseRules], ABC):
             elif isinstance(value, list) and value and hasattr(value[0], "dump"):
                 output[field_.name] = [item.dump() for item in value]
         return output
+
+
+T_InputRules = TypeVar("T_InputRules", bound=InputRules)
 
 
 @dataclass

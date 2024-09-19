@@ -76,6 +76,7 @@ tomli = { version = "^2.0.1", python = "<3.11" }
 uvicorn = { extras = ["standard"], version = "^0", optional = true }
 prometheus-client = { version = "^0", optional = true }
 fastapi = { version = "^0", optional = true }
+python-multipart = { version = "^0", optional = true }
 
 # WorkFlow
 schedule = { version = "^1", optional = true }
@@ -119,7 +120,7 @@ docs = [
 ]
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 oxi = ["oxrdflib", "pyoxigraph"]
-service = ["uvicorn", "prometheus-client", "fastapi", "schedule"]
+service = ["uvicorn", "prometheus-client", "fastapi", "schedule", "python-multipart"]
 graphql = ["jinja2"]
 jupyter = ["rich"]
 
@@ -131,6 +132,7 @@ all = [
     "prometheus-client",
     "fastapi",
     "schedule",
+    "python-multipart",
 ]
 
 [tool.poetry.dev-dependencies]
@@ -140,7 +142,7 @@ twine = "*"
 pytest = { version = ">=8.0, <8.1" }
 pytest-cov = "*"
 pytest-notebook = "*"
-freezegun = "^1.5.1"
+pytest-freezegun = "0.4.2"
 pytest-xdist = "^3.6.1"
 pre-commit = "*"
 jupyter = "*"

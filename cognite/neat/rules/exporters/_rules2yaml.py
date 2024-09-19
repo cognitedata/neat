@@ -16,8 +16,6 @@ class YAMLExporter(BaseExporter[VerifiedRules, str]):
     Args:
         files: The number of files to output. Defaults to "single".
         output: The format to output the rules. Defaults to "yaml".
-        output_role: The role to output the rules for. Defaults to None, which means that the role
-            of the input rules will be used.
 
     The following formats are available:
 
