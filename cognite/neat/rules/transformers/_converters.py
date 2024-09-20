@@ -280,9 +280,8 @@ class _InformationRulesConverter:
         if isinstance(prop.value_type, DataType):
             value_type = prop.value_type
 
-        # UnknownEntity should resolve to string as this is typical case
-        # where we do not know rdf:type of node property points to
-        # and we do not want to property nor knowledge about this
+        # UnknownEntity should  resolve to DMSUnknownEntity
+        # meaning end node type is unknown
         elif isinstance(prop.value_type, UnknownEntity):
             value_type = DMSUnknownEntity()
 
@@ -290,7 +289,7 @@ class _InformationRulesConverter:
             value_type = prop.value_type.as_view_entity(default_space, default_version)
 
         elif isinstance(prop.value_type, MultiValueTypeInfo):
-            # Multi Object type should resolve to DMSUknownEntity
+            # Multi Object type should resolve to DMSUnknownEntity
             # meaning end node type is unknown
             if prop.value_type.is_multi_object_type():
                 print(f"Multi Object type {prop.property_}")
