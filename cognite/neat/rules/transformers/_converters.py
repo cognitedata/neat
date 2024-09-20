@@ -292,7 +292,6 @@ class _InformationRulesConverter:
             # Multi Object type should resolve to DMSUnknownEntity
             # meaning end node type is unknown
             if prop.value_type.is_multi_object_type():
-                print(f"Multi Object type {prop.property_}")
                 value_type = DMSUnknownEntity()
 
             # Multi Data type should resolve to a single data type, or it should
