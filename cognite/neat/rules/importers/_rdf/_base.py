@@ -6,7 +6,7 @@ from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import FileReadError
 from cognite.neat.rules._shared import ReadRules
 from cognite.neat.rules.importers._base import BaseImporter
-from cognite.neat.rules.models.data_types import AnyURI, DataType
+from cognite.neat.rules.models.data_types import AnyURI
 from cognite.neat.rules.models.entities import UnknownEntity
 from cognite.neat.rules.models.information import (
     InformationInputRules,
@@ -31,7 +31,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         graph: Graph,
         prefix: str,
         max_number_of_instance: int,
-        non_existing_node_type: UnknownEntity | DataType,
+        non_existing_node_type: UnknownEntity | AnyURI,
     ) -> None:
         self.issue_list = issue_list
         self.graph = graph
