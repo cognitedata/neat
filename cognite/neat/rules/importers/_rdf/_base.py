@@ -6,10 +6,14 @@ from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import FileReadError
 from cognite.neat.rules._shared import ReadRules
 from cognite.neat.rules.importers._base import BaseImporter
+from cognite.neat.rules.models.data_types import AnyURI, DataType
+from cognite.neat.rules.models.entities import UnknownEntity
 from cognite.neat.rules.models.information import (
     InformationInputRules,
 )
 from cognite.neat.store import NeatGraphStore
+
+DEFAULT_NON_EXISTING_NODE_TYPE = AnyURI()
 
 
 class BaseRDFImporter(BaseImporter[InformationInputRules]):
@@ -27,11 +31,13 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         graph: Graph,
         prefix: str,
         max_number_of_instance: int,
+        non_existing_node_type: UnknownEntity | DataType,
     ) -> None:
         self.issue_list = issue_list
         self.graph = graph
         self.prefix = prefix
         self.max_number_of_instance = max_number_of_instance
+        self.non_existing_node_type = non_existing_node_type
 
     @classmethod
     def from_graph_store(
@@ -39,12 +45,14 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         store: NeatGraphStore,
         prefix: str = "neat",
         max_number_of_instance: int = -1,
+        non_existing_node_type: (UnknownEntity | DataType) = DEFAULT_NON_EXISTING_NODE_TYPE,
     ):
         return cls(
             IssueList(title=f"{cls.__name__} issues"),
             store.graph,
             prefix=prefix,
             max_number_of_instance=max_number_of_instance,
+            non_existing_node_type=non_existing_node_type,
         )
 
     @classmethod
@@ -53,6 +61,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         filepath: Path,
         prefix: str = "neat",
         max_number_of_instance: int = -1,
+        non_existing_node_type: (UnknownEntity | DataType) = DEFAULT_NON_EXISTING_NODE_TYPE,
     ):
         issue_list = IssueList(title=f"{cls.__name__} issues")
 
@@ -78,6 +87,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
             graph,
             prefix=prefix,
             max_number_of_instance=max_number_of_instance,
+            non_existing_node_type=non_existing_node_type,
         )
 
     def to_rules(

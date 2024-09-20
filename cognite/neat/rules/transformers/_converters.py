@@ -284,7 +284,7 @@ class _InformationRulesConverter:
         # where we do not know rdf:type of node property points to
         # and we do not want to property nor knowledge about this
         elif isinstance(prop.value_type, UnknownEntity):
-            value_type = String()
+            value_type = DMSUnknownEntity()
 
         elif isinstance(prop.value_type, ClassEntity):
             value_type = prop.value_type.as_view_entity(default_space, default_version)
