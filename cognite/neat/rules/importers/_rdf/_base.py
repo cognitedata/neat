@@ -45,7 +45,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         store: NeatGraphStore,
         prefix: str = "neat",
         max_number_of_instance: int = -1,
-        non_existing_node_type: (UnknownEntity | DataType) = DEFAULT_NON_EXISTING_NODE_TYPE,
+        non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ):
         return cls(
             IssueList(title=f"{cls.__name__} issues"),
@@ -61,7 +61,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         filepath: Path,
         prefix: str = "neat",
         max_number_of_instance: int = -1,
-        non_existing_node_type: (UnknownEntity | DataType) = DEFAULT_NON_EXISTING_NODE_TYPE,
+        non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ):
         issue_list = IssueList(title=f"{cls.__name__} issues")
 
