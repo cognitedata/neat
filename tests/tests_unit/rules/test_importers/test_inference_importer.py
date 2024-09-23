@@ -39,7 +39,7 @@ def test_rdf_inference_with_none_existing_node():
     extractor = RdfFileExtractor(DATA_FOLDER / "low-quality-graph.ttl", mime_type="text/turtle")
     store.write(extractor)
 
-    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
+    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store, non_existing_node_type=UnknownEntity()))
 
     assert len(rules.properties) == 14
     assert len(rules.classes) == 6

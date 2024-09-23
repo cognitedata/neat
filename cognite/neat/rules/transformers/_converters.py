@@ -59,43 +59,6 @@ class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRul
         raise NotImplementedError()
 
 
-class MultiObjectTypeToUnknownType(ConversionTransformer[InformationRules, InformationRules]):
-    """Converts multi object value type to unknown type to aid in conversion to DMSRules
-    which would be resolved as a direct connection without a value type."""
-
-    def _transform(self, rules: InformationRules) -> InformationRules:
-        for property_ in rules.properties:
-            if isinstance(property_.value_type, MultiValueTypeInfo) and all(
-                isinstance(t, ClassEntity) for t in property_.value_type.types
-            ):
-                property_.comment = (
-                    f"{property_.comment}. Converted to UnknownEntity from {property_.value_type}."
-                    if property_.comment
-                    else f"Converted to UnknownEntity from {property_.value_type}."
-                )
-                property_.value_type = UnknownEntity()
-        return rules
-
-
-class MixedValueTypeToStringType(ConversionTransformer[InformationRules, InformationRules]):
-    """Converts multi value type which contain both objects and data types to string type."""
-
-    def _transform(self, rules: InformationRules) -> InformationRules:
-        for property_ in rules.properties:
-            if (
-                isinstance(property_.value_type, MultiValueTypeInfo)
-                and not all(isinstance(t, ClassEntity) for t in property_.value_type.types)
-                and not all(isinstance(t, DataType) for t in property_.value_type.types)
-            ):
-                property_.comment = (
-                    f"{property_.comment}. Converted to string from {property_.value_type}."
-                    if property_.comment
-                    else f"Converted to string from {property_.value_type}."
-                )
-                property_.value_type = String()
-        return rules
-
-
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
@@ -316,12 +279,29 @@ class _InformationRulesConverter:
         value_type: DataType | ViewEntity | DMSUnknownEntity
         if isinstance(prop.value_type, DataType):
             value_type = prop.value_type
+
+        # UnknownEntity should  resolve to DMSUnknownEntity
+        # meaning end node type is unknown
         elif isinstance(prop.value_type, UnknownEntity):
             value_type = DMSUnknownEntity()
+
         elif isinstance(prop.value_type, ClassEntity):
             value_type = prop.value_type.as_view_entity(default_space, default_version)
+
         elif isinstance(prop.value_type, MultiValueTypeInfo):
-            value_type = self.convert_multi_value_type(prop.value_type)
+            # Multi Object type should resolve to DMSUnknownEntity
+            # meaning end node type is unknown
+            if prop.value_type.is_multi_object_type():
+                value_type = DMSUnknownEntity()
+
+            # Multi Data type should resolve to a single data type, or it should
+            elif prop.value_type.is_multi_data_type():
+                value_type = self.convert_multi_data_type(prop.value_type)
+
+            # Mixed types default to string
+            else:
+                value_type = String()
+
         else:
             raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
@@ -428,13 +408,15 @@ class _InformationRulesConverter:
             return f"{suffix}2"
 
     @staticmethod
-    def convert_multi_value_type(value_type: MultiValueTypeInfo) -> DataType:
-        if not all(isinstance(type_, DataType) for type_ in value_type.types):
+    def convert_multi_data_type(value_type: MultiValueTypeInfo) -> DataType:
+        if not value_type.is_multi_data_type():
             raise ValueError("Only MultiValueType with DataType types is supported")
         # We check above that there are no ClassEntity types in the MultiValueType
         py_types = {type_.python for type_ in value_type.types}  # type: ignore[union-attr]
+
+        # JSON mixed with other types should resolve to string that is safe choice
         if dms.Json in py_types and len(py_types) > 1:
-            raise ValueError("MultiValueType with Json and other types is not supported")
+            return data_types.String()
         elif dms.Json in py_types:
             return data_types.Json()
         elif not (py_types - {bool}):

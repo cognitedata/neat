@@ -358,6 +358,6 @@ class TestInformationConverter:
         ],
     )
     def test_convert_multivalue_type(self, multi: MultiValueTypeInfo, expected: DataType) -> None:
-        actual = _InformationRulesConverter.convert_multi_value_type(multi)
+        actual = _InformationRulesConverter.convert_multi_data_type(multi)
 
         assert actual == expected
