@@ -2,8 +2,6 @@ from rdflib import RDF, Graph, Namespace, URIRef
 
 from ._base import BaseTransformer
 
-IODD = Namespace("http://www.io-link.com/IODD/2010/10/")
-
 
 class ResolveValues(BaseTransformer):
     """
@@ -50,7 +48,7 @@ class ResolveValues(BaseTransformer):
         for subject in source_subjects:
             for predicate, object in graph.predicate_objects(subject=subject, unique=False):
                 if object in destination_subjects:
-                    if value := graph.value(subject=object, predicate=self.predicate_namespace.value, object=None):
+                    if value := graph.value(subject=object, predicate=self.predicate_namespace.value):
                         # Create new connection from source subject to value
                         graph.add((subject, predicate, value))
                         triples_to_delete.append((object, RDF.type, self.destination_node_type))
@@ -94,7 +92,7 @@ class PruneDanglingNodes(BaseTransformer):
         for object_type in self.node_prune_types:
             for object, predicate, subject in graph.triples(triple=(None, RDF.type, object_type)):
                 # Check if Node object has an edge pointing to it from another node in the Graph,
-                # i.e object is the subject of another triple
+                # i.e. object is the subject of another triple
                 triple_checker = (None, None, object)
                 found = False
                 for _ in graph.triples(triple=triple_checker):
