@@ -1,4 +1,5 @@
 from rdflib import RDF, Graph, Namespace, URIRef
+from rdflib.term import Node
 
 from ._base import BaseTransformer
 
@@ -20,7 +21,12 @@ class ResolveValues(BaseTransformer):
         node(A, rdf:type(Pump)) -(predicate("vendor"))> Literal("CompanyX")
 
     Args:
-    resolve_connection: List of mappings between source and destination node.
+        source_node_type: RDF.type of source node
+        destination_node_type: RDF.type of edge Node
+        predicate_namespace: Namespace to use when resolving the predicate_namespace.value from the edge node to
+                             the value
+        delete_connecting_node: bool if the intermediate Node and Edge between source Node
+                                and resolved value should be deleted. Default is True
     """
 
     description: str = "Prunes the graph of specified rdf types that do not have connections to other nodes."
@@ -30,12 +36,12 @@ class ResolveValues(BaseTransformer):
         source_node_type: URIRef,
         destination_node_type: URIRef,
         predicate_namespace: Namespace,
-        delete_edge_node: bool = True,
+        delete_connecting_node: bool = True,
     ):
         self.source_node_type = source_node_type
         self.destination_node_type = destination_node_type
         self.predicate_namespace = predicate_namespace
-        self.delete_edge_node = delete_edge_node
+        self.delete_connecting_node = delete_connecting_node
 
     def transform(self, graph: Graph) -> None:
         source_subjects = graph.subjects(object=self.source_node_type, predicate=RDF.type)
@@ -43,7 +49,8 @@ class ResolveValues(BaseTransformer):
             subject for subject in graph.subjects(object=self.destination_node_type, predicate=RDF.type)
         ]
 
-        triples_to_delete: list[tuple] = []
+        triples_to_delete: list[tuple[Node, Node, Node]] = []
+        edges_to_delete: list[tuple[Node, Node, Node]] = []
 
         for subject in source_subjects:
             for predicate, object in graph.predicate_objects(subject=subject, unique=False):
@@ -52,10 +59,13 @@ class ResolveValues(BaseTransformer):
                         # Create new connection from source subject to value
                         graph.add((subject, predicate, value))
                         triples_to_delete.append((object, RDF.type, self.destination_node_type))
+                        edges_to_delete.append((subject, predicate, object))
 
-        if self.delete_edge_node:
+        if self.delete_connecting_node:
             for delete_triple in triples_to_delete:
                 graph.remove(triple=delete_triple)
+            for edge_triple in edges_to_delete:
+                graph.remove(triple=edge_triple)
 
 
 class PruneDanglingNodes(BaseTransformer):
@@ -75,7 +85,7 @@ class PruneDanglingNodes(BaseTransformer):
         node(A, rd:type(Pump)) -> node(B, rdf:type(Disc))
 
     Args:
-        prune_type: list of RDF types to prune from the Graph
+        node_prune_types: list of RDF types to prune from the Graph if they are stand-alone Nodes
     """
 
     description: str = "Prunes the graph of specified rdf types that do not have connections to other nodes."
@@ -87,7 +97,7 @@ class PruneDanglingNodes(BaseTransformer):
         self.node_prune_types = node_prune_types
 
     def transform(self, graph: Graph) -> None:
-        triples_to_delete: list[tuple] = []
+        triples_to_delete: list[tuple[Node, Node, Node]] = []
 
         for object_type in self.node_prune_types:
             for object, predicate, subject in graph.triples(triple=(None, RDF.type, object_type)):
