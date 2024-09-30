@@ -66,6 +66,10 @@ class MultiValueTypeInfo(BaseModel):
             if isinstance(type_, ClassEntity) and type_.prefix is Undefined:
                 type_.prefix = prefix
 
+    def has_unknown_type(self) -> bool:
+        """Will signalize to DMS converter to create connection to unknown Node type"""
+        return any(isinstance(t, UnknownEntity) for t in self.types)
+
     def is_multi_object_type(self) -> bool:
         """Will signalize to DMS converter to create connection to unknown Node type"""
         return all(isinstance(t, ClassEntity) for t in self.types)

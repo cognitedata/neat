@@ -90,6 +90,31 @@ class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
         return _DMSRulesConverter(rules).as_information_rules()
 
 
+class ToDMSCompliantEntityID(ConversionTransformer[InformationRules, InformationRules]):
+    """Convert all entity IDs to DMS compliant entity IDs respecting the prescribe regex"""
+
+    ...
+
+    def _convert_property_sheet(
+        self, prop: list[InformationProperty]
+    ) -> list[InformationProperty]: ...
+    def _convert_class_sheet(
+        self, prop: list[InformationClass]
+    ) -> list[InformationProperty]: ...
+    def _convert_metadata_sheet(
+        self, prop: InformationMetadata
+    ) -> list[InformationProperty]: ...
+
+    def _transform(self, rules: InformationRules) -> InformationRules:
+        return InformationRules(
+            metadata=self._convert_metadata_sheet(rules.metadata),
+            properties=self._convert_property_sheet(rules.properties),
+            classes=self._convert_class_sheet(rules.classes),
+            last=self._transform(rules.last) if rules.last else None,
+            reference=self._transform(rules.reference) if rules.reference else None,
+        )
+
+
 class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
     """Converts any rules to any rules."""
 
