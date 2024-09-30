@@ -106,7 +106,7 @@ class IODDExtractor(BaseExtractor):
         ):
             for process_data_element in process_data_in:
                 if id := process_data_element.attrib.get("id"):
-                    process_data_in_id = namespace[f"{device_id!s}_{id}"]
+                    process_data_in_id = URIRef(f"{device_id!s}_{id}")
 
                     # Create ProcessDataIn node
                     triples.append((process_data_in_id, RDF.type, IODD.ProcessDataIn))
