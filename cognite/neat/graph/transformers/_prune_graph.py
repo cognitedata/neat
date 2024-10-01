@@ -9,8 +9,8 @@ class TwoHopFlattener(BaseTransformer):
     target property that is connected to the intermediate node.
     The transformation result is that the target property is attached directly to the source node, instead of having
     to go via the intermediate node.
-    The user can also provide a flag to decide if the intermediate node should be removed or not after performing
-    the connection from source node to the final property.
+    The user can also provide a flag to decide if the intermediate node should be removed from the graph or not
+    after connecting the target property to the source node.
 
         Ex. TwoHopFlattener:
 
