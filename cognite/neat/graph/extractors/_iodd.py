@@ -11,6 +11,7 @@ from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
 from cognite.neat.issues.errors import FileReadError, NeatValueError
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 from cognite.neat.utils.text import to_camel
 from cognite.neat.utils.xml_ import get_children
 
@@ -106,7 +107,8 @@ class IODDExtractor(BaseExtractor):
         ):
             for process_data_element in process_data_in:
                 if id := process_data_element.attrib.get("id"):
-                    process_data_in_id = namespace[f"{device_id!s}_{id}"]
+                    device_id_str = remove_namespace_from_uri(device_id)
+                    process_data_in_id = namespace[f"{device_id_str}_{id}"]
 
                     # Create ProcessDataIn node
                     triples.append((process_data_in_id, RDF.type, IODD.ProcessDataIn))
@@ -197,7 +199,7 @@ class IODDExtractor(BaseExtractor):
         if variable_elements := get_children(vc_root, child_tag="Variable", ignore_namespace=True):
             for element in variable_elements:
                 if id := element.attrib.get("id"):
-                    variable_id = f"{device_id}_{id}"
+                    variable_id = f"{device_id!s}_{id}"
 
                     # Create connection from device node to time series
                     triples.append((device_id, IODD.variable, Literal(variable_id, datatype=XSD["timeseries"])))
