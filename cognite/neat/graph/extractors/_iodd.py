@@ -199,7 +199,7 @@ class IODDExtractor(BaseExtractor):
         if variable_elements := get_children(vc_root, child_tag="Variable", ignore_namespace=True):
             for element in variable_elements:
                 if id := element.attrib.get("id"):
-                    variable_id = f"{device_id!s}_{id}"
+                    variable_id = f"{device_id}_{id}"
 
                     # Create connection from device node to time series
                     triples.append((device_id, IODD.variable, Literal(variable_id, datatype=XSD["timeseries"])))

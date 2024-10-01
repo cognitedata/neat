@@ -9,6 +9,7 @@ from rdflib import Literal as RdfLiteral
 from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat.issues.warnings import PropertyValueTypeUndefinedWarning
 from cognite.neat.rules.models._base_rules import MatchType
+from cognite.neat.rules.models.data_types import AnyURI
 from cognite.neat.rules.models.entities._single_value import UnknownEntity
 from cognite.neat.rules.models.information import (
     InformationMetadata,
@@ -16,7 +17,7 @@ from cognite.neat.rules.models.information import (
 from cognite.neat.store import NeatGraphStore
 from cognite.neat.utils.rdf_ import get_namespace, remove_namespace_from_uri, uri_to_short_form
 
-from ._base import BaseRDFImporter
+from ._base import DEFAULT_NON_EXISTING_NODE_TYPE, BaseRDFImporter
 
 ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class . }
@@ -53,8 +54,9 @@ class InferenceImporter(BaseRDFImporter):
         store: NeatGraphStore,
         prefix: str = "inferred",
         max_number_of_instance: int = -1,
+        non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ) -> "InferenceImporter":
-        return super().from_graph_store(store, prefix, max_number_of_instance)
+        return super().from_graph_store(store, prefix, max_number_of_instance, non_existing_node_type)
 
     @classmethod
     def from_file(
@@ -62,8 +64,9 @@ class InferenceImporter(BaseRDFImporter):
         filepath: Path,
         prefix: str = "inferred",
         max_number_of_instance: int = -1,
+        non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ) -> "InferenceImporter":
-        return super().from_file(filepath, prefix, max_number_of_instance)
+        return super().from_file(filepath, prefix, max_number_of_instance, non_existing_node_type)
 
     @classmethod
     def from_json_file(
@@ -153,7 +156,7 @@ class InferenceImporter(BaseRDFImporter):
 
                     # this handles situations when property points to node that is not present in graph
                     else:
-                        value_type_id = str(UnknownEntity())
+                        value_type_id = str(self.non_existing_node_type)
 
                         self.issue_list.append(
                             PropertyValueTypeUndefinedWarning(

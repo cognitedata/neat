@@ -7,6 +7,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 from cognite.neat.graph.loaders import DMSLoader
 from cognite.neat.rules.exporters import YAMLExporter
 from cognite.neat.rules.importers import InferenceImporter
+from cognite.neat.rules.models.entities import UnknownEntity
 from cognite.neat.rules.models.information import InformationInputProperty
 from cognite.neat.rules.transformers import InformationToDMS, VerifyInformationRules
 from cognite.neat.store import NeatGraphStore
@@ -39,7 +40,7 @@ class TestExtractToLoadFlow:
         for extractor in classic_windfarm.create_extractors():
             store.write(extractor)
 
-        read_rules = InferenceImporter.from_graph_store(store).to_rules()
+        read_rules = InferenceImporter.from_graph_store(store, non_existing_node_type=UnknownEntity()).to_rules()
         # Ensure deterministic output
         read_rules.rules.metadata.created = "2024-09-19T00:00:00Z"
         read_rules.rules.metadata.updated = "2024-09-19T00:00:00Z"
