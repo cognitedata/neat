@@ -1,6 +1,7 @@
 import re
 import uuid
 import xml.etree.ElementTree as ET
+from functools import cached_property
 from pathlib import Path
 from typing import ClassVar
 from xml.etree.ElementTree import Element
@@ -17,6 +18,8 @@ from cognite.neat.utils.xml_ import get_children
 
 IODD = Namespace("http://www.io-link.com/IODD/2010/10/")
 XSI = Namespace("http://www.w3.org/2001/XMLSchema-instance/")
+
+XSI_XML_PREFIX = "{http://www.w3.org/2001/XMLSchema-instance}"
 
 
 class IODDExtractor(BaseExtractor):
@@ -52,6 +55,24 @@ class IODDExtractor(BaseExtractor):
         self.device_id = (
             self.namespace[device_id] if device_id else self.namespace[f"Device_{str(uuid.uuid4()).replace('-', '_')}"]
         )
+
+    @cached_property
+    def _text_id_2value_mapping(self) -> dict[str, str]:
+        """
+        !!! note used for "Prototype Solution" !!!
+        A mapping for text_id references to Text elements under ExternalTextCollection.
+        The mapping can be used to find the Text element with matching id, and returns
+        the value associated with the Text element.
+        """
+        mapping = {}
+        if text_elements := get_children(
+            self.root, child_tag="Text", ignore_namespace=True, include_nested_children=True
+        ):
+            for element in text_elements:
+                if id := element.attrib.get("id"):
+                    if value := element.attrib.get("value"):
+                        mapping[id] = value
+        return mapping
 
     @classmethod
     def from_file(cls, filepath: Path, namespace: Namespace | None = None, device_id: str | None = None):
@@ -108,7 +129,7 @@ class IODDExtractor(BaseExtractor):
             for process_data_element in process_data_in:
                 if id := process_data_element.attrib.get("id"):
                     device_id_str = remove_namespace_from_uri(device_id)
-                    process_data_in_id = namespace[f"{device_id_str}_{id}"]
+                    process_data_in_id = namespace[f"{device_id_str}.{id}"]
 
                     # Create ProcessDataIn node
                     triples.append((process_data_in_id, RDF.type, IODD.ProcessDataIn))
@@ -199,7 +220,8 @@ class IODDExtractor(BaseExtractor):
         if variable_elements := get_children(vc_root, child_tag="Variable", ignore_namespace=True):
             for element in variable_elements:
                 if id := element.attrib.get("id"):
-                    variable_id = f"{device_id}_{id}"
+                    device_id_str = remove_namespace_from_uri(device_id)
+                    variable_id = f"{device_id_str}.{id}"
 
                     # Create connection from device node to time series
                     triples.append((device_id, IODD.variable, Literal(variable_id, datatype=XSD["timeseries"])))
@@ -242,7 +264,8 @@ class IODDExtractor(BaseExtractor):
         if record_items := get_children(pc_in_root, "RecordItem", ignore_namespace=True, include_nested_children=True):
             for record in record_items:
                 if index := record.attrib.get("subindex"):
-                    record_id = f"{process_data_in_id!s}_{index}"
+                    process_id_str = remove_namespace_from_uri(process_data_in_id)
+                    record_id = f"{process_id_str}.{index}"
                     # Create connection from device node to time series
                     triples.append((process_data_in_id, IODD.variable, Literal(record_id, datatype=XSD["timeseries"])))
 
@@ -253,3 +276,108 @@ class IODDExtractor(BaseExtractor):
         Extract RDF triples from IODD XML
         """
         return self._from_root2triples(self.root, self.namespace, self.device_id)
+
+    def _variable2info(self, variable_element: Element) -> dict:
+        """
+        !!! note used for "Prototype Solution" !!!
+        Extracts information relevant to a CDF time series type from a Variable element
+        """
+
+        variable_dict = {}
+
+        if name := get_children(
+            variable_element, child_tag="Name", ignore_namespace=True, include_nested_children=False, no_children=1
+        ):
+            if text_id := name[0].get("textId"):
+                variable_dict["name"] = self._text_id_2value_mapping[text_id]
+        if description := get_children(
+            variable_element,
+            child_tag="Description",
+            ignore_namespace=True,
+            include_nested_children=False,
+            no_children=1,
+        ):
+            if text_id := description[0].get("textId"):
+                variable_dict["description"] = self._text_id_2value_mapping[text_id]
+        if data_type := get_children(
+            variable_element, child_tag="Datatype", ignore_namespace=True, include_nested_children=False, no_children=1
+        ):
+            variable_dict["data_type"] = data_type[0].attrib[f"{XSI_XML_PREFIX}type"]
+
+        return variable_dict
+
+    def _process_record2info(self, record_element: Element) -> dict:
+        """
+        !!! note used for "Prototype Solution" !!!
+        Extracts information relevant to a CDF time series type from a Record element
+        """
+        record_dict = {}
+
+        if name := get_children(
+            record_element, child_tag="Name", ignore_namespace=True, include_nested_children=False, no_children=1
+        ):
+            if text_id := name[0].get("textId"):
+                record_dict["name"] = self._text_id_2value_mapping[text_id]
+        if description := get_children(
+            record_element, child_tag="Description", ignore_namespace=True, include_nested_children=False, no_children=1
+        ):
+            if text_id := description[0].get("textId"):
+                record_dict["description"] = self._text_id_2value_mapping[text_id]
+        if data_type := get_children(
+            record_element,
+            child_tag="SimpleDatatype",
+            ignore_namespace=True,
+            include_nested_children=False,
+            no_children=1,
+        ):
+            record_dict["data_type"] = data_type[0].attrib[f"{XSI_XML_PREFIX}type"]
+        if index := record_element.attrib.get("subindex"):
+            record_dict["index"] = index
+
+        return record_dict
+
+    def _extract_enhanced_ts_information(self, json_file_path: Path):
+        """
+        Extract additional information like name, description and data type for Variables and ProcessDataIn
+        record elements in the IODD. The purpose is for the result gile to be used for enhancing time series with more
+        information when they are created in CDF.
+
+        Args:
+            json_file_path: file path for where to write the extracted information about all time series
+                            in the IODD
+
+        !!! note "Prototype Solution" !!!
+        This is an intermediate solution while better support for adding this information directly
+        into the knowledge graph for the timeseries node type is under development.
+        """
+        import json
+
+        ts_ext_id2_info_map = {}
+
+        # Variable elements (these are the descriptions of the sensors)
+        if variable_elements := get_children(
+            self.root, child_tag="Variable", ignore_namespace=True, include_nested_children=True
+        ):
+            for element in variable_elements:
+                if id := element.attrib.get("id"):
+                    device_id_str = remove_namespace_from_uri(self.device_id)
+                    variable_id = f"{device_id_str}.{id}"
+                    ts_ext_id2_info_map[variable_id] = self._variable2info(element)
+
+        if process_data_in := get_children(
+            self.root, "ProcessDataIn", ignore_namespace=True, include_nested_children=True
+        ):
+            for process_data_element in process_data_in:
+                if id := process_data_element.attrib.get("id"):
+                    device_id_str = remove_namespace_from_uri(self.device_id)
+                    process_data_in_id = f"{device_id_str}.{id}"
+                    if record_items := get_children(
+                        process_data_element, "RecordItem", ignore_namespace=True, include_nested_children=True
+                    ):
+                        for record in record_items:
+                            if index := record.attrib.get("subindex"):
+                                process_record_id = f"{process_data_in_id}.{index}"
+                                ts_ext_id2_info_map[process_record_id] = self._process_record2info(record)
+
+        with Path.open(json_file_path, "w") as fp:
+            json.dump(ts_ext_id2_info_map, fp, indent=2)
