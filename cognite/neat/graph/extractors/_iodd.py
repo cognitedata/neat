@@ -368,5 +368,5 @@ class IODDExtractor(BaseExtractor):
                                 process_record_id = f"{process_data_in_id}.{index}"
                                 ts_ext_id2_info_map[process_record_id] = self._process_record2info(record)
 
-        with open(json_file_path, "w") as fp:
+        with Path.open(json_file_path, "w") as fp:
             json.dump(ts_ext_id2_info_map, fp, indent=2)
