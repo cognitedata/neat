@@ -1,6 +1,7 @@
 from ._base import BaseExporter, CDFExporter
 from ._rules2dms import DMSExporter
 from ._rules2excel import ExcelExporter
+from ._rules2graph_sheet import GraphSheetExporter
 from ._rules2ontology import GraphExporter, OWLExporter, SemanticDataModelExporter, SHACLExporter
 from ._rules2yaml import YAMLExporter
 
@@ -14,6 +15,7 @@ __all__ = [
     "SHACLExporter",
     "ExcelExporter",
     "YAMLExporter",
+    "GraphSheetExporter",
 ]
 
 
