@@ -59,7 +59,8 @@ class IODDExtractor(BaseExtractor):
     @cached_property
     def _text_id_2value_mapping(self) -> dict[str, str]:
         """
-        Creates a mapping for text_id references to Text elements under ExternalTextCollection.
+        !!! note used for "Prototype Solution" !!!
+        A mapping for text_id references to Text elements under ExternalTextCollection.
         The mapping can be used to find the Text element with matching id, and returns
         the value associated with the Text element.
         """
@@ -277,6 +278,11 @@ class IODDExtractor(BaseExtractor):
         return self._from_root2triples(self.root, self.namespace, self.device_id)
 
     def _variable2info(self, variable_element: Element) -> dict:
+        """
+        !!! note used for "Prototype Solution" !!!
+        Extracts information relevant to a CDF time series type from a Variable element
+        """
+
         variable_dict = {}
 
         if name := get_children(
@@ -301,6 +307,10 @@ class IODDExtractor(BaseExtractor):
         return variable_dict
 
     def _process_record2info(self, record_element: Element) -> dict:
+        """
+        !!! note used for "Prototype Solution" !!!
+        Extracts information relevant to a CDF time series type from a Record element
+        """
         record_dict = {}
 
         if name := get_children(
@@ -326,18 +336,19 @@ class IODDExtractor(BaseExtractor):
 
         return record_dict
 
-    def extract_enhanced_ts_information(self, json_file_path: Path):
+    def _extract_enhanced_ts_information(self, json_file_path: Path):
         """
         Extract additional information like name, description and data type for Variables and ProcessDataIn
         record elements in the IODD. The purpose is for the result gile to be used for enhancing time series with more
         information when they are created in CDF.
 
-        Note that this is an intermediate solution while better support for adding this information directly
-        into the knowledge graph for the timeseries node type is under development.
-
         Args:
             json_file_path: file path for where to write the extracted information about all time series
                             in the IODD
+
+        !!! note "Prototype Solution" !!!
+        This is an intermediate solution while better support for adding this information directly
+        into the knowledge graph for the timeseries node type is under development.
         """
         import json
 
