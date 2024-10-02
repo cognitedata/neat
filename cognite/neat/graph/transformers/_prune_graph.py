@@ -1,4 +1,6 @@
 from rdflib import Graph, Namespace, URIRef
+from rdflib.query import ResultRow
+from rdflib.term import Identifier
 
 from ._base import BaseTransformer
 
@@ -50,7 +52,7 @@ class TwoHopFlattener(BaseTransformer):
         self.delete_connecting_node = delete_connecting_node
 
     def transform(self, graph: Graph) -> None:
-        nodes_to_delete: list[URIRef] = []
+        nodes_to_delete: list[Identifier] = []
 
         graph_traversals = list(
             graph.query(
@@ -63,18 +65,19 @@ class TwoHopFlattener(BaseTransformer):
         )
 
         for path in graph_traversals:
-            source_node, predicate, destination_node, property_value = path.asdict().values()
+            if isinstance(path, ResultRow):
+                source_node, predicate, destination_node, property_value = path.asdict().values()
 
-            # Create new connection from source node to value
-            graph.add((source_node, predicate, property_value))
-            nodes_to_delete.append(destination_node)
+                # Create new connection from source node to value
+                graph.add((source_node, predicate, property_value))
+                nodes_to_delete.append(destination_node)
 
-        if self.delete_connecting_node:
-            for node in nodes_to_delete:
-                # Remove edge triples to node
-                graph.remove((None, None, node))
-                # Remove node triple
-                graph.remove((node, None, None))
+            if self.delete_connecting_node:
+                for node in nodes_to_delete:
+                    # Remove edge triples to node
+                    graph.remove((None, None, node))
+                    # Remove node triple
+                    graph.remove((node, None, None))
 
 
 class PruneDanglingNodes(BaseTransformer):
@@ -118,4 +121,5 @@ class PruneDanglingNodes(BaseTransformer):
 
             for node in nodes_without_neighbours:
                 # Remove node and its property triples in the graph
-                graph.remove(triple=(node["subject"], None, None))
+                if isinstance(node, ResultRow):
+                    graph.remove(triple=(node["subject"], None, None))
