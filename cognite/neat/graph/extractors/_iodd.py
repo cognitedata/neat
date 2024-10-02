@@ -108,7 +108,7 @@ class IODDExtractor(BaseExtractor):
             for process_data_element in process_data_in:
                 if id := process_data_element.attrib.get("id"):
                     device_id_str = remove_namespace_from_uri(device_id)
-                    process_data_in_id = namespace[f"{device_id_str}_{id}"]
+                    process_data_in_id = namespace[f"{device_id_str}.{id}"]
 
                     # Create ProcessDataIn node
                     triples.append((process_data_in_id, RDF.type, IODD.ProcessDataIn))
@@ -199,7 +199,8 @@ class IODDExtractor(BaseExtractor):
         if variable_elements := get_children(vc_root, child_tag="Variable", ignore_namespace=True):
             for element in variable_elements:
                 if id := element.attrib.get("id"):
-                    variable_id = f"{device_id}_{id}"
+                    device_id_str = remove_namespace_from_uri(device_id)
+                    variable_id = f"{device_id_str}.{id}"
 
                     # Create connection from device node to time series
                     triples.append((device_id, IODD.variable, Literal(variable_id, datatype=XSD["timeseries"])))
@@ -242,7 +243,8 @@ class IODDExtractor(BaseExtractor):
         if record_items := get_children(pc_in_root, "RecordItem", ignore_namespace=True, include_nested_children=True):
             for record in record_items:
                 if index := record.attrib.get("subindex"):
-                    record_id = f"{process_data_in_id!s}_{index}"
+                    process_id_str = remove_namespace_from_uri(process_data_in_id)
+                    record_id = f"{process_id_str}.{index}"
                     # Create connection from device node to time series
                     triples.append((process_data_in_id, IODD.variable, Literal(record_id, datatype=XSD["timeseries"])))
 
@@ -253,3 +255,7 @@ class IODDExtractor(BaseExtractor):
         Extract RDF triples from IODD XML
         """
         return self._from_root2triples(self.root, self.namespace, self.device_id)
+
+    def extract_enhanced_ts_information(self, json_file_path: Path):
+        """ """
+        ...
