@@ -1,13 +1,14 @@
 from abc import ABC
 from collections import defaultdict
-from collections.abc import Collection
 from dataclasses import dataclass
 
+from cognite.neat.constants import CORE_CDF_NAMESPACE
 from cognite.neat.rules._shared import JustRules, OutRules
 from cognite.neat.rules.models import DMSRules, InformationInputRules
 from cognite.neat.rules.models.dms import DMSProperty
-from cognite.neat.rules.models.entities import ReferenceEntity
-from cognite.neat.rules.models.information import InformationInputProperty
+from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
+from cognite.neat.rules.models.information import InformationInputClass, InformationInputProperty
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._base import RulesTransformer
 
@@ -106,8 +107,20 @@ class PropertyMapping:
     target: InformationInputProperty
 
 
+@dataclass
+class ClassMapping:
+    source: InformationInputClass
+    target: InformationInputClass
+
+
+@dataclass
+class Mapping:
+    properties: list[PropertyMapping]
+    classes: list[ClassMapping]
+
+
 class ClassicToCoreMapper(RulesTransformer[InformationInputRules, InformationInputRules]):
-    def __init__(self, mapping: Collection[PropertyMapping]) -> None:
+    def __init__(self, mapping: Mapping) -> None:
         self.mapping = mapping
 
     def transform(
@@ -115,11 +128,23 @@ class ClassicToCoreMapper(RulesTransformer[InformationInputRules, InformationInp
     ) -> JustRules[InformationInputRules]:
         input_rules = self._to_rules(rules)
 
-        target_by_source = {prop.source: prop.target for prop in self.mapping}
-
+        target_prop_by_source = {
+            (prop.source.class_, prop.source.property_): prop.target for prop in self.mapping.properties
+        }
+        target_cls_by_source = {cls.source.class_: cls.target for cls in self.mapping.classes}
+        meta = input_rules.metadata
+        classic = meta.prefix
+        core = remove_namespace_from_uri(CORE_CDF_NAMESPACE)
         for prop in input_rules.properties:
-            if prop in target_by_source:
-                target = target_by_source[prop]
-                prop.transformation = f"{prop.class_}({prop.property_})->{target.class_}({target.property_})"
+            if (prop.class_, prop.property_) in target_prop_by_source:
+                target = target_prop_by_source[(prop.class_, prop.property_)]
+                source_cls = ClassEntity.load(prop.class_, prefix=classic)
+                target_cls = ClassEntity.load(target.class_, prefix=core)
+                prop.transformation = (
+                    f"{source_cls!s}({classic}:{prop.property_})->{target_cls!s}({core}:{target.property_})"
+                )
+                prop.property_ = target.property_
+                if prop.class_ in target_cls_by_source:
+                    prop.class_ = target_cls_by_source[prop.class_].class_
 
         return JustRules(input_rules)
