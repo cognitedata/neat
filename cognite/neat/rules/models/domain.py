@@ -16,7 +16,7 @@ from ._base_rules import (
     SheetList,
     SheetRow,
 )
-from ._types import PropertyType, StrOrListType
+from ._types import InformationPropertyType, StrOrListType
 
 
 class DomainMetadata(BaseMetadata):
@@ -32,7 +32,7 @@ class DomainMetadata(BaseMetadata):
 
 class DomainProperty(SheetRow):
     class_: ClassEntity = Field(alias="Class")
-    property_: PropertyType = Field(alias="Property")
+    property_: InformationPropertyType = Field(alias="Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     value_type: DataType | ClassEntity = Field(alias="Value Type")

@@ -25,8 +25,9 @@ from cognite.neat.rules.models._base_rules import (
     SheetRow,
 )
 from cognite.neat.rules.models._types import (
+    DmsPropertyType,
     ExternalIdType,
-    PropertyType,
+    InformationPropertyType,
     StrListType,
     VersionType,
 )
@@ -153,7 +154,7 @@ def _metadata(context: Any) -> DMSMetadata | None:
 
 class DMSProperty(SheetRow):
     view: ViewEntity = Field(alias="View")
-    view_property: str = Field(alias="View Property")
+    view_property: DmsPropertyType = Field(alias="View Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = Field(None, alias="Connection")
@@ -168,7 +169,7 @@ class DMSProperty(SheetRow):
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
     class_: ClassEntity = Field(alias="Class (linage)")
-    property_: PropertyType = Field(alias="Property (linage)")
+    property_: InformationPropertyType = Field(alias="Property (linage)")
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return self.view, self.view_property

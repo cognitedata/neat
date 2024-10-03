@@ -18,9 +18,10 @@ from pydantic.functional_serializers import PlainSerializer
 from cognite.neat.issues.errors import RegexViolationError
 from cognite.neat.issues.warnings import RegexViolationWarning
 from cognite.neat.utils.regex_patterns import (
+    DMS_PROPERTY_ID_COMPLIANCE_REGEX,
+    INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX,
     PATTERNS,
     PREFIX_COMPLIANCE_REGEX,
-    PROPERTY_ID_COMPLIANCE_REGEX,
     VERSION_COMPLIANCE_REGEX,
 )
 
@@ -82,15 +83,37 @@ VersionType = Annotated[
 ]
 
 
-def _property_validation(value: str) -> str:
-    if not PATTERNS.property_id_compliance.match(value):
-        raise RegexViolationError(value, PROPERTY_ID_COMPLIANCE_REGEX)
+def _info_property_validation(value: str) -> str:
+    if not PATTERNS.information_property_id_compliance.match(value):
+        raise RegexViolationError(value, INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX)
     if PATTERNS.more_than_one_alphanumeric.search(value):
         warnings.warn(
-            RegexViolationWarning(value, PROPERTY_ID_COMPLIANCE_REGEX, "property", "MoreThanOneNonAlphanumeric"),
+            RegexViolationWarning(
+                value,
+                INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX,
+                "property",
+                "MoreThanOneNonAlphanumeric",
+            ),
             stacklevel=2,
         )
     return value
 
 
-PropertyType = Annotated[str, AfterValidator(_property_validation)]
+def _dms_property_validation(value: str) -> str:
+    if not PATTERNS.dms_property_id_compliance.match(value):
+        raise RegexViolationError(value, DMS_PROPERTY_ID_COMPLIANCE_REGEX)
+    if PATTERNS.more_than_one_alphanumeric.search(value):
+        warnings.warn(
+            RegexViolationWarning(
+                value,
+                DMS_PROPERTY_ID_COMPLIANCE_REGEX,
+                "property",
+                "MoreThanOneNonAlphanumeric",
+            ),
+            stacklevel=2,
+        )
+    return value
+
+
+InformationPropertyType = Annotated[str, AfterValidator(_info_property_validation)]
+DmsPropertyType = Annotated[str, AfterValidator(_dms_property_validation)]

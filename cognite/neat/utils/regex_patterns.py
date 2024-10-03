@@ -15,7 +15,9 @@ DMS_PROPERTY_ID_COMPLIANCE_REGEX = (
     r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
 )
 CLASS_ID_COMPLIANCE_REGEX = r"(?!^(Class|class)$)(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
-PROPERTY_ID_COMPLIANCE_REGEX = r"^(\*)|(?!^(Property|property)$)(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
+INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX = (
+    r"^(\*)|(?!^(Property|property)$)(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
+)
 VERSION_COMPLIANCE_REGEX = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
 
 
@@ -47,8 +49,8 @@ class _Patterns:
         return re.compile(CLASS_ID_COMPLIANCE_REGEX)
 
     @cached_property
-    def property_id_compliance(self) -> re.Pattern[str]:
-        return re.compile(PROPERTY_ID_COMPLIANCE_REGEX)
+    def information_property_id_compliance(self) -> re.Pattern[str]:
+        return re.compile(INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX)
 
     @cached_property
     def version_compliance(self) -> re.Pattern[str]:

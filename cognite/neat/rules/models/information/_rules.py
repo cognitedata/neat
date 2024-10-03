@@ -28,9 +28,9 @@ from cognite.neat.rules.models._rdfpath import (
     parse_rule,
 )
 from cognite.neat.rules.models._types import (
+    InformationPropertyType,
     NamespaceType,
     PrefixType,
-    PropertyType,
     StrListType,
     VersionType,
 )
@@ -190,7 +190,7 @@ class InformationProperty(SheetRow):
     """
 
     class_: ClassEntity = Field(alias="Class")
-    property_: PropertyType = Field(alias="Property")
+    property_: InformationPropertyType = Field(alias="Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity = Field(

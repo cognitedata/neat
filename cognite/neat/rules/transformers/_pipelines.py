@@ -50,6 +50,7 @@ class ImporterPipeline(RulesPipeline[InputRules, VerifiedRules]):
     def try_execute(self) -> MaybeRules[VerifiedRules]:
         """Try to execute the pipeline from importer to rules."""
         rules = self._importer.to_rules()
+        print(rules)
         return self.try_transform(rules)
 
     def execute(self) -> VerifiedRules:
