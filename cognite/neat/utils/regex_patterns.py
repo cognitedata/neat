@@ -1,5 +1,6 @@
 import re
 from functools import cached_property
+from typing import Literal
 
 MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX = r"([_-]{2,})"
 PREFIX_COMPLIANCE_REGEX = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9_-]*)([a-zA-Z0-9]*)$"
@@ -55,6 +56,33 @@ class _Patterns:
     @cached_property
     def version_compliance(self) -> re.Pattern[str]:
         return re.compile(VERSION_COMPLIANCE_REGEX)
+
+    def entity_pattern(
+        self,
+        entity: Literal[
+            "class",
+            "view",
+            "container",
+            "information_property",
+            "dms_property",
+            "version",
+            "prefix",
+        ],
+    ) -> re.Pattern:
+        if entity == "class":
+            return self.class_id_compliance
+        elif entity == "view":
+            return self.view_id_compliance
+        elif entity == "container":
+            return self.class_id_compliance
+        elif entity == "information_property":
+            return self.information_property_id_compliance
+        elif entity == "dms_property":
+            return self.dms_property_id_compliance
+        elif entity == "version":
+            return self.version_compliance
+        elif entity == "prefix":
+            return self.prefix_compliance
 
 
 PATTERNS = _Patterns()

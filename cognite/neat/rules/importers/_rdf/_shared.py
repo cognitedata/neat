@@ -4,10 +4,10 @@ import numpy as np
 import pandas as pd
 from rdflib import OWL, Literal, Namespace
 
+from cognite.neat.rules._constants import PATTERNS
 from cognite.neat.rules.models._base_rules import MatchType
 from cognite.neat.rules.models.data_types import _XSD_TYPES
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
-from cognite.neat.utils.regex_patterns import PATTERNS
 
 
 def parse_raw_classes_dataframe(query_results: list[tuple]) -> pd.DataFrame:

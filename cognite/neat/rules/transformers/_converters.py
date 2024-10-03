@@ -11,6 +11,7 @@ from rdflib import Namespace
 
 from cognite.neat.constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.issues.warnings.user_modeling import ParentInDifferentSpaceWarning
+from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules._shared import InputRules, JustRules, OutRules, VerifiedRules
 from cognite.neat.rules.models import (
     AssetRules,
@@ -31,7 +32,6 @@ from cognite.neat.rules.models.entities import (
     ContainerEntity,
     DMSUnknownEntity,
     EdgeEntity,
-    EntityTypes,
     MultiValueTypeInfo,
     ReferenceEntity,
     RelationshipEntity,

@@ -31,12 +31,15 @@ else:
     from backports.strenum import StrEnum
     from typing_extensions import Self
 
-from cognite.neat.utils.regex_patterns import SPLIT_ON_COMMA_PATTERN, SPLIT_ON_EQUAL_PATTERN
+from cognite.neat.rules._constants import (
+    ENTITY_PATTERN,
+    SPLIT_ON_COMMA_PATTERN,
+    SPLIT_ON_EQUAL_PATTERN,
+    EntityTypes,
+)
 
 from ._constants import (
     _PARSE,
-    ENTITY_PATTERN,
-    EntityTypes,
     Undefined,
     Unknown,
     _UndefinedType,

@@ -10,6 +10,7 @@ from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
 from cognite.neat.issues.errors import PropertyDefinitionError
+from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
@@ -39,7 +40,6 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ClassEntityList,
     Entity,
-    EntityTypes,
     MultiValueTypeInfo,
     ReferenceEntity,
     Undefined,

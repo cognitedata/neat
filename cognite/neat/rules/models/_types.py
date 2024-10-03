@@ -1,6 +1,6 @@
 import warnings
 from collections.abc import Callable
-from typing import Annotated, Any
+from typing import Annotated, Any, TypeAlias, TypeVar
 
 import rdflib
 from pydantic import (
@@ -17,13 +17,20 @@ from pydantic.functional_serializers import PlainSerializer
 
 from cognite.neat.issues.errors import RegexViolationError
 from cognite.neat.issues.warnings import RegexViolationWarning
-from cognite.neat.utils.regex_patterns import (
-    DMS_PROPERTY_ID_COMPLIANCE_REGEX,
-    INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX,
+from cognite.neat.rules._constants import (
     PATTERNS,
     PREFIX_COMPLIANCE_REGEX,
     VERSION_COMPLIANCE_REGEX,
+    EntityTypes,
 )
+from cognite.neat.rules.models.entities._single_value import (
+    ClassEntity,
+    ContainerEntity,
+    ViewEntity,
+)
+
+Entities: TypeAlias = ClassEntity | ViewEntity | ContainerEntity
+T_Entities = TypeVar("T_Entities", bound=Entities)
 
 
 def _custom_error(exc_factory: Callable[[str | None, Exception], Any]) -> Any:
@@ -83,14 +90,15 @@ VersionType = Annotated[
 ]
 
 
-def _info_property_validation(value: str) -> str:
-    if not PATTERNS.information_property_id_compliance.match(value):
-        raise RegexViolationError(value, INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX)
+def _property_validation(value: str, property_type: EntityTypes) -> str:
+    compiled_regex = PATTERNS.entity_pattern(property_type)
+    if not compiled_regex.match(value):
+        raise RegexViolationError(value, compiled_regex.pattern)
     if PATTERNS.more_than_one_alphanumeric.search(value):
         warnings.warn(
             RegexViolationWarning(
                 value,
-                INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX,
+                compiled_regex.pattern,
                 "property",
                 "MoreThanOneNonAlphanumeric",
             ),
@@ -99,21 +107,24 @@ def _info_property_validation(value: str) -> str:
     return value
 
 
-def _dms_property_validation(value: str) -> str:
-    if not PATTERNS.dms_property_id_compliance.match(value):
-        raise RegexViolationError(value, DMS_PROPERTY_ID_COMPLIANCE_REGEX)
-    if PATTERNS.more_than_one_alphanumeric.search(value):
-        warnings.warn(
-            RegexViolationWarning(
-                value,
-                DMS_PROPERTY_ID_COMPLIANCE_REGEX,
-                "property",
-                "MoreThanOneNonAlphanumeric",
-            ),
-            stacklevel=2,
-        )
+def _property_validation_factory(
+    property_type: EntityTypes,
+) -> Callable[[str], str]:
+    return lambda value: _property_validation(value, property_type)
+
+
+InformationPropertyType = Annotated[
+    str,
+    AfterValidator(_property_validation_factory(EntityTypes.information_property)),
+]
+DmsPropertyType = Annotated[
+    str,
+    AfterValidator(_property_validation_factory(EntityTypes.dms_property)),
+]
+
+
+def _entity_validation(value: Entities) -> Entities:
+    compiled_regex = PATTERNS.entity_pattern(value.type_)
+    if not compiled_regex.match(value.suffix):
+        raise RegexViolationError(str(value), compiled_regex.pattern)
     return value
-
-
-InformationPropertyType = Annotated[str, AfterValidator(_info_property_validation)]
-DmsPropertyType = Annotated[str, AfterValidator(_dms_property_validation)]
