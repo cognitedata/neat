@@ -9,8 +9,8 @@ from cognite.client.data_classes.data_modeling.data_types import Enum as DMSEnum
 from pydantic import BaseModel, Field, model_serializer, model_validator
 from pydantic.functional_validators import ModelWrapValidatorHandler
 
+from cognite.neat.rules._constants import SPLIT_ON_COMMA_PATTERN, SPLIT_ON_EQUAL_PATTERN
 from cognite.neat.rules.models.entities._single_value import ClassEntity, UnitEntity
-from cognite.neat.utils.regex_patterns import SPLIT_ON_COMMA_PATTERN, SPLIT_ON_EQUAL_PATTERN
 
 if sys.version_info >= (3, 11):
     from typing import Self
