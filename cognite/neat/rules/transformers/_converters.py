@@ -78,7 +78,6 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
         rules.metadata.prefix = self._fix_entity(rules.metadata.prefix)
         rules.classes = self._fix_classes(rules.classes)
         rules.properties = self._fix_properties(rules.properties)
-        print("here")
         return rules
 
     @classmethod
