@@ -1,6 +1,7 @@
 from cognite.neat.rules import importers
+from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.analysis import InformationAnalysis
-from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
+from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.transformers import ImporterPipeline
 
 

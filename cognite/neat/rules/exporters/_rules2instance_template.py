@@ -8,8 +8,8 @@ from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Si
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
+from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.analysis import InformationAnalysis
-from cognite.neat.rules.models.entities import EntityTypes
 from cognite.neat.rules.models.entities._single_value import ClassEntity
 from cognite.neat.rules.models.information._rules import InformationRules
 

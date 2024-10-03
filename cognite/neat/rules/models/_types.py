@@ -1,6 +1,6 @@
 import warnings
 from collections.abc import Callable
-from typing import Annotated, Any
+from typing import Annotated, Any, TypeAlias, TypeVar
 
 import rdflib
 from pydantic import (
@@ -17,12 +17,20 @@ from pydantic.functional_serializers import PlainSerializer
 
 from cognite.neat.issues.errors import RegexViolationError
 from cognite.neat.issues.warnings import RegexViolationWarning
-from cognite.neat.utils.regex_patterns import (
+from cognite.neat.rules._constants import (
     PATTERNS,
     PREFIX_COMPLIANCE_REGEX,
-    PROPERTY_ID_COMPLIANCE_REGEX,
     VERSION_COMPLIANCE_REGEX,
+    EntityTypes,
 )
+from cognite.neat.rules.models.entities._single_value import (
+    ClassEntity,
+    ContainerEntity,
+    ViewEntity,
+)
+
+Entities: TypeAlias = ClassEntity | ViewEntity | ContainerEntity
+T_Entities = TypeVar("T_Entities", bound=Entities)
 
 
 def _custom_error(exc_factory: Callable[[str | None, Exception], Any]) -> Any:
@@ -82,15 +90,38 @@ VersionType = Annotated[
 ]
 
 
-def _property_validation(value: str) -> str:
-    if not PATTERNS.property_id_compliance.match(value):
-        raise RegexViolationError(value, PROPERTY_ID_COMPLIANCE_REGEX)
-    if PATTERNS.more_than_one_alphanumeric.search(value):
-        warnings.warn(
-            RegexViolationWarning(value, PROPERTY_ID_COMPLIANCE_REGEX, "property", "MoreThanOneNonAlphanumeric"),
-            stacklevel=2,
-        )
+def _property_validation_factory(property_type: EntityTypes):
+    def _property_validation(value: str) -> str:
+        compiled_regex = PATTERNS.entity_pattern(property_type)
+        if not compiled_regex.match(value):
+            raise RegexViolationError(value, compiled_regex.pattern)
+        if PATTERNS.more_than_one_alphanumeric.search(value):
+            warnings.warn(
+                RegexViolationWarning(
+                    value,
+                    compiled_regex.pattern,
+                    "property",
+                    "MoreThanOneNonAlphanumeric",
+                ),
+                stacklevel=2,
+            )
+        return value
+
+    return _property_validation
+
+
+InformationPropertyType = Annotated[
+    str,
+    AfterValidator(_property_validation_factory(EntityTypes.information_property)),
+]
+DmsPropertyType = Annotated[
+    str,
+    AfterValidator(_property_validation_factory(EntityTypes.dms_property)),
+]
+
+
+def _entity_validation(value: Entities) -> Entities:
+    compiled_regex = PATTERNS.entity_pattern(value.type_)
+    if not compiled_regex.match(value.suffix):
+        raise RegexViolationError(str(value), compiled_regex.pattern)
     return value
-
-
-PropertyType = Annotated[str, AfterValidator(_property_validation)]

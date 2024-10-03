@@ -11,7 +11,8 @@ from rdflib import Namespace
 
 from cognite.neat.constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.issues.warnings.user_modeling import ParentInDifferentSpaceWarning
-from cognite.neat.rules._shared import JustRules, OutRules, VerifiedRules
+from cognite.neat.rules._constants import EntityTypes
+from cognite.neat.rules._shared import InputRules, JustRules, OutRules, VerifiedRules
 from cognite.neat.rules.models import (
     AssetRules,
     DMSRules,
@@ -31,7 +32,6 @@ from cognite.neat.rules.models.entities import (
     ContainerEntity,
     DMSUnknownEntity,
     EdgeEntity,
-    EntityTypes,
     MultiValueTypeInfo,
     ReferenceEntity,
     RelationshipEntity,
@@ -45,6 +45,8 @@ from ._base import RulesTransformer
 
 T_VerifiedInRules = TypeVar("T_VerifiedInRules", bound=VerifiedRules)
 T_VerifiedOutRules = TypeVar("T_VerifiedOutRules", bound=VerifiedRules)
+T_InputInRules = TypeVar("T_InputInRules", bound=InputRules)
+T_InputOutRules = TypeVar("T_InputOutRules", bound=InputRules)
 
 
 class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRules], ABC):
@@ -57,6 +59,9 @@ class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRul
     @abstractmethod
     def _transform(self, rules: T_VerifiedInRules) -> T_VerifiedOutRules:
         raise NotImplementedError()
+
+
+class ToCompliantEntityIds(ConversionTransformer[VerifiedRules, VerifiedRules]): ...
 
 
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):

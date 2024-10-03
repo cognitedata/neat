@@ -10,6 +10,7 @@ from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
 from cognite.neat.issues.errors import PropertyDefinitionError
+from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
@@ -28,9 +29,9 @@ from cognite.neat.rules.models._rdfpath import (
     parse_rule,
 )
 from cognite.neat.rules.models._types import (
+    InformationPropertyType,
     NamespaceType,
     PrefixType,
-    PropertyType,
     StrListType,
     VersionType,
 )
@@ -39,7 +40,6 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ClassEntityList,
     Entity,
-    EntityTypes,
     MultiValueTypeInfo,
     ReferenceEntity,
     Undefined,
@@ -190,7 +190,7 @@ class InformationProperty(SheetRow):
     """
 
     class_: ClassEntity = Field(alias="Class")
-    property_: PropertyType = Field(alias="Property")
+    property_: InformationPropertyType = Field(alias="Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity = Field(

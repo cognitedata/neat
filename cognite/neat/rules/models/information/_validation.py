@@ -4,8 +4,9 @@ from typing import cast
 
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import NeatValueError, ResourceNotDefinedError
+from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.models._base_rules import DataModelType, SchemaCompleteness
-from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, UnknownEntity
+from cognite.neat.rules.models.entities import ClassEntity, UnknownEntity
 from cognite.neat.utils.rdf_ import get_inheritance_path
 
 from ._rules import InformationRules

@@ -21,9 +21,10 @@ from cognite.neat.graph._tracking.base import Tracker
 from cognite.neat.graph._tracking.log import LogTracker
 from cognite.neat.issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors import ResourceCreationError, ResourceNotFoundError
+from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.analysis._asset import AssetAnalysis
 from cognite.neat.rules.models import AssetRules
-from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
+from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.store import NeatGraphStore
 from cognite.neat.utils.auxiliary import create_sha256_hash
 from cognite.neat.utils.upload import UploadResult

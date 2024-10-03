@@ -7,7 +7,8 @@ from rdflib import Literal as RdfLiteral
 from rdflib.query import ResultRow
 
 from cognite.neat.graph.models import InstanceType
-from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
+from cognite.neat.rules._constants import EntityTypes
+from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import InformationRules
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 

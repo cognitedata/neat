@@ -14,9 +14,10 @@ from cognite.neat.issues.errors import (
     PropertyDefinitionDuplicatedError,
 )
 from cognite.neat.issues.warnings import PropertyDefinitionDuplicatedWarning
+from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
+from cognite.neat.rules.models.entities import ClassEntity
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationMetadata,
