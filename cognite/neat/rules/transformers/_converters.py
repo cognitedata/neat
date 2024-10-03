@@ -59,6 +59,9 @@ class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRul
         raise NotImplementedError()
 
 
+class ToCompliantEntityIds(ConversionTransformer[VerifiedRules, VerifiedRules]): ...
+
+
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
