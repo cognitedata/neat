@@ -1,10 +1,13 @@
 from abc import ABC
 from collections import defaultdict
+from collections.abc import Collection
+from dataclasses import dataclass
 
 from cognite.neat.rules._shared import JustRules, OutRules
-from cognite.neat.rules.models import DMSRules
+from cognite.neat.rules.models import DMSRules, InformationInputRules
 from cognite.neat.rules.models.dms import DMSProperty
 from cognite.neat.rules.models.entities import ReferenceEntity
+from cognite.neat.rules.models.information import InformationInputProperty
 
 from ._base import RulesTransformer
 
@@ -95,3 +98,28 @@ class MapOneToOne(MapOntoTransformers):
                 prop.reference = ReferenceEntity.from_entity(ref_prop.view, ref_prop.view_property)
 
         return JustRules(solution)
+
+
+@dataclass
+class PropertyMapping:
+    source: InformationInputProperty
+    target: InformationInputProperty
+
+
+class ClassicToCoreMapper(RulesTransformer[InformationInputRules, InformationInputRules]):
+    def __init__(self, mapping: Collection[PropertyMapping]) -> None:
+        self.mapping = mapping
+
+    def transform(
+        self, rules: InformationInputRules | OutRules[InformationInputRules]
+    ) -> JustRules[InformationInputRules]:
+        input_rules = self._to_rules(rules)
+
+        target_by_source = {prop.source: prop.target for prop in self.mapping}
+
+        for prop in input_rules.properties:
+            if prop in target_by_source:
+                target = target_by_source[prop]
+                prop.transformation = f"{prop.class_}({prop.property_})->{target.class_}({target.property_})"
+
+        return JustRules(input_rules)
