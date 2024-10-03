@@ -23,6 +23,7 @@ from cognite.neat.rules._constants import (
     VERSION_COMPLIANCE_REGEX,
     EntityTypes,
 )
+from cognite.neat.rules.models.entities._multi_value import MultiValueTypeInfo
 from cognite.neat.rules.models.entities._single_value import (
     ClassEntity,
     ContainerEntity,
@@ -121,7 +122,22 @@ DmsPropertyType = Annotated[
 
 
 def _entity_validation(value: Entities) -> Entities:
-    compiled_regex = PATTERNS.entity_pattern(value.type_)
-    if not compiled_regex.match(value.suffix):
-        raise RegexViolationError(str(value), compiled_regex.pattern)
+    suffix_regex = PATTERNS.entity_pattern(value.type_)
+    if not suffix_regex.match(value.suffix):
+        raise RegexViolationError(str(value), suffix_regex.pattern)
     return value
+
+
+ClassEntityType = Annotated[ClassEntity, AfterValidator(_entity_validation)]
+ViewEntityType = Annotated[ViewEntity, AfterValidator(_entity_validation)]
+ContainerEntityType = Annotated[ContainerEntity, AfterValidator(_entity_validation)]
+
+
+def _multi_value_type_validation(value: MultiValueTypeInfo) -> MultiValueTypeInfo:
+    for type_ in value.types:
+        if isinstance(type_, ClassEntity):
+            _entity_validation(type_)
+    return value
+
+
+MultiValueTypeType = Annotated[MultiValueTypeInfo, AfterValidator(_multi_value_type_validation)]
