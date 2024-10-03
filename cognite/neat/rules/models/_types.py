@@ -90,27 +90,24 @@ VersionType = Annotated[
 ]
 
 
-def _property_validation(value: str, property_type: EntityTypes) -> str:
-    compiled_regex = PATTERNS.entity_pattern(property_type)
-    if not compiled_regex.match(value):
-        raise RegexViolationError(value, compiled_regex.pattern)
-    if PATTERNS.more_than_one_alphanumeric.search(value):
-        warnings.warn(
-            RegexViolationWarning(
-                value,
-                compiled_regex.pattern,
-                "property",
-                "MoreThanOneNonAlphanumeric",
-            ),
-            stacklevel=2,
-        )
-    return value
+def _property_validation_factory(property_type: EntityTypes):
+    def _property_validation(value: str) -> str:
+        compiled_regex = PATTERNS.entity_pattern(property_type)
+        if not compiled_regex.match(value):
+            raise RegexViolationError(value, compiled_regex.pattern)
+        if PATTERNS.more_than_one_alphanumeric.search(value):
+            warnings.warn(
+                RegexViolationWarning(
+                    value,
+                    compiled_regex.pattern,
+                    "property",
+                    "MoreThanOneNonAlphanumeric",
+                ),
+                stacklevel=2,
+            )
+        return value
 
-
-def _property_validation_factory(
-    property_type: EntityTypes,
-) -> Callable[[str], str]:
-    return lambda value: _property_validation(value, property_type)
+    return _property_validation
 
 
 InformationPropertyType = Annotated[
