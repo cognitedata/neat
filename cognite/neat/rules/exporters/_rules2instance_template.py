@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import uuid
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
 from openpyxl import Workbook
 from openpyxl.cell import Cell
@@ -18,11 +16,26 @@ from cognite.neat.rules.models.information._rules import InformationRules
 from ._base import BaseExporter
 
 
-class GraphSheetExporter(BaseExporter[InformationRules, Workbook]):
+class InstanceTemplateExporter(BaseExporter[InformationRules, Workbook]):
+    """
+    Converts Information Rules to a templated spreadsheet meant for capturing
+    instances based on class definitions in the rules.
+
+    Args:
+        no_rows: number of rows for processing, by default 1000
+        auto_identifier_type: type of automatic identifier, by default "index" based, alternative is "uuid" based
+        add_drop_down_list: Add drop down selection for columns that contain linking properties, by default True
+
+    !!! note "no_rows parameter"
+        no_rows should be set to the maximum expected number of instances of any of the classes.
+        By default, it is set to 1000, increase it accordingly if you have more instances.
+
+    """
+
     def __init__(
         self,
         no_rows: int = 1000,
-        auto_identifier_type: str = "index",
+        auto_identifier_type: Literal["index", "uuid"] = "index",
         add_drop_down_list: bool = True,
     ):
         self.no_rows = no_rows
@@ -33,23 +46,8 @@ class GraphSheetExporter(BaseExporter[InformationRules, Workbook]):
         self,
         rules: InformationRules,
     ):
-        """
-        Converts a InformationRUles object to a graph capturing sheet
-
-        Args:
-            rules: The TransformationRules object to convert to the graph capturing sheet
-            file_path: File path to save the sheet to
-            no_rows: Number of rows for processing, by default 1000
-            auto_identifier_type: Type of automatic identifier, by default "index" based, alternative is "uuid" based
-            add_drop_down_list: Add drop down selection for columns that contain linking properties, by default True
-
-        !!! note "no_rows parameter"
-            no_rows should be set to the maximum expected number of instances of any of the classes.
-            By default, it is set to 1000, increase it accordingly if you have more instances.
-
-        """
-
         workbook = Workbook()
+
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
@@ -62,6 +60,7 @@ class GraphSheetExporter(BaseExporter[InformationRules, Workbook]):
             if self.auto_identifier_type == "uuid":
                 _add_uuid_identifiers(workbook, class_.suffix, self.no_rows)
             else:
+                # Default to index-based identifier
                 _add_index_identifiers(workbook, class_.suffix, self.no_rows)
 
             for i, property_ in enumerate(properties.values()):
