@@ -20,7 +20,8 @@ IODD = Namespace("http://www.io-link.com/IODD/2010/10/")
 XSI = Namespace("http://www.w3.org/2001/XMLSchema-instance/")
 
 XSI_XML_PREFIX = "{http://www.w3.org/2001/XMLSchema-instance}"
-P_DATA_IN_ID_OVERRIDE = "V_ProcessDataInput" #TODO: find a better way of configuring this one-off case
+P_DATA_IN_ID_OVERRIDE = "V_ProcessDataInput"  # TODO: find a better way of configuring this one-off case
+
 
 class IODDExtractor(BaseExtractor):
     """
@@ -65,7 +66,8 @@ class IODDExtractor(BaseExtractor):
         the value associated with the Text element.
         """
         mapping = {}
-        if pl_root := get_children(self.root, "PrimaryLanguage", ignore_namespace=True, include_nested_children=True, no_children=1
+        if pl_root := get_children(
+            self.root, "PrimaryLanguage", ignore_namespace=True, include_nested_children=True, no_children=1
         ):
             if text_elements := get_children(
                 pl_root[0], child_tag="Text", ignore_namespace=True, include_nested_children=True
@@ -129,7 +131,7 @@ class IODDExtractor(BaseExtractor):
             pc_root, "ProcessDataIn", ignore_namespace=True, include_nested_children=True
         ):
             for process_data_element in process_data_in:
-                if id := process_data_element.attrib.get("id"):
+                if process_data_element.attrib.get("id"):
                     device_id_str = remove_namespace_from_uri(device_id)
                     process_data_in_id = namespace[f"{device_id_str}.{P_DATA_IN_ID_OVERRIDE}"]
 
@@ -370,7 +372,7 @@ class IODDExtractor(BaseExtractor):
             self.root, "ProcessDataIn", ignore_namespace=True, include_nested_children=True
         ):
             for process_data_element in process_data_in:
-                if id := process_data_element.attrib.get("id"):
+                if process_data_element.attrib.get("id"):
                     device_id_str = remove_namespace_from_uri(self.device_id)
                     process_data_in_id = f"{device_id_str}.{P_DATA_IN_ID_OVERRIDE}"
                     if record_items := get_children(
