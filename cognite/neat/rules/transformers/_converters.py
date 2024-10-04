@@ -116,7 +116,8 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
     def _fix_value_type(
         cls, value_type: str | DataType | ClassEntity | MultiValueTypeInfo
     ) -> str | DataType | ClassEntity | MultiValueTypeInfo:
-        fixed_value_type = value_type
+        fixed_value_type: str | DataType | ClassEntity | MultiValueTypeInfo
+
         if isinstance(value_type, str):
             # this is a multi value type but as string
             if " | " in value_type:
@@ -137,6 +138,10 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
             )
         elif isinstance(value_type, ClassEntity):
             fixed_value_type = cls._fix_class(value_type)
+
+        # this is a DataType instance but also we should default to original value
+        else:
+            fixed_value_type = value_type
 
         return fixed_value_type
 
