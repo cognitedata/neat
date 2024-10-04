@@ -1,12 +1,13 @@
-from typing import MutableSequence, TypeVar, overload, Iterator, SupportsIndex, Any, get_args, Union, Generic
+from collections.abc import Iterator, MutableSequence, Sequence
+from typing import Any, Generic, SupportsIndex, TypeVar, get_args, overload
 
 import pandas as pd
 from pydantic import BaseModel, GetCoreSchemaHandler
 from pydantic_core import core_schema
-from cognite.neat.rules.models._base_rules import PropertyRef, ClassRef
 
+from cognite.neat.rules.models._base_rules import ClassRef, PropertyRef
 
-T_Mapping = TypeVar("T_Mapping", bound=Union[ClassRef, PropertyRef])
+T_Mapping = TypeVar("T_Mapping", bound=ClassRef | PropertyRef)
 
 
 class Mapping(BaseModel, Generic[T_Mapping]):
@@ -46,7 +47,7 @@ class MappingList(list, MutableSequence[Mapping[T_Mapping]]):
         return self.to_pandas(drop_na_columns=True)._repr_html_()  # type: ignore[operator]
 
     # Implemented to get correct type hints
-    def __iter__(self) -> Iterator[T_Mapping]:
+    def __iter__(self) -> Iterator[Mapping[T_Mapping]]:
         return super().__iter__()
 
     @overload
@@ -59,7 +60,6 @@ class MappingList(list, MutableSequence[Mapping[T_Mapping]]):
         if isinstance(index, slice):
             return MappingList[T_Mapping](super().__getitem__(index))
         return super().__getitem__(index)
-
 
 
 class RuleMapping(BaseModel):

@@ -1,13 +1,11 @@
 from abc import ABC
 from collections import defaultdict
 
-
 from cognite.neat.rules._shared import JustRules, OutRules
-from cognite.neat.rules.models import DMSRules, InformationInputRules, InformationRules
+from cognite.neat.rules.models import DMSRules, InformationRules
 from cognite.neat.rules.models.dms import DMSProperty
-from cognite.neat.rules.models.mapping import RuleMapping
 from cognite.neat.rules.models.entities import ReferenceEntity
-
+from cognite.neat.rules.models.mapping import RuleMapping
 
 from ._base import RulesTransformer
 
@@ -109,23 +107,22 @@ class RuleMapper(RulesTransformer[InformationRules, InformationRules]):
         mapping: The mapping to use.
 
     """
+
     def __init__(self, mapping: RuleMapping) -> None:
         self.mapping = mapping
 
-    def transform(
-        self, rules: InformationRules | OutRules[InformationRules]
-    ) -> JustRules[InformationInputRules]:
+    def transform(self, rules: InformationRules | OutRules[InformationRules]) -> JustRules[InformationRules]:
         input_rules = self._to_rules(rules)
 
         destination_by_source = self.mapping.properties.as_destination_by_source()
         for prop in input_rules.properties:
-            if destination := destination_by_source.get(prop.as_reference()):
-                prop.class_ = destination.class_
-                prop.property_ = destination.property_
+            if destination_prop := destination_by_source.get(prop.as_reference()):
+                prop.class_ = destination_prop.class_
+                prop.property_ = destination_prop.property_
 
         destination_cls_by_source = self.mapping.classes.as_destination_by_source()
         for cls_ in input_rules.classes:
-            if destination := destination_cls_by_source.get(cls_.as_reference()):
-                cls_.class_ = destination
+            if destination_cls := destination_cls_by_source.get(cls_.as_reference()):
+                cls_.class_ = destination_cls.class_
 
         return JustRules(input_rules)
