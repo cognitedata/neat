@@ -40,6 +40,11 @@ from cognite.neat.rules.models.entities import (
     ViewEntity,
 )
 from cognite.neat.rules.models.information import InformationClass, InformationMetadata, InformationProperty
+from cognite.neat.rules.models.information._rules_input import (
+    InformationInputClass,
+    InformationInputProperty,
+    InformationInputRules,
+)
 
 from ._base import RulesTransformer
 
@@ -61,7 +66,102 @@ class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRul
         raise NotImplementedError()
 
 
-class ToCompliantEntityIds(ConversionTransformer[VerifiedRules, VerifiedRules]): ...
+class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInputRules]):  # type: ignore[misc]
+    """Converts input rules to rules with compliant entity IDs that match regex patters used
+    by DMS schema components."""
+
+    def transform(
+        self, rules: InformationInputRules | OutRules[InformationInputRules]
+    ) -> OutRules[InformationInputRules]:
+        return JustRules(self._transform(self._to_rules(rules)))
+
+    def _transform(self, rules: InformationInputRules) -> InformationInputRules:
+        rules.metadata.prefix = self._fix_entity(rules.metadata.prefix)
+        rules.classes = self._fix_classes(rules.classes)
+        rules.properties = self._fix_properties(rules.properties)
+        return rules
+
+    @classmethod
+    def _fix_entity(cls, entity: str) -> str:
+        entity = re.sub(r"[^_a-zA-Z0-9]+", "_", entity)
+
+        # entity id must start and end with a letter
+        if not entity[0].isalpha():
+            entity = "prefix_" + entity
+        if not entity[-1].isalpha():
+            entity = entity + "_suffix"
+
+        # removing any double underscores that could occur
+        return re.sub(r"[^a-zA-Z0-9]+", "_", entity)
+
+    @classmethod
+    def _fix_class(cls, class_: str | ClassEntity) -> str | ClassEntity:
+        if isinstance(class_, str):
+            if len(class_.split(":")) == 2:
+                prefix, suffix = class_.split(":")
+                class_ = f"{cls._fix_entity(prefix)}:{cls._fix_entity(suffix)}"
+
+            else:
+                class_ = cls._fix_entity(class_)
+
+        elif isinstance(class_, ClassEntity) and type(class_.prefix) is str:
+            class_ = ClassEntity(
+                prefix=cls._fix_entity(class_.prefix),
+                suffix=cls._fix_entity(class_.suffix),
+            )
+
+        return class_
+
+    @classmethod
+    def _fix_value_type(
+        cls, value_type: str | DataType | ClassEntity | MultiValueTypeInfo
+    ) -> str | DataType | ClassEntity | MultiValueTypeInfo:
+        fixed_value_type: str | DataType | ClassEntity | MultiValueTypeInfo
+
+        if isinstance(value_type, str):
+            # this is a multi value type but as string
+            if " | " in value_type:
+                value_types = value_type.split(" | ")
+                fixed_value_type = " | ".join([cast(str, cls._fix_value_type(v)) for v in value_types])
+            # this is value type specified with prefix:suffix string
+            elif ":" in value_type:
+                fixed_value_type = cls._fix_class(value_type)
+
+            # this is value type specified as suffix only
+            else:
+                fixed_value_type = cls._fix_entity(value_type)
+
+        # value type specified as instances of DataType, ClassEntity or MultiValueTypeInfo
+        elif isinstance(value_type, MultiValueTypeInfo):
+            fixed_value_type = MultiValueTypeInfo(
+                types=[cast(DataType | ClassEntity, cls._fix_value_type(type_)) for type_ in value_type.types],
+            )
+        elif isinstance(value_type, ClassEntity):
+            fixed_value_type = cls._fix_class(value_type)
+
+        # this is a DataType instance but also we should default to original value
+        else:
+            fixed_value_type = value_type
+
+        return fixed_value_type
+
+    @classmethod
+    def _fix_classes(cls, definitions: list[InformationInputClass]) -> list[InformationInputClass]:
+        fixed_definitions = []
+        for definition in definitions:
+            definition.class_ = cls._fix_class(definition.class_)
+            fixed_definitions.append(definition)
+        return fixed_definitions
+
+    @classmethod
+    def _fix_properties(cls, definitions: list[InformationInputProperty]) -> list[InformationInputProperty]:
+        fixed_definitions = []
+        for definition in definitions:
+            definition.class_ = cls._fix_class(definition.class_)
+            definition.property_ = cls._fix_entity(definition.property_)
+            definition.value_type = cls._fix_value_type(definition.value_type)
+            fixed_definitions.append(definition)
+        return fixed_definitions
 
 
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):

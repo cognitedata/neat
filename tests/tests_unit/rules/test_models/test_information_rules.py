@@ -20,7 +20,11 @@ from cognite.neat.rules.models.information._rules_input import (
     InformationInputMetadata,
     InformationInputProperty,
 )
-from cognite.neat.rules.transformers._converters import InformationToDMS, _InformationRulesConverter
+from cognite.neat.rules.transformers._converters import (
+    InformationToDMS,
+    ToCompliantEntities,
+    _InformationRulesConverter,
+)
 
 
 def case_insensitive_value_types():
@@ -317,6 +321,50 @@ class TestInformationRulesConverter:
         assert len(dms_rules.containers) == 2
 
 
+def non_compliant_entities():
+    yield pytest.param(
+        {
+            "Metadata": {
+                "role": "information architect",
+                "schema": "complete",
+                "creator": "Jon, Emma, David",
+                "namespace": "http://purl.org/cognite/power2consumer",
+                "prefix": "-power_or_not-",
+                "created": datetime(2024, 2, 9, 0, 0),
+                "updated": datetime(2024, 2, 9, 0, 0),
+                "version": "0.1.0",
+                "title": "Power to Consumer Data Model",
+                "license": "CC-BY 4.0",
+                "rights": "Free for use",
+            },
+            "Classes": [
+                {
+                    "Class": "Generating.Unit",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
+                    "Match": "exact",
+                }
+            ],
+            "Properties": [
+                {
+                    "Class": "Generating.Unit",
+                    "Property": "IdentifiedObject.name",
+                    "Description": None,
+                    "Value Type": "StrING",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Transformation": None,
+                }
+            ],
+        },
+        id="straightening_entities",
+    )
+
+
 class TestInformationConverter:
     @pytest.mark.parametrize(
         "name, expected",
@@ -361,3 +409,17 @@ class TestInformationConverter:
         actual = _InformationRulesConverter.convert_multi_data_type(multi)
 
         assert actual == expected
+
+    @pytest.mark.parametrize("rules_dict", list(non_compliant_entities()))
+    def test_to_compliant_entities(
+        self,
+        rules_dict: dict[str, dict[str, Any]],
+    ) -> None:
+        input_rules = InformationInputRules.load(rules_dict)
+
+        rules = ToCompliantEntities().transform(input_rules).get_rules().as_rules()
+
+        assert rules.metadata.prefix == "prefix_power_or_not_suffix"
+        assert rules.classes[0].class_.prefix == "prefix_power_or_not_suffix"
+        assert rules.properties[0].property_ == "IdentifiedObject_name"
+        assert rules.properties[0].value_type == data_types.String()
