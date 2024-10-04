@@ -18,7 +18,6 @@ InputRules: TypeAlias = AssetInputRules | DMSInputRules | InformationInputRules
 Rules: TypeAlias = (
     AssetInputRules | DMSInputRules | InformationInputRules | DomainRules | InformationRules | DMSRules | AssetRules
 )
-AllInformationRules: TypeAlias = InformationRules | InformationInputRules
 T_Rules = TypeVar("T_Rules", bound=Rules)
 T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
 T_InputRules = TypeVar("T_InputRules", bound=InputRules)
