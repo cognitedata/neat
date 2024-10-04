@@ -24,6 +24,8 @@ from pydantic import (
 from pydantic.main import IncEx
 from pydantic_core import core_schema
 
+from cognite.neat.rules.models._types import ClassEntityType, InformationPropertyType
+
 if sys.version_info >= (3, 11):
     from enum import StrEnum
     from typing import Self
@@ -348,3 +350,13 @@ ExtensionCategoryType = Annotated[
     ),
     BeforeValidator(lambda v: ExtensionCategory(v) if isinstance(v, str) else v),
 ]
+
+
+# Immutable such that this can be used as a key in a dictionary
+class PropertyRef(BaseModel, frozen=True):
+    class_: ClassEntityType = Field(alias="Class")
+    property_: InformationPropertyType = Field(alias="Property")
+
+
+class ClassRef(BaseModel, frozen=True):
+    class_: ClassEntityType = Field(alias="Class")

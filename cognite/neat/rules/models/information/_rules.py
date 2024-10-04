@@ -14,10 +14,12 @@ from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
+    ClassRef,
     DataModelType,
     ExtensionCategory,
     ExtensionCategoryType,
     MatchType,
+    PropertyRef,
     RoleTypes,
     SchemaCompleteness,
     SheetList,
@@ -171,6 +173,9 @@ class InformationClass(SheetRow):
             )
         return ",".join(str(value) for value in value)
 
+    def as_reference(self) -> ClassRef:
+        return ClassRef(Class=self.class_)
+
 
 class InformationProperty(SheetRow):
     """
@@ -313,6 +318,9 @@ class InformationProperty(SheetRow):
         return self.max_count in {float("inf"), None} or (
             isinstance(self.max_count, int | float) and self.max_count > 1
         )
+
+    def as_reference(self) -> PropertyRef:
+        return PropertyRef(Class=self.class_, Property=self.property_)
 
 
 class InformationRules(BaseRules):
