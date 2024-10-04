@@ -24,6 +24,13 @@ Changes are grouped as follows:
 - Renamed rules.examples to rules.catalog to start building catalog od data models
 - Improved IMF rules that will handle IMF AttributeType onboarding
 - Improved handling of unknown, multi-data, multi-objet and mixed value types in conversion from Information to DMS rules
+- Reorg prefixes
+- Added more detail regex testing of entities
+- Transformation is now generated for every RDF based rules importer
+
+### Added
+- Rules exporter that produces a spreadsheet template for instance creation based on definition of classes in the rules
+- Rules transformer which converts information rules entities to be DMS compliant
 
 ## [0.92.3] - 17-09-24
 ### Fixed

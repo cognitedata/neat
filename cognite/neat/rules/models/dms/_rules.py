@@ -25,15 +25,17 @@ from cognite.neat.rules.models._base_rules import (
     SheetRow,
 )
 from cognite.neat.rules.models._types import (
+    ClassEntityType,
+    ContainerEntityType,
+    DmsPropertyType,
     ExternalIdType,
-    PropertyType,
+    InformationPropertyType,
     StrListType,
     VersionType,
+    ViewEntityType,
 )
 from cognite.neat.rules.models.data_types import DataType
 from cognite.neat.rules.models.entities import (
-    ClassEntity,
-    ContainerEntity,
     ContainerEntityList,
     DMSEntity,
     DMSNodeEntity,
@@ -152,8 +154,8 @@ def _metadata(context: Any) -> DMSMetadata | None:
 
 
 class DMSProperty(SheetRow):
-    view: ViewEntity = Field(alias="View")
-    view_property: str = Field(alias="View Property")
+    view: ViewEntityType = Field(alias="View")
+    view_property: DmsPropertyType = Field(alias="View Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = Field(None, alias="Connection")
@@ -163,12 +165,12 @@ class DMSProperty(SheetRow):
     is_list: bool | None = Field(default=None, alias="Is List")
     default: str | int | dict | None = Field(None, alias="Default")
     reference: URLEntity | ReferenceEntity | None = Field(default=None, alias="Reference", union_mode="left_to_right")
-    container: ContainerEntity | None = Field(None, alias="Container")
-    container_property: str | None = Field(None, alias="Container Property")
+    container: ContainerEntityType | None = Field(None, alias="Container")
+    container_property: DmsPropertyType | None = Field(None, alias="Container Property")
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
-    class_: ClassEntity = Field(alias="Class (linage)")
-    property_: PropertyType = Field(alias="Property (linage)")
+    class_: ClassEntityType = Field(alias="Class (linage)")
+    property_: InformationPropertyType = Field(alias="Property (linage)")
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return self.view, self.view_property
@@ -233,13 +235,13 @@ class DMSProperty(SheetRow):
 
 
 class DMSContainer(SheetRow):
-    container: ContainerEntity = Field(alias="Container")
+    container: ContainerEntityType = Field(alias="Container")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     constraint: ContainerEntityList | None = Field(None, alias="Constraint")
     used_for: Literal["node", "edge", "all"] | None = Field("all", alias="Used For")
-    class_: ClassEntity = Field(alias="Class (linage)")
+    class_: ClassEntityType = Field(alias="Class (linage)")
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.container,)
@@ -289,14 +291,14 @@ class DMSContainer(SheetRow):
 
 
 class DMSView(SheetRow):
-    view: ViewEntity = Field(alias="View")
+    view: ViewEntityType = Field(alias="View")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     implements: ViewEntityList | None = Field(None, alias="Implements")
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     filter_: HasDataFilter | NodeTypeFilter | RawFilter | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="In Model")
-    class_: ClassEntity = Field(alias="Class (linage)")
+    class_: ClassEntityType = Field(alias="Class (linage)")
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.view,)
@@ -369,7 +371,7 @@ class DMSNode(SheetRow):
 
 
 class DMSEnum(SheetRow):
-    collection: ClassEntity = Field(alias="Collection")
+    collection: ClassEntityType = Field(alias="Collection")
     value: str = Field(alias="Value")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)

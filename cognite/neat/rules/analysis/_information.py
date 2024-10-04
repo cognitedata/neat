@@ -4,6 +4,7 @@ from typing import Any, cast
 from pydantic import ValidationError
 from rdflib import URIRef
 
+from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.models import SchemaCompleteness
 from cognite.neat.rules.models._rdfpath import (
     Hop,
@@ -11,7 +12,7 @@ from cognite.neat.rules.models._rdfpath import (
     SelfReferenceProperty,
     SingleProperty,
 )
-from cognite.neat.rules.models.entities import ClassEntity, EntityTypes, ReferenceEntity
+from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationProperty,

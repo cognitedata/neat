@@ -10,6 +10,7 @@ from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
 from cognite.neat.issues.errors import PropertyDefinitionError
+from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
@@ -28,9 +29,11 @@ from cognite.neat.rules.models._rdfpath import (
     parse_rule,
 )
 from cognite.neat.rules.models._types import (
+    ClassEntityType,
+    InformationPropertyType,
+    MultiValueTypeType,
     NamespaceType,
     PrefixType,
-    PropertyType,
     StrListType,
     VersionType,
 )
@@ -39,7 +42,6 @@ from cognite.neat.rules.models.entities import (
     ClassEntity,
     ClassEntityList,
     Entity,
-    EntityTypes,
     MultiValueTypeInfo,
     ReferenceEntity,
     Undefined,
@@ -135,7 +137,7 @@ class InformationClass(SheetRow):
         match_type: The match type of the resource being described and the source entity.
     """
 
-    class_: ClassEntity = Field(alias="Class")
+    class_: ClassEntityType = Field(alias="Class")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     parent: ClassEntityList | None = Field(alias="Parent Class", default=None)
@@ -189,11 +191,11 @@ class InformationProperty(SheetRow):
               knowledge graph. Defaults to None (no transformation)
     """
 
-    class_: ClassEntity = Field(alias="Class")
-    property_: PropertyType = Field(alias="Property")
+    class_: ClassEntityType = Field(alias="Class")
+    property_: InformationPropertyType = Field(alias="Property")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity = Field(
+    value_type: DataType | ClassEntityType | MultiValueTypeType | UnknownEntity = Field(
         alias="Value Type", union_mode="left_to_right"
     )
     min_count: int | None = Field(alias="Min Count", default=None)

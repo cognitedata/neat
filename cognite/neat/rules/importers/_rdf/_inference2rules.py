@@ -3,10 +3,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import cast
 
-from rdflib import RDF, Namespace, URIRef
+from rdflib import RDF
 from rdflib import Literal as RdfLiteral
 
-from cognite.neat.constants import DEFAULT_NAMESPACE, get_default_prefixes
+from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.issues.warnings import PropertyValueTypeUndefinedWarning
 from cognite.neat.rules.models._base_rules import MatchType
 from cognite.neat.rules.models.data_types import AnyURI
@@ -15,7 +15,7 @@ from cognite.neat.rules.models.information import (
     InformationMetadata,
 )
 from cognite.neat.store import NeatGraphStore
-from cognite.neat.utils.rdf_ import get_namespace, remove_namespace_from_uri, uri_to_short_form
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._base import DEFAULT_NON_EXISTING_NODE_TYPE, BaseRDFImporter
 
@@ -109,16 +109,10 @@ class InferenceImporter(BaseRDFImporter):
         """
         classes: dict[str, dict] = {}
         properties: dict[str, dict] = {}
-        prefixes: dict[str, Namespace] = get_default_prefixes()
         count_by_value_type_by_property: dict[str, dict[str, int]] = defaultdict(Counter)
-
-        # Adds default namespace to prefixes
-        prefixes[self._default_metadata().prefix] = self._default_metadata().namespace
 
         # Infers all the classes in the graph
         for class_uri, no_instances in self.graph.query(ORDERED_CLASSES_QUERY):  # type: ignore[misc]
-            self._add_uri_namespace_to_prefixes(cast(URIRef, class_uri), prefixes)
-
             if (class_id := remove_namespace_from_uri(class_uri)) in classes:
                 # handles cases when class id is already present in classes
                 class_id = f"{class_id}_{len(classes)+1}"
@@ -147,11 +141,7 @@ class InferenceImporter(BaseRDFImporter):
 
                     property_id = remove_namespace_from_uri(property_uri)
 
-                    self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
-
                     if value_type_uri := (data_type_uri or object_type_uri):
-                        self._add_uri_namespace_to_prefixes(cast(URIRef, value_type_uri), prefixes)
-
                         value_type_id = remove_namespace_from_uri(value_type_uri)
 
                     # this handles situations when property points to node that is not present in graph
@@ -176,10 +166,6 @@ class InferenceImporter(BaseRDFImporter):
                         "max_count": cast(RdfLiteral, occurrence).value,
                         "value_type": value_type_id,
                         "reference": property_uri,
-                        "transformation": (
-                            f"{uri_to_short_form(class_definition['reference'], prefixes)}"
-                            f"({uri_to_short_form(cast(URIRef, property_uri), prefixes)})"
-                        ),
                     }
 
                     count_by_value_type_by_property[id_][value_type_id] += 1
@@ -231,19 +217,7 @@ class InferenceImporter(BaseRDFImporter):
             "metadata": self._default_metadata().model_dump(),
             "classes": list(classes.values()),
             "properties": list(properties.values()),
-            "prefixes": prefixes,
         }
-
-    @classmethod
-    def _add_uri_namespace_to_prefixes(cls, URI: URIRef, prefixes: dict[str, Namespace]):
-        """Add URI to prefixes dict if not already present
-
-        Args:
-            URI: URI from which namespace is being extracted
-            prefixes: Dict of prefixes and namespaces
-        """
-        if Namespace(get_namespace(URI)) not in prefixes.values():
-            prefixes[f"prefix-{len(prefixes)+1}"] = Namespace(get_namespace(URI))
 
     def _default_metadata(self):
         return InformationMetadata(

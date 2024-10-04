@@ -76,6 +76,7 @@ def parse_imf_to_properties(graph: Graph, language: str = "en") -> list[dict]:
         BIND(REPLACE(?tempClassSegment, "-", "_") AS ?classSegment)
         BIND(IF(CONTAINS(?classString, "imf/"), CONCAT("IMF_", ?classSegment) , ?classSegment) AS ?class)
 
+
         # Finding the last segment of the property IRI
         BIND(STR(?imfProperty) AS ?propertyString)
         BIND(REPLACE(?propertyString, "^.*[/#]([^/#]*)$", "$1") AS ?tempPropertySegment)

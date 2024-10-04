@@ -2,6 +2,7 @@ import warnings
 from graphlib import TopologicalSorter
 from typing import cast
 
+from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.models import AssetRules
 from cognite.neat.rules.models._rdfpath import RDFPath
 from cognite.neat.rules.models.asset import AssetClass, AssetProperty
@@ -9,7 +10,6 @@ from cognite.neat.rules.models.entities import (
     AssetEntity,
     AssetFields,
     ClassEntity,
-    EntityTypes,
     ReferenceEntity,
     RelationshipEntity,
 )
