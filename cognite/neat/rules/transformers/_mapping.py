@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from cognite.neat.rules._shared import JustRules, OutRules
 from cognite.neat.rules.models import DMSRules, InformationRules
+from cognite.neat.rules.models._base_rules import ClassRef
 from cognite.neat.rules.models.dms import DMSProperty
 from cognite.neat.rules.models.entities import ReferenceEntity
 from cognite.neat.rules.models.mapping import RuleMapping
@@ -115,12 +116,16 @@ class RuleMapper(RulesTransformer[InformationRules, InformationRules]):
         input_rules = self._to_rules(rules)
 
         destination_by_source = self.mapping.properties.as_destination_by_source()
+        destination_cls_by_source = self.mapping.classes.as_destination_by_source()
         for prop in input_rules.properties:
             if destination_prop := destination_by_source.get(prop.as_reference()):
                 prop.class_ = destination_prop.class_
                 prop.property_ = destination_prop.property_
+            elif destination_cls := destination_cls_by_source.get(ClassRef(Class=prop.class_)):
+                # If the property is not in the mapping, but the class is,
+                # then we should map the class to the destination
+                prop.class_ = destination_cls.class_
 
-        destination_cls_by_source = self.mapping.classes.as_destination_by_source()
         for cls_ in input_rules.classes:
             if destination_cls := destination_cls_by_source.get(cls_.as_reference()):
                 cls_.class_ = destination_cls.class_
