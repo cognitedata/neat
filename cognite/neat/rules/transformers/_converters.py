@@ -67,7 +67,8 @@ class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRul
 
 
 class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInputRules]):  # type: ignore[misc]
-    """Converts input rules to rules with compliant entity IDs."""
+    """Converts input rules to rules with compliant entity IDs that match regex patters used
+    by DMS schema components."""
 
     def transform(
         self, rules: InformationInputRules | OutRules[InformationInputRules]
