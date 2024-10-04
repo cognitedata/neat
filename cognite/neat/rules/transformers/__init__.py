@@ -7,7 +7,7 @@ from ._converters import (
     InformationToDMS,
     ToCompliantEntities,
 )
-from ._mapping import RuleMapper, MapOneToOne
+from ._mapping import MapOneToOne, RuleMapper
 from ._pipelines import ImporterPipeline
 from ._verification import VerifyAnyRules, VerifyAssetRules, VerifyDMSRules, VerifyInformationRules
 

@@ -351,6 +351,7 @@ ExtensionCategoryType = Annotated[
     BeforeValidator(lambda v: ExtensionCategory(v) if isinstance(v, str) else v),
 ]
 
+
 # Immutable such that this can be used as a key in a dictionary
 class PropertyRef(BaseModel, frozen=True):
     class_: ClassEntityType = Field(alias="Class")
