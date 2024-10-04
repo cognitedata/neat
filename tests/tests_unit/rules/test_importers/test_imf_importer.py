@@ -13,9 +13,18 @@ def test_imf_importer():
     assert len(rules.properties) == 156
 
     # this is rdf:PlainLiteral edge case
+    class_property_pairs = InformationAnalysis(rules).class_property_pairs()
+
     assert (
-        InformationAnalysis(rules)
-        .class_property_pairs()[ClassEntity.load("pcaimf:IMF_1ccc23fc_42ca_4b8a_acd5_ef2beddf7f12")]["hasTerminal"]
-        .type_
+        class_property_pairs[ClassEntity.load("pcaimf:IMF_1ccc23fc_42ca_4b8a_acd5_ef2beddf7f12")]["hasTerminal"].type_
         == EntityTypes.object_property
+    )
+
+    assert (
+        str(
+            class_property_pairs[ClassEntity.load("pcaimf:IMF_1ccc23fc_42ca_4b8a_acd5_ef2beddf7f12")][
+                "hasTerminal"
+            ].transformation
+        )
+        == "prefix-3:1ccc23fc-42ca-4b8a-acd5-ef2beddf7f12(prefix-6:hasTerminal)"
     )

@@ -85,10 +85,11 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
     def _fix_entity(cls, entity: str) -> str:
         entity = re.sub(r"[^_a-zA-Z0-9]+", "_", entity)
 
-        # entity id must start and end with a letter
+        # entity id must start with a letter
         if not entity[0].isalpha():
             entity = "prefix_" + entity
-        if not entity[-1].isalpha():
+        # and end with a letter or number
+        if not entity[-1].isalnum():
             entity = entity + "_suffix"
 
         # removing any double underscores that could occur
