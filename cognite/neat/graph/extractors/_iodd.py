@@ -20,7 +20,7 @@ IODD = Namespace("http://www.io-link.com/IODD/2010/10/")
 XSI = Namespace("http://www.w3.org/2001/XMLSchema-instance/")
 
 XSI_XML_PREFIX = "{http://www.w3.org/2001/XMLSchema-instance}"
-
+P_DATA_IN_ID_OVERRIDE = "V_ProcessDataInput" #TODO: find a better way of configuring this one-off case
 
 class IODDExtractor(BaseExtractor):
     """
@@ -65,12 +65,14 @@ class IODDExtractor(BaseExtractor):
         the value associated with the Text element.
         """
         mapping = {}
-        if text_elements := get_children(
-            self.root, child_tag="Text", ignore_namespace=True, include_nested_children=True
+        if pl_root := get_children(self.root, "PrimaryLanguage", ignore_namespace=True, include_nested_children=True, no_children=1
         ):
-            for element in text_elements:
-                if id := element.attrib.get("id"):
-                    if value := element.attrib.get("value"):
+            if text_elements := get_children(
+                pl_root[0], child_tag="Text", ignore_namespace=True, include_nested_children=True
+            ):
+                for element in text_elements:
+                    if id := element.attrib.get("id"):
+                        value = element.attrib.get("value", "")
                         mapping[id] = value
         return mapping
 
@@ -106,10 +108,10 @@ class IODDExtractor(BaseExtractor):
         ):
             triples.extend(cls._process_data_collection2triples(pc_root[0], namespace, device_id))
 
-        if et_root := get_children(
-            root, "ExternalTextCollection", ignore_namespace=True, include_nested_children=True, no_children=1
+        if pl_root := get_children(
+            root, "PrimaryLanguage", ignore_namespace=True, include_nested_children=True, no_children=1
         ):
-            triples.extend(cls._text_elements2triples(et_root[0], namespace))
+            triples.extend(cls._text_elements2triples(pl_root[0], namespace))
 
         return triples
 
@@ -129,7 +131,7 @@ class IODDExtractor(BaseExtractor):
             for process_data_element in process_data_in:
                 if id := process_data_element.attrib.get("id"):
                     device_id_str = remove_namespace_from_uri(device_id)
-                    process_data_in_id = namespace[f"{device_id_str}.{id}"]
+                    process_data_in_id = namespace[f"{device_id_str}.{P_DATA_IN_ID_OVERRIDE}"]
 
                     # Create ProcessDataIn node
                     triples.append((process_data_in_id, RDF.type, IODD.ProcessDataIn))
@@ -179,8 +181,8 @@ class IODDExtractor(BaseExtractor):
                     triples.append((text_id, RDF.type, IODD.TextObject))
 
                     # Resolve text value related to the text item
-                    if value := element.attrib.get("value"):
-                        triples.append((text_id, IODD.value, Literal(value)))
+                    value = element.attrib.get("value", "")
+                    triples.append((text_id, IODD.value, Literal(value)))
 
         return triples
 
@@ -370,7 +372,7 @@ class IODDExtractor(BaseExtractor):
             for process_data_element in process_data_in:
                 if id := process_data_element.attrib.get("id"):
                     device_id_str = remove_namespace_from_uri(self.device_id)
-                    process_data_in_id = f"{device_id_str}.{id}"
+                    process_data_in_id = f"{device_id_str}.{P_DATA_IN_ID_OVERRIDE}"
                     if record_items := get_children(
                         process_data_element, "RecordItem", ignore_namespace=True, include_nested_children=True
                     ):
