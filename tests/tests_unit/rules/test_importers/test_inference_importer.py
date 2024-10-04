@@ -1,5 +1,6 @@
 from cognite.neat.graph.examples import nordic44_knowledge_graph
 from cognite.neat.graph.extractors import AssetsExtractor, RdfFileExtractor
+from cognite.neat.rules.analysis import InformationAnalysis
 from cognite.neat.rules.importers import InferenceImporter
 from cognite.neat.rules.models.data_types import Json
 from cognite.neat.rules.models.entities import MultiValueTypeInfo
@@ -31,7 +32,7 @@ def test_rdf_inference():
     )
 
     # we should have 4 multi-value property
-    assert len([prop_ for prop_ in rules.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]) == 4
+    assert len(InformationAnalysis(rules).multi_value_properties) == 4
 
 
 def test_rdf_inference_with_none_existing_node():
