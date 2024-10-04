@@ -26,6 +26,7 @@ Changes are grouped as follows:
 - Improved handling of unknown, multi-data, multi-objet and mixed value types in conversion from Information to DMS rules
 - Reorg prefixes
 - Added more detail regex testing of entities
+- Transformation is now generated for every RDF based rules importer
 
 ### Added
 - Rules exporter that produces a spreadsheet template for instance creation based on definition of classes in the rules
