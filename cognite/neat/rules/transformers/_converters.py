@@ -67,7 +67,8 @@ class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRul
 
 
 class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInputRules]):  # type: ignore[misc]
-    """Converts input rules to rules with compliant entity IDs."""
+    """Converts input rules to rules with compliant entity IDs that match regex patters used
+    by DMS schema components."""
 
     def transform(
         self, rules: InformationInputRules | OutRules[InformationInputRules]
@@ -116,7 +117,8 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
     def _fix_value_type(
         cls, value_type: str | DataType | ClassEntity | MultiValueTypeInfo
     ) -> str | DataType | ClassEntity | MultiValueTypeInfo:
-        fixed_value_type = value_type
+        fixed_value_type: str | DataType | ClassEntity | MultiValueTypeInfo
+
         if isinstance(value_type, str):
             # this is a multi value type but as string
             if " | " in value_type:
