@@ -22,9 +22,7 @@ class SplitMultiValueProperty(BaseTransformer):
     _use_only_once: bool = True
     _need_changes = frozenset({})
 
-    _object_property_template: str = """SELECT ?s ?o WHERE
-
-                            {{
+    _object_property_template: str = """SELECT ?s ?o WHERE{{
 
                                 ?s a <{subject_uri}> .
                                 ?s <{property_uri}> ?o .
@@ -32,15 +30,13 @@ class SplitMultiValueProperty(BaseTransformer):
 
                             }}"""
 
-    _datatype_property_template: str = """SELECT ?s ?o WHERE
-
-                            {{
+    _datatype_property_template: str = """SELECT ?s ?o WHERE {{
 
                                 ?s a <{subject_uri}> .
                                 ?s <{property_uri}> ?o .
                                 FILTER (datatype(?o) = <{datatype}>)
 
-                            }}"""
+                                }}"""
 
     def __init__(
         self,
@@ -68,17 +64,15 @@ class SplitMultiValueProperty(BaseTransformer):
                             cast(str, value_type.prefix), self.rules.metadata.namespace
                         )[value_type.suffix]
 
-                        query = self._object_property_template.format(
-                            subject_uri=subject_uri,
-                            property_uri=property_uri,
-                            object_uri=object_uri,
-                        )
-
-                        for s, o in graph.query(query):  # type: ignore [misc]
+                        for s, o in graph.query(  # type: ignore [misc]
+                            self._object_property_template.format(
+                                subject_uri=subject_uri,
+                                property_uri=property_uri,
+                                object_uri=object_uri,
+                            )
+                        ):
                             graph.remove((s, property_uri, o))
-
                             new_property = URIRef(f"{property_uri}_{value_type.suffix}")
-
                             graph.add((s, new_property, o))
 
                     elif isinstance(value_type, DataType) and not isinstance(value_type, AnyURI):
@@ -90,7 +84,5 @@ class SplitMultiValueProperty(BaseTransformer):
                             )
                         ):
                             graph.remove((s, property_uri, o))
-
                             new_property = URIRef(f"{property_uri}_{value_type.xsd}")
-
                             graph.add((s, new_property, o))
