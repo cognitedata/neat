@@ -7,7 +7,7 @@ from ._converters import (
     InformationToDMS,
     ToCompliantEntities,
 )
-from ._mapping import ClassicToCoreMapper, MapOneToOne
+from ._mapping import RuleMapper, MapOneToOne
 from ._pipelines import ImporterPipeline
 from ._verification import VerifyAnyRules, VerifyAssetRules, VerifyDMSRules, VerifyInformationRules
 
@@ -26,5 +26,5 @@ __all__ = [
     "VerifyAnyRules",
     "MapOneToOne",
     "ToCompliantEntities",
-    "ClassicToCoreMapper",
+    "RuleMapper",
 ]

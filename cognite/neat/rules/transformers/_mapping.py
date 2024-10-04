@@ -1,14 +1,13 @@
 from abc import ABC
 from collections import defaultdict
-from dataclasses import dataclass
 
-from cognite.neat.constants import CORE_CDF_NAMESPACE
+
 from cognite.neat.rules._shared import JustRules, OutRules
-from cognite.neat.rules.models import DMSRules, InformationInputRules
+from cognite.neat.rules.models import DMSRules, InformationInputRules, InformationRules
 from cognite.neat.rules.models.dms import DMSProperty
-from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
-from cognite.neat.rules.models.information import InformationInputClass, InformationInputProperty
-from cognite.neat.utils.rdf_ import remove_namespace_from_uri
+from cognite.neat.rules.models.mapping import RuleMapping
+from cognite.neat.rules.models.entities import ReferenceEntity
+
 
 from ._base import RulesTransformer
 
@@ -101,50 +100,32 @@ class MapOneToOne(MapOntoTransformers):
         return JustRules(solution)
 
 
-@dataclass
-class PropertyMapping:
-    source: InformationInputProperty
-    target: InformationInputProperty
+class RuleMapper(RulesTransformer[InformationRules, InformationRules]):
+    """Maps properties and classes using the given mapping.
 
+    **Note**: This transformer mutates the input rules.
 
-@dataclass
-class ClassMapping:
-    source: InformationInputClass
-    target: InformationInputClass
+    Args:
+        mapping: The mapping to use.
 
-
-@dataclass
-class Mapping:
-    properties: list[PropertyMapping]
-    classes: list[ClassMapping]
-
-
-class ClassicToCoreMapper(RulesTransformer[InformationInputRules, InformationInputRules]):
-    def __init__(self, mapping: Mapping) -> None:
+    """
+    def __init__(self, mapping: RuleMapping) -> None:
         self.mapping = mapping
 
     def transform(
-        self, rules: InformationInputRules | OutRules[InformationInputRules]
+        self, rules: InformationRules | OutRules[InformationRules]
     ) -> JustRules[InformationInputRules]:
         input_rules = self._to_rules(rules)
 
-        target_prop_by_source = {
-            (prop.source.class_, prop.source.property_): prop.target for prop in self.mapping.properties
-        }
-        target_cls_by_source = {cls.source.class_: cls.target for cls in self.mapping.classes}
-        meta = input_rules.metadata
-        classic = meta.prefix
-        core = remove_namespace_from_uri(CORE_CDF_NAMESPACE)
+        destination_by_source = self.mapping.properties.as_destination_by_source()
         for prop in input_rules.properties:
-            if (prop.class_, prop.property_) in target_prop_by_source:
-                target = target_prop_by_source[(prop.class_, prop.property_)]
-                source_cls = ClassEntity.load(prop.class_, prefix=classic)
-                target_cls = ClassEntity.load(target.class_, prefix=core)
-                prop.transformation = (
-                    f"{source_cls!s}({classic}:{prop.property_})->{target_cls!s}({core}:{target.property_})"
-                )
-                prop.property_ = target.property_
-                if prop.class_ in target_cls_by_source:
-                    prop.class_ = target_cls_by_source[prop.class_].class_
+            if destination := destination_by_source.get(prop.as_reference()):
+                prop.class_ = destination.class_
+                prop.property_ = destination.property_
+
+        destination_cls_by_source = self.mapping.classes.as_destination_by_source()
+        for cls_ in input_rules.classes:
+            if destination := destination_cls_by_source.get(cls_.as_reference()):
+                cls_.class_ = destination
 
         return JustRules(input_rules)

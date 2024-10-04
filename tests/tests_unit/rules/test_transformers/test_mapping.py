@@ -6,8 +6,8 @@ from cognite.neat.rules.models.information import (
     InformationInputMetadata,
     InformationInputProperty,
 )
-from cognite.neat.rules.transformers import ClassicToCoreMapper
-from cognite.neat.rules.transformers._mapping import ClassMapping, Mapping, PropertyMapping
+from cognite.neat.rules.models.mapping import RuleMapping, PropertyMapping, ClassMapping, PropertyRef, ClassRef
+from cognite.neat.rules.transformers import RuleMapper
 
 
 class TestClassicToCoreMapper:
@@ -38,34 +38,33 @@ class TestClassicToCoreMapper:
             )
         )
 
-        mapping = Mapping(
+
+        mapping = RuleMapping(
             properties=[
                 PropertyMapping(
-                    source=InformationInputProperty(
-                        class_="Asset",
+                    source=PropertyRef(
+                        Class=,
                         property_="name",
-                        value_type="string",
                     ),
-                    target=InformationInputProperty(
-                        class_="CogniteAsset",
+                    target=PropertyRef(
+                        Class="CogniteAsset",
                         property_="name",
-                        value_type="string",
                     ),
                 )
             ],
             classes=[
                 ClassMapping(
-                    source=InformationInputClass(
+                    source=ClassRef(
                         class_="Asset",
                     ),
-                    target=InformationInputClass(
+                    target=ClassRef(
                         class_="CogniteAsset",
                     ),
                 )
             ],
         )
 
-        transformed = ClassicToCoreMapper(mapping).transform(input_rules).rules
+        transformed = RuleMapper(mapping).transform(input_rules).rules
 
         assert transformed.properties == [
             InformationInputProperty(
