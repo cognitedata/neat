@@ -13,6 +13,7 @@ from cognite.neat.rules.models._rdfpath import (
     SingleProperty,
 )
 from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity
+from cognite.neat.rules.models.entities._multi_value import MultiValueTypeInfo
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationProperty,
@@ -227,3 +228,7 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
         # case 3 when class prefix is not found in prefixes of rules
         else:
             return None
+
+    @property
+    def multi_value_properties(self) -> list[InformationProperty]:
+        return [prop_ for prop_ in self.rules.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]
