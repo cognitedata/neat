@@ -14,6 +14,7 @@ EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "workflows" / "examples"
 DEFAULT_SPACE_URI = "http://purl.org/cognite/{space}#"
 DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/neat#")
 CLASSIC_CDF_NAMESPACE = Namespace("http://purl.org/cognite/cdf-classic#")
+UNKNOWN_TYPE = DEFAULT_NAMESPACE.UnknownType
 
 
 def get_default_prefixes() -> dict[str, Namespace]:
