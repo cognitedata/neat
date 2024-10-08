@@ -9,7 +9,7 @@ from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace
 
 from cognite.neat.constants import get_default_prefixes
-from cognite.neat.issues.errors import PropertyDefinitionError
+from cognite.neat.issues.errors import NeatValueError, PropertyDefinitionError
 from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.models._base_rules import (
     BaseMetadata,
@@ -208,7 +208,7 @@ class InformationProperty(SheetRow):
     default: Any | None = Field(alias="Default", default=None)
     reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     match_type: MatchType | None = Field(alias="Match Type", default=None)
-    transformation: str | RDFPath | None = Field(alias="Transformation", default=None)
+    transformation: RDFPath | None = Field(alias="Transformation", default=None)
     comment: str | None = Field(alias="Comment", default=None)
     inherited: bool = Field(
         default=False,
@@ -226,12 +226,14 @@ class InformationProperty(SheetRow):
             return float("inf")
         return value
 
-    @model_validator(mode="after")
-    def generate_valid_transformation(self):
-        # TODO: Currently only supporting RDFpath
-        if self.transformation:
-            self.transformation = parse_rule(self.transformation, TransformationRuleType.rdfpath)
-        return self
+    @field_validator("transformation", mode="before")
+    def generate_rdfpath(cls, value: str | RDFPath | None) -> RDFPath | None:
+        if value is None or isinstance(value, RDFPath):
+            return value
+        elif isinstance(value, str):
+            return parse_rule(value, TransformationRuleType.rdfpath)
+        else:
+            raise NeatValueError(f"Invalid RDF Path: {value!s}")
 
     @model_validator(mode="after")
     def set_default_as_list(self):

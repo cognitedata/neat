@@ -32,6 +32,7 @@ Changes are grouped as follows:
 - Rules exporter that produces a spreadsheet template for instance creation based on definition of classes in the rules
 - Rules transformer which converts information rules entities to be DMS compliant
 - Rules transformer `RuleMapping` that maps rules from one data model to another
+- Graph transformer `SplitMultiValueProperty` which splits multi-value properties into separate properties with single value
 
 ## [0.92.3] - 17-09-24
 ### Fixed

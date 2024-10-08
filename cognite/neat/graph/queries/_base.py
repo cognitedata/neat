@@ -1,11 +1,13 @@
 import warnings
 from collections import defaultdict
+from collections.abc import Iterable
 from typing import Literal, cast, overload
 
 from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 from rdflib.query import ResultRow
 
+from cognite.neat.constants import UNKNOWN_TYPE
 from cognite.neat.graph.models import InstanceType
 from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.models.entities import ClassEntity
@@ -286,3 +288,33 @@ class Queries:
         if remove_namespace:
             return [remove_namespace_from_uri(res[0]) for res in result]
         return result
+
+    def multi_value_type_property(
+        self,
+    ) -> Iterable[tuple[URIRef, URIRef, list[URIRef]]]:
+        query = """SELECT ?sourceType ?property
+                          (GROUP_CONCAT(DISTINCT STR(?valueType); SEPARATOR=",") AS ?valueTypes)
+
+                   WHERE {{
+                       ?s ?property ?o .
+                       ?s a ?sourceType .
+                       OPTIONAL {{ ?o a ?type }}
+
+                       # Key part to determine value type: either object, data or unknown
+                       BIND(   IF(isLiteral(?o),DATATYPE(?o),
+                               IF(BOUND(?type), ?type,
+                                               <{unknownType}>)) AS ?valueType)
+                   }}
+
+                   GROUP BY ?sourceType ?property
+                   HAVING (COUNT(DISTINCT ?valueType) > 1)"""
+
+        for (
+            source_type,
+            property_,
+            value_types,
+        ) in cast(
+            ResultRow,
+            self.graph.query(query.format(unknownType=str(UNKNOWN_TYPE))),
+        ):
+            yield cast(URIRef, source_type), cast(URIRef, property_), [URIRef(uri) for uri in value_types.split(",")]
