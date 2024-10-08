@@ -3,7 +3,6 @@ from rdflib import XSD, Graph, URIRef
 from cognite.neat.constants import UNKNOWN_TYPE
 from cognite.neat.graph.queries import Queries
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
-from cognite.neat.utils.text import to_camel
 
 from ._base import BaseTransformer
 
@@ -28,7 +27,7 @@ class SplitMultiValueProperty(BaseTransformer):
 
                                 ?s a <{subject_uri}> .
                                 ?s <{property_uri}> ?o .
-                                FILTER (datatype(?o) = <{datatype}>)
+                                FILTER (datatype(?o) = <{object_uri}>)
 
                                 }}"""
 
@@ -63,5 +62,5 @@ class SplitMultiValueProperty(BaseTransformer):
 
                 for s, o in iterator:  # type: ignore [misc]
                     graph.remove((s, property_uri, o))
-                    new_property = URIRef(f"{property_uri}_{to_camel(remove_namespace_from_uri(value_type_uri))}")
+                    new_property = URIRef(f"{property_uri}_{remove_namespace_from_uri(value_type_uri)}")
                     graph.add((s, new_property, o))
