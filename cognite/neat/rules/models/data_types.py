@@ -35,6 +35,7 @@ class DataType(BaseModel):
         "token",
         "float",
         "double",
+        "decimal",
         "integer",
         "nonPositiveInteger",
         "nonNegativeInteger",
@@ -161,6 +162,17 @@ class Double(DataType):
     sql = "FLOAT"
 
     name: typing.Literal["double"] = "double"
+    unit: UnitEntity | None = None
+
+
+class Decimal(DataType):
+    python = float
+    dms = dms.Float64
+    graphql = "Float"
+    xsd = "decimal"
+    sql = "FLOAT"
+
+    name: typing.Literal["decimal"] = "decimal"
     unit: UnitEntity | None = None
 
 
