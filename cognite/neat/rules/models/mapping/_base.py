@@ -1,3 +1,4 @@
+from collections import Counter, defaultdict
 from collections.abc import Iterator, MutableSequence, Sequence
 from pathlib import Path
 from typing import Any, Generic, SupportsIndex, TypeVar, get_args, overload
@@ -6,7 +7,9 @@ import pandas as pd
 from pydantic import BaseModel, GetCoreSchemaHandler
 from pydantic_core import core_schema
 
+from cognite.neat.issues.errors import NeatValueError
 from cognite.neat.rules.models._base_rules import ClassRef, PropertyRef
+from cognite.neat.rules.models.entities import ClassEntity
 
 T_Mapping = TypeVar("T_Mapping", bound=ClassRef | PropertyRef)
 
@@ -68,12 +71,48 @@ class RuleMapping(BaseModel):
     classes: MappingList[ClassRef]
 
     @classmethod
-    def load(cls, data: dict[str, Any]) -> "RuleMapping":
-        return cls(
-            properties=MappingList[PropertyRef](data["properties"]),
-            classes=MappingList[ClassRef](data["classes"]),
-        )
-
-    @classmethod
     def load_spreadsheet(cls, path: str | Path) -> "RuleMapping":
-        raise NotImplementedError()
+        """Loads mapping from Excel spreadsheet.
+
+        This method expects four columns in the spreadsheet. The first two columns are the source class and
+        property, and the last two columns are the destination class and property. The method will create
+        a mapping for each row in the spreadsheet.
+
+        The class mapping will be inferred from the property mappings. If a source class has multiple
+        destination classes, the most common destination class will be used.
+
+        Args:
+            path: Path to Excel spreadsheet.
+
+        Returns:
+            Mapping object.
+
+        """
+        df = pd.read_excel(path).dropna(axis=1, how="all")
+        properties = MappingList[PropertyRef]()
+        destination_classes_by_source: dict[ClassEntity, Counter[ClassEntity]] = defaultdict(Counter)
+        for _, row in df.iterrows():
+            if len(row) < 4:
+                raise NeatValueError(f"Row {row} is not valid. Expected 4 columns, got {len(row)}")
+
+            if any(pd.isna(row.iloc[:4])):
+                continue
+            source_class, source_property, destination_class, destination_property = row.iloc[:4]
+            source_entity = ClassEntity.load(source_class)
+            destination_entity = ClassEntity.load(destination_class)
+            properties.append(
+                Mapping(
+                    source=PropertyRef(Class=source_entity, Property=source_property),
+                    destination=PropertyRef(Class=destination_entity, Property=destination_property),
+                )
+            )
+            destination_classes_by_source[source_entity][destination_entity] += 1
+
+        classes = MappingList[ClassRef]()
+        for source_entity, destination_classes in destination_classes_by_source.items():
+            destination_entity = destination_classes.most_common(1)[0][0]
+            classes.append(
+                Mapping(source=ClassRef(Class=source_entity), destination=ClassRef(Class=destination_entity))
+            )
+
+        return cls(properties=properties, classes=classes)
