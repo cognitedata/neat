@@ -10,7 +10,7 @@ from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.issues.errors import NeatValueError
 from cognite.neat.rules.models._base_rules import ClassRef, PropertyRef
-from cognite.neat.rules.models.entities import ClassEntity
+from cognite.neat.rules.models.entities import ClassEntity, Undefined
 
 T_Mapping = TypeVar("T_Mapping", bound=ClassRef | PropertyRef)
 
@@ -80,7 +80,9 @@ class RuleMapping(BaseModel):
         return value
 
     @classmethod
-    def load_spreadsheet(cls, path: str | Path) -> "RuleMapping":
+    def load_spreadsheet(
+        cls, path: str | Path, source_prefix: str | None = None, destination_prefix: str | None = None
+    ) -> "RuleMapping":
         """Loads mapping from Excel spreadsheet.
 
         This method expects four columns in the spreadsheet. The first two columns are the source class and
@@ -92,6 +94,8 @@ class RuleMapping(BaseModel):
 
         Args:
             path: Path to Excel spreadsheet.
+            source_prefix: Default prefix for source classes.
+            destination_prefix: Default prefix for destination classes.
 
         Returns:
             Mapping object.
@@ -107,8 +111,8 @@ class RuleMapping(BaseModel):
             if any(pd.isna(row.iloc[:4])):
                 continue
             source_class, source_property, destination_class, destination_property = row.iloc[:4]
-            source_entity = ClassEntity.load(source_class)
-            destination_entity = ClassEntity.load(destination_class)
+            source_entity = ClassEntity.load(source_class, prefix=source_prefix or Undefined)
+            destination_entity = ClassEntity.load(destination_class, prefix=destination_prefix or Undefined)
             properties.append(
                 Mapping(
                     source=PropertyRef(Class=source_entity, Property=source_property),
