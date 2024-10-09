@@ -40,7 +40,9 @@ class TestExtractToLoadFlow:
         for extractor in classic_windfarm.create_extractors():
             store.write(extractor)
 
-        read_rules = InferenceImporter.from_graph_store(store, non_existing_node_type=UnknownEntity()).to_rules()
+        read_rules = InferenceImporter.from_graph_store(
+            store, non_existing_node_type=UnknownEntity(), prefix="classic"
+        ).to_rules()
         # Ensure deterministic output
         read_rules.rules.metadata.created = "2024-09-19T00:00:00Z"
         read_rules.rules.metadata.updated = "2024-09-19T00:00:00Z"
