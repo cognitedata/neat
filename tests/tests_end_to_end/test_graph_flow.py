@@ -53,6 +53,25 @@ class TestExtractToLoadFlow:
 
         mapped = RuleMapper(create_classic_to_core_mapping()).transform(verified).rules
 
+        # We need to rename the classes to non-reserved names
+        naming_mapping: dict[ClassEntity, ClassEntity] = {}
+        for cls_ in mapped.classes:
+            if not cls_.class_.suffix.startswith("Cognite"):
+                new_name = f"Classic{cls_.class_.suffix}"
+                source = cls_.class_
+                cls_.class_ = ClassEntity(prefix=cls_.class_.prefix, suffix=new_name)
+                naming_mapping[source] = cls_.class_
+
+        # We need to filter out the DMS reserved properties from the rules
+        new_properties = SheetList[InformationProperty]()
+        for prop in mapped.properties:
+            if prop.property_ in RESERVED_PROPERTIES:
+                continue
+            if prop.class_ in naming_mapping:
+                prop.class_ = naming_mapping[prop.class_]
+            new_properties.append(prop)
+        mapped.properties = new_properties
+
         store.add_rules(mapped)
 
         # Manually remove duplicated property, up for discussion how to handle this.
