@@ -1,11 +1,12 @@
 from collections import Counter, defaultdict
 from collections.abc import Iterator, MutableSequence, Sequence
 from pathlib import Path
-from typing import Any, Generic, SupportsIndex, TypeVar, get_args, overload
+from typing import Any, Generic, SupportsIndex, TypeVar, cast, get_args, overload
 
 import pandas as pd
-from pydantic import BaseModel, GetCoreSchemaHandler
+from pydantic import BaseModel, GetCoreSchemaHandler, field_validator
 from pydantic_core import core_schema
+from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat.issues.errors import NeatValueError
 from cognite.neat.rules.models._base_rules import ClassRef, PropertyRef
@@ -69,6 +70,14 @@ class MappingList(list, MutableSequence[Mapping[T_Mapping]]):
 class RuleMapping(BaseModel):
     properties: MappingList[PropertyRef]
     classes: MappingList[ClassRef]
+
+    @field_validator("properties", "classes", mode="before")
+    def as_mapping_list(cls, value: Sequence[Any], info: ValidationInfo) -> Any:
+        if isinstance(value, Sequence) and not isinstance(value, MappingList):
+            annotation = cast(type, cls.model_fields[info.field_name].annotation)  # type: ignore[index]
+            ref_cls = get_args(annotation)[0]
+            return annotation([Mapping[ref_cls].model_validate(item) for item in value])  # type: ignore[valid-type, index]
+        return value
 
     @classmethod
     def load_spreadsheet(cls, path: str | Path) -> "RuleMapping":
