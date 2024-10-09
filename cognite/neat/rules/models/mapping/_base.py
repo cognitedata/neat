@@ -1,4 +1,5 @@
 from collections.abc import Iterator, MutableSequence, Sequence
+from pathlib import Path
 from typing import Any, Generic, SupportsIndex, TypeVar, get_args, overload
 
 import pandas as pd
@@ -65,3 +66,14 @@ class MappingList(list, MutableSequence[Mapping[T_Mapping]]):
 class RuleMapping(BaseModel):
     properties: MappingList[PropertyRef]
     classes: MappingList[ClassRef]
+
+    @classmethod
+    def load(cls, data: dict[str, Any]) -> "RuleMapping":
+        return cls(
+            properties=MappingList[PropertyRef](data["properties"]),
+            classes=MappingList[ClassRef](data["classes"]),
+        )
+
+    @classmethod
+    def load_spreadsheet(cls, path: str | Path) -> "RuleMapping":
+        raise NotImplementedError()
