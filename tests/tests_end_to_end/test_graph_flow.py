@@ -8,8 +8,8 @@ from cognite.neat.graph.loaders import DMSLoader
 from cognite.neat.rules.exporters import YAMLExporter
 from cognite.neat.rules.importers import InferenceImporter
 from cognite.neat.rules.models.entities import UnknownEntity
-from cognite.neat.rules.models.information import InformationInputProperty
-from cognite.neat.rules.transformers import InformationToDMS, VerifyInformationRules
+from cognite.neat.rules.models.mapping import create_classic_to_core_mapping
+from cognite.neat.rules.transformers import InformationToDMS, RuleMapper, VerifyInformationRules
 from cognite.neat.store import NeatGraphStore
 from tests.data import classic_windfarm
 
@@ -45,24 +45,11 @@ class TestExtractToLoadFlow:
         read_rules.rules.metadata.created = "2024-09-19T00:00:00Z"
         read_rules.rules.metadata.updated = "2024-09-19T00:00:00Z"
 
-        # We need to rename the classes to non-reserved names
-        naming_mapping: dict[str, str] = {}
-        for cls_ in read_rules.rules.classes:
-            new_name = f"Classic{cls_.class_}"
-            naming_mapping[cls_.class_] = new_name
-            cls_.class_ = new_name
-
-        # We need to filter out the DMS reserved properties from the rules
-        new_properties: list[InformationInputProperty] = []
-        for prop in read_rules.rules.properties:
-            if prop.property_ not in RESERVED_PROPERTIES:
-                prop.class_ = naming_mapping[prop.class_]
-                new_properties.append(prop)
-        read_rules.rules.properties = new_properties
-
         verified = VerifyInformationRules(errors="raise").transform(read_rules).get_rules()
 
-        store.add_rules(verified)
+        mapped = RuleMapper(create_classic_to_core_mapping()).transform(verified).rules
+
+        store.add_rules(mapped)
 
         dms_rules = InformationToDMS().transform(verified).get_rules()
 
