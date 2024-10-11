@@ -1,11 +1,12 @@
-from collections.abc import Iterable
+import warnings
 from typing import cast
 
-from rdflib import RDF, Graph, Literal, URIRef
+from rdflib import RDF, Graph, Literal, Namespace, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat.constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat.graph import extractors
+from cognite.neat.issues.warnings import ResourceNotFoundWarning
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseTransformer
@@ -332,144 +333,115 @@ class RelationshipToSchemaTransformer(BaseTransformer):
 
     """
 
-    def __init__(self, limit: int = 1) -> None:
-        self.limit = limit
+    def __init__(self, limit: int = 1, namespace: Namespace = CLASSIC_CDF_NAMESPACE) -> None:
+        self._limit = limit
+        self._namespace = namespace
 
-    _RELATIONSHIP_PROPERTIES: frozenset[str] = frozenset({"confidence", "start_time", "end_time"})
+    _NOT_PROPERTIES: frozenset[str] = frozenset(
+        {"source_external_id", "target_external_id", "external_id", "source_type", "target_type"}
+    )
     _RELATIONSHIP_NODE_TYPES: tuple[str, ...] = tuple(["Asset", "Event", "File", "Sequence", "TimeSeries"])
     description = "Replaces relationships with a schema"
     _use_only_once: bool = True
     _need_changes = frozenset({str(extractors.RelationshipsExtractor.__name__)})
 
-    # Hardcoded namespace for the classic CDF.
-    _list_by_label = """PREFIX classic: <http://purl.org/cognite/cdf-classic#>
-
-SELECT ?label (COUNT(?instance) AS ?instanceCount)
-WHERE {{
-  ?instance a classic:Relationship ;
-  classic:source_type classic:{source_type} ;
-  classic:target_type classic:{target_type} ;
-  classic:label ?label
-}}
-GROUP BY ?label
-ORDER BY ?label"""
-
-    _instance_by_label = """PREFIX classic: <http://purl.org/cognite/cdf-classic#>
-
-SELECT ?instance
-WHERE {{
-    ?instance a classic:Relationship ;
-    classic:source_type classic:{source_type} ;
-    classic:target_type classic:{target_type} ;
-    classic:label <{label}>
-}}"""
-
-    _list_without_label = """PREFIX classic: <http://purl.org/cognite/cdf-classic#>
+    _count_by_source_target = """PREFIX classic: <{namespace}>
 
 SELECT (COUNT(?instance) AS ?instanceCount)
 WHERE {{
   ?instance a classic:Relationship .
   ?instance classic:source_type classic:{source_type} .
   ?instance classic:target_type classic:{target_type} .
-  FILTER NOT EXISTS {{ ?instance classic:label ?label }}
 }}"""
 
-    _instances_without_label = """PREFIX classic: <http://purl.org/cognite/cdf-classic#>
+    _instances = """PREFIX classic: <{namespace}>
 
 SELECT ?instance
 WHERE {{
     ?instance a classic:Relationship .
     ?instance classic:source_type classic:{source_type} .
     ?instance classic:target_type classic:{target_type} .
-    FILTER NOT EXISTS {{ ?instance classic:label ?label }}
+}}"""
+    _lookup_entity_query = """PREFIX classic: <{namespace}>
+
+SELECT ?entity
+WHERE {{
+    ?entity a classic:{entity_type} .
+    ?entity classic:external_id "{external_id}" .
 }}"""
 
     def transform(self, graph: Graph) -> None:
         for source_type in self._RELATIONSHIP_NODE_TYPES:
             for target_type in self._RELATIONSHIP_NODE_TYPES:
-                for label, instance_count in self._query_label_with_instance_count(graph, source_type, target_type):
-                    if int(instance_count) < self.limit:
+                query = self._count_by_source_target.format(
+                    namespace=self._namespace, source_type=source_type, target_type=target_type
+                )
+                for instance_count in graph.query(query):
+                    if int(instance_count[0]) < self._limit:  # type: ignore[index, arg-type]
                         continue
-                    for result in self._query_instances(graph, source_type, target_type, label):
+                    query = self._instances.format(
+                        namespace=self._namespace, source_type=source_type, target_type=target_type
+                    )
+                    for result in graph.query(query):
                         instance_id = cast(URIRef, result[0])  # type: ignore[index, misc]
-                        self._convert_relationship_to_schema(graph, instance_id, label, source_type, target_type)
-
-    def _query_label_with_instance_count(
-        self, graph: Graph, source_type: str, target_type: str
-    ) -> Iterable[tuple[URIRef, Literal]]:
-        # Find all relationships with label.
-        # Note as one relationship can have multiple labels, the same relationship can be counted multiple times
-        yield from graph.query(self._list_by_label.format(source_type=source_type, target_type=target_type))  # type: ignore[misc]
-        # Find all relationships without label, and use the fallback label
-        fallback_label = self._fallback_label(target_type)
-        yield from (  # type: ignore[misc]
-            (fallback_label, instance_count)
-            for instance_count in graph.query(
-                self._list_without_label.format(source_type=source_type, target_type=target_type)
-            )
-        )
-
-    def _query_instances(
-        self, graph: Graph, source_type: str, target_type: str, label: URIRef
-    ) -> Iterable[tuple[URIRef]]:
-        if label == self._fallback_label(target_type):
-            yield from graph.query(  # type: ignore[misc]
-                self._instances_without_label.format(source_type=source_type, target_type=target_type)
-            )
-        else:
-            yield from graph.query(  # type: ignore[misc]
-                self._instance_by_label.format(source_type=source_type, target_type=target_type, label=label)
-            )
+                        self._convert_relationship_to_schema(graph, instance_id, source_type, target_type)
 
     def _convert_relationship_to_schema(
-        self, graph: Graph, instance_id: URIRef, label: URIRef, source_type: str, target_type: str
+        self, graph: Graph, instance_id: URIRef, source_type: str, target_type: str
     ) -> None:
         result = cast(list[ResultRow], list(graph.query(f"DESCRIBE <{instance_id}>")))
         object_by_predicates = cast(
             dict[str, URIRef | Literal], {remove_namespace_from_uri(row[1]): row[2] for row in result}
         )
+        source_external_id = cast(URIRef, object_by_predicates["source_external_id"])
+        target_source_id = cast(URIRef, object_by_predicates["target_external_id"])
+        try:
+            source_id = self._lookup_entity(graph, source_type, source_external_id)
+        except ValueError:
+            warnings.warn(ResourceNotFoundWarning(source_external_id, "class", str(instance_id), "class"), stacklevel=2)
+            return None
+        try:
+            target_id = self._lookup_entity(graph, target_type, target_source_id)
+        except ValueError:
+            warnings.warn(ResourceNotFoundWarning(target_source_id, "class", str(instance_id), "class"), stacklevel=2)
+            return None
+        external_id = str(object_by_predicates["external_id"])
+        # If there is properties on the relationship, we create a new intermediate node
+        self._create_node(graph, object_by_predicates, external_id, source_id, target_id, self._predicate(target_type))
 
-        has_properties = bool(set(object_by_predicates) & self._RELATIONSHIP_PROPERTIES)
-        source_id = cast(URIRef, object_by_predicates["source_external_id"])
-        target_id = cast(URIRef, object_by_predicates["target_external_id"])
-        external_id = cast(URIRef, object_by_predicates["external_id"])
-        if has_properties:
-            # If there is properties on the relationship, we create a new intermediate node
-            self._create_node(graph, object_by_predicates, external_id, source_id, target_id, label)
-        else:
-            # Add a new relationship between the source and target nodes
-            graph.add((source_id, label, target_id))
+        for triple in result:
+            graph.remove(triple)  # type: ignore[arg-type]
 
-        triples = ".\n  ".join(str(triple) for triple in result)
-        graph.query(f"""DELETE DATA {{
-{triples}
-}}""")
+    def _lookup_entity(self, graph: Graph, entity_type: str, external_id: str) -> URIRef:
+        query = self._lookup_entity_query.format(
+            namespace=self._namespace, entity_type=entity_type, external_id=external_id
+        )
+        result = list(graph.query(query))
+        if len(result) == 1:
+            return cast(URIRef, result[0][0])  # type: ignore[index]
+        raise ValueError(f"Could not find entity with external_id {external_id} and type {entity_type}")
 
     def _create_node(
         self,
         graph: Graph,
         objects_by_predicates: dict[str, URIRef | Literal],
-        instance_id: URIRef,
+        external_id: str,
         source_id: URIRef,
         target_id: URIRef,
-        label: URIRef,
+        predicate: URIRef,
     ) -> None:
-        """Creates a new intermediate node for the relationship with properties.
-
-        A few comments on possible improvements:
-
-        * If a relationship has multiple properties, we will end up with an entity with multiple RDF types.
-        * We could add an extra triple to indicate that in DMS this should be modeled as an edge.
-
-        """
+        """Creates a new intermediate node for the relationship with properties."""
         # Create new node
-        graph.add((instance_id, RDF.type, label))
-        for prop_name in self._RELATIONSHIP_PROPERTIES & {"data_set_id"}:
-            if prop_value := objects_by_predicates.get(prop_name):
-                graph.add((instance_id, CLASSIC_CDF_NAMESPACE[prop_name], prop_value))
-        graph.add((source_id, label, instance_id))
-        graph.add((instance_id, CLASSIC_CDF_NAMESPACE["end_node"], target_id))
+        instance_id = self._namespace[external_id]
+        graph.add((instance_id, RDF.type, self._namespace["Edge"]))
+        for prop_name, object_ in objects_by_predicates.items():
+            if prop_name in self._NOT_PROPERTIES:
+                continue
+            graph.add((instance_id, self._namespace[prop_name], object_))
 
-    @staticmethod
-    def _fallback_label(target_type: str) -> URIRef:
-        return CLASSIC_CDF_NAMESPACE[f"relationship{target_type.capitalize()}"]
+        # Connect the new node to the source and target nodes
+        graph.add((source_id, predicate, instance_id))
+        graph.add((instance_id, self._namespace["end_node"], target_id))
+
+    def _predicate(self, target_type: str) -> URIRef:
+        return self._namespace[f"relationship{target_type.capitalize()}"]
