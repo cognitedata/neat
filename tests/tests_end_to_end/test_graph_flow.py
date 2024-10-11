@@ -5,6 +5,7 @@ from cognite.client.data_classes.data_modeling import InstanceApply
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat.graph.loaders import DMSLoader
+from cognite.neat.graph.transformers import RelationshipToSchemaTransformer
 from cognite.neat.rules.exporters import YAMLExporter
 from cognite.neat.rules.importers import InferenceImporter
 from cognite.neat.rules.models import SheetList
@@ -41,6 +42,8 @@ class TestExtractToLoadFlow:
         store = NeatGraphStore.from_oxi_store()
         for extractor in classic_windfarm.create_extractors():
             store.write(extractor)
+
+        store.transform(RelationshipToSchemaTransformer())
 
         read_rules = InferenceImporter.from_graph_store(
             store, non_existing_node_type=UnknownEntity(), prefix="classic"

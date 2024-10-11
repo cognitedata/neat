@@ -313,3 +313,25 @@ class AssetRelationshipConnector(BaseTransformer):
                     # remove properties that are not needed, specifically the external ids
                     graph.remove((relationship_id, self.relationship_source_xid_prop, None))
                     graph.remove((relationship_id, self.relationship_target_xid_prop, None))
+
+
+class RelationshipToSchemaTransformer(BaseTransformer):
+    """Replaces relationships with a schema.
+
+    This transformer analyzes the relationships in the graph and modifies them to be part of the schema
+    for Assets, Events, Files, Sequences, and TimeSeries. Relationships without any properties
+    are replaced by a simple relationship between the source and target nodes. Relationships with
+    properties are replaced by a schema that contains the properties as attributes.
+
+    """
+
+    description = "Replaces relationships with a schema"
+    _use_only_once: bool = True
+    _need_changes = frozenset(
+        {
+            str(extractors.RelationshipsExtractor.__name__),
+        }
+    )
+
+    def transform(self, graph: Graph) -> None:
+        raise NotImplementedError()
