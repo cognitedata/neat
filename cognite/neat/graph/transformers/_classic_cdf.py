@@ -1,8 +1,9 @@
+from collections.abc import Iterable
 from typing import cast
 
 from rdflib import RDF, Graph, Literal, URIRef
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
+from cognite.neat.constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat.graph import extractors
 
 from ._base import BaseTransformer
@@ -323,15 +324,93 @@ class RelationshipToSchemaTransformer(BaseTransformer):
     are replaced by a simple relationship between the source and target nodes. Relationships with
     properties are replaced by a schema that contains the properties as attributes.
 
+    Args:
+        limit: The minimum number of relationships that need to be present for it
+            to be converted into a schema. Default is 1.
+
     """
 
-    _RELATIONSHIP_PROPERTIES: tuple[str, ...] = tuple(["confidence", "startTime", "endTime"])
-    _RELATIONSHIP_NODE_TYPES: tuple[str, ...] = tuple(["asset", "event", "file", "sequence", "timeSeries"])
+    def __init__(self, limit: int = 1) -> None:
+        self.limit = limit
+
+    _RELATIONSHIP_PROPERTIES: tuple[str, ...] = tuple(["confidence", "start_time", "end_time"])
+    _RELATIONSHIP_NODE_TYPES: tuple[str, ...] = tuple(["Asset", "Event", "File", "Sequence", "TimeSeries"])
     description = "Replaces relationships with a schema"
     _use_only_once: bool = True
     _need_changes = frozenset({str(extractors.RelationshipsExtractor.__name__)})
 
+    # Hardcoded namespace for the classic CDF.
+    _list_by_label = """PREFIX classic: <http://purl.org/cognite/cdf-classic#>
+
+SELECT ?label (COUNT(?instance) AS ?instanceCount)
+WHERE {{
+  ?instance a classic:Relationship ;
+  classic:source_type classic:{source_type} ;
+  classic:target_type classic:{target_type} ;
+  classic:label ?label
+}}
+GROUP BY ?label
+ORDER BY ?label"""
+
+    _instance_by_label = """PREFIX classic: <http://purl.org/cognite/cdf-classic#>
+
+SELECT ?instance
+WHERE {{
+    ?instance a classic:Relationship ;
+    classic:source_type classic:{source_type} ;
+    classic:target_type classic:{target_type} ;
+    classic:label <{label}>
+}}"""
+
+    _list_without_label = """PREFIX classic: <http://purl.org/cognite/cdf-classic#>
+
+SELECT (COUNT(?instance) AS ?instanceCount)
+WHERE {{
+  ?instance a classic:Relationship .
+  ?instance classic:source_type classic:{source_type} .
+  ?instance classic:target_type classic:{target_type} .
+  FILTER NOT EXISTS {{ ?instance classic:label ?label }}
+}}"""
+
+    _instances_without_label = """PREFIX classic: <http://purl.org/cognite/cdf-classic#>
+
+SELECT ?instance
+WHERE {{
+    ?instance a classic:Relationship .
+    ?instance classic:source_type classic:{source_type} .
+    ?instance classic:target_type classic:{target_type} .
+    FILTER NOT EXISTS {{ ?instance classic:label ?label }}
+}}"""
+
     def transform(self, graph: Graph) -> None:
-        for _ in self._RELATIONSHIP_NODE_TYPES:
-            for _ in self._RELATIONSHIP_NODE_TYPES:
-                raise NotImplementedError("This method is not implemented yet.")
+        for source_type in self._RELATIONSHIP_NODE_TYPES:
+            for target_type in self._RELATIONSHIP_NODE_TYPES:
+                for label, instance_count in self._query_label_with_count(graph, source_type, target_type):
+                    if int(instance_count) < self.limit:
+                        continue
+                    # Todo use the other query if fallback label is used.
+                    for result in graph.query(
+                        self._instance_by_label.format(label=label, source_type=source_type, target_type=target_type)
+                    ):
+                        instance_id = cast(URIRef, result[0])  # type: ignore[index, misc]
+                        self._convert_relationship_to_schema(graph, instance_id, label, source_type, target_type)
+
+    def _query_label_with_count(
+        self, graph: Graph, source_type: str, target_type: str
+    ) -> Iterable[tuple[URIRef, Literal]]:
+        # Find all relationships with label.
+        # Note as one relationship can have multiple labels, the same relationship can be counted multiple times
+        yield from graph.query(self._list_by_label.format(source_type=source_type, target_type=target_type))  # type: ignore[misc]
+        # Find all relationships without label, and use the fallback label
+        fallback_label = CLASSIC_CDF_NAMESPACE[f"relationship{target_type.capitalize()}"]
+        yield from (  # type: ignore[misc]
+            (fallback_label, instance_count)
+            for instance_count in graph.query(
+                self._list_without_label.format(source_type=source_type, target_type=target_type)
+            )
+        )
+
+    def _convert_relationship_to_schema(
+        self, graph: Graph, instance_id: URIRef, label: URIRef, source_type: str, target_type: str
+    ) -> None:
+        raise NotImplementedError("This method should be implemented in a subclass")
