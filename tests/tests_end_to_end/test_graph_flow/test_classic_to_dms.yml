@@ -71,62 +71,6 @@ instances:
   type:
     externalId: ClassicLabel
     space: classic
-- externalId: Relationship_8ca8265214a7968fc1bcdbf71c8a623ae94be693c7aead5d779fb70e2a6ce130
-  instanceType: node
-  sources:
-  - properties:
-      confidence: 1.0
-      dataset:
-        externalId: DataSet_123
-        space: sp_instance_space
-      label:
-        externalId: Label_metMast
-        space: sp_instance_space
-      source_external_id: WT-01
-      source_type:
-        externalId: Asset
-        space: sp_instance_space
-      target_external_id: MetMast
-      target_type:
-        externalId: Asset
-        space: sp_instance_space
-    source:
-      externalId: ClassicRelationship
-      space: classic
-      type: view
-      version: inferred
-  space: sp_instance_space
-  type:
-    externalId: ClassicRelationship
-    space: classic
-- externalId: Relationship_dd8ad0fb1b0957b30eedf6b2aedb7d39b2d663f4779fd85cc7c2be5285404447
-  instanceType: node
-  sources:
-  - properties:
-      confidence: 1.0
-      dataset:
-        externalId: DataSet_123
-        space: sp_instance_space
-      label:
-        externalId: Label_metMast
-        space: sp_instance_space
-      source_external_id: WT-02
-      source_type:
-        externalId: Asset
-        space: sp_instance_space
-      target_external_id: MetMast
-      target_type:
-        externalId: Asset
-        space: sp_instance_space
-    source:
-      externalId: ClassicRelationship
-      space: classic
-      type: view
-      version: inferred
-  space: sp_instance_space
-  type:
-    externalId: ClassicRelationship
-    space: classic
 - externalId: Sequence_1
   instanceType: node
   sources:
@@ -143,6 +87,50 @@ instances:
   type:
     externalId: ClassicSequence
     space: classic
+- externalId: WT-01_to_MetMast
+  instanceType: node
+  sources:
+  - properties:
+      dataset:
+        externalId: DataSet_123
+        space: sp_instance_space
+      label:
+        externalId: Label_metMast
+        space: sp_instance_space
+      type:
+        externalId: Relationship
+        space: sp_instance_space
+    source:
+      externalId: ClassicEdge
+      space: classic
+      type: view
+      version: inferred
+  space: sp_instance_space
+  type:
+    externalId: ClassicEdge
+    space: classic
+- externalId: WT-02_to_MetMast
+  instanceType: node
+  sources:
+  - properties:
+      dataset:
+        externalId: DataSet_123
+        space: sp_instance_space
+      label:
+        externalId: Label_metMast
+        space: sp_instance_space
+      type:
+        externalId: Relationship
+        space: sp_instance_space
+    source:
+      externalId: ClassicEdge
+      space: classic
+      type: view
+      version: inferred
+  space: sp_instance_space
+  type:
+    externalId: ClassicEdge
+    space: classic
 rules:
   containers:
   - class_: cdf_cdm:ClassicDataProduct
@@ -157,10 +145,10 @@ rules:
     container: cdf_cdm:CogniteSourceSystem
   - class_: cdf_cdm:CogniteTimeSeries
     container: cdf_cdm:CogniteTimeSeries
+  - class_: ClassicEdge
+    container: ClassicEdge
   - class_: ClassicLabel
     container: ClassicLabel
-  - class_: ClassicRelationship
-    container: ClassicRelationship
   - class_: ClassicSequence
     container: ClassicSequence
   metadata:
@@ -364,6 +352,17 @@ rules:
     value_type: Asset
     view: cdf_cdm:CogniteAsset
     view_property: parent
+  - class_: cdf_cdm:CogniteAsset
+    connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: relationshipAsset
+    is_list: false
+    nullable: true
+    property_: relationshipAsset
+    reference: http://purl.org/cognite/cdf-classic#relationshipAsset
+    value_type: Edge
+    view: cdf_cdm:CogniteAsset
+    view_property: relationshipAsset
   - class_: cdf_cdm:CogniteFile
     connection: direct
     container: cdf_cdm:CogniteFile
@@ -483,6 +482,39 @@ rules:
     value_type: '#N/A'
     view: cdf_cdm:CogniteTimeSeries
     view_property: unit_external_id
+  - class_: ClassicEdge
+    connection: direct
+    container: ClassicEdge
+    container_property: dataset
+    is_list: false
+    nullable: true
+    property_: dataset
+    reference: http://purl.org/cognite/cdf-classic#dataset
+    value_type: DataSet
+    view: ClassicEdge
+    view_property: dataset
+  - class_: ClassicEdge
+    connection: direct
+    container: ClassicEdge
+    container_property: label
+    is_list: false
+    nullable: true
+    property_: label
+    reference: http://purl.org/cognite/cdf-classic#label
+    value_type: Label
+    view: ClassicEdge
+    view_property: label
+  - class_: ClassicEdge
+    connection: direct
+    container: ClassicEdge
+    container_property: type
+    is_list: false
+    nullable: true
+    property_: type
+    reference: http://purl.org/cognite/cdf-classic#type
+    value_type: '#N/A'
+    view: ClassicEdge
+    view_property: type
   - class_: ClassicLabel
     connection: direct
     container: ClassicLabel
@@ -514,80 +546,6 @@ rules:
     value_type: text
     view: ClassicLabel
     view_property: name
-  - class_: ClassicRelationship
-    container: ClassicRelationship
-    container_property: confidence
-    is_list: false
-    nullable: true
-    property_: confidence
-    reference: http://purl.org/cognite/cdf-classic#confidence
-    value_type: float64
-    view: ClassicRelationship
-    view_property: confidence
-  - class_: ClassicRelationship
-    connection: direct
-    container: ClassicRelationship
-    container_property: dataset
-    is_list: false
-    nullable: true
-    property_: dataset
-    reference: http://purl.org/cognite/cdf-classic#dataset
-    value_type: DataSet
-    view: ClassicRelationship
-    view_property: dataset
-  - class_: ClassicRelationship
-    connection: direct
-    container: ClassicRelationship
-    container_property: label
-    is_list: false
-    nullable: true
-    property_: label
-    reference: http://purl.org/cognite/cdf-classic#label
-    value_type: Label
-    view: ClassicRelationship
-    view_property: label
-  - class_: ClassicRelationship
-    container: ClassicRelationship
-    container_property: source_external_id
-    is_list: false
-    nullable: true
-    property_: source_external_id
-    reference: http://purl.org/cognite/cdf-classic#source_external_id
-    value_type: text
-    view: ClassicRelationship
-    view_property: source_external_id
-  - class_: ClassicRelationship
-    connection: direct
-    container: ClassicRelationship
-    container_property: source_type
-    is_list: false
-    nullable: true
-    property_: source_type
-    reference: http://purl.org/cognite/cdf-classic#source_type
-    value_type: '#N/A'
-    view: ClassicRelationship
-    view_property: source_type
-  - class_: ClassicRelationship
-    container: ClassicRelationship
-    container_property: target_external_id
-    is_list: false
-    nullable: true
-    property_: target_external_id
-    reference: http://purl.org/cognite/cdf-classic#target_external_id
-    value_type: text
-    view: ClassicRelationship
-    view_property: target_external_id
-  - class_: ClassicRelationship
-    connection: direct
-    container: ClassicRelationship
-    container_property: target_type
-    is_list: false
-    nullable: true
-    property_: target_type
-    reference: http://purl.org/cognite/cdf-classic#target_type
-    value_type: '#N/A'
-    view: ClassicRelationship
-    view_property: target_type
   - class_: ClassicSequence
     container: ClassicSequence
     container_property: blob
@@ -642,14 +600,14 @@ rules:
     implements: ''
     reference: http://purl.org/cognite/cdf-classic#TimeSeries
     view: cdf_cdm:CogniteTimeSeries
+  - class_: ClassicEdge
+    implements: ''
+    reference: http://purl.org/cognite/cdf-classic#Edge
+    view: ClassicEdge
   - class_: ClassicLabel
     implements: ''
     reference: http://purl.org/cognite/cdf-classic#Label
     view: ClassicLabel
-  - class_: ClassicRelationship
-    implements: ''
-    reference: http://purl.org/cognite/cdf-classic#Relationship
-    view: ClassicRelationship
   - class_: ClassicSequence
     implements: ''
     reference: http://purl.org/cognite/cdf-classic#Sequence
