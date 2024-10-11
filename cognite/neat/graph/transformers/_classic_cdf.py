@@ -2,9 +2,11 @@ from collections.abc import Iterable
 from typing import cast
 
 from rdflib import RDF, Graph, Literal, URIRef
+from rdflib.query import ResultRow
 
 from cognite.neat.constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat.graph import extractors
+from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseTransformer
 
@@ -333,7 +335,7 @@ class RelationshipToSchemaTransformer(BaseTransformer):
     def __init__(self, limit: int = 1) -> None:
         self.limit = limit
 
-    _RELATIONSHIP_PROPERTIES: tuple[str, ...] = tuple(["confidence", "start_time", "end_time"])
+    _RELATIONSHIP_PROPERTIES: frozenset[str] = frozenset({"confidence", "start_time", "end_time"})
     _RELATIONSHIP_NODE_TYPES: tuple[str, ...] = tuple(["Asset", "Event", "File", "Sequence", "TimeSeries"])
     description = "Replaces relationships with a schema"
     _use_only_once: bool = True
@@ -385,24 +387,21 @@ WHERE {{
     def transform(self, graph: Graph) -> None:
         for source_type in self._RELATIONSHIP_NODE_TYPES:
             for target_type in self._RELATIONSHIP_NODE_TYPES:
-                for label, instance_count in self._query_label_with_count(graph, source_type, target_type):
+                for label, instance_count in self._query_label_with_instance_count(graph, source_type, target_type):
                     if int(instance_count) < self.limit:
                         continue
-                    # Todo use the other query if fallback label is used.
-                    for result in graph.query(
-                        self._instance_by_label.format(label=label, source_type=source_type, target_type=target_type)
-                    ):
+                    for result in self._query_instances(graph, source_type, target_type, label):
                         instance_id = cast(URIRef, result[0])  # type: ignore[index, misc]
                         self._convert_relationship_to_schema(graph, instance_id, label, source_type, target_type)
 
-    def _query_label_with_count(
+    def _query_label_with_instance_count(
         self, graph: Graph, source_type: str, target_type: str
     ) -> Iterable[tuple[URIRef, Literal]]:
         # Find all relationships with label.
         # Note as one relationship can have multiple labels, the same relationship can be counted multiple times
         yield from graph.query(self._list_by_label.format(source_type=source_type, target_type=target_type))  # type: ignore[misc]
         # Find all relationships without label, and use the fallback label
-        fallback_label = CLASSIC_CDF_NAMESPACE[f"relationship{target_type.capitalize()}"]
+        fallback_label = self._fallback_label(target_type)
         yield from (  # type: ignore[misc]
             (fallback_label, instance_count)
             for instance_count in graph.query(
@@ -410,7 +409,67 @@ WHERE {{
             )
         )
 
+    def _query_instances(
+        self, graph: Graph, source_type: str, target_type: str, label: URIRef
+    ) -> Iterable[tuple[URIRef]]:
+        if label == self._fallback_label(target_type):
+            yield from graph.query(  # type: ignore[misc]
+                self._instances_without_label.format(source_type=source_type, target_type=target_type)
+            )
+        else:
+            yield from graph.query(  # type: ignore[misc]
+                self._instance_by_label.format(source_type=source_type, target_type=target_type, label=label)
+            )
+
     def _convert_relationship_to_schema(
         self, graph: Graph, instance_id: URIRef, label: URIRef, source_type: str, target_type: str
     ) -> None:
-        raise NotImplementedError("This method should be implemented in a subclass")
+        result = cast(list[ResultRow], list(graph.query(f"DESCRIBE <{instance_id}>")))
+        object_by_predicates = cast(
+            dict[str, URIRef | Literal], {remove_namespace_from_uri(row[1]): row[2] for row in result}
+        )
+
+        has_properties = bool(set(object_by_predicates) & self._RELATIONSHIP_PROPERTIES)
+        source_id = cast(URIRef, object_by_predicates["source_external_id"])
+        target_id = cast(URIRef, object_by_predicates["target_external_id"])
+        external_id = cast(URIRef, object_by_predicates["external_id"])
+        if has_properties:
+            # If there is properties on the relationship, we create a new intermediate node
+            self._create_node(graph, object_by_predicates, external_id, source_id, target_id, label)
+        else:
+            # Add a new relationship between the source and target nodes
+            graph.add((source_id, label, target_id))
+
+        triples = ".\n  ".join(str(triple) for triple in result)
+        graph.query(f"""DELETE DATA {{
+{triples}
+}}""")
+
+    def _create_node(
+        self,
+        graph: Graph,
+        objects_by_predicates: dict[str, URIRef | Literal],
+        instance_id: URIRef,
+        source_id: URIRef,
+        target_id: URIRef,
+        label: URIRef,
+    ) -> None:
+        """Creates a new intermediate node for the relationship with properties.
+
+        A few comments on possible improvements:
+
+        * If a relationship has multiple properties, we will end up with an entity with multiple RDF types.
+        * We could add an extra triple to indicate that in DMS this should be modeled as an edge.
+
+        """
+        # Create new node
+        graph.add((instance_id, RDF.type, label))
+        for prop_name in self._RELATIONSHIP_PROPERTIES & {"data_set_id"}:
+            if prop_value := objects_by_predicates.get(prop_name):
+                graph.add((instance_id, CLASSIC_CDF_NAMESPACE[prop_name], prop_value))
+        graph.add((source_id, label, instance_id))
+        graph.add((instance_id, CLASSIC_CDF_NAMESPACE["end_node"], target_id))
+
+    @staticmethod
+    def _fallback_label(target_type: str) -> URIRef:
+        return CLASSIC_CDF_NAMESPACE[f"relationship{target_type.capitalize()}"]
