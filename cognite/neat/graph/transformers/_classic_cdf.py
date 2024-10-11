@@ -325,13 +325,13 @@ class RelationshipToSchemaTransformer(BaseTransformer):
 
     """
 
+    _RELATIONSHIP_PROPERTIES: tuple[str, ...] = tuple(["confidence", "startTime", "endTime"])
+    _RELATIONSHIP_NODE_TYPES: tuple[str, ...] = tuple(["asset", "event", "file", "sequence", "timeSeries"])
     description = "Replaces relationships with a schema"
     _use_only_once: bool = True
-    _need_changes = frozenset(
-        {
-            str(extractors.RelationshipsExtractor.__name__),
-        }
-    )
+    _need_changes = frozenset({str(extractors.RelationshipsExtractor.__name__)})
 
     def transform(self, graph: Graph) -> None:
-        raise NotImplementedError()
+        for _ in self._RELATIONSHIP_NODE_TYPES:
+            for _ in self._RELATIONSHIP_NODE_TYPES:
+                raise NotImplementedError("This method is not implemented yet.")

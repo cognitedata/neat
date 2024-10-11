@@ -74,29 +74,32 @@ class Queries:
         # Select queries gives an iterable of result rows
         return cast(list[ResultRow], list(self.graph.query(query)))
 
-    def triples_of_type_instances(self, rdf_type: str) -> list[tuple[str, str, str]]:
+    def triples_of_type_instances(self, rdf_type: str | URIRef) -> list[tuple[str, str, str]]:
         """Get all triples of a given type.
 
         This method assumes the graph has been transformed into the default namespace.
         """
-
-        if self.rules:
-            query = (
-                f"SELECT ?instance ?prop ?value "
-                f"WHERE {{ ?instance a <{self.rules.metadata.namespace[rdf_type]}> . ?instance ?prop ?value . }} "
-                "order by ?instance"
-            )
-
-            result = self.graph.query(query)
-
-            # We cannot include the RDF.type in case there is a neat:type property
-            return [remove_namespace_from_uri(*triple) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
+        if isinstance(rdf_type, URIRef):
+            rdf_uri = rdf_type
+        elif isinstance(rdf_type, str) and self.rules:
+            rdf_uri = self.rules.metadata.namespace[rdf_type]
         else:
             warnings.warn(
-                "No rules found for the graph store, returning empty list.",
+                "Unknown namespace. Please either provide a URIRef or set the rules of the store.",
                 stacklevel=2,
             )
             return []
+
+        query = (
+            "SELECT ?instance ?prop ?value "
+            f"WHERE {{ ?instance a <{rdf_uri}> . ?instance ?prop ?value . }} "
+            "order by ?instance"
+        )
+
+        result = self.graph.query(query)
+
+        # We cannot include the RDF.type in case there is a neat:type property
+        return [remove_namespace_from_uri(list(triple)) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index, arg-type]
 
     def types_with_property(self, property_uri: URIRef) -> list[URIRef]:
         """Check if a property exists in the graph store
