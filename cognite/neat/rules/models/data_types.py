@@ -28,7 +28,6 @@ class DataType(BaseModel):
     graphql: ClassVar[str]
     xsd: ClassVar[str]
     sql: ClassVar[str]
-    _dms_loaded: bool = False
     # Repeat all here, just to make mypy happy
     name: typing.Literal[
         "boolean",
@@ -76,10 +75,8 @@ class DataType(BaseModel):
             cls_: type[DataType]
             if name in _DATA_TYPE_BY_DMS_TYPE:
                 cls_ = _DATA_TYPE_BY_DMS_TYPE[name]
-                dms_loaded = True
             elif name in _DATA_TYPE_BY_NAME:
                 cls_ = _DATA_TYPE_BY_NAME[name]
-                dms_loaded = False
             else:
                 raise ValueError(f"Unknown data type: {value}") from None
             extra_args: dict[str, Any] = {}
@@ -90,8 +87,6 @@ class DataType(BaseModel):
                 # Todo? Raise warning if extra_args contains keys that are not in the model fields
             instance = cls_(**extra_args)
             created = handler(instance)
-            # Private attributes are not validated or set. We need to set it manually
-            created._dms_loaded = dms_loaded
             return created
         raise ValueError(f"Cannot load {cls.__name__} from {value}")
 
@@ -100,11 +95,7 @@ class DataType(BaseModel):
         return str(self)
 
     def __str__(self) -> str:
-        if self._dms_loaded:
-            base = self.dms._type
-        else:
-            base = self.model_fields["name"].default
-        return self._suffix_extra_args(base)
+        return self._suffix_extra_args(self.model_fields["name"].default)
 
     def _suffix_extra_args(self, base: str) -> str:
         extra_fields: dict[str, str] = {}
