@@ -5,6 +5,7 @@ from ._classic_cdf import (
     AssetRelationshipConnector,
     AssetSequenceConnector,
     AssetTimeSeriesConnector,
+    RelationshipToSchemaTransformer,
 )
 from ._rdfpath import AddSelfReferenceProperty
 from ._value_type import SplitMultiValueProperty
@@ -18,6 +19,7 @@ __all__ = [
     "AssetRelationshipConnector",
     "AddSelfReferenceProperty",
     "SplitMultiValueProperty",
+    "RelationshipToSchemaTransformer",
 ]
 
 Transformers = (
@@ -29,4 +31,5 @@ Transformers = (
     | AssetRelationshipConnector
     | AddSelfReferenceProperty
     | SplitMultiValueProperty
+    | RelationshipToSchemaTransformer
 )

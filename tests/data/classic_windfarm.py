@@ -150,7 +150,6 @@ turbine_to_metmast = Relationship(
     target_type="Asset",
     data_set_id=ds_source.id,
     labels=[Label("metMast")],
-    confidence=1.0,
 )
 
 turbine_to_metmast2 = Relationship(
@@ -161,7 +160,6 @@ turbine_to_metmast2 = Relationship(
     target_type="Asset",
     data_set_id=ds_source.id,
     labels=[Label("metMast")],
-    confidence=1.0,
 )
 
 RELATIONSHIPS = [turbine_to_metmast, turbine_to_metmast2]
