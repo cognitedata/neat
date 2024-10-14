@@ -98,7 +98,7 @@ def table_example() -> InformationRules:
                     property_="on",
                     value_type="Item",
                     min_count=0,
-                    max_count=float("inf"),
+                    max_count=1,
                 ),
                 InformationProperty(
                     class_="Item",
