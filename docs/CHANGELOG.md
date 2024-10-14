@@ -35,6 +35,9 @@ Changes are grouped as follows:
 - Graph transformer `SplitMultiValueProperty` which splits multi-value properties into separate properties with single value
 - Support for `xsd:decimal` which is now mapped to `float64` in DMS rules
 
+### Removed
+- State on DataType stored in `_dms_loaded` attribute
+
 ## [0.92.3] - 17-09-24
 ### Fixed
 - Prefixes not being imported or exported to Excel
