@@ -9,7 +9,8 @@ from cognite.client.data_classes import Row
 from cognite.neat.rules.exporters import DMSExporter
 from cognite.neat.rules.importers import ExcelImporter
 from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes, SheetList
-from cognite.neat.rules.models.dms import DMSInputRules, PipelineSchema
+from cognite.neat.rules.models.dms import PipelineSchema
+from cognite.neat.rules.models.dms._rules_input import DMSInputRules
 from cognite.neat.rules.models.information import (
     InformationClass,
     InformationMetadata,
@@ -129,21 +130,57 @@ def table_example() -> InformationRules:
 def table_example_data() -> dict[str, list[Row]]:
     return {
         "Table": [
-            Row("table1", {"externalId": "table1", "color": "brown", "height": 1.0, "width": 2.0, "type": "Table"}),
+            Row(
+                "table1",
+                {
+                    "externalId": "table1",
+                    "color": "brown",
+                    "height": 1.0,
+                    "width": 2.0,
+                    "type": "Table",
+                    "on": "item1",
+                },
+            ),
             Row(
                 "table2",
-                {"externalId": "table2", "color": "white", "height": 1.5, "width": 3.0, "type": "Table"},
+                {
+                    "externalId": "table2",
+                    "color": "white",
+                    "height": 1.5,
+                    "width": 3.0,
+                    "type": "Table",
+                    "on": "item2",
+                },
             ),
         ],
         "Item": [
-            Row("item1", {"externalId": "item1", "name": "chair", "category": "furniture", "type": "Item"}),
-            Row("item2", {"externalId": "item2", "name": "lamp", "category": "lighting", "type": "Item"}),
-            Row("item3", {"externalId": "item3", "name": "computer", "category": "electronics", "type": "Item"}),
-        ],
-        "TableItem": [
-            Row("table1item1", {"externalId": "table1item1", "Table": "table1", "Item": "item1"}),
-            Row("table1item2", {"externalId": "table1item2", "Table": "table1", "Item": "item2"}),
-            Row("table2item3", {"externalId": "table2item3", "Table": "table2", "Item": "item3"}),
+            Row(
+                "item1",
+                {
+                    "externalId": "item1",
+                    "name": "chair",
+                    "category": "furniture",
+                    "type": "Item",
+                },
+            ),
+            Row(
+                "item2",
+                {
+                    "externalId": "item2",
+                    "name": "lamp",
+                    "category": "lighting",
+                    "type": "Item",
+                },
+            ),
+            Row(
+                "item3",
+                {
+                    "externalId": "item3",
+                    "name": "computer",
+                    "category": "electronics",
+                    "type": "Item",
+                },
+            ),
         ],
     }
 
@@ -209,8 +246,6 @@ class TestDMSExporters:
             cognite_client.raw.rows.insert(db_name, "TableProperties", table_example_data["Table"])
         if not cognite_client.raw.rows.list(db_name, "ItemProperties", limit=-1):
             cognite_client.raw.rows.insert(db_name, "ItemProperties", table_example_data["Item"])
-        if not cognite_client.raw.rows.list(db_name, "Table.OnEdge", limit=-1):
-            cognite_client.raw.rows.insert(db_name, "Table.OnEdge", table_example_data["TableItem"])
 
         # Verify Transformations are written
         transformation_loader = TransformationLoader(cognite_client)
@@ -315,7 +350,9 @@ class TestDMSExporters:
         dumped["Last"]["Metadata"]["space"] = new_solution_space
         dumped["Reference"]["Metadata"]["space"] = new_enterprise_space
         for prop in itertools.chain(
-            dumped["Properties"], dumped["Last"]["Properties"], dumped["Reference"]["Properties"]
+            dumped["Properties"],
+            dumped["Last"]["Properties"],
+            dumped["Reference"]["Properties"],
         ):
             if prop["Reference"]:
                 prop["Reference"] = prop["Reference"].replace("power", new_enterprise_space)

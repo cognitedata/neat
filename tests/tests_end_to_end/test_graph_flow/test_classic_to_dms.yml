@@ -327,8 +327,11 @@ rules:
     view: cdf_cdm:CogniteAsset
     view_property: description
   - class_: cdf_cdm:CogniteAsset
-    connection: edge
+    connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: label
     is_list: true
+    nullable: true
     property_: label
     reference: http://purl.org/cognite/cdf-classic#label
     value_type: Label
@@ -345,8 +348,11 @@ rules:
     view: cdf_cdm:CogniteAsset
     view_property: name
   - class_: cdf_cdm:CogniteAsset
-    connection: edge
+    connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: parent
     is_list: true
+    nullable: true
     property_: parent
     reference: http://purl.org/cognite/cdf-classic#parent
     value_type: Asset
@@ -416,8 +422,11 @@ rules:
     view: cdf_cdm:CogniteSourceSystem
     view_property: name
   - class_: cdf_cdm:CogniteTimeSeries
-    connection: edge
+    connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: asset
     is_list: true
+    nullable: true
     property_: asset
     reference: http://purl.org/cognite/cdf-classic#asset
     value_type: Asset
@@ -434,8 +443,11 @@ rules:
     view: cdf_cdm:CogniteTimeSeries
     view_property: blob
   - class_: cdf_cdm:CogniteTimeSeries
-    connection: edge
+    connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: dataset
     is_list: true
+    nullable: true
     property_: dataset
     reference: http://purl.org/cognite/cdf-classic#dataset
     value_type: DataSet
@@ -472,7 +484,6 @@ rules:
     view: cdf_cdm:CogniteTimeSeries
     view_property: name
   - class_: cdf_cdm:CogniteTimeSeries
-    connection: direct
     container: cdf_cdm:CogniteTimeSeries
     container_property: unit_external_id
     is_list: false
@@ -505,7 +516,6 @@ rules:
     view: ClassicEdge
     view_property: label
   - class_: ClassicEdge
-    connection: direct
     container: ClassicEdge
     container_property: type
     is_list: false
