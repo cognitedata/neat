@@ -235,7 +235,12 @@ class TestInformationRules:
 
         wind_farm = next((view for view in schema.views.values() if view.external_id == "WindFarm"), None)
         assert wind_farm is not None
-        expected_containers = {dm.ContainerId("power", "EnergyArea"), dm.ContainerId("power_analytics", "WindFarm")}
+        expected_containers = {
+            dm.ContainerId("power", "EnergyArea"),
+            # due to conversion to direct relation Olav as DMS is now reusing power:WindFarm container
+            dm.ContainerId("power", "WindFarm"),
+            dm.ContainerId("power_analytics", "WindFarm"),
+        }
         missing = expected_containers - wind_farm.referenced_containers()
         assert not missing, f"Missing containers: {missing}"
         extra = wind_farm.referenced_containers() - expected_containers
