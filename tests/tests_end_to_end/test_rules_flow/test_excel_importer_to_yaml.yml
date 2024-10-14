@@ -18,6 +18,9 @@ containers:
   container: GeoLocation
 - class_: Meter
   container: Meter
+- class_: MultiLineString
+  constraint: GeoLocation
+  container: MultiLineString
 - class_: OffshoreSubstation
   constraint: Substation
   container: OffshoreSubstation
@@ -26,6 +29,9 @@ containers:
 - class_: Point
   constraint: GeoLocation
   container: Point
+- class_: Polygon
+  constraint: GeoLocation
+  container: Polygon
 - class_: PowerLine
   container: PowerLine
 - class_: Substation
@@ -90,8 +96,11 @@ properties:
   view: DistributionSubstation
   view_property: primaryPowerLine
 - class_: DistributionSubstation
-  connection: edge
+  connection: direct
+  container: DistributionSubstation
+  container_property: secondaryPowerLine
   is_list: true
+  nullable: true
   property_: secondaryPowerLine
   value_type: DistributionLine
   view: DistributionSubstation
@@ -209,8 +218,11 @@ properties:
   view: GeoLocation
   view_property: name
 - class_: Meter
-  connection: edge
+  connection: direct
+  container: Meter
+  container_property: consumer
   is_list: true
+  nullable: true
   property_: consumer
   value_type: ElectricCarCharger
   view: Meter
@@ -235,15 +247,21 @@ properties:
   view: Meter
   view_property: powerLine
 - class_: MultiLineString
-  connection: edge
+  connection: direct
+  container: MultiLineString
+  container_property: point
   is_list: true
+  nullable: true
   property_: point
   value_type: Point
   view: MultiLineString
   view_property: point
 - class_: OffshoreSubstation
-  connection: edge
+  connection: direct
+  container: OffshoreSubstation
+  container_property: primaryPowerLine
   is_list: true
+  nullable: true
   property_: primaryPowerLine
   value_type: ArrayCable
   view: OffshoreSubstation
@@ -297,8 +315,11 @@ properties:
   view: Point
   view_property: longitude
 - class_: Polygon
-  connection: edge
+  connection: direct
+  container: Polygon
+  container_property: point
   is_list: true
+  nullable: true
   property_: point
   value_type: Point
   view: Polygon
@@ -342,22 +363,31 @@ properties:
   view: PowerLine
   view_property: voltageLevel
 - class_: Substation
-  connection: edge
+  connection: direct
+  container: Substation
+  container_property: circuitBreaker
   is_list: true
+  nullable: true
   property_: circuitBreaker
   value_type: CircuitBreaker
   view: Substation
   view_property: circuitBreaker
 - class_: Substation
-  connection: edge
+  connection: direct
+  container: Substation
+  container_property: currentTransformer
   is_list: true
+  nullable: true
   property_: currentTransformer
   value_type: CurrentTransformer
   view: Substation
   view_property: currentTransformer
 - class_: Substation
-  connection: edge
+  connection: direct
+  container: Substation
+  container_property: disconnectSwitch
   is_list: true
+  nullable: true
   property_: disconnectSwitch
   value_type: DisconnectSwitch
   view: Substation
@@ -458,8 +488,11 @@ properties:
   view: VoltageTransformer
   view_property: outputVoltageLevel
 - class_: WindFarm
-  connection: edge
+  connection: direct
+  container: WindFarm
+  container_property: arrayCable
   is_list: true
+  nullable: true
   property_: arrayCable
   value_type: ArrayCable
   view: WindFarm
@@ -485,8 +518,11 @@ properties:
   view: WindFarm
   view_property: substation
 - class_: WindFarm
-  connection: edge
+  connection: direct
+  container: WindFarm
+  container_property: windTurbines
   is_list: true
+  nullable: true
   property_: windTurbines
   value_type: WindTurbine
   view: WindFarm
