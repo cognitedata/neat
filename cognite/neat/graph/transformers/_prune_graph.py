@@ -65,7 +65,7 @@ class TwoHopFlattener(BaseTransformer):
             )
         )
 
-        for path in graph_traversals:  # TODO: figure out why DeviceName is not found for sensor2?
+        for path in graph_traversals:
             if isinstance(path, ResultRow):
                 source_node, predicate, destination_node, property_value = path.asdict().values()
 
