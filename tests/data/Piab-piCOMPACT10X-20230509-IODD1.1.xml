@@ -1,0 +1,887 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--IODevice is referencing an AML Schema-->
+<IODevice xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.io-link.com/IODD/2010/10" xsi:schemaLocation="http://www.io-link.com/IODD/2010/10 IODD1.1.xsd">
+  <DocumentInfo copyright="2023 PIAB AB" releaseDate="2023-05-09" version="V1.0" />
+  <ProfileHeader>
+    <ProfileIdentification>IO Device Profile</ProfileIdentification>
+    <ProfileRevision>1.1</ProfileRevision>
+    <ProfileName>Device Profile for IO Devices</ProfileName>
+    <ProfileSource>IO-Link Consortium</ProfileSource>
+    <ProfileClassID>Device</ProfileClassID>
+    <ISO15745Reference>
+      <ISO15745Part>1</ISO15745Part>
+      <ISO15745Edition>1</ISO15745Edition>
+      <ProfileTechnology>IODD</ProfileTechnology>
+    </ISO15745Reference>
+  </ProfileHeader>
+  <ProfileBody>
+    <DeviceIdentity vendorId="796" vendorName="Piab" deviceId="317">
+      <VendorText textId="TI_VendorText" />
+      <VendorUrl textId="TI_VendorText" />
+      <VendorLogo name="PIAB-logo.png" />
+      <DeviceName textId="TI_DeviceName" />
+      <DeviceFamily textId="TI_DeviceFamily" />
+      <DeviceVariantCollection>
+        <DeviceVariant productId="piCOMPACT®10X SMART" deviceIcon="PIAB-icon.png" deviceSymbol="piab-piCOMPACT10xSMART-pic.png">
+          <Name textId="TI_Device_Name" />
+          <Description textId="TI_Device_Description" />
+        </DeviceVariant>
+      </DeviceVariantCollection>
+    </DeviceIdentity>
+    <DeviceFunction>
+      <Features blockParameter="true" dataStorage="true">
+        <SupportedAccessLocks parameter="false" dataStorage="false" localParameterization="true" localUserInterface="false" />
+      </Features>
+      <VariableCollection>
+        <StdVariableRef id="V_DirectParameters_1" />
+        <StdVariableRef id="V_SystemCommand">
+          <StdSingleValueRef value="128" />
+          <StdSingleValueRef value="130" />
+          <StdSingleValueRef value="131" />
+        </StdVariableRef>
+        <StdVariableRef id="V_VendorName" defaultValue="Piab" />
+        <StdVariableRef id="V_DeviceStatus" />
+        <StdVariableRef id="V_DetailedDeviceStatus" fixedLengthRestriction="6" />
+        <StdVariableRef id="V_VendorText" defaultValue="www.piab.com" />
+        <StdVariableRef id="V_ProductText" defaultValue="Compact/stackable vacuum pump" />
+        <StdVariableRef id="V_SerialNumber" defaultValue="000000000" />
+        <StdVariableRef id="V_HardwareRevision" defaultValue="R01" />
+        <StdVariableRef id="V_FirmwareRevision" defaultValue="R001/R001" />
+        <StdVariableRef id="V_ApplicationSpecificTag" defaultValue="*******************" />
+        <StdVariableRef id="V_ProductName" defaultValue="piCOMPACT10X SMART Individual connection" />
+        <StdVariableRef id="V_ProductID" defaultValue="piCOMPACT®10X SMART" />
+        <StdVariableRef id="V_DeviceAccessLocks" />
+        <StdVariableRef id="V_ProcessDataInput" />
+        <StdVariableRef id="V_ProcessDataOutput" />
+        <Variable id="V_1" accessRights="rw" index="64" defaultValue="40">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <ValueRange lowerValue="0" upperValue="100" />
+          </Datatype>
+          <Name textId="V_N_Part_Present_PP_setpoint" />
+          <Description textId="V_D_Part_present_vacuum_level_setpoint" />
+        </Variable>
+        <Variable id="V_2" accessRights="rw" index="65" defaultValue="2">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <ValueRange lowerValue="2" upperValue="10" />
+          </Datatype>
+          <Name textId="V_N_Part_Present_PP_hysteresis" />
+          <Description textId="V_D_Part_Present_hysteresis" />
+        </Variable>
+        <Variable id="V_3" accessRights="rw" index="66" defaultValue="65">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <ValueRange lowerValue="0" upperValue="100" />
+          </Datatype>
+          <Name textId="V_N_Part_Secured_PS_setpoint" />
+          <Description textId="V_D_Part_secured_vacuum_level_setpoint" />
+        </Variable>
+        <Variable id="V_4" accessRights="rw" index="67" defaultValue="2">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <ValueRange lowerValue="2" upperValue="10" />
+          </Datatype>
+          <Name textId="V_N_Part_Secured_PS_hysteresis" />
+          <Description textId="V_D_Part_secured_hysteresis" />
+        </Variable>
+        <Variable id="V_5" accessRights="rw" index="68" defaultValue="70">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <ValueRange lowerValue="0" upperValue="100" />
+          </Datatype>
+          <Name textId="V_N_Energy_Saving_ES_setpoint" />
+          <Description textId="V_D_Energy_saving_vacuum_level_setpoint" />
+        </Variable>
+        <Variable id="V_6" accessRights="rw" index="69" defaultValue="8">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <ValueRange lowerValue="2" upperValue="40" />
+          </Datatype>
+          <Name textId="V_N_Energy_Saving_ES_hysteresis" />
+          <Description textId="V_D_Switching_band_around_ES_level_Vacuum_is_reenabled_at_ES" />
+        </Variable>
+        <Variable id="V_7" accessRights="rw" index="70" defaultValue="250">
+          <Datatype xsi:type="UIntegerT" bitLength="16">
+            <ValueRange lowerValue="0" upperValue="10000" />
+          </Datatype>
+          <Name textId="V_N_Automatic_Timer_Blow_Off_ATBO_duration" />
+          <Description textId="V_D_Duration_of_the_blow_off_pulse_when_Automatic_Timer_Blow" />
+        </Variable>
+        <Variable id="V_8" accessRights="rw" index="71" defaultValue="1">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <SingleValue value="0">
+              <Name textId="DT_Small_vacuum_system" />
+            </SingleValue>
+            <SingleValue value="1">
+              <Name textId="DT_Medium_vacuum_system" />
+            </SingleValue>
+            <SingleValue value="2">
+              <Name textId="DT_Large_vacuum_system" />
+            </SingleValue>
+            <SingleValue value="3">
+              <Name textId="DT_Large_vacuum_system_large_pressure_drops" />
+            </SingleValue>
+          </Datatype>
+          <Name textId="V_N_Intelligent_Blow_Off_IBO_sensitivity" />
+          <Description textId="V_D_Tunes_the_Intelligent_Blow_Off_IBO_function_to_the_vacuu" />
+        </Variable>
+        <Variable id="V_9" accessRights="rw" index="98" defaultValue="5">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <ValueRange lowerValue="0" upperValue="10" />
+          </Datatype>
+          <Name textId="V_N_ALD_hysteresis" />
+          <Description textId="V_D_Automatic_Level_Determination_ALD_factor_determines_hyst" />
+        </Variable>
+        <Variable id="V_10" accessRights="rw" index="99" defaultValue="3">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <ValueRange lowerValue="0" upperValue="100" />
+          </Datatype>
+          <Name textId="V_N_ACM_timeout" />
+          <Description textId="V_D_Time_for_all_recovery_actuations_in_Automatic_Condition" />
+        </Variable>
+        <Variable id="V_11" accessRights="rw" index="100" defaultValue="3">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <ValueRange lowerValue="0" upperValue="100" />
+          </Datatype>
+          <Name textId="V_N_ACM_recovery_actuations" />
+          <Description textId="V_D_Number_of_allowed_recovery_actuations_of_Automatic_Condi" />
+        </Variable>
+        <Variable id="V_12" accessRights="rw" index="101" defaultValue="15">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <ValueRange lowerValue="5" upperValue="150" />
+          </Datatype>
+          <Name textId="V_N_Self_Adhesion_Control_SAC_hysteresis" />
+          <Description textId="V_D_More_sensitive_when_value_is_low_more_robust_when_high" />
+        </Variable>
+        <Variable id="V_13" accessRights="rw" index="102" defaultValue="50">
+          <Datatype xsi:type="UIntegerT" bitLength="16">
+            <ValueRange lowerValue="10" upperValue="1000" />
+          </Datatype>
+          <Name textId="V_N_Self_Adhesion_Control_SAC_duration" />
+          <Description textId="V_D_Duration_of_SAC_blow_off_pulse" />
+        </Variable>
+        <Variable id="V_14" accessRights="rw" index="103" defaultValue="1">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <SingleValue value="0">
+              <Name textId="DT_Off_ES_disabled" />
+            </SingleValue>
+            <SingleValue value="1">
+              <Name textId="DT_On_ES_on_setpoint" />
+            </SingleValue>
+            <SingleValue value="2">
+              <Name textId="DT_On_ES_with_ALD" />
+            </SingleValue>
+          </Datatype>
+          <Name textId="V_N_Energy_Saving_ES_mode" />
+          <Description textId="V_D_When_1_the_ES_strictly_follows_the_ES_setpoint_When_2_th" />
+        </Variable>
+        <Variable id="V_15" accessRights="rw" index="104" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <SingleValue value="0">
+              <Name textId="DT_Off_External_control" />
+            </SingleValue>
+            <SingleValue value="1">
+              <Name textId="DT_On_Automatic_Timer_Blow_Off_ATBO" />
+            </SingleValue>
+            <SingleValue value="2">
+              <Name textId="DT_On_Intelligent_Blow_off_IBO" />
+            </SingleValue>
+          </Datatype>
+          <Name textId="V_N_Blow_off_mode" />
+          <Description textId="V_D_When_0_the_control_system_has_to_send_a_blow_off_command" />
+        </Variable>
+        <Variable id="V_16" accessRights="rw" index="105" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <SingleValue value="0">
+              <Name textId="DT_SAC_disabled" />
+            </SingleValue>
+            <SingleValue value="1">
+              <Name textId="DT_SAC_enabled" />
+            </SingleValue>
+          </Datatype>
+          <Name textId="V_N_SAC_enable" />
+          <Description textId="V_D_Enable_SAC_Removes_unwanted_vacuum_with_short_blow_off_p" />
+        </Variable>
+        <Variable id="V_17" accessRights="rw" index="106" defaultValue="4">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <SingleValue value="0">
+              <Name textId="DT_Lowest_Voltage_Detected_LVD" />
+            </SingleValue>
+            <SingleValue value="1">
+              <Name textId="DT_System_Voltage_SV" />
+            </SingleValue>
+            <SingleValue value="2">
+              <Name textId="DT_Vacuum_cycle_counter" />
+            </SingleValue>
+            <SingleValue value="3">
+              <Name textId="DT_Vacuum_valve_counter" />
+            </SingleValue>
+            <SingleValue value="4">
+              <Name textId="DT_Time_to_part_present" />
+            </SingleValue>
+            <SingleValue value="5">
+              <Name textId="DT_Average_time_to_part_present_last_20_picks" />
+            </SingleValue>
+            <SingleValue value="6">
+              <Name textId="DT_System_Temperature_ST" />
+            </SingleValue>
+            <SingleValue value="7">
+              <Name textId="DT_Highest_Temperature_Detected_HTD" />
+            </SingleValue>
+          </Datatype>
+          <Name textId="V_N_Configurable_process_data_in_byte_2_3" />
+          <Description textId="V_D_Configuration_for_16_bit_Process_Data_In_PDI_at_bytes_2" />
+        </Variable>
+        <Variable id="V_18" accessRights="rw" index="107" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <SingleValue value="0">
+              <Name textId="DT_Lowest_Voltage_Detected_LVD2" />
+            </SingleValue>
+            <SingleValue value="1">
+              <Name textId="DT_System_Voltage_SV3" />
+            </SingleValue>
+            <SingleValue value="2">
+              <Name textId="DT_Vacuum_cycle_counter4" />
+            </SingleValue>
+            <SingleValue value="3">
+              <Name textId="DT_Vacuum_valve_counter5" />
+            </SingleValue>
+            <SingleValue value="4">
+              <Name textId="DT_Time_to_part_present6" />
+            </SingleValue>
+            <SingleValue value="5">
+              <Name textId="DT_Average_time_to_part_present_last_20_picks7" />
+            </SingleValue>
+            <SingleValue value="6">
+              <Name textId="DT_System_Temperature_ST8" />
+            </SingleValue>
+            <SingleValue value="7">
+              <Name textId="DT_Highest_Temperature_Detected_HTD" />
+            </SingleValue>
+          </Datatype>
+          <Name textId="V_N_Configurable_process_data_in_byte_4_5" />
+          <Description textId="V_D_Configuration_for_16_bit_Process_Data_In_PDI_at_bytes_4" />
+        </Variable>
+        <Variable id="V_19" accessRights="rw" index="109" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <SingleValue value="0">
+              <Name textId="DT__kPa" />
+            </SingleValue>
+            <SingleValue value="1">
+              <Name textId="DT__inHg" />
+            </SingleValue>
+          </Datatype>
+          <Name textId="V_N_Pressure_unit" />
+          <Description textId="V_D_Pressure_unit_for_vacuum_level_in_process_data_kPa_or_in" />
+        </Variable>
+        <Variable id="V_20" accessRights="rw" index="111" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <SingleValue value="0">
+              <Name textId="DT_None" />
+            </SingleValue>
+            <SingleValue value="1">
+              <Name textId="DT_Trigger_self_check" />
+            </SingleValue>
+            <SingleValue value="2">
+              <Name textId="DT_Trigger_sensor_calibration" />
+            </SingleValue>
+            <SingleValue value="3">
+              <Name textId="DT_Reset_all_self_check_parameters" />
+            </SingleValue>
+          </Datatype>
+          <Name textId="V_N_Maintenance_functions" />
+          <Description textId="V_D_Trigger_maintenance_functions" />
+        </Variable>
+        <Variable id="V_21" accessRights="ro" index="112" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="32">
+            <ValueRange lowerValue="0" upperValue="4294967295" />
+          </Datatype>
+          <Name textId="V_N_Vacuum_cycle_counter" />
+          <Description textId="V_D_Number_of_actuations_of_vacuum" />
+        </Variable>
+        <Variable id="V_22" accessRights="ro" index="113" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="32">
+            <ValueRange lowerValue="0" upperValue="4294967295" />
+          </Datatype>
+          <Name textId="V_N_Vacuum_cycles_since_last_self_check" />
+          <Description textId="V_D_Number_of_actuations_of_vacuum_since_last_self_check" />
+        </Variable>
+        <Variable id="V_23" accessRights="ro" index="114" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="32">
+            <ValueRange lowerValue="0" upperValue="4294967295" />
+          </Datatype>
+          <Name textId="V_N_Vacuum_valve_counter" />
+          <Description textId="V_D_Number_of_actuations_of_vacuum_valve" />
+        </Variable>
+        <Variable id="V_24" accessRights="ro" index="115" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="16">
+            <ValueRange lowerValue="0" upperValue="65535" />
+          </Datatype>
+          <Name textId="V_N_Undervoltage_Detection_Counter_UDC" />
+          <Description textId="V_D_Number_of_times_below_minimum_system_voltage" />
+        </Variable>
+        <Variable id="V_25" accessRights="ro" index="116" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="32">
+            <ValueRange lowerValue="0" upperValue="4294967295" />
+          </Datatype>
+          <Name textId="V_N_Leakage_warning_counter" />
+          <Description textId="V_D_No_of_times_leakage_warning_has_occurred" />
+        </Variable>
+        <Variable id="V_26" accessRights="ro" index="117" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="16">
+            <ValueRange lowerValue="0" upperValue="65535" />
+          </Datatype>
+          <Name textId="V_N_Time_to_part_present" />
+          <Description textId="V_D_Time_between_vacuum_on_command_and_part_present_vacuum_l" />
+        </Variable>
+        <Variable id="V_27" accessRights="ro" index="118" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="16">
+            <ValueRange lowerValue="0" upperValue="65535" />
+          </Datatype>
+          <Name textId="V_N_Average_time_to_part_present_last_20_picks" />
+          <Description textId="V_D_Rolling_average_time_of_the_last_20_time_to_part_present" />
+        </Variable>
+        <Variable id="V_28" accessRights="ro" index="119" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="16">
+            <ValueRange lowerValue="0" upperValue="65535" />
+          </Datatype>
+          <Name textId="V_N_Current_Time_To_Hit_CTTH" />
+          <Description textId="V_D_Time_between_vacuum_on_command_and_vacuum_level_20_kPa_b" />
+        </Variable>
+        <Variable id="V_29" accessRights="ro" index="120" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="16">
+            <ValueRange lowerValue="0" upperValue="65535" />
+          </Datatype>
+          <Name textId="V_N_First_Time_To_Hit_FTTH" />
+          <Description textId="V_D_Time_to_hit_recorded_during_the_pumps_first_100_vacuum_c" />
+        </Variable>
+        <Variable id="V_30" accessRights="ro" index="121" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <ValueRange lowerValue="0" upperValue="255" />
+          </Datatype>
+          <Name textId="V_N_System_Temperature_ST" />
+          <Description textId="V_D_Temperature_of_pump" />
+        </Variable>
+        <Variable id="V_31" accessRights="ro" index="122" defaultValue="0">
+          <Datatype xsi:type="UIntegerT" bitLength="8">
+            <ValueRange lowerValue="0" upperValue="255" />
+          </Datatype>
+          <Name textId="V_N_Highest_Temperature_Detected_HTD" />
+          <Description textId="V_D_Highest_temperature_measured_since_start_of_unit" />
+        </Variable>
+        <Variable id="V_32" accessRights="ro" index="123">
+          <Datatype xsi:type="ArrayT" count="13" subindexAccessSupported="true">
+            <SimpleDatatype xsi:type="UIntegerT" bitLength="16">
+              <ValueRange lowerValue="0" upperValue="65535" />
+            </SimpleDatatype>
+          </Datatype>
+          <Name textId="V_N_System_Temperature_Log_STL" />
+          <Description textId="V_D_Statistical_overview_of_the_amount_of_hours_the_system_t" />
+        </Variable>
+        <Variable id="V_33" accessRights="ro" index="124">
+          <Datatype xsi:type="ArrayT" count="16" subindexAccessSupported="true">
+            <SimpleDatatype xsi:type="UIntegerT" bitLength="16">
+              <ValueRange lowerValue="0" upperValue="65535" />
+            </SimpleDatatype>
+          </Datatype>
+          <Name textId="V_N_System_Voltage_Log_SVL" />
+          <Description textId="V_D_Statistical_overview_of_the_amount_of_hours_the_supply_v" />
+        </Variable>
+        <Variable id="V_34" accessRights="ro" index="125">
+          <Datatype xsi:type="UIntegerT" bitLength="16">
+            <ValueRange lowerValue="0" upperValue="32767" />
+          </Datatype>
+          <Name textId="V_N_Highest_Voltage_Detected_HVD" />
+          <Description textId="V_D_Highest_voltage_detected_during_lifetime_of_pump" />
+        </Variable>
+        <Variable id="V_35" accessRights="ro" index="126">
+          <Datatype xsi:type="UIntegerT" bitLength="16">
+            <ValueRange lowerValue="0" upperValue="32767" />
+          </Datatype>
+          <Name textId="V_N_Lowest_Voltage_Detected_LVD" />
+          <Description textId="V_D_Lowest_voltage_detected_since_power_on" />
+        </Variable>
+        <Variable id="V_36" accessRights="ro" index="127">
+          <Datatype xsi:type="UIntegerT" bitLength="16">
+            <ValueRange lowerValue="0" upperValue="32767" />
+          </Datatype>
+          <Name textId="V_N_System_Voltage_SV" />
+          <Description textId="V_D_Voltage_as_reported_in_process_data" />
+        </Variable>
+        <Variable id="V_37" accessRights="ro" index="80" defaultValue="[code]">
+          <Datatype xsi:type="StringT" fixedLength="64" encoding="US-ASCII" />
+          <Name textId="V_N_Product_ordering_code" />
+          <Description textId="V_D_Contains_information_about_the_specific_configuration_of" />
+        </Variable>
+        <Variable id="V_38" accessRights="ro" index="81" defaultValue="1899-12-31">
+          <Datatype xsi:type="StringT" fixedLength="10" encoding="US-ASCII" />
+          <Name textId="V_N_Production_date" />
+          <Description textId="V_D_Date_at_which_unit_passed_final_inspection" />
+        </Variable>
+      </VariableCollection>
+      <ProcessDataCollection>
+        <ProcessData id="PD_ProcessData">
+          <ProcessDataIn id="PI_ProcessDataIn" bitLength="48">
+            <Datatype xsi:type="RecordT" bitLength="48">
+              <RecordItem subindex="1" bitOffset="40">
+                <SimpleDatatype xsi:type="IntegerT" bitLength="8" />
+                <Name textId="DT_RI_Vacuum_level" />
+                <Description textId="DT_RI_D_Actual_vacuum_level" />
+              </RecordItem>
+              <RecordItem subindex="2" bitOffset="39">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Part_Present_PP_achieved" />
+                <Description textId="DT_RI_D_Part_present_vacuum_level_achieved" />
+              </RecordItem>
+              <RecordItem subindex="3" bitOffset="38">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Part_Secured_PS_achieved" />
+                <Description textId="DT_RI_D_Part_secured_vacuum_level_achieved" />
+              </RecordItem>
+              <RecordItem subindex="4" bitOffset="37">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Energy_Saving_ES_achieved" />
+                <Description textId="DT_RI_D_Energy_saving_vacuum_level_achieved" />
+              </RecordItem>
+              <RecordItem subindex="5" bitOffset="36">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Leakage_Warning_LW" />
+                <Description textId="DT_RI_D_Vacuum_leakage_detected" />
+              </RecordItem>
+              <RecordItem subindex="6" bitOffset="35">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Blow_Off_Complete_BOC" />
+                <Description textId="DT_RI_D_Blow_off_sequence_completed" />
+              </RecordItem>
+              <RecordItem subindex="7" bitOffset="34">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Self_check_complete" />
+                <Description textId="DT_RI_D_Vacuum_system_self_check_completed" />
+              </RecordItem>
+              <RecordItem subindex="8" bitOffset="33">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Pressure_calibration_complete" />
+                <Description textId="DT_RI_D_Pressure_sensor_calibration_completed" />
+              </RecordItem>
+              <RecordItem subindex="9" bitOffset="16">
+                <SimpleDatatype xsi:type="UIntegerT" bitLength="16" />
+                <Name textId="DT_RI_Configurable_process_data_byte_2_3" />
+                <Description textId="DT_RI_D_Value_can_be_set_to_represent_a_number_of_different" />
+              </RecordItem>
+              <RecordItem subindex="10" bitOffset="0">
+                <SimpleDatatype xsi:type="UIntegerT" bitLength="16" />
+                <Name textId="DT_RI_Configurable_process_data_byte_4_5" />
+                <Description textId="DT_RI_D_Value_can_be_set_to_represent_a_number_of_different1" />
+              </RecordItem>
+            </Datatype>
+            <Name textId="PD_IN_DATA" />
+          </ProcessDataIn>
+          <ProcessDataOut id="PI_ProcessDataOut" bitLength="8">
+            <Datatype xsi:type="RecordT" bitLength="8">
+              <RecordItem subindex="1" bitOffset="7">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Disable_ATBO_IBO" />
+                <Description textId="DT_RI_D_Disable_automatic_timer_blow_off_and_intelligent_blo" />
+              </RecordItem>
+              <RecordItem subindex="2" bitOffset="6">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Disable_ACM" />
+                <Description textId="DT_RI_D_Disable_automatic_condition_monitoring" />
+              </RecordItem>
+              <RecordItem subindex="3" bitOffset="5">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Pressure_calibration" />
+                <Description textId="DT_RI_D_Calibrates_pressure_sensor_to_ambient_air_pressure" />
+              </RecordItem>
+              <RecordItem subindex="4" bitOffset="4">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Reset_self_check_parameters" />
+                <Description textId="DT_RI_D_Resets_parameters_changed_by_self_check_routine_to_d" />
+              </RecordItem>
+              <RecordItem subindex="5" bitOffset="3">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Self_check" />
+                <Description textId="DT_RI_D_Calculate_free_running_vacuum_level_by_activating_va" />
+              </RecordItem>
+              <RecordItem subindex="6" bitOffset="2">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Disable_ES" />
+                <Description textId="DT_RI_D_When_energy_saving_is_disabled_the_unit_generates_va" />
+              </RecordItem>
+              <RecordItem subindex="7" bitOffset="1">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Activate_blow_off" />
+                <Description textId="DT_RI_D_Use_compressed_air_to_release_the_part" />
+              </RecordItem>
+              <RecordItem subindex="8" bitOffset="0">
+                <SimpleDatatype xsi:type="BooleanT" />
+                <Name textId="DT_RI_Activate_vacuum" />
+                <Description textId="DT_RI_D_Use_compressed_air_to_generate_vacuum" />
+              </RecordItem>
+            </Datatype>
+            <Name textId="PD_OUT_DATA" />
+          </ProcessDataOut>
+        </ProcessData>
+      </ProcessDataCollection>
+      <EventCollection>
+        <StdEventRef code="35872" />
+        <StdEventRef code="25376" />
+        <StdEventRef code="20753" />
+        <StdEventRef code="20752" />
+        <StdEventRef code="20480" />
+        <StdEventRef code="16384" />
+        <Event type="Error" code="6144">
+          <Name textId="E_N_Error_6144" />
+          <Description textId="E_D_Error_6144" />
+        </Event>
+      </EventCollection>
+      <UserInterface>
+        <MenuCollection>
+          <Menu id="M_USER">
+            <VariableRef variableId="V_VendorName" />
+            <VariableRef variableId="V_VendorText" />
+            <VariableRef variableId="V_ProductName" />
+            <VariableRef variableId="V_ProductID" />
+            <VariableRef variableId="V_ProductText" />
+            <VariableRef variableId="V_SerialNumber" />
+            <VariableRef variableId="V_HardwareRevision" />
+            <VariableRef variableId="V_FirmwareRevision" />
+            <VariableRef variableId="V_ApplicationSpecificTag" />
+            <VariableRef variableId="V_37" />
+            <VariableRef variableId="V_38" />
+          </Menu>
+          <Menu id="M_SPECIALIST">
+            <MenuRef menuId="ME_OR_MR_SR_Commands" />
+            <VariableRef variableId="V_VendorName" />
+            <VariableRef variableId="V_VendorText" />
+            <VariableRef variableId="V_ProductName" />
+            <VariableRef variableId="V_ProductID" />
+            <VariableRef variableId="V_ProductText" />
+            <VariableRef variableId="V_SerialNumber" />
+            <VariableRef variableId="V_HardwareRevision" />
+            <VariableRef variableId="V_FirmwareRevision" />
+            <VariableRef variableId="V_ApplicationSpecificTag" />
+            <VariableRef variableId="V_37" />
+            <VariableRef variableId="V_38" />
+            <RecordItemRef variableId="V_DeviceAccessLocks" subindex="3" />
+          </Menu>
+          <Menu id="ME_OR_MR_SR_Commands">
+            <Name textId="M_Name_Commands" />
+            <VariableRef variableId="V_SystemCommand">
+              <Button buttonValue="128">
+                <Description textId="TD_STD_SystemCommand_DeviceReset" />
+              </Button>
+            </VariableRef>
+            <VariableRef variableId="V_SystemCommand">
+              <Button buttonValue="130">
+                <Description textId="TD_STD_SystemCommand_RestoreFactorySettings" />
+              </Button>
+            </VariableRef>
+            <VariableRef variableId="V_SystemCommand">
+              <Button buttonValue="131">
+                <Description textId="TD_STD_SystemCommand_BackToBox" />
+              </Button>
+            </VariableRef>
+          </Menu>
+          <Menu id="M_SPEC_PARAM">
+            <MenuRef menuId="M_PARAMETRIZATION" />
+            <MenuRef menuId="M_CONFIGURATION" />
+            <MenuRef menuId="M_MAINTENANCE" />
+          </Menu>
+          <Menu id="M_PARAMETRIZATION">
+            <Name textId="M_Name_Parametrization_menu" />
+            <VariableRef variableId="V_1" unitCode="1133" />
+            <VariableRef variableId="V_2" unitCode="1133" />
+            <VariableRef variableId="V_3" unitCode="1133" />
+            <VariableRef variableId="V_4" unitCode="1133" />
+            <VariableRef variableId="V_5" unitCode="1133" />
+            <VariableRef variableId="V_6" unitCode="1133" />
+            <VariableRef variableId="V_7" unitCode="1056" />
+            <VariableRef variableId="V_8" />
+            <VariableRef variableId="V_9" />
+            <VariableRef variableId="V_10" unitCode="1054" />
+            <VariableRef variableId="V_11" />
+            <VariableRef variableId="V_12" />
+            <VariableRef variableId="V_13" unitCode="1056" />
+          </Menu>
+          <Menu id="M_CONFIGURATION">
+            <Name textId="M_Name_Configuration_menu" />
+            <VariableRef variableId="V_14" />
+            <VariableRef variableId="V_15" />
+            <VariableRef variableId="V_19" />
+            <VariableRef variableId="V_16" />
+            <VariableRef variableId="V_17" />
+            <VariableRef variableId="V_18" />
+          </Menu>
+          <Menu id="M_MAINTENANCE">
+            <Name textId="M_Name_Maintenance_menu" />
+            <VariableRef variableId="V_20" />
+          </Menu>
+          <Menu id="M_OBSERVATION">
+            <MenuRef menuId="M_OBSERVATION_PARAMS" />
+          </Menu>
+          <Menu id="M_OBSERVATION_PARAMS">
+            <Name textId="M_Name_Observation_parameters" />
+            <MenuRef menuId="M_OBSERVATION_PARAMS_INPUT" />
+            <MenuRef menuId="M_OBSERVATION_PARAMS_OUTPUT" />
+          </Menu>
+          <Menu id="M_OBSERVATION_PARAMS_INPUT">
+            <Name textId="M_Name_Process_data_input" />
+            <RecordItemRef variableId="V_ProcessDataInput" subindex="1" />
+            <RecordItemRef variableId="V_ProcessDataInput" subindex="2" />
+            <RecordItemRef variableId="V_ProcessDataInput" subindex="3" />
+            <RecordItemRef variableId="V_ProcessDataInput" subindex="4" />
+            <RecordItemRef variableId="V_ProcessDataInput" subindex="5" />
+            <RecordItemRef variableId="V_ProcessDataInput" subindex="6" />
+            <RecordItemRef variableId="V_ProcessDataInput" subindex="7" />
+            <RecordItemRef variableId="V_ProcessDataInput" subindex="8" />
+            <RecordItemRef variableId="V_ProcessDataInput" subindex="9" />
+            <RecordItemRef variableId="V_ProcessDataInput" subindex="10" />
+          </Menu>
+          <Menu id="M_OBSERVATION_PARAMS_OUTPUT">
+            <Name textId="M_Name_Process_data_output" />
+            <RecordItemRef variableId="V_ProcessDataOutput" subindex="1" />
+            <RecordItemRef variableId="V_ProcessDataOutput" subindex="2" />
+            <RecordItemRef variableId="V_ProcessDataOutput" subindex="3" />
+            <RecordItemRef variableId="V_ProcessDataOutput" subindex="4" />
+            <RecordItemRef variableId="V_ProcessDataOutput" subindex="5" />
+            <RecordItemRef variableId="V_ProcessDataOutput" subindex="6" />
+            <RecordItemRef variableId="V_ProcessDataOutput" subindex="7" />
+            <RecordItemRef variableId="V_ProcessDataOutput" subindex="8" />
+          </Menu>
+          <Menu id="M_SPECIALIST_DIAG">
+            <Name textId="M_Name_Diagnostics_Menu" />
+            <MenuRef menuId="M_DEVICE_STATUS" />
+            <VariableRef variableId="V_21" />
+            <VariableRef variableId="V_30" unitCode="1001" />
+            <VariableRef variableId="V_22" />
+            <VariableRef variableId="V_31" unitCode="1001" />
+            <VariableRef variableId="V_23" />
+            <VariableRef variableId="V_32" unitCode="1059" />
+            <VariableRef variableId="V_24" />
+            <VariableRef variableId="V_25" />
+            <VariableRef variableId="V_33" unitCode="1059" />
+            <VariableRef variableId="V_26" unitCode="1056" />
+            <VariableRef variableId="V_34" unitCode="1243" />
+            <VariableRef variableId="V_27" unitCode="1056" />
+            <VariableRef variableId="V_35" unitCode="1243" />
+            <VariableRef variableId="V_28" unitCode="1056" />
+            <VariableRef variableId="V_36" unitCode="1243" />
+            <VariableRef variableId="V_29" unitCode="1056" />
+          </Menu>
+          <Menu id="M_DEVICE_STATUS">
+            <Name textId="M_Name_Device_status" />
+            <VariableRef variableId="V_DeviceStatus" />
+            <VariableRef variableId="V_DetailedDeviceStatus" />
+          </Menu>
+        </MenuCollection>
+        <ObserverRoleMenuSet>
+          <IdentificationMenu menuId="M_USER" />
+          <ParameterMenu menuId="M_SPEC_PARAM" />
+          <ObservationMenu menuId="M_OBSERVATION" />
+          <DiagnosisMenu menuId="M_SPECIALIST_DIAG" />
+        </ObserverRoleMenuSet>
+        <MaintenanceRoleMenuSet>
+          <IdentificationMenu menuId="M_SPECIALIST" />
+          <ParameterMenu menuId="M_SPEC_PARAM" />
+          <ObservationMenu menuId="M_OBSERVATION" />
+          <DiagnosisMenu menuId="M_SPECIALIST_DIAG" />
+        </MaintenanceRoleMenuSet>
+        <SpecialistRoleMenuSet>
+          <IdentificationMenu menuId="M_SPECIALIST" />
+          <ParameterMenu menuId="M_SPEC_PARAM" />
+          <ObservationMenu menuId="M_OBSERVATION" />
+          <DiagnosisMenu menuId="M_SPECIALIST_DIAG" />
+        </SpecialistRoleMenuSet>
+      </UserInterface>
+    </DeviceFunction>
+  </ProfileBody>
+  <CommNetworkProfile xsi:type="IOLinkCommNetworkProfileT" iolinkRevision="V1.1">
+    <TransportLayers>
+      <PhysicalLayer bitrate="COM2" minCycleTime="5000" sioSupported="false" mSequenceCapability="11">
+        <Connection xsi:type="M8ConnectionT">
+          <ProductRef productId="piCOMPACT®10X SMART" />
+          <Wire1 color="BN" function="L+" />
+          <Wire2 color="WH" function="NC" />
+          <Wire3 color="BU" function="L-" />
+          <Wire4 color="BK" function="C/Q" />
+        </Connection>
+      </PhysicalLayer>
+    </TransportLayers>
+    <Test>
+      <Config1 index="64" testValue="0x28" />
+      <Config2 index="256" testValue="0x00" />
+      <Config3 index="24" testValue="0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x31,0x31" />
+      <Config7 index="300">
+        <EventTrigger appearValue="1" disappearValue="0" />
+        <EventTrigger appearValue="3" disappearValue="2" />
+      </Config7>
+    </Test>
+  </CommNetworkProfile>
+  <ExternalTextCollection>
+    <PrimaryLanguage xml:lang="en">
+      <Text id="TI_VendorText" value="www.piab.com" />
+      <Text id="TI_DeviceName" value="piCOMPACT10X SMART Individual connection" />
+      <Text id="TI_DeviceFamily" value="piCOMPACT10X SMART Series" />
+      <Text id="PD_IN_DATA" value="PD_IN_DATA" />
+      <Text id="PD_OUT_DATA" value="PD_OUT_DATA" />
+      <Text id="TI_Device_Name" value="piCOMPACT®10X SMART" />
+      <Text id="TI_Device_Description" value="Efficient and intelligent compact ejector" />
+      <Text id="M_Name_Commands" value="Commands" />
+      <Text id="M_Name_Parametrization_menu" value="Parametrization menu" />
+      <Text id="M_Name_Configuration_menu" value="Configuration menu" />
+      <Text id="M_Name_Maintenance_menu" value="Maintenance menu" />
+      <Text id="M_Name_Observation_parameters" value="Observation parameters" />
+      <Text id="M_Name_Process_data_input" value="Process data input" />
+      <Text id="M_Name_Process_data_output" value="Process data output" />
+      <Text id="M_Name_Diagnostics_Menu" value="Diagnostics Menu" />
+      <Text id="M_Name_Device_status" value="Device status" />
+      <Text id="E_N_Error_6144" value="Configuration check-sum error" />
+      <Text id="E_D_Error_6144" value="Error in the saved configuration. New configuration needed to be saved." />
+      <Text id="DT_RI_Vacuum_level" value="Vacuum level" />
+      <Text id="DT_RI_D_Actual_vacuum_level" value="Actual vacuum level." />
+      <Text id="DT_RI_Part_Present_PP_achieved" value="Part Present (PP) achieved" />
+      <Text id="DT_RI_D_Part_present_vacuum_level_achieved" value="Part present vacuum level achieved." />
+      <Text id="DT_RI_Part_Secured_PS_achieved" value="Part Secured (PS) achieved" />
+      <Text id="DT_RI_D_Part_secured_vacuum_level_achieved" value="Part secured vacuum level achieved." />
+      <Text id="DT_RI_Energy_Saving_ES_achieved" value="Energy Saving (ES) achieved" />
+      <Text id="DT_RI_D_Energy_saving_vacuum_level_achieved" value="Energy saving vacuum level achieved." />
+      <Text id="DT_RI_Leakage_Warning_LW" value="Leakage Warning (LW)" />
+      <Text id="DT_RI_D_Vacuum_leakage_detected" value="Vacuum leakage detected." />
+      <Text id="DT_RI_Blow_Off_Complete_BOC" value="Blow-Off Complete (BOC)" />
+      <Text id="DT_RI_D_Blow_off_sequence_completed" value="Blow-off sequence completed." />
+      <Text id="DT_RI_Self_check_complete" value="Self-check complete" />
+      <Text id="DT_RI_D_Vacuum_system_self_check_completed" value="Vacuum system self-check completed." />
+      <Text id="DT_RI_Pressure_calibration_complete" value="Pressure calibration complete" />
+      <Text id="DT_RI_D_Pressure_sensor_calibration_completed" value="Pressure sensor calibration completed." />
+      <Text id="DT_RI_Configurable_process_data_byte_2_3" value="Configurable process data byte 2-3" />
+      <Text id="DT_RI_D_Value_can_be_set_to_represent_a_number_of_different" value="Value can be set to represent a number of different parameters according to index 106." />
+      <Text id="DT_RI_Configurable_process_data_byte_4_5" value="Configurable process data byte 4-5" />
+      <Text id="DT_RI_D_Value_can_be_set_to_represent_a_number_of_different1" value="Value can be set to represent a number of different parameters according to index 107." />
+      <Text id="DT_RI_Disable_ATBO_IBO" value="Disable ATBO / IBO" />
+      <Text id="DT_RI_D_Disable_automatic_timer_blow_off_and_intelligent_blo" value="Disable automatic timer blow-off and intelligent blow-off." />
+      <Text id="DT_RI_Disable_ACM" value="Disable ACM" />
+      <Text id="DT_RI_D_Disable_automatic_condition_monitoring" value="Disable automatic condition monitoring." />
+      <Text id="DT_RI_Pressure_calibration" value="Pressure calibration" />
+      <Text id="DT_RI_D_Calibrates_pressure_sensor_to_ambient_air_pressure" value="Calibrates pressure sensor to ambient air pressure." />
+      <Text id="DT_RI_Reset_self_check_parameters" value="Reset self-check parameters" />
+      <Text id="DT_RI_D_Resets_parameters_changed_by_self_check_routine_to_d" value="Resets parameters changed by self-check routine to default." />
+      <Text id="DT_RI_Self_check" value="Self-check" />
+      <Text id="DT_RI_D_Calculate_free_running_vacuum_level_by_activating_va" value="Calculate free-running vacuum level by activating vacuum and IBO consecutively." />
+      <Text id="DT_RI_Disable_ES" value="Disable ES" />
+      <Text id="DT_RI_D_When_energy_saving_is_disabled_the_unit_generates_va" value="When energy saving is disabled the unit generates vacuum constantly if activated." />
+      <Text id="DT_RI_Activate_blow_off" value="Activate blow-off" />
+      <Text id="DT_RI_D_Use_compressed_air_to_release_the_part" value="Use compressed air to release the part." />
+      <Text id="DT_RI_Activate_vacuum" value="Activate vacuum" />
+      <Text id="DT_RI_D_Use_compressed_air_to_generate_vacuum" value="Use compressed air to generate vacuum." />
+      <Text id="V_N_Part_Present_PP_setpoint" value="Part Present (PP) setpoint" />
+      <Text id="V_D_Part_present_vacuum_level_setpoint" value="Part present vacuum level setpoint." />
+      <Text id="V_N_Part_Present_PP_hysteresis" value="Part Present (PP) hysteresis" />
+      <Text id="V_D_Part_Present_hysteresis" value="Part Present hysteresis." />
+      <Text id="V_N_Part_Secured_PS_setpoint" value="Part Secured (PS) setpoint" />
+      <Text id="V_D_Part_secured_vacuum_level_setpoint" value="Part secured vacuum level setpoint." />
+      <Text id="V_N_Part_Secured_PS_hysteresis" value="Part Secured (PS) hysteresis" />
+      <Text id="V_D_Part_secured_hysteresis" value="Part secured hysteresis." />
+      <Text id="V_N_Energy_Saving_ES_setpoint" value="Energy Saving (ES) setpoint" />
+      <Text id="V_D_Energy_saving_vacuum_level_setpoint" value="Energy saving vacuum level setpoint." />
+      <Text id="V_N_Energy_Saving_ES_hysteresis" value="Energy Saving (ES) hysteresis" />
+      <Text id="V_D_Switching_band_around_ES_level_Vacuum_is_reenabled_at_ES" value="Switching band around ES level. Vacuum is (re)enabled at ES low level until ES high level is reached." />
+      <Text id="V_N_Automatic_Timer_Blow_Off_ATBO_duration" value="Automatic Timer Blow-Off (ATBO) duration" />
+      <Text id="V_D_Duration_of_the_blow_off_pulse_when_Automatic_Timer_Blow" value="Duration of the blow-off pulse when Automatic Timer Blow-Off (ATBO) is active." />
+      <Text id="V_N_Intelligent_Blow_Off_IBO_sensitivity" value="Intelligent Blow-Off (IBO) sensitivity" />
+      <Text id="V_D_Tunes_the_Intelligent_Blow_Off_IBO_function_to_the_vacuu" value="Tunes the Intelligent Blow-Off (IBO) function to the vacuum system." />
+      <Text id="DT_Small_vacuum_system" value="Small vacuum system" />
+      <Text id="DT_Medium_vacuum_system" value="Medium vacuum system" />
+      <Text id="DT_Large_vacuum_system" value="Large vacuum system" />
+      <Text id="DT_Large_vacuum_system_large_pressure_drops" value="Large vacuum system - large pressure drops" />
+      <Text id="V_N_ALD_hysteresis" value="ALD hysteresis " />
+      <Text id="V_D_Automatic_Level_Determination_ALD_factor_determines_hyst" value="Automatic Level Determination (ALD) factor, determines hysteresis between ALD min and max." />
+      <Text id="V_N_ACM_timeout" value="ACM timeout" />
+      <Text id="V_D_Time_for_all_recovery_actuations_in_Automatic_Condition" value="Time for all recovery actuations in Automatic Condition Monitoring (ACM)." />
+      <Text id="V_N_ACM_recovery_actuations" value="ACM recovery actuations" />
+      <Text id="V_D_Number_of_allowed_recovery_actuations_of_Automatic_Condi" value="Number of allowed recovery actuations of Automatic Condition Monitoring (ACM)." />
+      <Text id="V_N_Self_Adhesion_Control_SAC_hysteresis" value="Self Adhesion Control (SAC) hysteresis" />
+      <Text id="V_D_More_sensitive_when_value_is_low_more_robust_when_high" value="More sensitive when value is low, more robust when high." />
+      <Text id="V_N_Self_Adhesion_Control_SAC_duration" value="Self Adhesion Control (SAC) duration" />
+      <Text id="V_D_Duration_of_SAC_blow_off_pulse" value="Duration of SAC blow-off pulse." />
+      <Text id="V_N_Energy_Saving_ES_mode" value="Energy Saving (ES) mode" />
+      <Text id="V_D_When_1_the_ES_strictly_follows_the_ES_setpoint_When_2_th" value="When 1 the ES strictly follows the ES setpoint. When 2 the ES setpoint is automatically determined." />
+      <Text id="DT_Off_ES_disabled" value="Off - ES disabled" />
+      <Text id="DT_On_ES_on_setpoint" value="On - ES on setpoint" />
+      <Text id="DT_On_ES_with_ALD" value="On - ES with ALD" />
+      <Text id="V_N_Blow_off_mode" value="Blow-off mode" />
+      <Text id="V_D_When_0_the_control_system_has_to_send_a_blow_off_command" value="When 0 the control system has to send a blow-off command, when 1 or 2 blow-off is controlled by the pump." />
+      <Text id="DT_Off_External_control" value="Off - External control" />
+      <Text id="DT_On_Automatic_Timer_Blow_Off_ATBO" value="On - Automatic Timer Blow-Off (ATBO)" />
+      <Text id="DT_On_Intelligent_Blow_off_IBO" value="On - Intelligent Blow-off (IBO)" />
+      <Text id="V_N_SAC_enable" value="SAC enable" />
+      <Text id="V_D_Enable_SAC_Removes_unwanted_vacuum_with_short_blow_off_p" value="Enable SAC: Removes unwanted vacuum with short blow-off pulses." />
+      <Text id="DT_SAC_disabled" value="SAC disabled" />
+      <Text id="DT_SAC_enabled" value="SAC enabled" />
+      <Text id="V_N_Configurable_process_data_in_byte_2_3" value="Configurable process data in byte 2-3" />
+      <Text id="V_D_Configuration_for_16_bit_Process_Data_In_PDI_at_bytes_2" value="Configuration for 16-bit Process Data In (PDI) at bytes 2 and 3." />
+      <Text id="DT_Lowest_Voltage_Detected_LVD" value="Lowest Voltage Detected (LVD)" />
+      <Text id="DT_System_Voltage_SV" value="System Voltage (SV)" />
+      <Text id="DT_Vacuum_cycle_counter" value="Vacuum cycle counter" />
+      <Text id="DT_Vacuum_valve_counter" value="Vacuum valve counter" />
+      <Text id="DT_Time_to_part_present" value="Time to part present" />
+      <Text id="DT_Average_time_to_part_present_last_20_picks" value="Average time to part present (last 20 picks)" />
+      <Text id="DT_System_Temperature_ST" value="System Temperature (ST)" />
+      <Text id="DT_Highest_Temperature_Detected_HTD" value="Highest Temperature Detected (HTD)" />
+      <Text id="V_N_Configurable_process_data_in_byte_4_5" value="Configurable process data in byte 4-5" />
+      <Text id="V_D_Configuration_for_16_bit_Process_Data_In_PDI_at_bytes_4" value="Configuration for 16-bit Process Data In (PDI) at bytes 4 and 5." />
+      <Text id="DT_Lowest_Voltage_Detected_LVD2" value="Lowest Voltage Detected (LVD)&#xD;" />
+      <Text id="DT_System_Voltage_SV3" value="System Voltage (SV)&#xD;" />
+      <Text id="DT_Vacuum_cycle_counter4" value="Vacuum cycle counter&#xD;" />
+      <Text id="DT_Vacuum_valve_counter5" value="Vacuum valve counter&#xD;" />
+      <Text id="DT_Time_to_part_present6" value="Time to part present&#xD;" />
+      <Text id="DT_Average_time_to_part_present_last_20_picks7" value="Average time to part present (last 20 picks)&#xD;" />
+      <Text id="DT_System_Temperature_ST8" value="System Temperature (ST)&#xD;" />
+      <Text id="V_N_Pressure_unit" value="Pressure unit" />
+      <Text id="V_D_Pressure_unit_for_vacuum_level_in_process_data_kPa_or_in" value="Pressure unit for vacuum level in process data -kPa or -inHg." />
+      <Text id="DT__kPa" value="-kPa" />
+      <Text id="DT__inHg" value="-inHg" />
+      <Text id="V_N_Maintenance_functions" value="Maintenance functions" />
+      <Text id="V_D_Trigger_maintenance_functions" value="Trigger maintenance functions." />
+      <Text id="DT_None" value="None" />
+      <Text id="DT_Trigger_self_check" value="Trigger self-check" />
+      <Text id="DT_Trigger_sensor_calibration" value="Trigger sensor calibration" />
+      <Text id="DT_Reset_all_self_check_parameters" value="Reset all self-check parameters" />
+      <Text id="V_N_Vacuum_cycle_counter" value="Vacuum cycle counter " />
+      <Text id="V_D_Number_of_actuations_of_vacuum" value="Number of actuations of vacuum." />
+      <Text id="V_N_Vacuum_cycles_since_last_self_check" value="Vacuum cycles since last self-check" />
+      <Text id="V_D_Number_of_actuations_of_vacuum_since_last_self_check" value="Number of actuations of vacuum since last self-check." />
+      <Text id="V_N_Vacuum_valve_counter" value="Vacuum valve counter" />
+      <Text id="V_D_Number_of_actuations_of_vacuum_valve" value="Number of actuations of vacuum valve." />
+      <Text id="V_N_Undervoltage_Detection_Counter_UDC" value="Undervoltage Detection Counter (UDC)" />
+      <Text id="V_D_Number_of_times_below_minimum_system_voltage" value="Number of times below minimum system voltage." />
+      <Text id="V_N_Leakage_warning_counter" value="Leakage warning counter" />
+      <Text id="V_D_No_of_times_leakage_warning_has_occurred" value="No of times leakage warning has occurred." />
+      <Text id="V_N_Time_to_part_present" value="Time to part present" />
+      <Text id="V_D_Time_between_vacuum_on_command_and_part_present_vacuum_l" value="Time between vacuum on command and part present vacuum level achieved." />
+      <Text id="V_N_Average_time_to_part_present_last_20_picks" value="Average time to part present (last 20 picks)" />
+      <Text id="V_D_Rolling_average_time_of_the_last_20_time_to_part_present" value="Rolling average time of the last 20 time to part present samples." />
+      <Text id="V_N_Current_Time_To_Hit_CTTH" value="Current Time To Hit (CTTH)" />
+      <Text id="V_D_Time_between_vacuum_on_command_and_vacuum_level_20_kPa_b" value="Time between vacuum on command and vacuum level 20 -kPa below free running vacuum level." />
+      <Text id="V_N_First_Time_To_Hit_FTTH" value="First Time To Hit (FTTH)" />
+      <Text id="V_D_Time_to_hit_recorded_during_the_pumps_first_100_vacuum_c" value="Time to hit recorded during the pumps' first 100 vacuum cycles." />
+      <Text id="V_N_System_Temperature_ST" value="System Temperature (ST)" />
+      <Text id="V_D_Temperature_of_pump" value="Temperature of pump." />
+      <Text id="V_N_Highest_Temperature_Detected_HTD" value="Highest Temperature Detected (HTD)" />
+      <Text id="V_D_Highest_temperature_measured_since_start_of_unit" value="Highest temperature measured since start of unit." />
+      <Text id="V_N_System_Temperature_Log_STL" value="System Temperature Log (STL)" />
+      <Text id="V_D_Statistical_overview_of_the_amount_of_hours_the_system_t" value="Statistical overview of the amount of hours the system temperature was within a given range." />
+      <Text id="V_N_System_Voltage_Log_SVL" value="System Voltage Log (SVL)" />
+      <Text id="V_D_Statistical_overview_of_the_amount_of_hours_the_supply_v" value="Statistical overview of the amount of hours the supply voltage was within a given range." />
+      <Text id="V_N_Highest_Voltage_Detected_HVD" value="Highest Voltage Detected (HVD)" />
+      <Text id="V_D_Highest_voltage_detected_during_lifetime_of_pump" value="Highest voltage detected during lifetime of pump." />
+      <Text id="V_N_Lowest_Voltage_Detected_LVD" value="Lowest Voltage Detected (LVD)" />
+      <Text id="V_D_Lowest_voltage_detected_since_power_on" value="Lowest voltage detected since power-on." />
+      <Text id="V_N_System_Voltage_SV" value="System Voltage (SV)" />
+      <Text id="V_D_Voltage_as_reported_in_process_data" value="Voltage as reported in process data." />
+      <Text id="V_N_Product_ordering_code" value="Product ordering code" />
+      <Text id="V_D_Contains_information_about_the_specific_configuration_of" value="Contains information about the specific configuration of the pump hardware." />
+      <Text id="V_N_Production_date" value="Production date" />
+      <Text id="V_D_Date_at_which_unit_passed_final_inspection" value="Date at which unit passed final inspection." />
+      <Text id="TD_STD_SystemCommand_DeviceReset" value="A warm start is triggered and the device will be set to an initial state. The communication will be interrupted by the device and then reinitiated by the master." />
+      <Text id="TD_STD_SystemCommand_RestoreFactorySettings" value="The parameter of the device are reset to factory settings. Note: A download of the data storage may be executed on the next power cycle and overwrite the factory default settings!" />
+      <Text id="TD_STD_SystemCommand_BackToBox" value="The parameter of the device are set to factory default values and communication will be inhibited until the next power cycle. Note: Directly detach the device from the master port!" />
+    </PrimaryLanguage>
+  </ExternalTextCollection>
+  <Stamp crc="2221958562"><Checker name="IODD-Checker V1.1.9" version="V1.1.9.0"/></Stamp>
+</IODevice>

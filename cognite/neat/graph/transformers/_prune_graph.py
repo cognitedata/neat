@@ -5,6 +5,7 @@ from rdflib.term import Identifier
 from ._base import BaseTransformer
 
 
+# TODO: Handle the cse when value is None, which will not make the TextObject resolve
 class TwoHopFlattener(BaseTransformer):
     """
     Transformer that will flatten the distance between a source node, an intermediate connecting node, and a
