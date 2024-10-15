@@ -52,7 +52,6 @@ class IODDExtractor(BaseExtractor):
         root: Element,
         namespace: Namespace | None = None,
         device_id: str | None = None,
-        id_overrides: dict | None = None,
     ):
         self.root = root
         self.namespace = namespace or DEFAULT_NAMESPACE
