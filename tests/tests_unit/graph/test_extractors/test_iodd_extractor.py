@@ -1,7 +1,8 @@
+from rdflib import Namespace
+
 from cognite.neat.graph.extractors import IODDExtractor
 from cognite.neat.store import NeatGraphStore
-from tests.config  import IODD_EXAMPLE
-from rdflib import Namespace
+from tests.config import IODD_EXAMPLE
 
 IODD = Namespace("http://www.io-link.com/IODD/2010/10/")
 
