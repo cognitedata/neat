@@ -60,7 +60,7 @@ ResourceType: TypeAlias = (
 
 
 @total_ordering
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class NeatIssue:
     """This is the base class for all exceptions and warnings (issues) used in Neat."""
 
@@ -176,7 +176,7 @@ class NeatIssue:
         return (type(self).__name__, self.as_message()) == (type(other).__name__, other.as_message())
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class NeatError(NeatIssue, Exception):
     """This is the base class for all exceptions (errors) used in Neat."""
 
@@ -238,7 +238,7 @@ class NeatError(NeatIssue, Exception):
                 object.__setattr__(caught_error, "row_number", new_row)
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class DefaultPydanticError(NeatError, ValueError):
     """{type}: {msg} [loc={loc}]"""
 
@@ -263,7 +263,7 @@ class DefaultPydanticError(NeatError, ValueError):
             return self.msg
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class RowError(NeatError, ValueError):
     """In {sheet_name}, row={row}, column={column}: {msg}. [type={type}, input_value={input}]"""
 
@@ -307,7 +307,7 @@ class RowError(NeatError, ValueError):
         return output
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class NeatWarning(NeatIssue, UserWarning):
     """This is the base class for all warnings used in Neat."""
 
@@ -317,7 +317,7 @@ class NeatWarning(NeatIssue, UserWarning):
         return DefaultWarning.from_warning_message(warning)
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class DefaultWarning(NeatWarning):
     """{category}: {warning}"""
 

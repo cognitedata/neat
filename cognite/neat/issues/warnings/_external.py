@@ -4,7 +4,7 @@ from pathlib import Path
 from cognite.neat.issues import NeatWarning
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class FileReadWarning(NeatWarning):
     """Error when reading file, {filepath}: {reason}"""
 
@@ -12,7 +12,7 @@ class FileReadWarning(NeatWarning):
     reason: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class FileMissingRequiredFieldWarning(NeatWarning):
     """Missing required {field_name} in {filepath}: {field}. The file will be skipped"""
 
@@ -21,7 +21,7 @@ class FileMissingRequiredFieldWarning(NeatWarning):
     field: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class FileTypeUnexpectedWarning(NeatWarning):
     """Unexpected file type: {filepath}. Expected format: {expected_format}"""
 
@@ -32,7 +32,7 @@ class FileTypeUnexpectedWarning(NeatWarning):
     error_message: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class FileItemNotSupportedWarning(NeatWarning):
     """The item {item} in {filepath} is not supported. The item will be skipped"""
 

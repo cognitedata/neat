@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class DirectRelationMissingSourceWarning(UserModelingWarning):
     """The view {view_id}.{prop_name} is a direct relation without a source.
     Direct relations in views should point to a single other view, if not, you end up
@@ -35,7 +35,7 @@ class DirectRelationMissingSourceWarning(UserModelingWarning):
     prop_name: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ParentInDifferentSpaceWarning(UserModelingWarning):
     """The view {view_id} has multiple parents in different spaces.
     Neat recommends maximum one implementation of a view from another space."""
@@ -45,7 +45,7 @@ class ParentInDifferentSpaceWarning(UserModelingWarning):
     view_id: ViewId
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class EmptyContainerWarning(UserModelingWarning):
     """Container {container_id} is empty and will be skipped.
     The container does not have any properties."""
@@ -55,7 +55,7 @@ class EmptyContainerWarning(UserModelingWarning):
     container_id: ContainerId
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class HasDataFilterOnNoPropertiesViewWarning(UserModelingWarning):
     """Cannot set hasData filter on view {view_id}.
     The view does not have properties in any containers.
@@ -66,7 +66,7 @@ class HasDataFilterOnNoPropertiesViewWarning(UserModelingWarning):
     view_id: ViewId
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class NodeTypeFilterOnParentViewWarning(UserModelingWarning):
     """Setting a node type filter on parent view {view_id}.
     This is not recommended as parent views are typically used for multiple types of nodes."""
@@ -76,7 +76,7 @@ class NodeTypeFilterOnParentViewWarning(UserModelingWarning):
     view_id: ViewId
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class HasDataFilterOnViewWithReferencesWarning(UserModelingWarning):
     """Setting a hasData filter on view {view_id} which references other views {references}.
     This is not recommended as it will lead to no nodes being returned when querying the solution view.
@@ -88,7 +88,7 @@ class HasDataFilterOnViewWithReferencesWarning(UserModelingWarning):
     references: frozenset[ViewId]
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ViewPropertyLimitWarning(UserModelingWarning):
     """The number of properties in the {view_id} view is {count} which
     is more than the API limit {limit} properties.
@@ -102,7 +102,7 @@ class ViewPropertyLimitWarning(UserModelingWarning):
     limit: int = DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class NotNeatSupportedFilterWarning(UserModelingWarning):
     """The view {view_id} uses a non-standard filter.
     This will not be validated by Neat, and is thus not recommended.

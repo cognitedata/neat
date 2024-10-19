@@ -6,14 +6,14 @@ from cognite.neat.issues._base import ResourceType
 from ._resources import ResourceError, T_Identifier, T_ReferenceIdentifier
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class PropertyError(ResourceError[T_Identifier]):
     """Base class for property errors {resource_type} with identifier {identifier}.{property_name}"""
 
     property_name: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class PropertyNotFoundError(PropertyError, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} does not have a property {property_name}"""
 
@@ -24,7 +24,7 @@ class PropertyNotFoundError(PropertyError, Generic[T_Identifier, T_ReferenceIden
     referred_type: ResourceType | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class PropertyTypeNotSupportedError(PropertyError[T_Identifier]):
     """The {resource_type} with identifier {identifier} has a property {property_name}
     of unsupported type {property_type}"""
@@ -33,14 +33,14 @@ class PropertyTypeNotSupportedError(PropertyError[T_Identifier]):
 
 
 # This is a generic error that should be used sparingly
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class PropertyDefinitionError(PropertyError[T_Identifier]):
     """Invalid property definition for {resource_type} {identifier}.{property_name}: {reason}"""
 
     reason: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class PropertyDefinitionDuplicatedError(PropertyError[T_Identifier]):
     """The {resource_type} with identifier {identifier} has multiple definitions for the property {property_name}
     with values {property_values}
@@ -53,7 +53,7 @@ class PropertyDefinitionDuplicatedError(PropertyError[T_Identifier]):
     location_name: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class PropertyMappingDuplicatedError(PropertyError[T_Identifier], Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier}.{property_name} is mapped to by: {mappings}. Ensure
     that only one {mapping_type} maps to {resource_type} {identifier}.{property_name}"""
