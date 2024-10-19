@@ -1,9 +1,11 @@
-from typing import Literal
+from typing import Literal, cast
 
+import pandas as pd
 from cognite.client import CogniteClient
 
 from cognite.neat.issues import IssueList
 from cognite.neat.rules.models import DMSRules
+from cognite.neat.rules.models._base_input import InputComponent
 from cognite.neat.rules.transformers import ConvertToRules, VerifyAnyRules
 
 from ._read import ReadAPI
@@ -25,7 +27,7 @@ class NeatSession:
         self.to = ToAPI(self._state, client, verbose)
 
     def verify(self) -> IssueList:
-        output = VerifyAnyRules("continue").transform(self._state.input_rule)
+        output = VerifyAnyRules("continue").try_transform(self._state.input_rule)
         if output.rules:
             self._state.verified_rules.append(output.rules)
         return output.issues
@@ -35,3 +37,23 @@ class NeatSession:
         self._state.verified_rules.append(converted.rules)
         if self._verbose:
             print(f"Rules converted to {target}")
+
+    def _repr_html_(self) -> str:
+        state = self._state
+        if not state.has_store and not state.input_rules:
+            return "<strong>Empty session</strong>. Get started by reading something with the <em>.read</em> attribute."
+
+        output = []
+        if state.input_rules and not state.verified_rules:
+            metadata = cast(InputComponent, state.input_rule.rules.metadata)  # type: ignore[union-attr]
+            table = pd.DataFrame([metadata.dump()]).T._repr_html_()  # type: ignore[operator]
+            output.append(f"<strong>Raw DataModel</strong><br />{table}")
+
+        if state.verified_rules:
+            table = pd.DataFrame([state.verified_rule.metadata.model_dump()]).T._repr_html_()  # type: ignore[operator]
+            output.append(f"<strong>DataModel</strong><br />{table}")
+
+        if state.has_store:
+            output.append(f"<strong>Metadata</strong> {state.store._repr_html_()}")
+
+        return "<br />".join(output)

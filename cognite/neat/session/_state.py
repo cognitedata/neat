@@ -27,3 +27,7 @@ class SessionState:
         if not self.verified_rules:
             raise ValueError("No verified rules provided")
         return self.verified_rules[-1]
+
+    @property
+    def has_store(self) -> bool:
+        return self._store is not None

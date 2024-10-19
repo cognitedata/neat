@@ -30,7 +30,10 @@ class ReadAPI:
         if input_rules.rules:
             self._state.input_rules.append(input_rules)
             if self._verbose:
-                print(f"Excel file {filepath} read successfully")
+                if input_rules.issues.has_errors:
+                    print(f"Excel file {filepath} read failed")
+                else:
+                    print(f"Excel file {filepath} read successfully")
         return input_rules.issues
 
 

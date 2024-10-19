@@ -408,7 +408,7 @@ class IssueList(NeatIssueList[NeatIssue]):
 
     def _repr_html_(self) -> str | None:
         if not self:
-            return f"<p>{self.title or 'No issues found'}</p>"
+            return "<p>'No issues found'</p>"
         return super()._repr_html_()
 
 
