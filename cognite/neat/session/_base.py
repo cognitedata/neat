@@ -3,6 +3,8 @@ from typing import Literal
 from cognite.client import CogniteClient
 
 from cognite.neat.issues import IssueList
+from cognite.neat.rules.models import DMSRules
+from cognite.neat.rules.transformers import ConvertToRules, VerifyAnyRules
 
 from ._read import ReadAPI
 from ._state import SessionState
@@ -23,7 +25,13 @@ class NeatSession:
         self.to = ToAPI(self._state, client, verbose)
 
     def verify(self) -> IssueList:
-        raise NotImplementedError()
+        output = VerifyAnyRules("continue").transform(self._state.input_rule)
+        if output.rules:
+            self._state.verified_rules.append(output.rules)
+        return output.issues
 
     def convert(self, target: Literal["dms"]) -> None:
-        raise NotImplementedError()
+        converted = ConvertToRules(DMSRules).transform(self._state.verified_rule)
+        self._state.verified_rules.append(converted.rules)
+        if self._verbose:
+            print(f"Rules converted to {target}")
