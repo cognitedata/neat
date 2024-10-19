@@ -1,3 +1,4 @@
+import inspect
 import sys
 import warnings
 from abc import ABC
@@ -169,7 +170,7 @@ class NeatIssue:
             return ViewId.load(value)
         elif type_ is ContainerId:
             return ContainerId.load(value)
-        elif issubclass(type_, Entity):
+        elif inspect.isclass(type_) and issubclass(type_, Entity):
             return type_.load(value)
         return value
 
