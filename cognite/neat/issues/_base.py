@@ -406,7 +406,10 @@ class MultiValueError(ValueError):
 class IssueList(NeatIssueList[NeatIssue]):
     """This is a list of NeatIssues."""
 
-    ...
+    def _repr_html_(self) -> str | None:
+        if not self:
+            return f"<p>{self.title or 'No issues found'}</p>"
+        return super()._repr_html_()
 
 
 T_Cls = TypeVar("T_Cls")

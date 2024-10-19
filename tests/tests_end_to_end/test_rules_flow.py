@@ -3,9 +3,11 @@ from typing import Any
 import yaml
 from pytest_regressions.data_regression import DataRegressionFixture
 
+from cognite.neat import NeatSession
 from cognite.neat.rules.exporters import YAMLExporter
 from cognite.neat.rules.models.information import InformationInputRules
 from cognite.neat.rules.transformers import InformationToDMS, VerifyInformationRules
+from tests.config import DOC_RULES
 
 
 class TestImportersToYAMLExporter:
@@ -24,4 +26,15 @@ class TestImportersToYAMLExporter:
 
         exported_rules = yaml.safe_load(exported_yaml_str)
 
+        data_regression.check(exported_rules)
+
+    def test_excel_importer_to_yaml_neat_session(self, data_regression: DataRegressionFixture) -> None:
+        neat = NeatSession(verbose=False)
+
+        neat.read.excel(DOC_RULES / "information-architect-david.xlsx")
+        neat.verify()
+        neat.convert("dms")
+        exported_yaml_str = neat.to.yaml()
+
+        exported_rules = yaml.safe_load(exported_yaml_str)
         data_regression.check(exported_rules)
