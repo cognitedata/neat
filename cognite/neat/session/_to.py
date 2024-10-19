@@ -3,9 +3,9 @@ from typing import Any
 from cognite.client import CogniteClient
 
 
-class ReadAPI:
+class ToAPI:
     def __init__(self, client: CogniteClient | None = None) -> None:
-        self.cdf = CDFReadAPI(client)
+        self.cdf = CDFToAPI(client)
 
     def excel(
         self,
@@ -15,6 +15,6 @@ class ReadAPI:
     def yaml(self, io: Any) -> None: ...
 
 
-class CDFReadAPI:
+class CDFToAPI:
     def __init__(self, client: CogniteClient | None) -> None:
         self._client = client
