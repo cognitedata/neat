@@ -1,6 +1,9 @@
-from typing import Any
+from pathlib import Path
+from typing import Any, overload
 
 from cognite.client import CogniteClient
+
+from cognite.neat.rules.exporters import YAMLExporter
 
 from ._state import SessionState
 
@@ -16,7 +19,19 @@ class ToAPI:
         io: Any,
     ) -> None: ...
 
-    def yaml(self, io: Any | None = None) -> None: ...
+    @overload
+    def yaml(self, io: None) -> str: ...
+
+    @overload
+    def yaml(self, io: Any) -> None: ...
+
+    def yaml(self, io: Any | None = None) -> str | None:
+        exporter = YAMLExporter()
+        if io is None:
+            return exporter.export(self._state.verified_rule)
+
+        exporter.export_to_file(self._state.verified_rule, Path(io))
+        return None
 
 
 class CDFToAPI:
