@@ -3,6 +3,7 @@ from typing import Any
 
 from cognite.client import CogniteClient
 
+from cognite.neat.issues import IssueList
 from cognite.neat.rules._shared import ReadRules
 from cognite.neat.rules.importers import ExcelImporter
 
@@ -18,7 +19,7 @@ class ReadAPI:
     def excel(
         self,
         io: Any,
-    ) -> None:
+    ) -> IssueList:
         if isinstance(io, str):
             filepath = Path(io)
         elif isinstance(io, Path):
@@ -26,9 +27,11 @@ class ReadAPI:
         else:
             raise ValueError(f"Expected str or Path, got {type(io)}")
         input_rules: ReadRules = ExcelImporter(filepath).to_rules()
-        self._state.input_rules.append(input_rules)
-        if self._verbose:
-            print(f"Excel file {filepath} read successfully")
+        if input_rules.rules:
+            self._state.input_rules.append(input_rules)
+            if self._verbose:
+                print(f"Excel file {filepath} read successfully")
+        return input_rules.issues
 
 
 class CDFReadAPI:
