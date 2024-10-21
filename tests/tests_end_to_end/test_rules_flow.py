@@ -1,3 +1,6 @@
+from tempfile import NamedTemporaryFile
+
+import requests
 import yaml
 from pytest_regressions.data_regression import DataRegressionFixture
 
@@ -19,4 +22,17 @@ class TestImportersToYAMLExporter:
 
         exported_rules = yaml.safe_load(exported_yaml_str)
 
+        data_regression.check(exported_rules)
+
+    def test_ontology_importer_to_yaml(self, data_regression: DataRegressionFixture) -> None:
+        neat = NeatSession(verbose=False)
+
+        response = requests.get("https://data.nobelprize.org/terms.rdf")
+        temp_file = NamedTemporaryFile(delete=False, suffix=".rdf")
+        temp_file.write(response.content)
+
+        neat.read.ontology(temp_file.name)
+        neat.verify()
+        exported_yaml_str = neat.to.yaml()
+        exported_rules = yaml.safe_load(exported_yaml_str)
         data_regression.check(exported_rules)
