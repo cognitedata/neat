@@ -23,6 +23,7 @@ from cognite.neat.rules.models.dms import (
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
+    DMSMetadata,
     DMSSchema,
 )
 from cognite.neat.rules.models.entities._single_value import UnknownEntity
@@ -1625,6 +1626,19 @@ class TestDMSRules:
         assert manufacturer_view.referenced_containers() == {dm.ContainerId(car.BASE_MODEL.metadata.space, "Entity")}
         color_view = view_by_external_id["Color"]
         assert color_view.referenced_containers() == {dm.ContainerId(car.BASE_MODEL.metadata.space, "Entity")}
+
+    def test_metadata_int_version(self) -> None:
+        metadata = DMSMetadata.model_validate(
+            DMSInputMetadata(
+                "partial",
+                space="some_space",
+                external_id="some_id",
+                creator="me",
+                version=14,
+            ).dump()
+        )
+
+        assert metadata.version == "14"
 
 
 class TestDMSExporter:
