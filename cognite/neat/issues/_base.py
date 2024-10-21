@@ -1,3 +1,4 @@
+import inspect
 import sys
 import warnings
 from abc import ABC
@@ -107,6 +108,8 @@ class NeatIssue:
 
     @classmethod
     def _dump_value(cls, value: Any) -> list | int | bool | float | str | dict:
+        from cognite.neat.rules.models.entities import Entity
+
         if isinstance(value, str | int | bool | float):
             return value
         elif isinstance(value, frozenset):
@@ -117,6 +120,8 @@ class NeatIssue:
             return [cls._dump_value(item) for item in value]
         elif isinstance(value, ViewId | ContainerId):
             return value.dump(camel_case=True, include_type=True)
+        elif isinstance(value, Entity):
+            return value.dump()
         raise ValueError(f"Unsupported type: {type(value)}")
 
     @classmethod
@@ -148,6 +153,8 @@ class NeatIssue:
 
     @classmethod
     def _load_value(cls, type_: type, value: Any) -> Any:
+        from cognite.neat.rules.models.entities import Entity
+
         if isinstance(type_, UnionType) or get_origin(type_) is UnionType:
             args = get_args(type_)
             return cls._load_value(args[0], value)
@@ -163,6 +170,8 @@ class NeatIssue:
             return ViewId.load(value)
         elif type_ is ContainerId:
             return ContainerId.load(value)
+        elif inspect.isclass(type_) and issubclass(type_, Entity):
+            return type_.load(value)
         return value
 
     def __lt__(self, other: "NeatIssue") -> bool:
@@ -406,7 +415,10 @@ class MultiValueError(ValueError):
 class IssueList(NeatIssueList[NeatIssue]):
     """This is a list of NeatIssues."""
 
-    ...
+    def _repr_html_(self) -> str | None:
+        if not self:
+            return "<p>'No issues found'</p>"
+        return super()._repr_html_()
 
 
 T_Cls = TypeVar("T_Cls")
