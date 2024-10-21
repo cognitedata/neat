@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from cognite.client import CogniteClient
 
@@ -9,6 +9,8 @@ from cognite.neat.rules._shared import ReadRules
 from cognite.neat.store import NeatGraphStore
 
 from ._state import SessionState
+
+RDFFileType = Literal["excel", "ontology", "imf_types"]
 
 
 class ReadAPI:
@@ -23,19 +25,29 @@ class ReadAPI:
         self._store_rules(io, input_rules, "Excel")
         return input_rules.issues
 
-    def ontology(self, io: Any) -> IssueList:
+    def rdf(self, io: Any, type: RDFFileType) -> IssueList:
+        if type == "ontology":
+            return self._ontology(io)
+        elif type == "imf":
+            return self._imf(io)
+        elif type == "instances":
+            return self._inference(io)
+        else:
+            raise ValueError(f"Expected ontology, imf or instances, got {type}")
+
+    def _ontology(self, io: Any) -> IssueList:
         filepath = self._return_filepath(io)
         input_rules: ReadRules = importers.OWLImporter.from_file(filepath).to_rules()
         self._store_rules(io, input_rules, "Ontology")
         return input_rules.issues
 
-    def imf(self, io: Any) -> IssueList:
+    def _imf(self, io: Any) -> IssueList:
         filepath = self._return_filepath(io)
         input_rules: ReadRules = importers.IMFImporter.from_file(filepath).to_rules()
         self._store_rules(io, input_rules, "IMF Types")
         return input_rules.issues
 
-    def inference(self, io: Any) -> IssueList:
+    def _inference(self, io: Any) -> IssueList:
         if isinstance(io, NeatGraphStore):
             importer = importers.InferenceImporter.from_graph_store(io)
         else:
