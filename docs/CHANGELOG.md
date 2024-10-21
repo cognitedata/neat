@@ -38,6 +38,10 @@ Changes are grouped as follows:
 ### Removed
 - State on DataType stored in `_dms_loaded` attribute
 
+### Changed
+- Required `env_file_name` explicitly set in the `get_cognite_client` function. This is to avoid loading the wrong
+  environment file by accident when running the function in a notebook.
+
 ## [0.92.3] - 17-09-24
 ### Fixed
 - Prefixes not being imported or exported to Excel

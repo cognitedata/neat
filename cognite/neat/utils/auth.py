@@ -18,7 +18,18 @@ _VALID_LOGIN_FLOWS = get_args(_LOGIN_FLOW)
 _CLIENT_NAME = f"CogniteNeat:{_version.__version__}"
 
 
-def get_cognite_client(env_file_name: str = ".env") -> CogniteClient:
+def get_cognite_client(env_file_name: str) -> CogniteClient:
+    """Instantiate a CogniteClient using environment variables. If the environment variables are not set, the user will
+    be prompted to enter them.
+
+    Args:
+        env_file_name: The name of the .env file to look for in the repository root. If the file is found, the variables
+            will be loaded from the file. If the file is not found, the user will be prompted to enter the variables.
+
+    Returns:
+        CogniteClient: A CogniteClient instance.
+
+    """
     if not env_file_name.endswith(".env"):
         raise ValueError("env_file_name must end with '.env'")
     with suppress(KeyError):
@@ -320,5 +331,5 @@ def _env_in_gitignore(repo_root: Path, env_file_name: str) -> bool:
 
 
 if __name__ == "__main__":
-    c = get_cognite_client()
+    c = get_cognite_client(".env")
     print(c.iam.token.inspect())
