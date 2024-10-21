@@ -18,6 +18,8 @@ from dataclasses import Field, dataclass, fields, is_dataclass
 from types import GenericAlias, UnionType
 from typing import Any, Generic, TypeVar, Union, cast, get_args, get_origin, overload
 
+import pandas as pd
+
 from ._base_rules import BaseRules, SchemaModel
 
 if sys.version_info >= (3, 11):
@@ -173,3 +175,6 @@ class InputComponent(ABC, Generic[T_RuleModel]):
             for name, field_ in self._get_verified_cls().model_fields.items()
             if not field_.exclude
         }
+
+    def _repr_html_(self) -> str:
+        return pd.DataFrame([self.dump()])._repr_html_()  # type: ignore[operator]

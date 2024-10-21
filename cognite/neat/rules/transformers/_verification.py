@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from pydantic import ValidationError
 
-from cognite.neat.issues import IssueList, NeatError, NeatWarning
+from cognite.neat.issues import IssueList, MultiValueError, NeatError, NeatWarning
 from cognite.neat.issues.errors import NeatTypeError
 from cognite.neat.rules._shared import (
     InputRules,
@@ -128,6 +128,12 @@ def _handle_issues(
             yield future_result
         except ValidationError as e:
             issues.extend(error_cls.from_pydantic_errors(e.errors(), **(error_args or {})))
+            future_result._result = "failure"
+        except MultiValueError as e:
+            issues.extend(e.errors)
+            future_result._result = "failure"
+        except NeatError as e:
+            issues.append(e)
             future_result._result = "failure"
         else:
             future_result._result = "success"

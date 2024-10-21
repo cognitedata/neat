@@ -5,7 +5,7 @@ from cognite.neat.issues._base import NeatError, ResourceType, T_Identifier, T_R
 from cognite.neat.utils.text import humanize_collection
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourceError(NeatError, Generic[T_Identifier], RuntimeError):
     """Base class for resource errors {resource_type} with identifier {identifier}"""
 
@@ -13,7 +13,7 @@ class ResourceError(NeatError, Generic[T_Identifier], RuntimeError):
     resource_type: ResourceType
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourceDuplicatedError(ResourceError[T_Identifier]):
     """The {resource_type} with identifier {identifier} is duplicated in {location}"""
 
@@ -21,14 +21,14 @@ class ResourceDuplicatedError(ResourceError[T_Identifier]):
     location: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourceRetrievalError(ResourceError[T_Identifier]):
     """Failed to retrieve {resource_type} with identifier {identifier}. The error was: {error}"""
 
     error: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourceNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} does not exist"""
 
@@ -50,7 +50,7 @@ class ResourceNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIden
         return msg
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourceNotDefinedError(ResourceError[T_Identifier]):
     """The {resource_type} {identifier} is not defined in the {location}"""
 
@@ -63,7 +63,7 @@ class ResourceNotDefinedError(ResourceError[T_Identifier]):
     sheet_name: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourceConvertionError(ResourceError, ValueError):
     """Failed to convert the {resource_type} {identifier} to {target_format}: {reason}"""
 
@@ -72,14 +72,14 @@ class ResourceConvertionError(ResourceError, ValueError):
     reason: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourceCreationError(ResourceError[T_Identifier], ValueError):
     """Failed to create {resource_type} with identifier {identifier}. The error was: {error}"""
 
     error: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourceMissingIdentifierError(NeatError, ValueError):
     """The {resource_type} with name {name} is missing an identifier."""
 
@@ -87,7 +87,7 @@ class ResourceMissingIdentifierError(NeatError, ValueError):
     name: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourceChangedError(ResourceError[T_Identifier]):
     """The {resource_type} with identifier {identifier} has changed{changed}"""
 

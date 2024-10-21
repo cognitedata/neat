@@ -5,7 +5,7 @@ from cognite.neat.issues._base import NeatWarning, ResourceType, T_Identifier, T
 
 
 # Name ResourceNeatWarning to avoid conflicts with the built-in ResourceWarning
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourceNeatWarning(NeatWarning, Generic[T_Identifier]):
     """Base class for resource warnings {resource_type} with identifier {identifier}"""
 
@@ -13,7 +13,7 @@ class ResourceNeatWarning(NeatWarning, Generic[T_Identifier]):
     resource_type: ResourceType
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourceNotFoundWarning(ResourceNeatWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} referred by {referred_type} {referred_by} does not exist.
     This will be ignored."""
@@ -24,7 +24,7 @@ class ResourceNotFoundWarning(ResourceNeatWarning, Generic[T_Identifier, T_Refer
     referred_type: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourcesDuplicatedWarning(NeatWarning, Generic[T_Identifier]):
     """Duplicated {resource_type} with identifiers {resources} were found. {default_action}"""
 
@@ -35,7 +35,7 @@ class ResourcesDuplicatedWarning(NeatWarning, Generic[T_Identifier]):
     default_action: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class ResourceRetrievalWarning(NeatWarning, Generic[T_Identifier]):
     """Failed to retrieve {resource_type} with identifiers {resources}. Continuing without
     these resources."""

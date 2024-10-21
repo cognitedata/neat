@@ -6,7 +6,7 @@ from yaml import YAMLError
 from cognite.neat.issues import NeatError
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class AuthorizationError(NeatError, RuntimeError):
     """Missing authorization for {action}: {reason}"""
 
@@ -14,7 +14,7 @@ class AuthorizationError(NeatError, RuntimeError):
     reason: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class FileReadError(NeatError, RuntimeError):
     """Error when reading file, {filepath}: {reason}"""
 
@@ -23,7 +23,7 @@ class FileReadError(NeatError, RuntimeError):
     reason: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class FileNotFoundNeatError(NeatError, FileNotFoundError):
     """File {filepath} not found"""
 
@@ -31,7 +31,7 @@ class FileNotFoundNeatError(NeatError, FileNotFoundError):
     filepath: Path
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class FileMissingRequiredFieldError(NeatError, ValueError):
     """Missing required {field_name} in {filepath}: {field}"""
 
@@ -40,7 +40,7 @@ class FileMissingRequiredFieldError(NeatError, ValueError):
     field: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class NeatYamlError(NeatError, YAMLError):
     """Invalid YAML: {reason}"""
 
@@ -51,7 +51,7 @@ class NeatYamlError(NeatError, YAMLError):
     expected_format: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class FileTypeUnexpectedError(NeatError, TypeError):
     """Unexpected file type: {filepath}. Expected format: {expected_format}"""
 
@@ -59,7 +59,7 @@ class FileTypeUnexpectedError(NeatError, TypeError):
     expected_format: frozenset[str]
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class FileNotAFileError(NeatError, FileNotFoundError):
     """{filepath} is not a file"""
 
