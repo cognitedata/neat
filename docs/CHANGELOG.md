@@ -34,6 +34,7 @@ Changes are grouped as follows:
 - Rules transformer `RuleMapping` that maps rules from one data model to another
 - Graph transformer `SplitMultiValueProperty` which splits multi-value properties into separate properties with single value
 - Support for `xsd:decimal` which is now mapped to `float64` in DMS rules
+- Added RDF based readers for `NeatSession`
 
 ### Removed
 - State on DataType stored in `_dms_loaded` attribute
