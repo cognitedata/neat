@@ -10,7 +10,7 @@ from cognite.neat.store import NeatGraphStore
 
 from ._state import SessionState
 
-RDFFileType = Literal["excel", "ontology", "imf_types"]
+RDFFileType = Literal["instances", "ontology", "imf_types"]
 
 
 class ReadAPI:
