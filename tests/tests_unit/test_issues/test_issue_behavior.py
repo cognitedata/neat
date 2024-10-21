@@ -1,3 +1,5 @@
+import pytest
+
 from cognite.neat.issues import IssueList
 from cognite.neat.issues.errors import ResourceCreationError
 from cognite.neat.rules.transformers._verification import _handle_issues
@@ -9,7 +11,8 @@ class TestIssues:
         my_error = ResourceCreationError(identifier="missing", resource_type="space", error="No CDF Connection")
 
         errors = IssueList()
-        with _handle_issues(issues=errors):
-            raise my_error
+        with pytest.raises(ResourceCreationError) as exc_info:
+            with _handle_issues(issues=errors):
+                raise my_error
 
-        assert list(errors) == [my_error]
+        assert exc_info.value == my_error
