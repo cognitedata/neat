@@ -3,21 +3,21 @@ from dataclasses import dataclass
 from cognite.neat.issues import NeatWarning
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class NeatValueWarning(NeatWarning):
     """{value}"""
 
     value: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class NotSupportedWarning(NeatWarning):
     """{feature} is not supported"""
 
     feature: str
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class RegexViolationWarning(NeatWarning):
     """The value '{value}' of {identifier} does not match the {pattern_name} pattern '{pattern}'"""
 

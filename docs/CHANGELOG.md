@@ -38,6 +38,9 @@ Changes are grouped as follows:
 ### Removed
 - State on DataType stored in `_dms_loaded` attribute
 
+### Changed
+- `NeatIssue` are no longer immutable. This is to comply with the expectation of Exceptions in Python.
+
 ## [0.92.3] - 17-09-24
 ### Fixed
 - Prefixes not being imported or exported to Excel
