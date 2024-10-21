@@ -1628,13 +1628,15 @@ class TestDMSRules:
         assert color_view.referenced_containers() == {dm.ContainerId(car.BASE_MODEL.metadata.space, "Entity")}
 
     def test_metadata_int_version(self) -> None:
-        raw_metadata = DMSInputMetadata(
-            "partial",
+        raw_metadata = dict(
+            schema_="partial",
             space="some_space",
             external_id="some_id",
             creator="me",
             version=14,
-        ).dump()
+            created="2024-03-16",
+            updated="2024-03-16",
+        )
 
         metadata = DMSMetadata.model_validate(raw_metadata)
 
