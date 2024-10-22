@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from cognite.client import CogniteClient
 
@@ -9,8 +9,7 @@ from cognite.neat.rules._shared import ReadRules
 from cognite.neat.store import NeatGraphStore
 
 from ._state import SessionState
-
-RDFFileType = Literal["instances", "ontology", "imf_types"]
+from ._wizard import NeatObjectType, RDFFileType, object_wizard, rdf_dm_wizard
 
 
 class ReadAPI:
@@ -25,15 +24,28 @@ class ReadAPI:
         self._store_rules(io, input_rules, "Excel")
         return input_rules.issues
 
-    def rdf(self, io: Any, type: RDFFileType) -> IssueList:
-        if type == "ontology":
+    def rdf(
+        self,
+        io: Any,
+        type: NeatObjectType | None = None,
+        source: RDFFileType | None = None,
+    ) -> IssueList:
+        if type is None:
+            type = object_wizard()
+
+        if type == "Data Model":
+            source = source or rdf_dm_wizard()
+        else:
+            raise NotImplementedError(f"Currently only Data Model is supported, got {type}")
+
+        if source == "Ontology":
             return self._ontology(io)
-        elif type == "imf":
+        elif source == "IMF":
             return self._imf(io)
-        elif type == "instances":
+        elif source == "Instances":
             return self._inference(io)
         else:
-            raise ValueError(f"Expected ontology, imf or instances, got {type}")
+            raise ValueError(f"Expected ontology, imf or instances, got {source}")
 
     def _ontology(self, io: Any) -> IssueList:
         filepath = self._return_filepath(io)

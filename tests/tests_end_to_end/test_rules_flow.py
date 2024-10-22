@@ -33,7 +33,7 @@ class TestImportersToYAMLExporter:
         temp_file = NamedTemporaryFile(delete=False, suffix=".rdf")
         temp_file.write(response.content)
 
-        neat.read.rdf(temp_file.name, type="ontology")
+        neat.read.rdf(temp_file.name, source="Ontology", type="Data Model")
         neat.verify()
         neat.convert("dms")
         exported_yaml_str = neat.to.yaml()
