@@ -148,15 +148,16 @@ class InferenceImporter(BaseRDFImporter):
                     else:
                         value_type_id = str(self.non_existing_node_type)
 
-                        self.issue_list.append(
-                            PropertyValueTypeUndefinedWarning(
-                                resource_type="Property",
-                                identifier=f"{class_id}{property_id}",
-                                property_name=property_id,
-                                default_action="Remove the property from the rules",
-                                recommended_action="Make sure that graph is complete",
-                            )
+                        issue = PropertyValueTypeUndefinedWarning(
+                            resource_type="Property",
+                            identifier=f"{class_id}:{property_id}",
+                            property_name=property_id,
+                            default_action="Remove the property from the rules",
+                            recommended_action="Make sure that graph is complete",
                         )
+
+                        if issue not in self.issue_list:
+                            self.issue_list.append(issue)
 
                     id_ = f"{class_id}:{property_id}"
 

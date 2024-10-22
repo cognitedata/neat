@@ -4,6 +4,8 @@ import pandas as pd
 from cognite.client import CogniteClient
 
 from cognite.neat.issues import IssueList
+from cognite.neat.rules import importers
+from cognite.neat.rules._shared import ReadRules
 from cognite.neat.rules.models import DMSRules
 from cognite.neat.rules.models._base_input import InputComponent
 from cognite.neat.rules.transformers import ConvertToRules, VerifyAnyRules
@@ -37,6 +39,11 @@ class NeatSession:
         self._state.verified_rules.append(converted.rules)
         if self._verbose:
             print(f"Rules converted to {target}")
+
+    def infer(self) -> IssueList:
+        input_rules: ReadRules = importers.InferenceImporter.from_graph_store(self._state.store).to_rules()
+        self.read._store_rules(self._state.store, input_rules, "Data Model Inference")
+        return input_rules.issues
 
     def _repr_html_(self) -> str:
         state = self._state

@@ -10,7 +10,6 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.graph._shared import MIMETypes
 from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.graph.models import InstanceType, Triple
 from cognite.neat.graph.queries import Queries
@@ -158,20 +157,29 @@ class NeatGraphStore:
 
     def write(self, extractor: TripleExtractors) -> None:
         _start = datetime.now(timezone.utc)
+        success = True
 
-        if isinstance(extractor, RdfFileExtractor):
-            self._parse_file(extractor.filepath, extractor.mime_type, extractor.base_uri)
+        if isinstance(extractor, RdfFileExtractor) and not extractor.issue_list.has_errors:
+            self._parse_file(extractor.filepath, cast(str, extractor.mime_type), extractor.base_uri)
+        elif isinstance(extractor, RdfFileExtractor):
+            success = False
+            issue_text = "\n".join([issue.as_message() for issue in extractor.issue_list])
+            warnings.warn(
+                f"Cannot write to graph store with {type(extractor).__name__}, errors found in file:\n{issue_text}",
+                stacklevel=2,
+            )
         else:
             self._add_triples(extractor.extract())
 
-        self.provenance.append(
-            Change.record(
-                activity=f"{type(extractor).__name__}",
-                start=_start,
-                end=datetime.now(timezone.utc),
-                description=f"Extracted triples to graph store using {type(extractor).__name__}",
+        if success:
+            self.provenance.append(
+                Change.record(
+                    activity=f"{type(extractor).__name__}",
+                    start=_start,
+                    end=datetime.now(timezone.utc),
+                    description=f"Extracted triples to graph store using {type(extractor).__name__}",
+                )
             )
-        )
 
     def read(self, class_: str) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
         """Read instances for given view from the graph store."""
@@ -234,7 +242,7 @@ class NeatGraphStore:
     def _parse_file(
         self,
         filepath: Path,
-        mime_type: MIMETypes = "application/rdf+xml",
+        mime_type: str = "application/rdf+xml",
         base_uri: URIRef | None = None,
     ) -> None:
         """Imports graph data from file.
