@@ -37,7 +37,7 @@ def test_rdf_inference():
 
 def test_rdf_inference_with_none_existing_node():
     store = NeatGraphStore.from_oxi_store()
-    extractor = RdfFileExtractor(DATA_FOLDER / "low-quality-graph.ttl", mime_type="text/turtle")
+    extractor = RdfFileExtractor(DATA_FOLDER / "low-quality-graph.ttl")
     store.write(extractor)
 
     rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store, non_existing_node_type=UnknownEntity()))

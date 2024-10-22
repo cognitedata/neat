@@ -25,6 +25,7 @@ def rdflib_to_mime_types(rdflib_format: str) -> str | None:
         "owl": "application/rdf+xml",
         "n3": "application/n-triple",
         "ttl": "text/turtle",
+        "turtle": "text/turtle",
         "nt": "application/n-triple",
         "nq": "application/n-quads",
         "nquads": "application/n-quads",
