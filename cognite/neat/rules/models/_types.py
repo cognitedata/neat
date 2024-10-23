@@ -84,8 +84,10 @@ ExternalIdType = Annotated[
     Field(min_length=1, max_length=255),
 ]
 
+
 VersionType = Annotated[
     str,
+    BeforeValidator(str),
     StringConstraints(pattern=VERSION_COMPLIANCE_REGEX),
     _custom_error(lambda _, value: RegexViolationError(value, VERSION_COMPLIANCE_REGEX)),
 ]
