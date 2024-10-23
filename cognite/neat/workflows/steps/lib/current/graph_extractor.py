@@ -2,9 +2,6 @@ import json
 from pathlib import Path
 from typing import ClassVar, cast
 
-from rdflib import URIRef
-
-from cognite.neat.constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors import RdfFileExtractor
 from cognite.neat.graph.extractors._mock_graph_generator import MockGraphGenerator
 from cognite.neat.issues.errors import WorkflowStepNotInitializedError
@@ -83,25 +80,7 @@ class GraphFromRdfFile(Step):
             name="File path",
             value="source-graphs/source-graph-dump.xml",
             label="File name of source graph data dump in RDF format",
-        ),
-        Configurable(
-            name="MIME type",
-            value="application/rdf+xml",
-            label="MIME type of file containing RDF graph",
-            options=[
-                "application/rdf+xml",
-                "text/turtle",
-                "application/n-triples",
-                "application/n-quads",
-                "application/trig",
-            ],
-        ),
-        Configurable(
-            name="Add base URI",
-            value="True",
-            label="Whether to add base URI to graph in case if entity ids are relative",
-            options=["True", "False"],
-        ),
+        )
     ]
 
     def run(self, store: NeatGraph) -> FlowMessage:  # type: ignore[override, syntax]
@@ -112,8 +91,6 @@ class GraphFromRdfFile(Step):
             store.graph.write(
                 RdfFileExtractor(  # type: ignore[abstract]
                     filepath=self.data_store_path / Path(source_file),
-                    mime_type=self.configs["MIME type"],  # type: ignore[arg-type]
-                    base_uri=(URIRef(DEFAULT_NAMESPACE) if self.configs["Add base URI"] == "True" else None),
                 )
             )
 

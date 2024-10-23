@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Literal, cast
 
 from cognite.neat.rules._shared import ReadRules, VerifiedRules
 from cognite.neat.store import NeatGraphStore
@@ -14,7 +14,12 @@ class SessionState:
 
     @property
     def store(self) -> NeatGraphStore:
-        raise NotImplementedError()
+        if not self.has_store:
+            if self.store_type == "oxigraph":
+                self._store = NeatGraphStore.from_oxi_store()
+            else:
+                self._store = NeatGraphStore.from_memory_store()
+        return cast(NeatGraphStore, self._store)
 
     @property
     def input_rule(self) -> ReadRules:

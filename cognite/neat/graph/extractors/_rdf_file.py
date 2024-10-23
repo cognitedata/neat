@@ -1,9 +1,16 @@
+from collections.abc import Iterable
 from pathlib import Path
+from typing import cast
 
 from rdflib import URIRef
+from rdflib.util import guess_format
 
-from cognite.neat.graph._shared import MIMETypes
+from cognite.neat.constants import DEFAULT_BASE_URI
+from cognite.neat.graph._shared import rdflib_to_mime_types
 from cognite.neat.graph.extractors._base import BaseExtractor
+from cognite.neat.graph.models import Triple
+from cognite.neat.issues._base import IssueList
+from cognite.neat.issues.errors import FileNotFoundNeatError, FileTypeUnexpectedError
 
 
 class RdfFileExtractor(BaseExtractor):
@@ -18,9 +25,25 @@ class RdfFileExtractor(BaseExtractor):
     def __init__(
         self,
         filepath: Path,
-        mime_type: MIMETypes = "application/rdf+xml",
-        base_uri: URIRef | None = None,
+        base_uri: URIRef = DEFAULT_BASE_URI,
+        issue_list: IssueList | None = None,
     ):
+        self.issue_list = issue_list or IssueList(title=f"{filepath.name}")
+
         self.filepath = filepath
-        self.mime_type = mime_type
+        self.mime_type = rdflib_to_mime_types(cast(str, guess_format(str(self.filepath))))
         self.base_uri = base_uri
+
+        if not self.filepath.exists():
+            self.issue_list.append(FileNotFoundNeatError(self.filepath))
+
+        if not self.mime_type:
+            self.issue_list.append(
+                FileTypeUnexpectedError(
+                    self.filepath,
+                    frozenset([".rdf", ".ttl", ".nt", ".n3", ".owl", ".nq", ".trig"]),
+                )
+            )
+
+    def extract(self) -> Iterable[Triple]:
+        raise NotImplementedError()

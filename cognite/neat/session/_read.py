@@ -3,6 +3,7 @@ from typing import Any
 
 from cognite.client import CogniteClient
 
+from cognite.neat.graph import extractors
 from cognite.neat.issues import IssueList
 from cognite.neat.rules import importers
 from cognite.neat.rules._shared import ReadRules
@@ -31,21 +32,21 @@ class ReadAPI:
         source: RDFFileType | None = None,
     ) -> IssueList:
         if type is None:
-            type = object_wizard("What is the type of RDF?")
+            type = object_wizard()
 
-        if type == "Data Model":
+        if type.lower() == "Data Model".lower():
             source = source or rdf_dm_wizard("What type of data model is the RDF?")
+            if source == "Ontology":
+                return self._ontology(io)
+            elif source == "IMF":
+                return self._imf(io)
+            else:
+                raise ValueError(f"Expected ontology, imf or instances, got {source}")
+        elif type.lower() == "Instances".lower():
+            self._state.store.write(extractors.RdfFileExtractor(self._return_filepath(io)))
+            return IssueList()
         else:
-            raise NotImplementedError(f"Currently only Data Model is supported, got {type}")
-
-        if source == "Ontology":
-            return self._ontology(io)
-        elif source == "IMF":
-            return self._imf(io)
-        elif source == "Instances":
-            return self._inference(io)
-        else:
-            raise ValueError(f"Expected ontology, imf or instances, got {source}")
+            raise ValueError(f"Expected data model or instances, got {type}")
 
     def _ontology(self, io: Any) -> IssueList:
         filepath = self._return_filepath(io)

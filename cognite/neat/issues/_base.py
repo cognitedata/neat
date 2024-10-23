@@ -2,7 +2,6 @@ import inspect
 import sys
 import warnings
 from abc import ABC
-from collections import UserList
 from collections.abc import Collection, Hashable, Iterable, Sequence
 from dataclasses import dataclass, fields
 from functools import total_ordering
@@ -354,7 +353,7 @@ class DefaultWarning(NeatWarning):
 T_NeatIssue = TypeVar("T_NeatIssue", bound=NeatIssue)
 
 
-class NeatIssueList(UserList[T_NeatIssue], Sequence[T_NeatIssue], ABC):
+class NeatIssueList(list, Sequence[T_NeatIssue], ABC):
     """This is a generic list of NeatIssues."""
 
     def __init__(self, issues: Sequence[T_NeatIssue] | None = None, title: str | None = None):

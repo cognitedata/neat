@@ -34,7 +34,7 @@ def test_imf_attribute_nodes():
     dms_rules = InformationToDMS().transform(info_rules).rules
 
     store = NeatGraphStore.from_oxi_store(rules=info_rules)
-    store.write(RdfFileExtractor(IMF_EXAMPLE, mime_type="text/turtle"))
+    store.write(RdfFileExtractor(IMF_EXAMPLE))
 
     loader = DMSLoader.from_rules(dms_rules, store, instance_space="knowledge")
     knowledge_nodes = list(loader.load())
