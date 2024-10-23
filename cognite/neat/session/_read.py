@@ -31,7 +31,7 @@ class ReadAPI:
         source: RDFFileType | None = None,
     ) -> IssueList:
         if type is None:
-            type = object_wizard()
+            type = object_wizard("What is the type of RDF?")
 
         if type == "Data Model":
             source = source or rdf_dm_wizard()
