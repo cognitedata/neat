@@ -6,11 +6,9 @@ from pathlib import Path
 import typer
 from packaging.version import Version, parse
 
-from cognite.neat._version import __version__
-
 REPO_ROOT = Path(__file__).parent
 CHANGELOG = REPO_ROOT / "docs" / "CHANGELOG.md"
-
+VERSION_FILE = REPO_ROOT / "cognite" / "neat" / "_version.py"
 TBD_HEADING = "## TBD"
 
 dev_app = typer.Typer(
@@ -36,7 +34,10 @@ def bump(
         REPO_ROOT / "cognite" / "neat" / "_version.py",
         REPO_ROOT / "makefile",
     ]
-    version = parse(__version__)
+    version_file_content = VERSION_FILE.read_text().split("\n")[0]
+    version_raw = version_file_content.split(" = ")[1].strip().strip('"')
+
+    version = parse(version_raw)
 
     if alpha and version.is_prerelease and version.pre[0] == "a":
         suffix = f"a{version.pre[1] + 1}"
