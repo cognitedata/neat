@@ -27,6 +27,7 @@ Changes are grouped as follows:
 - Reorg prefixes
 - Added more detail regex testing of entities
 - Transformation is now generated for every RDF based rules importer
+- Information architect relations are converted to DMS direct relation instead of edge
 
 ### Added
 - Rules exporter that produces a spreadsheet template for instance creation based on definition of classes in the rules

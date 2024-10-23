@@ -413,11 +413,6 @@ class _InformationRulesConverter:
 
         connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = None
         if isinstance(value_type, ViewEntity):
-            # Default connection type.
-            connection = EdgeEntity() if prop.is_list else "direct"
-
-        # defaulting to direct connection
-        elif isinstance(value_type, DMSUnknownEntity):
             connection = "direct"
 
         container: ContainerEntity | None = None
