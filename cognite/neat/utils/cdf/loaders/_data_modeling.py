@@ -31,6 +31,7 @@ from cognite.client.data_classes.data_modeling import (
 from cognite.client.data_classes.data_modeling.ids import (
     ContainerId,
     DataModelId,
+    NodeId,
     ViewId,
 )
 from cognite.client.exceptions import CogniteAPIError
@@ -115,9 +116,14 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
         nodes = self.client.data_modeling.instances.list(
             "node", limit=-1, filter=filters.Equals(["node", "space"], space)
         )
-        if nodes:
-            instances = self.client.data_modeling.instances.delete(nodes=nodes.as_ids())
-            print(f"Deleted {len(instances.nodes)} nodes")
+        node_types = {NodeId(node.type.space, node.type.external_id) for node in nodes if node.type}
+        node_data = set(nodes.as_ids()) - node_types
+        if node_data:
+            instances = self.client.data_modeling.instances.delete(nodes=list(node_data))
+            print(f"Deleted {len(node_data)} nodes")
+        if node_types:
+            instances = self.client.data_modeling.instances.delete(nodes=list(node_types))
+            print(f"Deleted {len(node_types)} node types")
         views = self.client.data_modeling.views.list(limit=-1, space=space)
         if views:
             deleted_views = self.client.data_modeling.views.delete(views.as_ids())
