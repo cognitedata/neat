@@ -34,7 +34,7 @@ class ReadAPI:
             type = object_wizard("What is the type of RDF?")
 
         if type == "Data Model":
-            source = source or rdf_dm_wizard()
+            source = source or rdf_dm_wizard("What type of data model is the RDF?")
         else:
             raise NotImplementedError(f"Currently only Data Model is supported, got {type}")
 
