@@ -120,10 +120,10 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
         node_data = set(nodes.as_ids()) - node_types
         if node_data:
             instances = self.client.data_modeling.instances.delete(nodes=list(node_data))
-            print(f"Deleted {len(node_data)} nodes")
+            print(f"Deleted {len(instances.nodes)} nodes")
         if node_types:
             instances = self.client.data_modeling.instances.delete(nodes=list(node_types))
-            print(f"Deleted {len(node_types)} node types")
+            print(f"Deleted {len(instances.nodes)} node types")
         views = self.client.data_modeling.views.list(limit=-1, space=space)
         if views:
             deleted_views = self.client.data_modeling.views.delete(views.as_ids())
