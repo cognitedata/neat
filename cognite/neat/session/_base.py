@@ -13,6 +13,7 @@ from cognite.neat.rules.transformers import ConvertToRules, VerifyAnyRules
 from ._read import ReadAPI
 from ._state import SessionState
 from ._to import ToAPI
+from ._transform import TransformAPI
 
 
 class NeatSession:
@@ -27,6 +28,7 @@ class NeatSession:
         self._state = SessionState(store_type=storage)
         self.read = ReadAPI(self._state, client, verbose)
         self.to = ToAPI(self._state, client, verbose)
+        self.transform = TransformAPI(self._state, verbose)
 
     def verify(self) -> IssueList:
         output = VerifyAnyRules("continue").try_transform(self._state.input_rule)

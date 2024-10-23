@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Literal, cast
 
-from cognite.neat.rules._shared import ReadRules, VerifiedRules
+from cognite.neat.rules._shared import ReadRules, VerifiedRules, InformationInputRules
 from cognite.neat.store import NeatGraphStore
 
 
@@ -26,6 +26,14 @@ class SessionState:
         if not self.input_rules:
             raise ValueError("No input rules provided")
         return self.input_rules[-1]
+
+    @property
+    def information_input_rule(self) -> ReadRules:
+        if not self.input_rules:
+            raise ValueError("No input rules provided")
+        for rule in self.input_rules[::-1]:
+            if isinstance(rule.rules, InformationInputRules):
+                return rule
 
     @property
     def verified_rule(self) -> VerifiedRules:
