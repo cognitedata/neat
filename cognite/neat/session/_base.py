@@ -6,7 +6,7 @@ from cognite.client import CogniteClient
 from cognite.neat.issues import IssueList
 from cognite.neat.rules import importers
 from cognite.neat.rules._shared import ReadRules
-from cognite.neat.rules.models import DMSRules
+from cognite.neat.rules.models import DMSRules, InformationRules
 from cognite.neat.rules.models._base_input import InputComponent
 from cognite.neat.rules.transformers import ConvertToRules, VerifyAnyRules
 
@@ -34,6 +34,8 @@ class NeatSession:
         output = VerifyAnyRules("continue").try_transform(self._state.input_rule)
         if output.rules:
             self._state.verified_rules.append(output.rules)
+            if isinstance(output.rules, InformationRules):
+                self._state.store.add_rules(output.rules)
         return output.issues
 
     def convert(self, target: Literal["dms"]) -> None:
@@ -42,8 +44,18 @@ class NeatSession:
         if self._verbose:
             print(f"Rules converted to {target}")
 
-    def infer(self) -> IssueList:
+    def infer(
+        self,
+        space: str = "inference_space",
+        external_id: str = "InferredDataModel",
+        version: str = "v1",
+    ) -> IssueList:
         input_rules: ReadRules = importers.InferenceImporter.from_graph_store(self._state.store).to_rules()
+
+        input_rules.rules.metadata.prefix = space
+        input_rules.rules.metadata.name = external_id
+        input_rules.rules.metadata.version = version
+
         self.read._store_rules(self._state.store, input_rules, "Data Model Inference")
         return input_rules.issues
 
