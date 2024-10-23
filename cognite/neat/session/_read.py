@@ -35,7 +35,11 @@ class ReadAPI:
             type = object_wizard()
 
         if type.lower() == "Data Model".lower():
+<<<<<<< HEAD
             source = source or rdf_dm_wizard()
+=======
+            source = source or rdf_dm_wizard("What type of data model is the RDF?")
+>>>>>>> main
             if source == "Ontology":
                 return self._ontology(io)
             elif source == "IMF":

@@ -267,7 +267,7 @@ class DMSInputRules(InputRules[DMSRules]):
 
     def dump(self) -> dict[str, Any]:
         default_space = self.metadata.space
-        default_version = self.metadata.version
+        default_version = str(self.metadata.version)
         reference: dict[str, Any] | None = None
         if isinstance(self.reference, DMSInputRules):
             reference = self.reference.dump()
