@@ -32,7 +32,7 @@ def bump(
     version_files = [
         REPO_ROOT / "pyproject.toml",
         REPO_ROOT / "cognite" / "neat" / "_version.py",
-        REPO_ROOT / "makefile",
+        REPO_ROOT / "Makefile",
     ]
     version_file_content = VERSION_FILE.read_text().split("\n")[0]
     version_raw = version_file_content.split(" = ")[1].strip().strip('"')
