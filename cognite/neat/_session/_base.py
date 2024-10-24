@@ -12,10 +12,10 @@ from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
 
+from ._prepare import PrepareAPI
 from ._read import ReadAPI
 from ._state import SessionState
 from ._to import ToAPI
-from ._prepare import PrepareAPI
 
 
 class NeatSession:
@@ -30,7 +30,7 @@ class NeatSession:
         self._state = SessionState(store_type=storage)
         self.read = ReadAPI(self._state, client, verbose)
         self.to = ToAPI(self._state, client, verbose)
-        self.transform = TransformAPI(self._state, verbose)
+        self.prepare = PrepareAPI(self._state, verbose)
 
     def verify(self) -> IssueList:
         output = VerifyAnyRules("continue").try_transform(self._state.input_rule)

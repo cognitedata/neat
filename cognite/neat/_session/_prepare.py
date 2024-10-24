@@ -1,11 +1,10 @@
-
-
-
 from typing import cast
+
 from cognite.neat._issues._base import IssueList
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers._converters import ToCompliantEntities
+
 from ._state import SessionState
 
 

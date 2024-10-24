@@ -3,6 +3,7 @@ from typing import Any, overload
 
 from cognite.client import CogniteClient
 
+from cognite.neat._graph import loaders
 from cognite.neat._rules.exporters import YAMLExporter
 from cognite.neat._rules.exporters._rules2dms import DMSExporter
 
@@ -36,10 +37,7 @@ class ToAPI:
 
 
 class CDFToAPI:
-
-    def __init__(
-        self, state: SessionState, client: CogniteClient | None, verbose: bool
-    ) -> None:
+    def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._client = client
         self._state = state
         self._verbose = verbose
@@ -49,9 +47,7 @@ class CDFToAPI:
             raise ValueError("No verified DMS data model available")
 
         space = space or self._state.verifies_dms_rules.metadata.space
-        loader = loaders.DMSLoader.from_rules(
-            self._state.verifies_dms_rules, self._state.store, space
-        )
+        loader = loaders.DMSLoader.from_rules(self._state.verifies_dms_rules, self._state.store, space)
 
         if self._client:
             return loader.load_into_cdf(self._client)
@@ -65,8 +61,6 @@ class CDFToAPI:
         exporter = DMSExporter()
 
         if not self._client:
-            return exporter.export_to_file(
-                self._state.verifies_dms_rules, Path("./data_model.zip")
-            )
+            return exporter.export_to_file(self._state.verifies_dms_rules, Path("./data_model.zip"))
         else:
             return exporter.export_to_cdf(self._state.verifies_dms_rules, self._client)
