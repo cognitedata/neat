@@ -4,7 +4,7 @@ from typing import cast
 from rdflib import RDF, Graph, Literal, Namespace, URIRef
 from rdflib.query import ResultRow
 
-from cognite.neat.constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat.graph import extractors
 from cognite.neat.issues.warnings import ResourceNotFoundWarning
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri

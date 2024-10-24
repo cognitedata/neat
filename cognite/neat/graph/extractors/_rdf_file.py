@@ -5,7 +5,7 @@ from typing import cast
 from rdflib import URIRef
 from rdflib.util import guess_format
 
-from cognite.neat.constants import DEFAULT_BASE_URI
+from cognite.neat._constants import DEFAULT_BASE_URI
 from cognite.neat.graph._shared import rdflib_to_mime_types
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple

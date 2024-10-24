@@ -7,7 +7,7 @@ from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 from rdflib.query import ResultRow
 
-from cognite.neat.constants import UNKNOWN_TYPE
+from cognite.neat._constants import UNKNOWN_TYPE
 from cognite.neat.graph.models import InstanceType
 from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.models.entities import ClassEntity

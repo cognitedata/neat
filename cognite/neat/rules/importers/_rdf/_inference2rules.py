@@ -6,7 +6,7 @@ from typing import cast
 from rdflib import RDF
 from rdflib import Literal as RdfLiteral
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat.issues.warnings import PropertyValueTypeUndefinedWarning
 from cognite.neat.rules.models._base_rules import MatchType
 from cognite.neat.rules.models.data_types import AnyURI

@@ -1,6 +1,6 @@
 from rdflib import Graph, Namespace
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat.rules.importers._rdf._shared import make_metadata_compliant
 from cognite.neat.rules.models import RoleTypes, SchemaCompleteness
 from cognite.neat.utils.collection_ import remove_none_elements_from_set

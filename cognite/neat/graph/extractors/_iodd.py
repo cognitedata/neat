@@ -9,7 +9,7 @@ from xml.etree.ElementTree import Element
 
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
 from cognite.neat.issues.errors import FileReadError, NeatValueError

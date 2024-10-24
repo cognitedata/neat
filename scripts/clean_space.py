@@ -1,4 +1,4 @@
-from cognite.neat.config import Config
+from cognite.neat._config import Config
 from pathlib import Path
 
 

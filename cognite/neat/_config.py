@@ -10,7 +10,7 @@ import yaml
 from pydantic import BaseModel, Field, model_validator
 from yaml import safe_load
 
-from cognite.neat.constants import EXAMPLE_GRAPHS, EXAMPLE_RULES, EXAMPLE_WORKFLOWS
+from cognite.neat._constants import EXAMPLE_GRAPHS, EXAMPLE_RULES, EXAMPLE_WORKFLOWS
 from cognite.neat.utils.auth import EnvironmentVariables
 
 if sys.version_info >= (3, 11):

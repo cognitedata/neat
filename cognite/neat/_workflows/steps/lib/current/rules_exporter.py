@@ -2,6 +2,9 @@ import time
 from pathlib import Path
 from typing import ClassVar, Literal, cast
 
+from cognite.neat._workflows.model import FlowMessage, StepExecutionStatus
+from cognite.neat._workflows.steps.data_contracts import CogniteClient, MultiRuleData
+from cognite.neat._workflows.steps.step_model import Configurable, Step
 from cognite.neat.issues.errors import WorkflowStepNotInitializedError
 from cognite.neat.rules import exporters
 from cognite.neat.rules._shared import DMSRules, InformationRules, VerifiedRules
@@ -13,9 +16,6 @@ from cognite.neat.rules.transformers import (
     InformationToDMS,
     RulesPipeline,
 )
-from cognite.neat.workflows.model import FlowMessage, StepExecutionStatus
-from cognite.neat.workflows.steps.data_contracts import CogniteClient, MultiRuleData
-from cognite.neat.workflows.steps.step_model import Configurable, Step
 
 __all__ = [
     "RulesToDMS",

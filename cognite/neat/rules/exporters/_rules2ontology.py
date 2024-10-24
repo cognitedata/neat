@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespace, URIRef
 from rdflib.collection import Collection as GraphCollection
 
-from cognite.neat.constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
+from cognite.neat._constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.issues import MultiValueError
 from cognite.neat.issues.errors import (
     PropertyDefinitionDuplicatedError,

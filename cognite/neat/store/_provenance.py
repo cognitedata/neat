@@ -15,8 +15,8 @@ from typing import TypeVar
 
 from rdflib import PROV, RDF, Literal, URIRef
 
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._shared import FrozenNeatObject, NeatList
-from cognite.neat.constants import DEFAULT_NAMESPACE
 
 
 @dataclass(frozen=True)

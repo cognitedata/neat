@@ -4,7 +4,7 @@ from typing import Any, ClassVar, cast
 from pydantic import Field, field_validator, model_validator
 from rdflib import Namespace
 
-from cognite.neat.constants import get_default_prefixes
+from cognite.neat._constants import get_default_prefixes
 from cognite.neat.rules.models._base_rules import BaseRules, RoleTypes, SheetList
 from cognite.neat.rules.models.entities import (
     CdfResourceEntityList,

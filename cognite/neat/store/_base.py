@@ -9,7 +9,7 @@ import pandas as pd
 from rdflib import Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.graph.models import InstanceType, Triple
 from cognite.neat.graph.queries import Queries

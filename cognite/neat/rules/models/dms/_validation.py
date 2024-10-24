@@ -3,7 +3,7 @@ from typing import Any, ClassVar
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat.constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat.issues.errors import (
     PropertyDefinitionDuplicatedError,

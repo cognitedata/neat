@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
-from cognite.neat.constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 
 from ._models import UserModelingWarning
 

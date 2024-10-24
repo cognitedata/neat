@@ -7,11 +7,11 @@ from cognite.client import CogniteClient
 from fastapi import FastAPI
 
 from cognite import neat
-from cognite.neat.config import Config, configure_logging, copy_examples_to_directory, create_data_dir_structure
-from cognite.neat.constants import PACKAGE_DIRECTORY
-from cognite.neat.workflows.cdf_store import CdfStore
-from cognite.neat.workflows.manager import WorkflowManager
-from cognite.neat.workflows.triggers import TriggerManager
+from cognite.neat._config import Config, configure_logging, copy_examples_to_directory, create_data_dir_structure
+from cognite.neat._constants import PACKAGE_DIRECTORY
+from cognite.neat._workflows.cdf_store import CdfStore
+from cognite.neat._workflows.manager import WorkflowManager
+from cognite.neat._workflows.triggers import TriggerManager
 
 UI_PATH = PACKAGE_DIRECTORY / "app" / "ui" / "neat-app" / "build"
 

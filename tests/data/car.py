@@ -4,7 +4,7 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF
 from rdflib.term import Literal
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat.rules import importers
 from cognite.neat.rules.models import DMSRules, InformationRules
 from cognite.neat.rules.models.dms import (

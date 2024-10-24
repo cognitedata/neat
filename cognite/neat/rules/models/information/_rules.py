@@ -8,7 +8,7 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace
 
-from cognite.neat.constants import get_default_prefixes
+from cognite.neat._constants import get_default_prefixes
 from cognite.neat.issues.errors import NeatValueError, PropertyDefinitionError
 from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules.models._base_rules import (

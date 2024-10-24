@@ -11,9 +11,9 @@ from cognite.client.data_classes import Event, FileMetadataUpdate
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
+from cognite.neat._workflows.model import WorkflowFullStateReport, WorkflowState, WorkflowStepEvent
+from cognite.neat._workflows.utils import get_file_hash
 from cognite.neat.issues.errors import WorkflowConfigurationNotSetError
-from cognite.neat.workflows.model import WorkflowFullStateReport, WorkflowState, WorkflowStepEvent
-from cognite.neat.workflows.utils import get_file_hash
 
 
 class NeatCdfResource(BaseModel):

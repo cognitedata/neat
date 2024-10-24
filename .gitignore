@@ -11,7 +11,7 @@ dev-data/
 dev-data-*/
 tests/data/
 
-!cognite/neat/workflows/examples/config.yaml
+!cognite/neat/_workflows/examples/config.yaml
 requirements.txt
 
 # C extensions
@@ -36,7 +36,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-!cognite/neat/workflows/steps/lib
+!cognite/neat/_workflows/steps/lib
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

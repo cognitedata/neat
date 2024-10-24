@@ -9,7 +9,7 @@ from typing import Literal, TypeVar, cast
 from cognite.client.data_classes import data_modeling as dms
 from rdflib import Namespace
 
-from cognite.neat.constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat.rules._constants import EntityTypes
 from cognite.neat.rules._shared import InputRules, JustRules, OutRules, VerifiedRules

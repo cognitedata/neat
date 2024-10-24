@@ -1,12 +1,12 @@
 from typing import ClassVar
 
-from cognite.neat.store import NeatGraphStore
-from cognite.neat.workflows.model import FlowMessage
-from cognite.neat.workflows.steps.data_contracts import (
+from cognite.neat._workflows.model import FlowMessage
+from cognite.neat._workflows.steps.data_contracts import (
     MultiRuleData,
     NeatGraph,
 )
-from cognite.neat.workflows.steps.step_model import Configurable, Step
+from cognite.neat._workflows.steps.step_model import Configurable, Step
+from cognite.neat.store import NeatGraphStore
 
 __all__ = ["GraphStoreConfiguration"]
 

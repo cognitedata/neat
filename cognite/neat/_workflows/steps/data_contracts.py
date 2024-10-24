@@ -9,6 +9,7 @@ from cognite.client.data_classes import (
 )
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
+from cognite.neat._workflows.steps.step_model import DataContract
 from cognite.neat.rules.models import (
     AssetRules,
     DMSRules,
@@ -16,7 +17,6 @@ from cognite.neat.rules.models import (
     InformationRules,
 )
 from cognite.neat.store import NeatGraphStore
-from cognite.neat.workflows.steps.step_model import DataContract
 
 
 class MultiRuleData(DataContract):

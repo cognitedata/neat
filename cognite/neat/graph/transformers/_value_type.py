@@ -1,6 +1,6 @@
 from rdflib import XSD, Graph, URIRef
 
-from cognite.neat.constants import UNKNOWN_TYPE
+from cognite.neat._constants import UNKNOWN_TYPE
 from cognite.neat.graph.queries import Queries
 from cognite.neat.utils.rdf_ import remove_namespace_from_uri
 

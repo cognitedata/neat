@@ -4,8 +4,8 @@ from pathlib import Path
 
 from fastapi import APIRouter
 
+from cognite.neat._config import Config
 from cognite.neat.app.api.configuration import NEAT_APP
-from cognite.neat.config import Config
 
 router = APIRouter()
 

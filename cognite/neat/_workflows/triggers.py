@@ -6,8 +6,8 @@ import time
 import schedule
 from fastapi import Request
 
-from cognite.neat.workflows.manager import WorkflowManager
-from cognite.neat.workflows.model import FlowMessage, StepType, WorkflowState
+from cognite.neat._workflows.manager import WorkflowManager
+from cognite.neat._workflows.model import FlowMessage, StepType, WorkflowState
 
 
 class TriggerManager:

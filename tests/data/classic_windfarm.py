@@ -11,7 +11,7 @@ from cognite.client.data_classes import (
     TimeSeries,
 )
 
-from cognite.neat.constants import CLASSIC_CDF_NAMESPACE
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat.graph.extractors import (
     AssetsExtractor,
     DataSetExtractor,

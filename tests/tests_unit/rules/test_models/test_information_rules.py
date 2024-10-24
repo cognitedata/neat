@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat.constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.issues import NeatError
 from cognite.neat.issues.errors import NeatValueError, ResourceNotDefinedError
 from cognite.neat.rules.models import DMSRules, SheetList, data_types

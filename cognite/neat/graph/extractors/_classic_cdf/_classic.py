@@ -5,7 +5,7 @@ from typing import ClassVar, NamedTuple
 from cognite.client import CogniteClient
 from rdflib import Namespace
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat.graph.extractors._base import BaseExtractor
 from cognite.neat.graph.models import Triple
 from cognite.neat.utils.collection_ import chunker

@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from rdflib import Graph, Literal, Namespace
 from rdflib.term import URIRef
 
-from cognite.neat.constants import get_default_prefixes
+from cognite.neat._constants import get_default_prefixes
 from cognite.neat.rules.models._rdfpath import (
     Hop,
     Step,

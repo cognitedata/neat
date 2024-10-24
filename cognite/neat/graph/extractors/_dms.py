@@ -7,7 +7,7 @@ from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.data_classes.data_modeling.instances import Instance, PropertyValue
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
-from cognite.neat.constants import DEFAULT_SPACE_URI
+from cognite.neat._constants import DEFAULT_SPACE_URI
 from cognite.neat.graph.models import Triple
 from cognite.neat.issues.errors import ResourceRetrievalError
 

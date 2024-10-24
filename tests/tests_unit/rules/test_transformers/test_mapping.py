@@ -1,4 +1,4 @@
-from cognite.neat.constants import CLASSIC_CDF_NAMESPACE
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat.rules._shared import JustRules
 from cognite.neat.rules.models import InformationInputRules
 from cognite.neat.rules.models._base_rules import ClassRef, PropertyRef
