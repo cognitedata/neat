@@ -13,8 +13,10 @@ from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
 from ._read import ReadAPI
 from ._state import SessionState
 from ._to import ToAPI
+from .exceptions import intercept_session_exceptions
 
 
+@intercept_session_exceptions
 class NeatSession:
     def __init__(
         self,
