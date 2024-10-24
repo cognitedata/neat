@@ -39,13 +39,13 @@ class SessionState:
         return None
 
     @property
-    def verified_rule(self) -> VerifiedRules:
+    def last_verified_rule(self) -> VerifiedRules:
         if not self.verified_rules:
             raise ValueError("No verified rules provided")
         return self.verified_rules[-1]
 
     @property
-    def verifies_dms_rules(self) -> DMSRules | None:
+    def last_verified_dms_rules(self) -> DMSRules | None:
         if self.verified_rules:
             for rules in self.verified_rules[::-1]:
                 if isinstance(rules, DMSRules):
@@ -53,7 +53,7 @@ class SessionState:
         return None
 
     @property
-    def verifies_information_rules(self) -> InformationRules | None:
+    def last_verified_information_rules(self) -> InformationRules | None:
         if self.verified_rules:
             for rules in self.verified_rules[::-1]:
                 if isinstance(rules, InformationRules):

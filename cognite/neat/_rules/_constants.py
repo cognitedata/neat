@@ -93,20 +93,20 @@ MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX = r"([_-]{2,})"
 PREFIX_COMPLIANCE_REGEX = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9_-]*)([a-zA-Z0-9]*)$"
 
 SPACE_COMPLIANCE_REGEX = (
-    rf"(?!^({' | '.join(get_reserved_words()['space'])})$)" r"(^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$)"
+    rf"(?!^({'|'.join(get_reserved_words()['space'])})$)" r"(^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$)"
 )
 
 
 DATA_MODEL_COMPLIANCE_REGEX = r"^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$"
 
 VIEW_ID_COMPLIANCE_REGEX = (
-    rf"(?!^({' | '.join(get_reserved_words()['view'])})$)" r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
+    rf"(?!^({'|'.join(get_reserved_words()['view'])})$)" r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
 )
 DMS_PROPERTY_ID_COMPLIANCE_REGEX = (
-    rf"(?!^({' | '.join(get_reserved_words()['property'])})$)" r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
+    rf"(?!^({'|'.join(get_reserved_words()['property'])})$)" r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
 )
 CLASS_ID_COMPLIANCE_REGEX = (
-    rf"(?!^({' | '.join(get_reserved_words()['class'])})$)" r"(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
+    rf"(?!^({'|'.join(get_reserved_words()['class'])})$)" r"(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
 )
 
 INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX = (

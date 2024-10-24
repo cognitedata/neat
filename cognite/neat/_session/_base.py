@@ -41,7 +41,7 @@ class NeatSession:
         return output.issues
 
     def convert(self, target: Literal["dms"]) -> None:
-        converted = ConvertToRules(DMSRules).transform(self._state.verified_rule)
+        converted = ConvertToRules(DMSRules).transform(self._state.last_verified_rule)
         self._state.verified_rules.append(converted.rules)
         if self._verbose:
             print(f"Rules converted to {target}")
@@ -73,7 +73,7 @@ class NeatSession:
             output.append(f"<strong>Raw DataModel</strong><br />{table}")
 
         if state.verified_rules:
-            table = pd.DataFrame([state.verified_rule.metadata.model_dump()]).T._repr_html_()  # type: ignore[operator]
+            table = pd.DataFrame([state.last_verified_rule.metadata.model_dump()]).T._repr_html_()  # type: ignore[operator]
             output.append(f"<strong>DataModel</strong><br />{table}")
 
         if state.has_store:

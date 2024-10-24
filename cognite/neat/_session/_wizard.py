@@ -1,7 +1,9 @@
 from collections.abc import Sequence
 from typing import Literal, TypeVar, get_args
 
-from rich.prompt import IntPrompt
+from rich.prompt import IntPrompt, Prompt
+
+from cognite.neat._rules._constants import PATTERNS
 
 RDFFileType = Literal["Ontology", "IMF Types", "Inference"]
 NeatObjectType = Literal["Data Model", "Instances"]
@@ -24,3 +26,14 @@ def _selection(message: str, options: Sequence[_T_Option]) -> _T_Option:
         IntPrompt().ask(f"{message}\n  {option_text}\n", choices=list(map(str, range(1, len(options) + 1)))) - 1
     )
     return options[selected_index]
+
+
+def space_wizard(message: str = "Set space", space: str | None = None) -> str:
+    while True:
+        user_input = space or Prompt().ask(f"{message}:")
+        if PATTERNS.space_compliance.match(str(user_input)):
+            return user_input
+        else:
+            print(f"Invalid input. Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
+
+        space = ""
