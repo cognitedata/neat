@@ -50,12 +50,12 @@ class StepsRegistry:
         if self._step_classes:
             # classes already loaded - no need to reload
             return
-        for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.lib.current):
+        for name, step_cls in inspect.getmembers(cognite.neat._workflows.steps.lib.current):
             if inspect.isclass(step_cls):
                 logging.info(f"Loading NEAT step {name}")
                 self._step_classes.append(step_cls)
                 self.categorized_steps["current"].add(name)
-        for name, step_cls in inspect.getmembers(cognite.neat.workflows.steps.lib.io):
+        for name, step_cls in inspect.getmembers(cognite.neat._workflows.steps.lib.io):
             if inspect.isclass(step_cls):
                 logging.info(f"Loading NEAT step {name}")
                 self._step_classes.append(step_cls)
