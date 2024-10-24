@@ -6,7 +6,6 @@ import rdflib
 from pydantic import (
     AfterValidator,
     BeforeValidator,
-    Field,
     HttpUrl,
     StringConstraints,
     TypeAdapter,
@@ -18,8 +17,10 @@ from pydantic.functional_serializers import PlainSerializer
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._issues.warnings import RegexViolationWarning
 from cognite.neat._rules._constants import (
+    DATA_MODEL_COMPLIANCE_REGEX,
     PATTERNS,
     PREFIX_COMPLIANCE_REGEX,
+    SPACE_COMPLIANCE_REGEX,
     VERSION_COMPLIANCE_REGEX,
     EntityTypes,
 )
@@ -79,9 +80,16 @@ PrefixType = Annotated[
     _custom_error(lambda _, value: RegexViolationError(value, PREFIX_COMPLIANCE_REGEX)),
 ]
 
-ExternalIdType = Annotated[
+DataModelExternalIdType = Annotated[
     str,
-    Field(min_length=1, max_length=255),
+    StringConstraints(pattern=DATA_MODEL_COMPLIANCE_REGEX),
+    _custom_error(lambda _, value: RegexViolationError(value, DATA_MODEL_COMPLIANCE_REGEX)),
+]
+
+SpaceType = Annotated[
+    str,
+    StringConstraints(pattern=SPACE_COMPLIANCE_REGEX),
+    _custom_error(lambda _, value: RegexViolationError(value, SPACE_COMPLIANCE_REGEX)),
 ]
 
 

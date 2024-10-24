@@ -80,6 +80,7 @@ def get_reserved_words() -> dict[str, list[str]]:
             "tg_table_name",
             "extensions",
         ],
+        "space": ["space", "cdf", "dms", "pg3", "shared", "system", "node", "edge"],
     }
 
 
@@ -89,6 +90,12 @@ ENTITY_PATTERN = re.compile(r"^(?P<prefix>.*?):?(?P<suffix>[^(:]*)(\((?P<content
 # REGEX FOR VALIDATIONS
 MORE_THAN_ONE_NONE_ALPHANUMERIC_REGEX = r"([_-]{2,})"
 PREFIX_COMPLIANCE_REGEX = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9_-]*)([a-zA-Z0-9]*)$"
+
+SPACE_COMPLIANCE_REGEX = (
+    rf"(?!^({' | '.join(get_reserved_words()['space'])})$)" r"(^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$)"
+)
+
+DATA_MODEL_COMPLIANCE_REGEX = r"^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$"
 
 VIEW_ID_COMPLIANCE_REGEX = (
     rf"(?!^({' | '.join(get_reserved_words()['view'])})$)" r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
@@ -120,6 +127,10 @@ class _Patterns:
     @cached_property
     def prefix_compliance(self) -> re.Pattern[str]:
         return re.compile(PREFIX_COMPLIANCE_REGEX)
+
+    @cached_property
+    def space_compliance(self) -> re.Pattern[str]:
+        return re.compile(SPACE_COMPLIANCE_REGEX)
 
     @cached_property
     def view_id_compliance(self) -> re.Pattern[str]:
