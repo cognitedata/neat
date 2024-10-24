@@ -13,7 +13,7 @@ from cognite.neat._workflows.cdf_store import CdfStore
 from cognite.neat._workflows.manager import WorkflowManager
 from cognite.neat._workflows.triggers import TriggerManager
 
-UI_PATH = PACKAGE_DIRECTORY / "app" / "ui" / "neat-app" / "build"
+UI_PATH = PACKAGE_DIRECTORY / "_app" / "ui" / "neat-app" / "build"
 
 
 class NeatApp:

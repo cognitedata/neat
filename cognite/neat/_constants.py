@@ -7,9 +7,9 @@ from cognite import neat
 PACKAGE_DIRECTORY = Path(neat.__file__).parent
 
 
-EXAMPLE_RULES = PACKAGE_DIRECTORY / "rules" / "examples"
-EXAMPLE_GRAPHS = PACKAGE_DIRECTORY / "graph" / "examples"
-EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "workflows" / "examples"
+EXAMPLE_RULES = PACKAGE_DIRECTORY / "_rules" / "examples"
+EXAMPLE_GRAPHS = PACKAGE_DIRECTORY / "_graph" / "examples"
+EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "_workflows" / "examples"
 
 DEFAULT_SPACE_URI = "http://purl.org/cognite/{space}#"
 DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/neat#")
