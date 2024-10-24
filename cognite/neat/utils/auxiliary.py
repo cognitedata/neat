@@ -10,7 +10,7 @@ from types import ModuleType
 
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 
-from cognite.neat.issues.errors import NeatImportError
+from cognite.neat._issues.errors import NeatImportError
 
 
 def local_import(module: str, extra: str) -> ModuleType:

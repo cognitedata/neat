@@ -32,13 +32,13 @@ from cognite.client.data_classes.data_modeling import DataModelId
 
 from rich.panel import Panel
 
-from cognite.neat.rules.models import DMSRules
-from cognite.neat.rules.importers import DMSImporter
-from cognite.neat.rules.exporters import DMSExporter
+from cognite.neat._rules.models import DMSRules
+from cognite.neat._rules.importers import DMSImporter
+from cognite.neat._rules.exporters import DMSExporter
 from pathlib import Path
 from rich import print
 
-from cognite.neat.rules.transformers import DMSToInformation
+from cognite.neat._rules.transformers import DMSToInformation
 
 TMP_FOLDER = Path(__file__).parent / 'tmp'
 TMP_FOLDER.mkdir(exist_ok=True)

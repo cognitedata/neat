@@ -1,6 +1,6 @@
-from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors import ResourceCreationError
-from cognite.neat.rules.transformers._verification import _handle_issues
+from cognite.neat._issues import IssueList
+from cognite.neat._issues.errors import ResourceCreationError
+from cognite.neat._rules.transformers._verification import _handle_issues
 
 
 class TestIssues:

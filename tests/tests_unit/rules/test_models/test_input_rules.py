@@ -7,8 +7,8 @@ import pytest
 from _pytest.mark import ParameterSet
 from pydantic import BaseModel
 
-from cognite.neat.rules.models import SheetList
-from cognite.neat.rules.models._base_input import InputRules
+from cognite.neat._rules.models import SheetList
+from cognite.neat._rules.models._base_input import InputRules
 from tests.utils import DataClassCreator, get_all_subclasses
 
 

@@ -2,7 +2,7 @@ from cognite.client.data_classes import TimeSeriesList
 from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
-from cognite.neat.graph.extractors import TimeSeriesExtractor
+from cognite.neat._graph.extractors import TimeSeriesExtractor
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 

@@ -4,15 +4,15 @@ import yaml
 from cognite.client.data_classes.data_modeling import InstanceApply
 from pytest_regressions.data_regression import DataRegressionFixture
 
-from cognite.neat.graph.loaders import DMSLoader
-from cognite.neat.graph.transformers import RelationshipToSchemaTransformer
-from cognite.neat.rules.exporters import YAMLExporter
-from cognite.neat.rules.importers import InferenceImporter
-from cognite.neat.rules.models import SheetList
-from cognite.neat.rules.models.entities import ClassEntity, UnknownEntity
-from cognite.neat.rules.models.information import InformationProperty
-from cognite.neat.rules.models.mapping import create_classic_to_core_mapping
-from cognite.neat.rules.transformers import InformationToDMS, RuleMapper, VerifyInformationRules
+from cognite.neat._graph.loaders import DMSLoader
+from cognite.neat._graph.transformers import RelationshipToSchemaTransformer
+from cognite.neat._rules.exporters import YAMLExporter
+from cognite.neat._rules.importers import InferenceImporter
+from cognite.neat._rules.models import SheetList
+from cognite.neat._rules.models.entities import ClassEntity, UnknownEntity
+from cognite.neat._rules.models.information import InformationProperty
+from cognite.neat._rules.models.mapping import create_classic_to_core_mapping
+from cognite.neat._rules.transformers import InformationToDMS, RuleMapper, VerifyInformationRules
 from cognite.neat.store import NeatGraphStore
 from tests.data import classic_windfarm
 

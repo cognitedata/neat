@@ -1,6 +1,6 @@
-from cognite.neat.rules import importers
-from cognite.neat.rules.models import InformationRules
-from cognite.neat.rules.transformers import ImporterPipeline
+from cognite.neat._rules import importers
+from cognite.neat._rules.models import InformationRules
+from cognite.neat._rules.transformers import ImporterPipeline
 from tests.config import PARTIAL_MODEL_TEST_DATA
 
 

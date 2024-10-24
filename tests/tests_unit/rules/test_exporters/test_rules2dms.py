@@ -7,11 +7,11 @@ from typing import cast
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat.rules import importers
-from cognite.neat.rules.exporters import DMSExporter
-from cognite.neat.rules.models import RoleTypes
-from cognite.neat.rules.models.dms import DMSRules, PipelineSchema
-from cognite.neat.rules.transformers import ImporterPipeline
+from cognite.neat._rules import importers
+from cognite.neat._rules.exporters import DMSExporter
+from cognite.neat._rules.models import RoleTypes
+from cognite.neat._rules.models.dms import DMSRules, PipelineSchema
+from cognite.neat._rules.transformers import ImporterPipeline
 from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
 
 

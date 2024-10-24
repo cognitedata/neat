@@ -13,10 +13,10 @@ from pydantic import BaseModel
 import cognite.neat._workflows.steps.lib.current
 import cognite.neat._workflows.steps.lib.io
 from cognite.neat._config import Config
+from cognite.neat._issues.errors import WorkflowConfigurationNotSetError, WorkFlowMissingDataError
 from cognite.neat._workflows.model import FlowMessage, WorkflowConfigs
 from cognite.neat._workflows.steps.step_model import Configurable, DataContract, Step
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
-from cognite.neat.issues.errors import WorkflowConfigurationNotSetError, WorkFlowMissingDataError
 
 
 class StepMetadata(BaseModel):

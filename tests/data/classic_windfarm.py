@@ -12,7 +12,7 @@ from cognite.client.data_classes import (
 )
 
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
-from cognite.neat.graph.extractors import (
+from cognite.neat._graph.extractors import (
     AssetsExtractor,
     DataSetExtractor,
     EventsExtractor,
@@ -22,7 +22,7 @@ from cognite.neat.graph.extractors import (
     SequencesExtractor,
     TimeSeriesExtractor,
 )
-from cognite.neat.graph.extractors._classic_cdf._base import ClassicCDFBaseExtractor
+from cognite.neat._graph.extractors._classic_cdf._base import ClassicCDFBaseExtractor
 
 # This is a knowledge graph built on top of the classic CDF resources. It is used to test the CDFClassicGraphImporter.
 

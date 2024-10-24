@@ -5,7 +5,7 @@ import pytest
 from pydantic import AnyHttpUrl, BaseModel, Field, field_serializer
 from pydantic.networks import Url
 
-from cognite.neat.rules.models.data_types import (
+from cognite.neat._rules.models.data_types import (
     Boolean,
     DataType,
     Double,
@@ -14,7 +14,7 @@ from cognite.neat.rules.models.data_types import (
     NonNegativeInteger,
     NonPositiveInteger,
 )
-from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity, UnitEntity, URLEntity
+from cognite.neat._rules.models.entities import ClassEntity, ReferenceEntity, UnitEntity, URLEntity
 
 
 class DemoProperty(BaseModel):

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Literal, cast
 
-from cognite.neat.rules._shared import ReadRules, VerifiedRules
+from cognite.neat._rules._shared import ReadRules, VerifiedRules
 from cognite.neat.store import NeatGraphStore
 
 

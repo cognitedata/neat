@@ -4,11 +4,11 @@ from typing import cast
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
-from cognite.neat.rules.exporters import DMSExporter
-from cognite.neat.rules.importers import DMSImporter, ExcelImporter
-from cognite.neat.rules.models import DMSRules, DMSSchema, RoleTypes
-from cognite.neat.rules.transformers import DMSToInformation, ImporterPipeline, VerifyDMSRules
+from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
+from cognite.neat._rules.exporters import DMSExporter
+from cognite.neat._rules.importers import DMSImporter, ExcelImporter
+from cognite.neat._rules.models import DMSRules, DMSSchema, RoleTypes
+from cognite.neat._rules.transformers import DMSToInformation, ImporterPipeline, VerifyDMSRules
 from tests.config import DOC_RULES
 from tests.data import windturbine
 

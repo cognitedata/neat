@@ -1,7 +1,7 @@
 from rdflib import Namespace
 
-from cognite.neat.graph.extractors import IODDExtractor
-from cognite.neat.graph.transformers._iodd import IODDPruneDanglingNodes, IODDTwoHopFlattener
+from cognite.neat._graph.extractors import IODDExtractor
+from cognite.neat._graph.transformers._iodd import IODDPruneDanglingNodes, IODDTwoHopFlattener
 from cognite.neat.store import NeatGraphStore
 from tests.config import IODD_EXAMPLE
 

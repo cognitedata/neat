@@ -9,8 +9,8 @@ from typing import Any, Literal, TypeVar, Union, get_args, get_origin
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from rdflib import Namespace
 
-from cognite.neat.rules.models.data_types import DataType, String
-from cognite.neat.rules.models.entities import ClassEntity
+from cognite.neat._rules.models.data_types import DataType, String
+from cognite.neat._rules.models.entities import ClassEntity
 
 
 class DataClassCreator:

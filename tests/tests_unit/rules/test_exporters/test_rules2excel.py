@@ -3,9 +3,9 @@ from datetime import datetime, timezone
 import pytest
 from freezegun import freeze_time
 
-from cognite.neat.rules.exporters import ExcelExporter
-from cognite.neat.rules.exporters._rules2excel import _MetadataCreator
-from cognite.neat.rules.models import (
+from cognite.neat._rules.exporters import ExcelExporter
+from cognite.neat._rules.exporters._rules2excel import _MetadataCreator
+from cognite.neat._rules.models import (
     DataModelType,
     DMSRules,
     DomainRules,
@@ -14,9 +14,9 @@ from cognite.neat.rules.models import (
     RoleTypes,
     SchemaCompleteness,
 )
-from cognite.neat.rules.models.dms import DMSMetadata
-from cognite.neat.rules.models.domain import DomainMetadata
-from cognite.neat.rules.models.information import InformationMetadata
+from cognite.neat._rules.models.dms import DMSMetadata
+from cognite.neat._rules.models.domain import DomainMetadata
+from cognite.neat._rules.models.information import InformationMetadata
 
 
 class TestExcelExporter:

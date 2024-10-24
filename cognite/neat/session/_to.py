@@ -3,7 +3,7 @@ from typing import Any, overload
 
 from cognite.client import CogniteClient
 
-from cognite.neat.rules.exporters import YAMLExporter
+from cognite.neat._rules.exporters import YAMLExporter
 
 from ._state import SessionState
 

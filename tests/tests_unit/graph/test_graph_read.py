@@ -1,9 +1,9 @@
 from cognite.client.data_classes import AssetList
 from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat.graph.extractors import AssetsExtractor
-from cognite.neat.rules.importers import InferenceImporter
-from cognite.neat.rules.transformers import ImporterPipeline
+from cognite.neat._graph.extractors import AssetsExtractor
+from cognite.neat._rules.importers import InferenceImporter
+from cognite.neat._rules.transformers import ImporterPipeline
 from cognite.neat.store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 

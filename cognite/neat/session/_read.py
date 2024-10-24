@@ -3,10 +3,10 @@ from typing import Any
 
 from cognite.client import CogniteClient
 
-from cognite.neat.graph import extractors
-from cognite.neat.issues import IssueList
-from cognite.neat.rules import importers
-from cognite.neat.rules._shared import ReadRules
+from cognite.neat._graph import extractors
+from cognite.neat._issues import IssueList
+from cognite.neat._rules import importers
+from cognite.neat._rules._shared import ReadRules
 from cognite.neat.store import NeatGraphStore
 
 from ._state import SessionState

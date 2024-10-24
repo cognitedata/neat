@@ -1,7 +1,7 @@
 import pytest
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat.graph import extractors, transformers
+from cognite.neat._graph import extractors, transformers
 from cognite.neat.store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 

@@ -5,22 +5,22 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
-from cognite.neat.issues import NeatError
-from cognite.neat.issues.errors import NeatValueError, ResourceNotDefinedError
-from cognite.neat.rules.models import DMSRules, SheetList, data_types
-from cognite.neat.rules.models.data_types import DataType, String
-from cognite.neat.rules.models.entities import ClassEntity, MultiValueTypeInfo
-from cognite.neat.rules.models.information import (
+from cognite.neat._issues import NeatError
+from cognite.neat._issues.errors import NeatValueError, ResourceNotDefinedError
+from cognite.neat._rules.models import DMSRules, SheetList, data_types
+from cognite.neat._rules.models.data_types import DataType, String
+from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo
+from cognite.neat._rules.models.information import (
     InformationClass,
     InformationInputRules,
     InformationRules,
 )
-from cognite.neat.rules.models.information._rules_input import (
+from cognite.neat._rules.models.information._rules_input import (
     InformationInputClass,
     InformationInputMetadata,
     InformationInputProperty,
 )
-from cognite.neat.rules.transformers._converters import (
+from cognite.neat._rules.transformers._converters import (
     InformationToDMS,
     ToCompliantEntities,
     _InformationRulesConverter,

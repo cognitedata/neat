@@ -8,16 +8,16 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
-from cognite.neat.issues import MultiValueError, NeatError, NeatIssue
-from cognite.neat.issues.errors import (
+from cognite.neat._issues import MultiValueError, NeatError, NeatIssue
+from cognite.neat._issues.errors import (
     PropertyDefinitionDuplicatedError,
     ResourceChangedError,
     ResourceNotFoundError,
 )
-from cognite.neat.rules.importers import DMSImporter
-from cognite.neat.rules.models import DMSRules, InformationRules
-from cognite.neat.rules.models.data_types import String
-from cognite.neat.rules.models.dms import (
+from cognite.neat._rules.importers import DMSImporter
+from cognite.neat._rules.models import DMSRules, InformationRules
+from cognite.neat._rules.models.data_types import String
+from cognite.neat._rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
@@ -26,8 +26,8 @@ from cognite.neat.rules.models.dms import (
     DMSMetadata,
     DMSSchema,
 )
-from cognite.neat.rules.models.entities._single_value import UnknownEntity
-from cognite.neat.rules.transformers import (
+from cognite.neat._rules.models.entities._single_value import UnknownEntity
+from cognite.neat._rules.transformers import (
     DMSToInformation,
     ImporterPipeline,
     InformationToDMS,

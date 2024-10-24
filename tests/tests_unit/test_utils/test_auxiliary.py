@@ -1,6 +1,6 @@
 import pytest
 
-from cognite.neat.rules.importers import DMSImporter
+from cognite.neat._rules.importers import DMSImporter
 from cognite.neat.utils.auxiliary import get_classmethods
 
 

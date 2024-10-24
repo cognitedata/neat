@@ -2,10 +2,10 @@ import time
 from pathlib import Path
 from typing import ClassVar
 
+from cognite.neat._issues.errors import WorkflowStepNotInitializedError
 from cognite.neat._workflows.model import FlowMessage
 from cognite.neat._workflows.steps.data_contracts import NeatGraph
 from cognite.neat._workflows.steps.step_model import Configurable, Step
-from cognite.neat.issues.errors import WorkflowStepNotInitializedError
 
 __all__ = [
     "GraphToRdfFile",

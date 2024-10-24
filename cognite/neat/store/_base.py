@@ -10,13 +10,13 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat.graph.extractors import RdfFileExtractor, TripleExtractors
-from cognite.neat.graph.models import InstanceType, Triple
-from cognite.neat.graph.queries import Queries
-from cognite.neat.graph.transformers import Transformers
-from cognite.neat.rules.analysis import InformationAnalysis
-from cognite.neat.rules.models import InformationRules
-from cognite.neat.rules.models.entities import ClassEntity
+from cognite.neat._graph.extractors import RdfFileExtractor, TripleExtractors
+from cognite.neat._graph.models import InstanceType, Triple
+from cognite.neat._graph.queries import Queries
+from cognite.neat._graph.transformers import Transformers
+from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.models import InformationRules
+from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat.utils.auxiliary import local_import
 
 from ._provenance import Change, Provenance

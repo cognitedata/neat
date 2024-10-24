@@ -5,16 +5,16 @@ from typing import ClassVar
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
 
+from cognite.neat._issues.errors import WorkflowStepNotInitializedError
+from cognite.neat._issues.formatters import FORMATTER_BY_NAME
+from cognite.neat._rules import importers
+from cognite.neat._rules._shared import InputRules
+from cognite.neat._rules.models import RoleTypes
+from cognite.neat._rules.models.entities import DataModelEntity, DMSUnknownEntity
+from cognite.neat._rules.transformers import ImporterPipeline
 from cognite.neat._workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat._workflows.steps.data_contracts import MultiRuleData
 from cognite.neat._workflows.steps.step_model import Configurable, Step
-from cognite.neat.issues.errors import WorkflowStepNotInitializedError
-from cognite.neat.issues.formatters import FORMATTER_BY_NAME
-from cognite.neat.rules import importers
-from cognite.neat.rules._shared import InputRules
-from cognite.neat.rules.models import RoleTypes
-from cognite.neat.rules.models.entities import DataModelEntity, DMSUnknownEntity
-from cognite.neat.rules.transformers import ImporterPipeline
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 

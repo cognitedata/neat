@@ -3,12 +3,12 @@ from typing import Any
 
 import pytest
 
-from cognite.neat.issues import NeatError
-from cognite.neat.issues.errors import NeatValueError, PropertyDefinitionError
-from cognite.neat.rules.models import AssetRules, InformationRules
-from cognite.neat.rules.models.data_types import DataType
-from cognite.neat.rules.models.entities import AssetEntity, ClassEntity, RelationshipEntity
-from cognite.neat.rules.transformers import AssetToInformation, InformationToAsset, RulesPipeline
+from cognite.neat._issues import NeatError
+from cognite.neat._issues.errors import NeatValueError, PropertyDefinitionError
+from cognite.neat._rules.models import AssetRules, InformationRules
+from cognite.neat._rules.models.data_types import DataType
+from cognite.neat._rules.models.entities import AssetEntity, ClassEntity, RelationshipEntity
+from cognite.neat._rules.transformers import AssetToInformation, InformationToAsset, RulesPipeline
 
 
 def case_asset_relationship():

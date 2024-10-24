@@ -1,15 +1,15 @@
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
-from cognite.neat.rules._shared import JustRules
-from cognite.neat.rules.models import InformationInputRules
-from cognite.neat.rules.models._base_rules import ClassRef, PropertyRef
-from cognite.neat.rules.models.entities import ClassEntity
-from cognite.neat.rules.models.information import (
+from cognite.neat._rules._shared import JustRules
+from cognite.neat._rules.models import InformationInputRules
+from cognite.neat._rules.models._base_rules import ClassRef, PropertyRef
+from cognite.neat._rules.models.entities import ClassEntity
+from cognite.neat._rules.models.information import (
     InformationInputClass,
     InformationInputMetadata,
     InformationInputProperty,
 )
-from cognite.neat.rules.models.mapping import Mapping, MappingList, RuleMapping
-from cognite.neat.rules.transformers import RuleMapper
+from cognite.neat._rules.models.mapping import Mapping, MappingList, RuleMapping
+from cognite.neat._rules.transformers import RuleMapper
 
 
 class TestClassicToCoreMapper:

@@ -1,4 +1,4 @@
-from cognite.neat.rules.models.information import InformationClass, InformationInputClass, InformationMetadata
+from cognite.neat._rules.models.information import InformationClass, InformationInputClass, InformationMetadata
 
 
 class TestBaseRules:

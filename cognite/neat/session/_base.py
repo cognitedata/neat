@@ -3,12 +3,12 @@ from typing import Literal, cast
 import pandas as pd
 from cognite.client import CogniteClient
 
-from cognite.neat.issues import IssueList
-from cognite.neat.rules import importers
-from cognite.neat.rules._shared import ReadRules
-from cognite.neat.rules.models import DMSRules
-from cognite.neat.rules.models._base_input import InputComponent
-from cognite.neat.rules.transformers import ConvertToRules, VerifyAnyRules
+from cognite.neat._issues import IssueList
+from cognite.neat._rules import importers
+from cognite.neat._rules._shared import ReadRules
+from cognite.neat._rules.models import DMSRules
+from cognite.neat._rules.models._base_input import InputComponent
+from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
 
 from ._read import ReadAPI
 from ._state import SessionState

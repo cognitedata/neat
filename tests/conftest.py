@@ -3,16 +3,16 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from cognite.neat.rules.importers import ExcelImporter
-from cognite.neat.rules.models import (
+from cognite.neat._rules.importers import ExcelImporter
+from cognite.neat._rules.models import (
     AssetRules,
     DMSRules,
     DomainRules,
     InformationRules,
     RoleTypes,
 )
-from cognite.neat.rules.models.dms import DMSInputRules
-from cognite.neat.rules.transformers import ImporterPipeline
+from cognite.neat._rules.models.dms import DMSInputRules
+from cognite.neat._rules.transformers import ImporterPipeline
 from cognite.neat.utils.spreadsheet import read_individual_sheet
 from tests.config import DATA_FOLDER, DOC_RULES
 

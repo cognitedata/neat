@@ -2,13 +2,13 @@ import json
 from pathlib import Path
 from typing import ClassVar, cast
 
+from cognite.neat._graph.extractors import RdfFileExtractor
+from cognite.neat._graph.extractors._mock_graph_generator import MockGraphGenerator
+from cognite.neat._issues.errors import WorkflowStepNotInitializedError
+from cognite.neat._rules._shared import DMSRules, InformationRules
 from cognite.neat._workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat._workflows.steps.data_contracts import MultiRuleData, NeatGraph
 from cognite.neat._workflows.steps.step_model import Configurable, Step
-from cognite.neat.graph.extractors import RdfFileExtractor
-from cognite.neat.graph.extractors._mock_graph_generator import MockGraphGenerator
-from cognite.neat.issues.errors import WorkflowStepNotInitializedError
-from cognite.neat.rules._shared import DMSRules, InformationRules
 
 __all__ = ["GraphFromRdfFile", "GraphFromMockData"]
 

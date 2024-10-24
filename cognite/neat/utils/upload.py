@@ -3,8 +3,8 @@ from dataclasses import dataclass, field
 from functools import total_ordering
 from typing import Any, Generic
 
+from cognite.neat._issues import NeatIssueList
 from cognite.neat._shared import T_ID, NeatList, NeatObject
-from cognite.neat.issues import NeatIssueList
 
 
 @total_ordering
