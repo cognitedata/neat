@@ -2,6 +2,9 @@ from dataclasses import dataclass, field
 from typing import Literal, cast
 
 from cognite.neat._rules._shared import ReadRules, VerifiedRules
+from cognite.neat._rules.models.dms._rules import DMSRules
+from cognite.neat._rules.models.information._rules import InformationRules
+from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._store import NeatGraphStore
 
 
@@ -28,10 +31,34 @@ class SessionState:
         return self.input_rules[-1]
 
     @property
-    def verified_rule(self) -> VerifiedRules:
+    def information_input_rule(self) -> ReadRules | None:
+        if self.input_rules:
+            for rule in self.input_rules[::-1]:
+                if isinstance(rule.rules, InformationInputRules):
+                    return rule
+        return None
+
+    @property
+    def last_verified_rule(self) -> VerifiedRules:
         if not self.verified_rules:
             raise ValueError("No verified rules provided")
         return self.verified_rules[-1]
+
+    @property
+    def last_verified_dms_rules(self) -> DMSRules | None:
+        if self.verified_rules:
+            for rules in self.verified_rules[::-1]:
+                if isinstance(rules, DMSRules):
+                    return rules
+        return None
+
+    @property
+    def last_verified_information_rules(self) -> InformationRules | None:
+        if self.verified_rules:
+            for rules in self.verified_rules[::-1]:
+                if isinstance(rules, InformationRules):
+                    return rules
+        return None
 
     @property
     def has_store(self) -> bool:

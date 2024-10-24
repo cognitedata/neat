@@ -27,9 +27,10 @@ from cognite.neat._rules.models._base_rules import (
 from cognite.neat._rules.models._types import (
     ClassEntityType,
     ContainerEntityType,
+    DataModelExternalIdType,
     DmsPropertyType,
-    ExternalIdType,
     InformationPropertyType,
+    SpaceType,
     StrListType,
     VersionType,
     ViewEntityType,
@@ -70,7 +71,7 @@ class DMSMetadata(BaseMetadata):
     data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
     schema_: SchemaCompleteness = Field(alias="schema")
     extension: ExtensionCategory = ExtensionCategory.addition
-    space: ExternalIdType
+    space: SpaceType
     name: str | None = Field(
         None,
         description="Human readable name of the data model",
@@ -78,7 +79,7 @@ class DMSMetadata(BaseMetadata):
         max_length=255,
     )
     description: str | None = Field(None, min_length=1, max_length=1024)
-    external_id: ExternalIdType = Field(alias="externalId")
+    external_id: DataModelExternalIdType = Field(alias="externalId")
     version: VersionType
     creator: StrListType
     created: datetime = Field(

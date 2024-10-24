@@ -6,7 +6,6 @@ import rdflib
 from pydantic import (
     AfterValidator,
     BeforeValidator,
-    Field,
     HttpUrl,
     StringConstraints,
     TypeAdapter,
@@ -18,6 +17,7 @@ from pydantic.functional_serializers import PlainSerializer
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._issues.warnings import RegexViolationWarning
 from cognite.neat._rules._constants import (
+    DATA_MODEL_COMPLIANCE_REGEX,
     PATTERNS,
     PREFIX_COMPLIANCE_REGEX,
     VERSION_COMPLIANCE_REGEX,
@@ -79,9 +79,10 @@ PrefixType = Annotated[
     _custom_error(lambda _, value: RegexViolationError(value, PREFIX_COMPLIANCE_REGEX)),
 ]
 
-ExternalIdType = Annotated[
+DataModelExternalIdType = Annotated[
     str,
-    Field(min_length=1, max_length=255),
+    StringConstraints(pattern=DATA_MODEL_COMPLIANCE_REGEX),
+    _custom_error(lambda _, value: RegexViolationError(value, DATA_MODEL_COMPLIANCE_REGEX)),
 ]
 
 
@@ -93,9 +94,9 @@ VersionType = Annotated[
 ]
 
 
-def _property_validation_factory(property_type: EntityTypes):
-    def _property_validation(value: str) -> str:
-        compiled_regex = PATTERNS.entity_pattern(property_type)
+def _external_id_validation_factory(entity_type: EntityTypes):
+    def _external_id_validation(value: str) -> str:
+        compiled_regex = PATTERNS.entity_pattern(entity_type)
         if not compiled_regex.match(value):
             raise RegexViolationError(value, compiled_regex.pattern)
         if PATTERNS.more_than_one_alphanumeric.search(value):
@@ -110,16 +111,21 @@ def _property_validation_factory(property_type: EntityTypes):
             )
         return value
 
-    return _property_validation
+    return _external_id_validation
 
+
+SpaceType = Annotated[
+    str,
+    AfterValidator(_external_id_validation_factory(EntityTypes.space)),
+]
 
 InformationPropertyType = Annotated[
     str,
-    AfterValidator(_property_validation_factory(EntityTypes.information_property)),
+    AfterValidator(_external_id_validation_factory(EntityTypes.information_property)),
 ]
 DmsPropertyType = Annotated[
     str,
-    AfterValidator(_property_validation_factory(EntityTypes.dms_property)),
+    AfterValidator(_external_id_validation_factory(EntityTypes.dms_property)),
 ]
 
 
