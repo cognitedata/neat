@@ -39,6 +39,7 @@ class EntityTypes(StrEnum):
     unit = "unit"
     version = "version"
     prefix = "prefix"
+    space = "space"
 
 
 def get_reserved_words() -> dict[str, list[str]]:
@@ -94,6 +95,7 @@ PREFIX_COMPLIANCE_REGEX = r"^([a-zA-Z]+)([a-zA-Z0-9]*[_-]{0,1}[a-zA-Z0-9_-]*)([a
 SPACE_COMPLIANCE_REGEX = (
     rf"(?!^({' | '.join(get_reserved_words()['space'])})$)" r"(^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$)"
 )
+
 
 DATA_MODEL_COMPLIANCE_REGEX = r"^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$"
 
@@ -177,6 +179,10 @@ class _Patterns:
 
         elif entity == EntityTypes.prefix:
             return self.prefix_compliance
+
+        elif entity == EntityTypes.space:
+            return self.space_compliance
+
         else:
             raise ValueError(f"Unsupported entity type {entity}")
 

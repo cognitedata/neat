@@ -20,7 +20,6 @@ from cognite.neat._rules._constants import (
     DATA_MODEL_COMPLIANCE_REGEX,
     PATTERNS,
     PREFIX_COMPLIANCE_REGEX,
-    SPACE_COMPLIANCE_REGEX,
     VERSION_COMPLIANCE_REGEX,
     EntityTypes,
 )
@@ -86,12 +85,6 @@ DataModelExternalIdType = Annotated[
     _custom_error(lambda _, value: RegexViolationError(value, DATA_MODEL_COMPLIANCE_REGEX)),
 ]
 
-SpaceType = Annotated[
-    str,
-    StringConstraints(pattern=SPACE_COMPLIANCE_REGEX),
-    _custom_error(lambda _, value: RegexViolationError(value, SPACE_COMPLIANCE_REGEX)),
-]
-
 
 VersionType = Annotated[
     str,
@@ -120,6 +113,11 @@ def _property_validation_factory(property_type: EntityTypes):
 
     return _property_validation
 
+
+SpaceType = Annotated[
+    str,
+    AfterValidator(_property_validation_factory(EntityTypes.space)),
+]
 
 InformationPropertyType = Annotated[
     str,
