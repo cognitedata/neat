@@ -1,1 +1,1 @@
-::: cognite.neat.graph.extractors
+::: cognite.neat._graph.extractors
