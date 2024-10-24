@@ -1,10 +1,10 @@
-from cognite.neat.graph.examples import nordic44_knowledge_graph
-from cognite.neat.graph.extractors import RdfFileExtractor
-from cognite.neat.graph.transformers._value_type import SplitMultiValueProperty
-from cognite.neat.rules.analysis import InformationAnalysis
-from cognite.neat.rules.importers import InferenceImporter
-from cognite.neat.rules.transformers import ImporterPipeline
-from cognite.neat.store import NeatGraphStore
+from cognite.neat._graph.examples import nordic44_knowledge_graph
+from cognite.neat._graph.extractors import RdfFileExtractor
+from cognite.neat._graph.transformers._value_type import SplitMultiValueProperty
+from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.importers import InferenceImporter
+from cognite.neat._rules.transformers import ImporterPipeline
+from cognite.neat._store import NeatGraphStore
 
 
 def test_split_multi_value_property():

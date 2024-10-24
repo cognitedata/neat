@@ -3,9 +3,9 @@ from pathlib import Path
 
 from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat.constants import PACKAGE_DIRECTORY
-from cognite.neat.workflows import WorkflowManager
-from cognite.neat.config import Config, WorkflowsStoreType
+from cognite.neat._constants import PACKAGE_DIRECTORY
+from cognite.neat._workflows import WorkflowManager
+from cognite.neat._config import Config, WorkflowsStoreType
 
 ROOT = Path(__file__).resolve().parent.parent
 

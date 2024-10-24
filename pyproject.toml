@@ -32,7 +32,7 @@ known-third-party = ["cognite.client"]
 [tool.ruff]
 line-length = 120
 target-version = "py310"
-exclude = ["examples", "examples-pydantic-v1", "scripts"]
+exclude = ["scripts"]
 fix = true
 
 
@@ -47,7 +47,7 @@ init_typed = true
 warn_required_dynamic_aliases = true
 
 [tool.poetry.scripts]
-neat = "cognite.neat.app.main:run"
+neat = "cognite.neat._app.main:run"
 
 [tool.poetry.dependencies]
 python = "^3.10"

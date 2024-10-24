@@ -1,12 +1,12 @@
-from cognite.neat.graph.examples import nordic44_knowledge_graph
-from cognite.neat.graph.extractors import AssetsExtractor, RdfFileExtractor
-from cognite.neat.rules.analysis import InformationAnalysis
-from cognite.neat.rules.importers import InferenceImporter
-from cognite.neat.rules.models.data_types import Json
-from cognite.neat.rules.models.entities import MultiValueTypeInfo
-from cognite.neat.rules.models.entities._single_value import UnknownEntity
-from cognite.neat.rules.transformers import ImporterPipeline
-from cognite.neat.store import NeatGraphStore
+from cognite.neat._graph.examples import nordic44_knowledge_graph
+from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
+from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.importers import InferenceImporter
+from cognite.neat._rules.models.data_types import Json
+from cognite.neat._rules.models.entities import MultiValueTypeInfo
+from cognite.neat._rules.models.entities._single_value import UnknownEntity
+from cognite.neat._rules.transformers import ImporterPipeline
+from cognite.neat._store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, DATA_FOLDER
 
 

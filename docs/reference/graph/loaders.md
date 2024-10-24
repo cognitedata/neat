@@ -1,1 +1,1 @@
-::: cognite.neat.graph.loaders
+::: cognite.neat._graph.loaders

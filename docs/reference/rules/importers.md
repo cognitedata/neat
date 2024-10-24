@@ -1,1 +1,1 @@
-::: cognite.neat.rules.importers
+::: cognite.neat._rules.importers

@@ -1,1 +1,1 @@
-::: cognite.neat.rules.exporters
+::: cognite.neat._rules.exporters

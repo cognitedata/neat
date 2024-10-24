@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from cognite.neat.rules.exporters import YAMLExporter
-from cognite.neat.rules.importers import YAMLImporter
-from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules
-from cognite.neat.rules.transformers import ImporterPipeline
+from cognite.neat._rules.exporters import YAMLExporter
+from cognite.neat._rules.importers import YAMLImporter
+from cognite.neat._rules.models import DMSRules, DomainRules, InformationRules
+from cognite.neat._rules.transformers import ImporterPipeline
 
 
 class TestYAMLExporter:

@@ -1,6 +1,6 @@
 import pytest
 
-from cognite.neat.rules.models._rdfpath import (
+from cognite.neat._rules.models._rdfpath import (
     Entity,
     Hop,
     SingleProperty,

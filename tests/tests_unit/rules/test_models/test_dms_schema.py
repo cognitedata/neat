@@ -7,13 +7,13 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
-from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
-from cognite.neat.issues.errors import PropertyNotFoundError, ResourceDuplicatedError, ResourceNotFoundError
-from cognite.neat.issues.warnings import FileTypeUnexpectedWarning
-from cognite.neat.issues.warnings.user_modeling import DirectRelationMissingSourceWarning
-from cognite.neat.rules.models import DMSSchema
-from cognite.neat.rules.models.dms import PipelineSchema
-from cognite.neat.utils.cdf.data_classes import (
+from cognite.neat._issues import NeatError, NeatIssue, NeatWarning
+from cognite.neat._issues.errors import PropertyNotFoundError, ResourceDuplicatedError, ResourceNotFoundError
+from cognite.neat._issues.warnings import FileTypeUnexpectedWarning
+from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
+from cognite.neat._rules.models import DMSSchema
+from cognite.neat._rules.models.dms import PipelineSchema
+from cognite.neat._utils.cdf.data_classes import (
     ContainerApplyDict,
     RawTableWrite,
     RawTableWriteList,

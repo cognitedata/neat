@@ -1,8 +1,8 @@
 import pytest
 from cognite.client.data_classes.data_modeling import DataModelId
 
-from cognite.neat.rules._constants import ENTITY_PATTERN
-from cognite.neat.rules.models.entities import (
+from cognite.neat._rules._constants import ENTITY_PATTERN
+from cognite.neat._rules.models.entities import (
     AssetEntity,
     ClassEntity,
     DataModelEntity,
