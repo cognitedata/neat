@@ -29,6 +29,7 @@ Changes are grouped as follows:
 - Transformation is now generated for every RDF based rules importer
 
 ### Added
+- Added `NeatSession`
 - Rules exporter that produces a spreadsheet template for instance creation based on definition of classes in the rules
 - Rules transformer which converts information rules entities to be DMS compliant
 - Rules transformer `RuleMapping` that maps rules from one data model to another
@@ -43,7 +44,7 @@ Changes are grouped as follows:
 - Required `env_file_name` explicitly set in the `get_cognite_client` function. This is to avoid loading the wrong
   environment file by accident when running the function in a notebook.
 - `NeatIssue` are no longer immutable. This is to comply with the expectation of Exceptions in Python.
-
+- [BREAKING] All `NEAT` former public methods are now private. Only `NeatSession` is public.
 
 ## [0.92.3] - 17-09-24
 ### Fixed
