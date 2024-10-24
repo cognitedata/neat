@@ -8,6 +8,7 @@ from cognite.neat.rules import importers
 from cognite.neat.rules._shared import ReadRules
 from cognite.neat.rules.models import DMSRules, InformationRules
 from cognite.neat.rules.models._base_input import InputComponent
+from cognite.neat.rules.models.information._rules_input import InformationInputRules
 from cognite.neat.rules.transformers import ConvertToRules, VerifyAnyRules
 
 from ._read import ReadAPI
@@ -52,9 +53,9 @@ class NeatSession:
     ) -> IssueList:
         input_rules: ReadRules = importers.InferenceImporter.from_graph_store(self._state.store).to_rules()
 
-        input_rules.rules.metadata.prefix = space
-        input_rules.rules.metadata.name = external_id
-        input_rules.rules.metadata.version = version
+        cast(InformationInputRules, input_rules.rules).metadata.prefix = space
+        cast(InformationInputRules, input_rules.rules).metadata.name = external_id
+        cast(InformationInputRules, input_rules.rules).metadata.version = version
 
         self.read._store_rules(self._state.store, input_rules, "Data Model Inference")
         return input_rules.issues

@@ -47,6 +47,7 @@ SOURCE_SHEET__TARGET_FIELD__HEADERS = [
     ("Classes", "Classes", "Class"),
     ("Containers", "Containers", "Container"),
     ("Views", "Views", "View"),
+    ("Enum", "Enum", "Collection"),
 ]
 
 MANDATORY_SHEETS_BY_ROLE: dict[RoleTypes, set[str]] = {

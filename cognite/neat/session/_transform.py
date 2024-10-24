@@ -1,11 +1,9 @@
-from pathlib import Path
-from typing import Any, cast, overload
+from typing import cast
 
-from cognite.client import CogniteClient
-
-from cognite.neat.rules._shared import ReadRules, VerifiedRules, InformationInputRules
-from cognite.neat.rules.transformers import ToCompliantEntities
 from cognite.neat.issues import IssueList
+from cognite.neat.rules._shared import InformationInputRules, ReadRules
+from cognite.neat.rules.transformers import ToCompliantEntities
+
 from ._state import SessionState
 
 
@@ -26,7 +24,7 @@ class DataModelTransformAPI:
             output = ToCompliantEntities().transform(input)
             self._state.input_rules.append(
                 ReadRules(
-                    rules=cast(InformationInputRules, output.rules),
+                    rules=cast(InformationInputRules, output.get_rules()),
                     issues=IssueList(),
                     read_context={},
                 )
