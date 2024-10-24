@@ -230,7 +230,7 @@ This sheet is only used for the DMS/CDF Architect, and it is mandatory. The shee
 | Description    | Short description of the view being defined                                                                        |                           | Yes       |
 | Implements     | List of parent view ids which the view being defined implements                                                    |                           | No        |
 | Filter         | Filter(s) which the view being defined should use                                                                  | `hasData`, `nodeType`, '' | No        |
-| In Model       | Indicates whether the view being defined is a part of the data model                                               | `True`, `False`           | No        |
+| In Model       | Indicates whether the view being defined is a part of the data model                                               | `True`, `False`           | Yes        |
 
 
 !!! tip annotate "Usage"
