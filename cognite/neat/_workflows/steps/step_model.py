@@ -4,9 +4,9 @@ from typing import ClassVar, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
+from cognite.neat._app.monitoring.metrics import NeatMetricsCollector
 from cognite.neat._config import Config
 from cognite.neat._workflows.model import FlowMessage, WorkflowConfigs
-from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
 
 
 class Configurable(BaseModel):

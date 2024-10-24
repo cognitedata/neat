@@ -7,16 +7,16 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from cognite import neat
-from cognite.neat.app.api.asgi.metrics import prometheus_app
-from cognite.neat.app.api.configuration import NEAT_APP, UI_PATH
-from cognite.neat.app.api.context_manager import lifespan
-from cognite.neat.app.api.routers import (
+from cognite.neat._app.api.asgi.metrics import prometheus_app
+from cognite.neat._app.api.configuration import NEAT_APP, UI_PATH
+from cognite.neat._app.api.context_manager import lifespan
+from cognite.neat._app.api.routers import (
     configuration,
     crud,
     metrics,
     workflows,
 )
-from cognite.neat.app.api.utils.logging import EndpointFilter
+from cognite.neat._app.api.utils.logging import EndpointFilter
 
 app = FastAPI(title="Neat", lifespan=lifespan)
 

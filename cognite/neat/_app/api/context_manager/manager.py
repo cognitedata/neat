@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from cognite.neat.app.api.configuration import NEAT_APP
+from cognite.neat._app.api.configuration import NEAT_APP
 
 
 @asynccontextmanager

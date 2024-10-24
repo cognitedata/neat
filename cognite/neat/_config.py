@@ -203,7 +203,7 @@ class Config(BaseModel, arbitrary_types_allowed=True):
             workflows_store_type=os.environ.get(  # type: ignore[arg-type]
                 "NEAT_WORKFLOWS_STORE_TYPE", WorkflowsStoreType.FILE
             ),
-            data_store_path=Path(os.environ.get("NEAT_DATA_PATH", "/app/data")),
+            data_store_path=Path(os.environ.get("NEAT_DATA_PATH", "_app/data")),
             cdf_default_dataset_id=int(os.environ.get("NEAT_CDF_DEFAULT_DATASET_ID", 6476640149881990)),
             log_level=cast(
                 Literal["ERROR", "WARNING", "INFO", "DEBUG"],

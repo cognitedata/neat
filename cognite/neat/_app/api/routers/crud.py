@@ -6,10 +6,10 @@ import shutil
 
 from fastapi import APIRouter, UploadFile
 
+from cognite.neat._app.api.configuration import NEAT_APP
 from cognite.neat._config import Config
 from cognite.neat._workflows.model import FlowMessage
 from cognite.neat._workflows.utils import get_file_hash
-from cognite.neat.app.api.configuration import NEAT_APP
 
 router = APIRouter()
 
