@@ -23,7 +23,7 @@ def _intercept_session_exceptions(func: Callable):
             return func(*args, **kwargs)
         except NeatSessionError as e:
             action = func.__name__
-            print(f"{_PREFIX} cannot {action}: {e}")
+            print(f"{_PREFIX} Cannot {action}: {e}")
 
     return wrapper
 

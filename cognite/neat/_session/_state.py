@@ -4,6 +4,8 @@ from typing import Literal, cast
 from cognite.neat._rules._shared import ReadRules, VerifiedRules
 from cognite.neat._store import NeatGraphStore
 
+from .exceptions import NeatSessionError
+
 
 @dataclass
 class SessionState:
@@ -24,13 +26,15 @@ class SessionState:
     @property
     def input_rule(self) -> ReadRules:
         if not self.input_rules:
-            raise ValueError("No input rules provided")
+            raise NeatSessionError("No input data model available. Try using [bold].read[/bold] to load a data model.")
         return self.input_rules[-1]
 
     @property
     def verified_rule(self) -> VerifiedRules:
         if not self.verified_rules:
-            raise ValueError("No verified rules provided")
+            raise NeatSessionError(
+                "No data model available to verify. Try using  [bold].read[/bold] to load a data model."
+            )
         return self.verified_rules[-1]
 
     @property
