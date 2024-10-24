@@ -9,7 +9,7 @@ from cognite.client import ClientConfig, CogniteClient
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
 
 from cognite.neat import _version
-from cognite.neat.utils.auxiliary import local_import
+from cognite.neat._utils.auxiliary import local_import
 
 __all__ = ["get_cognite_client", "EnvironmentVariables"]
 

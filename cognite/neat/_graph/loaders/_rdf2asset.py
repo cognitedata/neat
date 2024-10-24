@@ -25,9 +25,9 @@ from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.analysis._asset import AssetAnalysis
 from cognite.neat._rules.models import AssetRules
 from cognite.neat._rules.models.entities import ClassEntity
-from cognite.neat.store import NeatGraphStore
-from cognite.neat.utils.auxiliary import create_sha256_hash
-from cognite.neat.utils.upload import UploadResult
+from cognite.neat._store import NeatGraphStore
+from cognite.neat._utils.auxiliary import create_sha256_hash
+from cognite.neat._utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, CDFLoader
 

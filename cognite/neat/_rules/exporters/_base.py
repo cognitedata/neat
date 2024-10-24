@@ -6,8 +6,8 @@ from typing import Generic, TypeVar
 from cognite.client import CogniteClient
 
 from cognite.neat._rules._shared import T_VerifiedRules
-from cognite.neat.utils.auxiliary import class_html_doc
-from cognite.neat.utils.upload import UploadResult, UploadResultList
+from cognite.neat._utils.auxiliary import class_html_doc
+from cognite.neat._utils.upload import UploadResult, UploadResultList
 
 T_Export = TypeVar("T_Export")
 

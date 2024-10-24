@@ -15,7 +15,7 @@ from cognite.client.data_classes import (
 from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
-from cognite.neat.utils.cdf.data_classes import RawTable, RawTableID, RawTableList, RawTableWrite, RawTableWriteList
+from cognite.neat._utils.cdf.data_classes import RawTable, RawTableID, RawTableList, RawTableWrite, RawTableWriteList
 
 from ._base import ResourceLoader
 

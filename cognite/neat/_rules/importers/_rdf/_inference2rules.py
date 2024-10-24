@@ -14,8 +14,8 @@ from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.models.information import (
     InformationMetadata,
 )
-from cognite.neat.store import NeatGraphStore
-from cognite.neat.utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._store import NeatGraphStore
+from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._base import DEFAULT_NON_EXISTING_NODE_TYPE, BaseRDFImporter
 

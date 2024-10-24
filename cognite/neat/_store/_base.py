@@ -17,7 +17,7 @@ from cognite.neat._graph.transformers import Transformers
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.entities import ClassEntity
-from cognite.neat.utils.auxiliary import local_import
+from cognite.neat._utils.auxiliary import local_import
 
 from ._provenance import Change, Provenance
 

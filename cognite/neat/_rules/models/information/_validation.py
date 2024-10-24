@@ -7,7 +7,7 @@ from cognite.neat._issues.errors import NeatValueError, ResourceNotDefinedError
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models._base_rules import DataModelType, SchemaCompleteness
 from cognite.neat._rules.models.entities import ClassEntity, UnknownEntity
-from cognite.neat.utils.rdf_ import get_inheritance_path
+from cognite.neat._utils.rdf_ import get_inheritance_path
 
 from ._rules import InformationRules
 

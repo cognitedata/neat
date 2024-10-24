@@ -16,7 +16,7 @@ from cognite.neat._rules.models.information import (
     InformationProperty,
 )
 from cognite.neat._rules.transformers import ImporterPipeline, InformationToDMS
-from cognite.neat.utils.cdf.loaders import RawTableLoader, TransformationLoader
+from cognite.neat._utils.cdf.loaders import RawTableLoader, TransformationLoader
 from tests.config import DOC_RULES
 
 

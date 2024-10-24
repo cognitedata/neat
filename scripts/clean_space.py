@@ -2,7 +2,7 @@ from cognite.neat._config import Config
 from pathlib import Path
 
 
-from cognite.neat.utils.cdf.loaders import SpaceLoader
+from cognite.neat._utils.cdf.loaders import SpaceLoader
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

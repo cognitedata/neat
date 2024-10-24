@@ -13,7 +13,7 @@ from cognite.neat._rules.models.entities import ClassEntity, UnknownEntity
 from cognite.neat._rules.models.information import InformationProperty
 from cognite.neat._rules.models.mapping import create_classic_to_core_mapping
 from cognite.neat._rules.transformers import InformationToDMS, RuleMapper, VerifyInformationRules
-from cognite.neat.store import NeatGraphStore
+from cognite.neat._store import NeatGraphStore
 from tests.data import classic_windfarm
 
 RESERVED_PROPERTIES = frozenset(

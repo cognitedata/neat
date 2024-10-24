@@ -8,9 +8,9 @@ from cognite.client.data_classes.capabilities import Capability
 
 from cognite.neat._issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import AuthorizationError
-from cognite.neat.store import NeatGraphStore
-from cognite.neat.utils.auxiliary import class_html_doc
-from cognite.neat.utils.upload import UploadResult, UploadResultList
+from cognite.neat._store import NeatGraphStore
+from cognite.neat._utils.auxiliary import class_html_doc
+from cognite.neat._utils.upload import UploadResult, UploadResultList
 
 T_Output = TypeVar("T_Output")
 

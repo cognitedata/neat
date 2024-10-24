@@ -19,7 +19,7 @@ from cognite.neat._rules.importers._dtdl2rules.dtdl_converter import _DTDLConver
 from cognite.neat._rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
 from cognite.neat._rules.models import InformationInputRules, SchemaCompleteness
 from cognite.neat._rules.models.information import InformationInputMetadata
-from cognite.neat.utils.text import humanize_collection, to_pascal
+from cognite.neat._utils.text import humanize_collection, to_pascal
 
 
 class DTDLImporter(BaseImporter[InformationInputRules]):

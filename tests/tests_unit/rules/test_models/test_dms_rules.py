@@ -34,7 +34,7 @@ from cognite.neat._rules.transformers import (
     MapOneToOne,
     RulesPipeline,
 )
-from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
+from cognite.neat._utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 from tests.data import car
 
 

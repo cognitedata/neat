@@ -11,8 +11,8 @@ from cognite.neat._rules.models.entities import UnknownEntity
 from cognite.neat._rules.models.information import (
     InformationInputRules,
 )
-from cognite.neat.store import NeatGraphStore
-from cognite.neat.utils.rdf_ import get_namespace, uri_to_short_form
+from cognite.neat._store import NeatGraphStore
+from cognite.neat._utils.rdf_ import get_namespace, uri_to_short_form
 
 DEFAULT_NON_EXISTING_NODE_TYPE = AnyURI()
 

@@ -17,7 +17,7 @@ from cognite.neat._rules.models.entities import (
     ReferenceEntity,
 )
 from cognite.neat._rules.models.information import InformationProperty
-from cognite.neat.utils.rdf_ import get_inheritance_path
+from cognite.neat._utils.rdf_ import get_inheritance_path
 
 T_Rules = TypeVar("T_Rules", bound=BaseRules)
 T_Property = TypeVar("T_Property", bound=BaseModel)

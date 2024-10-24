@@ -7,7 +7,7 @@ from cognite.neat._graph import extractors
 from cognite.neat._issues import IssueList
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules
-from cognite.neat.store import NeatGraphStore
+from cognite.neat._store import NeatGraphStore
 
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, object_wizard, rdf_dm_wizard

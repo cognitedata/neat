@@ -41,7 +41,7 @@ from cognite.neat._issues.warnings import (
 )
 from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
-from cognite.neat.utils.cdf.data_classes import (
+from cognite.neat._utils.cdf.data_classes import (
     CogniteResourceDict,
     ContainerApplyDict,
     NodeApplyDict,
@@ -50,9 +50,9 @@ from cognite.neat.utils.cdf.data_classes import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat.utils.cdf.loaders import ViewLoader
-from cognite.neat.utils.rdf_ import get_inheritance_path
-from cognite.neat.utils.text import to_camel
+from cognite.neat._utils.cdf.loaders import ViewLoader
+from cognite.neat._utils.rdf_ import get_inheritance_path
+from cognite.neat._utils.text import to_camel
 
 if sys.version_info >= (3, 11):
     from typing import Self

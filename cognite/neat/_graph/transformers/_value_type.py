@@ -2,7 +2,7 @@ from rdflib import XSD, Graph, URIRef
 
 from cognite.neat._constants import UNKNOWN_TYPE
 from cognite.neat._graph.queries import Queries
-from cognite.neat.utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseTransformer
 

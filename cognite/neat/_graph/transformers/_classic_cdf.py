@@ -7,7 +7,7 @@ from rdflib.query import ResultRow
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat._graph import extractors
 from cognite.neat._issues.warnings import ResourceNotFoundWarning
-from cognite.neat.utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseTransformer
 

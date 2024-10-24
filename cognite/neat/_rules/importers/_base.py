@@ -10,7 +10,7 @@ from rdflib import Namespace
 
 from cognite.neat._issues import IssueList, NeatError, NeatWarning
 from cognite.neat._rules._shared import ReadRules, T_InputRules
-from cognite.neat.utils.auxiliary import class_html_doc
+from cognite.neat._utils.auxiliary import class_html_doc
 
 
 class BaseImporter(ABC, Generic[T_InputRules]):

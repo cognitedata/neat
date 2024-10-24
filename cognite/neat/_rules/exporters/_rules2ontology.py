@@ -24,7 +24,7 @@ from cognite.neat._rules.models.information import (
     InformationProperty,
     InformationRules,
 )
-from cognite.neat.utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseExporter
 from ._validation import duplicated_properties

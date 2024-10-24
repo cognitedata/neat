@@ -3,7 +3,7 @@ import pytest
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.importers import InferenceImporter
 from cognite.neat._rules.transformers import ImporterPipeline
-from cognite.neat.store import NeatGraphStore
+from cognite.neat._store import NeatGraphStore
 from tests.data import car
 
 

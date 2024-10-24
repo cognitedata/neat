@@ -19,8 +19,8 @@ from cognite.neat._rules.models.information import (
     InformationProperty,
     InformationRules,
 )
-from cognite.neat.utils.collection_ import most_occurring_element
-from cognite.neat.utils.rdf_ import get_inheritance_path
+from cognite.neat._utils.collection_ import most_occurring_element
+from cognite.neat._utils.rdf_ import get_inheritance_path
 
 from ._base import BaseAnalysis
 

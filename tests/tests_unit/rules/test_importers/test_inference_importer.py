@@ -6,7 +6,7 @@ from cognite.neat._rules.models.data_types import Json
 from cognite.neat._rules.models.entities import MultiValueTypeInfo
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.transformers import ImporterPipeline
-from cognite.neat.store import NeatGraphStore
+from cognite.neat._store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, DATA_FOLDER
 
 

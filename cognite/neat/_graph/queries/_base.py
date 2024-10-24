@@ -12,7 +12,7 @@ from cognite.neat._graph.models import InstanceType
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import InformationRules
-from cognite.neat.utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._construct import build_construct_query
 

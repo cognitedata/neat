@@ -22,7 +22,7 @@ from pydantic import (
     model_validator,
 )
 
-from cognite.neat.utils.text import replace_non_alphanumeric_with_underscore
+from cognite.neat._utils.text import replace_non_alphanumeric_with_underscore
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum

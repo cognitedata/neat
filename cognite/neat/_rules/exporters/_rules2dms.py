@@ -21,7 +21,7 @@ from cognite.neat._issues.warnings import (
     ResourceRetrievalWarning,
 )
 from cognite.neat._rules.models.dms import DMSRules, DMSSchema, PipelineSchema
-from cognite.neat.utils.cdf.loaders import (
+from cognite.neat._utils.cdf.loaders import (
     ContainerLoader,
     DataModelingLoader,
     DataModelLoader,
@@ -32,7 +32,7 @@ from cognite.neat.utils.cdf.loaders import (
     TransformationLoader,
     ViewLoader,
 )
-from cognite.neat.utils.upload import UploadResult
+from cognite.neat._utils.upload import UploadResult
 
 from ._base import CDFExporter
 

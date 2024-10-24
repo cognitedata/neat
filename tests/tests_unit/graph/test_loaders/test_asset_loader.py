@@ -14,7 +14,7 @@ from cognite.neat._issues import NeatError
 from cognite.neat._issues.errors import ResourceCreationError
 from cognite.neat._rules.models import AssetRules
 from cognite.neat._rules.transformers import AssetToInformation
-from cognite.neat.store import NeatGraphStore
+from cognite.neat._store import NeatGraphStore
 
 
 @pytest.fixture()

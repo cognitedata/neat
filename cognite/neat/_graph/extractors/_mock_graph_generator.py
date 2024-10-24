@@ -18,7 +18,7 @@ from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import InformationProperty
-from cognite.neat.utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseExtractor
 

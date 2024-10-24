@@ -13,7 +13,7 @@ from cognite.neat._issues.warnings import FileTypeUnexpectedWarning
 from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat._rules.models import DMSSchema
 from cognite.neat._rules.models.dms import PipelineSchema
-from cognite.neat.utils.cdf.data_classes import (
+from cognite.neat._utils.cdf.data_classes import (
     ContainerApplyDict,
     RawTableWrite,
     RawTableWriteList,

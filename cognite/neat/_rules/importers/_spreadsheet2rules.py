@@ -28,8 +28,8 @@ from cognite.neat._rules.models import (
     RoleTypes,
     SchemaCompleteness,
 )
-from cognite.neat.utils.spreadsheet import SpreadsheetRead, read_individual_sheet
-from cognite.neat.utils.text import humanize_collection
+from cognite.neat._utils.spreadsheet import SpreadsheetRead, read_individual_sheet
+from cognite.neat._utils.text import humanize_collection
 
 from ._base import BaseImporter
 

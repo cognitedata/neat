@@ -14,8 +14,8 @@ import pandas as pd
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic_core import ErrorDetails
 
-from cognite.neat.utils.spreadsheet import SpreadsheetRead
-from cognite.neat.utils.text import humanize_collection, to_camel, to_snake
+from cognite.neat._utils.spreadsheet import SpreadsheetRead
+from cognite.neat._utils.text import humanize_collection, to_camel, to_snake
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup

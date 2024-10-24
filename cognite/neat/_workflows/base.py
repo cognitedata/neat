@@ -13,6 +13,7 @@ from prometheus_client import Gauge
 
 from cognite.neat._config import Config
 from cognite.neat._issues.errors import WorkflowConfigurationNotSetError, WorkflowStepOutputError
+from cognite.neat._utils.auxiliary import retry_decorator
 from cognite.neat._workflows import cdf_store, utils
 from cognite.neat._workflows.cdf_store import CdfStore
 from cognite.neat._workflows.model import (
@@ -33,7 +34,6 @@ from cognite.neat._workflows.steps.step_model import DataContract
 from cognite.neat._workflows.steps_registry import StepsRegistry
 from cognite.neat._workflows.tasks import WorkflowTaskBuilder
 from cognite.neat.app.monitoring.metrics import NeatMetricsCollector
-from cognite.neat.utils.auxiliary import retry_decorator
 
 summary_metrics = Gauge("neat_workflow_summary_metrics", "Workflow execution summary metrics", ["wf_name", "name"])
 steps_metrics = Gauge("neat_workflow_steps_metrics", "Workflow step level metrics", ["wf_name", "step_name", "name"])

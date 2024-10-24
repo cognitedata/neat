@@ -37,7 +37,7 @@ from cognite.neat._rules.models.entities import (
     UnitEntity,
     ViewEntity,
 )
-from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
+from cognite.neat._utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 
 from ._rules import DMSEnum, DMSMetadata, DMSProperty, DMSRules, DMSView
 from ._schema import DMSSchema, PipelineSchema

@@ -15,8 +15,8 @@ from cognite.neat._rules.models import (
     DomainRules,
     InformationRules,
 )
+from cognite.neat._store import NeatGraphStore
 from cognite.neat._workflows.steps.step_model import DataContract
-from cognite.neat.store import NeatGraphStore
 
 
 class MultiRuleData(DataContract):

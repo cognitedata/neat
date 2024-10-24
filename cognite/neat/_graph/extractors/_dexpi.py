@@ -9,8 +9,8 @@ from rdflib import RDF, RDFS, XSD, Literal, Namespace, URIRef
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._graph.models import Triple
-from cognite.neat.utils.rdf_ import as_neat_compliant_uri
-from cognite.neat.utils.xml_ import get_children, iterate_tree
+from cognite.neat._utils.rdf_ import as_neat_compliant_uri
+from cognite.neat._utils.xml_ import get_children, iterate_tree
 
 DEXPI = Namespace("http://sandbox.dexpi.org/rdl/")
 QUDT = Namespace("https://qudt.org/vocab/unit/")
