@@ -34,13 +34,15 @@ class DataModelPrepareAPI:
                 )
             )
 
-    def to_extension(self, new_data_model_id: DataModelIdentifier) -> None:
+    def to_extension(self, new_data_model_id: DataModelIdentifier, prefix: str | None = None) -> None:
         """Uses the current data model as a basis to extend from.
 
         Args:
             new_data_model_id: The new data model that is extending the current data model.
+            prefix: Prefix to use for the views in the new data model. This is required if the
+                current data model is a Cognite Data Model.
 
         """
         if dms := self._state.last_verified_dms_rules:
-            output = ToExtension(new_data_model_id).transform(dms)
+            output = ToExtension(new_data_model_id, prefix).transform(dms)
             self._state.verified_rules.append(output.rules)

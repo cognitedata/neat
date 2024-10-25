@@ -11,6 +11,7 @@ from cognite.client.data_classes.data_modeling import DataModelId, DataModelIden
 from rdflib import Namespace
 
 from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules._shared import InputRules, JustRules, OutRules, VerifiedRules
@@ -226,13 +227,18 @@ _T_Entity = TypeVar("_T_Entity", bound=ClassEntity | ViewEntity)
 
 
 class ToExtension(RulesTransformer[DMSRules, DMSRules]):
-    def __init__(self, new_model_id: DataModelIdentifier, mode: Literal["composition"] = "composition"):
+    def __init__(
+        self, new_model_id: DataModelIdentifier, prefix: str | None = None, mode: Literal["composition"] = "composition"
+    ):
         self.new_model_id = DataModelId.load(new_model_id)
+        self.prefix = prefix
         self.mode = mode
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         # Copy to ensure immutability
         verified = self._to_rules(rules)
+        if self.prefix is None and verified.metadata.as_data_model_id() in COGNITE_MODELS:
+            raise NeatValueError(f"Prefix is required when extending {verified.metadata.as_data_model_id()}")
         source_id = verified.metadata.as_data_model_id()
 
         dump = verified.dump()
@@ -268,14 +274,8 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
         return JustRules(new_model)
 
-    @staticmethod
-    def _remove_cognite_prefix(entity: _T_Entity) -> _T_Entity:
-        new_suffix = entity.suffix.removeprefix("Cognite")
-        if new_suffix.startswith("3D"):
-            new_suffix = f"{new_suffix[2:]}3D"
-        elif new_suffix.startswith("360"):
-            new_suffix = f"{new_suffix[3:]}360"
-
+    def _remove_cognite_prefix(self, entity: _T_Entity) -> _T_Entity:
+        new_suffix = entity.suffix.replace("Cognite", self.prefix or "")
         if isinstance(entity, ViewEntity):
             return ViewEntity(space=entity.space, externalId=new_suffix, version=entity.version)  # type: ignore[return-value]
         elif isinstance(entity, ClassEntity):
