@@ -228,17 +228,28 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         # Copy to ensure immutability
-        verified = self._to_rules(rules).model_copy(deep=True, update={"Containers": None})
-        verified.metadata.space = self.new_model_id.space
-        verified.metadata.external_id = self.new_model_id.external_id
+        verified = self._to_rules(rules)
+        source_id = verified.metadata.as_data_model_id()
+
+        verified = verified.model_dump()
+        verified["Metadata"]["space"] = self.new_model_id.space
+        verified["Metadata"]["externalId"] = self.new_model_id.external_id
         if self.new_model_id.version is not None:
-            verified.metadata.version = self.new_model_id.version
+            verified["Metadata"]["version"] = self.new_model_id.version
+        new_model = DMSRules.model_validate(verified)
+
+        for prop in new_model.properties:
+            if prop.container:
+                prop.container = ContainerEntity(
+                    space=source_id.space,
+                    externalId=prop.container.suffix,
+                )
 
         if self.mode == "composition":
-            for view in verified.views:
+            for view in new_model.views:
                 view.implements = None
 
-        return JustRules(verified)
+        return JustRules(new_model)
 
 
 class _InformationRulesConverter:
