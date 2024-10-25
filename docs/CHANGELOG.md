@@ -36,6 +36,7 @@ Changes are grouped as follows:
 - Graph transformer `SplitMultiValueProperty` which splits multi-value properties into separate properties with single value
 - Support for `xsd:decimal` which is now mapped to `float64` in DMS rules
 - Added RDF based readers for `NeatSession`
+- `NeatSession.read.rdf.examples.nordic44`
 
 ### Removed
 - State on DataType stored in `_dms_loaded` attribute

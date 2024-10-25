@@ -114,3 +114,13 @@ class Provenance(NeatList[Change]):
 
     def __setitem__(self, *args, **kwargs):
         raise TypeError("Cannot modify change from provenance")
+
+    def _repr_html_(self) -> str:
+        text = "<br /><strong>Provenance</strong>:<ul>"
+
+        for change in self:
+            text += f"<li>{change.description}</li>"
+
+        text += "</ul>"
+
+        return text

@@ -3,9 +3,10 @@ import warnings
 from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import pandas as pd
+from pandas import Index
 from rdflib import Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
@@ -350,16 +351,38 @@ class NeatGraphStore:
     def _repr_html_(self) -> str:
         provenance = self.provenance._repr_html_()
         summary: pd.DataFrame = self.summary
-        summary_text = (
-            "<br /><strong>Graph is empty</strong><br />"
-            if summary.empty
-            else f"<br /><strong>Graph content</strong><br />{cast(pd.DataFrame, summary)._repr_html_()}"  # type: ignore[operator]
-        )
 
-        return (
-            f"<strong>{type(self).__name__}</strong> A graph store is a container for storing triples. "
-            "It can be queried and transformed to extract information.<br />"
-            "<strong>Provenance</strong> Provenance is a record of changes that have occurred in the graph store.<br />"
-            f"{provenance}"
-            f"{summary_text}"
+        if summary.empty:
+            summary_text = "<br /><strong>Graph is empty</strong><br />"
+        else:
+            summary_text = (
+                "<br /><strong>Overview</strong>:"  # type: ignore
+                f"<ul><li>{len(summary)} types</strong></li>"
+                f"<li>{sum(summary['Occurrence'])} instances</strong></li></ul>"
+                f"{cast(pd.DataFrame, self._shorten_summary(summary))._repr_html_()}"
+            )
+
+        return f"{summary_text}" f"{provenance}"
+
+    def _shorten_summary(self, summary: pd.DataFrame) -> pd.DataFrame:
+        """Shorten summary to top 5 types by occurrence."""
+        top_5_rows = summary.head(5)
+        last_row = summary.tail(1)
+
+        indexes = [
+            *top_5_rows.index.tolist(),
+            "...",
+            *last_row.index.tolist(),
+        ]
+
+        shorter_summary = pd.concat(
+            [
+                top_5_rows,
+                pd.DataFrame([["..."] * summary.shape[1]], columns=summary.columns),
+                last_row,
+            ],
+            ignore_index=True,
         )
+        shorter_summary.index = cast(Index[Any], indexes)
+
+        return shorter_summary
