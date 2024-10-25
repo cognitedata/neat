@@ -14,6 +14,7 @@ from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
 
 from ._prepare import PrepareAPI
 from ._read import ReadAPI
+from ._show import ShowAPI
 from ._state import SessionState
 from ._to import ToAPI
 from .exceptions import intercept_session_exceptions
@@ -33,6 +34,7 @@ class NeatSession:
         self.read = ReadAPI(self._state, client, verbose)
         self.to = ToAPI(self._state, client, verbose)
         self.prepare = PrepareAPI(self._state, verbose)
+        self.show = ShowAPI(self._state)
 
     def verify(self) -> IssueList:
         output = VerifyAnyRules("continue").try_transform(self._state.input_rule)
