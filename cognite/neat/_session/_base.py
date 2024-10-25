@@ -72,11 +72,11 @@ class NeatSession:
         if state.input_rules and not state.verified_rules:
             metadata = cast(InputComponent, state.input_rule.rules.metadata)  # type: ignore[union-attr]
             table = pd.DataFrame([metadata.dump()]).T._repr_html_()  # type: ignore[operator]
-            output.append(f"<H2>Raw DataModel</H2><br />{table}")
+            output.append(f"<H2>Raw Data Model</H2><br />{table}")
 
         if state.verified_rules:
             table = pd.DataFrame([state.last_verified_rule.metadata.model_dump()]).T._repr_html_()  # type: ignore[operator]
-            output.append(f"<H2>DataModel</H2><br />{table}")
+            output.append(f"<H2>Data Model</H2><br />{table}")
 
         if state.has_store:
             output.append(f"<H2>Instances</H2> {state.store._repr_html_()}")
