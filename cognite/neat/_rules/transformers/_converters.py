@@ -15,6 +15,7 @@ from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules._shared import InputRules, JustRules, OutRules, VerifiedRules
+from cognite.neat._rules.analysis import DMSAnalysis
 from cognite.neat._rules.models import (
     AssetRules,
     DMSInputRules,
@@ -335,16 +336,19 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
         exclude_views = {view for collection in self.drop for view in self._VIEW_BY_COLLECTION[collection]}
         new_model = verified.model_copy(deep=True)
 
+        properties_by_view = DMSAnalysis(new_model).classes_with_properties(consider_inheritance=True)
+
         new_model.views = SheetList[DMSView](
             [view for view in new_model.views if view.view.as_id() not in exclude_views]
         )
-        new_model.properties = SheetList[DMSProperty](
-            [
-                prop
-                for prop in new_model.properties
-                if (prop.view.as_id() not in exclude_views) and not self._is_asset_3D_property(prop)
-            ]
-        )
+        new_properties = SheetList[DMSProperty]()
+        for view in new_model.views:
+            for prop in properties_by_view[view.view]:
+                if self._is_asset_3D_property(prop):
+                    # We filter out the 3D property of asset
+                    continue
+                new_properties.append(prop)
+        new_model.properties = new_properties
 
         return JustRules(new_model)
 
