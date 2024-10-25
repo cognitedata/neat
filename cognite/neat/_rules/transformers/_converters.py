@@ -7,6 +7,7 @@ from datetime import date, datetime
 from typing import Literal, TypeVar, cast
 
 from cognite.client.data_classes import data_modeling as dms
+from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from rdflib import Namespace
 
 from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
@@ -218,6 +219,26 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
         if isinstance(rules, DMSRules) and self._out_cls is AssetRules:
             return InformationToAsset().transform(DMSToInformation().transform(rules)).rules
         raise ValueError(f"Unsupported conversion from {type(rules)} to {self._out_cls}")
+
+
+class ToExtension(RulesTransformer[DMSRules, DMSRules]):
+    def __init__(self, new_model_id: DataModelIdentifier, mode: Literal["composition"] = "composition"):
+        self.new_model_id = DataModelId.load(new_model_id)
+        self.mode = mode
+
+    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
+        # Copy to ensure immutability
+        verified = self._to_rules(rules).model_copy(deep=True, update={"Containers": None})
+        verified.metadata.space = self.new_model_id.space
+        verified.metadata.external_id = self.new_model_id.external_id
+        if self.new_model_id.version is not None:
+            verified.metadata.version = self.new_model_id.version
+
+        if self.mode == "composition":
+            for view in verified.views:
+                view.implements = None
+
+        return JustRules(verified)
 
 
 class _InformationRulesConverter:

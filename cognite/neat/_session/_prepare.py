@@ -1,9 +1,11 @@
 from typing import cast
 
+from cognite.client.data_classes.data_modeling import DataModelIdentifier
+
 from cognite.neat._issues._base import IssueList
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
-from cognite.neat._rules.transformers._converters import ToCompliantEntities
+from cognite.neat._rules.transformers import ToCompliantEntities, ToExtension
 
 from ._state import SessionState
 
@@ -24,6 +26,23 @@ class DataModelPrepareAPI:
         """Convert data model component external ids to CDF compliant entities."""
         if input := self._state.information_input_rule:
             output = ToCompliantEntities().transform(input)
+            self._state.input_rules.append(
+                ReadRules(
+                    rules=cast(InformationInputRules, output.get_rules()),
+                    issues=IssueList(),
+                    read_context={},
+                )
+            )
+
+    def to_extension(self, new_data_model_id: DataModelIdentifier) -> None:
+        """Uses the current data model as a basis to extend from.
+
+        Args:
+            new_data_model_id: The new data model that is extending the current data model.
+
+        """
+        if input := self._state.information_input_rule:
+            output = ToExtension(new_data_model_id).transform(input)
             self._state.input_rules.append(
                 ReadRules(
                     rules=cast(InformationInputRules, output.get_rules()),

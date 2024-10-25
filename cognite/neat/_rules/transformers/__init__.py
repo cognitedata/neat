@@ -6,6 +6,7 @@ from ._converters import (
     InformationToAsset,
     InformationToDMS,
     ToCompliantEntities,
+    ToExtension,
 )
 from ._mapping import MapOneToOne, RuleMapper
 from ._pipelines import ImporterPipeline
@@ -27,4 +28,5 @@ __all__ = [
     "MapOneToOne",
     "ToCompliantEntities",
     "RuleMapper",
+    "ToExtension",
 ]
