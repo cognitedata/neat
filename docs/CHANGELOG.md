@@ -38,7 +38,7 @@ Changes are grouped as follows:
 - Support for `xsd:decimal` which is now mapped to `float64` in DMS rules
 - Added RDF based readers for `NeatSession`
 - `NeatSession.read.rdf.examples.nordic44`
-
+- `NeatSession.show.data_model` show data model in UI
 
 ### Removed
 - State on DataType stored in `_dms_loaded` attribute
