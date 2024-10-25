@@ -334,6 +334,7 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
 
         exclude_views = {view for collection in self.drop for view in self._VIEW_BY_COLLECTION[collection]}
         new_model = verified.model_copy(deep=True)
+
         new_model.views = SheetList[DMSView](
             [view for view in new_model.views if view.view.as_id() not in exclude_views]
         )

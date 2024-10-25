@@ -25,7 +25,7 @@ class NeatSession:
     def __init__(
         self,
         client: CogniteClient | None = None,
-        storage: Literal["memory", "oxigraph"] = "oxigraph",
+        storage: Literal["memory", "oxigraph"] = "memory",
         verbose: bool = True,
     ) -> None:
         self._client = client
