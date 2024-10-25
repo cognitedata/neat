@@ -10,12 +10,13 @@ from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from rdflib import Namespace
 
-from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules._shared import InputRules, JustRules, OutRules, VerifiedRules
 from cognite.neat._rules.models import (
     AssetRules,
+    DMSInputRules,
     DMSRules,
     DomainRules,
     ExtensionCategory,
@@ -221,6 +222,9 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
         raise ValueError(f"Unsupported conversion from {type(rules)} to {self._out_cls}")
 
 
+_T_Entity = TypeVar("_T_Entity", bound=ClassEntity | ViewEntity)
+
+
 class ToExtension(RulesTransformer[DMSRules, DMSRules]):
     def __init__(self, new_model_id: DataModelIdentifier, mode: Literal["composition"] = "composition"):
         self.new_model_id = DataModelId.load(new_model_id)
@@ -231,25 +235,52 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         verified = self._to_rules(rules)
         source_id = verified.metadata.as_data_model_id()
 
-        verified = verified.model_dump()
-        verified["Metadata"]["space"] = self.new_model_id.space
-        verified["Metadata"]["externalId"] = self.new_model_id.external_id
+        dump = verified.dump()
+        dump["metadata"]["schema_"] = SchemaCompleteness.partial.value
+        dump["metadata"]["space"] = self.new_model_id.space
+        dump["metadata"]["external_id"] = self.new_model_id.external_id
         if self.new_model_id.version is not None:
-            verified["Metadata"]["version"] = self.new_model_id.version
-        new_model = DMSRules.model_validate(verified)
+            dump["metadata"]["version"] = self.new_model_id.version
+        new_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
 
         for prop in new_model.properties:
-            if prop.container:
+            if prop.container and prop.container.space == self.new_model_id.space:
                 prop.container = ContainerEntity(
                     space=source_id.space,
                     externalId=prop.container.suffix,
                 )
 
         if self.mode == "composition":
+            new_model.containers = None
             for view in new_model.views:
                 view.implements = None
 
+        if source_id in COGNITE_MODELS:
+            # Remove CognitePrefixes.
+            for prop in new_model.properties:
+                prop.view = self._remove_cognite_prefix(prop.view)
+                prop.class_ = self._remove_cognite_prefix(prop.class_)
+                if isinstance(prop.value_type, ViewEntity):
+                    prop.value_type = self._remove_cognite_prefix(prop.value_type)
+            for view in new_model.views:
+                view.view = self._remove_cognite_prefix(view.view)
+                view.class_ = self._remove_cognite_prefix(view.class_)
+
         return JustRules(new_model)
+
+    @staticmethod
+    def _remove_cognite_prefix(entity: _T_Entity) -> _T_Entity:
+        new_suffix = entity.suffix.removeprefix("Cognite")
+        if new_suffix.startswith("3D"):
+            new_suffix = f"{new_suffix[2:]}3D"
+        elif new_suffix.startswith("360"):
+            new_suffix = f"{new_suffix[3:]}360"
+
+        if isinstance(entity, ViewEntity):
+            return ViewEntity(space=entity.space, externalId=new_suffix, version=entity.version)  # type: ignore[return-value]
+        elif isinstance(entity, ClassEntity):
+            return ClassEntity(prefix=entity.prefix, suffix=new_suffix, version=entity.version)  # type: ignore[return-value]
+        raise ValueError(f"Unsupported entity type: {type(entity)}")
 
 
 class _InformationRulesConverter:
