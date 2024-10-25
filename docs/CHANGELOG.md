@@ -27,6 +27,7 @@ Changes are grouped as follows:
 - Reorg prefixes
 - Added more detail regex testing of entities
 - Transformation is now generated for every RDF based rules importer
+- Improved session overview in UI
 
 ### Added
 - Added `NeatSession`
@@ -37,6 +38,7 @@ Changes are grouped as follows:
 - Support for `xsd:decimal` which is now mapped to `float64` in DMS rules
 - Added RDF based readers for `NeatSession`
 - `NeatSession.read.rdf.examples.nordic44`
+
 
 ### Removed
 - State on DataType stored in `_dms_loaded` attribute
