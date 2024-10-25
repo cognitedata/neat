@@ -5,6 +5,7 @@ from ._converters import (
     DMSToInformation,
     InformationToAsset,
     InformationToDMS,
+    ReduceCogniteModel,
     ToCompliantEntities,
     ToExtension,
 )
@@ -29,4 +30,5 @@ __all__ = [
     "ToCompliantEntities",
     "RuleMapper",
     "ToExtension",
+    "ReduceCogniteModel",
 ]
