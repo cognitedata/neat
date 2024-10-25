@@ -4,10 +4,10 @@ from cognite.neat._rules.models.entities import ReferenceEntity, ViewEntity
 from ._base import BaseAnalysis
 
 
-class InformationAnalysis(BaseAnalysis[DMSRules, DMSView, DMSProperty, ViewEntity, str]):
+class DMSAnalysis(BaseAnalysis[DMSRules, DMSView, DMSProperty, ViewEntity, str]):
     """Assumes analysis over only the complete schema"""
 
-    def _geDMSViewes(self) -> list[DMSView]:
+    def _get_classes(self) -> list[DMSView]:
         return list(self.rules.views)
 
     def _get_properties(self) -> list[DMSProperty]:
