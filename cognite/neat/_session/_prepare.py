@@ -41,12 +41,6 @@ class DataModelPrepareAPI:
             new_data_model_id: The new data model that is extending the current data model.
 
         """
-        if input := self._state.information_input_rule:
-            output = ToExtension(new_data_model_id).transform(input)
-            self._state.input_rules.append(
-                ReadRules(
-                    rules=cast(InformationInputRules, output.get_rules()),
-                    issues=IssueList(),
-                    read_context={},
-                )
-            )
+        if dms := self._state.last_verified_dms_rules:
+            output = ToExtension(new_data_model_id).transform(dms)
+            self._state.verified_rules.append(output.rules)
