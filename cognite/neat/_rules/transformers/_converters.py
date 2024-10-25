@@ -284,6 +284,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
 
 class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
+    _ASSET_VIEW = ViewId("cdf_cdm", "CogniteAsset", "v1")
     _VIEW_BY_COLLECTION: Mapping[Literal["3D", "Annotation", "BaseViews"], frozenset[ViewId]] = {
         "3D": frozenset(
             {
@@ -295,7 +296,7 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
                 ViewId("cdf_cdm", "Cognite360ImageAnnotation", "v1"),
                 ViewId("cdf_cdm", "Cognite360ImageCollection", "v1"),
                 ViewId("cdf_cdm", "Cognite360ImageModel", "v1"),
-                ViewId("cdf_cdm", "Cognite360ImageModel", "v1"),
+                ViewId("cdf_cdm", "Cognite360ImageStation", "v1"),
                 ViewId("cdf_cdm", "CogniteCADModel", "v1"),
                 ViewId("cdf_cdm", "CogniteCADNode", "v1"),
                 ViewId("cdf_cdm", "CogniteCADRevision", "v1"),
@@ -337,10 +338,19 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
             [view for view in new_model.views if view.view.as_id() not in exclude_views]
         )
         new_model.properties = SheetList[DMSProperty](
-            [prop for prop in new_model.properties if prop.view.as_id() not in exclude_views]
+            [
+                prop
+                for prop in new_model.properties
+                if (prop.view.as_id() not in exclude_views) and not self._is_asset_3D_property(prop)
+            ]
         )
 
         return JustRules(new_model)
+
+    def _is_asset_3D_property(self, prop: DMSProperty) -> bool:
+        if "3D" not in self.drop:
+            return False
+        return prop.view.as_id() == self._ASSET_VIEW and prop.property_ == "object3D"
 
 
 class _InformationRulesConverter:
