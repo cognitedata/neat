@@ -60,7 +60,7 @@ class NeatSession:
         cast(InformationInputRules, input_rules.rules).metadata.name = external_id
         cast(InformationInputRules, input_rules.rules).metadata.version = version
 
-        self.read._store_rules(self._state.store, input_rules, "Data Model Inference")
+        self.read.rdf._store_rules(self._state.store, input_rules, "Data Model Inference")
         return input_rules.issues
 
     def _repr_html_(self) -> str:
@@ -72,13 +72,13 @@ class NeatSession:
         if state.input_rules and not state.verified_rules:
             metadata = cast(InputComponent, state.input_rule.rules.metadata)  # type: ignore[union-attr]
             table = pd.DataFrame([metadata.dump()]).T._repr_html_()  # type: ignore[operator]
-            output.append(f"<strong>Raw DataModel</strong><br />{table}")
+            output.append(f"<H2>Raw Data Model</H2><br />{table}")
 
         if state.verified_rules:
             table = pd.DataFrame([state.last_verified_rule.metadata.model_dump()]).T._repr_html_()  # type: ignore[operator]
-            output.append(f"<strong>DataModel</strong><br />{table}")
+            output.append(f"<H2>Data Model</H2><br />{table}")
 
         if state.has_store:
-            output.append(f"<strong>Metadata</strong> {state.store._repr_html_()}")
+            output.append(f"<H2>Instances</H2> {state.store._repr_html_()}")
 
         return "<br />".join(output)
