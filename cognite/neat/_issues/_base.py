@@ -153,7 +153,7 @@ class NeatIssue:
         return neat_issue_cls(**args)
 
     @classmethod
-    def _load_value(cls, type_: type, value: Any) -> Any:
+    def _load_value(cls, type_: Any, value: Any) -> Any:
         from cognite.neat._rules.models.entities import Entity
 
         if isinstance(type_, UnionType) or get_origin(type_) is UnionType:
