@@ -4388,14 +4388,17 @@ files = [
 
 [[package]]
 name = "python-multipart"
-version = "0.0.15"
+version = "0.0.9"
 description = "A streaming multipart parser for Python"
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "python_multipart-0.0.15-py3-none-any.whl", hash = "sha256:167e3fc3d115de7849efb43e061f213350c87d72ba64fcd014b0ae15ce5e7d4c"},
-    {file = "python_multipart-0.0.15.tar.gz", hash = "sha256:7be357d5aec4b59cc4e4999a7e442dfc7eb0c6c0126422ae22c1f2f50ceab6a7"},
+    {file = "python_multipart-0.0.9-py3-none-any.whl", hash = "sha256:97ca7b8ea7b05f977dc3849c3ba99d51689822fab725c3703af7c866a0c2b215"},
+    {file = "python_multipart-0.0.9.tar.gz", hash = "sha256:03f54688c663f1b7977105f021043b0793151e4cb1c1a9d4a11fc13d622c4026"},
 ]
+
+[package.extras]
+dev = ["atomicwrites (==1.4.1)", "attrs (==23.2.0)", "coverage (==7.4.1)", "hatch", "invoke (==2.2.0)", "more-itertools (==10.2.0)", "pbr (==6.0.0)", "pluggy (==1.4.0)", "py (==1.11.0)", "pytest (==8.0.0)", "pytest-cov (==4.1.0)", "pytest-timeout (==2.2.0)", "pyyaml (==6.0.1)", "ruff (==0.2.1)"]
 
 [[package]]
 name = "pytz"
@@ -6002,4 +6005,4 @@ service = ["fastapi", "prometheus-client", "python-multipart", "schedule", "uvic
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "bf1d31c6796d50ec6e2795a7894902b2d22ad706cc1e035782d00e2153f44968"
+content-hash = "80decf99ed692c6dd09fdb98dbdaeb8459b0d5b54273a7a5489a4fa2cdb017d6"
