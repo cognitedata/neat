@@ -1642,6 +1642,8 @@ class TestDMSRules:
 
         assert metadata.version == "14"
 
+    def test_property_not_found_warning_on_parent_property(self) -> None: ...
+
 
 class TestDMSExporter:
     def test_default_filters_using_olav_dms_rules(self, olav_dms_rules: DMSRules) -> None:
