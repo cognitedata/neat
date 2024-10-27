@@ -78,6 +78,7 @@ tomli = { version = "^2.0.1", python = "<3.11" }
 uvicorn = { extras = ["standard"], version = "^0", optional = true }
 prometheus-client = { version = "^0", optional = true }
 fastapi = { version = "^0", optional = true }
+# This is pinned as fastapi raises a runtime error with the latest version of python-multipart
 python-multipart = { version = "0.0.9", optional = true }
 
 # WorkFlow
