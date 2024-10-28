@@ -4,8 +4,8 @@ from typing import cast
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.instances import Instance
 
-from cognite.neat.constants import DEFAULT_NAMESPACE
-from cognite.neat.graph.extractors import DMSExtractor
+from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._graph.extractors import DMSExtractor
 from tests.data import car
 
 

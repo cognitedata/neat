@@ -1,0 +1,290 @@
+containers:
+- class_: Agent
+  container: Agent
+- class_: Award
+  container: Award
+- class_: Concept
+  container: Concept
+- class_: DatatypeProperty
+  container: DatatypeProperty
+  description: The class of data properties.
+- class_: Laureate
+  constraint: Agent
+  container: Laureate
+  description: A laureate is a person or organization who recieves one or several
+    Nobel Prizes.
+  name: Laureate
+- class_: LaureateAward
+  constraint: Award
+  container: LaureateAward
+  description: The Nobel Prize is often divided to several laureates. LaureateAward
+    captures the details of the award given to each laureate, such as share of the
+    Nobel Prize, motivation etc.
+  name: Laureate Award
+- class_: NobelPrize
+  constraint: Award
+  container: NobelPrize
+  description: The Nobel Prize is a set of annual international awards bestowed in
+    a number of categories by Scandinavian committees in recognition of cultural and
+    scientific advances. The will of the Swedish chemist Alfred Nobel, the inventor
+    of dynamite, established the prizes in 1895. The prizes in Physics, Chemistry,
+    Physiology or Medicine, Literature, and Peace were first awarded in 1901. The
+    Peace Prize is awarded in Oslo, Norway, while the other prizes are awarded in
+    Stockholm, Sweden.
+  name: Nobel Prize
+- class_: ObjectProperty
+  container: ObjectProperty
+  description: The class of object properties.
+- class_: Thing
+  container: Thing
+  description: The class of holding class individuals.
+- class_: University
+  container: University
+metadata:
+  created: '2017-05-21T00:00:00'
+  creator: NEAT
+  data_model_type: enterprise
+  external_id: linked_nobelprizes
+  name: Linked Nobelprizes
+  role: DMS Architect
+  schema_: partial
+  space: neat
+  updated: '2017-05-21T00:00:00'
+  version: 1.0.0
+properties:
+- class_: Agent
+  container: Agent
+  container_property: label
+  is_list: false
+  nullable: true
+  property_: label
+  reference: http://www.w3.org/2000/01/rdf-schema#label
+  value_type: text
+  view: Agent
+  view_property: label
+- class_: Award
+  container: Award
+  container_property: year
+  is_list: false
+  name: year
+  nullable: true
+  property_: year
+  reference: http://data.nobelprize.org/terms/year
+  value_type: int32
+  view: Award
+  view_property: year
+- class_: Concept
+  container: Concept
+  container_property: label
+  is_list: false
+  nullable: true
+  property_: label
+  reference: http://www.w3.org/2000/01/rdf-schema#label
+  value_type: text
+  view: Concept
+  view_property: label
+- class_: DatatypeProperty
+  container: DatatypeProperty
+  container_property: label
+  is_list: false
+  nullable: true
+  property_: label
+  reference: http://www.w3.org/2000/01/rdf-schema#label
+  value_type: text
+  view: DatatypeProperty
+  view_property: label
+- class_: Laureate
+  connection: direct
+  container: Laureate
+  container_property: laureateAward
+  is_list: false
+  name: laureateAward
+  nullable: true
+  property_: laureateAward
+  reference: http://data.nobelprize.org/terms/laureateAward
+  value_type: LaureateAward
+  view: Laureate
+  view_property: laureateAward
+- class_: Laureate
+  connection: direct
+  container: Laureate
+  container_property: nobelPrize
+  is_list: false
+  name: nobelPrize
+  nullable: true
+  property_: nobelPrize
+  reference: http://data.nobelprize.org/terms/nobelPrize
+  value_type: NobelPrize
+  view: Laureate
+  view_property: nobelPrize
+- class_: LaureateAward
+  connection: direct
+  container: LaureateAward
+  container_property: laureate
+  is_list: false
+  name: laureate
+  nullable: true
+  property_: laureate
+  reference: http://data.nobelprize.org/terms/laureate
+  value_type: Laureate
+  view: LaureateAward
+  view_property: laureate
+- class_: LaureateAward
+  container: LaureateAward
+  container_property: motivation
+  is_list: false
+  name: motivation
+  nullable: true
+  property_: motivation
+  reference: http://data.nobelprize.org/terms/motivation
+  value_type: text
+  view: LaureateAward
+  view_property: motivation
+- class_: LaureateAward
+  container: LaureateAward
+  container_property: share
+  is_list: false
+  name: share
+  nullable: true
+  property_: share
+  reference: http://data.nobelprize.org/terms/share
+  value_type: int32
+  view: LaureateAward
+  view_property: share
+- class_: LaureateAward
+  container: LaureateAward
+  container_property: sortOrder
+  is_list: false
+  name: sort order
+  nullable: true
+  property_: sortOrder
+  reference: http://data.nobelprize.org/terms/sortOrder
+  value_type: int32
+  view: LaureateAward
+  view_property: sortOrder
+- class_: LaureateAward
+  connection: direct
+  container: LaureateAward
+  container_property: university
+  is_list: false
+  name: university
+  nullable: true
+  property_: university
+  reference: http://data.nobelprize.org/terms/university
+  value_type: University
+  view: LaureateAward
+  view_property: university
+- class_: NobelPrize
+  connection: direct
+  container: NobelPrize
+  container_property: category
+  is_list: false
+  name: category
+  nullable: true
+  property_: category
+  reference: http://data.nobelprize.org/terms/category
+  value_type: Category
+  view: NobelPrize
+  view_property: category
+- class_: NobelPrize
+  container: NobelPrize
+  container_property: motivation
+  is_list: false
+  name: motivation
+  nullable: true
+  property_: motivation
+  reference: http://data.nobelprize.org/terms/motivation
+  value_type: text
+  view: NobelPrize
+  view_property: motivation
+- class_: ObjectProperty
+  container: ObjectProperty
+  container_property: label
+  is_list: false
+  nullable: true
+  property_: label
+  reference: http://www.w3.org/2000/01/rdf-schema#label
+  value_type: text
+  view: ObjectProperty
+  view_property: label
+- class_: Thing
+  container: Thing
+  container_property: label
+  is_list: false
+  nullable: true
+  property_: label
+  reference: http://www.w3.org/2000/01/rdf-schema#label
+  value_type: text
+  view: Thing
+  view_property: label
+- class_: University
+  container: University
+  container_property: label
+  is_list: false
+  nullable: true
+  property_: label
+  reference: http://www.w3.org/2000/01/rdf-schema#label
+  value_type: text
+  view: University
+  view_property: label
+views:
+- class_: Agent
+  implements: ''
+  view: Agent
+- class_: Award
+  implements: ''
+  view: Award
+- class_: Category
+  description: The Nobel Prize is given in six different categories.
+  implements: Concept
+  name: Nobel Prize category
+  reference: http://data.nobelprize.org/terms/Category
+  view: Category
+- class_: Concept
+  implements: ''
+  view: Concept
+- class_: DatatypeProperty
+  description: The class of data properties.
+  implements: ''
+  reference: http://www.w3.org/2002/07/owl#DatatypeProperty
+  view: DatatypeProperty
+- class_: Laureate
+  description: A laureate is a person or organization who recieves one or several
+    Nobel Prizes.
+  implements: Agent
+  name: Laureate
+  reference: http://data.nobelprize.org/terms/Laureate
+  view: Laureate
+- class_: LaureateAward
+  description: The Nobel Prize is often divided to several laureates. LaureateAward
+    captures the details of the award given to each laureate, such as share of the
+    Nobel Prize, motivation etc.
+  implements: Award
+  name: Laureate Award
+  reference: http://data.nobelprize.org/terms/LaureateAward
+  view: LaureateAward
+- class_: NobelPrize
+  description: The Nobel Prize is a set of annual international awards bestowed in
+    a number of categories by Scandinavian committees in recognition of cultural and
+    scientific advances. The will of the Swedish chemist Alfred Nobel, the inventor
+    of dynamite, established the prizes in 1895. The prizes in Physics, Chemistry,
+    Physiology or Medicine, Literature, and Peace were first awarded in 1901. The
+    Peace Prize is awarded in Oslo, Norway, while the other prizes are awarded in
+    Stockholm, Sweden.
+  implements: Award
+  name: Nobel Prize
+  reference: http://data.nobelprize.org/terms/NobelPrize
+  view: NobelPrize
+- class_: ObjectProperty
+  description: The class of object properties.
+  implements: ''
+  reference: http://www.w3.org/2002/07/owl#ObjectProperty
+  view: ObjectProperty
+- class_: Thing
+  description: The class of holding class individuals.
+  implements: ''
+  reference: http://www.w3.org/2002/07/owl#Thing
+  view: Thing
+- class_: University
+  implements: ''
+  view: University

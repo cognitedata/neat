@@ -2,9 +2,9 @@ import pytest
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
 
-from cognite.neat.rules.importers import DMSImporter, ExcelImporter
-from cognite.neat.rules.models import DataModelType, DMSRules, InformationRules, RoleTypes
-from cognite.neat.rules.transformers import ImporterPipeline
+from cognite.neat._rules.importers import DMSImporter, ExcelImporter
+from cognite.neat._rules.models import DataModelType, DMSRules, InformationRules, RoleTypes
+from cognite.neat._rules.transformers import ImporterPipeline
 from tests.config import DOC_RULES
 
 

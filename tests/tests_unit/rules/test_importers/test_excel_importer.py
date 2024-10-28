@@ -4,20 +4,20 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
 
-from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors import (
+from cognite.neat._issues import IssueList
+from cognite.neat._issues.errors import (
     FileNotFoundNeatError,
     PropertyDefinitionDuplicatedError,
     ResourceNotDefinedError,
     RowError,
 )
-from cognite.neat.issues.warnings import (
+from cognite.neat._issues.warnings import (
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
 )
-from cognite.neat.rules.importers import ExcelImporter
-from cognite.neat.rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
-from cognite.neat.rules.transformers import ImporterPipeline
+from cognite.neat._rules.importers import ExcelImporter
+from cognite.neat._rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
+from cognite.neat._rules.transformers import ImporterPipeline
 from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 

@@ -1,11 +1,11 @@
 .PHONY: run-explorer run-tests run-linters build-ui build-python build-docker run-docker compose-up
-version="0.92.3"
+version="0.93.0"
 run-explorer:
 	@echo "Running explorer API server..."
 	# open "http://localhost:8000/static/index.html" || true
 	mkdir -p ./data
 	export NEAT_CONFIG_PATH=./data/config.yaml && \
-	poetry run uvicorn --host 0.0.0.0 cognite.neat.app.api.explorer:app
+	poetry run uvicorn --host 0.0.0.0 cognite.neat._app.api.explorer:app
 
 run-tests:
 	@echo "Running tests..."
@@ -18,7 +18,7 @@ run-regen-test:
 configure:
 	@echo "Configuring..."
 	poetry install --extras all
-	cd cognite/neat/app/ui/neat-app; npm install
+	cd cognite/neat/_app/ui/neat-app; npm install
 
 run-linters:
 	poetry run pre-commit run --all-files
@@ -27,7 +27,7 @@ run-all-checks : run-linters run-tests
 
 build-ui:
 	@echo "Building react UI app"
-	cd cognite/neat/app/ui/neat-app; npm run build
+	cd cognite/neat/_app/ui/neat-app; npm run build
 
 build-python: build-ui
 	@echo "Building Python wheels"
@@ -35,7 +35,7 @@ build-python: build-ui
 
 start-ui-dev:
 	@echo "Starting NodeJs UI dev server"
-	cd cognite/neat/app/ui/neat-app; npm start
+	cd cognite/neat/_app/ui/neat-app; npm start
 
 poetry-export:
 	@echo "Exporting poetry dependencies"

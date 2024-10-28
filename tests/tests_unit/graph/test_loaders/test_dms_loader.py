@@ -1,9 +1,9 @@
-from cognite.neat.graph.extractors import AssetsExtractor, RdfFileExtractor
-from cognite.neat.graph.loaders import DMSLoader
-from cognite.neat.rules.examples import imf_info_rules
-from cognite.neat.rules.importers import ExcelImporter, InferenceImporter
-from cognite.neat.rules.transformers import ImporterPipeline, InformationToDMS
-from cognite.neat.store import NeatGraphStore
+from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
+from cognite.neat._graph.loaders import DMSLoader
+from cognite.neat._rules.catalog import imf_attributes
+from cognite.neat._rules.importers import ExcelImporter, InferenceImporter
+from cognite.neat._rules.transformers import ImporterPipeline, InformationToDMS
+from cognite.neat._store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, IMF_EXAMPLE
 
 
@@ -30,11 +30,11 @@ def test_imf_attribute_nodes():
     # as well omitting to remove namespace from values if
     # properties are not specified to be object properties
 
-    info_rules = ImporterPipeline.verify(ExcelImporter(imf_info_rules))
+    info_rules = ImporterPipeline.verify(ExcelImporter(imf_attributes))
     dms_rules = InformationToDMS().transform(info_rules).rules
 
     store = NeatGraphStore.from_oxi_store(rules=info_rules)
-    store.write(RdfFileExtractor(IMF_EXAMPLE, mime_type="text/turtle"))
+    store.write(RdfFileExtractor(IMF_EXAMPLE))
 
     loader = DMSLoader.from_rules(dms_rules, store, instance_space="knowledge")
     knowledge_nodes = list(loader.load())

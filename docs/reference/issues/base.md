@@ -1,1 +1,1 @@
-::: cognite.neat.issues
+::: cognite.neat._issues

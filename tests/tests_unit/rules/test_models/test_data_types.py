@@ -5,7 +5,7 @@ import pytest
 from pydantic import AnyHttpUrl, BaseModel, Field, field_serializer
 from pydantic.networks import Url
 
-from cognite.neat.rules.models.data_types import (
+from cognite.neat._rules.models.data_types import (
     Boolean,
     DataType,
     Double,
@@ -14,7 +14,7 @@ from cognite.neat.rules.models.data_types import (
     NonNegativeInteger,
     NonPositiveInteger,
 )
-from cognite.neat.rules.models.entities import ClassEntity, ReferenceEntity, UnitEntity, URLEntity
+from cognite.neat._rules.models.entities import ClassEntity, ReferenceEntity, UnitEntity, URLEntity
 
 
 class DemoProperty(BaseModel):
@@ -31,17 +31,17 @@ class DemoProperty(BaseModel):
 
 
 class TestDataTypes:
-    case_2 = Double(unit=UnitEntity(prefix="length", suffix="m"))
-    # The loaded attribute is used to determine how to serialize the object
-    # Typically, when instantiating the object, it is assumed to never be DMS.
-    # However, for testing purposes, we can set it to True to as test case 2 is DMS loaded.
-    case_2._dms_loaded = True
-
     @pytest.mark.parametrize(
         "raw, expected",
         [
-            ("float(unit=power:megaw)", Float(unit=UnitEntity(prefix="power", suffix="megaw"))),
-            ("float64(unit=length:m)", case_2),
+            (
+                "float(unit=power:megaw)",
+                Float(unit=UnitEntity(prefix="power", suffix="megaw")),
+            ),
+            (
+                "double(unit=length:m)",
+                Double(unit=UnitEntity(prefix="length", suffix="m")),
+            ),
             ("boolean", Boolean()),
             ("float", Float()),
             ("double", Double()),
@@ -53,8 +53,8 @@ class TestDataTypes:
     def test_load(self, raw: str, expected: DataType):
         loaded = DataType.load(raw)
         assert loaded == expected
-        assert str(loaded) == raw
         assert loaded.model_dump() == raw
+        assert str(loaded) == raw
 
     def test_set_unit(self) -> None:
         unit = UnitEntity(prefix="power", suffix="megaw")

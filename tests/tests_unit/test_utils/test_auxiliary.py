@@ -1,7 +1,7 @@
 import pytest
 
-from cognite.neat.rules.importers import DMSImporter
-from cognite.neat.utils.auxiliary import get_classmethods
+from cognite.neat._rules.importers import DMSImporter
+from cognite.neat._utils.auxiliary import get_classmethods
 
 
 @pytest.mark.parametrize(

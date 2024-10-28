@@ -1,11 +1,12 @@
-from cognite.neat.rules import importers
-from cognite.neat.rules.analysis import InformationAnalysis
-from cognite.neat.rules.models.entities import ClassEntity, EntityTypes
-from cognite.neat.rules.transformers import ImporterPipeline
+from cognite.neat._rules import importers
+from cognite.neat._rules._constants import EntityTypes
+from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.models.entities import ClassEntity
+from cognite.neat._rules.transformers import ImporterPipeline
 
 
 def test_owl_importer():
-    rules = ImporterPipeline.verify(importers.OWLImporter(filepath="https://data.nobelprize.org/terms.rdf"))
+    rules = ImporterPipeline.verify(importers.OWLImporter.from_file(filepath="https://data.nobelprize.org/terms.rdf"))
 
     assert len(rules.classes) == 11
     assert len(rules.properties) == 16

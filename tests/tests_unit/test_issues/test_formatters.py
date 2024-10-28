@@ -1,9 +1,9 @@
 import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
-from cognite.neat.issues import IssueList
-from cognite.neat.issues.errors import PropertyDefinitionDuplicatedError, PropertyNotFoundError, RowError
-from cognite.neat.issues.formatters import BasicHTML
+from cognite.neat._issues import IssueList
+from cognite.neat._issues.errors import PropertyDefinitionDuplicatedError, PropertyNotFoundError, RowError
+from cognite.neat._issues.formatters import BasicHTML
 
 
 @pytest.fixture(scope="session")

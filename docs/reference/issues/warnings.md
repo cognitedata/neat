@@ -1,2 +1,2 @@
-::: cognite.neat.issues.warnings
+::: cognite.neat._issues.warnings
 

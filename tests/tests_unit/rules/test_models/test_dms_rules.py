@@ -8,32 +8,34 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
-from cognite.neat.issues import MultiValueError, NeatError, NeatIssue
-from cognite.neat.issues.errors import (
+from cognite.neat._issues import MultiValueError, NeatError, NeatIssue
+from cognite.neat._issues.errors import (
     PropertyDefinitionDuplicatedError,
     ResourceChangedError,
     ResourceNotFoundError,
 )
-from cognite.neat.rules.importers import DMSImporter
-from cognite.neat.rules.models import DMSRules, InformationRules
-from cognite.neat.rules.models.data_types import String
-from cognite.neat.rules.models.dms import (
+from cognite.neat._rules.importers import DMSImporter
+from cognite.neat._rules.models import DMSRules, InformationRules
+from cognite.neat._rules.models.data_types import String
+from cognite.neat._rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
+    DMSMetadata,
     DMSSchema,
 )
-from cognite.neat.rules.models.entities._single_value import UnknownEntity
-from cognite.neat.rules.transformers import (
+from cognite.neat._rules.models.entities._single_value import UnknownEntity
+from cognite.neat._rules.transformers import (
     DMSToInformation,
     ImporterPipeline,
     InformationToDMS,
     MapOneToOne,
     RulesPipeline,
+    VerifyDMSRules,
 )
-from cognite.neat.utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
+from cognite.neat._utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 from tests.data import car
 
 
@@ -1625,6 +1627,56 @@ class TestDMSRules:
         assert manufacturer_view.referenced_containers() == {dm.ContainerId(car.BASE_MODEL.metadata.space, "Entity")}
         color_view = view_by_external_id["Color"]
         assert color_view.referenced_containers() == {dm.ContainerId(car.BASE_MODEL.metadata.space, "Entity")}
+
+    def test_metadata_int_version(self) -> None:
+        raw_metadata = dict(
+            schema_="partial",
+            space="some_space",
+            external_id="some_id",
+            creator="me",
+            version=14,
+            created="2024-03-16",
+            updated="2024-03-16",
+        )
+
+        metadata = DMSMetadata.model_validate(raw_metadata)
+
+        assert metadata.version == "14"
+
+    def test_reverse_property_in_parent(self) -> None:
+        sub_core = DMSInputRules(
+            DMSInputMetadata(
+                schema_="complete", space="my_space", external_id="my_data_model", creator="Anders", version="v42"
+            ),
+            properties=[
+                DMSInputProperty(
+                    view="CogniteVisualizable",
+                    view_property="object3D",
+                    value_type="Cognite3DObject",
+                    connection="direct",
+                    is_list=False,
+                    container="CogniteVisualizable",
+                    container_property="object3D",
+                ),
+                DMSInputProperty(
+                    view="Cognite3DObject",
+                    view_property="asset",
+                    value_type="CogniteAsset",
+                    connection="reverse(property=object3D)",
+                ),
+            ],
+            views=[
+                DMSInputView(view="CogniteVisualizable"),
+                DMSInputView(view="CogniteAsset", implements="CogniteVisualizable"),
+                DMSInputView(view="Cognite3DObject"),
+            ],
+            containers=[
+                DMSInputContainer("CogniteVisualizable"),
+            ],
+        )
+        maybe_rules = VerifyDMSRules("continue").transform(sub_core)
+
+        assert not maybe_rules.issues
 
 
 class TestDMSExporter:

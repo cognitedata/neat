@@ -1,2 +1,2 @@
-::: cognite.neat.issues.warnings.user_modeling
+::: cognite.neat._issues.warnings.user_modeling
 

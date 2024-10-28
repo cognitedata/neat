@@ -15,6 +15,40 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.93.0] - 28-10-2024
+### Improved
+- IODD extractor to also extract XML elements that should map to time series data type
+- This includes extracting `VariableCollection` elements and `ProcessDataIn` elements
+- Will probably need to revise how the tag/id of the time series is created
+- Interfaces for InferenceImporter, IMFImporter and OWLImporter are leveraging BaseRDFImporter
+- Renamed rules.examples to rules.catalog to start building catalog od data models
+- Improved IMF rules that will handle IMF AttributeType onboarding
+- Improved handling of unknown, multi-data, multi-objet and mixed value types in conversion from Information to DMS rules
+- Reorg prefixes
+- Added more detail regex testing of entities
+- Transformation is now generated for every RDF based rules importer
+- Improved session overview in UI
+
+### Added
+- Added `NeatSession`
+- Rules exporter that produces a spreadsheet template for instance creation based on definition of classes in the rules
+- Rules transformer which converts information rules entities to be DMS compliant
+- Rules transformer `RuleMapping` that maps rules from one data model to another
+- Graph transformer `SplitMultiValueProperty` which splits multi-value properties into separate properties with single value
+- Support for `xsd:decimal` which is now mapped to `float64` in DMS rules
+- Added RDF based readers for `NeatSession`
+- `NeatSession.read.rdf.examples.nordic44`
+- `NeatSession.show.data_model` show data model in UI
+
+### Removed
+- State on DataType stored in `_dms_loaded` attribute
+
+### Changed
+- Required `env_file_name` explicitly set in the `get_cognite_client` function. This is to avoid loading the wrong
+  environment file by accident when running the function in a notebook.
+- `NeatIssue` are no longer immutable. This is to comply with the expectation of Exceptions in Python.
+- [BREAKING] All `NEAT` former public methods are now private. Only `NeatSession` is public.
+
 ## [0.92.3] - 17-09-24
 ### Fixed
 - Prefixes not being imported or exported to Excel

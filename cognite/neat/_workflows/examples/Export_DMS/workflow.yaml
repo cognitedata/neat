@@ -1,0 +1,89 @@
+configs: []
+description: null
+implementation_module: null
+name: Export DMS
+steps:
+-   complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_861205
+    label: Upload Rules Spreadsheet
+    max_retries: 0
+    method: null
+    params:
+        file_type: rules
+    retry_delay: 3
+    stype: file_uploader
+    system_component_id: null
+    transition_to:
+    - step_295479
+    trigger: true
+    ui_config:
+        pos_x: 629
+        pos_y: 57
+-   complex_configs: {}
+    configs:
+        File name: ''
+        Report formatter: BasicHTML
+        Role: infer
+    description: null
+    enabled: true
+    id: step_295479
+    label: Validate
+    max_retries: 0
+    method: ExcelToRules
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_50885
+    trigger: false
+    ui_config:
+        pos_x: 629
+        pos_y: 161
+-   complex_configs:
+        Components:
+            containers: true
+            data_models: true
+            spaces: true
+            views: true
+    configs:
+        Dry run: 'False'
+        Existing component handling: update
+        Multi-space components create: 'True'
+    description: null
+    enabled: true
+    id: step_50885
+    label: Export Data Model to CDF
+    max_retries: 0
+    method: RulesToDMS
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to:
+    - step_171560
+    trigger: false
+    ui_config:
+        pos_x: 629
+        pos_y: 243
+-   complex_configs: {}
+    configs: {}
+    description: null
+    enabled: true
+    id: step_171560
+    label: Export Transformations
+    max_retries: 0
+    method: RulesToCDFTransformations
+    params: {}
+    retry_delay: 3
+    stype: stdstep
+    system_component_id: null
+    transition_to: []
+    trigger: false
+    ui_config:
+        pos_x: 629
+        pos_y: 342
+system_components: []

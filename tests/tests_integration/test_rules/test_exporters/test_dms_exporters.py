@@ -6,17 +6,17 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import Row
 
-from cognite.neat.rules.exporters import DMSExporter
-from cognite.neat.rules.importers import ExcelImporter
-from cognite.neat.rules.models import DMSRules, InformationRules, RoleTypes, SheetList
-from cognite.neat.rules.models.dms import DMSInputRules, PipelineSchema
-from cognite.neat.rules.models.information import (
+from cognite.neat._rules.exporters import DMSExporter
+from cognite.neat._rules.importers import ExcelImporter
+from cognite.neat._rules.models import DMSRules, InformationRules, RoleTypes, SheetList
+from cognite.neat._rules.models.dms import DMSInputRules, PipelineSchema
+from cognite.neat._rules.models.information import (
     InformationClass,
     InformationMetadata,
     InformationProperty,
 )
-from cognite.neat.rules.transformers import ImporterPipeline, InformationToDMS
-from cognite.neat.utils.cdf.loaders import RawTableLoader, TransformationLoader
+from cognite.neat._rules.transformers import ImporterPipeline, InformationToDMS
+from cognite.neat._utils.cdf.loaders import RawTableLoader, TransformationLoader
 from tests.config import DOC_RULES
 
 

@@ -9,8 +9,8 @@ from dataclasses import fields, is_dataclass
 import pytest
 from _pytest.mark import ParameterSet
 
-from cognite.neat.issues import NeatError, NeatIssue, NeatWarning
-from cognite.neat.issues.errors import ResourceChangedError, ResourceNotFoundError
+from cognite.neat._issues import NeatError, NeatIssue, NeatWarning
+from cognite.neat._issues.errors import ResourceChangedError, ResourceNotFoundError
 from tests.utils import DataClassCreator, get_all_subclasses
 
 

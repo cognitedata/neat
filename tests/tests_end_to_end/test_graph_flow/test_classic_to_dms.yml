@@ -1,0 +1,614 @@
+instances:
+- externalId: Label_Measurement
+  instanceType: node
+  sources:
+  - properties:
+      data_set_id:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Measurement
+      name: Measurement
+    source:
+      externalId: ClassicLabel
+      space: classic
+      type: view
+      version: inferred
+  space: sp_instance_space
+  type:
+    externalId: ClassicLabel
+    space: classic
+- externalId: Label_PowerGeneratingUnit
+  instanceType: node
+  sources:
+  - properties:
+      data_set_id:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Power generating unit
+      name: Power generating unit
+    source:
+      externalId: ClassicLabel
+      space: classic
+      type: view
+      version: inferred
+  space: sp_instance_space
+  type:
+    externalId: ClassicLabel
+    space: classic
+- externalId: Label_WindTurbine
+  instanceType: node
+  sources:
+  - properties:
+      data_set_id:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Wind turbine
+      name: Wind turbine
+    source:
+      externalId: ClassicLabel
+      space: classic
+      type: view
+      version: inferred
+  space: sp_instance_space
+  type:
+    externalId: ClassicLabel
+    space: classic
+- externalId: Label_metMast
+  instanceType: node
+  sources:
+  - properties:
+      data_set_id:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Meteorological mast
+      name: Meteorological mast
+    source:
+      externalId: ClassicLabel
+      space: classic
+      type: view
+      version: inferred
+  space: sp_instance_space
+  type:
+    externalId: ClassicLabel
+    space: classic
+- externalId: Sequence_1
+  instanceType: node
+  sources:
+  - properties:
+      blob: data
+      description: Power curve from manufacturer 1
+      name: Power curve Manufacturer 1
+    source:
+      externalId: ClassicSequence
+      space: classic
+      type: view
+      version: inferred
+  space: sp_instance_space
+  type:
+    externalId: ClassicSequence
+    space: classic
+- externalId: WT-01_to_MetMast
+  instanceType: node
+  sources:
+  - properties:
+      dataset:
+        externalId: DataSet_123
+        space: sp_instance_space
+      label:
+        externalId: Label_metMast
+        space: sp_instance_space
+      type:
+        externalId: Relationship
+        space: sp_instance_space
+    source:
+      externalId: ClassicEdge
+      space: classic
+      type: view
+      version: inferred
+  space: sp_instance_space
+  type:
+    externalId: ClassicEdge
+    space: classic
+- externalId: WT-02_to_MetMast
+  instanceType: node
+  sources:
+  - properties:
+      dataset:
+        externalId: DataSet_123
+        space: sp_instance_space
+      label:
+        externalId: Label_metMast
+        space: sp_instance_space
+      type:
+        externalId: Relationship
+        space: sp_instance_space
+    source:
+      externalId: ClassicEdge
+      space: classic
+      type: view
+      version: inferred
+  space: sp_instance_space
+  type:
+    externalId: ClassicEdge
+    space: classic
+rules:
+  containers:
+  - class_: cdf_cdm:ClassicDataProduct
+    container: cdf_cdm:ClassicDataProduct
+  - class_: cdf_cdm:CogniteActivity
+    container: cdf_cdm:CogniteActivity
+  - class_: cdf_cdm:CogniteAsset
+    container: cdf_cdm:CogniteAsset
+  - class_: cdf_cdm:CogniteFile
+    container: cdf_cdm:CogniteFile
+  - class_: cdf_cdm:CogniteSourceSystem
+    container: cdf_cdm:CogniteSourceSystem
+  - class_: cdf_cdm:CogniteTimeSeries
+    container: cdf_cdm:CogniteTimeSeries
+  - class_: ClassicEdge
+    container: ClassicEdge
+  - class_: ClassicLabel
+    container: ClassicLabel
+  - class_: ClassicSequence
+    container: ClassicSequence
+  metadata:
+    created: '2024-09-19T00:00:00Z'
+    creator: NEAT
+    data_model_type: enterprise
+    external_id: inferred_model
+    name: Inferred Model
+    role: DMS Architect
+    schema_: partial
+    space: classic
+    updated: '2024-09-19T00:00:00Z'
+    version: inferred
+  properties:
+  - class_: cdf_cdm:ClassicDataProduct
+    container: cdf_cdm:ClassicDataProduct
+    container_property: description
+    is_list: false
+    nullable: true
+    property_: description
+    reference: http://purl.org/cognite/cdf-classic#description
+    value_type: text
+    view: cdf_cdm:ClassicDataProduct
+    view_property: description
+  - class_: cdf_cdm:ClassicDataProduct
+    container: cdf_cdm:ClassicDataProduct
+    container_property: information
+    is_list: false
+    nullable: true
+    property_: information
+    reference: http://purl.org/cognite/cdf-classic#information
+    value_type: text
+    view: cdf_cdm:ClassicDataProduct
+    view_property: information
+  - class_: cdf_cdm:ClassicDataProduct
+    container: cdf_cdm:ClassicDataProduct
+    container_property: name
+    is_list: false
+    nullable: true
+    property_: name
+    reference: http://purl.org/cognite/cdf-classic#name
+    value_type: text
+    view: cdf_cdm:ClassicDataProduct
+    view_property: name
+  - class_: cdf_cdm:ClassicDataProduct
+    container: cdf_cdm:ClassicDataProduct
+    container_property: some
+    is_list: false
+    nullable: true
+    property_: some
+    reference: http://purl.org/cognite/cdf-classic#some
+    value_type: text
+    view: cdf_cdm:ClassicDataProduct
+    view_property: some
+  - class_: cdf_cdm:ClassicDataProduct
+    container: cdf_cdm:ClassicDataProduct
+    container_property: write_protected
+    is_list: false
+    nullable: true
+    property_: write_protected
+    reference: http://purl.org/cognite/cdf-classic#write_protected
+    value_type: boolean
+    view: cdf_cdm:ClassicDataProduct
+    view_property: write_protected
+  - class_: cdf_cdm:CogniteActivity
+    connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: asset
+    is_list: false
+    nullable: true
+    property_: asset
+    reference: http://purl.org/cognite/cdf-classic#asset
+    value_type: Asset
+    view: cdf_cdm:CogniteActivity
+    view_property: asset
+  - class_: cdf_cdm:CogniteActivity
+    container: cdf_cdm:CogniteActivity
+    container_property: blob
+    is_list: false
+    nullable: true
+    property_: blob
+    reference: http://purl.org/cognite/cdf-classic#blob
+    value_type: text
+    view: cdf_cdm:CogniteActivity
+    view_property: blob
+  - class_: cdf_cdm:CogniteActivity
+    connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: data_set_id
+    is_list: false
+    nullable: true
+    property_: data_set_id
+    reference: http://purl.org/cognite/cdf-classic#data_set_id
+    value_type: DataSet
+    view: cdf_cdm:CogniteActivity
+    view_property: data_set_id
+  - class_: cdf_cdm:CogniteActivity
+    container: cdf_cdm:CogniteActivity
+    container_property: description
+    is_list: false
+    nullable: true
+    property_: description
+    reference: http://purl.org/cognite/cdf-classic#description
+    value_type: text
+    view: cdf_cdm:CogniteActivity
+    view_property: description
+  - class_: cdf_cdm:CogniteActivity
+    container: cdf_cdm:CogniteActivity
+    container_property: end_time
+    is_list: false
+    nullable: true
+    property_: end_time
+    reference: http://purl.org/cognite/cdf-classic#end_time
+    value_type: timestamp
+    view: cdf_cdm:CogniteActivity
+    view_property: end_time
+  - class_: cdf_cdm:CogniteActivity
+    container: cdf_cdm:CogniteActivity
+    container_property: start_time
+    is_list: false
+    nullable: true
+    property_: start_time
+    reference: http://purl.org/cognite/cdf-classic#start_time
+    value_type: timestamp
+    view: cdf_cdm:CogniteActivity
+    view_property: start_time
+  - class_: cdf_cdm:CogniteActivity
+    container: cdf_cdm:CogniteActivity
+    container_property: subtype
+    is_list: false
+    nullable: true
+    property_: subtype
+    reference: http://purl.org/cognite/cdf-classic#subtype
+    value_type: text
+    view: cdf_cdm:CogniteActivity
+    view_property: subtype
+  - class_: cdf_cdm:CogniteActivity
+    container: cdf_cdm:CogniteActivity
+    container_property: type
+    is_list: true
+    nullable: true
+    property_: type
+    reference: http://purl.org/cognite/cdf-classic#type
+    value_type: text
+    view: cdf_cdm:CogniteActivity
+    view_property: type
+  - class_: cdf_cdm:CogniteAsset
+    container: cdf_cdm:CogniteAsset
+    container_property: blob
+    is_list: false
+    nullable: true
+    property_: blob
+    reference: http://purl.org/cognite/cdf-classic#blob
+    value_type: text
+    view: cdf_cdm:CogniteAsset
+    view_property: blob
+  - class_: cdf_cdm:CogniteAsset
+    connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: dataset
+    is_list: false
+    nullable: true
+    property_: dataset
+    reference: http://purl.org/cognite/cdf-classic#dataset
+    value_type: DataSet
+    view: cdf_cdm:CogniteAsset
+    view_property: dataset
+  - class_: cdf_cdm:CogniteAsset
+    container: cdf_cdm:CogniteAsset
+    container_property: description
+    is_list: true
+    nullable: true
+    property_: description
+    reference: http://purl.org/cognite/cdf-classic#description
+    value_type: text
+    view: cdf_cdm:CogniteAsset
+    view_property: description
+  - class_: cdf_cdm:CogniteAsset
+    connection: edge
+    is_list: true
+    property_: label
+    reference: http://purl.org/cognite/cdf-classic#label
+    value_type: Label
+    view: cdf_cdm:CogniteAsset
+    view_property: label
+  - class_: cdf_cdm:CogniteAsset
+    container: cdf_cdm:CogniteAsset
+    container_property: name
+    is_list: true
+    nullable: true
+    property_: name
+    reference: http://purl.org/cognite/cdf-classic#name
+    value_type: text
+    view: cdf_cdm:CogniteAsset
+    view_property: name
+  - class_: cdf_cdm:CogniteAsset
+    connection: edge
+    is_list: true
+    property_: parent
+    reference: http://purl.org/cognite/cdf-classic#parent
+    value_type: Asset
+    view: cdf_cdm:CogniteAsset
+    view_property: parent
+  - class_: cdf_cdm:CogniteAsset
+    connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: relationshipAsset
+    is_list: false
+    nullable: true
+    property_: relationshipAsset
+    reference: http://purl.org/cognite/cdf-classic#relationshipAsset
+    value_type: Edge
+    view: cdf_cdm:CogniteAsset
+    view_property: relationshipAsset
+  - class_: cdf_cdm:CogniteFile
+    connection: direct
+    container: cdf_cdm:CogniteFile
+    container_property: asset
+    is_list: false
+    nullable: true
+    property_: asset
+    reference: http://purl.org/cognite/cdf-classic#asset
+    value_type: Asset
+    view: cdf_cdm:CogniteFile
+    view_property: asset
+  - class_: cdf_cdm:CogniteFile
+    container: cdf_cdm:CogniteFile
+    container_property: blob
+    is_list: false
+    nullable: true
+    property_: blob
+    reference: http://purl.org/cognite/cdf-classic#blob
+    value_type: text
+    view: cdf_cdm:CogniteFile
+    view_property: blob
+  - class_: cdf_cdm:CogniteFile
+    connection: direct
+    container: cdf_cdm:CogniteFile
+    container_property: data_set_id
+    is_list: false
+    nullable: true
+    property_: data_set_id
+    reference: http://purl.org/cognite/cdf-classic#data_set_id
+    value_type: DataSet
+    view: cdf_cdm:CogniteFile
+    view_property: data_set_id
+  - class_: cdf_cdm:CogniteFile
+    container: cdf_cdm:CogniteFile
+    container_property: type
+    is_list: false
+    nullable: true
+    property_: type
+    reference: http://purl.org/cognite/cdf-classic#type
+    value_type: text
+    view: cdf_cdm:CogniteFile
+    view_property: type
+  - class_: cdf_cdm:CogniteSourceSystem
+    container: cdf_cdm:CogniteSourceSystem
+    container_property: name
+    is_list: true
+    nullable: true
+    property_: name
+    reference: http://purl.org/cognite/cdf-classic#source
+    value_type: text
+    view: cdf_cdm:CogniteSourceSystem
+    view_property: name
+  - class_: cdf_cdm:CogniteTimeSeries
+    connection: edge
+    is_list: true
+    property_: asset
+    reference: http://purl.org/cognite/cdf-classic#asset
+    value_type: Asset
+    view: cdf_cdm:CogniteTimeSeries
+    view_property: asset
+  - class_: cdf_cdm:CogniteTimeSeries
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: blob
+    is_list: false
+    nullable: true
+    property_: blob
+    reference: http://purl.org/cognite/cdf-classic#blob
+    value_type: text
+    view: cdf_cdm:CogniteTimeSeries
+    view_property: blob
+  - class_: cdf_cdm:CogniteTimeSeries
+    connection: edge
+    is_list: true
+    property_: dataset
+    reference: http://purl.org/cognite/cdf-classic#dataset
+    value_type: DataSet
+    view: cdf_cdm:CogniteTimeSeries
+    view_property: dataset
+  - class_: cdf_cdm:CogniteTimeSeries
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: description
+    is_list: true
+    nullable: true
+    property_: description
+    reference: http://purl.org/cognite/cdf-classic#description
+    value_type: text
+    view: cdf_cdm:CogniteTimeSeries
+    view_property: description
+  - class_: cdf_cdm:CogniteTimeSeries
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: is_step
+    is_list: false
+    nullable: true
+    property_: is_step
+    reference: http://purl.org/cognite/cdf-classic#is_step
+    value_type: boolean
+    view: cdf_cdm:CogniteTimeSeries
+    view_property: is_step
+  - class_: cdf_cdm:CogniteTimeSeries
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: name
+    is_list: true
+    nullable: true
+    property_: name
+    reference: http://purl.org/cognite/cdf-classic#name
+    value_type: text
+    view: cdf_cdm:CogniteTimeSeries
+    view_property: name
+  - class_: cdf_cdm:CogniteTimeSeries
+    connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: unit_external_id
+    is_list: false
+    nullable: true
+    property_: unit_external_id
+    reference: http://purl.org/cognite/cdf-classic#unit_external_id
+    value_type: '#N/A'
+    view: cdf_cdm:CogniteTimeSeries
+    view_property: unit_external_id
+  - class_: ClassicEdge
+    connection: direct
+    container: ClassicEdge
+    container_property: dataset
+    is_list: false
+    nullable: true
+    property_: dataset
+    reference: http://purl.org/cognite/cdf-classic#dataset
+    value_type: DataSet
+    view: ClassicEdge
+    view_property: dataset
+  - class_: ClassicEdge
+    connection: direct
+    container: ClassicEdge
+    container_property: label
+    is_list: false
+    nullable: true
+    property_: label
+    reference: http://purl.org/cognite/cdf-classic#label
+    value_type: Label
+    view: ClassicEdge
+    view_property: label
+  - class_: ClassicEdge
+    connection: direct
+    container: ClassicEdge
+    container_property: type
+    is_list: false
+    nullable: true
+    property_: type
+    reference: http://purl.org/cognite/cdf-classic#type
+    value_type: '#N/A'
+    view: ClassicEdge
+    view_property: type
+  - class_: ClassicLabel
+    connection: direct
+    container: ClassicLabel
+    container_property: data_set_id
+    is_list: false
+    nullable: true
+    property_: data_set_id
+    reference: http://purl.org/cognite/cdf-classic#data_set_id
+    value_type: DataSet
+    view: ClassicLabel
+    view_property: data_set_id
+  - class_: ClassicLabel
+    container: ClassicLabel
+    container_property: description
+    is_list: false
+    nullable: true
+    property_: description
+    reference: http://purl.org/cognite/cdf-classic#description
+    value_type: text
+    view: ClassicLabel
+    view_property: description
+  - class_: ClassicLabel
+    container: ClassicLabel
+    container_property: name
+    is_list: false
+    nullable: true
+    property_: name
+    reference: http://purl.org/cognite/cdf-classic#name
+    value_type: text
+    view: ClassicLabel
+    view_property: name
+  - class_: ClassicSequence
+    container: ClassicSequence
+    container_property: blob
+    is_list: false
+    nullable: true
+    property_: blob
+    reference: http://purl.org/cognite/cdf-classic#blob
+    value_type: text
+    view: ClassicSequence
+    view_property: blob
+  - class_: ClassicSequence
+    container: ClassicSequence
+    container_property: description
+    is_list: false
+    nullable: true
+    property_: description
+    reference: http://purl.org/cognite/cdf-classic#description
+    value_type: text
+    view: ClassicSequence
+    view_property: description
+  - class_: ClassicSequence
+    container: ClassicSequence
+    container_property: name
+    is_list: false
+    nullable: true
+    property_: name
+    reference: http://purl.org/cognite/cdf-classic#name
+    value_type: text
+    view: ClassicSequence
+    view_property: name
+  views:
+  - class_: cdf_cdm:ClassicDataProduct
+    implements: ''
+    reference: http://purl.org/cognite/cdf-classic#DataSet
+    view: cdf_cdm:ClassicDataProduct
+  - class_: cdf_cdm:CogniteActivity
+    implements: ''
+    reference: http://purl.org/cognite/cdf-classic#Event
+    view: cdf_cdm:CogniteActivity
+  - class_: cdf_cdm:CogniteAsset
+    implements: ''
+    reference: http://purl.org/cognite/cdf-classic#Asset
+    view: cdf_cdm:CogniteAsset
+  - class_: cdf_cdm:CogniteFile
+    implements: ''
+    reference: http://purl.org/cognite/cdf-classic#File
+    view: cdf_cdm:CogniteFile
+  - class_: cdf_cdm:CogniteSourceSystem
+    implements: ''
+    view: cdf_cdm:CogniteSourceSystem
+  - class_: cdf_cdm:CogniteTimeSeries
+    implements: ''
+    reference: http://purl.org/cognite/cdf-classic#TimeSeries
+    view: cdf_cdm:CogniteTimeSeries
+  - class_: ClassicEdge
+    implements: ''
+    reference: http://purl.org/cognite/cdf-classic#Edge
+    view: ClassicEdge
+  - class_: ClassicLabel
+    implements: ''
+    reference: http://purl.org/cognite/cdf-classic#Label
+    view: ClassicLabel
+  - class_: ClassicSequence
+    implements: ''
+    reference: http://purl.org/cognite/cdf-classic#Sequence
+    view: ClassicSequence

@@ -6,15 +6,15 @@ from cognite.client.data_classes import (
 )
 from rdflib import URIRef
 
-from cognite.neat.graph.examples import nordic44_knowledge_graph
-from cognite.neat.graph.extractors import RdfFileExtractor
-from cognite.neat.graph.loaders import AssetLoader
-from cognite.neat.graph.transformers import AddSelfReferenceProperty
-from cognite.neat.issues import NeatError
-from cognite.neat.issues.errors import ResourceCreationError
-from cognite.neat.rules.models import AssetRules
-from cognite.neat.rules.transformers import AssetToInformation
-from cognite.neat.store import NeatGraphStore
+from cognite.neat._graph.examples import nordic44_knowledge_graph
+from cognite.neat._graph.extractors import RdfFileExtractor
+from cognite.neat._graph.loaders import AssetLoader
+from cognite.neat._graph.transformers import AddSelfReferenceProperty
+from cognite.neat._issues import NeatError
+from cognite.neat._issues.errors import ResourceCreationError
+from cognite.neat._rules.models import AssetRules
+from cognite.neat._rules.transformers import AssetToInformation
+from cognite.neat._store import NeatGraphStore
 
 
 @pytest.fixture()

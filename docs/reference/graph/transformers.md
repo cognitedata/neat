@@ -1,1 +1,1 @@
-::: cognite.neat.graph.transformers
+::: cognite.neat._graph.transformers

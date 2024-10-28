@@ -1,9 +1,9 @@
-from cognite.neat.rules.analysis import (
+from cognite.neat._rules.analysis import (
     AssetAnalysis,
     InformationAnalysis,
 )
-from cognite.neat.rules.models import AssetRules, InformationRules
-from cognite.neat.rules.models.entities import ClassEntity
+from cognite.neat._rules.models import AssetRules, InformationRules
+from cognite.neat._rules.models.entities import ClassEntity
 
 
 class TestInformationRulesAnalysis:
