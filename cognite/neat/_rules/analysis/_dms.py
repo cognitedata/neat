@@ -1,3 +1,4 @@
+from cognite.neat._constants import DMS_LISTABLE_PROPERTY_LIMIT
 from cognite.neat._rules.models.dms import DMSProperty, DMSRules, DMSView
 from cognite.neat._rules.models.entities import ReferenceEntity, ViewEntity
 
@@ -36,7 +37,7 @@ class DMSAnalysis(BaseAnalysis[DMSRules, DMSView, DMSProperty, ViewEntity, str])
         return property_.value_type if isinstance(property_.value_type, ViewEntity) else None
 
     def _get_max_occurrence(self, property_: DMSProperty) -> int | float | None:
-        return 1_000 if property_.is_list else 1
+        return DMS_LISTABLE_PROPERTY_LIMIT if property_.is_list else 1
 
     def subset_rules(self, desired_classes: set[ViewEntity]) -> DMSRules:
         raise NotImplementedError()

@@ -10,6 +10,7 @@ COGNITE_MODELS = (
     DataModelId("cdf_cdm", "CogniteCore", "v1"),
     DataModelId("cdf_idm", "CogniteProcessIndustries", "v1"),
 )
+DMS_LISTABLE_PROPERTY_LIMIT = 1000
 
 EXAMPLE_RULES = PACKAGE_DIRECTORY / "_rules" / "examples"
 EXAMPLE_GRAPHS = PACKAGE_DIRECTORY / "_graph" / "examples"
