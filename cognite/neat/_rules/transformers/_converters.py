@@ -2,19 +2,23 @@ import re
 import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 from datetime import date, datetime
 from typing import Literal, TypeVar, cast
 
 from cognite.client.data_classes import data_modeling as dms
+from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
 from rdflib import Namespace
 
-from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules._shared import InputRules, JustRules, OutRules, VerifiedRules
+from cognite.neat._rules.analysis import DMSAnalysis
 from cognite.neat._rules.models import (
     AssetRules,
+    DMSInputRules,
     DMSRules,
     DomainRules,
     ExtensionCategory,
@@ -218,6 +222,146 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
         if isinstance(rules, DMSRules) and self._out_cls is AssetRules:
             return InformationToAsset().transform(DMSToInformation().transform(rules)).rules
         raise ValueError(f"Unsupported conversion from {type(rules)} to {self._out_cls}")
+
+
+_T_Entity = TypeVar("_T_Entity", bound=ClassEntity | ViewEntity)
+
+
+class ToExtension(RulesTransformer[DMSRules, DMSRules]):
+    def __init__(
+        self,
+        new_model_id: DataModelIdentifier,
+        org_name: str | None = None,
+        mode: Literal["composition"] = "composition",
+    ):
+        self.new_model_id = DataModelId.load(new_model_id)
+        self.org_name = org_name
+        self.mode = mode
+
+    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
+        # Copy to ensure immutability
+        verified = self._to_rules(rules)
+        if self.org_name is None and verified.metadata.as_data_model_id() in COGNITE_MODELS:
+            raise NeatValueError(f"Prefix is required when extending {verified.metadata.as_data_model_id()}")
+        source_id = verified.metadata.as_data_model_id()
+
+        dump = verified.dump()
+        dump["metadata"]["schema_"] = SchemaCompleteness.partial.value
+        dump["metadata"]["space"] = self.new_model_id.space
+        dump["metadata"]["external_id"] = self.new_model_id.external_id
+        if self.new_model_id.version is not None:
+            dump["metadata"]["version"] = self.new_model_id.version
+        # Serialize and deserialize to set the new space and external_id
+        # as the default values for the new model.
+        new_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
+
+        # Write back the original space and external_id for the container of the new model.
+        for prop in new_model.properties:
+            if prop.container and prop.container.space == self.new_model_id.space:
+                prop.container = ContainerEntity(
+                    space=source_id.space,
+                    externalId=prop.container.suffix,
+                )
+
+        if self.mode == "composition":
+            new_model.containers = None
+            for view in new_model.views:
+                view.implements = None
+
+        if source_id in COGNITE_MODELS:
+            # Remove CognitePrefixes.
+            for prop in new_model.properties:
+                prop.view = self._remove_cognite_prefix(prop.view)
+                prop.class_ = self._remove_cognite_prefix(prop.class_)
+                if isinstance(prop.value_type, ViewEntity):
+                    prop.value_type = self._remove_cognite_prefix(prop.value_type)
+            for view in new_model.views:
+                view.view = self._remove_cognite_prefix(view.view)
+                view.class_ = self._remove_cognite_prefix(view.class_)
+
+        return JustRules(new_model)
+
+    def _remove_cognite_prefix(self, entity: _T_Entity) -> _T_Entity:
+        new_suffix = entity.suffix.replace("Cognite", self.org_name or "")
+        if isinstance(entity, ViewEntity):
+            return ViewEntity(space=entity.space, externalId=new_suffix, version=entity.version)  # type: ignore[return-value]
+        elif isinstance(entity, ClassEntity):
+            return ClassEntity(prefix=entity.prefix, suffix=new_suffix, version=entity.version)  # type: ignore[return-value]
+        raise ValueError(f"Unsupported entity type: {type(entity)}")
+
+
+class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
+    _ASSET_VIEW = ViewId("cdf_cdm", "CogniteAsset", "v1")
+    _VIEW_BY_COLLECTION: Mapping[Literal["3D", "Annotation", "BaseViews"], frozenset[ViewId]] = {
+        "3D": frozenset(
+            {
+                ViewId("cdf_cdm", "Cognite3DModel", "v1"),
+                ViewId("cdf_cdm", "Cognite3DObject", "v1"),
+                ViewId("cdf_cdm", "Cognite3DRevision", "v1"),
+                ViewId("cdf_cdm", "Cognite3DTransformation", "v1"),
+                ViewId("cdf_cdm", "Cognite360Image", "v1"),
+                ViewId("cdf_cdm", "Cognite360ImageAnnotation", "v1"),
+                ViewId("cdf_cdm", "Cognite360ImageCollection", "v1"),
+                ViewId("cdf_cdm", "Cognite360ImageModel", "v1"),
+                ViewId("cdf_cdm", "Cognite360ImageStation", "v1"),
+                ViewId("cdf_cdm", "CogniteCADModel", "v1"),
+                ViewId("cdf_cdm", "CogniteCADNode", "v1"),
+                ViewId("cdf_cdm", "CogniteCADRevision", "v1"),
+                ViewId("cdf_cdm", "CogniteCubeMap", "v1"),
+                ViewId("cdf_cdm", "CognitePointCloudModel", "v1"),
+                ViewId("cdf_cdm", "CognitePointCloudRevision", "v1"),
+                ViewId("cdf_cdm", "CognitePointCloudVolume", "v1"),
+            }
+        ),
+        "Annotation": frozenset(
+            {
+                ViewId("cdf_cdm", "CogniteAnnotation", "v1"),
+                ViewId("cdf_cdm", "CogniteDiagramAnnotation", "v1"),
+            }
+        ),
+        "BaseViews": frozenset(
+            {
+                ViewId("cdf_cdm", "CogniteDescribable", "v1"),
+                ViewId("cdf_cdm", "CogniteSchedulable", "v1"),
+                ViewId("cdf_cdm", "CogniteSourceable", "v1"),
+                ViewId("cdf_cdm", "CogniteVisualizable", "v1"),
+            }
+        ),
+    }
+
+    def __init__(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"]]):
+        self.drop = drop
+
+    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
+        verified = self._to_rules(rules)
+        if verified.metadata.as_data_model_id() not in COGNITE_MODELS:
+            raise NeatValueError(f"Can only reduce Cognite Data Models, not {verified.metadata.as_data_model_id()}")
+        if invalid := (set(self.drop) - set(self._VIEW_BY_COLLECTION.keys())):
+            raise NeatValueError(f"Invalid drop values: {invalid}. Expected {set(self._VIEW_BY_COLLECTION)}")
+
+        exclude_views = {view for collection in self.drop for view in self._VIEW_BY_COLLECTION[collection]}
+        new_model = verified.model_copy(deep=True)
+
+        properties_by_view = DMSAnalysis(new_model).classes_with_properties(consider_inheritance=True)
+
+        new_model.views = SheetList[DMSView](
+            [view for view in new_model.views if view.view.as_id() not in exclude_views]
+        )
+        new_properties = SheetList[DMSProperty]()
+        for view in new_model.views:
+            for prop in properties_by_view[view.view]:
+                if self._is_asset_3D_property(prop):
+                    # We filter out the 3D property of asset
+                    continue
+                new_properties.append(prop)
+        new_model.properties = new_properties
+
+        return JustRules(new_model)
+
+    def _is_asset_3D_property(self, prop: DMSProperty) -> bool:
+        if "3D" not in self.drop:
+            return False
+        return prop.view.as_id() == self._ASSET_VIEW and prop.property_ == "object3D"
 
 
 class _InformationRulesConverter:

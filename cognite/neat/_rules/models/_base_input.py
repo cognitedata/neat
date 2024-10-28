@@ -64,14 +64,15 @@ class InputRules(Generic[T_BaseRules], ABC):
             if isinstance(type_, str) and type_.startswith(cls.__name__):
                 type_ = cls
 
+            candidate: type
             if is_dataclass(type_):
-                candidate = type_
+                candidate = type_  # type: ignore[assignment]
             elif isinstance(type_, GenericAlias) and type_.__origin__ is list and is_dataclass(type_.__args__[0]):
-                candidate = type_.__args__[0]
+                candidate = type_.__args__[0]  # type: ignore[assignment]
 
             # this handles prefixes
             elif isinstance(type_, GenericAlias) and type_.__origin__ is dict:
-                candidate = type_
+                candidate = type_  # type: ignore[assignment]
             else:
                 continue
 

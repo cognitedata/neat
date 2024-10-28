@@ -4,8 +4,7 @@ from typing import Any, overload
 from cognite.client import CogniteClient
 
 from cognite.neat._graph import loaders
-from cognite.neat._rules.exporters import YAMLExporter
-from cognite.neat._rules.exporters._rules2dms import DMSExporter
+from cognite.neat._rules import exporters
 from cognite.neat._session._wizard import space_wizard
 
 from ._state import SessionState
@@ -20,7 +19,10 @@ class ToAPI:
     def excel(
         self,
         io: Any,
-    ) -> None: ...
+    ) -> None:
+        exporter = exporters.ExcelExporter()
+        exporter.export_to_file(self._state.last_verified_rule, Path(io))
+        return None
 
     @overload
     def yaml(self, io: None) -> str: ...
@@ -29,7 +31,7 @@ class ToAPI:
     def yaml(self, io: Any) -> None: ...
 
     def yaml(self, io: Any | None = None) -> str | None:
-        exporter = YAMLExporter()
+        exporter = exporters.YAMLExporter()
         if io is None:
             return exporter.export(self._state.last_verified_rule)
 
@@ -60,7 +62,7 @@ class CDFToAPI:
         if not self._state.last_verified_dms_rules:
             raise ValueError("No verified DMS data model available")
 
-        exporter = DMSExporter()
+        exporter = exporters.DMSExporter()
 
         if not self._client:
             raise ValueError("No client provided!")

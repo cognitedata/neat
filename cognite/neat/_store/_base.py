@@ -359,7 +359,7 @@ class NeatGraphStore:
                 "<br /><strong>Overview</strong>:"  # type: ignore
                 f"<ul><li>{len(summary)} types</strong></li>"
                 f"<li>{sum(summary['Occurrence'])} instances</strong></li></ul>"
-                f"{cast(pd.DataFrame, self._shorten_summary(summary))._repr_html_()}"
+                f"{cast(pd.DataFrame, self._shorten_summary(summary))._repr_html_()}"  # type: ignore[operator]
             )
 
         return f"{summary_text}" f"{provenance}"

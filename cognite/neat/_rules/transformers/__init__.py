@@ -5,7 +5,9 @@ from ._converters import (
     DMSToInformation,
     InformationToAsset,
     InformationToDMS,
+    ReduceCogniteModel,
     ToCompliantEntities,
+    ToExtension,
 )
 from ._mapping import MapOneToOne, RuleMapper
 from ._pipelines import ImporterPipeline
@@ -27,4 +29,6 @@ __all__ = [
     "MapOneToOne",
     "ToCompliantEntities",
     "RuleMapper",
+    "ToExtension",
+    "ReduceCogniteModel",
 ]

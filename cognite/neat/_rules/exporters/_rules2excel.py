@@ -27,6 +27,8 @@ from cognite.neat._rules.models.information._rules import InformationRules
 
 from ._base import BaseExporter
 
+MAX_COLUMN_WIDTH = 70.0
+
 
 class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     """Export rules to Excel.
@@ -251,7 +253,9 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                     selected_column = column_cells[1]
 
                 current = sheet.column_dimensions[selected_column.column_letter].width or (max_length + 0.5)
-                sheet.column_dimensions[selected_column.column_letter].width = max(current, max_length + 0.5)
+                sheet.column_dimensions[selected_column.column_letter].width = min(
+                    max(current, max_length + 0.5), MAX_COLUMN_WIDTH
+                )
         return None
 
 

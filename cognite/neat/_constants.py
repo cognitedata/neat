@@ -1,11 +1,16 @@
 from pathlib import Path
 
+from cognite.client.data_classes.data_modeling.ids import DataModelId
 from rdflib import DCTERMS, OWL, RDF, RDFS, SKOS, XSD, Namespace, URIRef
 
 from cognite import neat
 
 PACKAGE_DIRECTORY = Path(neat.__file__).parent
-
+COGNITE_MODELS = (
+    DataModelId("cdf_cdm", "CogniteCore", "v1"),
+    DataModelId("cdf_idm", "CogniteProcessIndustries", "v1"),
+)
+DMS_LISTABLE_PROPERTY_LIMIT = 1000
 
 EXAMPLE_RULES = PACKAGE_DIRECTORY / "_rules" / "examples"
 EXAMPLE_GRAPHS = PACKAGE_DIRECTORY / "_graph" / "examples"

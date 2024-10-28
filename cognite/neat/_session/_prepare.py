@@ -1,9 +1,12 @@
-from typing import cast
+from collections.abc import Collection
+from typing import Literal, cast
+
+from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
 from cognite.neat._issues._base import IssueList
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
-from cognite.neat._rules.transformers._converters import ToCompliantEntities
+from cognite.neat._rules.transformers import ReduceCogniteModel, ToCompliantEntities, ToExtension
 
 from ._state import SessionState
 
@@ -31,3 +34,28 @@ class DataModelPrepareAPI:
                     read_context={},
                 )
             )
+
+    def to_extension(self, new_data_model_id: DataModelIdentifier, org_name: str | None = None) -> None:
+        """Uses the current data model as a basis to extend from.
+
+        Args:
+            new_data_model_id: The new data model that is extending the current data model.
+            org_name: Organization name to use for the views in the new data model. This is required if you are
+                creating an extension from a Cognite Data Model.
+
+        """
+        if dms := self._state.last_verified_dms_rules:
+            output = ToExtension(new_data_model_id, org_name).transform(dms)
+            self._state.verified_rules.append(output.rules)
+
+    def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"]]) -> None:
+        """This is a special method that allow you to drop parts of the data model.
+        This only applies to Cognite Data Models.
+
+        Args:
+            drop: Which parts of the data model to drop.
+
+        """
+        if dms := self._state.last_verified_dms_rules:
+            output = ReduceCogniteModel(drop).transform(dms)
+            self._state.verified_rules.append(output.rules)

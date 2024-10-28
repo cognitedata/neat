@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any
 
 from cognite.client import CogniteClient
+from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
@@ -46,7 +47,15 @@ class BaseReadAPI:
             raise ValueError(f"Expected str or Path, got {type(io)}")
 
 
-class CDFReadAPI(BaseReadAPI): ...
+class CDFReadAPI(BaseReadAPI):
+    def data_model(self, data_model_id: DataModelIdentifier) -> IssueList:
+        if self._client is None:
+            raise ValueError("No client provided. Please provide a client to read a data model.")
+
+        importer = importers.DMSImporter.from_data_model_id(self._client, data_model_id)
+        input_rules = importer.to_rules()
+        self._store_rules(data_model_id, input_rules, "CDF")
+        return input_rules.issues
 
 
 class ExcelReadAPI(BaseReadAPI):
