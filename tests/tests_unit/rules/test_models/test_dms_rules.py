@@ -33,6 +33,7 @@ from cognite.neat._rules.transformers import (
     InformationToDMS,
     MapOneToOne,
     RulesPipeline,
+    VerifyDMSRules,
 )
 from cognite.neat._utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 from tests.data import car
@@ -1641,6 +1642,41 @@ class TestDMSRules:
         metadata = DMSMetadata.model_validate(raw_metadata)
 
         assert metadata.version == "14"
+
+    def test_reverse_property_in_parent(self) -> None:
+        sub_core = DMSInputRules(
+            DMSInputMetadata(
+                schema_="complete", space="my_space", external_id="my_data_model", creator="Anders", version="v42"
+            ),
+            properties=[
+                DMSInputProperty(
+                    view="CogniteVisualizable",
+                    view_property="object3D",
+                    value_type="Cognite3DObject",
+                    connection="direct",
+                    is_list=False,
+                    container="CogniteVisualizable",
+                    container_property="object3D",
+                ),
+                DMSInputProperty(
+                    view="Cognite3DObject",
+                    view_property="asset",
+                    value_type="CogniteAsset",
+                    connection="reverse(property=object3D)",
+                ),
+            ],
+            views=[
+                DMSInputView(view="CogniteVisualizable"),
+                DMSInputView(view="CogniteAsset", implements="CogniteVisualizable"),
+                DMSInputView(view="Cognite3DObject"),
+            ],
+            containers=[
+                DMSInputContainer("CogniteVisualizable"),
+            ],
+        )
+        maybe_rules = VerifyDMSRules("continue").transform(sub_core)
+
+        assert not maybe_rules.issues
 
 
 class TestDMSExporter:

@@ -1,6 +1,6 @@
 import warnings
 from collections import defaultdict
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Hashable, Sequence
 from typing import Any, cast
 
 from cognite.client.data_classes import data_modeling as dm
@@ -120,7 +120,13 @@ class _DMSExporter:
 
         containers = self._create_containers(container_properties_by_id, rules.enum)  # type: ignore[arg-type]
 
-        views, view_node_type_filters = self._create_views_with_node_types(view_properties_by_id)
+        view_properties_with_ancestors_by_id = self._gather_properties_with_ancestors(
+            view_properties_by_id, rules.views
+        )
+
+        views, view_node_type_filters = self._create_views_with_node_types(
+            view_properties_by_id, view_properties_with_ancestors_by_id
+        )
         if rules.nodes:
             node_types = NodeApplyDict(
                 [node.as_node() for node in rules.nodes]
@@ -198,6 +204,7 @@ class _DMSExporter:
     def _create_views_with_node_types(
         self,
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
+        view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
     ) -> tuple[ViewApplyDict, set[dm.NodeId]]:
         input_views = list(self.rules.views)
         if self.rules.last:
@@ -217,7 +224,7 @@ class _DMSExporter:
             if not (view_properties := view_properties_by_id.get(view_id)):
                 continue
             for prop in view_properties:
-                view_property = self._create_view_property(prop, view_properties_by_id)
+                view_property = self._create_view_property(prop, view_properties_with_ancestors_by_id)
                 if view_property is not None:
                     view.properties[prop.view_property] = view_property
 
@@ -395,6 +402,43 @@ class _DMSExporter:
 
         return container_properties_by_id, view_properties_by_id
 
+    @staticmethod
+    def _gather_properties_with_ancestors(
+        view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
+        views: Sequence[DMSView],
+    ) -> dict[dm.ViewId, list[DMSProperty]]:
+        view_properties_with_parents_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
+        view_by_view_id = {view.view.as_id(): view for view in views}
+        for view in views:
+            view_id = view.view.as_id()
+            seen: set[Hashable] = set()
+            if view_properties := view_properties_by_id.get(view_id):
+                view_properties_with_parents_by_id[view_id].extend(view_properties)
+                seen.update(prop._identifier() for prop in view_properties)
+            if not view.implements:
+                continue
+            parents = view.implements.copy()
+            seen_parents = set(parents)
+            while parents:
+                parent = parents.pop()
+                parent_view_id = parent.as_id()
+                if parent_view := view_by_view_id.get(parent_view_id):
+                    for grandparent in parent_view.implements or []:
+                        if grandparent not in seen_parents:
+                            parents.append(grandparent)
+                            seen_parents.add(grandparent)
+
+                if not (parent_view_properties := view_properties_by_id.get(parent_view_id)):
+                    continue
+                for prop in parent_view_properties:
+                    new_prop = prop.model_copy(update={"view": view.view})
+
+                    if new_prop._identifier() not in seen:
+                        view_properties_with_parents_by_id[view_id].append(new_prop)
+                        seen.add(new_prop._identifier())
+
+        return view_properties_with_parents_by_id
+
     @classmethod
     def _update_with_properties(
         cls,
@@ -472,7 +516,7 @@ class _DMSExporter:
 
     @classmethod
     def _create_view_property(
-        cls, prop: DMSProperty, view_properties_by_id: dict[dm.ViewId, list[DMSProperty]]
+        cls, prop: DMSProperty, view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]]
     ) -> ViewPropertyApply | None:
         if prop.container and prop.container_property:
             container_prop_identifier = prop.container_property
@@ -538,7 +582,11 @@ class _DMSExporter:
                 )
             edge_source = None
             reverse_prop = next(
-                (prop for prop in view_properties_by_id.get(source_view_id, []) if prop.property_ == reverse_prop_id),
+                (
+                    prop
+                    for prop in view_properties_with_ancestors_by_id.get(source_view_id, [])
+                    if prop.property_ == reverse_prop_id
+                ),
                 None,
             )
             if (
