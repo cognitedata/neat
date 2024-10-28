@@ -1662,7 +1662,7 @@ class TestDMSRules:
                     view="Cognite3DObject",
                     view_property="asset",
                     value_type="CogniteAsset",
-                    connection="reverse(property=asset)",
+                    connection="reverse(property=object3D)",
                 ),
             ],
             views=[
