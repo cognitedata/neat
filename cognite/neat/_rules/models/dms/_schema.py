@@ -461,7 +461,7 @@ class DMSSchema:
                         )
                 else:
                     try:
-                        loaded[attr.name] = attr.type.load(items)
+                        loaded[attr.name] = attr.type.load(items)  # type: ignore[union-attr]
                     except Exception as e:
                         loaded[attr.name] = cls._load_individual_resources(
                             items, attr, str(e), context.get(attr.name, [])
@@ -470,14 +470,15 @@ class DMSSchema:
 
     @classmethod
     def _load_individual_resources(cls, items: list, attr: Field, trigger_error: str, resource_context) -> list[Any]:
-        resources = attr.type([])
-        if not hasattr(attr.type, "_RESOURCE"):
+        type_ = cast(type, attr.type)
+        resources = type_([])
+        if not hasattr(type_, "_RESOURCE"):
             warnings.warn(
-                FileTypeUnexpectedWarning(Path("UNKNOWN"), frozenset([attr.type.__name__]), trigger_error), stacklevel=2
+                FileTypeUnexpectedWarning(Path("UNKNOWN"), frozenset([type_.__name__]), trigger_error), stacklevel=2
             )
             return resources
         # Fallback to load individual resources.
-        single_cls = attr.type._RESOURCE
+        single_cls = type_._RESOURCE
         for no, item in enumerate(items):
             try:
                 loaded_instance = single_cls.load(item)
