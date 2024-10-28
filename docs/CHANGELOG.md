@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.93.0] - 28-10-2024
 ### Improved
 - IODD extractor to also extract XML elements that should map to time series data type
 - This includes extracting `VariableCollection` elements and `ProcessDataIn` elements
