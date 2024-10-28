@@ -229,16 +229,19 @@ _T_Entity = TypeVar("_T_Entity", bound=ClassEntity | ViewEntity)
 
 class ToExtension(RulesTransformer[DMSRules, DMSRules]):
     def __init__(
-        self, new_model_id: DataModelIdentifier, prefix: str | None = None, mode: Literal["composition"] = "composition"
+        self,
+        new_model_id: DataModelIdentifier,
+        org_name: str | None = None,
+        mode: Literal["composition"] = "composition",
     ):
         self.new_model_id = DataModelId.load(new_model_id)
-        self.prefix = prefix
+        self.org_name = org_name
         self.mode = mode
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         # Copy to ensure immutability
         verified = self._to_rules(rules)
-        if self.prefix is None and verified.metadata.as_data_model_id() in COGNITE_MODELS:
+        if self.org_name is None and verified.metadata.as_data_model_id() in COGNITE_MODELS:
             raise NeatValueError(f"Prefix is required when extending {verified.metadata.as_data_model_id()}")
         source_id = verified.metadata.as_data_model_id()
 
@@ -248,8 +251,11 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         dump["metadata"]["external_id"] = self.new_model_id.external_id
         if self.new_model_id.version is not None:
             dump["metadata"]["version"] = self.new_model_id.version
+        # Serialize and deserialize to set the new space and external_id
+        # as the default values for the new model.
         new_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
 
+        # Write back the original space and external_id for the container of the new model.
         for prop in new_model.properties:
             if prop.container and prop.container.space == self.new_model_id.space:
                 prop.container = ContainerEntity(
@@ -276,7 +282,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         return JustRules(new_model)
 
     def _remove_cognite_prefix(self, entity: _T_Entity) -> _T_Entity:
-        new_suffix = entity.suffix.replace("Cognite", self.prefix or "")
+        new_suffix = entity.suffix.replace("Cognite", self.org_name or "")
         if isinstance(entity, ViewEntity):
             return ViewEntity(space=entity.space, externalId=new_suffix, version=entity.version)  # type: ignore[return-value]
         elif isinstance(entity, ClassEntity):
