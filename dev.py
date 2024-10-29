@@ -72,7 +72,7 @@ def bump(
             f"There are no changes to release. The changelog does not contain a TBD section: {TBD_HEADING}."
         )
 
-    today = date.today().strftime("%d-%m-%Y")
+    today = date.today().strftime("%d-%m-**%Y**")
     new_heading = f"## [{new_version}] - {today}"
 
     changelog = changelog.replace(TBD_HEADING, new_heading)

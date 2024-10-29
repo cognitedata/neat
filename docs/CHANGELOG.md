@@ -17,6 +17,11 @@ Changes are grouped as follows:
 
 ## TBD
 ### Added
+- Improved NeatSession summary for data models
+
+
+## [0.94.0] - 29-10-**2024**
+### Added
 - Support for information rules and instance plotting in NeatSession
 - From Source to CDF tutorial
 
