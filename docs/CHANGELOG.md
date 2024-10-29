@@ -20,6 +20,9 @@ Changes are grouped as follows:
 - `NeatSession` subcommands no longer gives traceback for `NeatSessionError` exceptions, instead it
   gives a more user-friendly error message.
 
+### Improved
+- Reduced matplotlib version to 3.5.2 due to PYOD compatibility issues
+
 ## [0.94.0] - 29-10-**2024**
 ### Added
 - Support for information rules and instance plotting in NeatSession
@@ -27,7 +30,6 @@ Changes are grouped as follows:
 
 ### Improved
 - Better plotting of rules for dms and information rules in NeatSession (accounts for `subClassOf` and `implements`)
-
 
 ## [0.93.0] - 28-10-**2024**
 ### Improved
