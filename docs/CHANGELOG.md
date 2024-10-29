@@ -16,6 +16,9 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Improved
+- Shorter and more concise summary of the data model in NeatSession
+
 ### Added
 - Improved NeatSession summary for data models
 
