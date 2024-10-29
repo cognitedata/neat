@@ -15,8 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-
 ## TBD
+### Fixed
+- `NeatSession` subcommands no longer gives traceback for `NeatSessionError` exceptions, instead it
+  gives a more user-friendly error message.
+
 ### Improved
 - Reduced matplotlib version to 3.5.2 due to PYOD compatibility issues
 
