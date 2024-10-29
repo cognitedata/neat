@@ -3,7 +3,7 @@ import warnings
 from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 import pandas as pd
 from pandas import Index
@@ -383,6 +383,6 @@ class NeatGraphStore:
             ],
             ignore_index=True,
         )
-        shorter_summary.index = cast(Index[Any], indexes)
+        shorter_summary.index = cast(Index, indexes)
 
         return shorter_summary
