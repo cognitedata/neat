@@ -108,6 +108,7 @@ class ShowInstanceAPI:
     @staticmethod
     def _generate_hex_colors(n: int) -> list[str]:
         """Generate a list of N random HEX color codes."""
+        random.seed(42)  # Set a seed for deterministic behavior
         hex_colors = []
         for _ in range(n):
             color = f"#{random.randint(0, 0xFFFFFF):06x}"
