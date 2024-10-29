@@ -15,13 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+
 ## TBD
 ### Improved
+- Reduced matplotlib version to 3.5.2 due to PYOD compatibility issues
 - Shorter and more concise summary of the data model in NeatSession
-
-### Added
-- Improved NeatSession summary for data models
-
 
 ## [0.94.0] - 29-10-**2024**
 ### Added
@@ -30,7 +28,6 @@ Changes are grouped as follows:
 
 ### Improved
 - Better plotting of rules for dms and information rules in NeatSession (accounts for `subClassOf` and `implements`)
-
 
 ## [0.93.0] - 28-10-**2024**
 ### Improved
