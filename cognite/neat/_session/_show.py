@@ -9,6 +9,7 @@ from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models.dms._rules import DMSRules
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
 from cognite.neat._rules.models.information._rules import InformationRules
+from cognite.neat._session.exceptions import NeatSessionError
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._state import SessionState
@@ -27,22 +28,21 @@ class ShowInstanceAPI:
 
     def __call__(self) -> Any:
         if not self._state.store.graph:
-            print("No graph data available.")
-            return None
+            raise NeatSessionError("No instances available. Try using [bold].read[/bold] to load instances.")
 
         widget = CytoscapeWidget()
         widget.layout.height = "700px"
 
-        G, types = self._get_instance_di_graph_and_types()
+        NxGraph, types = self._generate_instance_di_graph_and_types()
         widget_style = self._generate_cytoscape_widget_style(types)
         widget.set_style(widget_style)
 
-        widget.graph.add_graph_from_networkx(G)
+        widget.graph.add_graph_from_networkx(NxGraph)
         print("Max of 100 nodes and edges are displayed, which are randomly selected.")
 
         return display(widget)
 
-    def _get_instance_di_graph_and_types(self):
+    def _generate_instance_di_graph_and_types(self) -> tuple[nx.DiGraph, set[str]]:
         query = """
         SELECT ?s ?p ?o ?ts ?to WHERE {
             ?s ?p ?o .
@@ -56,33 +56,33 @@ class ShowInstanceAPI:
         LIMIT 100
         """
 
-        G = nx.DiGraph()
+        NxGraph = nx.DiGraph()
 
         types = set()
 
-        for (
-            s,
-            p,
-            o,
-            s_type,
-            o_type,
+        for (  # type: ignore
+            subject,
+            property_,
+            object,
+            subject_type,
+            object_type,
         ) in self._state.store.graph.query(query):
-            s = remove_namespace_from_uri(s)
-            p = remove_namespace_from_uri(p)
-            o = remove_namespace_from_uri(o)
-            s_type = remove_namespace_from_uri(s_type)
-            o_type = remove_namespace_from_uri(o_type)
+            subject = remove_namespace_from_uri(subject)
+            property_ = remove_namespace_from_uri(property_)
+            object = remove_namespace_from_uri(object)
+            subject_type = remove_namespace_from_uri(subject_type)
+            object_type = remove_namespace_from_uri(object_type)
 
-            G.add_node(s, label=s, type=s_type)
-            G.add_node(o, label=o, type=o_type)
-            G.add_edge(s, o, label=p)
+            NxGraph.add_node(subject, label=subject, type=subject_type)
+            NxGraph.add_node(object, label=object, type=object_type)
+            NxGraph.add_edge(subject, object, label=property_)
 
-            types.add(s_type)
-            types.add(o_type)
+            types.add(subject_type)
+            types.add(object_type)
 
-        return G, types
+        return NxGraph, types
 
-    def _generate_cytoscape_widget_style(self, types: list[str]) -> list[dict]:
+    def _generate_cytoscape_widget_style(self, types: set[str]) -> list[dict]:
         widget_style = [
             {
                 "selector": "edge",
@@ -108,6 +108,7 @@ class ShowInstanceAPI:
     @staticmethod
     def _generate_hex_colors(n: int) -> list[str]:
         """Generate a list of N random HEX color codes."""
+        random.seed(42)  # Set a seed for deterministic behavior
         hex_colors = []
         for _ in range(n):
             color = f"#{random.randint(0, 0xFFFFFF):06x}"
@@ -139,81 +140,84 @@ class ShowDataModelAPI:
 
     def __call__(self) -> Any:
         if not self._state.last_verified_dms_rules and not self._state.last_verified_information_rules:
-            print("No rules have been verified yet.")
-            return None
+            raise NeatSessionError(
+                "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
+            )
 
         if self._state.last_verified_dms_rules:
-            nodes, edges = self._generate_dms_rules_nodes_and_edges()
+            NxGraph = self._generate_dms_di_graph()
         elif self._state.last_verified_information_rules:
-            nodes, edges = self._generate_info_rules_nodes_and_edges()
+            NxGraph = self._generate_info_di_graph()
 
-        digraph = self._generate_dms_di_graph(nodes, edges)
         widget = self._generate_widget()
-        widget.graph.add_graph_from_networkx(digraph)
+        widget.graph.add_graph_from_networkx(NxGraph)
         return display(widget)
 
-    def _generate_dms_di_graph(self, nodes: list[str], edges: list[tuple]) -> nx.DiGraph:
+    def _generate_dms_di_graph(self) -> nx.DiGraph:
         """Generate a DiGraph from the last verified DMS rules."""
-        G = nx.DiGraph()
+        NxGraph = nx.DiGraph()
 
-        G.add_nodes_from(nodes)
-        G.add_edges_from(edges)
-
-        for node in G.nodes:
-            G.nodes[node]["label"] = node
-
-        return G
-
-    def _generate_dms_rules_nodes_and_edges(self) -> tuple[list[str], list[tuple[str, str, dict]]]:
-        """Generate nodes and edges for the last verified DMS rules for DiGraph."""
-
-        nodes = []
-        edges = []
-
-        for prop_ in cast(DMSRules, self._state.last_verified_dms_rules).properties:
-            nodes.append(prop_.view.suffix)
-
-            if prop_.connection and isinstance(prop_.value_type, ViewEntity):
-                label = f"{prop_.property_} [{0 if prop_.nullable else 1}..{ '' if prop_.is_list else 1}]"
-                edges.append((prop_.view.suffix, prop_.value_type.suffix, {"label": label}))
-
+        # Add nodes and edges from Views sheet
         for view in cast(DMSRules, self._state.last_verified_dms_rules).views:
-            nodes.append(view.view.suffix)
+            # if possible use human readable label coming from the view name
+            if not NxGraph.has_node(view.view.suffix):
+                NxGraph.add_node(view.view.suffix, label=view.name or view.view.suffix)
 
+            # add implements as edges
             if view.implements:
                 for implement in view.implements:
-                    edges.append((view.view.suffix, implement.suffix, {"label": "implements"}))
+                    if not NxGraph.has_node(implement.suffix):
+                        NxGraph.add_node(implement.suffix, label=implement.suffix)
 
-        return nodes, edges
+                    NxGraph.add_edge(view.view.suffix, implement.suffix, label="implements")
 
-    def _generate_info_rules_nodes_and_edges(
-        self,
-    ) -> tuple[list[str], list[tuple[str, str, dict]]]:
+        # Add nodes and edges from Properties sheet
+        for prop_ in cast(DMSRules, self._state.last_verified_dms_rules).properties:
+            if prop_.connection and isinstance(prop_.value_type, ViewEntity):
+                if not NxGraph.has_node(prop_.view.suffix):
+                    NxGraph.add_node(prop_.view.suffix, label=prop_.view.suffix)
+
+                label = f"{prop_.property_} [{0 if prop_.nullable else 1}..{ '' if prop_.is_list else 1}]"
+                NxGraph.add_edge(prop_.view.suffix, prop_.value_type.suffix, label=label)
+
+        return NxGraph
+
+    def _generate_info_di_graph(self) -> nx.DiGraph:
         """Generate nodes and edges for the last verified Information rules for DiGraph."""
 
-        nodes = []
-        edges = []
+        NxGraph = nx.DiGraph()
 
-        for prop_ in cast(InformationRules, self._state.last_verified_information_rules).properties:
-            nodes.append(prop_.class_.suffix)
-            if prop_.type_ == EntityTypes.object_property:
-                label = f"{prop_.property_} [{1 if prop_.is_mandatory else 0}..{ '' if prop_.is_list else 1}]"
-                edges.append(
-                    (
-                        prop_.class_.suffix,
-                        cast(ClassEntity, prop_.value_type).suffix,
-                        {"label": label},
-                    )
+        # Add nodes and edges from Views sheet
+        for class_ in cast(InformationRules, self._state.last_verified_information_rules).classes:
+            # if possible use human readable label coming from the view name
+            if not NxGraph.has_node(class_.class_.suffix):
+                NxGraph.add_node(
+                    class_.class_.suffix,
+                    label=class_.name or class_.class_.suffix,
                 )
 
-        for class_ in cast(InformationRules, self._state.last_verified_information_rules).classes:
-            nodes.append(class_.class_.suffix)
-
+            # add implements as edges
             if class_.parent:
                 for parent in class_.parent:
-                    edges.append((class_.class_.suffix, parent.suffix, {"label": "subClassOf"}))
+                    if not NxGraph.has_node(parent.suffix):
+                        NxGraph.add_node(parent.suffix, label=parent.suffix)
 
-        return nodes, edges
+                    NxGraph.add_edge(class_.class_.suffix, parent.suffix, label="subClassOf")
+
+        # Add nodes and edges from Properties sheet
+        for prop_ in cast(InformationRules, self._state.last_verified_information_rules).properties:
+            if prop_.type_ == EntityTypes.object_property:
+                if not NxGraph.has_node(prop_.class_.suffix):
+                    NxGraph.add_node(prop_.class_.suffix, label=prop_.class_.suffix)
+
+                label = f"{prop_.property_} [{1 if prop_.is_mandatory else 0}..{ '' if prop_.is_list else 1}]"
+                NxGraph.add_edge(
+                    prop_.class_.suffix,
+                    cast(ClassEntity, prop_.value_type).suffix,
+                    label=label,
+                )
+
+        return NxGraph
 
     def _generate_widget(self):
         """Generates an empty a CytoscapeWidget."""
