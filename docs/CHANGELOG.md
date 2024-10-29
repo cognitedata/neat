@@ -22,6 +22,7 @@ Changes are grouped as follows:
 
 ### Improved
 - Reduced matplotlib version to 3.5.2 due to PYOD compatibility issues
+- Shorter and more concise summary of the data model in NeatSession
 
 ## [0.94.0] - 29-10-**2024**
 ### Added

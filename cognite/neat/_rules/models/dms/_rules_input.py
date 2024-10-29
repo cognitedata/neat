@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal
 
+import pandas as pd
 from cognite.client import data_modeling as dm
 
 from cognite.neat._rules.models._base_input import InputComponent, InputRules
@@ -291,3 +292,18 @@ class DMSInputRules(InputRules[DMSRules]):
             "Last": last,
             "Reference": reference,
         }
+
+    def _repr_html_(self) -> str:
+        summary = {
+            "type": "Physical Data Model",
+            "intended for": "DMS Architect",
+            "name": self.metadata.name,
+            "space": self.metadata.space,
+            "external_id": self.metadata.external_id,
+            "version": self.metadata.version,
+            "views": len(self.views),
+            "containers": len(self.containers) if self.containers else 0,
+            "properties": len(self.properties),
+        }
+
+        return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore
