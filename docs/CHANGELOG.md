@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.95.0] - 29-10-**2024**
 ### Fixed
 - `NeatSession` subcommands no longer gives traceback for `NeatSessionError` exceptions, instead it
   gives a more user-friendly error message.
