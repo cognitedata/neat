@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.94.0] - 29-10-**2024**
 ### Added
 - Support for information rules and instance plotting in NeatSession
 - From Source to CDF tutorial
