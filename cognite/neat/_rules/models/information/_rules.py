@@ -4,6 +4,7 @@ from collections.abc import Hashable
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
+import pandas as pd
 from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace
@@ -380,3 +381,16 @@ class InformationRules(BaseRules):
         from cognite.neat._rules.transformers._converters import _InformationRulesConverter
 
         return _InformationRulesConverter(self).as_dms_rules()
+
+    def _repr_html_(self) -> str:
+        summary = {
+            "type": "Logical Data Model",
+            "intended for": "Information Architect",
+            "name": self.metadata.name,
+            "external_id": self.metadata.prefix,
+            "version": self.metadata.version,
+            "classes": len(self.classes),
+            "properties": len(self.properties),
+        }
+
+        return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore

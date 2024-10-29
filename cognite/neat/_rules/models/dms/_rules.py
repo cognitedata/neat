@@ -5,6 +5,7 @@ from collections.abc import Hashable
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
+import pandas as pd
 from cognite.client import data_modeling as dm
 from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
@@ -451,3 +452,18 @@ class DMSRules(BaseRules):
         from ._exporter import _DMSExporter
 
         return _DMSExporter(self, include_pipeline, instance_space).to_schema()
+
+    def _repr_html_(self) -> str:
+        summary = {
+            "type": "Physical Data Model",
+            "intended for": "DMS Architect",
+            "name": self.metadata.name,
+            "space": self.metadata.space,
+            "external_id": self.metadata.external_id,
+            "version": self.metadata.version,
+            "views": len(self.views),
+            "containers": len(self.containers) if self.containers else 0,
+            "properties": len(self.properties),
+        }
+
+        return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore

@@ -1,13 +1,11 @@
 from typing import Literal, cast
 
-import pandas as pd
 from cognite.client import CogniteClient
 
 from cognite.neat._issues import IssueList
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models._base_input import InputComponent
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
@@ -72,13 +70,10 @@ class NeatSession:
 
         output = []
         if state.input_rules and not state.verified_rules:
-            metadata = cast(InputComponent, state.input_rule.rules.metadata)  # type: ignore[union-attr]
-            table = pd.DataFrame([metadata.dump()]).T._repr_html_()  # type: ignore[operator]
-            output.append(f"<H2>Raw Data Model</H2><br />{table}")
+            output.append(f"<H2>Raw Data Model</H2><br />{state.input_rule.rules._repr_html_()}")  # type: ignore
 
         if state.verified_rules:
-            table = pd.DataFrame([state.last_verified_rule.metadata.model_dump()]).T._repr_html_()  # type: ignore[operator]
-            output.append(f"<H2>Data Model</H2><br />{table}")
+            output.append(f"<H2>Data Model</H2><br />{state.last_verified_rule._repr_html_()}")  # type: ignore
 
         if state.has_store:
             output.append(f"<H2>Instances</H2> {state.store._repr_html_()}")

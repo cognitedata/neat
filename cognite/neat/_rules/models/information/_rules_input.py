@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Literal
 
+import pandas as pd
 from rdflib import Namespace
 
 from cognite.neat._rules.models._base_input import InputComponent, InputRules
@@ -144,3 +145,16 @@ class InformationInputRules(InputRules[InformationRules]):
             Last=last,
             Reference=reference,
         )
+
+    def _repr_html_(self) -> str:
+        summary = {
+            "type": "Logical Data Model",
+            "intended for": "Information Architect",
+            "name": self.metadata.name,
+            "external_id": self.metadata.prefix,
+            "version": self.metadata.version,
+            "classes": len(self.classes),
+            "properties": len(self.properties),
+        }
+
+        return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore
