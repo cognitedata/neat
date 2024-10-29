@@ -22,7 +22,7 @@ Changes are grouped as follows:
 
 ### Improved
 - Better plotting of rules for dms and information rules in NeatSession (accounts for `subClassOf` and `implements`)
-
+- Reduced matplotlib version to 3.5.2 due to PYOD compatibility issues
 
 ## [0.93.0] - 28-10-**2024**
 ### Improved
