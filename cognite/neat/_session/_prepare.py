@@ -9,8 +9,10 @@ from cognite.neat._rules.models.information._rules_input import InformationInput
 from cognite.neat._rules.transformers import ReduceCogniteModel, ToCompliantEntities, ToExtension
 
 from ._state import SessionState
+from .exceptions import intercept_session_exceptions
 
 
+@intercept_session_exceptions
 class PrepareAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
@@ -18,6 +20,7 @@ class PrepareAPI:
         self.data_model = DataModelPrepareAPI(state, verbose)
 
 
+@intercept_session_exceptions
 class DataModelPrepareAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state

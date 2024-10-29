@@ -23,6 +23,8 @@ def _intercept_session_exceptions(func: Callable):
             return func(*args, **kwargs)
         except NeatSessionError as e:
             action = func.__name__
+            if action == "__call__":
+                action = func.__qualname__.removesuffix(".__call__").removesuffix("API")
             print(f"{_PREFIX} Cannot {action}: {e}")
 
     return wrapper
@@ -33,10 +35,11 @@ def intercept_session_exceptions(cls: type):
     while to_check:
         cls = to_check.pop()
         for attr_name in dir(cls):
-            if not attr_name.startswith("_"):
-                attr = getattr(cls, attr_name)
-                if callable(attr):
-                    setattr(cls, attr_name, _intercept_session_exceptions(attr))
-                elif isinstance(attr, type):
-                    to_check.append(attr)
+            if attr_name.startswith("_") and not attr_name == "__call__":
+                continue
+            attr = getattr(cls, attr_name)
+            if callable(attr):
+                setattr(cls, attr_name, _intercept_session_exceptions(attr))
+            elif isinstance(attr, type):
+                to_check.append(attr)
     return cls

@@ -13,8 +13,10 @@ from cognite.neat._session.exceptions import NeatSessionError
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._state import SessionState
+from .exceptions import intercept_session_exceptions
 
 
+@intercept_session_exceptions
 class ShowAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
@@ -22,6 +24,7 @@ class ShowAPI:
         self.instances = ShowInstanceAPI(self._state)
 
 
+@intercept_session_exceptions
 class ShowInstanceAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
@@ -134,6 +137,7 @@ class ShowInstanceAPI:
         return template
 
 
+@intercept_session_exceptions
 class ShowDataModelAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
