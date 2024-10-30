@@ -38,7 +38,12 @@ class DataModelPrepareAPI:
                 )
             )
 
-    def to_extension(self, new_data_model_id: DataModelIdentifier, org_name: str | None = None) -> None:
+    def to_extension(
+        self,
+        new_data_model_id: DataModelIdentifier,
+        org_name: str | None = None,
+        mode: Literal["extension", "solution"] = "extension",
+    ) -> None:
         """Uses the current data model as a basis to extend from.
 
         Args:
@@ -48,7 +53,7 @@ class DataModelPrepareAPI:
 
         """
         if dms := self._state.last_verified_dms_rules:
-            output = ToExtension(new_data_model_id, org_name).transform(dms)
+            output = ToExtension(new_data_model_id, org_name, mode).transform(dms)
             self._state.verified_rules.append(output.rules)
 
     def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"]]) -> None:

@@ -13,6 +13,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
 from rdflib import Namespace
 
+from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.models import (
     DataModelType,
@@ -21,6 +22,7 @@ from cognite.neat._rules.models import (
     SheetRow,
 )
 from cognite.neat._rules.models.dms import DMSMetadata
+from cognite.neat._rules.models.dms._rules import DMSRules
 from cognite.neat._rules.models.domain import DomainMetadata
 from cognite.neat._rules.models.information import InformationMetadata
 from cognite.neat._rules.models.information._rules import InformationRules
@@ -134,8 +136,12 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             self._write_metadata_sheet(workbook, dumped_last_rules["Metadata"], sheet_prefix="Last")
 
         if dumped_reference_rules:
-            self._write_sheets(workbook, dumped_reference_rules, rules, sheet_prefix="Ref")
-            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix="Ref")
+            if isinstance(rules.reference, DMSRules):
+                sheet_prefix = "CDM" if rules.reference.metadata.as_data_model_id() in COGNITE_MODELS else "Ref"
+            else:
+                sheet_prefix = "Ref"
+            self._write_sheets(workbook, dumped_reference_rules, rules, sheet_prefix=sheet_prefix)
+            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix=sheet_prefix)
 
         if isinstance(rules, InformationRules) and rules.prefixes:
             self._write_prefixes_sheet(workbook, rules.prefixes)
