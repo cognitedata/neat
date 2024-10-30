@@ -62,11 +62,10 @@ urllib3 = "^2"
 openpyxl = "*"
 networkx = "^3.4.2"
 ipycytoscape = "^1.3.3"
-matplotlib = "=3.5.2"
-
+matplotlib = ">=3.5.2"
 
 # Notebook
-rich = { version = "^13.7.1", extras = ["jupyter"], optional = true }
+rich = { version = "^13.7.1", extras = ["jupyter"]}
 
 # Backport from Python 3.11
 exceptiongroup = { version = "^1.1.3", python = "<3.11" }
@@ -125,7 +124,6 @@ google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 oxi = ["oxrdflib", "pyoxigraph"]
 service = ["uvicorn", "prometheus-client", "fastapi", "schedule", "python-multipart"]
 graphql = ["jinja2"]
-jupyter = ["rich"]
 
 all = [
     "jinja2",
