@@ -51,12 +51,13 @@ class DataModelPrepareAPI:
             output = ToExtension(new_data_model_id, org_name).transform(dms)
             self._state.verified_rules.append(output.rules)
 
-    def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"]]) -> None:
+    def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]) -> None:
         """This is a special method that allow you to drop parts of the data model.
         This only applies to Cognite Data Models.
 
         Args:
-            drop: Which parts of the data model to drop.
+            drop: What to drop from the data model. The values 3D, Annotation, and BaseViews are special values that
+                drops multiple views at once. You can also pass externalIds of views to drop individual views.
 
         """
         if dms := self._state.last_verified_dms_rules:

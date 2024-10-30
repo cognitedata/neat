@@ -329,17 +329,20 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
         ),
     }
 
-    def __init__(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"]]):
-        self.drop = drop
+    def __init__(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]):
+        self.drop_collection = cast(
+            list[Literal["3D", "Annotation", "BaseViews"]],
+            [collection for collection in drop if collection in self._VIEW_BY_COLLECTION],
+        )
+        self.drop_external_ids = {external_id for external_id in drop if external_id not in self._VIEW_BY_COLLECTION}
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         verified = self._to_rules(rules)
         if verified.metadata.as_data_model_id() not in COGNITE_MODELS:
             raise NeatValueError(f"Can only reduce Cognite Data Models, not {verified.metadata.as_data_model_id()}")
-        if invalid := (set(self.drop) - set(self._VIEW_BY_COLLECTION.keys())):
-            raise NeatValueError(f"Invalid drop values: {invalid}. Expected {set(self._VIEW_BY_COLLECTION)}")
 
-        exclude_views = {view for collection in self.drop for view in self._VIEW_BY_COLLECTION[collection]}
+        exclude_views = {view for collection in self.drop_collection for view in self._VIEW_BY_COLLECTION[collection]}
+        exclude_views |= {view.view.as_id() for view in verified.views if view.view.suffix in self.drop_external_ids}
         new_model = verified.model_copy(deep=True)
 
         properties_by_view = DMSAnalysis(new_model).classes_with_properties(consider_inheritance=True)
@@ -359,7 +362,7 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
         return JustRules(new_model)
 
     def _is_asset_3D_property(self, prop: DMSProperty) -> bool:
-        if "3D" not in self.drop:
+        if "3D" not in self.drop_collection:
             return False
         return prop.view.as_id() == self._ASSET_VIEW and prop.property_ == "object3D"
 
