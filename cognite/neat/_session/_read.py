@@ -52,14 +52,30 @@ class BaseReadAPI:
 
 @intercept_session_exceptions
 class CDFReadAPI(BaseReadAPI):
-    def data_model(self, data_model_id: DataModelIdentifier) -> IssueList:
+    def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
+        super().__init__(state, client, verbose)
+        self.classic = CDFClassicAPI(state, client, verbose)
+
+    @property
+    def _get_client(self) -> CogniteClient:
         if self._client is None:
             raise ValueError("No client provided. Please provide a client to read a data model.")
+        return self._client
 
-        importer = importers.DMSImporter.from_data_model_id(self._client, data_model_id)
+    def data_model(self, data_model_id: DataModelIdentifier) -> IssueList:
+        importer = importers.DMSImporter.from_data_model_id(self._get_client, data_model_id)
         input_rules = importer.to_rules()
         self._store_rules(data_model_id, input_rules, "CDF")
         return input_rules.issues
+
+
+@intercept_session_exceptions
+class CDFClassicAPI(CDFReadAPI):
+    def assets(self, root_asset_external_id: str) -> None:
+        extractor = extractors.AssetsExtractor.from_hierarchy(self._get_client, root_asset_external_id)
+        self._state.store.write(extractor)
+        if self._verbose:
+            print(f"Asset hierarchy {root_asset_external_id} read successfully")
 
 
 @intercept_session_exceptions
