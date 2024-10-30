@@ -18,6 +18,8 @@ Changes are grouped as follows:
 ## TBD
 ### Improved
 - Handling of CDM extension
+### Added
+- `neat.prepare.reduce` now support dropping individual views from a `Cognite` model.
 
 ## [0.95.0] - 29-10-**2024**
 ### Fixed
