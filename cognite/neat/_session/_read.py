@@ -70,7 +70,13 @@ class CDFReadAPI(BaseReadAPI):
 
 
 @intercept_session_exceptions
-class CDFClassicAPI(CDFReadAPI):
+class CDFClassicAPI(BaseReadAPI):
+    @property
+    def _get_client(self) -> CogniteClient:
+        if self._client is None:
+            raise ValueError("No client provided. Please provide a client to read a data model.")
+        return self._client
+
     def assets(self, root_asset_external_id: str) -> None:
         extractor = extractors.AssetsExtractor.from_hierarchy(self._get_client, root_asset_external_id)
         self._state.store.write(extractor)
