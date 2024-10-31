@@ -50,6 +50,7 @@ from cognite.neat._rules.models.information._rules_input import (
     InformationInputProperty,
     InformationInputRules,
 )
+from cognite.neat._utils.collection_ import remove_list_elements
 from cognite.neat._utils.text import to_camel
 
 from ._base import RulesTransformer
@@ -233,95 +234,167 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
     def __init__(
         self,
         new_model_id: DataModelIdentifier,
-        org_name: str | None = None,
-        mode: Literal["extension", "solution"] = "extension",
+        org_name: str = "My",
+        type_: Literal["enterprise", "solution"] = "enterprise",
+        mode: Literal["read", "write"] = "read",
+        dummy_property: str = "GUID",
     ):
         self.new_model_id = DataModelId.load(new_model_id)
         if not self.new_model_id.version:
-            raise ValueError("Version is required for the new model.")
+            raise NeatValueError("Version is required for the new model.")
 
         self.org_name = org_name
         self.mode = mode
+        self.type_ = type_
+        self.dummy_property = dummy_property
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         # Copy to ensure immutability
-
         reference_model = self._to_rules(rules)
-        if self.org_name is None and reference_model.metadata.as_data_model_id() in COGNITE_MODELS:
-            raise NeatValueError(
-                f"Organization name is required when mapping to {reference_model.metadata.as_data_model_id()}"
-            )
         reference_model_id = reference_model.metadata.as_data_model_id()
 
-        dump = reference_model.dump()
-
-        # this avoids chaos with validation
-        dump["metadata"]["schema_"] = SchemaCompleteness.partial.value
-
         # if model is solution then we need to get correct space for views and containers
-        if self.mode == "solution":
-            dump["metadata"]["schema_"] = SchemaCompleteness.partial.value
-            dump["metadata"]["space"] = self.new_model_id.space
-            dump["metadata"]["external_id"] = self.new_model_id.external_id
-            dump["metadata"]["version"] = self.new_model_id.version
+        if self.type_ == "solution":
+            if self.mode not in ["read", "write"]:
+                raise NeatValueError(f"Unsupported mode: {self.mode}")
 
-            # this will set new model space to all the views and containers in the new model
-            new_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
+            if reference_model_id in COGNITE_MODELS:
+                print(
+                    "You are building solution model on top of"
+                    " Cognite Data Model, this is not recommended."
+                    " Build the solution model on top of enterprise model instead."
+                )
 
-            # however we do not want to create new containers so we are reverting
-            # the space of containers to the reference model space
-            for prop in new_model.properties:
-                if prop.container and prop.container.space == self.new_model_id.space:
-                    prop.container = ContainerEntity(
-                        space=reference_model_id.space,
-                        externalId=prop.container.suffix,
-                    )
-        # for extension we do not do the above as we will keep
+            return self._to_solution(reference_model)
+
+        elif self.type_ == "enterprise":
+            if reference_model_id not in COGNITE_MODELS:
+                raise NeatValueError("You can only build enterprise model on top of Cognite Data Models.")
+
+            return self._to_enterprise(reference_model)
+
         else:
-            new_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
-            new_model.metadata.space = self.new_model_id.space
-            new_model.metadata.external_id = self.new_model_id.external_id
-            new_model.metadata.version = cast(str, self.new_model_id.version)
+            raise NeatValueError(f"Unsupported data model type: {self.type_}")
 
-        if reference_model_id in COGNITE_MODELS:
-            new_model.reference = reference_model
+    def _has_views_in_multiple_space(self, rules: DMSRules) -> bool:
+        for view in rules.views:
+            if view.view.space != rules.metadata.space:
+                return True
+        return False
 
-        if self.mode == "solution":
-            return self._to_solution(new_model, reference_model_id)
-
-        elif self.mode == "extension":
-            return self._to_extension(new_model, reference_model_id)
-
-    def _to_solution(self, rules: DMSRules, reference_model_id: DataModelId) -> JustRules[DMSRules]:
+    def _to_solution(self, reference_rules: DMSRules) -> JustRules[DMSRules]:
         """For creation of solution data model / rules specifically for mapping over existing containers."""
 
-        # Dropping containers since this model is only for mapping on
-        # existing containers from the reference model.
-        rules.containers = None
+        dump = reference_rules.dump()
 
-        # We are setting any implements to None since model is expected to be used
-        # for consumption only of existing containers.
-        for view in rules.views:
-            view.implements = None
+        # Prepare new model metadata prior validation
+        dump["metadata"]["schema_"] = SchemaCompleteness.partial.value
+        dump["metadata"]["data_model_type"] = self.type_
+        dump["metadata"]["name"] = f"{self.org_name} {self.type_} data model"
+        dump["metadata"]["space"] = self.new_model_id.space
+        dump["metadata"]["external_id"] = self.new_model_id.external_id
+        dump["metadata"]["version"] = self.new_model_id.version
+
+        # dropping reference and last from the dump as they can cause validation
+        # issues especially if reference is enterprise model build on top of CDM
+        dump.pop("reference", None)
+        dump.pop("last", None)
+
+        # Set implement to NONE for all views
+        for view in dump["views"]:
+            view["implements"] = None
+
+        if self._has_views_in_multiple_space(reference_rules):
+            views_to_remove = []
+            for view in dump["views"]:
+                if ":" in view["view"]:
+                    views_to_remove.append(view)
+
+            dump["views"] = remove_list_elements(dump["views"], views_to_remove)
+
+        solution_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
+
+        # Dropping containers coming from reference model
+        solution_model.containers = SheetList[DMSContainer]()
+
+        # We want to map properties to existing containers allowing extension
+        for prop in solution_model.properties:
+            if prop.container and prop.container.space == self.new_model_id.space:
+                prop.container = ContainerEntity(
+                    space=reference_rules.metadata.space,
+                    externalId=prop.container.suffix,
+                )
 
         # If reference model on which we are mapping one of Cognite Data Models
-        if reference_model_id in COGNITE_MODELS:
-            # Remove CognitePrefixes.
-            for prop in rules.properties:
+        # since we want to affix these with the organization name
+        if reference_rules.metadata.as_data_model_id() in COGNITE_MODELS:
+            # Remove Cognite affix in view external_id / suffix.
+            for prop in solution_model.properties:
                 prop.view = self._remove_cognite_affix(prop.view)
                 prop.class_ = self._remove_cognite_affix(prop.class_)
                 if isinstance(prop.value_type, ViewEntity):
                     prop.value_type = self._remove_cognite_affix(prop.value_type)
-            for view in rules.views:
+            for view in solution_model.views:
                 view.view = self._remove_cognite_affix(view.view)
                 view.class_ = self._remove_cognite_affix(view.class_)
 
-        return JustRules(rules)
+        if self.mode == "write":
+            _, new_containers, new_properties = self._get_new_components(solution_model)
 
-    def _to_extension(self, rules: DMSRules, reference_model_id: DataModelId) -> JustRules[DMSRules]:
-        new_views: list[DMSView] = []
-        new_containers: list[DMSContainer] = []
-        new_properties: list[DMSProperty] = []
+            # Here we add ONLY dummy properties of the solution model and
+            # corresponding solution model space containers to hold them
+            solution_model.containers.extend(new_containers)
+            solution_model.properties.extend(new_properties)
+
+        return JustRules(solution_model)
+
+    def _to_enterprise(self, reference_model: DMSRules) -> JustRules[DMSRules]:
+        dump = reference_model.dump()
+
+        # This is must prior model validation to avoid validation issues
+        dump["metadata"]["schema_"] = SchemaCompleteness.partial.value
+
+        # This will create reference model components in the enterprise model space
+        enterprise_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
+
+        # Post validation metadata update:
+        enterprise_model.metadata.name = self.type_
+        enterprise_model.metadata.name = f"{self.org_name} {self.type_} data model"
+        enterprise_model.metadata.space = self.new_model_id.space
+        enterprise_model.metadata.external_id = self.new_model_id.external_id
+        enterprise_model.metadata.version = cast(str, self.new_model_id.version)
+
+        if reference_model.metadata.as_data_model_id() in COGNITE_MODELS:
+            enterprise_model.reference = reference_model
+
+        # Here we are creating enterprise specific components
+        enterprise_views, enterprise_containers, enterprise_properties = self._get_new_components(enterprise_model)
+
+        # And we are adding them to the enterprise model
+        # extending reference views with new ones
+        enterprise_model.views.extend(enterprise_views)
+
+        # while overwriting containers and properties with new ones
+        enterprise_model.containers = enterprise_containers
+        enterprise_model.properties = enterprise_properties
+
+        return JustRules(enterprise_model)
+
+    def _remove_cognite_affix(self, entity: _T_Entity) -> _T_Entity:
+        """This method removes `Cognite` affix from the entity."""
+        new_suffix = entity.suffix.replace("Cognite", self.org_name or "")
+        if isinstance(entity, ViewEntity):
+            return ViewEntity(space=entity.space, externalId=new_suffix, version=entity.version)  # type: ignore[return-value]
+        elif isinstance(entity, ClassEntity):
+            return ClassEntity(prefix=entity.prefix, suffix=new_suffix, version=entity.version)  # type: ignore[return-value]
+        raise ValueError(f"Unsupported entity type: {type(entity)}")
+
+    def _get_new_components(
+        self, rules: DMSRules
+    ) -> tuple[SheetList[DMSView], SheetList[DMSContainer], SheetList[DMSProperty]]:
+        new_views = SheetList[DMSView]()
+        new_containers = SheetList[DMSContainer]()
+        new_properties = SheetList[DMSProperty]()
 
         for definition in rules.views:
             view_entity = self._remove_cognite_affix(definition.view)
@@ -346,38 +419,22 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
             property_ = DMSProperty(
                 view=view_entity,
-                view_property=f"{to_camel(view_entity.suffix)}GUID",
+                view_property=f"{to_camel(view_entity.suffix)}{self.dummy_property}",
                 value_type=String(),
                 nullable=True,
                 immutable=False,
                 is_list=False,
                 container=container_entity,
-                container_property=f"{to_camel(view_entity.suffix)}GUID",
+                container_property=f"{to_camel(view_entity.suffix)}{self.dummy_property}",
                 class_=class_entity,
-                property_=f"{to_camel(view_entity.suffix)}GUID",
+                property_=f"{to_camel(view_entity.suffix)}{self.dummy_property}",
             )
 
             new_properties.append(property_)
             new_views.append(view)
             new_containers.append(container)
 
-        rules.views.extend(new_views)
-
-        rules.containers = SheetList[DMSContainer]()
-        rules.containers.extend(new_containers)
-        rules.properties = SheetList[DMSProperty]()
-        rules.properties.extend(new_properties)
-
-        return JustRules(rules)
-
-    def _remove_cognite_affix(self, entity: _T_Entity) -> _T_Entity:
-        """This method removes `Cognite` affix from the entity."""
-        new_suffix = entity.suffix.replace("Cognite", self.org_name or "")
-        if isinstance(entity, ViewEntity):
-            return ViewEntity(space=entity.space, externalId=new_suffix, version=entity.version)  # type: ignore[return-value]
-        elif isinstance(entity, ClassEntity):
-            return ClassEntity(prefix=entity.prefix, suffix=new_suffix, version=entity.version)  # type: ignore[return-value]
-        raise ValueError(f"Unsupported entity type: {type(entity)}")
+        return new_views, new_containers, new_properties
 
 
 class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
