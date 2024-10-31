@@ -235,7 +235,6 @@ class SetIDDMSModel(RulesTransformer[DMSRules, DMSRules]):
         if self.new_id.version is None:
             raise NeatValueError("Version is required when setting a new Data Model ID")
         dump = self._to_rules(rules).dump()
-        dump["metadata"]["schema_"] = SchemaCompleteness.partial.value
         dump["metadata"]["space"] = self.new_id.space
         dump["metadata"]["external_id"] = self.new_id.external_id
         dump["metadata"]["version"] = self.new_id.version
