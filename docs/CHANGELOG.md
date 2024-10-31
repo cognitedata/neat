@@ -18,6 +18,7 @@ Changes are grouped as follows:
 ## TBD
 ### Added
 - `neat.prepare.reduce` now support dropping individual views from a `Cognite` model.
+- `neat.version` returns the version of the `neat` package.
 
 ## [0.95.0] - 29-10-**2024**
 ### Fixed
