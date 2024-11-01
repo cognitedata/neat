@@ -2,6 +2,7 @@ from typing import Literal, cast
 
 from cognite.client import CogniteClient
 
+from cognite.neat import _version
 from cognite.neat._issues import IssueList
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules
@@ -33,6 +34,10 @@ class NeatSession:
         self.to = ToAPI(self._state, client, verbose)
         self.prepare = PrepareAPI(self._state, verbose)
         self.show = ShowAPI(self._state)
+
+    @property
+    def version(self) -> str:
+        return _version.__version__
 
     def verify(self) -> IssueList:
         output = VerifyAnyRules("continue").try_transform(self._state.input_rule)
