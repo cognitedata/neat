@@ -234,6 +234,22 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
 _T_Entity = TypeVar("_T_Entity", bound=ClassEntity | ViewEntity)
 
 
+class SetIDDMSModel(RulesTransformer[DMSRules, DMSRules]):
+    def __init__(self, new_id: DataModelId | tuple[str, str, str]):
+        self.new_id = DataModelId.load(new_id)
+
+    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
+        if self.new_id.version is None:
+            raise NeatValueError("Version is required when setting a new Data Model ID")
+        dump = self._to_rules(rules).dump()
+        dump["metadata"]["space"] = self.new_id.space
+        dump["metadata"]["external_id"] = self.new_id.external_id
+        dump["metadata"]["version"] = self.new_id.version
+        # Serialize and deserialize to set the new space and external_id
+        # as the default values for the new model.
+        return JustRules(DMSRules.model_validate(DMSInputRules.load(dump).dump()))
+
+
 class ToExtension(RulesTransformer[DMSRules, DMSRules]):
     def __init__(
         self,
