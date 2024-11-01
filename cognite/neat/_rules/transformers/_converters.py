@@ -12,6 +12,10 @@ from rdflib import Namespace
 
 from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._issues.warnings._models import (
+    EnterpriseModelNotBuildOnTopOfCDM,
+    SolutionModelBuildOnTopOfCDM,
+)
 from cognite.neat._issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules._shared import InputRules, JustRules, OutRules, VerifiedRules
@@ -259,17 +263,19 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
                 raise NeatValueError(f"Unsupported mode: {self.mode}")
 
             if reference_model_id in COGNITE_MODELS:
-                print(
-                    "You are building solution model on top of"
-                    " Cognite Data Model, this is not recommended."
-                    " Build the solution model on top of enterprise model instead."
+                warnings.warn(
+                    SolutionModelBuildOnTopOfCDM(reference_model_id=reference_model_id),
+                    stacklevel=2,
                 )
 
             return self._to_solution(reference_model)
 
         elif self.type_ == "enterprise":
             if reference_model_id not in COGNITE_MODELS:
-                raise NeatValueError("You can only build enterprise model on top of Cognite Data Models.")
+                warnings.warn(
+                    EnterpriseModelNotBuildOnTopOfCDM(reference_model_id=reference_model_id).as_message(),
+                    stacklevel=2,
+                )
 
             return self._to_enterprise(reference_model)
 
