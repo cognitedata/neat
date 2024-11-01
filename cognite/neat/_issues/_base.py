@@ -176,6 +176,8 @@ class NeatIssue:
             return tuple(cls._load_value(subtype, item) for item in value)
         elif type_ is ViewId:
             return ViewId.load(value)
+        elif type_ is DataModelId:
+            return DataModelId.load(value)
         elif type_ is PropertyId:
             return PropertyId.load(value)
         elif type_ is ContainerId:
