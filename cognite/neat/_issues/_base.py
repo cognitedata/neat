@@ -11,7 +11,12 @@ from typing import Any, ClassVar, Literal, TypeAlias, TypeVar, get_args, get_ori
 from warnings import WarningMessage
 
 import pandas as pd
-from cognite.client.data_classes.data_modeling import ContainerId, PropertyId, ViewId
+from cognite.client.data_classes.data_modeling import (
+    ContainerId,
+    DataModelId,
+    PropertyId,
+    ViewId,
+)
 from pydantic_core import ErrorDetails
 
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
@@ -123,6 +128,8 @@ class NeatIssue:
             return value.dump()
         elif isinstance(value, PropertyId):
             return value.dump(camel_case=True)
+        elif isinstance(value, DataModelId):
+            return value.dump(camel_case=True, include_type=False)
         raise ValueError(f"Unsupported type: {type(value)}")
 
     @classmethod
