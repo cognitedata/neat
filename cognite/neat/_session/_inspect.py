@@ -61,7 +61,9 @@ class InspectIssues:
         if IN_NOTEBOOK:
             from IPython.display import Markdown, display
 
-            issue_str = "\n".join([f"  * **{type(issue).__name__}**: {issue.as_message()}" for issue in issues])
+            issue_str = "\n".join(
+                [f"  * **{type(issue).__name__}**: {issue.as_message(include_type=False)}" for issue in issues]
+            )
             message = f"### {len(issues)} issues found\n\n{issue_str}"
             display(Markdown(message))
 
