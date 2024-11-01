@@ -13,8 +13,8 @@ from rdflib import Namespace
 from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings._models import (
-    EnterpriseModelNotBuildOnTopOfCDM,
-    SolutionModelBuildOnTopOfCDM,
+    EnterpriseModelNotBuildOnTopOfCDMWarning,
+    SolutionModelBuildOnTopOfCDMWarning,
 )
 from cognite.neat._issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat._rules._constants import EntityTypes
@@ -264,7 +264,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
             if reference_model_id in COGNITE_MODELS:
                 warnings.warn(
-                    SolutionModelBuildOnTopOfCDM(reference_model_id=reference_model_id),
+                    SolutionModelBuildOnTopOfCDMWarning(reference_model_id=reference_model_id),
                     stacklevel=2,
                 )
 
@@ -273,7 +273,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         elif self.type_ == "enterprise":
             if reference_model_id not in COGNITE_MODELS:
                 warnings.warn(
-                    EnterpriseModelNotBuildOnTopOfCDM(reference_model_id=reference_model_id).as_message(),
+                    EnterpriseModelNotBuildOnTopOfCDMWarning(reference_model_id=reference_model_id).as_message(),
                     stacklevel=2,
                 )
 

@@ -93,7 +93,7 @@ class NotSupportedHasDataFilterLimitWarning(CDFNotSupportedWarning):
 
 
 @dataclass(unsafe_hash=True)
-class EnterpriseModelNotBuildOnTopOfCDM(UserModelingWarning):
+class EnterpriseModelNotBuildOnTopOfCDMWarning(UserModelingWarning):
     """Enterprise data model being build on top {reference_model_id}. This is not recommended."""
 
     fix = "Always build Enterprise Data Model on top of Cognite Data Model such as Core Data Model."
@@ -102,8 +102,8 @@ class EnterpriseModelNotBuildOnTopOfCDM(UserModelingWarning):
 
 
 @dataclass(unsafe_hash=True)
-class SolutionModelBuildOnTopOfCDM(UserModelingWarning):
-    """Solution data model being build on top Cognite Data Model. This is not recommended."""
+class SolutionModelBuildOnTopOfCDMWarning(UserModelingWarning):
+    """Solution data model being build on top Cognite Data Model {reference_model_id}. This is not recommended."""
 
     fix = "Always build solution data model on top of enterprise data model."
 

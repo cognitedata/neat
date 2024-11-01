@@ -49,6 +49,7 @@ class DataModelPrepareAPI:
         Args:
             data_model_id: The enterprise data model id that is being created
             org_name: Organization name to use for the views in the enterprise data model.
+            dummy_property: The dummy property to use as placeholder for the views in the new data model.
 
         !!! note "Enterprise Data Model Creation"
             Always create an enterprise data model from a Cognite Data Model as this will
@@ -80,6 +81,7 @@ class DataModelPrepareAPI:
             data_model_id: The solution data model id that is being created.
             org_name: Organization name to use for the views in the new data model.
             mode: The mode of the solution data model. Can be either "read" or "write".
+            dummy_property: The dummy property to use as placeholder for the views in the new data model.
 
         !!! note "Solution Data Model Mode"
             The read-only solution model will only be able to read from the existing containers
