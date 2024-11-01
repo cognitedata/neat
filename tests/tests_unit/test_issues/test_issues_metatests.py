@@ -134,4 +134,5 @@ class TestIssuesMeta:
         json_dumped = json.dumps(dumped)
         json_loaded = json.loads(json_dumped)
         loaded = NeatIssue.load(json_loaded)
+
         assert issue == loaded, f"Dump and load mismatch for {issue.__class__.__name__}"

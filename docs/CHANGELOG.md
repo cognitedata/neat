@@ -16,6 +16,8 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Improved
+- Handling of CDM extension
 ### Added
 - `neat.prepare.reduce` now support dropping individual views from a `Cognite` model.
 

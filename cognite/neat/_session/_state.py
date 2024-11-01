@@ -49,20 +49,28 @@ class SessionState:
         return self.verified_rules[-1]
 
     @property
-    def last_verified_dms_rules(self) -> DMSRules | None:
+    def last_verified_dms_rules(self) -> DMSRules:
         if self.verified_rules:
             for rules in self.verified_rules[::-1]:
                 if isinstance(rules, DMSRules):
                     return rules
-        return None
+
+        raise NeatSessionError(
+            'No verified DMS data model. Try using  [bold].convert("DMS")[/bold]'
+            " to convert verified information model to verified DMS model."
+        )
 
     @property
-    def last_verified_information_rules(self) -> InformationRules | None:
+    def last_verified_information_rules(self) -> InformationRules:
         if self.verified_rules:
             for rules in self.verified_rules[::-1]:
                 if isinstance(rules, InformationRules):
                     return rules
-        return None
+
+        raise NeatSessionError(
+            "No verified information data model. Try using  [bold].verify()[/bold]"
+            " to convert unverified information model to verified information model."
+        )
 
     @property
     def has_store(self) -> bool:

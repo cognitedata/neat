@@ -17,3 +17,7 @@ def most_occurring_element(list_of_elements: list[T_Element]) -> T_Element:
 def chunker(sequence: Sequence[T_Element], chunk_size: int) -> Iterable[Sequence[T_Element]]:
     for i in range(0, len(sequence), chunk_size):
         yield sequence[i : i + chunk_size]
+
+
+def remove_list_elements(input_list: list, elements_to_remove: list) -> list:
+    return [element for element in input_list if element not in elements_to_remove]
