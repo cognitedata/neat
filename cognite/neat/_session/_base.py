@@ -11,6 +11,7 @@ from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
 
+from ._inspect import InspectAPI
 from ._prepare import PrepareAPI
 from ._read import ReadAPI
 from ._set import SetAPI
@@ -36,6 +37,7 @@ class NeatSession:
         self.prepare = PrepareAPI(self._state, verbose)
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
+        self.inspect = InspectAPI(self._state)
 
     @property
     def version(self) -> str:

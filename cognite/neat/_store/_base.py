@@ -367,20 +367,23 @@ class NeatGraphStore:
     def _shorten_summary(self, summary: pd.DataFrame) -> pd.DataFrame:
         """Shorten summary to top 5 types by occurrence."""
         top_5_rows = summary.head(5)
-        last_row = summary.tail(1)
 
         indexes = [
             *top_5_rows.index.tolist(),
-            "...",
-            *last_row.index.tolist(),
         ]
+        data = [
+            top_5_rows,
+        ]
+        if len(summary) > 6:
+            last_row = summary.tail(1)
+            indexes += [
+                "...",
+                *last_row.index.tolist(),
+            ]
+            data.extend([pd.DataFrame([["..."] * summary.shape[1]], columns=summary.columns), last_row])
 
         shorter_summary = pd.concat(
-            [
-                top_5_rows,
-                pd.DataFrame([["..."] * summary.shape[1]], columns=summary.columns),
-                last_row,
-            ],
+            data,
             ignore_index=True,
         )
         shorter_summary.index = cast(Index, indexes)
