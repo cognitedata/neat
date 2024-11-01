@@ -283,10 +283,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
             raise NeatValueError(f"Unsupported data model type: {self.type_}")
 
     def _has_views_in_multiple_space(self, rules: DMSRules) -> bool:
-        for view in rules.views:
-            if view.view.space != rules.metadata.space:
-                return True
-        return False
+        return any(view.view.space != rules.metadata.space for view in rules.views)
 
     def _to_solution(self, reference_rules: DMSRules) -> JustRules[DMSRules]:
         """For creation of solution data model / rules specifically for mapping over existing containers."""
