@@ -6,7 +6,7 @@ from pathlib import Path
 from types import GenericAlias, UnionType
 from typing import Any, Literal, TypeVar, Union, get_args, get_origin
 
-from cognite.client.data_classes.data_modeling import ContainerId, ViewId
+from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, ViewId
 from rdflib import Namespace
 
 from cognite.neat._rules.models.data_types import DataType, String
@@ -50,6 +50,8 @@ class DataClassCreator:
             return "typevar"
         elif type_ is ViewId:
             return ViewId("namespace", "class", "version")
+        elif type_ is DataModelId:
+            return DataModelId("space", "externalId", "version")
         elif type_ is ContainerId:
             return ContainerId("namespace", "class")
         elif get_origin(type_) is Literal:

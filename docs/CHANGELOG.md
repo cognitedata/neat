@@ -16,9 +16,13 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Improved
+- Handling of CDM extension
 ### Added
 - `neat.prepare.reduce` now support dropping individual views from a `Cognite` model.
 - `neat.set.data_model_id` a convenience method to set the data model id in a `NeatSession`.
+- `neat.version` returns the version of the `neat` package.
+
 
 ## [0.95.0] - 29-10-**2024**
 ### Fixed

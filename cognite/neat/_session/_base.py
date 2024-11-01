@@ -2,6 +2,7 @@ from typing import Literal, cast
 
 from cognite.client import CogniteClient
 
+from cognite.neat import _version
 from cognite.neat._issues import IssueList
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules
@@ -35,6 +36,10 @@ class NeatSession:
         self.prepare = PrepareAPI(self._state, verbose)
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
+
+    @property
+    def version(self) -> str:
+        return _version.__version__
 
     def verify(self) -> IssueList:
         output = VerifyAnyRules("continue").try_transform(self._state.input_rule)
@@ -72,10 +77,10 @@ class NeatSession:
 
         output = []
         if state.input_rules and not state.verified_rules:
-            output.append(f"<H2>Raw Data Model</H2><br />{state.input_rule.rules._repr_html_()}")  # type: ignore
+            output.append(f"<H2>Unverified Data Model</H2><br />{state.input_rule.rules._repr_html_()}")  # type: ignore
 
         if state.verified_rules:
-            output.append(f"<H2>Data Model</H2><br />{state.last_verified_rule._repr_html_()}")  # type: ignore
+            output.append(f"<H2>Verified Data Model</H2><br />{state.last_verified_rule._repr_html_()}")  # type: ignore
 
         if state.has_store:
             output.append(f"<H2>Instances</H2> {state.store._repr_html_()}")
