@@ -5,6 +5,7 @@ from rdflib import DCTERMS, OWL, RDF, RDFS, SKOS, XSD, Namespace, URIRef
 
 from cognite import neat
 
+
 def _is_in_notebook() -> bool:
     try:
         from IPython import get_ipython
