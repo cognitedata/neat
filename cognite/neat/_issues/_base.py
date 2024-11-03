@@ -72,7 +72,7 @@ class NeatIssue:
     extra: ClassVar[str | None] = None
     fix: ClassVar[str | None] = None
 
-    def as_message(self) -> str:
+    def as_message(self, include_type: bool = True) -> str:
         """Return a human-readable message for the issue."""
         template = self.__doc__
         if not template:
@@ -84,8 +84,10 @@ class NeatIssue:
             msg += "\n" + self.extra.format(**variables)
         if self.fix:
             msg += f"\nFix: {self.fix.format(**variables)}"
-        name = type(self).__name__
-        return f"{name}: {msg}"
+        if include_type:
+            name = type(self).__name__
+            msg = f"{name}: {msg}"
+        return msg
 
     def _get_variables(self) -> tuple[dict[str, str], bool]:
         variables: dict[str, str] = {}
@@ -275,7 +277,7 @@ class DefaultPydanticError(NeatError, ValueError):
             msg=error["msg"],
         )
 
-    def as_message(self) -> str:
+    def as_message(self, include_type: bool = True) -> str:
         if self.loc and len(self.loc) == 1:
             return f"{self.loc[0]} sheet: {self.msg}"
         elif self.loc and len(self.loc) == 2:
@@ -316,7 +318,7 @@ class RowError(NeatError, ValueError):
             url=str(url) if (url := error.get("url")) else None,
         )
 
-    def as_message(self) -> str:
+    def as_message(self, include_type: bool = True) -> str:
         input_str = str(self.input) if self.input is not None else ""
         input_str = input_str[:50] + "..." if len(input_str) > 50 else input_str
         output = (
@@ -359,7 +361,7 @@ class DefaultWarning(NeatWarning):
             source=warning.source,
         )
 
-    def as_message(self) -> str:
+    def as_message(self, include_type: bool = True) -> str:
         return str(self.warning)
 
 
@@ -430,7 +432,12 @@ class IssueList(NeatIssueList[NeatIssue]):
     def _repr_html_(self) -> str | None:
         if not self:
             return "<p>'No issues found'</p>"
-        return super()._repr_html_()
+        df = self.to_pandas()
+        agg_df = df["NeatIssue"].value_counts().to_frame()
+        if len(agg_df) < 10:
+            return agg_df._repr_html_()  # type: ignore[operator]
+        else:
+            return agg_df.head()._repr_html_()  # type: ignore[operator]
 
 
 T_Cls = TypeVar("T_Cls")

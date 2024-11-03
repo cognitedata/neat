@@ -18,7 +18,7 @@ class BreakingModelingPrincipleWarning(NeatWarning, ABC):
     url: ClassVar[str]
     specific: str
 
-    def as_message(self) -> str:
+    def as_message(self, include_type: bool = True) -> str:
         principle = type(self).__name__.removesuffix("Warning")
         url = f"{_BASE_URL}#{self.url}"
         return (self.__doc__ or "").format(

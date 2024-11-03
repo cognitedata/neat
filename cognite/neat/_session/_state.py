@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Literal, cast
 
+from cognite.neat._issues import IssueList
 from cognite.neat._rules._shared import ReadRules, VerifiedRules
 from cognite.neat._rules.models.dms._rules import DMSRules
 from cognite.neat._rules.models.information._rules import InformationRules
@@ -15,6 +16,7 @@ class SessionState:
     store_type: Literal["memory", "oxigraph"]
     input_rules: list[ReadRules] = field(default_factory=list)
     verified_rules: list[VerifiedRules] = field(default_factory=list)
+    issue_lists: list[IssueList] = field(default_factory=list)
     _store: NeatGraphStore | None = field(init=False, default=None)
 
     @property
@@ -75,3 +77,9 @@ class SessionState:
     @property
     def has_store(self) -> bool:
         return self._store is not None
+
+    @property
+    def last_issues(self) -> IssueList:
+        if not self.issue_lists:
+            raise NeatSessionError("No issues available. Try using [bold].verify()[/bold] to verify a data model.")
+        return self.issue_lists[-1]
