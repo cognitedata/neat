@@ -79,6 +79,10 @@ class SessionState:
         return self._store is not None
 
     @property
+    def has_verified_rules(self) -> bool:
+        return bool(self.verified_rules)
+
+    @property
     def last_issues(self) -> IssueList:
         if not self.issue_lists:
             raise NeatSessionError("No issues available. Try using [bold].verify()[/bold] to verify a data model.")
