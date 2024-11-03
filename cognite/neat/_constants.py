@@ -5,16 +5,21 @@ from rdflib import DCTERMS, OWL, RDF, RDFS, SKOS, XSD, Namespace, URIRef
 
 from cognite import neat
 
-IN_NOTEBOOK = True
-try:
-    from IPython import get_ipython
 
-    if "IPKernelApp" not in get_ipython().config:  # pragma: no cover
-        IN_NOTEBOOK = False
-except ImportError:
-    IN_NOTEBOOK = False
-except AttributeError:
-    IN_NOTEBOOK = False
+def _is_in_notebook() -> bool:
+    try:
+        from IPython import get_ipython
+
+        if "IPKernelApp" not in get_ipython().config:  # pragma: no cover
+            return False
+    except ImportError:
+        return False
+    except AttributeError:
+        return False
+    return True
+
+
+IN_NOTEBOOK = _is_in_notebook()
 
 PACKAGE_DIRECTORY = Path(neat.__file__).parent
 COGNITE_MODELS = (
