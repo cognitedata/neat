@@ -3,7 +3,6 @@ import random
 from typing import Any, cast
 
 import networkx as nx
-from IPython.display import HTML, display
 from pyvis.network import Network as PyVisNetwork  # type: ignore
 
 from cognite.neat._constants import IN_NOTEBOOK
@@ -31,7 +30,7 @@ class ShowBaseAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
-    def _generate_visualization(self, di_graph: nx.DiGraph) -> Any:
+    def _generate_visualization(self, di_graph: nx.DiGraph, name: str) -> Any:
         net = PyVisNetwork(
             notebook=IN_NOTEBOOK,
             cdn_resources="remote",
@@ -51,7 +50,7 @@ class ShowBaseAPI:
         )
 
         net.from_nx(di_graph)
-        return display(HTML(net.generate_html()))
+        return net.show(name)
 
 
 @intercept_session_exceptions
@@ -68,10 +67,12 @@ class ShowDataModelAPI(ShowBaseAPI):
 
         try:
             di_graph = self._generate_dms_di_graph(self._state.last_verified_dms_rules)
+            name = "dms_data_model.html"
         except NeatSessionError:
             di_graph = self._generate_info_di_graph(self._state.last_verified_information_rules)
+            name = "information_data_model.html"
 
-        return self._generate_visualization(di_graph)
+        return self._generate_visualization(di_graph, name)
 
     def _generate_dms_di_graph(self, rules: DMSRules) -> nx.DiGraph:
         """Generate a DiGraph from the last verified DMS rules."""
@@ -161,7 +162,7 @@ class ShowInstanceAPI(ShowBaseAPI):
             raise NeatSessionError("No instances available. Try using [bold].read[/bold] to load instances.")
 
         di_graph = self._generate_instance_di_graph_and_types()
-        return self._generate_visualization(di_graph)
+        return self._generate_visualization(di_graph, name="instances.html")
 
     def _generate_instance_di_graph_and_types(self) -> nx.DiGraph:
         query = """
