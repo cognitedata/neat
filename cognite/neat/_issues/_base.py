@@ -2,7 +2,8 @@ import inspect
 import sys
 import warnings
 from abc import ABC
-from collections.abc import Collection, Hashable, Iterable, Sequence
+from collections.abc import Collection, Hashable, Iterable, Iterator, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, fields
 from functools import total_ordering
 from pathlib import Path
@@ -450,3 +451,18 @@ def _get_subclasses(cls_: type[T_Cls], include_base: bool = False) -> Iterable[t
     for s in cls_.__subclasses__():
         yield s
         yield from _get_subclasses(s, False)
+
+
+@contextmanager
+def catch_warnings(
+    issues: IssueList,
+    warning_cls: type[NeatWarning] = DefaultWarning,
+) -> Iterator[None]:
+    """Catch warnings and append them to the issues list."""
+    with warnings.catch_warnings(record=True) as warning_logger:
+        warnings.simplefilter("always")
+        try:
+            yield None
+        finally:
+            if warning_logger:
+                issues.extend([warning_cls.from_warning(warning) for warning in warning_logger])  # type: ignore[misc]

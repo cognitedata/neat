@@ -32,7 +32,9 @@ class UploadResultCore(NeatObject, ABC):
 
 class UploadResultList(NeatList[UploadResultCore]):
     def _repr_html_(self) -> str:
-        return self.to_pandas().fillna(0).astype(int)._repr_html_()  # type: ignore[operator]
+        df = self.to_pandas().fillna(0)
+        df = df.style.format({column: "{:,.0f}".format for column in df.select_dtypes(include="number").columns})
+        return df._repr_html_()  # type: ignore[attr-defined]
 
 
 @dataclass
