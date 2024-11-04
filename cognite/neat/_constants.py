@@ -27,8 +27,8 @@ def _is_in_browser() -> bool:
     return IN_BROWSER
 
 
-IN_BROWSER = _is_in_browser()
-IN_NOTEBOOK = _is_in_notebook() or IN_BROWSER
+IN_PYODIDE = _is_in_browser()
+IN_NOTEBOOK = _is_in_notebook() or IN_PYODIDE
 
 
 PACKAGE_DIRECTORY = Path(neat.__file__).parent
