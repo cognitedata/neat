@@ -1,10 +1,11 @@
+import colorsys
 import random
 from typing import Any, cast
 
 import networkx as nx
-from ipycytoscape import CytoscapeWidget  # type: ignore
-from IPython.display import display
+from pyvis.network import Network as PyVisNetwork  # type: ignore
 
+from cognite.neat._constants import IN_NOTEBOOK
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models.dms._rules import DMSRules
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
@@ -25,27 +26,145 @@ class ShowAPI:
 
 
 @intercept_session_exceptions
-class ShowInstanceAPI:
+class ShowBaseAPI:
     def __init__(self, state: SessionState) -> None:
+        self._state = state
+
+    def _generate_visualization(self, di_graph: nx.DiGraph, name: str) -> Any:
+        net = PyVisNetwork(
+            notebook=IN_NOTEBOOK,
+            cdn_resources="remote",
+            directed=True,
+            height="750px",
+            width="100%",
+            select_menu=IN_NOTEBOOK,
+        )
+
+        # Change the plotting layout
+        net.repulsion(
+            node_distance=100,
+            central_gravity=0.3,
+            spring_length=200,
+            spring_strength=0.05,
+            damping=0.09,
+        )
+
+        net.from_nx(di_graph)
+        return net.show(name)
+
+
+@intercept_session_exceptions
+class ShowDataModelAPI(ShowBaseAPI):
+    def __init__(self, state: SessionState) -> None:
+        super().__init__(state)
+        self._state = state
+
+    def __call__(self) -> Any:
+        if not self._state.has_verified_rules:
+            raise NeatSessionError(
+                "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
+            )
+
+        try:
+            di_graph = self._generate_dms_di_graph(self._state.last_verified_dms_rules)
+            name = "dms_data_model.html"
+        except NeatSessionError:
+            di_graph = self._generate_info_di_graph(self._state.last_verified_information_rules)
+            name = "information_data_model.html"
+
+        return self._generate_visualization(di_graph, name)
+
+    def _generate_dms_di_graph(self, rules: DMSRules) -> nx.DiGraph:
+        """Generate a DiGraph from the last verified DMS rules."""
+        di_graph = nx.DiGraph()
+
+        # Add nodes and edges from Views sheet
+        for view in rules.views:
+            # if possible use human readable label coming from the view name
+            if not di_graph.has_node(view.view.suffix):
+                di_graph.add_node(view.view.suffix, label=view.name or view.view.suffix)
+
+            # add implements as edges
+            if view.implements:
+                for implement in view.implements:
+                    if not di_graph.has_node(implement.suffix):
+                        di_graph.add_node(implement.suffix, label=implement.suffix)
+
+                    di_graph.add_edge(
+                        view.view.suffix,
+                        implement.suffix,
+                        label="implements",
+                        dashes=True,
+                    )
+
+        # Add nodes and edges from Properties sheet
+        for prop_ in rules.properties:
+            if prop_.connection and isinstance(prop_.value_type, ViewEntity):
+                if not di_graph.has_node(prop_.view.suffix):
+                    di_graph.add_node(prop_.view.suffix, label=prop_.view.suffix)
+                di_graph.add_edge(
+                    prop_.view.suffix,
+                    prop_.value_type.suffix,
+                    label=prop_.name or prop_.property_,
+                )
+
+        return di_graph
+
+    def _generate_info_di_graph(self, rules: InformationRules) -> nx.DiGraph:
+        """Generate DiGraph representing information data model."""
+
+        di_graph = nx.DiGraph()
+
+        # Add nodes and edges from Views sheet
+        for class_ in rules.classes:
+            # if possible use human readable label coming from the view name
+            if not di_graph.has_node(class_.class_.suffix):
+                di_graph.add_node(
+                    class_.class_.suffix,
+                    label=class_.name or class_.class_.suffix,
+                )
+
+            # add subClassOff as edges
+            if class_.parent:
+                for parent in class_.parent:
+                    if not di_graph.has_node(parent.suffix):
+                        di_graph.add_node(parent.suffix, label=parent.suffix)
+                    di_graph.add_edge(
+                        class_.class_.suffix,
+                        parent.suffix,
+                        label="subClassOf",
+                        dashes=True,
+                    )
+
+        # Add nodes and edges from Properties sheet
+        for prop_ in rules.properties:
+            if prop_.type_ == EntityTypes.object_property:
+                if not di_graph.has_node(prop_.class_.suffix):
+                    di_graph.add_node(prop_.class_.suffix, label=prop_.class_.suffix)
+
+                di_graph.add_edge(
+                    prop_.class_.suffix,
+                    cast(ClassEntity, prop_.value_type).suffix,
+                    label=prop_.name or prop_.property_,
+                )
+
+        return di_graph
+
+
+@intercept_session_exceptions
+class ShowInstanceAPI(ShowBaseAPI):
+    def __init__(self, state: SessionState) -> None:
+        super().__init__(state)
         self._state = state
 
     def __call__(self) -> Any:
         if not self._state.store.graph:
             raise NeatSessionError("No instances available. Try using [bold].read[/bold] to load instances.")
 
-        widget = CytoscapeWidget()
-        widget.layout.height = "700px"
+        di_graph = self._generate_instance_di_graph_and_types()
+        return self._generate_visualization(di_graph, name="instances.html")
 
-        NxGraph, types = self._generate_instance_di_graph_and_types()
-        widget_style = self._generate_cytoscape_widget_style(types)
-        widget.set_style(widget_style)
-
-        widget.graph.add_graph_from_networkx(NxGraph)
-        print("Max of 100 nodes and edges are displayed, which are randomly selected.")
-
-        return display(widget)
-
-    def _generate_instance_di_graph_and_types(self) -> tuple[nx.DiGraph, set[str]]:
+    def _generate_instance_di_graph_and_types(self) -> nx.DiGraph:
         query = """
         SELECT ?s ?p ?o ?ts ?to WHERE {
             ?s ?p ?o .
@@ -56,12 +175,13 @@ class ShowInstanceAPI:
             ?s a ?ts .
             ?o a ?to .
         }
-        LIMIT 100
+        LIMIT 200
         """
 
-        NxGraph = nx.DiGraph()
+        di_graph = nx.DiGraph()
 
-        types = set()
+        types = [type_ for type_, _ in self._state.store.queries.summarize_instances()]
+        hex_colored_types = self._generate_hex_color_per_type(types)
 
         for (  # type: ignore
             subject,
@@ -76,203 +196,33 @@ class ShowInstanceAPI:
             subject_type = remove_namespace_from_uri(subject_type)
             object_type = remove_namespace_from_uri(object_type)
 
-            NxGraph.add_node(subject, label=subject, type=subject_type)
-            NxGraph.add_node(object, label=object, type=object_type)
-            NxGraph.add_edge(subject, object, label=property_)
-
-            types.add(subject_type)
-            types.add(object_type)
-
-        return NxGraph, types
-
-    def _generate_cytoscape_widget_style(self, types: set[str]) -> list[dict]:
-        widget_style = [
-            {
-                "selector": "edge",
-                "style": {
-                    "width": 1,
-                    "target-arrow-shape": "triangle",
-                    "curve-style": "bezier",
-                    "label": "data(label)",
-                    "font-size": "8px",
-                    "line-color": "black",
-                    "target-arrow-color": "black",
-                },
-            },
-        ]
-
-        colors = self._generate_hex_colors(len(types))
-
-        for i, type_ in enumerate(types):
-            widget_style.append(self._generate_node_cytoscape_style(type_, colors[i]))
-
-        return widget_style
-
-    @staticmethod
-    def _generate_hex_colors(n: int) -> list[str]:
-        """Generate a list of N random HEX color codes."""
-        random.seed(42)  # Set a seed for deterministic behavior
-        hex_colors = []
-        for _ in range(n):
-            color = f"#{random.randint(0, 0xFFFFFF):06x}"
-            hex_colors.append(color)
-        return hex_colors
-
-    @staticmethod
-    def _generate_node_cytoscape_style(type_: str, color: str) -> dict:
-        template = {
-            "css": {
-                "content": "data(label)",
-                "text-valign": "center",
-                "color": "black",
-                "font-size": "10px",
-                "width": "mapData(score, 0, 1, 10, 50)",
-                "height": "mapData(score, 0, 1, 10, 50)",
-            },
-        }
-
-        template["selector"] = f'node[type = "{type_}"]'  # type: ignore
-        template["css"]["background-color"] = color
-
-        return template
-
-
-@intercept_session_exceptions
-class ShowDataModelAPI:
-    def __init__(self, state: SessionState) -> None:
-        self._state = state
-
-    def __call__(self) -> Any:
-        if not self._state.last_verified_dms_rules and not self._state.last_verified_information_rules:
-            raise NeatSessionError(
-                "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
+            di_graph.add_node(
+                subject,
+                label=subject,
+                type=subject_type,
+                title=subject_type,
+                color=hex_colored_types[subject_type],
             )
+            di_graph.add_node(
+                object,
+                label=object,
+                type=object_type,
+                title=object_type,
+                color=hex_colored_types[object_type],
+            )
+            di_graph.add_edge(subject, object, label=property_, color="grey")
 
-        if self._state.last_verified_dms_rules:
-            NxGraph = self._generate_dms_di_graph()
-        elif self._state.last_verified_information_rules:
-            NxGraph = self._generate_info_di_graph()
+        return di_graph
 
-        widget = self._generate_widget()
-        widget.graph.add_graph_from_networkx(NxGraph)
-        return display(widget)
-
-    def _generate_dms_di_graph(self) -> nx.DiGraph:
-        """Generate a DiGraph from the last verified DMS rules."""
-        NxGraph = nx.DiGraph()
-
-        # Add nodes and edges from Views sheet
-        for view in cast(DMSRules, self._state.last_verified_dms_rules).views:
-            # if possible use human readable label coming from the view name
-            if not NxGraph.has_node(view.view.suffix):
-                NxGraph.add_node(view.view.suffix, label=view.name or view.view.suffix)
-
-            # add implements as edges
-            if view.implements:
-                for implement in view.implements:
-                    if not NxGraph.has_node(implement.suffix):
-                        NxGraph.add_node(implement.suffix, label=implement.suffix)
-
-                    NxGraph.add_edge(view.view.suffix, implement.suffix, label="implements")
-
-        # Add nodes and edges from Properties sheet
-        for prop_ in cast(DMSRules, self._state.last_verified_dms_rules).properties:
-            if prop_.connection and isinstance(prop_.value_type, ViewEntity):
-                if not NxGraph.has_node(prop_.view.suffix):
-                    NxGraph.add_node(prop_.view.suffix, label=prop_.view.suffix)
-
-                label = f"{prop_.property_} [{0 if prop_.nullable else 1}..{ '' if prop_.is_list else 1}]"
-                NxGraph.add_edge(prop_.view.suffix, prop_.value_type.suffix, label=label)
-
-        return NxGraph
-
-    def _generate_info_di_graph(self) -> nx.DiGraph:
-        """Generate nodes and edges for the last verified Information rules for DiGraph."""
-
-        NxGraph = nx.DiGraph()
-
-        # Add nodes and edges from Views sheet
-        for class_ in cast(InformationRules, self._state.last_verified_information_rules).classes:
-            # if possible use human readable label coming from the view name
-            if not NxGraph.has_node(class_.class_.suffix):
-                NxGraph.add_node(
-                    class_.class_.suffix,
-                    label=class_.name or class_.class_.suffix,
-                )
-
-            # add implements as edges
-            if class_.parent:
-                for parent in class_.parent:
-                    if not NxGraph.has_node(parent.suffix):
-                        NxGraph.add_node(parent.suffix, label=parent.suffix)
-
-                    NxGraph.add_edge(class_.class_.suffix, parent.suffix, label="subClassOf")
-
-        # Add nodes and edges from Properties sheet
-        for prop_ in cast(InformationRules, self._state.last_verified_information_rules).properties:
-            if prop_.type_ == EntityTypes.object_property:
-                if not NxGraph.has_node(prop_.class_.suffix):
-                    NxGraph.add_node(prop_.class_.suffix, label=prop_.class_.suffix)
-
-                label = f"{prop_.property_} [{1 if prop_.is_mandatory else 0}..{ '' if prop_.is_list else 1}]"
-                NxGraph.add_edge(
-                    prop_.class_.suffix,
-                    cast(ClassEntity, prop_.value_type).suffix,
-                    label=label,
-                )
-
-        return NxGraph
-
-    def _generate_widget(self):
-        """Generates an empty a CytoscapeWidget."""
-        widget = CytoscapeWidget()
-        widget.layout.height = "700px"
-
-        widget.set_style(
-            [
-                {
-                    "selector": "node",
-                    "css": {
-                        "content": "data(label)",
-                        "text-valign": "center",
-                        "color": "black",
-                        "background-color": "#33C4FF",
-                        "font-size": "10px",
-                        "width": "mapData(score, 0, 1, 10, 50)",
-                        "height": "mapData(score, 0, 1, 10, 50)",
-                    },
-                },
-                {
-                    "selector": "edge",
-                    "style": {
-                        "width": 1,
-                        "target-arrow-shape": "triangle",
-                        "curve-style": "bezier",
-                        "label": "data(label)",
-                        "font-size": "8px",
-                        "line-color": "black",
-                        "target-arrow-color": "black",
-                    },
-                },
-                {
-                    "selector": 'edge[label = "subClassOf"]',
-                    "style": {
-                        "line-color": "grey",
-                        "target-arrow-color": "grey",
-                        "line-style": "dashed",
-                        "font-size": "8px",
-                    },
-                },
-                {
-                    "selector": 'edge[label = "implements"]',
-                    "style": {
-                        "line-color": "grey",
-                        "target-arrow-color": "grey",
-                        "line-style": "dashed",
-                        "font-size": "8px",
-                    },
-                },
-            ]
-        )
-
-        return widget
+    @staticmethod
+    def _generate_hex_color_per_type(types: list[str]) -> dict:
+        hex_colored_types = {}
+        random.seed(381)
+        for type_ in types:
+            hue = random.random()
+            saturation = random.uniform(0.5, 1.0)
+            lightness = random.uniform(0.4, 0.6)
+            rgb = colorsys.hls_to_rgb(hue, lightness, saturation)
+            hex_color = f"#{int(rgb[0] * 255):02x}{int(rgb[1] * 255):02x}{int(rgb[2] * 255):02x}"
+            hex_colored_types[type_] = hex_color
+        return hex_colored_types
