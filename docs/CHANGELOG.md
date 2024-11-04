@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.96.1] - 04-11-**2024**
 ### Fixed
 - `naet.show` working in a pyodide environment
 
