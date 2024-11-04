@@ -7,6 +7,7 @@ from cognite.neat._rules.models.dms._rules import DMSRules
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._store import NeatGraphStore
+from cognite.neat._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError
 
@@ -17,6 +18,7 @@ class SessionState:
     input_rules: list[ReadRules] = field(default_factory=list)
     verified_rules: list[VerifiedRules] = field(default_factory=list)
     issue_lists: list[IssueList] = field(default_factory=list)
+    write_results: list[UploadResultList] = field(default_factory=list)
     _store: NeatGraphStore | None = field(init=False, default=None)
 
     @property

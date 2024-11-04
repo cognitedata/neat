@@ -372,9 +372,12 @@ T_NeatIssue = TypeVar("T_NeatIssue", bound=NeatIssue)
 class NeatIssueList(list, Sequence[T_NeatIssue], ABC):
     """This is a generic list of NeatIssues."""
 
-    def __init__(self, issues: Sequence[T_NeatIssue] | None = None, title: str | None = None):
+    def __init__(
+        self, issues: Sequence[T_NeatIssue] | None = None, title: str | None = None, action: str | None = None
+    ):
         super().__init__(issues or [])
         self.title = title
+        self.action = action
 
     @property
     def errors(self) -> Self:
@@ -455,7 +458,7 @@ def _get_subclasses(cls_: type[T_Cls], include_base: bool = False) -> Iterable[t
 
 @contextmanager
 def catch_warnings(
-    issues: IssueList,
+    issues: IssueList | None = None,
     warning_cls: type[NeatWarning] = DefaultWarning,
 ) -> Iterator[None]:
     """Catch warnings and append them to the issues list."""
@@ -464,5 +467,5 @@ def catch_warnings(
         try:
             yield None
         finally:
-            if warning_logger:
+            if warning_logger and issues is not None:
                 issues.extend([warning_cls.from_warning(warning) for warning in warning_logger])  # type: ignore[misc]
