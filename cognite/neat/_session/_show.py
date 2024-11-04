@@ -3,9 +3,10 @@ import random
 from typing import Any, cast
 
 import networkx as nx
+from IPython.display import HTML, display
 from pyvis.network import Network as PyVisNetwork  # type: ignore
 
-from cognite.neat._constants import IN_NOTEBOOK
+from cognite.neat._constants import IN_NOTEBOOK, IN_PYODIDE
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models.dms._rules import DMSRules
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
@@ -31,6 +32,9 @@ class ShowBaseAPI:
         self._state = state
 
     def _generate_visualization(self, di_graph: nx.DiGraph, name: str) -> Any:
+        if not IN_NOTEBOOK:
+            raise NeatSessionError("Visualization is only available in Jupyter notebooks!")
+
         net = PyVisNetwork(
             notebook=IN_NOTEBOOK,
             cdn_resources="remote",
@@ -50,7 +54,12 @@ class ShowBaseAPI:
         )
 
         net.from_nx(di_graph)
-        return net.show(name)
+        if IN_PYODIDE:
+            net.write_html(name)
+            return display(HTML(name))
+
+        else:
+            return net.show(name)
 
 
 @intercept_session_exceptions
