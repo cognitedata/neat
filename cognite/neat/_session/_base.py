@@ -71,14 +71,19 @@ class NeatSession:
             "NeatInferredDataModel",
             "v1",
         ),
-        max_number_of_instance: int = 1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ) -> IssueList:
+        """Data model inference from instances.
+
+        Args:
+            model_id: The ID of the inferred data model.
+            non_existing_node_type: The type of node to use when type of node is not possible to determine.
+        """
+
         model_id = dm.DataModelId.load(model_id)
 
         input_rules: ReadRules = importers.InferenceImporter.from_graph_store(
-            self._state.store,
-            max_number_of_instance=max_number_of_instance,
+            store=self._state.store,
             non_existing_node_type=non_existing_node_type,
         ).to_rules()
 
