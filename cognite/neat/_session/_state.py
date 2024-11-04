@@ -37,6 +37,14 @@ class SessionState:
         return self.input_rules[-1]
 
     @property
+    def last_outcome(self) -> UploadResultList:
+        if not self.outcome:
+            raise NeatSessionError(
+                "No outcome available. Try using [bold].to.cdf[/bold] to upload a data model/instances."
+            )
+        return self.outcome[-1]
+
+    @property
     def information_input_rule(self) -> ReadRules | None:
         if self.input_rules:
             for rule in self.input_rules[::-1]:
