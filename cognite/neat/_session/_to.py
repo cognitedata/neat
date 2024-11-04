@@ -61,11 +61,19 @@ class CDFToAPI:
 
         return loader.load_into_cdf(self._client)
 
-    def data_model(self, existing_handling: Literal["fail", "skip", "update", "force"] = "skip"):
+    def data_model(self, existing_handling: Literal["fail", "skip", "update", "force"] = "skip", dry_run: bool = False):
         """Export the verified DMS data model to CDF.
 
         Args:
             existing_handling: How to handle if component of data model exists. Defaults to "skip".
+            dry_run: If True, no changes will be made to CDF. Defaults to False.
+
+        ... note::
+
+        - "fail": If any component already exists, the export will fail.
+        - "skip": If any component already exists, it will be skipped.
+        - "update": If any component already exists, it will be updated.
+        - "force": If any component already exists, it will be deleted and recreated.
 
         """
         if not self._state.last_verified_dms_rules:
@@ -76,4 +84,4 @@ class CDFToAPI:
         if not self._client:
             raise ValueError("No client provided!")
 
-        return exporter.export_to_cdf(self._state.last_verified_dms_rules, self._client)
+        return exporter.export_to_cdf(self._state.last_verified_dms_rules, self._client, dry_run)
