@@ -565,7 +565,7 @@ class _DMSExporter:
             return edge_cls(
                 type=cls._create_edge_type_from_prop(prop),
                 source=source_view_id,
-                direction="outwards",
+                direction=prop.connection.direction,
                 name=prop.name,
                 description=prop.description,
                 edge_source=edge_source,
@@ -580,7 +580,6 @@ class _DMSExporter:
                     "If this error occurs it is a bug in NEAT, please report"
                     f"Debug Info, Invalid valueType reverse connection: {prop.model_dump_json()}"
                 )
-            edge_source = None
             reverse_prop = next(
                 (
                     prop
@@ -589,13 +588,6 @@ class _DMSExporter:
                 ),
                 None,
             )
-            if (
-                reverse_prop
-                and isinstance(reverse_prop.connection, EdgeEntity)
-                and reverse_prop.connection.properties is not None
-            ):
-                edge_source = reverse_prop.connection.properties.as_id()
-
             if reverse_prop is None:
                 warnings.warn(
                     PropertyNotFoundWarning(
@@ -608,30 +600,17 @@ class _DMSExporter:
                     stacklevel=2,
                 )
 
-            if reverse_prop is None or isinstance(reverse_prop.connection, EdgeEntity):
-                inwards_edge_cls = (
-                    dm.MultiEdgeConnectionApply if prop.is_list in [True, None] else SingleEdgeConnectionApply
-                )
-                return inwards_edge_cls(
-                    type=cls._create_edge_type_from_prop(reverse_prop or prop),
-                    source=source_view_id,
-                    name=prop.name,
-                    description=prop.description,
-                    direction="inwards",
-                    edge_source=edge_source,
-                )
-            elif reverse_prop and reverse_prop.connection == "direct":
-                reverse_direct_cls = (
-                    dm.MultiReverseDirectRelationApply
-                    if prop.is_list in [True, None]
-                    else SingleReverseDirectRelationApply
-                )
-                return reverse_direct_cls(
+            if reverse_prop and reverse_prop.connection == "direct":
+                args: dict[str, Any] = dict(
                     source=source_view_id,
                     through=dm.PropertyId(source=source_view_id, property=reverse_prop_id),
                     name=prop.name,
                     description=prop.description,
                 )
+                if prop.is_list in [True, None]:
+                    return dm.MultiReverseDirectRelationApply(**args)
+                else:
+                    return SingleReverseDirectRelationApply(**args)
             else:
                 return None
 
