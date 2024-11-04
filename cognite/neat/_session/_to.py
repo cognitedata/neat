@@ -91,5 +91,5 @@ class CDFToAPI:
             result = exporter.export_to_cdf(self._state.last_verified_dms_rules, self._client, dry_run)
         result.insert(0, UploadResultCore(name="schema", issues=conversion_issues))
         self._state.outcome.append(result)
-        print("You can inspect the issues with the .inspect.outcome(...) method.")
+        print("You can inspect the details with the .inspect.outcome(...) method.")
         return result
