@@ -5,6 +5,22 @@ from rdflib import DCTERMS, OWL, RDF, RDFS, SKOS, XSD, Namespace, URIRef
 
 from cognite import neat
 
+
+def _is_in_notebook() -> bool:
+    try:
+        from IPython import get_ipython
+
+        if "IPKernelApp" not in get_ipython().config:  # pragma: no cover
+            return False
+    except ImportError:
+        return False
+    except AttributeError:
+        return False
+    return True
+
+
+IN_NOTEBOOK = _is_in_notebook()
+
 PACKAGE_DIRECTORY = Path(neat.__file__).parent
 COGNITE_MODELS = (
     DataModelId("cdf_cdm", "CogniteCore", "v1"),

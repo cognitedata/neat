@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import ClassVar
 
-from cognite.client.data_classes.data_modeling import ViewId
+from cognite.client.data_classes.data_modeling import DataModelId, ViewId
 
 from cognite.neat._constants import DMS_VIEW_CONTAINER_SIZE_LIMIT
 from cognite.neat._issues import NeatWarning
@@ -18,7 +18,7 @@ class BreakingModelingPrincipleWarning(NeatWarning, ABC):
     url: ClassVar[str]
     specific: str
 
-    def as_message(self) -> str:
+    def as_message(self, include_type: bool = True) -> str:
         principle = type(self).__name__.removesuffix("Warning")
         url = f"{_BASE_URL}#{self.url}"
         return (self.__doc__ or "").format(
@@ -90,3 +90,21 @@ class NotSupportedHasDataFilterLimitWarning(CDFNotSupportedWarning):
     view_id: ViewId
     count: int
     limit: int = DMS_VIEW_CONTAINER_SIZE_LIMIT
+
+
+@dataclass(unsafe_hash=True)
+class EnterpriseModelNotBuildOnTopOfCDMWarning(UserModelingWarning):
+    """Enterprise data model being build on top {reference_model_id}. This is not recommended."""
+
+    fix = "Always build Enterprise Data Model on top of Cognite Data Model such as Core Data Model."
+
+    reference_model_id: DataModelId
+
+
+@dataclass(unsafe_hash=True)
+class SolutionModelBuildOnTopOfCDMWarning(UserModelingWarning):
+    """Solution data model being build on top Cognite Data Model {reference_model_id}. This is not recommended."""
+
+    fix = "Always build solution data model on top of enterprise data model."
+
+    reference_model_id: DataModelId
