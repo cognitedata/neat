@@ -40,7 +40,7 @@ class ResourceNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIden
     referred_type: ResourceType | None = None
     more: str | None = None
 
-    def as_message(self) -> str:
+    def as_message(self, include_type: bool = True) -> str:
         msg = (self.__doc__ or "").format(resource_type=self.resource_type, identifier=self.identifier)
         if self.referred_by and self.referred_type:
             msg += self.extra.format(referred_type=self.referred_type, referred_by=self.referred_by)
@@ -99,7 +99,7 @@ class ResourceChangedError(ResourceError[T_Identifier]):
     changed_properties: frozenset[str]
     changed_attributes: frozenset[str]
 
-    def as_message(self) -> str:
+    def as_message(self, include_type: bool = True) -> str:
         if self.changed_properties:
             changed = f" properties {humanize_collection(self.changed_properties)}."
         elif self.changed_attributes:

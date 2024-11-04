@@ -18,14 +18,14 @@ nav:
       - Why NEAT?: gettingstarted/why-neat.md
       - Installation: gettingstarted/installation.md
   - Tutorials:
-      - Data Modeling Lifecycle:
-          - Overview: tutorials/data-modeling-lifecycle/overview.md
-          - Knowledge Acquisition: tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md
-          - Analytic Solution Model: tutorials/data-modeling-lifecycle/part-2-analytic-solution.md
-          - Extending Enterprise Model: tutorials/data-modeling-lifecycle/part-3-extending-enterprise-model.md
-          - Extending Solution Model: tutorials/data-modeling-lifecycle/part-4-extending-solution-model.md
-          - Business Solution Model: tutorials/data-modeling-lifecycle/part-5-business-solution-model.md
-          - User Personas: tutorials/data-modeling-lifecycle/user-personas.md
+#      - Data Modeling Lifecycle:
+#          - Overview: tutorials/data-modeling-lifecycle/overview.md
+#          - Knowledge Acquisition: tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md
+#          - Analytic Solution Model: tutorials/data-modeling-lifecycle/part-2-analytic-solution.md
+#          - Extending Enterprise Model: tutorials/data-modeling-lifecycle/part-3-extending-enterprise-model.md
+#          - Extending Solution Model: tutorials/data-modeling-lifecycle/part-4-extending-solution-model.md
+#          - Business Solution Model: tutorials/data-modeling-lifecycle/part-5-business-solution-model.md
+#          - User Personas: tutorials/data-modeling-lifecycle/user-personas.md
       - Data Onboarding:
         - Asset Hierarchy Migration: tutorials/data-onboarding/asset_hierarchy_migration.ipynb
         - Asset Hierarchy Migration with Type: tutorials/data-onboarding/asset_hierarchy_migration_with_type.ipynb
@@ -41,13 +41,6 @@ nav:
           - Units: terminology/units.md
   - Reference - Code API:
       - Overview: reference/overview.md
-      - Rules:
-            - Importers: reference/rules/importers.md
-            - Exporters: reference/rules/exporters.md
-      - Graph:
-          -  Extractors: reference/graph/extractors.md
-          -  Transformers: reference/graph/transformers.md
-          -  Loaders: reference/graph/loaders.md
       - Issues:
           - Base: reference/issues/base.md
           - Errors: reference/issues/errors.md

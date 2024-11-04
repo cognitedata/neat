@@ -7,13 +7,16 @@ from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
 from cognite.neat._issues import IssueList
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules
 
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, object_wizard, rdf_dm_wizard
+from .exceptions import intercept_session_exceptions
 
 
+@intercept_session_exceptions
 class ReadAPI:
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._state = state
@@ -23,6 +26,7 @@ class ReadAPI:
         self.excel = ExcelReadAPI(state, client, verbose)
 
 
+@intercept_session_exceptions
 class BaseReadAPI:
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._state = state
@@ -44,20 +48,44 @@ class BaseReadAPI:
         elif isinstance(io, Path):
             return io
         else:
-            raise ValueError(f"Expected str or Path, got {type(io)}")
+            raise NeatValueError(f"Expected str or Path, got {type(io)}")
 
 
+@intercept_session_exceptions
 class CDFReadAPI(BaseReadAPI):
-    def data_model(self, data_model_id: DataModelIdentifier) -> IssueList:
-        if self._client is None:
-            raise ValueError("No client provided. Please provide a client to read a data model.")
+    def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
+        super().__init__(state, client, verbose)
+        self.classic = CDFClassicAPI(state, client, verbose)
 
-        importer = importers.DMSImporter.from_data_model_id(self._client, data_model_id)
+    @property
+    def _get_client(self) -> CogniteClient:
+        if self._client is None:
+            raise NeatValueError("No client provided. Please provide a client to read a data model.")
+        return self._client
+
+    def data_model(self, data_model_id: DataModelIdentifier) -> IssueList:
+        importer = importers.DMSImporter.from_data_model_id(self._get_client, data_model_id)
         input_rules = importer.to_rules()
         self._store_rules(data_model_id, input_rules, "CDF")
         return input_rules.issues
 
 
+@intercept_session_exceptions
+class CDFClassicAPI(BaseReadAPI):
+    @property
+    def _get_client(self) -> CogniteClient:
+        if self._client is None:
+            raise ValueError("No client provided. Please provide a client to read a data model.")
+        return self._client
+
+    def assets(self, root_asset_external_id: str) -> None:
+        extractor = extractors.AssetsExtractor.from_hierarchy(self._get_client, root_asset_external_id)
+        self._state.store.write(extractor)
+        if self._verbose:
+            print(f"Asset hierarchy {root_asset_external_id} read successfully")
+
+
+@intercept_session_exceptions
 class ExcelReadAPI(BaseReadAPI):
     def __call__(self, io: Any) -> IssueList:
         filepath = self._return_filepath(io)
@@ -66,6 +94,7 @@ class ExcelReadAPI(BaseReadAPI):
         return input_rules.issues
 
 
+@intercept_session_exceptions
 class RDFReadAPI(BaseReadAPI):
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         super().__init__(state, client, verbose)

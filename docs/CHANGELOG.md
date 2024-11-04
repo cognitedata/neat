@@ -16,9 +16,29 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
-### Added
-- Improved NeatSession summary for data models
+### Fixed
+- `naet.show` working in a pyodide environment
 
+## [0.96.0] - 04-11-**2024**
+### Improved
+- Handling of CDM extension
+- Switched from Cytoscape to PyVis for data model and instances visualization
+### Added
+- `neat.prepare.reduce` now support dropping individual views from a `Cognite` model.
+- `neat.set.data_model_id` a convenience method to set the data model id in a `NeatSession`.
+- `neat.version` returns the version of the `neat` package.
+- `neat.prepare.to_enterprise` prepares template for creation of an enterprise model in `Cognite Data Fusion`.
+- `neat.prepare.to_solution` prepares template for creation of a solution model in `Cognite Data Fusion`.
+
+
+## [0.95.0] - 29-10-**2024**
+### Fixed
+- `NeatSession` subcommands no longer gives traceback for `NeatSessionError` exceptions, instead it
+  gives a more user-friendly error message.
+
+### Improved
+- Reduced matplotlib version to 3.5.2 due to PYOD compatibility issues
+- Shorter and more concise summary of the data model in NeatSession
 
 ## [0.94.0] - 29-10-**2024**
 ### Added
@@ -27,7 +47,6 @@ Changes are grouped as follows:
 
 ### Improved
 - Better plotting of rules for dms and information rules in NeatSession (accounts for `subClassOf` and `implements`)
-
 
 ## [0.93.0] - 28-10-**2024**
 ### Improved

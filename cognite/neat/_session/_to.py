@@ -8,8 +8,10 @@ from cognite.neat._rules import exporters
 from cognite.neat._session._wizard import space_wizard
 
 from ._state import SessionState
+from .exceptions import intercept_session_exceptions
 
 
+@intercept_session_exceptions
 class ToAPI:
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._state = state
@@ -39,6 +41,7 @@ class ToAPI:
         return None
 
 
+@intercept_session_exceptions
 class CDFToAPI:
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._client = client
