@@ -109,7 +109,7 @@ class TestDMSImporter:
 
         dms_recreated = DMSExporter().export(rules)
 
-        assert dms_recreated.dump() == SCHEMA_INWARDS_EDGE_WITH_PROPERTIES.dump()
+        assert dms_recreated.views.dump() == SCHEMA_INWARDS_EDGE_WITH_PROPERTIES.views.dump()
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
@@ -150,10 +150,11 @@ SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
         space="neat",
         external_id="data_model",
         version="1",
+        description="Creator: MISSING",
         views=[
+            dm.ViewId("neat", "EdgeView", "1"),
             dm.ViewId("neat", "NodeView1", "1"),
             dm.ViewId("neat", "NodeView2", "1"),
-            dm.ViewId("neat", "EdgeView", "1"),
         ],
     ),
     spaces=SpaceApplyDict([dm.SpaceApply(space="neat")]),
@@ -163,11 +164,18 @@ SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
                 space="neat",
                 external_id="NodeView1",
                 version="1",
+                filter=dm.filters.Equals(
+                    ["node", "type"],
+                    value={
+                        "space": "neat",
+                        "externalId": "NodeView1",
+                    },
+                ),
                 properties={
                     "to": dm.MultiEdgeConnectionApply(
                         type=dm.DirectRelationReference("neat", "myEdgeType"),
-                        source=dm.ViewId("neat", "NodeView2", "v1"),
-                        edge_source=dm.ViewId("neat", "EdgeView", "v1"),
+                        source=dm.ViewId("neat", "NodeView2", "1"),
+                        edge_source=dm.ViewId("neat", "EdgeView", "1"),
                         direction="inwards",
                     )
                 },
@@ -176,11 +184,18 @@ SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
                 space="neat",
                 external_id="NodeView2",
                 version="1",
+                filter=dm.filters.Equals(
+                    ["node", "type"],
+                    value={
+                        "space": "neat",
+                        "externalId": "NodeView2",
+                    },
+                ),
                 properties={
                     "from": dm.MultiEdgeConnectionApply(
                         type=dm.DirectRelationReference("neat", "myEdgeType"),
-                        source=dm.ViewId("neat", "NodeView1", "v1"),
-                        edge_source=dm.ViewId("neat", "EdgeView", "v1"),
+                        source=dm.ViewId("neat", "NodeView1", "1"),
+                        edge_source=dm.ViewId("neat", "EdgeView", "1"),
                         direction="outwards",
                     )
                 },
@@ -189,6 +204,7 @@ SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
                 space="neat",
                 external_id="EdgeView",
                 version="1",
+                filter=dm.filters.HasData(containers=[dm.ContainerId("neat", "container")]),
                 properties={
                     "distance": dm.MappedPropertyApply(
                         container=dm.ContainerId("neat", "container"),
