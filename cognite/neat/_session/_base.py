@@ -48,9 +48,10 @@ class NeatSession:
         return _version.__version__
 
     def verify(self) -> IssueList:
-        output = VerifyAnyRules("continue").try_transform(self._state.input_rule)
+        last_unverified_rule = self._state.data_model.last_unverified_rule
+        output = VerifyAnyRules("continue").try_transform(last_unverified_rule)
         if output.rules:
-            self._state.verified_rules.append(output.rules)
+            self._state.data_model.verified_rules.append(output.rules)
             if isinstance(output.rules, InformationRules):
                 self._state.store.add_rules(output.rules)
         self._state.issue_lists.append(output.issues)
@@ -100,17 +101,24 @@ class NeatSession:
 
     def _repr_html_(self) -> str:
         state = self._state
-        if not state.has_store and not state.input_rules:
+        if (
+            not state.instances.has_store
+            and not state.data_model.has_unverified_rules
+            and not state.data_model.has_verified_rules
+        ):
             return "<strong>Empty session</strong>. Get started by reading something with the <em>.read</em> attribute."
 
         output = []
-        if state.input_rules and not state.verified_rules:
-            output.append(f"<H2>Unverified Data Model</H2><br />{state.input_rule.rules._repr_html_()}")  # type: ignore
 
-        if state.verified_rules:
-            output.append(f"<H2>Verified Data Model</H2><br />{state.last_verified_rule._repr_html_()}")  # type: ignore
+        if state.data_model.has_unverified_rules and not state.data_model.has_verified_rules:
+            output.append(
+                f"<H2>Unverified Data Model</H2><br />{state.data_model.last_unverified_rule.rules._repr_html_()}"
+            )  # type: ignore
 
-        if state.has_store:
-            output.append(f"<H2>Instances</H2> {state.store._repr_html_()}")
+        if state.data_model.has_verified_rules:
+            output.append(f"<H2>Verified Data Model</H2><br />{state.data_model.last_verified_rule._repr_html_()}")  # type: ignore
+
+        if state.instances.has_store:
+            output.append(f"<H2>Instances</H2> {state.instances.store._repr_html_()}")
 
         return "<br />".join(output)

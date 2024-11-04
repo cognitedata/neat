@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes.data_modeling import DataModelIdentifier
+from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
@@ -10,10 +10,12 @@ from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules
+from cognite.neat._rules.importers import RulesImporters
+from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, object_wizard, rdf_dm_wizard
-from .exceptions import intercept_session_exceptions
+from .exceptions import NeatSessionError, intercept_session_exceptions
 
 
 @intercept_session_exceptions
@@ -33,14 +35,26 @@ class BaseReadAPI:
         self._verbose = verbose
         self._client = client
 
-    def _store_rules(self, io: Any, input_rules: ReadRules, source: str) -> None:
-        if input_rules.rules:
-            self._state.input_rules.append(input_rules)
-            if self._verbose:
-                if input_rules.issues.has_errors:
-                    print(f"{source} {type(io)} {io} read failed")
-                else:
-                    print(f"{source} {type(io)} {io} read successfully")
+    def _store_rules(self, importer: RulesImporters) -> None:
+        rules = importer.to_rules()
+
+        if self._verbose:
+            if rules.issues.has_errors:
+                print("Data model read failed")
+            else:
+                print("Data model read passed")
+
+        if rules.rules:
+            change = Change(
+                source_entity=importer.source_entity,
+                target_entity=importer.target_entity,
+                agent=importer.agent,
+                activity=importer.activity,
+                description="Read data model to NeatSession",
+            )
+            self._state.data_model.write(rules, change)
+
+        return rules.issues
 
     def _return_filepath(self, io: Any) -> Path:
         if isinstance(io, str):
@@ -64,10 +78,14 @@ class CDFReadAPI(BaseReadAPI):
         return self._client
 
     def data_model(self, data_model_id: DataModelIdentifier) -> IssueList:
+        data_model_id = DataModelId.load(data_model_id)
+
+        if not data_model_id.version:
+            raise NeatSessionError("Data model version is required to read a data model.")
+
         importer = importers.DMSImporter.from_data_model_id(self._get_client, data_model_id)
-        input_rules = importer.to_rules()
-        self._store_rules(data_model_id, input_rules, "CDF")
-        return input_rules.issues
+
+        return self._store_rules(importer)
 
 
 @intercept_session_exceptions
@@ -80,7 +98,7 @@ class CDFClassicAPI(BaseReadAPI):
 
     def assets(self, root_asset_external_id: str) -> None:
         extractor = extractors.AssetsExtractor.from_hierarchy(self._get_client, root_asset_external_id)
-        self._state.store.write(extractor)
+        self._state.instances.store.write(extractor)
         if self._verbose:
             print(f"Asset hierarchy {root_asset_external_id} read successfully")
 
@@ -143,5 +161,5 @@ class RDFExamples:
 
     @property
     def nordic44(self) -> IssueList:
-        self._state.store.write(extractors.RdfFileExtractor(instances_examples.nordic44_knowledge_graph))
+        self._state.instances.store.write(extractors.RdfFileExtractor(instances_examples.nordic44_knowledge_graph))
         return IssueList()

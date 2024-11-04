@@ -8,8 +8,12 @@ from typing import Any, Generic, Literal
 from pydantic import ValidationError
 from rdflib import Namespace
 
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList, NeatError, NeatWarning
 from cognite.neat._rules._shared import ReadRules, T_InputRules
+from cognite.neat._store._provenance import Activity as ProvenanceActivity
+from cognite.neat._store._provenance import Agent as ProvenanceAgent
+from cognite.neat._store._provenance import Entity as ProvenanceEntity
 from cognite.neat._utils.auxiliary import class_html_doc
 
 
@@ -45,6 +49,29 @@ class BaseImporter(ABC, Generic[T_InputRules]):
     @classmethod
     def _repr_html_(cls) -> str:
         return class_html_doc(cls)
+
+    @property
+    def agent(self) -> ProvenanceAgent:
+        """Provenance agent for the importer."""
+        return ProvenanceAgent(id_=DEFAULT_NAMESPACE[f"agent/{type(self).__name__}"])
+
+    @property
+    @abstractmethod
+    def source_entity(self) -> ProvenanceEntity | None:
+        """Provenance entity for the source data."""
+        raise NotImplementedError()
+
+    @property
+    @abstractmethod
+    def activity(self) -> ProvenanceActivity | None:
+        """Provenance activity for the importer."""
+        raise NotImplementedError()
+
+    @property
+    @abstractmethod
+    def target_entity(self) -> ProvenanceEntity | None:
+        """Provenance entity for the target data."""
+        raise NotImplementedError()
 
 
 class _FutureResult:
