@@ -1,12 +1,16 @@
 from typing import Literal, cast
 
 from cognite.client import CogniteClient
+from cognite.client import data_modeling as dm
 
 from cognite.neat import _version
 from cognite.neat._issues import IssueList
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules
+from cognite.neat._rules.importers._rdf._base import DEFAULT_NON_EXISTING_NODE_TYPE
 from cognite.neat._rules.models import DMSRules
+from cognite.neat._rules.models.data_types import AnyURI
+from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
@@ -62,15 +66,29 @@ class NeatSession:
 
     def infer(
         self,
-        space: str = "inference_space",
-        external_id: str = "InferredDataModel",
-        version: str = "v1",
+        model_id: dm.DataModelId | tuple[str, str, str] = (
+            "neat_space",
+            "NeatInferredDataModel",
+            "v1",
+        ),
+        max_number_of_instance: int = -1,
+        non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ) -> IssueList:
-        input_rules: ReadRules = importers.InferenceImporter.from_graph_store(self._state.store).to_rules()
+        model_id = dm.DataModelId.load(model_id)
 
-        cast(InformationInputRules, input_rules.rules).metadata.prefix = space
-        cast(InformationInputRules, input_rules.rules).metadata.name = external_id
-        cast(InformationInputRules, input_rules.rules).metadata.version = version
+        input_rules: ReadRules = importers.InferenceImporter.from_graph_store(
+            self._state.store,
+            max_number_of_instance=max_number_of_instance,
+            non_existing_node_type=non_existing_node_type,
+        ).to_rules()
+
+        if model_id.space:
+            cast(InformationInputRules, input_rules.rules).metadata.prefix = model_id.space
+        if model_id.external_id:
+            cast(InformationInputRules, input_rules.rules).metadata.name = model_id.external_id
+
+        if model_id.version:
+            cast(InformationInputRules, input_rules.rules).metadata.version = model_id.version
 
         self.read.rdf._store_rules(self._state.store, input_rules, "Data Model Inference")
         return input_rules.issues
