@@ -9,6 +9,7 @@ from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import DMSImporter, ExcelImporter
 from cognite.neat._rules.models import DMSRules, DMSSchema, RoleTypes
 from cognite.neat._rules.transformers import DMSToInformation, ImporterPipeline, VerifyDMSRules
+from cognite.neat._utils.cdf.data_classes import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from tests.config import DOC_RULES
 from tests.data import windturbine
 
@@ -98,6 +99,18 @@ class TestDMSImporter:
             dms_recreated.containers[windturbine.DISTANCE_CONTAINER_ID].dump() == windturbine.DISTANCE_CONTAINER.dump()
         )
 
+    def test_import_export_schema_with_inwards_edge_with_properties(self) -> None:
+        importer = DMSImporter(SCHEMA_INWARDS_EDGE_WITH_PROPERTIES)
+
+        result = ImporterPipeline.try_verify(importer)
+        rules = cast(DMSRules, result.rules)
+        issues = result.issues
+        assert len(issues) == 0
+
+        dms_recreated = DMSExporter().export(rules)
+
+        assert dms_recreated.views.dump() == SCHEMA_INWARDS_EDGE_WITH_PROPERTIES.views.dump()
+
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
     data_model=dm.DataModelApply(
@@ -131,4 +144,87 @@ SCHEMA_WITH_DIRECT_RELATION_NONE.views[dm.ViewId("neat", "OneView", "1")] = dm.V
             description="Direction Relation",
         )
     },
+)
+SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
+    data_model=dm.DataModelApply(
+        space="neat",
+        external_id="data_model",
+        version="1",
+        description="Creator: MISSING",
+        views=[
+            dm.ViewId("neat", "EdgeView", "1"),
+            dm.ViewId("neat", "NodeView1", "1"),
+            dm.ViewId("neat", "NodeView2", "1"),
+        ],
+    ),
+    spaces=SpaceApplyDict([dm.SpaceApply(space="neat")]),
+    views=ViewApplyDict(
+        [
+            dm.ViewApply(
+                space="neat",
+                external_id="NodeView1",
+                version="1",
+                filter=dm.filters.Equals(
+                    ["node", "type"],
+                    value={
+                        "space": "neat",
+                        "externalId": "NodeView1",
+                    },
+                ),
+                properties={
+                    "to": dm.MultiEdgeConnectionApply(
+                        type=dm.DirectRelationReference("neat", "myEdgeType"),
+                        source=dm.ViewId("neat", "NodeView2", "1"),
+                        edge_source=dm.ViewId("neat", "EdgeView", "1"),
+                        direction="inwards",
+                    )
+                },
+            ),
+            dm.ViewApply(
+                space="neat",
+                external_id="NodeView2",
+                version="1",
+                filter=dm.filters.Equals(
+                    ["node", "type"],
+                    value={
+                        "space": "neat",
+                        "externalId": "NodeView2",
+                    },
+                ),
+                properties={
+                    "from": dm.MultiEdgeConnectionApply(
+                        type=dm.DirectRelationReference("neat", "myEdgeType"),
+                        source=dm.ViewId("neat", "NodeView1", "1"),
+                        edge_source=dm.ViewId("neat", "EdgeView", "1"),
+                        direction="outwards",
+                    )
+                },
+            ),
+            dm.ViewApply(
+                space="neat",
+                external_id="EdgeView",
+                version="1",
+                filter=dm.filters.HasData(containers=[dm.ContainerId("neat", "container")]),
+                properties={
+                    "distance": dm.MappedPropertyApply(
+                        container=dm.ContainerId("neat", "container"),
+                        container_property_identifier="distance",
+                    )
+                },
+            ),
+        ]
+    ),
+    containers=ContainerApplyDict(
+        [
+            dm.ContainerApply(
+                space="neat",
+                external_id="container",
+                properties={
+                    "distance": dm.ContainerProperty(
+                        type=dm.data_types.Float64(),
+                    )
+                },
+            )
+        ]
+    ),
 )

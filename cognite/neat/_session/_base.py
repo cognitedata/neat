@@ -55,7 +55,7 @@ class NeatSession:
                 self._state.store.add_rules(output.rules)
         self._state.issue_lists.append(output.issues)
         if output.issues:
-            print("You can inspect the issues with the .inspect attribute.")
+            print("You can inspect the issues with the .inspect.issues(...) method.")
         return output.issues
 
     def convert(self, target: Literal["dms"]) -> None:

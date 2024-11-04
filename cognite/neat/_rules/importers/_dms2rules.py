@@ -346,7 +346,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             property_=prop_id,
             description=prop.description,
             name=prop.name,
-            connection=self._get_connection_type(prop_id, prop, view_entity.as_id()),
+            connection=self._get_connection_type(prop),
             value_type=str(value_type),
             is_list=self._get_is_list(prop),
             nullable=self._get_nullable(prop),
@@ -367,19 +367,13 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         return self._all_containers_by_id[prop.container].properties[prop.container_property_identifier]
 
     def _get_connection_type(
-        self, prop_id: str, prop: ViewPropertyApply, view_id: dm.ViewId
+        self, prop: ViewPropertyApply
     ) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
-        if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "outwards":
+        if isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply):
             properties = ViewEntity.from_id(prop.edge_source) if prop.edge_source is not None else None
-            return EdgeEntity(properties=properties, type=DMSNodeEntity.from_reference(prop.type), direction="outwards")
-        elif isinstance(prop, SingleEdgeConnectionApply | MultiEdgeConnectionApply) and prop.direction == "inwards":
-            if reverse_prop := self._find_reverse_edge(prop_id, prop, view_id):
-                return ReverseConnectionEntity(property=reverse_prop)
-            else:
-                properties = ViewEntity.from_id(prop.source) if prop.edge_source is not None else None
-                return EdgeEntity(
-                    properties=properties, type=DMSNodeEntity.from_reference(prop.type), direction="inwards"
-                )
+            return EdgeEntity(
+                properties=properties, type=DMSNodeEntity.from_reference(prop.type), direction=prop.direction
+            )
         elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):
             return ReverseConnectionEntity(property=prop.through.property)
         elif isinstance(prop, dm.MappedPropertyApply) and isinstance(
