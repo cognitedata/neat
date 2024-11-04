@@ -30,7 +30,9 @@ class UploadResultCore(NeatObject, ABC):
         return {"name": self.name}
 
 
-class UploadResultList(NeatList[UploadResultCore]): ...
+class UploadResultList(NeatList[UploadResultCore]):
+    def _repr_html_(self) -> str:
+        return self.to_pandas().fillna(0)._repr_html_()  # type: ignore[operator]
 
 
 @dataclass
