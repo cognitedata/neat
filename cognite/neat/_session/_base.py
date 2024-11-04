@@ -71,7 +71,7 @@ class NeatSession:
             "NeatInferredDataModel",
             "v1",
         ),
-        max_number_of_instance: int = -1,
+        max_number_of_instance: int = 1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ) -> IssueList:
         model_id = dm.DataModelId.load(model_id)
