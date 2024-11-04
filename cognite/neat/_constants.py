@@ -19,7 +19,17 @@ def _is_in_notebook() -> bool:
     return True
 
 
-IN_NOTEBOOK = _is_in_notebook()
+def _is_in_browser() -> bool:
+    try:
+        from pyodide.ffi import IN_BROWSER  # type: ignore [import-not-found]
+    except ModuleNotFoundError:
+        return False
+    return IN_BROWSER
+
+
+IN_BROWSER = _is_in_browser()
+IN_NOTEBOOK = _is_in_notebook() or IN_BROWSER
+
 
 PACKAGE_DIRECTORY = Path(neat.__file__).parent
 COGNITE_MODELS = (
