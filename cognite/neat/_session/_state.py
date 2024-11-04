@@ -18,7 +18,7 @@ class SessionState:
     input_rules: list[ReadRules] = field(default_factory=list)
     verified_rules: list[VerifiedRules] = field(default_factory=list)
     issue_lists: list[IssueList] = field(default_factory=list)
-    write_results: list[UploadResultList] = field(default_factory=list)
+    outcome: list[UploadResultList] = field(default_factory=list)
     _store: NeatGraphStore | None = field(init=False, default=None)
 
     @property

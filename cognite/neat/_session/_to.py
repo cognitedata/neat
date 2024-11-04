@@ -7,6 +7,7 @@ from cognite.neat._graph import loaders
 from cognite.neat._issues import IssueList, catch_warnings
 from cognite.neat._rules import exporters
 from cognite.neat._session._wizard import space_wizard
+from cognite.neat._utils.upload import UploadResultCore
 
 from ._state import SessionState
 from .exceptions import intercept_session_exceptions
@@ -85,8 +86,8 @@ class CDFToAPI:
         if not self._client:
             raise ValueError("No client provided!")
 
-        deploy_issues = IssueList(action="to.cdf.data_model")
-        with catch_warnings(deploy_issues):
+        conversion_issues = IssueList(action="to.cdf.data_model")
+        with catch_warnings(conversion_issues):
             result = exporter.export_to_cdf(self._state.last_verified_dms_rules, self._client, dry_run)
-        self._state.issue_lists.append(deploy_issues)
+        result.insert(0, UploadResultCore(name="schema", issues=conversion_issues))
         return result
