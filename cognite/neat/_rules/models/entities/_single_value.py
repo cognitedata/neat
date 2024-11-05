@@ -187,10 +187,10 @@ class Entity(BaseModel, extra="ignore"):
         }
         if isinstance(defaults, dict):
             for key, value in defaults.items():
-                if key in model_dump and value == defaults.get(key):
+                if key in model_dump and model_dump[key] == value:
                     del model_dump[key]
-
-        args = ",".join(f"{k}={v}" for k, v in model_dump.items())
+        # Sorting to ensure deterministic order
+        args = ",".join(f"{k}={v}" for k, v in sorted(model_dump.items(), key=lambda x: x[0]))
         if self.prefix == Undefined or (isinstance(defaults, dict) and self.prefix == defaults.get("prefix")):
             base_id = str(self.suffix)
         else:
