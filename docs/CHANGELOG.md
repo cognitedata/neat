@@ -15,13 +15,16 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.96.2] - 05-11-**2024**
+## TBD
 ### Added
-- Can configure `neat.to.cdf.data_model` behavior for data model components that already exist in CDF
 - Introduce `neat.inspect.outcome(...)` to check the outcome of `cdf.to.data_model`.
 
 ### Fixed
 - `neat.to.cdf.data_model` no longer outputs warnings when creating a new data model in CDF.
+
+## [0.96.2] - 05-11-**2024**
+### Added
+- Can configure `neat.to.cdf.data_model` behavior for data model components that already exist in CDF
 
 ### Changed
 - When reading a data model from CDF, `inwards` edges are now treated as an edge with direction inwards and
