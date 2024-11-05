@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.96.2] - 05-11-**2024**
 ### Added
 - Can configure `neat.to.cdf.data_model` behavior for data model components that already exist in CDF
 
