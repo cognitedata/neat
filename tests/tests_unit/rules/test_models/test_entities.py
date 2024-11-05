@@ -96,15 +96,27 @@ TEST_CASES = [
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
         ),
     ),
+    (
+        EdgeEntity,
+        "edge(properties=StartEndTime,direction=inwards)",
+        EdgeEntity(
+            properties=ViewEntity(space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="StartEndTime"),
+            direction="inwards",
+        ),
+    ),
 ]
 
 
 class TestEntities:
     @pytest.mark.parametrize("cls_, raw, expected", TEST_CASES)
-    def test_load(self, cls_: type[Entity], raw: str, expected: Entity) -> None:
+    def test_load_dump(self, cls_: type[Entity], raw: str, expected: Entity) -> None:
         loaded = cls_.load(raw, space=DEFAULT_SPACE, version=DEFAULT_VERSION)
 
         assert loaded == expected
+
+        dumped = loaded.dump(space=DEFAULT_SPACE, version=DEFAULT_VERSION)
+
+        assert dumped == raw
 
 
 class TestEntityPattern:
