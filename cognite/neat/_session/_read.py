@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -10,8 +11,9 @@ from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.importers import RulesImporters
+from cognite.neat._store._provenance import Activity as ProvenanceActivity
 from cognite.neat._store._provenance import Change
+from cognite.neat._store._provenance import Entity as ProvenanceEntity
 
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, object_wizard, rdf_dm_wizard
@@ -35,9 +37,7 @@ class BaseReadAPI:
         self._verbose = verbose
         self._client = client
 
-    def _store_rules(self, importer: RulesImporters) -> None:
-        rules = importer.to_rules()
-
+    def _store_rules(self, rules: ReadRules, change: Change) -> IssueList:
         if self._verbose:
             if rules.issues.has_errors:
                 print("Data model read failed")
@@ -45,13 +45,6 @@ class BaseReadAPI:
                 print("Data model read passed")
 
         if rules.rules:
-            change = Change(
-                source_entity=importer.source_entity,
-                target_entity=importer.target_entity,
-                agent=importer.agent,
-                activity=importer.activity,
-                description="Read data model to NeatSession",
-            )
             self._state.data_model.write(rules, change)
 
         return rules.issues
@@ -83,9 +76,31 @@ class CDFReadAPI(BaseReadAPI):
         if not data_model_id.version:
             raise NeatSessionError("Data model version is required to read a data model.")
 
+        # actual reading of data model
+        start = datetime.now(timezone.utc)
         importer = importers.DMSImporter.from_data_model_id(self._get_client, data_model_id)
+        rules = importer.to_rules()
+        end = datetime.now(timezone.utc)
 
-        return self._store_rules(importer)
+        # provenance information
+        source_entity = ProvenanceEntity.from_data_model_id(data_model_id)
+        agent = importer.agent
+        activity = ProvenanceActivity(
+            was_associated_with=agent,
+            ended_at_time=end,
+            used=source_entity,
+            started_at_time=start,
+        )
+        target_entity = ProvenanceEntity.from_rules(rules, agent, activity)
+        change = Change(
+            source_entity=source_entity,
+            agent=agent,
+            activity=activity,
+            target_entity=target_entity,
+            description=f"DMS Data model {data_model_id.as_tuple()} read as unverified data model",
+        )
+
+        return self._store_rules(rules, change)
 
 
 @intercept_session_exceptions
@@ -107,8 +122,21 @@ class CDFClassicAPI(BaseReadAPI):
 class ExcelReadAPI(BaseReadAPI):
     def __call__(self, io: Any) -> IssueList:
         filepath = self._return_filepath(io)
-        input_rules: ReadRules = importers.ExcelImporter(filepath).to_rules()
-        self._store_rules(io, input_rules, "Excel")
+        start = datetime.now(timezone.utc)
+        importer: importers.ExcelImporter = importers.ExcelImporter(filepath)
+        input_rules: ReadRules = importer.to_rules()
+        end = datetime.now(timezone.utc)
+
+        if input_rules.rules:
+            change = Change.from_rules_activity(
+                input_rules,
+                importer.agent,
+                start,
+                end,
+                description=f"Excel file {filepath} read as unverified data model",
+            )
+            self._store_rules(input_rules, change)
+
         return input_rules.issues
 
 
@@ -118,16 +146,42 @@ class RDFReadAPI(BaseReadAPI):
         super().__init__(state, client, verbose)
         self.examples = RDFExamples(state)
 
-    def _ontology(self, io: Any) -> IssueList:
+    def ontology(self, io: Any) -> IssueList:
+        start = datetime.now(timezone.utc)
         filepath = self._return_filepath(io)
-        input_rules: ReadRules = importers.OWLImporter.from_file(filepath).to_rules()
-        self._store_rules(io, input_rules, "Ontology")
+        importer = importers.OWLImporter.from_file(filepath)
+        input_rules: ReadRules = importer.to_rules()
+        end = datetime.now(timezone.utc)
+
+        if input_rules.rules:
+            change = Change.from_rules_activity(
+                input_rules,
+                importer.agent,
+                start,
+                end,
+                description=f"Ontology file {filepath} read as unverified data model",
+            )
+            self._store_rules(input_rules, change)
+
         return input_rules.issues
 
-    def _imf(self, io: Any) -> IssueList:
+    def imf(self, io: Any) -> IssueList:
+        start = datetime.now(timezone.utc)
         filepath = self._return_filepath(io)
-        input_rules: ReadRules = importers.IMFImporter.from_file(filepath).to_rules()
-        self._store_rules(io, input_rules, "IMF Types")
+        importer = importers.IMFImporter.from_file(filepath)
+        input_rules: ReadRules = importer.to_rules()
+        end = datetime.now(timezone.utc)
+
+        if input_rules.rules:
+            change = Change.from_rules_activity(
+                input_rules,
+                importer.agent,
+                start,
+                end,
+                description=f"IMF Types file {filepath} read as unverified data model",
+            )
+            self._store_rules(input_rules, change)
+
         return input_rules.issues
 
     def __call__(
@@ -142,17 +196,17 @@ class RDFReadAPI(BaseReadAPI):
         if type.lower() == "Data Model".lower():
             source = source or rdf_dm_wizard("What type of data model is the RDF?")
             if source == "Ontology":
-                return self._ontology(io)
+                return self.ontology(io)
             elif source == "IMF":
-                return self._imf(io)
+                return self.imf(io)
             else:
                 raise ValueError(f"Expected ontology, imf or instances, got {source}")
 
         elif type.lower() == "Instances".lower():
-            self._state.store.write(extractors.RdfFileExtractor(self._return_filepath(io)))
+            self._state.instances.store.write(extractors.RdfFileExtractor(self._return_filepath(io)))
             return IssueList()
         else:
-            raise ValueError(f"Expected data model or instances, got {type}")
+            raise NeatSessionError(f"Expected data model or instances, got {type}")
 
 
 class RDFExamples:

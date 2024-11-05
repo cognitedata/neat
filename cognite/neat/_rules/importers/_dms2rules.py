@@ -19,7 +19,6 @@ from cognite.client.data_classes.data_modeling.views import (
 )
 from cognite.client.utils import ms_to_datetime
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList, NeatIssue
 from cognite.neat._issues.errors import FileTypeUnexpectedError, ResourceMissingIdentifierError, ResourceRetrievalError
 from cognite.neat._issues.warnings import (
@@ -54,13 +53,6 @@ from cognite.neat._rules.models.entities import (
     ReverseConnectionEntity,
     ViewEntity,
 )
-from cognite.neat._store._provenance import (
-    UNKNOWN_AGENT,
-)
-from cognite.neat._store._provenance import (
-    Activity as ProvenanceActivity,
-)
-from cognite.neat._store._provenance import Entity as ProvenanceEntity
 
 
 class DMSImporter(BaseImporter[DMSInputRules]):
@@ -80,7 +72,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         read_issues: Sequence[NeatIssue] | None = None,
         metadata: DMSInputMetadata | None = None,
         ref_metadata: DMSInputMetadata | None = None,
-        start: datetime | None = None,
     ):
         # Calling this root schema to distinguish it from
         # * User Schema
@@ -94,9 +85,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         if schema.reference:
             self._all_containers_by_id.update(schema.reference.containers.items())
             self._all_views_by_id.update(schema.reference.views.items())
-
-        self._start = start
-        self._end: datetime | None = None
 
     @classmethod
     def from_data_model_id(
@@ -117,8 +105,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             DMSImporter: DMSImporter instance
         """
 
-        start = datetime.now(timezone.utc)
-
         data_model_ids = [data_model_id, reference_model_id] if reference_model_id else [data_model_id]
         data_models = client.data_modeling.data_models.retrieve(data_model_ids, inline_views=True)
 
@@ -133,7 +119,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                         "Data Model is missing in CDF",
                     )
                 ],
-                start=start,
             )
         user_model = user_models.latest_version()
 
@@ -149,7 +134,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                             "Data Model is missing in CDF",
                         )
                     ],
-                    start=start,
                 )
             ref_model: dm.DataModel[dm.View] | None = ref_models.latest_version()
         else:
@@ -160,12 +144,12 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             schema = DMSSchema.from_data_model(client, user_model, ref_model)
 
         if result.result == "failure" or issue_list.has_errors:
-            return cls(DMSSchema(), issue_list, start=start)
+            return cls(DMSSchema(), issue_list)
 
         metadata = cls._create_metadata_from_model(user_model, has_reference=ref_model is not None)
         ref_metadata = cls._create_metadata_from_model(ref_model) if ref_model else None
 
-        return cls(schema, issue_list, metadata, ref_metadata, start=start)
+        return cls(schema, issue_list, metadata, ref_metadata)
 
     @classmethod
     def _find_model_in_list(
@@ -211,26 +195,23 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
     @classmethod
     def from_directory(cls, directory: str | Path) -> "DMSImporter":
-        start = datetime.now(timezone.utc)
         issue_list = IssueList()
         with _handle_issues(issue_list) as _:
             schema = DMSSchema.from_directory(directory)
         # If there were errors during the import, the to_rules
-        return cls(schema, issue_list, start=start)
+        return cls(schema, issue_list)
 
     @classmethod
     def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
-        start = datetime.now(timezone.utc)
         if Path(zip_file).suffix != ".zip":
             return cls(
                 DMSSchema(),
                 [FileTypeUnexpectedError(Path(zip_file), frozenset([".zip"]))],
-                start=start,
             )
         issue_list = IssueList()
         with _handle_issues(issue_list) as _:
             schema = DMSSchema.from_zip(zip_file)
-        return cls(schema, issue_list, start=start)
+        return cls(schema, issue_list)
 
     def to_rules(self) -> ReadRules[DMSInputRules]:
         if self.issue_list.has_errors:
@@ -560,42 +541,3 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                             )
                         )
         return enum_collections
-
-    @property
-    def source_entity(self) -> ProvenanceEntity | None:
-        if self.root_schema.data_model:
-            space = self.root_schema.data_model.space
-            external_id = self.root_schema.data_model.external_id
-            version = self.root_schema.data_model.version
-            return ProvenanceEntity(
-                was_attributed_to=UNKNOWN_AGENT,
-                id_=DEFAULT_NAMESPACE[f"dms/{space}/{external_id}/{version}"],
-            )
-
-        return None
-
-    @property
-    def activity(self) -> ProvenanceActivity | None:
-        if self._end:
-            return ProvenanceActivity(
-                was_associated_with=self.agent,
-                started_at_time=cast(datetime, self._start),
-                ended_at_time=self._end,
-                used=cast(ProvenanceEntity, self.source_entity),
-            )
-
-        return None
-
-    @property
-    def target_entity(self) -> ProvenanceEntity | None:
-        if self.root_schema.data_model and not self.issue_list.has_errors:
-            space = self.root_schema.data_model.space
-            external_id = self.root_schema.data_model.external_id
-            version = self.root_schema.data_model.version
-            return ProvenanceEntity(
-                was_generated_by=self.activity,
-                was_attributed_to=self.agent,
-                id_=DEFAULT_NAMESPACE[f"unverified/dms/{space}/{external_id}/{version}"],
-            )
-
-        return None

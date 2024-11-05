@@ -10,7 +10,11 @@ from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
 from rdflib import Namespace
 
-from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._constants import (
+    COGNITE_MODELS,
+    DEFAULT_NAMESPACE,
+    DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
+)
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings._models import (
     EnterpriseModelNotBuildOnTopOfCDMWarning,
@@ -54,6 +58,7 @@ from cognite.neat._rules.models.information._rules_input import (
     InformationInputProperty,
     InformationInputRules,
 )
+from cognite.neat._store._provenance import Agent as ProvenanceAgent
 from cognite.neat._utils.collection_ import remove_list_elements
 from cognite.neat._utils.text import to_camel
 
@@ -76,6 +81,11 @@ class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRul
     def _transform(self, rules: T_VerifiedInRules) -> T_VerifiedOutRules:
         raise NotImplementedError()
 
+    @property
+    def agent(self) -> ProvenanceAgent:
+        """Provenance agent for the importer."""
+        return ProvenanceAgent(id_=DEFAULT_NAMESPACE[f"agent/{type(self).__name__}"])
+
 
 class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInputRules]):  # type: ignore[misc]
     """Converts input rules to rules with compliant entity IDs that match regex patters used
@@ -83,7 +93,7 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
 
     def transform(
         self, rules: InformationInputRules | OutRules[InformationInputRules]
-    ) -> OutRules[InformationInputRules]:
+    ) -> JustRules[InformationInputRules]:
         return JustRules(self._transform(self._to_rules(rules)))
 
     def _transform(self, rules: InformationInputRules) -> InformationInputRules:

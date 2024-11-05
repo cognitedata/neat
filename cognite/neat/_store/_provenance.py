@@ -13,9 +13,11 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, TypeVar
 
+from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from rdflib import PROV, RDF, Literal, URIRef
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._constants import CDF_NAMESPACE, DEFAULT_NAMESPACE
+from cognite.neat._rules._shared import JustRules, ReadRules, VerifiedRules
 from cognite.neat._shared import FrozenNeatObject, NeatList
 
 
@@ -29,6 +31,11 @@ class Agent:
             (self.id_, RDF.type, PROV[type(self).__name__]),
             (self.id_, PROV.actedOnBehalfOf, self.acted_on_behalf_of),
         ]
+
+
+CDF_AGENT = Agent(acted_on_behalf_of="UNKNOWN", id_=CDF_NAMESPACE["agent"])
+NEAT_AGENT = Agent(acted_on_behalf_of="UNKNOWN", id_=DEFAULT_NAMESPACE["agent"])
+UNKNOWN_AGENT = Agent(acted_on_behalf_of="UNKNOWN", id_=DEFAULT_NAMESPACE["unknown-agent"])
 
 
 @dataclass(frozen=True)
@@ -48,13 +55,69 @@ class Entity:
             (self.id_, PROV.wasAttributedTo, self.was_attributed_to.id_),
         ]
 
+    @classmethod
+    def from_data_model_id(cls, data_model_id: DataModelIdentifier):
+        data_model_id = DataModelId.load(data_model_id)
+
+        return cls(
+            was_attributed_to=CDF_AGENT,
+            id_=CDF_NAMESPACE[
+                f"dms/data-model/{data_model_id.space}/{data_model_id.external_id}/{data_model_id.version}"
+            ],
+        )
+
+    @classmethod
+    def from_rules(
+        cls,
+        rules: ReadRules | JustRules | VerifiedRules,
+        agent: Agent | None = None,
+        activity: "Activity | None" = None,
+    ):
+        agent = agent or UNKNOWN_AGENT
+        if isinstance(rules, VerifiedRules):
+            return cls(
+                was_attributed_to=agent,
+                was_generated_by=activity,
+                id_=rules.id_,
+            )
+
+        elif isinstance(rules, ReadRules) and rules.rules:
+            return cls(
+                was_attributed_to=agent,
+                was_generated_by=activity,
+                id_=rules.rules.id_,
+            )
+        elif isinstance(rules, JustRules):
+            return cls(
+                was_attributed_to=agent,
+                was_generated_by=activity,
+                id_=rules.rules.id_,
+            )
+
+        else:
+            return cls(
+                was_attributed_to=agent,
+                was_generated_by=activity,
+                id_=DEFAULT_NAMESPACE["unknown-entity"],
+            )
+
+    @classmethod
+    def new_unknown_entity(cls):
+        return cls(
+            was_attributed_to=UNKNOWN_AGENT,
+            id_=DEFAULT_NAMESPACE[f"unknown-entity/{uuid.uuid4()}"],
+        )
+
+
+INSTANCES_ENTITY = Entity(was_attributed_to=NEAT_AGENT, id_=CDF_NAMESPACE["instances"])
+
 
 @dataclass(frozen=True)
 class Activity:
     was_associated_with: Agent
     ended_at_time: datetime
     started_at_time: datetime
-    used: str | Entity
+    used: str | Entity | None = None
     id_: URIRef = DEFAULT_NAMESPACE[f"activity-{uuid.uuid4()}"]
 
     def as_triples(self):
@@ -71,17 +134,13 @@ class Activity:
         ]
 
 
-UNKNOWN_AGENT = Agent(acted_on_behalf_of="UNKNOWN", id_=DEFAULT_NAMESPACE["unknown-agent"])
-UNKNOWN_ENTITY = Entity(was_attributed_to=UNKNOWN_AGENT, id_=DEFAULT_NAMESPACE["unknown-entity"])
-
-
 @dataclass(frozen=True)
 class Change(FrozenNeatObject):
     agent: Agent
     activity: Activity
     target_entity: Entity
     description: str
-    source_entity: Entity = field(default=UNKNOWN_ENTITY)
+    source_entity: Entity = field(default=Entity.new_unknown_entity())
 
     def as_triples(self):
         return (
@@ -104,6 +163,34 @@ class Change(FrozenNeatObject):
             activity=activity,
             target_entity=target_entity,
             description=description,
+        )
+
+    @classmethod
+    def from_rules_activity(
+        cls,
+        rules: ReadRules | JustRules | VerifiedRules,
+        agent: Agent,
+        start: datetime,
+        end: datetime,
+        description: str,
+        source_entity: Entity | None = None,
+    ):
+        source_entity = source_entity or Entity.new_unknown_entity()
+        activity = Activity(
+            started_at_time=start,
+            ended_at_time=end,
+            was_associated_with=agent,
+            used=source_entity,
+        )
+
+        target_entity = Entity.from_rules(rules, agent, activity)
+
+        return cls(
+            agent=agent,
+            activity=activity,
+            target_entity=target_entity,
+            description=description,
+            source_entity=source_entity,
         )
 
     def dump(self, aggregate: bool = True) -> dict[str, str]:
@@ -141,3 +228,12 @@ class Provenance(NeatList[Change]):
         text += "</ul>"
 
         return text
+
+    def activity(self, id_: URIRef) -> Activity | None:
+        return next((change for change in self if change.activity.id_ == id_), None)
+
+    def agent(self, id_: URIRef) -> Agent | None:
+        return next((change for change in self if change.agent.id_ == id_), None)
+
+    def entity(self, id_: URIRef) -> Entity | None:
+        return next((change for change in self if change.target_entity.id_ == id_), None)

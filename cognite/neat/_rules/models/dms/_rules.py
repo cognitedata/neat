@@ -9,7 +9,9 @@ import pandas as pd
 from cognite.client import data_modeling as dm
 from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
+from rdflib import URIRef
 
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import MultiValueError
 from cognite.neat._issues.warnings import (
     PrincipleMatchingSpaceAndVersionWarning,
@@ -467,3 +469,9 @@ class DMSRules(BaseRules):
         }
 
         return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore
+
+    @property
+    def id_(self) -> URIRef:
+        return DEFAULT_NAMESPACE[
+            f"data-model/verified/dms/{self.metadata.space}/{self.metadata.external_id}/{self.metadata.version}"
+        ]

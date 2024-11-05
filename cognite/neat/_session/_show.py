@@ -69,16 +69,16 @@ class ShowDataModelAPI(ShowBaseAPI):
         self._state = state
 
     def __call__(self) -> Any:
-        if not self._state.has_verified_rules:
+        if not self._state.data_model.has_verified_rules:
             raise NeatSessionError(
                 "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
             )
 
         try:
-            di_graph = self._generate_dms_di_graph(self._state.last_verified_dms_rules)
+            di_graph = self._generate_dms_di_graph(self._state.data_model.last_verified_dms_rules[1])
             name = "dms_data_model.html"
         except NeatSessionError:
-            di_graph = self._generate_info_di_graph(self._state.last_verified_information_rules)
+            di_graph = self._generate_info_di_graph(self._state.data_model.last_verified_information_rules[1])
             name = "information_data_model.html"
 
         return self._generate_visualization(di_graph, name)
@@ -167,7 +167,7 @@ class ShowInstanceAPI(ShowBaseAPI):
         self._state = state
 
     def __call__(self) -> Any:
-        if not self._state.store.graph:
+        if not self._state.instances.store.graph:
             raise NeatSessionError("No instances available. Try using [bold].read[/bold] to load instances.")
 
         di_graph = self._generate_instance_di_graph_and_types()
@@ -189,7 +189,7 @@ class ShowInstanceAPI(ShowBaseAPI):
 
         di_graph = nx.DiGraph()
 
-        types = [type_ for type_, _ in self._state.store.queries.summarize_instances()]
+        types = [type_ for type_, _ in self._state.instances.store.queries.summarize_instances()]
         hex_colored_types = self._generate_hex_color_per_type(types)
 
         for (  # type: ignore
@@ -198,7 +198,7 @@ class ShowInstanceAPI(ShowBaseAPI):
             object,
             subject_type,
             object_type,
-        ) in self._state.store.graph.query(query):
+        ) in self._state.instances.store.graph.query(query):
             subject = remove_namespace_from_uri(subject)
             property_ = remove_namespace_from_uri(property_)
             object = remove_namespace_from_uri(object)

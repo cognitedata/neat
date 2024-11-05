@@ -8,7 +8,7 @@ from cognite.neat._rules import exporters
 from cognite.neat._session._wizard import space_wizard
 
 from ._state import SessionState
-from .exceptions import intercept_session_exceptions
+from .exceptions import NeatSessionError, intercept_session_exceptions
 
 
 @intercept_session_exceptions
@@ -23,7 +23,7 @@ class ToAPI:
         io: Any,
     ) -> None:
         exporter = exporters.ExcelExporter()
-        exporter.export_to_file(self._state.last_verified_rule, Path(io))
+        exporter.export_to_file(self._state.data_model.last_verified_rule[1], Path(io))
         return None
 
     @overload
@@ -35,9 +35,9 @@ class ToAPI:
     def yaml(self, io: Any | None = None) -> str | None:
         exporter = exporters.YAMLExporter()
         if io is None:
-            return exporter.export(self._state.last_verified_rule)
+            return exporter.export(self._state.data_model.last_verified_rule[1])
 
-        exporter.export_to_file(self._state.last_verified_rule, Path(io))
+        exporter.export_to_file(self._state.data_model.last_verified_rule[1], Path(io))
         return None
 
 
@@ -49,15 +49,14 @@ class CDFToAPI:
         self._verbose = verbose
 
     def instances(self, space: str | None = None):
-        if not self._state.last_verified_dms_rules:
-            raise ValueError("No verified DMS data model available")
-
         loader = loaders.DMSLoader.from_rules(
-            self._state.last_verified_dms_rules, self._state.store, space_wizard(space=space)
+            self._state.data_model.last_verified_dms_rules[1],
+            self._state.instances.store,
+            space_wizard(space=space),
         )
 
         if not self._client:
-            raise ValueError("No client provided!")
+            raise NeatSessionError("No CDF client provided!")
 
         return loader.load_into_cdf(self._client)
 
@@ -68,12 +67,10 @@ class CDFToAPI:
             existing_handling: How to handle if component of data model exists. Defaults to "skip".
 
         """
-        if not self._state.last_verified_dms_rules:
-            raise ValueError("No verified DMS data model available")
 
         exporter = exporters.DMSExporter(existing_handling=existing_handling)
 
         if not self._client:
-            raise ValueError("No client provided!")
+            raise NeatSessionError("No client provided!")
 
-        return exporter.export_to_cdf(self._state.last_verified_dms_rules, self._client)
+        return exporter.export_to_cdf(self._state.data_model.last_verified_dms_rules[1], self._client)

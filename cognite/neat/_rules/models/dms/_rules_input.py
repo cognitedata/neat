@@ -5,7 +5,9 @@ from typing import Any, Literal
 
 import pandas as pd
 from cognite.client import data_modeling as dm
+from rdflib import URIRef
 
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.models._base_input import InputComponent, InputRules
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import (
@@ -307,3 +309,9 @@ class DMSInputRules(InputRules[DMSRules]):
         }
 
         return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore
+
+    @property
+    def id_(self) -> URIRef:
+        return DEFAULT_NAMESPACE[
+            f"data-model/unverified/dms/{self.metadata.space}/{self.metadata.external_id}/{self.metadata.version}"
+        ]
