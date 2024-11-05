@@ -178,7 +178,7 @@ INPUT_RULES = DMSInputRules(
             "MetMast",
             "windTurbines",
             "WindTurbine",
-            connection="reverse(property=metmasts)",
+            connection="edge(properties=Distance, type=distance, direction=inwards)",
             is_list=True,
         ),
         DMSInputProperty(

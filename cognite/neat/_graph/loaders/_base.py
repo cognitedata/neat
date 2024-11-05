@@ -6,7 +6,7 @@ from typing import ClassVar, Generic, TypeVar
 from cognite.client import CogniteClient
 from cognite.client.data_classes.capabilities import Capability
 
-from cognite.neat._issues import IssueList, NeatIssue, NeatIssueList
+from cognite.neat._issues import IssueList, NeatIssue
 from cognite.neat._issues.errors import AuthorizationError
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import class_html_doc
@@ -94,6 +94,6 @@ class CDFLoader(BaseLoader[T_Output]):
         client: CogniteClient,
         items: list[T_Output],
         dry_run: bool,
-        read_issues: NeatIssueList,
+        read_issues: IssueList,
     ) -> Iterable[UploadResult]:
         raise NotImplementedError

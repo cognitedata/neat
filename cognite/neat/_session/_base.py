@@ -76,9 +76,10 @@ class NeatSession:
             if isinstance(output.rules, InformationRules):
                 self._state.instances.store.add_rules(output.rules)
 
+        output.issues.action = "verify"
         self._state.data_model.issue_lists.append(output.issues)
         if output.issues:
-            print("You can inspect the issues with the .inspect attribute.")
+            print("You can inspect the issues with the .inspect.issues(...) method.")
         return output.issues
 
     def convert(self, target: Literal["dms", "information"]) -> None:

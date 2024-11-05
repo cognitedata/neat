@@ -11,6 +11,7 @@ from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._store._provenance import Change, Provenance
+from cognite.neat._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError
 
@@ -25,6 +26,7 @@ class SessionState:
 class InstancesState:
     store_type: Literal["memory", "oxigraph"]
     issue_lists: list[IssueList] = field(default_factory=list)
+    outcome: list[UploadResultList] = field(default_factory=list)
     _store: NeatGraphStore | None = field(init=False, default=None)
 
     @property
@@ -46,6 +48,7 @@ class DataModelState:
     _rules: dict[str, ReadRules | JustRules | VerifiedRules] = field(init=False, default_factory=dict)
     issue_lists: list[IssueList] = field(default_factory=list)
     provenance: Provenance = field(default_factory=Provenance)
+    outcome: list[UploadResultList] = field(default_factory=list)
 
     def write(self, rules: ReadRules | JustRules | VerifiedRules, change: Change) -> None:
         if change.target_entity.id_ in self._rules:
@@ -128,3 +131,11 @@ class DataModelState:
         if not self.issue_lists:
             raise NeatSessionError("No issues available. Try using [bold].verify()[/bold] to verify a data model.")
         return self.issue_lists[-1]
+
+    @property
+    def last_outcome(self) -> UploadResultList:
+        if not self.outcome:
+            raise NeatSessionError(
+                "No outcome available. Try using [bold].to.cdf[/bold] to upload a data model/instances."
+            )
+        return self.outcome[-1]

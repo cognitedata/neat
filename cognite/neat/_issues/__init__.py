@@ -1,7 +1,16 @@
 """This is module contains all the Neat Exceptions (Errors) and Warnings as well
 as some helper classes to handle them like NeatIssueList"""
 
-from ._base import DefaultWarning, IssueList, MultiValueError, NeatError, NeatIssue, NeatIssueList, NeatWarning
+from ._base import (
+    DefaultWarning,
+    IssueList,
+    MultiValueError,
+    NeatError,
+    NeatIssue,
+    NeatIssueList,
+    NeatWarning,
+    catch_warnings,
+)
 
 __all__ = [
     "NeatIssue",
@@ -11,4 +20,5 @@ __all__ = [
     "NeatIssueList",
     "IssueList",
     "MultiValueError",
+    "catch_warnings",
 ]

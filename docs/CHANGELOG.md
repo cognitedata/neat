@@ -15,9 +15,26 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.96.4] - 05-11-**2024**
+### Fixed
+- `neat.to.excel` or `neat.to.yaml` now correctly writes `ViewTypes` and `Edge` that do not have the default
+  value. For example, if the `Connection` was `edge(direction=inwards)` it would not be written to the Excel or
+  YAML file as `edge` as `direction=inwards` was not the default value. This is now fixed.
+
+## [0.96.3] - 05-11-**2024**
+### Added
+- Introduce `neat.inspect.outcome(...)` to check the outcome of `cdf.to.data_model`.
+
+### Fixed
+- `neat.to.cdf.data_model` no longer outputs warnings when creating a new data model in CDF.
+
+## [0.96.2] - 05-11-**2024**
 ### Added
 - Can configure `neat.to.cdf.data_model` behavior for data model components that already exist in CDF
+
+### Changed
+- When reading a data model from CDF, `inwards` edges are now treated as an edge with direction inwards and
+  not the reverse edge. 
 
 ## [0.96.1] - 04-11-**2024**
 ### Fixed

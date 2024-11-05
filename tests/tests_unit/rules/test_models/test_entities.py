@@ -75,7 +75,7 @@ TEST_CASES = [
     ),
     (
         EdgeEntity,
-        "edge(properties=Owns, type=sp_my_space:ownership)",
+        "edge(properties=Owns,type=ownership)",
         EdgeEntity(
             properties=ViewEntity(space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="Owns"),
             type=DMSNodeEntity(space="sp_my_space", externalId="ownership"),
@@ -83,7 +83,7 @@ TEST_CASES = [
     ),
     (
         EdgeEntity,
-        "edge(properties=Owns(version=34), type=ownership)",
+        "edge(properties=Owns(version=34),type=ownership)",
         EdgeEntity(
             properties=ViewEntity(space=DEFAULT_SPACE, version="34", externalId="Owns"),
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
@@ -96,15 +96,27 @@ TEST_CASES = [
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
         ),
     ),
+    (
+        EdgeEntity,
+        "edge(direction=inwards,properties=StartEndTime)",
+        EdgeEntity(
+            properties=ViewEntity(space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="StartEndTime"),
+            direction="inwards",
+        ),
+    ),
 ]
 
 
 class TestEntities:
     @pytest.mark.parametrize("cls_, raw, expected", TEST_CASES)
-    def test_load(self, cls_: type[Entity], raw: str, expected: Entity) -> None:
+    def test_load_dump(self, cls_: type[Entity], raw: str, expected: Entity) -> None:
         loaded = cls_.load(raw, space=DEFAULT_SPACE, version=DEFAULT_VERSION)
 
         assert loaded == expected
+
+        dumped = loaded.dump(space=DEFAULT_SPACE, version=DEFAULT_VERSION)
+
+        assert dumped == raw
 
 
 class TestEntityPattern:
