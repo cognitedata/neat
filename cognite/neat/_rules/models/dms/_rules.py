@@ -231,7 +231,9 @@ class DMSProperty(SheetRow):
     @field_serializer("connection", when_used="unless-none")
     def remove_defaults(self, value: Any, info: SerializationInfo) -> str:
         if isinstance(value, Entity) and (metadata := _metadata(info.context)):
-            default_type = f"{metadata.space}{self.view.external_id}.{self.view_property}"
+            default_type = f"{self.view.external_id}.{self.view_property}"
+            if isinstance(value, EdgeEntity) and value.edge_type and value.edge_type.space != metadata.space:
+                default_type = f"{metadata.space}{default_type}"
             return value.dump(space=metadata.space, version=metadata.version, type=default_type)
         return str(value)
 
