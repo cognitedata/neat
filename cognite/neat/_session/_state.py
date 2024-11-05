@@ -7,6 +7,7 @@ from cognite.neat._rules.models.dms._rules import DMSRules
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._store import NeatGraphStore
+from cognite.neat._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError
 
@@ -17,6 +18,7 @@ class SessionState:
     input_rules: list[ReadRules] = field(default_factory=list)
     verified_rules: list[VerifiedRules] = field(default_factory=list)
     issue_lists: list[IssueList] = field(default_factory=list)
+    outcome: list[UploadResultList] = field(default_factory=list)
     _store: NeatGraphStore | None = field(init=False, default=None)
 
     @property
@@ -33,6 +35,14 @@ class SessionState:
         if not self.input_rules:
             raise NeatSessionError("No input data model available. Try using [bold].read[/bold] to load a data model.")
         return self.input_rules[-1]
+
+    @property
+    def last_outcome(self) -> UploadResultList:
+        if not self.outcome:
+            raise NeatSessionError(
+                "No outcome available. Try using [bold].to.cdf[/bold] to upload a data model/instances."
+            )
+        return self.outcome[-1]
 
     @property
     def information_input_rule(self) -> ReadRules | None:

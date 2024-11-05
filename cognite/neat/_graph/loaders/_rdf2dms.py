@@ -293,7 +293,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         client: CogniteClient,
         items: list[dm.InstanceApply],
         dry_run: bool,
-        read_issues: NeatIssueList,
+        read_issues: IssueList,
     ) -> Iterable[UploadResult]:
         try:
             nodes = [item for item in items if isinstance(item, dm.NodeApply)]

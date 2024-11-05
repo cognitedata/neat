@@ -4,8 +4,10 @@ from typing import Any, Literal, overload
 from cognite.client import CogniteClient
 
 from cognite.neat._graph import loaders
+from cognite.neat._issues import IssueList, catch_warnings
 from cognite.neat._rules import exporters
 from cognite.neat._session._wizard import space_wizard
+from cognite.neat._utils.upload import UploadResultCore
 
 from ._state import SessionState
 from .exceptions import intercept_session_exceptions
@@ -61,11 +63,19 @@ class CDFToAPI:
 
         return loader.load_into_cdf(self._client)
 
-    def data_model(self, existing_handling: Literal["fail", "skip", "update", "force"] = "skip"):
+    def data_model(self, existing_handling: Literal["fail", "skip", "update", "force"] = "skip", dry_run: bool = False):
         """Export the verified DMS data model to CDF.
 
         Args:
             existing_handling: How to handle if component of data model exists. Defaults to "skip".
+            dry_run: If True, no changes will be made to CDF. Defaults to False.
+
+        ... note::
+
+        - "fail": If any component already exists, the export will fail.
+        - "skip": If any component already exists, it will be skipped.
+        - "update": If any component already exists, it will be updated.
+        - "force": If any component already exists, it will be deleted and recreated.
 
         """
         if not self._state.last_verified_dms_rules:
@@ -76,4 +86,10 @@ class CDFToAPI:
         if not self._client:
             raise ValueError("No client provided!")
 
-        return exporter.export_to_cdf(self._state.last_verified_dms_rules, self._client)
+        conversion_issues = IssueList(action="to.cdf.data_model")
+        with catch_warnings(conversion_issues):
+            result = exporter.export_to_cdf(self._state.last_verified_dms_rules, self._client, dry_run)
+        result.insert(0, UploadResultCore(name="schema", issues=conversion_issues))
+        self._state.outcome.append(result)
+        print("You can inspect the details with the .inspect.outcome(...) method.")
+        return result

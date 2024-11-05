@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from functools import total_ordering
 from typing import Any, Generic
 
-from cognite.neat._issues import NeatIssueList
+from cognite.neat._issues import IssueList
 from cognite.neat._shared import T_ID, NeatList, NeatObject
 
 
@@ -12,7 +12,7 @@ from cognite.neat._shared import T_ID, NeatList, NeatObject
 class UploadResultCore(NeatObject, ABC):
     name: str
     error_messages: list[str] = field(default_factory=list)
-    issues: NeatIssueList = field(default_factory=NeatIssueList)
+    issues: IssueList = field(default_factory=IssueList)
 
     def __lt__(self, other: object) -> bool:
         if isinstance(other, UploadResultCore):
@@ -27,10 +27,19 @@ class UploadResultCore(NeatObject, ABC):
             return NotImplemented
 
     def dump(self, aggregate: bool = True) -> dict[str, Any]:
-        return {"name": self.name}
+        output: dict[str, Any] = {"name": self.name}
+        if self.error_messages:
+            output["error_messages"] = len(self.error_messages) if aggregate else self.error_messages
+        if self.issues:
+            output["issues"] = len(self.issues) if aggregate else [issue.dump() for issue in self.issues]
+        return output
 
 
-class UploadResultList(NeatList[UploadResultCore]): ...
+class UploadResultList(NeatList[UploadResultCore]):
+    def _repr_html_(self) -> str:
+        df = self.to_pandas().fillna(0)
+        df = df.style.format({column: "{:,.0f}".format for column in df.select_dtypes(include="number").columns})
+        return df._repr_html_()  # type: ignore[attr-defined]
 
 
 @dataclass
@@ -85,10 +94,12 @@ class UploadResult(UploadResultCore, Generic[T_ID]):
             output["failed_changed"] = len(self.failed_changed) if aggregate else list(self.failed_changed)
         if self.failed_deleted:
             output["failed_deleted"] = len(self.failed_deleted) if aggregate else list(self.failed_deleted)
-        if self.error_messages:
-            output["error_messages"] = len(self.error_messages) if aggregate else self.error_messages
-        if self.issues:
-            output["issues"] = len(self.issues) if aggregate else [issue.dump() for issue in self.issues]
+        if "error_messages" in output:
+            # Trick to move error_messages to the end of the dict
+            output["error_messages"] = output.pop("error_messages")
+        if "issues" in output:
+            # Trick to move issues to the end of the dict
+            output["issues"] = output.pop("issues")
         return output
 
     def __str__(self) -> str:
