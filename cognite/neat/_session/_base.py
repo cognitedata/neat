@@ -61,8 +61,6 @@ class NeatSession:
         output = transformer.try_transform(last_unverified_rule)
         end = datetime.now(timezone.utc)
 
-        print(type(output.rules))
-
         if output.rules:
             change = Change.from_rules_activity(
                 output.rules,
