@@ -19,7 +19,7 @@ from cognite.client.exceptions import CogniteAPIError, CogniteDuplicatedError
 
 from cognite.neat._graph._tracking.base import Tracker
 from cognite.neat._graph._tracking.log import LogTracker
-from cognite.neat._issues import IssueList, NeatError, NeatIssue, NeatIssueList
+from cognite.neat._issues import IssueList, NeatError, NeatIssue
 from cognite.neat._issues.errors import ResourceCreationError, ResourceNotFoundError
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.analysis._asset import AssetAnalysis
@@ -283,7 +283,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
         client: CogniteClient,
         items: list[AssetWrite] | list[RelationshipWrite] | list[LabelDefinitionWrite],
         dry_run: bool,
-        read_issues: NeatIssueList,
+        read_issues: IssueList,
     ) -> Iterable[UploadResult]:
         if isinstance(items[0], AssetWrite) and all(isinstance(item, AssetWrite) for item in items):
             yield from self._upload_assets_to_cdf(client, cast(list[AssetWrite], items), dry_run, read_issues)
@@ -303,7 +303,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
         client: CogniteClient,
         items: list[LabelDefinitionWrite],
         dry_run: bool,
-        read_issues: NeatIssueList,
+        read_issues: IssueList,
     ) -> Iterable[UploadResult]:
         try:
             created = client.labels.create(items)
@@ -324,7 +324,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
         client: CogniteClient,
         items: list[AssetWrite],
         dry_run: bool,
-        read_issues: NeatIssueList,
+        read_issues: IssueList,
     ) -> Iterable[UploadResult]:
         try:
             upserted = client.assets.upsert(items, mode="replace")
@@ -345,7 +345,7 @@ class AssetLoader(CDFLoader[AssetWrite]):
         client: CogniteClient,
         items: list[RelationshipWrite],
         dry_run: bool,
-        read_issues: NeatIssueList,
+        read_issues: IssueList,
     ) -> Iterable[UploadResult]:
         try:
             upserted = client.relationships.upsert(items, mode="replace")

@@ -2,7 +2,8 @@ import inspect
 import sys
 import warnings
 from abc import ABC
-from collections.abc import Collection, Hashable, Iterable, Sequence
+from collections.abc import Collection, Hashable, Iterable, Iterator, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, fields
 from functools import total_ordering
 from pathlib import Path
@@ -371,9 +372,12 @@ T_NeatIssue = TypeVar("T_NeatIssue", bound=NeatIssue)
 class NeatIssueList(list, Sequence[T_NeatIssue], ABC):
     """This is a generic list of NeatIssues."""
 
-    def __init__(self, issues: Sequence[T_NeatIssue] | None = None, title: str | None = None):
+    def __init__(
+        self, issues: Sequence[T_NeatIssue] | None = None, title: str | None = None, action: str | None = None
+    ):
         super().__init__(issues or [])
         self.title = title
+        self.action = action
 
     @property
     def errors(self) -> Self:
@@ -450,3 +454,18 @@ def _get_subclasses(cls_: type[T_Cls], include_base: bool = False) -> Iterable[t
     for s in cls_.__subclasses__():
         yield s
         yield from _get_subclasses(s, False)
+
+
+@contextmanager
+def catch_warnings(
+    issues: IssueList | None = None,
+    warning_cls: type[NeatWarning] = DefaultWarning,
+) -> Iterator[None]:
+    """Catch warnings and append them to the issues list."""
+    with warnings.catch_warnings(record=True) as warning_logger:
+        warnings.simplefilter("always")
+        try:
+            yield None
+        finally:
+            if warning_logger and issues is not None:
+                issues.extend([warning_cls.from_warning(warning) for warning in warning_logger])  # type: ignore[misc]
