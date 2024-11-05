@@ -397,4 +397,4 @@ class InformationRules(BaseRules):
 
     @property
     def id_(self) -> URIRef:
-        return DEFAULT_NAMESPACE[f"data-model/unverified/info/{self.metadata.prefix}/{self.metadata.version}"]
+        return DEFAULT_NAMESPACE[f"data-model/verified/info/{self.metadata.prefix}/{self.metadata.version}"]
