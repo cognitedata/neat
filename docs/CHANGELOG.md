@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.96.4] - 05-11-**2024**
 ### Fixed
 - `neat.to.excel` or `neat.to.yaml` now correctly writes `ViewTypes` and `Edge` that do not have the default
   value. For example, if the `Connection` was `edge(direction=inwards)` it would not be written to the Excel or
