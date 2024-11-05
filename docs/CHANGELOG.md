@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Added
+- Added provenance on rules in NeatSession
+
 ## [0.96.4] - 05-11-**2024**
 ### Fixed
 - `neat.to.excel` or `neat.to.yaml` now correctly writes `ViewTypes` and `Edge` that do not have the default
@@ -34,7 +38,7 @@ Changes are grouped as follows:
 
 ### Changed
 - When reading a data model from CDF, `inwards` edges are now treated as an edge with direction inwards and
-  not the reverse edge. 
+  not the reverse edge.
 
 ## [0.96.1] - 04-11-**2024**
 ### Fixed
