@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, overload
+from typing import Any, Literal, overload
 
 from cognite.client import CogniteClient
 
@@ -61,11 +61,17 @@ class CDFToAPI:
 
         return loader.load_into_cdf(self._client)
 
-    def data_model(self):
+    def data_model(self, existing_handling: Literal["fail", "skip", "update", "force"] = "skip"):
+        """Export the verified DMS data model to CDF.
+
+        Args:
+            existing_handling: How to handle if component of data model exists. Defaults to "skip".
+
+        """
         if not self._state.last_verified_dms_rules:
             raise ValueError("No verified DMS data model available")
 
-        exporter = exporters.DMSExporter()
+        exporter = exporters.DMSExporter(existing_handling=existing_handling)
 
         if not self._client:
             raise ValueError("No client provided!")

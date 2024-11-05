@@ -15,6 +15,14 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.96.2] - 05-11-**2024**
+### Added
+- Can configure `neat.to.cdf.data_model` behavior for data model components that already exist in CDF
+
+### Changed
+- When reading a data model from CDF, `inwards` edges are now treated as an edge with direction inwards and
+  not the reverse edge. 
+
 ## [0.96.1] - 04-11-**2024**
 ### Fixed
 - `naet.show` working in a pyodide environment
