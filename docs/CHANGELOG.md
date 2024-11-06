@@ -18,7 +18,11 @@ Changes are grouped as follows:
 ## TBD
 ### Fixed
 - Serializing `ResourceNotDefinedError` class no longer raises a `ValueError`. This happens when a `ResourceNotDefinedError`
-  is found, for example, when calling `neat.verify()`. 
+  is found, for example, when calling `neat.verify()`.
+
+### Improved
+- When running `neat.to.cdf.data_model()` the entire response from CDF is now stored as an error message, not just the
+  text.
 
 ## [0.96.4] - 05-11-**2024**
 ### Fixed
