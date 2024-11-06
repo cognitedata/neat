@@ -24,6 +24,10 @@ Changes are grouped as follows:
 - When running `neat.to.cdf.data_model()` the entire response from CDF is now stored as an error message, not just the
   text.
 
+### Added
+- `neat.to.cdf.data_model()` now has a `fallback_one_by_one` parameter. If set to `True`, the views/containers will
+  be created one by one, if the batch creation fails.
+
 ## [0.96.4] - 05-11-**2024**
 ### Fixed
 - `neat.to.excel` or `neat.to.yaml` now correctly writes `ViewTypes` and `Edge` that do not have the default
