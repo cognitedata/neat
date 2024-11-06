@@ -200,7 +200,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                     try:
                         loader.delete(to_delete)
                     except CogniteAPIError as e:
-                        error_messages.append(f"Failed delete: {e.message}")
+                        error_messages.append(f"Failed delete: {e!s}")
 
                 if isinstance(loader, DataModelingLoader):
                     to_create = loader.sort_by_dependencies(to_create)
@@ -220,7 +220,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                     except CogniteAPIError as e:
                         failed_changed.update(loader.get_id(item) for item in e.failed + e.unknown)
                         changed.update(loader.get_id(item) for item in e.successful)
-                        error_messages.append(e.message)
+                        error_messages.append(str(e))
                     else:
                         changed.update(loader.get_id(item) for item in to_update)
                 elif self.existing_handling == "skip":
