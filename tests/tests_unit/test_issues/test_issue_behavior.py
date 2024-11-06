@@ -1,7 +1,9 @@
 import warnings
 
+from cognite.client import data_modeling as dm
+
 from cognite.neat._issues import IssueList
-from cognite.neat._issues.errors import ResourceCreationError
+from cognite.neat._issues.errors import ResourceCreationError, ResourceNotDefinedError
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._rules.transformers._verification import _catch_issues
 
@@ -26,3 +28,15 @@ class TestIssues:
             warnings.warn(my_warning, stacklevel=2)
 
         assert warning_list == IssueList([my_warning])
+
+    def test_dump_generic_specified(self) -> None:
+        my_issue = ResourceNotDefinedError[dm.ViewId](
+            identifier=dm.ViewId("neat", "SKUKpi", "v1"),
+            location="View Sheet",
+            row_number=66,
+            sheet_name="Properties",
+            resource_type="view",
+        )
+        dumped = my_issue.dump()
+
+        assert isinstance(dumped, dict)
