@@ -210,7 +210,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 except CogniteAPIError as e:
                     failed_created.update(loader.get_id(item) for item in e.failed + e.unknown)
                     created.update(loader.get_id(item) for item in e.successful)
-                    error_messages.append(e.message)
+                    error_messages.append(str(e))
                 else:
                     created.update(loader.get_id(item) for item in to_create)
 
