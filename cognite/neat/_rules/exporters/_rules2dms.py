@@ -118,12 +118,16 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
     def export(self, rules: DMSRules) -> DMSSchema:
         return rules.as_schema(include_pipeline=self.export_pipeline, instance_space=self.instance_space)
 
-    def delete_from_cdf(self, rules: DMSRules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
+    def delete_from_cdf(
+        self, rules: DMSRules, client: CogniteClient, dry_run: bool = False, skip_space: bool = False
+    ) -> Iterable[UploadResult]:
         to_export = self._prepare_exporters(rules, client)
 
         # we need to reverse order in which we are picking up the items to delete
         # as they are sorted in the order of creation and we need to delete them in reverse order
         for items, loader in reversed(to_export):
+            if skip_space and isinstance(loader, SpaceLoader):
+                continue
             item_ids = loader.get_ids(items)
             existing_items = loader.retrieve(item_ids)
             existing_ids = loader.get_ids(existing_items)
@@ -168,7 +172,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
 
         result_by_name = {}
         if self.existing_handling == "force":
-            for delete_result in self.delete_from_cdf(rules, client, dry_run):
+            for delete_result in self.delete_from_cdf(rules, client, dry_run, skip_space=True):
                 result_by_name[delete_result.name] = delete_result
 
         redeploy_data_model = False
