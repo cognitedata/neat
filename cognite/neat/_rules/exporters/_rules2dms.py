@@ -166,11 +166,16 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
     ) -> Iterable[UploadResult]:
         to_export = self._prepare_exporters(rules, client)
 
+        result_by_name = {}
+        if self.existing_handling == "force":
+            for delete_result in self.delete_from_cdf(rules, client, dry_run):
+                result_by_name[delete_result.name] = delete_result
+
         redeploy_data_model = False
         for items, loader in to_export:
             # The conversion from DMS to GraphQL does not seem to be triggered even if the views
             # are changed. This is a workaround to force the conversion.
-            is_redeploying = (loader is DataModelingLoader and redeploy_data_model) or self.existing_handling == "force"
+            is_redeploying = loader is DataModelingLoader and redeploy_data_model
 
             to_create, to_delete, to_update, unchanged = self._categorize_items_for_upload(
                 loader, items, is_redeploying
@@ -262,6 +267,12 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                     skipped.update(loader.get_id(item) for item in to_update)
                 elif self.existing_handling == "fail":
                     failed_changed.update(loader.get_id(item) for item in to_update)
+
+            if loader.resource_name in result_by_name:
+                delete_result = result_by_name[loader.resource_name]
+                deleted.update(delete_result.deleted)
+                failed_deleted.update(delete_result.failed_deleted)
+                error_messages.extend(delete_result.error_messages)
 
             yield UploadResult(
                 name=loader.resource_name,
