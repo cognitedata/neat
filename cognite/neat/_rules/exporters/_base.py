@@ -32,9 +32,11 @@ class BaseExporter(ABC, Generic[T_VerifiedRules, T_Export]):
 class CDFExporter(BaseExporter[T_VerifiedRules, T_Export]):
     @abstractmethod
     def export_to_cdf_iterable(
-        self, rules: T_VerifiedRules, client: CogniteClient, dry_run: bool = False
+        self, rules: T_VerifiedRules, client: CogniteClient, dry_run: bool = False, fallback_one_by_one: bool = False
     ) -> Iterable[UploadResult]:
         raise NotImplementedError
 
-    def export_to_cdf(self, rules: T_VerifiedRules, client: CogniteClient, dry_run: bool = False) -> UploadResultList:
-        return UploadResultList(self.export_to_cdf_iterable(rules, client, dry_run))
+    def export_to_cdf(
+        self, rules: T_VerifiedRules, client: CogniteClient, dry_run: bool = False, fallback_one_by_one: bool = False
+    ) -> UploadResultList:
+        return UploadResultList(self.export_to_cdf_iterable(rules, client, dry_run, fallback_one_by_one))

@@ -63,12 +63,18 @@ class CDFToAPI:
 
         return loader.load_into_cdf(self._client)
 
-    def data_model(self, existing_handling: Literal["fail", "skip", "update", "force"] = "skip", dry_run: bool = False):
+    def data_model(
+        self,
+        existing_handling: Literal["fail", "skip", "update", "force"] = "skip",
+        dry_run: bool = False,
+        fallback_one_by_one: bool = False,
+    ):
         """Export the verified DMS data model to CDF.
 
         Args:
             existing_handling: How to handle if component of data model exists. Defaults to "skip".
             dry_run: If True, no changes will be made to CDF. Defaults to False.
+            fallback_one_by_one: If True, will fall back to one-by-one upload if batch upload fails. Defaults to False.
 
         ... note::
 
@@ -88,7 +94,9 @@ class CDFToAPI:
 
         conversion_issues = IssueList(action="to.cdf.data_model")
         with catch_warnings(conversion_issues):
-            result = exporter.export_to_cdf(self._state.last_verified_dms_rules, self._client, dry_run)
+            result = exporter.export_to_cdf(
+                self._state.last_verified_dms_rules, self._client, dry_run, fallback_one_by_one
+            )
         result.insert(0, UploadResultCore(name="schema", issues=conversion_issues))
         self._state.outcome.append(result)
         print("You can inspect the details with the .inspect.outcome(...) method.")

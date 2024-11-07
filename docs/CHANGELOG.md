@@ -15,6 +15,21 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.96.5] - 07-11-**2024**
+### Fixed
+- Serializing `ResourceNotDefinedError` class no longer raises a `ValueError`. This happens when a `ResourceNotDefinedError`
+  is found, for example, when calling `neat.verify()`.
+- Setting `neat.to.cdf.data_model(existing_handling='force)` will now correctly delete and recreate views and containers
+  if they already exist in CDF.
+
+### Improved
+- When running `neat.to.cdf.data_model()` the entire response from CDF is now stored as an error message, not just the
+  text.
+
+### Added
+- `neat.to.cdf.data_model()` now has a `fallback_one_by_one` parameter. If set to `True`, the views/containers will
+  be created one by one, if the batch creation fails.
+
 ## [0.96.4] - 05-11-**2024**
 ### Fixed
 - `neat.to.excel` or `neat.to.yaml` now correctly writes `ViewTypes` and `Edge` that do not have the default

@@ -27,7 +27,7 @@ class ResourceLoader(
 
     @classmethod
     @abstractmethod
-    def get_id(cls, item: T_WriteClass | T_WritableCogniteResource) -> T_ID:
+    def get_id(cls, item: T_WriteClass | T_WritableCogniteResource | dict | T_ID) -> T_ID:
         raise NotImplementedError
 
     @classmethod

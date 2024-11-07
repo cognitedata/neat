@@ -26,10 +26,16 @@ class TransformationLoader(
     resource_name = "transformations"
 
     @classmethod
-    def get_id(cls, item: Transformation | TransformationWrite) -> str:
-        if item.external_id is None:
-            raise ValueError(f"Transformation {item} does not have an external_id")
-        return item.external_id
+    def get_id(cls, item: Transformation | TransformationWrite | str | dict) -> str:
+        if isinstance(item, Transformation | TransformationWrite):
+            if item.external_id is None:
+                raise ValueError(f"Transformation {item} does not have an external_id")
+            return item.external_id
+        if isinstance(item, dict):
+            if item.get("externalId") is None:
+                raise ValueError(f"Transformation {item} does not have an external_id")
+            return item["externalId"]
+        return item
 
     def create(self, items: Sequence[TransformationWrite]) -> TransformationList:
         return self.client.transformations.create(items)
@@ -50,10 +56,16 @@ class RawDatabaseLoader(ResourceLoader[str, DatabaseWrite, Database, DatabaseWri
     resource_name = "databases"
 
     @classmethod
-    def get_id(cls, item: Database | DatabaseWrite) -> str:
-        if item.name is None:
-            raise ValueError(f"Database {item} does not have a name")
-        return item.name
+    def get_id(cls, item: Database | DatabaseWrite | str | dict) -> str:
+        if isinstance(item, Database | DatabaseWrite):
+            if item.name is None:
+                raise ValueError(f"Database {item} does not have a name")
+            return item.name
+        if isinstance(item, dict):
+            if item.get("name") is None:
+                raise ValueError(f"Database {item} does not have a name")
+            return item["name"]
+        return item
 
     def create(self, items: Sequence[DatabaseWrite]) -> DatabaseList:
         return self.client.raw.databases.create([item.name for item in items if item.name is not None])
@@ -78,8 +90,12 @@ class RawTableLoader(ResourceLoader[RawTableID, RawTableWrite, RawTable, RawTabl
     resource_name = "tables"
 
     @classmethod
-    def get_id(cls, item: RawTable | RawTableWrite) -> RawTableID:
-        return item.as_id()
+    def get_id(cls, item: RawTable | RawTableWrite | RawTableID | dict) -> RawTableID:
+        if isinstance(item, RawTable | RawTableWrite):
+            return item.as_id()
+        if isinstance(item, dict):
+            return RawTableID(database=item["database"], table=item["name"])
+        return item
 
     @overload
     def _groupby_database(self, items: Sequence[RawTableWrite]) -> Iterable[tuple[str, Iterable[RawTableWrite]]]: ...

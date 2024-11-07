@@ -118,12 +118,16 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
     def export(self, rules: DMSRules) -> DMSSchema:
         return rules.as_schema(include_pipeline=self.export_pipeline, instance_space=self.instance_space)
 
-    def delete_from_cdf(self, rules: DMSRules, client: CogniteClient, dry_run: bool = False) -> Iterable[UploadResult]:
+    def delete_from_cdf(
+        self, rules: DMSRules, client: CogniteClient, dry_run: bool = False, skip_space: bool = False
+    ) -> Iterable[UploadResult]:
         to_export = self._prepare_exporters(rules, client)
 
         # we need to reverse order in which we are picking up the items to delete
         # as they are sorted in the order of creation and we need to delete them in reverse order
         for items, loader in reversed(to_export):
+            if skip_space and isinstance(loader, SpaceLoader):
+                continue
             item_ids = loader.get_ids(items)
             existing_items = loader.retrieve(item_ids)
             existing_ids = loader.get_ids(existing_items)
@@ -162,9 +166,14 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             )
 
     def export_to_cdf_iterable(
-        self, rules: DMSRules, client: CogniteClient, dry_run: bool = False
+        self, rules: DMSRules, client: CogniteClient, dry_run: bool = False, fallback_one_by_one: bool = False
     ) -> Iterable[UploadResult]:
         to_export = self._prepare_exporters(rules, client)
+
+        result_by_name = {}
+        if self.existing_handling == "force":
+            for delete_result in self.delete_from_cdf(rules, client, dry_run, skip_space=True):
+                result_by_name[delete_result.name] = delete_result
 
         redeploy_data_model = False
         for items, loader in to_export:
@@ -183,8 +192,10 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             created: set[Hashable] = set()
             skipped: set[Hashable] = set()
             changed: set[Hashable] = set()
+            deleted: set[Hashable] = set()
             failed_created: set[Hashable] = set()
             failed_changed: set[Hashable] = set()
+            failed_deleted: set[Hashable] = set()
             error_messages: list[str] = []
             if dry_run:
                 if self.existing_handling in ["update", "force"]:
@@ -200,7 +211,20 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                     try:
                         loader.delete(to_delete)
                     except CogniteAPIError as e:
-                        error_messages.append(f"Failed delete: {e.message}")
+                        if fallback_one_by_one:
+                            for item in to_delete:
+                                try:
+                                    loader.delete([item])
+                                except CogniteAPIError as item_e:
+                                    failed_deleted.add(loader.get_id(item))
+                                    error_messages.append(f"Failed delete: {item_e!s}")
+                                else:
+                                    deleted.add(loader.get_id(item))
+                        else:
+                            error_messages.append(f"Failed delete: {e!s}")
+                            failed_deleted.update(loader.get_id(item) for item in e.failed + e.unknown)
+                    else:
+                        deleted.update(loader.get_id(item) for item in to_delete)
 
                 if isinstance(loader, DataModelingLoader):
                     to_create = loader.sort_by_dependencies(to_create)
@@ -208,9 +232,19 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 try:
                     loader.create(to_create)
                 except CogniteAPIError as e:
-                    failed_created.update(loader.get_id(item) for item in e.failed + e.unknown)
-                    created.update(loader.get_id(item) for item in e.successful)
-                    error_messages.append(e.message)
+                    if fallback_one_by_one:
+                        for item in to_create:
+                            try:
+                                loader.create([item])
+                            except CogniteAPIError as item_e:
+                                failed_created.add(loader.get_id(item))
+                                error_messages.append(f"Failed create: {item_e!s}")
+                            else:
+                                created.add(loader.get_id(item))
+                    else:
+                        failed_created.update(loader.get_id(item) for item in e.failed + e.unknown)
+                        created.update(loader.get_id(item) for item in e.successful)
+                        error_messages.append(f"Failed create: {e!s}")
                 else:
                     created.update(loader.get_id(item) for item in to_create)
 
@@ -218,9 +252,19 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                     try:
                         loader.update(to_update)
                     except CogniteAPIError as e:
-                        failed_changed.update(loader.get_id(item) for item in e.failed + e.unknown)
-                        changed.update(loader.get_id(item) for item in e.successful)
-                        error_messages.append(e.message)
+                        if fallback_one_by_one:
+                            for item in to_update:
+                                try:
+                                    loader.update([item])
+                                except CogniteAPIError as e_item:
+                                    failed_changed.add(loader.get_id(item))
+                                    error_messages.append(f"Failed update: {e_item!s}")
+                                else:
+                                    changed.add(loader.get_id(item))
+                        else:
+                            failed_changed.update(loader.get_id(item) for item in e.failed + e.unknown)
+                            changed.update(loader.get_id(item) for item in e.successful)
+                            error_messages.append(f"Failed update: {e!s}")
                     else:
                         changed.update(loader.get_id(item) for item in to_update)
                 elif self.existing_handling == "skip":
@@ -228,14 +272,22 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 elif self.existing_handling == "fail":
                     failed_changed.update(loader.get_id(item) for item in to_update)
 
+            if loader.resource_name in result_by_name:
+                delete_result = result_by_name[loader.resource_name]
+                deleted.update(delete_result.deleted)
+                failed_deleted.update(delete_result.failed_deleted)
+                error_messages.extend(delete_result.error_messages)
+
             yield UploadResult(
                 name=loader.resource_name,
                 created=created,
                 changed=changed,
+                deleted=deleted,
                 unchanged={loader.get_id(item) for item in unchanged},
                 skipped=skipped,
                 failed_created=failed_created,
                 failed_changed=failed_changed,
+                failed_deleted=failed_deleted,
                 error_messages=error_messages,
                 issues=issue_list,
             )

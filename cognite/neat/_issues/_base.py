@@ -109,7 +109,11 @@ class NeatIssue:
     def dump(self) -> dict[str, Any]:
         """Return a dictionary representation of the issue."""
         variables = vars(self)
-        output = {to_camel(key): self._dump_value(value) for key, value in variables.items() if value is not None}
+        output = {
+            to_camel(key): self._dump_value(value)
+            for key, value in variables.items()
+            if not (value is None or key.startswith("_"))
+        }
         output["NeatIssue"] = type(self).__name__
         return output
 
