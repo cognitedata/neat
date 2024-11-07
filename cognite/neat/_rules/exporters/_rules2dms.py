@@ -170,7 +170,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         for items, loader in to_export:
             # The conversion from DMS to GraphQL does not seem to be triggered even if the views
             # are changed. This is a workaround to force the conversion.
-            is_redeploying = loader is DataModelingLoader and redeploy_data_model
+            is_redeploying = (loader is DataModelingLoader and redeploy_data_model) or self.existing_handling == "force"
 
             to_create, to_delete, to_update, unchanged = self._categorize_items_for_upload(
                 loader, items, is_redeploying

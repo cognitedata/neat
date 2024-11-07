@@ -19,6 +19,8 @@ Changes are grouped as follows:
 ### Fixed
 - Serializing `ResourceNotDefinedError` class no longer raises a `ValueError`. This happens when a `ResourceNotDefinedError`
   is found, for example, when calling `neat.verify()`.
+- Setting `neat.to.cdf.data_model(existing_handling='force)` will now correctly delete and recreate views and containers
+  if they already exist in CDF.
 
 ### Improved
 - When running `neat.to.cdf.data_model()` the entire response from CDF is now stored as an error message, not just the
