@@ -1,15 +1,15 @@
 import math
-import sys
 import warnings
 from collections.abc import Hashable
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
 import pandas as pd
 from cognite.client import data_modeling as dm
 from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
+from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._issues import MultiValueError
 from cognite.neat._issues.warnings import (
     PrincipleMatchingSpaceAndVersionWarning,
@@ -55,14 +55,6 @@ from cognite.neat._rules.models.entities import (
 )
 
 from ._schema import DMSSchema
-
-if TYPE_CHECKING:
-    pass
-
-if sys.version_info >= (3, 11):
-    pass
-else:
-    pass
 
 _DEFAULT_VERSION = "1"
 
@@ -421,7 +413,11 @@ class DMSRules(BaseRules):
         if not (metadata := info.data.get("metadata")):
             return value
         model_version = metadata.version
-        if different_version := [view.view.as_id() for view in value if view.view.version != model_version]:
+        if different_version := [
+            view.view.as_id()
+            for view in value
+            if view.view.version != model_version and view.view.space not in COGNITE_SPACES
+        ]:
             for view_id in different_version:
                 warnings.warn(
                     PrincipleMatchingSpaceAndVersionWarning(
@@ -429,7 +425,11 @@ class DMSRules(BaseRules):
                     ),
                     stacklevel=2,
                 )
-        if different_space := [view.view.as_id() for view in value if view.view.space != metadata.space]:
+        if different_space := [
+            view.view.as_id()
+            for view in value
+            if view.view.space != metadata.space and view.view.space not in COGNITE_SPACES
+        ]:
             for view_id in different_space:
                 warnings.warn(
                     PrincipleMatchingSpaceAndVersionWarning(
