@@ -15,6 +15,16 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Fixed
+- `neat.verify()` no longer gives a `PrincipleMatchingSpaceAndVersionWarning` when you include views from 
+  the `CogniteCore` or `CogniteProcessIndustry` data models.
+- In the `DMSSheet` you will now get a `RowError` if you try to set `container` or `container property` for
+  an edge or reverse direct relation as these are not stored in containers.
+- `neat.read.excel(...)` now correctly reads the `Enum` and `Nodes` sheets.
+- In the `DMSSheet`, `reverse` relations no longer give a `RowError` if the reverse property is referencing
+  a property in the reference sheets.
+
 ## [0.96.5] - 07-11-**2024**
 ### Fixed
 - Serializing `ResourceNotDefinedError` class no longer raises a `ValueError`. This happens when a `ResourceNotDefinedError`
