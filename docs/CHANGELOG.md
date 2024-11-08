@@ -21,6 +21,9 @@ Changes are grouped as follows:
   the `CogniteCore` or `CogniteProcessIndustry` data models.
 - In the `DMSSheet` you will now get a `RowError` if you try to set `container` or `container property` for
   an edge or reverse direct relation as these are not stored in containers.
+- `neat.read.excel(...)` now correctly reads the `Enum` and `Nodes` sheets.
+- In the `DMSSheet`, `reverse` relations no longer give a `RowError` if the reverse property is referencing
+  a property in the reference sheets.
 
 ## [0.96.5] - 07-11-**2024**
 ### Fixed
