@@ -189,6 +189,24 @@ class DMSProperty(SheetRow):
             raise ValueError(f"Reverse connection must have a value type that points to a view, got {value}")
         return value
 
+    @field_validator("container", "container_property", mode="after")
+    def container_set_correctly(cls, value: Any, info: ValidationInfo) -> Any:
+        if (connection := info.data.get("connection")) is None:
+            return value
+        if connection == "direct" and value is None:
+            raise ValueError(
+                "You must provide a container and container property for where to store direct connections"
+            )
+        elif isinstance(connection, EdgeEntity) and value is not None:
+            raise ValueError(
+                "Edge connections are not stored in a container, please remove the container and container property"
+            )
+        elif isinstance(connection, ReverseConnectionEntity) and value is not None:
+            raise ValueError(
+                "Reverse connection are not stored in a container, please remove the container and container property"
+            )
+        return value
+
     @field_serializer("reference", when_used="always")
     def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
         if isinstance(info.context, dict) and info.context.get("as_reference") is True:
