@@ -19,6 +19,8 @@ Changes are grouped as follows:
 ### Fixed
 - `neat.verify()` no longer gives a `PrincipleMatchingSpaceAndVersionWarning` when you include views from 
   the `CogniteCore` or `CogniteProcessIndustry` data models.
+- In the `DMSSheet` you will now get a `RowError` if you try to set `container` or `container property` for
+  an edge or reverse direct relation as these are not stored in containers.
 
 ## [0.96.5] - 07-11-**2024**
 ### Fixed
