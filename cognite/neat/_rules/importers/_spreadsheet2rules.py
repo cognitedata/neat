@@ -47,6 +47,8 @@ SOURCE_SHEET__TARGET_FIELD__HEADERS = [
     ("Classes", "Classes", "Class"),
     ("Containers", "Containers", "Container"),
     ("Views", "Views", "View"),
+    ("Enum", "Enum", "Collection"),
+    ("Nodes", "Nodes", "Node"),
 ]
 
 MANDATORY_SHEETS_BY_ROLE: dict[RoleTypes, set[str]] = {
@@ -112,7 +114,7 @@ class SpreadsheetReader:
         issue_list: IssueList,
         required: bool = True,
         metadata: MetadataRaw | None = None,
-        sheet_prefix: Literal["", "Last", "Ref"] = "",
+        sheet_prefix: Literal["", "Last", "Ref", "CDMRef"] = "",
     ):
         self.issue_list = issue_list
         self.required = required
@@ -267,6 +269,8 @@ class ExcelImporter(BaseImporter[T_InputRules]):
             reference_read: ReadResult | None = None
             if any(sheet_name.startswith("Ref") for sheet_name in user_reader.seen_sheets):
                 reference_read = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(excel_file, self.filepath)
+            elif any(sheet_name.startswith("CDMRef") for sheet_name in user_reader.seen_sheets):
+                reference_read = SpreadsheetReader(issue_list, sheet_prefix="CDMRef").read(excel_file, self.filepath)
 
         if issue_list.has_errors:
             return ReadRules(None, issue_list, {})

@@ -402,17 +402,30 @@ class _DMSExporter:
 
         return container_properties_by_id, view_properties_by_id
 
-    @staticmethod
     def _gather_properties_with_ancestors(
+        self,
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
         views: Sequence[DMSView],
     ) -> dict[dm.ViewId, list[DMSProperty]]:
+        all_view_properties_by_id = view_properties_by_id.copy()
+        if self.rules.reference:
+            # We need to include t
+            ref_view_properties_by_id = self._gather_properties(self.rules.reference.properties)[1]
+            for view_id, properties in ref_view_properties_by_id.items():
+                if view_id not in all_view_properties_by_id:
+                    all_view_properties_by_id[view_id] = properties
+                else:
+                    existing_properties = {prop._identifier() for prop in all_view_properties_by_id[view_id]}
+                    for prop in properties:
+                        if prop._identifier() not in existing_properties:
+                            all_view_properties_by_id[view_id].append(prop)
+
         view_properties_with_parents_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
         view_by_view_id = {view.view.as_id(): view for view in views}
         for view in views:
             view_id = view.view.as_id()
             seen: set[Hashable] = set()
-            if view_properties := view_properties_by_id.get(view_id):
+            if view_properties := all_view_properties_by_id.get(view_id):
                 view_properties_with_parents_by_id[view_id].extend(view_properties)
                 seen.update(prop._identifier() for prop in view_properties)
             if not view.implements:
@@ -428,7 +441,7 @@ class _DMSExporter:
                             parents.append(grandparent)
                             seen_parents.add(grandparent)
 
-                if not (parent_view_properties := view_properties_by_id.get(parent_view_id)):
+                if not (parent_view_properties := all_view_properties_by_id.get(parent_view_id)):
                     continue
                 for prop in parent_view_properties:
                     new_prop = prop.model_copy(update={"view": view.view})
