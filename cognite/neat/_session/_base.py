@@ -15,6 +15,7 @@ from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
 
+from ._engine import load_neat_engine
 from ._inspect import InspectAPI
 from ._prepare import PrepareAPI
 from ._read import ReadAPI
@@ -32,6 +33,7 @@ class NeatSession:
         client: CogniteClient | None = None,
         storage: Literal["memory", "oxigraph"] = "memory",
         verbose: bool = True,
+        load_engine: bool = True,
     ) -> None:
         self._client = client
         self._verbose = verbose
@@ -42,6 +44,8 @@ class NeatSession:
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
+        if load_engine and (engine_version := load_neat_engine(client)):
+            print(f"Neat Engine loaded: {engine_version}")
 
     @property
     def version(self) -> str:
