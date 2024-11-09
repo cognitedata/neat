@@ -5527,11 +5527,10 @@ type = ["pytest-mypy"]
 all = ["fastapi", "oxrdflib", "prometheus-client", "pyoxigraph", "python-multipart", "schedule", "uvicorn"]
 docs = ["mkdocs", "mkdocs-autorefs", "mkdocs-git-authors-plugin", "mkdocs-git-revision-date-localized-plugin", "mkdocs-gitbook", "mkdocs-glightbox", "mkdocs-jupyter", "mkdocs-material-extensions", "mkdocstrings", "pymdown-extensions"]
 google = ["google-api-python-client", "google-auth-oauthlib", "gspread"]
-graphql = []
 oxi = ["oxrdflib", "pyoxigraph"]
 service = ["fastapi", "prometheus-client", "python-multipart", "schedule", "uvicorn"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "79a90172c291f355b09a2bbda55c47ed813cab3049c211534609706d98a57b27"
+content-hash = "d77626c8c2ae1cd963781c8ae00f269d0df7fa4d714ad77e9e89332dbfaa8f81"
