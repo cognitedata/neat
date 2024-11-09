@@ -33,7 +33,7 @@ class NeatSession:
         client: CogniteClient | None = None,
         storage: Literal["memory", "oxigraph"] = "memory",
         verbose: bool = True,
-        load_engine: bool = True,
+        load_engine: Literal["newest", "cache", "skip"] = "cache",
     ) -> None:
         self._client = client
         self._verbose = verbose
@@ -44,7 +44,7 @@ class NeatSession:
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
-        if load_engine and (engine_version := load_neat_engine(client)):
+        if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
             print(f"Neat Engine loaded: {engine_version}")
 
     @property
