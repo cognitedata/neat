@@ -12,6 +12,7 @@ from cognite.client import CogniteClient
 from packaging.version import Version
 from packaging.version import parse as parse_version
 
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._version import __engine__
 
 ENVIRONMENT_VARIABLE = "NEATENGINE"
@@ -20,6 +21,8 @@ PYVERSION = f"{sys.version_info.major}{sys.version_info.minor}"
 
 
 def load_neat_engine(client: CogniteClient | None, location: Literal["newest", "cache"]) -> str | None:
+    if location not in ["newest", "cache"]:
+        raise NeatValueError(f"Cannot load engine from location: {location}")
     cache_dir = Path(tempfile.gettempdir()) / PACKAGE_NAME
     cache_dir.mkdir(exist_ok=True)
     pattern = re.compile(rf"{PACKAGE_NAME}-(\d+\.\d+\.\d+)-{PYVERSION}.zip")
@@ -51,6 +54,7 @@ def load_neat_engine(client: CogniteClient | None, location: Literal["newest", "
         return None
 
     if not __engine__.startswith("^"):
+        # Using value error as this is a developer error
         raise ValueError(f"Invalid engine version: {__engine__}")
 
     lower_bound = parse_version(__engine__[1:])
