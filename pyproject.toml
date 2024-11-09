@@ -61,6 +61,8 @@ requests = "*"
 urllib3 = "^2"
 openpyxl = "*"
 networkx = "^3.4.2"
+# Used for loading neat engine
+packaging = ">=22.0,<25.0"
 
 # Notebook
 rich = { version = "^13.7.1", extras = ["jupyter"]}
@@ -89,9 +91,6 @@ pyoxigraph = { version = "0.3.19", optional = true }
 gspread = { version = "*", optional = true }
 google-api-python-client = { version = "*", optional = true }
 google-auth-oauthlib = { version = "*", optional = true }
-
-# Remove when ledacy is removed
-jinja2 = { version = "^3.1.2", optional = true }
 
 # Documentation dependencies
 mkdocs = { version = "*", optional = true }
