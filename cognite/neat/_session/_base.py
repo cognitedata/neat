@@ -45,7 +45,7 @@ class NeatSession:
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
-            print(f"Neat Engine loaded: {engine_version}")
+            print(f"Neat Engine {engine_version} loaded.")
 
     @property
     def version(self) -> str:
