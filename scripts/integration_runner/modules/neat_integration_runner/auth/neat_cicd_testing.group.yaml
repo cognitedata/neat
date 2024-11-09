@@ -47,3 +47,9 @@ capabilities:
         - WRITE
       scope:
         all: {}
+  - filesAcl:
+      actions:
+        - READ
+        - WRITE
+      scope:
+        all: {}
