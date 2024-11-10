@@ -80,8 +80,12 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
     resource_name = "spaces"
 
     @classmethod
-    def get_id(cls, item: Space | SpaceApply) -> str:
-        return item.space
+    def get_id(cls, item: Space | SpaceApply | str | dict) -> str:
+        if isinstance(item, Space | SpaceApply):
+            return item.space
+        if isinstance(item, dict):
+            return item["space"]
+        return item
 
     def create(self, items: Sequence[SpaceApply]) -> SpaceList:
         return self.client.data_modeling.spaces.apply(items)
@@ -149,8 +153,12 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         self._tried_force_deploy: set[ViewId] = set()
 
     @classmethod
-    def get_id(cls, item: View | ViewApply) -> ViewId:
-        return item.as_id()
+    def get_id(cls, item: View | ViewApply | ViewId | dict) -> ViewId:
+        if isinstance(item, View | ViewApply):
+            return item.as_id()
+        if isinstance(item, dict):
+            return ViewId.load(item)
+        return item
 
     def create(self, items: Sequence[ViewApply]) -> ViewList:
         if self.existing_handling == "force":
@@ -247,8 +255,12 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
         self._tried_force_deploy: set[ContainerId] = set()
 
     @classmethod
-    def get_id(cls, item: Container | ContainerApply) -> ContainerId:
-        return item.as_id()
+    def get_id(cls, item: Container | ContainerApply | ContainerId | dict) -> ContainerId:
+        if isinstance(item, Container | ContainerApply):
+            return item.as_id()
+        if isinstance(item, dict):
+            return ContainerId.load(item)
+        return item
 
     def sort_by_dependencies(self, items: Sequence[ContainerApply]) -> list[ContainerApply]:
         container_by_id = {container.as_id(): container for container in items}
@@ -292,8 +304,12 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
     resource_name = "data_models"
 
     @classmethod
-    def get_id(cls, item: DataModel | DataModelApply) -> DataModelId:
-        return item.as_id()
+    def get_id(cls, item: DataModel | DataModelApply | DataModelId | dict) -> DataModelId:
+        if isinstance(item, DataModel | DataModelApply):
+            return item.as_id()
+        if isinstance(item, dict):
+            return DataModelId.load(item)
+        return item
 
     def create(self, items: Sequence[DataModelApply]) -> DataModelList:
         return self.client.data_modeling.data_models.apply(items)

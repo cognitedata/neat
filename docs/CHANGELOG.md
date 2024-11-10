@@ -19,6 +19,31 @@ Changes are grouped as follows:
 ### Added
 - Added provenance on rules in NeatSession
 
+## [0.96.6] - 08-11-**2024**
+### Fixed
+- `neat.verify()` no longer gives a `PrincipleMatchingSpaceAndVersionWarning` when you include views from 
+  the `CogniteCore` or `CogniteProcessIndustry` data models.
+- In the `DMSSheet` you will now get a `RowError` if you try to set `container` or `container property` for
+  an edge or reverse direct relation as these are not stored in containers.
+- `neat.read.excel(...)` now correctly reads the `Enum` and `Nodes` sheets.
+- In the `DMSSheet`, `reverse` relations no longer give a `RowError` if the reverse property is referencing
+  a property in the reference sheets.
+
+## [0.96.5] - 07-11-**2024**
+### Fixed
+- Serializing `ResourceNotDefinedError` class no longer raises a `ValueError`. This happens when a `ResourceNotDefinedError`
+  is found, for example, when calling `neat.verify()`.
+- Setting `neat.to.cdf.data_model(existing_handling='force)` will now correctly delete and recreate views and containers
+  if they already exist in CDF.
+
+### Improved
+- When running `neat.to.cdf.data_model()` the entire response from CDF is now stored as an error message, not just the
+  text.
+
+### Added
+- `neat.to.cdf.data_model()` now has a `fallback_one_by_one` parameter. If set to `True`, the views/containers will
+  be created one by one, if the batch creation fails.
+
 ## [0.96.4] - 05-11-**2024**
 ### Fixed
 - `neat.to.excel` or `neat.to.yaml` now correctly writes `ViewTypes` and `Edge` that do not have the default

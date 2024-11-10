@@ -170,18 +170,22 @@ class TestDMSExporters:
         uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].success == len(rules.containers)
+        assert uploaded_by_name["containers"].success == len(rules.containers) * 2  # 2 x due to delete and create
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].success == len(rules.views)
+        assert uploaded_by_name["views"].success == len(rules.views) * 2  # 2 x due to delete and create
         assert uploaded_by_name["views"].failed == 0
 
-        assert uploaded_by_name["data_models"].success == 1
+        assert uploaded_by_name["data_models"].success == 1 * 2  # 2 x due to delete and create
         assert uploaded_by_name["data_models"].failed == 0
 
-        assert uploaded_by_name["spaces"].success == 1
+        assert uploaded_by_name["spaces"].success == 1  # Space is not deleted
         assert uploaded_by_name["spaces"].failed == 0
 
+    @pytest.mark.skip(
+        "We are not exposing the functionality any more. "
+        "It is up for discussion if we should keep it. Does the test is not maintained."
+    )
     def test_export_pipeline_populate_and_retrieve_data(
         self, cognite_client: CogniteClient, table_example: InformationRules, table_example_data: dict[str, list[str]]
     ) -> None:
@@ -259,13 +263,14 @@ class TestDMSExporters:
         uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].success == len(rules.containers)
+        # We have to double the amount of entities due to the delete and create
+        assert uploaded_by_name["containers"].success == len(rules.containers) * 2
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].success == len(rules.views)
+        assert uploaded_by_name["views"].success == len(rules.views) * 2
         assert uploaded_by_name["views"].failed == 0
 
-        assert uploaded_by_name["data_models"].success == 1
+        assert uploaded_by_name["data_models"].success == 1 * 2
         assert uploaded_by_name["data_models"].failed == 0
 
         assert uploaded_by_name["spaces"].success == 1
@@ -292,13 +297,14 @@ class TestDMSExporters:
         uploaded = exporter.export_to_cdf(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].success == len(rules.containers)
+        # We have to double the amount of entities due to the delete and create
+        assert uploaded_by_name["containers"].success == len(rules.containers) * 2
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].success == len(schema.views)
+        assert uploaded_by_name["views"].success == len(schema.views) * 2
         assert uploaded_by_name["views"].failed == 0
 
-        assert uploaded_by_name["data_models"].success == 1
+        assert uploaded_by_name["data_models"].success == 1 * 2
         assert uploaded_by_name["data_models"].failed == 0
 
         assert uploaded_by_name["spaces"].success == 1
@@ -355,13 +361,14 @@ class TestDMSExporters:
         uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
 
-        assert uploaded_by_name["containers"].success == len(schema.containers)
+        # We have to double the amount of entities due to the delete and create
+        assert uploaded_by_name["containers"].success == len(schema.containers) * 2
         assert uploaded_by_name["containers"].failed == 0
 
-        assert uploaded_by_name["views"].success == len(schema.views)
+        assert uploaded_by_name["views"].success == len(schema.views) * 2
         assert uploaded_by_name["views"].failed == 0
 
-        assert uploaded_by_name["data_models"].success == 1
+        assert uploaded_by_name["data_models"].success == 1 * 2
         assert uploaded_by_name["data_models"].failed == 0
 
         assert uploaded_by_name["spaces"].success == 1

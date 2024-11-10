@@ -1,9 +1,8 @@
 import math
-import sys
 import warnings
 from collections.abc import Hashable
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
 import pandas as pd
 from cognite.client import data_modeling as dm
@@ -11,7 +10,7 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from rdflib import URIRef
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._constants import COGNITE_SPACES, DEFAULT_NAMESPACE
 from cognite.neat._issues import MultiValueError
 from cognite.neat._issues.warnings import (
     PrincipleMatchingSpaceAndVersionWarning,
@@ -57,14 +56,6 @@ from cognite.neat._rules.models.entities import (
 )
 
 from ._schema import DMSSchema
-
-if TYPE_CHECKING:
-    pass
-
-if sys.version_info >= (3, 11):
-    pass
-else:
-    pass
 
 _DEFAULT_VERSION = "1"
 
@@ -197,6 +188,24 @@ class DMSProperty(SheetRow):
             raise ValueError(f"Edge connection must have a value type that points to a view, got {value}")
         elif isinstance(connection, ReverseConnectionEntity) and not isinstance(value, ViewEntity):
             raise ValueError(f"Reverse connection must have a value type that points to a view, got {value}")
+        return value
+
+    @field_validator("container", "container_property", mode="after")
+    def container_set_correctly(cls, value: Any, info: ValidationInfo) -> Any:
+        if (connection := info.data.get("connection")) is None:
+            return value
+        if connection == "direct" and value is None:
+            raise ValueError(
+                "You must provide a container and container property for where to store direct connections"
+            )
+        elif isinstance(connection, EdgeEntity) and value is not None:
+            raise ValueError(
+                "Edge connections are not stored in a container, please remove the container and container property"
+            )
+        elif isinstance(connection, ReverseConnectionEntity) and value is not None:
+            raise ValueError(
+                "Reverse connection are not stored in a container, please remove the container and container property"
+            )
         return value
 
     @field_serializer("reference", when_used="always")
@@ -423,7 +432,11 @@ class DMSRules(BaseRules):
         if not (metadata := info.data.get("metadata")):
             return value
         model_version = metadata.version
-        if different_version := [view.view.as_id() for view in value if view.view.version != model_version]:
+        if different_version := [
+            view.view.as_id()
+            for view in value
+            if view.view.version != model_version and view.view.space not in COGNITE_SPACES
+        ]:
             for view_id in different_version:
                 warnings.warn(
                     PrincipleMatchingSpaceAndVersionWarning(
@@ -431,7 +444,11 @@ class DMSRules(BaseRules):
                     ),
                     stacklevel=2,
                 )
-        if different_space := [view.view.as_id() for view in value if view.view.space != metadata.space]:
+        if different_space := [
+            view.view.as_id()
+            for view in value
+            if view.view.space != metadata.space and view.view.space not in COGNITE_SPACES
+        ]:
             for view_id in different_space:
                 warnings.warn(
                     PrincipleMatchingSpaceAndVersionWarning(
