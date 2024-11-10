@@ -8,9 +8,9 @@ from rdflib.util import guess_format
 from cognite.neat._constants import DEFAULT_BASE_URI
 from cognite.neat._graph._shared import rdflib_to_mime_types
 from cognite.neat._graph.extractors._base import BaseExtractor
-from cognite.neat._graph.models import Triple
 from cognite.neat._issues._base import IssueList
 from cognite.neat._issues.errors import FileNotFoundNeatError, FileTypeUnexpectedError
+from cognite.neat._shared import Triple
 
 
 class RdfFileExtractor(BaseExtractor):

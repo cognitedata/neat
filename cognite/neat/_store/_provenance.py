@@ -1,11 +1,13 @@
-# we will use prov-o to represent the provenance of the neat graph store
-# basically tracking changes that occur in the graph store
-# prov-o use concepts of Agent, Activity and Entity to represent provenance
-# where in case of neat we have:
-# Agent: triples extractors, graph enhancers, contextualizers, etc.
-# Activity: write triple, add connection, etc.
-# Entity: neat graph store
+"""
+We use prov-o to represent the provenance of the neat graph store
+basically tracking changes that occur in the graph store
+prov-o use concepts of Agent, Activity and Entity to represent provenance
+where in case of neat we have:
 
+ * Agent: triples extractors, graph enhancers, contextualizers, etc.
+ * Activity: write/remove triples such as add connection, etc.
+ * Entity: neat graph store
+"""
 
 import uuid
 from collections.abc import Sequence
@@ -26,7 +28,7 @@ class Agent:
     id_: URIRef = DEFAULT_NAMESPACE.agent
     acted_on_behalf_of: str = "NEAT"
 
-    def as_triples(self):
+    def as_triples(self) -> list[tuple[URIRef, URIRef, URIRef | str]]:
         return [
             (self.id_, RDF.type, PROV[type(self).__name__]),
             (self.id_, PROV.actedOnBehalfOf, self.acted_on_behalf_of),
@@ -44,7 +46,7 @@ class Entity:
     was_generated_by: Optional["Activity"] = field(default=None, repr=False)
     id_: URIRef = DEFAULT_NAMESPACE["graph-store"]
 
-    def as_triples(self):
+    def as_triples(self) -> list[tuple[URIRef, URIRef, URIRef | None]]:
         return [
             (self.id_, RDF.type, PROV[type(self).__name__]),
             (
@@ -56,7 +58,7 @@ class Entity:
         ]
 
     @classmethod
-    def from_data_model_id(cls, data_model_id: DataModelIdentifier):
+    def from_data_model_id(cls, data_model_id: DataModelIdentifier) -> "Entity":
         data_model_id = DataModelId.load(data_model_id)
 
         return cls(
@@ -72,7 +74,7 @@ class Entity:
         rules: ReadRules | JustRules | VerifiedRules,
         agent: Agent | None = None,
         activity: "Activity | None" = None,
-    ):
+    ) -> "Entity":
         agent = agent or UNKNOWN_AGENT
         if isinstance(rules, VerifiedRules):
             return cls(
@@ -81,19 +83,12 @@ class Entity:
                 id_=rules.id_,
             )
 
-        elif isinstance(rules, ReadRules) and rules.rules:
+        elif isinstance(rules, ReadRules | JustRules) and rules.rules is not None:
             return cls(
                 was_attributed_to=agent,
                 was_generated_by=activity,
                 id_=rules.rules.id_,
             )
-        elif isinstance(rules, JustRules):
-            return cls(
-                was_attributed_to=agent,
-                was_generated_by=activity,
-                id_=rules.rules.id_,
-            )
-
         else:
             return cls(
                 was_attributed_to=agent,
@@ -102,7 +97,7 @@ class Entity:
             )
 
     @classmethod
-    def new_unknown_entity(cls):
+    def new_unknown_entity(cls) -> "Entity":
         return cls(
             was_attributed_to=UNKNOWN_AGENT,
             id_=DEFAULT_NAMESPACE[f"unknown-entity/{uuid.uuid4()}"],
@@ -118,9 +113,9 @@ class Activity:
     ended_at_time: datetime
     started_at_time: datetime
     used: str | Entity | None = None
-    id_: URIRef = DEFAULT_NAMESPACE[f"activity-{uuid.uuid4()}"]
+    id_: URIRef = field(default_factory=lambda: DEFAULT_NAMESPACE[f"activity-{uuid.uuid4()}"])
 
-    def as_triples(self):
+    def as_triples(self) -> list[tuple[URIRef, URIRef, str | None]]:
         return [
             (self.id_, RDF.type, PROV[type(self).__name__]),
             (self.id_, PROV.wasAssociatedWith, self.was_associated_with.id_),
@@ -140,15 +135,18 @@ class Change(FrozenNeatObject):
     activity: Activity
     target_entity: Entity
     description: str
-    source_entity: Entity = field(default=Entity.new_unknown_entity())
+    source_entity: Entity = field(default_factory=Entity.new_unknown_entity)
 
-    def as_triples(self):
+    def as_triples(self) -> list[tuple[URIRef, URIRef, URIRef | Literal | None | str]]:
         return (
-            self.source.as_triples() + self.agent.as_triples() + self.activity.as_triples() + self.entity.as_triples()
+            self.source_entity.as_triples()
+            + self.agent.as_triples()
+            + self.activity.as_triples()
+            + self.target_entity.as_triples()  # type: ignore[operator]
         )
 
     @classmethod
-    def record(cls, activity: str, start: datetime, end: datetime, description: str):
+    def record(cls, activity: str, start: datetime, end: datetime, description: str) -> "Change":
         """User friendly method to record a change that occurred in the graph store."""
         agent = Agent()
         activity = Activity(
@@ -174,7 +172,7 @@ class Change(FrozenNeatObject):
         end: datetime,
         description: str,
         source_entity: Entity | None = None,
-    ):
+    ) -> "Change":
         source_entity = source_entity or Entity.new_unknown_entity()
         activity = Activity(
             started_at_time=start,

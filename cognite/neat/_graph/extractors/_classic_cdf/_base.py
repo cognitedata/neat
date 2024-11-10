@@ -10,7 +10,7 @@ from rdflib import XSD, Literal, Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
-from cognite.neat._graph.models import Triple
+from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import string_to_ideal_type
 
 T_CogniteResource = TypeVar("T_CogniteResource", bound=CogniteResource)

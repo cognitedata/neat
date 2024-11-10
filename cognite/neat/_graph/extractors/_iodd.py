@@ -11,8 +11,8 @@ from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
-from cognite.neat._graph.models import Triple
 from cognite.neat._issues.errors import FileReadError, NeatValueError
+from cognite.neat._shared import Triple
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 from cognite.neat._utils.text import to_camel
 from cognite.neat._utils.xml_ import get_children

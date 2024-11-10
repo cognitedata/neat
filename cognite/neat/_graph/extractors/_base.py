@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from collections.abc import Iterable
 
-from cognite.neat._graph.models import Triple
+from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import class_html_doc
 
 
