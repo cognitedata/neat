@@ -19,8 +19,9 @@ Changes are grouped as follows:
 ### Added
 - Added provenance on rules in NeatSession
 ### Improved
-- Case-insensitive "direct" connection type in DMR Rules
-- Validation over view types for connections in DMR Rules
+- Case-insensitive "direct" connection type in DMS Rules
+- Validation over view types for connections in DMS Rules
+- Validation of reverse connection feasibility in DMS Rules
 
 ## [0.96.6] - 08-11-**2024**
 ### Fixed
