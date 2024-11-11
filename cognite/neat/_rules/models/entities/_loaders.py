@@ -63,11 +63,9 @@ def load_connection(
     default_space: str,
     default_version: str,
 ) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
-    if (
-        isinstance(raw, EdgeEntity | ReverseConnectionEntity)
-        or raw is None
-        or (isinstance(raw, str) and raw == "direct")
-    ):
+    if isinstance(raw, str) and raw.lower() == "direct":
+        return "direct"  # type: ignore[return-value]
+    elif isinstance(raw, EdgeEntity | ReverseConnectionEntity) or raw is None:
         return raw  # type: ignore[return-value]
     elif isinstance(raw, str) and raw.startswith("edge"):
         return EdgeEntity.load(raw, space=default_space, version=default_version)  # type: ignore[return-value]
