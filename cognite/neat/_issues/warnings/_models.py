@@ -93,6 +93,17 @@ class NotSupportedHasDataFilterLimitWarning(CDFNotSupportedWarning):
 
 
 @dataclass(unsafe_hash=True)
+class UndefinedViewWarning(UserModelingWarning):
+    """Undefined view {value_type} has been referred as value type for property <{property_}> of view {view_id}."""
+
+    fix = "Define views which are used as value types."
+
+    view_id: str
+    value_type: str
+    property_: str
+
+
+@dataclass(unsafe_hash=True)
 class EnterpriseModelNotBuildOnTopOfCDMWarning(UserModelingWarning):
     """Enterprise data model being build on top {reference_model_id}. This is not recommended."""
 

@@ -13,6 +13,7 @@ from cognite.neat._issues.errors import (
 from cognite.neat._issues.warnings import (
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
+    UndefinedViewWarning,
 )
 from cognite.neat._issues.warnings.user_modeling import (
     NotNeatSupportedFilterWarning,
@@ -21,6 +22,7 @@ from cognite.neat._issues.warnings.user_modeling import (
 from cognite.neat._rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ContainerEntity, RawFilter
+from cognite.neat._rules.models.entities._single_value import ViewEntity
 
 from ._rules import DMSProperty, DMSRules
 from ._schema import DMSSchema
@@ -45,6 +47,7 @@ class DMSPostValidation:
     def validate(self) -> NeatIssueList:
         self._validate_raw_filter()
         self._consistent_container_properties()
+        self._validate_value_type_existence()
 
         self._referenced_views_and_containers_are_existing_and_proper_size()
         if self.metadata.schema_ is SchemaCompleteness.extended:
@@ -316,6 +319,19 @@ class DMSPostValidation:
             if view.filter_ and isinstance(view.filter_, RawFilter):
                 self.issue_list.append(
                     NotNeatSupportedFilterWarning(view.view.as_id()),
+                )
+
+    def _validate_value_type_existence(self) -> None:
+        views = {prop_.view for prop_ in self.properties}.union({view_.view for view_ in self.views})
+
+        for prop_ in self.properties:
+            if isinstance(prop_.value_type, ViewEntity) and prop_.value_type not in views:
+                self.issue_list.append(
+                    UndefinedViewWarning(
+                        str(prop_.view),
+                        str(prop_.value_type),
+                        prop_.property_,
+                    )
                 )
 
     @staticmethod
