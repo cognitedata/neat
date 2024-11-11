@@ -2,4 +2,4 @@
 # This is the system configuration for the Cognite Toolkit.
 packages: {}
 # This part is used by cdf-toolkit to keep track of the version and help you upgrade.
-cdf_toolkit_version: 0.2.4
+cdf_toolkit_version: 0.2.22
