@@ -20,6 +20,7 @@ from ._models import (
     PrincipleMatchingSpaceAndVersionWarning,
     PrincipleOneModelOneSpaceWarning,
     PrincipleSolutionBuildsOnEnterpriseWarning,
+    UndefinedViewWarning,
     UserModelingWarning,
 )
 from ._properties import (
@@ -62,6 +63,7 @@ __all__ = [
     "PrincipleSolutionBuildsOnEnterpriseWarning",
     "NotSupportedViewContainerLimitWarning",
     "NotSupportedHasDataFilterLimitWarning",
+    "UndefinedViewWarning",
     "user_modeling",
 ]
 
