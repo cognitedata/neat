@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Literal, cast
 
 from cognite.client import CogniteClient
@@ -14,6 +15,10 @@ from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
+from cognite.neat._store._provenance import (
+    INSTANCES_ENTITY,
+    Change,
+)
 
 from ._inspect import InspectAPI
 from ._prepare import PrepareAPI
@@ -22,7 +27,7 @@ from ._set import SetAPI
 from ._show import ShowAPI
 from ._state import SessionState
 from ._to import ToAPI
-from .exceptions import intercept_session_exceptions
+from .exceptions import NeatSessionError, intercept_session_exceptions
 
 
 @intercept_session_exceptions
@@ -48,20 +53,61 @@ class NeatSession:
         return _version.__version__
 
     def verify(self) -> IssueList:
-        output = VerifyAnyRules("continue").try_transform(self._state.input_rule)
+        source_id, last_unverified_rule = self._state.data_model.last_unverified_rule
+
+        transformer = VerifyAnyRules("continue")
+
+        start = datetime.now(timezone.utc)
+        output = transformer.try_transform(last_unverified_rule)
+        end = datetime.now(timezone.utc)
+
         if output.rules:
-            self._state.verified_rules.append(output.rules)
+            change = Change.from_rules_activity(
+                output.rules,
+                transformer.agent,
+                start,
+                end,
+                f"Verified data model {source_id} as {output.rules.id_}",
+                self._state.data_model.provenance.entity(source_id),
+            )
+
+            self._state.data_model.write(output.rules, change)
+
             if isinstance(output.rules, InformationRules):
-                self._state.store.add_rules(output.rules)
+                self._state.instances.store.add_rules(output.rules)
+
         output.issues.action = "verify"
-        self._state.issue_lists.append(output.issues)
+        self._state.data_model.issue_lists.append(output.issues)
         if output.issues:
             print("You can inspect the issues with the .inspect.issues(...) method.")
         return output.issues
 
-    def convert(self, target: Literal["dms"]) -> None:
-        converted = ConvertToRules(DMSRules).transform(self._state.last_verified_rule)
-        self._state.verified_rules.append(converted.rules)
+    def convert(self, target: Literal["dms", "information"]) -> None:
+        start = datetime.now(timezone.utc)
+        if target == "dms":
+            source_id, info_rules = self._state.data_model.last_verified_information_rules
+            converter = ConvertToRules(DMSRules)
+            converted_rules = converter.transform(info_rules).rules
+        elif target == "information":
+            source_id, dms_rules = self._state.data_model.last_verified_dms_rules
+            converter = ConvertToRules(InformationRules)
+            converted_rules = converter.transform(dms_rules).rules
+        else:
+            raise NeatSessionError(f"Target {target} not supported.")
+        end = datetime.now(timezone.utc)
+
+        # Provenance
+        change = Change.from_rules_activity(
+            converted_rules,
+            converter.agent,
+            start,
+            end,
+            f"Converted data model {source_id} to {converted_rules.id_}",
+            self._state.data_model.provenance.entity(source_id),
+        )
+
+        self._state.data_model.write(converted_rules, change)
+
         if self._verbose:
             print(f"Rules converted to {target}")
 
@@ -83,35 +129,54 @@ class NeatSession:
 
         model_id = dm.DataModelId.load(model_id)
 
-        input_rules: ReadRules = importers.InferenceImporter.from_graph_store(
-            store=self._state.store,
+        start = datetime.now(timezone.utc)
+        importer = importers.InferenceImporter.from_graph_store(
+            store=self._state.instances.store,
             non_existing_node_type=non_existing_node_type,
-        ).to_rules()
+        )
+        inferred_rules: ReadRules = importer.to_rules()
+        end = datetime.now(timezone.utc)
 
         if model_id.space:
-            cast(InformationInputRules, input_rules.rules).metadata.prefix = model_id.space
+            cast(InformationInputRules, inferred_rules.rules).metadata.prefix = model_id.space
         if model_id.external_id:
-            cast(InformationInputRules, input_rules.rules).metadata.name = model_id.external_id
+            cast(InformationInputRules, inferred_rules.rules).metadata.name = model_id.external_id
 
         if model_id.version:
-            cast(InformationInputRules, input_rules.rules).metadata.version = model_id.version
+            cast(InformationInputRules, inferred_rules.rules).metadata.version = model_id.version
 
-        self.read.rdf._store_rules(self._state.store, input_rules, "Data Model Inference")
-        return input_rules.issues
+        # Provenance
+        change = Change.from_rules_activity(
+            inferred_rules,
+            importer.agent,
+            start,
+            end,
+            "Inferred data model",
+            INSTANCES_ENTITY,
+        )
+
+        self._state.data_model.write(inferred_rules, change)
+        return inferred_rules.issues
 
     def _repr_html_(self) -> str:
         state = self._state
-        if not state.has_store and not state.input_rules:
+        if (
+            not state.instances.has_store
+            and not state.data_model.has_unverified_rules
+            and not state.data_model.has_verified_rules
+        ):
             return "<strong>Empty session</strong>. Get started by reading something with the <em>.read</em> attribute."
 
         output = []
-        if state.input_rules and not state.verified_rules:
-            output.append(f"<H2>Unverified Data Model</H2><br />{state.input_rule.rules._repr_html_()}")  # type: ignore
 
-        if state.verified_rules:
-            output.append(f"<H2>Verified Data Model</H2><br />{state.last_verified_rule._repr_html_()}")  # type: ignore
+        if state.data_model.has_unverified_rules and not state.data_model.has_verified_rules:
+            rules: ReadRules = state.data_model.last_unverified_rule[1]
+            output.append(f"<H2>Unverified Data Model</H2><br />{rules.rules._repr_html_()}")  # type: ignore
 
-        if state.has_store:
-            output.append(f"<H2>Instances</H2> {state.store._repr_html_()}")
+        if state.data_model.has_verified_rules:
+            output.append(f"<H2>Verified Data Model</H2><br />{state.data_model.last_verified_rule[1]._repr_html_()}")  # type: ignore
+
+        if state.instances.has_store:
+            output.append(f"<H2>Instances</H2> {state.instances.store._repr_html_()}")
 
         return "<br />".join(output)

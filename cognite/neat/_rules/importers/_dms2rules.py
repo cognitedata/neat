@@ -1,6 +1,6 @@
 from collections import Counter
 from collections.abc import Collection, Sequence
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, cast
 
@@ -104,6 +104,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         Returns:
             DMSImporter: DMSImporter instance
         """
+
         data_model_ids = [data_model_id, reference_model_id] if reference_model_id else [data_model_id]
         data_models = client.data_modeling.data_models.retrieve(data_model_ids, inline_views=True)
 
@@ -128,7 +129,9 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                     DMSSchema(),
                     [
                         ResourceRetrievalError(
-                            dm.DataModelId.load(reference_model_id), "data model", "Data Model is missing in CDF"
+                            dm.DataModelId.load(reference_model_id),
+                            "data model",
+                            "Data Model is missing in CDF",
                         )
                     ],
                 )
@@ -201,7 +204,10 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     @classmethod
     def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
         if Path(zip_file).suffix != ".zip":
-            return cls(DMSSchema(), [FileTypeUnexpectedError(Path(zip_file), frozenset([".zip"]))])
+            return cls(
+                DMSSchema(),
+                [FileTypeUnexpectedError(Path(zip_file), frozenset([".zip"]))],
+            )
         issue_list = IssueList()
         with _handle_issues(issue_list) as _:
             schema = DMSSchema.from_zip(zip_file)
@@ -210,10 +216,12 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     def to_rules(self) -> ReadRules[DMSInputRules]:
         if self.issue_list.has_errors:
             # In case there were errors during the import, the to_rules method will return None
+            self._end = datetime.now(timezone.utc)
             return ReadRules(None, self.issue_list, {})
 
         if not self.root_schema.data_model:
             self.issue_list.append(ResourceMissingIdentifierError("data model", type(self.root_schema).__name__))
+            self._end = datetime.now(timezone.utc)
             return ReadRules(None, self.issue_list, {})
 
         model = self.root_schema.data_model
@@ -240,6 +248,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             has_reference=reference is not None,
         )
         user_rules.reference = reference
+        self._end = datetime.now(timezone.utc)
 
         return ReadRules(user_rules, self.issue_list, {})
 

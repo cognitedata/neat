@@ -21,7 +21,7 @@ class InspectAPI:
     @property
     def properties(self) -> pd.DataFrame:
         """Returns the properties of the current data model."""
-        return self._state.last_verified_rule.properties.to_pandas()
+        return self._state.data_model.last_verified_rule[1].properties.to_pandas()
 
 
 @intercept_session_exceptions
@@ -51,7 +51,7 @@ class InspectIssues:
         return_dataframe: bool = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> pd.DataFrame | None:
         """Returns the issues of the current data model."""
-        issues = self._state.last_issues
+        issues = self._state.data_model.last_issues
         if not issues:
             self._print("No issues found.")
 
@@ -130,7 +130,7 @@ class InspectOutcome:
         return_dataframe: bool = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> pd.DataFrame | None:
         """Returns the outcome of the last upload."""
-        outcome = self._state.last_outcome
+        outcome = self._state.data_model.last_outcome
         name_set = self._as_set(name)
 
         def outcome_filter(item: UploadResultCore) -> bool:

@@ -10,7 +10,10 @@ from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
 from rdflib import Namespace
 
-from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._constants import (
+    COGNITE_MODELS,
+    DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
+)
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings._models import (
     EnterpriseModelNotBuildOnTopOfCDMWarning,
@@ -83,7 +86,7 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
 
     def transform(
         self, rules: InformationInputRules | OutRules[InformationInputRules]
-    ) -> OutRules[InformationInputRules]:
+    ) -> JustRules[InformationInputRules]:
         return JustRules(self._transform(self._to_rules(rules)))
 
     def _transform(self, rules: InformationInputRules) -> InformationInputRules:

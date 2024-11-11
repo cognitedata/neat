@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import pandas as pd
 from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
 
-from cognite.neat._constants import get_default_prefixes
+from cognite.neat._constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat._issues.errors import NeatValueError, PropertyDefinitionError
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models._base_rules import (
@@ -394,3 +394,7 @@ class InformationRules(BaseRules):
         }
 
         return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore
+
+    @property
+    def id_(self) -> URIRef:
+        return DEFAULT_NAMESPACE[f"data-model/verified/info/{self.metadata.prefix}/{self.metadata.version}"]

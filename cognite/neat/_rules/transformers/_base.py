@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import MutableSequence
 from typing import Generic, TypeVar
 
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList, NeatError
 from cognite.neat._issues.errors import NeatTypeError, NeatValueError
 from cognite.neat._rules._shared import (
@@ -12,6 +13,7 @@ from cognite.neat._rules._shared import (
     Rules,
     VerifiedRules,
 )
+from cognite.neat._store._provenance import Agent as ProvenanceAgent
 
 T_RulesIn = TypeVar("T_RulesIn", bound=Rules)
 T_RulesOut = TypeVar("T_RulesOut", bound=Rules)
@@ -53,6 +55,11 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
             return rules  # type: ignore[return-value]
         else:
             raise NeatTypeError(f"Unsupported type: {type(rules)}")
+
+    @property
+    def agent(self) -> ProvenanceAgent:
+        """Provenance agent for the importer."""
+        return ProvenanceAgent(id_=DEFAULT_NAMESPACE[f"agent/{type(self).__name__}"])
 
 
 class RulesPipeline(list, MutableSequence[RulesTransformer], Generic[T_RulesIn, T_RulesOut]):

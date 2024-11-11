@@ -1,9 +1,10 @@
 from abc import abstractmethod
 from collections.abc import Hashable, Sequence
 from dataclasses import dataclass
-from typing import Any, TypeVar
+from typing import Any, TypeAlias, TypeVar
 
 import pandas as pd
+from rdflib import Literal, URIRef
 
 T_ID = TypeVar("T_ID", bound=Hashable)
 
@@ -49,3 +50,7 @@ class NeatList(list, Sequence[T_NeatObject]):
 
     def _repr_html_(self) -> str:
         return self.to_pandas()._repr_html_()  # type: ignore[operator]
+
+
+Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
+InstanceType: TypeAlias = URIRef

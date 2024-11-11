@@ -1,12 +1,13 @@
 from collections.abc import Collection
-from typing import Literal, cast
+from datetime import datetime, timezone
+from typing import Literal
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
-from cognite.neat._issues._base import IssueList
-from cognite.neat._rules._shared import ReadRules
+from cognite.neat._rules._shared import JustRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ReduceCogniteModel, ToCompliantEntities, ToExtension
+from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
 from .exceptions import intercept_session_exceptions
@@ -28,15 +29,24 @@ class DataModelPrepareAPI:
 
     def cdf_compliant_external_ids(self) -> None:
         """Convert data model component external ids to CDF compliant entities."""
-        if input := self._state.information_input_rule:
-            output = ToCompliantEntities().transform(input)
-            self._state.input_rules.append(
-                ReadRules(
-                    rules=cast(InformationInputRules, output.get_rules()),
-                    issues=IssueList(),
-                    read_context={},
-                )
+        if input := self._state.data_model.last_info_unverified_rule:
+            source_id, rules = input
+
+            start = datetime.now(timezone.utc)
+            transformer = ToCompliantEntities()
+            output: JustRules[InformationInputRules] = transformer.transform(rules)
+            end = datetime.now(timezone.utc)
+
+            change = Change.from_rules_activity(
+                output,
+                transformer.agent,
+                start,
+                end,
+                "Converted external ids to CDF compliant entities",
+                self._state.data_model.provenance.entity(source_id),
             )
+
+            self._state.data_model.write(output, change)
 
     def to_enterprise(
         self,
@@ -59,14 +69,32 @@ class DataModelPrepareAPI:
             - ...
 
         """
-        if dms := self._state.last_verified_dms_rules:
-            output = ToExtension(
+        if input := self._state.data_model.last_verified_dms_rules:
+            source_id, rules = input
+
+            start = datetime.now(timezone.utc)
+            transformer = ToExtension(
                 new_model_id=data_model_id,
                 org_name=org_name,
                 type_="enterprise",
                 dummy_property=dummy_property,
-            ).transform(dms)
-            self._state.verified_rules.append(output.rules)
+            )
+            output = transformer.transform(rules)
+            end = datetime.now(timezone.utc)
+
+            change = Change.from_rules_activity(
+                output,
+                transformer.agent,
+                start,
+                end,
+                (
+                    f"Prepared data model {data_model_id} to be enterprise data "
+                    f"model on top of {rules.metadata.as_data_model_id()}"
+                ),
+                self._state.data_model.provenance.entity(source_id),
+            )
+
+            self._state.data_model.write(output, change)
 
     def to_solution(
         self,
@@ -94,15 +122,33 @@ class DataModelPrepareAPI:
             the containers in the solution data model space.
 
         """
-        if dms := self._state.last_verified_dms_rules:
-            output = ToExtension(
+        if input := self._state.data_model.last_verified_dms_rules:
+            source_id, rules = input
+
+            start = datetime.now(timezone.utc)
+            transformer = ToExtension(
                 new_model_id=data_model_id,
                 org_name=org_name,
                 type_="solution",
                 mode=mode,
                 dummy_property=dummy_property,
-            ).transform(dms)
-            self._state.verified_rules.append(output.rules)
+            )
+            output = transformer.transform(rules)
+            end = datetime.now(timezone.utc)
+
+            change = Change.from_rules_activity(
+                output,
+                transformer.agent,
+                start,
+                end,
+                (
+                    f"Prepared data model {data_model_id} to be solution data model "
+                    f"on top of {rules.metadata.as_data_model_id()}"
+                ),
+                self._state.data_model.provenance.entity(source_id),
+            )
+
+            self._state.data_model.write(output, change)
 
     def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]) -> None:
         """This is a special method that allow you to drop parts of the data model.
@@ -113,6 +159,26 @@ class DataModelPrepareAPI:
                 drops multiple views at once. You can also pass externalIds of views to drop individual views.
 
         """
-        if dms := self._state.last_verified_dms_rules:
-            output = ReduceCogniteModel(drop).transform(dms)
-            self._state.verified_rules.append(output.rules)
+        if input := self._state.data_model.last_verified_dms_rules:
+            source_id, rules = input
+            start = datetime.now(timezone.utc)
+
+            transformer = ReduceCogniteModel(drop)
+            output = transformer.transform(rules)
+            output.rules.metadata.version = f"{rules.metadata.version}.reduced"
+
+            end = datetime.now(timezone.utc)
+
+            change = Change.from_rules_activity(
+                output,
+                transformer.agent,
+                start,
+                end,
+                (
+                    f"Reduced data model {rules.metadata.as_data_model_id()}"
+                    f"on top of {rules.metadata.as_data_model_id()}"
+                ),
+                self._state.data_model.provenance.entity(source_id),
+            )
+
+            self._state.data_model.write(output.rules, change)

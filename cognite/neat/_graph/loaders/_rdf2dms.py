@@ -16,7 +16,6 @@ from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 from rdflib import RDF
 
 from cognite.neat._graph._tracking import LogTracker, Tracker
-from cognite.neat._graph.models import InstanceType
 from cognite.neat._issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
     ResourceConvertionError,
@@ -27,6 +26,7 @@ from cognite.neat._issues.errors import (
 from cognite.neat._issues.warnings import PropertyTypeNotSupportedWarning
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
+from cognite.neat._shared import InstanceType
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
 from cognite.neat._utils.upload import UploadResult

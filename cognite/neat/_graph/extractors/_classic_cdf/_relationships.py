@@ -7,7 +7,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Relationship, RelationshipList
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat._graph.models import Triple
+from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import create_sha256_hash
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
