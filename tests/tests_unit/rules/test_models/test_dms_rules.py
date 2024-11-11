@@ -1646,7 +1646,11 @@ class TestDMSRules:
     def test_reverse_property_in_parent(self) -> None:
         sub_core = DMSInputRules(
             DMSInputMetadata(
-                schema_="complete", space="my_space", external_id="my_data_model", creator="Anders", version="v42"
+                schema_="complete",
+                space="my_space",
+                external_id="my_data_model",
+                creator="Anders",
+                version="v42",
             ),
             properties=[
                 DMSInputProperty(
@@ -1661,7 +1665,7 @@ class TestDMSRules:
                 DMSInputProperty(
                     view="Cognite3DObject",
                     view_property="asset",
-                    value_type="CogniteAsset",
+                    value_type="CogniteVisualizable",
                     connection="reverse(property=object3D)",
                 ),
             ],

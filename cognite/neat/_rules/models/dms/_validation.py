@@ -1,15 +1,16 @@
 from collections import defaultdict
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
     PropertyDefinitionDuplicatedError,
     ResourceChangedError,
     ResourceNotDefinedError,
 )
+from cognite.neat._issues.errors._properties import ReversedConnectionNotFeasibleError
 from cognite.neat._issues.warnings import (
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
@@ -22,7 +23,10 @@ from cognite.neat._issues.warnings.user_modeling import (
 from cognite.neat._rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ContainerEntity, RawFilter
-from cognite.neat._rules.models.entities._single_value import ViewEntity
+from cognite.neat._rules.models.entities._single_value import (
+    ReverseConnectionEntity,
+    ViewEntity,
+)
 
 from ._rules import DMSProperty, DMSRules
 from ._schema import DMSSchema
@@ -48,6 +52,7 @@ class DMSPostValidation:
         self._validate_raw_filter()
         self._consistent_container_properties()
         self._validate_value_type_existence()
+        self._validate_reverse_connections()
 
         self._referenced_views_and_containers_are_existing_and_proper_size()
         if self.metadata.schema_ is SchemaCompleteness.extended:
@@ -333,6 +338,51 @@ class DMSPostValidation:
                         prop_.property_,
                     )
                 )
+
+    def _validate_reverse_connections(self) -> None:
+        # do not check for reverse connections in Cognite models
+        if self.metadata.as_data_model_id() in COGNITE_MODELS:
+            return None
+
+        properties_by_view = {f"{prop_.view.suffix}.{prop_.property_}": prop_ for prop_ in self.properties}
+        reversed_ids = {
+            id_
+            for id_, prop_ in properties_by_view.items()
+            if prop_.connection and isinstance(prop_.connection, ReverseConnectionEntity)
+        }
+
+        for reverse_id in reversed_ids:
+            prop_ = properties_by_view[reverse_id]
+            source_id = (
+                f"{cast(ViewEntity, prop_.value_type).suffix}."
+                f"{cast(ReverseConnectionEntity, prop_.connection).property_}"
+            )
+            if source_id not in properties_by_view:
+                self.issue_list.append(
+                    ReversedConnectionNotFeasibleError(
+                        reverse_id,
+                        "reversed connection",
+                        prop_.property_,
+                        str(prop_.view),
+                        str(prop_.value_type),
+                        cast(ReverseConnectionEntity, prop_.connection).property_,
+                    )
+                )
+
+            elif source_id in properties_by_view and properties_by_view[source_id].value_type != prop_.view:
+                self.issue_list.append(
+                    ReversedConnectionNotFeasibleError(
+                        reverse_id,
+                        "view property",
+                        prop_.property_,
+                        str(prop_.view),
+                        str(prop_.value_type),
+                        cast(ReverseConnectionEntity, prop_.connection).property_,
+                    )
+                )
+
+            else:
+                continue
 
     @staticmethod
     def _changed_attributes_and_properties(
