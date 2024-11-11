@@ -44,7 +44,7 @@ class InstancesState:
 
 @dataclass
 class DataModelState:
-    _rules: dict[str, ReadRules | JustRules | VerifiedRules] = field(init=False, default_factory=dict)
+    _rules: dict[URIRef, ReadRules | JustRules | VerifiedRules] = field(init=False, default_factory=dict)
     issue_lists: list[IssueList] = field(default_factory=list)
     provenance: Provenance = field(default_factory=Provenance)
     outcome: list[UploadResultList] = field(default_factory=list)
@@ -63,21 +63,21 @@ class DataModelState:
         return self._rules[id_]
 
     @property
-    def unverified_rules(self) -> dict[str, ReadRules]:
+    def unverified_rules(self) -> dict[URIRef, ReadRules]:
         return {id_: rules for id_, rules in self._rules.items() if isinstance(rules, ReadRules)}
 
     @property
-    def verified_rules(self) -> dict[str, VerifiedRules]:
+    def verified_rules(self) -> dict[URIRef, VerifiedRules]:
         return {id_: rules for id_, rules in self._rules.items() if isinstance(rules, VerifiedRules)}
 
     @property
-    def last_unverified_rule(self) -> tuple[str, ReadRules]:
+    def last_unverified_rule(self) -> tuple[URIRef, ReadRules]:
         if not self.unverified_rules:
             raise NeatSessionError("No data model available. Try using [bold].read[/bold] to load a data model.")
         return next(reversed(self.unverified_rules.items()))
 
     @property
-    def last_info_unverified_rule(self) -> tuple[str, ReadRules]:
+    def last_info_unverified_rule(self) -> tuple[URIRef, ReadRules]:
         if self.unverified_rules:
             for id_, rule in reversed(self.unverified_rules.items()):
                 if isinstance(rule.rules, InformationInputRules):
@@ -86,7 +86,7 @@ class DataModelState:
         raise NeatSessionError("No data model available. Try using [bold].read[/bold] to load a data model.")
 
     @property
-    def last_verified_rule(self) -> tuple[str, VerifiedRules]:
+    def last_verified_rule(self) -> tuple[URIRef, VerifiedRules]:
         if not self.verified_rules:
             raise NeatSessionError(
                 "No data model available to verify. Try using  [bold].read[/bold] to load a data model."
@@ -94,7 +94,7 @@ class DataModelState:
         return next(reversed(self.verified_rules.items()))
 
     @property
-    def last_verified_information_rules(self) -> tuple[str, InformationRules]:
+    def last_verified_information_rules(self) -> tuple[URIRef, InformationRules]:
         if self.verified_rules:
             for id_, rules in reversed(self.verified_rules.items()):
                 if isinstance(rules, InformationRules):
@@ -106,7 +106,7 @@ class DataModelState:
         )
 
     @property
-    def last_verified_dms_rules(self) -> tuple[str, DMSRules]:
+    def last_verified_dms_rules(self) -> tuple[URIRef, DMSRules]:
         if self.verified_rules:
             for id_, rules in reversed(self.verified_rules.items()):
                 if isinstance(rules, DMSRules):

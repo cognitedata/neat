@@ -1,12 +1,19 @@
 """
-We use prov-o to represent the provenance of the neat graph store
-basically tracking changes that occur in the graph store
+We use prov-o to represent the provenance of instances and data models
+basically tracking changes that occur.
 prov-o use concepts of Agent, Activity and Entity to represent provenance
-where in case of neat we have:
+where in case of neat when dealing with instances we have:
 
  * Agent: triples extractors, graph enhancers, contextualizers, etc.
  * Activity: write/remove triples such as add connection, etc.
  * Entity: neat graph store
+
+ and in case of data models we have:
+
+ * Agent: Rules importers, exporters, transformers, etc.
+ * Activity: convert, verify, etc.
+ * Entity: data model (aka Rules)
+
 """
 
 import uuid
@@ -20,7 +27,7 @@ from rdflib import PROV, RDF, Literal, URIRef
 
 from cognite.neat._constants import CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat._rules._shared import JustRules, ReadRules, VerifiedRules
-from cognite.neat._shared import FrozenNeatObject, NeatList
+from cognite.neat._shared import FrozenNeatObject, NeatList, Triple
 
 
 @dataclass(frozen=True)
@@ -28,10 +35,10 @@ class Agent:
     id_: URIRef = DEFAULT_NAMESPACE.agent
     acted_on_behalf_of: str = "NEAT"
 
-    def as_triples(self) -> list[tuple[URIRef, URIRef, URIRef | str]]:
+    def as_triples(self) -> list[Triple]:
         return [
             (self.id_, RDF.type, PROV[type(self).__name__]),
-            (self.id_, PROV.actedOnBehalfOf, self.acted_on_behalf_of),
+            (self.id_, PROV.actedOnBehalfOf, Literal(self.acted_on_behalf_of)),
         ]
 
 
@@ -46,16 +53,22 @@ class Entity:
     was_generated_by: Optional["Activity"] = field(default=None, repr=False)
     id_: URIRef = DEFAULT_NAMESPACE["graph-store"]
 
-    def as_triples(self) -> list[tuple[URIRef, URIRef, URIRef | None]]:
-        return [
+    def as_triples(self) -> list[Triple]:
+        output: list[tuple[URIRef, URIRef, Literal | URIRef]] = [
             (self.id_, RDF.type, PROV[type(self).__name__]),
-            (
-                self.id_,
-                PROV.wasGeneratedBy,
-                self.was_generated_by.id_ if self.was_generated_by else None,
-            ),
             (self.id_, PROV.wasAttributedTo, self.was_attributed_to.id_),
         ]
+
+        if self.was_generated_by:
+            output.append(
+                (
+                    self.id_,
+                    PROV.wasGeneratedBy,
+                    self.was_generated_by.id_,
+                )
+            )
+
+        return output
 
     @classmethod
     def from_data_model_id(cls, data_model_id: DataModelIdentifier) -> "Entity":
@@ -115,18 +128,24 @@ class Activity:
     used: str | Entity | None = None
     id_: URIRef = field(default_factory=lambda: DEFAULT_NAMESPACE[f"activity-{uuid.uuid4()}"])
 
-    def as_triples(self) -> list[tuple[URIRef, URIRef, str | None]]:
-        return [
+    def as_triples(self) -> list[Triple]:
+        output: list[tuple[URIRef, URIRef, Literal | URIRef]] = [
             (self.id_, RDF.type, PROV[type(self).__name__]),
             (self.id_, PROV.wasAssociatedWith, self.was_associated_with.id_),
             (self.id_, PROV.startedAtTime, Literal(self.started_at_time)),
             (self.id_, PROV.endedAtTime, Literal(self.ended_at_time)),
-            (
-                self.id_,
-                PROV.used,
-                self.used.id_ if isinstance(self.used, Entity) else self.used,
-            ),
         ]
+
+        if self.used:
+            output.append(
+                (
+                    self.id_,
+                    PROV.used,
+                    (self.used.id_ if isinstance(self.used, Entity) else Literal(self.used)),
+                )
+            )
+
+        return output
 
 
 @dataclass(frozen=True)
@@ -137,7 +156,7 @@ class Change(FrozenNeatObject):
     description: str
     source_entity: Entity = field(default_factory=Entity.new_unknown_entity)
 
-    def as_triples(self) -> list[tuple[URIRef, URIRef, URIRef | Literal | None | str]]:
+    def as_triples(self) -> list[Triple]:
         return (
             self.source_entity.as_triples()
             + self.agent.as_triples()
