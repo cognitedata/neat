@@ -18,10 +18,12 @@ Changes are grouped as follows:
 ## TBD
 ### Added
 - Added provenance on rules in NeatSession
+### Improved
+- Case-insensitive "direct" connection type in DMR Rules
 
 ## [0.96.6] - 08-11-**2024**
 ### Fixed
-- `neat.verify()` no longer gives a `PrincipleMatchingSpaceAndVersionWarning` when you include views from 
+- `neat.verify()` no longer gives a `PrincipleMatchingSpaceAndVersionWarning` when you include views from
   the `CogniteCore` or `CogniteProcessIndustry` data models.
 - In the `DMSSheet` you will now get a `RowError` if you try to set `container` or `container property` for
   an edge or reverse direct relation as these are not stored in containers.
