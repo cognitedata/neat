@@ -17,6 +17,7 @@ from cognite.neat._store._provenance import Entity as ProvenanceEntity
 
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, object_wizard, rdf_dm_wizard
+from .engine import import_engine
 from .exceptions import NeatSessionError, intercept_session_exceptions
 
 
@@ -138,6 +139,18 @@ class ExcelReadAPI(BaseReadAPI):
             self._store_rules(input_rules, change)
 
         return input_rules.issues
+
+
+@intercept_session_exceptions
+class CSVReadAPI(BaseReadAPI):
+    def __call__(self, io: Any, type: str, primary_key: str) -> None:
+        engine = import_engine()
+        engine.set.file(io)
+        engine.set.type(type)
+        engine.set.primary_key(primary_key)
+        extractor = engine.create_extractor()
+
+        self._state.instances.store.write(extractor)
 
 
 @intercept_session_exceptions

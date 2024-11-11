@@ -1,3 +1,5 @@
+from cognite.neat._session.engine._interface import Extractor as EngineExtractor
+
 from ._base import BaseExtractor
 from ._classic_cdf._assets import AssetsExtractor
 from ._classic_cdf._classic import ClassicGraphExtractor
@@ -48,6 +50,7 @@ TripleExtractors = (
     | DMSExtractor
     | ClassicGraphExtractor
     | DataSetExtractor
+    | EngineExtractor
 )
 
 
