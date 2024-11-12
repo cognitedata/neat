@@ -405,7 +405,9 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         # while overwriting containers and properties with new ones
         enterprise_model.containers = enterprise_containers
         enterprise_model.properties = enterprise_properties
-        enterprise_properties.extend(enterprise_connections)
+
+        if self.move_connections:
+            enterprise_properties.extend(enterprise_connections)
 
         return JustRules(enterprise_model)
 
