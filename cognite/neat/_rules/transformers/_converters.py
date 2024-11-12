@@ -408,8 +408,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         enterprise_model.containers = enterprise_containers
         enterprise_model.properties = enterprise_properties
 
-        if self.move_connections:
-            enterprise_properties.extend(enterprise_connections)
+        enterprise_properties.extend(enterprise_connections)
 
         return JustRules(enterprise_model)
 
