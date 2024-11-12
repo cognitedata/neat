@@ -16,6 +16,7 @@ from ._properties import (
     PropertyMappingDuplicatedError,
     PropertyNotFoundError,
     PropertyTypeNotSupportedError,
+    ReversedConnectionNotFeasibleError,
 )
 from ._resources import (
     ResourceChangedError,
@@ -68,6 +69,7 @@ __all__ = [
     "PropertyMappingDuplicatedError",
     "RowError",
     "NeatTypeError",
+    "ReversedConnectionNotFeasibleError",
 ]
 
 _NEAT_ERRORS_BY_NAME = {error.__name__: error for error in _get_subclasses(NeatError, include_base=True)}
