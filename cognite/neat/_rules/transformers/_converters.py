@@ -261,6 +261,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         type_: Literal["enterprise", "solution"] = "enterprise",
         mode: Literal["read", "write"] = "read",
         dummy_property: str = "GUID",
+        move_connections: bool = False,
     ):
         self.new_model_id = DataModelId.load(new_model_id)
         if not self.new_model_id.version:
@@ -270,6 +271,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         self.mode = mode
         self.type_ = type_
         self.dummy_property = dummy_property
+        self.move_connections = move_connections
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         # Copy to ensure immutability
@@ -396,9 +398,17 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         # extending reference views with new ones
         enterprise_model.views.extend(enterprise_views)
 
+        # Move connections from reference model to enterprise model
+        if self.move_connections:
+            enterprise_connections = self._move_connections(enterprise_model)
+        else:
+            enterprise_connections = SheetList[DMSProperty]()
+
         # while overwriting containers and properties with new ones
         enterprise_model.containers = enterprise_containers
         enterprise_model.properties = enterprise_properties
+
+        enterprise_properties.extend(enterprise_connections)
 
         return JustRules(enterprise_model)
 
@@ -457,6 +467,35 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
             new_containers.append(container)
 
         return new_views, new_containers, new_properties
+
+    def _move_connections(self, rules: DMSRules) -> SheetList[DMSProperty]:
+        implements: dict[ViewEntity, list[ViewEntity]] = defaultdict(list)
+        new_properties = SheetList[DMSProperty]()
+
+        for view in rules.views:
+            if view.view.space == rules.metadata.space and view.implements:
+                for implemented_view in view.implements:
+                    implements.setdefault(implemented_view, []).append(view.view)
+
+        # currently only supporting single implementation of reference view in enterprise view
+        # connections that do not have properties
+        if all(len(v) == 1 for v in implements.values()):
+            for prop_ in rules.properties:
+                if (
+                    prop_.view.space != rules.metadata.space
+                    and prop_.connection
+                    and isinstance(prop_.value_type, ViewEntity)
+                    and implements.get(prop_.view)
+                    and implements.get(prop_.value_type)
+                ):
+                    if isinstance(prop_.connection, EdgeEntity) and prop_.connection.properties:
+                        continue
+                    new_property = prop_.model_copy(deep=True)
+                    new_property.view = implements[prop_.view][0]
+                    new_property.value_type = implements[prop_.value_type][0]
+                    new_properties.append(new_property)
+
+        return new_properties
 
 
 class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
