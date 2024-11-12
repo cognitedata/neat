@@ -1722,7 +1722,7 @@ class TestDMSRules:
 
         assert maybe_rules.issues
         assert len(maybe_rules.issues) == 1
-        assert isinstance(maybe_rules.issues, ReversedConnectionNotFeasibleError)
+        assert isinstance(maybe_rules.issues[0], ReversedConnectionNotFeasibleError)
 
 
 class TestDMSExporter:
