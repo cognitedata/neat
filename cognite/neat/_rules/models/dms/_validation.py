@@ -344,23 +344,19 @@ class DMSPostValidation:
         if self.metadata.as_data_model_id() in COGNITE_MODELS:
             return None
 
-        properties_by_view = {f"{prop_.view.suffix}.{prop_.property_}": prop_ for prop_ in self.properties}
-        reversed_ids = {
-            id_
-            for id_, prop_ in properties_by_view.items()
+        properties_by_ids = {f"{prop_.view!s}.{prop_.property_}": prop_ for prop_ in self.properties}
+        reversed_by_ids = {
+            id_: prop_
+            for id_, prop_ in properties_by_ids.items()
             if prop_.connection and isinstance(prop_.connection, ReverseConnectionEntity)
         }
 
-        for reverse_id in reversed_ids:
-            prop_ = properties_by_view[reverse_id]
-            source_id = (
-                f"{cast(ViewEntity, prop_.value_type).suffix}."
-                f"{cast(ReverseConnectionEntity, prop_.connection).property_}"
-            )
-            if source_id not in properties_by_view:
+        for id_, prop_ in reversed_by_ids.items():
+            source_id = f"{prop_.value_type!s}." f"{cast(ReverseConnectionEntity, prop_.connection).property_}"
+            if source_id not in properties_by_ids:
                 self.issue_list.append(
                     ReversedConnectionNotFeasibleError(
-                        reverse_id,
+                        id_,
                         "reversed connection",
                         prop_.property_,
                         str(prop_.view),
@@ -369,10 +365,10 @@ class DMSPostValidation:
                     )
                 )
 
-            elif source_id in properties_by_view and properties_by_view[source_id].value_type != prop_.view:
+            elif source_id in properties_by_ids and properties_by_ids[source_id].value_type != prop_.view:
                 self.issue_list.append(
                     ReversedConnectionNotFeasibleError(
-                        reverse_id,
+                        id_,
                         "view property",
                         prop_.property_,
                         str(prop_.view),
