@@ -29,6 +29,7 @@ class ReadAPI:
         self.cdf = CDFReadAPI(state, client, verbose)
         self.rdf = RDFReadAPI(state, client, verbose)
         self.excel = ExcelReadAPI(state, client, verbose)
+        self.csv = CSVReadAPI(state, client, verbose)
 
 
 @intercept_session_exceptions
