@@ -401,6 +401,8 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         # Move connections from reference model to enterprise model
         if self.move_connections:
             enterprise_connections = self._move_connections(enterprise_model)
+        else:
+            enterprise_connections = SheetList[DMSProperty]()
 
         # while overwriting containers and properties with new ones
         enterprise_model.containers = enterprise_containers
