@@ -20,7 +20,6 @@ from cognite.neat._store._provenance import (
     Change,
 )
 
-from ._engine import load_neat_engine
 from ._inspect import InspectAPI
 from ._prepare import PrepareAPI
 from ._read import ReadAPI
@@ -28,6 +27,7 @@ from ._set import SetAPI
 from ._show import ShowAPI
 from ._state import SessionState
 from ._to import ToAPI
+from .engine import load_neat_engine
 from .exceptions import NeatSessionError, intercept_session_exceptions
 
 
