@@ -17,7 +17,7 @@ class SetterAPI(Protocol):
 
 
 class NeatEngine(Protocol):
-    version: ClassVar[str] = "0.1.0"
+    version: ClassVar[str] = "1.0.0"
 
     @property
     def set(self) -> SetterAPI: ...

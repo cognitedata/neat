@@ -22,10 +22,20 @@ def _intercept_session_exceptions(func: Callable):
         try:
             return func(*args, **kwargs)
         except NeatSessionError as e:
-            action = func.__name__
-            if action == "__call__":
-                action = func.__qualname__.removesuffix(".__call__").removesuffix("API")
+            action = _get_action()
             print(f"{_PREFIX} Cannot {action}: {e}")
+        except ModuleNotFoundError as e:
+            if e.name == "neatengine":
+                action = _get_action()
+                print(f"{_PREFIX} The functionality {action} requires the NeatEngine.")
+            else:
+                raise e
+
+    def _get_action():
+        action = func.__name__
+        if action == "__call__":
+            action = func.__qualname__.removesuffix(".__call__").removesuffix("API")
+        return action
 
     return wrapper
 
