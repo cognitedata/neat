@@ -23,26 +23,34 @@ PYVERSION = f"{sys.version_info.major}{sys.version_info.minor}"
 def load_neat_engine(client: CogniteClient | None, location: Literal["newest", "cache"]) -> str | None:
     if location not in ["newest", "cache"]:
         raise NeatValueError(f"Cannot load engine from location: {location}")
+
+    if not __engine__.startswith("^"):
+        # Using value error as this is a developer error
+        raise ValueError(f"Invalid engine version: {__engine__}")
+
+    lower_bound = parse_version(__engine__[1:])
+    upper_bound = Version(f"{lower_bound.major + 1}.0.0")
+
     cache_dir = Path(tempfile.gettempdir()) / PACKAGE_NAME
     cache_dir.mkdir(exist_ok=True)
     pattern = re.compile(rf"{PACKAGE_NAME}-(\d+\.\d+\.\d+)-{PYVERSION}.zip")
 
     candidates: dict[Version, Callable[[], Path]] = {}
     if location == "cache" and cache_dir.exists():
-        candidates = _load_from_path(cache_dir, pattern)
+        candidates = _load_from_path(cache_dir, pattern, lower_bound, upper_bound)
 
     if location == "newest" or not candidates:
-        # Loading in revrse order of priority
+        # Loading in reverse order of priority
         # 3. Downloads folder
-        candidates = _load_from_path(Path.home() / "Downloads", pattern)
+        candidates = _load_from_path(Path.home() / "Downloads", pattern, lower_bound, upper_bound)
         # 2. CDF
         if client:
-            candidates.update(_load_from_cdf(client, pattern, cache_dir))
+            candidates.update(_load_from_cdf(client, pattern, lower_bound, upper_bound, cache_dir))
         # 1. Environment variable
         if ENVIRONMENT_VARIABLE in os.environ:
             environ_path = Path(os.environ[ENVIRONMENT_VARIABLE])
             if environ_path.exists():
-                candidates.update(_load_from_path(environ_path, pattern))
+                candidates.update(_load_from_path(environ_path, pattern, lower_bound, upper_bound))
             else:
                 warnings.warn(
                     f"Environment variable {ENVIRONMENT_VARIABLE} points to non-existing path: {environ_path}",
@@ -53,15 +61,7 @@ def load_neat_engine(client: CogniteClient | None, location: Literal["newest", "
     if not candidates:
         return None
 
-    if not __engine__.startswith("^"):
-        # Using value error as this is a developer error
-        raise ValueError(f"Invalid engine version: {__engine__}")
-
-    lower_bound = parse_version(__engine__[1:])
-    upper_bound = Version(f"{lower_bound.major+1}.0.0")
-    selected_version = max(
-        (version for version in candidates.keys() if lower_bound <= version < upper_bound), default=None
-    )
+    selected_version = max(candidates.keys(), default=None)
     if not selected_version:
         return None
     source_path = candidates[selected_version]()
@@ -76,26 +76,33 @@ def load_neat_engine(client: CogniteClient | None, location: Literal["newest", "
     return engine_version
 
 
-def _load_from_path(path: Path, pattern) -> dict[Version, Callable[[], Path]]:
+def _load_from_path(
+    path: Path, pattern: re.Pattern[str], lower_bound: Version, upper_bound: Version
+) -> dict[Version, Callable[[], Path]]:
     if path.is_file() and (match := pattern.match(path.name)):
-        return {parse_version(match.group(1)): lambda: path}
+        version = parse_version(match.group(1))
+        if lower_bound <= version < upper_bound:
+            return {parse_version(match.group(1)): lambda: path}
+        return {}
     elif path.is_dir():
         output: dict[Version, Callable[[], Path]] = {}
         for candidate in path.iterdir():
             if candidate.is_file() and (match := pattern.match(candidate.name)):
-                # Setting default value to ensure we use the candidate from the current iteration
-                # If not set, the function will use the last candidate from the loop
-                def return_path(the_path: Path = candidate) -> Path:
-                    return the_path
+                version = parse_version(match.group(1))
+                if lower_bound <= version < upper_bound:
+                    # Setting default value to ensure we use the candidate from the current iteration
+                    # If not set, the function will use the last candidate from the loop
+                    def return_path(the_path: Path = candidate) -> Path:
+                        return the_path
 
-                output[parse_version(match.group(1))] = return_path
+                    output[parse_version(match.group(1))] = return_path
 
         return output
     return {}
 
 
 def _load_from_cdf(
-    client: CogniteClient, pattern: re.Pattern[str], cache_dir: Path
+    client: CogniteClient, pattern: re.Pattern[str], lower_bound: Version, upper_bound: Version, cache_dir: Path
 ) -> dict[Version, Callable[[], Path]]:
     file_metadata = client.files.list(
         limit=-1,
@@ -115,6 +122,8 @@ def _load_from_cdf(
             return cache_dir / filename
 
         if match := pattern.match(name):
-            output[parse_version(match.group(1))] = download_file
+            version = parse_version(match.group(1))
+            if lower_bound <= version < upper_bound:
+                output[version] = download_file
 
     return output
