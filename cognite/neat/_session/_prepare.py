@@ -53,6 +53,7 @@ class DataModelPrepareAPI:
         data_model_id: DataModelIdentifier,
         org_name: str = "My",
         dummy_property: str = "GUID",
+        move_connections: bool = False,
     ) -> None:
         """Uses the current data model as a basis to create enterprise data model
 
@@ -60,6 +61,7 @@ class DataModelPrepareAPI:
             data_model_id: The enterprise data model id that is being created
             org_name: Organization name to use for the views in the enterprise data model.
             dummy_property: The dummy property to use as placeholder for the views in the new data model.
+            move_connections: If True, the connections will be moved to the new data model.
 
         !!! note "Enterprise Data Model Creation"
             Always create an enterprise data model from a Cognite Data Model as this will
@@ -67,6 +69,11 @@ class DataModelPrepareAPI:
             - Search
             - Atlas AI
             - ...
+
+        !!! note "Move Connections"
+            If you want to move the connections to the new data model, set the move_connections
+            to True. This will move the connections to the new data model and use new model
+            views as the source and target views.
 
         """
         if input := self._state.data_model.last_verified_dms_rules:
@@ -78,6 +85,7 @@ class DataModelPrepareAPI:
                 org_name=org_name,
                 type_="enterprise",
                 dummy_property=dummy_property,
+                move_connections=move_connections,
             )
             output = transformer.transform(rules)
             end = datetime.now(timezone.utc)
@@ -94,7 +102,7 @@ class DataModelPrepareAPI:
                 self._state.data_model.provenance.entity(source_id),
             )
 
-            self._state.data_model.write(output, change)
+            self._state.data_model.write(output.rules, change)
 
     def to_solution(
         self,
@@ -148,7 +156,7 @@ class DataModelPrepareAPI:
                 self._state.data_model.provenance.entity(source_id),
             )
 
-            self._state.data_model.write(output, change)
+            self._state.data_model.write(output.rules, change)
 
     def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]) -> None:
         """This is a special method that allow you to drop parts of the data model.
