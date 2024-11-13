@@ -21,6 +21,7 @@ Changes are grouped as follows:
 - Option to move connections from reference to new model in DMS rules when generating Enterprise model
 - Support for loading `NeatEngine`.
 - Support for inspecting outcome of `neat.to.cdf.instances(...)` with `neat.inspect.outcome.instances(...)`.
+- Support for reading instances from csv `neat.read.csv`. Including reading csv from a public GitHub repository.
 
 ### Improved
 - Case-insensitive "direct" connection type in DMS Rules
