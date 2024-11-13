@@ -49,6 +49,7 @@ CDF_NAMESPACE = Namespace("https://cognitedata.com/")
 DEFAULT_BASE_URI = URIRef(DEFAULT_NAMESPACE)
 CLASSIC_CDF_NAMESPACE = Namespace("http://purl.org/cognite/cdf-classic#")
 UNKNOWN_TYPE = DEFAULT_NAMESPACE.UnknownType
+XML_SCHEMA_NAMESPACE = Namespace("http://www.w3.org/2001/XMLSchema#")
 
 
 def get_default_prefixes() -> dict[str, Namespace]:

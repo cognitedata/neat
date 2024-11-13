@@ -2,12 +2,13 @@ from cognite.neat._graph.examples import nordic44_knowledge_graph
 from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.importers import InferenceImporter
-from cognite.neat._rules.models.data_types import Json
+from cognite.neat._rules.models.data_types import DataType, Integer, Json, Long
 from cognite.neat._rules.models.entities import MultiValueTypeInfo
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.transformers import ImporterPipeline
 from cognite.neat._store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, DATA_FOLDER
+from tests.data import car
 
 
 def test_rdf_inference():
@@ -65,3 +66,17 @@ def test_json_value_type_inference():
     assert len(rules.classes) == 1
 
     assert isinstance(properties["metadata"].value_type, Json)
+
+
+def test_integer_as_long():
+    store = NeatGraphStore.from_memory_store()
+    for triple in car.TRIPLES:
+        store.graph.add(triple)
+
+    inferer = InferenceImporter.from_graph_store(store)
+    rules = ImporterPipeline.verify(inferer)
+
+    data_types = {prop.value_type for prop in rules.properties if isinstance(prop.value_type, DataType)}
+
+    assert Integer() not in data_types
+    assert Long() in data_types

@@ -51,15 +51,17 @@ class CDFToAPI:
         self._verbose = verbose
 
     def instances(self, space: str | None = None):
+        if not self._client:
+            raise NeatSessionError("No CDF client provided!")
+
         loader = loaders.DMSLoader.from_rules(
             self._state.data_model.last_verified_dms_rules[1],
             self._state.instances.store,
             space_wizard(space=space),
         )
-
-        if not self._client:
-            raise NeatSessionError("No CDF client provided!")
-
+        result = loader.load_into_cdf(self._client)
+        self._state.instances.outcome.append(result)
+        print("You can inspect the details with the .inspect.instances.outcome(...) method.")
         return loader.load_into_cdf(self._client)
 
     def data_model(
@@ -96,5 +98,5 @@ class CDFToAPI:
             )
         result.insert(0, UploadResultCore(name="schema", issues=conversion_issues))
         self._state.data_model.outcome.append(result)
-        print("You can inspect the details with the .inspect.outcome(...) method.")
+        print("You can inspect the details with the .inspect.data_model.outcome(...) method.")
         return result
