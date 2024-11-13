@@ -1,3 +1,4 @@
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,7 @@ from cognite.neat._rules._shared import ReadRules
 from cognite.neat._store._provenance import Activity as ProvenanceActivity
 from cognite.neat._store._provenance import Change
 from cognite.neat._store._provenance import Entity as ProvenanceEntity
+from cognite.neat._utils.reader import GitHubReader, NeatReader, PathReader
 
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, object_wizard, rdf_dm_wizard
@@ -123,9 +125,11 @@ class CDFClassicAPI(BaseReadAPI):
 @intercept_session_exceptions
 class ExcelReadAPI(BaseReadAPI):
     def __call__(self, io: Any) -> IssueList:
-        filepath = self._return_filepath(io)
+        reader = NeatReader.create(io)
         start = datetime.now(timezone.utc)
-        importer: importers.ExcelImporter = importers.ExcelImporter(filepath)
+        if not isinstance(reader, PathReader):
+            raise NeatValueError("Only file paths are supported for Excel files")
+        importer: importers.ExcelImporter = importers.ExcelImporter(reader.path)
         input_rules: ReadRules = importer.to_rules()
         end = datetime.now(timezone.utc)
 
@@ -135,7 +139,7 @@ class ExcelReadAPI(BaseReadAPI):
                 importer.agent,
                 start,
                 end,
-                description=f"Excel file {filepath} read as unverified data model",
+                description=f"Excel file {reader!s} read as unverified data model",
             )
             self._store_rules(input_rules, change)
 
@@ -145,9 +149,17 @@ class ExcelReadAPI(BaseReadAPI):
 @intercept_session_exceptions
 class CSVReadAPI(BaseReadAPI):
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
+        reader = NeatReader.create(io)
+        if isinstance(reader, GitHubReader):
+            path = Path(tempfile.gettempdir()) / reader.name
+            path.write_text(reader.read_text())
+        elif isinstance(reader, PathReader):
+            path = reader.path
+        else:
+            raise NeatValueError("Only file paths are supported for CSV files")
         engine = import_engine()
         engine.set.source = ".csv"
-        engine.set.file = Path(io)
+        engine.set.file = path
         engine.set.type = type
         engine.set.primary_key = primary_key
         extractor = engine.create_extractor()
@@ -163,8 +175,10 @@ class RDFReadAPI(BaseReadAPI):
 
     def ontology(self, io: Any) -> IssueList:
         start = datetime.now(timezone.utc)
-        filepath = self._return_filepath(io)
-        importer = importers.OWLImporter.from_file(filepath)
+        reader = NeatReader.create(io)
+        if not isinstance(reader, PathReader):
+            raise NeatValueError("Only file paths are supported for RDF files")
+        importer = importers.OWLImporter.from_file(reader.path)
         input_rules: ReadRules = importer.to_rules()
         end = datetime.now(timezone.utc)
 
@@ -174,7 +188,7 @@ class RDFReadAPI(BaseReadAPI):
                 importer.agent,
                 start,
                 end,
-                description=f"Ontology file {filepath} read as unverified data model",
+                description=f"Ontology file {reader!s} read as unverified data model",
             )
             self._store_rules(input_rules, change)
 
@@ -182,8 +196,10 @@ class RDFReadAPI(BaseReadAPI):
 
     def imf(self, io: Any) -> IssueList:
         start = datetime.now(timezone.utc)
-        filepath = self._return_filepath(io)
-        importer = importers.IMFImporter.from_file(filepath)
+        reader = NeatReader.create(io)
+        if not isinstance(reader, PathReader):
+            raise NeatValueError("Only file paths are supported for RDF files")
+        importer = importers.IMFImporter.from_file(reader.path)
         input_rules: ReadRules = importer.to_rules()
         end = datetime.now(timezone.utc)
 
@@ -193,7 +209,7 @@ class RDFReadAPI(BaseReadAPI):
                 importer.agent,
                 start,
                 end,
-                description=f"IMF Types file {filepath} read as unverified data model",
+                description=f"IMF Types file {reader!s} read as unverified data model",
             )
             self._store_rules(input_rules, change)
 
@@ -218,7 +234,11 @@ class RDFReadAPI(BaseReadAPI):
                 raise ValueError(f"Expected ontology, imf or instances, got {source}")
 
         elif type.lower() == "Instances".lower():
-            self._state.instances.store.write(extractors.RdfFileExtractor(self._return_filepath(io)))
+            reader = NeatReader.create(io)
+            if not isinstance(reader, PathReader):
+                raise NeatValueError("Only file paths are supported for RDF files")
+
+            self._state.instances.store.write(extractors.RdfFileExtractor(reader.path))
             return IssueList()
         else:
             raise NeatSessionError(f"Expected data model or instances, got {type}")

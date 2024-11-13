@@ -22,8 +22,12 @@ class NeatReader(ABC):
             return PathReader(Path(io))
         raise NeatTypeError(f"Unsupported type: {type(io)}")
 
+    @property
+    def name(self) -> str:
+        return str(self)
+
     @abstractmethod
-    def read(self) -> str:
+    def read_text(self) -> str:
         """Read the buffer as a string"""
         raise NotImplementedError()
 
@@ -49,13 +53,21 @@ class NeatReader(ABC):
     def __str__(self) -> str:
         raise NotImplementedError()
 
+    @abstractmethod
+    def exists(self) -> bool:
+        raise NotImplementedError
+
 
 class PathReader(NeatReader):
     def __init__(self, path: Path):
         self.path = path
         self._io: TextIO | None = None
 
-    def read(self) -> str:
+    @property
+    def name(self) -> str:
+        return self.path.name
+
+    def read_text(self) -> str:
         return self.path.read_text()
 
     def size(self) -> int:
@@ -78,6 +90,9 @@ class PathReader(NeatReader):
     def __str__(self) -> str:
         return self.path.as_posix()
 
+    def exists(self) -> bool:
+        return self.path.exists()
+
 
 class GitHubReader(NeatReader):
     raw_url = "https://raw.githubusercontent.com/"
@@ -85,6 +100,12 @@ class GitHubReader(NeatReader):
     def __init__(self, raw: str):
         self.raw = raw
         self.repo, self.path = self._parse_url(raw)
+
+    @property
+    def name(self) -> str:
+        if "/" in self.path:
+            return self.path.rsplit("/", maxsplit=1)[-1]
+        return self.path
 
     @property
     def _full_url(self) -> str:
@@ -114,7 +135,7 @@ class GitHubReader(NeatReader):
     def __str__(self) -> str:
         return self.raw
 
-    def read(self) -> str:
+    def read_text(self) -> str:
         response = requests.get(self._full_url)
         response.raise_for_status()
         return response.text
@@ -131,7 +152,11 @@ class GitHubReader(NeatReader):
                 yield chunk.decode("utf-8")
 
     def __enter__(self) -> IO:
-        return StringIO(self.read())
+        return StringIO(self.read_text())
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         pass
+
+    def exists(self) -> bool:
+        response = requests.head(self._full_url)
+        return 200 <= response.status_code < 400

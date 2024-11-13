@@ -48,5 +48,5 @@ class TestGithubReader:
         size = reader.size()
         assert size > 0
         chunks = list(reader.iterate(10))
-        read = reader.read()
+        read = reader.read_text()
         assert "".join(chunks) == read
