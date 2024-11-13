@@ -19,6 +19,8 @@ Changes are grouped as follows:
 ### Added
 - Added provenance on rules in NeatSession
 - Option to move connections from reference to new model in DMS rules when generating Enterprise model
+- Plotting of data model provenance
+- Plotting of data model implements
 ### Improved
 - Case-insensitive "direct" connection type in DMS Rules
 - Validation over view types for connections in DMS Rules

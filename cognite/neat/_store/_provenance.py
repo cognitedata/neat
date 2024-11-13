@@ -17,7 +17,7 @@ where in case of neat when dealing with instances we have:
 """
 
 import uuid
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, TypeVar
@@ -247,10 +247,23 @@ class Provenance(NeatList[Change]):
         return text
 
     def activity(self, id_: URIRef) -> Activity | None:
-        return next((change for change in self if change.activity.id_ == id_), None)
+        return next((change.activity for change in self if change.activity.id_ == id_), None)
 
     def agent(self, id_: URIRef) -> Agent | None:
-        return next((change for change in self if change.agent.id_ == id_), None)
+        return next((change.agent for change in self if change.agent.id_ == id_), None)
 
-    def entity(self, id_: URIRef) -> Entity | None:
-        return next((change for change in self if change.target_entity.id_ == id_), None)
+    def target_entity(self, id_: URIRef) -> Entity | None:
+        return next(
+            (change.target_entity for change in self if change.target_entity.id_ == id_),
+            None,
+        )
+
+    def source_entity(self, id_: URIRef) -> Entity | None:
+        return next(
+            (change.source_entity for change in self if change.source_entity.id_ == id_),
+            None,
+        )
+
+    def as_triples(self) -> Iterable[Triple]:
+        for change in self:
+            yield from change.as_triples()

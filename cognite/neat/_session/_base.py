@@ -58,9 +58,7 @@ class NeatSession:
 
     def verify(self) -> IssueList:
         source_id, last_unverified_rule = self._state.data_model.last_unverified_rule
-
         transformer = VerifyAnyRules("continue")
-
         start = datetime.now(timezone.utc)
         output = transformer.try_transform(last_unverified_rule)
         end = datetime.now(timezone.utc)
@@ -72,7 +70,8 @@ class NeatSession:
                 start,
                 end,
                 f"Verified data model {source_id} as {output.rules.id_}",
-                self._state.data_model.provenance.entity(source_id),
+                self._state.data_model.provenance.source_entity(source_id)
+                or self._state.data_model.provenance.target_entity(source_id),
             )
 
             self._state.data_model.write(output.rules, change)
@@ -107,7 +106,8 @@ class NeatSession:
             start,
             end,
             f"Converted data model {source_id} to {converted_rules.id_}",
-            self._state.data_model.provenance.entity(source_id),
+            self._state.data_model.provenance.source_entity(source_id)
+            or self._state.data_model.provenance.target_entity(source_id),
         )
 
         self._state.data_model.write(converted_rules, change)

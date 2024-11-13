@@ -32,7 +32,7 @@ class SetAPI:
                 start,
                 end,
                 "Changed data model id",
-                self._state.data_model.provenance.entity(source_id),
+                self._state.data_model.provenance.source_entity(source_id),
             )
 
             self._state.data_model.write(output, change)
