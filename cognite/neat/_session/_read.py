@@ -151,7 +151,7 @@ class CSVReadAPI(BaseReadAPI):
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
         reader = NeatReader.create(io)
         if isinstance(reader, GitHubReader):
-            path = Path(tempfile.gettempdir()) / reader.name
+            path = Path(tempfile.gettempdir()).resolve() / reader.name
             path.write_text(reader.read_text())
         elif isinstance(reader, PathReader):
             path = reader.path
