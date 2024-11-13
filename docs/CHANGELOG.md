@@ -20,6 +20,7 @@ Changes are grouped as follows:
 - Added provenance on rules in NeatSession
 - Option to move connections from reference to new model in DMS rules when generating Enterprise model
 - Support for loading `NeatEngine`.
+- Support for inspecting outcome of `neat.to.cdf.instances(...)` with `neat.inspect.outcome.instances(...)`.
 
 ### Improved
 - Case-insensitive "direct" connection type in DMS Rules
