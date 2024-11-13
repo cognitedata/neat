@@ -23,6 +23,7 @@ Changes are grouped as follows:
 - Plotting of data model implements
 - Support for loading `NeatEngine`.
 - Support for inspecting outcome of `neat.to.cdf.instances(...)` with `neat.inspect.outcome.instances(...)`.
+- `neat.prepare.instance.make_connection_on_exact_match` added
 
 ### Improved
 - Case-insensitive "direct" connection type in DMS Rules
@@ -31,7 +32,7 @@ Changes are grouped as follows:
 
 ## Changed
 - The `neat.infer()` now always infer integer and float as their 64-bit counterparts long and double. The motivation
-  for this change is to have a more flexible data model that can handle 64-bit integers and floats. 
+  for this change is to have a more flexible data model that can handle 64-bit integers and floats.
 
 ## [0.96.6] - 08-11-**2024**
 ### Fixed
