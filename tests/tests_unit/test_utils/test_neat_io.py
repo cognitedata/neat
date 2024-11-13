@@ -40,3 +40,13 @@ class TestGithubFile:
         actual_repo, actual_path = GitHubFile._parse_url(url)
         assert actual_repo == repo
         assert actual_path == path
+
+    def test_iterate_file(self) -> None:
+        reader = GitHubFile(
+            "https://github.com/cognitedata/toolkit-data/blob/main/data/publicdata/sharepoint.Table.csv"
+        )
+        size = reader.size()
+        assert size > 0
+        chunks = list(reader.iterate(10))
+        read = reader.read()
+        assert "".join(chunks) == read

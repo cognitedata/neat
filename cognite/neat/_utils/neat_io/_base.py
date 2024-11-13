@@ -3,7 +3,7 @@ from collections.abc import Iterable
 from io import StringIO
 from pathlib import Path
 from typing import IO, Any, TextIO
-from urllib.parse import ParseResult, urlparse
+from urllib.parse import urlparse
 
 import requests
 
@@ -16,7 +16,7 @@ class NeatReader(ABC):
         if isinstance(io, str):
             url = urlparse(io)
             if url.scheme == "https" and url.netloc.endswith("github.com"):
-                return GitHubFile(io, url)
+                return GitHubFile(io)
 
         if isinstance(io, str | Path):
             return NeatPath(Path(io))
@@ -80,16 +80,15 @@ class NeatPath(NeatReader):
 
 
 class GitHubFile(NeatReader):
-    api_url = "https://api.github.com"
+    raw_url = "https://raw.githubusercontent.com/"
 
-    def __init__(self, raw: str, url: ParseResult):
+    def __init__(self, raw: str):
         self.raw = raw
         self.repo, self.path = self._parse_url(raw)
-        self.url = url
 
     @property
     def _full_url(self) -> str:
-        return f"{self.api_url}/repos/{self.repo}/contents/{self.path}"
+        return f"{self.raw_url}{self.repo}/main/{self.path}"
 
     @staticmethod
     def _parse_url(url: str) -> tuple[str, str]:
@@ -104,6 +103,10 @@ class GitHubFile(NeatReader):
 
         elif parsed.netloc == "api.github.com":
             repo, path = path.removeprefix("repos/").split("/contents/", maxsplit=1)
+            return repo, path
+
+        elif parsed.netloc == "raw.githubusercontent.com":
+            repo, path = path.split("/main/", maxsplit=1)
             return repo, path
 
         raise NeatValueError(f"Unsupported netloc: {parsed.netloc}")
