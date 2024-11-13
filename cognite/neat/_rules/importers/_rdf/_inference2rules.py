@@ -1,13 +1,15 @@
 from collections import Counter, defaultdict
+from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import cast
+from typing import ClassVar, cast
 
-from rdflib import RDF
+from rdflib import RDF, URIRef
 from rdflib import Literal as RdfLiteral
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues.warnings import PropertyValueTypeUndefinedWarning
+from cognite.neat._rules.models import data_types
 from cognite.neat._rules.models._base_rules import MatchType
 from cognite.neat._rules.models.data_types import AnyURI
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
@@ -41,12 +43,23 @@ class InferenceImporter(BaseRDFImporter):
     Use the factory methods to create a triple store from sources such as
     RDF files, JSON files, YAML files, XML files, or directly from a graph store.
 
+    ClassVars:
+        overwrite: Mapping of data types to be overwritten. The InferenceImporter will overwrite
+            32-bit integer and 32-bit float data types to 64-bit integer and 64-bit float data types
+
     Args:
         issue_list: Issue list to store issues
         graph: Knowledge graph
         max_number_of_instance: Maximum number of instances to be used in inference
         prefix: Prefix to be used for the inferred model
+
+
     """
+
+    overwrite: ClassVar[Mapping[URIRef, URIRef]] = {
+        data_types.Integer.as_xml_uri_ref(): data_types.Long.as_xml_uri_ref(),
+        data_types.Float.as_xml_uri_ref(): data_types.Double.as_xml_uri_ref(),
+    }
 
     @classmethod
     def from_graph_store(
@@ -140,6 +153,8 @@ class InferenceImporter(BaseRDFImporter):
                         continue
 
                     property_id = remove_namespace_from_uri(property_uri)
+                    if isinstance(data_type_uri, URIRef):
+                        data_type_uri = self.overwrite.get(data_type_uri, data_type_uri)
 
                     if value_type_uri := (data_type_uri or object_type_uri):
                         value_type_id = remove_namespace_from_uri(value_type_uri)
