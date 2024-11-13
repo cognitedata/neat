@@ -1,26 +1,26 @@
 import pytest
 
-from cognite.neat._utils.neat_io import GitHubFile, NeatPath, NeatReader
+from cognite.neat._utils.reader import GitHubReader, NeatReader, PathReader
 from tests.data import DATA_DIR
 
 
 class TestNeatReader:
     def test_create(self) -> None:
         reader = NeatReader.create(DATA_DIR / "car.py")
-        assert isinstance(reader, NeatPath)
+        assert isinstance(reader, PathReader)
 
     def test_str(self) -> None:
         reader = NeatReader.create(str(DATA_DIR / "car.py"))
-        assert isinstance(reader, NeatPath)
+        assert isinstance(reader, PathReader)
 
     def test_github(self) -> None:
         reader = NeatReader.create(
             "https://github.com/cognitedata/toolkit-data/blob/main/data/publicdata/sharepoint.Table.csv"
         )
-        assert isinstance(reader, GitHubFile)
+        assert isinstance(reader, GitHubReader)
 
 
-class TestGithubFile:
+class TestGithubReader:
     @pytest.mark.parametrize(
         "url, repo, path",
         [
@@ -37,12 +37,12 @@ class TestGithubFile:
         ],
     )
     def test_parse_url(self, url: str, repo: str, path: str) -> None:
-        actual_repo, actual_path = GitHubFile._parse_url(url)
+        actual_repo, actual_path = GitHubReader._parse_url(url)
         assert actual_repo == repo
         assert actual_path == path
 
     def test_iterate_file(self) -> None:
-        reader = GitHubFile(
+        reader = GitHubReader(
             "https://github.com/cognitedata/toolkit-data/blob/main/data/publicdata/sharepoint.Table.csv"
         )
         size = reader.size()

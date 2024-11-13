@@ -16,10 +16,10 @@ class NeatReader(ABC):
         if isinstance(io, str):
             url = urlparse(io)
             if url.scheme == "https" and url.netloc.endswith("github.com"):
-                return GitHubFile(io)
+                return GitHubReader(io)
 
         if isinstance(io, str | Path):
-            return NeatPath(Path(io))
+            return PathReader(Path(io))
         raise NeatTypeError(f"Unsupported type: {type(io)}")
 
     @abstractmethod
@@ -50,7 +50,7 @@ class NeatReader(ABC):
         raise NotImplementedError()
 
 
-class NeatPath(NeatReader):
+class PathReader(NeatReader):
     def __init__(self, path: Path):
         self.path = path
         self._io: TextIO | None = None
@@ -79,7 +79,7 @@ class NeatPath(NeatReader):
         return self.path.as_posix()
 
 
-class GitHubFile(NeatReader):
+class GitHubReader(NeatReader):
     raw_url = "https://raw.githubusercontent.com/"
 
     def __init__(self, raw: str):
