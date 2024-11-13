@@ -4,7 +4,7 @@ from typing import Literal
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
-from cognite.neat._rules._shared import JustRules
+from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ReduceCogniteModel, ToCompliantEntities, ToExtension
 from cognite.neat._store._provenance import Change
@@ -34,7 +34,7 @@ class DataModelPrepareAPI:
 
             start = datetime.now(timezone.utc)
             transformer = ToCompliantEntities()
-            output: JustRules[InformationInputRules] = transformer.transform(rules)
+            output: ReadRules[InformationInputRules] = transformer.transform(rules)
             end = datetime.now(timezone.utc)
 
             change = Change.from_rules_activity(
@@ -43,7 +43,8 @@ class DataModelPrepareAPI:
                 start,
                 end,
                 "Converted external ids to CDF compliant entities",
-                self._state.data_model.provenance.entity(source_id),
+                self._state.data_model.provenance.source_entity(source_id)
+                or self._state.data_model.provenance.target_entity(source_id),
             )
 
             self._state.data_model.write(output, change)
@@ -99,7 +100,7 @@ class DataModelPrepareAPI:
                     f"Prepared data model {data_model_id} to be enterprise data "
                     f"model on top of {rules.metadata.as_data_model_id()}"
                 ),
-                self._state.data_model.provenance.entity(source_id),
+                self._state.data_model.provenance.source_entity(source_id),
             )
 
             self._state.data_model.write(output.rules, change)
@@ -153,7 +154,7 @@ class DataModelPrepareAPI:
                     f"Prepared data model {data_model_id} to be solution data model "
                     f"on top of {rules.metadata.as_data_model_id()}"
                 ),
-                self._state.data_model.provenance.entity(source_id),
+                self._state.data_model.provenance.source_entity(source_id),
             )
 
             self._state.data_model.write(output.rules, change)
@@ -186,7 +187,7 @@ class DataModelPrepareAPI:
                     f"Reduced data model {rules.metadata.as_data_model_id()}"
                     f"on top of {rules.metadata.as_data_model_id()}"
                 ),
-                self._state.data_model.provenance.entity(source_id),
+                self._state.data_model.provenance.source_entity(source_id),
             )
 
             self._state.data_model.write(output.rules, change)

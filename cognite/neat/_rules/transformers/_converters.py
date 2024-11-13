@@ -14,6 +14,7 @@ from cognite.neat._constants import (
     COGNITE_MODELS,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
 )
+from cognite.neat._issues._base import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings._models import (
     EnterpriseModelNotBuildOnTopOfCDMWarning,
@@ -21,7 +22,13 @@ from cognite.neat._issues.warnings._models import (
 )
 from cognite.neat._issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules._shared import InputRules, JustRules, OutRules, VerifiedRules
+from cognite.neat._rules._shared import (
+    InputRules,
+    JustRules,
+    OutRules,
+    ReadRules,
+    VerifiedRules,
+)
 from cognite.neat._rules.analysis import DMSAnalysis
 from cognite.neat._rules.models import (
     AssetRules,
@@ -86,13 +93,16 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
 
     def transform(
         self, rules: InformationInputRules | OutRules[InformationInputRules]
-    ) -> JustRules[InformationInputRules]:
-        return JustRules(self._transform(self._to_rules(rules)))
+    ) -> ReadRules[InformationInputRules]:
+        return ReadRules(self._transform(self._to_rules(rules)), IssueList(), {})
 
     def _transform(self, rules: InformationInputRules) -> InformationInputRules:
         rules.metadata.prefix = self._fix_entity(rules.metadata.prefix)
         rules.classes = self._fix_classes(rules.classes)
         rules.properties = self._fix_properties(rules.properties)
+
+        rules.metadata.version += "_dms_compliant"
+
         return rules
 
     @classmethod

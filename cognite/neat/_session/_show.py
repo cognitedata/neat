@@ -5,6 +5,7 @@ from typing import Any, cast
 import networkx as nx
 from IPython.display import HTML, display
 from pyvis.network import Network as PyVisNetwork  # type: ignore
+from rdflib import URIRef
 
 from cognite.neat._constants import IN_NOTEBOOK, IN_PYODIDE
 from cognite.neat._rules._constants import EntityTypes
@@ -67,6 +68,8 @@ class ShowDataModelAPI(ShowBaseAPI):
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)
         self._state = state
+        self.provenance = ShowDataModelProvenanceAPI(self._state)
+        self.implements = ShowDataModelImplementsAPI(self._state)
 
     def __call__(self) -> Any:
         if not self._state.data_model.has_verified_rules:
@@ -74,12 +77,19 @@ class ShowDataModelAPI(ShowBaseAPI):
                 "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
             )
 
-        try:
+        rules = self._state.data_model.last_verified_rule[1]
+
+        if isinstance(rules, DMSRules):
             di_graph = self._generate_dms_di_graph(self._state.data_model.last_verified_dms_rules[1])
             name = "dms_data_model.html"
-        except NeatSessionError:
+        elif isinstance(rules, InformationRules):
             di_graph = self._generate_info_di_graph(self._state.data_model.last_verified_information_rules[1])
             name = "information_data_model.html"
+        else:
+            # This should never happen, but we need to handle it to satisfy mypy
+            raise NeatSessionError(
+                f"Unsupported type {type(rules) }. Make sure you have either information or DMS rules."
+            )
 
         return self._generate_visualization(di_graph, name)
 
@@ -91,20 +101,7 @@ class ShowDataModelAPI(ShowBaseAPI):
         for view in rules.views:
             # if possible use human readable label coming from the view name
             if not di_graph.has_node(view.view.suffix):
-                di_graph.add_node(view.view.suffix, label=view.name or view.view.suffix)
-
-            # add implements as edges
-            if view.implements:
-                for implement in view.implements:
-                    if not di_graph.has_node(implement.suffix):
-                        di_graph.add_node(implement.suffix, label=implement.suffix)
-
-                    di_graph.add_edge(
-                        view.view.suffix,
-                        implement.suffix,
-                        label="implements",
-                        dashes=True,
-                    )
+                di_graph.add_node(view.view.suffix, label=view.view.suffix)
 
         # Add nodes and edges from Properties sheet
         for prop_ in rules.properties:
@@ -133,18 +130,6 @@ class ShowDataModelAPI(ShowBaseAPI):
                     label=class_.name or class_.class_.suffix,
                 )
 
-            # add subClassOff as edges
-            if class_.parent:
-                for parent in class_.parent:
-                    if not di_graph.has_node(parent.suffix):
-                        di_graph.add_node(parent.suffix, label=parent.suffix)
-                    di_graph.add_edge(
-                        class_.class_.suffix,
-                        parent.suffix,
-                        label="subClassOf",
-                        dashes=True,
-                    )
-
         # Add nodes and edges from Properties sheet
         for prop_ in rules.properties:
             if prop_.type_ == EntityTypes.object_property:
@@ -158,6 +143,147 @@ class ShowDataModelAPI(ShowBaseAPI):
                 )
 
         return di_graph
+
+
+@intercept_session_exceptions
+class ShowDataModelImplementsAPI(ShowBaseAPI):
+    def __init__(self, state: SessionState) -> None:
+        super().__init__(state)
+        self._state = state
+
+    def __call__(self) -> Any:
+        if not self._state.data_model.has_verified_rules:
+            raise NeatSessionError(
+                "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
+            )
+
+        rules = self._state.data_model.last_verified_rule[1]
+
+        if isinstance(rules, DMSRules):
+            di_graph = self._generate_dms_di_graph(self._state.data_model.last_verified_dms_rules[1])
+            name = "dms_data_model_implements.html"
+        elif isinstance(rules, InformationRules):
+            di_graph = self._generate_info_di_graph(self._state.data_model.last_verified_information_rules[1])
+            name = "information_data_model_implements.html"
+        else:
+            # This should never happen, but we need to handle it to satisfy mypy
+            raise NeatSessionError(
+                f"Unsupported type {type(rules) }. Make sure you have either information or DMS rules."
+            )
+
+        return self._generate_visualization(di_graph, name)
+
+    def _generate_dms_di_graph(self, rules: DMSRules) -> nx.DiGraph:
+        """Generate a DiGraph from the last verified DMS rules."""
+        di_graph = nx.DiGraph()
+
+        # Add nodes and edges from Views sheet
+        for view in rules.views:
+            # add implements as edges
+            if view.implements:
+                if not di_graph.has_node(view.view.suffix):
+                    di_graph.add_node(view.view.suffix, label=view.view.suffix)
+                for implement in view.implements:
+                    if not di_graph.has_node(implement.suffix):
+                        di_graph.add_node(implement.suffix, label=implement.suffix)
+
+                    di_graph.add_edge(
+                        view.view.suffix,
+                        implement.suffix,
+                        label="implements",
+                        dashes=True,
+                    )
+
+        return di_graph
+
+    def _generate_info_di_graph(self, rules: InformationRules) -> nx.DiGraph:
+        """Generate DiGraph representing information data model."""
+
+        di_graph = nx.DiGraph()
+
+        # Add nodes and edges from Views sheet
+        for class_ in rules.classes:
+            # if possible use human readable label coming from the view name
+
+            # add subClassOff as edges
+            if class_.parent:
+                if not di_graph.has_node(class_.class_.suffix):
+                    di_graph.add_node(
+                        class_.class_.suffix,
+                        label=class_.name or class_.class_.suffix,
+                    )
+
+                for parent in class_.parent:
+                    if not di_graph.has_node(parent.suffix):
+                        di_graph.add_node(parent.suffix, label=parent.suffix)
+                    di_graph.add_edge(
+                        class_.class_.suffix,
+                        parent.suffix,
+                        label="subClassOf",
+                        dashes=True,
+                    )
+
+        return di_graph
+
+
+@intercept_session_exceptions
+class ShowDataModelProvenanceAPI(ShowBaseAPI):
+    def __init__(self, state: SessionState) -> None:
+        super().__init__(state)
+        self._state = state
+
+    def __call__(self) -> Any:
+        if not self._state.data_model.provenance:
+            raise NeatSessionError("No data model available. Try using [bold].read[/bold] to load data model.")
+
+        di_graph = self._generate_dm_provenance_di_graph_and_types()
+        return self._generate_visualization(di_graph, name="data_model_provenance.html")
+
+    def _generate_dm_provenance_di_graph_and_types(self) -> nx.DiGraph:
+        di_graph = nx.DiGraph()
+        hex_colored_types = _generate_hex_color_per_type(["Agent", "Entity", "Activity"])
+
+        for change in self._state.data_model.provenance:
+            source = self._shorten_id(change.source_entity.id_)
+            target = self._shorten_id(change.target_entity.id_)
+            agent = self._shorten_id(change.agent.id_)
+
+            di_graph.add_node(
+                source,
+                label=source,
+                type="Entity",
+                title="Entity",
+                color=hex_colored_types["Entity"],
+            )
+
+            di_graph.add_node(
+                target,
+                label=target,
+                type="Entity",
+                title="Entity",
+                color=hex_colored_types["Entity"],
+            )
+
+            di_graph.add_node(
+                agent,
+                label=agent,
+                type="Agent",
+                title="Agent",
+                color=hex_colored_types["Agent"],
+            )
+
+            di_graph.add_edge(source, agent, label="used", color="grey")
+            di_graph.add_edge(agent, target, label="generated", color="grey")
+
+        return di_graph
+
+    @staticmethod
+    def _shorten_id(thing: URIRef) -> str:
+        if "https://cognitedata.com/dms/data-model/" in thing:
+            return "DMS(" + ",".join(thing.replace("https://cognitedata.com/dms/data-model/", "").split("/")) + ")"
+        elif "http://purl.org/cognite/neat/data-model/" in thing:
+            return "NEAT(" + ",".join(thing.replace("http://purl.org/cognite/neat/data-model/", "").split("/")) + ")"
+        return remove_namespace_from_uri(thing)
 
 
 @intercept_session_exceptions
@@ -190,7 +316,7 @@ class ShowInstanceAPI(ShowBaseAPI):
         di_graph = nx.DiGraph()
 
         types = [type_ for type_, _ in self._state.instances.store.queries.summarize_instances()]
-        hex_colored_types = self._generate_hex_color_per_type(types)
+        hex_colored_types = _generate_hex_color_per_type(types)
 
         for (  # type: ignore
             subject,
@@ -223,15 +349,15 @@ class ShowInstanceAPI(ShowBaseAPI):
 
         return di_graph
 
-    @staticmethod
-    def _generate_hex_color_per_type(types: list[str]) -> dict:
-        hex_colored_types = {}
-        random.seed(381)
-        for type_ in types:
-            hue = random.random()
-            saturation = random.uniform(0.5, 1.0)
-            lightness = random.uniform(0.4, 0.6)
-            rgb = colorsys.hls_to_rgb(hue, lightness, saturation)
-            hex_color = f"#{int(rgb[0] * 255):02x}{int(rgb[1] * 255):02x}{int(rgb[2] * 255):02x}"
-            hex_colored_types[type_] = hex_color
-        return hex_colored_types
+
+def _generate_hex_color_per_type(types: list[str]) -> dict:
+    hex_colored_types = {}
+    random.seed(381)
+    for type_ in types:
+        hue = random.random()
+        saturation = random.uniform(0.5, 1.0)
+        lightness = random.uniform(0.4, 0.6)
+        rgb = colorsys.hls_to_rgb(hue, lightness, saturation)
+        hex_color = f"#{int(rgb[0] * 255):02x}{int(rgb[1] * 255):02x}{int(rgb[2] * 255):02x}"
+        hex_colored_types[type_] = hex_color
+    return hex_colored_types
