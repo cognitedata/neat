@@ -3,7 +3,9 @@ from datetime import datetime, timezone
 from typing import Literal
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
+from rdflib import URIRef
 
+from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ReduceCogniteModel, ToCompliantEntities, ToExtension
@@ -19,6 +21,52 @@ class PrepareAPI:
         self._state = state
         self._verbose = verbose
         self.data_model = DataModelPrepareAPI(state, verbose)
+        self.instances = InstancePrepareAPI(state, verbose)
+
+
+@intercept_session_exceptions
+class InstancePrepareAPI:
+    def __init__(self, state: SessionState, verbose: bool) -> None:
+        self._state = state
+        self._verbose = verbose
+
+    def make_connection_on_exact_match(
+        self,
+        source: tuple[URIRef, URIRef],
+        target: tuple[URIRef, URIRef],
+        connection: URIRef | None = None,
+        limit: int = 100,
+    ) -> None:
+        """Make connection on exact match.
+
+        Args:
+            source: The source of the connection. A tuple of (rdf type, property) where
+                    where property is the property that should be matched on the source
+                    to make the connection with the target.
+            target: The target of the connection. A tuple of (rdf type, property) where
+                    where property is the property that should be matched on the target
+                    to make the connection with the source.
+
+            connection: new property to use for the connection. If None, the connection
+                    will be made by lowercasing the target type.
+            limit: The maximum number of connections to make. If None, all connections
+
+
+        """
+
+        subject_type, subject_predicate = source
+        object_type, object_predicate = target
+
+        transformer = MakeConnectionOnExactMatch(
+            subject_type,
+            subject_predicate,
+            object_type,
+            object_predicate,
+            connection,
+            limit,
+        )
+
+        self._state.instances.store.transform(transformer)
 
 
 @intercept_session_exceptions

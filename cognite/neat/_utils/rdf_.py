@@ -4,8 +4,8 @@ from typing import Any, Literal, TypeAlias, overload
 
 from cognite.client.utils.useful_types import SequenceNotStr
 from pydantic import HttpUrl, TypeAdapter, ValidationError
+from rdflib import Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
-from rdflib import Namespace, URIRef
 
 Triple: TypeAlias = tuple[URIRef, URIRef, RdfLiteral | URIRef]
 
@@ -171,3 +171,36 @@ def get_inheritance_path(child: Any, child_parent: dict[Any, list[Any]]) -> list
         for parent in child_parent[child]:
             path.extend(get_inheritance_path(parent, child_parent))
     return path
+
+
+def add_triples_in_batch(graph: Graph, triples: Iterable[Triple], batch_size: int = 10_000):
+    """Adds triples to the graph store in batches.
+
+    Args:
+        triples: list of triples to be added to the graph store
+        batch_size: Batch size of triples per commit, by default 10_000
+        verbose: Verbose mode, by default False
+    """
+
+    commit_counter = 0
+    number_of_written_triples = 0
+
+    def check_commit(force_commit: bool = False):
+        """Commit nodes to the graph if batch counter is reached or if force_commit is True"""
+        nonlocal commit_counter
+        nonlocal number_of_written_triples
+        if force_commit:
+            number_of_written_triples += commit_counter
+            graph.commit()
+            return
+        commit_counter += 1
+        if commit_counter >= batch_size:
+            number_of_written_triples += commit_counter
+            graph.commit()
+            commit_counter = 0
+
+    for triple in triples:
+        graph.add(triple)
+        check_commit()
+
+    check_commit(force_commit=True)
