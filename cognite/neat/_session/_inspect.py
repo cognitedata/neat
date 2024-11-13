@@ -94,6 +94,12 @@ class InspectIssues:
 @intercept_session_exceptions
 class InspectOutcome:
     def __init__(self, state: SessionState) -> None:
+        self.data_model = InspectDataModelOutcome(state)
+
+
+@intercept_session_exceptions
+class InspectDataModelOutcome:
+    def __init__(self, state: SessionState) -> None:
         self._state = state
 
     @staticmethod
