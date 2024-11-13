@@ -146,9 +146,10 @@ class ExcelReadAPI(BaseReadAPI):
 class CSVReadAPI(BaseReadAPI):
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
         engine = import_engine()
-        engine.set.file(io)
-        engine.set.type(type)
-        engine.set.primary_key(primary_key)
+        engine.set.source = ".csv"
+        engine.set.file = io
+        engine.set.type = type
+        engine.set.primary_key = primary_key
         extractor = engine.create_extractor()
 
         self._state.instances.store.write(extractor)
