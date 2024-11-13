@@ -41,6 +41,14 @@ class InstancesState:
     def has_store(self) -> bool:
         return self._store is not None
 
+    @property
+    def last_outcome(self) -> UploadResultList:
+        if not self.outcome:
+            raise NeatSessionError(
+                "No outcome available. Try using [bold].to.cdf.instances[/bold] to upload a data minstances."
+            )
+        return self.outcome[-1]
+
 
 @dataclass
 class DataModelState:
@@ -135,6 +143,6 @@ class DataModelState:
     def last_outcome(self) -> UploadResultList:
         if not self.outcome:
             raise NeatSessionError(
-                "No outcome available. Try using [bold].to.cdf[/bold] to upload a data model/instances."
+                "No outcome available. Try using [bold].to.cdf.data_model[/bold] to upload a data model."
             )
         return self.outcome[-1]

@@ -1,4 +1,5 @@
 import difflib
+from collections.abc import Callable
 from typing import Literal, overload
 
 import pandas as pd
@@ -94,13 +95,14 @@ class InspectIssues:
 @intercept_session_exceptions
 class InspectOutcome:
     def __init__(self, state: SessionState) -> None:
-        self.data_model = InspectDataModelOutcome(state)
+        self.data_model = InspectUploadOutcome(lambda: state.data_model.last_outcome)
+        self.instances = InspectUploadOutcome(lambda: state.instances.last_outcome)
 
 
 @intercept_session_exceptions
-class InspectDataModelOutcome:
-    def __init__(self, state: SessionState) -> None:
-        self._state = state
+class InspectUploadOutcome:
+    def __init__(self, get_last_outcome: Callable[[], UploadResultList]) -> None:
+        self._get_last_outcome = get_last_outcome
 
     @staticmethod
     def _as_set(value: str | list[str] | None) -> set[str] | None:
@@ -136,7 +138,7 @@ class InspectDataModelOutcome:
         return_dataframe: bool = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> pd.DataFrame | None:
         """Returns the outcome of the last upload."""
-        outcome = self._state.data_model.last_outcome
+        outcome = self._get_last_outcome()
         name_set = self._as_set(name)
 
         def outcome_filter(item: UploadResultCore) -> bool:
