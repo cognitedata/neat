@@ -147,7 +147,7 @@ class CSVReadAPI(BaseReadAPI):
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
         engine = import_engine()
         engine.set.source = ".csv"
-        engine.set.file = io
+        engine.set.file = Path(io)
         engine.set.type = type
         engine.set.primary_key = primary_key
         extractor = engine.create_extractor()
