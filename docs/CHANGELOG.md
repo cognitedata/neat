@@ -26,6 +26,10 @@ Changes are grouped as follows:
 - Validation over view types for connections in DMS Rules
 - Validation of reverse connection feasibility in DMS Rules
 
+## Changed
+- The `neat.infer()` now always infer integer and float as their 64-bit counterparts long and double. The motivation
+  for this change is to have a more flexible data model that can handle 64-bit integers and floats. 
+
 ## [0.96.6] - 08-11-**2024**
 ### Fixed
 - `neat.verify()` no longer gives a `PrincipleMatchingSpaceAndVersionWarning` when you include views from
