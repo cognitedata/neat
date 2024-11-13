@@ -44,7 +44,7 @@ class InferenceImporter(BaseRDFImporter):
     RDF files, JSON files, YAML files, XML files, or directly from a graph store.
 
     ClassVars:
-        overwrite: Mapping of data types to be overwritten. The InferenceImporter will overwrite
+        overwrite_data_types: Mapping of data types to be overwritten. The InferenceImporter will overwrite
             32-bit integer and 32-bit float data types to 64-bit integer and 64-bit float data types
 
     Args:
@@ -56,7 +56,7 @@ class InferenceImporter(BaseRDFImporter):
 
     """
 
-    overwrite: ClassVar[Mapping[URIRef, URIRef]] = {
+    overwrite_data_types: ClassVar[Mapping[URIRef, URIRef]] = {
         data_types.Integer.as_xml_uri_ref(): data_types.Long.as_xml_uri_ref(),
         data_types.Float.as_xml_uri_ref(): data_types.Double.as_xml_uri_ref(),
     }
@@ -154,7 +154,7 @@ class InferenceImporter(BaseRDFImporter):
 
                     property_id = remove_namespace_from_uri(property_uri)
                     if isinstance(data_type_uri, URIRef):
-                        data_type_uri = self.overwrite.get(data_type_uri, data_type_uri)
+                        data_type_uri = self.overwrite_data_types.get(data_type_uri, data_type_uri)
 
                     if value_type_uri := (data_type_uri or object_type_uri):
                         value_type_id = remove_namespace_from_uri(value_type_uri)

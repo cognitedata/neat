@@ -78,5 +78,5 @@ def test_integer_as_long():
 
     data_types = {prop.value_type for prop in rules.properties if isinstance(prop.value_type, DataType)}
 
-    assert Integer() in data_types
+    assert Integer() not in data_types
     assert Long() in data_types
