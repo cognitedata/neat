@@ -76,13 +76,17 @@ NamespaceType = Annotated[
 PrefixType = Annotated[
     str,
     StringConstraints(pattern=PREFIX_COMPLIANCE_REGEX),
-    _custom_error(lambda _, value: RegexViolationError(value, PREFIX_COMPLIANCE_REGEX)),
+    _custom_error(
+        lambda _, value: RegexViolationError(value, PREFIX_COMPLIANCE_REGEX, "prefix entry in metadata"),
+    ),
 ]
 
 DataModelExternalIdType = Annotated[
     str,
     StringConstraints(pattern=DATA_MODEL_COMPLIANCE_REGEX),
-    _custom_error(lambda _, value: RegexViolationError(value, DATA_MODEL_COMPLIANCE_REGEX)),
+    _custom_error(
+        lambda _, value: RegexViolationError(value, DATA_MODEL_COMPLIANCE_REGEX, "external ID entry in metadata")
+    ),
 ]
 
 
@@ -90,15 +94,15 @@ VersionType = Annotated[
     str,
     BeforeValidator(str),
     StringConstraints(pattern=VERSION_COMPLIANCE_REGEX),
-    _custom_error(lambda _, value: RegexViolationError(value, VERSION_COMPLIANCE_REGEX)),
+    _custom_error(lambda _, value: RegexViolationError(value, VERSION_COMPLIANCE_REGEX, "version entry in metadata")),
 ]
 
 
-def _external_id_validation_factory(entity_type: EntityTypes):
+def _external_id_validation_factory(entity_type: EntityTypes, location: str):
     def _external_id_validation(value: str) -> str:
         compiled_regex = PATTERNS.entity_pattern(entity_type)
         if not compiled_regex.match(value):
-            raise RegexViolationError(value, compiled_regex.pattern)
+            raise RegexViolationError(value, compiled_regex.pattern, location)
         if PATTERNS.more_than_one_alphanumeric.search(value):
             warnings.warn(
                 RegexViolationWarning(
@@ -116,36 +120,40 @@ def _external_id_validation_factory(entity_type: EntityTypes):
 
 SpaceType = Annotated[
     str,
-    AfterValidator(_external_id_validation_factory(EntityTypes.space)),
+    AfterValidator(_external_id_validation_factory(EntityTypes.space, "space entry in metadata")),
 ]
 
 InformationPropertyType = Annotated[
     str,
-    AfterValidator(_external_id_validation_factory(EntityTypes.information_property)),
+    AfterValidator(_external_id_validation_factory(EntityTypes.information_property, "Property column in properties")),
 ]
 DmsPropertyType = Annotated[
     str,
-    AfterValidator(_external_id_validation_factory(EntityTypes.dms_property)),
+    AfterValidator(_external_id_validation_factory(EntityTypes.dms_property, "Property column in properties")),
 ]
 
 
-def _entity_validation(value: Entities) -> Entities:
+def _entity_validation(value: Entities, location: str) -> Entities:
     suffix_regex = PATTERNS.entity_pattern(value.type_)
     if not suffix_regex.match(value.suffix):
-        raise RegexViolationError(str(value), suffix_regex.pattern)
+        raise RegexViolationError(str(value), suffix_regex.pattern, location)
     return value
 
 
-ClassEntityType = Annotated[ClassEntity, AfterValidator(_entity_validation)]
-ViewEntityType = Annotated[ViewEntity, AfterValidator(_entity_validation)]
-ContainerEntityType = Annotated[ContainerEntity, AfterValidator(_entity_validation)]
+ClassEntityType = Annotated[ClassEntity, AfterValidator(lambda v: _entity_validation(v, "the Class column"))]
+ViewEntityType = Annotated[ViewEntity, AfterValidator(lambda v: _entity_validation(v, "the View column"))]
+ContainerEntityType = Annotated[
+    ContainerEntity, AfterValidator(lambda v: _entity_validation(v, "the Container column"))
+]
 
 
-def _multi_value_type_validation(value: MultiValueTypeInfo) -> MultiValueTypeInfo:
+def _multi_value_type_validation(value: MultiValueTypeInfo, location: str) -> MultiValueTypeInfo:
     for type_ in value.types:
         if isinstance(type_, ClassEntity):
-            _entity_validation(type_)
+            _entity_validation(type_, location)
     return value
 
 
-MultiValueTypeType = Annotated[MultiValueTypeInfo, AfterValidator(_multi_value_type_validation)]
+MultiValueTypeType = Annotated[
+    MultiValueTypeInfo, AfterValidator(lambda v: _multi_value_type_validation(v, "the Value Type column"))
+]

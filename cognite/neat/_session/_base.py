@@ -6,6 +6,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat import _version
 from cognite.neat._issues import IssueList, catch_issues
+from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules, VerifiedRules
 from cognite.neat._rules.importers._rdf._base import DEFAULT_NON_EXISTING_NODE_TYPE
@@ -128,6 +129,9 @@ class NeatSession:
             print("Conversion failed.")
         if issues:
             print("You can inspect the issues with the .inspect.issues(...) method.")
+            if issues.has_error_type(RegexViolationError):
+                print("You can use .prepare. to try to fix the issues")
+
         return issues
 
     def infer(

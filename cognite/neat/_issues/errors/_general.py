@@ -19,10 +19,12 @@ class NeatTypeError(NeatError, TypeError):
 
 @dataclass(unsafe_hash=True)
 class RegexViolationError(NeatError, ValueError):
-    """Value, {value} failed regex, {regex}, validation. Make sure that the name follows the regex pattern."""
+    """Value, {value} in {location} failed regex, {regex}, validation.
+    Make sure that the name follows the regex pattern."""
 
     value: str
     regex: str
+    location: str
 
 
 @dataclass(unsafe_hash=True)
