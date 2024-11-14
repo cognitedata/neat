@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from typing import Any
 
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
 
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.models._base_input import InputComponent, InputRules
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import (
@@ -94,3 +95,7 @@ class AssetInputRules(InputRules[AssetRules]):
             Last=last,
             Reference=reference,
         )
+
+    @property
+    def id_(self) -> URIRef:
+        return DEFAULT_NAMESPACE[f"data-model/unverified/asset/{self.metadata.prefix}/{self.metadata.version}"]

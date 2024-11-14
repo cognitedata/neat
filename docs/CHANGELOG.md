@@ -15,9 +15,30 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.97.0] - 14-11-**2024**
+### Added
+- Added provenance on rules in NeatSession
+- Option to move connections from reference to new model in DMS rules when generating Enterprise model
+- Plotting of data model provenance
+- Plotting of data model implements
+- Support for loading `NeatEngine`.
+- Support for inspecting outcome of `neat.to.cdf.instances(...)` with `neat.inspect.outcome.instances(...)`.
+- `neat.prepare.instance.make_connection_on_exact_match` added to enable adding connections 
+  between instances based on exact match of properties.
+- Support for reading instances from csv `neat.read.csv`. Including reading csv from a public GitHub repository.
+
+### Improved
+- Case-insensitive "direct" connection type in DMS Rules
+- Validation over view types for connections in DMS Rules
+- Validation of reverse connection feasibility in DMS Rules
+
+## Changed
+- The `neat.infer()` now always infer integer and float as their 64-bit counterparts long and double. The motivation
+  for this change is to have a more flexible data model that can handle 64-bit integers and floats.
+
 ## [0.96.6] - 08-11-**2024**
 ### Fixed
-- `neat.verify()` no longer gives a `PrincipleMatchingSpaceAndVersionWarning` when you include views from 
+- `neat.verify()` no longer gives a `PrincipleMatchingSpaceAndVersionWarning` when you include views from
   the `CogniteCore` or `CogniteProcessIndustry` data models.
 - In the `DMSSheet` you will now get a `RowError` if you try to set `container` or `container property` for
   an edge or reverse direct relation as these are not stored in containers.
@@ -59,7 +80,7 @@ Changes are grouped as follows:
 
 ### Changed
 - When reading a data model from CDF, `inwards` edges are now treated as an edge with direction inwards and
-  not the reverse edge. 
+  not the reverse edge.
 
 ## [0.96.1] - 04-11-**2024**
 ### Fixed

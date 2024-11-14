@@ -10,7 +10,11 @@ from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
 from rdflib import Namespace
 
-from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._constants import (
+    COGNITE_MODELS,
+    DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
+)
+from cognite.neat._issues._base import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings._models import (
     EnterpriseModelNotBuildOnTopOfCDMWarning,
@@ -18,7 +22,13 @@ from cognite.neat._issues.warnings._models import (
 )
 from cognite.neat._issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules._shared import InputRules, JustRules, OutRules, VerifiedRules
+from cognite.neat._rules._shared import (
+    InputRules,
+    JustRules,
+    OutRules,
+    ReadRules,
+    VerifiedRules,
+)
 from cognite.neat._rules.analysis import DMSAnalysis
 from cognite.neat._rules.models import (
     AssetRules,
@@ -83,13 +93,16 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
 
     def transform(
         self, rules: InformationInputRules | OutRules[InformationInputRules]
-    ) -> OutRules[InformationInputRules]:
-        return JustRules(self._transform(self._to_rules(rules)))
+    ) -> ReadRules[InformationInputRules]:
+        return ReadRules(self._transform(self._to_rules(rules)), IssueList(), {})
 
     def _transform(self, rules: InformationInputRules) -> InformationInputRules:
         rules.metadata.prefix = self._fix_entity(rules.metadata.prefix)
         rules.classes = self._fix_classes(rules.classes)
         rules.properties = self._fix_properties(rules.properties)
+
+        rules.metadata.version += "_dms_compliant"
+
         return rules
 
     @classmethod
@@ -258,6 +271,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         type_: Literal["enterprise", "solution"] = "enterprise",
         mode: Literal["read", "write"] = "read",
         dummy_property: str = "GUID",
+        move_connections: bool = False,
     ):
         self.new_model_id = DataModelId.load(new_model_id)
         if not self.new_model_id.version:
@@ -267,6 +281,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         self.mode = mode
         self.type_ = type_
         self.dummy_property = dummy_property
+        self.move_connections = move_connections
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         # Copy to ensure immutability
@@ -393,9 +408,17 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         # extending reference views with new ones
         enterprise_model.views.extend(enterprise_views)
 
+        # Move connections from reference model to enterprise model
+        if self.move_connections:
+            enterprise_connections = self._move_connections(enterprise_model)
+        else:
+            enterprise_connections = SheetList[DMSProperty]()
+
         # while overwriting containers and properties with new ones
         enterprise_model.containers = enterprise_containers
         enterprise_model.properties = enterprise_properties
+
+        enterprise_properties.extend(enterprise_connections)
 
         return JustRules(enterprise_model)
 
@@ -454,6 +477,35 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
             new_containers.append(container)
 
         return new_views, new_containers, new_properties
+
+    def _move_connections(self, rules: DMSRules) -> SheetList[DMSProperty]:
+        implements: dict[ViewEntity, list[ViewEntity]] = defaultdict(list)
+        new_properties = SheetList[DMSProperty]()
+
+        for view in rules.views:
+            if view.view.space == rules.metadata.space and view.implements:
+                for implemented_view in view.implements:
+                    implements.setdefault(implemented_view, []).append(view.view)
+
+        # currently only supporting single implementation of reference view in enterprise view
+        # connections that do not have properties
+        if all(len(v) == 1 for v in implements.values()):
+            for prop_ in rules.properties:
+                if (
+                    prop_.view.space != rules.metadata.space
+                    and prop_.connection
+                    and isinstance(prop_.value_type, ViewEntity)
+                    and implements.get(prop_.view)
+                    and implements.get(prop_.value_type)
+                ):
+                    if isinstance(prop_.connection, EdgeEntity) and prop_.connection.properties:
+                        continue
+                    new_property = prop_.model_copy(deep=True)
+                    new_property.view = implements[prop_.view][0]
+                    new_property.value_type = implements[prop_.value_type][0]
+                    new_properties.append(new_property)
+
+        return new_properties
 
 
 class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):

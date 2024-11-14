@@ -2,9 +2,9 @@ import sys
 from typing import Any, ClassVar, cast
 
 from pydantic import Field, field_validator, model_validator
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
 
-from cognite.neat._constants import get_default_prefixes
+from cognite.neat._constants import DEFAULT_NAMESPACE, get_default_prefixes
 from cognite.neat._rules.models._base_rules import BaseRules, RoleTypes, SheetList
 from cognite.neat._rules.models.entities import (
     CdfResourceEntityList,
@@ -103,3 +103,7 @@ class AssetRules(BaseRules):
         if issue_list.has_errors:
             raise issue_list.as_exception()
         return self
+
+    @property
+    def id_(self) -> URIRef:
+        return DEFAULT_NAMESPACE[f"data-model/verified/asset/{self.metadata.prefix}/{self.metadata.version}"]

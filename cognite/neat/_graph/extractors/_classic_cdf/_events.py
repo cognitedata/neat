@@ -6,7 +6,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Event, EventFilter, EventList
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat._graph.models import Triple
+from cognite.neat._shared import Triple
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 

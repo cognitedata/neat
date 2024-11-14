@@ -1,18 +1,20 @@
 from collections import defaultdict
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
     PropertyDefinitionDuplicatedError,
     ResourceChangedError,
     ResourceNotDefinedError,
 )
+from cognite.neat._issues.errors._properties import ReversedConnectionNotFeasibleError
 from cognite.neat._issues.warnings import (
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
+    UndefinedViewWarning,
 )
 from cognite.neat._issues.warnings.user_modeling import (
     NotNeatSupportedFilterWarning,
@@ -21,6 +23,10 @@ from cognite.neat._issues.warnings.user_modeling import (
 from cognite.neat._rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ContainerEntity, RawFilter
+from cognite.neat._rules.models.entities._single_value import (
+    ReverseConnectionEntity,
+    ViewEntity,
+)
 
 from ._rules import DMSProperty, DMSRules
 from ._schema import DMSSchema
@@ -45,6 +51,8 @@ class DMSPostValidation:
     def validate(self) -> NeatIssueList:
         self._validate_raw_filter()
         self._consistent_container_properties()
+        self._validate_value_type_existence()
+        self._validate_reverse_connections()
 
         self._referenced_views_and_containers_are_existing_and_proper_size()
         if self.metadata.schema_ is SchemaCompleteness.extended:
@@ -317,6 +325,60 @@ class DMSPostValidation:
                 self.issue_list.append(
                     NotNeatSupportedFilterWarning(view.view.as_id()),
                 )
+
+    def _validate_value_type_existence(self) -> None:
+        views = {prop_.view for prop_ in self.properties}.union({view_.view for view_ in self.views})
+
+        for prop_ in self.properties:
+            if isinstance(prop_.value_type, ViewEntity) and prop_.value_type not in views:
+                self.issue_list.append(
+                    UndefinedViewWarning(
+                        str(prop_.view),
+                        str(prop_.value_type),
+                        prop_.property_,
+                    )
+                )
+
+    def _validate_reverse_connections(self) -> None:
+        # do not check for reverse connections in Cognite models
+        if self.metadata.as_data_model_id() in COGNITE_MODELS:
+            return None
+
+        properties_by_ids = {f"{prop_.view!s}.{prop_.property_}": prop_ for prop_ in self.properties}
+        reversed_by_ids = {
+            id_: prop_
+            for id_, prop_ in properties_by_ids.items()
+            if prop_.connection and isinstance(prop_.connection, ReverseConnectionEntity)
+        }
+
+        for id_, prop_ in reversed_by_ids.items():
+            source_id = f"{prop_.value_type!s}." f"{cast(ReverseConnectionEntity, prop_.connection).property_}"
+            if source_id not in properties_by_ids:
+                self.issue_list.append(
+                    ReversedConnectionNotFeasibleError(
+                        id_,
+                        "reversed connection",
+                        prop_.property_,
+                        str(prop_.view),
+                        str(prop_.value_type),
+                        cast(ReverseConnectionEntity, prop_.connection).property_,
+                    )
+                )
+
+            elif source_id in properties_by_ids and properties_by_ids[source_id].value_type != prop_.view:
+                self.issue_list.append(
+                    ReversedConnectionNotFeasibleError(
+                        id_,
+                        "view property",
+                        prop_.property_,
+                        str(prop_.view),
+                        str(prop_.value_type),
+                        cast(ReverseConnectionEntity, prop_.connection).property_,
+                    )
+                )
+
+            else:
+                continue
 
     @staticmethod
     def _changed_attributes_and_properties(

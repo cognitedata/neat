@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.96.6"
+version = "0.97.0"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -62,6 +62,14 @@ urllib3 = "^2"
 openpyxl = "*"
 networkx = "^3.4.2"
 
+
+# Used for loading neat engine
+packaging = ">=22.0,<25.0"
+# NeatEngine dependencies
+jsonpath-python = ">=1.0.6, <2.0.0"
+elementpath = ">=4.0.0, <5.0.0"
+lxml = "^5.3.0"
+
 # Notebook
 rich = { version = "^13.7.1", extras = ["jupyter"]}
 
@@ -89,9 +97,6 @@ pyoxigraph = { version = "0.3.19", optional = true }
 gspread = { version = "*", optional = true }
 google-api-python-client = { version = "*", optional = true }
 google-auth-oauthlib = { version = "*", optional = true }
-
-# Remove when ledacy is removed
-jinja2 = { version = "^3.1.2", optional = true }
 
 # Documentation dependencies
 mkdocs = { version = "*", optional = true }
@@ -122,10 +127,8 @@ docs = [
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 oxi = ["oxrdflib", "pyoxigraph"]
 service = ["uvicorn", "prometheus-client", "fastapi", "schedule", "python-multipart"]
-graphql = ["jinja2"]
 
 all = [
-    "jinja2",
     "pyoxigraph",
     "oxrdflib",
     "uvicorn",

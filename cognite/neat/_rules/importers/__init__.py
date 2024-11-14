@@ -19,6 +19,17 @@ __all__ = [
     "InferenceImporter",
 ]
 
+RulesImporters = (
+    OWLImporter
+    | IMFImporter
+    | DMSImporter
+    | ExcelImporter
+    | GoogleSheetImporter
+    | DTDLImporter
+    | YAMLImporter
+    | InferenceImporter
+)
+
 
 def _repr_html_() -> str:
     import pandas as pd

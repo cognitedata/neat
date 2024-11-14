@@ -8,8 +8,8 @@ from cognite.client.data_classes.data_modeling.instances import Instance, Proper
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_SPACE_URI
-from cognite.neat._graph.models import Triple
 from cognite.neat._issues.errors import ResourceRetrievalError
+from cognite.neat._shared import Triple
 
 from ._base import BaseExtractor
 

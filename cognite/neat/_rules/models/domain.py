@@ -4,7 +4,9 @@ from dataclasses import dataclass, field
 from typing import ClassVar
 
 from pydantic import Field, field_serializer, field_validator
+from rdflib import URIRef
 
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ClassEntity, ClassEntityList
 
@@ -76,6 +78,10 @@ class DomainRules(BaseRules):
     last: "DomainRules | None" = Field(None, alias="Last")
     reference: "DomainRules | None" = Field(None, alias="Reference")
 
+    @property
+    def id_(self) -> URIRef:
+        return DEFAULT_NAMESPACE["data-model/verified/domain"]
+
 
 @dataclass
 class DomainInputMetadata(InputComponent[DomainMetadata]):
@@ -124,3 +130,7 @@ class DomainInputRules(InputRules[DomainRules]):
     @classmethod
     def _get_verified_cls(cls) -> type[DomainRules]:
         return DomainRules
+
+    @property
+    def id_(self) -> URIRef:
+        return DEFAULT_NAMESPACE["data-model/unverified/domain"]

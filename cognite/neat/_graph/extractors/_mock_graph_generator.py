@@ -11,13 +11,13 @@ import numpy
 import pandas as pd
 from rdflib import RDF, Literal, Namespace, URIRef
 
-from cognite.neat._graph.models import Triple
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import InformationProperty
+from cognite.neat._shared import Triple
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseExtractor

@@ -14,6 +14,7 @@ from cognite.neat._issues.errors import (
     ResourceChangedError,
     ResourceNotFoundError,
 )
+from cognite.neat._issues.errors._properties import ReversedConnectionNotFeasibleError
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.data_types import String
@@ -1646,7 +1647,50 @@ class TestDMSRules:
     def test_reverse_property_in_parent(self) -> None:
         sub_core = DMSInputRules(
             DMSInputMetadata(
-                schema_="complete", space="my_space", external_id="my_data_model", creator="Anders", version="v42"
+                schema_="complete",
+                space="my_space",
+                external_id="my_data_model",
+                creator="Anders",
+                version="v42",
+            ),
+            properties=[
+                DMSInputProperty(
+                    view="CogniteVisualizable",
+                    view_property="object3D",
+                    value_type="Cognite3DObject",
+                    connection="direct",
+                    is_list=False,
+                    container="CogniteVisualizable",
+                    container_property="object3D",
+                ),
+                DMSInputProperty(
+                    view="Cognite3DObject",
+                    view_property="asset",
+                    value_type="CogniteVisualizable",
+                    connection="reverse(property=object3D)",
+                ),
+            ],
+            views=[
+                DMSInputView(view="CogniteVisualizable"),
+                DMSInputView(view="CogniteAsset", implements="CogniteVisualizable"),
+                DMSInputView(view="Cognite3DObject"),
+            ],
+            containers=[
+                DMSInputContainer("CogniteVisualizable"),
+            ],
+        )
+        maybe_rules = VerifyDMSRules("continue").transform(sub_core)
+
+        assert not maybe_rules.issues
+
+    def test_reverse_property_in_parent_fail(self) -> None:
+        sub_core = DMSInputRules(
+            DMSInputMetadata(
+                schema_="complete",
+                space="my_space",
+                external_id="my_data_model",
+                creator="Anders",
+                version="v42",
             ),
             properties=[
                 DMSInputProperty(
@@ -1676,7 +1720,9 @@ class TestDMSRules:
         )
         maybe_rules = VerifyDMSRules("continue").transform(sub_core)
 
-        assert not maybe_rules.issues
+        assert maybe_rules.issues
+        assert len(maybe_rules.issues) == 1
+        assert isinstance(maybe_rules.issues[0], ReversedConnectionNotFeasibleError)
 
 
 class TestDMSExporter:

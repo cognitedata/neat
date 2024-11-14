@@ -7,7 +7,7 @@ from cognite.client.data_classes import TimeSeries, TimeSeriesFilter, TimeSeries
 from pydantic import AnyHttpUrl, ValidationError
 from rdflib import RDF, Literal, Namespace, URIRef
 
-from cognite.neat._graph.models import Triple
+from cognite.neat._shared import Triple
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 

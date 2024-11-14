@@ -12,13 +12,14 @@ from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors import RdfFileExtractor, TripleExtractors
-from cognite.neat._graph.models import InstanceType, Triple
 from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.entities import ClassEntity
+from cognite.neat._shared import InstanceType, Triple
 from cognite.neat._utils.auxiliary import local_import
+from cognite.neat._utils.rdf_ import add_triples_in_batch
 
 from ._provenance import Change, Provenance
 
@@ -288,29 +289,7 @@ class NeatGraphStore:
             batch_size: Batch size of triples per commit, by default 10_000
             verbose: Verbose mode, by default False
         """
-
-        commit_counter = 0
-        number_of_written_triples = 0
-
-        def check_commit(force_commit: bool = False):
-            """Commit nodes to the graph if batch counter is reached or if force_commit is True"""
-            nonlocal commit_counter
-            nonlocal number_of_written_triples
-            if force_commit:
-                number_of_written_triples += commit_counter
-                self.graph.commit()
-                return
-            commit_counter += 1
-            if commit_counter >= batch_size:
-                number_of_written_triples += commit_counter
-                self.graph.commit()
-                commit_counter = 0
-
-        for triple in triples:
-            self.graph.add(triple)
-            check_commit()
-
-        check_commit(force_commit=True)
+        add_triples_in_batch(self.graph, triples, batch_size)
 
     def transform(self, transformer: Transformers) -> None:
         """Transforms the graph store using a transformer."""

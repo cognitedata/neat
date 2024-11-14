@@ -8,7 +8,9 @@ from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling.data_types import Enum as DMSEnum
 from pydantic import BaseModel, Field, model_serializer, model_validator
 from pydantic.functional_validators import ModelWrapValidatorHandler
+from rdflib import URIRef
 
+from cognite.neat._constants import XML_SCHEMA_NAMESPACE
 from cognite.neat._rules._constants import SPLIT_ON_COMMA_PATTERN, SPLIT_ON_EQUAL_PATTERN
 from cognite.neat._rules.models.entities._single_value import ClassEntity, UnitEntity
 
@@ -123,6 +125,10 @@ class DataType(BaseModel):
             name = match.group("name").casefold()
             return name in _DATA_TYPE_BY_NAME or name in _DATA_TYPE_BY_DMS_TYPE
         return False
+
+    @classmethod
+    def as_xml_uri_ref(cls) -> URIRef:
+        return XML_SCHEMA_NAMESPACE[cls.xsd]
 
 
 class Boolean(DataType):

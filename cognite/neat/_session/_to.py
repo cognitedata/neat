@@ -10,7 +10,7 @@ from cognite.neat._session._wizard import space_wizard
 from cognite.neat._utils.upload import UploadResultCore
 
 from ._state import SessionState
-from .exceptions import intercept_session_exceptions
+from .exceptions import NeatSessionError, intercept_session_exceptions
 
 
 @intercept_session_exceptions
@@ -25,7 +25,7 @@ class ToAPI:
         io: Any,
     ) -> None:
         exporter = exporters.ExcelExporter()
-        exporter.export_to_file(self._state.last_verified_rule, Path(io))
+        exporter.export_to_file(self._state.data_model.last_verified_rule[1], Path(io))
         return None
 
     @overload
@@ -37,9 +37,9 @@ class ToAPI:
     def yaml(self, io: Any | None = None) -> str | None:
         exporter = exporters.YAMLExporter()
         if io is None:
-            return exporter.export(self._state.last_verified_rule)
+            return exporter.export(self._state.data_model.last_verified_rule[1])
 
-        exporter.export_to_file(self._state.last_verified_rule, Path(io))
+        exporter.export_to_file(self._state.data_model.last_verified_rule[1], Path(io))
         return None
 
 
@@ -51,16 +51,17 @@ class CDFToAPI:
         self._verbose = verbose
 
     def instances(self, space: str | None = None):
-        if not self._state.last_verified_dms_rules:
-            raise ValueError("No verified DMS data model available")
+        if not self._client:
+            raise NeatSessionError("No CDF client provided!")
 
         loader = loaders.DMSLoader.from_rules(
-            self._state.last_verified_dms_rules, self._state.store, space_wizard(space=space)
+            self._state.data_model.last_verified_dms_rules[1],
+            self._state.instances.store,
+            space_wizard(space=space),
         )
-
-        if not self._client:
-            raise ValueError("No client provided!")
-
+        result = loader.load_into_cdf(self._client)
+        self._state.instances.outcome.append(result)
+        print("You can inspect the details with the .inspect.instances.outcome(...) method.")
         return loader.load_into_cdf(self._client)
 
     def data_model(
@@ -84,20 +85,18 @@ class CDFToAPI:
         - "force": If any component already exists, it will be deleted and recreated.
 
         """
-        if not self._state.last_verified_dms_rules:
-            raise ValueError("No verified DMS data model available")
 
         exporter = exporters.DMSExporter(existing_handling=existing_handling)
 
         if not self._client:
-            raise ValueError("No client provided!")
+            raise NeatSessionError("No client provided!")
 
         conversion_issues = IssueList(action="to.cdf.data_model")
         with catch_warnings(conversion_issues):
             result = exporter.export_to_cdf(
-                self._state.last_verified_dms_rules, self._client, dry_run, fallback_one_by_one
+                self._state.data_model.last_verified_dms_rules[1], self._client, dry_run, fallback_one_by_one
             )
         result.insert(0, UploadResultCore(name="schema", issues=conversion_issues))
-        self._state.outcome.append(result)
-        print("You can inspect the details with the .inspect.outcome(...) method.")
+        self._state.data_model.outcome.append(result)
+        print("You can inspect the details with the .inspect.data_model.outcome(...) method.")
         return result
