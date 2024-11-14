@@ -1,4 +1,5 @@
 from typing import cast
+from urllib.parse import quote
 
 from rdflib import Graph, URIRef
 
@@ -73,14 +74,19 @@ class MakeConnectionOnExactMatch(BaseTransformer):
         subject_predicate: URIRef,
         object_type: URIRef,
         object_predicate: URIRef,
-        connection: URIRef | None = None,
+        connection: URIRef | str | None = None,
         limit: int | None = None,
     ):
         self.subject_type = subject_type
         self.subject_predicate = subject_predicate
         self.object_type = object_type
         self.object_predicate = object_predicate
-        self.connection = connection or DEFAULT_NAMESPACE[remove_namespace_from_uri(self.object_type).lower()]
+
+        self.connection = (
+            DEFAULT_NAMESPACE[quote(connection.strip())]
+            if isinstance(connection, str)
+            else connection or DEFAULT_NAMESPACE[remove_namespace_from_uri(self.object_type).lower()]
+        )
 
         self.limit = limit
 
@@ -99,4 +105,5 @@ class MakeConnectionOnExactMatch(BaseTransformer):
         for subject, object in graph.query(query):  # type: ignore [misc]
             triples.append(cast(Triple, (subject, self.connection, object)))
 
+        print(f"Found {len(triples)} connections. Adding them to the graph...")
         add_triples_in_batch(graph, triples)
