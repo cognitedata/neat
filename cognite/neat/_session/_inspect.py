@@ -157,7 +157,6 @@ class InspectUploadOutcome:
 
             lines: list[str] = []
             for item in outcome:
-                print(item.name)
                 lines.append(f"### {item.name}")
                 if unique_errors := set(item.error_messages):
                     lines.append("#### Errors")
@@ -176,7 +175,7 @@ class InspectUploadOutcome:
                         if isinstance(value, list):
                             total = len(value)
                             for i, v in enumerate(value):
-                                if key in ["created", "updated"]:
+                                if key in ["created", "updated", "changed"]:
                                     if i < 50:
                                         lines.append(f"  * {v}")
                                     elif i == 50 and total > 50:
