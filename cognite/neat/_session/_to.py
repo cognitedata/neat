@@ -7,7 +7,6 @@ from cognite.client.data_classes.data_modeling import SpaceApply
 from cognite.neat._graph import loaders
 from cognite.neat._issues import IssueList, catch_warnings
 from cognite.neat._rules import exporters
-
 from cognite.neat._rules._constants import PATTERNS
 from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._utils.upload import UploadResultCore, UploadResultList
