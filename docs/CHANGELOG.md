@@ -16,6 +16,9 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Added
+- Added parameter, `model`, to `neat.to.excel(...)` to allow to specify 'dms' or 'information' model.
+
 ### Fixed
 - `neat.set.data_model_id()` did not result in the verified data model being stored
 - Due to issues with reverse connections `neat.set.data_model_id()` does not allow changing data model id-
