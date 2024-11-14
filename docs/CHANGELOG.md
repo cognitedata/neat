@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.97.1] - 14-11-**2024**
 ### Changed
 - `neat.show.instances()` now only works if NeatSession storage is set to `oxigraph`
 ### Fixed
