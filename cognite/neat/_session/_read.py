@@ -1,7 +1,7 @@
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
@@ -32,6 +32,7 @@ class ReadAPI:
         self.rdf = RDFReadAPI(state, client, verbose)
         self.excel = ExcelReadAPI(state, client, verbose)
         self.csv = CSVReadAPI(state, client, verbose)
+        self.xml = XMLReadAPI(state, client, verbose)
 
 
 @intercept_session_exceptions
@@ -162,6 +163,27 @@ class CSVReadAPI(BaseReadAPI):
         engine.set.file = path
         engine.set.type = type
         engine.set.primary_key = primary_key
+        extractor = engine.create_extractor()
+
+        self._state.instances.store.write(extractor)
+
+
+@intercept_session_exceptions
+class XMLReadAPI(BaseReadAPI):
+    def __call__(self, io: Any, format: Literal["dexpi"] | None = None) -> None:
+        reader = NeatReader.create(io)
+        if isinstance(reader, GitHubReader):
+            path = Path(tempfile.gettempdir()).resolve() / reader.name
+            path.write_text(reader.read_text())
+        elif isinstance(reader, PathReader):
+            path = reader.path
+        else:
+            raise NeatValueError("Only file paths are supported for XML files")
+        if format != "dexpi":
+            raise NeatValueError("Only DEXPI format is supported for XML.")
+        engine = import_engine()
+        engine.set.source = format
+        engine.set.file = path
         extractor = engine.create_extractor()
 
         self._state.instances.store.write(extractor)
