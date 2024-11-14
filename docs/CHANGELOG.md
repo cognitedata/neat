@@ -20,6 +20,8 @@ Changes are grouped as follows:
 - `neat.show.instances()` now only works if NeatSession storage is set to `oxigraph`
 ### Fixed
 - `neat.prepare.data_model.to_enterprise/to_solution` was not picking up source entity
+### Changed
+- `lxml` is now an optional dependency for `DexpiExtractor`. This is to support running in `pyodide` environment.
 
 ## [0.97.0] - 14-11-**2024**
 ### Added
