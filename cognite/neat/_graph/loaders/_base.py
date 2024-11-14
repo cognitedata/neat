@@ -51,7 +51,14 @@ class CDFLoader(BaseLoader[T_Output]):
     def load_into_cdf(
         self, client: CogniteClient, dry_run: bool = False, check_client: bool = True
     ) -> UploadResultList:
-        return UploadResultList(self.load_into_cdf_iterable(client, dry_run, check_client))
+        upload_result_by_name: dict[str, UploadResult] = {}
+        for upload_result in self.load_into_cdf_iterable(client, dry_run, check_client):
+            if upload_result.name in upload_result_by_name:
+                upload_result_by_name[upload_result.name].merge(upload_result)
+            else:
+                upload_result_by_name[upload_result.name] = upload_result
+
+        return UploadResultList(upload_result_by_name.values())
 
     def load_into_cdf_iterable(
         self, client: CogniteClient, dry_run: bool = False, check_client: bool = True
