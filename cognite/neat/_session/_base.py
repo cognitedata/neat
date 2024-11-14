@@ -123,6 +123,7 @@ class NeatSession:
             "v1",
         ),
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
+        max_number_of_instance: int = 100,
     ) -> IssueList:
         """Data model inference from instances.
 
@@ -137,6 +138,7 @@ class NeatSession:
         importer = importers.InferenceImporter.from_graph_store(
             store=self._state.instances.store,
             non_existing_node_type=non_existing_node_type,
+            max_number_of_instance=max_number_of_instance,
         )
         inferred_rules: ReadRules = importer.to_rules()
         end = datetime.now(timezone.utc)
