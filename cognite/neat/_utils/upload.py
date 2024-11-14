@@ -4,6 +4,7 @@ from functools import total_ordering
 from typing import Any, Generic
 
 from cognite.neat._issues import IssueList
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._shared import T_ID, NeatList, NeatObject
 
 
@@ -110,3 +111,22 @@ class UploadResult(UploadResultCore, Generic[T_ID]):
                 continue
             lines.append(f"{key}: {value}")
         return f"{self.name.title()}: {', '.join(lines)}"
+
+    def merge(self, other: "UploadResult[T_ID]") -> "UploadResult[T_ID]":
+        if self.name != other.name:
+            raise NeatValueError(f"Cannot merge UploadResults with different names: {self.name} and {other.name}")
+        return UploadResult(
+            name=self.name,
+            error_messages=self.error_messages + other.error_messages,
+            issues=IssueList(self.issues + other.issues),
+            created=self.created.union(other.created),
+            upserted=self.upserted.union(other.upserted),
+            deleted=self.deleted.union(other.deleted),
+            changed=self.changed.union(other.changed),
+            unchanged=self.unchanged.union(other.unchanged),
+            skipped=self.skipped.union(other.skipped),
+            failed_created=self.failed_created.union(other.failed_created),
+            failed_upserted=self.failed_upserted.union(other.failed_upserted),
+            failed_changed=self.failed_changed.union(other.failed_changed),
+            failed_deleted=self.failed_deleted.union(other.failed_deleted),
+        )
