@@ -23,7 +23,8 @@ Changes are grouped as follows:
 - Plotting of data model implements
 - Support for loading `NeatEngine`.
 - Support for inspecting outcome of `neat.to.cdf.instances(...)` with `neat.inspect.outcome.instances(...)`.
-- `neat.prepare.instance.make_connection_on_exact_match` added
+- `neat.prepare.instance.make_connection_on_exact_match` added to enable adding connections 
+  between instances based on exact match of properties.
 
 ### Improved
 - Case-insensitive "direct" connection type in DMS Rules
