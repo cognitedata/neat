@@ -54,7 +54,9 @@ class CDFLoader(BaseLoader[T_Output]):
         upload_result_by_name: dict[str, UploadResult] = {}
         for upload_result in self.load_into_cdf_iterable(client, dry_run, check_client):
             if upload_result.name in upload_result_by_name:
-                upload_result_by_name[upload_result.name].merge(upload_result)
+                upload_result_by_name[upload_result.name] = upload_result_by_name[upload_result.name].merge(
+                    upload_result
+                )
             else:
                 upload_result_by_name[upload_result.name] = upload_result
 
