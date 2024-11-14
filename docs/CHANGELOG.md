@@ -25,6 +25,7 @@ Changes are grouped as follows:
 - Support for inspecting outcome of `neat.to.cdf.instances(...)` with `neat.inspect.outcome.instances(...)`.
 - `neat.prepare.instance.make_connection_on_exact_match` added to enable adding connections 
   between instances based on exact match of properties.
+- Support for reading instances from csv `neat.read.csv`. Including reading csv from a public GitHub repository.
 
 ### Improved
 - Case-insensitive "direct" connection type in DMS Rules
