@@ -68,7 +68,7 @@ packaging = ">=22.0,<25.0"
 # NeatEngine dependencies
 jsonpath-python = ">=1.0.6, <2.0.0"
 elementpath = ">=4.0.0, <5.0.0"
-lxml = "^5.3.0"
+lxml = {version  = "^5.3.0", optional = true}
 
 # Notebook
 rich = { version = "^13.7.1", extras = ["jupyter"]}
@@ -136,6 +136,7 @@ all = [
     "fastapi",
     "schedule",
     "python-multipart",
+    "lxml",
 ]
 
 [tool.poetry.dev-dependencies]
