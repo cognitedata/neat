@@ -21,7 +21,8 @@ Changes are grouped as follows:
 - Due to issues with reverse connections `neat.set.data_model_id()` does not allow changing data model id-
 ### Improved
 - `neat.to.cdf.instances()` now auto creates space if one is not passed, also does not allow usage of data model space for instances storage
-
+- `neat.to.cdf.instances()` no longer loads the data twice.
+- `neat.to.cdf.instances()` now has a more informative output.
 
 ## [0.97.1] - 14-11-**2024**
 ### Changed

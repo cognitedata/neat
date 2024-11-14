@@ -8,7 +8,7 @@ from cognite.neat._graph import loaders
 from cognite.neat._issues import IssueList, catch_warnings
 from cognite.neat._rules import exporters
 from cognite.neat._rules._constants import PATTERNS
-from cognite.neat._utils.upload import UploadResultCore
+from cognite.neat._utils.upload import UploadResultCore, UploadResultList
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, intercept_session_exceptions
@@ -51,7 +51,7 @@ class CDFToAPI:
         self._state = state
         self._verbose = verbose
 
-    def instances(self, space: str | None = None):
+    def instances(self, space: str | None = None) -> UploadResultList:
         if not self._client:
             raise NeatSessionError("No CDF client provided!")
 
@@ -72,8 +72,8 @@ class CDFToAPI:
         )
         result = loader.load_into_cdf(self._client)
         self._state.instances.outcome.append(result)
-        print("You can inspect the details with the .inspect.instances.outcome(...) method.")
-        return loader.load_into_cdf(self._client)
+        print("You can inspect the details with the .inspect.outcome.instances(...) method.")
+        return result
 
     def data_model(
         self,
