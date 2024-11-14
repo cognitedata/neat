@@ -18,6 +18,8 @@ Changes are grouped as follows:
 ## TBD
 ### Fixed
 - `neat.set.data_model_id()` did not result in the verified data model being stored
+### Improved
+- `neat.to.cdf.instances()` now auto creates space if one is not passed, also does not allow usage of data model space for instances storage
 
 ## [0.97.1] - 14-11-**2024**
 ### Changed
