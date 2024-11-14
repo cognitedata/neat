@@ -6,6 +6,7 @@ from cognite.client import CogniteClient
 from cognite.neat._graph import loaders
 from cognite.neat._issues import IssueList, catch_warnings
 from cognite.neat._rules import exporters
+from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._session._wizard import space_wizard
 from cognite.neat._utils.upload import UploadResultCore, UploadResultList
 
@@ -23,9 +24,24 @@ class ToAPI:
     def excel(
         self,
         io: Any,
+        model: Literal["dms", "information", "logical", "physical"] | None,
     ) -> None:
+        """Export the verified data model to Excel.
+
+        Args:
+            io: The file path or file-like object to write the Excel file to.
+            model: The format of the data model to export. Defaults to None.
+        """
         exporter = exporters.ExcelExporter()
-        exporter.export_to_file(self._state.data_model.last_verified_rule[1], Path(io))
+        rules: VerifiedRules
+        if model == "information" or model == "logical":
+            rules = self._state.data_model.last_verified_information_rules[1]
+        elif model == "dms" or model == "physical":
+            rules = self._state.data_model.last_verified_dms_rules[1]
+        else:
+            rules = self._state.data_model.last_verified_rule[1]
+
+        exporter.export_to_file(rules, Path(io))
         return None
 
     @overload
