@@ -35,7 +35,7 @@ class InstancePrepareAPI:
         source: tuple[URIRef, URIRef],
         target: tuple[URIRef, URIRef],
         connection: URIRef | None = None,
-        limit: int = 100,
+        limit: int | None = 100,
     ) -> None:
         """Make connection on exact match.
 
