@@ -5,9 +5,9 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
 from cognite.neat import _version
-from cognite.neat._issues import IssueList
+from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._rules import importers
-from cognite.neat._rules._shared import ReadRules
+from cognite.neat._rules._shared import ReadRules, VerifiedRules
 from cognite.neat._rules.importers._rdf._base import DEFAULT_NON_EXISTING_NODE_TYPE
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import AnyURI
@@ -15,6 +15,7 @@ from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
+from cognite.neat._rules.transformers._converters import ConversionTransformer
 from cognite.neat._store._provenance import (
     INSTANCES_ENTITY,
     Change,
@@ -85,35 +86,49 @@ class NeatSession:
             print("You can inspect the issues with the .inspect.issues(...) method.")
         return output.issues
 
-    def convert(self, target: Literal["dms", "information"]) -> None:
+    def convert(self, target: Literal["dms", "information"]) -> IssueList:
         start = datetime.now(timezone.utc)
-        if target == "dms":
-            source_id, info_rules = self._state.data_model.last_verified_information_rules
-            converter = ConvertToRules(DMSRules)
-            converted_rules = converter.transform(info_rules).rules
-        elif target == "information":
-            source_id, dms_rules = self._state.data_model.last_verified_dms_rules
-            converter = ConvertToRules(InformationRules)
-            converted_rules = converter.transform(dms_rules).rules
-        else:
-            raise NeatSessionError(f"Target {target} not supported.")
+        issues = IssueList()
+        converter: ConversionTransformer | None = None
+        converted_rules: VerifiedRules | None = None
+        with catch_issues(issues):
+            if target == "dms":
+                source_id, info_rules = self._state.data_model.last_verified_information_rules
+                converter = ConvertToRules(DMSRules)
+                converted_rules = converter.transform(info_rules).rules
+            elif target == "information":
+                source_id, dms_rules = self._state.data_model.last_verified_dms_rules
+                converter = ConvertToRules(InformationRules)
+                converted_rules = converter.transform(dms_rules).rules
+            else:
+                # Session errors are not caught by the catch_issues context manager
+                raise NeatSessionError(f"Target {target} not supported.")
+
         end = datetime.now(timezone.utc)
+        if issues:
+            self._state.data_model.issue_lists.append(issues)
 
-        # Provenance
-        change = Change.from_rules_activity(
-            converted_rules,
-            converter.agent,
-            start,
-            end,
-            f"Converted data model {source_id} to {converted_rules.id_}",
-            self._state.data_model.provenance.source_entity(source_id)
-            or self._state.data_model.provenance.target_entity(source_id),
-        )
+        if converted_rules is not None and converter is not None:
+            # Provenance
+            change = Change.from_rules_activity(
+                converted_rules,
+                converter.agent,
+                start,
+                end,
+                f"Converted data model {source_id} to {converted_rules.id_}",
+                self._state.data_model.provenance.source_entity(source_id)
+                or self._state.data_model.provenance.target_entity(source_id),
+            )
 
-        self._state.data_model.write(converted_rules, change)
+            self._state.data_model.write(converted_rules, change)
 
-        if self._verbose:
-            print(f"Rules converted to {target}")
+            if self._verbose and not issues.has_errors:
+                print(f"Rules converted to {target}")
+        else:
+            print("Conversion failed.")
+        if issues:
+            print("You can inspect the issues with the .inspect.issues(...) method.")
+        return issues
 
     def infer(
         self,
