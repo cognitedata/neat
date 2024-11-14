@@ -293,6 +293,19 @@ class ShowInstanceAPI(ShowBaseAPI):
         self._state = state
 
     def __call__(self) -> Any:
+        if IN_PYODIDE:
+            raise NeatSessionError(
+                "Instances visualization not available if neat is run in PYODIDE as "
+                "PYODIDE dues not support oxigraph storage for NeatSession."
+                "Try running neat in regular Jupyter notebook and set [bold]NeatSession(storage='oxigraph')[/bold]."
+            )
+
+        if not self._state.instances.store_type == "oxigraph":
+            raise NeatSessionError(
+                "Visualization is only available for Oxigraph store. "
+                'Try setting [bold]NeatSession(storage="oxigraph")[/bold] enable Oxigraph store.'
+            )
+
         if not self._state.instances.store.graph:
             raise NeatSessionError("No instances available. Try using [bold].read[/bold] to load instances.")
 
