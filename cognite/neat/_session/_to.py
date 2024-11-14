@@ -2,11 +2,12 @@ from pathlib import Path
 from typing import Any, Literal, overload
 
 from cognite.client import CogniteClient
+from cognite.client.data_classes.data_modeling import SpaceApply
 
 from cognite.neat._graph import loaders
 from cognite.neat._issues import IssueList, catch_warnings
 from cognite.neat._rules import exporters
-from cognite.neat._session._wizard import space_wizard
+from cognite.neat._rules._constants import PATTERNS
 from cognite.neat._utils.upload import UploadResultCore
 
 from ._state import SessionState
@@ -54,10 +55,20 @@ class CDFToAPI:
         if not self._client:
             raise NeatSessionError("No CDF client provided!")
 
+        space = space or f"{self._state.data_model.last_verified_dms_rules[1].metadata.space}_instances"
+
+        if space and space == self._state.data_model.last_verified_dms_rules[1].metadata.space:
+            raise NeatSessionError("Space for instances must be different from the data model space.")
+        elif not PATTERNS.space_compliance.match(str(space)):
+            raise NeatSessionError("Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
+
+        if not self._client.data_modeling.spaces.retrieve(space):
+            self._client.data_modeling.spaces.apply(SpaceApply(space=space))
+
         loader = loaders.DMSLoader.from_rules(
             self._state.data_model.last_verified_dms_rules[1],
             self._state.instances.store,
-            space_wizard(space=space),
+            instance_space=space,
         )
         result = loader.load_into_cdf(self._client)
         self._state.instances.outcome.append(result)
