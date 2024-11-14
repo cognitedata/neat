@@ -329,8 +329,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 (upserted.edges, source_by_edge_id),
             ]:
                 for source, subinstances in itertools.groupby(
-                    sorted(instances, key=lambda i: ids_by_source[i.as_id()]),  # type: ignore[attr-defined, index, call-overload]
-                    key=lambda i: ids_by_source[i.as_id()],  # type: ignore[attr-defined, index, call-overload]
+                    sorted(instances, key=lambda i: ids_by_source[i.as_id()].external_id),  # type: ignore[attr-defined, index, call-overload]
+                    key=lambda i: ids_by_source[i.as_id()].external_id,  # type: ignore[attr-defined, index, call-overload]
                 ):
                     result = UploadResult(name=source.external_id, issues=read_issues)
                     for instance in subinstances:  # type: ignore[attr-defined]
