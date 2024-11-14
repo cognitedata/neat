@@ -16,10 +16,16 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Fixed
+- `neat.set.data_model_id()` did not result in the verified data model being stored
+
+## [0.97.1] - 14-11-**2024**
 ### Changed
 - `neat.show.instances()` now only works if NeatSession storage is set to `oxigraph`
 ### Fixed
 - `neat.prepare.data_model.to_enterprise/to_solution` was not picking up source entity
+### Changed
+- `lxml` is now an optional dependency for `DexpiExtractor`. This is to support running in `pyodide` environment.
 
 ## [0.97.0] - 14-11-**2024**
 ### Added
