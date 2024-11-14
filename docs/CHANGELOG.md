@@ -26,6 +26,7 @@ Changes are grouped as follows:
 - `neat.to.cdf.instances()` now auto creates space if one is not passed, also does not allow usage of data model space for instances storage
 - `neat.to.cdf.instances()` no longer loads the data twice.
 - `neat.to.cdf.instances()` now has a more informative output.
+- `neat.inspect.outcome....` reduced the amount of information shown in the output to make it more readable.
 
 ## [0.97.1] - 14-11-**2024**
 ### Changed
