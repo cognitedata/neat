@@ -188,16 +188,16 @@ class XMLReadAPI(BaseReadAPI):
 
         if format.lower() == "dexpi":
             return self.dexpi(path)
-         else:
+        else:
             raise NeatValueError("Only support XML files of DEXPI format at the moment.")
-       
-    def dexpi(self, path):  
-     
+
+    def dexpi(self, path):
         engine = import_engine()
         engine.set.source = "dexpi"
         engine.set.file = path
         extractor = engine.create_extractor()
         self._state.instances.store.write(extractor)
+
 
 @intercept_session_exceptions
 class RDFReadAPI(BaseReadAPI):

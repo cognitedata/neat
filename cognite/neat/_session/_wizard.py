@@ -15,7 +15,7 @@ def object_wizard(message: str = "Select object") -> NeatObjectType:
     return _selection(message, get_args(NeatObjectType))
 
 
-def xml_format_wizard(message: str = "Select xml format") -> XMLFileType:
+def xml_format_wizard(message: str = "Select XML format") -> XMLFileType:
     return _selection(message, get_args(XMLFileType))
 
 
