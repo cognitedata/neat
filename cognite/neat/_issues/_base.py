@@ -18,6 +18,7 @@ from cognite.client.data_classes.data_modeling import (
     PropertyId,
     ViewId,
 )
+from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
@@ -473,3 +474,46 @@ def catch_warnings(
         finally:
             if warning_logger and issues is not None:
                 issues.extend([warning_cls.from_warning(warning) for warning in warning_logger])  # type: ignore[misc]
+
+
+class FutureResult:
+    def __init__(self) -> None:
+        self._result: Literal["success", "failure", "pending"] = "pending"
+
+    @property
+    def result(self) -> Literal["success", "failure", "pending"]:
+        return self._result
+
+
+@contextmanager
+def catch_issues(
+    issues: IssueList,
+    error_cls: type[NeatError] = NeatError,
+    warning_cls: type[NeatWarning] = NeatWarning,
+    error_args: dict[str, Any] | None = None,
+) -> Iterator[FutureResult]:
+    """This is an internal help function to handle issues and warnings.
+
+    Args:
+        issues: The issues list to append to.
+        error_cls: The class used to convert errors to issues.
+        warning_cls:  The class used to convert warnings to issues.
+
+    Returns:
+        FutureResult: A future result object that can be used to check the result of the context manager.
+    """
+    with catch_warnings(issues, warning_cls):
+        future_result = FutureResult()
+        try:
+            yield future_result
+        except ValidationError as e:
+            issues.extend(error_cls.from_pydantic_errors(e.errors(), **(error_args or {})))
+            future_result._result = "failure"
+        except MultiValueError as e:
+            issues.extend(e.errors)
+            future_result._result = "failure"
+        except NeatError as e:
+            issues.append(e)
+            future_result._result = "failure"
+        else:
+            future_result._result = "success"
