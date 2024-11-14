@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.97.0] - 14-11-**2024**
 ### Added
 - Added provenance on rules in NeatSession
 - Option to move connections from reference to new model in DMS rules when generating Enterprise model
