@@ -328,11 +328,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 (upserted.nodes, source_by_node_id),
                 (upserted.edges, source_by_edge_id),
             ]:
-                for source, subinstances in itertools.groupby(
+                for source_external_id, subinstances in itertools.groupby(
                     sorted(instances, key=lambda i: ids_by_source[i.as_id()].external_id),  # type: ignore[attr-defined, index, call-overload]
                     key=lambda i: ids_by_source[i.as_id()].external_id,  # type: ignore[attr-defined, index, call-overload]
                 ):
-                    result = UploadResult(name=source.external_id, issues=read_issues)
+                    result = UploadResult(name=source_external_id, issues=read_issues)
                     for instance in subinstances:  # type: ignore[attr-defined]
                         if instance.was_modified and instance.created_time == instance.last_updated_time:
                             result.created.add(instance.as_id())
