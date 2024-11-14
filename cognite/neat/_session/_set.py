@@ -27,15 +27,16 @@ class SetAPI:
 
             # Provenance
             change = Change.from_rules_activity(
-                output,
+                output.rules,
                 transformer.agent,
                 start,
                 end,
                 "Changed data model id",
-                self._state.data_model.provenance.source_entity(source_id),
+                self._state.data_model.provenance.source_entity(source_id)
+                or self._state.data_model.provenance.target_entity(source_id),
             )
 
-            self._state.data_model.write(output, change)
+            self._state.data_model.write(output.rules, change)
             if self._verbose:
                 print(f"Data model ID set to {new_model_id}")
         else:
