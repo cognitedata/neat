@@ -41,7 +41,7 @@ def get_cognite_client(env_file_name: str) -> CogniteClient:
         with suppress(KeyError, FileNotFoundError, TypeError):
             variables = _from_dotenv(repo_root / env_file_name)
             client = variables.get_client()
-            print("Found .env file in repository root. Loaded variables from .env file.")
+            print(f"Found {env_file_name} file in repository root. Loaded variables from {env_file_name} file.")
             return client
     variables = _prompt_user()
     if repo_root and _env_in_gitignore(repo_root, env_file_name):
@@ -50,13 +50,14 @@ def get_cognite_client(env_file_name: str) -> CogniteClient:
 
         env_file = repo_root / env_file_name
         answer = Prompt.ask(
-            "Do you store the variables in an .env file in the repository root for easy reuse?", choices=["y", "n"]
+            f"Do you store the variables in an {env_file_name} file in the repository root for easy reuse?",
+            choices=["y", "n"],
         )
         if env_file.exists():
             answer = Prompt.ask(f"{env_file} already exists. Overwrite?", choices=["y", "n"])
         if answer == "y":
             env_file.write_text(variables.create_env_file())
-            print("Created .env file in repository root.")
+            print(f"Created {env_file_name} file in repository root.")
 
     return variables.get_client()
 

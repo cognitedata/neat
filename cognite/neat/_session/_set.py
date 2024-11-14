@@ -2,11 +2,12 @@ from datetime import datetime, timezone
 
 from cognite.client import data_modeling as dm
 
+from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._rules.transformers import SetIDDMSModel
 from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
-from .exceptions import intercept_session_exceptions
+from .exceptions import NeatSessionError, intercept_session_exceptions
 
 
 @intercept_session_exceptions
@@ -19,6 +20,12 @@ class SetAPI:
         """Sets the data model ID of the latest verified data model."""
         if res := self._state.data_model.last_verified_dms_rules:
             source_id, rules = res
+
+            if rules.metadata.as_data_model_id() in COGNITE_MODELS:
+                raise NeatSessionError(
+                    "Cannot change the data model ID of a Cognite Data Model in NeatSession"
+                    " due to temporarily issue with the reverse direct relation interpretation"
+                )
 
             start = datetime.now(timezone.utc)
             transformer = SetIDDMSModel(new_model_id)
