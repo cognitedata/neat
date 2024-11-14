@@ -1,3 +1,4 @@
+import itertools
 import json
 from collections.abc import Iterable, Sequence
 from pathlib import Path
@@ -295,9 +296,24 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         dry_run: bool,
         read_issues: IssueList,
     ) -> Iterable[UploadResult]:
+        nodes: list[dm.NodeApply] = []
+        edges: list[dm.EdgeApply] = []
+        source_by_node_id: dict[dm.NodeId, str] = {}
+        source_by_edge_id: dict[dm.EdgeId, str] = {}
+        for item in items:
+            if isinstance(item, dm.NodeApply):
+                nodes.append(item)
+                if item.sources:
+                    source_by_node_id[item.as_id()] = item.sources[0].source.external_id
+                else:
+                    source_by_node_id[item.as_id()] = "node"
+            elif isinstance(item, dm.EdgeApply):
+                edges.append(item)
+                if item.sources:
+                    source_by_edge_id[item.as_id()] = item.sources[0].source.external_id
+                else:
+                    source_by_edge_id[item.as_id()] = "edge"
         try:
-            nodes = [item for item in items if isinstance(item, dm.NodeApply)]
-            edges = [item for item in items if isinstance(item, dm.EdgeApply)]
             upserted = client.data_modeling.instances.apply(
                 nodes,
                 edges,
@@ -312,19 +328,23 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             result.created.update(item.as_id() for item in e.successful)
             yield result
         else:
-            for instance_type, instances in {
-                "Nodes": upserted.nodes,
-                "Edges": upserted.edges,
-            }.items():
-                result = UploadResult[InstanceId](name=instance_type, issues=read_issues)
-                for instance in instances:  # type: ignore[attr-defined]
-                    if instance.was_modified and instance.created_time == instance.last_updated_time:
-                        result.created.add(instance.as_id())
-                    elif instance.was_modified:
-                        result.changed.add(instance.as_id())
-                    else:
-                        result.unchanged.add(instance.as_id())
-                yield result
+            for instances, ids_by_source in [
+                (upserted.nodes, source_by_node_id),
+                (upserted.edges, source_by_edge_id),
+            ]:
+                for name, subinstances in itertools.groupby(
+                    sorted(instances, key=lambda i: ids_by_source[i.as_id()]),  # type: ignore[call-overload, index, attr-defined]
+                    key=lambda i: ids_by_source[i.as_id()],  # type: ignore[index]
+                ):
+                    result = UploadResult(name=name, issues=read_issues)
+                    for instance in subinstances:  # type: ignore[attr-defined]
+                        if instance.was_modified and instance.created_time == instance.last_updated_time:
+                            result.created.add(instance.as_id())
+                        elif instance.was_modified:
+                            result.changed.add(instance.as_id())
+                        else:
+                            result.unchanged.add(instance.as_id())
+                    yield result
 
 
 def _get_field_value_types(cls, info):

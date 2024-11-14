@@ -15,6 +15,19 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.97.2] - 14-11-**2024**
+### Added
+- Added parameter, `model`, to `neat.to.excel(...)` to allow to specify 'dms' or 'information' model.
+
+### Fixed
+- `neat.set.data_model_id()` did not result in the verified data model being stored
+- Due to issues with reverse connections `neat.set.data_model_id()` does not allow changing data model id-
+### Improved
+- `neat.to.cdf.instances()` now auto creates space if one is not passed, also does not allow usage of data model space for instances storage
+- `neat.to.cdf.instances()` no longer loads the data twice.
+- `neat.to.cdf.instances()` now has a more informative output.
+- `neat.inspect.outcome....` reduced the amount of information shown in the output to make it more readable.
+
 ## [0.97.1] - 14-11-**2024**
 ### Changed
 - `neat.show.instances()` now only works if NeatSession storage is set to `oxigraph`
