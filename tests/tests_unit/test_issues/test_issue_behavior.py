@@ -5,7 +5,7 @@ from cognite.client import data_modeling as dm
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import ResourceCreationError, ResourceNotDefinedError
 from cognite.neat._issues.warnings import NeatValueWarning
-from cognite.neat._rules.transformers._verification import _catch_issues
+from cognite.neat._rules.transformers._verification import catch_issues
 
 
 class TestIssues:
@@ -14,7 +14,7 @@ class TestIssues:
         my_error = ResourceCreationError(identifier="missing", resource_type="space", error="No CDF Connection")
 
         errors = IssueList()
-        with _catch_issues(issues=errors):
+        with catch_issues(issues=errors):
             raise my_error
 
         assert errors == IssueList([my_error])
@@ -24,7 +24,7 @@ class TestIssues:
         my_warning = NeatValueWarning("This is a warning")
 
         warning_list = IssueList()
-        with _catch_issues(issues=warning_list):
+        with catch_issues(issues=warning_list):
             warnings.warn(my_warning, stacklevel=2)
 
         assert warning_list == IssueList([my_warning])

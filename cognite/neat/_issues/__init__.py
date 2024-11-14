@@ -3,12 +3,14 @@ as some helper classes to handle them like NeatIssueList"""
 
 from ._base import (
     DefaultWarning,
+    FutureResult,
     IssueList,
     MultiValueError,
     NeatError,
     NeatIssue,
     NeatIssueList,
     NeatWarning,
+    catch_issues,
     catch_warnings,
 )
 
@@ -21,4 +23,6 @@ __all__ = [
     "IssueList",
     "MultiValueError",
     "catch_warnings",
+    "catch_issues",
+    "FutureResult",
 ]

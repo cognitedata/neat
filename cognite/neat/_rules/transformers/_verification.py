@@ -1,11 +1,7 @@
 from abc import ABC
-from collections.abc import Iterator
-from contextlib import contextmanager
 from typing import Any, Literal
 
-from pydantic import ValidationError
-
-from cognite.neat._issues import IssueList, MultiValueError, NeatError, NeatWarning, catch_warnings
+from cognite.neat._issues import IssueList, NeatError, NeatWarning, catch_issues
 from cognite.neat._issues.errors import NeatTypeError
 from cognite.neat._rules._shared import (
     InputRules,
@@ -45,7 +41,7 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
         if isinstance(rules, ReadRules):
             error_args = rules.read_context
         verified_rules: T_VerifiedRules | None = None
-        with _catch_issues(issues, NeatError, NeatWarning, error_args) as future:
+        with catch_issues(issues, NeatError, NeatWarning, error_args) as future:
             rules_cls = self._get_rules_cls(in_)
             verified_rules = rules_cls.model_validate(in_.dump())  # type: ignore[assignment]
 
@@ -92,46 +88,3 @@ class VerifyAnyRules(VerificationTransformer[InputRules, VerifiedRules]):
             return DomainRules
         else:
             raise NeatTypeError(f"Unsupported rules type: {type(in_)}")
-
-
-class _FutureResult:
-    def __init__(self) -> None:
-        self._result: Literal["success", "failure", "pending"] = "pending"
-
-    @property
-    def result(self) -> Literal["success", "failure", "pending"]:
-        return self._result
-
-
-@contextmanager
-def _catch_issues(
-    issues: IssueList,
-    error_cls: type[NeatError] = NeatError,
-    warning_cls: type[NeatWarning] = NeatWarning,
-    error_args: dict[str, Any] | None = None,
-) -> Iterator[_FutureResult]:
-    """This is an internal help function to handle issues and warnings.
-
-    Args:
-        issues: The issues list to append to.
-        error_cls: The class used to convert errors to issues.
-        warning_cls:  The class used to convert warnings to issues.
-
-    Returns:
-        FutureResult: A future result object that can be used to check the result of the context manager.
-    """
-    with catch_warnings(issues, warning_cls):
-        future_result = _FutureResult()
-        try:
-            yield future_result
-        except ValidationError as e:
-            issues.extend(error_cls.from_pydantic_errors(e.errors(), **(error_args or {})))
-            future_result._result = "failure"
-        except MultiValueError as e:
-            issues.extend(e.errors)
-            future_result._result = "failure"
-        except NeatError as e:
-            issues.append(e)
-            future_result._result = "failure"
-        else:
-            future_result._result = "success"
