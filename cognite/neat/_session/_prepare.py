@@ -148,7 +148,8 @@ class DataModelPrepareAPI:
                     f"Prepared data model {data_model_id} to be enterprise data "
                     f"model on top of {rules.metadata.as_data_model_id()}"
                 ),
-                self._state.data_model.provenance.source_entity(source_id),
+                self._state.data_model.provenance.source_entity(source_id)
+                or self._state.data_model.provenance.target_entity(source_id),
             )
 
             self._state.data_model.write(output.rules, change)
@@ -202,7 +203,8 @@ class DataModelPrepareAPI:
                     f"Prepared data model {data_model_id} to be solution data model "
                     f"on top of {rules.metadata.as_data_model_id()}"
                 ),
-                self._state.data_model.provenance.source_entity(source_id),
+                self._state.data_model.provenance.source_entity(source_id)
+                or self._state.data_model.provenance.target_entity(source_id),
             )
 
             self._state.data_model.write(output.rules, change)

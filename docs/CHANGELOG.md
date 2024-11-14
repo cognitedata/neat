@@ -15,6 +15,14 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.97.1] - 14-11-**2024**
+### Changed
+- `neat.show.instances()` now only works if NeatSession storage is set to `oxigraph`
+### Fixed
+- `neat.prepare.data_model.to_enterprise/to_solution` was not picking up source entity
+### Changed
+- `lxml` is now an optional dependency for `DexpiExtractor`. This is to support running in `pyodide` environment.
+
 ## [0.97.0] - 14-11-**2024**
 ### Added
 - Added provenance on rules in NeatSession
@@ -23,7 +31,7 @@ Changes are grouped as follows:
 - Plotting of data model implements
 - Support for loading `NeatEngine`.
 - Support for inspecting outcome of `neat.to.cdf.instances(...)` with `neat.inspect.outcome.instances(...)`.
-- `neat.prepare.instance.make_connection_on_exact_match` added to enable adding connections 
+- `neat.prepare.instance.make_connection_on_exact_match` added to enable adding connections
   between instances based on exact match of properties.
 - Support for reading instances from csv `neat.read.csv`. Including reading csv from a public GitHub repository.
 
