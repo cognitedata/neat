@@ -62,7 +62,7 @@ class CDFToAPI:
         result = loader.load_into_cdf(self._client)
         self._state.instances.outcome.append(result)
         print("You can inspect the details with the .inspect.instances.outcome(...) method.")
-        return loader.load_into_cdf(self._client)
+        return result
 
     def data_model(
         self,
