@@ -8,7 +8,8 @@ from cognite.neat._graph import loaders
 from cognite.neat._issues import IssueList, catch_warnings
 from cognite.neat._rules import exporters
 from cognite.neat._rules._constants import PATTERNS
-from cognite.neat._utils.upload import UploadResultCore
+from cognite.neat._rules._shared import VerifiedRules
+from cognite.neat._utils.upload import UploadResultCore, UploadResultList
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, intercept_session_exceptions
@@ -24,9 +25,24 @@ class ToAPI:
     def excel(
         self,
         io: Any,
+        model: Literal["dms", "information", "logical", "physical"] | None,
     ) -> None:
+        """Export the verified data model to Excel.
+
+        Args:
+            io: The file path or file-like object to write the Excel file to.
+            model: The format of the data model to export. Defaults to None.
+        """
         exporter = exporters.ExcelExporter()
-        exporter.export_to_file(self._state.data_model.last_verified_rule[1], Path(io))
+        rules: VerifiedRules
+        if model == "information" or model == "logical":
+            rules = self._state.data_model.last_verified_information_rules[1]
+        elif model == "dms" or model == "physical":
+            rules = self._state.data_model.last_verified_dms_rules[1]
+        else:
+            rules = self._state.data_model.last_verified_rule[1]
+
+        exporter.export_to_file(rules, Path(io))
         return None
 
     @overload
@@ -51,7 +67,7 @@ class CDFToAPI:
         self._state = state
         self._verbose = verbose
 
-    def instances(self, space: str | None = None):
+    def instances(self, space: str | None = None) -> UploadResultList:
         if not self._client:
             raise NeatSessionError("No CDF client provided!")
 
@@ -72,8 +88,8 @@ class CDFToAPI:
         )
         result = loader.load_into_cdf(self._client)
         self._state.instances.outcome.append(result)
-        print("You can inspect the details with the .inspect.instances.outcome(...) method.")
-        return loader.load_into_cdf(self._client)
+        print("You can inspect the details with the .inspect.outcome.instances(...) method.")
+        return result
 
     def data_model(
         self,
