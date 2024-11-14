@@ -173,8 +173,18 @@ class InspectUploadOutcome:
                             continue
                         lines.append(f"#### {key}")
                         if isinstance(value, list):
-                            for v in value:
-                                lines.append(f"  * {v}")
+                            total = len(value)
+                            for i, v in enumerate(value):
+                                if key in ["created", "updated", "changed"]:
+                                    if i < 50:
+                                        lines.append(f"  * {v}")
+                                    elif i == 50 and total > 50:
+                                        lines.append(f"  * ... {total-50} more")
+                                    elif i == 50 and total == 50:
+                                        lines.append(f"  * {v}")
+                                else:
+                                    lines.append(f"  * {v}")
+
                         else:
                             lines.append(f"  * {value}")
 
