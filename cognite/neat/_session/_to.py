@@ -24,19 +24,19 @@ class ToAPI:
     def excel(
         self,
         io: Any,
-        format: Literal["dms", "information", "logical", "physical"] | None,
+        model: Literal["dms", "information", "logical", "physical"] | None,
     ) -> None:
         """Export the verified data model to Excel.
 
         Args:
             io: The file path or file-like object to write the Excel file to.
-            format: The format of the data model to export. Defaults to None.
+            model: The format of the data model to export. Defaults to None.
         """
         exporter = exporters.ExcelExporter()
         rules: VerifiedRules
-        if format == "information" or format == "logical":
+        if model == "information" or model == "logical":
             rules = self._state.data_model.last_verified_information_rules[1]
-        elif format == "dms" or format == "physical":
+        elif model == "dms" or model == "physical":
             rules = self._state.data_model.last_verified_dms_rules[1]
         else:
             rules = self._state.data_model.last_verified_rule[1]
