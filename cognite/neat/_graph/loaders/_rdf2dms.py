@@ -298,17 +298,21 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     ) -> Iterable[UploadResult]:
         nodes: list[dm.NodeApply] = []
         edges: list[dm.EdgeApply] = []
-        source_by_node_id: dict[dm.NodeId, dm.ViewId | dm.ContainerId] = {}
-        source_by_edge_id: dict[dm.EdgeId, dm.ViewId | dm.ContainerId] = {}
+        source_by_node_id: dict[dm.NodeId, str] = {}
+        source_by_edge_id: dict[dm.EdgeId, str] = {}
         for item in items:
             if isinstance(item, dm.NodeApply):
                 nodes.append(item)
                 if item.sources:
-                    source_by_node_id[item.as_id()] = item.sources[0].source
+                    source_by_node_id[item.as_id()] = item.sources[0].source.external_id
+                else:
+                    source_by_node_id[item.as_id()] = "node"
             elif isinstance(item, dm.EdgeApply):
                 edges.append(item)
                 if item.sources:
-                    source_by_edge_id[item.as_id()] = item.sources[0].source
+                    source_by_edge_id[item.as_id()] = item.sources[0].source.external_id
+                else:
+                    source_by_edge_id[item.as_id()] = "edge"
         try:
             upserted = client.data_modeling.instances.apply(
                 nodes,
@@ -328,11 +332,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 (upserted.nodes, source_by_node_id),
                 (upserted.edges, source_by_edge_id),
             ]:
-                for source_external_id, subinstances in itertools.groupby(
-                    sorted(instances, key=lambda i: ids_by_source[i.as_id()].external_id),  # type: ignore[attr-defined, index, call-overload]
-                    key=lambda i: ids_by_source[i.as_id()].external_id,  # type: ignore[attr-defined, index, call-overload]
+                for name, subinstances in itertools.groupby(
+                    sorted(instances, key=lambda i: ids_by_source[i.as_id()]),  # type: ignore[call-overload, index, attr-defined]
+                    key=lambda i: ids_by_source[i.as_id()],  # type: ignore[index]
                 ):
-                    result = UploadResult(name=source_external_id, issues=read_issues)
+                    result = UploadResult(name=name, issues=read_issues)
                     for instance in subinstances:  # type: ignore[attr-defined]
                         if instance.was_modified and instance.created_time == instance.last_updated_time:
                             result.created.add(instance.as_id())
