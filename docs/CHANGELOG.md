@@ -18,6 +18,7 @@ Changes are grouped as follows:
 ## TBD
 ### Fixed
 - `neat.set.data_model_id()` did not result in the verified data model being stored
+- Support for XML/Dexpi files so that you can now run `neat.read.xml()`. Only supports DEXPI atm.
 
 ## [0.97.1] - 14-11-**2024**
 ### Changed
