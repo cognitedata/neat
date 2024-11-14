@@ -23,6 +23,7 @@ Changes are grouped as follows:
 - Plotting of data model implements
 - Support for loading `NeatEngine`.
 - Support for inspecting outcome of `neat.to.cdf.instances(...)` with `neat.inspect.outcome.instances(...)`.
+- Support for reading instances from csv `neat.read.csv`. Including reading csv from a public GitHub repository.
 
 ### Improved
 - Case-insensitive "direct" connection type in DMS Rules
