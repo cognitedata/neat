@@ -21,6 +21,7 @@ from cognite.neat._store._provenance import (
     INSTANCES_ENTITY,
     Change,
 )
+from cognite.neat._utils.auth import _CLIENT_NAME
 
 from ._inspect import InspectAPI
 from ._prepare import PrepareAPI
@@ -51,6 +52,8 @@ class NeatSession:
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
+        if self._client._config is not None:  # type: ignore[union-attr]
+            self._client._config.client_name = _CLIENT_NAME  # type: ignore[union-attr]
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
             print(f"Neat Engine {engine_version} loaded.")
 
