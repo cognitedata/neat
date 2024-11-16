@@ -42,6 +42,27 @@ class Queries:
             for res in list(self.graph.query(query_statement))
         ]
 
+    @property
+    def types(self) -> dict[URIRef, str]:
+        """Types and their short form in the graph"""
+        query = """SELECT DISTINCT ?type
+                   WHERE {?s a ?type .}"""
+        return {type_: remove_namespace_from_uri(cast(URIRef, type_)) for (type_,) in list(self.graph.query(query))}  # type: ignore[misc, index, arg-type]
+
+    def type_uri(self, type_: str) -> list[URIRef]:
+        """Get the URIRef of a type"""
+        return [k for k, v in self.types.items() if v == type_]
+
+    @property
+    def properties(self) -> dict[URIRef, str]:
+        query = """SELECT DISTINCT ?property
+               WHERE {?s ?property ?o . FILTER(?property != rdf:type)}"""
+        return {type_: remove_namespace_from_uri(cast(URIRef, type_)) for (type_,) in list(self.graph.query(query))}  # type: ignore[misc, index, arg-type]
+
+    def property_uri(self, property_: str) -> list[URIRef]:
+        """Get the URIRef of a type"""
+        return [k for k, v in self.properties.items() if v == property_]
+
     def list_instances_ids_of_class(self, class_uri: URIRef, limit: int = -1) -> list[URIRef]:
         """Get instances ids for a given class
 
@@ -101,7 +122,7 @@ class Queries:
         # We cannot include the RDF.type in case there is a neat:type property
         return [remove_namespace_from_uri(list(triple)) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index, arg-type]
 
-    def types_with_property(self, property_uri: URIRef) -> list[URIRef]:
+    def type_with_property(self, type_: URIRef, property_uri: URIRef) -> bool:
         """Check if a property exists in the graph store
 
         Args:
@@ -110,8 +131,8 @@ class Queries:
         Returns:
             True if property exists, False otherwise
         """
-        query = f"SELECT DISTINCT ?t WHERE {{ ?s <{property_uri}> ?o ; a ?t}} Limit 1"
-        return cast(list[URIRef], [t[0] for t in self.graph.query(query)])  # type: ignore[index]
+        query = f"SELECT ?o WHERE {{ ?s a <{type_}> ; <{property_uri}> ?o .}} Limit 1"
+        return bool(list(self.graph.query(query)))
 
     def has_namespace(self, namespace: Namespace) -> bool:
         """Check if a namespace exists in the graph store
@@ -250,7 +271,7 @@ class Queries:
             result = self.graph.query(query)
 
             # We cannot include the RDF.type in case there is a neat:type property
-            return [remove_namespace_from_uri(cast(ResultRow, triple)) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index]
+            return [remove_namespace_from_uri(cast(ResultRow, triple)) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index, arg-type]
         else:
             warnings.warn(
                 "No rules found for the graph store, returning empty list.",
