@@ -172,8 +172,9 @@ class YamlReadAPI(BaseReadAPI):
             ]:
                 if self._client is None:
                     raise NeatValueError(
-                        "No client provided. You are referencing Cognite containers in your data model,"
-                        "NEAT needs a client to lookup the container definitions."
+                        "No client provided. You are referencing Cognite containers in your data model, "
+                        "NEAT needs a client to lookup the container definitions. "
+                        "Please set the client in the session, NeatSession(client=client)"
                     )
                 system_containers = self._client.data_modeling.containers.retrieve(system_container_ids)
                 dms_importer.update_referenced_containers(system_containers)
