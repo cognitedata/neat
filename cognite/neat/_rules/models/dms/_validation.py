@@ -157,21 +157,6 @@ class DMSPostValidation:
                     )
                 )
 
-            # This sets the container definition for all the properties where it is not defined.
-            # This allows the user to define the container only once.
-            value_type = next(iter(value_types))
-            list_definition = next(iter(list_definitions)) if list_definitions else None
-            nullable_definition = next(iter(nullable_definitions)) if nullable_definitions else None
-            default_definition = next(iter(default_definitions)) if default_definitions else None
-            index_definition = next(iter(index_definitions)).split(",") if index_definitions else None
-            constraint_definition = next(iter(constraint_definitions)).split(",") if constraint_definitions else None
-            for _, prop in properties:
-                prop.value_type = value_type
-                prop.is_list = prop.is_list or list_definition
-                prop.nullable = prop.nullable or nullable_definition
-                prop.default = prop.default or default_definition
-                prop.index = prop.index or index_definition
-                prop.constraint = prop.constraint or constraint_definition
         self.issue_list.extend(errors)
 
     def _referenced_views_and_containers_are_existing_and_proper_size(self) -> None:

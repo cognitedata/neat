@@ -18,7 +18,8 @@ Changes are grouped as follows:
 ## TBD
 ### Improved
 - `...make_connection_on_exact_match` now takes strings instead of URIRefs
-
+### Fixed
+- Smart filling in of container properties lead to bug (triggered by edge case)
 
 ## [0.97.2] - 14-11-**2024**
 ### Added
