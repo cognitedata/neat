@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Literal, cast
 
+from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
 from cognite.neat._issues import IssueList
@@ -56,6 +57,7 @@ class DataModelState:
     issue_lists: list[IssueList] = field(default_factory=list)
     provenance: Provenance = field(default_factory=Provenance)
     outcome: list[UploadResultList] = field(default_factory=list)
+    system_containers: dict[dm.ContainerId, dm.Container] = field(default_factory=dict)
 
     def write(self, rules: ReadRules | JustRules | VerifiedRules, change: Change) -> None:
         if change.target_entity.id_ in self._rules:
