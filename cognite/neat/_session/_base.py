@@ -52,8 +52,8 @@ class NeatSession:
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
-        if self._client._config is not None:  # type: ignore[union-attr]
-            self._client._config.client_name = _CLIENT_NAME  # type: ignore[union-attr]
+        if self._client is not None and self._client._config is not None:
+            self._client._config.client_name = _CLIENT_NAME
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
             print(f"Neat Engine {engine_version} loaded.")
 
