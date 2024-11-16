@@ -12,7 +12,7 @@ from cognite.neat._rules.transformers import ReduceCogniteModel, ToCompliantEnti
 from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
-from .exceptions import intercept_session_exceptions
+from .exceptions import NeatSessionError, intercept_session_exceptions
 
 
 @intercept_session_exceptions
@@ -32,18 +32,18 @@ class InstancePrepareAPI:
 
     def make_connection_on_exact_match(
         self,
-        source: tuple[URIRef, URIRef],
-        target: tuple[URIRef, URIRef],
-        connection: URIRef | None = None,
+        source: tuple[str, str],
+        target: tuple[str, str],
+        connection: str | None = None,
         limit: int | None = 100,
     ) -> None:
         """Make connection on exact match.
 
         Args:
-            source: The source of the connection. A tuple of (rdf type, property) where
+            source: The source of the connection. A tuple of (type, property) where
                     where property is the property that should be matched on the source
                     to make the connection with the target.
-            target: The target of the connection. A tuple of (rdf type, property) where
+            target: The target of the connection. A tuple of (type, property) where
                     where property is the property that should be matched on the target
                     to make the connection with the source.
 
@@ -51,11 +51,19 @@ class InstancePrepareAPI:
                     will be made by lowercasing the target type.
             limit: The maximum number of connections to make. If None, all connections
 
+        !!! note "Make Connection on Exact Match"
+            This method will make a connection between the source and target based on the exact match:
+            (SourceType)-[sourceProperty]->(sourceValue) == (TargetType)-[targetProperty]->(targetValue)
+
+            The connection will be made by creating a new property on the source type that will contain the
+            target value, as follows:
+            (SourceType)-[connection]->(TargetType)
+
 
         """
 
-        subject_type, subject_predicate = source
-        object_type, object_predicate = target
+        subject_type, subject_predicate = self._get_type_and_property_uris(*source)
+        object_type, object_predicate = self._get_type_and_property_uris(*target)
 
         transformer = MakeConnectionOnExactMatch(
             subject_type,
@@ -67,6 +75,24 @@ class InstancePrepareAPI:
         )
 
         self._state.instances.store.transform(transformer)
+
+    def _get_type_and_property_uris(self, type_: str, property_: str) -> tuple[URIRef, URIRef]:
+        type_uri = self._state.instances.store.queries.type_uri(type_)
+        property_uri = self._state.instances.store.queries.property_uri(property_)
+
+        if not type_uri:
+            raise NeatSessionError(f"Type {type_} does not exist in the graph.")
+        elif len(type_uri) > 1:
+            raise NeatSessionError(f"{type_} has multiple ids found in the graph: {','.join(type_uri)}.")
+
+        if not property_uri:
+            raise NeatSessionError(f"Property {property_} does not exist in the graph.")
+        elif len(type_uri) > 1:
+            raise NeatSessionError(f"{property_} has multiple ids found in the graph: {','.join(property_uri)}.")
+
+        if not self._state.instances.store.queries.type_with_property(type_uri[0], property_uri[0]):
+            raise NeatSessionError(f"Property {property_} is not defined for type {type_}. Cannot make connection")
+        return type_uri[0], property_uri[0]
 
 
 @intercept_session_exceptions
