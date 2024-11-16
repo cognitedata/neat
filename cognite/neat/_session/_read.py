@@ -6,6 +6,7 @@ from typing import Any, Literal
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 
+from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
 from cognite.neat._issues import IssueList
@@ -158,10 +159,26 @@ class YamlReadAPI(BaseReadAPI):
         importer: BaseImporter
         if format == "neat":
             importer = importers.YAMLImporter.from_file(reader.path)
-        elif format == "toolkit" and reader.path.is_file():
-            importer = importers.DMSImporter.from_directory(reader.path)
-        elif format == "toolkit" and reader.path.is_dir():
-            importer = importers.DMSImporter.from_directory(reader.path)
+        elif format == "toolkit":
+            if reader.path.is_file():
+                dms_importer = importers.DMSImporter.from_zip_file(reader.path)
+            elif reader.path.is_dir():
+                dms_importer = importers.DMSImporter.from_directory(reader.path)
+            else:
+                raise NeatValueError(f"Unsupported YAML format: {format}")
+            ref_containers = dms_importer.root_schema.referenced_container()
+            if system_container_ids := [
+                container_id for container_id in ref_containers if container_id.space in COGNITE_SPACES
+            ]:
+                if self._client is None:
+                    raise NeatValueError(
+                        "No client provided. You are referencing Cognite containers in the data model,"
+                        "and a client is required to lookup the container definitions."
+                    )
+                system_containers = self._client.data_modeling.containers.retrieve(system_container_ids)
+                dms_importer.update_referenced_containers(system_containers)
+
+            importer = dms_importer
         else:
             raise NeatValueError(f"Unsupported YAML format: {format}")
         input_rules: ReadRules = importer.to_rules()
