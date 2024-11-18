@@ -31,7 +31,6 @@ from cognite.neat._rules.analysis import DMSAnalysis
 from cognite.neat._rules.models import (
     DMSInputRules,
     DMSRules,
-    DomainRules,
     ExtensionCategory,
     InformationRules,
     SchemaCompleteness,
@@ -93,7 +92,6 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
     def _transform(self, rules: InformationInputRules) -> InformationInputRules:
         rules.classes = self._fix_classes(rules.classes)
         rules.properties = self._fix_properties(rules.properties)
-
         rules.metadata.version += "_dms_compliant"
 
         return rules
@@ -579,9 +577,6 @@ class _InformationRulesConverter:
             self.last_classes = {}
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
 
-    def as_domain_rules(self) -> DomainRules:
-        raise NotImplementedError("DomainRules not implemented yet")
-
     def as_dms_rules(self, ignore_undefined_value_types: bool = False) -> "DMSRules":
         from cognite.neat._rules.models.dms._rules import (
             DMSContainer,
@@ -611,7 +606,6 @@ class _InformationRulesConverter:
                 name=cls_.name,
                 view=cls_.class_.as_view_entity(default_space, default_version),
                 description=cls_.description,
-                reference=cls_.reference,
                 implements=self._get_view_implements(cls_, info_metadata),
             )
             for cls_ in self.rules.classes
@@ -798,20 +792,7 @@ class _InformationRulesConverter:
         return container_entity, prop.property_
 
     def _get_view_implements(self, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
-        if isinstance(cls_.reference, ReferenceEntity) and cls_.reference.prefix != metadata.prefix:
-            # We use the reference for implements if it is in a different namespace
-            if self.rules.reference and cls_.reference.prefix == self.rules.reference.metadata.prefix:
-                implements = [
-                    cls_.reference.as_view_entity(
-                        self.rules.reference.metadata.prefix, self.rules.reference.metadata.version
-                    )
-                ]
-            else:
-                implements = [
-                    cls_.reference.as_view_entity(metadata.prefix, metadata.version),
-                ]
-        else:
-            implements = []
+        implements = []
         for parent in cls_.parent or []:
             if self.rules.reference and parent.prefix == self.rules.reference.metadata.prefix:
                 view_entity = parent.as_view_entity(
@@ -858,9 +839,6 @@ class _InformationRulesConverter:
 class _DMSRulesConverter:
     def __init__(self, dms: DMSRules):
         self.dms = dms
-
-    def as_domain_rules(self) -> "DomainRules":
-        raise NotImplementedError("DomainRules not implemented yet")
 
     def as_information_rules(
         self,

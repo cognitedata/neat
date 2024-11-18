@@ -318,9 +318,8 @@ class RulesToExcel(Step):
 
         # Todo - Move the conversion to a separate workflow step.
         rule_instance: VerifiedRules
-        if rules.domain:
-            rule_instance = rules.domain
-        elif rules.information:
+
+        if rules.information:
             rule_instance = rules.information
         elif rules.dms:
             rule_instance = rules.dms

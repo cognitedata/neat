@@ -36,8 +36,6 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
     description: str | None = None
     created: datetime | str | None = None
     updated: datetime | str | None = None
-    license: str | None = None
-    rights: str | None = None
     physical: str | None = None
     conceptual: str | None = None
 

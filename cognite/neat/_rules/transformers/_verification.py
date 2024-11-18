@@ -15,8 +15,6 @@ from cognite.neat._rules._shared import (
 from cognite.neat._rules.models import (
     DMSInputRules,
     DMSRules,
-    DomainInputRules,
-    DomainRules,
     InformationInputRules,
     InformationRules,
 )
@@ -74,7 +72,5 @@ class VerifyAnyRules(VerificationTransformer[InputRules, VerifiedRules]):
             return InformationRules
         elif isinstance(in_, DMSInputRules):
             return DMSRules
-        elif isinstance(in_, DomainInputRules):
-            return DomainRules
         else:
             raise NeatTypeError(f"Unsupported rules type: {type(in_)}")

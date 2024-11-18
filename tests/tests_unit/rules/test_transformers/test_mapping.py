@@ -1,4 +1,3 @@
-from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._rules._shared import JustRules
 from cognite.neat._rules.models import InformationInputRules
 from cognite.neat._rules.models._base_rules import ClassRef, PropertyRef
@@ -19,8 +18,8 @@ class TestClassicToCoreMapper:
         input_ = InformationInputRules(
             metadata=InformationInputMetadata(
                 schema_="partial",
-                prefix=classic,
-                namespace=CLASSIC_CDF_NAMESPACE,
+                space=classic,
+                external_id=classic,
                 version="1.0",
                 creator="neat",
                 data_model_type="enterprise",

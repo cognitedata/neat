@@ -5,15 +5,14 @@ from typing import Any, Generic, TypeAlias, TypeVar
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.models import (
     DMSRules,
-    DomainRules,
     InformationRules,
 )
 from cognite.neat._rules.models.dms._rules_input import DMSInputRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 
-VerifiedRules: TypeAlias = DomainRules | InformationRules | DMSRules
+VerifiedRules: TypeAlias = InformationRules | DMSRules
 InputRules: TypeAlias = DMSInputRules | InformationInputRules
-Rules: TypeAlias = DMSInputRules | InformationInputRules | DomainRules | InformationRules | DMSRules
+Rules: TypeAlias = DMSInputRules | InformationInputRules | InformationRules | DMSRules
 T_Rules = TypeVar("T_Rules", bound=Rules)
 T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
 T_InputRules = TypeVar("T_InputRules", bound=InputRules)

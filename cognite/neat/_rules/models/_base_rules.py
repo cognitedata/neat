@@ -111,7 +111,6 @@ class DataModelAspect(StrEnum):
 class RoleTypes(StrEnum):
     domain_expert = "domain expert"
     information = "information architect"
-    asset = "asset architect"
     dms = "DMS Architect"
 
 

@@ -44,7 +44,7 @@ metadata:
   created: '2024-02-09T00:00:00'
   creator: Jon,Emma,David
   data_model_type: enterprise
-  external_id: power_to_consumer_data_model
+  external_id: power2consumer
   name: Power to Consumer Data Model
   role: DMS Architect
   schema_: complete

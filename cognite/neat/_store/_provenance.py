@@ -100,7 +100,7 @@ class Entity:
             return cls(
                 was_attributed_to=agent,
                 was_generated_by=activity,
-                id_=rules.rules.id_,
+                id_=rules.rules.metadata.identifier,
             )
         else:
             return cls(

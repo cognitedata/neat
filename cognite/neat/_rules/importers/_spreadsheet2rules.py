@@ -38,7 +38,6 @@ SOURCE_SHEET__TARGET_FIELD__HEADERS = [
         "Properties",
         "Properties",
         {
-            RoleTypes.domain_expert: "Property",
             RoleTypes.information: "Property",
             RoleTypes.dms: "View Property",
         },
@@ -50,8 +49,17 @@ SOURCE_SHEET__TARGET_FIELD__HEADERS = [
     ("Nodes", "Nodes", "Node"),
 ]
 
+
 MANDATORY_SHEETS_BY_ROLE: dict[RoleTypes, set[str]] = {
-    role_type: {str(sheet_name) for sheet_name in VERIFIED_RULES_BY_ROLE[role_type].mandatory_fields(use_alias=True)}
+    role_type: {
+        str(sheet_name)
+        for sheet_name in (
+            VERIFIED_RULES_BY_ROLE.get(role_type).mandatory_fields(use_alias=True)  # type: ignore
+            if VERIFIED_RULES_BY_ROLE.get(role_type)
+            else []
+        )
+        if sheet_name is not None
+    }
     for role_type in RoleTypes.__members__.values()
 }
 

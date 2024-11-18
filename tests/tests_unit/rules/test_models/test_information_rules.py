@@ -34,14 +34,12 @@ def case_insensitive_value_types():
                 "role": "information architect",
                 "schema": "complete",
                 "creator": "Jon, Emma, David",
-                "namespace": "http://purl.org/cognite/power2consumer",
-                "prefix": "power",
+                "space": "power",
+                "external_id": "power2consumer",
                 "created": datetime(2024, 2, 9, 0, 0),
                 "updated": datetime(2024, 2, 9, 0, 0),
                 "version": "0.1.0",
-                "title": "Power to Consumer Data Model",
-                "license": "CC-BY 4.0",
-                "rights": "Free for use",
+                "name": "Power to Consumer Data Model",
             },
             "Classes": [
                 {
@@ -79,14 +77,12 @@ def invalid_domain_rules_cases():
                 "role": "information architect",
                 "schema": "complete",
                 "creator": "Jon, Emma, David",
-                "namespace": "http://purl.org/cognite/power2consumer",
-                "prefix": "power",
+                "space": "power",
+                "external_id": "power2consumer",
                 "created": datetime(2024, 2, 9, 0, 0),
                 "updated": datetime(2024, 2, 9, 0, 0),
                 "version": "0.1.0",
-                "title": "Power to Consumer Data Model",
-                "license": "CC-BY 4.0",
-                "rights": "Free for use",
+                "name": "Power to Consumer Data Model",
             },
             "Classes": [
                 {
@@ -124,14 +120,12 @@ def incomplete_rules_case():
                 "role": "information architect",
                 "schema": "complete",
                 "creator": "Jon, Emma, David",
-                "namespace": "http://purl.org/cognite/power2consumer",
-                "prefix": "power",
+                "space": "power",
+                "external_id": "power2consumer",
                 "created": datetime(2024, 2, 9, 0, 0),
                 "updated": datetime(2024, 2, 9, 0, 0),
                 "version": "0.1.0",
-                "title": "Power to Consumer Data Model",
-                "license": "CC-BY 4.0",
-                "rights": "Free for use",
+                "name": "Power to Consumer Data Model",
             },
             "Classes": [
                 {
@@ -159,7 +153,9 @@ def incomplete_rules_case():
             ],
         },
         ResourceNotDefinedError[ClassEntity](
-            ClassEntity(prefix="power", suffix="GeneratingUnit2"), "class", "Classes sheet"
+            ClassEntity(prefix="power", suffix="GeneratingUnit2"),
+            "class",
+            "Classes sheet",
         ),
         id="missing_rule",
     )
@@ -299,8 +295,8 @@ class TestInformationRulesConverter:
         info = InformationInputRules(
             metadata=InformationInputMetadata(
                 schema_="complete",
-                prefix="bad_model",
-                namespace="http://purl.org/cognite/bad_model",
+                space="bad_model",
+                external_id="bad_model",
                 name="Bad Model",
                 version="0.1.0",
                 creator="Anders",
@@ -329,7 +325,8 @@ def non_compliant_entities():
                 "schema": "complete",
                 "creator": "Jon, Emma, David",
                 "namespace": "http://purl.org/cognite/power2consumer",
-                "prefix": "-power_or_not-",
+                "space": "power_or_not",
+                "external_id": "powerfulModel",
                 "created": datetime(2024, 2, 9, 0, 0),
                 "updated": datetime(2024, 2, 9, 0, 0),
                 "version": "0.1.0",
@@ -419,7 +416,6 @@ class TestInformationConverter:
 
         rules = ToCompliantEntities().transform(input_rules).get_rules().as_rules()
 
-        assert rules.metadata.prefix == "prefix_power_or_not_suffix"
-        assert rules.classes[0].class_.prefix == "prefix_power_or_not_suffix"
+        assert rules.classes[0].class_.prefix == "power_or_not"
         assert rules.properties[0].property_ == "IdentifiedObject_name"
         assert rules.properties[0].value_type == data_types.String()

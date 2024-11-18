@@ -46,7 +46,9 @@ class TestExtractToLoadFlow:
         store.transform(RelationshipToSchemaTransformer())
 
         read_rules = InferenceImporter.from_graph_store(
-            store, non_existing_node_type=UnknownEntity(), prefix="classic"
+            store,
+            non_existing_node_type=UnknownEntity(),
+            data_model_id=("classic", "inferred_model", "inferred"),
         ).to_rules()
         # Ensure deterministic output
         read_rules.rules.metadata.created = "2024-09-19T00:00:00Z"
