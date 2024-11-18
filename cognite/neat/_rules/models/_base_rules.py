@@ -293,6 +293,10 @@ class SheetRow(SchemaModel):
     def _identifier(self) -> tuple[Hashable, ...]:
         raise NotImplementedError()
 
+    def __repr__(self) -> str:
+        # Simplified representation of the object for debugging
+        return f"{self.__class__.__name__}({self._identifier()})"
+
 
 T_SheetRow = TypeVar("T_SheetRow", bound=SheetRow)
 

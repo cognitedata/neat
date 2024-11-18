@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Added
+- Support for reading `YAML`
+- Support for writing `YAML` in toolkit format.
+
 ## [0.97.3] - 16-11-**2024**
 ### Improved
 - `...make_connection_on_exact_match` now takes strings instead of URIRefs

@@ -708,6 +708,13 @@ class DMSSchema:
         referenced_spaces |= {s.space for s in self.spaces.values()}
         return referenced_spaces
 
+    def referenced_container(self) -> set[dm.ContainerId]:
+        referenced_containers = {
+            container for view in self.views.values() for container in view.referenced_containers()
+        }
+        referenced_containers |= set(self.containers.keys())
+        return referenced_containers
+
     def as_read_model(self) -> dm.DataModel[dm.View]:
         if self.data_model is None:
             raise ValueError("Data model is not defined")
