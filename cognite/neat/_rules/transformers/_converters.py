@@ -753,7 +753,6 @@ class _InformationRulesConverter:
             is_list=is_list,
             connection=connection,
             default=prop.default,
-            reference=prop.reference,
             container=container,
             container_property=container_property,
             view=prop.class_.as_view_entity(default_space, default_version),
@@ -865,7 +864,6 @@ class _DMSRulesConverter:
                     for implemented_view in view.implements or []
                     if implemented_view.prefix == view.class_.prefix
                 ],
-                reference=self._get_class_reference(view),
             )
             for view in self.dms.views
         ]
@@ -892,9 +890,8 @@ class _DMSRulesConverter:
                     property_=property_.view_property,
                     value_type=value_type,
                     description=property_.description,
-                    min_count=0 if property_.nullable or property_.nullable is None else 1,
-                    max_count=float("inf") if property_.is_list or property_.nullable is None else 1,
-                    reference=self._get_property_reference(property_),
+                    min_count=(0 if property_.nullable or property_.nullable is None else 1),
+                    max_count=(float("inf") if property_.is_list or property_.nullable is None else 1),
                 )
             )
 

@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 import pandas as pd
 from cognite.client import data_modeling as dm
-from rdflib import URIRef
+from rdflib import Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.models._base_input import InputComponent, InputRules
@@ -79,6 +79,21 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
             creator = ["MISSING"]
             description = None
         return description, creator
+
+    @property
+    def identifier(self) -> URIRef:
+        """Globally unique identifier for the data model.
+
+        !!! note
+            Unlike namespace, the identifier does not end with "/" or "#".
+
+        """
+        return DEFAULT_NAMESPACE[f"data-model/unverified/physical/{self.space}/{self.external_id}/{self.version}"]
+
+    @property
+    def namespace(self) -> Namespace:
+        """Namespace for the data model used for the entities in the data model."""
+        return Namespace(f"{self.identifier}/")
 
 
 @dataclass
