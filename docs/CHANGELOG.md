@@ -25,6 +25,7 @@ Changes are grouped as follows:
 ### Changed
 - [BREAKING] Rules are simplified and normalized, especially metadata
 
+
 ## [0.97.3] - 16-11-**2024**
 ### Improved
 - `...make_connection_on_exact_match` now takes strings instead of URIRefs
