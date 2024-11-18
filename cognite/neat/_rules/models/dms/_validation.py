@@ -3,7 +3,7 @@ from typing import Any, ClassVar, cast
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat._constants import COGNITE_MODELS, COGNITE_SPACES, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
     PropertyDefinitionDuplicatedError,
@@ -183,7 +183,7 @@ class DMSPostValidation:
         errors: list[NeatIssue] = []
         for prop_no, prop in enumerate(self.properties):
             view_id = prop.view.as_id()
-            if view_id not in defined_views and view_id.space not in COGNITE_SPACES:
+            if view_id not in defined_views:
                 errors.append(
                     ResourceNotDefinedError[dm.ViewId](
                         identifier=view_id,
@@ -207,10 +207,7 @@ class DMSPostValidation:
                 }
 
             for prop_no, prop in enumerate(self.properties):
-                if prop.container and (
-                    (container_id := prop.container.as_id()) not in defined_containers
-                    and container_id.space not in COGNITE_SPACES
-                ):
+                if prop.container and ((container_id := prop.container.as_id()) not in defined_containers):
                     errors.append(
                         ResourceNotDefinedError(
                             identifier=container_id,

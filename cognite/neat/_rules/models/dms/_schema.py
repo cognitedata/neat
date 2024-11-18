@@ -25,7 +25,6 @@ from cognite.client.data_classes.data_modeling.views import (
 )
 from cognite.client.data_classes.transformations.common import Edges, EdgeType, Nodes, ViewInfo
 
-from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._issues import NeatError
 from cognite.neat._issues.errors import (
     NeatYamlError,
@@ -100,9 +99,6 @@ class DMSSchema:
         for parent_id in view_inheritance:
             if implemented_view := view_by_id.get(parent_id):
                 inherited_referenced_containers |= implemented_view.referenced_containers()
-            elif parent_id.space in COGNITE_SPACES:
-                # If the parent view is in the Cognite space, we know that is a system view and it exists.
-                ...
             else:
                 raise ResourceNotFoundError(parent_id, "view", view_id, "view")
 
@@ -554,27 +550,25 @@ class DMSSchema:
                 defined_views |= other_schema.views
 
         for container in self.containers.values():
-            if container.space not in defined_spaces and container.space not in COGNITE_SPACES:
+            if container.space not in defined_spaces:
                 errors.add(
                     ResourceNotFoundError[str, dm.ContainerId](container.space, "space", container.as_id(), "container")
                 )
 
         for view in self.views.values():
             view_id = view.as_id()
-            if view.space not in defined_spaces and view.space not in COGNITE_SPACES:
+            if view.space not in defined_spaces:
                 errors.add(ResourceNotFoundError(view.space, "space", view_id, "view"))
 
             for parent in view.implements or []:
-                if parent not in defined_views and parent.space not in COGNITE_SPACES:
+                if parent not in defined_views:
                     errors.add(PropertyNotFoundError(parent, "view", "implements", view_id, "view"))
 
             for prop_name, prop in (view.properties or {}).items():
                 if isinstance(prop, dm.MappedPropertyApply):
                     ref_container = defined_containers.get(prop.container)
-                    if ref_container is None and prop.container.space not in COGNITE_SPACES:
+                    if ref_container is None:
                         errors.add(ResourceNotFoundError(prop.container, "container", view_id, "view"))
-                    elif prop.container.space in COGNITE_SPACES:
-                        ...
                     elif prop.container_property_identifier not in ref_container.properties:
                         errors.add(
                             PropertyNotFoundError(
@@ -638,13 +632,13 @@ class DMSSchema:
 
         if self.data_model:
             model = self.data_model
-            if model.space not in defined_spaces and model.space not in COGNITE_SPACES:
+            if model.space not in defined_spaces:
                 errors.add(ResourceNotFoundError(model.space, "space", model.as_id(), "data model"))
 
             view_counts: dict[dm.ViewId, int] = defaultdict(int)
             for view_id_or_class in model.views or []:
                 view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
-                if view_id not in defined_views and view_id.space not in COGNITE_SPACES:
+                if view_id not in defined_views:
                     errors.add(ResourceNotFoundError(view_id, "view", model.as_id(), "data model"))
                 view_counts[view_id] += 1
 
