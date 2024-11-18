@@ -20,7 +20,6 @@ from cognite.neat._issues.warnings._models import (
     SolutionModelBuildOnTopOfCDMWarning,
 )
 from cognite.neat._issues.warnings.user_modeling import ParentInDifferentSpaceWarning
-from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules._shared import (
     InputRules,
     JustRules,
@@ -30,7 +29,6 @@ from cognite.neat._rules._shared import (
 )
 from cognite.neat._rules.analysis import DMSAnalysis
 from cognite.neat._rules.models import (
-    AssetRules,
     DMSInputRules,
     DMSRules,
     DomainRules,
@@ -44,15 +42,12 @@ from cognite.neat._rules.models.data_types import DataType, String
 from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSView
 from cognite.neat._rules.models.dms._rules import DMSContainer
 from cognite.neat._rules.models.entities import (
-    AssetEntity,
-    AssetFields,
     ClassEntity,
     ContainerEntity,
     DMSUnknownEntity,
     EdgeEntity,
     MultiValueTypeInfo,
     ReferenceEntity,
-    RelationshipEntity,
     ReverseConnectionEntity,
     UnknownEntity,
     ViewEntity,
@@ -197,20 +192,6 @@ class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
         return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types)
 
 
-class InformationToAsset(ConversionTransformer[InformationRules, AssetRules]):
-    """Converts InformationRules to AssetRules."""
-
-    def _transform(self, rules: InformationRules) -> AssetRules:
-        return _InformationRulesConverter(rules).as_asset_architect_rules()
-
-
-class AssetToInformation(ConversionTransformer[AssetRules, InformationRules]):
-    """Converts AssetRules to InformationRules."""
-
-    def _transform(self, rules: AssetRules) -> InformationRules:
-        return InformationRules.model_validate(rules.model_dump())
-
-
 class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
     """Converts DMSRules to InformationRules."""
 
@@ -229,16 +210,8 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
             return rules
         if isinstance(rules, InformationRules) and self._out_cls is DMSRules:
             return InformationToDMS().transform(rules).rules
-        if isinstance(rules, InformationRules) and self._out_cls is AssetRules:
-            return InformationToAsset().transform(rules).rules
-        if isinstance(rules, AssetRules) and self._out_cls is InformationRules:
-            return AssetToInformation().transform(rules).rules
-        if isinstance(rules, AssetRules) and self._out_cls is DMSRules:
-            return InformationToDMS().transform(AssetToInformation().transform(rules)).rules
         if isinstance(rules, DMSRules) and self._out_cls is InformationRules:
             return DMSToInformation().transform(rules).rules
-        if isinstance(rules, DMSRules) and self._out_cls is AssetRules:
-            return InformationToAsset().transform(DMSToInformation().transform(rules)).rules
         raise ValueError(f"Unsupported conversion from {type(rules)} to {self._out_cls}")
 
 
@@ -608,28 +581,6 @@ class _InformationRulesConverter:
 
     def as_domain_rules(self) -> DomainRules:
         raise NotImplementedError("DomainRules not implemented yet")
-
-    def as_asset_architect_rules(self) -> "AssetRules":
-        from cognite.neat._rules.models.asset._rules import AssetClass, AssetMetadata, AssetProperty, AssetRules
-
-        classes: SheetList[AssetClass] = SheetList[AssetClass](
-            [AssetClass(**class_.model_dump()) for class_ in self.rules.classes]
-        )
-        properties: SheetList[AssetProperty] = SheetList[AssetProperty]()
-        for prop_ in self.rules.properties:
-            if prop_.type_ == EntityTypes.data_property:
-                properties.append(
-                    AssetProperty(**prop_.model_dump(), implementation=[AssetEntity(property=AssetFields.metadata)])
-                )
-            elif prop_.type_ == EntityTypes.object_property:
-                properties.append(AssetProperty(**prop_.model_dump(), implementation=[RelationshipEntity()]))
-
-        return AssetRules(
-            metadata=AssetMetadata(**self.rules.metadata.model_dump()),
-            properties=properties,
-            classes=classes,
-            prefixes=self.rules.prefixes,
-        )
 
     def as_dms_rules(self, ignore_undefined_value_types: bool = False) -> "DMSRules":
         from cognite.neat._rules.models.dms._rules import (

@@ -5,13 +5,10 @@ from typing import ClassVar, Literal, cast
 from cognite.neat._issues.errors import WorkflowStepNotInitializedError
 from cognite.neat._rules import exporters
 from cognite.neat._rules._shared import DMSRules, InformationRules, VerifiedRules
-from cognite.neat._rules.models import AssetRules, RoleTypes
+from cognite.neat._rules.models import RoleTypes
 from cognite.neat._rules.transformers import (
-    AssetToInformation,
     DMSToInformation,
-    InformationToAsset,
     InformationToDMS,
-    RulesPipeline,
 )
 from cognite.neat._workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat._workflows.steps.data_contracts import CogniteClient, MultiRuleData
@@ -82,7 +79,7 @@ class DeleteDataModelFromCDF(Step):
                 error_text="No DMS Schema components selected for removal! Please select minimum one!",
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
-        input_rules = rules.dms or rules.information or rules.asset
+        input_rules = rules.dms or rules.information
         if input_rules is None:
             return FlowMessage(
                 error_text="Missing DMS or Information rules in the input data! "
@@ -93,8 +90,6 @@ class DeleteDataModelFromCDF(Step):
             dms_rules = input_rules
         elif isinstance(input_rules, InformationRules):
             dms_rules = InformationToDMS().transform(input_rules).rules
-        elif isinstance(input_rules, AssetRules):
-            dms_rules = RulesPipeline[AssetRules, DMSRules]([AssetToInformation(), InformationToDMS()]).run(input_rules)
         else:
             raise NotImplementedError(f"Unsupported rules type {type(input_rules)}")
 
@@ -207,8 +202,6 @@ class RulesToDMS(Step):
             dms_rules = input_rules
         elif isinstance(input_rules, InformationRules):
             dms_rules = InformationToDMS().transform(input_rules).rules
-        elif isinstance(input_rules, AssetRules):
-            dms_rules = RulesPipeline[AssetRules, DMSRules]([AssetToInformation(), InformationToDMS()]).run(input_rules)
         else:
             raise NotImplementedError(f"Unsupported rules type {type(input_rules)}")
 
@@ -331,8 +324,6 @@ class RulesToExcel(Step):
             rule_instance = rules.information
         elif rules.dms:
             rule_instance = rules.dms
-        elif rules.asset:
-            rule_instance = rules.asset
         else:
             output_errors = "No rules provided for export!"
             return FlowMessage(error_text=output_errors, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
@@ -342,26 +333,11 @@ class RulesToExcel(Step):
         elif output_role is RoleTypes.dms:
             if isinstance(rule_instance, InformationRules):
                 rule_instance = InformationToDMS().transform(rule_instance).rules
-            elif isinstance(rule_instance, AssetRules):
-                rule_instance = RulesPipeline[AssetRules, DMSRules]([AssetToInformation(), InformationToDMS()]).run(
-                    rule_instance
-                )
             else:
                 raise NotImplementedError(f"Role {output_role} is not supported for {type(rules).__name__} rules")
         elif output_role is RoleTypes.information:
             if isinstance(rule_instance, DMSRules):
                 rule_instance = DMSToInformation().transform(rule_instance).rules
-            elif isinstance(rule_instance, AssetRules):
-                rule_instance = AssetToInformation().transform(rule_instance).rules
-            else:
-                raise NotImplementedError(f"Role {output_role} is not supported for {type(rules).__name__} rules")
-        elif output_role is RoleTypes.asset:
-            if isinstance(rule_instance, InformationRules):
-                rule_instance = InformationToAsset().transform(rule_instance).rules
-            elif isinstance(rule_instance, DMSRules):
-                rule_instance = RulesPipeline[DMSRules, AssetRules]([DMSToInformation(), InformationToAsset()]).run(
-                    rule_instance
-                )
             else:
                 raise NotImplementedError(f"Role {output_role} is not supported for {type(rules).__name__} rules")
         else:
@@ -600,8 +576,6 @@ class RulesToCDFTransformations(Step):
             dms_rules = input_rules
         elif isinstance(input_rules, InformationRules):
             dms_rules = InformationToDMS().transform(input_rules).rules
-        elif isinstance(input_rules, AssetRules):
-            dms_rules = RulesPipeline[AssetRules, DMSRules]([AssetToInformation(), InformationToDMS()]).run(input_rules)
         else:
             raise NotImplementedError(f"Unsupported rules type {type(input_rules)}")
 

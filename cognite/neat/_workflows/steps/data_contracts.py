@@ -10,7 +10,6 @@ from cognite.client.data_classes import (
 from cognite.client.data_classes.data_modeling import EdgeApply, NodeApply
 
 from cognite.neat._rules.models import (
-    AssetRules,
     DMSRules,
     DomainRules,
     InformationRules,
@@ -22,17 +21,14 @@ from cognite.neat._workflows.steps.step_model import DataContract
 class MultiRuleData(DataContract):
     domain: DomainRules | None = None
     information: InformationRules | None = None
-    asset: AssetRules | None = None
     dms: DMSRules | None = None
 
     @classmethod
-    def from_rules(cls, rules: DomainRules | InformationRules | AssetRules | DMSRules):
+    def from_rules(cls, rules: DomainRules | InformationRules | DMSRules):
         if isinstance(rules, DomainRules):
             return cls(domain=rules)
         elif isinstance(rules, InformationRules):
             return cls(information=rules)
-        elif isinstance(rules, AssetRules):
-            return cls(asset=rules)
         elif isinstance(rules, DMSRules):
             return cls(dms=rules)
         else:

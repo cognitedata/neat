@@ -40,7 +40,6 @@ SOURCE_SHEET__TARGET_FIELD__HEADERS = [
         {
             RoleTypes.domain_expert: "Property",
             RoleTypes.information: "Property",
-            RoleTypes.asset: "Property",
             RoleTypes.dms: "View Property",
         },
     ),
