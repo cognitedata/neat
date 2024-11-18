@@ -192,7 +192,7 @@ class DMSPostValidation:
                 }
 
             for prop_no, prop in enumerate(self.properties):
-                if prop.container and (container_id := prop.container.as_id()) not in defined_containers:
+                if prop.container and ((container_id := prop.container.as_id()) not in defined_containers):
                     errors.append(
                         ResourceNotDefinedError(
                             identifier=container_id,

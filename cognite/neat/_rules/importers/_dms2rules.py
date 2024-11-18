@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Iterable, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, cast
@@ -85,6 +85,14 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         if schema.reference:
             self._all_containers_by_id.update(schema.reference.containers.items())
             self._all_views_by_id.update(schema.reference.views.items())
+
+    def update_referenced_containers(self, containers: Iterable[dm.ContainerApply]) -> None:
+        """Update the referenced containers. This is useful to add Cognite containers identified after the root schema
+        is read"""
+        for container in containers:
+            if container.as_id() in self._all_containers_by_id:
+                continue
+            self._all_containers_by_id[container.as_id()] = container
 
     @classmethod
     def from_data_model_id(
