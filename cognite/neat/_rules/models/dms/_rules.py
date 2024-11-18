@@ -19,6 +19,7 @@ from cognite.neat._issues.warnings import (
 from cognite.neat._rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
+    DataModelAspect,
     DataModelType,
     ExtensionCategory,
     RoleTypes,
@@ -62,6 +63,7 @@ _DEFAULT_VERSION = "1"
 
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms
+    aspect: ClassVar[DataModelAspect] = DataModelAspect.physical
     data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
     schema_: SchemaCompleteness = Field(alias="schema")
     extension: ExtensionCategory = ExtensionCategory.addition
