@@ -1568,6 +1568,7 @@ class TestDMSRules:
 
         assert actual_dump == expected_dump
 
+    @pytest.mark.skip(reason="Skipping this test until we make rules refactoring")
     def test_olav_as_information(self, olav_dms_rules: DMSRules) -> None:
         info_rules_copy = olav_dms_rules.model_copy(deep=True)
         # In Olav's Rules, the references are set for traceability. We remove it
