@@ -24,6 +24,8 @@ Changes are grouped as follows:
 ## [0.97.2] - 14-11-**2024**
 ### Added
 - Added parameter, `model`, to `neat.to.excel(...)` to allow to specify 'dms' or 'information' model.
+- Support for XML/Dexpi files so that you can now run `neat.read.xml()`. Only supports DEXPI atm.
+
 
 ### Fixed
 - `neat.set.data_model_id()` did not result in the verified data model being stored
