@@ -16,12 +16,18 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
-### Improved
-- `...make_connection_on_exact_match` now takes strings instead of URIRefs
+### Added
+- Support for reading `YAML`
+- Support for writing `YAML` in toolkit format.
 - Added end-to-end test for CDM extension
 ### Fixed
-- Smart filling in of container properties lead to bug (triggered by edge case)
 - Verification of reversed connections was done of `property (linage)` instead of `view_property`
+
+## [0.97.3] - 16-11-**2024**
+### Improved
+- `...make_connection_on_exact_match` now takes strings instead of URIRefs
+### Fixed
+- Smart filling in of container properties lead to bug (triggered by edge case)
 
 ## [0.97.2] - 14-11-**2024**
 ### Added
