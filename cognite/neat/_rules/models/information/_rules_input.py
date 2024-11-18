@@ -38,6 +38,8 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
     updated: datetime | str | None = None
     license: str | None = None
     rights: str | None = None
+    physical: str | None = None
+    conceptual: str | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationMetadata]:
