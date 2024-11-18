@@ -20,6 +20,12 @@ Changes are grouped as follows:
 - Support for reading `YAML`
 - Support for writing `YAML` in toolkit format.
 
+## [0.97.3] - 16-11-**2024**
+### Improved
+- `...make_connection_on_exact_match` now takes strings instead of URIRefs
+### Fixed
+- Smart filling in of container properties lead to bug (triggered by edge case)
+
 ## [0.97.2] - 14-11-**2024**
 ### Added
 - Added parameter, `model`, to `neat.to.excel(...)` to allow to specify 'dms' or 'information' model.
