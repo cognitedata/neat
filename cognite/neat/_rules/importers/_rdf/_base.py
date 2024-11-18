@@ -27,6 +27,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
 
     Args:
         issue_list: Issue list to store issues
+        graph: Knowledge graph
         data_model_id: Data model id to be used for the imported rules
         space: CDF Space to be used for the imported rules
     """
