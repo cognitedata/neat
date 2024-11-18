@@ -19,6 +19,9 @@ Changes are grouped as follows:
 ### Added
 - Support for reading `YAML`
 - Support for writing `YAML` in toolkit format.
+- Added end-to-end test for CDM extension
+### Fixed
+- Verification of reversed connections was done of `property (linage)` instead of `view_property`
 
 ## [0.97.3] - 16-11-**2024**
 ### Improved

@@ -7,6 +7,7 @@ from rdflib import URIRef
 
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._rules._shared import ReadRules
+from cognite.neat._rules.models._base_rules import SchemaCompleteness
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ReduceCogniteModel, ToCompliantEntities, ToExtension
 from cognite.neat._store._provenance import Change
@@ -251,6 +252,7 @@ class DataModelPrepareAPI:
             transformer = ReduceCogniteModel(drop)
             output = transformer.transform(rules)
             output.rules.metadata.version = f"{rules.metadata.version}.reduced"
+            output.rules.metadata.schema_ = SchemaCompleteness.partial
 
             end = datetime.now(timezone.utc)
 

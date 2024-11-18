@@ -329,7 +329,7 @@ class DMSPostValidation:
         if self.metadata.as_data_model_id() in COGNITE_MODELS:
             return None
 
-        properties_by_ids = {f"{prop_.view!s}.{prop_.property_}": prop_ for prop_ in self.properties}
+        properties_by_ids = {f"{prop_.view!s}.{prop_.view_property}": prop_ for prop_ in self.properties}
         reversed_by_ids = {
             id_: prop_
             for id_, prop_ in properties_by_ids.items()
