@@ -351,7 +351,6 @@ class DMSPostValidation:
                 )
 
             elif source_id in properties_by_ids and properties_by_ids[source_id].value_type != prop_.view:
-                print(f"source_id: {source_id}, second issue")
                 self.issue_list.append(
                     ReversedConnectionNotFeasibleError(
                         id_,
