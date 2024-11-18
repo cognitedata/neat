@@ -18,8 +18,10 @@ Changes are grouped as follows:
 ## TBD
 ### Improved
 - `...make_connection_on_exact_match` now takes strings instead of URIRefs
+- Added end-to-end test for CDM extension
 ### Fixed
 - Smart filling in of container properties lead to bug (triggered by edge case)
+- Verification of reversed connections was done of `property (linage)` instead of `view_property`
 
 ## [0.97.2] - 14-11-**2024**
 ### Added
