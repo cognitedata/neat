@@ -569,12 +569,18 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
             [view for view in new_model.views if view.view.as_id() not in exclude_views]
         )
         new_properties = SheetList[DMSProperty]()
+
         for view in new_model.views:
             for prop in properties_by_view[view.view]:
                 if self._is_asset_3D_property(prop):
                     # We filter out the 3D property of asset
                     continue
+
+                prop.class_ = ClassEntity(prefix=prop.view.prefix, suffix=view.view.suffix)
+                prop.property_ = prop.view_property
+
                 new_properties.append(prop)
+
         new_model.properties = new_properties
 
         return JustRules(new_model)
