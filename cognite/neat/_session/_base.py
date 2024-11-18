@@ -166,9 +166,9 @@ class NeatSession:
         end = datetime.now(timezone.utc)
 
         if model_id.space:
-            cast(InformationInputRules, inferred_rules.rules).metadata.prefix = model_id.space
+            cast(InformationInputRules, inferred_rules.rules).metadata.space = model_id.space
         if model_id.external_id:
-            cast(InformationInputRules, inferred_rules.rules).metadata.name = model_id.external_id
+            cast(InformationInputRules, inferred_rules.rules).metadata.external_id = model_id.external_id
 
         if model_id.version:
             cast(InformationInputRules, inferred_rules.rules).metadata.version = model_id.version

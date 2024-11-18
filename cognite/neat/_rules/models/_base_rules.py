@@ -215,7 +215,7 @@ class BaseMetadata(SchemaModel):
             Unlike namespace, the identifier does not end with "/" or "#".
 
         """
-        return DEFAULT_NAMESPACE[f"data-model/verified/{self.aspect}/{self.external_id}/{self.version}"]
+        return DEFAULT_NAMESPACE[f"data-model/verified/{self.aspect}/{self.space}/{self.external_id}/{self.version}"]
 
     @property
     def namespace(self) -> Namespace:
