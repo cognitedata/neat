@@ -329,7 +329,7 @@ class DMSPostValidation:
         if self.metadata.as_data_model_id() in COGNITE_MODELS:
             return None
 
-        properties_by_ids = {f"{prop_.view!s}.{prop_.property_}": prop_ for prop_ in self.properties}
+        properties_by_ids = {f"{prop_.view!s}.{prop_.view_property}": prop_ for prop_ in self.properties}
         reversed_by_ids = {
             id_: prop_
             for id_, prop_ in properties_by_ids.items()
@@ -339,6 +339,7 @@ class DMSPostValidation:
         for id_, prop_ in reversed_by_ids.items():
             source_id = f"{prop_.value_type!s}." f"{cast(ReverseConnectionEntity, prop_.connection).property_}"
             if source_id not in properties_by_ids:
+                print(f"source_id: {source_id}, first issue")
                 self.issue_list.append(
                     ReversedConnectionNotFeasibleError(
                         id_,
@@ -351,6 +352,7 @@ class DMSPostValidation:
                 )
 
             elif source_id in properties_by_ids and properties_by_ids[source_id].value_type != prop_.view:
+                print(f"source_id: {source_id}, second issue")
                 self.issue_list.append(
                     ReversedConnectionNotFeasibleError(
                         id_,
