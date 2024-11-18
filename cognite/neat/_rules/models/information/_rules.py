@@ -1,7 +1,6 @@
 import math
 import sys
 from collections.abc import Hashable
-from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import pandas as pd
@@ -9,13 +8,14 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace, URIRef
 
-from cognite.neat._constants import DEFAULT_NAMESPACE, get_default_prefixes
+from cognite.neat._constants import get_default_prefixes
 from cognite.neat._issues.errors import NeatValueError, PropertyDefinitionError
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
     ClassRef,
+    DataModelAspect,
     DataModelType,
     ExtensionCategory,
     ExtensionCategoryType,
@@ -35,10 +35,6 @@ from cognite.neat._rules.models._types import (
     ClassEntityType,
     InformationPropertyType,
     MultiValueTypeType,
-    NamespaceType,
-    PrefixType,
-    StrListType,
-    VersionType,
 )
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import (
@@ -64,37 +60,18 @@ else:
 
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information
+    aspect: ClassVar[DataModelAspect] = DataModelAspect.logical
+
+    # this will be removed
     data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
+    # this will be removed
     schema_: SchemaCompleteness = Field(SchemaCompleteness.partial, alias="schema")
+    # this will be removed
     extension: ExtensionCategoryType | None = ExtensionCategory.addition
 
-    prefix: PrefixType
-    namespace: NamespaceType
-
-    name: str = Field(
-        alias="title",
-        description="Human readable name of the data model",
-        min_length=1,
-        max_length=255,
-    )
-    description: str | None = Field(None, min_length=1, max_length=1024)
-    version: VersionType
-
-    created: datetime = Field(
-        description=("Date of the data model creation"),
-    )
-
-    updated: datetime = Field(
-        description=("Date of the data model update"),
-    )
-    creator: StrListType = Field(
-        description=(
-            "List of contributors to the data model creation, "
-            "typically information architects are considered as contributors."
-        ),
-    )
-    license: str | None = None
-    rights: str | None = None
+    # Linking to Conceptual and Physical data model aspects
+    physical: URIRef | None = Field(None, description="Link to the logical data model aspect")
+    conceptual: URIRef | None = Field(None, description="Link to the logical data model aspect")
 
     @model_validator(mode="after")
     def extension_none_but_schema_extend(self) -> Self:
@@ -114,12 +91,6 @@ class InformationMetadata(BaseMetadata):
     @field_validator("data_model_type", mode="plain")
     def as_enum_model_type(cls, value: str) -> DataModelType:
         return DataModelType(value.strip())
-
-    def as_identifier(self) -> str:
-        return f"{self.prefix}:{self.name}"
-
-    def get_prefix(self) -> str:
-        return self.prefix
 
 
 def _get_metadata(context: Any) -> InformationMetadata | None:
@@ -387,14 +358,10 @@ class InformationRules(BaseRules):
             "type": "Logical Data Model",
             "intended for": "Information Architect",
             "name": self.metadata.name,
-            "external_id": self.metadata.prefix,
+            "external_id": self.metadata.external_id,
             "version": self.metadata.version,
             "classes": len(self.classes),
             "properties": len(self.properties),
         }
 
         return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore
-
-    @property
-    def id_(self) -> URIRef:
-        return DEFAULT_NAMESPACE[f"data-model/verified/info/{self.metadata.prefix}/{self.metadata.version}"]

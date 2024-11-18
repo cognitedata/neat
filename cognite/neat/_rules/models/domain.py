@@ -18,18 +18,11 @@ from ._base_rules import (
     SheetList,
     SheetRow,
 )
-from ._types import ClassEntityType, InformationPropertyType, StrOrListType
+from ._types import ClassEntityType, InformationPropertyType
 
 
 class DomainMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.domain_expert
-    creator: StrOrListType
-
-    def as_identifier(self) -> str:
-        return "DomainRules"
-
-    def get_prefix(self) -> str:
-        return "domain"
 
 
 class DomainProperty(SheetRow):
@@ -77,10 +70,6 @@ class DomainRules(BaseRules):
     classes: SheetList[DomainClass] | None = Field(None, alias="Classes")
     last: "DomainRules | None" = Field(None, alias="Last")
     reference: "DomainRules | None" = Field(None, alias="Reference")
-
-    @property
-    def id_(self) -> URIRef:
-        return DEFAULT_NAMESPACE["data-model/verified/domain"]
 
 
 @dataclass

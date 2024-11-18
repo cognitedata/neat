@@ -8,7 +8,6 @@ from typing import Literal, TypeVar, cast
 
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
-from rdflib import Namespace
 
 from cognite.neat._constants import (
     COGNITE_MODELS,
@@ -733,14 +732,12 @@ class _InformationRulesConverter:
             DMSMetadata,
         )
 
-        space = cls._to_space(metadata.prefix)
-
         return DMSMetadata(
             schema_=metadata.schema_,
-            space=space,
             data_model_type=metadata.data_model_type,
+            space=metadata.space,
             version=metadata.version,
-            external_id=metadata.name.replace(" ", "_").lower(),
+            external_id=metadata.external_id,
             creator=metadata.creator,
             name=metadata.name,
             created=metadata.created,
@@ -985,16 +982,15 @@ class _DMSRulesConverter:
     def _convert_metadata_to_info(cls, metadata: DMSMetadata) -> "InformationMetadata":
         from cognite.neat._rules.models.information._rules import InformationMetadata
 
-        prefix = metadata.space
         return InformationMetadata(
             schema_=metadata.schema_,
             data_model_type=metadata.data_model_type,
             extension=metadata.extension,
-            prefix=prefix,
-            namespace=Namespace(f"https://purl.orgl/neat/{prefix}/"),
+            space=metadata.space,
+            external_id=metadata.external_id,
             version=metadata.version,
             description=metadata.description,
-            name=metadata.name or metadata.external_id,
+            name=metadata.name,
             creator=metadata.creator,
             created=metadata.created,
             updated=metadata.updated,

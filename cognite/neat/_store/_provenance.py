@@ -93,7 +93,7 @@ class Entity:
             return cls(
                 was_attributed_to=agent,
                 was_generated_by=activity,
-                id_=rules.id_,
+                id_=rules.metadata.identifier,
             )
 
         elif isinstance(rules, ReadRules | JustRules) and rules.rules is not None:

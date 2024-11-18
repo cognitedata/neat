@@ -274,7 +274,7 @@ class _MetadataCreator:
         new_model_id: tuple[str, str] | None = None,
     ):
         self.action = action
-        self.new_model_id = new_model_id or ("YOUR_PREFIX", "YOUR_TITLE")
+        self.new_model_id = new_model_id or ("YOUR_SPACE", "YOUR_EXTERNAL_ID")
 
     def create(self, metadata: DomainMetadata | InformationMetadata | DMSMetadata) -> dict[str, Any]:
         now = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None)
@@ -314,13 +314,12 @@ class _MetadataCreator:
         return created
 
     def _create_new_info(self, now: datetime) -> InformationMetadata:
-        prefix = self.new_model_id[0]
         return InformationMetadata(
             data_model_type=DataModelType.solution,
             schema_=SchemaCompleteness.complete,
             extension=ExtensionCategory.addition,
-            prefix=prefix,
-            namespace=f"http://purl.org/neat/{prefix}/",  # type: ignore[arg-type]
+            space=self.new_model_id[0],
+            external_id=self.new_model_id[1],
             description=None,
             version="1",
             created=now,

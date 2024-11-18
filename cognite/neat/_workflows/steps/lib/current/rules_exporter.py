@@ -220,11 +220,7 @@ class RulesToDMS(Step):
 
         output_dir = self.config.staging_path
         output_dir.mkdir(parents=True, exist_ok=True)
-        file_name = (
-            input_rules.metadata.external_id
-            if isinstance(input_rules, DMSRules)
-            else input_rules.metadata.name.replace(" ", "_").lower()
-        )
+        file_name = input_rules.metadata.external_id
         schema_zip = f"{file_name}.zip"
         schema_full_path = output_dir / schema_zip
         dms_exporter.export_to_file(dms_rules, schema_full_path)
