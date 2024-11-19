@@ -19,6 +19,9 @@ class SubClass:
 
     def do_something(self, a: int, b: bool) -> None: ...
 
+    @property
+    def also_ignore_me(self) -> str: ...
+
 
 class MyClass:
     ignore_me: ClassVar[str] = "ignore"

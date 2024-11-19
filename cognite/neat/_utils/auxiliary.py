@@ -144,15 +144,15 @@ def string_to_ideal_type(input_string: str) -> int | bool | float | datetime | s
 
 def get_parameters_by_method(obj: object, prefix: str = "") -> dict[str, dict[str, type]]:
     annotation_by_method = {}
-    for attribute_name in dir(obj):
-        if attribute_name.startswith("_"):
+    namespace_dict = {**dict(obj.__class__.__dict__.items()), **vars(obj)}
+    for name, value in namespace_dict.items():
+        if name.startswith("_") or isinstance(value, property):
             continue
-        attribute = getattr(obj, attribute_name)
-        if callable(attribute):
-            annotation_by_method[f"{prefix}{attribute_name}"] = get_parameters(attribute)
-        elif isinstance(attribute, object) and type(attribute).__module__ != "builtins":
-            sub_prefix = f"{prefix}.{attribute_name}." if prefix else f"{attribute_name}."
-            annotation_by_method.update(get_parameters_by_method(attribute, sub_prefix))
+        if callable(value):
+            annotation_by_method[f"{prefix}{name}"] = get_parameters(value)
+        elif isinstance(value, object) and type(value).__module__ != "builtins":
+            sub_prefix = f"{prefix}.{name}." if prefix else f"{name}."
+            annotation_by_method.update(get_parameters_by_method(value, sub_prefix))
     return annotation_by_method
 
 
