@@ -5,7 +5,7 @@ from cognite.neat._rules._shared import JustRules, OutRules
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models._base_rules import ClassRef
 from cognite.neat._rules.models.dms import DMSProperty
-from cognite.neat._rules.models.entities import ClassEntity, ReferenceEntity
+from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import InformationClass
 from cognite.neat._rules.models.mapping import RuleMapping
 
@@ -95,7 +95,6 @@ class MapOneToOne(MapOntoTransformers):
                 if ref_prop.container and ref_prop.container_property:
                     prop.container = ref_prop.container
                     prop.container_property = ref_prop.container_property
-                prop.reference = ReferenceEntity.from_entity(ref_prop.view, ref_prop.view_property)
 
         return JustRules(solution)
 

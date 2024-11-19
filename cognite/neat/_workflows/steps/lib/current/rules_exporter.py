@@ -273,14 +273,6 @@ class RulesToExcel(Step):
             options=["input", *RoleTypes.__members__.keys()],
         ),
         Configurable(
-            name="Dump Format",
-            value="user",
-            label="How to dump the rules to the Excel file.\n"
-            "'user' - just as is.\n'reference' - enterprise model used as basis for a solution model\n"
-            "'last' - used when updating a data model.",
-            options=list(exporters.ExcelExporter.dump_options),
-        ),
-        Configurable(
             name="New Data Model ID",
             value="",
             label="If you chose Dump Format 'reference', the provided ID will be use in the new medata sheet. "
@@ -297,7 +289,6 @@ class RulesToExcel(Step):
         if self.configs is None or self.data_store_path is None:
             raise WorkflowStepNotInitializedError(type(self).__name__)
 
-        dump_format = self.configs.get("Dump Format", "user")
         styling = cast(exporters.ExcelExporter.Style, self.configs.get("Styling", "default"))
         role = self.configs.get("Output role format")
         output_role: RoleTypes | None = None
@@ -314,7 +305,7 @@ class RulesToExcel(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
 
-        excel_exporter = exporters.ExcelExporter(styling=styling, dump_as=dump_format, new_model_id=new_model_id)  # type: ignore[arg-type]
+        excel_exporter = exporters.ExcelExporter(styling=styling, new_model_id=new_model_id)  # type: ignore[arg-type]
 
         # Todo - Move the conversion to a separate workflow step.
         rule_instance: VerifiedRules

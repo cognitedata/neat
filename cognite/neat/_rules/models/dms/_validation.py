@@ -7,7 +7,6 @@ from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_
 from cognite.neat._issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
     PropertyDefinitionDuplicatedError,
-    ResourceChangedError,
     ResourceNotDefinedError,
 )
 from cognite.neat._issues.errors._properties import ReversedConnectionNotFeasibleError
@@ -20,7 +19,7 @@ from cognite.neat._issues.warnings.user_modeling import (
     NotNeatSupportedFilterWarning,
     ViewPropertyLimitWarning,
 )
-from cognite.neat._rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
+from cognite.neat._rules.models._base_rules import SchemaCompleteness
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ContainerEntity, RawFilter
 from cognite.neat._rules.models.entities._single_value import (
@@ -55,8 +54,6 @@ class DMSPostValidation:
         self._validate_reverse_connections()
 
         self._referenced_views_and_containers_are_existing_and_proper_size()
-        if self.metadata.schema_ is SchemaCompleteness.extended:
-            self._validate_extension()
         if self.metadata.schema_ is SchemaCompleteness.partial:
             return self.issue_list
         dms_schema = self.rules.as_schema()
@@ -160,9 +157,10 @@ class DMSPostValidation:
         self.issue_list.extend(errors)
 
     def _referenced_views_and_containers_are_existing_and_proper_size(self) -> None:
+        # TODO: Split this method and keep only validation that should be independent of
+        # whether view and/or container exist in the pydantic model instance
+        # other validation should be done through NeatSession.verify()
         defined_views = {view.view.as_id() for view in self.views}
-        if self.metadata.schema_ is SchemaCompleteness.extended and self.rules.last:
-            defined_views |= {view.view.as_id() for view in self.rules.last.views}
 
         property_count_by_view: dict[dm.ViewId, int] = defaultdict(int)
         errors: list[NeatIssue] = []
@@ -184,12 +182,9 @@ class DMSPostValidation:
         for view_id, count in property_count_by_view.items():
             if count > DMS_CONTAINER_PROPERTY_SIZE_LIMIT:
                 errors.append(ViewPropertyLimitWarning(view_id, count))
+
         if self.metadata.schema_ is SchemaCompleteness.complete:
             defined_containers = {container.container.as_id() for container in self.containers or []}
-            if self.metadata.data_model_type == DataModelType.solution and self.rules.reference:
-                defined_containers |= {
-                    container.container.as_id() for container in self.rules.reference.containers or []
-                }
 
             for prop_no, prop in enumerate(self.properties):
                 if prop.container and ((container_id := prop.container.as_id()) not in defined_containers):
@@ -217,69 +212,6 @@ class DMSPostValidation:
                             )
                         )
         self.issue_list.extend(errors)
-
-    def _validate_extension(self) -> None:
-        if self.metadata.schema_ is not SchemaCompleteness.extended:
-            return None
-        if not self.rules.last:
-            raise ValueError("The schema is set to 'extended', but no last rules are provided to validate against")
-        if self.metadata.extension is ExtensionCategory.rebuild:
-            # Everything is allowed
-            return None
-        user_schema = self.rules.as_schema()
-        new_containers = user_schema.containers.copy()
-
-        last_schema = self.rules.last.as_schema()
-        existing_containers = last_schema.containers.copy()
-
-        for container_id, container in new_containers.items():
-            existing_container = existing_containers.get(container_id)
-            if not existing_container or existing_container == container:
-                # No problem
-                continue
-            new_dumped = container.dump()
-            existing_dumped = existing_container.dump()
-            changed_attributes, changed_properties = self._changed_attributes_and_properties(
-                new_dumped, existing_dumped
-            )
-            self.issue_list.append(
-                ResourceChangedError(
-                    container_id,
-                    "container",
-                    changed_properties=frozenset(changed_properties),
-                    changed_attributes=frozenset(changed_attributes),
-                )
-            )
-
-        if self.metadata.extension is ExtensionCategory.reshape:
-            # Reshape allows changes to views
-            return None
-
-        new_views = user_schema.views.copy()
-        existing_views = last_schema.views.copy()
-        for view_id, view in new_views.items():
-            existing_view = existing_views.get(view_id)
-            if not existing_view or existing_view == view:
-                # No problem
-                continue
-            changed_attributes, changed_properties = self._changed_attributes_and_properties(
-                view.dump(), existing_view.dump()
-            )
-            existing_properties = existing_view.properties or {}
-            changed_properties = [prop for prop in changed_properties if prop in existing_properties]
-            changed_attributes = [attr for attr in changed_attributes if attr not in self.changeable_view_attributes]
-
-            if not changed_attributes and not changed_properties:
-                # Only added new properties, no problem
-                continue
-            self.issue_list.append(
-                ResourceChangedError(
-                    view_id,
-                    "view",
-                    changed_properties=frozenset(changed_properties),
-                    changed_attributes=frozenset(changed_attributes),
-                )
-            )
 
     def _validate_performance(self, dms_schema: DMSSchema) -> None:
         for view_id, view in dms_schema.views.items():
@@ -320,7 +252,7 @@ class DMSPostValidation:
                     UndefinedViewWarning(
                         str(prop_.view),
                         str(prop_.value_type),
-                        prop_.property_,
+                        prop_.view_property,
                     )
                 )
 
@@ -344,7 +276,7 @@ class DMSPostValidation:
                     ReversedConnectionNotFeasibleError(
                         id_,
                         "reversed connection",
-                        prop_.property_,
+                        prop_.view_property,
                         str(prop_.view),
                         str(prop_.value_type),
                         cast(ReverseConnectionEntity, prop_.connection).property_,
@@ -357,7 +289,7 @@ class DMSPostValidation:
                     ReversedConnectionNotFeasibleError(
                         id_,
                         "view property",
-                        prop_.property_,
+                        prop_.view_property,
                         str(prop_.view),
                         str(prop_.value_type),
                         cast(ReverseConnectionEntity, prop_.connection).property_,

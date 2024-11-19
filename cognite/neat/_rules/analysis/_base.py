@@ -14,7 +14,6 @@ from cognite.neat._rules.models._rdfpath import RDFPath
 from cognite.neat._rules.models.entities import (
     ClassEntity,
     Entity,
-    ReferenceEntity,
 )
 from cognite.neat._rules.models.information import InformationProperty
 from cognite.neat._utils.rdf_ import get_inheritance_path
@@ -77,10 +76,6 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
         raise NotImplementedError
 
     @abstractmethod
-    def _get_reference(self, class_or_property: T_Class | T_Property) -> ReferenceEntity | None:
-        raise NotImplementedError
-
-    @abstractmethod
     def _get_cls_entity(self, class_: T_Class | T_Property) -> T_ClassEntity:
         raise NotImplementedError
 
@@ -90,10 +85,6 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
 
     @abstractmethod
     def _get_cls_parents(self, class_: T_Class) -> list[T_ClassEntity] | None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def _get_reference_rules(self) -> T_Rules | None:
         raise NotImplementedError
 
     @classmethod
@@ -111,23 +102,11 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
 
     @property
     def directly_referred_classes(self) -> set[ClassEntity]:
-        ref_rules = self._get_reference_rules()
-        if ref_rules is None:
-            return set()
-        prefix = ref_rules.metadata.prefix
-        return {
-            ref.as_class_entity()
-            for class_ in self._get_classes()
-            if isinstance((ref := self._get_reference(class_)), ReferenceEntity) and ref.prefix == prefix
-        }
+        raise NotImplementedError
 
     @property
     def inherited_referred_classes(self) -> set[ClassEntity]:
-        dir_referred_classes = self.directly_referred_classes
-        inherited_referred_classes = []
-        for class_ in dir_referred_classes:
-            inherited_referred_classes.extend(self.class_inheritance_path(class_))
-        return set(inherited_referred_classes)
+        raise NotImplementedError
 
     # Todo Lru cache this method.
     def class_parent_pairs(self) -> dict[T_ClassEntity, list[T_ClassEntity]]:

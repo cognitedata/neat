@@ -19,7 +19,6 @@ from cognite.neat._issues.warnings._models import (
     EnterpriseModelNotBuildOnTopOfCDMWarning,
     SolutionModelBuildOnTopOfCDMWarning,
 )
-from cognite.neat._issues.warnings.user_modeling import ParentInDifferentSpaceWarning
 from cognite.neat._rules._shared import (
     InputRules,
     JustRules,
@@ -334,12 +333,10 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
             # Remove Cognite affix in view external_id / suffix.
             for prop in solution_model.properties:
                 prop.view = self._remove_cognite_affix(prop.view)
-                prop.class_ = self._remove_cognite_affix(prop.class_)
                 if isinstance(prop.value_type, ViewEntity):
                     prop.value_type = self._remove_cognite_affix(prop.value_type)
             for view in solution_model.views:
                 view.view = self._remove_cognite_affix(view.view)
-                view.class_ = self._remove_cognite_affix(view.class_)
 
         if self.mode == "write":
             _, new_containers, new_properties = self._get_new_components(solution_model)
@@ -413,19 +410,16 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
             view_entity.version = cast(str, self.new_model_id.version)
             view_entity.prefix = self.new_model_id.space
             container_entity = ContainerEntity(space=view_entity.prefix, externalId=view_entity.external_id)
-            class_entity = ClassEntity(prefix=view_entity.prefix, suffix=view_entity.suffix)
 
             view = DMSView(
                 view=view_entity,
                 implements=[definition.view],
                 in_model=True,
-                class_=class_entity,
                 name=definition.name,
             )
 
             container = DMSContainer(
                 container=container_entity,
-                class_=class_entity,
             )
 
             property_ = DMSProperty(
@@ -437,8 +431,6 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
                 is_list=False,
                 container=container_entity,
                 container_property=f"{to_camel(view_entity.suffix)}{self.dummy_property}",
-                class_=class_entity,
-                property_=f"{to_camel(view_entity.suffix)}{self.dummy_property}",
             )
 
             new_properties.append(property_)
@@ -544,10 +536,6 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
                 if self._is_asset_3D_property(prop):
                     # We filter out the 3D property of asset
                     continue
-
-                prop.class_ = ClassEntity(prefix=prop.view.prefix, suffix=view.view.suffix)
-                prop.property_ = prop.view_property
-
                 new_properties.append(prop)
 
         new_model.properties = new_properties
@@ -557,7 +545,7 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
     def _is_asset_3D_property(self, prop: DMSProperty) -> bool:
         if "3D" not in self.drop_collection:
             return False
-        return prop.view.as_id() == self._ASSET_VIEW and prop.property_ == "object3D"
+        return prop.view.as_id() == self._ASSET_VIEW
 
 
 class _InformationRulesConverter:
@@ -602,7 +590,6 @@ class _InformationRulesConverter:
 
         views: list[DMSView] = [
             DMSView(
-                class_=cls_.class_,
                 name=cls_.name,
                 view=cls_.class_.as_view_entity(default_space, default_version),
                 description=cls_.description,
@@ -637,7 +624,6 @@ class _InformationRulesConverter:
             most_used_class_entity = class_entities.most_common(1)[0][0]
             class_ = class_by_entity[most_used_class_entity]
             container = DMSContainer(
-                class_=class_.class_,
                 container=container_entity,
                 name=class_.name,
                 description=class_.description,
@@ -650,8 +636,6 @@ class _InformationRulesConverter:
             properties=SheetList[DMSProperty]([prop for prop_set in properties_by_class.values() for prop in prop_set]),
             views=SheetList[DMSView](views),
             containers=SheetList[DMSContainer](containers),
-            last=last_dms_rules,
-            reference=ref_dms_rules,
         )
 
     @staticmethod
@@ -745,9 +729,7 @@ class _InformationRulesConverter:
             container, container_property = self._get_container(prop, default_space)
 
         return DMSProperty(
-            class_=prop.class_,
             name=prop.name,
-            property_=prop.property_,
             value_type=value_type,
             nullable=nullable,
             is_list=is_list,
@@ -855,14 +837,12 @@ class _DMSRulesConverter:
         classes = [
             InformationClass(
                 # we do not want a version in class as we use URI for the class
-                class_=ClassEntity(prefix=view.class_.prefix, suffix=view.class_.suffix),
+                class_=ClassEntity(prefix=view.view.prefix, suffix=view.view.suffix),
                 description=view.description,
                 parent=[
                     # we do not want a version in class as we use URI for the class
                     implemented_view.as_class(skip_version=True)
-                    # We only want parents in the same namespace, parent in a different namespace is a reference
                     for implemented_view in view.implements or []
-                    if implemented_view.prefix == view.class_.prefix
                 ],
             )
             for view in self.dms.views
@@ -886,7 +866,7 @@ class _DMSRulesConverter:
             properties.append(
                 InformationProperty(
                     # Removing version
-                    class_=ClassEntity(suffix=property_.class_.suffix, prefix=property_.class_.prefix),
+                    class_=ClassEntity(suffix=property_.view.suffix, prefix=property_.view.prefix),
                     property_=property_.view_property,
                     value_type=value_type,
                     description=property_.description,
@@ -899,8 +879,6 @@ class _DMSRulesConverter:
             metadata=metadata,
             properties=SheetList[InformationProperty](properties),
             classes=SheetList[InformationClass](classes),
-            last=_DMSRulesConverter(self.dms.last).as_information_rules() if self.dms.last else None,
-            reference=_DMSRulesConverter(self.dms.reference).as_information_rules() if self.dms.reference else None,
         )
 
     @classmethod
@@ -919,30 +897,4 @@ class _DMSRulesConverter:
             creator=metadata.creator,
             created=metadata.created,
             updated=metadata.updated,
-        )
-
-    @classmethod
-    def _get_class_reference(cls, view: DMSView) -> ReferenceEntity | None:
-        parents_other_namespace = [parent for parent in view.implements or [] if parent.prefix != view.class_.prefix]
-        if len(parents_other_namespace) == 0:
-            return None
-        if len(parents_other_namespace) > 1:
-            warnings.warn(
-                ParentInDifferentSpaceWarning(view.view.as_id()),
-                stacklevel=2,
-            )
-        other_parent = parents_other_namespace[0]
-
-        return ReferenceEntity(prefix=other_parent.prefix, suffix=other_parent.suffix)
-
-    @classmethod
-    def _get_property_reference(cls, property_: DMSProperty) -> ReferenceEntity | None:
-        has_container_other_namespace = property_.container and property_.container.prefix != property_.class_.prefix
-        if not has_container_other_namespace:
-            return None
-        container = cast(ContainerEntity, property_.container)
-        return ReferenceEntity(
-            prefix=container.prefix,
-            suffix=container.suffix,
-            property=property_.container_property,
         )

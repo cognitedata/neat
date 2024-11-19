@@ -32,3 +32,6 @@ class DMSAnalysis(BaseAnalysis[DMSRules, DMSView, DMSProperty, ViewEntity, str])
 
     def subset_rules(self, desired_classes: set[ViewEntity]) -> DMSRules:
         raise NotImplementedError()
+
+    def _get_prop_entity(self, property_: DMSProperty) -> str:
+        return property_.view_property

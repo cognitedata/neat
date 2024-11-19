@@ -1,7 +1,7 @@
 import warnings
 from collections import defaultdict
 from collections.abc import Collection, Hashable, Sequence
-from typing import Any, cast
+from typing import Any
 
 from cognite.client.data_classes import data_modeling as dm
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
@@ -18,7 +18,6 @@ from cognite.neat._issues.warnings import NotSupportedWarning, PropertyNotFoundW
 from cognite.neat._issues.warnings.user_modeling import (
     EmptyContainerWarning,
     HasDataFilterOnNoPropertiesViewWarning,
-    HasDataFilterOnViewWithReferencesWarning,
     NodeTypeFilterOnParentViewWarning,
 )
 from cognite.neat._rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
@@ -32,7 +31,6 @@ from cognite.neat._rules.models.entities import (
     EdgeEntity,
     HasDataFilter,
     NodeTypeFilter,
-    ReferenceEntity,
     ReverseConnectionEntity,
     UnitEntity,
     ViewEntity,
@@ -180,38 +178,25 @@ class _DMSExporter:
         parent_views = {parent for view in views.values() for parent in view.implements or []}
         for view_id, view in views.items():
             dms_view = dms_view_by_id.get(view_id)
-            dms_properties = view_properties_by_id.get(view_id, [])
-            view_filter = self._create_view_filter(view, dms_view, data_model_type, dms_properties)
 
-            view.filter = view_filter.as_dms_filter()
-            if isinstance(view_filter, NodeTypeFilter):
-                unique_node_types.update(view_filter.nodes)
-                if view.as_id() in parent_views:
-                    warnings.warn(
-                        NodeTypeFilterOnParentViewWarning(view.as_id()),
-                        stacklevel=2,
-                    )
+            if view_filter := self._create_view_filter(view, dms_view, data_model_type):
+                view.filter = view_filter.as_dms_filter()
+                if isinstance(view_filter, NodeTypeFilter):
+                    unique_node_types.update(view_filter.nodes)
+                    if view.as_id() in parent_views:
+                        warnings.warn(
+                            NodeTypeFilterOnParentViewWarning(view.as_id()),
+                            stacklevel=2,
+                        )
 
-            elif isinstance(view_filter, HasDataFilter) and data_model_type == DataModelType.solution:
-                if dms_view and isinstance(dms_view.reference, ReferenceEntity):
-                    references = {dms_view.reference.as_view_id()}
-                elif any(True for prop in dms_properties if isinstance(prop.reference, ReferenceEntity)):
-                    references = {
-                        prop.reference.as_view_id()
-                        for prop in dms_properties
-                        if isinstance(prop.reference, ReferenceEntity)
-                    }
-                else:
+                elif isinstance(view_filter, HasDataFilter) and data_model_type == DataModelType.solution:
+                    # Solution model filtering was based on .reference which is removed
                     continue
-                warnings.warn(
-                    HasDataFilterOnViewWithReferencesWarning(view.as_id(), frozenset(references)),
-                    stacklevel=2,
-                )
 
-            if data_model_type == DataModelType.enterprise:
-                # Enterprise Model needs to create node types for all views,
-                # as they are expected for the solution model.
-                unique_node_types.add(dm.NodeId(space=view.space, external_id=view.external_id))
+                if data_model_type == DataModelType.enterprise:
+                    # Enterprise Model needs to create node types for all views,
+                    # as they are expected for the solution model.
+                    unique_node_types.add(dm.NodeId(space=view.space, external_id=view.external_id))
 
         return views, unique_node_types
 
@@ -219,9 +204,6 @@ class _DMSExporter:
     def _create_edge_type_from_prop(cls, prop: DMSProperty) -> dm.DirectRelationReference:
         if isinstance(prop.connection, EdgeEntity) and prop.connection.edge_type is not None:
             return prop.connection.edge_type.as_reference()
-        elif isinstance(prop.reference, ReferenceEntity):
-            ref_view_prop = prop.reference.as_view_property_id()
-            return cls._create_edge_type_from_view_id(cast(dm.ViewId, ref_view_prop.source), ref_view_prop.property)
         elif isinstance(prop.value_type, ViewEntity):
             return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
         else:
@@ -422,8 +404,7 @@ class _DMSExporter:
         view: dm.ViewApply,
         dms_view: DMSView | None,
         data_model_type: DataModelType,
-        dms_properties: list[DMSProperty],
-    ) -> DMSFilter:
+    ) -> DMSFilter | None:
         selected_filter_name = (dms_view and dms_view.filter_ and dms_view.filter_.name) or ""
 
         if dms_view and dms_view.filter_ and not dms_view.filter_.is_empty:
@@ -431,26 +412,9 @@ class _DMSExporter:
             return dms_view.filter_
 
         if data_model_type == DataModelType.solution and selected_filter_name in [NodeTypeFilter.name, ""]:
-            if (
-                dms_view
-                and isinstance(dms_view.reference, ReferenceEntity)
-                and not dms_properties
-                and (ref_view := self._ref_views_by_id.get(dms_view.reference.as_view_id()))
-                and ref_view.filter
-            ):
-                # No new properties, only reference, reuse the reference filter
-                return DMSFilter.from_dms_filter(ref_view.filter)
-            else:
-                referenced_node_ids = {
-                    prop.reference.as_node_entity()
-                    for prop in dms_properties
-                    if isinstance(prop.reference, ReferenceEntity)
-                }
-                if dms_view and isinstance(dms_view.reference, ReferenceEntity):
-                    referenced_node_ids.add(dms_view.reference.as_node_entity())
-
-                if referenced_node_ids:
-                    return NodeTypeFilter(inner=list(referenced_node_ids))
+            # Revamp on filtering will be done so this use-case will be supported differently
+            warnings.warn("NodeTypeFilter is not supported in Solution Model", stacklevel=2)
+            return None
 
         # Enterprise Model or (Solution + HasData)
         ref_containers = view.referenced_containers()
@@ -536,7 +500,7 @@ class _DMSExporter:
                 (
                     prop
                     for prop in view_properties_with_ancestors_by_id.get(source_view_id, [])
-                    if prop.property_ == reverse_prop_id
+                    if prop.view_property == reverse_prop_id
                 ),
                 None,
             )
