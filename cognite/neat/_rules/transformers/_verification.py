@@ -13,12 +13,8 @@ from cognite.neat._rules._shared import (
     VerifiedRules,
 )
 from cognite.neat._rules.models import (
-    AssetInputRules,
-    AssetRules,
     DMSInputRules,
     DMSRules,
-    DomainInputRules,
-    DomainRules,
     InformationInputRules,
     InformationRules,
 )
@@ -68,12 +64,6 @@ class VerifyInformationRules(VerificationTransformer[InformationInputRules, Info
     _rules_cls = InformationRules
 
 
-class VerifyAssetRules(VerificationTransformer[AssetInputRules, AssetRules]):
-    """Class to verify Asset rules."""
-
-    _rules_cls = AssetRules
-
-
 class VerifyAnyRules(VerificationTransformer[InputRules, VerifiedRules]):
     """Class to verify arbitrary rules"""
 
@@ -82,9 +72,5 @@ class VerifyAnyRules(VerificationTransformer[InputRules, VerifiedRules]):
             return InformationRules
         elif isinstance(in_, DMSInputRules):
             return DMSRules
-        elif isinstance(in_, AssetInputRules):
-            return AssetRules
-        elif isinstance(in_, DomainInputRules):
-            return DomainRules
         else:
             raise NeatTypeError(f"Unsupported rules type: {type(in_)}")

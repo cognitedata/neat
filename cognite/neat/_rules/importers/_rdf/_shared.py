@@ -2,7 +2,7 @@ import datetime
 
 import numpy as np
 import pandas as pd
-from rdflib import OWL, Literal, Namespace
+from rdflib import OWL, Literal
 
 from cognite.neat._rules._constants import PATTERNS
 from cognite.neat._rules.models._base_rules import MatchType
@@ -335,8 +335,7 @@ def make_metadata_compliant(metadata: dict) -> dict:
         Dictionary containing metadata with fixed errors
     """
 
-    metadata = fix_namespace(metadata, default=Namespace("http://purl.org/cognite/neat#"))
-    metadata = fix_prefix(metadata)
+    metadata = fix_space(metadata)
     metadata = fix_version(metadata)
     metadata = fix_date(
         metadata,
@@ -348,34 +347,10 @@ def make_metadata_compliant(metadata: dict) -> dict:
         date_type="updated",
         default=datetime.datetime.now().replace(microsecond=0),
     )
-    metadata = fix_title(metadata)
+    metadata = fix_name(metadata)
     metadata = fix_description(metadata)
     metadata = fix_author(metadata, "creator")
-    metadata = fix_rights(metadata)
-    metadata = fix_license(metadata)
 
-    return metadata
-
-
-def fix_license(metadata: dict, default: str = "Unknown license") -> dict:
-    if license := metadata.get("license", None):
-        if not isinstance(license, str):
-            metadata["license"] = default
-        elif isinstance(license, str) and len(license) == 0:
-            metadata["license"] = default
-    else:
-        metadata["license"] = default
-    return metadata
-
-
-def fix_rights(metadata: dict, default: str = "Unknown rights") -> dict:
-    if rights := metadata.get("rights", None):
-        if not isinstance(rights, str):
-            metadata["rights"] = default
-        elif isinstance(rights, str) and len(rights) == 0:
-            metadata["rights"] = default
-    else:
-        metadata["rights"] = default
     return metadata
 
 
@@ -401,25 +376,12 @@ def fix_description(metadata: dict, default: str = "This model has been inferred
     return metadata
 
 
-def fix_prefix(metadata: dict, default: str = "neat") -> dict:
-    if prefix := metadata.get("prefix", None):
-        if not isinstance(prefix, str) or not PATTERNS.prefix_compliance.match(prefix):
-            metadata["prefix"] = default
+def fix_space(metadata: dict, default: str = "neat") -> dict:
+    if space := metadata.get("space", None):
+        if not isinstance(space, str) or not PATTERNS.space_compliance.match(space):
+            metadata["space"] = default
     else:
-        metadata["prefix"] = default
-    return metadata
-
-
-def fix_namespace(metadata: dict, default: Namespace) -> dict:
-    if namespace := metadata.get("namespace", None):
-        if not isinstance(namespace, Namespace):
-            try:
-                metadata["namespace"] = Namespace(namespace)
-            except Exception:
-                metadata["namespace"] = default
-    else:
-        metadata["namespace"] = default
-
+        metadata["space"] = default
     return metadata
 
 
@@ -456,18 +418,18 @@ def fix_version(metadata: dict, default: str = "1.0.0") -> dict:
     return metadata
 
 
-def fix_title(metadata: dict, default: str = "OWL Inferred Data Model") -> dict:
-    if title := metadata.get("title", None):
-        if not isinstance(title, str):
+def fix_name(metadata: dict, default: str = "OWL Inferred Data Model") -> dict:
+    if name := metadata.get("name", None):
+        if not isinstance(name, str):
             metadata["title"] = default
-        elif isinstance(title, str) and len(title) == 0:
+        elif isinstance(name, str) and len(name) == 0:
             metadata["title"] = default
-        elif isinstance(title, str) and len(title) > 255:
+        elif isinstance(name, str) and len(name) > 255:
             metadata["title"] = metadata["title"][:255]
         else:
             pass
     else:
-        metadata["title"] = default
+        metadata["name"] = default
 
     return metadata
 

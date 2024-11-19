@@ -44,7 +44,7 @@ metadata:
   created: '2017-05-21T00:00:00'
   creator: NEAT
   data_model_type: enterprise
-  external_id: linked_nobelprizes
+  external_id: OntologyBasedDataModel
   name: Linked Nobelprizes
   role: DMS Architect
   schema_: partial
@@ -58,7 +58,6 @@ properties:
   is_list: false
   nullable: true
   property_: label
-  reference: http://www.w3.org/2000/01/rdf-schema#label
   value_type: text
   view: Agent
   view_property: label
@@ -69,7 +68,6 @@ properties:
   name: year
   nullable: true
   property_: year
-  reference: http://data.nobelprize.org/terms/year
   value_type: int32
   view: Award
   view_property: year
@@ -79,7 +77,6 @@ properties:
   is_list: false
   nullable: true
   property_: label
-  reference: http://www.w3.org/2000/01/rdf-schema#label
   value_type: text
   view: Concept
   view_property: label
@@ -89,7 +86,6 @@ properties:
   is_list: false
   nullable: true
   property_: label
-  reference: http://www.w3.org/2000/01/rdf-schema#label
   value_type: text
   view: DatatypeProperty
   view_property: label
@@ -101,7 +97,6 @@ properties:
   name: laureateAward
   nullable: true
   property_: laureateAward
-  reference: http://data.nobelprize.org/terms/laureateAward
   value_type: LaureateAward
   view: Laureate
   view_property: laureateAward
@@ -113,7 +108,6 @@ properties:
   name: nobelPrize
   nullable: true
   property_: nobelPrize
-  reference: http://data.nobelprize.org/terms/nobelPrize
   value_type: NobelPrize
   view: Laureate
   view_property: nobelPrize
@@ -125,7 +119,6 @@ properties:
   name: laureate
   nullable: true
   property_: laureate
-  reference: http://data.nobelprize.org/terms/laureate
   value_type: Laureate
   view: LaureateAward
   view_property: laureate
@@ -136,7 +129,6 @@ properties:
   name: motivation
   nullable: true
   property_: motivation
-  reference: http://data.nobelprize.org/terms/motivation
   value_type: text
   view: LaureateAward
   view_property: motivation
@@ -147,7 +139,6 @@ properties:
   name: share
   nullable: true
   property_: share
-  reference: http://data.nobelprize.org/terms/share
   value_type: int32
   view: LaureateAward
   view_property: share
@@ -158,7 +149,6 @@ properties:
   name: sort order
   nullable: true
   property_: sortOrder
-  reference: http://data.nobelprize.org/terms/sortOrder
   value_type: int32
   view: LaureateAward
   view_property: sortOrder
@@ -170,7 +160,6 @@ properties:
   name: university
   nullable: true
   property_: university
-  reference: http://data.nobelprize.org/terms/university
   value_type: University
   view: LaureateAward
   view_property: university
@@ -182,7 +171,6 @@ properties:
   name: category
   nullable: true
   property_: category
-  reference: http://data.nobelprize.org/terms/category
   value_type: Category
   view: NobelPrize
   view_property: category
@@ -193,7 +181,6 @@ properties:
   name: motivation
   nullable: true
   property_: motivation
-  reference: http://data.nobelprize.org/terms/motivation
   value_type: text
   view: NobelPrize
   view_property: motivation
@@ -203,7 +190,6 @@ properties:
   is_list: false
   nullable: true
   property_: label
-  reference: http://www.w3.org/2000/01/rdf-schema#label
   value_type: text
   view: ObjectProperty
   view_property: label
@@ -213,7 +199,6 @@ properties:
   is_list: false
   nullable: true
   property_: label
-  reference: http://www.w3.org/2000/01/rdf-schema#label
   value_type: text
   view: Thing
   view_property: label
@@ -223,7 +208,6 @@ properties:
   is_list: false
   nullable: true
   property_: label
-  reference: http://www.w3.org/2000/01/rdf-schema#label
   value_type: text
   view: University
   view_property: label
@@ -238,7 +222,6 @@ views:
   description: The Nobel Prize is given in six different categories.
   implements: Concept
   name: Nobel Prize category
-  reference: http://data.nobelprize.org/terms/Category
   view: Category
 - class_: Concept
   implements: ''
@@ -246,14 +229,12 @@ views:
 - class_: DatatypeProperty
   description: The class of data properties.
   implements: ''
-  reference: http://www.w3.org/2002/07/owl#DatatypeProperty
   view: DatatypeProperty
 - class_: Laureate
   description: A laureate is a person or organization who recieves one or several
     Nobel Prizes.
   implements: Agent
   name: Laureate
-  reference: http://data.nobelprize.org/terms/Laureate
   view: Laureate
 - class_: LaureateAward
   description: The Nobel Prize is often divided to several laureates. LaureateAward
@@ -261,7 +242,6 @@ views:
     Nobel Prize, motivation etc.
   implements: Award
   name: Laureate Award
-  reference: http://data.nobelprize.org/terms/LaureateAward
   view: LaureateAward
 - class_: NobelPrize
   description: The Nobel Prize is a set of annual international awards bestowed in
@@ -273,17 +253,14 @@ views:
     Stockholm, Sweden.
   implements: Award
   name: Nobel Prize
-  reference: http://data.nobelprize.org/terms/NobelPrize
   view: NobelPrize
 - class_: ObjectProperty
   description: The class of object properties.
   implements: ''
-  reference: http://www.w3.org/2002/07/owl#ObjectProperty
   view: ObjectProperty
 - class_: Thing
   description: The class of holding class individuals.
   implements: ''
-  reference: http://www.w3.org/2002/07/owl#Thing
   view: Thing
 - class_: University
   implements: ''

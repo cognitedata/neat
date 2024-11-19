@@ -8,7 +8,18 @@ import sys
 import types
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Hashable, Iterator, MutableSequence, Sequence
-from typing import Annotated, Any, ClassVar, Literal, SupportsIndex, TypeVar, get_args, get_origin, overload
+from datetime import datetime
+from typing import (
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    SupportsIndex,
+    TypeVar,
+    get_args,
+    get_origin,
+    overload,
+)
 
 import pandas as pd
 from pydantic import (
@@ -23,8 +34,17 @@ from pydantic import (
 )
 from pydantic.main import IncEx
 from pydantic_core import core_schema
+from rdflib import Namespace, URIRef
 
-from cognite.neat._rules.models._types import ClassEntityType, InformationPropertyType
+from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._rules.models._types import (
+    ClassEntityType,
+    DataModelExternalIdType,
+    InformationPropertyType,
+    SpaceType,
+    StrListType,
+    VersionType,
+)
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -82,10 +102,15 @@ class DataModelType(StrEnum):
     enterprise = "enterprise"
 
 
+class DataModelAspect(StrEnum):
+    conceptual = "conceptual"
+    logical = "logical"
+    physical = "physical"
+
+
 class RoleTypes(StrEnum):
     domain_expert = "domain expert"
     information = "information architect"
-    asset = "asset architect"
     dms = "DMS Architect"
 
 
@@ -125,6 +150,34 @@ class BaseMetadata(SchemaModel):
     """
 
     role: ClassVar[RoleTypes]
+    aspect: ClassVar[DataModelAspect]
+    space: SpaceType = Field(alias="prefix")
+    external_id: DataModelExternalIdType = Field(alias="externalId")
+    version: VersionType
+
+    name: str | None = Field(
+        None,
+        description="Human readable name of the data model",
+        min_length=1,
+        max_length=255,
+    )
+
+    description: str | None = Field(None, min_length=1, max_length=1024)
+
+    creator: StrListType = Field(
+        description=(
+            "List of contributors to the data model creation, "
+            "typically information architects are considered as contributors."
+        ),
+    )
+
+    created: datetime = Field(
+        description=("Date of the data model creation"),
+    )
+
+    updated: datetime = Field(
+        description=("Date of the data model update"),
+    )
 
     def to_pandas(self) -> pd.Series:
         """Converts Metadata to pandas Series."""
@@ -143,15 +196,30 @@ class BaseMetadata(SchemaModel):
     def include_role(self, serializer: Callable) -> dict:
         return {"role": self.role.value, **serializer(self)}
 
-    @abstractmethod
-    def as_identifier(self) -> str:
-        """Returns a unique identifier for the metadata."""
-        raise NotImplementedError()
+    @property
+    def prefix(self) -> str:
+        return self.space
 
-    @abstractmethod
+    def as_identifier(self) -> str:
+        return f"{self.prefix}:{self.external_id}"
+
     def get_prefix(self) -> str:
-        """Returns the prefix for the metadata."""
-        raise NotImplementedError()
+        return self.prefix
+
+    @property
+    def identifier(self) -> URIRef:
+        """Globally unique identifier for the data model.
+
+        !!! note
+            Unlike namespace, the identifier does not end with "/" or "#".
+
+        """
+        return DEFAULT_NAMESPACE[f"data-model/verified/{self.aspect}/{self.space}/{self.external_id}/{self.version}"]
+
+    @property
+    def namespace(self) -> Namespace:
+        """Namespace for the data model used for the entities in the data model."""
+        return Namespace(f"{self.identifier}/")
 
 
 class BaseRules(SchemaModel, ABC):

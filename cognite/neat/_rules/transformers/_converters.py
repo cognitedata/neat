@@ -8,7 +8,6 @@ from typing import Literal, TypeVar, cast
 
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
-from rdflib import Namespace
 
 from cognite.neat._constants import (
     COGNITE_MODELS,
@@ -21,7 +20,6 @@ from cognite.neat._issues.warnings._models import (
     SolutionModelBuildOnTopOfCDMWarning,
 )
 from cognite.neat._issues.warnings.user_modeling import ParentInDifferentSpaceWarning
-from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules._shared import (
     InputRules,
     JustRules,
@@ -31,10 +29,8 @@ from cognite.neat._rules._shared import (
 )
 from cognite.neat._rules.analysis import DMSAnalysis
 from cognite.neat._rules.models import (
-    AssetRules,
     DMSInputRules,
     DMSRules,
-    DomainRules,
     ExtensionCategory,
     InformationRules,
     SchemaCompleteness,
@@ -45,15 +41,12 @@ from cognite.neat._rules.models.data_types import DataType, String
 from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSView
 from cognite.neat._rules.models.dms._rules import DMSContainer
 from cognite.neat._rules.models.entities import (
-    AssetEntity,
-    AssetFields,
     ClassEntity,
     ContainerEntity,
     DMSUnknownEntity,
     EdgeEntity,
     MultiValueTypeInfo,
     ReferenceEntity,
-    RelationshipEntity,
     ReverseConnectionEntity,
     UnknownEntity,
     ViewEntity,
@@ -97,10 +90,8 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
         return ReadRules(self._transform(self._to_rules(rules)), IssueList(), {})
 
     def _transform(self, rules: InformationInputRules) -> InformationInputRules:
-        rules.metadata.prefix = self._fix_entity(rules.metadata.prefix)
         rules.classes = self._fix_classes(rules.classes)
         rules.properties = self._fix_properties(rules.properties)
-
         rules.metadata.version += "_dms_compliant"
 
         return rules
@@ -199,20 +190,6 @@ class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
         return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types)
 
 
-class InformationToAsset(ConversionTransformer[InformationRules, AssetRules]):
-    """Converts InformationRules to AssetRules."""
-
-    def _transform(self, rules: InformationRules) -> AssetRules:
-        return _InformationRulesConverter(rules).as_asset_architect_rules()
-
-
-class AssetToInformation(ConversionTransformer[AssetRules, InformationRules]):
-    """Converts AssetRules to InformationRules."""
-
-    def _transform(self, rules: AssetRules) -> InformationRules:
-        return InformationRules.model_validate(rules.model_dump())
-
-
 class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
     """Converts DMSRules to InformationRules."""
 
@@ -231,16 +208,8 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
             return rules
         if isinstance(rules, InformationRules) and self._out_cls is DMSRules:
             return InformationToDMS().transform(rules).rules
-        if isinstance(rules, InformationRules) and self._out_cls is AssetRules:
-            return InformationToAsset().transform(rules).rules
-        if isinstance(rules, AssetRules) and self._out_cls is InformationRules:
-            return AssetToInformation().transform(rules).rules
-        if isinstance(rules, AssetRules) and self._out_cls is DMSRules:
-            return InformationToDMS().transform(AssetToInformation().transform(rules)).rules
         if isinstance(rules, DMSRules) and self._out_cls is InformationRules:
             return DMSToInformation().transform(rules).rules
-        if isinstance(rules, DMSRules) and self._out_cls is AssetRules:
-            return InformationToAsset().transform(DMSToInformation().transform(rules)).rules
         raise ValueError(f"Unsupported conversion from {type(rules)} to {self._out_cls}")
 
 
@@ -608,31 +577,6 @@ class _InformationRulesConverter:
             self.last_classes = {}
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
 
-    def as_domain_rules(self) -> DomainRules:
-        raise NotImplementedError("DomainRules not implemented yet")
-
-    def as_asset_architect_rules(self) -> "AssetRules":
-        from cognite.neat._rules.models.asset._rules import AssetClass, AssetMetadata, AssetProperty, AssetRules
-
-        classes: SheetList[AssetClass] = SheetList[AssetClass](
-            [AssetClass(**class_.model_dump()) for class_ in self.rules.classes]
-        )
-        properties: SheetList[AssetProperty] = SheetList[AssetProperty]()
-        for prop_ in self.rules.properties:
-            if prop_.type_ == EntityTypes.data_property:
-                properties.append(
-                    AssetProperty(**prop_.model_dump(), implementation=[AssetEntity(property=AssetFields.metadata)])
-                )
-            elif prop_.type_ == EntityTypes.object_property:
-                properties.append(AssetProperty(**prop_.model_dump(), implementation=[RelationshipEntity()]))
-
-        return AssetRules(
-            metadata=AssetMetadata(**self.rules.metadata.model_dump()),
-            properties=properties,
-            classes=classes,
-            prefixes=self.rules.prefixes,
-        )
-
     def as_dms_rules(self, ignore_undefined_value_types: bool = False) -> "DMSRules":
         from cognite.neat._rules.models.dms._rules import (
             DMSContainer,
@@ -662,7 +606,6 @@ class _InformationRulesConverter:
                 name=cls_.name,
                 view=cls_.class_.as_view_entity(default_space, default_version),
                 description=cls_.description,
-                reference=cls_.reference,
                 implements=self._get_view_implements(cls_, info_metadata),
             )
             for cls_ in self.rules.classes
@@ -733,14 +676,12 @@ class _InformationRulesConverter:
             DMSMetadata,
         )
 
-        space = cls._to_space(metadata.prefix)
-
         return DMSMetadata(
             schema_=metadata.schema_,
-            space=space,
             data_model_type=metadata.data_model_type,
+            space=metadata.space,
             version=metadata.version,
-            external_id=metadata.name.replace(" ", "_").lower(),
+            external_id=metadata.external_id,
             creator=metadata.creator,
             name=metadata.name,
             created=metadata.created,
@@ -812,7 +753,6 @@ class _InformationRulesConverter:
             is_list=is_list,
             connection=connection,
             default=prop.default,
-            reference=prop.reference,
             container=container,
             container_property=container_property,
             view=prop.class_.as_view_entity(default_space, default_version),
@@ -851,20 +791,7 @@ class _InformationRulesConverter:
         return container_entity, prop.property_
 
     def _get_view_implements(self, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
-        if isinstance(cls_.reference, ReferenceEntity) and cls_.reference.prefix != metadata.prefix:
-            # We use the reference for implements if it is in a different namespace
-            if self.rules.reference and cls_.reference.prefix == self.rules.reference.metadata.prefix:
-                implements = [
-                    cls_.reference.as_view_entity(
-                        self.rules.reference.metadata.prefix, self.rules.reference.metadata.version
-                    )
-                ]
-            else:
-                implements = [
-                    cls_.reference.as_view_entity(metadata.prefix, metadata.version),
-                ]
-        else:
-            implements = []
+        implements = []
         for parent in cls_.parent or []:
             if self.rules.reference and parent.prefix == self.rules.reference.metadata.prefix:
                 view_entity = parent.as_view_entity(
@@ -912,9 +839,6 @@ class _DMSRulesConverter:
     def __init__(self, dms: DMSRules):
         self.dms = dms
 
-    def as_domain_rules(self) -> "DomainRules":
-        raise NotImplementedError("DomainRules not implemented yet")
-
     def as_information_rules(
         self,
     ) -> "InformationRules":
@@ -940,7 +864,6 @@ class _DMSRulesConverter:
                     for implemented_view in view.implements or []
                     if implemented_view.prefix == view.class_.prefix
                 ],
-                reference=self._get_class_reference(view),
             )
             for view in self.dms.views
         ]
@@ -967,9 +890,8 @@ class _DMSRulesConverter:
                     property_=property_.view_property,
                     value_type=value_type,
                     description=property_.description,
-                    min_count=0 if property_.nullable or property_.nullable is None else 1,
-                    max_count=float("inf") if property_.is_list or property_.nullable is None else 1,
-                    reference=self._get_property_reference(property_),
+                    min_count=(0 if property_.nullable or property_.nullable is None else 1),
+                    max_count=(float("inf") if property_.is_list or property_.nullable is None else 1),
                 )
             )
 
@@ -985,16 +907,15 @@ class _DMSRulesConverter:
     def _convert_metadata_to_info(cls, metadata: DMSMetadata) -> "InformationMetadata":
         from cognite.neat._rules.models.information._rules import InformationMetadata
 
-        prefix = metadata.space
         return InformationMetadata(
             schema_=metadata.schema_,
             data_model_type=metadata.data_model_type,
             extension=metadata.extension,
-            prefix=prefix,
-            namespace=Namespace(f"https://purl.orgl/neat/{prefix}/"),
+            space=metadata.space,
+            external_id=metadata.external_id,
             version=metadata.version,
             description=metadata.description,
-            name=metadata.name or metadata.external_id,
+            name=metadata.name,
             creator=metadata.creator,
             created=metadata.created,
             updated=metadata.updated,

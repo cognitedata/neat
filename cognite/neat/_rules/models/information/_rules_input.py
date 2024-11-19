@@ -26,8 +26,8 @@ from ._rules import (
 @dataclass
 class InformationInputMetadata(InputComponent[InformationMetadata]):
     schema_: Literal["complete", "partial", "extended"]
-    prefix: str
-    namespace: str
+    space: str
+    external_id: str
     version: str
     creator: str
     data_model_type: Literal["solution", "enterprise"] = "enterprise"
@@ -36,8 +36,8 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
     description: str | None = None
     created: datetime | str | None = None
     updated: datetime | str | None = None
-    license: str | None = None
-    rights: str | None = None
+    physical: str | None = None
+    conceptual: str | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationMetadata]:
@@ -50,6 +50,25 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
         if self.updated is None:
             output["updated"] = datetime.now()
         return output
+
+    @property
+    def prefix(self) -> str:
+        return self.space
+
+    @property
+    def identifier(self) -> URIRef:
+        """Globally unique identifier for the data model.
+
+        !!! note
+            Unlike namespace, the identifier does not end with "/" or "#".
+
+        """
+        return DEFAULT_NAMESPACE[f"data-model/unverified/logical/{self.space}/{self.external_id}/{self.version}"]
+
+    @property
+    def namespace(self) -> Namespace:
+        """Namespace for the data model used for the entities in the data model."""
+        return Namespace(f"{self.identifier}/")
 
 
 @dataclass
@@ -152,14 +171,11 @@ class InformationInputRules(InputRules[InformationRules]):
             "type": "Logical Data Model",
             "intended for": "Information Architect",
             "name": self.metadata.name,
-            "external_id": self.metadata.prefix,
+            "external_id": self.metadata.external_id,
+            "space": self.metadata.space,
             "version": self.metadata.version,
             "classes": len(self.classes),
             "properties": len(self.properties),
         }
 
         return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore
-
-    @property
-    def id_(self) -> URIRef:
-        return DEFAULT_NAMESPACE[f"data-model/unverified/info/{self.metadata.prefix}/{self.metadata.version}"]

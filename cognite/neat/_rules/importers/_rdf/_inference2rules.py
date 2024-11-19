@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar, cast
 
+from cognite.client import data_modeling as dm
 from rdflib import RDF, URIRef
 from rdflib import Literal as RdfLiteral
 
@@ -20,6 +21,8 @@ from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._base import DEFAULT_NON_EXISTING_NODE_TYPE, BaseRDFImporter
+
+DEFAULT_INFERENCE_DATA_MODEL_ID = ("neat_space", "InferredDataModel", "inferred")
 
 ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class . }
@@ -65,27 +68,27 @@ class InferenceImporter(BaseRDFImporter):
     def from_graph_store(
         cls,
         store: NeatGraphStore,
-        prefix: str = "inferred",
+        data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_INFERENCE_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ) -> "InferenceImporter":
-        return super().from_graph_store(store, prefix, max_number_of_instance, non_existing_node_type)
+        return super().from_graph_store(store, data_model_id, max_number_of_instance, non_existing_node_type)
 
     @classmethod
     def from_file(
         cls,
         filepath: Path,
-        prefix: str = "inferred",
+        data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_INFERENCE_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ) -> "InferenceImporter":
-        return super().from_file(filepath, prefix, max_number_of_instance, non_existing_node_type)
+        return super().from_file(filepath, data_model_id, max_number_of_instance, non_existing_node_type)
 
     @classmethod
     def from_json_file(
         cls,
         filepath: Path,
-        prefix: str = "inferred",
+        data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_INFERENCE_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
@@ -94,7 +97,7 @@ class InferenceImporter(BaseRDFImporter):
     def from_yaml_file(
         cls,
         filepath: Path,
-        prefix: str = "inferred",
+        data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_INFERENCE_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
     ) -> "InferenceImporter":
         raise NotImplementedError("YAML file format is not supported yet.")
@@ -103,7 +106,7 @@ class InferenceImporter(BaseRDFImporter):
     def from_xml_file(
         cls,
         filepath: Path,
-        prefix: str = "inferred",
+        data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_INFERENCE_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
@@ -237,12 +240,13 @@ class InferenceImporter(BaseRDFImporter):
 
     def _default_metadata(self):
         return InformationMetadata(
+            space=self.data_model_id.space,
+            external_id=self.data_model_id.external_id,
+            version=self.data_model_id.version,
             name="Inferred Model",
             creator="NEAT",
-            version="inferred",
             created=datetime.now(),
             updated=datetime.now(),
             description="Inferred model from knowledge graph",
-            prefix=self.prefix,
             namespace=DEFAULT_NAMESPACE,
         )

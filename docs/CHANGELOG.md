@@ -22,6 +22,9 @@ Changes are grouped as follows:
 - Added end-to-end test for CDM extension
 ### Fixed
 - Verification of reversed connections was done of `property (linage)` instead of `view_property`
+### Changed
+- [BREAKING] Rules are simplified and normalized, especially metadata
+
 
 ## [0.97.3] - 16-11-**2024**
 ### Improved

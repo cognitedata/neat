@@ -74,7 +74,7 @@ class NeatSession:
                 transformer.agent,
                 start,
                 end,
-                f"Verified data model {source_id} as {output.rules.id_}",
+                f"Verified data model {source_id} as {output.rules.metadata.identifier}",
                 self._state.data_model.provenance.source_entity(source_id)
                 or self._state.data_model.provenance.target_entity(source_id),
             )
@@ -119,7 +119,7 @@ class NeatSession:
                 converter.agent,
                 start,
                 end,
-                f"Converted data model {source_id} to {converted_rules.id_}",
+                f"Converted data model {source_id} to {converted_rules.metadata.identifier}",
                 self._state.data_model.provenance.source_entity(source_id)
                 or self._state.data_model.provenance.target_entity(source_id),
             )
@@ -166,9 +166,9 @@ class NeatSession:
         end = datetime.now(timezone.utc)
 
         if model_id.space:
-            cast(InformationInputRules, inferred_rules.rules).metadata.prefix = model_id.space
+            cast(InformationInputRules, inferred_rules.rules).metadata.space = model_id.space
         if model_id.external_id:
-            cast(InformationInputRules, inferred_rules.rules).metadata.name = model_id.external_id
+            cast(InformationInputRules, inferred_rules.rules).metadata.external_id = model_id.external_id
 
         if model_id.version:
             cast(InformationInputRules, inferred_rules.rules).metadata.version = model_id.version

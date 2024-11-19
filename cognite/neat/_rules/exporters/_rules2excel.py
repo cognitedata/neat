@@ -23,7 +23,6 @@ from cognite.neat._rules.models import (
 )
 from cognite.neat._rules.models.dms import DMSMetadata
 from cognite.neat._rules.models.dms._rules import DMSRules
-from cognite.neat._rules.models.domain import DomainMetadata
 from cognite.neat._rules.models.information import InformationMetadata
 from cognite.neat._rules.models.information._rules import InformationRules
 
@@ -274,9 +273,9 @@ class _MetadataCreator:
         new_model_id: tuple[str, str] | None = None,
     ):
         self.action = action
-        self.new_model_id = new_model_id or ("YOUR_PREFIX", "YOUR_TITLE")
+        self.new_model_id = new_model_id or ("YOUR_SPACE", "YOUR_EXTERNAL_ID")
 
-    def create(self, metadata: DomainMetadata | InformationMetadata | DMSMetadata) -> dict[str, Any]:
+    def create(self, metadata: InformationMetadata | DMSMetadata) -> dict[str, Any]:
         now = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None)
         if self.action == "update":
             output = json.loads(metadata.model_dump_json(by_alias=True))
@@ -288,13 +287,6 @@ class _MetadataCreator:
                 output["creator"] = f"{value}, {self.creator_name}"
             else:
                 output["creator"] = self.creator_name
-            return output
-
-        # Action "create"
-        if isinstance(metadata, DomainMetadata):
-            output = {field_alias: None for field_alias in metadata.model_dump(by_alias=True).keys()}
-            output["role"] = metadata.role.value
-            output["creator"] = self.creator_name
             return output
 
         new_metadata = self._create_new_info(now)
@@ -314,13 +306,12 @@ class _MetadataCreator:
         return created
 
     def _create_new_info(self, now: datetime) -> InformationMetadata:
-        prefix = self.new_model_id[0]
         return InformationMetadata(
             data_model_type=DataModelType.solution,
             schema_=SchemaCompleteness.complete,
             extension=ExtensionCategory.addition,
-            prefix=prefix,
-            namespace=f"http://purl.org/neat/{prefix}/",  # type: ignore[arg-type]
+            space=self.new_model_id[0],
+            external_id=self.new_model_id[1],
             description=None,
             version="1",
             created=now,

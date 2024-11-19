@@ -44,7 +44,7 @@ metadata:
   created: '2024-02-09T00:00:00'
   creator: Jon,Emma,David
   data_model_type: enterprise
-  external_id: power_to_consumer_data_model
+  external_id: power2consumer
   name: Power to Consumer Data Model
   role: DMS Architect
   schema_: complete
@@ -177,7 +177,6 @@ properties:
   is_list: false
   nullable: true
   property_: geoLocation
-  reference: http://www.w3.org/2003/01/geo/wgs84_pos#location
   value_type: Point
   view: GeneratingUnit
   view_property: geoLocation
@@ -561,29 +560,24 @@ views:
   view: ElectricCarCharger
 - class_: EnergyArea
   implements: ''
-  reference: http://www.iec.ch/TC57/CIM#EnergyArea
   view: EnergyArea
 - class_: EnergyConsumer
   implements: ''
-  reference: http://www.iec.ch/TC57/CIM#EnergyConsumer
   view: EnergyConsumer
 - class_: ExportCable
   implements: PowerLine
   view: ExportCable
 - class_: GeneratingUnit
   implements: ''
-  reference: http://www.iec.ch/TC57/CIM#GeneratingUnit
   view: GeneratingUnit
 - class_: GeoLocation
   implements: ''
-  reference: http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing
   view: GeoLocation
 - class_: Meter
   implements: ''
   view: Meter
 - class_: MultiLineString
   implements: GeoLocation
-  reference: https://purl.org/geojson/vocab#MultiLineString
   view: MultiLineString
 - class_: OffshoreSubstation
   implements: Substation
@@ -593,11 +587,9 @@ views:
   view: OnshoreSubstation
 - class_: Point
   implements: GeoLocation
-  reference: https://purl.org/geojson/vocab#Point
   view: Point
 - class_: Polygon
   implements: GeoLocation
-  reference: https://purl.org/geojson/vocab#Polygon
   view: Polygon
 - class_: PowerLine
   implements: ''
@@ -607,7 +599,6 @@ views:
   view: Substation
 - class_: Transmission
   implements: PowerLine
-  reference: http://www.iec.ch/TC57/CIM#ACLineSegment
   view: Transmission
 - class_: TransmissionSubstation
   implements: Substation
@@ -620,9 +611,7 @@ views:
   view: VoltageTransformer
 - class_: WindFarm
   implements: EnergyArea
-  reference: http://purl.org/neat/WindFarm
   view: WindFarm
 - class_: WindTurbine
   implements: GeneratingUnit
-  reference: http://purl.org/neat/WindTurbine
   view: WindTurbine

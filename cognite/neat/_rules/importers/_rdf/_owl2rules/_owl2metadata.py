@@ -1,4 +1,4 @@
-from rdflib import Graph, Namespace
+from rdflib import Graph
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.importers._rdf._shared import make_metadata_compliant
@@ -48,20 +48,18 @@ def parse_owl_metadata(graph: Graph) -> dict:
         {
             "role": RoleTypes.information,
             "schema": SchemaCompleteness.partial,
-            "prefix": results[1].pop(),
-            "namespace": Namespace(results[0].pop()),
+            "space": results[1].pop(),
+            "external_id": "OntologyBasedDataModel",
             "version": results[2].pop(),
             "created": results[3].pop(),
             "updated": results[4].pop(),
-            "title": results[5].pop(),
+            "name": results[5].pop(),
             "description": results[6].pop(),
             "creator": (
                 ", ".join(remove_none_elements_from_set(results[7]))
                 if remove_none_elements_from_set(results[7])
                 else None
             ),
-            "rights": results[8].pop(),
-            "license": results[9].pop(),
         }
     )
 

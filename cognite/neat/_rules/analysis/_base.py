@@ -114,7 +114,7 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
         ref_rules = self._get_reference_rules()
         if ref_rules is None:
             return set()
-        prefix = ref_rules.metadata.get_prefix()
+        prefix = ref_rules.metadata.prefix
         return {
             ref.as_class_entity()
             for class_ in self._get_classes()
