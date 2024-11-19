@@ -20,6 +20,7 @@ from cognite.neat._store._provenance import (
 )
 from cognite.neat._utils.auth import _CLIENT_NAME
 
+from ._collector import _COLLECTOR, Collector
 from ._inspect import InspectAPI
 from ._prepare import PrepareAPI
 from ._read import ReadAPI
@@ -49,6 +50,8 @@ class NeatSession:
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
+        self.opt = OptAPI()
+        self.opt._display()
         if self._client is not None and self._client._config is not None:
             self._client._config.client_name = _CLIENT_NAME
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
@@ -202,3 +205,27 @@ class NeatSession:
             output.append(f"<H2>Instances</H2> {state.instances.store._repr_html_()}")
 
         return "<br />".join(output)
+
+
+@session_class_wrapper
+class OptAPI:
+    def __init__(self, collector: Collector | None = None) -> None:
+        self._collector = collector or _COLLECTOR
+
+    def _display(self) -> None:
+        if self._collector.opted_in or self._collector.opted_out:
+            return
+        print(
+            "For Neat to improve, we need to collect usage information. "
+            "You acknowledge and agree that neat may collect usage information."
+            "To remove this message run 'neat.opt.in_()"
+            "or to stop collecting usage information run 'neat.opt.out()'."
+        )
+
+    def in_(self) -> None:
+        self._collector.enable()
+        print("You have successfully opted in to data collection.")
+
+    def out(self) -> None:
+        self._collector.disable()
+        print("You have successfully opted out of data collection.")

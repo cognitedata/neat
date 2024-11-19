@@ -10,7 +10,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any
 
-from mixpanel import Consumer, Mixpanel
+from mixpanel import Consumer, Mixpanel  # type: ignore[import-untyped]
 
 from cognite.neat._version import __version__
 
@@ -57,7 +57,7 @@ class Collector:
         self._track(command, event_information)
 
     @staticmethod
-    def _serialize_value(value: Any) -> str | int | float | bool:
+    def _serialize_value(value: Any) -> str:
         if isinstance(value, (str | int | float | bool)):
             return str(value)
         if isinstance(value, list | tuple | dict):
@@ -110,3 +110,6 @@ class Collector:
     def disable(self) -> None:
         self._opt_status_file.write_text("opted-out")
         self._bust_opt_status()
+
+
+_COLLECTOR = Collector()
