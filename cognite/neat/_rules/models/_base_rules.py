@@ -151,7 +151,7 @@ class BaseMetadata(SchemaModel):
 
     role: ClassVar[RoleTypes]
     aspect: ClassVar[DataModelAspect]
-    space: SpaceType = Field(SchemaCompleteness.partial, alias="prefix")
+    space: SpaceType = Field(alias="prefix")
     external_id: DataModelExternalIdType = Field(alias="externalId")
     version: VersionType
 
