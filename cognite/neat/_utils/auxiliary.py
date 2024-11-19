@@ -140,3 +140,22 @@ def string_to_ideal_type(input_string: str) -> int | bool | float | datetime | s
                 except ValueError:
                     # Return the input string if no conversion is possible
                     return input_string
+
+
+def get_parameters_by_method(obj: object, prefix: str = "") -> dict[str, dict[str, type]]:
+    annotation_by_method = {}
+    for attribute_name in dir(obj):
+        if attribute_name.startswith("_"):
+            continue
+        attribute = getattr(obj, attribute_name)
+        if callable(attribute):
+            annotation_by_method[f"{prefix}{attribute_name}"] = get_parameters(attribute)
+        elif isinstance(attribute, object) and type(attribute).__module__ != "builtins":
+            sub_prefix = f"{prefix}.{attribute_name}." if prefix else f"{attribute_name}."
+            annotation_by_method.update(get_parameters_by_method(attribute, sub_prefix))
+    return annotation_by_method
+
+
+def get_parameters(obj: Callable) -> dict[str, type]:
+    annotations = inspect.get_annotations(obj)
+    return {name: annotations[name] for name in annotations if name != "return"}

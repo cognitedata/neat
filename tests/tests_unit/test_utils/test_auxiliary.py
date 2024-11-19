@@ -1,7 +1,9 @@
+from typing import ClassVar
+
 import pytest
 
 from cognite.neat._rules.importers import DMSImporter
-from cognite.neat._utils.auxiliary import get_classmethods
+from cognite.neat._utils.auxiliary import get_classmethods, get_parameters_by_method
 
 
 @pytest.mark.parametrize(
@@ -10,3 +12,36 @@ from cognite.neat._utils.auxiliary import get_classmethods
 )
 def test_get_classmethods(cls_, expected_methods: list) -> None:
     assert get_classmethods(cls_) == expected_methods
+
+
+class SubClass:
+    def verify(self) -> None: ...
+
+    def do_something(self, a: int, b: bool) -> None: ...
+
+
+class MyClass:
+    ignore_me: ClassVar[str] = "ignore"
+
+    def __init__(self) -> None:
+        self.sub_class = SubClass()
+
+    def action(self, values: tuple[int, ...]) -> None: ...
+
+
+@pytest.mark.parametrize(
+    "type_, expected_methods",
+    [
+        (
+            MyClass,
+            {
+                "action": {"values": tuple[int, ...]},
+                "sub_class.verify": {},
+                "sub_class.do_something": {"a": int, "b": bool},
+            },
+        )
+    ],
+)
+def test_get_parameters_by_method(type_: type, expected_methods: dict[str, dict[str, type]]) -> None:
+    obj = type_()
+    assert get_parameters_by_method(obj) == expected_methods
