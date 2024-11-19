@@ -10,11 +10,10 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from rdflib import URIRef
 
-from cognite.neat._constants import COGNITE_SPACES, DEFAULT_NAMESPACE
+from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._issues import MultiValueError
 from cognite.neat._issues.warnings import (
     PrincipleMatchingSpaceAndVersionWarning,
-    PrincipleSolutionBuildsOnEnterpriseWarning,
 )
 from cognite.neat._rules.models._base_rules import (
     BaseMetadata,
@@ -32,7 +31,6 @@ from cognite.neat._rules.models._types import (
     ContainerEntityType,
     DataModelExternalIdType,
     DmsPropertyType,
-    InformationPropertyType,
     SpaceType,
     StrListType,
     VersionType,
@@ -49,9 +47,7 @@ from cognite.neat._rules.models.entities import (
     HasDataFilter,
     NodeTypeFilter,
     RawFilter,
-    ReferenceEntity,
     ReverseConnectionEntity,
-    URLEntity,
     ViewEntity,
     ViewEntityList,
 )
@@ -161,13 +157,15 @@ class DMSProperty(SheetRow):
     immutable: bool | None = Field(default=None, alias="Immutable")
     is_list: bool | None = Field(default=None, alias="Is List")
     default: str | int | dict | None = Field(None, alias="Default")
-    reference: URLEntity | ReferenceEntity | None = Field(default=None, alias="Reference", union_mode="left_to_right")
     container: ContainerEntityType | None = Field(None, alias="Container")
     container_property: DmsPropertyType | None = Field(None, alias="Container Property")
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
-    class_: ClassEntityType = Field(alias="Class (linage)")
-    property_: InformationPropertyType = Field(alias="Property (linage)")
+    logical: URIRef | None = Field(
+        None,
+        alias="Logical",
+        description="Used to make connection between physical and logical data model aspect",
+    )
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return self.view, self.view_property
@@ -210,19 +208,6 @@ class DMSProperty(SheetRow):
             )
         return value
 
-    @field_serializer("reference", when_used="always")
-    def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
-        if isinstance(info.context, dict) and info.context.get("as_reference") is True:
-            return str(
-                ReferenceEntity(
-                    prefix=self.view.prefix,
-                    suffix=self.view.suffix,
-                    version=self.view.version,
-                    property=self.view_property,
-                )
-            )
-        return str(value) if value is not None else None
-
     @field_serializer("value_type", when_used="always")
     def as_dms_type(self, value_type: DataType | EdgeEntity | ViewEntity, info: SerializationInfo) -> str:
         if isinstance(value_type, DataType):
@@ -255,10 +240,8 @@ class DMSContainer(SheetRow):
     container: ContainerEntityType = Field(alias="Container")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     constraint: ContainerEntityList | None = Field(None, alias="Constraint")
     used_for: Literal["node", "edge", "all"] | None = Field("all", alias="Used For")
-    class_: ClassEntityType = Field(alias="Class (linage)")
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.container,)
@@ -312,19 +295,16 @@ class DMSView(SheetRow):
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     implements: ViewEntityList | None = Field(None, alias="Implements")
-    reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
     filter_: HasDataFilter | NodeTypeFilter | RawFilter | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="In Model")
-    class_: ClassEntityType = Field(alias="Class (linage)")
+    logical: URIRef | None = Field(
+        None,
+        alias="Logical",
+        description="Used to make connection between physical and logical data model aspect",
+    )
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.view,)
-
-    @field_serializer("reference", when_used="always")
-    def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
-        if isinstance(info.context, dict) and info.context.get("as_reference") is True:
-            return self.view.dump()
-        return str(value) if value is not None else None
 
     @field_serializer("view", "class_", when_used="unless-none")
     def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
@@ -346,11 +326,6 @@ class DMSView(SheetRow):
     def as_view(self) -> dm.ViewApply:
         view_id = self.view.as_id()
         implements = [parent.as_id() for parent in self.implements or []] or None
-        if implements is None and isinstance(self.reference, ReferenceEntity):
-            # Fallback to the reference if no implements are provided
-            parent = self.reference.as_view_id()
-            if (parent.space, parent.external_id) != (view_id.space, view_id.external_id):
-                implements = [parent]
 
         return dm.ViewApply(
             space=view_id.space,
@@ -410,24 +385,7 @@ class DMSRules(BaseRules):
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     enum: SheetList[DMSEnum] | None = Field(None, alias="Enum")
     nodes: SheetList[DMSNode] | None = Field(None, alias="Nodes")
-    last: "DMSRules | None" = Field(None, alias="Last", description="The previous version of the data model")
-    reference: "DMSRules | None" = Field(None, alias="Reference")
-
-    @field_validator("reference")
-    def check_reference_of_reference(cls, value: "DMSRules | None", info: ValidationInfo) -> "DMSRules | None":
-        if value is None:
-            return None
-        if value.reference is not None:
-            raise ValueError("Reference rules cannot have a reference")
-        if value.metadata.data_model_type == DataModelType.solution and (metadata := info.data.get("metadata")):
-            warnings.warn(
-                PrincipleSolutionBuildsOnEnterpriseWarning(
-                    f"The solution model {metadata.as_data_model_id()} is referencing another "
-                    f"solution model {value.metadata.as_data_model_id()}",
-                ),
-                stacklevel=2,
-            )
-        return value
+    last: URIRef | None = Field(None, alias="Last", description="The previous version of the data model")
 
     @field_validator("views")
     def matching_version_and_space(cls, value: SheetList[DMSView], info: ValidationInfo) -> SheetList[DMSView]:
@@ -478,7 +436,7 @@ class DMSRules(BaseRules):
 
     def _repr_html_(self) -> str:
         summary = {
-            "type": "Physical Data Model",
+            "aspect": self.metadata.aspect,
             "intended for": "DMS Architect",
             "name": self.metadata.name,
             "space": self.metadata.space,
@@ -490,9 +448,3 @@ class DMSRules(BaseRules):
         }
 
         return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore
-
-    @property
-    def id_(self) -> URIRef:
-        return DEFAULT_NAMESPACE[
-            f"data-model/verified/dms/{self.metadata.space}/{self.metadata.external_id}/{self.metadata.version}"
-        ]

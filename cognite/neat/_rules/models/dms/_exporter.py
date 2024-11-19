@@ -90,34 +90,6 @@ class _DMSExporter:
         rules = self.rules
         container_properties_by_id, view_properties_by_id = self._gather_properties(list(self.rules.properties))
 
-        # If we are reshaping or rebuilding, and there are no properties in the current rules, we will
-        # include those properties from the last rules.
-        if rules.last and (self.is_reshape or self.is_rebuild):
-            selected_views = {view.view for view in rules.views}
-            selected_properties = [
-                prop
-                for prop in rules.last.properties
-                if prop.view in selected_views and prop.view.as_id() not in view_properties_by_id
-            ]
-            self._update_with_properties(
-                selected_properties, container_properties_by_id, view_properties_by_id, include_new_containers=True
-            )
-
-        # We need to include the properties from the last rules as well to create complete containers and view
-        # depending on the type of extension.
-        if rules.last and self.is_addition:
-            selected_properties = [
-                prop for prop in rules.last.properties if (prop.view.as_id() in view_properties_by_id)
-            ]
-            self._update_with_properties(selected_properties, container_properties_by_id, view_properties_by_id)
-        elif rules.last and (self.is_reshape or self.is_rebuild):
-            selected_properties = [
-                prop
-                for prop in rules.last.properties
-                if prop.container and prop.container.as_id() in container_properties_by_id
-            ]
-            self._update_with_properties(selected_properties, container_properties_by_id, None)
-
         containers = self._create_containers(container_properties_by_id, rules.enum)  # type: ignore[arg-type]
 
         view_properties_with_ancestors_by_id = self._gather_properties_with_ancestors(
@@ -136,25 +108,8 @@ class _DMSExporter:
             node_types = NodeApplyDict([dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters])
 
         last_schema: DMSSchema | None = None
-        if self.rules.last:
-            last_schema = self.rules.last.as_schema()
-            # Remove the views that are in the current model, last + current should equal the full model
-            # without any duplicates
-            last_schema.views = ViewApplyDict(
-                {view_id: view for view_id, view in last_schema.views.items() if view_id not in views}
-            )
-            last_schema.containers = ContainerApplyDict(
-                {
-                    container_id: container
-                    for container_id, container in last_schema.containers.items()
-                    if container_id not in containers
-                }
-            )
 
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
-        if rules.last and self.is_addition:
-            views_not_in_model.update({view.view.as_id() for view in rules.last.views if not view.in_model})
-
         data_model = rules.metadata.as_data_model()
 
         data_model_views = [view_id for view_id in views if view_id not in views_not_in_model]
@@ -207,14 +162,6 @@ class _DMSExporter:
         view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
     ) -> tuple[ViewApplyDict, set[dm.NodeId]]:
         input_views = list(self.rules.views)
-        if self.rules.last:
-            existing = {view.view.as_id() for view in input_views}
-            modified_views = [
-                v
-                for v in self.rules.last.views
-                if v.view.as_id() in view_properties_by_id and v.view.as_id() not in existing
-            ]
-            input_views.extend(modified_views)
 
         views = ViewApplyDict([dms_view.as_view() for dms_view in input_views])
         dms_view_by_id = {dms_view.view.as_id(): dms_view for dms_view in input_views}
@@ -298,14 +245,6 @@ class _DMSExporter:
             enum_values_by_collection[enum_value.collection].append(enum_value)
 
         containers = list(self.rules.containers or [])
-        if self.rules.last:
-            existing = {container.container.as_id() for container in containers}
-            modified_containers = [
-                c
-                for c in self.rules.last.containers or []
-                if c.container.as_id() in container_properties_by_id and c.container.as_id() not in existing
-            ]
-            containers.extend(modified_containers)
 
         containers = dm.ContainerApplyList([dms_container.as_container() for dms_container in containers])
         container_to_drop = set()
