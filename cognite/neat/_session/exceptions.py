@@ -16,7 +16,7 @@ class NeatSessionError(Exception):
     ...
 
 
-def _intercept_session_exceptions(func: Callable):
+def _session_method_wrapper(func: Callable):
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any):
         try:
@@ -40,7 +40,21 @@ def _intercept_session_exceptions(func: Callable):
     return wrapper
 
 
-def intercept_session_exceptions(cls: type):
+def session_class_wrapper(cls: type):
+    """This decorator wraps all methods of a class.
+
+    It should be used with all composition classes used with the NeatSession class.
+
+    It does the following:
+        * Intercepts all NeatSession exceptions and prints them in a user-friendly way.
+        * Collects user metrics.
+
+    Args:
+        cls: NeatSession composition class
+
+    Returns:
+        cls: NeatSession composition class with all methods wrapped
+    """
     to_check = [cls]
     while to_check:
         cls = to_check.pop()
@@ -49,7 +63,7 @@ def intercept_session_exceptions(cls: type):
                 continue
             attr = getattr(cls, attr_name)
             if callable(attr):
-                setattr(cls, attr_name, _intercept_session_exceptions(attr))
+                setattr(cls, attr_name, _session_method_wrapper(attr))
             elif isinstance(attr, type):
                 to_check.append(attr)
     return cls

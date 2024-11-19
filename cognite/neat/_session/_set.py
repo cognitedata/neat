@@ -7,10 +7,10 @@ from cognite.neat._rules.transformers import SetIDDMSModel
 from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
-from .exceptions import NeatSessionError, intercept_session_exceptions
+from .exceptions import NeatSessionError, session_class_wrapper
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class SetAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state

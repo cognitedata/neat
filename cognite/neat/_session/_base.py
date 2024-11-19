@@ -28,10 +28,10 @@ from ._show import ShowAPI
 from ._state import SessionState
 from ._to import ToAPI
 from .engine import load_neat_engine
-from .exceptions import NeatSessionError, intercept_session_exceptions
+from .exceptions import NeatSessionError, session_class_wrapper
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class NeatSession:
     def __init__(
         self,

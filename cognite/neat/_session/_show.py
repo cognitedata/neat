@@ -16,10 +16,10 @@ from cognite.neat._session.exceptions import NeatSessionError
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._state import SessionState
-from .exceptions import intercept_session_exceptions
+from .exceptions import session_class_wrapper
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ShowAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
@@ -27,7 +27,7 @@ class ShowAPI:
         self.instances = ShowInstanceAPI(self._state)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ShowBaseAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
@@ -63,7 +63,7 @@ class ShowBaseAPI:
             return net.show(name)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ShowDataModelAPI(ShowBaseAPI):
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)
@@ -145,7 +145,7 @@ class ShowDataModelAPI(ShowBaseAPI):
         return di_graph
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ShowDataModelImplementsAPI(ShowBaseAPI):
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)
@@ -226,7 +226,7 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
         return di_graph
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ShowDataModelProvenanceAPI(ShowBaseAPI):
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)
@@ -286,7 +286,7 @@ class ShowDataModelProvenanceAPI(ShowBaseAPI):
         return remove_namespace_from_uri(thing)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ShowInstanceAPI(ShowBaseAPI):
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)
