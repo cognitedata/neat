@@ -14,7 +14,7 @@ from mixpanel import Consumer, Mixpanel  # type: ignore[import-untyped]
 
 from cognite.neat._version import __version__
 
-_NEAT_MIXPANEL_TOKEN: str = ""
+_NEAT_MIXPANEL_TOKEN: str = "bd630ad149d19999df3989c3a3750c4f"
 
 
 class Collector:

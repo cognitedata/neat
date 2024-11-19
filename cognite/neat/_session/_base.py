@@ -218,7 +218,7 @@ class OptAPI:
         print(
             "For Neat to improve, we need to collect usage information. "
             "You acknowledge and agree that neat may collect usage information."
-            "To remove this message run 'neat.opt.in_()"
+            "To remove this message run 'neat.opt.in_() "
             "or to stop collecting usage information run 'neat.opt.out()'."
         )
 
