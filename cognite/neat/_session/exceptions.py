@@ -2,6 +2,8 @@ import functools
 from collections.abc import Callable
 from typing import Any
 
+from ._collector import _COLLECTOR
+
 try:
     from rich import print
 
@@ -16,9 +18,10 @@ class NeatSessionError(Exception):
     ...
 
 
-def _session_method_wrapper(func: Callable):
+def _session_method_wrapper(func: Callable, cls_name: str):
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any):
+        _COLLECTOR.track_session_command(f"{cls_name}.{func.__name__}", *args, **kwargs)
         try:
             return func(*args, **kwargs)
         except NeatSessionError as e:
@@ -63,7 +66,7 @@ def session_class_wrapper(cls: type):
                 continue
             attr = getattr(cls, attr_name)
             if callable(attr):
-                setattr(cls, attr_name, _session_method_wrapper(attr))
+                setattr(cls, attr_name, _session_method_wrapper(attr, cls.__name__))
             elif isinstance(attr, type):
                 to_check.append(attr)
     return cls
