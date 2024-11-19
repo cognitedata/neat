@@ -151,7 +151,7 @@ def get_parameters_by_method(obj: object, prefix: str = "") -> dict[str, dict[st
         if callable(value) and type(value).__name__ == "function":
             annotation_by_method[f"{prefix}{name}"] = get_parameters(value)
         elif isinstance(value, object) and type(value).__module__ != "builtins":
-            sub_prefix = f"{prefix}.{name}." if prefix else f"{name}."
+            sub_prefix = f"{prefix}{name}." if prefix else f"{name}."
             annotation_by_method.update(get_parameters_by_method(value, sub_prefix))
     return annotation_by_method
 

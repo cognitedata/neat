@@ -4,6 +4,12 @@ agreed upon by the team. This includes the following:
     - All parameters should be primary types (int, str, float, bool, etc.) or list/tuple of primary types.
 """
 
+from collections.abc import Collection
+from types import NoneType, UnionType
+from typing import Any, Literal, Union, get_args, get_origin
+
+from cognite.client.data_classes.data_modeling import DataModelId
+
 from cognite.neat import NeatSession
 from cognite.neat._utils.auxiliary import get_parameters_by_method
 
@@ -21,4 +27,13 @@ def test_method_parameters_is_primary_types() -> None:
 
 
 def is_allowed_type(value: type) -> bool:
-    raise NotImplementedError()
+    if isinstance(value, str | int | float | bool):
+        return True
+    if value in (int, str, float, bool, None, DataModelId, Any, NoneType):
+        return True
+    origin = get_origin(value)
+    if origin in (Literal, list, tuple, Union, UnionType, Collection):
+        return all(is_allowed_type(arg) for arg in get_args(value))
+    if value is DataModelId:
+        return True
+    return False
