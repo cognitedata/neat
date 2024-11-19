@@ -22,10 +22,10 @@ from cognite.neat._utils.reader import GitHubReader, NeatReader, PathReader
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, object_wizard, rdf_dm_wizard
 from .engine import import_engine
-from .exceptions import NeatSessionError, intercept_session_exceptions
+from .exceptions import NeatSessionError, session_class_wrapper
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ReadAPI:
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._state = state
@@ -37,7 +37,7 @@ class ReadAPI:
         self.yaml = YamlReadAPI(state, client, verbose)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class BaseReadAPI:
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._state = state
@@ -65,7 +65,7 @@ class BaseReadAPI:
             raise NeatValueError(f"Expected str or Path, got {type(io)}")
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class CDFReadAPI(BaseReadAPI):
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         super().__init__(state, client, verbose)
@@ -110,7 +110,7 @@ class CDFReadAPI(BaseReadAPI):
         return self._store_rules(rules, change)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class CDFClassicAPI(BaseReadAPI):
     @property
     def _get_client(self) -> CogniteClient:
@@ -125,7 +125,7 @@ class CDFClassicAPI(BaseReadAPI):
             print(f"Asset hierarchy {root_asset_external_id} read successfully")
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ExcelReadAPI(BaseReadAPI):
     def __call__(self, io: Any) -> IssueList:
         reader = NeatReader.create(io)
@@ -149,7 +149,7 @@ class ExcelReadAPI(BaseReadAPI):
         return input_rules.issues
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class YamlReadAPI(BaseReadAPI):
     def __call__(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> IssueList:
         reader = NeatReader.create(io)
@@ -199,7 +199,7 @@ class YamlReadAPI(BaseReadAPI):
         return input_rules.issues
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class CSVReadAPI(BaseReadAPI):
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
         reader = NeatReader.create(io)
@@ -220,7 +220,7 @@ class CSVReadAPI(BaseReadAPI):
         self._state.instances.store.write(extractor)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class RDFReadAPI(BaseReadAPI):
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         super().__init__(state, client, verbose)
