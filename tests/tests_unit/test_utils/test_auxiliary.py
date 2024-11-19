@@ -1,4 +1,4 @@
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pytest
 
@@ -22,6 +22,8 @@ class SubClass:
     @property
     def also_ignore_me(self) -> str: ...
 
+    def __call__(self, io: Any) -> None: ...
+
 
 class MyClass:
     ignore_me: ClassVar[str] = "ignore"
@@ -41,6 +43,7 @@ class MyClass:
                 "action": {"values": tuple[int, ...]},
                 "sub_class.verify": {},
                 "sub_class.do_something": {"a": int, "b": bool},
+                "sub_class.__call__": {"io": Any},
             },
         )
     ],

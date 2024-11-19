@@ -146,9 +146,9 @@ def get_parameters_by_method(obj: object, prefix: str = "") -> dict[str, dict[st
     annotation_by_method = {}
     namespace_dict = {**dict(obj.__class__.__dict__.items()), **vars(obj)}
     for name, value in namespace_dict.items():
-        if name.startswith("_") or isinstance(value, property):
+        if name != "__call__" and (name.startswith("_") or isinstance(value, property)):
             continue
-        if callable(value):
+        if callable(value) and type(value).__name__ == "function":
             annotation_by_method[f"{prefix}{name}"] = get_parameters(value)
         elif isinstance(value, object) and type(value).__module__ != "builtins":
             sub_prefix = f"{prefix}.{name}." if prefix else f"{name}."
