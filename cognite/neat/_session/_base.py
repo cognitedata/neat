@@ -9,10 +9,7 @@ from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules, VerifiedRules
-from cognite.neat._rules.importers._rdf._base import DEFAULT_NON_EXISTING_NODE_TYPE
 from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models.data_types import AnyURI
-from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
@@ -144,22 +141,19 @@ class NeatSession:
             "NeatInferredDataModel",
             "v1",
         ),
-        non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
         max_number_of_instance: int = 100,
     ) -> IssueList:
         """Data model inference from instances.
 
         Args:
             model_id: The ID of the inferred data model.
-            non_existing_node_type: The type of node to use when type of node is not possible to determine.
+            max_number_of_instance: The maximum number of instances to use for inference.
         """
-
         model_id = dm.DataModelId.load(model_id)
 
         start = datetime.now(timezone.utc)
         importer = importers.InferenceImporter.from_graph_store(
             store=self._state.instances.store,
-            non_existing_node_type=non_existing_node_type,
             max_number_of_instance=max_number_of_instance,
         )
         inferred_rules: ReadRules = importer.to_rules()
