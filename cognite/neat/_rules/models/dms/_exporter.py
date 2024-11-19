@@ -62,14 +62,14 @@ class _DMSExporter:
         self.include_pipeline = include_pipeline
         self.instance_space = instance_space
         self.rules = rules
-        self._ref_schema = rules.reference.as_schema() if rules.reference else None
+        self._ref_schema = None
         if self._ref_schema:
             # We skip version as that will always be missing in the reference
             self._ref_views_by_id = {
                 dm.ViewId(view.space, view.external_id): view for view in self._ref_schema.views.values()
             }
         else:
-            self._ref_views_by_id = {}
+            self._ref_views_by_id = {}  # type: ignore
 
         self.is_addition = (
             rules.metadata.schema_ is SchemaCompleteness.extended
@@ -410,11 +410,6 @@ class _DMSExporter:
         if dms_view and dms_view.filter_ and not dms_view.filter_.is_empty:
             # Has Explicit Filter, use it
             return dms_view.filter_
-
-        if data_model_type == DataModelType.solution and selected_filter_name in [NodeTypeFilter.name, ""]:
-            # Revamp on filtering will be done so this use-case will be supported differently
-            warnings.warn("NodeTypeFilter is not supported in Solution Model", stacklevel=2)
-            return None
 
         # Enterprise Model or (Solution + HasData)
         ref_containers = view.referenced_containers()

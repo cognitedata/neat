@@ -80,6 +80,7 @@ class DMSMetadata(BaseMetadata):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
+    logical: str | None = None
 
     @field_validator("*", mode="before")
     def strip_string(cls, value: Any) -> Any:
@@ -216,7 +217,7 @@ class DMSProperty(SheetRow):
             return value_type.dump(space=metadata.space, version=metadata.version)
         return str(value_type)
 
-    @field_serializer("view", "container", "class_", when_used="unless-none")
+    @field_serializer("view", "container", when_used="unless-none")
     def remove_default_space(self, value: str, info: SerializationInfo) -> str:
         if (metadata := _metadata(info.context)) and isinstance(value, Entity):
             if info.field_name == "container" and info.context.get("as_reference") is True:
@@ -263,13 +264,7 @@ class DMSContainer(SheetRow):
             used_for=self.used_for,
         )
 
-    @field_serializer("reference", when_used="always")
-    def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
-        if isinstance(info.context, dict) and info.context.get("as_reference") is True:
-            return self.container.dump()
-        return str(value) if value is not None else None
-
-    @field_serializer("container", "class_", when_used="unless-none")
+    @field_serializer("container", when_used="unless-none")
     def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
         if metadata := _metadata(info.context):
             if isinstance(value, DMSEntity):
@@ -306,7 +301,7 @@ class DMSView(SheetRow):
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.view,)
 
-    @field_serializer("view", "class_", when_used="unless-none")
+    @field_serializer("view", when_used="unless-none")
     def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
         if (metadata := _metadata(info.context)) and isinstance(value, Entity):
             return value.dump(prefix=metadata.space, version=metadata.version)

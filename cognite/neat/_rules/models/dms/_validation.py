@@ -57,7 +57,6 @@ class DMSPostValidation:
         if self.metadata.schema_ is SchemaCompleteness.partial:
             return self.issue_list
         dms_schema = self.rules.as_schema()
-        self.issue_list.extend(dms_schema.validate())
         self._validate_performance(dms_schema)
         return self.issue_list
 
@@ -183,34 +182,6 @@ class DMSPostValidation:
             if count > DMS_CONTAINER_PROPERTY_SIZE_LIMIT:
                 errors.append(ViewPropertyLimitWarning(view_id, count))
 
-        if self.metadata.schema_ is SchemaCompleteness.complete:
-            defined_containers = {container.container.as_id() for container in self.containers or []}
-
-            for prop_no, prop in enumerate(self.properties):
-                if prop.container and ((container_id := prop.container.as_id()) not in defined_containers):
-                    errors.append(
-                        ResourceNotDefinedError(
-                            identifier=container_id,
-                            resource_type="container",
-                            location="Containers Sheet",
-                            column_name="Container",
-                            row_number=prop_no,
-                            sheet_name="Properties",
-                        )
-                    )
-            for _container_no, container in enumerate(self.containers or []):
-                for constraint_no, constraint in enumerate(container.constraint or []):
-                    if constraint.as_id() not in defined_containers:
-                        errors.append(
-                            ResourceNotDefinedError(
-                                identifier=constraint.as_id(),
-                                resource_type="container",
-                                location="Containers Sheet",
-                                column_name="Constraint",
-                                row_number=constraint_no,
-                                sheet_name="Properties",
-                            )
-                        )
         self.issue_list.extend(errors)
 
     def _validate_performance(self, dms_schema: DMSSchema) -> None:

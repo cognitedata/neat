@@ -255,7 +255,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             schema_completeness,
             has_reference=reference is not None,
         )
-        user_rules.reference = reference
+
         self._end = datetime.now(timezone.utc)
 
         return ReadRules(user_rules, self.issue_list, {})
@@ -359,8 +359,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             return None
 
         return DMSInputProperty(
-            class_=str(class_entity),
-            property_=prop_id,
             description=prop.description,
             name=prop.name,
             connection=self._get_connection_type(prop),
@@ -369,10 +367,12 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             nullable=self._get_nullable(prop),
             immutable=self._get_immutable(prop),
             default=self._get_default(prop),
-            container=str(ContainerEntity.from_id(prop.container))
-            if isinstance(prop, dm.MappedPropertyApply)
-            else None,
-            container_property=prop.container_property_identifier if isinstance(prop, dm.MappedPropertyApply) else None,
+            container=(
+                str(ContainerEntity.from_id(prop.container)) if isinstance(prop, dm.MappedPropertyApply) else None
+            ),
+            container_property=(
+                prop.container_property_identifier if isinstance(prop, dm.MappedPropertyApply) else None
+            ),
             view=str(view_entity),
             view_property=prop_id,
             index=self._get_index(prop, prop_id),

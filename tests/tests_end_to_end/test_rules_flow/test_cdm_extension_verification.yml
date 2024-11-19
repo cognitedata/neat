@@ -1,154 +1,116 @@
 containers:
-- class_: Area
-  container: Area
+- container: Area
   name: Area
   used_for: node
-- class_: Building
-  container: Building
+- container: Building
   name: Building
   used_for: node
-- class_: ControlModule
-  container: ControlModule
+- container: ControlModule
   name: ControlModule
   used_for: node
-- class_: Datatype
-  container: Datatype
+- container: Datatype
   name: Datatype
   used_for: node
-- class_: Enterprise
-  container: Enterprise
+- container: Enterprise
   name: Enterprise
   used_for: node
-- class_: EquipmentKpi
-  container: EquipmentKpi
+- container: EquipmentKpi
   name: EquipmentKpi
   used_for: node
-- class_: EquipmentModule
-  container: EquipmentModule
+- container: EquipmentModule
   name: EquipmentModule
   used_for: node
-- class_: EquipmentSensor
-  container: EquipmentSensor
+- container: EquipmentSensor
   name: EquipmentSensor
   used_for: node
-- class_: ForcastedData
-  container: ForcastedData
+- container: ForcastedData
   name: ForcastedData
   used_for: node
-- class_: Formulation
-  container: Formulation
+- container: Formulation
   name: Formulation
   used_for: node
-- class_: ISA95Asset
-  container: ISA95Asset
+- container: ISA95Asset
   name: ISA95Asset
   used_for: node
-- class_: KpiData
-  container: KpiData
+- container: KpiData
   name: KpiData
   used_for: node
-- class_: Phase
-  container: Phase
+- container: Phase
   name: Phase
   used_for: node
-- class_: PhaseKpi
-  container: PhaseKpi
+- container: PhaseKpi
   name: PhaseKpi
   used_for: node
-- class_: ProcessArea
-  container: ProcessArea
+- container: ProcessArea
   name: ProcessArea
   used_for: node
-- class_: ProcessCell
-  container: ProcessCell
+- container: ProcessCell
   name: ProcessCell
   used_for: node
-- class_: Batch
-  container: ProcessOrder
+- container: ProcessOrder
   name: ProcessOrder
   used_for: node
-- class_: BatchNode
-  container: ProcessOrderNode
+- container: ProcessOrderNode
   name: ProcessOrderNode
   used_for: node
-- class_: Product
-  container: Product
+- container: Product
   name: Product
   used_for: node
-- class_: ProductComponent
-  container: ProductComponent
+- container: ProductComponent
   name: ProductComponent
   used_for: node
-- class_: ProductNode
-  container: ProductNode
+- container: ProductNode
   name: ProductNode
   used_for: node
-- class_: ProductionLine
-  container: ProductionLine
+- container: ProductionLine
   name: ProductionLine
   used_for: node
-- class_: ProductionUnit
-  container: ProductionUnit
+- container: ProductionUnit
   name: ProductionUnit
   used_for: node
-- class_: Recipe
-  container: SKU
+- container: SKU
   name: SKU
   used_for: node
-- class_: RecipeKpi
-  container: SKUKpi
+- container: SKUKpi
   name: SKUKpi
   used_for: node
-- class_: SampleData
-  container: SampleData
+- container: SampleData
   name: SampleData
   used_for: node
-- class_: Site
-  container: Site
+- container: Site
   name: Site
   used_for: node
-- class_: StartEndTime
-  container: StartEndTime
+- container: StartEndTime
   name: StartEndTime
   used_for: edge
-- class_: Status
-  container: Status
+- container: Status
   name: Status
   used_for: node
-- class_: Operation
-  container: Step
+- container: Step
   name: Step
   used_for: node
-- class_: StorageUnit
-  container: StorageUnit
+- container: StorageUnit
   name: StorageUnit
   used_for: node
-- class_: StorageZone
-  container: StorageZone
+- container: StorageZone
   name: StorageZone
   used_for: node
-- class_: SensorData
-  container: TSData
+- container: TSData
   name: TSData
   used_for: node
-- class_: UnitProcedure
-  container: UnitProcedure
+- container: UnitProcedure
   name: UnitProcedure
   used_for: node
-- class_: WorkCell
-  container: WorkCell
+- container: WorkCell
   name: WorkCell
   used_for: node
-- class_: WorkCenter
-  container: WorkCenter
+- container: WorkCenter
   name: WorkCenter
   used_for: node
-- class_: WorkUnit
-  container: WorkUnit
+- container: WorkUnit
   name: WorkUnit
   used_for: node
-- class_: WorkUnits
-  container: WorkUnits
+- container: WorkUnits
   name: WorkUnits
   used_for: node
 enum:
@@ -221,3553 +183,1098 @@ metadata:
   updated: '2024-10-16T13:42:07.220000'
   version: v1
 properties:
-- class_: Area
-  container: Area
+- container: Area
   container_property: area_guid
   immutable: false
   is_list: false
   name: area_guid
   nullable: true
-  property_: area_guid
   value_type: text
   view: Area
   view_property: area_guid
-- class_: Area
-  connection: direct
+- connection: direct
   container: cdf_cdm:CogniteAsset
   container_property: assetHierarchy_parent
   immutable: false
   is_list: false
   name: site
   nullable: true
-  property_: site
   value_type: Site
   view: Area
   view_property: site
-- class_: Area
-  connection: reverse(property=area)
+- connection: reverse(property=area)
   is_list: true
   name: work_centers
-  property_: work_centers
   value_type: WorkCenter
   view: Area
   view_property: work_centers
-- class_: Building
-  container: Building
+- container: Building
   container_property: building_guid
   immutable: false
   is_list: false
   name: building_guid
   nullable: true
-  property_: building_guid
   value_type: text
   view: Building
   view_property: building_guid
-- class_: ControlModule
-  container: ControlModule
+- container: ControlModule
   container_property: control_module_guid
   immutable: false
   is_list: false
   name: control_module_guid
   nullable: true
-  property_: control_module_giud
   value_type: text
   view: ControlModule
   view_property: control_module_guid
-- class_: Datatype
-  container: Datatype
+- container: Datatype
   container_property: datatype
   immutable: false
   is_list: false
   name: datatype
   nullable: true
-  property_: datatype
   value_type: text
   view: Datatype
   view_property: datatype
-- class_: Datatype
-  container: Datatype
+- container: Datatype
   container_property: datatype_guid
   immutable: false
   is_list: false
   name: datatype_guid
   nullable: true
-  property_: datatype_guid
   value_type: text
   view: Datatype
   view_property: datatype_guid
-- class_: Enterprise
-  container: Enterprise
+- container: Enterprise
   container_property: enterprise_guid
   immutable: false
   is_list: false
   name: enterprise_guid
   nullable: true
-  property_: enterprise_guid
   value_type: text
   view: Enterprise
   view_property: enterprise_guid
-- class_: Enterprise
-  connection: reverse(property=enterprise)
+- connection: reverse(property=enterprise)
   is_list: true
   name: sites
-  property_: sites
   value_type: Site
   view: Enterprise
   view_property: sites
-- class_: EquipmentKpi
-  connection: direct
+- connection: direct
   container: EquipmentKpi
   container_property: equipment_node
   immutable: false
   is_list: false
   name: equipment_node
   nullable: true
-  property_: equipment_node
   value_type: ISA95Asset
   view: EquipmentKpi
   view_property: equipment_node
-- class_: EquipmentModule
-  container: EquipmentModule
+- container: EquipmentModule
   container_property: equipment_module_giud
   immutable: false
   is_list: false
   name: equipment_module_giud
   nullable: true
-  property_: equipment_module_giud
   value_type: text
   view: EquipmentModule
   view_property: equipment_module_giud
-- class_: EquipmentModule
-  connection: reverse(property=equipment_module)
+- connection: reverse(property=equipment_module)
   is_list: true
   name: equipment_sensors
-  property_: equipment_sensors
   value_type: EquipmentSensor
   view: EquipmentModule
   view_property: equipment_sensors
-- class_: EquipmentModule
-  connection: reverse(property=equipment_module)
+- connection: reverse(property=equipment_module)
   is_list: true
   name: forcasts
-  property_: forcasts
   value_type: ForcastedData
   view: EquipmentModule
   view_property: forcasts
-- class_: EquipmentModule
-  connection: reverse(property=equipment_module)
+- connection: reverse(property=equipment_module)
   is_list: true
   name: samples
-  property_: samples
   value_type: SampleData
   view: EquipmentModule
   view_property: samples
-- class_: EquipmentSensor
-  connection: direct
+- connection: direct
   container: EquipmentSensor
   container_property: equipment_module
   immutable: false
   is_list: false
   name: equipment_module
   nullable: true
-  property_: equipment_module
   value_type: EquipmentModule
   view: EquipmentSensor
   view_property: equipment_module
-- class_: EquipmentSensor
-  container: EquipmentSensor
+- container: EquipmentSensor
   container_property: equipment_sensor_guid
   immutable: false
   is_list: false
   name: equipment_sensor_guid
   nullable: true
-  property_: equipment_sensor_guid
   value_type: text
   view: EquipmentSensor
   view_property: equipment_sensor_guid
-- class_: ForcastedData
-  connection: direct
+- connection: direct
   container: ForcastedData
   container_property: equipment_module
   immutable: false
   is_list: false
   name: equipment_module
   nullable: true
-  property_: equipment_module
   value_type: EquipmentModule
   view: ForcastedData
   view_property: equipment_module
-- class_: ForcastedData
-  container: ForcastedData
+- container: ForcastedData
   container_property: forcast_guid
   immutable: false
   is_list: false
   name: forcast_guid
   nullable: true
-  property_: forcast_guid
   value_type: text
   view: ForcastedData
   view_property: forcast_guid
-- class_: Formulation
-  connection: direct
+- connection: direct
   container: Formulation
   container_property: process_orders
   immutable: false
   is_list: true
   name: process_orders
   nullable: true
-  property_: batches
   value_type: ProcessOrder
   view: Formulation
   view_property: process_orders
-- class_: Formulation
-  connection: direct
+- connection: direct
   container: Formulation
   container_property: sku
   immutable: false
   is_list: false
   name: sku
   nullable: true
-  property_: recipe
   value_type: SKU
   view: Formulation
   view_property: sku
-- class_: ISA95Asset
-  container: ISA95Asset
+- container: ISA95Asset
   container_property: asset_guid
   immutable: false
   is_list: false
   name: asset_guid
   nullable: true
-  property_: asset_guid
   value_type: text
   view: ISA95Asset
   view_property: asset_guid
-- class_: ISA95Module
-  connection: direct
+- connection: direct
   container: ISA95Asset
   container_property: forcasted_data
   immutable: true
   is_list: true
   name: forcasted_data
   nullable: true
-  property_: forcasted_data
   value_type: ForcastedData
   view: ISA95Asset
   view_property: forcasted_data
-- class_: ISA95Module
-  connection: direct
+- connection: direct
   container: ISA95Asset
   container_property: kpis
   immutable: true
   is_list: true
   name: kpis
   nullable: true
-  property_: kpis
   value_type: EquipmentKpi
   view: ISA95Asset
   view_property: kpis
-- class_: ISA95Class
-  connection: direct
+- connection: direct
   container: ISA95Asset
   container_property: status
   immutable: false
   is_list: false
   name: status
   nullable: true
-  property_: status
   value_type: Status
   view: ISA95Asset
   view_property: status
-- class_: KpiData
-  container: KpiData
+- container: KpiData
   container_property: kpi_properties
   immutable: false
   is_list: false
   name: kpi_properties
   nullable: true
-  property_: kpi_properties
   value_type: json
   view: KpiData
   view_property: kpi_properties
-- class_: KpiData
-  container: KpiData
+- container: KpiData
   container_property: kpi_type
   immutable: false
   is_list: false
   name: kpi_type
   nullable: true
-  property_: kpi_type
   value_type: text
   view: KpiData
   view_property: kpi_type
-- class_: Phase
-  container: Phase
+- container: Phase
   container_property: type
   immutable: false
   is_list: false
   name: instance_type
   nullable: true
-  property_: type
   value_type: text
   view: Phase
   view_property: instance_type
-- class_: Phase
-  container: Phase
+- container: Phase
   container_property: modified
   immutable: false
   is_list: false
   name: modified
   nullable: true
-  property_: modified
   value_type: timestamp
   view: Phase
   view_property: modified
-- class_: Phase
-  container: Phase
+- container: Phase
   container_property: phase_guid
   immutable: false
   is_list: false
   name: phase_guid
   nullable: true
-  property_: uniqueid
   value_type: text
   view: Phase
   view_property: phase_guid
-- class_: Phase
-  connection: direct
+- connection: direct
   container: Phase
   container_property: phase_kpis
   immutable: false
   is_list: true
   name: phase_kpis
   nullable: true
-  property_: phase_kpis
   value_type: PhaseKpi
   view: Phase
   view_property: phase_kpis
-- class_: Phase
-  connection: direct
+- connection: direct
   container: Phase
   container_property: primary_equipment_module
   immutable: false
   is_list: false
   name: primary_equipment_module
   nullable: true
-  property_: primary_equipment_module
   value_type: EquipmentModule
   view: Phase
   view_property: primary_equipment_module
-- class_: Phase
-  container: Phase
+- container: Phase
   container_property: revision
   immutable: false
   is_list: false
   name: revision
   nullable: true
-  property_: revision
   value_type: int32
   view: Phase
   view_property: revision
-- class_: Phase
-  container: Phase
+- container: Phase
   container_property: status
   immutable: false
   is_list: false
   name: status
   nullable: true
-  property_: status
   value_type: text
   view: Phase
   view_property: status
-- class_: Phase
-  connection: edge(properties=StartEndTime)
+- connection: edge(properties=StartEndTime)
   is_list: true
   name: step
-  property_: operation
   value_type: Step
   view: Phase
   view_property: step
-- class_: Phase
-  connection: edge(properties=StartEndTime)
+- connection: edge(properties=StartEndTime)
   is_list: true
   name: unit_procedure
-  property_: unit_procedure
   value_type: UnitProcedure
   view: Phase
   view_property: unit_procedure
-- class_: PhaseKpi
-  connection: direct
+- connection: direct
   container: PhaseKpi
   container_property: phase
   immutable: false
   is_list: false
   name: phase
   nullable: true
-  property_: phase
   value_type: Phase
   view: PhaseKpi
   view_property: phase
-- class_: ProcessArea
-  container: ProcessArea
+- container: ProcessArea
   container_property: process_area_guid
   immutable: false
   is_list: false
   name: process_area_guid
   nullable: true
-  property_: process_area_guid
   value_type: text
   view: ProcessArea
   view_property: process_area_guid
-- class_: ProcessCell
-  container: ProcessCell
+- container: ProcessCell
   container_property: process_cell_guid
   immutable: false
   is_list: false
   name: process_cell_guid
   nullable: true
-  property_: process_cell_guid
   value_type: text
   view: ProcessCell
   view_property: process_cell_guid
-- class_: Batch
-  container: ProcessOrder
+- container: ProcessOrder
   container_property: excludePo
   immutable: false
   is_list: false
   name: excludePO
   nullable: true
-  property_: excludeBatch
   value_type: boolean
   view: ProcessOrder
   view_property: excludePO
-- class_: Batch
-  connection: direct
+- connection: direct
   container: ProcessOrder
   container_property: formulation
   immutable: false
   is_list: false
   name: formulation
   nullable: true
-  property_: formulation
   value_type: Formulation
   view: ProcessOrder
   view_property: formulation
-- class_: Batch
-  container: ProcessOrder
+- container: ProcessOrder
   container_property: po_guid
   immutable: false
   is_list: false
   name: po_guid
   nullable: true
-  property_: batchid
   value_type: text
   view: ProcessOrder
   view_property: po_guid
-- class_: Batch
-  connection: direct
+- connection: direct
   container: ProcessOrder
   container_property: sku
   immutable: false
   is_list: false
   name: sku
   nullable: true
-  property_: recipe
   value_type: SKU
   view: ProcessOrder
   view_property: sku
-- class_: BatchNode
-  connection: reverse(property=parent_po_node)
+- connection: reverse(property=parent_po_node)
   is_list: true
   name: children_po_node
-  property_: children_batch_node
   value_type: ProcessOrderNode
   view: ProcessOrderNode
   view_property: children_po_node
-- class_: BatchNode
-  connection: direct
+- connection: direct
   container: ProcessOrderNode
   container_property: kpis
   immutable: false
   is_list: true
   name: kpis
   nullable: true
-  property_: kpis
   value_type: SKUKpi
   view: ProcessOrderNode
   view_property: kpis
-- class_: BatchNode
-  container: ProcessOrderNode
+- container: ProcessOrderNode
   container_property: modified
   immutable: false
   is_list: false
   name: modified
   nullable: true
-  property_: modified
   value_type: timestamp
   view: ProcessOrderNode
   view_property: modified
-- class_: BatchNode
-  connection: direct
+- connection: direct
   container: ProcessOrderNode
   container_property: parent_po_node
   immutable: false
   is_list: false
   name: parent_po_node
   nullable: true
-  property_: parent_batch_node
   value_type: ProcessOrderNode
   view: ProcessOrderNode
   view_property: parent_po_node
-- class_: BatchNode
-  connection: direct
+- connection: direct
   container: ProcessOrderNode
   container_property: primary_equipment_module
   immutable: false
   is_list: false
   name: primary_equipment_module
   nullable: true
-  property_: primary_equipment_module
   value_type: EquipmentModule
   view: ProcessOrderNode
   view_property: primary_equipment_module
-- class_: BatchNode
-  container: ProcessOrderNode
+- container: ProcessOrderNode
   container_property: revision
   immutable: false
   is_list: false
   name: revision
   nullable: true
-  property_: revision
   value_type: int32
   view: ProcessOrderNode
   view_property: revision
-- class_: BatchNode
-  container: ProcessOrderNode
+- container: ProcessOrderNode
   container_property: status
   immutable: false
   is_list: false
   name: status
   nullable: true
-  property_: status
   value_type: text
   view: ProcessOrderNode
   view_property: status
-- class_: Product
-  container: Product
+- container: Product
   container_property: product_guid
   immutable: false
   is_list: false
   name: product_guid
   nullable: true
-  property_: product_guid
   value_type: text
   view: Product
   view_property: product_guid
-- class_: ProductComponent
-  container: ProductComponent
+- container: ProductComponent
   container_property: product_component_guid
   immutable: false
   is_list: false
   name: product_component_guid
   nullable: true
-  property_: product_component_guid
   value_type: text
   view: ProductComponent
   view_property: product_component_guid
-- class_: ProductNode
-  connection: reverse(property=parent_product_components)
+- connection: reverse(property=parent_product_components)
   is_list: true
   name: children_product_components
-  property_: productComponents
   value_type: ProductNode
   view: ProductNode
   view_property: children_product_components
-- class_: ProductNode
-  connection: direct
+- connection: direct
   container: ProductNode
   container_property: parent_product_components
   immutable: false
   is_list: false
   name: parent_product_components
   nullable: true
-  property_: parent_product_components
   value_type: ProductNode
   view: ProductNode
   view_property: parent_product_components
-- class_: ProductNode
-  connection: direct
+- connection: direct
   container: ProductNode
   container_property: process_order_node
   immutable: false
   is_list: false
   name: process_order_node
   nullable: true
-  property_: batch_node
   value_type: ProcessOrderNode
   view: ProductNode
   view_property: process_order_node
-- class_: ProductNode
-  connection: direct
+- connection: direct
   container: ProductNode
   container_property: product
   immutable: false
   is_list: false
   name: product
   nullable: true
-  property_: product
   value_type: Product
   view: ProductNode
   view_property: product
-- class_: ProductNode
-  connection: edge(properties=StartEndTime)
+- connection: edge(properties=StartEndTime)
   is_list: true
   name: sites
-  property_: sites
   value_type: Site
   view: ProductNode
   view_property: sites
-- class_: ProductNode
-  connection: direct
+- connection: direct
   container: ProductNode
   container_property: sku
   immutable: false
   is_list: false
   name: sku
   nullable: true
-  property_: recipe
   value_type: SKU
   view: ProductNode
   view_property: sku
-- class_: ProductionLine
-  container: ProductionLine
+- container: ProductionLine
   container_property: production_line_guid
   immutable: false
   is_list: false
   name: production_line_guid
   nullable: true
-  property_: production_line_guid
   value_type: text
   view: ProductionLine
   view_property: production_line_guid
-- class_: ProductionUnit
-  container: ProductionUnit
+- container: ProductionUnit
   container_property: production_unit_guid
   immutable: false
   is_list: false
   name: production_unit_guid
   nullable: true
-  property_: production_unit_guid
   value_type: text
   view: ProductionUnit
   view_property: production_unit_guid
-- class_: Recipe
-  connection: direct
+- connection: direct
   container: SKU
   container_property: formulations
   immutable: false
   is_list: true
   name: formulations
   nullable: true
-  property_: formulations
   value_type: Formulation
   view: SKU
   view_property: formulations
-- class_: Recipe
-  connection: edge(properties=StartEndTime)
+- connection: edge(properties=StartEndTime)
   is_list: true
   name: isa95_asset
-  property_: isa95_node
   value_type: ISA95Asset
   view: SKU
   view_property: isa95_asset
-- class_: Recipe
-  connection: direct
+- connection: direct
   container: SKU
   container_property: kpis
   immutable: false
   is_list: true
   name: kpis
   nullable: true
-  property_: kpis
   value_type: SKUKpi
   view: SKU
   view_property: kpis
-- class_: Recipe
-  connection: direct
+- connection: direct
   container: SKU
   container_property: process_orders
   immutable: false
   is_list: true
   name: process_orders
   nullable: true
-  property_: batches
   value_type: ProcessOrder
   view: SKU
   view_property: process_orders
-- class_: Recipe
-  connection: direct
+- connection: direct
   container: SKU
   container_property: products
   immutable: false
   is_list: true
   name: products
   nullable: true
-  property_: products
   value_type: Product
   view: SKU
   view_property: products
-- class_: SKU
-  container: SKU
+- container: SKU
   container_property: sku_guid
   immutable: false
   is_list: false
   name: sku_guid
   nullable: true
-  property_: sku_guid
   value_type: text
   view: SKU
   view_property: sku_guid
-- class_: RecipeKpi
-  connection: direct
+- connection: direct
   container: SKUKpi
   container_property: process_order
   immutable: false
   is_list: true
   name: process_order
   nullable: true
-  property_: batch
   value_type: ProcessOrder
   view: SKUKpi
   view_property: process_order
-- class_: RecipeKpi
-  connection: direct
+- connection: direct
   container: SKUKpi
   container_property: sku
   immutable: false
   is_list: false
   name: sku
   nullable: true
-  property_: recipe
   value_type: SKU
   view: SKUKpi
   view_property: sku
-- class_: SampleData
-  connection: direct
+- connection: direct
   container: SampleData
   container_property: equipment_module
   immutable: false
   is_list: false
   name: equipment_module
   nullable: true
-  property_: equipment_module
   value_type: EquipmentModule
   view: SampleData
   view_property: equipment_module
-- class_: SampleData
-  container: SampleData
+- container: SampleData
   container_property: samples_guid
   immutable: false
   is_list: false
   name: samples_guid
   nullable: true
-  property_: samples_guid
   value_type: text
   view: SampleData
   view_property: samples_guid
-- class_: Site
-  connection: reverse(property=site)
+- connection: reverse(property=site)
   is_list: true
   name: areas
-  property_: areas
   value_type: Area
   view: Site
   view_property: areas
-- class_: Site
-  connection: direct
+- connection: direct
   container: cdf_cdm:CogniteAsset
   container_property: assetHierarchy_parent
   immutable: false
   is_list: false
   name: enterprise
   nullable: true
-  property_: enterprise
   value_type: Enterprise
   view: Site
   view_property: enterprise
-- class_: Site
-  container: Site
+- container: Site
   container_property: site_guid
   immutable: false
   is_list: false
   name: site_guid
   nullable: true
-  property_: site_guid
   value_type: text
   view: Site
   view_property: site_guid
-- class_: StartEndTime
-  container: StartEndTime
+- container: StartEndTime
   container_property: edge_guid
   immutable: false
   is_list: false
   name: edge_guid
   nullable: true
-  property_: edge_guid
   value_type: text
   view: StartEndTime
   view_property: edge_guid
-- class_: StartEndTime
-  container: StartEndTime
+- container: StartEndTime
   container_property: end_time
   immutable: false
   is_list: false
   name: end_time
   nullable: true
-  property_: end_time
   value_type: timestamp
   view: StartEndTime
   view_property: end_time
-- class_: StartEndTime
-  container: StartEndTime
+- container: StartEndTime
   container_property: start_time
   immutable: false
   is_list: false
   name: start_time
   nullable: true
-  property_: start_time
   value_type: timestamp
   view: StartEndTime
   view_property: start_time
-- class_: Status
-  container: Status
+- container: Status
   container_property: status
   immutable: false
   is_list: false
   name: status
   nullable: true
-  property_: status
   value_type: text
   view: Status
   view_property: status
-- class_: Status
-  container: Status
+- container: Status
   container_property: status_guid
   immutable: false
   is_list: false
   name: status_guid
   nullable: true
-  property_: status_guid
   value_type: text
   view: Status
   view_property: status_guid
-- class_: Operation
-  connection: edge(direction=inwards,properties=StartEndTime)
+- connection: edge(direction=inwards,properties=StartEndTime)
   is_list: true
   name: phase
-  property_: phase
   value_type: Phase
   view: Step
   view_property: phase
-- class_: Operation
-  container: Step
+- container: Step
   container_property: step_guid
   immutable: false
   is_list: false
   name: step_guid
   nullable: true
-  property_: operation_guid
   value_type: text
   view: Step
   view_property: step_guid
-- class_: StorageUnit
-  container: StorageUnit
+- container: StorageUnit
   container_property: storage_unit_guid
   immutable: false
   is_list: false
   name: storage_unit_guid
   nullable: true
-  property_: storage_unit_guid
   value_type: text
   view: StorageUnit
   view_property: storage_unit_guid
-- class_: StorageZone
-  container: StorageZone
+- container: StorageZone
   container_property: storage_zone_guid
   immutable: false
   is_list: false
   name: storage_zone_guid
   nullable: true
-  property_: storage_zone_guid
   value_type: text
   view: StorageZone
   view_property: storage_zone_guid
-- class_: SensorData
-  container: TSData
+- container: TSData
   container_property: ts_data_guid
   immutable: false
   is_list: false
   name: ts_data_guid
   nullable: true
-  property_: sensor_name
   value_type: text
   view: TSData
   view_property: ts_data_guid
-- class_: TSData
-  container: TSData
+- container: TSData
   container_property: type
   immutable: false
   is_list: false
   name: type
   nullable: true
-  property_: type
   value_type: text
   view: TSData
   view_property: type
-- class_: TSData
-  container: TSData
+- container: TSData
   container_property: value
   immutable: false
   is_list: false
   name: value
   nullable: true
-  property_: value
   value_type: timeseries
   view: TSData
   view_property: value
-- class_: UnitProcedure
-  connection: direct
+- connection: direct
   container: UnitProcedure
   container_property: sku
   immutable: false
   is_list: false
   name: sku
   nullable: true
-  property_: recipe
   value_type: SKU
   view: UnitProcedure
   view_property: sku
-- class_: UnitProcedure
-  connection: edge(properties=StartEndTime)
+- connection: edge(properties=StartEndTime)
   is_list: true
   name: step
-  property_: operation
   value_type: Step
   view: UnitProcedure
   view_property: step
-- class_: UnitProcedure
-  container: UnitProcedure
+- container: UnitProcedure
   container_property: unit_procedure_guid
   immutable: false
   is_list: false
   name: unit_procedure_guid
   nullable: true
-  property_: unit_procedure_guid
   value_type: text
   view: UnitProcedure
   view_property: unit_procedure_guid
-- class_: UnitProcedure
-  connection: edge(properties=StartEndTime)
+- connection: edge(properties=StartEndTime)
   is_list: true
   name: work_units
-  property_: work_units
   value_type: WorkUnits
   view: UnitProcedure
   view_property: work_units
-- class_: WorkCell
-  container: WorkCell
+- container: WorkCell
   container_property: work_cell_guid
   immutable: false
   is_list: false
   name: work_cell_guid
   nullable: true
-  property_: work_cell_guid
   value_type: text
   view: WorkCell
   view_property: work_cell_guid
-- class_: WorkCenter
-  connection: direct
+- connection: direct
   container: cdf_cdm:CogniteAsset
   container_property: assetHierarchy_parent
   immutable: false
   is_list: false
   name: area
   nullable: true
-  property_: area
   value_type: Area
   view: WorkCenter
   view_property: area
-- class_: WorkCenter
-  container: WorkCenter
+- container: WorkCenter
   container_property: work_center_guid
   immutable: false
   is_list: false
   name: work_center_guid
   nullable: true
-  property_: work_center_guid
   value_type: text
   view: WorkCenter
   view_property: work_center_guid
-- class_: WorkCenter
-  connection: reverse(property=work_center)
+- connection: reverse(property=work_center)
   is_list: true
   name: work_units
-  property_: work_units
   value_type: WorkUnits
   view: WorkCenter
   view_property: work_units
-- class_: WorkUnit
-  container: WorkUnit
+- container: WorkUnit
   container_property: work_unit_guid
   immutable: false
   is_list: false
   name: work_unit_guid
   nullable: true
-  property_: work_unit_guid
   value_type: text
   view: WorkUnit
   view_property: work_unit_guid
-- class_: WorkUnits
-  connection: direct
+- connection: direct
   container: cdf_cdm:CogniteAsset
   container_property: assetHierarchy_parent
   immutable: false
   is_list: false
   name: work_center
   nullable: true
-  property_: work_center
   value_type: WorkCenter
   view: WorkUnits
   view_property: work_center
-- class_: WorkUnits
-  container: WorkUnits
+- container: WorkUnits
   container_property: work_units_guid
   immutable: false
   is_list: false
   name: work_units_guid
   nullable: true
-  property_: work_units_guid
   value_type: text
   view: WorkUnits
   view_property: work_units_guid
-reference:
-  containers:
-  - class_: CogniteActivity
-    constraint: CogniteDescribable,CogniteSourceable,CogniteSchedulable
-    container: CogniteActivity
-    description: Represent an activity
-    reference: cdf_cdm:CogniteActivity
-    used_for: node
-  - class_: CogniteAnnotation
-    constraint: CogniteDescribable,CogniteSourceable
-    container: CogniteAnnotation
-    description: Annotation represents contextualization results or links
-    reference: cdf_cdm:CogniteAnnotation
-    used_for: edge
-  - class_: CogniteAsset
-    constraint: CogniteDescribable,CogniteVisualizable,CogniteSourceable
-    container: CogniteAsset
-    description: The asset is the bare bone representation of assets in our asset
-      centric world
-    reference: cdf_cdm:CogniteAsset
-    used_for: node
-  - class_: CogniteAssetClass
-    constraint: CogniteDescribable
-    container: CogniteAssetClass
-    description: This identifies the class of an asset
-    reference: cdf_cdm:CogniteAssetClass
-    used_for: node
-  - class_: CogniteAssetType
-    constraint: CogniteDescribable
-    container: CogniteAssetType
-    description: This identifies the type of an asset
-    reference: cdf_cdm:CogniteAssetType
-    used_for: node
-  - class_: CogniteDescribable
-    container: CogniteDescribable
-    description: The describable core concept is used as a standard way of holding
-      the bare minimum of information about the instance.
-    reference: cdf_cdm:CogniteDescribable
-    used_for: all
-  - class_: CogniteDiagramAnnotation
-    constraint: CogniteDescribable,CogniteSourceable,CogniteAnnotation
-    container: CogniteDiagramAnnotation
-    reference: cdf_cdm:CogniteDiagramAnnotation
-    used_for: edge
-  - class_: CogniteEquipment
-    constraint: CogniteDescribable,CogniteSourceable
-    container: CogniteEquipment
-    description: Represent a physical piece of equipment
-    reference: cdf_cdm:CogniteEquipment
-    used_for: node
-  - class_: CogniteEquipmentType
-    constraint: CogniteDescribable
-    container: CogniteEquipmentType
-    description: This identifies the type of an equipment
-    reference: cdf_cdm:CogniteEquipmentType
-    used_for: node
-  - class_: CogniteFile
-    constraint: CogniteDescribable,CogniteSourceable
-    container: CogniteFile
-    description: This concept models the underlying file from the Files resource type
-    reference: cdf_cdm:CogniteFile
-    used_for: node
-  - class_: CogniteFileCategory
-    constraint: CogniteDescribable
-    container: CogniteFileCategory
-    description: Specifies the category for a file (as a result of categorization/classification))
-    reference: cdf_cdm:CogniteFileCategory
-    used_for: node
-  - class_: CogniteSchedulable
-    container: CogniteSchedulable
-    description: CogniteSchedulable represents the metadata about when an activity
-      (or similar) starts and ends
-    reference: cdf_cdm:CogniteSchedulable
-    used_for: node
-  - class_: CogniteSourceSystem
-    container: CogniteSourceSystem
-    description: The CogniteSourceSystem core concept is used to standardize the way
-      source system is stored.
-    reference: cdf_cdm:CogniteSourceSystem
-    used_for: node
-  - class_: CogniteSourceable
-    container: CogniteSourceable
-    description: The CogniteSourceable core concept is used to standardize the way
-      source information is stored.
-    reference: cdf_cdm:CogniteSourceable
-    used_for: all
-  - class_: CogniteTimeSeries
-    constraint: CogniteDescribable,CogniteSourceable
-    container: CogniteTimeSeries
-    reference: cdf_cdm:CogniteTimeSeries
-    used_for: node
-  - class_: CogniteUnit
-    constraint: CogniteDescribable
-    container: CogniteUnit
-    description: Represents a single unit of measurement
-    reference: cdf_cdm:CogniteUnit
-    used_for: node
-  - class_: CogniteVisualizable
-    container: CogniteVisualizable
-    description: CogniteVisualizable defines the standard way to reference a related
-      3D resource
-    reference: cdf_cdm:CogniteVisualizable
-    used_for: node
-  - class_: cdf_cdm_3d:Cognite360Image
-    container: cdf_cdm_3d:Cognite360Image
-    reference: cdf_cdm_3d:Cognite360Image
-    used_for: node
-  - class_: cdf_cdm_3d:Cognite360ImageAnnotation
-    container: cdf_cdm_3d:Cognite360ImageAnnotation
-    reference: cdf_cdm_3d:Cognite360ImageAnnotation
-    used_for: edge
-  - class_: cdf_cdm_3d:Cognite3DGroup
-    container: cdf_cdm_3d:Cognite3DGroup
-    reference: cdf_cdm_3d:Cognite3DGroup
-    used_for: node
-  - class_: cdf_cdm_3d:Cognite3DModel
-    container: cdf_cdm_3d:Cognite3DModel
-    reference: cdf_cdm_3d:Cognite3DModel
-    used_for: node
-  - class_: cdf_cdm_3d:Cognite3DObject
-    container: cdf_cdm_3d:Cognite3DObject
-    reference: cdf_cdm_3d:Cognite3DObject
-    used_for: node
-  - class_: cdf_cdm_3d:Cognite3DRevision
-    container: cdf_cdm_3d:Cognite3DRevision
-    reference: cdf_cdm_3d:Cognite3DRevision
-    used_for: node
-  - class_: cdf_cdm_3d:Cognite3DTransformation
-    container: cdf_cdm_3d:Cognite3DTransformation
-    reference: cdf_cdm_3d:Cognite3DTransformation
-    used_for: all
-  - class_: cdf_cdm_3d:CogniteCADNode
-    container: cdf_cdm_3d:CogniteCADNode
-    reference: cdf_cdm_3d:CogniteCADNode
-    used_for: node
-  - class_: cdf_cdm_3d:CogniteCADRevision
-    container: cdf_cdm_3d:CogniteCADRevision
-    reference: cdf_cdm_3d:CogniteCADRevision
-    used_for: node
-  - class_: cdf_cdm_3d:CogniteCubeMap
-    container: cdf_cdm_3d:CogniteCubeMap
-    reference: cdf_cdm_3d:CogniteCubeMap
-    used_for: node
-  - class_: cdf_cdm_3d:CognitePointCloudRevision
-    container: cdf_cdm_3d:CognitePointCloudRevision
-    reference: cdf_cdm_3d:CognitePointCloudRevision
-    used_for: node
-  - class_: cdf_cdm_3d:CognitePointCloudVolume
-    container: cdf_cdm_3d:CognitePointCloudVolume
-    reference: cdf_cdm_3d:CognitePointCloudVolume
-    used_for: node
-  enum:
-  - collection: groupType
-    name: Station360
-    value: Station360
-  - collection: status
-    name: Approved
-    value: Approved
-  - collection: status
-    name: Done
-    value: Done
-  - collection: status
-    name: Failed
-    value: Failed
-  - collection: status
-    name: Processing
-    value: Processing
-  - collection: status
-    name: Queued
-    value: Queued
-  - collection: status
-    name: Rejected
-    value: Rejected
-  - collection: status
-    name: Suggested
-    value: Suggested
-  - collection: type
-    name: CAD
-    value: CAD
-  - collection: type
-    name: CAD
-    value: CAD
-  - collection: type
-    name: Image360
-    value: Image360
-  - collection: type
-    name: Image360
-    value: Image360
-  - collection: type
-    name: PointCloud
-    value: PointCloud
-  - collection: type
-    name: PointCloud
-    value: PointCloud
-  - collection: type
-    description: Time series with double floating point data points.
-    name: numeric
-    value: numeric
-  - collection: type
-    description: Time series with string data points.
-    name: string
-    value: string
-  - collection: volumeType
-    name: Box
-    value: Box
-  - collection: volumeType
-    name: Cylinder
-    value: Cylinder
-  metadata:
-    created: '2024-08-29T14:02:17.831000'
-    creator: MISSING
-    data_model_type: enterprise
-    description: Cognite core data model
-    extension: addition
-    external_id: CogniteCore
-    name: Cognite core data model
-    role: DMS Architect
-    schema_: complete
-    space: cdf_cdm
-    updated: '2024-08-29T14:02:17.831000'
-    version: v1
-  properties:
-  - class_: Cognite360Image
-    connection: direct
-    container: cdf_cdm_3d:Cognite360Image
-    container_property: collection360
-    description: Direct relation to Cognite360ImageCollection
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: collection360
-    reference: cdf_cdm:Cognite360Image(property=collection360,version=v1)
-    value_type: Cognite360ImageCollection
-    view: Cognite360Image
-    view_property: collection360
-  - class_: Cognite360Image
-    connection: direct
-    container: cdf_cdm_3d:Cognite360Image
-    container_property: group3d
-    description: Direct relation to Cognite3DGroup instance that groups different
-      Cognite360Image instances to the same station
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: station360
-    reference: cdf_cdm:Cognite360Image(property=station360,version=v1)
-    value_type: Cognite360ImageStation
-    view: Cognite360Image
-    view_property: station360
-  - class_: Cognite360Image
-    container: cdf_cdm_3d:Cognite360Image
-    container_property: takenAt
-    description: The timestamp when the 6 photos were taken
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: takenAt
-    reference: cdf_cdm:Cognite360Image(property=takenAt,version=v1)
-    value_type: timestamp
-    view: Cognite360Image
-    view_property: takenAt
-  - class_: Cognite360ImageAnnotation
-    container: cdf_cdm_3d:Cognite360ImageAnnotation
-    container_property: formatVersion
-    description: Specifies the storage representation for the polygon
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: formatVersion
-    reference: cdf_cdm:Cognite360ImageAnnotation(property=formatVersion,version=v1)
-    value_type: text
-    view: Cognite360ImageAnnotation
-    view_property: formatVersion
-  - class_: Cognite360ImageAnnotation
-    container: cdf_cdm_3d:Cognite360ImageAnnotation
-    container_property: polygon
-    description: List of floats representing the polygon. Format depends on formatVersion
-    immutable: false
-    is_list: true
-    nullable: true
-    property_: polygon
-    reference: cdf_cdm:Cognite360ImageAnnotation(property=polygon,version=v1)
-    value_type: float64
-    view: Cognite360ImageAnnotation
-    view_property: polygon
-  - class_: Cognite360ImageModel
-    connection: reverse(property=model3D)
-    description: List Cognite360Image collections for this instance
-    is_list: true
-    property_: collections
-    reference: cdf_cdm:Cognite360ImageModel(property=collections,version=v1)
-    value_type: Cognite360ImageCollection
-    view: Cognite360ImageModel
-    view_property: collections
-  - class_: Cognite360ImageStation
-    container: cdf_cdm_3d:Cognite3DGroup
-    container_property: groupType
-    description: Type of group
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: groupType
-    reference: cdf_cdm:Cognite360ImageStation(property=groupType,version=v1)
-    value_type: enum(collection=groupType)
-    view: Cognite360ImageStation
-    view_property: groupType
-  - class_: Cognite3DModel
-    connection: direct
-    container: cdf_cdm_3d:Cognite3DModel
-    container_property: thumbnail
-    description: Thumbnail of the 3D model
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: thumbnail
-    reference: cdf_cdm:Cognite3DModel(property=thumbnail,version=v1)
-    value_type: CogniteFile
-    view: Cognite3DModel
-    view_property: thumbnail
-  - class_: Cognite3DModel
-    container: cdf_cdm_3d:Cognite3DModel
-    container_property: type
-    description: CAD, PointCloud or Image360
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: type
-    reference: cdf_cdm:Cognite3DModel(property=type,version=v1)
-    value_type: enum(collection=type)
-    view: Cognite3DModel
-    view_property: type
-  - class_: Cognite3DObject
-    connection: reverse(property=object3D)
-    description: Asset that is tied to this 3D object
-    is_list: false
-    property_: asset
-    reference: cdf_cdm:Cognite3DObject(property=asset,version=v1)
-    value_type: CogniteAsset
-    view: Cognite3DObject
-    view_property: asset
-  - class_: Cognite3DObject
-    connection: reverse(property=object3D)
-    description: List of up to 1000 CADNodes that represents the connected CogniteAsset
-    is_list: true
-    property_: cadNodes
-    reference: cdf_cdm:Cognite3DObject(property=cadNodes,version=v1)
-    value_type: CogniteCADNode
-    view: Cognite3DObject
-    view_property: cadNodes
-  - class_: Cognite3DObject
-    connection: edge(properties=Cognite360ImageAnnotation)
-    description: Edge connection to Cognite360Image annotations that represents the
-      connected CogniteAsset
-    is_list: true
-    property_: images360
-    reference: cdf_cdm:Cognite3DObject(property=images360,version=v1)
-    value_type: Cognite360Image
-    view: Cognite3DObject
-    view_property: images360
-  - class_: Cognite3DObject
-    connection: reverse(property=object3D)
-    description: List of up to 1000 PointCloudVolumes that represents the connected
-      CogniteAsset
-    is_list: true
-    property_: pointCloudVolumes
-    reference: cdf_cdm:Cognite3DObject(property=pointCloudVolumes,version=v1)
-    value_type: CognitePointCloudVolume
-    view: Cognite3DObject
-    view_property: pointCloudVolumes
-  - class_: Cognite3DObject
-    container: cdf_cdm_3d:Cognite3DObject
-    container_property: xMax
-    description: Highest X value in bounding box
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: xMax
-    reference: cdf_cdm:Cognite3DObject(property=xMax,version=v1)
-    value_type: float64
-    view: Cognite3DObject
-    view_property: xMax
-  - class_: Cognite3DObject
-    container: cdf_cdm_3d:Cognite3DObject
-    container_property: xMin
-    description: Lowest X value in bounding box
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: xMin
-    reference: cdf_cdm:Cognite3DObject(property=xMin,version=v1)
-    value_type: float64
-    view: Cognite3DObject
-    view_property: xMin
-  - class_: Cognite3DObject
-    container: cdf_cdm_3d:Cognite3DObject
-    container_property: yMax
-    description: Highest Y value in bounding box
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: yMax
-    reference: cdf_cdm:Cognite3DObject(property=yMax,version=v1)
-    value_type: float64
-    view: Cognite3DObject
-    view_property: yMax
-  - class_: Cognite3DObject
-    container: cdf_cdm_3d:Cognite3DObject
-    container_property: yMin
-    description: Lowest Y value in bounding box
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: yMin
-    reference: cdf_cdm:Cognite3DObject(property=yMin,version=v1)
-    value_type: float64
-    view: Cognite3DObject
-    view_property: yMin
-  - class_: Cognite3DObject
-    container: cdf_cdm_3d:Cognite3DObject
-    container_property: zMax
-    description: Highest Z value in bounding box
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: zMax
-    reference: cdf_cdm:Cognite3DObject(property=zMax,version=v1)
-    value_type: float64
-    view: Cognite3DObject
-    view_property: zMax
-  - class_: Cognite3DObject
-    container: cdf_cdm_3d:Cognite3DObject
-    container_property: zMin
-    description: Lowest Z value in bounding box
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: zMin
-    reference: cdf_cdm:Cognite3DObject(property=zMin,version=v1)
-    value_type: float64
-    view: Cognite3DObject
-    view_property: zMin
-  - class_: Cognite3DRevision
-    connection: direct
-    container: cdf_cdm_3d:Cognite3DRevision
-    container_property: model3D
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: model3D
-    reference: cdf_cdm:Cognite3DRevision(property=model3D,version=v1)
-    value_type: Cognite3DModel
-    view: Cognite3DRevision
-    view_property: model3D
-  - class_: Cognite3DRevision
-    container: cdf_cdm_3d:Cognite3DRevision
-    container_property: published
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: published
-    reference: cdf_cdm:Cognite3DRevision(property=published,version=v1)
-    value_type: boolean
-    view: Cognite3DRevision
-    view_property: published
-  - class_: Cognite3DRevision
-    container: cdf_cdm_3d:Cognite3DRevision
-    container_property: status
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: status
-    reference: cdf_cdm:Cognite3DRevision(property=status,version=v1)
-    value_type: enum(collection=status)
-    view: Cognite3DRevision
-    view_property: status
-  - class_: Cognite3DRevision
-    container: cdf_cdm_3d:Cognite3DRevision
-    container_property: type
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: type
-    reference: cdf_cdm:Cognite3DRevision(property=type,version=v1)
-    value_type: enum(collection=type)
-    view: Cognite3DRevision
-    view_property: type
-  - class_: Cognite3DTransformation
-    container: cdf_cdm_3d:Cognite3DTransformation
-    container_property: eulerRotationX
-    description: The rotation of the object around the X-axis in radians
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: eulerRotationX
-    reference: cdf_cdm:Cognite3DTransformation(property=eulerRotationX,version=v1)
-    value_type: float64
-    view: Cognite3DTransformation
-    view_property: eulerRotationX
-  - class_: Cognite3DTransformation
-    container: cdf_cdm_3d:Cognite3DTransformation
-    container_property: eulerRotationY
-    description: The rotation of the object around the Y-axis in radians
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: eulerRotationY
-    reference: cdf_cdm:Cognite3DTransformation(property=eulerRotationY,version=v1)
-    value_type: float64
-    view: Cognite3DTransformation
-    view_property: eulerRotationY
-  - class_: Cognite3DTransformation
-    container: cdf_cdm_3d:Cognite3DTransformation
-    container_property: eulerRotationZ
-    description: The rotation of the object around the Z-axis in radians
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: eulerRotationZ
-    reference: cdf_cdm:Cognite3DTransformation(property=eulerRotationZ,version=v1)
-    value_type: float64
-    view: Cognite3DTransformation
-    view_property: eulerRotationZ
-  - class_: Cognite3DTransformation
-    container: cdf_cdm_3d:Cognite3DTransformation
-    container_property: scaleX
-    description: The scaling factor applied to the object along the X-axis
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: scaleX
-    reference: cdf_cdm:Cognite3DTransformation(property=scaleX,version=v1)
-    value_type: float64
-    view: Cognite3DTransformation
-    view_property: scaleX
-  - class_: Cognite3DTransformation
-    container: cdf_cdm_3d:Cognite3DTransformation
-    container_property: scaleY
-    description: The scaling factor applied to the object along the Y-axis
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: scaleY
-    reference: cdf_cdm:Cognite3DTransformation(property=scaleY,version=v1)
-    value_type: float64
-    view: Cognite3DTransformation
-    view_property: scaleY
-  - class_: Cognite3DTransformation
-    container: cdf_cdm_3d:Cognite3DTransformation
-    container_property: scaleZ
-    description: The scaling factor applied to the object along the Z-axis
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: scaleZ
-    reference: cdf_cdm:Cognite3DTransformation(property=scaleZ,version=v1)
-    value_type: float64
-    view: Cognite3DTransformation
-    view_property: scaleZ
-  - class_: Cognite3DTransformation
-    container: cdf_cdm_3d:Cognite3DTransformation
-    container_property: translationX
-    description: The displacement of the object along the X-axis in the 3D coordinate
-      system
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: translationX
-    reference: cdf_cdm:Cognite3DTransformation(property=translationX,version=v1)
-    value_type: float64
-    view: Cognite3DTransformation
-    view_property: translationX
-  - class_: Cognite3DTransformation
-    container: cdf_cdm_3d:Cognite3DTransformation
-    container_property: translationY
-    description: The displacement of the object along the Y-axis in the 3D coordinate
-      system
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: translationY
-    reference: cdf_cdm:Cognite3DTransformation(property=translationY,version=v1)
-    value_type: float64
-    view: Cognite3DTransformation
-    view_property: translationY
-  - class_: Cognite3DTransformation
-    container: cdf_cdm_3d:Cognite3DTransformation
-    container_property: translationZ
-    description: The displacement of the object along the Z-axis in the 3D coordinate
-      system
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: translationZ
-    reference: cdf_cdm:Cognite3DTransformation(property=translationZ,version=v1)
-    value_type: float64
-    view: Cognite3DTransformation
-    view_property: translationZ
-  - class_: CogniteActivity
-    connection: direct
-    container: cdf_cdm:CogniteActivity
-    container_property: assets
-    description: A list of assets the activity is related to.
-    immutable: false
-    is_list: true
-    name: Assets
-    nullable: true
-    property_: assets
-    reference: cdf_cdm:CogniteActivity(property=assets,version=v1)
-    value_type: CogniteAsset
-    view: CogniteActivity
-    view_property: assets
-  - class_: CogniteActivity
-    connection: direct
-    container: cdf_cdm:CogniteActivity
-    container_property: equipment
-    description: A list of equipment the activity is related to.
-    immutable: false
-    is_list: true
-    name: Equipment
-    nullable: true
-    property_: equipment
-    reference: cdf_cdm:CogniteActivity(property=equipment,version=v1)
-    value_type: CogniteEquipment
-    view: CogniteActivity
-    view_property: equipment
-  - class_: CogniteActivity
-    connection: direct
-    container: cdf_cdm:CogniteActivity
-    container_property: timeSeries
-    description: A list of time series the activity is related to.
-    immutable: false
-    is_list: true
-    name: Time series
-    nullable: true
-    property_: timeSeries
-    reference: cdf_cdm:CogniteActivity(property=timeSeries,version=v1)
-    value_type: CogniteTimeSeries
-    view: CogniteActivity
-    view_property: timeSeries
-  - class_: CogniteAnnotation
-    container: cdf_cdm:CogniteAnnotation
-    container_property: confidence
-    description: The confidence that the annotation is a good match
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: confidence
-    reference: cdf_cdm:CogniteAnnotation(property=confidence,version=v1)
-    value_type: float64
-    view: CogniteAnnotation
-    view_property: confidence
-  - class_: CogniteAnnotation
-    container: cdf_cdm:CogniteAnnotation
-    container_property: status
-    description: The status of the annotation
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: status
-    reference: cdf_cdm:CogniteAnnotation(property=status,version=v1)
-    value_type: enum(collection=status)
-    view: CogniteAnnotation
-    view_property: status
-  - class_: CogniteAsset
-    connection: reverse(property=assets)
-    description: An automatically updated list of activities related to the asset.
-    is_list: true
-    name: Activities
-    property_: activities
-    reference: cdf_cdm:CogniteAsset(property=activities,version=v1)
-    value_type: CogniteActivity
-    view: CogniteAsset
-    view_property: activities
-  - class_: CogniteAsset
-    connection: direct
-    container: cdf_cdm:CogniteAsset
-    container_property: assetClass
-    description: Specifies the class of the asset. It's a direct relation to CogniteAssetClass.
-    immutable: false
-    is_list: false
-    name: Asset class
-    nullable: true
-    property_: assetClass
-    reference: cdf_cdm:CogniteAsset(property=assetClass,version=v1)
-    value_type: CogniteAssetClass
-    view: CogniteAsset
-    view_property: assetClass
-  - class_: CogniteAsset
-    connection: reverse(property=parent)
-    description: An automatically updated list of assets with this asset as their
-      parent.
-    is_list: true
-    name: Children
-    property_: children
-    reference: cdf_cdm:CogniteAsset(property=children,version=v1)
-    value_type: CogniteAsset
-    view: CogniteAsset
-    view_property: children
-  - class_: CogniteAsset
-    connection: reverse(property=asset)
-    description: An automatically updated list of equipment related to the asset.
-    is_list: true
-    name: Equipment
-    property_: equipment
-    reference: cdf_cdm:CogniteAsset(property=equipment,version=v1)
-    value_type: CogniteEquipment
-    view: CogniteAsset
-    view_property: equipment
-  - class_: CogniteAsset
-    connection: reverse(property=assets)
-    description: An automatically updated list of files related to the asset.
-    is_list: true
-    name: Files
-    property_: files
-    reference: cdf_cdm:CogniteAsset(property=files,version=v1)
-    value_type: CogniteFile
-    view: CogniteAsset
-    view_property: files
-  - class_: CogniteAsset
-    connection: direct
-    container: cdf_cdm:CogniteAsset
-    container_property: assetHierarchy_parent
-    description: The parent of the asset.
-    immutable: false
-    is_list: false
-    name: Parent
-    nullable: true
-    property_: parent
-    reference: cdf_cdm:CogniteAsset(property=parent,version=v1)
-    value_type: CogniteAsset
-    view: CogniteAsset
-    view_property: parent
-  - class_: CogniteAsset
-    connection: direct
-    container: cdf_cdm:CogniteAsset
-    container_property: assetHierarchy_path
-    description: An automatically updated ordered list of this asset's ancestors,
-      starting with the root asset. Enables subtree filtering to find all assets under
-      a parent.
-    immutable: false
-    is_list: true
-    name: Path
-    nullable: true
-    property_: path
-    reference: cdf_cdm:CogniteAsset(property=path,version=v1)
-    value_type: CogniteAsset
-    view: CogniteAsset
-    view_property: path
-  - class_: CogniteAsset
-    container: cdf_cdm:CogniteAsset
-    container_property: assetHierarchy_path_last_updated_time
-    description: The last time the path was updated for this asset.
-    immutable: false
-    is_list: false
-    name: Path last updated time
-    nullable: true
-    property_: pathLastUpdatedTime
-    reference: cdf_cdm:CogniteAsset(property=pathLastUpdatedTime,version=v1)
-    value_type: timestamp
-    view: CogniteAsset
-    view_property: pathLastUpdatedTime
-  - class_: CogniteAsset
-    connection: direct
-    container: cdf_cdm:CogniteAsset
-    container_property: assetHierarchy_root
-    description: An automatically updated reference to the top-level asset of the
-      hierarchy.
-    immutable: false
-    is_list: false
-    name: Root
-    nullable: true
-    property_: root
-    reference: cdf_cdm:CogniteAsset(property=root,version=v1)
-    value_type: CogniteAsset
-    view: CogniteAsset
-    view_property: root
-  - class_: CogniteAsset
-    connection: reverse(property=assets)
-    description: An automatically updated list of time series related to the asset.
-    is_list: true
-    name: Time series
-    property_: timeSeries
-    reference: cdf_cdm:CogniteAsset(property=timeSeries,version=v1)
-    value_type: CogniteTimeSeries
-    view: CogniteAsset
-    view_property: timeSeries
-  - class_: CogniteAsset
-    connection: direct
-    container: cdf_cdm:CogniteAsset
-    container_property: type
-    description: Specifies the type of the asset. It's a direct relation to CogniteAssetType.
-    immutable: false
-    is_list: false
-    name: Asset type
-    nullable: true
-    property_: type
-    reference: cdf_cdm:CogniteAsset(property=type,version=v1)
-    value_type: CogniteAssetType
-    view: CogniteAsset
-    view_property: type
-  - class_: CogniteAssetClass
-    constraint: uniqueCodeConstraint
-    container: cdf_cdm:CogniteAssetClass
-    container_property: code
-    description: A unique identifier for the class of asset.
-    immutable: false
-    is_list: false
-    name: Code
-    nullable: true
-    property_: code
-    reference: cdf_cdm:CogniteAssetClass(property=code,version=v1)
-    value_type: text
-    view: CogniteAssetClass
-    view_property: code
-  - class_: CogniteAssetClass
-    constraint: uniqueCodeConstraint
-    container: cdf_cdm:CogniteAssetClass
-    container_property: standard
-    description: A text string to specify which standard the class is from.
-    immutable: false
-    is_list: false
-    name: Standard
-    nullable: true
-    property_: standard
-    reference: cdf_cdm:CogniteAssetClass(property=standard,version=v1)
-    value_type: text
-    view: CogniteAssetClass
-    view_property: standard
-  - class_: CogniteAssetType
-    connection: direct
-    container: cdf_cdm:CogniteAssetType
-    container_property: assetClass
-    description: Specifies the class the type belongs to. It's a direct relation to
-      CogniteAssetClass.
-    immutable: false
-    is_list: false
-    name: Asset class
-    nullable: true
-    property_: assetClass
-    reference: cdf_cdm:CogniteAssetType(property=assetClass,version=v1)
-    value_type: CogniteAssetClass
-    view: CogniteAssetType
-    view_property: assetClass
-  - class_: CogniteAssetType
-    container: cdf_cdm:CogniteAssetType
-    container_property: code
-    description: A unique identifier for the type of asset.
-    immutable: false
-    index: code,standard
-    is_list: false
-    name: Code
-    nullable: true
-    property_: code
-    reference: cdf_cdm:CogniteAssetType(property=code,version=v1)
-    value_type: text
-    view: CogniteAssetType
-    view_property: code
-  - class_: CogniteAssetType
-    container: cdf_cdm:CogniteAssetType
-    container_property: standard
-    description: A text string to specify which standard the type is from.
-    immutable: false
-    index: standard
-    is_list: false
-    name: Standard
-    nullable: true
-    property_: standard
-    reference: cdf_cdm:CogniteAssetType(property=standard,version=v1)
-    value_type: text
-    view: CogniteAssetType
-    view_property: standard
-  - class_: CogniteCADModel
-    connection: reverse(property=model3D)
-    description: List of revisions for this CAD model
-    is_list: true
-    property_: revisions
-    reference: cdf_cdm:CogniteCADModel(property=revisions,version=v1)
-    value_type: CogniteCADRevision
-    view: CogniteCADModel
-    view_property: revisions
-  - class_: CogniteCADNode
-    container: cdf_cdm_3d:CogniteCADNode
-    container_property: cadNodeReference
-    description: Reference to a node within a CAD model from the 3D API
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: cadNodeReference
-    reference: cdf_cdm:CogniteCADNode(property=cadNodeReference,version=v1)
-    value_type: text
-    view: CogniteCADNode
-    view_property: cadNodeReference
-  - class_: CogniteCADNode
-    connection: direct
-    container: cdf_cdm_3d:CogniteCADNode
-    container_property: model3D
-    description: Direct relation to Cognite3DModel
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: model3D
-    reference: cdf_cdm:CogniteCADNode(property=model3D,version=v1)
-    value_type: CogniteCADModel
-    view: CogniteCADNode
-    view_property: model3D
-  - class_: CogniteCADNode
-    connection: direct
-    container: cdf_cdm_3d:CogniteCADNode
-    container_property: object3D
-    description: Direct relation to object3D grouping for this node
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: object3D
-    reference: cdf_cdm:CogniteCADNode(property=object3D,version=v1)
-    value_type: Cognite3DObject
-    view: CogniteCADNode
-    view_property: object3D
-  - class_: CogniteCADNode
-    connection: direct
-    container: cdf_cdm_3d:CogniteCADNode
-    container_property: revisions
-    description: List of direct relations to instances of Cognite3DRevision which
-      this CogniteCADNode exists in.
-    immutable: false
-    is_list: true
-    nullable: true
-    property_: revisions
-    reference: cdf_cdm:CogniteCADNode(property=revisions,version=v1)
-    value_type: CogniteCADRevision
-    view: CogniteCADNode
-    view_property: revisions
-  - class_: CogniteCADNode
-    container: cdf_cdm_3d:CogniteCADNode
-    container_property: subTreeSizes
-    description: List of subtree sizes in the same order as revisions. Used by Reveal
-      and similar applications to know how many nodes exists below this node in the
-      hierarchy
-    immutable: false
-    is_list: true
-    nullable: true
-    property_: subTreeSizes
-    reference: cdf_cdm:CogniteCADNode(property=subTreeSizes,version=v1)
-    value_type: int64
-    view: CogniteCADNode
-    view_property: subTreeSizes
-  - class_: CogniteCADNode
-    container: cdf_cdm_3d:CogniteCADNode
-    container_property: treeIndexes
-    description: List of tree indexes in the same order as revisions. Used by Reveal
-      and similar applications to map from CogniteCADNode to tree index
-    immutable: false
-    is_list: true
-    nullable: true
-    property_: treeIndexes
-    reference: cdf_cdm:CogniteCADNode(property=treeIndexes,version=v1)
-    value_type: int64
-    view: CogniteCADNode
-    view_property: treeIndexes
-  - class_: CogniteCADRevision
-    container: cdf_cdm_3d:CogniteCADRevision
-    container_property: revisionId
-    description: The 3D API revision identifier for this CAD model
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: revisionId
-    reference: cdf_cdm:CogniteCADRevision(property=revisionId,version=v1)
-    value_type: int64
-    view: CogniteCADRevision
-    view_property: revisionId
-  - class_: CogniteCubeMap
-    connection: direct
-    container: cdf_cdm_3d:CogniteCubeMap
-    container_property: back
-    description: Direct relation to a file holding the back projection of the cube
-      map
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: back
-    reference: cdf_cdm:CogniteCubeMap(property=back,version=v1)
-    value_type: CogniteFile
-    view: CogniteCubeMap
-    view_property: back
-  - class_: CogniteCubeMap
-    connection: direct
-    container: cdf_cdm_3d:CogniteCubeMap
-    container_property: bottom
-    description: Direct relation to a file holding the bottom projection of the cube
-      map
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: bottom
-    reference: cdf_cdm:CogniteCubeMap(property=bottom,version=v1)
-    value_type: CogniteFile
-    view: CogniteCubeMap
-    view_property: bottom
-  - class_: CogniteCubeMap
-    connection: direct
-    container: cdf_cdm_3d:CogniteCubeMap
-    container_property: front
-    description: Direct relation to a file holding the front projection of the cube
-      map
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: front
-    reference: cdf_cdm:CogniteCubeMap(property=front,version=v1)
-    value_type: CogniteFile
-    view: CogniteCubeMap
-    view_property: front
-  - class_: CogniteCubeMap
-    connection: direct
-    container: cdf_cdm_3d:CogniteCubeMap
-    container_property: left
-    description: Direct relation to a file holding the left projection of the cube
-      map
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: left
-    reference: cdf_cdm:CogniteCubeMap(property=left,version=v1)
-    value_type: CogniteFile
-    view: CogniteCubeMap
-    view_property: left
-  - class_: CogniteCubeMap
-    connection: direct
-    container: cdf_cdm_3d:CogniteCubeMap
-    container_property: right
-    description: Direct relation to a file holding the right projection of the cube
-      map
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: right
-    reference: cdf_cdm:CogniteCubeMap(property=right,version=v1)
-    value_type: CogniteFile
-    view: CogniteCubeMap
-    view_property: right
-  - class_: CogniteCubeMap
-    connection: direct
-    container: cdf_cdm_3d:CogniteCubeMap
-    container_property: top
-    description: Direct relation to a file holding the top projection of the cube
-      map
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: top
-    reference: cdf_cdm:CogniteCubeMap(property=top,version=v1)
-    value_type: CogniteFile
-    view: CogniteCubeMap
-    view_property: top
-  - class_: CogniteDescribable
-    container: cdf_cdm:CogniteDescribable
-    container_property: aliases
-    description: Alternative names for the node
-    immutable: false
-    is_list: true
-    nullable: true
-    property_: aliases
-    reference: cdf_cdm:CogniteDescribable(property=aliases,version=v1)
-    value_type: text
-    view: CogniteDescribable
-    view_property: aliases
-  - class_: CogniteDescribable
-    container: cdf_cdm:CogniteDescribable
-    container_property: description
-    description: Description of the instance
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: description
-    reference: cdf_cdm:CogniteDescribable(property=description,version=v1)
-    value_type: text
-    view: CogniteDescribable
-    view_property: description
-  - class_: CogniteDescribable
-    container: cdf_cdm:CogniteDescribable
-    container_property: name
-    description: Name of the instance
-    immutable: false
-    index: name
-    is_list: false
-    nullable: true
-    property_: name
-    reference: cdf_cdm:CogniteDescribable(property=name,version=v1)
-    value_type: text
-    view: CogniteDescribable
-    view_property: name
-  - class_: CogniteDescribable
-    container: cdf_cdm:CogniteDescribable
-    container_property: tags
-    description: Text based labels for generic use, limited to 1000
-    immutable: false
-    is_list: true
-    nullable: true
-    property_: tags
-    reference: cdf_cdm:CogniteDescribable(property=tags,version=v1)
-    value_type: text
-    view: CogniteDescribable
-    view_property: tags
-  - class_: CogniteDiagramAnnotation
-    container: cdf_cdm:CogniteDiagramAnnotation
-    container_property: endNodePageNumber
-    description: The number of the page on which this annotation is located in the
-      endNode File if an endNode is present. The first page has number 1
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: endNodePageNumber
-    reference: cdf_cdm:CogniteDiagramAnnotation(property=endNodePageNumber,version=v1)
-    value_type: int64
-    view: CogniteDiagramAnnotation
-    view_property: endNodePageNumber
-  - class_: CogniteDiagramAnnotation
-    container: cdf_cdm:CogniteDiagramAnnotation
-    container_property: endNodeText
-    description: The text extracted from within the bounding box on the endNode. Only
-      applicable if an endNode is defined
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: endNodeText
-    reference: cdf_cdm:CogniteDiagramAnnotation(property=endNodeText,version=v1)
-    value_type: text
-    view: CogniteDiagramAnnotation
-    view_property: endNodeText
-  - class_: CogniteDiagramAnnotation
-    container: cdf_cdm:CogniteDiagramAnnotation
-    container_property: endNodeXMax
-    description: Value between [0,1]. Maximum abscissa of the bounding box (right
-      edge). Must be strictly more than endNodeXMin. Only applicable if an endNode
-      is defined
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: endNodeXMax
-    reference: cdf_cdm:CogniteDiagramAnnotation(property=endNodeXMax,version=v1)
-    value_type: float64
-    view: CogniteDiagramAnnotation
-    view_property: endNodeXMax
-  - class_: CogniteDiagramAnnotation
-    container: cdf_cdm:CogniteDiagramAnnotation
-    container_property: endNodeXMin
-    description: Value between [0,1]. Minimum abscissa of the bounding box (left edge).
-      Must be strictly less than endNodeXMax. Only applicable if an endNode is defined
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: endNodeXMin
-    reference: cdf_cdm:CogniteDiagramAnnotation(property=endNodeXMin,version=v1)
-    value_type: float64
-    view: CogniteDiagramAnnotation
-    view_property: endNodeXMin
-  - class_: CogniteDiagramAnnotation
-    container: cdf_cdm:CogniteDiagramAnnotation
-    container_property: endNodeYMax
-    description: Value between [0,1]. Maximum ordinate of the bounding box (top edge).
-      Must be strictly more than endNodeYMin. Only applicable if an endNode is defined
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: endNodeYMax
-    reference: cdf_cdm:CogniteDiagramAnnotation(property=endNodeYMax,version=v1)
-    value_type: float64
-    view: CogniteDiagramAnnotation
-    view_property: endNodeYMax
-  - class_: CogniteDiagramAnnotation
-    container: cdf_cdm:CogniteDiagramAnnotation
-    container_property: endNodeYMin
-    description: Value between [0,1]. Minimum ordinate of the bounding box (bottom
-      edge). Must be strictly less than endNodeYMax. Only applicable if an endNode
-      is defined
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: endNodeYMin
-    reference: cdf_cdm:CogniteDiagramAnnotation(property=endNodeYMin,version=v1)
-    value_type: float64
-    view: CogniteDiagramAnnotation
-    view_property: endNodeYMin
-  - class_: CogniteDiagramAnnotation
-    container: cdf_cdm:CogniteDiagramAnnotation
-    container_property: startNodePageNumber
-    description: The number of the page on which this annotation is located in `startNode`
-      File. The first page has number 1
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: startNodePageNumber
-    reference: cdf_cdm:CogniteDiagramAnnotation(property=startNodePageNumber,version=v1)
-    value_type: int64
-    view: CogniteDiagramAnnotation
-    view_property: startNodePageNumber
-  - class_: CogniteDiagramAnnotation
-    container: cdf_cdm:CogniteDiagramAnnotation
-    container_property: startNodeText
-    description: The text extracted from within the bounding box on the startNode
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: startNodeText
-    reference: cdf_cdm:CogniteDiagramAnnotation(property=startNodeText,version=v1)
-    value_type: text
-    view: CogniteDiagramAnnotation
-    view_property: startNodeText
-  - class_: CogniteDiagramAnnotation
-    container: cdf_cdm:CogniteDiagramAnnotation
-    container_property: startNodeXMax
-    description: Value between [0,1]. Maximum abscissa of the bounding box (right
-      edge). Must be strictly more than startNodeXMin
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: startNodeXMax
-    reference: cdf_cdm:CogniteDiagramAnnotation(property=startNodeXMax,version=v1)
-    value_type: float64
-    view: CogniteDiagramAnnotation
-    view_property: startNodeXMax
-  - class_: CogniteDiagramAnnotation
-    container: cdf_cdm:CogniteDiagramAnnotation
-    container_property: startNodeXMin
-    description: Value between [0,1]. Minimum abscissa of the bounding box (left edge).
-      Must be strictly less than startNodeXMax
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: startNodeXMin
-    reference: cdf_cdm:CogniteDiagramAnnotation(property=startNodeXMin,version=v1)
-    value_type: float64
-    view: CogniteDiagramAnnotation
-    view_property: startNodeXMin
-  - class_: CogniteDiagramAnnotation
-    container: cdf_cdm:CogniteDiagramAnnotation
-    container_property: startNodeYMax
-    description: Value between [0,1]. Maximum ordinate of the bounding box (top edge).
-      Must be strictly more than startNodeYMin
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: startNodeYMax
-    reference: cdf_cdm:CogniteDiagramAnnotation(property=startNodeYMax,version=v1)
-    value_type: float64
-    view: CogniteDiagramAnnotation
-    view_property: startNodeYMax
-  - class_: CogniteDiagramAnnotation
-    container: cdf_cdm:CogniteDiagramAnnotation
-    container_property: startNodeYMin
-    description: Value between [0,1]. Minimum ordinate of the bounding box (bottom
-      edge). Must be strictly less than startNodeYMax
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: startNodeYMin
-    reference: cdf_cdm:CogniteDiagramAnnotation(property=startNodeYMin,version=v1)
-    value_type: float64
-    view: CogniteDiagramAnnotation
-    view_property: startNodeYMin
-  - class_: CogniteEquipment
-    connection: reverse(property=equipment)
-    description: An automatically updated list of activities related to the equipment.
-    is_list: true
-    name: Activities
-    property_: activities
-    reference: cdf_cdm:CogniteEquipment(property=activities,version=v1)
-    value_type: CogniteActivity
-    view: CogniteEquipment
-    view_property: activities
-  - class_: CogniteEquipment
-    connection: direct
-    container: cdf_cdm:CogniteEquipment
-    container_property: asset
-    description: The asset the equipment is related to.
-    immutable: false
-    is_list: false
-    name: Asset
-    nullable: true
-    property_: asset
-    reference: cdf_cdm:CogniteEquipment(property=asset,version=v1)
-    value_type: CogniteAsset
-    view: CogniteEquipment
-    view_property: asset
-  - class_: CogniteEquipment
-    connection: direct
-    container: cdf_cdm:CogniteEquipment
-    container_property: equipmentType
-    description: Specifies the type of the equipment. It's a direct relation to CogniteEquipmentType.
-    immutable: false
-    is_list: false
-    name: Equipment type
-    nullable: true
-    property_: equipmentType
-    reference: cdf_cdm:CogniteEquipment(property=equipmentType,version=v1)
-    value_type: CogniteEquipmentType
-    view: CogniteEquipment
-    view_property: equipmentType
-  - class_: CogniteEquipment
-    connection: direct
-    container: cdf_cdm:CogniteEquipment
-    container_property: files
-    description: A list of files the equipment relates to.
-    immutable: false
-    is_list: true
-    name: Files
-    nullable: true
-    property_: files
-    reference: cdf_cdm:CogniteEquipment(property=files,version=v1)
-    value_type: CogniteFile
-    view: CogniteEquipment
-    view_property: files
-  - class_: CogniteEquipment
-    container: cdf_cdm:CogniteEquipment
-    container_property: manufacturer
-    description: The manufacturer of the equipment.
-    immutable: false
-    index: manufacturer
-    is_list: false
-    name: Manufacturer
-    nullable: true
-    property_: manufacturer
-    reference: cdf_cdm:CogniteEquipment(property=manufacturer,version=v1)
-    value_type: text
-    view: CogniteEquipment
-    view_property: manufacturer
-  - class_: CogniteEquipment
-    container: cdf_cdm:CogniteEquipment
-    container_property: serialNumber
-    description: The serial number of the equipment.
-    immutable: false
-    index: serialNumber
-    is_list: false
-    name: Serial number
-    nullable: true
-    property_: serialNumber
-    reference: cdf_cdm:CogniteEquipment(property=serialNumber,version=v1)
-    value_type: text
-    view: CogniteEquipment
-    view_property: serialNumber
-  - class_: CogniteEquipment
-    connection: reverse(property=equipment)
-    description: An automatically updated list of time series related to the equipment.
-    is_list: true
-    name: Time series
-    property_: timeSeries
-    reference: cdf_cdm:CogniteEquipment(property=timeSeries,version=v1)
-    value_type: CogniteTimeSeries
-    view: CogniteEquipment
-    view_property: timeSeries
-  - class_: CogniteEquipmentType
-    constraint: uniqueCodeConstraint
-    container: cdf_cdm:CogniteEquipmentType
-    container_property: code
-    description: A unique identifier for the type of equipment.
-    immutable: false
-    is_list: false
-    name: Code
-    nullable: true
-    property_: code
-    reference: cdf_cdm:CogniteEquipmentType(property=code,version=v1)
-    value_type: text
-    view: CogniteEquipmentType
-    view_property: code
-  - class_: CogniteEquipmentType
-    container: cdf_cdm:CogniteEquipmentType
-    container_property: equipmentClass
-    description: Represents the class of equipment.
-    immutable: false
-    is_list: false
-    name: Equipment class
-    nullable: true
-    property_: equipmentClass
-    reference: cdf_cdm:CogniteEquipmentType(property=equipmentClass,version=v1)
-    value_type: text
-    view: CogniteEquipmentType
-    view_property: equipmentClass
-  - class_: CogniteEquipmentType
-    constraint: uniqueCodeConstraint
-    container: cdf_cdm:CogniteEquipmentType
-    container_property: standard
-    description: An identifier for the standard this equipment type is sourced from,
-      for example, ISO14224.
-    immutable: false
-    is_list: false
-    name: Standard
-    nullable: true
-    property_: standard
-    reference: cdf_cdm:CogniteEquipmentType(property=standard,version=v1)
-    value_type: text
-    view: CogniteEquipmentType
-    view_property: standard
-  - class_: CogniteEquipmentType
-    container: cdf_cdm:CogniteEquipmentType
-    container_property: standardReference
-    description: A reference to the source of the equipment standard.
-    immutable: false
-    is_list: false
-    name: Standard reference
-    nullable: true
-    property_: standardReference
-    reference: cdf_cdm:CogniteEquipmentType(property=standardReference,version=v1)
-    value_type: text
-    view: CogniteEquipmentType
-    view_property: standardReference
-  - class_: CogniteFile
-    connection: direct
-    container: cdf_cdm:CogniteFile
-    container_property: assets
-    description: A list of assets this file is related to.
-    immutable: false
-    is_list: true
-    name: Assets
-    nullable: true
-    property_: assets
-    reference: cdf_cdm:CogniteFile(property=assets,version=v1)
-    value_type: CogniteAsset
-    view: CogniteFile
-    view_property: assets
-  - class_: CogniteFile
-    connection: direct
-    container: cdf_cdm:CogniteFile
-    container_property: category
-    description: Specifies the detected category the file belongs to. It's a direct
-      relation to an instance of CogniteFileCategory.
-    immutable: false
-    is_list: false
-    name: Category
-    nullable: true
-    property_: category
-    reference: cdf_cdm:CogniteFile(property=category,version=v1)
-    value_type: CogniteFileCategory
-    view: CogniteFile
-    view_property: category
-  - class_: CogniteFile
-    container: cdf_cdm:CogniteFile
-    container_property: directory
-    description: Contains the path elements from the source (if the source system
-      has a file system hierarchy or similar.)
-    immutable: false
-    is_list: false
-    name: Directory
-    nullable: true
-    property_: directory
-    reference: cdf_cdm:CogniteFile(property=directory,version=v1)
-    value_type: text
-    view: CogniteFile
-    view_property: directory
-  - class_: CogniteFile
-    connection: reverse(property=files)
-    description: An automatically updated list of equipment this file is related to.
-    is_list: true
-    name: Equipment
-    property_: equipment
-    reference: cdf_cdm:CogniteFile(property=equipment,version=v1)
-    value_type: CogniteEquipment
-    view: CogniteFile
-    view_property: equipment
-  - class_: CogniteFile
-    container: cdf_cdm:CogniteFile
-    container_property: isUploaded
-    default: 0
-    description: Specifies if the file content has been uploaded to Cognite Data Fusion
-      or not.
-    immutable: false
-    is_list: false
-    name: Is uploaded
-    nullable: true
-    property_: isUploaded
-    reference: cdf_cdm:CogniteFile(property=isUploaded,version=v1)
-    value_type: boolean
-    view: CogniteFile
-    view_property: isUploaded
-  - class_: CogniteFile
-    container: cdf_cdm:CogniteFile
-    container_property: mimeType
-    description: The MIME type of the file.
-    immutable: false
-    is_list: false
-    name: MIME type
-    nullable: true
-    property_: mimeType
-    reference: cdf_cdm:CogniteFile(property=mimeType,version=v1)
-    value_type: text
-    view: CogniteFile
-    view_property: mimeType
-  - class_: CogniteFile
-    container: cdf_cdm:CogniteFile
-    container_property: uploadedTime
-    description: The time the file upload completed.
-    immutable: false
-    is_list: false
-    name: Uploaded time
-    nullable: true
-    property_: uploadedTime
-    reference: cdf_cdm:CogniteFile(property=uploadedTime,version=v1)
-    value_type: timestamp
-    view: CogniteFile
-    view_property: uploadedTime
-  - class_: CogniteFileCategory
-    constraint: uniqueCodeConstraint
-    container: cdf_cdm:CogniteFileCategory
-    container_property: code
-    description: An identifier for the category, for example, 'AA' for Accounting
-      (from Norsok.)
-    immutable: false
-    is_list: false
-    name: Code
-    nullable: false
-    property_: code
-    reference: cdf_cdm:CogniteFileCategory(property=code,version=v1)
-    value_type: text
-    view: CogniteFileCategory
-    view_property: code
-  - class_: CogniteFileCategory
-    constraint: uniqueCodeConstraint
-    container: cdf_cdm:CogniteFileCategory
-    container_property: standard
-    description: The name of the standard the category originates from, for example,
-      'Norsok'.
-    immutable: false
-    is_list: false
-    name: Standard
-    nullable: true
-    property_: standard
-    reference: cdf_cdm:CogniteFileCategory(property=standard,version=v1)
-    value_type: text
-    view: CogniteFileCategory
-    view_property: standard
-  - class_: CogniteFileCategory
-    container: cdf_cdm:CogniteFileCategory
-    container_property: standardReference
-    description: A reference to the source of the category standard.
-    immutable: false
-    is_list: false
-    name: Standard reference
-    nullable: true
-    property_: standardReference
-    reference: cdf_cdm:CogniteFileCategory(property=standardReference,version=v1)
-    value_type: text
-    view: CogniteFileCategory
-    view_property: standardReference
-  - class_: CognitePointCloudModel
-    connection: reverse(property=model3D)
-    description: List of revisions for this PointCloud model
-    is_list: true
-    property_: revisions
-    reference: cdf_cdm:CognitePointCloudModel(property=revisions,version=v1)
-    value_type: CognitePointCloudRevision
-    view: CognitePointCloudModel
-    view_property: revisions
-  - class_: CognitePointCloudRevision
-    container: cdf_cdm_3d:CognitePointCloudRevision
-    container_property: revisionId
-    description: The 3D API revision identifier for this PointCloud model
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: revisionId
-    reference: cdf_cdm:CognitePointCloudRevision(property=revisionId,version=v1)
-    value_type: int64
-    view: CognitePointCloudRevision
-    view_property: revisionId
-  - class_: CognitePointCloudVolume
-    container: cdf_cdm_3d:CognitePointCloudVolume
-    container_property: formatVersion
-    description: Specifies the version the ‘volume’ field is following. Volume definition
-      is today 9 floats (property volume)
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: formatVersion
-    reference: cdf_cdm:CognitePointCloudVolume(property=formatVersion,version=v1)
-    value_type: text
-    view: CognitePointCloudVolume
-    view_property: formatVersion
-  - class_: CognitePointCloudVolume
-    connection: direct
-    container: cdf_cdm_3d:CognitePointCloudVolume
-    container_property: model3D
-    description: Direct relation to Cognite3DModel instance
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: model3D
-    reference: cdf_cdm:CognitePointCloudVolume(property=model3D,version=v1)
-    value_type: CogniteCADModel
-    view: CognitePointCloudVolume
-    view_property: model3D
-  - class_: CognitePointCloudVolume
-    connection: direct
-    container: cdf_cdm_3d:CognitePointCloudVolume
-    container_property: object3D
-    description: Direct relation to object3D grouping for this node
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: object3D
-    reference: cdf_cdm:CognitePointCloudVolume(property=object3D,version=v1)
-    value_type: Cognite3DObject
-    view: CognitePointCloudVolume
-    view_property: object3D
-  - class_: CognitePointCloudVolume
-    connection: direct
-    container: cdf_cdm_3d:CognitePointCloudVolume
-    container_property: revisions
-    description: List of direct relations to revision information
-    immutable: false
-    is_list: true
-    nullable: true
-    property_: revisions
-    reference: cdf_cdm:CognitePointCloudVolume(property=revisions,version=v1)
-    value_type: CogniteCADRevision
-    view: CognitePointCloudVolume
-    view_property: revisions
-  - class_: CognitePointCloudVolume
-    container: cdf_cdm_3d:CognitePointCloudVolume
-    container_property: volume
-    description: Relevant coordinates for the volume type, 9 floats in total, that
-      defines the volume
-    immutable: false
-    is_list: true
-    nullable: true
-    property_: volume
-    reference: cdf_cdm:CognitePointCloudVolume(property=volume,version=v1)
-    value_type: float64
-    view: CognitePointCloudVolume
-    view_property: volume
-  - class_: CognitePointCloudVolume
-    container: cdf_cdm_3d:CognitePointCloudVolume
-    container_property: volumeReferences
-    description: Unique volume metric hashes used to access the 3D specialized data
-      storage
-    immutable: false
-    is_list: true
-    nullable: true
-    property_: volumeReferences
-    reference: cdf_cdm:CognitePointCloudVolume(property=volumeReferences,version=v1)
-    value_type: text
-    view: CognitePointCloudVolume
-    view_property: volumeReferences
-  - class_: CognitePointCloudVolume
-    container: cdf_cdm_3d:CognitePointCloudVolume
-    container_property: volumeType
-    description: Type of volume (Cylinder or Box)
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: volumeType
-    reference: cdf_cdm:CognitePointCloudVolume(property=volumeType,version=v1)
-    value_type: enum(collection=volumeType)
-    view: CognitePointCloudVolume
-    view_property: volumeType
-  - class_: CogniteSchedulable
-    container: cdf_cdm:CogniteSchedulable
-    container_property: endTime
-    description: The actual end time of an activity (or similar that extends this)
-    immutable: false
-    index: endTime
-    is_list: false
-    nullable: true
-    property_: endTime
-    reference: cdf_cdm:CogniteSchedulable(property=endTime,version=v1)
-    value_type: timestamp
-    view: CogniteSchedulable
-    view_property: endTime
-  - class_: CogniteSchedulable
-    container: cdf_cdm:CogniteSchedulable
-    container_property: scheduledEndTime
-    description: The planned end time of an activity (or similar that extends this)
-    immutable: false
-    index: scheduledEndTime
-    is_list: false
-    nullable: true
-    property_: scheduledEndTime
-    reference: cdf_cdm:CogniteSchedulable(property=scheduledEndTime,version=v1)
-    value_type: timestamp
-    view: CogniteSchedulable
-    view_property: scheduledEndTime
-  - class_: CogniteSchedulable
-    container: cdf_cdm:CogniteSchedulable
-    container_property: scheduledStartTime
-    description: The planned start time of an activity (or similar that extends this)
-    immutable: false
-    index: scheduledStartTime
-    is_list: false
-    nullable: true
-    property_: scheduledStartTime
-    reference: cdf_cdm:CogniteSchedulable(property=scheduledStartTime,version=v1)
-    value_type: timestamp
-    view: CogniteSchedulable
-    view_property: scheduledStartTime
-  - class_: CogniteSchedulable
-    container: cdf_cdm:CogniteSchedulable
-    container_property: startTime
-    description: The actual start time of an activity (or similar that extends this)
-    immutable: false
-    index: startTime
-    is_list: false
-    nullable: true
-    property_: startTime
-    reference: cdf_cdm:CogniteSchedulable(property=startTime,version=v1)
-    value_type: timestamp
-    view: CogniteSchedulable
-    view_property: startTime
-  - class_: CogniteSourceSystem
-    container: cdf_cdm:CogniteSourceSystem
-    container_property: manufacturer
-    description: Manufacturer of the source system
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: manufacturer
-    reference: cdf_cdm:CogniteSourceSystem(property=manufacturer,version=v1)
-    value_type: text
-    view: CogniteSourceSystem
-    view_property: manufacturer
-  - class_: CogniteSourceSystem
-    container: cdf_cdm:CogniteSourceSystem
-    container_property: version
-    description: Version identifier for the source system
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: version
-    reference: cdf_cdm:CogniteSourceSystem(property=version,version=v1)
-    value_type: text
-    view: CogniteSourceSystem
-    view_property: version
-  - class_: CogniteSourceable
-    connection: direct
-    container: cdf_cdm:CogniteSourceable
-    container_property: source
-    description: Direct relation to a source system
-    immutable: false
-    index: source
-    is_list: false
-    nullable: true
-    property_: source
-    reference: cdf_cdm:CogniteSourceable(property=source,version=v1)
-    value_type: CogniteSourceSystem
-    view: CogniteSourceable
-    view_property: source
-  - class_: CogniteSourceable
-    container: cdf_cdm:CogniteSourceable
-    container_property: sourceContext
-    description: Context of the source id. For systems where the sourceId is globally
-      unique, the sourceContext is expected to not be set.
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: sourceContext
-    reference: cdf_cdm:CogniteSourceable(property=sourceContext,version=v1)
-    value_type: text
-    view: CogniteSourceable
-    view_property: sourceContext
-  - class_: CogniteSourceable
-    container: cdf_cdm:CogniteSourceable
-    container_property: sourceCreatedTime
-    description: When the instance was created in source system (if available)
-    immutable: false
-    index: sourceCreatedTime
-    is_list: false
-    nullable: true
-    property_: sourceCreatedTime
-    reference: cdf_cdm:CogniteSourceable(property=sourceCreatedTime,version=v1)
-    value_type: timestamp
-    view: CogniteSourceable
-    view_property: sourceCreatedTime
-  - class_: CogniteSourceable
-    container: cdf_cdm:CogniteSourceable
-    container_property: sourceCreatedUser
-    description: User identifier from the source system on who created the source
-      data. This identifier is not guaranteed to match the user identifiers in CDF
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: sourceCreatedUser
-    reference: cdf_cdm:CogniteSourceable(property=sourceCreatedUser,version=v1)
-    value_type: text
-    view: CogniteSourceable
-    view_property: sourceCreatedUser
-  - class_: CogniteSourceable
-    container: cdf_cdm:CogniteSourceable
-    container_property: sourceId
-    description: Identifier from the source system
-    immutable: false
-    index: sourceId
-    is_list: false
-    nullable: true
-    property_: sourceId
-    reference: cdf_cdm:CogniteSourceable(property=sourceId,version=v1)
-    value_type: text
-    view: CogniteSourceable
-    view_property: sourceId
-  - class_: CogniteSourceable
-    container: cdf_cdm:CogniteSourceable
-    container_property: sourceUpdatedTime
-    description: When the instance was last updated in the source system (if available)
-    immutable: false
-    index: sourceUpdatedTime
-    is_list: false
-    nullable: true
-    property_: sourceUpdatedTime
-    reference: cdf_cdm:CogniteSourceable(property=sourceUpdatedTime,version=v1)
-    value_type: timestamp
-    view: CogniteSourceable
-    view_property: sourceUpdatedTime
-  - class_: CogniteSourceable
-    container: cdf_cdm:CogniteSourceable
-    container_property: sourceUpdatedUser
-    description: User identifier from the source system on who last updated the source
-      data. This identifier is not guaranteed to match the user identifiers in CDF
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: sourceUpdatedUser
-    reference: cdf_cdm:CogniteSourceable(property=sourceUpdatedUser,version=v1)
-    value_type: text
-    view: CogniteSourceable
-    view_property: sourceUpdatedUser
-  - class_: CogniteTimeSeries
-    connection: reverse(property=timeSeries)
-    description: An automatically updated list of activities the time series is related
-      to.
-    is_list: true
-    name: Activities
-    property_: activities
-    reference: cdf_cdm:CogniteTimeSeries(property=activities,version=v1)
-    value_type: CogniteActivity
-    view: CogniteTimeSeries
-    view_property: activities
-  - class_: CogniteTimeSeries
-    connection: direct
-    container: cdf_cdm:CogniteTimeSeries
-    container_property: assets
-    description: A list of assets the time series is related to.
-    immutable: false
-    is_list: true
-    name: Assets
-    nullable: true
-    property_: assets
-    reference: cdf_cdm:CogniteTimeSeries(property=assets,version=v1)
-    value_type: CogniteAsset
-    view: CogniteTimeSeries
-    view_property: assets
-  - class_: CogniteTimeSeries
-    connection: direct
-    container: cdf_cdm:CogniteTimeSeries
-    container_property: equipment
-    description: A list of equipment the time series is related to.
-    immutable: false
-    is_list: true
-    name: Equipment
-    nullable: true
-    property_: equipment
-    reference: cdf_cdm:CogniteTimeSeries(property=equipment,version=v1)
-    value_type: CogniteEquipment
-    view: CogniteTimeSeries
-    view_property: equipment
-  - class_: CogniteTimeSeries
-    container: cdf_cdm:CogniteTimeSeries
-    container_property: isStep
-    default: 0
-    description: Specifies whether the time series is a step time series or not.
-    immutable: false
-    is_list: false
-    name: Is step
-    nullable: false
-    property_: isStep
-    reference: cdf_cdm:CogniteTimeSeries(property=isStep,version=v1)
-    value_type: boolean
-    view: CogniteTimeSeries
-    view_property: isStep
-  - class_: CogniteTimeSeries
-    container: cdf_cdm:CogniteTimeSeries
-    container_property: sourceUnit
-    description: The unit specified in the source system.
-    immutable: false
-    is_list: false
-    name: Source unit
-    nullable: true
-    property_: sourceUnit
-    reference: cdf_cdm:CogniteTimeSeries(property=sourceUnit,version=v1)
-    value_type: text
-    view: CogniteTimeSeries
-    view_property: sourceUnit
-  - class_: CogniteTimeSeries
-    container: cdf_cdm:CogniteTimeSeries
-    container_property: type
-    description: Specifies the data type of the data points.
-    immutable: true
-    is_list: false
-    name: Type
-    nullable: false
-    property_: type
-    reference: cdf_cdm:CogniteTimeSeries(property=type,version=v1)
-    value_type: enum(collection=type)
-    view: CogniteTimeSeries
-    view_property: type
-  - class_: CogniteTimeSeries
-    connection: direct
-    container: cdf_cdm:CogniteTimeSeries
-    container_property: unit
-    description: The unit of the time series.
-    immutable: false
-    is_list: false
-    name: Unit
-    nullable: true
-    property_: unit
-    reference: cdf_cdm:CogniteTimeSeries(property=unit,version=v1)
-    value_type: CogniteUnit
-    view: CogniteTimeSeries
-    view_property: unit
-  - class_: CogniteUnit
-    container: cdf_cdm:CogniteUnit
-    container_property: quantity
-    description: Specifies the physical quantity the unit measures
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: quantity
-    reference: cdf_cdm:CogniteUnit(property=quantity,version=v1)
-    value_type: text
-    view: CogniteUnit
-    view_property: quantity
-  - class_: CogniteUnit
-    container: cdf_cdm:CogniteUnit
-    container_property: source
-    description: Source of the unit definition
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: source
-    reference: cdf_cdm:CogniteUnit(property=source,version=v1)
-    value_type: text
-    view: CogniteUnit
-    view_property: source
-  - class_: CogniteUnit
-    container: cdf_cdm:CogniteUnit
-    container_property: sourceReference
-    description: Reference to the source of the unit definition
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: sourceReference
-    reference: cdf_cdm:CogniteUnit(property=sourceReference,version=v1)
-    value_type: text
-    view: CogniteUnit
-    view_property: sourceReference
-  - class_: CogniteUnit
-    container: cdf_cdm:CogniteUnit
-    container_property: symbol
-    description: The symbol for the unit of measurement
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: symbol
-    reference: cdf_cdm:CogniteUnit(property=symbol,version=v1)
-    value_type: text
-    view: CogniteUnit
-    view_property: symbol
-  - class_: CogniteVisualizable
-    connection: direct
-    constraint: uniqueObject3D
-    container: cdf_cdm:CogniteVisualizable
-    container_property: object3D
-    description: Direct relation to an Object3D instance representing the 3D resource
-    immutable: false
-    is_list: false
-    nullable: true
-    property_: object3D
-    reference: cdf_cdm:CogniteVisualizable(property=object3D,version=v1)
-    value_type: Cognite3DObject
-    view: CogniteVisualizable
-    view_property: object3D
-  views:
-  - class_: Cognite360Image
-    implements: Cognite3DTransformation,CogniteCubeMap
-    in_model: true
-    reference: cdf_cdm:Cognite360Image(version=v1)
-    view: Cognite360Image
-  - class_: Cognite360ImageAnnotation
-    implements: CogniteDescribable,CogniteSourceable,CogniteAnnotation
-    in_model: true
-    reference: cdf_cdm:Cognite360ImageAnnotation(version=v1)
-    view: Cognite360ImageAnnotation
-  - class_: Cognite360ImageCollection
-    description: Represents a logical collection of Cognite360Image instances
-    implements: CogniteDescribable,Cognite3DRevision
-    in_model: true
-    reference: cdf_cdm:Cognite360ImageCollection(version=v1)
-    view: Cognite360ImageCollection
-  - class_: Cognite360ImageModel
-    description: Navigational aid for traversing Cognite360ImageModel instances
-    implements: CogniteDescribable,Cognite3DModel
-    in_model: true
-    reference: cdf_cdm:Cognite360ImageModel(version=v1)
-    view: Cognite360ImageModel
-  - class_: Cognite360ImageStation
-    description: A way to group images across collections. Used for creating visual
-      scan history
-    implements: CogniteDescribable
-    in_model: true
-    reference: cdf_cdm:Cognite360ImageStation(version=v1)
-    view: Cognite360ImageStation
-  - class_: Cognite3DModel
-    description: Groups revisions of 3D data of various kinds together (CAD, PointCloud,
-      Image360)
-    implements: CogniteDescribable
-    in_model: true
-    reference: cdf_cdm:Cognite3DModel(version=v1)
-    view: Cognite3DModel
-  - class_: Cognite3DObject
-    description: This is the virtual position representation of an object in the physical
-      world, connecting an asset to one or more 3D resources
-    implements: CogniteDescribable
-    in_model: true
-    reference: cdf_cdm:Cognite3DObject(version=v1)
-    view: Cognite3DObject
-  - class_: Cognite3DRevision
-    description: Shared revision information for various 3D data types. Normally not
-      used directly, but through CognitePointCloudRevision, Image360Collection or
-      CogniteCADRevision
-    in_model: true
-    reference: cdf_cdm:Cognite3DRevision(version=v1)
-    view: Cognite3DRevision
-  - class_: Cognite3DTransformation
-    description: The Cognite3DTransformation object defines a comprehensive 3D transformation,
-      enabling precise adjustments to an object's position, orientation, and size
-      in the 3D coordinate system. It allows for the translation of objects along
-      the three spatial axes, rotation around these axes using Euler angles, and scaling
-      along each axis to modify the object's dimensions. The object's transformation
-      is defined in "CDF space", a coordinate system where the positive Z axis is
-      the up direction
-    in_model: true
-    reference: cdf_cdm:Cognite3DTransformation(version=v1)
-    view: Cognite3DTransformation
-  - class_: CogniteActivity
-    description: Represents activities. Activities typically happen over a period
-      and have a start and end time.
-    implements: CogniteDescribable,CogniteSourceable,CogniteSchedulable
-    in_model: true
-    name: Activity
-    reference: cdf_cdm:CogniteActivity(version=v1)
-    view: CogniteActivity
-  - class_: CogniteAnnotation
-    description: Annotation represents contextualization results or links
-    implements: CogniteDescribable,CogniteSourceable
-    in_model: true
-    reference: cdf_cdm:CogniteAnnotation(version=v1)
-    view: CogniteAnnotation
-  - class_: CogniteAsset
-    description: Assets represent systems that support industrial functions or processes.
-      Assets are often called 'functional location'.
-    implements: CogniteVisualizable,CogniteDescribable,CogniteSourceable
-    in_model: true
-    name: Asset
-    reference: cdf_cdm:CogniteAsset(version=v1)
-    view: CogniteAsset
-  - class_: CogniteAssetClass
-    description: Represents the class of an asset.
-    implements: CogniteDescribable
-    in_model: true
-    name: Asset class
-    reference: cdf_cdm:CogniteAssetClass(version=v1)
-    view: CogniteAssetClass
-  - class_: CogniteAssetType
-    description: Represents the type of an asset.
-    implements: CogniteDescribable
-    in_model: true
-    name: Asset type
-    reference: cdf_cdm:CogniteAssetType(version=v1)
-    view: CogniteAssetType
-  - class_: CogniteCADModel
-    description: Navigational aid for traversing CogniteCADModel instances
-    implements: CogniteDescribable,Cognite3DModel
-    in_model: true
-    reference: cdf_cdm:CogniteCADModel(version=v1)
-    view: CogniteCADModel
-  - class_: CogniteCADNode
-    description: Represents nodes from the 3D model that have been contextualized
-    implements: CogniteDescribable
-    in_model: true
-    reference: cdf_cdm:CogniteCADNode(version=v1)
-    view: CogniteCADNode
-  - class_: CogniteCADRevision
-    implements: Cognite3DRevision
-    in_model: true
-    reference: cdf_cdm:CogniteCADRevision(version=v1)
-    view: CogniteCADRevision
-  - class_: CogniteCubeMap
-    description: The cube map holds references to 6 images in used to visually represent
-      the surrounding environment
-    in_model: true
-    reference: cdf_cdm:CogniteCubeMap(version=v1)
-    view: CogniteCubeMap
-  - class_: CogniteDescribable
-    description: The describable core concept is used as a standard way of holding
-      the bare minimum of information about the instance
-    in_model: true
-    reference: cdf_cdm:CogniteDescribable(version=v1)
-    view: CogniteDescribable
-  - class_: CogniteDiagramAnnotation
-    description: Annotation for diagrams
-    implements: CogniteDescribable,CogniteSourceable,CogniteAnnotation
-    in_model: true
-    reference: cdf_cdm:CogniteDiagramAnnotation(version=v1)
-    view: CogniteDiagramAnnotation
-  - class_: CogniteEquipment
-    description: Equipment represents physical supplies or devices.
-    implements: CogniteDescribable,CogniteSourceable
-    in_model: true
-    name: Equipment
-    reference: cdf_cdm:CogniteEquipment(version=v1)
-    view: CogniteEquipment
-  - class_: CogniteEquipmentType
-    description: Represents the type of equipment.
-    implements: CogniteDescribable
-    in_model: true
-    name: Equipment type
-    reference: cdf_cdm:CogniteEquipmentType(version=v1)
-    view: CogniteEquipmentType
-  - class_: CogniteFile
-    description: Represents files.
-    implements: CogniteDescribable,CogniteSourceable
-    in_model: true
-    name: File
-    reference: cdf_cdm:CogniteFile(version=v1)
-    view: CogniteFile
-  - class_: CogniteFileCategory
-    description: Represents the categories of files as determined by contextualization
-      or categorization.
-    implements: CogniteDescribable
-    in_model: true
-    name: File category
-    reference: cdf_cdm:CogniteFileCategory(version=v1)
-    view: CogniteFileCategory
-  - class_: CognitePointCloudModel
-    description: Navigational aid for traversing CognitePointCloudModel instances
-    implements: CogniteDescribable,Cognite3DModel
-    in_model: true
-    reference: cdf_cdm:CognitePointCloudModel(version=v1)
-    view: CognitePointCloudModel
-  - class_: CognitePointCloudRevision
-    description: Navigational aid for traversing CognitePointCloudRevision instances
-    implements: Cognite3DRevision
-    in_model: true
-    reference: cdf_cdm:CognitePointCloudRevision(version=v1)
-    view: CognitePointCloudRevision
-  - class_: CognitePointCloudVolume
-    description: PointCloud volume definition
-    implements: CogniteDescribable
-    in_model: true
-    reference: cdf_cdm:CognitePointCloudVolume(version=v1)
-    view: CognitePointCloudVolume
-  - class_: CogniteSchedulable
-    description: CogniteSchedulable represents the metadata about when an activity
-      (or similar) starts and ends.
-    in_model: true
-    reference: cdf_cdm:CogniteSchedulable(version=v1)
-    view: CogniteSchedulable
-  - class_: CogniteSourceSystem
-    description: The CogniteSourceSystem core concept is used to standardize the way
-      source system is stored.
-    implements: CogniteDescribable
-    in_model: true
-    reference: cdf_cdm:CogniteSourceSystem(version=v1)
-    view: CogniteSourceSystem
-  - class_: CogniteSourceable
-    in_model: true
-    reference: cdf_cdm:CogniteSourceable(version=v1)
-    view: CogniteSourceable
-  - class_: CogniteTimeSeries
-    description: Represents a series of data points in time order."
-    implements: CogniteDescribable,CogniteSourceable
-    in_model: true
-    name: Time series
-    reference: cdf_cdm:CogniteTimeSeries(version=v1)
-    view: CogniteTimeSeries
-  - class_: CogniteUnit
-    description: Represents a single unit of measurement
-    implements: CogniteDescribable
-    in_model: true
-    reference: cdf_cdm:CogniteUnit(version=v1)
-    view: CogniteUnit
-  - class_: CogniteVisualizable
-    description: CogniteVisualizable defines the standard way to reference a related
-      3D resource
-    in_model: true
-    reference: cdf_cdm:CogniteVisualizable(version=v1)
-    view: CogniteVisualizable
 views:
-- class_: cdf_cdm:Cognite360Image
-  in_model: true
+- in_model: true
   name: Cognite360Image
   view: cdf_cdm:Cognite360Image
-- class_: cdf_cdm:Cognite360ImageAnnotation
-  in_model: true
+- in_model: true
   name: Cognite360ImageAnnotation
   view: cdf_cdm:Cognite360ImageAnnotation
-- class_: cdf_cdm:Cognite360ImageCollection
-  in_model: true
+- in_model: true
   name: Cognite360ImageCollection
   view: cdf_cdm:Cognite360ImageCollection
-- class_: cdf_cdm:Cognite360ImageModel
-  in_model: true
+- in_model: true
   name: Cognite360ImageModel
   view: cdf_cdm:Cognite360ImageModel
-- class_: cdf_cdm:Cognite360ImageStation
-  in_model: true
+- in_model: true
   name: Cognite360ImageStation
   view: cdf_cdm:Cognite360ImageStation
-- class_: cdf_cdm:Cognite3DModel
-  in_model: true
+- in_model: true
   name: Cognite3DModel
   view: cdf_cdm:Cognite3DModel
-- class_: cdf_cdm:Cognite3DObject
-  in_model: true
+- in_model: true
   name: Cognite3DObject
   view: cdf_cdm:Cognite3DObject
-- class_: cdf_cdm:Cognite3DRevision
-  in_model: true
+- in_model: true
   name: Cognite3DRevision
   view: cdf_cdm:Cognite3DRevision
-- class_: cdf_cdm:Cognite3DTransformation
-  in_model: true
+- in_model: true
   name: Cognite3DTransformation
   view: cdf_cdm:Cognite3DTransformation
-- class_: cdf_cdm:CogniteActivity
-  in_model: true
+- in_model: true
   name: CogniteActivity
   view: cdf_cdm:CogniteActivity
-- class_: cdf_cdm:CogniteAnnotation
-  in_model: true
+- in_model: true
   name: CogniteAnnotation
   view: cdf_cdm:CogniteAnnotation
-- class_: cdf_cdm:CogniteAsset
-  in_model: true
+- in_model: true
   name: CogniteAsset
   view: cdf_cdm:CogniteAsset
-- class_: cdf_cdm:CogniteAssetClass
-  in_model: true
+- in_model: true
   name: CogniteAssetClass
   view: cdf_cdm:CogniteAssetClass
-- class_: cdf_cdm:CogniteAssetType
-  in_model: true
+- in_model: true
   name: CogniteAssetType
   view: cdf_cdm:CogniteAssetType
-- class_: cdf_cdm:CogniteCADModel
-  in_model: true
+- in_model: true
   name: CogniteCADModel
   view: cdf_cdm:CogniteCADModel
-- class_: cdf_cdm:CogniteCADNode
-  in_model: true
+- in_model: true
   name: CogniteCADNode
   view: cdf_cdm:CogniteCADNode
-- class_: cdf_cdm:CogniteCADRevision
-  in_model: true
+- in_model: true
   name: CogniteCADRevision
   view: cdf_cdm:CogniteCADRevision
-- class_: cdf_cdm:CogniteCubeMap
-  in_model: true
+- in_model: true
   name: CogniteCubeMap
   view: cdf_cdm:CogniteCubeMap
-- class_: cdf_cdm:CogniteDescribable
-  in_model: true
+- in_model: true
   name: CogniteDescribable
   view: cdf_cdm:CogniteDescribable
-- class_: cdf_cdm:CogniteDiagramAnnotation
-  in_model: true
+- in_model: true
   name: CogniteDiagramAnnotation
   view: cdf_cdm:CogniteDiagramAnnotation
-- class_: cdf_cdm:CogniteEquipment
-  in_model: true
+- in_model: true
   name: CogniteEquipment
   view: cdf_cdm:CogniteEquipment
-- class_: cdf_cdm:CogniteEquipmentType
-  in_model: true
+- in_model: true
   name: CogniteEquipmentType
   view: cdf_cdm:CogniteEquipmentType
-- class_: cdf_cdm:CogniteFile
-  in_model: true
+- in_model: true
   name: CogniteFile
   view: cdf_cdm:CogniteFile
-- class_: cdf_cdm:CogniteFileCategory
-  in_model: true
+- in_model: true
   name: CogniteFileCategory
   view: cdf_cdm:CogniteFileCategory
-- class_: cdf_cdm:CognitePointCloudModel
-  in_model: true
+- in_model: true
   name: CognitePointCloudModel
   view: cdf_cdm:CognitePointCloudModel
-- class_: cdf_cdm:CognitePointCloudRevision
-  in_model: true
+- in_model: true
   name: CognitePointCloudRevision
   view: cdf_cdm:CognitePointCloudRevision
-- class_: cdf_cdm:CognitePointCloudVolume
-  in_model: true
+- in_model: true
   name: CognitePointCloudVolume
   view: cdf_cdm:CognitePointCloudVolume
-- class_: cdf_cdm:CogniteSchedulable
-  in_model: true
+- in_model: true
   name: CogniteSchedulable
   view: cdf_cdm:CogniteSchedulable
-- class_: cdf_cdm:CogniteSourceSystem
-  in_model: true
+- in_model: true
   name: CogniteSourceSystem
   view: cdf_cdm:CogniteSourceSystem
-- class_: cdf_cdm:CogniteSourceable
-  in_model: true
+- in_model: true
   name: CogniteSourceable
   view: cdf_cdm:CogniteSourceable
-- class_: cdf_cdm:CogniteTimeSeries
-  in_model: true
+- in_model: true
   name: CogniteTimeSeries
   view: cdf_cdm:CogniteTimeSeries
-- class_: cdf_cdm:CogniteUnit
-  in_model: true
+- in_model: true
   name: CogniteUnit
   view: cdf_cdm:CogniteUnit
-- class_: cdf_cdm:CogniteVisualizable
-  in_model: true
+- in_model: true
   name: CogniteVisualizable
   view: cdf_cdm:CogniteVisualizable
-- class_: Area
-  implements: ISA95Asset
+- implements: ISA95Asset
   in_model: true
   name: Area
   view: Area
-- class_: Building
-  implements: ISA95Asset
+- implements: ISA95Asset
   in_model: true
   name: Building
   view: Building
-- class_: ControlModule
-  implements: ISA95Asset
+- implements: ISA95Asset
   in_model: true
   name: ControlModule
   view: ControlModule
-- class_: Datatype
-  in_model: true
+- in_model: true
   name: Datatype
   view: Datatype
-- class_: Enterprise
-  description: Highest level in the hierarchy of a manufacturing organization.
+- description: Highest level in the hierarchy of a manufacturing organization.
   implements: ISA95Asset
   in_model: true
   name: Enterprise
   view: Enterprise
-- class_: Equipment
-  implements: cdf_cdm:CogniteEquipment
+- implements: cdf_cdm:CogniteEquipment
   in_model: true
   name: Equipment
   view: Equipment
-- class_: EquipmentKpi
-  implements: KpiData
+- implements: KpiData
   in_model: true
   name: EquipmentKpi
   view: EquipmentKpi
-- class_: EquipmentModule
-  implements: ISA95Asset
+- implements: ISA95Asset
   in_model: true
   name: EquipmentModule
   view: EquipmentModule
-- class_: EquipmentSensor
-  implements: TSData
+- implements: TSData
   in_model: true
   name: EquipmentSensor
   view: EquipmentSensor
-- class_: ForcastedData
-  implements: TSData
+- implements: TSData
   in_model: true
   name: ForcastedData
   view: ForcastedData
-- class_: Formulation
-  implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSchedulable
+- implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSchedulable
   in_model: true
   name: Formulation
   view: Formulation
-- class_: ISA95Asset
-  implements: cdf_cdm:CogniteAsset
+- implements: cdf_cdm:CogniteAsset
   in_model: true
   name: ISA95Asset
   view: ISA95Asset
-- class_: KpiData
-  implements: TSData
+- implements: TSData
   in_model: true
   name: KpiData
   view: KpiData
-- class_: Phase
-  implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSchedulable
+- implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSchedulable
   in_model: true
   name: Phase
   view: Phase
-- class_: PhaseKpi
-  implements: KpiData
+- implements: KpiData
   in_model: true
   name: PhaseKpi
   view: PhaseKpi
-- class_: ProcessArea
-  description: Process Area such as Cell Culture, Purification, Media & Buffer, etc
+- description: Process Area such as Cell Culture, Purification, Media & Buffer, etc
   implements: ISA95Asset
   in_model: true
   name: ProcessArea
   view: ProcessArea
-- class_: ProcessCell
-  implements: WorkCenter
+- implements: WorkCenter
   in_model: true
   name: ProcessCell
   view: ProcessCell
-- class_: Batch
-  implements: ProcessOrderNode
+- implements: ProcessOrderNode
   in_model: true
   name: ProcessOrder
   view: ProcessOrder
-- class_: BatchNode
-  implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSchedulable
+- implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSchedulable
   in_model: true
   name: ProcessOrderNode
   view: ProcessOrderNode
-- class_: Product
-  implements: ProductNode
+- implements: ProductNode
   in_model: true
   name: Product
   view: Product
-- class_: ProductComponent
-  implements: ProductNode
+- implements: ProductNode
   in_model: true
   name: ProductComponent
   view: ProductComponent
-- class_: ProductNode
-  implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSchedulable
+- implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSchedulable
   in_model: true
   name: ProductNode
   view: ProductNode
-- class_: ProductionLine
-  implements: WorkCenter
+- implements: WorkCenter
   in_model: true
   name: ProductionLine
   view: ProductionLine
-- class_: ProductionUnit
-  implements: WorkCenter
+- implements: WorkCenter
   in_model: true
   name: ProductionUnit
   view: ProductionUnit
-- class_: Recipe
-  implements: cdf_cdm:CogniteDescribable
+- implements: cdf_cdm:CogniteDescribable
   in_model: true
   name: SKU
   view: SKU
-- class_: RecipeKpi
-  implements: KpiData
+- implements: KpiData
   in_model: true
   name: SKUKpi
   view: SKUKpi
-- class_: SampleData
-  implements: TSData
+- implements: TSData
   in_model: true
   view: SampleData
-- class_: Site
-  description: Physical or geographical location where manufacturing, production,
+- description: Physical or geographical location where manufacturing, production,
     or other operations are carried out.
   implements: ISA95Asset
   in_model: true
   name: Site
   view: Site
-- class_: StartEndTime
-  in_model: true
+- in_model: true
   name: StartEndTime
   view: StartEndTime
-- class_: Status
-  in_model: true
+- in_model: true
   name: Status
   view: Status
-- class_: Operation
-  implements: ProcessOrderNode
+- implements: ProcessOrderNode
   in_model: true
   name: Step
   view: Step
-- class_: StorageUnit
-  implements: WorkUnits
+- implements: WorkUnits
   in_model: true
   name: StorageUnit
   view: StorageUnit
-- class_: StorageZone
-  implements: WorkCenter
+- implements: WorkCenter
   in_model: true
   name: StorageZone
   view: StorageZone
-- class_: SensorData
-  implements: cdf_cdm:CogniteDescribable
+- implements: cdf_cdm:CogniteDescribable
   in_model: true
   name: SensorData
   view: TSData
-- class_: UnitProcedure
-  implements: ProcessOrderNode
+- implements: ProcessOrderNode
   in_model: true
   name: UnitProcedure
   view: UnitProcedure
-- class_: WorkCell
-  implements: WorkUnits
+- implements: WorkUnits
   in_model: true
   name: WorkCell
   view: WorkCell
-- class_: WorkCenter
-  implements: ISA95Asset
+- implements: ISA95Asset
   in_model: true
   name: WorkCenter
   view: WorkCenter
-- class_: WorkUnit
-  implements: WorkUnits
+- implements: WorkUnits
   in_model: true
   name: WorkUnit
   view: WorkUnit
-- class_: WorkUnits
-  implements: ISA95Asset
+- implements: ISA95Asset
   in_model: true
   name: WorkUnits
   view: WorkUnits

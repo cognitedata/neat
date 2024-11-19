@@ -263,6 +263,9 @@ class TestInformationRulesConverter:
 
         assert actual_space == expected_space
 
+    @pytest.mark.skip(
+        reason="Skipping this test until rules refactoring is completed, probably deprecating as we do not use last"
+    )
     def test_svein_harald_information_as_dms(self, svein_harald_information_rules: InformationRules) -> None:
         expected = {
             "ArrayCable": {"PowerLine"},

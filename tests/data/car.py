@@ -184,7 +184,6 @@ BASE_MODEL: DMSRules = DMSInputRules(
             view="Entity",
             view_property="name",
             value_type="text",
-            property_="name",
             container="Entity",
             container_property="name",
         )
