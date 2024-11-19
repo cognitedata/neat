@@ -12,6 +12,7 @@ from typing import Any
 
 from mixpanel import Consumer, Mixpanel  # type: ignore[import-untyped]
 
+from cognite.neat._constants import IN_NOTEBOOK, IN_PYODIDE
 from cognite.neat._version import __version__
 
 _NEAT_MIXPANEL_TOKEN: str = "bd630ad149d19999df3989c3a3750c4f"
@@ -42,18 +43,30 @@ class Collector:
     def opted_in(self) -> bool:
         return self._opt_status == "opted-in"
 
+    @staticmethod
+    def _get_environment() -> str:
+        if IN_PYODIDE:
+            return "pyodide"
+        if IN_NOTEBOOK:
+            return "notebook"
+        return "python"
+
     def track_session_command(self, command: str, *args, **kwargs) -> None:
         event_information = {
             "neatVersion": __version__,
             "$os": platform.system(),
             "pythonVersion": platform.python_version(),
+            "environment": self._get_environment(),
         }
-        if args:
-            for i, arg in enumerate(args):
+
+        if len(args) > 1:
+            # The first argument is self.
+            for i, arg in enumerate(args[1:]):
                 event_information[f"arg{i}"] = arg
+
         if kwargs:
             for key, value in kwargs.items():
-                event_information[key] = self._serialize_value(value)[:100]
+                event_information[key] = self._serialize_value(value)[:500]
         self._track(command, event_information)
 
     @staticmethod
