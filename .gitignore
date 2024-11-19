@@ -175,3 +175,6 @@ scripts/tmp/*
 scripts/config_manual_test.yaml
 real_cases/
 *.env
+
+# Excel chache files
+~*.xlsx
