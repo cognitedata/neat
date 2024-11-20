@@ -106,27 +106,16 @@ class InformationClass(SheetRow):
     Args:
         class_: The class ID of the class.
         description: A description of the class.
-        parent: The parent class of the class.
-        reference: Reference of the source of the information for given resource
-        match_type: The match type of the resource being described and the source entity.
+        implements: Which classes the current class implements.
     """
 
     class_: ClassEntityType = Field(alias="Class")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    parent: ClassEntityList | None = Field(alias="Parent Class", default=None)
-    reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
-    match_type: MatchType | None = Field(alias="Match Type", default=None)
-    comment: str | None = Field(alias="Comment", default=None)
+    implements: ClassEntityList | None = Field(alias="Implements", default=None)
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.class_,)
-
-    @field_serializer("reference", when_used="always")
-    def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
-        if isinstance(info.context, dict) and info.context.get("as_reference") is True:
-            return self.class_.dump()
-        return str(value) if value is not None else None
 
     @field_serializer("class_", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
@@ -134,14 +123,16 @@ class InformationClass(SheetRow):
             return value.dump(prefix=metadata.prefix, version=metadata.version)
         return str(value)
 
-    @field_serializer("parent", when_used="unless-none")
+    @field_serializer("implements", when_used="unless-none")
     def remove_default_prefixes(self, value: Any, info: SerializationInfo) -> str:
         if isinstance(value, list) and (metadata := _get_metadata(info.context)):
             return ",".join(
-                parent.dump(prefix=metadata.prefix, version=metadata.version)
-                if isinstance(parent, Entity)
-                else str(parent)
-                for parent in value
+                (
+                    class_.dump(prefix=metadata.prefix, version=metadata.version)
+                    if isinstance(class_, Entity)
+                    else str(class_)
+                )
+                for class_ in value
             )
         return ",".join(str(value) for value in value)
 
@@ -162,8 +153,6 @@ class InformationProperty(SheetRow):
         min_count: Minimum count of the property values. Defaults to 0
         max_count: Maximum count of the property values. Defaults to None
         default: Default value of the property
-        reference: Reference to the source of the information, HTTP URI
-        match_type: The match type of the resource being described and the source entity.
         transformation: Actual rule for the transformation from source to target representation of
               knowledge graph. Defaults to None (no transformation)
     """
@@ -175,11 +164,14 @@ class InformationProperty(SheetRow):
     value_type: DataType | ClassEntityType | MultiValueTypeType | UnknownEntity = Field(
         alias="Value Type", union_mode="left_to_right"
     )
+    properties: "InformationProperty" | None = Field(
+        alias="Properties",
+        default=None,
+        description="For definition of properties on properties",
+    )
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
-    reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
-    match_type: MatchType | None = Field(alias="Match Type", default=None)
     transformation: RDFPath | None = Field(alias="Transformation", default=None)
     comment: str | None = Field(alias="Comment", default=None)
     inherited: bool = Field(
