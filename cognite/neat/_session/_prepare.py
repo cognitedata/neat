@@ -13,10 +13,10 @@ from cognite.neat._rules.transformers import ReduceCogniteModel, ToCompliantEnti
 from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
-from .exceptions import NeatSessionError, intercept_session_exceptions
+from .exceptions import NeatSessionError, session_class_wrapper
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class PrepareAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
@@ -25,7 +25,7 @@ class PrepareAPI:
         self.instances = InstancePrepareAPI(state, verbose)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class InstancePrepareAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
@@ -96,7 +96,7 @@ class InstancePrepareAPI:
         return type_uri[0], property_uri[0]
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class DataModelPrepareAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state

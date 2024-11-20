@@ -12,10 +12,10 @@ from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._utils.upload import UploadResultCore, UploadResultList
 
 from ._state import SessionState
-from .exceptions import NeatSessionError, intercept_session_exceptions
+from .exceptions import NeatSessionError, session_class_wrapper
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ToAPI:
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._state = state
@@ -73,7 +73,7 @@ class ToAPI:
         return None
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class CDFToAPI:
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._client = client

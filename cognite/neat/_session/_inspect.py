@@ -9,10 +9,10 @@ from cognite.neat._issues import IssueList
 from cognite.neat._utils.upload import UploadResult, UploadResultCore, UploadResultList
 
 from ._state import SessionState
-from .exceptions import intercept_session_exceptions
+from .exceptions import session_class_wrapper
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class InspectAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
@@ -25,7 +25,7 @@ class InspectAPI:
         return self._state.data_model.last_verified_rule[1].properties.to_pandas()
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class InspectIssues:
     """Inspect issues of the current data model."""
 
@@ -92,14 +92,14 @@ class InspectIssues:
         )
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class InspectOutcome:
     def __init__(self, state: SessionState) -> None:
         self.data_model = InspectUploadOutcome(lambda: state.data_model.last_outcome)
         self.instances = InspectUploadOutcome(lambda: state.instances.last_outcome)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class InspectUploadOutcome:
     def __init__(self, get_last_outcome: Callable[[], UploadResultList]) -> None:
         self._get_last_outcome = get_last_outcome

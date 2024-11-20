@@ -545,7 +545,7 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
     def _is_asset_3D_property(self, prop: DMSProperty) -> bool:
         if "3D" not in self.drop_collection:
             return False
-        return prop.view.as_id() == self._ASSET_VIEW
+        return prop.view.as_id() == self._ASSET_VIEW and prop.view_property == "object3D"
 
 
 class _InformationRulesConverter:
