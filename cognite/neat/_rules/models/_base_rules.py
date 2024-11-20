@@ -90,7 +90,6 @@ class SchemaCompleteness(StrEnum):
     partial = "partial"
     extended = "extended"
 
-
 class ExtensionCategory(StrEnum):
     addition = "addition"
     reshape = "reshape"
@@ -112,11 +111,6 @@ class RoleTypes(StrEnum):
     domain_expert = "domain expert"
     information = "information architect"
     dms = "DMS Architect"
-
-
-class MatchType(StrEnum):
-    exact = "exact"
-    partial = "partial"
 
 
 class SchemaModel(BaseModel):
@@ -237,7 +231,6 @@ class BaseRules(SchemaModel, ABC):
     """
 
     metadata: BaseMetadata
-    reference: Self | None = Field(None, alias="Reference")
 
     @classmethod
     def headers_by_sheet(cls, by_alias: bool = False) -> dict[str, list[str]]:
@@ -275,7 +268,6 @@ class BaseRules(SchemaModel, ABC):
     def dump(
         self,
         entities_exclude_defaults: bool = True,
-        as_reference: bool = False,
         mode: Literal["python", "json"] = "python",
         by_alias: bool = False,
         exclude: IncEx | None = None,
@@ -292,9 +284,6 @@ class BaseRules(SchemaModel, ABC):
                 For example, given a class that is dumped as 'my_prefix:MyClass', if the prefix for the rules
                 set in metadata.prefix = 'my_prefix', then this class will be dumped as 'MyClass' when this flag is set.
                 Defaults to True.
-            as_reference (bool, optional): Whether to dump as reference. For Information and DMS rules, this will
-                set the reference column/field to the reference of that entity. This is used in the ExcelExporter
-                to dump a reference model.
             mode: The mode in which `to_python` should run.
                 If mode is 'json', the output will only contain JSON serializable types.
                 If mode is 'python', the output may contain non-JSON-serializable Python objects.
@@ -310,25 +299,11 @@ class BaseRules(SchemaModel, ABC):
             if isinstance(value, SheetList):
                 value.sort(key=lambda x: x._identifier())
 
-        context: dict[str, Any] = {"as_reference": as_reference}
+        context: dict[str, Any] = {}
         if entities_exclude_defaults:
             context["metadata"] = self.metadata
 
-        exclude_input: IncEx | None
-        if self.reference is None:
-            exclude_input = exclude
-        else:
-            # If the rules has a reference, we dump that separately with the as_reference flag set to True.
-            # We don't want to include the reference in the main dump, so we exclude it here.
-            # This is to include whatever is in the exclude set from the user.
-            if isinstance(exclude, dict):
-                exclude_input = exclude.copy()
-                exclude_input["reference"] = {"__all__"}  # type: ignore[index]
-            elif isinstance(exclude, set):
-                exclude_input = exclude.copy()
-                exclude_input.add("reference")  # type: ignore[arg-type]
-            else:
-                exclude_input = {"reference"}
+        exclude_input: IncEx | None = exclude
 
         output = self.model_dump(
             mode=mode,
@@ -339,20 +314,7 @@ class BaseRules(SchemaModel, ABC):
             exclude_defaults=exclude_defaults,
             context=context,
         )
-        is_reference_user_excluded = isinstance(exclude, dict | set) and "reference" in exclude
-        if self.reference is not None and not is_reference_user_excluded:
-            # If the rules has a reference, we dump that separately with the as_reference flag set to True.
-            # Unless the user has explicitly excluded the reference.
-            output["Reference" if by_alias else "reference"] = self.reference.dump(
-                mode=mode,
-                by_alias=by_alias,
-                exclude=exclude,
-                exclude_none=exclude_none,
-                exclude_unset=exclude_unset,
-                exclude_defaults=exclude_defaults,
-                entities_exclude_defaults=entities_exclude_defaults,
-                as_reference=True,
-            )
+
         return output
 
 
