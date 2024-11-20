@@ -39,12 +39,9 @@ class InformationPostValidation:
 
         if classes_without_properties := defined_classes.difference(referred_classes):
             for class_ in classes_without_properties:
-
                 # USE CASE: class has no direct properties and no parents with properties
                 if class_ not in class_parent_pairs:
-                    self.issue_list.append(
-                        UndefinedClassWarning(class_id=class_.as_str())
-                    )
+                    self.issue_list.append(UndefinedClassWarning(class_id=str(class_)))
 
     def _parent_class_defined(self) -> None:
         """This is a validation to check if the parent class of a class is defined in the classes sheet."""
@@ -54,19 +51,15 @@ class InformationPostValidation:
 
         if undefined_parents := parents.difference(classes):
             for parent in undefined_parents:
-                self.issue_list.append(UndefinedClassWarning(class_id=parent.as_str()))
+                self.issue_list.append(UndefinedClassWarning(class_id=str(parent)))
 
     def _referenced_classes_exist(self) -> None:
         # needs to be complete for this validation to pass
         defined_classes = {class_.class_ for class_ in self.classes}
-        classes_with_explicit_properties = {
-            property_.class_ for property_ in self.properties
-        }
+        classes_with_explicit_properties = {property_.class_ for property_ in self.properties}
 
         # USE CASE: models are complete
-        if missing_classes := classes_with_explicit_properties.difference(
-            defined_classes
-        ):
+        if missing_classes := classes_with_explicit_properties.difference(defined_classes):
             for class_ in missing_classes:
                 self.issue_list.append(
                     ResourceNotDefinedError[ClassEntity](
@@ -104,7 +97,7 @@ class InformationPostValidation:
             class_parent_pairs[class_.class_] = []
             if class_.implements is None:
                 continue
-            class_parent_pairs[class_.class_].extend(class_.parent)
+            class_parent_pairs[class_.class_].extend(class_.implements)
 
         return class_parent_pairs
 

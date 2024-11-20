@@ -4,6 +4,7 @@ its sub-models and validators.
 
 from __future__ import annotations
 
+import math
 import sys
 import types
 from abc import ABC, abstractmethod
@@ -48,10 +49,8 @@ from cognite.neat._rules.models._types import (
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
-    from typing import Self
 else:
     from backports.strenum import StrEnum
-    from typing_extensions import Self
 
 
 METADATA_VALUE_MAX_LENGTH = 5120
@@ -89,6 +88,7 @@ class SchemaCompleteness(StrEnum):
     complete = "complete"
     partial = "partial"
     extended = "extended"
+
 
 class ExtensionCategory(StrEnum):
     addition = "addition"
@@ -172,6 +172,18 @@ class BaseMetadata(SchemaModel):
     updated: datetime = Field(
         description=("Date of the data model update"),
     )
+
+    @field_validator("*", mode="before")
+    def strip_string(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
+    @field_validator("description", mode="before")
+    def nan_as_none(cls, value):
+        if isinstance(value, float) and math.isnan(value):
+            return None
+        return value
 
     def to_pandas(self) -> pd.Series:
         """Converts Metadata to pandas Series."""

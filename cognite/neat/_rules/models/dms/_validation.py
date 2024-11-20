@@ -19,7 +19,6 @@ from cognite.neat._issues.warnings.user_modeling import (
     NotNeatSupportedFilterWarning,
     ViewPropertyLimitWarning,
 )
-from cognite.neat._rules.models._base_rules import SchemaCompleteness
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ContainerEntity, RawFilter
 from cognite.neat._rules.models.entities._single_value import (
@@ -54,8 +53,6 @@ class DMSPostValidation:
         self._validate_reverse_connections()
 
         self._referenced_views_and_containers_are_existing_and_proper_size()
-        if self.metadata.schema_ is SchemaCompleteness.partial:
-            return self.issue_list
         dms_schema = self.rules.as_schema()
         self._validate_performance(dms_schema)
         return self.issue_list

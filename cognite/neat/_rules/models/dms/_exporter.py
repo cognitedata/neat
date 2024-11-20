@@ -18,9 +18,7 @@ from cognite.neat._issues.warnings import NotSupportedWarning, PropertyNotFoundW
 from cognite.neat._issues.warnings.user_modeling import (
     EmptyContainerWarning,
     HasDataFilterOnNoPropertiesViewWarning,
-    NodeTypeFilterOnParentViewWarning,
 )
-from cognite.neat._rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat._rules.models.data_types import DataType, Double, Enum, Float
 from cognite.neat._rules.models.entities import (
     ClassEntity,
@@ -71,19 +69,6 @@ class _DMSExporter:
         else:
             self._ref_views_by_id = {}  # type: ignore
 
-        self.is_addition = (
-            rules.metadata.schema_ is SchemaCompleteness.extended
-            and rules.metadata.extension is ExtensionCategory.addition
-        )
-        self.is_reshape = (
-            rules.metadata.schema_ is SchemaCompleteness.extended
-            and rules.metadata.extension is ExtensionCategory.reshape
-        )
-        self.is_rebuild = (
-            rules.metadata.schema_ is SchemaCompleteness.extended
-            and rules.metadata.extension is ExtensionCategory.rebuild
-        )
-
     def to_schema(self) -> DMSSchema:
         rules = self.rules
         container_properties_by_id, view_properties_by_id = self._gather_properties(list(self.rules.properties))
@@ -111,8 +96,6 @@ class _DMSExporter:
         data_model = rules.metadata.as_data_model()
 
         data_model_views = [view_id for view_id in views if view_id not in views_not_in_model]
-        if last_schema and self.is_addition:
-            data_model_views.extend([view_id for view_id in last_schema.views if view_id not in views_not_in_model])
 
         # Sorting to ensure deterministic order
         data_model.views = sorted(data_model_views, key=lambda v: v.as_tuple())  # type: ignore[union-attr]
@@ -162,7 +145,6 @@ class _DMSExporter:
         input_views = list(self.rules.views)
 
         views = ViewApplyDict([dms_view.as_view() for dms_view in input_views])
-        dms_view_by_id = {dms_view.view.as_id(): dms_view for dms_view in input_views}
 
         for view_id, view in views.items():
             view.properties = {}
@@ -173,30 +155,9 @@ class _DMSExporter:
                 if view_property is not None:
                     view.properties[prop.view_property] = view_property
 
-        data_model_type = self.rules.metadata.data_model_type
         unique_node_types: set[dm.NodeId] = set()
-        parent_views = {parent for view in views.values() for parent in view.implements or []}
-        for view_id, view in views.items():
-            dms_view = dms_view_by_id.get(view_id)
-
-            if view_filter := self._create_view_filter(view, dms_view, data_model_type):
-                view.filter = view_filter.as_dms_filter()
-                if isinstance(view_filter, NodeTypeFilter):
-                    unique_node_types.update(view_filter.nodes)
-                    if view.as_id() in parent_views:
-                        warnings.warn(
-                            NodeTypeFilterOnParentViewWarning(view.as_id()),
-                            stacklevel=2,
-                        )
-
-                elif isinstance(view_filter, HasDataFilter) and data_model_type == DataModelType.solution:
-                    # Solution model filtering was based on .reference which is removed
-                    continue
-
-                if data_model_type == DataModelType.enterprise:
-                    # Enterprise Model needs to create node types for all views,
-                    # as they are expected for the solution model.
-                    unique_node_types.add(dm.NodeId(space=view.space, external_id=view.external_id))
+        for view in views.values():
+            unique_node_types.add(dm.NodeId(space=view.space, external_id=view.external_id))
 
         return views, unique_node_types
 
@@ -329,17 +290,6 @@ class _DMSExporter:
         views: Sequence[DMSView],
     ) -> dict[dm.ViewId, list[DMSProperty]]:
         all_view_properties_by_id = view_properties_by_id.copy()
-        if self.rules.reference:
-            # We need to include t
-            ref_view_properties_by_id = self._gather_properties(self.rules.reference.properties)[1]
-            for view_id, properties in ref_view_properties_by_id.items():
-                if view_id not in all_view_properties_by_id:
-                    all_view_properties_by_id[view_id] = properties
-                else:
-                    existing_properties = {prop._identifier() for prop in all_view_properties_by_id[view_id]}
-                    for prop in properties:
-                        if prop._identifier() not in existing_properties:
-                            all_view_properties_by_id[view_id].append(prop)
 
         view_properties_with_parents_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
         view_by_view_id = {view.view.as_id(): view for view in views}
@@ -403,7 +353,6 @@ class _DMSExporter:
         self,
         view: dm.ViewApply,
         dms_view: DMSView | None,
-        data_model_type: DataModelType,
     ) -> DMSFilter | None:
         selected_filter_name = (dms_view and dms_view.filter_ and dms_view.filter_.name) or ""
 

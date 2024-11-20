@@ -1,7 +1,5 @@
-import math
 import warnings
 from collections.abc import Hashable
-from datetime import datetime
 from typing import Any, ClassVar, Literal
 
 import pandas as pd
@@ -19,21 +17,15 @@ from cognite.neat._rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
     DataModelAspect,
-    DataModelType,
-    ExtensionCategory,
     RoleTypes,
-    SchemaCompleteness,
     SheetList,
     SheetRow,
 )
 from cognite.neat._rules.models._types import (
     ClassEntityType,
     ContainerEntityType,
-    DataModelExternalIdType,
     DmsPropertyType,
-    SpaceType,
     StrListType,
-    VersionType,
     ViewEntityType,
 )
 from cognite.neat._rules.models.data_types import DataType
@@ -60,55 +52,7 @@ _DEFAULT_VERSION = "1"
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms
     aspect: ClassVar[DataModelAspect] = DataModelAspect.physical
-    data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
-    schema_: SchemaCompleteness = Field(alias="schema")
-    extension: ExtensionCategory = ExtensionCategory.addition
-    space: SpaceType
-    name: str | None = Field(
-        None,
-        description="Human readable name of the data model",
-        min_length=1,
-        max_length=255,
-    )
-    description: str | None = Field(None, min_length=1, max_length=1024)
-    external_id: DataModelExternalIdType = Field(alias="externalId")
-    version: VersionType
-    creator: StrListType
-    created: datetime = Field(
-        description=("Date of the data model creation"),
-    )
-    updated: datetime = Field(
-        description=("Date of the data model update"),
-    )
     logical: str | None = None
-
-    @field_validator("*", mode="before")
-    def strip_string(cls, value: Any) -> Any:
-        if isinstance(value, str):
-            return value.strip()
-        return value
-
-    @field_serializer("schema_", "extension", "data_model_type", when_used="always")
-    def as_string(self, value: SchemaCompleteness | ExtensionCategory | DataModelType) -> str:
-        return str(value)
-
-    @field_validator("schema_", mode="plain")
-    def as_enum_schema(cls, value: str) -> SchemaCompleteness:
-        return SchemaCompleteness(value.strip())
-
-    @field_validator("extension", mode="plain")
-    def as_enum_extension(cls, value: str) -> ExtensionCategory:
-        return ExtensionCategory(value.strip())
-
-    @field_validator("data_model_type", mode="plain")
-    def as_enum_model_type(cls, value: str) -> DataModelType:
-        return DataModelType(value.strip())
-
-    @field_validator("description", mode="before")
-    def nan_as_none(cls, value):
-        if isinstance(value, float) and math.isnan(value):
-            return None
-        return value
 
     def as_space(self) -> dm.SpaceApply:
         return dm.SpaceApply(

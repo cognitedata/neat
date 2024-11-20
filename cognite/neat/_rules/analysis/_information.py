@@ -12,7 +12,7 @@ from cognite.neat._rules.models._rdfpath import (
     SelfReferenceProperty,
     SingleProperty,
 )
-from cognite.neat._rules.models.entities import ClassEntity, ReferenceEntity
+from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.entities._multi_value import MultiValueTypeInfo
 from cognite.neat._rules.models.information import (
     InformationClass,
@@ -34,9 +34,6 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
     def _get_max_occurrence(self, property_: InformationProperty) -> int | float | None:
         return property_.max_count
 
-    def _get_reference(self, class_or_property: InformationClass | InformationProperty) -> ReferenceEntity | None:
-        return class_or_property.reference if isinstance(class_or_property.reference, ReferenceEntity) else None
-
     def _get_cls_entity(self, class_: InformationClass | InformationProperty) -> ClassEntity:
         return class_.class_
 
@@ -48,10 +45,7 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
         return property_.property_
 
     def _get_cls_parents(self, class_: InformationClass) -> list[ClassEntity] | None:
-        return list(class_.parent or []) or None
-
-    def _get_reference_rules(self) -> InformationRules | None:
-        return self.rules.reference
+        return list(class_.implements or []) or None
 
     def _get_properties(self) -> list[InformationProperty]:
         return list(self.rules.properties)
@@ -154,8 +148,6 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
             If it fails, it will return a partial rules with a warning message, validated
             only with base Pydantic validators.
         """
-        if self.rules.metadata.schema_ is not SchemaCompleteness.complete:
-            raise ValueError("Rules are not complete cannot perform reduction!")
         class_as_dict = self.as_class_dict()
         class_parents_pairs = self.class_parent_pairs()
         defined_classes = self.defined_classes(consider_inheritance=True)

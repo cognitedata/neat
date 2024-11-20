@@ -16,11 +16,8 @@ from cognite.neat._rules.models._base_rules import (
     BaseRules,
     ClassRef,
     DataModelAspect,
-    DataModelType,
-    ExtensionCategory,
     PropertyRef,
     RoleTypes,
-    SchemaCompleteness,
     SheetList,
     SheetRow,
 )
@@ -61,25 +58,6 @@ class InformationMetadata(BaseMetadata):
     # Linking to Conceptual and Physical data model aspects
     physical: URIRef | None = Field(None, description="Link to the logical data model aspect")
     conceptual: URIRef | None = Field(None, description="Link to the logical data model aspect")
-
-    @model_validator(mode="after")
-    def extension_none_but_schema_extend(self) -> Self:
-        if self.extension is None:
-            self.extension = ExtensionCategory.addition
-            return self
-        return self
-
-    @field_validator("schema_", mode="plain")
-    def as_enum_schema(cls, value: str) -> SchemaCompleteness:
-        return SchemaCompleteness(value.strip())
-
-    @field_validator("extension", mode="plain")
-    def as_enum_extension(cls, value: str) -> ExtensionCategory:
-        return ExtensionCategory(value.strip())
-
-    @field_validator("data_model_type", mode="plain")
-    def as_enum_model_type(cls, value: str) -> DataModelType:
-        return DataModelType(value.strip())
 
 
 def _get_metadata(context: Any) -> InformationMetadata | None:
@@ -268,9 +246,7 @@ class InformationRules(BaseRules):
     metadata: InformationMetadata = Field(alias="Metadata")
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
-    prefixes: dict[str, Namespace] = Field(
-        default_factory=get_default_prefixes, alias="Prefixes"
-    )
+    prefixes: dict[str, Namespace] = Field(default_factory=get_default_prefixes, alias="Prefixes")
 
     @field_validator("prefixes", mode="before")
     def parse_str(cls, values: Any) -> Any:

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any
 
 import pandas as pd
 from rdflib import Namespace, URIRef
@@ -113,15 +113,9 @@ class InformationInputClass(InputComponent[InformationClass]):
         output = super().dump()
         parent: list[ClassEntity] | None = None
         if isinstance(self.implements, str):
-            parent = [
-                ClassEntity.load(parent, prefix=default_prefix)
-                for parent in self.implements.split(",")
-            ]
+            parent = [ClassEntity.load(parent, prefix=default_prefix) for parent in self.implements.split(",")]
         elif isinstance(self.implements, list):
-            parent = [
-                ClassEntity.load(parent_, prefix=default_prefix)
-                for parent_ in self.implements
-            ]
+            parent = [ClassEntity.load(parent_, prefix=default_prefix) for parent_ in self.implements]
         output["Class"] = ClassEntity.load(self.class_, prefix=default_prefix)
         output["Implements"] = parent
         return output

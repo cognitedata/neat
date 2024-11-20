@@ -206,20 +206,20 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
             # if possible use human readable label coming from the view name
 
             # add subClassOff as edges
-            if class_.parent:
+            if class_.implements:
                 if not di_graph.has_node(class_.class_.suffix):
                     di_graph.add_node(
                         class_.class_.suffix,
                         label=class_.name or class_.class_.suffix,
                     )
 
-                for parent in class_.parent:
+                for parent in class_.implements:
                     if not di_graph.has_node(parent.suffix):
                         di_graph.add_node(parent.suffix, label=parent.suffix)
                     di_graph.add_edge(
                         class_.class_.suffix,
                         parent.suffix,
-                        label="subClassOf",
+                        label="implements",
                         dashes=True,
                     )
 
