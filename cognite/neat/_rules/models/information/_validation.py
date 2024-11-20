@@ -40,7 +40,9 @@ class InformationPostValidation:
         if classes_without_properties := defined_classes.difference(referred_classes):
             for class_ in classes_without_properties:
                 # USE CASE: class has no direct properties and no parents with properties
-                if class_parent_pairs[class_]:
+                # and it is a class in the prefix of data model, as long as it is in the
+                # same prefix, meaning same space
+                if not class_parent_pairs[class_] and class_.prefix == self.metadata.prefix:
                     self.issue_list.append(
                         ResourceNotDefinedError[ClassEntity](
                             resource_type="class",
@@ -57,7 +59,16 @@ class InformationPostValidation:
 
         if undefined_parents := parents.difference(classes):
             for parent in undefined_parents:
-                self.issue_list.append(UndefinedClassWarning(class_id=str(parent)))
+                if parent.prefix != self.metadata.prefix:
+                    self.issue_list.append(UndefinedClassWarning(class_id=str(parent)))
+                else:
+                    self.issue_list.append(
+                        ResourceNotDefinedError[ClassEntity](
+                            resource_type="class",
+                            identifier=parent,
+                            location="Classes sheet",
+                        )
+                    )
 
     def _referenced_classes_exist(self) -> None:
         # needs to be complete for this validation to pass

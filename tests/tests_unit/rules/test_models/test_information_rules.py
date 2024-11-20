@@ -75,7 +75,6 @@ def invalid_domain_rules_cases():
         {
             "Metadata": {
                 "role": "information architect",
-                "schema": "complete",
                 "creator": "Jon, Emma, David",
                 "space": "power",
                 "external_id": "power2consumer",
@@ -88,9 +87,7 @@ def invalid_domain_rules_cases():
                 {
                     "Class": "GeneratingUnit",
                     "Description": None,
-                    "Parent Class": None,
-                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
-                    "Match": "exact",
+                    "Implements": None,
                 }
             ],
             "Properties": [
@@ -102,8 +99,6 @@ def invalid_domain_rules_cases():
                     "Min Count": 1,
                     "Max Count": 1.0,
                     "Default": None,
-                    "Source": None,
-                    "MatchType": None,
                     "Transformation": ":GeneratingUnit(cim:name)",
                 }
             ],
@@ -131,9 +126,7 @@ def incomplete_rules_case():
                 {
                     "Class": "GeneratingUnit",
                     "Description": None,
-                    "Parent Class": None,
-                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
-                    "Match": "exact",
+                    "Implements": None,
                 }
             ],
             "Properties": [
@@ -145,18 +138,22 @@ def incomplete_rules_case():
                     "Min Count": 1,
                     "Max Count": 1.0,
                     "Default": None,
-                    "Source": None,
-                    "MatchType": None,
-                    "Rule Type": "rdfpath",
-                    "Rule": "cim:GeneratingUnit",
+                    "Transformation": "cim:GeneratingUnit",
                 }
             ],
         },
-        ResourceNotDefinedError[ClassEntity](
-            ClassEntity(prefix="power", suffix="GeneratingUnit2"),
-            "class",
-            "Classes sheet",
-        ),
+        [
+            ResourceNotDefinedError[ClassEntity](
+                ClassEntity(prefix="power", suffix="GeneratingUnit2"),
+                "class",
+                "Classes sheet",
+            ),
+            ResourceNotDefinedError[ClassEntity](
+                ClassEntity(prefix="power", suffix="GeneratingUnit"),
+                "class",
+                "Classes sheet",
+            ),
+        ],
         id="missing_rule",
     )
 
@@ -188,7 +185,8 @@ class TestInformationRules:
         with pytest.raises(ValueError) as e:
             InformationRules.model_validate(incomplete_rules)
         errors = NeatError.from_pydantic_errors(e.value.errors())
-        assert errors[0] == expected_exception
+        assert len(errors) == 2
+        assert set(errors) == set(expected_exception)
 
     @pytest.mark.parametrize("rules, expected_exception", list(case_insensitive_value_types()))
     def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: DataType) -> None:
@@ -298,7 +296,6 @@ class TestInformationRulesConverter:
     def test_convert_above_container_limit(self) -> None:
         info = InformationInputRules(
             metadata=InformationInputMetadata(
-                schema_="complete",
                 space="bad_model",
                 external_id="bad_model",
                 name="Bad Model",

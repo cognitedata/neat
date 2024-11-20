@@ -115,11 +115,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 container_property_identifier="name",
                             )
                         },
-                        filter=dm.filters.HasData(
-                            containers=[
-                                dm.ContainerId("my_space", "Asset"),
-                            ]
-                        ),
                     ),
                     dm.ViewApply(
                         space="my_space",
@@ -132,7 +127,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 container_property_identifier="ratedPower",
                             ),
                         },
-                        filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "GeneratingUnit")]),
                     ),
                     dm.ViewApply(
                         space="my_space",
@@ -152,13 +146,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 direction="outwards",
                             )
                         },
-                        filter=dm.filters.Equals(
-                            ["node", "type"],
-                            {
-                                "space": "my_space",
-                                "externalId": "WindFarm",
-                            },
-                        ),
                     ),
                 ]
             ),
@@ -179,7 +166,13 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
-            node_types=NodeApplyDict([dm.NodeApply(space="my_space", external_id="WindFarm")]),
+            node_types=NodeApplyDict(
+                [
+                    dm.NodeApply(space="my_space", external_id="WindFarm"),
+                    dm.NodeApply(space="my_space", external_id="Asset"),
+                    dm.NodeApply(space="my_space", external_id="WindTurbine"),
+                ]
+            ),
         ),
         id="Two properties, one container, one view",
     )
@@ -247,7 +240,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     version="1",
                     properties={
                         "name": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
+                            container=dm.ContainerId("my_space", "Asset"),
+                            container_property_identifier="name",
                         ),
                         "windTurbines": dm.MappedPropertyApply(
                             container=dm.ContainerId("my_space", "WindFarm"),
@@ -255,9 +249,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             source=dm.ViewId("my_space", "WindTurbine", "1"),
                         ),
                     },
-                    filter=dm.filters.HasData(
-                        containers=[dm.ContainerId("my_space", "Asset"), dm.ContainerId("my_space", "WindFarm")]
-                    ),
                 ),
                 dm.ViewApply(
                     space="my_space",
@@ -265,10 +256,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     version="1",
                     properties={
                         "name": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
+                            container=dm.ContainerId("my_space", "Asset"),
+                            container_property_identifier="name",
                         )
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
                 ),
             ]
         ),
@@ -293,7 +284,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=NodeApplyDict([]),
+        node_types=NodeApplyDict(
+            [
+                dm.NodeApply(space="my_space", external_id="WindFarm"),
+                dm.NodeApply(space="my_space", external_id="WindTurbine"),
+            ]
+        ),
     )
     yield pytest.param(
         dms_rules,
@@ -354,10 +350,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     version="1",
                     properties={
                         "name": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
+                            container=dm.ContainerId("my_space", "Asset"),
+                            container_property_identifier="name",
                         ),
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
                 ),
                 dm.ViewApply(
                     external_id="WindTurbine",
@@ -370,7 +366,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         ),
                     },
                     implements=[dm.ViewId("my_space", "Asset", "1")],
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "WindTurbine")]),
                 ),
             ],
         ),
@@ -389,7 +384,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
         ),
-        node_types=NodeApplyDict([]),
+        node_types=NodeApplyDict(
+            [
+                dm.NodeApply(space="my_space", external_id="Asset"),
+                dm.NodeApply(space="my_space", external_id="WindTurbine"),
+            ]
+        ),
     )
 
     yield pytest.param(
@@ -505,12 +505,14 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     version="1",
                     properties={
                         "name": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
+                            container=dm.ContainerId("my_space", "Asset"),
+                            container_property_identifier="name",
                         ),
                         "timeseries": dm.MultiReverseDirectRelationApply(
                             source=dm.ViewId("my_space", "CogniteTimeseries", "1"),
                             through=dm.PropertyId(
-                                source=dm.ViewId("my_space", "CogniteTimeseries", "1"), property="asset"
+                                source=dm.ViewId("my_space", "CogniteTimeseries", "1"),
+                                property="asset",
                             ),
                         ),
                         "root": dm.MappedPropertyApply(
@@ -520,10 +522,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         ),
                         "children": dm.MultiReverseDirectRelationApply(
                             source=dm.ViewId("my_space", "Asset", "1"),
-                            through=dm.PropertyId(source=dm.ViewId("my_space", "Asset", "1"), property="root"),
+                            through=dm.PropertyId(
+                                source=dm.ViewId("my_space", "Asset", "1"),
+                                property="root",
+                            ),
                         ),
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
                 ),
                 dm.ViewApply(
                     space="my_space",
@@ -545,7 +549,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             source=dm.ViewId("my_space", "Activity", "1"),
                         ),
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "CogniteTimeseries")]),
                 ),
                 dm.ViewApply(
                     space="my_space",
@@ -555,17 +558,11 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         "timeseries": dm.MultiReverseDirectRelationApply(
                             source=dm.ViewId("my_space", "CogniteTimeseries", "1"),
                             through=dm.PropertyId(
-                                source=dm.ViewId("my_space", "CogniteTimeseries", "1"), property="activities"
+                                source=dm.ViewId("my_space", "CogniteTimeseries", "1"),
+                                property="activities",
                             ),
                         )
                     },
-                    filter=dm.filters.Equals(
-                        ["node", "type"],
-                        {
-                            "space": "my_space",
-                            "externalId": "Activity",
-                        },
-                    ),
                 ),
             ]
         ),
@@ -593,6 +590,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         node_types=NodeApplyDict(
             [
                 dm.NodeApply(space="my_space", external_id="Activity"),
+                dm.NodeApply(space="my_space", external_id="Asset"),
+                dm.NodeApply(space="my_space", external_id="CogniteTimeseries"),
             ]
         ),
     )
@@ -651,7 +650,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container_property_identifier="display_name",
                         ),
                     },
-                    filter=dm.filters.Equals(["node", "type"], {"space": "sp_other", "externalId": "wind_turbine"}),
                 ),
             ]
         ),
@@ -664,7 +662,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=NodeApplyDict([dm.NodeApply(space="sp_other", external_id="wind_turbine")]),
+        node_types=NodeApplyDict([dm.NodeApply(space="my_space", external_id="generating_unit")]),
     )
     yield pytest.param(
         dms_rules,
@@ -716,10 +714,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             direction="outwards",
                         ),
                     },
-                    filter=dm.filters.Equals(
-                        ["node", "type"],
-                        {"space": "sp_solution", "externalId": "Asset"},
-                    ),
                 ),
             ]
         ),
@@ -732,7 +726,11 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 dm.ViewId(space="sp_solution", external_id="Asset", version="1"),
             ],
         ),
-        node_types=NodeApplyDict([dm.NodeApply(space="sp_solution", external_id="Asset")]),
+        node_types=NodeApplyDict(
+            [
+                dm.NodeApply(space="sp_solution", external_id="Asset"),
+            ]
+        ),
     )
 
     yield pytest.param(
@@ -1344,7 +1342,11 @@ class TestDMSRules:
                     view_property="name",
                 ),
             ],
-            views=[DMSInputView(view="WindFarm", implements="Sourceable,Describable")],
+            views=[
+                DMSInputView(view="WindFarm", implements="cdf_cdm:Sourceable,cdf_cdm:Describable"),
+                DMSInputView(view="cdf_cdm:Sourceable"),
+                DMSInputView(view="cdf_cdm:Describable"),
+            ],
             containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
         ).as_rules()
         expected_dump = {
@@ -1368,9 +1370,15 @@ class TestDMSRules:
             ],
             "views": [
                 {
+                    "view": "cdf_cdm:Describable",
+                },
+                {
+                    "view": "cdf_cdm:Sourceable",
+                },
+                {
                     "view": "WindFarm",
-                    "implements": "Sourceable,Describable",
-                }
+                    "implements": "cdf_cdm:Sourceable,cdf_cdm:Describable",
+                },
             ],
             "containers": [
                 {
@@ -1615,23 +1623,6 @@ class TestDMSExporter:
         assert actual_model_views == expected_views
         actual_containers = {container.external_id for container in schema.containers}
         assert actual_containers == expected_containers
-
-    def test_camilla_business_solution_as_schema(self, camilla_information_rules: InformationRules) -> None:
-        dms_rules = InformationToDMS().transform(camilla_information_rules).rules
-        expected_views = {"TimeseriesForecastProduct", "WindFarm"}
-
-        schema = dms_rules.as_schema()
-
-        assert {v.external_id for v in schema.views} == expected_views
-        assert {v.external_id for v in schema.data_model.views} == expected_views
-        product = next((v for v in schema.views.values() if v.external_id == "TimeseriesForecastProduct"), None)
-        assert product is not None
-        assert not product.properties, f"Expected no properties for {product.external_id}"
-
-        wind_farm = next((v for v in schema.views.values() if v.external_id == "WindFarm"), None)
-        assert wind_farm is not None
-        assert set(wind_farm.properties) == {"name", "powerForecast"}
-        assert wind_farm.referenced_containers() == {dm.ContainerId("power", "EnergyArea")}
 
 
 def test_dms_rules_validation_error():

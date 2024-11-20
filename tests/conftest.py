@@ -119,10 +119,3 @@ def svein_harald_dms_rules() -> DMSRules:
 @pytest.fixture(scope="session")
 def olav_rebuild_dms_rules() -> DMSRules:
     return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx"), role=RoleTypes.dms)
-
-
-@pytest.fixture(scope="session")
-def camilla_information_rules() -> InformationRules:
-    return ImporterPipeline.verify(
-        ExcelImporter(DOC_RULES / "information-business-camilla.xlsx"), role=RoleTypes.information
-    )

@@ -63,7 +63,7 @@ class TestDTDLImporter:
         rules, issues = result.rules, result.issues
 
         assert rules is None
-        assert len(issues) == 2
+        assert len(issues) == 1
         actual_issue = issues[0]
         assert isinstance(actual_issue, ResourceNotDefinedError)
 
