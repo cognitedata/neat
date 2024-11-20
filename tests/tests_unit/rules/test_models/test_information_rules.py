@@ -198,7 +198,7 @@ class TestInformationRules:
 
         assert isinstance(dms_rules, DMSRules)
 
-    @pytest.mark.skip(reason="Skipping this test until rules refactoring is completed")
+    @pytest.mark.skip("Not sure purpose of this test, so skipping for now")
     def test_olav_as_dms(self, olav_rules: InformationRules) -> None:
         olav_rules_copy = olav_rules.model_copy(deep=True)
         # Todo: Remove this line when Olav's Information .xlsx file is available
@@ -207,9 +207,10 @@ class TestInformationRules:
             if cls_.class_.versioned_id == "power_analytics:GeoLocation":
                 continue
             elif cls_.class_.versioned_id in ("power_analytics:Point", "power_analytics:Polygon"):
-                cls_.parent = None
+                cls_.implements = None
             new_classes.append(cls_)
         olav_rules_copy.classes = new_classes
+
         ## End of temporary code
         dms_rules = InformationToDMS().transform(olav_rules_copy).rules
 
@@ -260,38 +261,6 @@ class TestInformationRulesConverter:
         actual_space = _InformationRulesConverter._to_space(prefix)
 
         assert actual_space == expected_space
-
-    @pytest.mark.skip(
-        reason="Skipping this test until rules refactoring is completed, probably deprecating as we do not use last"
-    )
-    def test_svein_harald_information_as_dms(self, svein_harald_information_rules: InformationRules) -> None:
-        expected = {
-            "ArrayCable": {"PowerLine"},
-            "DistributionLine": {"PowerLine"},
-            "DistributionSubstation": {"Substation"},
-            "ElectricCarCharger": {"EnergyConsumer"},
-            "ExportCable": {"PowerLine"},
-            "MultiLineString": {"GeoLocation"},
-            "OffshoreSubstation": {"Substation"},
-            "OnshoreSubstation": {"TransmissionSubstation"},
-            "Point": {"GeoLocation"},
-            "Polygon": {"GeoLocation"},
-            "Transmission": {"PowerLine"},
-            "TransmissionSubstation": {"Substation"},
-            "WindFarm": {"EnergyArea"},
-            "WindTurbine": {"GeneratingUnit"},
-        }
-        dms_rules = InformationToDMS().transform(svein_harald_information_rules).rules
-
-        assert isinstance(dms_rules, DMSRules)
-        assert dms_rules.last is not None
-        actual = {
-            view.view.external_id: {parent.external_id for parent in view.implements}
-            for view in dms_rules.last.views
-            if view.implements
-        }
-
-        assert actual == expected
 
     def test_convert_above_container_limit(self) -> None:
         info = InformationInputRules(

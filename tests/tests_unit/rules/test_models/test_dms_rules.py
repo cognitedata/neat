@@ -1392,38 +1392,6 @@ class TestDMSRules:
 
         assert actual_dump == expected_dump
 
-    @pytest.mark.skip(reason="Skipping this test until we make rules refactoring")
-    def test_olav_as_information(self, olav_dms_rules: DMSRules) -> None:
-        info_rules_copy = olav_dms_rules.model_copy(deep=True)
-        # In Olav's Rules, the references are set for traceability. We remove it
-        # to test that the references are correctly set in the conversion.
-        for prop in info_rules_copy.properties:
-            prop.reference = None
-        for view in info_rules_copy.views:
-            view.reference = None
-
-        info_rules = DMSToInformation().transform(olav_dms_rules).rules
-
-        assert isinstance(info_rules, InformationRules)
-
-        # Check some samples
-        point = next((cls_ for cls_ in info_rules.classes if cls_.class_.versioned_id == "power_analytics:Point"), None)
-        assert point is not None
-        assert point.reference is not None
-        assert point.reference.versioned_id == "power:Point"
-
-        wind_turbine_name = next(
-            (
-                prop
-                for prop in info_rules.properties
-                if prop.property_ == "name" and prop.class_.versioned_id == "power_analytics:WindTurbine"
-            ),
-            None,
-        )
-        assert wind_turbine_name is not None
-        assert wind_turbine_name.reference is not None
-        assert wind_turbine_name.reference.versioned_id == "power:GeneratingUnit(property=name)"
-
     def test_create_reference(self) -> None:
         pipeline = RulesPipeline[InformationRules, DMSRules](
             [
@@ -1536,7 +1504,7 @@ class TestDMSRules:
 
 
 class TestDMSExporter:
-    @pytest.mark.skip(reason="Skipping this test until we make rules refactoring, a bit of chaos with filters")
+    @pytest.mark.skip(reason="This test no more relevant since there will be redo of filtering")
     def test_default_filters_using_olav_dms_rules(self, olav_dms_rules: DMSRules) -> None:
         set_filter = {view.view.as_id() for view in olav_dms_rules.views if view.filter_ is not None}
         assert not set_filter, f"Expected no filters to be set, but got {set_filter}"

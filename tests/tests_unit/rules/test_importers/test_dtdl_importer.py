@@ -43,7 +43,6 @@ class TestDTDLImporter:
         assert isinstance(rules, InformationRules)
         assert len(rules.classes) == 2
 
-    # @pytest.mark.skip("This test is no longer relevant since we are allowing classes")
     def tests_import_invalid_data_model_and_return_errors(self) -> None:
         dtdl_importer = DTDLImporter(
             [
