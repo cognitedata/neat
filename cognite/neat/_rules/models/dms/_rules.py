@@ -324,7 +324,6 @@ class DMSRules(BaseRules):
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     enum: SheetList[DMSEnum] | None = Field(None, alias="Enum")
     nodes: SheetList[DMSNode] | None = Field(None, alias="Nodes")
-    last: URIRef | None = Field(None, alias="Last", description="The previous version of the data model")
 
     @field_validator("views")
     def matching_version_and_space(cls, value: SheetList[DMSView], info: ValidationInfo) -> SheetList[DMSView]:

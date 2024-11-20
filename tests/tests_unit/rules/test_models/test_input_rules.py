@@ -6,6 +6,7 @@ from typing import Union, get_args, get_origin
 import pytest
 from _pytest.mark import ParameterSet
 from pydantic import BaseModel
+from rdflib import URIRef
 
 from cognite.neat._rules.models import SheetList
 from cognite.neat._rules.models._base_input import InputRules
@@ -23,6 +24,7 @@ def input_rules_cls_iterator() -> Iterable[ParameterSet]:
 
 
 class TestInputRules:
+    @pytest.mark.parametrize("input_rules_cls", input_rules_cls_iterator())
     def test_input_rules_match_verified_cls(self, input_rules_cls: type[InputRules]) -> None:
         """Test that all classes that inherit from InputRules have a matching verified class."""
         verified_cls = input_rules_cls._get_verified_cls()
@@ -76,7 +78,13 @@ def pydantic_to_parameters(verified_cls: type[BaseModel]) -> dict[str, set[str]]
     for name, field_ in verified_cls.model_fields.items():
         if name == "validators_to_skip":
             continue
+
         type_ = field_.annotation
+
+        if URIRef in get_args(type_):
+            output[name] = ""
+            continue
+
         if isinstance(type_, UnionType) or get_origin(type_) is Union:
             type_ = get_args(type_)[0]
 

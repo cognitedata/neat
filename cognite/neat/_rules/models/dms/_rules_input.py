@@ -249,7 +249,6 @@ class DMSInputRules(InputRules[DMSRules]):
     containers: list[DMSInputContainer] | None = None
     enum: list[DMSInputEnum] | None = None
     nodes: list[DMSInputNode] | None = None
-    last: str | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSRules]:
