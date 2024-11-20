@@ -40,8 +40,14 @@ class InformationPostValidation:
         if classes_without_properties := defined_classes.difference(referred_classes):
             for class_ in classes_without_properties:
                 # USE CASE: class has no direct properties and no parents with properties
-                if class_ not in class_parent_pairs:
-                    self.issue_list.append(UndefinedClassWarning(class_id=str(class_)))
+                if class_parent_pairs[class_]:
+                    self.issue_list.append(
+                        ResourceNotDefinedError[ClassEntity](
+                            resource_type="class",
+                            identifier=class_,
+                            location="Classes sheet",
+                        )
+                    )
 
     def _parent_class_defined(self) -> None:
         """This is a validation to check if the parent class of a class is defined in the classes sheet."""

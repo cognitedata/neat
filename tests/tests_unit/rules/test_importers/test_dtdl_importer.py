@@ -43,6 +43,7 @@ class TestDTDLImporter:
         assert isinstance(rules, InformationRules)
         assert len(rules.classes) == 2
 
+    # @pytest.mark.skip("This test is no longer relevant since we are allowing classes")
     def tests_import_invalid_data_model_and_return_errors(self) -> None:
         dtdl_importer = DTDLImporter(
             [
@@ -62,7 +63,7 @@ class TestDTDLImporter:
         rules, issues = result.rules, result.issues
 
         assert rules is None
-        assert len(issues) == 1
+        assert len(issues) == 2
         actual_issue = issues[0]
         assert isinstance(actual_issue, ResourceNotDefinedError)
 
