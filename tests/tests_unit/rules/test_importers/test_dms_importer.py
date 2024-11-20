@@ -161,13 +161,6 @@ SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
                 space="neat",
                 external_id="NodeView1",
                 version="1",
-                filter=dm.filters.Equals(
-                    ["node", "type"],
-                    value={
-                        "space": "neat",
-                        "externalId": "NodeView1",
-                    },
-                ),
                 properties={
                     "to": dm.MultiEdgeConnectionApply(
                         type=dm.DirectRelationReference("neat", "myEdgeType"),
@@ -181,13 +174,6 @@ SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
                 space="neat",
                 external_id="NodeView2",
                 version="1",
-                filter=dm.filters.Equals(
-                    ["node", "type"],
-                    value={
-                        "space": "neat",
-                        "externalId": "NodeView2",
-                    },
-                ),
                 properties={
                     "from": dm.MultiEdgeConnectionApply(
                         type=dm.DirectRelationReference("neat", "myEdgeType"),
@@ -201,7 +187,6 @@ SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
                 space="neat",
                 external_id="EdgeView",
                 version="1",
-                filter=dm.filters.HasData(containers=[dm.ContainerId("neat", "container")]),
                 properties={
                     "distance": dm.MappedPropertyApply(
                         container=dm.ContainerId("neat", "container"),

@@ -18,7 +18,6 @@ from cognite.neat._issues.errors import (
     FileMissingRequiredFieldError,
     FileNotFoundNeatError,
     FileReadError,
-    PropertyDefinitionDuplicatedError,
 )
 from cognite.neat._issues.warnings import FileMissingRequiredFieldWarning
 from cognite.neat._rules._shared import ReadRules, T_InputRules
@@ -92,10 +91,6 @@ class MetadataRaw(UserDict):
             issue_list.append(FileMissingRequiredFieldError(filepath, "metadata", "role"))
             return False
 
-        # check if there is a schema field if role is not domain expert
-        if self.role != RoleTypes.domain_expert and not self.has_schema_field:
-            issue_list.append(FileMissingRequiredFieldError(filepath, "metadata", "schema"))
-            return False
         return True
 
 
@@ -268,45 +263,12 @@ class ExcelImporter(BaseImporter[T_InputRules]):
             if user_read is None or issue_list.has_errors:
                 return ReadRules(None, issue_list, {})
 
-            last_read: ReadResult | None = None
-            if any(sheet_name.startswith("Last") for sheet_name in user_reader.seen_sheets):
-                last_read = SpreadsheetReader(issue_list, required=False, sheet_prefix="Last").read(
-                    excel_file, self.filepath
-                )
-            reference_read: ReadResult | None = None
-            if any(sheet_name.startswith("Ref") for sheet_name in user_reader.seen_sheets):
-                reference_read = SpreadsheetReader(issue_list, sheet_prefix="Ref").read(excel_file, self.filepath)
-            elif any(sheet_name.startswith("CDMRef") for sheet_name in user_reader.seen_sheets):
-                reference_read = SpreadsheetReader(issue_list, sheet_prefix="CDMRef").read(excel_file, self.filepath)
-
         if issue_list.has_errors:
-            return ReadRules(None, issue_list, {})
-
-        if reference_read and user_read.role != reference_read.role:
-            issue_list.append(
-                PropertyDefinitionDuplicatedError(
-                    self.filepath.as_posix(),
-                    "spreadsheet.metadata",  # type: ignore[arg-type]
-                    "role",
-                    frozenset({user_read.role, reference_read.role}),
-                    ("user", "reference"),
-                    "sheet",
-                )
-            )
             return ReadRules(None, issue_list, {})
 
         sheets = user_read.sheets
         original_role = user_read.role
         read_info_by_sheet = user_read.read_info_by_sheet
-        if last_read:
-            sheets["last"] = last_read.sheets
-            read_info_by_sheet.update(last_read.read_info_by_sheet)
-            if reference_read:
-                # The last rules will also be validated against the reference rules
-                sheets["last"]["reference"] = reference_read.sheets  # type: ignore[call-overload]
-        if reference_read:
-            sheets["reference"] = reference_read.sheets
-            read_info_by_sheet.update(reference_read.read_info_by_sheet)
 
         rules_cls = INPUT_RULES_BY_ROLE[original_role]
         rules = cast(T_InputRules, rules_cls.load(sheets))

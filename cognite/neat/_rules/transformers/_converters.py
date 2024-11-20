@@ -31,7 +31,6 @@ from cognite.neat._rules.models import (
     DMSInputRules,
     DMSRules,
     InformationRules,
-    SchemaCompleteness,
     SheetList,
     data_types,
 )
@@ -288,8 +287,6 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         dump = reference_rules.dump()
 
         # Prepare new model metadata prior validation
-        dump["metadata"]["schema_"] = SchemaCompleteness.partial.value
-        dump["metadata"]["data_model_type"] = self.type_
         dump["metadata"]["name"] = f"{self.org_name} {self.type_} data model"
         dump["metadata"]["space"] = self.new_model_id.space
         dump["metadata"]["external_id"] = self.new_model_id.external_id
@@ -348,9 +345,6 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
     def _to_enterprise(self, reference_model: DMSRules) -> JustRules[DMSRules]:
         dump = reference_model.dump()
-
-        # This is must prior model validation to avoid validation issues
-        dump["metadata"]["schema_"] = SchemaCompleteness.partial.value
 
         # This will create reference model components in the enterprise model space
         enterprise_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())

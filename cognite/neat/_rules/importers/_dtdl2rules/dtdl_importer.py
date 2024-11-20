@@ -17,7 +17,7 @@ from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers._base import BaseImporter
 from cognite.neat._rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
 from cognite.neat._rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
-from cognite.neat._rules.models import InformationInputRules, SchemaCompleteness
+from cognite.neat._rules.models import InformationInputRules
 from cognite.neat._rules.models.information import InformationInputMetadata
 from cognite.neat._utils.text import humanize_collection, to_pascal
 
@@ -42,12 +42,10 @@ class DTDLImporter(BaseImporter[InformationInputRules]):
         items: Sequence[DTDLBase],
         name: str | None = None,
         read_issues: list[NeatIssue] | None = None,
-        schema: SchemaCompleteness = SchemaCompleteness.partial,
     ) -> None:
         self._items = items
         self.name = name
         self._read_issues = IssueList(read_issues)
-        self._schema_completeness = schema
 
     @classmethod
     def _from_file_content(cls, file_content: str, filepath: Path) -> Iterable[DTDLBase | NeatIssue]:
@@ -130,7 +128,6 @@ class DTDLImporter(BaseImporter[InformationInputRules]):
         converter.convert(self._items)
 
         metadata = self._default_metadata()
-        metadata["schema"] = self._schema_completeness.value
 
         if self.name:
             metadata["name"] = to_pascal(self.name)

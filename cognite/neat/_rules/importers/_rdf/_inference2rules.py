@@ -239,12 +239,11 @@ class InferenceImporter(BaseRDFImporter):
             property_id = property_["property_"]
             property_["comment"] = f"Class <{class_id}> has property <{property_id}> {counts_str}"
 
-            [class_.pop("uri") for class_ in classes.values()]
-
         return {
             "metadata": self._default_metadata().model_dump(),
             "classes": list(classes.values()),
             "properties": list(properties.values()),
+            "prefixes": prefixes,
         }
 
     def _default_metadata(self):

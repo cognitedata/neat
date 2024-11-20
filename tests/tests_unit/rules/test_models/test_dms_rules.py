@@ -42,7 +42,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 description="DMS data model",
@@ -187,7 +186,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
     dms_rules = DMSInputRules(
         metadata=DMSInputMetadata(
-            schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
@@ -305,7 +303,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
     dms_rules = DMSInputRules(
         metadata=DMSInputMetadata(
-            schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
@@ -404,7 +401,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     dms_rules = DMSInputRules(
         metadata=DMSInputMetadata(
             # This is a complete schema, but we do not want to trigger the full validation
-            schema_="partial",
             space="my_space",
             external_id="my_data_model",
             version="1",
@@ -608,7 +604,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
     dms_rules = DMSInputRules(
         metadata=DMSInputMetadata(
-            schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
@@ -679,7 +674,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
     dms_rules = DMSInputRules(
         metadata=DMSInputMetadata(
-            schema_="complete",
             space="sp_solution",
             external_id="solution_model",
             version="1",
@@ -752,7 +746,6 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -792,7 +785,6 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
         ),
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -833,7 +825,6 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -894,7 +885,6 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
         ),
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -963,7 +953,6 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1009,7 +998,6 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1055,7 +1043,6 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1101,7 +1088,6 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1147,7 +1133,6 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1343,7 +1328,6 @@ class TestDMSRules:
     def test_dump_skip_default_space_and_version(self) -> None:
         dms_rules = DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1366,9 +1350,6 @@ class TestDMSRules:
         expected_dump = {
             "metadata": {
                 "role": "DMS Architect",
-                "schema_": "partial",
-                "data_model_type": "solution",
-                "extension": "addition",
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "creator": "Anders",
@@ -1455,7 +1436,6 @@ class TestDMSRules:
 
     def test_metadata_int_version(self) -> None:
         raw_metadata = dict(
-            schema_="partial",
             space="some_space",
             external_id="some_id",
             creator="me",
@@ -1471,7 +1451,6 @@ class TestDMSRules:
     def test_reverse_property_in_parent(self) -> None:
         sub_core = DMSInputRules(
             DMSInputMetadata(
-                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 creator="Anders",
@@ -1510,7 +1489,6 @@ class TestDMSRules:
     def test_reverse_property_in_parent_fail(self) -> None:
         sub_core = DMSInputRules(
             DMSInputMetadata(
-                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 creator="Anders",
@@ -1660,7 +1638,6 @@ def test_dms_rules_validation_error():
     with pytest.raises(NeatError) as e:
         dms_rules = DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",

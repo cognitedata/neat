@@ -284,6 +284,8 @@ class InformationRules(BaseRules):
     def post_validation(self) -> "InformationRules":
         from ._validation import InformationPostValidation
 
+        print("Here")
+
         issue_list = InformationPostValidation(self).validate()
         if issue_list.warnings:
             issue_list.trigger_warnings()
