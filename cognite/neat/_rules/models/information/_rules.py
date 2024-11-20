@@ -18,8 +18,6 @@ from cognite.neat._rules.models._base_rules import (
     DataModelAspect,
     DataModelType,
     ExtensionCategory,
-    ExtensionCategoryType,
-    MatchType,
     PropertyRef,
     RoleTypes,
     SchemaCompleteness,
@@ -42,10 +40,8 @@ from cognite.neat._rules.models.entities import (
     ClassEntityList,
     Entity,
     MultiValueTypeInfo,
-    ReferenceEntity,
     Undefined,
     UnknownEntity,
-    URLEntity,
 )
 
 if TYPE_CHECKING:
@@ -61,13 +57,6 @@ else:
 class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information
     aspect: ClassVar[DataModelAspect] = DataModelAspect.logical
-
-    # this will be removed
-    data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
-    # this will be removed
-    schema_: SchemaCompleteness = Field(SchemaCompleteness.partial, alias="schema")
-    # this will be removed
-    extension: ExtensionCategoryType | None = ExtensionCategory.addition
 
     # Linking to Conceptual and Physical data model aspects
     physical: URIRef | None = Field(None, description="Link to the logical data model aspect")
@@ -164,7 +153,7 @@ class InformationProperty(SheetRow):
     value_type: DataType | ClassEntityType | MultiValueTypeType | UnknownEntity = Field(
         alias="Value Type", union_mode="left_to_right"
     )
-    properties: "InformationProperty" | None = Field(
+    properties: ClassEntityType | None = Field(
         alias="Properties",
         default=None,
         description="For definition of properties on properties",
@@ -173,7 +162,6 @@ class InformationProperty(SheetRow):
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
     transformation: RDFPath | None = Field(alias="Transformation", default=None)
-    comment: str | None = Field(alias="Comment", default=None)
     inherited: bool = Field(
         default=False,
         exclude=True,
@@ -244,20 +232,7 @@ class InformationProperty(SheetRow):
             return None
         return value
 
-    @field_serializer("reference", when_used="always")
-    def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
-        # When rules as dumped as reference, we set the reference to the class
-        if isinstance(info.context, dict) and info.context.get("as_reference") is True:
-            return str(
-                ReferenceEntity(
-                    prefix=str(self.class_.prefix),
-                    suffix=self.class_.suffix,
-                    property=self.property_,
-                )
-            )
-        return str(value) if value is not None else None
-
-    @field_serializer("class_", "value_type", when_used="unless-none")
+    @field_serializer("class_", "value_type", "properties", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
         if (metadata := _get_metadata(info.context)) and isinstance(value, Entity):
             return value.dump(prefix=metadata.prefix, version=metadata.version)
@@ -293,9 +268,9 @@ class InformationRules(BaseRules):
     metadata: InformationMetadata = Field(alias="Metadata")
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
-    prefixes: dict[str, Namespace] = Field(default_factory=get_default_prefixes, alias="Prefixes")
-    last: "InformationRules | None" = Field(None, alias="Last")
-    reference: "InformationRules | None" = Field(None, alias="Reference")
+    prefixes: dict[str, Namespace] = Field(
+        default_factory=get_default_prefixes, alias="Prefixes"
+    )
 
     @field_validator("prefixes", mode="before")
     def parse_str(cls, values: Any) -> Any:
@@ -318,10 +293,10 @@ class InformationRules(BaseRules):
             if property_.class_.prefix is Undefined:
                 property_.class_.prefix = self.metadata.prefix
 
-        # update parent classes
+        # update implements
         for class_ in self.classes:
-            if class_.parent:
-                for parent in class_.parent:
+            if class_.implements:
+                for parent in class_.implements:
                     if not isinstance(parent.prefix, str):
                         parent.prefix = self.metadata.prefix
             if class_.class_.prefix is Undefined:
