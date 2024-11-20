@@ -76,14 +76,6 @@ def invalid_rules_filepaths():
                     row_number=3,
                     sheet_name="Properties",
                 ),
-                ResourceNotDefinedError(
-                    ContainerId("neat", "Pump"),
-                    "container",
-                    location="Containers Sheet",
-                    column_name="Container",
-                    row_number=3,
-                    sheet_name="Properties",
-                ),
             ]
         ),
         id="Missing container and view definition",

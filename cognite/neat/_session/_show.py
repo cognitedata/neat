@@ -111,7 +111,7 @@ class ShowDataModelAPI(ShowBaseAPI):
                 di_graph.add_edge(
                     prop_.view.suffix,
                     prop_.value_type.suffix,
-                    label=prop_.name or prop_.property_,
+                    label=prop_.name or prop_.view_property,
                 )
 
         return di_graph

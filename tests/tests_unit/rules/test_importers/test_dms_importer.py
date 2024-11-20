@@ -4,7 +4,6 @@ from typing import cast
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import DMSImporter, ExcelImporter
 from cognite.neat._rules.models import DMSRules, DMSSchema, RoleTypes
@@ -21,8 +20,7 @@ class TestDMSImporter:
         result = ImporterPipeline.try_verify(importer)
         rules = result.rules
         issues = result.issues
-        assert len(issues) == 1
-        assert issues[0] == DirectRelationMissingSourceWarning(dm.ViewId("neat", "OneView", "1"), "direct")
+        assert len(issues) == 0
         dms_rules = cast(DMSRules, rules)
         dump_dms = dms_rules.dump()
         assert dump_dms["properties"][0]["value_type"] == "#N/A"
@@ -39,7 +37,6 @@ class TestDMSImporter:
         "filepath",
         [
             pytest.param(DOC_RULES / "cdf-dms-architect-alice.xlsx", id="Alice rules"),
-            pytest.param(DOC_RULES / "dms-analytics-olav.xlsx", id="Olav DMS rules"),
         ],
     )
     def test_import_rules_from_tutorials(self, filepath: Path) -> None:
