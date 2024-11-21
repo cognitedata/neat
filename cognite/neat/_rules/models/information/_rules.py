@@ -131,11 +131,6 @@ class InformationProperty(SheetRow):
     value_type: DataType | ClassEntityType | MultiValueTypeType | UnknownEntity = Field(
         alias="Value Type", union_mode="left_to_right"
     )
-    properties: ClassEntityType | None = Field(
-        alias="Properties",
-        default=None,
-        description="For definition of properties on properties",
-    )
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)

@@ -73,7 +73,6 @@ class InformationInputProperty(InputComponent[InformationProperty]):
     class_: ClassEntity | str
     property_: str
     value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity | str
-    properties: str | ClassEntity | None = None
     name: str | None = None
     description: str | None = None
     min_count: int | None = None
