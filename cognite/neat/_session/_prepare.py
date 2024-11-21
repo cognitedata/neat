@@ -5,6 +5,7 @@ from typing import Literal
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from rdflib import URIRef
 
+from cognite.neat._graph.transformers import RelationshipToSchemaTransformer
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
@@ -93,6 +94,22 @@ class InstancePrepareAPI:
         if not self._state.instances.store.queries.type_with_property(type_uri[0], property_uri[0]):
             raise NeatSessionError(f"Property {property_} is not defined for type {type_}. Cannot make connection")
         return type_uri[0], property_uri[0]
+
+    def relationships_as_connections(self, limit: int = 1) -> None:
+        """This assumes that you have read a classic CDF knowledge graph including relationships.
+
+        This transformer analyzes the relationships in the graph and modifies them to be part of the schema
+        for Assets, Events, Files, Sequences, and TimeSeries. Relationships without any properties
+        are replaced by a simple relationship between the source and target nodes. Relationships with
+        properties are replaced by a schema that contains the properties as attributes.
+
+        Args:
+            limit: The minimum number of relationships that need to be present for it
+                to be converted into a schema. Default is 1.
+
+        """
+        transformer = RelationshipToSchemaTransformer(limit=limit)
+        self._state.instances.store.transform(transformer)
 
 
 @session_class_wrapper
