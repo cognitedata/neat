@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Added
+- Support for dropping instances of a given type with `neat.drop.instances(...)`
+
 ## [0.98.0] - 21-11-**2024**
 ### Added
 - Support for reading `YAML`
@@ -26,7 +30,6 @@ Changes are grouped as follows:
 - [BREAKING] Rules are simplified and normalized, especially metadata
 - [BREAKING] removed `reference`, `class (linage)` and `property (linage)`.
 - [BREAKING] removed `last`, `reference`, auto-generated filters, `data_model_type`, `schema_`, `extension`
-
 
 ## [0.97.3] - 16-11-**2024**
 ### Improved
