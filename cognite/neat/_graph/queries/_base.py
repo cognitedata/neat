@@ -342,3 +342,18 @@ class Queries:
             self.graph.query(query.format(unknownType=str(UNKNOWN_TYPE))),
         ):
             yield cast(URIRef, source_type), cast(URIRef, property_), [URIRef(uri) for uri in value_types.split(",")]
+
+    def drop_types(self, type_: list[URIRef]) -> dict[URIRef, int]:
+        """Drop types from the graph store
+
+        Args:
+            type_: List of types to drop
+
+        Returns:
+            Dictionary of dropped types
+        """
+        dropped_types: dict[URIRef, int] = {}
+        for t in type_:
+            query = f"DELETE WHERE {{ ?s a <{t}> }}"
+            dropped_types[t] = len(list(self.graph.query(query)))
+        return dropped_types
