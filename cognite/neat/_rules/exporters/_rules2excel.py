@@ -13,17 +13,13 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
 from rdflib import Namespace
 
-from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.models import (
-    DataModelType,
     ExtensionCategory,
     SchemaCompleteness,
     SheetRow,
 )
 from cognite.neat._rules.models.dms import DMSMetadata
-from cognite.neat._rules.models.dms._rules import DMSRules
-from cognite.neat._rules.models.domain import DomainMetadata
 from cognite.neat._rules.models.information import InformationMetadata
 from cognite.neat._rules.models.information._rules import InformationRules
 
@@ -40,22 +36,12 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             on the different styles.
         output_role: The role to use for the exported spreadsheet. If provided, the rules will be converted to
             this role formate before being written to excel. If not provided, the role from the rules will be used.
-        dump_as: This determines how the rules are written to the Excel file. An Excel file has up to three sets of
-           sheets: user, last, and reference. The user sheets are used for inputting rules from a user. The last sheets
-           are used for the last version of the same model as the user, while the reference sheets are used for
-           the model the user is building on. The options are:
-             * "user": The rules are written to the user sheets. This is used when you want to modify the rules
-                directly and potentially change the model. This is useful when you have imported the data model
-                from outside CDF and you want to modify it before you write it to CDF.
-             * "last": The rules are written to the last sheets. This is used when you want to extend the rules,
-               but have validation that you are not breaking the existing model. This is used when you want to
-               change a model that has already been published to CDF and that model is in production.
-             * "reference": The rules are written to the reference sheets. This is typically used when you want to build
-               a new solution on top of an enterprise model.
         new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
             rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
             new metadata sheet in the Excel file. The model id is expected to be a tuple of (prefix, title)
             (space, external_id) for InformationRules and DMSRules respectively.
+
+        sheet_prefix: The prefix to use for the sheet names in the Excel file. Defaults to an empty string.
 
     The following styles are available:
 
@@ -80,16 +66,17 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     dump_options = get_args(DumpOptions)
 
     def __init__(
-        self, styling: Style = "default", dump_as: DumpOptions = "user", new_model_id: tuple[str, str] | None = None
+        self,
+        styling: Style = "default",
+        new_model_id: tuple[str, str] | None = None,
+        sheet_prefix: str | None = None,
     ):
+        self.sheet_prefix = sheet_prefix or ""
         if styling not in self.style_options:
             raise ValueError(f"Invalid styling: {styling}. Valid options are {self.style_options}")
-        if dump_as not in self.dump_options:
-            raise ValueError(f"Invalid dump_as: {dump_as}. Valid options are {self.dump_options}")
         self.styling = styling
         self._styling_level = self.style_options.index(styling)
         self.new_model_id = new_model_id
-        self.dump_as = dump_as
 
     def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
         """Exports transformation rules to excel file."""
@@ -105,43 +92,10 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        dumped_user_rules: dict[str, Any]
-        dumped_last_rules: dict[str, Any] | None = None
-        dumped_reference_rules: dict[str, Any] | None = None
-        if self.dump_as != "user":
-            action = {"last": "update", "reference": "create"}[self.dump_as]
-            metadata_creator = _MetadataCreator(action, self.new_model_id)  # type: ignore[arg-type]
+        dumped_user_rules: dict[str, Any] = rules.dump(by_alias=True)
 
-            dumped_user_rules = {
-                "Metadata": metadata_creator.create(rules.metadata),
-            }
-
-            if self.dump_as == "last":
-                dumped_last_rules = rules.dump(by_alias=True)
-                if rules.reference:
-                    dumped_reference_rules = rules.reference.dump(by_alias=True, as_reference=True)
-            elif self.dump_as == "reference":
-                dumped_reference_rules = rules.dump(by_alias=True, as_reference=True)
-        else:
-            dumped_user_rules = rules.dump(by_alias=True)
-            if rules.last:
-                dumped_last_rules = rules.last.dump(by_alias=True)
-            if rules.reference:
-                dumped_reference_rules = rules.reference.dump(by_alias=True, as_reference=True)
-
-        self._write_metadata_sheet(workbook, dumped_user_rules["Metadata"])
-        self._write_sheets(workbook, dumped_user_rules, rules)
-        if dumped_last_rules:
-            self._write_sheets(workbook, dumped_last_rules, rules, sheet_prefix="Last")
-            self._write_metadata_sheet(workbook, dumped_last_rules["Metadata"], sheet_prefix="Last")
-
-        if dumped_reference_rules:
-            if isinstance(rules.reference, DMSRules):
-                sheet_prefix = "CDM" if rules.reference.metadata.as_data_model_id() in COGNITE_MODELS else "Ref"
-            else:
-                sheet_prefix = "Ref"
-            self._write_sheets(workbook, dumped_reference_rules, rules, sheet_prefix=sheet_prefix)
-            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix=sheet_prefix)
+        self._write_metadata_sheet(workbook, dumped_user_rules["Metadata"], sheet_prefix=self.sheet_prefix)
+        self._write_sheets(workbook, dumped_user_rules, rules, sheet_prefix=self.sheet_prefix)
 
         if isinstance(rules, InformationRules) and rules.prefixes:
             self._write_prefixes_sheet(workbook, rules.prefixes)
@@ -274,9 +228,9 @@ class _MetadataCreator:
         new_model_id: tuple[str, str] | None = None,
     ):
         self.action = action
-        self.new_model_id = new_model_id or ("YOUR_PREFIX", "YOUR_TITLE")
+        self.new_model_id = new_model_id or ("YOUR_SPACE", "YOUR_EXTERNAL_ID")
 
-    def create(self, metadata: DomainMetadata | InformationMetadata | DMSMetadata) -> dict[str, Any]:
+    def create(self, metadata: InformationMetadata | DMSMetadata) -> dict[str, Any]:
         now = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None)
         if self.action == "update":
             output = json.loads(metadata.model_dump_json(by_alias=True))
@@ -288,13 +242,6 @@ class _MetadataCreator:
                 output["creator"] = f"{value}, {self.creator_name}"
             else:
                 output["creator"] = self.creator_name
-            return output
-
-        # Action "create"
-        if isinstance(metadata, DomainMetadata):
-            output = {field_alias: None for field_alias in metadata.model_dump(by_alias=True).keys()}
-            output["role"] = metadata.role.value
-            output["creator"] = self.creator_name
             return output
 
         new_metadata = self._create_new_info(now)
@@ -314,13 +261,9 @@ class _MetadataCreator:
         return created
 
     def _create_new_info(self, now: datetime) -> InformationMetadata:
-        prefix = self.new_model_id[0]
         return InformationMetadata(
-            data_model_type=DataModelType.solution,
-            schema_=SchemaCompleteness.complete,
-            extension=ExtensionCategory.addition,
-            prefix=prefix,
-            namespace=f"http://purl.org/neat/{prefix}/",  # type: ignore[arg-type]
+            space=self.new_model_id[0],
+            external_id=self.new_model_id[1],
             description=None,
             version="1",
             created=now,

@@ -15,6 +15,19 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.98.0] - 21-11-**2024**
+### Added
+- Support for reading `YAML`
+- Support for writing `YAML` in toolkit format.
+- Added end-to-end test for CDM extension
+### Fixed
+- Verification of reversed connections was done of `property (linage)` instead of `view_property`
+### Changed
+- [BREAKING] Rules are simplified and normalized, especially metadata
+- [BREAKING] removed `reference`, `class (linage)` and `property (linage)`.
+- [BREAKING] removed `last`, `reference`, auto-generated filters, `data_model_type`, `schema_`, `extension`
+
+
 ## [0.97.3] - 16-11-**2024**
 ### Improved
 - `...make_connection_on_exact_match` now takes strings instead of URIRefs

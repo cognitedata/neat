@@ -4,7 +4,6 @@ from typing import cast
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import DMSImporter, ExcelImporter
 from cognite.neat._rules.models import DMSRules, DMSSchema, RoleTypes
@@ -21,8 +20,7 @@ class TestDMSImporter:
         result = ImporterPipeline.try_verify(importer)
         rules = result.rules
         issues = result.issues
-        assert len(issues) == 1
-        assert issues[0] == DirectRelationMissingSourceWarning(dm.ViewId("neat", "OneView", "1"), "direct")
+        assert len(issues) == 0
         dms_rules = cast(DMSRules, rules)
         dump_dms = dms_rules.dump()
         assert dump_dms["properties"][0]["value_type"] == "#N/A"
@@ -39,7 +37,6 @@ class TestDMSImporter:
         "filepath",
         [
             pytest.param(DOC_RULES / "cdf-dms-architect-alice.xlsx", id="Alice rules"),
-            pytest.param(DOC_RULES / "dms-analytics-olav.xlsx", id="Olav DMS rules"),
         ],
     )
     def test_import_rules_from_tutorials(self, filepath: Path) -> None:
@@ -164,13 +161,6 @@ SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
                 space="neat",
                 external_id="NodeView1",
                 version="1",
-                filter=dm.filters.Equals(
-                    ["node", "type"],
-                    value={
-                        "space": "neat",
-                        "externalId": "NodeView1",
-                    },
-                ),
                 properties={
                     "to": dm.MultiEdgeConnectionApply(
                         type=dm.DirectRelationReference("neat", "myEdgeType"),
@@ -184,13 +174,6 @@ SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
                 space="neat",
                 external_id="NodeView2",
                 version="1",
-                filter=dm.filters.Equals(
-                    ["node", "type"],
-                    value={
-                        "space": "neat",
-                        "externalId": "NodeView2",
-                    },
-                ),
                 properties={
                     "from": dm.MultiEdgeConnectionApply(
                         type=dm.DirectRelationReference("neat", "myEdgeType"),
@@ -204,7 +187,6 @@ SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
                 space="neat",
                 external_id="EdgeView",
                 version="1",
-                filter=dm.filters.HasData(containers=[dm.ContainerId("neat", "container")]),
                 properties={
                     "distance": dm.MappedPropertyApply(
                         container=dm.ContainerId("neat", "container"),

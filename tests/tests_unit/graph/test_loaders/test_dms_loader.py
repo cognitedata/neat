@@ -11,7 +11,7 @@ def test_metadata_as_json_filed():
     store = NeatGraphStore.from_memory_store()
     store.write(AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml", unpack_metadata=False))
 
-    importer = InferenceImporter.from_graph_store(store, prefix="some-prefix")
+    importer = InferenceImporter.from_graph_store(store)
 
     rules = ImporterPipeline.verify(importer)
     store.add_rules(rules)
@@ -31,6 +31,7 @@ def test_imf_attribute_nodes():
     # properties are not specified to be object properties
 
     info_rules = ImporterPipeline.verify(ExcelImporter(imf_attributes))
+
     dms_rules = InformationToDMS().transform(info_rules).rules
 
     store = NeatGraphStore.from_oxi_store(rules=info_rules)

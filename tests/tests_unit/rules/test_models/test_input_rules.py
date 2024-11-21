@@ -6,6 +6,7 @@ from typing import Union, get_args, get_origin
 import pytest
 from _pytest.mark import ParameterSet
 from pydantic import BaseModel
+from rdflib import URIRef
 
 from cognite.neat._rules.models import SheetList
 from cognite.neat._rules.models._base_input import InputRules
@@ -50,6 +51,10 @@ def dataclass_to_parameters(input_rules_cls: type[InputRules]) -> dict[str, set[
         type_ = field_.type
         if isinstance(type_, UnionType) or get_origin(type_) is Union:
             type_ = get_args(type_)[0]
+
+            if type_ is str:
+                output[field_.name] = ""
+                continue
         if isinstance(type_, str) and type_.startswith(input_rules_cls.__name__):
             type_ = input_rules_cls
 
@@ -64,7 +69,7 @@ def dataclass_to_parameters(input_rules_cls: type[InputRules]) -> dict[str, set[
             elif origin is dict:
                 output[field_.name] = set()
                 continue
-        raise TypeError(f"Unsupported type {type_}")
+        raise TypeError(f"Unsupported type {type_} for {field_.name}")
     return output
 
 
@@ -73,7 +78,13 @@ def pydantic_to_parameters(verified_cls: type[BaseModel]) -> dict[str, set[str]]
     for name, field_ in verified_cls.model_fields.items():
         if name == "validators_to_skip":
             continue
+
         type_ = field_.annotation
+
+        if URIRef in get_args(type_):
+            output[name] = ""
+            continue
+
         if isinstance(type_, UnionType) or get_origin(type_) is Union:
             type_ = get_args(type_)[0]
 
@@ -87,5 +98,5 @@ def pydantic_to_parameters(verified_cls: type[BaseModel]) -> dict[str, set[str]]
         if issubclass(type_, BaseModel):
             output[name] = {k for k in type_.model_fields.keys() if k != "validators_to_skip"}
         else:
-            raise TypeError(f"Unsupported type {type_}")
+            raise TypeError(f"Unsupported type {type_} for {name}")
     return output

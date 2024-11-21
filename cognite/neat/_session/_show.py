@@ -16,10 +16,10 @@ from cognite.neat._session.exceptions import NeatSessionError
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._state import SessionState
-from .exceptions import intercept_session_exceptions
+from .exceptions import session_class_wrapper
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ShowAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
@@ -27,7 +27,7 @@ class ShowAPI:
         self.instances = ShowInstanceAPI(self._state)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ShowBaseAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
@@ -63,7 +63,7 @@ class ShowBaseAPI:
             return net.show(name)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ShowDataModelAPI(ShowBaseAPI):
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)
@@ -111,7 +111,7 @@ class ShowDataModelAPI(ShowBaseAPI):
                 di_graph.add_edge(
                     prop_.view.suffix,
                     prop_.value_type.suffix,
-                    label=prop_.name or prop_.property_,
+                    label=prop_.name or prop_.view_property,
                 )
 
         return di_graph
@@ -145,7 +145,7 @@ class ShowDataModelAPI(ShowBaseAPI):
         return di_graph
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ShowDataModelImplementsAPI(ShowBaseAPI):
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)
@@ -206,27 +206,27 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
             # if possible use human readable label coming from the view name
 
             # add subClassOff as edges
-            if class_.parent:
+            if class_.implements:
                 if not di_graph.has_node(class_.class_.suffix):
                     di_graph.add_node(
                         class_.class_.suffix,
                         label=class_.name or class_.class_.suffix,
                     )
 
-                for parent in class_.parent:
+                for parent in class_.implements:
                     if not di_graph.has_node(parent.suffix):
                         di_graph.add_node(parent.suffix, label=parent.suffix)
                     di_graph.add_edge(
                         class_.class_.suffix,
                         parent.suffix,
-                        label="subClassOf",
+                        label="implements",
                         dashes=True,
                     )
 
         return di_graph
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ShowDataModelProvenanceAPI(ShowBaseAPI):
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)
@@ -286,7 +286,7 @@ class ShowDataModelProvenanceAPI(ShowBaseAPI):
         return remove_namespace_from_uri(thing)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ShowInstanceAPI(ShowBaseAPI):
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)

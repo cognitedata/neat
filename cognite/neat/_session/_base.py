@@ -9,10 +9,7 @@ from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules, VerifiedRules
-from cognite.neat._rules.importers._rdf._base import DEFAULT_NON_EXISTING_NODE_TYPE
 from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models.data_types import AnyURI
-from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
@@ -23,6 +20,7 @@ from cognite.neat._store._provenance import (
 )
 from cognite.neat._utils.auth import _CLIENT_NAME
 
+from ._collector import _COLLECTOR, Collector
 from ._inspect import InspectAPI
 from ._prepare import PrepareAPI
 from ._read import ReadAPI
@@ -31,10 +29,10 @@ from ._show import ShowAPI
 from ._state import SessionState
 from ._to import ToAPI
 from .engine import load_neat_engine
-from .exceptions import NeatSessionError, intercept_session_exceptions
+from .exceptions import NeatSessionError, session_class_wrapper
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class NeatSession:
     def __init__(
         self,
@@ -52,6 +50,8 @@ class NeatSession:
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
+        self.opt = OptAPI()
+        self.opt._display()
         if self._client is not None and self._client._config is not None:
             self._client._config.client_name = _CLIENT_NAME
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
@@ -74,7 +74,7 @@ class NeatSession:
                 transformer.agent,
                 start,
                 end,
-                f"Verified data model {source_id} as {output.rules.id_}",
+                f"Verified data model {source_id} as {output.rules.metadata.identifier}",
                 self._state.data_model.provenance.source_entity(source_id)
                 or self._state.data_model.provenance.target_entity(source_id),
             )
@@ -119,7 +119,7 @@ class NeatSession:
                 converter.agent,
                 start,
                 end,
-                f"Converted data model {source_id} to {converted_rules.id_}",
+                f"Converted data model {source_id} to {converted_rules.metadata.identifier}",
                 self._state.data_model.provenance.source_entity(source_id)
                 or self._state.data_model.provenance.target_entity(source_id),
             )
@@ -144,31 +144,28 @@ class NeatSession:
             "NeatInferredDataModel",
             "v1",
         ),
-        non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
         max_number_of_instance: int = 100,
     ) -> IssueList:
         """Data model inference from instances.
 
         Args:
             model_id: The ID of the inferred data model.
-            non_existing_node_type: The type of node to use when type of node is not possible to determine.
+            max_number_of_instance: The maximum number of instances to use for inference.
         """
-
         model_id = dm.DataModelId.load(model_id)
 
         start = datetime.now(timezone.utc)
         importer = importers.InferenceImporter.from_graph_store(
             store=self._state.instances.store,
-            non_existing_node_type=non_existing_node_type,
             max_number_of_instance=max_number_of_instance,
         )
         inferred_rules: ReadRules = importer.to_rules()
         end = datetime.now(timezone.utc)
 
         if model_id.space:
-            cast(InformationInputRules, inferred_rules.rules).metadata.prefix = model_id.space
+            cast(InformationInputRules, inferred_rules.rules).metadata.space = model_id.space
         if model_id.external_id:
-            cast(InformationInputRules, inferred_rules.rules).metadata.name = model_id.external_id
+            cast(InformationInputRules, inferred_rules.rules).metadata.external_id = model_id.external_id
 
         if model_id.version:
             cast(InformationInputRules, inferred_rules.rules).metadata.version = model_id.version
@@ -208,3 +205,27 @@ class NeatSession:
             output.append(f"<H2>Instances</H2> {state.instances.store._repr_html_()}")
 
         return "<br />".join(output)
+
+
+@session_class_wrapper
+class OptAPI:
+    def __init__(self, collector: Collector | None = None) -> None:
+        self._collector = collector or _COLLECTOR
+
+    def _display(self) -> None:
+        if self._collector.opted_in or self._collector.opted_out:
+            return
+        print(
+            "For Neat to improve, we need to collect usage information. "
+            "You acknowledge and agree that neat may collect usage information."
+            "To remove this message run 'neat.opt.in_() "
+            "or to stop collecting usage information run 'neat.opt.out()'."
+        )
+
+    def in_(self) -> None:
+        self._collector.enable()
+        print("You have successfully opted in to data collection.")
+
+    def out(self) -> None:
+        self._collector.disable()
+        print("You have successfully opted out of data collection.")

@@ -1,10 +1,8 @@
-from rdflib import Namespace
-
 from cognite.neat._rules.importers._rdf._shared import make_metadata_compliant
-from cognite.neat._rules.models import RoleTypes, SchemaCompleteness
+from cognite.neat._rules.models import RoleTypes
 
 
-def parse_imf_metadata(prefix: str = "pcaimf") -> dict:
+def parse_imf_metadata(space: str = "pcaimf") -> dict:
     """Provide hardcoded IMF metadata to dict.
 
     Returns:
@@ -18,17 +16,14 @@ def parse_imf_metadata(prefix: str = "pcaimf") -> dict:
 
     raw_metadata = {
         "role": RoleTypes.information,
-        "schema": SchemaCompleteness.partial,
-        "prefix": prefix,
-        "namespace": Namespace("https://posccaesar.org/imf/"),
+        "space": space,
+        "external_id": "imf_types",
         "version": None,
         "created": None,
         "updated": None,
-        "title": "IMF_types",
+        "name": "IMF Types",
         "description": "IMF - types",
         "creator": None,
-        "rights": None,
-        "license": None,
     }
 
     return make_metadata_compliant(raw_metadata)

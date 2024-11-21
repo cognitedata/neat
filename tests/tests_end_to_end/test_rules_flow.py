@@ -6,7 +6,7 @@ import yaml
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
-from tests.config import DOC_RULES
+from tests.config import DATA_FOLDER, DOC_RULES
 
 
 class TestImportersToYAMLExporter:
@@ -36,6 +36,18 @@ class TestImportersToYAMLExporter:
         neat.read.rdf(temp_file.name, source="Ontology", type="Data Model")
         neat.verify()
         neat.convert("dms")
+        exported_yaml_str = neat.to.yaml()
+        exported_rules = yaml.safe_load(exported_yaml_str)
+        data_regression.check(exported_rules)
+
+    @pytest.mark.freeze_time("2017-05-21")
+    def test_cdm_extension_verification(self, data_regression: DataRegressionFixture) -> None:
+        neat = NeatSession(verbose=False)
+
+        neat.read.excel(DATA_FOLDER / "isa_plus_cdm.xlsx")
+
+        neat.verify()
+
         exported_yaml_str = neat.to.yaml()
         exported_rules = yaml.safe_load(exported_yaml_str)
         data_regression.check(exported_rules)

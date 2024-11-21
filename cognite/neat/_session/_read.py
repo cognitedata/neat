@@ -1,17 +1,19 @@
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 
+from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules
+from cognite.neat._rules.importers import BaseImporter
 from cognite.neat._store._provenance import Activity as ProvenanceActivity
 from cognite.neat._store._provenance import Change
 from cognite.neat._store._provenance import Entity as ProvenanceEntity
@@ -20,10 +22,10 @@ from cognite.neat._utils.reader import GitHubReader, NeatReader, PathReader
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, object_wizard, rdf_dm_wizard
 from .engine import import_engine
-from .exceptions import NeatSessionError, intercept_session_exceptions
+from .exceptions import NeatSessionError, session_class_wrapper
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ReadAPI:
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._state = state
@@ -32,9 +34,10 @@ class ReadAPI:
         self.rdf = RDFReadAPI(state, client, verbose)
         self.excel = ExcelReadAPI(state, client, verbose)
         self.csv = CSVReadAPI(state, client, verbose)
+        self.yaml = YamlReadAPI(state, client, verbose)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class BaseReadAPI:
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._state = state
@@ -62,7 +65,7 @@ class BaseReadAPI:
             raise NeatValueError(f"Expected str or Path, got {type(io)}")
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class CDFReadAPI(BaseReadAPI):
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         super().__init__(state, client, verbose)
@@ -107,7 +110,7 @@ class CDFReadAPI(BaseReadAPI):
         return self._store_rules(rules, change)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class CDFClassicAPI(BaseReadAPI):
     @property
     def _get_client(self) -> CogniteClient:
@@ -122,7 +125,7 @@ class CDFClassicAPI(BaseReadAPI):
             print(f"Asset hierarchy {root_asset_external_id} read successfully")
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ExcelReadAPI(BaseReadAPI):
     def __call__(self, io: Any) -> IssueList:
         reader = NeatReader.create(io)
@@ -146,7 +149,57 @@ class ExcelReadAPI(BaseReadAPI):
         return input_rules.issues
 
 
-@intercept_session_exceptions
+@session_class_wrapper
+class YamlReadAPI(BaseReadAPI):
+    def __call__(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> IssueList:
+        reader = NeatReader.create(io)
+        if not isinstance(reader, PathReader):
+            raise NeatValueError("Only file paths are supported for YAML files")
+        start = datetime.now(timezone.utc)
+        importer: BaseImporter
+        if format == "neat":
+            importer = importers.YAMLImporter.from_file(reader.path)
+        elif format == "toolkit":
+            if reader.path.is_file():
+                dms_importer = importers.DMSImporter.from_zip_file(reader.path)
+            elif reader.path.is_dir():
+                dms_importer = importers.DMSImporter.from_directory(reader.path)
+            else:
+                raise NeatValueError(f"Unsupported YAML format: {format}")
+            ref_containers = dms_importer.root_schema.referenced_container()
+            if system_container_ids := [
+                container_id for container_id in ref_containers if container_id.space in COGNITE_SPACES
+            ]:
+                if self._client is None:
+                    raise NeatSessionError(
+                        "No client provided. You are referencing Cognite containers in your data model, "
+                        "NEAT needs a client to lookup the container definitions. "
+                        "Please set the client in the session, NeatSession(client=client)."
+                    )
+                system_containers = self._client.data_modeling.containers.retrieve(system_container_ids)
+                dms_importer.update_referenced_containers(system_containers)
+
+            importer = dms_importer
+        else:
+            raise NeatValueError(f"Unsupported YAML format: {format}")
+        input_rules: ReadRules = importer.to_rules()
+
+        end = datetime.now(timezone.utc)
+
+        if input_rules.rules:
+            change = Change.from_rules_activity(
+                input_rules,
+                importer.agent,
+                start,
+                end,
+                description=f"YAML file {reader!s} read as unverified data model",
+            )
+            self._store_rules(input_rules, change)
+
+        return input_rules.issues
+
+
+@session_class_wrapper
 class CSVReadAPI(BaseReadAPI):
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
         reader = NeatReader.create(io)
@@ -167,7 +220,7 @@ class CSVReadAPI(BaseReadAPI):
         self._state.instances.store.write(extractor)
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class RDFReadAPI(BaseReadAPI):
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         super().__init__(state, client, verbose)

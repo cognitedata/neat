@@ -1,14 +1,9 @@
 from datetime import datetime
-from typing import Any
 
 import pytest
 
-from cognite.neat._issues import NeatError
 from cognite.neat._issues.errors import NeatValueError, PropertyDefinitionError
-from cognite.neat._rules.models import AssetRules, InformationRules
-from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import AssetEntity, ClassEntity, RelationshipEntity
-from cognite.neat._rules.transformers import AssetToInformation, InformationToAsset, RulesPipeline
 
 
 def case_asset_relationship():
@@ -206,31 +201,3 @@ def parent_property_points_to_data_type():
         ),
         id="data_type_for_parent_property",
     )
-
-
-class TestAssetRules:
-    @pytest.mark.parametrize("rules, expected_exception", list(case_asset_relationship()))
-    def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: DataType) -> None:
-        assert AssetRules.model_validate(rules).properties[0].implementation == expected_exception
-
-    def test_conversion_between_roles(self, david_rules: InformationRules) -> None:
-        pipeline = RulesPipeline[InformationRules, InformationRules]([InformationToAsset(), AssetToInformation()])
-        recreated = pipeline.run(david_rules)
-
-        assert recreated.model_dump() == david_rules.model_dump()
-
-    @pytest.mark.parametrize("invalid_rules, expected_exception", list(case_circular_dependency()))
-    def test_circular_dependency(self, invalid_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:
-        with pytest.raises(ValueError) as e:
-            AssetRules.model_validate(invalid_rules)
-        errors = NeatError.from_pydantic_errors(e.value.errors())
-        assert errors[0] == expected_exception
-
-    @pytest.mark.parametrize("invalid_rules, expected_exception", list(parent_property_points_to_data_type()))
-    def test_data_type_for_parent_property(
-        self, invalid_rules: dict[str, dict[str, Any]], expected_exception: NeatError
-    ) -> None:
-        with pytest.raises(ValueError) as e:
-            AssetRules.model_validate(invalid_rules)
-        errors = NeatError.from_pydantic_errors(e.value.errors())
-        assert errors[0] == expected_exception

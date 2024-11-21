@@ -5,9 +5,7 @@ import pytest
 
 from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import (
-    AssetRules,
     DMSRules,
-    DomainRules,
     InformationRules,
     RoleTypes,
 )
@@ -62,11 +60,6 @@ def asset_spreadsheet() -> dict[str, dict[str, Any]]:
 
 
 @pytest.fixture(scope="session")
-def asset_rules(asset_spreadsheet: dict[str, dict[str, Any]]) -> AssetRules:
-    return AssetRules.model_validate(asset_spreadsheet)
-
-
-@pytest.fixture(scope="session")
 def jimbo_spreadsheet() -> dict[str, dict[str, Any]]:
     filepath = DOC_RULES / "asset-architect-jimbo.xlsx"
     excel_file = pd.ExcelFile(filepath)
@@ -76,11 +69,6 @@ def jimbo_spreadsheet() -> dict[str, dict[str, Any]]:
         "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
         "Prefixes": read_individual_sheet(excel_file, "Prefixes", expected_headers=["Prefix"]),
     }
-
-
-@pytest.fixture(scope="session")
-def jimbo_rules(jimbo_spreadsheet: dict[str, dict[str, Any]]) -> AssetRules:
-    return AssetRules.model_validate(jimbo_spreadsheet)
 
 
 @pytest.fixture(scope="session")
@@ -94,11 +82,6 @@ def jon_spreadsheet() -> dict[str, dict[str, Any]]:
 
 
 @pytest.fixture(scope="session")
-def jon_rules(jon_spreadsheet: dict[str, dict[str, Any]]) -> DomainRules:
-    return DomainRules.model_validate(jon_spreadsheet)
-
-
-@pytest.fixture(scope="session")
 def emma_spreadsheet() -> dict[str, dict[str, Any]]:
     filepath = DOC_RULES / "expert-grid-emma.xlsx"
     excel_file = pd.ExcelFile(filepath)
@@ -107,11 +90,6 @@ def emma_spreadsheet() -> dict[str, dict[str, Any]]:
         "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
         "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
     }
-
-
-@pytest.fixture(scope="session")
-def emma_rules(emma_spreadsheet: dict[str, dict[str, Any]]) -> DomainRules:
-    return DomainRules.model_validate(emma_spreadsheet)
 
 
 @pytest.fixture(scope="session")
@@ -141,10 +119,3 @@ def svein_harald_dms_rules() -> DMSRules:
 @pytest.fixture(scope="session")
 def olav_rebuild_dms_rules() -> DMSRules:
     return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx"), role=RoleTypes.dms)
-
-
-@pytest.fixture(scope="session")
-def camilla_information_rules() -> InformationRules:
-    return ImporterPipeline.verify(
-        ExcelImporter(DOC_RULES / "information-business-camilla.xlsx"), role=RoleTypes.information
-    )

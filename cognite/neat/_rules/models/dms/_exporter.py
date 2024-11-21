@@ -1,7 +1,7 @@
 import warnings
 from collections import defaultdict
 from collections.abc import Collection, Hashable, Sequence
-from typing import Any, cast
+from typing import Any
 
 from cognite.client.data_classes import data_modeling as dm
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
@@ -18,10 +18,7 @@ from cognite.neat._issues.warnings import NotSupportedWarning, PropertyNotFoundW
 from cognite.neat._issues.warnings.user_modeling import (
     EmptyContainerWarning,
     HasDataFilterOnNoPropertiesViewWarning,
-    HasDataFilterOnViewWithReferencesWarning,
-    NodeTypeFilterOnParentViewWarning,
 )
-from cognite.neat._rules.models._base_rules import DataModelType, ExtensionCategory, SchemaCompleteness
 from cognite.neat._rules.models.data_types import DataType, Double, Enum, Float
 from cognite.neat._rules.models.entities import (
     ClassEntity,
@@ -32,7 +29,6 @@ from cognite.neat._rules.models.entities import (
     EdgeEntity,
     HasDataFilter,
     NodeTypeFilter,
-    ReferenceEntity,
     ReverseConnectionEntity,
     UnitEntity,
     ViewEntity,
@@ -64,59 +60,18 @@ class _DMSExporter:
         self.include_pipeline = include_pipeline
         self.instance_space = instance_space
         self.rules = rules
-        self._ref_schema = rules.reference.as_schema() if rules.reference else None
+        self._ref_schema = None
         if self._ref_schema:
             # We skip version as that will always be missing in the reference
             self._ref_views_by_id = {
                 dm.ViewId(view.space, view.external_id): view for view in self._ref_schema.views.values()
             }
         else:
-            self._ref_views_by_id = {}
-
-        self.is_addition = (
-            rules.metadata.schema_ is SchemaCompleteness.extended
-            and rules.metadata.extension is ExtensionCategory.addition
-        )
-        self.is_reshape = (
-            rules.metadata.schema_ is SchemaCompleteness.extended
-            and rules.metadata.extension is ExtensionCategory.reshape
-        )
-        self.is_rebuild = (
-            rules.metadata.schema_ is SchemaCompleteness.extended
-            and rules.metadata.extension is ExtensionCategory.rebuild
-        )
+            self._ref_views_by_id = {}  # type: ignore
 
     def to_schema(self) -> DMSSchema:
         rules = self.rules
         container_properties_by_id, view_properties_by_id = self._gather_properties(list(self.rules.properties))
-
-        # If we are reshaping or rebuilding, and there are no properties in the current rules, we will
-        # include those properties from the last rules.
-        if rules.last and (self.is_reshape or self.is_rebuild):
-            selected_views = {view.view for view in rules.views}
-            selected_properties = [
-                prop
-                for prop in rules.last.properties
-                if prop.view in selected_views and prop.view.as_id() not in view_properties_by_id
-            ]
-            self._update_with_properties(
-                selected_properties, container_properties_by_id, view_properties_by_id, include_new_containers=True
-            )
-
-        # We need to include the properties from the last rules as well to create complete containers and view
-        # depending on the type of extension.
-        if rules.last and self.is_addition:
-            selected_properties = [
-                prop for prop in rules.last.properties if (prop.view.as_id() in view_properties_by_id)
-            ]
-            self._update_with_properties(selected_properties, container_properties_by_id, view_properties_by_id)
-        elif rules.last and (self.is_reshape or self.is_rebuild):
-            selected_properties = [
-                prop
-                for prop in rules.last.properties
-                if prop.container and prop.container.as_id() in container_properties_by_id
-            ]
-            self._update_with_properties(selected_properties, container_properties_by_id, None)
 
         containers = self._create_containers(container_properties_by_id, rules.enum)  # type: ignore[arg-type]
 
@@ -136,30 +91,11 @@ class _DMSExporter:
             node_types = NodeApplyDict([dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters])
 
         last_schema: DMSSchema | None = None
-        if self.rules.last:
-            last_schema = self.rules.last.as_schema()
-            # Remove the views that are in the current model, last + current should equal the full model
-            # without any duplicates
-            last_schema.views = ViewApplyDict(
-                {view_id: view for view_id, view in last_schema.views.items() if view_id not in views}
-            )
-            last_schema.containers = ContainerApplyDict(
-                {
-                    container_id: container
-                    for container_id, container in last_schema.containers.items()
-                    if container_id not in containers
-                }
-            )
 
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
-        if rules.last and self.is_addition:
-            views_not_in_model.update({view.view.as_id() for view in rules.last.views if not view.in_model})
-
         data_model = rules.metadata.as_data_model()
 
         data_model_views = [view_id for view_id in views if view_id not in views_not_in_model]
-        if last_schema and self.is_addition:
-            data_model_views.extend([view_id for view_id in last_schema.views if view_id not in views_not_in_model])
 
         # Sorting to ensure deterministic order
         data_model.views = sorted(data_model_views, key=lambda v: v.as_tuple())  # type: ignore[union-attr]
@@ -207,17 +143,8 @@ class _DMSExporter:
         view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
     ) -> tuple[ViewApplyDict, set[dm.NodeId]]:
         input_views = list(self.rules.views)
-        if self.rules.last:
-            existing = {view.view.as_id() for view in input_views}
-            modified_views = [
-                v
-                for v in self.rules.last.views
-                if v.view.as_id() in view_properties_by_id and v.view.as_id() not in existing
-            ]
-            input_views.extend(modified_views)
 
         views = ViewApplyDict([dms_view.as_view() for dms_view in input_views])
-        dms_view_by_id = {dms_view.view.as_id(): dms_view for dms_view in input_views}
 
         for view_id, view in views.items():
             view.properties = {}
@@ -228,43 +155,9 @@ class _DMSExporter:
                 if view_property is not None:
                     view.properties[prop.view_property] = view_property
 
-        data_model_type = self.rules.metadata.data_model_type
         unique_node_types: set[dm.NodeId] = set()
-        parent_views = {parent for view in views.values() for parent in view.implements or []}
-        for view_id, view in views.items():
-            dms_view = dms_view_by_id.get(view_id)
-            dms_properties = view_properties_by_id.get(view_id, [])
-            view_filter = self._create_view_filter(view, dms_view, data_model_type, dms_properties)
-
-            view.filter = view_filter.as_dms_filter()
-            if isinstance(view_filter, NodeTypeFilter):
-                unique_node_types.update(view_filter.nodes)
-                if view.as_id() in parent_views:
-                    warnings.warn(
-                        NodeTypeFilterOnParentViewWarning(view.as_id()),
-                        stacklevel=2,
-                    )
-
-            elif isinstance(view_filter, HasDataFilter) and data_model_type == DataModelType.solution:
-                if dms_view and isinstance(dms_view.reference, ReferenceEntity):
-                    references = {dms_view.reference.as_view_id()}
-                elif any(True for prop in dms_properties if isinstance(prop.reference, ReferenceEntity)):
-                    references = {
-                        prop.reference.as_view_id()
-                        for prop in dms_properties
-                        if isinstance(prop.reference, ReferenceEntity)
-                    }
-                else:
-                    continue
-                warnings.warn(
-                    HasDataFilterOnViewWithReferencesWarning(view.as_id(), frozenset(references)),
-                    stacklevel=2,
-                )
-
-            if data_model_type == DataModelType.enterprise:
-                # Enterprise Model needs to create node types for all views,
-                # as they are expected for the solution model.
-                unique_node_types.add(dm.NodeId(space=view.space, external_id=view.external_id))
+        for view in views.values():
+            unique_node_types.add(dm.NodeId(space=view.space, external_id=view.external_id))
 
         return views, unique_node_types
 
@@ -272,9 +165,6 @@ class _DMSExporter:
     def _create_edge_type_from_prop(cls, prop: DMSProperty) -> dm.DirectRelationReference:
         if isinstance(prop.connection, EdgeEntity) and prop.connection.edge_type is not None:
             return prop.connection.edge_type.as_reference()
-        elif isinstance(prop.reference, ReferenceEntity):
-            ref_view_prop = prop.reference.as_view_property_id()
-            return cls._create_edge_type_from_view_id(cast(dm.ViewId, ref_view_prop.source), ref_view_prop.property)
         elif isinstance(prop.value_type, ViewEntity):
             return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
         else:
@@ -298,14 +188,6 @@ class _DMSExporter:
             enum_values_by_collection[enum_value.collection].append(enum_value)
 
         containers = list(self.rules.containers or [])
-        if self.rules.last:
-            existing = {container.container.as_id() for container in containers}
-            modified_containers = [
-                c
-                for c in self.rules.last.containers or []
-                if c.container.as_id() in container_properties_by_id and c.container.as_id() not in existing
-            ]
-            containers.extend(modified_containers)
 
         containers = dm.ContainerApplyList([dms_container.as_container() for dms_container in containers])
         container_to_drop = set()
@@ -408,17 +290,6 @@ class _DMSExporter:
         views: Sequence[DMSView],
     ) -> dict[dm.ViewId, list[DMSProperty]]:
         all_view_properties_by_id = view_properties_by_id.copy()
-        if self.rules.reference:
-            # We need to include t
-            ref_view_properties_by_id = self._gather_properties(self.rules.reference.properties)[1]
-            for view_id, properties in ref_view_properties_by_id.items():
-                if view_id not in all_view_properties_by_id:
-                    all_view_properties_by_id[view_id] = properties
-                else:
-                    existing_properties = {prop._identifier() for prop in all_view_properties_by_id[view_id]}
-                    for prop in properties:
-                        if prop._identifier() not in existing_properties:
-                            all_view_properties_by_id[view_id].append(prop)
 
         view_properties_with_parents_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
         view_by_view_id = {view.view.as_id(): view for view in views}
@@ -482,36 +353,12 @@ class _DMSExporter:
         self,
         view: dm.ViewApply,
         dms_view: DMSView | None,
-        data_model_type: DataModelType,
-        dms_properties: list[DMSProperty],
-    ) -> DMSFilter:
+    ) -> DMSFilter | None:
         selected_filter_name = (dms_view and dms_view.filter_ and dms_view.filter_.name) or ""
 
         if dms_view and dms_view.filter_ and not dms_view.filter_.is_empty:
             # Has Explicit Filter, use it
             return dms_view.filter_
-
-        if data_model_type == DataModelType.solution and selected_filter_name in [NodeTypeFilter.name, ""]:
-            if (
-                dms_view
-                and isinstance(dms_view.reference, ReferenceEntity)
-                and not dms_properties
-                and (ref_view := self._ref_views_by_id.get(dms_view.reference.as_view_id()))
-                and ref_view.filter
-            ):
-                # No new properties, only reference, reuse the reference filter
-                return DMSFilter.from_dms_filter(ref_view.filter)
-            else:
-                referenced_node_ids = {
-                    prop.reference.as_node_entity()
-                    for prop in dms_properties
-                    if isinstance(prop.reference, ReferenceEntity)
-                }
-                if dms_view and isinstance(dms_view.reference, ReferenceEntity):
-                    referenced_node_ids.add(dms_view.reference.as_node_entity())
-
-                if referenced_node_ids:
-                    return NodeTypeFilter(inner=list(referenced_node_ids))
 
         # Enterprise Model or (Solution + HasData)
         ref_containers = view.referenced_containers()
@@ -597,7 +444,7 @@ class _DMSExporter:
                 (
                     prop
                     for prop in view_properties_with_ancestors_by_id.get(source_view_id, [])
-                    if prop.property_ == reverse_prop_id
+                    if prop.view_property == reverse_prop_id
                 ),
                 None,
             )

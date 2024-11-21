@@ -169,12 +169,9 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
 
 BASE_MODEL: DMSRules = DMSInputRules(
     metadata=DMSInputMetadata(
-        schema_="partial",
         space="sp_base",
         external_id="Base",
         version="1",
-        extension="addition",
-        data_model_type="enterprise",
         creator="Anders",
     ),
     views=[DMSInputView(view="Entity")],
@@ -184,7 +181,6 @@ BASE_MODEL: DMSRules = DMSInputRules(
             view="Entity",
             view_property="name",
             value_type="text",
-            property_="name",
             container="Entity",
             container_property="name",
         )

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any
 
 import pandas as pd
 from rdflib import Namespace, URIRef
@@ -25,19 +25,16 @@ from ._rules import (
 
 @dataclass
 class InformationInputMetadata(InputComponent[InformationMetadata]):
-    schema_: Literal["complete", "partial", "extended"]
-    prefix: str
-    namespace: str
+    space: str
+    external_id: str
     version: str
     creator: str
-    data_model_type: Literal["solution", "enterprise"] = "enterprise"
-    extension: Literal["addition", "reshape", "rebuild"] = "addition"
     name: str | None = None
     description: str | None = None
     created: datetime | str | None = None
     updated: datetime | str | None = None
-    license: str | None = None
-    rights: str | None = None
+    physical: str | None = None
+    conceptual: str | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationMetadata]:
@@ -51,6 +48,25 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
             output["updated"] = datetime.now()
         return output
 
+    @property
+    def prefix(self) -> str:
+        return self.space
+
+    @property
+    def identifier(self) -> URIRef:
+        """Globally unique identifier for the data model.
+
+        !!! note
+            Unlike namespace, the identifier does not end with "/" or "#".
+
+        """
+        return DEFAULT_NAMESPACE[f"data-model/unverified/logical/{self.space}/{self.external_id}/{self.version}"]
+
+    @property
+    def namespace(self) -> Namespace:
+        """Namespace for the data model used for the entities in the data model."""
+        return Namespace(f"{self.identifier}/")
+
 
 @dataclass
 class InformationInputProperty(InputComponent[InformationProperty]):
@@ -59,12 +75,9 @@ class InformationInputProperty(InputComponent[InformationProperty]):
     value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity | str
     name: str | None = None
     description: str | None = None
-    comment: str | None = None
     min_count: int | None = None
     max_count: int | float | None = None
     default: Any | None = None
-    reference: str | None = None
-    match_type: str | None = None
     transformation: str | None = None
     # Only used internally
     inherited: bool = False
@@ -85,10 +98,7 @@ class InformationInputClass(InputComponent[InformationClass]):
     class_: ClassEntity | str
     name: str | None = None
     description: str | None = None
-    comment: str | None = None
-    parent: str | list[ClassEntity] | None = None
-    reference: str | None = None
-    match_type: str | None = None
+    implements: str | list[ClassEntity] | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationClass]:
@@ -101,12 +111,12 @@ class InformationInputClass(InputComponent[InformationClass]):
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
         parent: list[ClassEntity] | None = None
-        if isinstance(self.parent, str):
-            parent = [ClassEntity.load(parent, prefix=default_prefix) for parent in self.parent.split(",")]
-        elif isinstance(self.parent, list):
-            parent = [ClassEntity.load(parent_, prefix=default_prefix) for parent_ in self.parent]
+        if isinstance(self.implements, str):
+            parent = [ClassEntity.load(parent, prefix=default_prefix) for parent in self.implements.split(",")]
+        elif isinstance(self.implements, list):
+            parent = [ClassEntity.load(parent_, prefix=default_prefix) for parent_ in self.implements]
         output["Class"] = ClassEntity.load(self.class_, prefix=default_prefix)
-        output["Parent Class"] = parent
+        output["Implements"] = parent
         return output
 
 
@@ -116,8 +126,6 @@ class InformationInputRules(InputRules[InformationRules]):
     properties: list[InformationInputProperty] = field(default_factory=list)
     classes: list[InformationInputClass] = field(default_factory=list)
     prefixes: dict[str, Namespace] | None = None
-    last: "InformationInputRules | None" = None
-    reference: "InformationInputRules | None" = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationRules]:
@@ -125,26 +133,12 @@ class InformationInputRules(InputRules[InformationRules]):
 
     def dump(self) -> dict[str, Any]:
         default_prefix = self.metadata.prefix
-        reference: dict[str, Any] | None = None
-        if isinstance(self.reference, InformationInputRules):
-            reference = self.reference.dump()
-        elif isinstance(self.reference, InformationRules):
-            # We need to load through the InformationRulesInput to set the correct default space and version
-            reference = InformationInputRules.load(self.reference.model_dump()).dump()
-        last: dict[str, Any] | None = None
-        if isinstance(self.last, InformationInputRules):
-            last = self.last.dump()
-        elif isinstance(self.last, InformationRules):
-            # We need to load through the InformationRulesInput to set the correct default space and version
-            last = InformationInputRules.load(self.last.model_dump()).dump()
 
         return dict(
             Metadata=self.metadata.dump(),
             Properties=[prop.dump(default_prefix) for prop in self.properties],
             Classes=[class_.dump(default_prefix) for class_ in self.classes],
             Prefixes=self.prefixes,
-            Last=last,
-            Reference=reference,
         )
 
     def _repr_html_(self) -> str:
@@ -152,14 +146,11 @@ class InformationInputRules(InputRules[InformationRules]):
             "type": "Logical Data Model",
             "intended for": "Information Architect",
             "name": self.metadata.name,
-            "external_id": self.metadata.prefix,
+            "external_id": self.metadata.external_id,
+            "space": self.metadata.space,
             "version": self.metadata.version,
             "classes": len(self.classes),
             "properties": len(self.properties),
         }
 
         return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore
-
-    @property
-    def id_(self) -> URIRef:
-        return DEFAULT_NAMESPACE[f"data-model/unverified/info/{self.metadata.prefix}/{self.metadata.version}"]

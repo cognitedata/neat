@@ -17,7 +17,7 @@ from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers._base import BaseImporter
 from cognite.neat._rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
 from cognite.neat._rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
-from cognite.neat._rules.models import InformationInputRules, SchemaCompleteness
+from cognite.neat._rules.models import InformationInputRules
 from cognite.neat._rules.models.information import InformationInputMetadata
 from cognite.neat._utils.text import humanize_collection, to_pascal
 
@@ -31,7 +31,7 @@ class DTDLImporter(BaseImporter[InformationInputRules]):
 
     Args:
         items (Sequence[DTDLBase]): A sequence of DTDLBase objects.
-        title (str, optional): Title of the data model. Defaults to None.
+        name (str, optional): Name of the data model. Defaults to None.
         read_issues (list[ValidationIssue], optional): A list of issues that occurred during reading. Defaults to None.
         schema (SchemaCompleteness, optional): Schema completeness. Defaults to SchemaCompleteness.partial.
 
@@ -40,14 +40,12 @@ class DTDLImporter(BaseImporter[InformationInputRules]):
     def __init__(
         self,
         items: Sequence[DTDLBase],
-        title: str | None = None,
+        name: str | None = None,
         read_issues: list[NeatIssue] | None = None,
-        schema: SchemaCompleteness = SchemaCompleteness.partial,
     ) -> None:
         self._items = items
-        self.title = title
+        self.name = name
         self._read_issues = IssueList(read_issues)
-        self._schema_completeness = schema
 
     @classmethod
     def _from_file_content(cls, file_content: str, filepath: Path) -> Iterable[DTDLBase | NeatIssue]:
@@ -130,17 +128,16 @@ class DTDLImporter(BaseImporter[InformationInputRules]):
         converter.convert(self._items)
 
         metadata = self._default_metadata()
-        metadata["schema"] = self._schema_completeness.value
 
-        if self.title:
-            metadata["title"] = to_pascal(self.title)
+        if self.name:
+            metadata["name"] = to_pascal(self.name)
         try:
             most_common_prefix = converter.get_most_common_prefix()
         except ValueError:
             # No prefixes are defined so we just use the default prefix...
             ...
         else:
-            metadata["prefix"] = most_common_prefix
+            metadata["space"] = most_common_prefix
 
         rules = InformationInputRules(
             metadata=InformationInputMetadata.load(metadata),

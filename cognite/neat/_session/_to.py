@@ -12,10 +12,10 @@ from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._utils.upload import UploadResultCore, UploadResultList
 
 from ._state import SessionState
-from .exceptions import NeatSessionError, intercept_session_exceptions
+from .exceptions import NeatSessionError, session_class_wrapper
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class ToAPI:
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._state = state
@@ -46,21 +46,34 @@ class ToAPI:
         return None
 
     @overload
-    def yaml(self, io: None) -> str: ...
+    def yaml(self, io: None, format: Literal["neat"] = "neat") -> str: ...
 
     @overload
-    def yaml(self, io: Any) -> None: ...
+    def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None: ...
 
-    def yaml(self, io: Any | None = None) -> str | None:
-        exporter = exporters.YAMLExporter()
-        if io is None:
-            return exporter.export(self._state.data_model.last_verified_rule[1])
+    def yaml(self, io: Any | None = None, format: Literal["neat", "toolkit"] = "neat") -> str | None:
+        if format == "neat":
+            exporter = exporters.YAMLExporter()
+            last_verified = self._state.data_model.last_verified_rule[1]
+            if io is None:
+                return exporter.export(last_verified)
 
-        exporter.export_to_file(self._state.data_model.last_verified_rule[1], Path(io))
+            exporter.export_to_file(last_verified, Path(io))
+        elif format == "toolkit":
+            if io is None or not isinstance(io, str | Path):
+                raise NeatSessionError(
+                    "Please provide a zip file or directory path to write the YAML files to."
+                    "This is required for the 'toolkit' format."
+                )
+            dms_rule = self._state.data_model.last_verified_dms_rules[1]
+            exporters.DMSExporter().export_to_file(dms_rule, Path(io))
+        else:
+            raise NeatSessionError("Please provide a valid format. {['neat', 'toolkit']}")
+
         return None
 
 
-@intercept_session_exceptions
+@session_class_wrapper
 class CDFToAPI:
     def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
         self._client = client

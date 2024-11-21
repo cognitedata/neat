@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Iterable, Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, cast
@@ -30,10 +30,8 @@ from cognite.neat._issues.warnings import (
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers._base import BaseImporter, _handle_issues
 from cognite.neat._rules.models import (
-    DataModelType,
     DMSInputRules,
     DMSSchema,
-    SchemaCompleteness,
 )
 from cognite.neat._rules.models.data_types import DataType, Enum
 from cognite.neat._rules.models.dms import (
@@ -85,6 +83,14 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         if schema.reference:
             self._all_containers_by_id.update(schema.reference.containers.items())
             self._all_views_by_id.update(schema.reference.views.items())
+
+    def update_referenced_containers(self, containers: Iterable[dm.ContainerApply]) -> None:
+        """Update the referenced containers. This is useful to add Cognite containers identified after the root schema
+        is read"""
+        for container in containers:
+            if container.as_id() in self._all_containers_by_id:
+                continue
+            self._all_containers_by_id[container.as_id()] = container
 
     @classmethod
     def from_data_model_id(
@@ -180,9 +186,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             created = now
             updated = now
         return DMSInputMetadata(
-            schema_="complete",
-            data_model_type="solution" if has_reference else "enterprise",
-            extension="addition",
             space=model.space,
             external_id=model.external_id,
             name=model.name or model.external_id,
@@ -226,28 +229,12 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
         model = self.root_schema.data_model
 
-        schema_completeness = SchemaCompleteness.complete
-        data_model_type = DataModelType.enterprise
-        reference: DMSInputRules | None = None
-        if (ref_schema := self.root_schema.reference) and (ref_model := ref_schema.data_model):
-            # Reference should always be an enterprise model.
-            reference = self._create_rule_components(
-                ref_model,
-                ref_schema,
-                self.ref_metadata or self._create_default_metadata(list(ref_schema.views.values()), is_ref=True),
-                DataModelType.enterprise,
-            )
-            data_model_type = DataModelType.solution
-
         user_rules = self._create_rule_components(
             model,
             self.root_schema,
             self.metadata,
-            data_model_type,
-            schema_completeness,
-            has_reference=reference is not None,
         )
-        user_rules.reference = reference
+
         self._end = datetime.now(timezone.utc)
 
         return ReadRules(user_rules, self.issue_list, {})
@@ -257,9 +244,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         data_model: dm.DataModelApply,
         schema: DMSSchema,
         metadata: DMSInputMetadata | None = None,
-        data_model_type: DataModelType | None = None,
-        schema_completeness: SchemaCompleteness | None = None,
-        has_reference: bool = False,
     ) -> DMSInputRules:
         properties: list[DMSInputProperty] = []
         for view_id, view in schema.views.items():
@@ -274,11 +258,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
         }
 
-        metadata = metadata or DMSInputMetadata.from_data_model(data_model, has_reference)
-        if data_model_type is not None:
-            metadata.data_model_type = str(data_model_type)  # type: ignore[assignment]
-        if schema_completeness is not None:
-            metadata.schema_ = str(schema_completeness)  # type: ignore[assignment]
+        metadata = metadata or DMSInputMetadata.from_data_model(data_model)
 
         enum = self._create_enum_collections(schema.containers.values())
 
@@ -301,9 +281,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         now = datetime.now().replace(microsecond=0)
         space = Counter(view.space for view in views).most_common(1)[0][0]
         return DMSInputMetadata(
-            schema_="complete",
-            extension="addition",
-            data_model_type="enterprise" if is_ref else "solution",
             space=space,
             external_id="Unknown",
             version="0.1.0",
@@ -351,8 +328,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             return None
 
         return DMSInputProperty(
-            class_=str(class_entity),
-            property_=prop_id,
             description=prop.description,
             name=prop.name,
             connection=self._get_connection_type(prop),
@@ -361,10 +336,12 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             nullable=self._get_nullable(prop),
             immutable=self._get_immutable(prop),
             default=self._get_default(prop),
-            container=str(ContainerEntity.from_id(prop.container))
-            if isinstance(prop, dm.MappedPropertyApply)
-            else None,
-            container_property=prop.container_property_identifier if isinstance(prop, dm.MappedPropertyApply) else None,
+            container=(
+                str(ContainerEntity.from_id(prop.container)) if isinstance(prop, dm.MappedPropertyApply) else None
+            ),
+            container_property=(
+                prop.container_property_identifier if isinstance(prop, dm.MappedPropertyApply) else None
+            ),
             view=str(view_entity),
             view_property=prop_id,
             index=self._get_index(prop, prop_id),

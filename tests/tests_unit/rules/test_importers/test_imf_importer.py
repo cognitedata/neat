@@ -7,7 +7,7 @@ from tests.config import IMF_EXAMPLE
 
 
 def test_imf_importer():
-    rules = ImporterPipeline.verify(importers.IMFImporter.from_file(IMF_EXAMPLE, "imf"))
+    rules = ImporterPipeline.verify(importers.IMFImporter.from_file(IMF_EXAMPLE))
 
     assert len(rules.classes) == 69
     assert len(rules.properties) == 156
@@ -18,13 +18,4 @@ def test_imf_importer():
     assert (
         class_property_pairs[ClassEntity.load("pcaimf:IMF_1ccc23fc_42ca_4b8a_acd5_ef2beddf7f12")]["hasTerminal"].type_
         == EntityTypes.object_property
-    )
-
-    assert (
-        str(
-            class_property_pairs[ClassEntity.load("pcaimf:IMF_1ccc23fc_42ca_4b8a_acd5_ef2beddf7f12")][
-                "hasTerminal"
-            ].transformation
-        )
-        == "prefix-3:1ccc23fc-42ca-4b8a-acd5-ef2beddf7f12(prefix-6:hasTerminal)"
     )

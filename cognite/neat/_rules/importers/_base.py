@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Any, Generic, Literal
 
 from pydantic import ValidationError
-from rdflib import Namespace
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList, NeatError, NeatWarning
@@ -33,11 +32,11 @@ class BaseImporter(ABC, Generic[T_InputRules]):
             creator = getpass.getuser()
 
         return {
-            "prefix": "neat",
             "schema": "partial",
-            "namespace": Namespace("http://purl.org/cognite/neat/"),
+            "space": "neat",
+            "external_id": "NeatImportedDataModel",
             "version": "0.1.0",
-            "title": "Neat Imported Data Model",
+            "name": "Neat Imported Data Model",
             "created": datetime.now().replace(microsecond=0).isoformat(),
             "updated": datetime.now().replace(microsecond=0).isoformat(),
             "creator": creator,

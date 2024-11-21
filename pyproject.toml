@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.97.3"
+version = "0.98.0"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -61,7 +61,7 @@ requests = "*"
 urllib3 = "^2"
 openpyxl = "*"
 networkx = "^3.4.2"
-
+mixpanel = "^4.10.1"
 
 # Used for loading neat engine
 packaging = ">=22.0,<25.0"

@@ -16,7 +16,9 @@ def test_rdf_inference():
     extractor = RdfFileExtractor(nordic44_knowledge_graph, base_uri="http://nordic44.com/")
     store.write(extractor)
 
-    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
+    rules = ImporterPipeline.verify(
+        InferenceImporter.from_graph_store(store, ("inferred", "nordic44_data_model", "rdf"))
+    )
 
     assert len(rules.properties) == 332
     assert len(rules.classes) == 59

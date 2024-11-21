@@ -1,8 +1,5 @@
-from cognite.neat._rules.analysis import (
-    AssetAnalysis,
-    InformationAnalysis,
-)
-from cognite.neat._rules.models import AssetRules, InformationRules
+from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.entities import ClassEntity
 
 
@@ -42,11 +39,3 @@ class TestInformationRulesAnalysis:
             0
         ].class_ == ClassEntity.load("power:GeoLocation")
         assert len(InformationAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes) == 1
-
-
-class TestAssetRulesAnalysis:
-    def test_asset_definitions(self, jimbo_rules: AssetRules) -> None:
-        assert len(AssetAnalysis(jimbo_rules).asset_definition(only_rdfpath=True)) == 6
-
-    def test_relationship_definitions(self, jimbo_rules: AssetRules) -> None:
-        assert len(AssetAnalysis(jimbo_rules).relationship_definition(only_rdfpath=True)) == 4

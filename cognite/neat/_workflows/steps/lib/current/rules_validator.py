@@ -8,7 +8,7 @@ from cognite.client import CogniteClient
 from cognite.neat._issues import NeatIssueList
 from cognite.neat._issues.errors import ResourceNotFoundError, WorkflowStepNotInitializedError
 from cognite.neat._issues.formatters import FORMATTER_BY_NAME
-from cognite.neat._rules.models import DMSRules, SchemaCompleteness
+from cognite.neat._rules.models import DMSRules
 from cognite.neat._utils.cdf.loaders import ViewLoader
 from cognite.neat._workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat._workflows.steps.data_contracts import MultiRuleData
@@ -49,12 +49,7 @@ class ValidateRulesAgainstCDF(Step):
                 step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
             )
         dms_rules = rules.dms
-        if dms_rules.metadata.schema_ is not SchemaCompleteness.partial:
-            return FlowMessage(
-                error_text="DMS rules are not partial. This step expects DMS rules to be a partial definition "
-                "with the rest of the definition being fetched from CDF.",
-                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
-            )
+
         schema = dms_rules.as_schema()
         errors = schema.validate()
         if not errors:

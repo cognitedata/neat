@@ -1,9 +1,7 @@
 from ._base import RulesPipeline, RulesTransformer
 from ._converters import (
-    AssetToInformation,
     ConvertToRules,
     DMSToInformation,
-    InformationToAsset,
     InformationToDMS,
     ReduceCogniteModel,
     SetIDDMSModel,
@@ -12,7 +10,7 @@ from ._converters import (
 )
 from ._mapping import MapOneToOne, RuleMapper
 from ._pipelines import ImporterPipeline
-from ._verification import VerifyAnyRules, VerifyAssetRules, VerifyDMSRules, VerifyInformationRules
+from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRules
 
 __all__ = [
     "ImporterPipeline",
@@ -23,7 +21,6 @@ __all__ = [
     "ConvertToRules",
     "AssetToInformation",
     "DMSToInformation",
-    "VerifyAssetRules",
     "VerifyDMSRules",
     "VerifyInformationRules",
     "VerifyAnyRules",

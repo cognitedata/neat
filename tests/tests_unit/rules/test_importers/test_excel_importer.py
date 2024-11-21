@@ -12,11 +12,10 @@ from cognite.neat._issues.errors import (
     RowError,
 )
 from cognite.neat._issues.warnings import (
-    NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
 )
 from cognite.neat._rules.importers import ExcelImporter
-from cognite.neat._rules.models import DMSRules, DomainRules, InformationRules, RoleTypes
+from cognite.neat._rules.models import DMSRules, InformationRules, RoleTypes
 from cognite.neat._rules.transformers import ImporterPipeline
 from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
@@ -76,14 +75,6 @@ def invalid_rules_filepaths():
                     row_number=3,
                     sheet_name="Properties",
                 ),
-                ResourceNotDefinedError(
-                    ContainerId("neat", "Pump"),
-                    "container",
-                    location="Containers Sheet",
-                    column_name="Container",
-                    row_number=3,
-                    sheet_name="Properties",
-                ),
             ]
         ),
         id="Missing container and view definition",
@@ -95,11 +86,7 @@ def invalid_rules_filepaths():
                 NotSupportedViewContainerLimitWarning(
                     ViewId(space="neat", external_id="Asset", version="1"),
                     11,
-                ),
-                NotSupportedHasDataFilterLimitWarning(
-                    ViewId(space="neat", external_id="Asset", version="1"),
-                    11,
-                ),
+                )
             ]
         ),
         id="Too many containers per view",
@@ -110,15 +97,18 @@ class TestExcelImporter:
     @pytest.mark.parametrize(
         "filepath, rule_type, convert_to",
         [
-            pytest.param(DOC_RULES / "cdf-dms-architect-alice.xlsx", DMSRules, RoleTypes.information, id="Alice rules"),
+            pytest.param(
+                DOC_RULES / "cdf-dms-architect-alice.xlsx",
+                DMSRules,
+                RoleTypes.information,
+                id="Alice rules",
+            ),
             pytest.param(
                 DOC_RULES / "information-analytics-olav.xlsx",
                 InformationRules,
                 RoleTypes.dms,
                 id="Olav user rules",
             ),
-            pytest.param(DOC_RULES / "expert-wind-energy-jon.xlsx", DomainRules, None, id="expert-wind-energy-jon"),
-            pytest.param(DOC_RULES / "expert-grid-emma.xlsx", DomainRules, None, id="expert-grid-emma"),
             pytest.param(
                 DOC_RULES / "information-architect-david.xlsx",
                 InformationRules,
@@ -148,7 +138,7 @@ class TestExcelImporter:
     def test_import_valid_rules(
         self,
         filepath: Path,
-        rule_type: type[DMSRules] | type[InformationRules] | type[DomainRules],
+        rule_type: type[DMSRules] | type[InformationRules],
         convert_to: RoleTypes | None,
     ):
         importer = ExcelImporter(filepath)
