@@ -12,7 +12,7 @@ from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import InformationRules
 from cognite.neat._shared import InstanceType
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import remove_instance_ids_in_batch, remove_namespace_from_uri
 
 from ._construct import build_construct_query
 
@@ -354,8 +354,7 @@ class Queries:
         """
         dropped_types: dict[URIRef, int] = {}
         for t in type_:
-            triples = self.list_instances_of_type(t)
-            dropped_types[t] = sum(1 for triple in triples if triple[1] is RDF.type)
-            for triple in triples:
-                self.graph.remove(triple)  # type: ignore[arg-type]
+            instance_ids = self.list_instances_ids_of_class(t)
+            dropped_types[t] = len(instance_ids)
+            remove_instance_ids_in_batch(self.graph, instance_ids)
         return dropped_types
