@@ -31,5 +31,5 @@ class DropAPI:
         result = self._state.instances.store.queries.drop_types(list(selected_uri_by_type.keys()))
 
         for type_uri, count in result.items():
-            print(f"Dropped {count} instances of type {type_uri}")
+            print(f"Dropped {count} instances of type {selected_uri_by_type[type_uri]}")
         return None

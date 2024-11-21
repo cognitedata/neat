@@ -354,6 +354,8 @@ class Queries:
         """
         dropped_types: dict[URIRef, int] = {}
         for t in type_:
-            query = f"DELETE WHERE {{ ?s a <{t}> }}"
-            dropped_types[t] = len(list(self.graph.query(query)))
+            triples = self.list_instances_of_type(t)
+            dropped_types[t] = sum(1 for triple in triples if triple[1] is RDF.type)
+            for triple in triples:
+                self.graph.remove(triple)  # type: ignore[arg-type]
         return dropped_types
