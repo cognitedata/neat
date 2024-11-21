@@ -24,7 +24,7 @@ def parse_owl_classes(graph: Graph, language: str = "en") -> list[dict]:
     """
 
     query = """
-        SELECT ?class ?name ?description ?parentClass ?reference ?match ?comment
+        SELECT ?class ?name ?description ?parentClass
         WHERE {
         ?class a owl:Class .
         OPTIONAL {?class rdfs:subClassOf ?parentClass }.
@@ -51,7 +51,7 @@ def parse_owl_classes(graph: Graph, language: str = "en") -> list[dict]:
     processed_df = make_classes_compliant(processed_df, importer="OWL")
 
     # Make Parent Class list elements into string joined with comma
-    processed_df["Parent Class"] = processed_df["Parent Class"].apply(
+    processed_df["Implements"] = processed_df["Implements"].apply(
         lambda x: ", ".join(x) if isinstance(x, list) and x else None
     )
 

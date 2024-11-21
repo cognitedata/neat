@@ -247,9 +247,9 @@ class OWLClass(OntologyModel):
 
     @classmethod
     def from_class(cls, definition: InformationClass, namespace: Namespace, prefixes: dict) -> Self:
-        if definition.parent and isinstance(definition.parent, list):
+        if definition.implements and isinstance(definition.implements, list):
             sub_class_of = []
-            for parent_class in definition.parent:
+            for parent_class in definition.implements:
                 try:
                     sub_class_of.append(prefixes[str(parent_class.prefix)][str(parent_class.suffix)])
                 except KeyError:
@@ -524,8 +524,8 @@ class SHACLNodeShape(OntologyModel):
     def from_rules(
         cls, class_definition: InformationClass, property_definitions: list[InformationProperty], namespace: Namespace
     ) -> "SHACLNodeShape":
-        if class_definition.parent:
-            parent = [namespace[str(parent.suffix) + "Shape"] for parent in class_definition.parent]
+        if class_definition.implements:
+            parent = [namespace[str(parent.suffix) + "Shape"] for parent in class_definition.implements]
         else:
             parent = None
         return cls(

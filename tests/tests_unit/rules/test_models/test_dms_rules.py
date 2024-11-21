@@ -42,7 +42,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 description="DMS data model",
@@ -116,11 +115,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 container_property_identifier="name",
                             )
                         },
-                        filter=dm.filters.HasData(
-                            containers=[
-                                dm.ContainerId("my_space", "Asset"),
-                            ]
-                        ),
                     ),
                     dm.ViewApply(
                         space="my_space",
@@ -133,7 +127,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 container_property_identifier="ratedPower",
                             ),
                         },
-                        filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "GeneratingUnit")]),
                     ),
                     dm.ViewApply(
                         space="my_space",
@@ -153,13 +146,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                                 direction="outwards",
                             )
                         },
-                        filter=dm.filters.Equals(
-                            ["node", "type"],
-                            {
-                                "space": "my_space",
-                                "externalId": "WindFarm",
-                            },
-                        ),
                     ),
                 ]
             ),
@@ -180,14 +166,19 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
-            node_types=NodeApplyDict([dm.NodeApply(space="my_space", external_id="WindFarm")]),
+            node_types=NodeApplyDict(
+                [
+                    dm.NodeApply(space="my_space", external_id="WindFarm"),
+                    dm.NodeApply(space="my_space", external_id="Asset"),
+                    dm.NodeApply(space="my_space", external_id="WindTurbine"),
+                ]
+            ),
         ),
         id="Two properties, one container, one view",
     )
 
     dms_rules = DMSInputRules(
         metadata=DMSInputMetadata(
-            schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
@@ -249,7 +240,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     version="1",
                     properties={
                         "name": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
+                            container=dm.ContainerId("my_space", "Asset"),
+                            container_property_identifier="name",
                         ),
                         "windTurbines": dm.MappedPropertyApply(
                             container=dm.ContainerId("my_space", "WindFarm"),
@@ -257,9 +249,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             source=dm.ViewId("my_space", "WindTurbine", "1"),
                         ),
                     },
-                    filter=dm.filters.HasData(
-                        containers=[dm.ContainerId("my_space", "Asset"), dm.ContainerId("my_space", "WindFarm")]
-                    ),
                 ),
                 dm.ViewApply(
                     space="my_space",
@@ -267,10 +256,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     version="1",
                     properties={
                         "name": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
+                            container=dm.ContainerId("my_space", "Asset"),
+                            container_property_identifier="name",
                         )
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
                 ),
             ]
         ),
@@ -295,7 +284,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=NodeApplyDict([]),
+        node_types=NodeApplyDict(
+            [
+                dm.NodeApply(space="my_space", external_id="WindFarm"),
+                dm.NodeApply(space="my_space", external_id="WindTurbine"),
+            ]
+        ),
     )
     yield pytest.param(
         dms_rules,
@@ -305,7 +299,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
     dms_rules = DMSInputRules(
         metadata=DMSInputMetadata(
-            schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
@@ -357,10 +350,10 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     version="1",
                     properties={
                         "name": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
+                            container=dm.ContainerId("my_space", "Asset"),
+                            container_property_identifier="name",
                         ),
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
                 ),
                 dm.ViewApply(
                     external_id="WindTurbine",
@@ -373,7 +366,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         ),
                     },
                     implements=[dm.ViewId("my_space", "Asset", "1")],
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "WindTurbine")]),
                 ),
             ],
         ),
@@ -392,7 +384,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
         ),
-        node_types=NodeApplyDict([]),
+        node_types=NodeApplyDict(
+            [
+                dm.NodeApply(space="my_space", external_id="Asset"),
+                dm.NodeApply(space="my_space", external_id="WindTurbine"),
+            ]
+        ),
     )
 
     yield pytest.param(
@@ -404,7 +401,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     dms_rules = DMSInputRules(
         metadata=DMSInputMetadata(
             # This is a complete schema, but we do not want to trigger the full validation
-            schema_="partial",
             space="my_space",
             external_id="my_data_model",
             version="1",
@@ -509,12 +505,14 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     version="1",
                     properties={
                         "name": dm.MappedPropertyApply(
-                            container=dm.ContainerId("my_space", "Asset"), container_property_identifier="name"
+                            container=dm.ContainerId("my_space", "Asset"),
+                            container_property_identifier="name",
                         ),
                         "timeseries": dm.MultiReverseDirectRelationApply(
                             source=dm.ViewId("my_space", "CogniteTimeseries", "1"),
                             through=dm.PropertyId(
-                                source=dm.ViewId("my_space", "CogniteTimeseries", "1"), property="asset"
+                                source=dm.ViewId("my_space", "CogniteTimeseries", "1"),
+                                property="asset",
                             ),
                         ),
                         "root": dm.MappedPropertyApply(
@@ -524,10 +522,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         ),
                         "children": dm.MultiReverseDirectRelationApply(
                             source=dm.ViewId("my_space", "Asset", "1"),
-                            through=dm.PropertyId(source=dm.ViewId("my_space", "Asset", "1"), property="root"),
+                            through=dm.PropertyId(
+                                source=dm.ViewId("my_space", "Asset", "1"),
+                                property="root",
+                            ),
                         ),
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "Asset")]),
                 ),
                 dm.ViewApply(
                     space="my_space",
@@ -549,7 +549,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             source=dm.ViewId("my_space", "Activity", "1"),
                         ),
                     },
-                    filter=dm.filters.HasData(containers=[dm.ContainerId("my_space", "CogniteTimeseries")]),
                 ),
                 dm.ViewApply(
                     space="my_space",
@@ -559,17 +558,11 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                         "timeseries": dm.MultiReverseDirectRelationApply(
                             source=dm.ViewId("my_space", "CogniteTimeseries", "1"),
                             through=dm.PropertyId(
-                                source=dm.ViewId("my_space", "CogniteTimeseries", "1"), property="activities"
+                                source=dm.ViewId("my_space", "CogniteTimeseries", "1"),
+                                property="activities",
                             ),
                         )
                     },
-                    filter=dm.filters.Equals(
-                        ["node", "type"],
-                        {
-                            "space": "my_space",
-                            "externalId": "Activity",
-                        },
-                    ),
                 ),
             ]
         ),
@@ -597,6 +590,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         node_types=NodeApplyDict(
             [
                 dm.NodeApply(space="my_space", external_id="Activity"),
+                dm.NodeApply(space="my_space", external_id="Asset"),
+                dm.NodeApply(space="my_space", external_id="CogniteTimeseries"),
             ]
         ),
     )
@@ -608,7 +603,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
     dms_rules = DMSInputRules(
         metadata=DMSInputMetadata(
-            schema_="complete",
             space="my_space",
             external_id="my_data_model",
             version="1",
@@ -656,7 +650,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             container_property_identifier="display_name",
                         ),
                     },
-                    filter=dm.filters.Equals(["node", "type"], {"space": "sp_other", "externalId": "wind_turbine"}),
                 ),
             ]
         ),
@@ -669,7 +662,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=NodeApplyDict([dm.NodeApply(space="sp_other", external_id="wind_turbine")]),
+        node_types=NodeApplyDict([dm.NodeApply(space="my_space", external_id="generating_unit")]),
     )
     yield pytest.param(
         dms_rules,
@@ -679,7 +672,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
     dms_rules = DMSInputRules(
         metadata=DMSInputMetadata(
-            schema_="complete",
             space="sp_solution",
             external_id="solution_model",
             version="1",
@@ -722,10 +714,6 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                             direction="outwards",
                         ),
                     },
-                    filter=dm.filters.Equals(
-                        ["node", "type"],
-                        {"space": "sp_solution", "externalId": "Asset"},
-                    ),
                 ),
             ]
         ),
@@ -738,7 +726,11 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 dm.ViewId(space="sp_solution", external_id="Asset", version="1"),
             ],
         ),
-        node_types=NodeApplyDict([dm.NodeApply(space="sp_solution", external_id="Asset")]),
+        node_types=NodeApplyDict(
+            [
+                dm.NodeApply(space="sp_solution", external_id="Asset"),
+            ]
+        ),
     )
 
     yield pytest.param(
@@ -752,7 +744,6 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -792,7 +783,6 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
         ),
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -833,7 +823,6 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -894,7 +883,6 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
         ),
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -963,7 +951,6 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1009,7 +996,6 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1055,7 +1041,6 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1101,7 +1086,6 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1147,7 +1131,6 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
         DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1343,7 +1326,6 @@ class TestDMSRules:
     def test_dump_skip_default_space_and_version(self) -> None:
         dms_rules = DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="partial",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1360,15 +1342,16 @@ class TestDMSRules:
                     view_property="name",
                 ),
             ],
-            views=[DMSInputView(view="WindFarm", implements="Sourceable,Describable")],
+            views=[
+                DMSInputView(view="WindFarm", implements="cdf_cdm:Sourceable,cdf_cdm:Describable"),
+                DMSInputView(view="cdf_cdm:Sourceable"),
+                DMSInputView(view="cdf_cdm:Describable"),
+            ],
             containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
         ).as_rules()
         expected_dump = {
             "metadata": {
                 "role": "DMS Architect",
-                "schema_": "partial",
-                "data_model_type": "solution",
-                "extension": "addition",
                 "space": "my_space",
                 "external_id": "my_data_model",
                 "creator": "Anders",
@@ -1387,9 +1370,15 @@ class TestDMSRules:
             ],
             "views": [
                 {
+                    "view": "cdf_cdm:Describable",
+                },
+                {
+                    "view": "cdf_cdm:Sourceable",
+                },
+                {
                     "view": "WindFarm",
-                    "implements": "Sourceable,Describable",
-                }
+                    "implements": "cdf_cdm:Sourceable,cdf_cdm:Describable",
+                },
             ],
             "containers": [
                 {
@@ -1402,38 +1391,6 @@ class TestDMSRules:
         actual_dump = dms_rules.dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
 
         assert actual_dump == expected_dump
-
-    @pytest.mark.skip(reason="Skipping this test until we make rules refactoring")
-    def test_olav_as_information(self, olav_dms_rules: DMSRules) -> None:
-        info_rules_copy = olav_dms_rules.model_copy(deep=True)
-        # In Olav's Rules, the references are set for traceability. We remove it
-        # to test that the references are correctly set in the conversion.
-        for prop in info_rules_copy.properties:
-            prop.reference = None
-        for view in info_rules_copy.views:
-            view.reference = None
-
-        info_rules = DMSToInformation().transform(olav_dms_rules).rules
-
-        assert isinstance(info_rules, InformationRules)
-
-        # Check some samples
-        point = next((cls_ for cls_ in info_rules.classes if cls_.class_.versioned_id == "power_analytics:Point"), None)
-        assert point is not None
-        assert point.reference is not None
-        assert point.reference.versioned_id == "power:Point"
-
-        wind_turbine_name = next(
-            (
-                prop
-                for prop in info_rules.properties
-                if prop.property_ == "name" and prop.class_.versioned_id == "power_analytics:WindTurbine"
-            ),
-            None,
-        )
-        assert wind_turbine_name is not None
-        assert wind_turbine_name.reference is not None
-        assert wind_turbine_name.reference.versioned_id == "power:GeneratingUnit(property=name)"
 
     def test_create_reference(self) -> None:
         pipeline = RulesPipeline[InformationRules, DMSRules](
@@ -1455,7 +1412,6 @@ class TestDMSRules:
 
     def test_metadata_int_version(self) -> None:
         raw_metadata = dict(
-            schema_="partial",
             space="some_space",
             external_id="some_id",
             creator="me",
@@ -1471,7 +1427,6 @@ class TestDMSRules:
     def test_reverse_property_in_parent(self) -> None:
         sub_core = DMSInputRules(
             DMSInputMetadata(
-                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 creator="Anders",
@@ -1510,7 +1465,6 @@ class TestDMSRules:
     def test_reverse_property_in_parent_fail(self) -> None:
         sub_core = DMSInputRules(
             DMSInputMetadata(
-                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 creator="Anders",
@@ -1550,7 +1504,7 @@ class TestDMSRules:
 
 
 class TestDMSExporter:
-    @pytest.mark.skip(reason="Skipping this test until we make rules refactoring, a bit of chaos with filters")
+    @pytest.mark.skip(reason="This test no more relevant since there will be redo of filtering")
     def test_default_filters_using_olav_dms_rules(self, olav_dms_rules: DMSRules) -> None:
         set_filter = {view.view.as_id() for view in olav_dms_rules.views if view.filter_ is not None}
         assert not set_filter, f"Expected no filters to be set, but got {set_filter}"
@@ -1638,29 +1592,11 @@ class TestDMSExporter:
         actual_containers = {container.external_id for container in schema.containers}
         assert actual_containers == expected_containers
 
-    def test_camilla_business_solution_as_schema(self, camilla_information_rules: InformationRules) -> None:
-        dms_rules = InformationToDMS().transform(camilla_information_rules).rules
-        expected_views = {"TimeseriesForecastProduct", "WindFarm"}
-
-        schema = dms_rules.as_schema()
-
-        assert {v.external_id for v in schema.views} == expected_views
-        assert {v.external_id for v in schema.data_model.views} == expected_views
-        product = next((v for v in schema.views.values() if v.external_id == "TimeseriesForecastProduct"), None)
-        assert product is not None
-        assert not product.properties, f"Expected no properties for {product.external_id}"
-
-        wind_farm = next((v for v in schema.views.values() if v.external_id == "WindFarm"), None)
-        assert wind_farm is not None
-        assert set(wind_farm.properties) == {"name", "powerForecast"}
-        assert wind_farm.referenced_containers() == {dm.ContainerId("power", "EnergyArea")}
-
 
 def test_dms_rules_validation_error():
     with pytest.raises(NeatError) as e:
         dms_rules = DMSInputRules(
             metadata=DMSInputMetadata(
-                schema_="complete",
                 space="my_space",
                 external_id="my_data_model",
                 version="1",

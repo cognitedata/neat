@@ -8,8 +8,6 @@ class TestBaseRules:
         meta = InformationMetadata.model_validate(
             {
                 "role": "  information architect  ",
-                "dataModelType": "   enterprise   ",
-                "schema": "     partial   ",
                 "space": "  my_space  ",
                 "external_id": "  my_external_id  ",
                 "version": "  0.1.0  ",
@@ -23,9 +21,7 @@ class TestBaseRules:
 
         assert meta.space == "my_space"
         assert meta.external_id == "my_external_id"
-        assert meta.schema_ == "partial"
         assert meta.role == "information architect"
-        assert meta.data_model_type == "enterprise"
         assert meta.creator == ["Me", "Myself", "I"]
 
     def test_strip_whitespace_input_class(self) -> None:

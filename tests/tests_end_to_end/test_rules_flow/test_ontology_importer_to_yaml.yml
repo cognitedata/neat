@@ -33,11 +33,9 @@ containers:
 metadata:
   created: '2017-05-21T00:00:00'
   creator: NEAT
-  data_model_type: enterprise
   external_id: OntologyBasedDataModel
   name: Linked Nobelprizes
   role: DMS Architect
-  schema_: partial
   space: neat
   updated: '2017-05-21T00:00:00'
   version: 1.0.0

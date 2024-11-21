@@ -138,18 +138,21 @@ _DEFAULTS: dict[str, Any] = dict(immutable=False, nullable=True, is_list=False)
 
 INPUT_RULES = DMSInputRules(
     metadata=DMSInputMetadata(
-        "complete",
         _SPACE,
         "WindTurbineModel",
         "MISSING",
         "v1",
-        data_model_type="enterprise",
         updated=_TODAY,
         created=_TODAY,
     ),
     properties=[
         DMSInputProperty(
-            "WindTurbine", "name", "text", container="WindTurbine", container_property="name", **_DEFAULTS
+            "WindTurbine",
+            "name",
+            "text",
+            container="WindTurbine",
+            container_property="name",
+            **_DEFAULTS,
         ),
         DMSInputProperty(
             "WindTurbine",
@@ -168,11 +171,27 @@ INPUT_RULES = DMSInputRules(
             **_DEFAULTS,
         ),
         DMSInputProperty(
-            "WindTurbine", "metmasts", "MetMast", connection="edge(properties=Distance, type=distance)", is_list=True
+            "WindTurbine",
+            "metmasts",
+            "MetMast",
+            connection="edge(properties=Distance, type=distance)",
+            is_list=True,
         ),
-        DMSInputProperty("MetMast", "name", "text", container="MetMast", container_property="name", **_DEFAULTS),
         DMSInputProperty(
-            "MetMast", "windSpeed", "timeseries", container="MetMast", container_property="windSpeed", **_DEFAULTS
+            "MetMast",
+            "name",
+            "text",
+            container="MetMast",
+            container_property="name",
+            **_DEFAULTS,
+        ),
+        DMSInputProperty(
+            "MetMast",
+            "windSpeed",
+            "timeseries",
+            container="MetMast",
+            container_property="windSpeed",
+            **_DEFAULTS,
         ),
         DMSInputProperty(
             "MetMast",
@@ -190,7 +209,11 @@ INPUT_RULES = DMSInputRules(
             **_DEFAULTS,
         ),
     ],
-    views=[DMSInputView("WindTurbine"), DMSInputView("MetMast"), DMSInputView("Distance")],
+    views=[
+        DMSInputView("WindTurbine"),
+        DMSInputView("MetMast"),
+        DMSInputView("Distance"),
+    ],
     containers=[
         DMSInputContainer("WindTurbine", used_for="node"),
         DMSInputContainer("MetMast", used_for="node"),

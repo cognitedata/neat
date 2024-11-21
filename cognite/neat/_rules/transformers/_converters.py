@@ -30,9 +30,7 @@ from cognite.neat._rules.analysis import DMSAnalysis
 from cognite.neat._rules.models import (
     DMSInputRules,
     DMSRules,
-    ExtensionCategory,
     InformationRules,
-    SchemaCompleteness,
     SheetList,
     data_types,
 )
@@ -45,7 +43,6 @@ from cognite.neat._rules.models.entities import (
     DMSUnknownEntity,
     EdgeEntity,
     MultiValueTypeInfo,
-    ReferenceEntity,
     ReverseConnectionEntity,
     UnknownEntity,
     ViewEntity,
@@ -290,8 +287,6 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         dump = reference_rules.dump()
 
         # Prepare new model metadata prior validation
-        dump["metadata"]["schema_"] = SchemaCompleteness.partial.value
-        dump["metadata"]["data_model_type"] = self.type_
         dump["metadata"]["name"] = f"{self.org_name} {self.type_} data model"
         dump["metadata"]["space"] = self.new_model_id.space
         dump["metadata"]["external_id"] = self.new_model_id.external_id
@@ -351,9 +346,6 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
     def _to_enterprise(self, reference_model: DMSRules) -> JustRules[DMSRules]:
         dump = reference_model.dump()
 
-        # This is must prior model validation to avoid validation issues
-        dump["metadata"]["schema_"] = SchemaCompleteness.partial.value
-
         # This will create reference model components in the enterprise model space
         enterprise_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
 
@@ -363,9 +355,6 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         enterprise_model.metadata.space = self.new_model_id.space
         enterprise_model.metadata.external_id = self.new_model_id.external_id
         enterprise_model.metadata.version = cast(str, self.new_model_id.version)
-
-        if reference_model.metadata.as_data_model_id() in COGNITE_MODELS:
-            enterprise_model.reference = reference_model
 
         # Here we are creating enterprise specific components
         enterprise_views, enterprise_containers, enterprise_properties = self._get_new_components(enterprise_model)
@@ -551,18 +540,6 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
 class _InformationRulesConverter:
     def __init__(self, information: InformationRules):
         self.rules = information
-        self.is_addition = (
-            self.rules.metadata.schema_ is SchemaCompleteness.extended
-            and self.rules.metadata.extension is ExtensionCategory.addition
-        )
-        self.is_reshape = (
-            self.rules.metadata.schema_ is SchemaCompleteness.extended
-            and self.rules.metadata.extension is ExtensionCategory.reshape
-        )
-        if self.rules.last:
-            self.last_classes = {class_.class_: class_ for class_ in self.rules.last.classes}
-        else:
-            self.last_classes = {}
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
 
     def as_dms_rules(self, ignore_undefined_value_types: bool = False) -> "DMSRules":
@@ -598,21 +575,9 @@ class _InformationRulesConverter:
             for cls_ in self.rules.classes
         ]
 
-        last_dms_rules = _InformationRulesConverter(self.rules.last).as_dms_rules() if self.rules.last else None
-        ref_dms_rules = (
-            _InformationRulesConverter(self.rules.reference).as_dms_rules() if self.rules.reference else None
-        )
-
         class_by_entity = {cls_.class_: cls_ for cls_ in self.rules.classes}
-        if self.rules.last:
-            for cls_ in self.rules.last.classes:
-                if cls_.class_ not in class_by_entity:
-                    class_by_entity[cls_.class_] = cls_
 
         existing_containers: set[ContainerEntity] = set()
-        for rule_set in [last_dms_rules, ref_dms_rules]:
-            if rule_set:
-                existing_containers.update({c.container for c in rule_set.containers or []})
 
         containers: list[DMSContainer] = []
         for container_entity, class_entities in referenced_containers.items():
@@ -648,7 +613,7 @@ class _InformationRulesConverter:
         constrains: list[ContainerEntity] = []
         for entity in class_entities:
             class_ = class_by_entity[entity]
-            for parent in class_.parent or []:
+            for parent in class_.implements or []:
                 parent_entity = parent.as_container_entity(default_space)
                 if parent_entity in referenced_containers:
                     constrains.append(parent_entity)
@@ -661,8 +626,6 @@ class _InformationRulesConverter:
         )
 
         return DMSMetadata(
-            schema_=metadata.schema_,
-            data_model_type=metadata.data_model_type,
             space=metadata.space,
             version=metadata.version,
             external_id=metadata.external_id,
@@ -753,18 +716,7 @@ class _InformationRulesConverter:
         return prefix
 
     def _get_container(self, prop: InformationProperty, default_space: str) -> tuple[ContainerEntity, str]:
-        if isinstance(prop.reference, ReferenceEntity):
-            return (
-                prop.reference.as_container_entity(default_space),
-                prop.reference.property_ or prop.property_,
-            )
-        elif (self.is_addition or self.is_reshape) and prop.class_ in self.last_classes:
-            # We need to create a new container for the property, as we cannot change
-            # the existing container in the last schema
-            container_entity = prop.class_.as_container_entity(default_space)
-            container_entity.suffix = self._bump_suffix(container_entity.suffix)
-        else:
-            container_entity = prop.class_.as_container_entity(default_space)
+        container_entity = prop.class_.as_container_entity(default_space)
 
         while self.property_count_by_container[container_entity] >= DMS_CONTAINER_PROPERTY_SIZE_LIMIT:
             container_entity.suffix = self._bump_suffix(container_entity.suffix)
@@ -774,13 +726,8 @@ class _InformationRulesConverter:
 
     def _get_view_implements(self, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
         implements = []
-        for parent in cls_.parent or []:
-            if self.rules.reference and parent.prefix == self.rules.reference.metadata.prefix:
-                view_entity = parent.as_view_entity(
-                    self.rules.reference.metadata.prefix, self.rules.reference.metadata.version
-                )
-            else:
-                view_entity = parent.as_view_entity(metadata.prefix, metadata.version)
+        for parent in cls_.implements or []:
+            view_entity = parent.as_view_entity(metadata.prefix, metadata.version)
             implements.append(view_entity)
         return implements
 
@@ -839,7 +786,7 @@ class _DMSRulesConverter:
                 # we do not want a version in class as we use URI for the class
                 class_=ClassEntity(prefix=view.view.prefix, suffix=view.view.suffix),
                 description=view.description,
-                parent=[
+                implements=[
                     # we do not want a version in class as we use URI for the class
                     implemented_view.as_class(skip_version=True)
                     for implemented_view in view.implements or []
@@ -886,9 +833,6 @@ class _DMSRulesConverter:
         from cognite.neat._rules.models.information._rules import InformationMetadata
 
         return InformationMetadata(
-            schema_=metadata.schema_,
-            data_model_type=metadata.data_model_type,
-            extension=metadata.extension,
             space=metadata.space,
             external_id=metadata.external_id,
             version=metadata.version,

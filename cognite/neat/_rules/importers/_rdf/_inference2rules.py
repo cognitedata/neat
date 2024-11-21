@@ -5,20 +5,19 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 from cognite.client import data_modeling as dm
-from rdflib import RDF, URIRef
+from rdflib import RDF, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues.warnings import PropertyValueTypeUndefinedWarning
 from cognite.neat._rules.models import data_types
-from cognite.neat._rules.models._base_rules import MatchType
 from cognite.neat._rules.models.data_types import AnyURI
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.models.information import (
     InformationMetadata,
 )
 from cognite.neat._store import NeatGraphStore
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import remove_namespace_from_uri, uri_to_short_form
 
 from ._base import DEFAULT_NON_EXISTING_NODE_TYPE, BaseRDFImporter
 
@@ -123,29 +122,32 @@ class InferenceImporter(BaseRDFImporter):
         Returns:
             Tuple of data model and prefixes of the graph
         """
+
         classes: dict[str, dict] = {}
         properties: dict[str, dict] = {}
+        prefixes: dict[str, Namespace] = {}
         count_by_value_type_by_property: dict[str, dict[str, int]] = defaultdict(Counter)
 
         # Infers all the classes in the graph
         for class_uri, no_instances in self.graph.query(ORDERED_CLASSES_QUERY):  # type: ignore[misc]
-            if (class_id := remove_namespace_from_uri(class_uri)) in classes:
+            if (class_id := remove_namespace_from_uri(cast(URIRef, class_uri))) in classes:
                 # handles cases when class id is already present in classes
                 class_id = f"{class_id}_{len(classes)+1}"
 
             classes[class_id] = {
                 "class_": class_id,
-                "reference": class_uri,
-                "match_type": MatchType.exact,
+                "uri": class_uri,
                 "comment": f"Inferred from knowledge graph, where this class has <{no_instances}> instances",
             }
+
+            self._add_uri_namespace_to_prefixes(cast(URIRef, class_uri), prefixes)
 
         # Infers all the properties of the class
         for class_id, class_definition in classes.items():
             for (instance,) in self.graph.query(  # type: ignore[misc]
-                INSTANCES_OF_CLASS_QUERY.replace("class", class_definition["reference"])
+                INSTANCES_OF_CLASS_QUERY.replace("class", class_definition["uri"])
                 if self.max_number_of_instance < 0
-                else INSTANCES_OF_CLASS_QUERY.replace("class", class_definition["reference"])
+                else INSTANCES_OF_CLASS_QUERY.replace("class", class_definition["uri"])
                 + f" LIMIT {self.max_number_of_instance}"
             ):
                 for property_uri, occurrence, data_type_uri, object_type_uri in self.graph.query(  # type: ignore[misc]
@@ -155,11 +157,13 @@ class InferenceImporter(BaseRDFImporter):
                     if property_uri == RDF.type:
                         continue
 
+                    self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
                     property_id = remove_namespace_from_uri(property_uri)
                     if isinstance(data_type_uri, URIRef):
                         data_type_uri = self.overwrite_data_types.get(data_type_uri, data_type_uri)
 
                     if value_type_uri := (data_type_uri or object_type_uri):
+                        self._add_uri_namespace_to_prefixes(cast(URIRef, value_type_uri), prefixes)
                         value_type_id = remove_namespace_from_uri(value_type_uri)
 
                     # this handles situations when property points to node that is not present in graph
@@ -184,7 +188,10 @@ class InferenceImporter(BaseRDFImporter):
                         "property_": property_id,
                         "max_count": cast(RdfLiteral, occurrence).value,
                         "value_type": value_type_id,
-                        "reference": property_uri,
+                        "transformation": (
+                            f"{uri_to_short_form(class_definition['uri'], prefixes)}"
+                            f"({uri_to_short_form(cast(URIRef, property_uri), prefixes)})"
+                        ),
                     }
 
                     count_by_value_type_by_property[id_][value_type_id] += 1
@@ -236,6 +243,7 @@ class InferenceImporter(BaseRDFImporter):
             "metadata": self._default_metadata().model_dump(),
             "classes": list(classes.values()),
             "properties": list(properties.values()),
+            "prefixes": prefixes,
         }
 
     def _default_metadata(self):

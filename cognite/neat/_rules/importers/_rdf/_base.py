@@ -14,7 +14,7 @@ from cognite.neat._rules.models.information import (
     InformationInputRules,
 )
 from cognite.neat._store import NeatGraphStore
-from cognite.neat._utils.rdf_ import get_namespace, uri_to_short_form
+from cognite.neat._utils.rdf_ import get_namespace
 
 DEFAULT_NON_EXISTING_NODE_TYPE = AnyURI()
 
@@ -115,31 +115,10 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
 
         rules = InformationInputRules.load(rules_dict)
 
-        self._add_transformation(rules)
-
         return ReadRules(rules, self.issue_list, {})
 
     def _to_rules_components(self) -> dict:
         raise NotImplementedError()
-
-    @classmethod
-    def _add_transformation(cls, rules: InformationInputRules) -> None:
-        rules.prefixes = {}
-
-        rules.prefixes[rules.metadata.prefix] = Namespace(rules.metadata.namespace)
-
-        class_ref_dict = {}
-        for class_ in rules.classes:
-            if class_.reference:
-                cls._add_uri_namespace_to_prefixes(URIRef(class_.reference), rules.prefixes)
-                class_ref_dict[class_.class_] = f"{uri_to_short_form(URIRef(class_.reference), rules.prefixes)}"
-
-        for property_ in rules.properties:
-            if property_.reference:
-                cls._add_uri_namespace_to_prefixes(URIRef(property_.reference), rules.prefixes)
-                if class_id := class_ref_dict.get(property_.class_, None):
-                    property_id = f"{uri_to_short_form(URIRef(property_.reference), rules.prefixes)}"
-                    property_.transformation = f"{class_id}({property_id})"
 
     @classmethod
     def _add_uri_namespace_to_prefixes(cls, URI: URIRef, prefixes: dict[str, Namespace]):

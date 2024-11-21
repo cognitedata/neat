@@ -2,7 +2,7 @@ from rdflib import Graph
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.importers._rdf._shared import make_metadata_compliant
-from cognite.neat._rules.models import RoleTypes, SchemaCompleteness
+from cognite.neat._rules.models import RoleTypes
 from cognite.neat._utils.collection_ import remove_none_elements_from_set
 from cognite.neat._utils.rdf_ import convert_rdflib_content
 
@@ -47,7 +47,6 @@ def parse_owl_metadata(graph: Graph) -> dict:
     raw_metadata = convert_rdflib_content(
         {
             "role": RoleTypes.information,
-            "schema": SchemaCompleteness.partial,
             "space": results[1].pop(),
             "external_id": "OntologyBasedDataModel",
             "version": results[2].pop(),

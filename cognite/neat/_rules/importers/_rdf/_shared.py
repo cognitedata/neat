@@ -2,10 +2,9 @@ import datetime
 
 import numpy as np
 import pandas as pd
-from rdflib import OWL, Literal
+from rdflib import Literal
 
 from cognite.neat._rules._constants import PATTERNS
-from cognite.neat._rules.models._base_rules import MatchType
 from cognite.neat._rules.models.data_types import _XSD_TYPES
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
@@ -17,10 +16,7 @@ def parse_raw_classes_dataframe(query_results: list[tuple]) -> pd.DataFrame:
             "Class",
             "Name",
             "Description",
-            "Parent Class",
-            "Reference",
-            "Match",
-            "Comment",
+            "Implements",
         ],
     )
 
@@ -31,9 +27,8 @@ def parse_raw_classes_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     df.replace(np.nan, "", regex=True, inplace=True)
 
     df.Class = df.Class.apply(lambda x: remove_namespace_from_uri(x))
-    df["Match Type"] = len(df) * [MatchType.exact]
     df["Comment"] = len(df) * [None]
-    df["Parent Class"] = df["Parent Class"].apply(lambda x: remove_namespace_from_uri(x))
+    df["Implements"] = df["Implements"].apply(lambda x: remove_namespace_from_uri(x))
 
     return df
 
@@ -44,10 +39,7 @@ def clean_up_classes(df: pd.DataFrame) -> pd.DataFrame:
             "Class": class_,
             "Name": group_df["Name"].unique()[0],
             "Description": "\n".join(list(group_df.Description.unique())),
-            "Parent Class": ", ".join(list(group_df["Parent Class"].unique())),
-            "Reference": group_df["Reference"].unique()[0],
-            "Match Type": group_df["Match Type"].unique()[0],
-            "Comment": group_df["Comment"].unique()[0],
+            "Implements": ", ".join(list(group_df["Implements"].unique())),
         }
         for class_, group_df in df.groupby("Class")
     ]
@@ -57,8 +49,8 @@ def clean_up_classes(df: pd.DataFrame) -> pd.DataFrame:
     # bring NaNs back
     df.replace("", None, inplace=True)
 
-    # split Parent Class column back into list
-    df["Parent Class"] = df["Parent Class"].apply(lambda x: x.split(", ") if isinstance(x, str) else None)
+    # split Implements column back into list
+    df["Implements"] = df["Implements"].apply(lambda x: x.split(", ") if isinstance(x, str) else None)
 
     return df
 
@@ -75,18 +67,6 @@ def make_classes_compliant(classes: pd.DataFrame, importer: str = "RDF-based") -
         are not compliant with the CDF naming convention. For example, if a class id contains a space,
         starts with a number, etc. This will cause issues when trying to create the class in CDF.
     """
-
-    # Replace empty or non-string values in "Match" column with "exact"
-    classes["Match Type"] = classes["Match Type"].fillna(MatchType.exact)
-    classes["Match Type"] = classes["Match Type"].apply(
-        lambda x: MatchType.exact if not isinstance(x, str) or len(x) == 0 else x
-    )
-
-    # Replace empty or non-string values in "Comment" column with a default value
-    classes["Comment"] = classes["Comment"].fillna(f"Imported using {importer} importer")
-    classes["Comment"] = classes["Comment"].apply(
-        lambda x: (f"Imported using {importer} importer" if not isinstance(x, str) or len(x) == 0 else x)
-    )
 
     # Add _object_property_class, _data_type_property_class, _thing_class to the dataframe
     classes = pd.concat(
@@ -114,10 +94,7 @@ def object_property_class() -> dict:
         "Class": "ObjectProperty",
         "Name": None,
         "Description": "The class of object properties.",
-        "Parent Class": None,
-        "Reference": OWL.ObjectProperty,
-        "Match Type": MatchType.exact,
-        "Comment": "Added by NEAT based on owl:ObjectProperty but adapted to NEAT and use in CDF.",
+        "Implements": None,
     }
 
 
@@ -126,10 +103,7 @@ def data_type_property_class() -> dict:
         "Class": "DatatypeProperty",
         "Name": None,
         "Description": "The class of data properties.",
-        "Parent Class": None,
-        "Reference": OWL.DatatypeProperty,
-        "Match Type": MatchType.exact,
-        "Comment": "Added by NEAT based on owl:DatatypeProperty but adapted to NEAT and use in CDF.",
+        "Implements": None,
     }
 
 
@@ -138,24 +112,13 @@ def thing_class() -> dict:
         "Class": "Thing",
         "Name": None,
         "Description": "The class of holding class individuals.",
-        "Parent Class": None,
-        "Reference": OWL.Thing,
-        "Match Type": MatchType.exact,
-        "Comment": (
-            "Added by NEAT. "
-            "Imported from OWL base ontology, it is meant for use as a default"
-            " value type for object properties which miss a declared range."
-        ),
+        "Implements": None,
     }
 
 
 def add_parent_class(df: pd.DataFrame) -> list[dict]:
     parent_set = {
-        item
-        for sublist in df["Parent Class"].tolist()
-        if sublist
-        for item in sublist
-        if item != "" and item is not None
+        item for sublist in df["Implements"].tolist() if sublist for item in sublist if item != "" and item is not None
     }
     class_set = set(df["Class"].tolist())
 
@@ -166,14 +129,7 @@ def add_parent_class(df: pd.DataFrame) -> list[dict]:
                 "Class": missing_parent_class,
                 "Name": None,
                 "Description": None,
-                "Parent Class": None,
-                "Reference": None,
-                "Match Type": None,
-                "Comment": (
-                    "Added by NEAT. "
-                    "This is a parent class that is missing in the ontology. "
-                    "It is added by NEAT to make the ontology compliant with CDF."
-                ),
+                "Implements": None,
             }
         ]
 
@@ -192,9 +148,6 @@ def parse_raw_properties_dataframe(query_results: list[tuple]) -> pd.DataFrame:
             "Min Count",
             "Max Count",
             "Default",
-            "Reference",
-            "Match Type",
-            "Comment",
             "_property_type",
         ],
     )
@@ -206,8 +159,6 @@ def parse_raw_properties_dataframe(query_results: list[tuple]) -> pd.DataFrame:
     df.Class = df.Class.apply(lambda x: remove_namespace_from_uri(x))
     df.Property = df.Property.apply(lambda x: remove_namespace_from_uri(x))
     df["Value Type"] = df["Value Type"].apply(lambda x: remove_namespace_from_uri(x))
-    df["Match Type"] = len(df) * [MatchType.exact]
-    df["Comment"] = len(df) * [None]
     df["_property_type"] = df["_property_type"].apply(lambda x: remove_namespace_from_uri(x))
 
     return df
@@ -231,9 +182,6 @@ def clean_up_properties(df: pd.DataFrame) -> pd.DataFrame:
                     "Min Count": property_grouped_df["Min Count"].unique()[0],
                     "Max Count": property_grouped_df["Max Count"].unique()[0],
                     "Default": property_grouped_df["Default"].unique()[0],
-                    "Reference": property_grouped_df["Reference"].unique()[0],
-                    "Match Type": property_grouped_df["Match Type"].unique()[0],
-                    "Comment": property_grouped_df["Comment"].unique()[0],
                     "_property_type": property_grouped_df["_property_type"].unique()[0],
                 }
             ]
@@ -250,18 +198,6 @@ def make_properties_compliant(properties: pd.DataFrame, importer: str = "RDF-bas
 
     # default to 1 if "Max Count" is not specified
     properties["Max Count"] = properties["Max Count"].apply(lambda x: 1 if not isinstance(x, Literal) or x == "" else x)
-
-    # Replace empty or non-string values in "Match Type" column with "exact"
-    properties["Match Type"] = properties["Match Type"].fillna("exact")
-    properties["Match Type"] = properties["Match Type"].apply(
-        lambda x: "exact" if not isinstance(x, str) or len(x) == 0 else x
-    )
-
-    # Replace empty or non-string values in "Comment" column with a default value
-    properties["Comment"] = properties["Comment"].fillna(f"Imported using {importer} importer")
-    properties["Comment"] = properties["Comment"].apply(
-        lambda x: (f"Imported using {importer} importer" if not isinstance(x, str) or len(x) == 0 else x)
-    )
 
     # Reduce length of elements in the "Description" column to 1024 characters
     properties["Description"] = properties["Description"].apply(lambda x: x[:1024] if isinstance(x, str) else None)
@@ -501,11 +437,6 @@ def add_missing_value_types(components: dict) -> dict:
         components["Classes"].append(
             {
                 "Class": class_,
-                "Comment": (
-                    "Added by NEAT. "
-                    "This is a class that a domain of a property but was not defined in the ontology. "
-                    "It is added by NEAT to make the ontology compliant with CDF."
-                ),
             }
         )
 
@@ -523,14 +454,8 @@ def add_default_property_to_dangling_classes(components: dict[str, list[dict]]) 
     """
 
     dangling_classes = {
-        definition["Class"] for definition in components["Classes"] if not definition.get("Parent Class", None)
+        definition["Class"] for definition in components["Classes"] if not definition.get("Implements", None)
     } - {definition["Class"] for definition in components["Properties"]}
-
-    comment = (
-        "Added by NEAT. "
-        "This is property has been added to this class since otherwise it will create "
-        "dangling classes in the ontology."
-    )
 
     for class_ in dangling_classes:
         components["Properties"].append(
@@ -538,10 +463,8 @@ def add_default_property_to_dangling_classes(components: dict[str, list[dict]]) 
                 "Class": class_,
                 "Property": "label",
                 "Value Type": "string",
-                "Comment": comment,
                 "Min Count": 0,
                 "Max Count": 1,
-                "Reference": "http://www.w3.org/2000/01/rdf-schema#label",
             }
         )
 

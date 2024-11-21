@@ -1,5 +1,5 @@
 from cognite.neat._rules.importers._rdf._shared import make_metadata_compliant
-from cognite.neat._rules.models import RoleTypes, SchemaCompleteness
+from cognite.neat._rules.models import RoleTypes
 
 
 def parse_imf_metadata(space: str = "pcaimf") -> dict:
@@ -16,7 +16,6 @@ def parse_imf_metadata(space: str = "pcaimf") -> dict:
 
     raw_metadata = {
         "role": RoleTypes.information,
-        "schema": SchemaCompleteness.partial,
         "space": space,
         "external_id": "imf_types",
         "version": None,

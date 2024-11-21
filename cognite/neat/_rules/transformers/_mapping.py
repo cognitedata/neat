@@ -51,9 +51,6 @@ class MapOneToOne(MapOntoTransformers):
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         solution: DMSRules = self._to_rules(rules)
-        if solution.reference is not None:
-            raise ValueError("Reference already exists")
-        solution.reference = self.reference
         view_by_external_id = {view.view.external_id: view for view in solution.views}
         ref_view_by_external_id = {view.view.external_id: view for view in self.reference.views}
 
