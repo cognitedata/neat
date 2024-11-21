@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.98.0] - 21-11-**2024**
 ### Added
 - Support for reading `YAML`
 - Support for writing `YAML` in toolkit format.
