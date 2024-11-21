@@ -38,6 +38,9 @@ class TestExtractToLoadFlow:
             neat._state.instances.store.write(extractor)
 
         neat.prepare.instances.relationships_as_connections(limit=1)
+        # Sequences is not yet supported
+        neat.drop.instances("Sequence")
+
         neat.infer()
 
         # Hack to ensure deterministic output
