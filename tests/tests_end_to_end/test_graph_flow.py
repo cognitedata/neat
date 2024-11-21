@@ -48,10 +48,11 @@ class TestExtractToLoadFlow:
         rules.metadata.created = "2024-09-19T00:00:00Z"
         rules.metadata.updated = "2024-09-19T00:00:00Z"
 
+        neat.prepare.data_model.prefix("Classic")
+
         neat.verify()
 
         neat.convert("dms")
-        neat.mapping.classic_to_core("Classic")
 
         dms_rules = neat._state.data_model.last_verified_dms_rules
         store = neat._state.instances.store

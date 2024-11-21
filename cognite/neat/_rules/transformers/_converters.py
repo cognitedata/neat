@@ -1,3 +1,4 @@
+import copy
 import re
 import warnings
 from abc import ABC, abstractmethod
@@ -42,8 +43,10 @@ from cognite.neat._rules.models.entities import (
     ContainerEntity,
     DMSUnknownEntity,
     EdgeEntity,
+    Entity,
     MultiValueTypeInfo,
     ReverseConnectionEntity,
+    T_Entity,
     UnknownEntity,
     ViewEntity,
 )
@@ -174,6 +177,54 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
             definition.value_type = cls._fix_value_type(definition.value_type)
             fixed_definitions.append(definition)
         return fixed_definitions
+
+
+class PrefixEntities(RulesTransformer[InputRules, InputRules]):  # type: ignore[misc]
+    """Prefixes all entities with a given prefix."""
+
+    def __init__(self, prefix: str) -> None:
+        self._prefix = prefix
+
+    def transform(self, rules: InputRules | OutRules[InputRules]) -> ReadRules[InputRules]:
+        return ReadRules(self._transform(self._to_rules(rules)), IssueList(), {})
+
+    def _transform(self, rules: InputRules) -> InputRules:
+        if isinstance(rules, InformationInputRules):
+            new_rules = copy.deepcopy(rules)
+            for cls in new_rules.classes:
+                cls.class_ = self._with_prefix(cls.class_)
+            for prop in new_rules.properties:
+                prop.class_ = self._with_prefix(prop.class_)
+            return new_rules
+        elif isinstance(rules, DMSInputRules):
+            new_dms = copy.deepcopy(rules)
+            for dms_prop in new_dms.properties:
+                dms_prop.view = self._with_prefix(dms_prop.view)
+            for view in new_dms.views:
+                view.view = self._with_prefix(view.view)
+            if new_dms.containers:
+                for container in new_dms.containers:
+                    container.container = self._with_prefix(container.container)
+            return new_dms
+        raise NeatValueError(f"Unsupported rules type: {type(rules)}")
+
+    def _with_prefix(self, raw: str | T_Entity) -> str | T_Entity:
+        is_entity_format = not isinstance(raw, str)
+        entity = Entity.load(raw)
+        output: ClassEntity | ViewEntity | ContainerEntity
+        if isinstance(entity, ClassEntity):
+            output = ClassEntity(prefix=entity.prefix, suffix=f"{self._prefix}{entity.suffix}", version=entity.version)
+        elif isinstance(entity, ViewEntity):
+            output = ViewEntity(
+                space=entity.space, externalId=f"{self._prefix}{entity.external_id}", version=entity.version
+            )
+        elif isinstance(entity, ContainerEntity):
+            output = ContainerEntity(space=entity.space, externalId=f"{self._prefix}{entity.external_id}")
+        else:
+            raise NeatValueError(f"Unsupported entity type: {type(raw)}")
+        if is_entity_format:
+            return cast(T_Entity, output)
+        return str(output)
 
 
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):

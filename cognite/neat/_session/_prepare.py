@@ -9,7 +9,7 @@ from cognite.neat._graph.transformers import RelationshipToSchemaTransformer
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
-from cognite.neat._rules.transformers import ReduceCogniteModel, ToCompliantEntities, ToExtension
+from cognite.neat._rules.transformers import PrefixEntities, ReduceCogniteModel, ToCompliantEntities, ToExtension
 from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
@@ -120,25 +120,50 @@ class DataModelPrepareAPI:
 
     def cdf_compliant_external_ids(self) -> None:
         """Convert data model component external ids to CDF compliant entities."""
-        if input := self._state.data_model.last_info_unverified_rule:
-            source_id, rules = input
+        source_id, rules = self._state.data_model.last_info_unverified_rule
 
-            start = datetime.now(timezone.utc)
-            transformer = ToCompliantEntities()
-            output: ReadRules[InformationInputRules] = transformer.transform(rules)
-            end = datetime.now(timezone.utc)
+        start = datetime.now(timezone.utc)
+        transformer = ToCompliantEntities()
+        output: ReadRules[InformationInputRules] = transformer.transform(rules)
+        end = datetime.now(timezone.utc)
 
-            change = Change.from_rules_activity(
-                output,
-                transformer.agent,
-                start,
-                end,
-                "Converted external ids to CDF compliant entities",
-                self._state.data_model.provenance.source_entity(source_id)
-                or self._state.data_model.provenance.target_entity(source_id),
-            )
+        change = Change.from_rules_activity(
+            output,
+            transformer.agent,
+            start,
+            end,
+            "Converted external ids to CDF compliant entities",
+            self._state.data_model.provenance.source_entity(source_id)
+            or self._state.data_model.provenance.target_entity(source_id),
+        )
 
-            self._state.data_model.write(output, change)
+        self._state.data_model.write(output, change)
+
+    def prefix(self, prefix: str) -> None:
+        """Prefix all views in the data model with the given prefix.
+
+        Args:
+            prefix: The prefix to add to the views in the data model.
+
+        """
+        source_id, rules = self._state.data_model.last_unverified_rule
+
+        start = datetime.now(timezone.utc)
+        transformer = PrefixEntities(prefix)
+        output: ReadRules = transformer.transform(rules)
+        end = datetime.now(timezone.utc)
+
+        change = Change.from_rules_activity(
+            output,
+            transformer.agent,
+            start,
+            end,
+            "Prefixed views/containers/classes in the data model",
+            self._state.data_model.provenance.source_entity(source_id)
+            or self._state.data_model.provenance.target_entity(source_id),
+        )
+
+        self._state.data_model.write(output, change)
 
     def to_enterprise(
         self,
