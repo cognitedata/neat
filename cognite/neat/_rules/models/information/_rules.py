@@ -16,13 +16,8 @@ from cognite.neat._rules.models._base_rules import (
     BaseRules,
     ClassRef,
     DataModelAspect,
-    DataModelType,
-    ExtensionCategory,
-    ExtensionCategoryType,
-    MatchType,
     PropertyRef,
     RoleTypes,
-    SchemaCompleteness,
     SheetList,
     SheetRow,
 )
@@ -42,10 +37,8 @@ from cognite.neat._rules.models.entities import (
     ClassEntityList,
     Entity,
     MultiValueTypeInfo,
-    ReferenceEntity,
     Undefined,
     UnknownEntity,
-    URLEntity,
 )
 
 if TYPE_CHECKING:
@@ -62,35 +55,9 @@ class InformationMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information
     aspect: ClassVar[DataModelAspect] = DataModelAspect.logical
 
-    # this will be removed
-    data_model_type: DataModelType = Field(DataModelType.enterprise, alias="dataModelType")
-    # this will be removed
-    schema_: SchemaCompleteness = Field(SchemaCompleteness.partial, alias="schema")
-    # this will be removed
-    extension: ExtensionCategoryType | None = ExtensionCategory.addition
-
     # Linking to Conceptual and Physical data model aspects
     physical: URIRef | None = Field(None, description="Link to the logical data model aspect")
     conceptual: URIRef | None = Field(None, description="Link to the logical data model aspect")
-
-    @model_validator(mode="after")
-    def extension_none_but_schema_extend(self) -> Self:
-        if self.extension is None:
-            self.extension = ExtensionCategory.addition
-            return self
-        return self
-
-    @field_validator("schema_", mode="plain")
-    def as_enum_schema(cls, value: str) -> SchemaCompleteness:
-        return SchemaCompleteness(value.strip())
-
-    @field_validator("extension", mode="plain")
-    def as_enum_extension(cls, value: str) -> ExtensionCategory:
-        return ExtensionCategory(value.strip())
-
-    @field_validator("data_model_type", mode="plain")
-    def as_enum_model_type(cls, value: str) -> DataModelType:
-        return DataModelType(value.strip())
 
 
 def _get_metadata(context: Any) -> InformationMetadata | None:
@@ -106,27 +73,16 @@ class InformationClass(SheetRow):
     Args:
         class_: The class ID of the class.
         description: A description of the class.
-        parent: The parent class of the class.
-        reference: Reference of the source of the information for given resource
-        match_type: The match type of the resource being described and the source entity.
+        implements: Which classes the current class implements.
     """
 
     class_: ClassEntityType = Field(alias="Class")
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
-    parent: ClassEntityList | None = Field(alias="Parent Class", default=None)
-    reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
-    match_type: MatchType | None = Field(alias="Match Type", default=None)
-    comment: str | None = Field(alias="Comment", default=None)
+    implements: ClassEntityList | None = Field(alias="Implements", default=None)
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.class_,)
-
-    @field_serializer("reference", when_used="always")
-    def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
-        if isinstance(info.context, dict) and info.context.get("as_reference") is True:
-            return self.class_.dump()
-        return str(value) if value is not None else None
 
     @field_serializer("class_", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
@@ -134,14 +90,16 @@ class InformationClass(SheetRow):
             return value.dump(prefix=metadata.prefix, version=metadata.version)
         return str(value)
 
-    @field_serializer("parent", when_used="unless-none")
+    @field_serializer("implements", when_used="unless-none")
     def remove_default_prefixes(self, value: Any, info: SerializationInfo) -> str:
         if isinstance(value, list) and (metadata := _get_metadata(info.context)):
             return ",".join(
-                parent.dump(prefix=metadata.prefix, version=metadata.version)
-                if isinstance(parent, Entity)
-                else str(parent)
-                for parent in value
+                (
+                    class_.dump(prefix=metadata.prefix, version=metadata.version)
+                    if isinstance(class_, Entity)
+                    else str(class_)
+                )
+                for class_ in value
             )
         return ",".join(str(value) for value in value)
 
@@ -162,8 +120,6 @@ class InformationProperty(SheetRow):
         min_count: Minimum count of the property values. Defaults to 0
         max_count: Maximum count of the property values. Defaults to None
         default: Default value of the property
-        reference: Reference to the source of the information, HTTP URI
-        match_type: The match type of the resource being described and the source entity.
         transformation: Actual rule for the transformation from source to target representation of
               knowledge graph. Defaults to None (no transformation)
     """
@@ -178,10 +134,7 @@ class InformationProperty(SheetRow):
     min_count: int | None = Field(alias="Min Count", default=None)
     max_count: int | float | None = Field(alias="Max Count", default=None)
     default: Any | None = Field(alias="Default", default=None)
-    reference: URLEntity | ReferenceEntity | None = Field(alias="Reference", default=None, union_mode="left_to_right")
-    match_type: MatchType | None = Field(alias="Match Type", default=None)
     transformation: RDFPath | None = Field(alias="Transformation", default=None)
-    comment: str | None = Field(alias="Comment", default=None)
     inherited: bool = Field(
         default=False,
         exclude=True,
@@ -252,19 +205,6 @@ class InformationProperty(SheetRow):
             return None
         return value
 
-    @field_serializer("reference", when_used="always")
-    def set_reference(self, value: Any, info: SerializationInfo) -> str | None:
-        # When rules as dumped as reference, we set the reference to the class
-        if isinstance(info.context, dict) and info.context.get("as_reference") is True:
-            return str(
-                ReferenceEntity(
-                    prefix=str(self.class_.prefix),
-                    suffix=self.class_.suffix,
-                    property=self.property_,
-                )
-            )
-        return str(value) if value is not None else None
-
     @field_serializer("class_", "value_type", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
         if (metadata := _get_metadata(info.context)) and isinstance(value, Entity):
@@ -302,8 +242,6 @@ class InformationRules(BaseRules):
     properties: SheetList[InformationProperty] = Field(alias="Properties")
     classes: SheetList[InformationClass] = Field(alias="Classes")
     prefixes: dict[str, Namespace] = Field(default_factory=get_default_prefixes, alias="Prefixes")
-    last: "InformationRules | None" = Field(None, alias="Last")
-    reference: "InformationRules | None" = Field(None, alias="Reference")
 
     @field_validator("prefixes", mode="before")
     def parse_str(cls, values: Any) -> Any:
@@ -326,10 +264,10 @@ class InformationRules(BaseRules):
             if property_.class_.prefix is Undefined:
                 property_.class_.prefix = self.metadata.prefix
 
-        # update parent classes
+        # update implements
         for class_ in self.classes:
-            if class_.parent:
-                for parent in class_.parent:
+            if class_.implements:
+                for parent in class_.implements:
                     if not isinstance(parent.prefix, str):
                         parent.prefix = self.metadata.prefix
             if class_.class_.prefix is Undefined:

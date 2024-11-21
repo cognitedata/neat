@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any
 
 import pandas as pd
 from rdflib import Namespace, URIRef
@@ -25,13 +25,10 @@ from ._rules import (
 
 @dataclass
 class InformationInputMetadata(InputComponent[InformationMetadata]):
-    schema_: Literal["complete", "partial", "extended"]
     space: str
     external_id: str
     version: str
     creator: str
-    data_model_type: Literal["solution", "enterprise"] = "enterprise"
-    extension: Literal["addition", "reshape", "rebuild"] = "addition"
     name: str | None = None
     description: str | None = None
     created: datetime | str | None = None
@@ -78,12 +75,9 @@ class InformationInputProperty(InputComponent[InformationProperty]):
     value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity | str
     name: str | None = None
     description: str | None = None
-    comment: str | None = None
     min_count: int | None = None
     max_count: int | float | None = None
     default: Any | None = None
-    reference: str | None = None
-    match_type: str | None = None
     transformation: str | None = None
     # Only used internally
     inherited: bool = False
@@ -104,10 +98,7 @@ class InformationInputClass(InputComponent[InformationClass]):
     class_: ClassEntity | str
     name: str | None = None
     description: str | None = None
-    comment: str | None = None
-    parent: str | list[ClassEntity] | None = None
-    reference: str | None = None
-    match_type: str | None = None
+    implements: str | list[ClassEntity] | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationClass]:
@@ -120,12 +111,12 @@ class InformationInputClass(InputComponent[InformationClass]):
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
         parent: list[ClassEntity] | None = None
-        if isinstance(self.parent, str):
-            parent = [ClassEntity.load(parent, prefix=default_prefix) for parent in self.parent.split(",")]
-        elif isinstance(self.parent, list):
-            parent = [ClassEntity.load(parent_, prefix=default_prefix) for parent_ in self.parent]
+        if isinstance(self.implements, str):
+            parent = [ClassEntity.load(parent, prefix=default_prefix) for parent in self.implements.split(",")]
+        elif isinstance(self.implements, list):
+            parent = [ClassEntity.load(parent_, prefix=default_prefix) for parent_ in self.implements]
         output["Class"] = ClassEntity.load(self.class_, prefix=default_prefix)
-        output["Parent Class"] = parent
+        output["Implements"] = parent
         return output
 
 
@@ -135,8 +126,6 @@ class InformationInputRules(InputRules[InformationRules]):
     properties: list[InformationInputProperty] = field(default_factory=list)
     classes: list[InformationInputClass] = field(default_factory=list)
     prefixes: dict[str, Namespace] | None = None
-    last: "InformationInputRules | None" = None
-    reference: "InformationInputRules | None" = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationRules]:
@@ -144,26 +133,12 @@ class InformationInputRules(InputRules[InformationRules]):
 
     def dump(self) -> dict[str, Any]:
         default_prefix = self.metadata.prefix
-        reference: dict[str, Any] | None = None
-        if isinstance(self.reference, InformationInputRules):
-            reference = self.reference.dump()
-        elif isinstance(self.reference, InformationRules):
-            # We need to load through the InformationRulesInput to set the correct default space and version
-            reference = InformationInputRules.load(self.reference.model_dump()).dump()
-        last: dict[str, Any] | None = None
-        if isinstance(self.last, InformationInputRules):
-            last = self.last.dump()
-        elif isinstance(self.last, InformationRules):
-            # We need to load through the InformationRulesInput to set the correct default space and version
-            last = InformationInputRules.load(self.last.model_dump()).dump()
 
         return dict(
             Metadata=self.metadata.dump(),
             Properties=[prop.dump(default_prefix) for prop in self.properties],
             Classes=[class_.dump(default_prefix) for class_ in self.classes],
             Prefixes=self.prefixes,
-            Last=last,
-            Reference=reference,
         )
 
     def _repr_html_(self) -> str:

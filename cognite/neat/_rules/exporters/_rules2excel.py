@@ -15,7 +15,6 @@ from rdflib import Namespace
 
 from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.models import (
-    DataModelType,
     ExtensionCategory,
     SchemaCompleteness,
     SheetRow,
@@ -263,9 +262,6 @@ class _MetadataCreator:
 
     def _create_new_info(self, now: datetime) -> InformationMetadata:
         return InformationMetadata(
-            data_model_type=DataModelType.solution,
-            schema_=SchemaCompleteness.complete,
-            extension=ExtensionCategory.addition,
             space=self.new_model_id[0],
             external_id=self.new_model_id[1],
             description=None,

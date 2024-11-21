@@ -173,12 +173,9 @@ enum:
 metadata:
   created: '2024-10-16T13:42:07.220000'
   creator: MISSING
-  data_model_type: solution
-  extension: addition
   external_id: isa88
   name: ISA DM Dev
   role: DMS Architect
-  schema_: complete
   space: isaSpace
   updated: '2024-10-16T13:42:07.220000'
   version: v1

@@ -26,13 +26,10 @@ from ._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNod
 
 @dataclass
 class DMSInputMetadata(InputComponent[DMSMetadata]):
-    schema_: Literal["complete", "partial", "extended"]
     space: str
     external_id: str
     creator: str
     version: str
-    extension: Literal["addition", "reshape", "rebuild"] = "addition"
-    data_model_type: Literal["solution", "enterprise"] = "solution"
     name: str | None = None
     description: str | None = None
     created: datetime | str | None = None
@@ -52,11 +49,9 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
         return output
 
     @classmethod
-    def from_data_model(cls, data_model: dm.DataModelApply, has_reference: bool) -> "DMSInputMetadata":
+    def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSInputMetadata":
         description, creator = cls._get_description_and_creator(data_model.description)
         return cls(
-            schema_="complete",
-            data_model_type="solution" if has_reference else "enterprise",
             space=data_model.space,
             name=data_model.name or None,
             description=description,
@@ -254,7 +249,6 @@ class DMSInputRules(InputRules[DMSRules]):
     containers: list[DMSInputContainer] | None = None
     enum: list[DMSInputEnum] | None = None
     nodes: list[DMSInputNode] | None = None
-    last: str | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSRules]:

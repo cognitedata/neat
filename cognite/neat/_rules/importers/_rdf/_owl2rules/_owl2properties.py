@@ -22,8 +22,7 @@ def parse_owl_properties(graph: Graph, language: str = "en") -> list[dict]:
 
     query = """
 
-    SELECT ?class ?property ?name ?description ?type ?minCount ?maxCount ?default ?reference
-     ?match ?comment ?propertyType
+    SELECT ?class ?property ?name ?description ?type ?minCount ?maxCount ?default ?propertyType
     WHERE {
         ?property a ?propertyType.
         FILTER (?propertyType IN (owl:ObjectProperty, owl:DatatypeProperty ) )

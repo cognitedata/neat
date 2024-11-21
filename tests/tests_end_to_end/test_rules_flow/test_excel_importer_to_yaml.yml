@@ -25,11 +25,9 @@ containers:
 metadata:
   created: '2024-02-09T00:00:00'
   creator: Jon,Emma,David
-  data_model_type: enterprise
   external_id: power2consumer
   name: Power to Consumer Data Model
   role: DMS Architect
-  schema_: complete
   space: power
   updated: '2024-02-09T00:00:00'
   version: 0.1.0

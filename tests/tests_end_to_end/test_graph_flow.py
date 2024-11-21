@@ -1,6 +1,5 @@
 from typing import Any
 
-import pytest
 import yaml
 from cognite.client.data_classes.data_modeling import InstanceApply
 from pytest_regressions.data_regression import DataRegressionFixture
@@ -38,7 +37,6 @@ RESERVED_PROPERTIES = frozenset(
 )
 
 
-@pytest.mark.skip(reason="Skipping this test until refactoring of rules is completed")
 class TestExtractToLoadFlow:
     def test_classic_to_dms(self, data_regression: DataRegressionFixture) -> None:
         store = NeatGraphStore.from_oxi_store()

@@ -17,13 +17,10 @@ class TestClassicToCoreMapper:
         core = "core"
         input_ = InformationInputRules(
             metadata=InformationInputMetadata(
-                schema_="partial",
                 space=classic,
                 external_id=classic,
                 version="1.0",
                 creator="neat",
-                data_model_type="enterprise",
-                extension="addition",
                 name="TheClassic",
             ),
             properties=[

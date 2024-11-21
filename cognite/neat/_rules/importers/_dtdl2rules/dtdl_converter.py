@@ -99,8 +99,7 @@ class _DTDLConverter:
             class_=item.id_.as_class_id(),
             name=item.display_name,
             description=item.description,
-            comment=item.comment,
-            parent=[parent.as_class_id() for parent in item.extends or []] or None,
+            implements=[parent.as_class_id() for parent in item.extends or []] or None,
         )
         self.classes.append(class_)
         for sub_item_or_id in item.contents or []:
@@ -135,7 +134,6 @@ class _DTDLConverter:
             property_=item.name,
             name=item.display_name,
             description=item.description,
-            comment=item.comment,
             value_type=value_type,
             min_count=min_count,
             max_count=max_count,
@@ -181,7 +179,6 @@ class _DTDLConverter:
             property_=item.name,
             name=item.display_name,
             description=item.description,
-            comment=item.comment,
             value_type=value_type,
             min_count=0,
             max_count=1,
@@ -201,7 +198,6 @@ class _DTDLConverter:
             property_=item.name,
             name=item.display_name,
             description=item.description,
-            comment=item.comment,
             value_type=value_type,
             min_count=0,
             max_count=1,
@@ -233,7 +229,6 @@ class _DTDLConverter:
                 description=item.description,
                 min_count=item.min_multiplicity or 0,
                 max_count=item.max_multiplicity or 1,
-                comment=item.comment,
                 value_type=value_type,
             )
             self.properties.append(prop)
@@ -255,7 +250,6 @@ class _DTDLConverter:
             class_=item.id_.as_class_id(),
             name=item.display_name,
             description=item.description,
-            comment=item.comment,
         )
         self.classes.append(class_)
 

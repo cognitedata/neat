@@ -25,6 +25,7 @@ Changes are grouped as follows:
 ### Changed
 - [BREAKING] Rules are simplified and normalized, especially metadata
 - [BREAKING] removed `reference`, `class (linage)` and `property (linage)`.
+- [BREAKING] removed `last`, `reference`, auto-generated filters, `data_model_type`, `schema_`, `extension`
 
 
 ## [0.97.3] - 16-11-**2024**

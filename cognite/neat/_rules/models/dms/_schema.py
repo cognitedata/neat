@@ -539,6 +539,10 @@ class DMSSchema:
             raise ValueError(f"Cannot sort item of type {type(item)}")
 
     def validate(self) -> list[NeatError]:
+        # TODO: This type of validation should be done in NeatSession where all the
+        # schema components which are not part of Rules are imported and the model as
+        # the whole is validated.
+
         errors: set[NeatError] = set()
         defined_spaces = self.spaces.copy()
         defined_containers = self.containers.copy()

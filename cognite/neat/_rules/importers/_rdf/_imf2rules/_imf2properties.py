@@ -36,8 +36,7 @@ def parse_imf_to_properties(graph: Graph, language: str = "en") -> list[dict]:
     """
 
     query = """
-    SELECT DISTINCT ?class ?property ?name ?description ?valueType ?minCount ?maxCount ?default ?reference
-    ?match ?comment ?propertyType
+    SELECT DISTINCT ?class ?property ?name ?description ?valueType ?minCount ?maxCount ?default ?propertyType
     WHERE
     {
         # Finding IMF-blocks and terminals

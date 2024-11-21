@@ -93,6 +93,15 @@ class NotSupportedHasDataFilterLimitWarning(CDFNotSupportedWarning):
 
 
 @dataclass(unsafe_hash=True)
+class UndefinedClassWarning(UserModelingWarning):
+    """Class {class_id} has no explicit properties defined neither implements other class"""
+
+    fix = "Define properties for class or inherit properties by implementing another class."
+
+    class_id: str
+
+
+@dataclass(unsafe_hash=True)
 class UndefinedViewWarning(UserModelingWarning):
     """Undefined view {value_type} has been referred as value type for property <{view_property}> of view {view_id}."""
 
