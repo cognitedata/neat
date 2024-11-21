@@ -54,6 +54,7 @@ class TestExtractToLoadFlow:
 
         neat.convert("dms")
 
+        neat.mapping.classic_to_core(org_name=None)
         dms_rules = neat._state.data_model.last_verified_dms_rules
         store = neat._state.instances.store
         instances = [
