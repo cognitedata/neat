@@ -148,22 +148,9 @@ class DataModelPrepareAPI:
         """
         source_id, rules = self._state.data_model.last_unverified_rule
 
-        start = datetime.now(timezone.utc)
         transformer = PrefixEntities(prefix)
-        output: ReadRules = transformer.transform(rules)
-        end = datetime.now(timezone.utc)
-
-        change = Change.from_rules_activity(
-            output,
-            transformer.agent,
-            start,
-            end,
-            "Prefixed views/containers/classes in the data model",
-            self._state.data_model.provenance.source_entity(source_id)
-            or self._state.data_model.provenance.target_entity(source_id),
-        )
-
-        self._state.data_model.write(output, change)
+        # Mutates the input
+        _: ReadRules = transformer.transform(rules)
 
     def to_enterprise(
         self,
