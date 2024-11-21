@@ -24,6 +24,7 @@ Changes are grouped as follows:
 - Support for reading `YAML`
 - Support for writing `YAML` in toolkit format.
 - Added end-to-end test for CDM extension
+- Support for dropping instances of a given type with `neat.drop.instances(...)`
 ### Fixed
 - Verification of reversed connections was done of `property (linage)` instead of `view_property`
 ### Changed
