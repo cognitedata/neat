@@ -205,7 +205,7 @@ class InformationProperty(SheetRow):
             return None
         return value
 
-    @field_serializer("class_", "value_type", "properties", when_used="unless-none")
+    @field_serializer("class_", "value_type", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
         if (metadata := _get_metadata(info.context)) and isinstance(value, Entity):
             return value.dump(prefix=metadata.prefix, version=metadata.version)
