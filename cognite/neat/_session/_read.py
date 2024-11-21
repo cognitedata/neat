@@ -124,6 +124,49 @@ class CDFClassicAPI(BaseReadAPI):
         if self._verbose:
             print(f"Asset hierarchy {root_asset_external_id} read successfully")
 
+    def graph(self, root_asset_external_id: str) -> None:
+        """Reads the classic knowledge graph from CDF.
+
+        The Classic Graph consists of the following core resource type.
+
+        Classic Node CDF Resources:
+         - Assets
+         - TimeSeries
+         - Sequences
+         - Events
+         - Files
+
+        All the classic node CDF resources can have one or more connections to one or more assets. This
+        will match a direct relationship in the data modeling of CDF.
+
+        In addition, you have relationships between the classic node CDF resources. This matches an edge
+        in the data modeling of CDF.
+
+        Finally, you have labels and data sets that to organize the graph. In which data sets have a similar,
+        but different, role as a space in data modeling. While labels can be compared to node types in data modeling,
+        used to quickly filter and find nodes/edges.
+
+        This extractor will extract the classic CDF graph into Neat starting from either a data set or a root asset.
+
+        It works as follows:
+
+        1. Extract all core nodes (assets, time series, sequences, events, files) filtered by the given data set or
+           root asset.
+        2. Extract all relationships starting from any of the extracted core nodes.
+        3. Extract all core nodes that are targets of the relationships that are not already extracted.
+        4. Extract all labels that are connected to the extracted core nodes/relationships.
+        5. Extract all data sets that are connected to the extracted core nodes/relationships.
+
+        Args:
+            root_asset_external_id: The external id of the root asset
+
+        """
+        extractor = extractors.ClassicGraphExtractor(self._get_client, root_asset_external_id=root_asset_external_id)
+
+        self._state.instances.store.write(extractor)
+        if self._verbose:
+            print(f"Classic Graph {root_asset_external_id} read successfully")
+
 
 @session_class_wrapper
 class ExcelReadAPI(BaseReadAPI):
