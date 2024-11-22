@@ -23,7 +23,6 @@ from cognite.neat._utils.auth import _CLIENT_NAME
 from ._collector import _COLLECTOR, Collector
 from ._drop import DropAPI
 from ._inspect import InspectAPI
-from ._mapping import MappingAPI
 from ._prepare import PrepareAPI
 from ._read import ReadAPI
 from ._set import SetAPI
@@ -52,7 +51,6 @@ class NeatSession:
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
-        self.mapping = MappingAPI(self._state)
         self.drop = DropAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()

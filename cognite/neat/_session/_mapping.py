@@ -1,5 +1,7 @@
 from ._state import SessionState
 from .exceptions import session_class_wrapper
+from cognite.neat._rules.models.mapping import create_classic_to_core_mapping
+from cognite.neat._rules.transformers import RuleMapper
 
 
 @session_class_wrapper
@@ -13,4 +15,6 @@ class MappingAPI:
         Note this automatically creates an extended CogniteCore model.
 
         """
-        ...
+        transformer = RuleMapper(create_classic_to_core_mapping())
+
+        self._state.data_model.write(transformer.transform(self._state.data_model.last_verified_dms_rules))
