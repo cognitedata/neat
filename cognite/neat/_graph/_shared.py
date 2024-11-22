@@ -14,10 +14,7 @@ def rdflib_to_oxi_types(rdflib_format: str) -> str | None:
         rdflib_format (str): The RDFlib format.
 
     Returns:
-        MIMETypes: The MIME type.
-
-    !!! note
-        This will be replaced once new version of oxrdflib is released.
+        Oxi format used to trigger correct plugging in rdflib
 
     """
 
