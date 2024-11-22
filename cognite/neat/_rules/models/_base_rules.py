@@ -2,8 +2,6 @@
 its sub-models and validators.
 """
 
-from __future__ import annotations
-
 import math
 import sys
 import types
@@ -47,6 +45,7 @@ from cognite.neat._rules.models._types import (
     VersionType,
     ViewEntityType,
 )
+from cognite.neat._rules.models.data_types import DataType
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -380,9 +379,9 @@ class SheetList(list, MutableSequence[T_SheetRow]):
     def __getitem__(self, index: SupportsIndex) -> T_SheetRow: ...
 
     @overload
-    def __getitem__(self, index: slice) -> SheetList[T_SheetRow]: ...
+    def __getitem__(self, index: slice) -> "SheetList[T_SheetRow]": ...
 
-    def __getitem__(self, index: SupportsIndex | slice, /) -> T_SheetRow | SheetList[T_SheetRow]:
+    def __getitem__(self, index: SupportsIndex | slice, /) -> "T_SheetRow | SheetList[T_SheetRow]":
         if isinstance(index, slice):
             return SheetList[T_SheetRow](super().__getitem__(index))
         return super().__getitem__(index)
@@ -403,7 +402,10 @@ ExtensionCategoryType = Annotated[
 class ContainerProperty(BaseModel, frozen=True):
     container: ContainerEntityType
     property_: DmsPropertyType
-    value_type: str | None = Field(None)
+
+
+class ContainerDestinationProperty(ContainerProperty, frozen=True):
+    value_type: DataType
 
 
 class ViewRef(BaseModel, frozen=True):

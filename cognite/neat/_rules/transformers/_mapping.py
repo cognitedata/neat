@@ -3,10 +3,7 @@ from collections import defaultdict
 
 from cognite.neat._rules._shared import JustRules, OutRules
 from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models._base_rules import ViewRef
 from cognite.neat._rules.models.dms import DMSProperty
-from cognite.neat._rules.models.entities import ClassEntity
-from cognite.neat._rules.models.information import InformationClass
 from cognite.neat._rules.models.mapping import RuleMapping
 
 from ._base import RulesTransformer
@@ -110,26 +107,4 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
         self.mapping = mapping
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
-        input_rules = self._to_rules(rules)
-
-        destination_by_source = self.mapping.properties.as_destination_by_source()
-        destination_view_by_source = self.mapping.views.as_destination_by_source()
-        used_destination_classes: set[ClassEntity] = set()
-        for prop in input_rules.properties:
-            if destination_prop := destination_by_source.get(prop.as_reference()):
-                prop.class_ = destination_prop.container
-                prop.property_ = destination_prop.property_
-                used_destination_classes.add(destination_prop.view)
-            elif destination_cls := destination_view_by_source.get(ViewRef(Class=prop.class_)):
-                # If the property is not in the mapping, but the class is,
-                # then we should map the class to the destination
-                prop.class_ = destination_cls.view
-
-        for cls_ in input_rules.classes:
-            if destination_cls := destination_view_by_source.get(cls_.as_reference()):
-                cls_.class_ = destination_cls.view
-        existing_classes = {cls_.class_ for cls_ in input_rules.classes}
-        for new_cls in used_destination_classes - existing_classes:
-            input_rules.classes.append(InformationClass(class_=new_cls))
-
-        return JustRules(input_rules)
+        raise NotImplementedError()

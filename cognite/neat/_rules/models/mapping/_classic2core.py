@@ -28,202 +28,204 @@ def create_classic_to_core_mapping(org_name: str) -> RuleMapping:
     containerProperties:
     - destination:
         container: cdf_cdm:CogniteAsset
-        Property: externalId
+        property: externalId
       source:
         container: {{ org_name }}Asset
-        Property: externalId
+        property: externalId
     - destination:
         container: cdf_cdm:CogniteAsset
-        Property: name
+        property: name
       source:
         container: {{ org_name }}Asset
-        Property: name
+        property: name
     - destination:
         container: cdf_cdm:CogniteAsset
-        Property: parent
+        property: parent
       source:
         container: {{ org_name }}Asset
-        Property: parentId
+        property: parentId
     - destination:
         container: cdf_cdm:CogniteAsset
-        Property: description
+        property: description
       source:
         container: {{ org_name }}Asset
-        Property: description
+        property: description
     - destination:
         container: cdf_cdm:CogniteSourceSystem
-        Property: name
+        property: name
       source:
         container: {{ org_name }}Asset
-        Property: source
+        property: source
     - destination:
         container: cdf_cdm:CogniteAsset
-        Property: tag
+        property: tag
       source:
         container: {{ org_name }}Asset
-        Property: labels
+        property: labels
     - destination:
         container: cdf_cdm:DataProduct
-        Property: externalId
+        property: externalId
       source:
         container: {{ org_name }}DataSet
-        Property: externalId
+        property: externalId
     - destination:
         container: cdf_cdm:DataProduct
-        Property: name
+        property: name
       source:
         container: {{ org_name }}DataSet
-        Property: name
+        property: name
     - destination:
         container: cdf_cdm:DataProduct
-        Property: description
+        property: description
       source:
         container: {{ org_name }}DataSet
-        Property: description
+        property: description
     - destination:
         container: cdf_cdm:DataProduct
-        Property: metadata
+        property: metadata
       source:
         container: {{ org_name }}DataSet
-        Property: metadata
+        property: metadata
     - destination:
         container: cdf_cdm:DataProduct
-        Property: writeProtected
+        property: writeProtected
       source:
         container: {{ org_name }}DataSet
-        Property: writeProtected
+        property: writeProtected
     - destination:
         container: cdf_cdm:CogniteActivity
-        Property: externalId
+        property: externalId
       source:
         container: {{ org_name }}Event
-        Property: externalId
+        property: externalId
     - destination:
         container: cdf_cdm:CogniteSchedulable
-        Property: startTime
+        property: startTime
       source:
         container: {{ org_name }}Event
-        Property: startTime
+        property: startTime
     - destination:
         container: cdf_cdm:CogniteSchedulable
-        Property: endTime
+        property: endTime
       source:
         container: {{ org_name }}Event
-        Property: endTime
+        property: endTime
     - destination:
         container: cdf_cdm:CogniteActivity
-        Property: description
+        property: description
       source:
         container: {{ org_name }}Event
-        Property: description
+        property: description
     - destination:
         container: cdf_cdm:CogniteActivity
-        Property: assets
+        property: assets
       source:
         container: {{ org_name }}Event
-        Property: assetIds
+        property: assetIds
     - destination:
         container: cdf_cdm:CogniteSourceSystem
-        Property: name
+        property: name
       source:
         container: {{ org_name }}Event
-        Property: source
+        property: source
     - destination:
         container: cdf_cdm:CogniteFile
-        Property: externalId
+        property: externalId
       source:
         container: {{ org_name }}File
-        Property: externalId
+        property: externalId
     - destination:
         container: cdf_cdm:CogniteFile
-        Property: name
+        property: name
       source:
         container: {{ org_name }}File
-        Property: name
+        property: name
     - destination:
         container: cdf_cdm:CogniteFile
-        Property: directory
+        property: directory
       source:
         container: {{ org_name }}File
-        Property: directory
+        property: directory
     - destination:
         container: cdf_cdm:CogniteSourceSystem
-        Property: name
+        property: name
       source:
         container: {{ org_name }}File
-        Property: source
+        property: source
     - destination:
         container: cdf_cdm:CogniteFile
-        Property: mimeType
+        property: mimeType
       source:
         container: {{ org_name }}File
-        Property: mimeType
+        property: mimeType
     - destination:
         container: cdf_cdm:CogniteFile
-        Property: assets
+        property: assets
       source:
         container: {{ org_name }}File
-        Property: assetIds
+        property: assetIds
     - destination:
         container: cdf_cdm:CogniteFile
-        Property: sourceCreatedTime
+        property: sourceCreatedTime
       source:
         container: {{ org_name }}File
-        Property: sourceCreatedTime
+        property: sourceCreatedTime
     - destination:
         container: cdf_cdm:CogniteFile
-        Property: sourceUpdatedTime
+        property: sourceUpdatedTime
       source:
         container: {{ org_name }}File
-        Property: sourceModifiedTime
+        property: sourceModifiedTime
     - destination:
         container: cdf_cdm:CogniteTimeSeries
-        Property: externalId
+        property: externalId
       source:
         container: {{ org_name }}TimeSeries
-        Property: externalId
+        property: externalId
     - destination:
         container: cdf_cdm:CogniteTimeSeries
-        Property: name
+        property: name
       source:
         container: {{ org_name }}TimeSeries
-        Property: name
+        property: name
     - destination:
         container: cdf_cdm:CogniteTimeSeries
-        Property: type
+        property: type
       source:
         container: {{ org_name }}TimeSeries
-        Property: isString
+        property: isString
     - destination:
         container: cdf_cdm:CogniteTimeSeries
-        Property: sourceUnit
+        property: sourceUnit
       source:
         container: {{ org_name }}TimeSeries
-        Property: unit
+        property: unit
     - destination:
         container: cdf_cdm:CogniteTimeSeries
-        Property: unit
+        property: unit
       source:
         container: {{ org_name }}TimeSeries
-        Property: unitExternalId
+        property: unitExternalId
     - destination:
         container: cdf_cdm:CogniteTimeSeries
-        Property: assets
+        property: assets
       source:
         container: {{ org_name }}TimeSeries
-        Property: assetId
+        property: assetId
     - destination:
         container: cdf_cdm:CogniteTimeSeries
-        Property: isStep
+        property: isStep
+        value_type: boolean
       source:
         container: {{ org_name }}TimeSeries
-        Property: isStep
+        property: isStep
     - destination:
         container: cdf_cdm:CogniteTimeSeries
-        Property: description
+        property: description
+        value_type: text
       source:
         container: {{ org_name }}TimeSeries
-        Property: description
+        property: description
     """.replace("{{ org_name }}", org_name)
 
     return RuleMapping.model_validate(yaml.safe_load(raw))
