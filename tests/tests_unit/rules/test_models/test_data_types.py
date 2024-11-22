@@ -2,8 +2,7 @@ from collections import Counter
 from typing import Any
 
 import pytest
-from pydantic import AnyHttpUrl, BaseModel, Field, field_serializer
-from pydantic.networks import Url
+from pydantic import BaseModel, Field
 
 from cognite.neat._rules.models.data_types import (
     Boolean,
@@ -14,20 +13,15 @@ from cognite.neat._rules.models.data_types import (
     NonNegativeInteger,
     NonPositiveInteger,
 )
-from cognite.neat._rules.models.entities import ClassEntity, ReferenceEntity, UnitEntity, URLEntity
+from cognite.neat._rules.models.entities import ClassEntity, UnitEntity
 
 
 class DemoProperty(BaseModel):
     property_: str = Field(alias="property")
     value_type: DataType | ClassEntity = Field(alias="valueType")
-    reference: URLEntity | ReferenceEntity | None = Field(None, alias="Reference", union_mode="left_to_right")
 
     def dump(self) -> dict[str, Any]:
         return self.model_dump(by_alias=True, exclude_none=True)
-
-    @field_serializer("reference", when_used="unless-none")
-    def as_str(reference: AnyHttpUrl) -> str:
-        return str(reference)
 
 
 class TestDataTypes:
@@ -80,7 +74,6 @@ class TestDataTypes:
                 DemoProperty(
                     property="a_boolean",
                     valueType=Boolean(),
-                    Reference=ReferenceEntity(prefix="power", suffix="GeneratingUnit", property="activePower"),
                 ),
             ),
             (
@@ -92,7 +85,6 @@ class TestDataTypes:
                 DemoProperty(
                     property="a_float",
                     valueType=Float(),
-                    Reference=Url("http://www.w3.org/2003/01/geo/wgs84_pos#location"),
                 ),
             ),
             (
@@ -104,7 +96,6 @@ class TestDataTypes:
                 DemoProperty(
                     property="a_class",
                     valueType=ClassEntity(prefix="my_namespace", suffix="person"),
-                    Reference=ReferenceEntity(prefix="another_namespace", suffix="GeneratingUnit"),
                 ),
             ),
             (
@@ -116,7 +107,6 @@ class TestDataTypes:
                 DemoProperty(
                     property="a_class_versioned",
                     valueType=ClassEntity(prefix="my_namespace", suffix="person", version="1"),
-                    Reference=ReferenceEntity(prefix="power", suffix="GeneratingUnit"),
                 ),
             ),
         ],
