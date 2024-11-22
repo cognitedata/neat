@@ -188,6 +188,8 @@ class PrefixEntities(RulesTransformer[InputRules, InputRules]):  # type: ignore[
         return ReadRules(self._transform(self._to_rules(rules)), IssueList(), {})
 
     def _transform(self, rules: InputRules) -> InputRules:
+        rules.metadata.version += f"_prefixed_{self._prefix}"
+
         if isinstance(rules, InformationInputRules):
             # Todo Make Not mutate input class
             prefixed_by_class: dict[str, str] = {}

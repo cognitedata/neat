@@ -1,13 +1,14 @@
+import copy
 from collections.abc import Collection
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from rdflib import URIRef
 
 from cognite.neat._graph.transformers import RelationshipToSchemaTransformer
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
-from cognite.neat._rules._shared import ReadRules
+from cognite.neat._rules._shared import InputRules, ReadRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import PrefixEntities, ReduceCogniteModel, ToCompliantEntities, ToExtension
 from cognite.neat._store._provenance import Change
@@ -121,12 +122,9 @@ class DataModelPrepareAPI:
     def cdf_compliant_external_ids(self) -> None:
         """Convert data model component external ids to CDF compliant entities."""
         source_id, rules = self._state.data_model.last_info_unverified_rule
-        transformer = ToCompliantEntities()
-
-
-        self._state.data_model.write(rules, transformer)
 
         start = datetime.now(timezone.utc)
+        transformer = ToCompliantEntities()
         output: ReadRules[InformationInputRules] = transformer.transform(rules)
         end = datetime.now(timezone.utc)
 
@@ -151,9 +149,23 @@ class DataModelPrepareAPI:
         """
         source_id, rules = self._state.data_model.last_unverified_rule
 
+        start = datetime.now(timezone.utc)
         transformer = PrefixEntities(prefix)
-        # Mutates the input
-        _: ReadRules = transformer.transform(rules)
+        new_rules = cast(InputRules, copy.deepcopy(rules.get_rules()))
+        output = transformer.transform(new_rules)
+        end = datetime.now(timezone.utc)
+
+        change = Change.from_rules_activity(
+            output,
+            transformer.agent,
+            start,
+            end,
+            "Added prefix to the data model views",
+            self._state.data_model.provenance.source_entity(source_id)
+            or self._state.data_model.provenance.target_entity(source_id),
+        )
+
+        self._state.data_model.write(output, change)
 
     def to_enterprise(
         self,
