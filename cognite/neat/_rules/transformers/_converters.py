@@ -348,6 +348,13 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
             return self._to_enterprise(reference_model)
         elif self.type_ == "data_product":
             expanded = self._expand_properties(reference_model.model_copy(deep=True))
+            if self.include == "same-space":
+                expanded.properties = SheetList[DMSProperty](
+                    [prop for prop in expanded.properties if prop.view.space == expanded.metadata.space]
+                )
+                expanded.views = SheetList[DMSView](
+                    [view for view in expanded.views if view.view.space == expanded.metadata.space]
+                )
             return self._to_solution(expanded, remove_views_in_other_space=False)
 
         else:
@@ -447,7 +454,8 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
         return JustRules(enterprise_model)
 
-    def _expand_properties(self, rules: DMSRules) -> DMSRules:
+    @staticmethod
+    def _expand_properties(rules: DMSRules) -> DMSRules:
         probe = DMSAnalysis(rules)
         ancestor_properties_by_view = probe.classes_with_properties(
             consider_inheritance=True, allow_different_namespace=True
@@ -459,8 +467,6 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         for view, property_names in property_names_by_view.items():
             ancestor_properties = ancestor_properties_by_view.get(view, [])
             for prop in ancestor_properties:
-                if self.include == "same-space" and prop.view.space != rules.metadata.space:
-                    continue
                 if prop.view_property not in property_names:
                     rules.properties.append(prop)
         return rules

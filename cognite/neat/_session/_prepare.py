@@ -11,6 +11,7 @@ from cognite.neat._graph.transformers import RelationshipToSchemaTransformer
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._rules._shared import InputRules, ReadRules
 from cognite.neat._rules.importers import DMSImporter
+from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import (
     PrefixEntities,
@@ -307,6 +308,7 @@ class DataModelPrepareAPI:
         """
         source_id, rules = self._state.data_model.last_verified_dms_rules
 
+        dms_ref: DMSRules | None = None
         view_ids, container_ids = rules.imported_views_and_containers_ids()
         if view_ids or container_ids:
             if self._client is None:
@@ -321,14 +323,14 @@ class DataModelPrepareAPI:
             reference_rules = importer.to_rules().rules
             if reference_rules is not None:
                 imported = VerifyDMSRules("continue").transform(reference_rules)
-                if imported.rules:
+                if dms_ref := imported.rules:
                     rules = rules.model_copy(deep=True)
                     if rules.containers is None:
-                        rules.containers = imported.rules.containers
+                        rules.containers = dms_ref.containers
                     else:
-                        rules.containers.extend(imported.rules.containers or [])
-                    rules.views.extend(imported.rules.views)
-                    rules.properties.extend(imported.rules.properties)
+                        rules.containers.extend(dms_ref.containers or [])
+                    rules.views.extend(dms_ref.views)
+                    rules.properties.extend(dms_ref.properties)
 
         start = datetime.now(timezone.utc)
         transformer = ToExtension(
