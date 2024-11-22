@@ -23,6 +23,7 @@ Changes are grouped as follows:
 ### Added
 - Support for dropping instances of a given type with `neat.drop.instances(...)`
 - Helper methods `neat.prepare.instances.relationships_as_connection` and `neat.prepare.data_model.prefix` added
+- The `neat.verify(...)` method now looks in `CDF` for the data model if it is not found in the `NeatSession`.
 
 ### Fixed
 - Running `neat.to.cdf.data_model(..., dry_run=True)` now counts created and deleted items correctly.

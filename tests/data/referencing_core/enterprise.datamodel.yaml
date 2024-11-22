@@ -1,0 +1,14 @@
+space: sp_referencing_core
+externalId: ReferencingCore
+version: v1
+name: ReferencingCore
+description: This is an enterprise data model for testing.
+views:
+- space: sp_referencing_core
+  externalId: MyDescribable
+  version: v1
+  type: view
+- space: cdf_cdm
+  externalId: CogniteDescribable
+  version: v1
+  type: view
