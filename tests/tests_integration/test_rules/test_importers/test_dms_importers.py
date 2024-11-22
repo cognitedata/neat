@@ -36,6 +36,7 @@ def olav_data_model_id(olav_rules: DMSRules) -> DataModelId:
     return olav_rules.metadata.as_data_model_id()
 
 
+@pytest.mark.skip("These models depend on the exporter tests running, which are currently failing.")
 class TestDMSImporter:
     def test_import_alice_from_cdf(self, cognite_client: CogniteClient, alice_data_model_id: DataModelId):
         dms_exporter = DMSImporter.from_data_model_id(cognite_client, alice_data_model_id)

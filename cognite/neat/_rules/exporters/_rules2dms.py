@@ -206,6 +206,8 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                     failed_changed.update(loader.get_id(item) for item in to_update)
                 else:
                     raise ValueError(f"Unsupported existing_handling {self.existing_handling}")
+                created.update(loader.get_id(item) for item in to_create)
+                deleted.update(loader.get_id(item) for item in to_delete)
             else:
                 if to_delete:
                     try:

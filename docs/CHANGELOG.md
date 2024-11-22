@@ -19,6 +19,9 @@ Changes are grouped as follows:
 ### Added
 - Support for dropping instances of a given type with `neat.drop.instances(...)`
 
+### Fixed
+- Running `neat.to.cdf.data_model(..., dry_run=True)` now counts created and deleted items correctly.
+
 ## [0.98.0] - 21-11-**2024**
 ### Added
 - Support for reading `YAML`
