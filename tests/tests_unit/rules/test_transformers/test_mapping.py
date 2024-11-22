@@ -1,12 +1,14 @@
 from cognite.neat._rules._shared import JustRules
-from cognite.neat._rules.models import InformationInputRules
-from cognite.neat._rules.models._base_rules import ContainerProperty, ViewRef
-from cognite.neat._rules.models.entities import ClassEntity
-from cognite.neat._rules.models.information import (
-    InformationInputClass,
-    InformationInputMetadata,
-    InformationInputProperty,
+from cognite.neat._rules.models._base_rules import ContainerDestinationProperty, ContainerProperty, ViewRef
+from cognite.neat._rules.models.data_types import String
+from cognite.neat._rules.models.dms import (
+    DMSInputContainer,
+    DMSInputMetadata,
+    DMSInputProperty,
+    DMSInputRules,
+    DMSInputView,
 )
+from cognite.neat._rules.models.entities import ContainerEntity, ViewEntity
 from cognite.neat._rules.models.mapping import Mapping, MappingList, RuleMapping
 from cognite.neat._rules.transformers import RuleMapper
 
@@ -15,8 +17,8 @@ class TestClassicToCoreMapper:
     def test_map_single_property(self) -> None:
         classic = "classic"
         core = "core"
-        input_ = InformationInputRules(
-            metadata=InformationInputMetadata(
+        input_ = DMSInputRules(
+            metadata=DMSInputMetadata(
                 space=classic,
                 external_id=classic,
                 version="1.0",
@@ -24,15 +26,22 @@ class TestClassicToCoreMapper:
                 name="TheClassic",
             ),
             properties=[
-                InformationInputProperty(
-                    class_="Asset",
-                    property_="name",
-                    value_type="string",
+                DMSInputProperty(
+                    view="MyAsset",
+                    view_property="name",
+                    value_type="text",
+                    container="Asset",
+                    container_property="name",
                 )
             ],
-            classes=[
-                InformationInputClass(
-                    class_="Asset",
+            views=[
+                DMSInputView(
+                    view="MyAsset",
+                )
+            ],
+            containers=[
+                DMSInputContainer(
+                    container="Asset",
                 )
             ],
         ).as_rules()
@@ -40,25 +49,26 @@ class TestClassicToCoreMapper:
         input_rules = JustRules(input_)
 
         mapping = RuleMapping(
-            properties=MappingList[ContainerProperty](
+            properties=MappingList[ContainerProperty, ContainerDestinationProperty](
                 [
-                    Mapping[ContainerProperty](
+                    Mapping(
                         source=ContainerProperty(
-                            Class=ClassEntity.load(f"{classic}:Asset"),
-                            Property="name",
+                            container=ContainerEntity.load(f"{classic}:Asset"),
+                            property_="name",
                         ),
-                        destination=ContainerProperty(
-                            Class=ClassEntity.load(f"{core}:CogniteAsset"),
-                            Property="name",
+                        destination=ContainerDestinationProperty(
+                            container=ContainerEntity.load(f"{core}:CogniteAsset"),
+                            property_="name",
+                            value_type=String(),
                         ),
                     )
                 ]
             ),
-            views=MappingList[ViewRef](
+            views=MappingList[ViewRef, ViewRef](
                 [
-                    Mapping[ViewRef](
-                        source=ViewRef(Class=ClassEntity.load(f"{classic}:Asset")),
-                        destination=ViewRef(Class=ClassEntity.load(f"{core}:CogniteAsset")),
+                    Mapping(
+                        source=ViewRef(view=ViewEntity.load(f"{classic}:Asset(version=1.0)")),
+                        destination=ViewRef(view=ViewEntity.load(f"{core}:CogniteAsset(version=v1)")),
                     )
                 ]
             ),
@@ -68,9 +78,9 @@ class TestClassicToCoreMapper:
 
         assert len(transformed.properties) == 1
         prop = transformed.properties[0]
-        assert prop.class_ == ClassEntity.load(f"{core}:CogniteAsset")
+        assert prop.container == ContainerEntity.load(f"{core}:CogniteAsset")
         assert prop.property_ == "name"
 
-        assert len(transformed.classes) == 1
-        cls_ = transformed.classes[0]
-        assert cls_.class_ == ClassEntity.load(f"{core}:CogniteAsset")
+        assert len(transformed.views) == 1
+        view = transformed.views[0]
+        assert view.implements == ViewEntity.load(f"{core}:CogniteAsset(version=v1)")

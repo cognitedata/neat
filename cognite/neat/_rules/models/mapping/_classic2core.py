@@ -215,14 +215,14 @@ def create_classic_to_core_mapping(org_name: str) -> RuleMapping:
     - destination:
         container: cdf_cdm:CogniteTimeSeries
         property: isStep
-        value_type: boolean
+        valueType: boolean
       source:
         container: {{ org_name }}TimeSeries
         property: isStep
     - destination:
         container: cdf_cdm:CogniteTimeSeries
         property: description
-        value_type: text
+        valueType: text
       source:
         container: {{ org_name }}TimeSeries
         property: description
