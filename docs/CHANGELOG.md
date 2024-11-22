@@ -20,6 +20,9 @@ Changes are grouped as follows:
 - Support for dropping instances of a given type with `neat.drop.instances(...)`
 - Helper methods `neat.prepare.instances.relationships_as_connection` and `neat.prepare.data_model.prefix` added
 
+### Fixed
+- Running `neat.to.cdf.data_model(..., dry_run=True)` now counts created and deleted items correctly.
+
 ## [0.98.0] - 21-11-**2024**
 ### Added
 - Support for reading `YAML`
