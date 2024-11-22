@@ -467,10 +467,9 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         for view, property_names in property_names_by_view.items():
             ancestor_properties = ancestor_properties_by_view.get(view, [])
             for prop in ancestor_properties:
-                if prop.container is None:
+                if isinstance(prop.connection, ReverseConnectionEntity):
                     # If you try to add a reverse direct relation of a parent, it will fail as the ValueType of the
                     # original property will point to the parent view, and not the child.
-                    # Dropping edges as well as it is a bit unclear how to handle them.
                     continue
                 if prop.view_property not in property_names:
                     rules.properties.append(prop)
