@@ -22,6 +22,7 @@ from cognite.neat._rules.models._base_rules import (
     RoleTypes,
     SheetList,
     SheetRow,
+    ViewProperty,
     ViewRef,
 )
 from cognite.neat._rules.models._types import (
@@ -187,6 +188,9 @@ class DMSProperty(SheetRow):
         if self.container is None or self.container_property is None:
             raise NeatValueError("Accessing container reference without container and container property set")
         return ContainerProperty(container=self.container, property_=self.container_property)
+
+    def as_view_reference(self) -> ViewProperty:
+        return ViewProperty(view=self.view, property_=self.view_property)
 
 
 class DMSContainer(SheetRow):

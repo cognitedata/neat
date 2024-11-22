@@ -410,3 +410,7 @@ class ContainerDestinationProperty(ContainerProperty, frozen=True):
 
 class ViewRef(BaseModel, frozen=True):
     view: ViewEntityType
+
+
+class ViewProperty(ViewRef, frozen=True):
+    property_: DmsPropertyType

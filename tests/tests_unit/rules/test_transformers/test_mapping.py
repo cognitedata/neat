@@ -53,7 +53,7 @@ class TestClassicToCoreMapper:
                 [
                     Mapping(
                         source=ContainerProperty(
-                            container=ContainerEntity.load(f"{classic}:Asset"),
+                            container=ContainerEntity.load(f"{classic}:MyAsset"),
                             property_="name",
                         ),
                         destination=ContainerDestinationProperty(
@@ -67,7 +67,7 @@ class TestClassicToCoreMapper:
             views=MappingList[ViewRef, ViewRef](
                 [
                     Mapping(
-                        source=ViewRef(view=ViewEntity.load(f"{classic}:Asset(version=1.0)")),
+                        source=ViewRef(view=ViewEntity.load(f"{classic}:MyAsset(version=1.0)")),
                         destination=ViewRef(view=ViewEntity.load(f"{core}:CogniteAsset(version=v1)")),
                     )
                 ]

@@ -7,9 +7,14 @@ from pydantic import BaseModel, GetCoreSchemaHandler, field_validator
 from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo
 
-from cognite.neat._rules.models._base_rules import ContainerDestinationProperty, ContainerProperty, ViewRef
+from cognite.neat._rules.models._base_rules import (
+    ContainerDestinationProperty,
+    ContainerProperty,
+    ViewProperty,
+    ViewRef,
+)
 
-T_Source = TypeVar("T_Source", bound=ViewRef | ContainerProperty)
+T_Source = TypeVar("T_Source", bound=ViewRef | ViewProperty)
 T_Destination = TypeVar("T_Destination", bound=ViewRef | ContainerProperty)
 
 
@@ -68,7 +73,7 @@ class MappingList(list, MutableSequence[Mapping[T_Source, T_Destination]]):
 
 
 class RuleMapping(BaseModel):
-    properties: MappingList[ContainerProperty, ContainerDestinationProperty]
+    properties: MappingList[ViewProperty, ContainerDestinationProperty]
     views: MappingList[ViewRef, ViewRef]
 
     @field_validator("properties", "views", mode="before")

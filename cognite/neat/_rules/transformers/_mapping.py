@@ -120,13 +120,15 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
 
         destination_prop_by_source = self.mapping.properties.as_destination_by_source()
         for prop in new_rules.properties:
-            ref = prop.as_container_reference()
+            ref = prop.as_view_reference()
             if destination_prop := destination_prop_by_source.get(ref):
-                if prop.value_type != destination_prop.value_type and self.data_type_conflict == "overwrite":
+                if (
+                    prop.value_type != destination_prop.value_type or prop.container is None or prop.view is None
+                ) and self.data_type_conflict == "overwrite":
                     warnings.warn(
                         PropertyOverwritingValueTypeWarning(
-                            ref.container,
-                            "container",
+                            ref.view,
+                            "view",
                             ref.property_,  # type: ignore[arg-type]
                             value_type=str(prop.value_type),
                             overwrite_value_type=str(destination_prop.value_type),
