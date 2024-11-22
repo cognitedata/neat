@@ -18,6 +18,7 @@ Changes are grouped as follows:
 ## TBD
 ### Added
 - Support for dropping instances of a given type with `neat.drop.instances(...)`
+- Helper methods `neat.prepare.instances.relationships_as_connection` and `neat.prepare.data_model.prefix` added
 
 ## [0.98.0] - 21-11-**2024**
 ### Added
