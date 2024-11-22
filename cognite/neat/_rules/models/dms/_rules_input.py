@@ -5,6 +5,7 @@ from typing import Any, Literal
 
 import pandas as pd
 from cognite.client import data_modeling as dm
+from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from rdflib import Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -316,3 +317,17 @@ class DMSInputRules(InputRules[DMSRules]):
                 containers.add(ref_container)
 
         return views, containers
+
+    def as_view_entities(self) -> list[ViewEntity]:
+        return [view.as_entity_id(self.metadata.space, self.metadata.external_id) for view in self.views]
+
+    def as_container_entities(self) -> list[ContainerEntity]:
+        return [container.as_entity_id(self.metadata.space) for container in self.containers or []]
+
+    def missing_views_and_containers(self) -> tuple[set[ViewEntity], set[ContainerEntity]]:
+        views, containers = self.referenced_views_and_containers()
+        return views - set(self.as_view_entities()), containers - set(self.as_container_entities())
+
+    def missing_views_and_containers_ids(self) -> tuple[set[ViewId], set[ContainerId]]:
+        views, containers = self.missing_views_and_containers()
+        return {view.as_id() for view in views}, {container.as_id() for container in containers}
