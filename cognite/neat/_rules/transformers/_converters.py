@@ -460,19 +460,20 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         ancestor_properties_by_view = probe.classes_with_properties(
             consider_inheritance=True, allow_different_namespace=True
         )
-        property_names_by_view = {
+        property_ids_by_view = {
             view: {prop.view_property for prop in properties}
             for view, properties in probe.classes_with_properties(consider_inheritance=False).items()
         }
-        for view, property_names in property_names_by_view.items():
+        for view, property_ids in property_ids_by_view.items():
             ancestor_properties = ancestor_properties_by_view.get(view, [])
             for prop in ancestor_properties:
                 if isinstance(prop.connection, ReverseConnectionEntity):
                     # If you try to add a reverse direct relation of a parent, it will fail as the ValueType of the
                     # original property will point to the parent view, and not the child.
                     continue
-                if prop.view_property not in property_names:
+                if prop.view_property not in property_ids:
                     rules.properties.append(prop)
+                    property_ids.add(prop.view_property)
         return rules
 
     def _remove_cognite_affix(self, entity: _T_Entity) -> _T_Entity:
