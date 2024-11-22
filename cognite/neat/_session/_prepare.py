@@ -132,12 +132,9 @@ class DataModelPrepareAPI:
     def cdf_compliant_external_ids(self) -> None:
         """Convert data model component external ids to CDF compliant entities."""
         source_id, rules = self._state.data_model.last_info_unverified_rule
-        transformer = ToCompliantEntities()
-
-
-        self._state.data_model.write(rules, transformer)
 
         start = datetime.now(timezone.utc)
+        transformer = ToCompliantEntities()
         output: ReadRules[InformationInputRules] = transformer.transform(rules)
         end = datetime.now(timezone.utc)
 
