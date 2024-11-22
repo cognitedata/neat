@@ -1,0 +1,15 @@
+space: sp_referencing_core
+externalId: MyDescribable
+name: MyDescribable
+version: v1
+implements:
+- space: cdf_cdm
+  externalId: CogniteDescribable
+  version: v1
+properties:
+  UUID:
+    container:
+      space: sp_referencing_core
+      externalId: MyDescribable
+      type: container
+    containerPropertyIdentifier: UUID

@@ -1,0 +1,15 @@
+space: sp_referencing_core
+externalId: MyDescribable
+name: MyDescribable
+usedFor: node
+properties:
+  UUID:
+    type:
+      list: false
+      collation: ucs_basic
+      type: text
+    immutable: false
+    nullable: true
+    autoIncrement: false
+constraints: {}
+indexes: {}
