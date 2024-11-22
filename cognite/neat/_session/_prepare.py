@@ -292,7 +292,7 @@ class DataModelPrepareAPI:
     def to_data_product(
         self,
         data_model_id: DataModelIdentifier,
-        org_name: str = "My",
+        org_name: str = "",
         include: Literal["same-space", "all"] = "same-space",
     ) -> None:
         """Uses the current data model as a basis to create data product data model.
