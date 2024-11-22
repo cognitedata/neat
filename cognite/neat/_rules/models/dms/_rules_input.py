@@ -125,6 +125,12 @@ class DMSInputProperty(InputComponent[DMSProperty]):
         )
         return output
 
+    def referenced_view(self, default_space: str, default_version: str) -> ViewEntity:
+        return ViewEntity.load(self.view, strict=True, space=default_space, version=default_version)
+
+    def referenced_container(self, default_space: str) -> ContainerEntity | None:
+        return ContainerEntity.load(self.container, strict=True, space=default_space) if self.container else None
+
 
 @dataclass
 class DMSInputContainer(InputComponent[DMSContainer]):
@@ -140,14 +146,16 @@ class DMSInputContainer(InputComponent[DMSContainer]):
 
     def dump(self, default_space: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
-        container = ContainerEntity.load(self.container, space=default_space)
-        output["Container"] = container
+        output["Container"] = self.as_entity_id(default_space)
         output["Constraint"] = (
             [ContainerEntity.load(constraint.strip(), space=default_space) for constraint in self.constraint.split(",")]
             if self.constraint
             else None
         )
         return output
+
+    def as_entity_id(self, default_space: str) -> ContainerEntity:
+        return ContainerEntity.load(self.container, strict=True, space=default_space)
 
     @classmethod
     def from_container(cls, container: dm.ContainerApply) -> "DMSInputContainer":
@@ -182,17 +190,25 @@ class DMSInputView(InputComponent[DMSView]):
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
-        view = ViewEntity.load(self.view, space=default_space, version=default_version)
-        output["View"] = view
-        output["Implements"] = (
+        output["View"] = self.as_entity_id(default_space, default_version)
+        output["Implements"] = self._load_implements(default_space, default_version)
+        return output
+
+    def as_entity_id(self, default_space: str, default_version: str) -> ViewEntity:
+        return ViewEntity.load(self.view, strict=True, space=default_space, version=default_version)
+
+    def _load_implements(self, default_space: str, default_version: str) -> list[ViewEntity] | None:
+        return (
             [
-                ViewEntity.load(implement, space=default_space, version=default_version)
+                ViewEntity.load(implement, strict=True, space=default_space, version=default_version)
                 for implement in self.implements.split(",")
             ]
             if self.implements
             else None
         )
-        return output
+
+    def referenced_views(self, default_space: str, default_version: str) -> list[ViewEntity]:
+        return self._load_implements(default_space, default_version) or []
 
     @classmethod
     def from_view(cls, view: dm.ViewApply, in_model: bool) -> "DMSInputView":
@@ -287,3 +303,16 @@ class DMSInputRules(InputRules[DMSRules]):
         return DEFAULT_NAMESPACE[
             f"data-model/unverified/dms/{self.metadata.space}/{self.metadata.external_id}/{self.metadata.version}"
         ]
+
+    def referenced_views_and_containers(self) -> tuple[set[ViewEntity], set[ContainerEntity]]:
+        default_space = self.metadata.space
+        default_version = self.metadata.version
+
+        containers: set[ContainerEntity] = set()
+        views = {parent for view in self.views for parent in view.referenced_views(default_space, default_version)}
+        for prop in self.properties:
+            views.add(prop.referenced_view(default_space, default_version))
+            if ref_container := prop.referenced_container(default_space):
+                containers.add(ref_container)
+
+        return views, containers

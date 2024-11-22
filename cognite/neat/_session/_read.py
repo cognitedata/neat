@@ -219,7 +219,7 @@ class YamlReadAPI(BaseReadAPI):
                         "NEAT needs a client to lookup the container definitions. "
                         "Please set the client in the session, NeatSession(client=client)."
                     )
-                system_containers = self._state.data_model.lookup_system_containers(self._client, system_container_ids)
+                system_containers = self._state.data_model.lookup_containers(self._client, system_container_ids)
                 dms_importer.update_referenced_containers(system_containers)
 
             importer = dms_importer

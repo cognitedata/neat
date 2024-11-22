@@ -65,6 +65,7 @@ class NeatSession:
 
     def verify(self) -> IssueList:
         source_id, last_unverified_rule = self._state.data_model.last_unverified_rule
+
         transformer = VerifyAnyRules("continue")
         start = datetime.now(timezone.utc)
         output = transformer.try_transform(last_unverified_rule)

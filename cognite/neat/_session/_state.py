@@ -153,7 +153,7 @@ class DataModelState:
             )
         return self.outcome[-1]
 
-    def lookup_system_containers(
+    def lookup_containers(
         self, client: CogniteClient, container_ids: Sequence[dm.ContainerId]
     ) -> list[dm.ContainerApply]:
         if missing := set(container_ids) - set(self._system_containers.keys()):
