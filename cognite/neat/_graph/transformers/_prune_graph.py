@@ -123,4 +123,4 @@ class PruneDanglingNodes(BaseTransformer):
             for node in nodes_without_neighbours:
                 # Remove node and its property triples in the graph
                 if isinstance(node, ResultRow):
-                    graph.remove(triple=(node["subject"], None, None))
+                    graph.remove((node["subject"], None, None))

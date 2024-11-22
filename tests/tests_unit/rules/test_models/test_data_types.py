@@ -69,7 +69,6 @@ class TestDataTypes:
                 {
                     "property": "a_boolean",
                     "valueType": "boolean",
-                    "Reference": "power:GeneratingUnit(property=activePower)",
                 },
                 DemoProperty(
                     property="a_boolean",
@@ -80,7 +79,6 @@ class TestDataTypes:
                 {
                     "property": "a_float",
                     "valueType": "float",
-                    "Reference": "http://www.w3.org/2003/01/geo/wgs84_pos#location",
                 },
                 DemoProperty(
                     property="a_float",
@@ -91,7 +89,6 @@ class TestDataTypes:
                 {
                     "property": "a_class",
                     "valueType": "my_namespace:person",
-                    "Reference": "another_namespace:GeneratingUnit",
                 },
                 DemoProperty(
                     property="a_class",
@@ -102,7 +99,6 @@ class TestDataTypes:
                 {
                     "property": "a_class_versioned",
                     "valueType": "my_namespace:person(version=1)",
-                    "Reference": "power:GeneratingUnit",
                 },
                 DemoProperty(
                     property="a_class_versioned",
