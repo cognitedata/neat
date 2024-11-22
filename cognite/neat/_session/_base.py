@@ -70,7 +70,7 @@ class NeatSession:
         reference_rules: DMSInputRules | None = None
         if isinstance(last_unverified_rule.rules, DMSInputRules):
             dms_rules = last_unverified_rule.rules
-            views_ids, containers_ids = dms_rules.missing_views_and_containers_ids()
+            views_ids, containers_ids = dms_rules.imported_views_and_containers_ids()
             if views_ids or containers_ids:
                 if self._client is None:
                     raise NeatSessionError(

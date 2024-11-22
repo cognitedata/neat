@@ -324,10 +324,10 @@ class DMSInputRules(InputRules[DMSRules]):
     def as_container_entities(self) -> list[ContainerEntity]:
         return [container.as_entity_id(self.metadata.space) for container in self.containers or []]
 
-    def missing_views_and_containers(self) -> tuple[set[ViewEntity], set[ContainerEntity]]:
+    def imported_views_and_containers(self) -> tuple[set[ViewEntity], set[ContainerEntity]]:
         views, containers = self.referenced_views_and_containers()
         return views - set(self.as_view_entities()), containers - set(self.as_container_entities())
 
-    def missing_views_and_containers_ids(self) -> tuple[set[ViewId], set[ContainerId]]:
-        views, containers = self.missing_views_and_containers()
+    def imported_views_and_containers_ids(self) -> tuple[set[ViewId], set[ContainerId]]:
+        views, containers = self.imported_views_and_containers()
         return {view.as_id() for view in views}, {container.as_id() for container in containers}
