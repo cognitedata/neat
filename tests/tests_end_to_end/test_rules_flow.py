@@ -53,7 +53,7 @@ class TestImportersToYAMLExporter:
         exported_rules = yaml.safe_load(exported_yaml_str)
         data_regression.check(exported_rules)
 
-    @pytest.mark.freeze_time("2025-01-08")
+    @pytest.mark.freeze_time("2024-11-22")
     def test_read_model_to_data_product(self, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(verbose=False)
 

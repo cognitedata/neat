@@ -1,0 +1,23 @@
+metadata:
+  created: '2024-11-22T00:00:00'
+  creator: MISSING
+  description: This is an enterprise data model for testing.
+  external_id: MyProduct
+  name: data_product data model
+  role: DMS Architect
+  space: sp_my_space
+  updated: '2024-11-22T00:00:00'
+  version: v1
+properties:
+- container: sp_referencing_core:MyDescribable
+  container_property: UUID
+  immutable: false
+  is_list: false
+  nullable: true
+  value_type: text
+  view: MyDescribable
+  view_property: UUID
+views:
+- in_model: true
+  name: MyDescribable
+  view: MyDescribable
