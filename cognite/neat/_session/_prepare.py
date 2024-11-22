@@ -1,14 +1,16 @@
+import copy
 from collections.abc import Collection
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from rdflib import URIRef
 
+from cognite.neat._graph.transformers import RelationshipToSchemaTransformer
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
-from cognite.neat._rules._shared import ReadRules
+from cognite.neat._rules._shared import InputRules, ReadRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
-from cognite.neat._rules.transformers import ReduceCogniteModel, ToCompliantEntities, ToExtension
+from cognite.neat._rules.transformers import PrefixEntities, ReduceCogniteModel, ToCompliantEntities, ToExtension
 from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
@@ -94,6 +96,22 @@ class InstancePrepareAPI:
             raise NeatSessionError(f"Property {property_} is not defined for type {type_}. Cannot make connection")
         return type_uri[0], property_uri[0]
 
+    def relationships_as_connections(self, limit: int = 1) -> None:
+        """This assumes that you have read a classic CDF knowledge graph including relationships.
+
+        This transformer analyzes the relationships in the graph and modifies them to be part of the schema
+        for Assets, Events, Files, Sequences, and TimeSeries. Relationships without any properties
+        are replaced by a simple relationship between the source and target nodes. Relationships with
+        properties are replaced by a schema that contains the properties as attributes.
+
+        Args:
+            limit: The minimum number of relationships that need to be present for it
+                to be converted into a schema. Default is 1.
+
+        """
+        transformer = RelationshipToSchemaTransformer(limit=limit)
+        self._state.instances.store.transform(transformer)
+
 
 @session_class_wrapper
 class DataModelPrepareAPI:
@@ -103,25 +121,51 @@ class DataModelPrepareAPI:
 
     def cdf_compliant_external_ids(self) -> None:
         """Convert data model component external ids to CDF compliant entities."""
-        if input := self._state.data_model.last_info_unverified_rule:
-            source_id, rules = input
+        source_id, rules = self._state.data_model.last_info_unverified_rule
 
-            start = datetime.now(timezone.utc)
-            transformer = ToCompliantEntities()
-            output: ReadRules[InformationInputRules] = transformer.transform(rules)
-            end = datetime.now(timezone.utc)
+        start = datetime.now(timezone.utc)
+        transformer = ToCompliantEntities()
+        output: ReadRules[InformationInputRules] = transformer.transform(rules)
+        end = datetime.now(timezone.utc)
 
-            change = Change.from_rules_activity(
-                output,
-                transformer.agent,
-                start,
-                end,
-                "Converted external ids to CDF compliant entities",
-                self._state.data_model.provenance.source_entity(source_id)
-                or self._state.data_model.provenance.target_entity(source_id),
-            )
+        change = Change.from_rules_activity(
+            output,
+            transformer.agent,
+            start,
+            end,
+            "Converted external ids to CDF compliant entities",
+            self._state.data_model.provenance.source_entity(source_id)
+            or self._state.data_model.provenance.target_entity(source_id),
+        )
 
-            self._state.data_model.write(output, change)
+        self._state.data_model.write(output, change)
+
+    def prefix(self, prefix: str) -> None:
+        """Prefix all views in the data model with the given prefix.
+
+        Args:
+            prefix: The prefix to add to the views in the data model.
+
+        """
+        source_id, rules = self._state.data_model.last_unverified_rule
+
+        start = datetime.now(timezone.utc)
+        transformer = PrefixEntities(prefix)
+        new_rules = cast(InputRules, copy.deepcopy(rules.get_rules()))
+        output = transformer.transform(new_rules)
+        end = datetime.now(timezone.utc)
+
+        change = Change.from_rules_activity(
+            output,
+            transformer.agent,
+            start,
+            end,
+            "Added prefix to the data model views",
+            self._state.data_model.provenance.source_entity(source_id)
+            or self._state.data_model.provenance.target_entity(source_id),
+        )
+
+        self._state.data_model.write(output, change)
 
     def to_enterprise(
         self,
