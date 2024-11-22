@@ -309,7 +309,7 @@ class DataModelPrepareAPI:
         source_id, rules = self._state.data_model.last_verified_dms_rules
 
         dms_ref: DMSRules | None = None
-        view_ids, container_ids = rules.imported_views_and_containers_ids()
+        view_ids, container_ids = rules.imported_views_and_containers_ids(include_model_views_with_no_properties=True)
         if view_ids or container_ids:
             if self._client is None:
                 raise NeatSessionError(
