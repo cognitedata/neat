@@ -24,9 +24,17 @@ def test_rdf_inference():
     assert len(rules.classes) == 59
 
     # checking multi-value type
-    multi_value_property = "OperatingShare.PowerSystemResource"
-    prop = next((prop for prop in rules.properties if prop.property_ == multi_value_property), None)
-    assert prop is not None, f"Failed to infer expected multi-value property {multi_value_property}"
+
+    prop = next(
+        (
+            prop
+            for prop in rules.properties
+            if prop.property_ == "OperatingShare.PowerSystemResource" and prop.class_.suffix == "OperatingShare"
+        ),
+        None,
+    )
+
+    assert prop is not None, "Failed to infer expected multi-value property OperatingShare.PowerSystemResource"
     assert set(prop.value_type.types) == set(
         MultiValueTypeInfo.load(
             "inferred:ConformLoad | inferred:NonConformLoad | "

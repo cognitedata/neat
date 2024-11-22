@@ -16,12 +16,21 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Changed
+- We are now using RDF datasets (namedgraphs) instead of simple graphs, enabling support for multi space
+  resolution of nodes and edges in CDF.
+
 ### Added
 - Support for dropping instances of a given type with `neat.drop.instances(...)`
 - Helper methods `neat.prepare.instances.relationships_as_connection` and `neat.prepare.data_model.prefix` added
 
 ### Fixed
 - Running `neat.to.cdf.data_model(..., dry_run=True)` now counts created and deleted items correctly.
+- Bug in inference of multi-value types
+
+### Improved
+- Bump dep on pyoxi to 0.4.3 and oxrdflib to 0.4.0
+- Increase speed in loading RDF files in oxistore
 
 ## [0.98.0] - 21-11-**2024**
 ### Added

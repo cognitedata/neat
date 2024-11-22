@@ -4,31 +4,30 @@ MIMETypes: TypeAlias = Literal[
     "application/rdf+xml", "text/turtle", "application/n-triple", "application/n-quads", "application/trig"
 ]
 
+RDFTypes: TypeAlias = Literal["xml", "rdf", "owl", "n3", "ttl", "turtle", "nt", "nq", "nquads", "trig"]
 
-def rdflib_to_mime_types(rdflib_format: str) -> str | None:
+
+def rdflib_to_oxi_type(rdflib_format: str) -> str | None:
     """Convert an RDFlib format to a MIME type.
 
     Args:
         rdflib_format (str): The RDFlib format.
 
     Returns:
-        MIMETypes: The MIME type.
-
-    !!! note
-        This will be replaced once new version of oxrdflib is released.
+        Oxi format used to trigger correct plugging in rdflib
 
     """
 
     mapping = {
-        "xml": "application/rdf+xml",
-        "rdf": "application/rdf+xml",
-        "owl": "application/rdf+xml",
-        "n3": "application/n-triple",
-        "ttl": "text/turtle",
-        "turtle": "text/turtle",
-        "nt": "application/n-triple",
-        "nq": "application/n-quads",
-        "nquads": "application/n-quads",
-        "trig": "application/trig",
+        "xml": "ox-xml",
+        "rdf": "ox-xml",
+        "owl": "ox-xml",
+        "n3": "ox-n3",
+        "ttl": "ox-ttl",
+        "turtle": "ox-turtle",
+        "nt": "ox-nt",
+        "nq": "ox-nq",
+        "nquads": "ox-nquads",
+        "trig": "ox-trig",
     }
     return mapping.get(rdflib_format, None)

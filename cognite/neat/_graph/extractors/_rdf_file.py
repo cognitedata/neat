@@ -1,12 +1,12 @@
 from collections.abc import Iterable
 from pathlib import Path
-from typing import cast
+from typing import get_args
 
 from rdflib import URIRef
 from rdflib.util import guess_format
 
 from cognite.neat._constants import DEFAULT_BASE_URI
-from cognite.neat._graph._shared import rdflib_to_mime_types
+from cognite.neat._graph._shared import RDFTypes
 from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._issues._base import IssueList
 from cognite.neat._issues.errors import FileNotFoundNeatError, FileTypeUnexpectedError
@@ -29,19 +29,18 @@ class RdfFileExtractor(BaseExtractor):
         issue_list: IssueList | None = None,
     ):
         self.issue_list = issue_list or IssueList(title=f"{filepath.name}")
-
-        self.filepath = filepath
-        self.mime_type = rdflib_to_mime_types(cast(str, guess_format(str(self.filepath))))
         self.base_uri = base_uri
+        self.filepath = filepath
+        self.format = guess_format(str(self.filepath))
 
         if not self.filepath.exists():
             self.issue_list.append(FileNotFoundNeatError(self.filepath))
 
-        if not self.mime_type:
+        if not self.format:
             self.issue_list.append(
                 FileTypeUnexpectedError(
                     self.filepath,
-                    frozenset([".rdf", ".ttl", ".nt", ".n3", ".owl", ".nq", ".trig"]),
+                    frozenset(get_args(RDFTypes)),
                 )
             )
 
