@@ -272,6 +272,7 @@ class DMSView(SheetRow):
             version=view_id.version or _DEFAULT_VERSION,
             name=self.name or None,
             description=self.description,
+            filter=None if self.filter_ is None else self.filter_.as_dms_filter(),
             implements=implements,
             properties={},
         )
