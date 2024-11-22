@@ -3,14 +3,22 @@ from collections.abc import Collection
 from datetime import datetime, timezone
 from typing import Literal, cast
 
+from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from rdflib import URIRef
 
 from cognite.neat._graph.transformers import RelationshipToSchemaTransformer
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._rules._shared import InputRules, ReadRules
+from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
-from cognite.neat._rules.transformers import PrefixEntities, ReduceCogniteModel, ToCompliantEntities, ToExtension
+from cognite.neat._rules.transformers import (
+    PrefixEntities,
+    ReduceCogniteModel,
+    ToCompliantEntities,
+    ToExtension,
+    VerifyDMSRules,
+)
 from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
@@ -19,10 +27,10 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 @session_class_wrapper
 class PrepareAPI:
-    def __init__(self, state: SessionState, verbose: bool) -> None:
+    def __init__(self, client: CogniteClient | None, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
-        self.data_model = DataModelPrepareAPI(state, verbose)
+        self.data_model = DataModelPrepareAPI(client, state, verbose)
         self.instances = InstancePrepareAPI(state, verbose)
 
 
@@ -115,7 +123,8 @@ class InstancePrepareAPI:
 
 @session_class_wrapper
 class DataModelPrepareAPI:
-    def __init__(self, state: SessionState, verbose: bool) -> None:
+    def __init__(self, client: CogniteClient | None, state: SessionState, verbose: bool) -> None:
+        self._client = client
         self._state = state
         self._verbose = verbose
 
@@ -297,6 +306,29 @@ class DataModelPrepareAPI:
                 If you set same-space, only the views in the same space as the data model will be included.
         """
         source_id, rules = self._state.data_model.last_verified_dms_rules
+
+        view_ids, container_ids = rules.imported_views_and_containers_ids()
+        if view_ids or container_ids:
+            if self._client is None:
+                raise NeatSessionError(
+                    "No client provided. You are referencing unknown views and containers in your data model, "
+                    "NEAT needs a client to lookup the definitions. "
+                    "Please set the client in the session, NeatSession(client=client)."
+                )
+            schema = self._state.data_model.lookup_schema(self._client, list(view_ids), list(container_ids))
+
+            importer = DMSImporter(schema)
+            reference_rules = importer.to_rules().rules
+            if reference_rules is not None:
+                imported = VerifyDMSRules("continue").transform(reference_rules)
+                if imported.rules:
+                    rules = rules.model_copy(deep=True)
+                    if rules.containers is None:
+                        rules.containers = imported.rules.containers
+                    else:
+                        rules.containers.extend(imported.rules.containers or [])
+                    rules.views.extend(imported.rules.views)
+                    rules.properties.extend(imported.rules.properties)
 
         start = datetime.now(timezone.utc)
         transformer = ToExtension(
