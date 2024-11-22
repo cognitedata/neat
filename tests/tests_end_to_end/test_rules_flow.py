@@ -52,3 +52,17 @@ class TestImportersToYAMLExporter:
         exported_yaml_str = neat.to.yaml()
         exported_rules = yaml.safe_load(exported_yaml_str)
         data_regression.check(exported_rules)
+
+    @pytest.mark.freeze_time("2025-01-08")
+    def test_read_model_to_data_product(self, data_regression: DataRegressionFixture) -> None:
+        neat = NeatSession(verbose=False)
+
+        neat.read.excel(DOC_RULES / "cdf-dms-architect-alice.xlsx")
+
+        neat.verify()
+
+        neat.prepare.data_model.to_data_product(("my_space", "MyProduct", "v1"), org_name="")
+
+        exported_yaml_str = neat.to.yaml()
+        exported_rules = yaml.safe_load(exported_yaml_str)
+        data_regression.check(exported_rules)

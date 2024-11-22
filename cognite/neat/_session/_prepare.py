@@ -229,7 +229,7 @@ class DataModelPrepareAPI:
         data_model_id: DataModelIdentifier,
         org_name: str = "My",
         mode: Literal["read", "write"] = "read",
-        dummy_property: str = "dummy",
+        dummy_property: str = "GUID",
     ) -> None:
         """Uses the current data model as a basis to create solution data model
 
@@ -296,7 +296,32 @@ class DataModelPrepareAPI:
             include: The views to include in the data product data model. Can be either "same-space" or "all".
                 If you set same-space, only the views in the same space as the data model will be included.
         """
-        ...
+        source_id, rules = self._state.data_model.last_verified_dms_rules
+
+        start = datetime.now(timezone.utc)
+        transformer = ToExtension(
+            new_model_id=data_model_id,
+            org_name=org_name,
+            type_="data_product",
+            include=include,
+        )
+        output = transformer.transform(rules)
+        end = datetime.now(timezone.utc)
+
+        change = Change.from_rules_activity(
+            output,
+            transformer.agent,
+            start,
+            end,
+            (
+                f"Prepared data model {data_model_id} to be data product model "
+                f"on top of {rules.metadata.as_data_model_id()}"
+            ),
+            self._state.data_model.provenance.source_entity(source_id)
+            or self._state.data_model.provenance.target_entity(source_id),
+        )
+
+        self._state.data_model.write(output.rules, change)
 
     def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]) -> None:
         """This is a special method that allow you to drop parts of the data model.

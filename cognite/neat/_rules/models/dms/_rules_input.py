@@ -319,7 +319,7 @@ class DMSInputRules(InputRules[DMSRules]):
         return views, containers
 
     def as_view_entities(self) -> list[ViewEntity]:
-        return [view.as_entity_id(self.metadata.space, self.metadata.external_id) for view in self.views]
+        return [view.as_entity_id(self.metadata.space, self.metadata.version) for view in self.views]
 
     def as_container_entities(self) -> list[ContainerEntity]:
         return [container.as_entity_id(self.metadata.space) for container in self.containers or []]
