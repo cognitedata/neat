@@ -1,6 +1,9 @@
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Literal, cast
 
+from cognite.client import CogniteClient
+from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
 from cognite.neat._issues import IssueList
@@ -10,6 +13,8 @@ from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._store._provenance import Change, Provenance
+from cognite.neat._utils.cdf.data_classes import ContainerApplyDict
+from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError
@@ -56,6 +61,7 @@ class DataModelState:
     issue_lists: list[IssueList] = field(default_factory=list)
     provenance: Provenance = field(default_factory=Provenance)
     outcome: list[UploadResultList] = field(default_factory=list)
+    _system_containers: ContainerApplyDict = field(default_factory=ContainerApplyDict)
 
     def write(self, rules: ReadRules | JustRules | VerifiedRules, change: Change) -> None:
         if change.target_entity.id_ in self._rules:
@@ -146,3 +152,14 @@ class DataModelState:
                 "No outcome available. Try using [bold].to.cdf.data_model[/bold] to upload a data model."
             )
         return self.outcome[-1]
+
+    def lookup_system_containers(
+        self, client: CogniteClient, container_ids: Sequence[dm.ContainerId]
+    ) -> list[dm.ContainerApply]:
+        if missing := set(container_ids) - set(self._system_containers.keys()):
+            system_container_ids = list(missing)
+            found = client.data_modeling.containers.retrieve(system_container_ids)
+            if not_found := set(found.as_ids()) - missing:
+                raise NeatSessionError(f"System containers, not found: {humanize_collection(not_found, sort=False)}")
+            self._system_containers.update(found)
+        return [self._system_containers[container_id] for container_id in container_ids]
