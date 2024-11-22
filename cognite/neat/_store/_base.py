@@ -11,7 +11,7 @@ from rdflib import Dataset, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._graph._shared import rdflib_to_oxi_types
+from cognite.neat._graph._shared import rdflib_to_oxi_type
 from cognite.neat._graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
@@ -269,7 +269,7 @@ class NeatGraphStore:
             # this is necessary to trigger rdflib oxigraph plugin
             self.graph.parse(
                 filepath,
-                format=rdflib_to_oxi_types(format),
+                format=rdflib_to_oxi_type(format),
                 transactional=False,
                 publicID=base_uri,
             )

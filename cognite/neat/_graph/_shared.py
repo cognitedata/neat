@@ -7,7 +7,7 @@ MIMETypes: TypeAlias = Literal[
 RDFTypes: TypeAlias = Literal["xml", "rdf", "owl", "n3", "ttl", "turtle", "nt", "nq", "nquads", "trig"]
 
 
-def rdflib_to_oxi_types(rdflib_format: str) -> str | None:
+def rdflib_to_oxi_type(rdflib_format: str) -> str | None:
     """Convert an RDFlib format to a MIME type.
 
     Args:
