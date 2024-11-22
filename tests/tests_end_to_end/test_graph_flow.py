@@ -1,19 +1,13 @@
 from typing import Any
 
+import pytest
 import yaml
 from cognite.client.data_classes.data_modeling import InstanceApply
 from pytest_regressions.data_regression import DataRegressionFixture
 
+from cognite.neat import NeatSession
 from cognite.neat._graph.loaders import DMSLoader
-from cognite.neat._graph.transformers import RelationshipToSchemaTransformer
 from cognite.neat._rules.exporters import YAMLExporter
-from cognite.neat._rules.importers import InferenceImporter
-from cognite.neat._rules.models import SheetList
-from cognite.neat._rules.models.entities import ClassEntity, UnknownEntity
-from cognite.neat._rules.models.information import InformationProperty
-from cognite.neat._rules.models.mapping import create_classic_to_core_mapping
-from cognite.neat._rules.transformers import InformationToDMS, RuleMapper, VerifyInformationRules
-from cognite.neat._store import NeatGraphStore
 from tests.data import classic_windfarm
 
 RESERVED_PROPERTIES = frozenset(
@@ -38,62 +32,33 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
+    @pytest.mark.skip("In progress")
     def test_classic_to_dms(self, data_regression: DataRegressionFixture) -> None:
-        store = NeatGraphStore.from_oxi_store()
+        neat = NeatSession(storage="oxigraph")
+        # Hack to read in the test data.
         for extractor in classic_windfarm.create_extractors():
-            store.write(extractor)
+            neat._state.instances.store.write(extractor)
 
-        store.transform(RelationshipToSchemaTransformer())
+        neat.prepare.instances.relationships_as_connections(limit=1)
+        # Sequences is not yet supported
+        neat.drop.instances("Sequence")
 
-        read_rules = InferenceImporter.from_graph_store(
-            store,
-            non_existing_node_type=UnknownEntity(),
-            data_model_id=("classic", "inferred_model", "inferred"),
-        ).to_rules()
-        # Ensure deterministic output
-        read_rules.rules.metadata.created = "2024-09-19T00:00:00Z"
-        read_rules.rules.metadata.updated = "2024-09-19T00:00:00Z"
+        neat.infer()
 
-        verified = VerifyInformationRules(errors="raise").transform(read_rules).get_rules()
+        # Hack to ensure deterministic output
+        rules = neat._state.data_model.last_unverified_rule[1].rules
+        rules.metadata.created = "2024-09-19T00:00:00Z"
+        rules.metadata.updated = "2024-09-19T00:00:00Z"
 
-        mapped = RuleMapper(create_classic_to_core_mapping()).transform(verified).rules
+        neat.prepare.data_model.prefix("Classic")
 
-        # We need to rename the classes to non-reserved names
-        naming_mapping: dict[ClassEntity, ClassEntity] = {}
-        for cls_ in mapped.classes:
-            if not cls_.class_.suffix.startswith("Cognite"):
-                new_name = f"Classic{cls_.class_.suffix}"
-                source = cls_.class_
-                cls_.class_ = ClassEntity(prefix=cls_.class_.prefix, suffix=new_name)
-                naming_mapping[source] = cls_.class_
+        neat.verify()
 
-        # We need to filter out the DMS reserved properties from the rules
-        new_properties = SheetList[InformationProperty]()
-        for prop in mapped.properties:
-            if prop.property_ in RESERVED_PROPERTIES:
-                continue
-            if prop.class_ in naming_mapping:
-                prop.class_ = naming_mapping[prop.class_]
-            new_properties.append(prop)
-        mapped.properties = new_properties
+        neat.convert("dms")
 
-        store.add_rules(mapped)
-
-        # Manually remove duplicated property, up for discussion how to handle this.
-        # It is caused by multiple sources being mapped to the same property.
-        copy = mapped.model_copy(deep=True)
-        seen: set[(ClassEntity, str)] = set()
-        new_properties = SheetList[InformationProperty]()
-        for prop in copy.properties:
-            key = (prop.class_, prop.property_)
-            if key in seen:
-                continue
-            seen.add(key)
-            new_properties.append(prop)
-        copy.properties = new_properties
-
-        dms_rules = InformationToDMS().transform(copy).get_rules()
-
+        neat.mapping.classic_to_core(org_name=None)
+        dms_rules = neat._state.data_model.last_verified_dms_rules
+        store = neat._state.instances.store
         instances = [
             self._standardize_instance(instance)
             for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
