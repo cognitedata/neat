@@ -16,7 +16,6 @@ from cognite.neat._store import NeatGraphStore
 from cognite.neat._store._provenance import Change, Provenance
 from cognite.neat._utils.cdf.data_classes import ContainerApplyDict, ViewApplyDict
 from cognite.neat._utils.cdf.loaders import ViewLoader
-from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError
@@ -162,10 +161,10 @@ class DataModelState:
         if missing := set(container_ids) - set(self._cdf_containers.keys()):
             cdf_container_ids = list(missing)
             found = client.data_modeling.containers.retrieve(cdf_container_ids).as_write()
-            if not_found := missing - set(found.as_ids()):
-                raise NeatSessionError(f"CDF containers, not found: {humanize_collection(not_found, sort=False)}")
             self._cdf_containers.update({container.as_id(): container for container in found})
-        return [self._cdf_containers[container_id] for container_id in container_ids]
+        return [
+            self._cdf_containers[container_id] for container_id in container_ids if container_id in self._cdf_containers
+        ]
 
     def lookup_views(
         self, client: CogniteClient, view_ids: Sequence[dm.ViewId], include_ancestors: bool = True
@@ -177,10 +176,8 @@ class DataModelState:
                 found = loader.retrieve_all_ancestors(cdf_view_ids).as_write()
             else:
                 found = loader.retrieve(cdf_view_ids).as_write()
-            if not_found := missing - set(found.as_ids()):
-                raise NeatSessionError(f"CDF views, not found: {humanize_collection(not_found, sort=False)}")
             self._cdf_views.update({view.as_id(): view for view in found})
-        output = [self._cdf_views[view_id] for view_id in view_ids]
+        output = [self._cdf_views[view_id] for view_id in view_ids if view_id in self._cdf_views]
         to_check = output.copy()
         seen = set(view_ids)
         while to_check:
@@ -188,8 +185,9 @@ class DataModelState:
             for parent in checking.implements or []:
                 if parent not in seen:
                     seen.add(parent)
-                    to_check.append(self._cdf_views[parent])
-                    output.append(self._cdf_views[parent])
+                    if parent in self._cdf_views:
+                        to_check.append(self._cdf_views[parent])
+                        output.append(self._cdf_views[parent])
         return output
 
     def lookup_schema(
