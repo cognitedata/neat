@@ -198,6 +198,11 @@ class DataModelState:
         include_ancestors: bool = True,
     ) -> DMSSchema:
         views = ViewApplyDict(self.lookup_views(client, views, include_ancestors=include_ancestors))
+
+        container_set = set(containers) | {
+            container for view in views.values() for container in view.referenced_containers()
+        }
+
         return DMSSchema(
             data_model=dm.DataModelApply(
                 space="NEAT_LOOKUP",
@@ -206,5 +211,5 @@ class DataModelState:
                 views=list(views.keys()),
             ),
             views=views,
-            containers=ContainerApplyDict(self.lookup_containers(client, containers)),
+            containers=ContainerApplyDict(self.lookup_containers(client, list(container_set))),
         )

@@ -20,7 +20,7 @@ class TestRead:
         neat.read.yaml(data.REFERENCING_CORE, format="toolkit")
 
         issues = neat.verify()
-        assert not issues
+        assert not issues.has_errors
 
         neat.prepare.data_model.to_data_product(("sp_my_space", "MyProduct", "v1"), org_name="")
 

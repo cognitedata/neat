@@ -109,14 +109,14 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
         raise NotImplementedError
 
     # Todo Lru cache this method.
-    def class_parent_pairs(self) -> dict[T_ClassEntity, list[T_ClassEntity]]:
+    def class_parent_pairs(self, allow_different_namespace: bool = False) -> dict[T_ClassEntity, list[T_ClassEntity]]:
         """This only returns class - parent pairs only if parent is in the same data model"""
         class_subclass_pairs: dict[T_ClassEntity, list[T_ClassEntity]] = {}
         for cls_ in self._get_classes():
             entity = self._get_cls_entity(cls_)
             class_subclass_pairs[entity] = []
             for parent in self._get_cls_parents(cls_) or []:
-                if parent.prefix == entity.prefix:
+                if parent.prefix == entity.prefix or allow_different_namespace:
                     class_subclass_pairs[entity].append(parent)
                 else:
                     warnings.warn(
@@ -126,11 +126,15 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
 
         return class_subclass_pairs
 
-    def classes_with_properties(self, consider_inheritance: bool = False) -> dict[T_ClassEntity, list[T_Property]]:
+    def classes_with_properties(
+        self, consider_inheritance: bool = False, allow_different_namespace: bool = False
+    ) -> dict[T_ClassEntity, list[T_Property]]:
         """Returns classes that have been defined in the data model.
 
         Args:
             consider_inheritance: Whether to consider inheritance or not. Defaults False
+            allow_different_namespace: When considering inheritance, whether to allow parents from
+                different namespaces or not. Defaults False
 
         Returns:
             Dictionary of classes with a list of properties defined for them
@@ -150,7 +154,7 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
             class_property_pairs[self._get_cls_entity(property_)].append(property_)  # type: ignore
 
         if consider_inheritance:
-            class_parent_pairs = self.class_parent_pairs()
+            class_parent_pairs = self.class_parent_pairs(allow_different_namespace)
             for class_ in class_parent_pairs:
                 self._add_inherited_properties(class_, class_property_pairs, class_parent_pairs)
 

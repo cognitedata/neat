@@ -348,7 +348,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
             return self._to_enterprise(reference_model)
         elif self.type_ == "data_product":
             expanded = self._expand_properties(reference_model.model_copy(deep=True))
-            return self._to_solution(expanded)
+            return self._to_solution(expanded, remove_views_in_other_space=False)
 
         else:
             raise NeatValueError(f"Unsupported data model type: {self.type_}")
@@ -356,7 +356,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
     def _has_views_in_multiple_space(self, rules: DMSRules) -> bool:
         return any(view.view.space != rules.metadata.space for view in rules.views)
 
-    def _to_solution(self, reference_rules: DMSRules) -> JustRules[DMSRules]:
+    def _to_solution(self, reference_rules: DMSRules, remove_views_in_other_space: bool = True) -> JustRules[DMSRules]:
         """For creation of solution data model / rules specifically for mapping over existing containers."""
 
         dump = reference_rules.dump()
@@ -371,7 +371,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         for view in dump["views"]:
             view["implements"] = None
 
-        if self._has_views_in_multiple_space(reference_rules):
+        if remove_views_in_other_space and self._has_views_in_multiple_space(reference_rules):
             views_to_remove = []
             for view in dump["views"]:
                 if ":" in view["view"]:
@@ -449,7 +449,9 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
     def _expand_properties(self, rules: DMSRules) -> DMSRules:
         probe = DMSAnalysis(rules)
-        ancestor_properties_by_view = probe.classes_with_properties(consider_inheritance=True)
+        ancestor_properties_by_view = probe.classes_with_properties(
+            consider_inheritance=True, allow_different_namespace=True
+        )
         property_names_by_view = {
             view: {prop.view_property for prop in properties}
             for view, properties in probe.classes_with_properties(consider_inheritance=False).items()
