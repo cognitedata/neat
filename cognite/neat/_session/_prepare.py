@@ -279,6 +279,25 @@ class DataModelPrepareAPI:
 
             self._state.data_model.write(output.rules, change)
 
+    def to_data_product(
+        self,
+        data_model_id: DataModelIdentifier,
+        org_name: str = "My",
+        include: Literal["same-space", "all"] = "same-space",
+    ) -> None:
+        """Uses the current data model as a basis to create data product data model.
+
+        A data product model is a data model that ONLY maps to containers and do not use implements. This is
+        typically used for defining the data in a data product.
+
+        Args:
+            data_model_id: The data product data model id that is being created.
+            org_name: Organization name to use for the views in the new data model.
+            include: The views to include in the data product data model. Can be either "same-space" or "all".
+                If you set same-space, only the views in the same space as the data model will be included.
+        """
+        ...
+
     def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]) -> None:
         """This is a special method that allow you to drop parts of the data model.
         This only applies to Cognite Data Models.
