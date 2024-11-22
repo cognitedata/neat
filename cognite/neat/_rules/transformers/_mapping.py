@@ -1,9 +1,14 @@
+import warnings
 from abc import ABC
 from collections import defaultdict
+from typing import Literal
 
+from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._issues.warnings import PropertyOverwritingValueTypeWarning
 from cognite.neat._rules._shared import JustRules, OutRules
 from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models.dms import DMSProperty
+from cognite.neat._rules.models.dms import DMSProperty, DMSView
+from cognite.neat._rules.models.entities import ViewEntity
 from cognite.neat._rules.models.mapping import RuleMapping
 
 from ._base import RulesTransformer
@@ -103,8 +108,49 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
 
     """
 
-    def __init__(self, mapping: RuleMapping) -> None:
+    def __init__(self, mapping: RuleMapping, data_type_conflict: Literal["overwrite"] = "overwrite") -> None:
         self.mapping = mapping
+        self.data_type_conflict = data_type_conflict
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
-        raise NotImplementedError()
+        if self.data_type_conflict != "overwrite":
+            raise NeatValueError(f"Invalid data_type_conflict: {self.data_type_conflict}")
+        input_rules = self._to_rules(rules)
+        new_rules = input_rules.model_copy(deep=True)
+
+        destination_prop_by_source = self.mapping.properties.as_destination_by_source()
+        for prop in new_rules.properties:
+            ref = prop.as_container_reference()
+            if destination_prop := destination_prop_by_source.get(ref):
+                if prop.value_type != destination_prop.value_type and self.data_type_conflict == "overwrite":
+                    warnings.warn(
+                        PropertyOverwritingValueTypeWarning(
+                            ref.container,
+                            "container",
+                            ref.property_,  # type: ignore[arg-type]
+                            value_type=str(prop.value_type),
+                            overwrite_value_type=str(destination_prop.value_type),
+                        ),
+                        stacklevel=2,
+                    )
+                    prop.value_type = destination_prop.value_type
+                prop.container = destination_prop.container
+                prop.container_property = destination_prop.property_
+
+        destination_view_by_source = self.mapping.views.as_destination_by_source()
+        used_views: set[ViewEntity] = set()
+        for view in new_rules.views:
+            if destination_view := destination_view_by_source.get(view.as_view_reference()):
+                view.implements = [destination_view.view]
+                used_views.add(destination_view.view)
+
+        existing_views = {view.view for view in input_rules.views}
+        for new_view in list(used_views - existing_views):
+            new_rules.views.append(
+                DMSView(
+                    view=new_view,
+                    in_model=True,
+                )
+            )
+
+        return JustRules(new_rules)

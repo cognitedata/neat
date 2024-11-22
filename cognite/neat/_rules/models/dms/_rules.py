@@ -10,16 +10,19 @@ from rdflib import URIRef
 
 from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._issues import MultiValueError
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import (
     PrincipleMatchingSpaceAndVersionWarning,
 )
 from cognite.neat._rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
+    ContainerProperty,
     DataModelAspect,
     RoleTypes,
     SheetList,
     SheetRow,
+    ViewRef,
 )
 from cognite.neat._rules.models._types import (
     ClassEntityType,
@@ -180,6 +183,11 @@ class DMSProperty(SheetRow):
             return value.dump(space=metadata.space, version=metadata.version, type=default_type)
         return str(value)
 
+    def as_container_reference(self) -> ContainerProperty:
+        if self.container is None or self.container_property is None:
+            raise NeatValueError("Accessing container reference without container and container property set")
+        return ContainerProperty(container=self.container, property_=self.container_property)
+
 
 class DMSContainer(SheetRow):
     container: ContainerEntityType = Field(alias="Container")
@@ -276,6 +284,9 @@ class DMSView(SheetRow):
             implements=implements,
             properties={},
         )
+
+    def as_view_reference(self) -> ViewRef:
+        return ViewRef(view=self.view)
 
 
 class DMSNode(SheetRow):
