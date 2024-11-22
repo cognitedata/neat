@@ -57,9 +57,9 @@ class PropertyValueTypeUndefinedWarning(PropertyWarning[T_Identifier]):
 
 
 @dataclass(unsafe_hash=True)
-class PropertyOverwritingValueTypeWarning(PropertyWarning[T_Identifier]):
-    """Overwriting the {value_type} to {overwrite_value_type} for {property_name} in the {resource_type}
+class PropertyOverwritingWarning(PropertyWarning[T_Identifier]):
+    """Overwriting the {original} to {overwrite} for {property_name} in the {resource_type}
     with identifier {identifier}."""
 
-    value_type: str
-    overwrite_value_type: str
+    original: str
+    overwrite: str

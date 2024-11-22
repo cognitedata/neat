@@ -4,7 +4,7 @@ from collections import defaultdict
 from typing import Literal
 
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._issues.warnings import PropertyOverwritingValueTypeWarning
+from cognite.neat._issues.warnings import PropertyOverwritingWarning
 from cognite.neat._rules._shared import JustRules, OutRules
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.dms import DMSProperty, DMSView
@@ -122,20 +122,40 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
         for prop in new_rules.properties:
             ref = prop.as_view_reference()
             if destination_prop := destination_prop_by_source.get(ref):
-                if (
-                    prop.value_type != destination_prop.value_type or prop.container is None or prop.view is None
-                ) and self.data_type_conflict == "overwrite":
+                if prop.value_type != destination_prop.value_type and self.data_type_conflict == "overwrite":
                     warnings.warn(
-                        PropertyOverwritingValueTypeWarning(
+                        PropertyOverwritingWarning(
                             ref.view,
                             "view",
-                            ref.property_,  # type: ignore[arg-type]
-                            value_type=str(prop.value_type),
-                            overwrite_value_type=str(destination_prop.value_type),
+                            ref.property_,
+                            original=str(prop.value_type),
+                            overwrite=str(destination_prop.value_type),
                         ),
                         stacklevel=2,
                     )
                     prop.value_type = destination_prop.value_type
+                elif prop.value_type != destination_prop.value_type:
+                    raise NotImplementedError(
+                        "Mapping properties not supported if source and destination are not the same value type,"
+                        " and the 'overwrite' data_type_conflict is not used."
+                    )
+                if prop.connection != destination_prop.connection and self.data_type_conflict == "overwrite":
+                    warnings.warn(
+                        PropertyOverwritingWarning(
+                            ref.view,
+                            "view",
+                            ref.property_,
+                            original=str(prop.connection),
+                            overwrite=str(destination_prop.connection),
+                        ),
+                        stacklevel=2,
+                    )
+                    prop.connection = destination_prop.connection
+                elif prop.connection != destination_prop.connection:
+                    raise NotImplementedError(
+                        "Mapping properties not supported if source and destination are not the same connection,"
+                        " and the 'overwrite' data_type_conflict is not used."
+                    )
                 prop.container = destination_prop.container
                 prop.container_property = destination_prop.property_
 

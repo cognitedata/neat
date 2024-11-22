@@ -46,6 +46,7 @@ from cognite.neat._rules.models._types import (
     ViewEntityType,
 )
 from cognite.neat._rules.models.data_types import DataType
+from cognite.neat._rules.models.entities import EdgeEntity, ReverseConnectionEntity, ViewEntity
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -405,7 +406,8 @@ class ContainerProperty(BaseModel, frozen=True):
 
 
 class ContainerDestinationProperty(ContainerProperty, frozen=True):
-    value_type: DataType
+    value_type: DataType | ViewEntity
+    connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = None
 
 
 class ViewRef(BaseModel, frozen=True):

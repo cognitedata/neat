@@ -26,7 +26,7 @@ from ._models import (
 from ._properties import (
     PropertyDefinitionDuplicatedWarning,
     PropertyNotFoundWarning,
-    PropertyOverwritingValueTypeWarning,
+    PropertyOverwritingWarning,
     PropertyTypeNotSupportedWarning,
     PropertyValueTypeUndefinedWarning,
 )
@@ -53,7 +53,7 @@ __all__ = [
     "PropertyTypeNotSupportedWarning",
     "PropertyNotFoundWarning",
     "PropertyValueTypeUndefinedWarning",
-    "PropertyOverwritingValueTypeWarning",
+    "PropertyOverwritingWarning",
     "ResourceNeatWarning",
     "ResourcesDuplicatedWarning",
     "RegexViolationWarning",

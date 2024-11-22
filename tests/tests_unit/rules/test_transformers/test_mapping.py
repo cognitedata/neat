@@ -1,5 +1,9 @@
 from cognite.neat._rules._shared import JustRules
-from cognite.neat._rules.models._base_rules import ContainerDestinationProperty, ContainerProperty, ViewRef
+from cognite.neat._rules.models._base_rules import (
+    ContainerDestinationProperty,
+    ViewProperty,
+    ViewRef,
+)
 from cognite.neat._rules.models.data_types import String
 from cognite.neat._rules.models.dms import (
     DMSInputContainer,
@@ -49,17 +53,18 @@ class TestClassicToCoreMapper:
         input_rules = JustRules(input_)
 
         mapping = RuleMapping(
-            properties=MappingList[ContainerProperty, ContainerDestinationProperty](
+            properties=MappingList[ViewProperty, ContainerDestinationProperty](
                 [
                     Mapping(
-                        source=ContainerProperty(
-                            container=ContainerEntity.load(f"{classic}:MyAsset"),
+                        source=ViewProperty(
+                            view=ViewEntity.load(f"{classic}:MyAsset(version=1.0)"),
                             property_="name",
                         ),
                         destination=ContainerDestinationProperty(
                             container=ContainerEntity.load(f"{core}:CogniteAsset"),
                             property_="name",
                             value_type=String(),
+                            connection=None,
                         ),
                     )
                 ]
@@ -79,8 +84,11 @@ class TestClassicToCoreMapper:
         assert len(transformed.properties) == 1
         prop = transformed.properties[0]
         assert prop.container == ContainerEntity.load(f"{core}:CogniteAsset")
-        assert prop.property_ == "name"
+        assert prop.container_property == "name"
 
-        assert len(transformed.views) == 1
-        view = transformed.views[0]
-        assert view.implements == ViewEntity.load(f"{core}:CogniteAsset(version=v1)")
+        assert len(transformed.views) == 2
+        first = transformed.views[0]
+        cognite_asset = ViewEntity.load(f"{core}:CogniteAsset(version=v1)")
+        assert first.implements == [cognite_asset]
+        second = transformed.views[1]
+        assert second.view == cognite_asset
