@@ -181,7 +181,7 @@ class DMSInputView(InputComponent[DMSView]):
     name: str | None = None
     description: str | None = None
     implements: str | None = None
-    filter_: Literal["hasData", "nodeType", "rawFilter"] | None = None
+    filter_: Literal["hasData", "nodeType", "rawFilter"] | str | None = None
     in_model: bool = True
     logical: str | None = None
 
