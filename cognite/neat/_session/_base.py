@@ -74,8 +74,8 @@ class NeatSession:
             if views_ids or containers_ids:
                 if self._client is None:
                     raise NeatSessionError(
-                        "No client provided. You are referencing Cognite containers in your data model, "
-                        "NEAT needs a client to lookup the container definitions. "
+                        "No client provided. You are referencing unknown views and containers in your data model, "
+                        "NEAT needs a client to lookup the definitions. "
                         "Please set the client in the session, NeatSession(client=client)."
                     )
                 schema = self._state.data_model.lookup_schema(self._client, list(views_ids), list(containers_ids))

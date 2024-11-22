@@ -206,8 +206,8 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
     def as_write(self, view: View) -> ViewApply:
         return ViewApply.load(self._as_write_raw(view))
 
-    def retrieve_all_parents(self, views: list[ViewId]) -> list[View]:
-        return self._retrieve_view_ancestors(views, self._cache_view_by_id)
+    def retrieve_all_ancestors(self, views: list[ViewId]) -> ViewList:
+        return ViewList(self._retrieve_view_ancestors(views, self._cache_view_by_id))
 
     def _retrieve_view_ancestors(self, parents: list[ViewId], cache: dict[ViewId, View]) -> list[View]:
         """Retrieves all ancestors of a view.
