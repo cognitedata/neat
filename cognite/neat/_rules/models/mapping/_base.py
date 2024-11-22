@@ -9,10 +9,10 @@ from pydantic_core import core_schema
 from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules.models._base_rules import ClassRef, PropertyRef
-from cognite.neat._rules.models.entities import ClassEntity, Undefined
+from cognite.neat._rules.models._base_rules import ContainerProperty, ViewRef
+from cognite.neat._rules.models.entities import ContainerEntity, DMSUnknownEntity, Undefined, ViewEntity
 
-T_Mapping = TypeVar("T_Mapping", bound=ClassRef | PropertyRef)
+T_Mapping = TypeVar("T_Mapping", bound=ViewRef | ContainerProperty)
 
 
 class Mapping(BaseModel, Generic[T_Mapping]):
@@ -68,8 +68,8 @@ class MappingList(list, MutableSequence[Mapping[T_Mapping]]):
 
 
 class RuleMapping(BaseModel):
-    properties: MappingList[PropertyRef]
-    classes: MappingList[ClassRef]
+    properties: MappingList[ContainerProperty]
+    views: MappingList[ViewRef]
 
     @field_validator("properties", "classes", mode="before")
     def as_mapping_list(cls, value: Sequence[Any], info: ValidationInfo) -> Any:
@@ -102,8 +102,10 @@ class RuleMapping(BaseModel):
 
         """
         df = pd.read_excel(path).dropna(axis=1, how="all")
-        properties = MappingList[PropertyRef]()
-        destination_classes_by_source: dict[ClassEntity, Counter[ClassEntity]] = defaultdict(Counter)
+        properties = MappingList[ContainerProperty]()
+        destination_classes_by_source: dict[ContainerEntity, Counter[ContainerProperty | DMSUnknownEntity]] = (
+            defaultdict(Counter)
+        )
         for _, row in df.iterrows():
             if len(row) < 4:
                 raise NeatValueError(f"Row {row} is not valid. Expected 4 columns, got {len(row)}")
@@ -111,21 +113,21 @@ class RuleMapping(BaseModel):
             if any(pd.isna(row.iloc[:4])):
                 continue
             source_class, source_property, destination_class, destination_property = row.iloc[:4]
-            source_entity = ClassEntity.load(source_class, prefix=source_prefix or Undefined)
-            destination_entity = ClassEntity.load(destination_class, prefix=destination_prefix or Undefined)
+            source_entity = ContainerEntity.load(source_class, prefix=source_prefix or Undefined)
+            destination_entity = ContainerEntity.load(destination_class, prefix=destination_prefix or Undefined)
             properties.append(
                 Mapping(
-                    source=PropertyRef(Class=source_entity, Property=source_property),
-                    destination=PropertyRef(Class=destination_entity, Property=destination_property),
+                    source=ContainerProperty(container=source_entity, property_=source_property),
+                    destination=ContainerProperty(container=destination_entity, property_=destination_property),
                 )
             )
             destination_classes_by_source[source_entity][destination_entity] += 1
 
-        classes = MappingList[ClassRef]()
+        classes = MappingList[ViewRef]()
         for source_entity, destination_classes in destination_classes_by_source.items():
             destination_entity = destination_classes.most_common(1)[0][0]
-            classes.append(
-                Mapping(source=ClassRef(Class=source_entity), destination=ClassRef(Class=destination_entity))
-            )
+            source_view = ViewEntity(prefix=source_entity.prefix, suffix=source_entity.name)
+            destination_view = ViewEntity(prefix=destination_entity.prefix, suffix=destination_entity.name)
+            classes.append(Mapping(source=ViewRef(view=source_view), destination=ViewRef(view=destination_view)))
 
-        return cls(properties=properties, classes=classes)
+        return cls(properties=properties, views=classes)

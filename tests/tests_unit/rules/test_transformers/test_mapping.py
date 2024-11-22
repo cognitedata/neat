@@ -1,6 +1,6 @@
 from cognite.neat._rules._shared import JustRules
 from cognite.neat._rules.models import InformationInputRules
-from cognite.neat._rules.models._base_rules import ClassRef, PropertyRef
+from cognite.neat._rules.models._base_rules import ContainerProperty, ViewRef
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import (
     InformationInputClass,
@@ -40,25 +40,25 @@ class TestClassicToCoreMapper:
         input_rules = JustRules(input_)
 
         mapping = RuleMapping(
-            properties=MappingList[PropertyRef](
+            properties=MappingList[ContainerProperty](
                 [
-                    Mapping[PropertyRef](
-                        source=PropertyRef(
+                    Mapping[ContainerProperty](
+                        source=ContainerProperty(
                             Class=ClassEntity.load(f"{classic}:Asset"),
                             Property="name",
                         ),
-                        destination=PropertyRef(
+                        destination=ContainerProperty(
                             Class=ClassEntity.load(f"{core}:CogniteAsset"),
                             Property="name",
                         ),
                     )
                 ]
             ),
-            classes=MappingList[ClassRef](
+            views=MappingList[ViewRef](
                 [
-                    Mapping[ClassRef](
-                        source=ClassRef(Class=ClassEntity.load(f"{classic}:Asset")),
-                        destination=ClassRef(Class=ClassEntity.load(f"{core}:CogniteAsset")),
+                    Mapping[ViewRef](
+                        source=ViewRef(Class=ClassEntity.load(f"{classic}:Asset")),
+                        destination=ViewRef(Class=ClassEntity.load(f"{core}:CogniteAsset")),
                     )
                 ]
             ),

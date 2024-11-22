@@ -10,12 +10,12 @@ class MappingAPI:
     def __init__(self, state: SessionState):
         self._state = state
 
-    def classic_to_core(self) -> None:
+    def classic_to_core(self, org_name: str) -> None:
         """Map classic types to core types.
 
         Note this automatically creates an extended CogniteCore model.
 
         """
-        _ = RuleMapper(create_classic_to_core_mapping())
+        _ = RuleMapper(create_classic_to_core_mapping(org_name))
 
         raise NotImplementedError("This method is not yet implemented.")

@@ -39,12 +39,13 @@ from rdflib import Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.models._types import (
-    ClassEntityType,
+    ContainerEntityType,
     DataModelExternalIdType,
-    InformationPropertyType,
+    DmsPropertyType,
     SpaceType,
     StrListType,
     VersionType,
+    ViewEntityType,
 )
 
 if sys.version_info >= (3, 11):
@@ -399,10 +400,11 @@ ExtensionCategoryType = Annotated[
 
 
 # Immutable such that this can be used as a key in a dictionary
-class PropertyRef(BaseModel, frozen=True):
-    class_: ClassEntityType = Field(alias="Class")
-    property_: InformationPropertyType = Field(alias="Property")
+class ContainerProperty(BaseModel, frozen=True):
+    container: ContainerEntityType
+    property_: DmsPropertyType
+    value_type: str | None = Field(None)
 
 
-class ClassRef(BaseModel, frozen=True):
-    class_: ClassEntityType = Field(alias="Class")
+class ViewRef(BaseModel, frozen=True):
+    view: ViewEntityType
