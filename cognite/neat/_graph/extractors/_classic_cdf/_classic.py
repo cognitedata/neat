@@ -205,7 +205,7 @@ class ClassicGraphExtractor(BaseExtractor):
 
     @staticmethod
     def _chunk(items: Sequence, description: str) -> Iterable:
-        to_iterate: Iterable = chunker(items, chunk_size=1000)
+        to_iterate: Iterable = chunker(items, chunk_size=10_000)
         try:
             from rich.progress import track
         except ModuleNotFoundError:
@@ -213,7 +213,7 @@ class ClassicGraphExtractor(BaseExtractor):
         else:
             to_iterate = track(
                 to_iterate,
-                total=(len(items) // 1000) + 1,
+                total=(len(items) // 10_000) + 1,
                 description=description,
             )
         return to_iterate
