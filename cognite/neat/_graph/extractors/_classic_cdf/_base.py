@@ -6,7 +6,7 @@ from collections.abc import Callable, Iterable, Sequence, Set
 from datetime import datetime, timezone
 from typing import Any, Generic, TypeVar
 
-from cognite.client.data_classes._base import CogniteResource
+from cognite.client.data_classes._base import WriteableCogniteResource
 from pydantic import AnyHttpUrl, ValidationError
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
@@ -15,7 +15,7 @@ from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import string_to_ideal_type
 
-T_CogniteResource = TypeVar("T_CogniteResource", bound=CogniteResource)
+T_CogniteResource = TypeVar("T_CogniteResource", bound=WriteableCogniteResource)
 
 DEFAULT_SKIP_METADATA_VALUES = frozenset({"nan", "null", "none", ""})
 
@@ -129,6 +129,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
 
         # Set rdf type
         triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
+        if self.as_write:
+            item = item.as_write()
         dumped = item.dump(self.camel_case)
         dumped.pop("id", None)
         # We have parentId so we don't need parentExternalId
