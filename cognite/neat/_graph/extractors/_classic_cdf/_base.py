@@ -130,6 +130,11 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         dumped.pop("id", None)
         if "metadata" in dumped:
             triples.extend(self._metadata_to_triples(id_, dumped.pop("metadata")))
+        if "columns" in dumped:
+            columns = dumped.pop("columns")
+            triples.append(
+                (id_, self.namespace.columns, Literal(json.dumps({"columns": columns}), datatype=XSD._NS["json"]))
+            )
 
         for key, value in dumped.items():
             if value is None or value == []:
