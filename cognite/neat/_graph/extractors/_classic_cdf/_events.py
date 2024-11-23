@@ -20,9 +20,7 @@ class EventsExtractor(ClassicCDFBaseExtractor[Event]):
         return total, items
 
     @classmethod
-    def _from_hierarchy(
-        cls, client: CogniteClient, root_asset_external_id: str
-    ) -> tuple[int | None, Iterable[Event]]:
+    def _from_hierarchy(cls, client: CogniteClient, root_asset_external_id: str) -> tuple[int | None, Iterable[Event]]:
         total = client.events.aggregate_count(
             filter=EventFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
         )

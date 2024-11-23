@@ -157,15 +157,15 @@ class InferenceImporter(BaseRDFImporter):
                         continue
                     property_id = remove_namespace_from_uri(property_uri)
                     if property_id in {"external_id", "externalId"}:
-                        issue = PropertySkippedWarning(
+                        skip_issue = PropertySkippedWarning(
                             resource_type="Property",
                             identifier=f"{class_id}:{property_id}",
                             property_name=property_id,
                             reason="External ID is assumed to be the unique identifier of the instance "
                             "and is not part of the data model schema.",
                         )
-                        if issue not in self.issue_list:
-                            self.issue_list.append(issue)
+                        if skip_issue not in self.issue_list:
+                            self.issue_list.append(skip_issue)
                         continue
 
                     self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)

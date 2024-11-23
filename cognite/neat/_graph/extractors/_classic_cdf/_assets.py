@@ -21,9 +21,7 @@ class AssetsExtractor(ClassicCDFBaseExtractor[Asset]):
         return total, items
 
     @classmethod
-    def _from_hierarchy(
-        cls, client: CogniteClient, root_asset_external_id: str
-    ) -> tuple[int | None, Iterable[[Asset]]]:
+    def _from_hierarchy(cls, client: CogniteClient, root_asset_external_id: str) -> tuple[int | None, Iterable[Asset]]:
         total = client.assets.aggregate_count(
             filter=AssetFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
         )

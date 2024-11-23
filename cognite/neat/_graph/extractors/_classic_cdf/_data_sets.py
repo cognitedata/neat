@@ -18,7 +18,7 @@ class DataSetExtractor(ClassicCDFBaseExtractor[DataSet]):
     def _from_dataset(
         cls,
         client: CogniteClient,
-        data_set_external_id: SequenceNotStr[str],
+        data_set_external_id: SequenceNotStr[str],  # type: ignore[override]
     ) -> tuple[int | None, Iterable[DataSet]]:
         items = client.data_sets.retrieve_multiple(external_ids=data_set_external_id)
         return len(items), items
