@@ -229,7 +229,3 @@ def create_classic_to_core_mapping(org_name: str) -> RuleMapping:
     """.replace("{{ org_name }}", org_name)
 
     return RuleMapping.model_validate(yaml.safe_load(raw))
-
-
-if __name__ == "__main__":
-    create_classic_to_core_mapping("MyOrg")
