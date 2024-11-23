@@ -1,4 +1,4 @@
-from cognite.neat._rules.models.mapping import create_classic_to_core_mapping
+from cognite.neat._rules.models.mapping import load_classic_to_core_mapping
 from cognite.neat._rules.transformers import RuleMapper
 
 from ._state import SessionState
@@ -16,6 +16,6 @@ class MappingAPI:
         Note this automatically creates an extended CogniteCore model.
 
         """
-        _ = RuleMapper(create_classic_to_core_mapping(org_name))
+        _ = RuleMapper(load_classic_to_core_mapping(org_name))
 
         raise NotImplementedError("This method is not yet implemented.")
