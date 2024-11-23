@@ -9,6 +9,7 @@ from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 def test_asset_depth_transformer_without_typing():
     store = NeatGraphStore.from_memory_store()
     extractor = extractors.AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml")
+    extractor.camel_case = False
     store.write(extractor)
 
     transformer = transformers.AddAssetDepth()

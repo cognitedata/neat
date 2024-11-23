@@ -128,6 +128,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
         dumped = item.dump(self.camel_case)
         dumped.pop("id", None)
+        # We have parentId so we don't need parentExternalId
+        dumped.pop("parentExternalId", None)
         if "metadata" in dumped:
             triples.extend(self._metadata_to_triples(id_, dumped.pop("metadata")))
         if "columns" in dumped:
@@ -171,7 +173,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     def _as_object(self, raw: Any, key: str) -> Literal | URIRef:
         if key in {"data_set_id", "DataSetId"}:
             return self.namespace[f"{InstanceIdPrefix.data_set}{raw}"]
-        elif key in {"assetId", "asset_id", "assetIds", "asset_ids"}:
+        elif key in {"assetId", "asset_id", "assetIds", "asset_ids", "parentId", "rootId", "parent_id", "root_id"}:
             return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
         elif key in {
             "startTime",
