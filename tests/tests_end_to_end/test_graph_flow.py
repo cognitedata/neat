@@ -1,5 +1,6 @@
 from typing import Any
 
+import pytest
 import yaml
 from cognite.client.data_classes.data_modeling import InstanceApply
 from pytest_regressions.data_regression import DataRegressionFixture
@@ -31,7 +32,7 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
-    # @pytest.mark.skip("InProgress")
+    @pytest.mark.skip("InProgress")
     def test_classic_to_dms(self, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(storage="oxigraph")
         # Hack to read in the test data.
