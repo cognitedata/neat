@@ -1,12 +1,11 @@
-from collections.abc import Set
+from collections.abc import Iterable
 from pathlib import Path
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import DataSet, DataSetList
 from cognite.client.utils.useful_types import SequenceNotStr
-from rdflib import Namespace
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
+from ._base import ClassicCDFBaseExtractor, InstanceIdPrefix, T_CogniteResource
 
 
 class DataSetExtractor(ClassicCDFBaseExtractor[DataSet]):
@@ -16,35 +15,21 @@ class DataSetExtractor(ClassicCDFBaseExtractor[DataSet]):
     _instance_id_prefix = InstanceIdPrefix.data_set
 
     @classmethod
-    def from_dataset(
+    def _from_dataset(
         cls,
         client: CogniteClient,
         data_set_external_id: SequenceNotStr[str],
-        namespace: Namespace | None = None,
-        unpack_metadata: bool = True,
-        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
-    ):
-        return cls(
-            client.data_sets.retrieve_multiple(external_ids=data_set_external_id),
-            namespace=namespace,
-            total=len(data_set_external_id),
-            unpack_metadata=unpack_metadata,
-            skip_metadata_values=skip_metadata_values,
-        )
+    ) -> tuple[int | None, Iterable[DataSet]]:
+        items = client.data_sets.retrieve_multiple(external_ids=data_set_external_id)
+        return len(items), items
 
     @classmethod
-    def from_file(
-        cls,
-        file_path: str,
-        namespace: Namespace | None = None,
-        unpack_metadata: bool = True,
-        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
-    ):
+    def _from_hierarchy(
+        cls, client: CogniteClient, root_asset_external_id: str
+    ) -> tuple[int | None, Iterable[T_CogniteResource]]:
+        raise NotImplementedError("DataSets do not have a hierarchy.")
+
+    @classmethod
+    def _from_file(cls, file_path: str | Path) -> tuple[int | None, Iterable[DataSet]]:
         data_sets = DataSetList.load(Path(file_path).read_text())
-        return cls(
-            data_sets,
-            namespace=namespace,
-            total=len(data_sets),
-            unpack_metadata=unpack_metadata,
-            skip_metadata_values=skip_metadata_values,
-        )
+        return len(data_sets), data_sets

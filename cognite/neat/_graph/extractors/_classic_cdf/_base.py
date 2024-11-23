@@ -1,11 +1,13 @@
 import json
 import re
 import sys
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence, Set
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Generic, TypeVar
 
+from cognite.client import CogniteClient
 from cognite.client.data_classes._base import WriteableCogniteResource
 from pydantic import AnyHttpUrl, ValidationError
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
@@ -82,7 +84,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
         camel_case: bool = True,
-        as_write: bool = False,
+        as_write: bool = True,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.items = items
@@ -204,3 +206,69 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             except ValidationError:
                 return Literal(raw)
         return Literal(raw, datatype=XSD.dateTime)
+
+    @classmethod
+    def from_dataset(
+        cls,
+        client: CogniteClient,
+        data_set_external_id: str,
+        namespace: Namespace | None = None,
+        to_type: Callable[[T_CogniteResource], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+        camel_case: bool = True,
+        as_write: bool = False,
+    ):
+        total, items = cls._from_dataset(client, data_set_external_id)
+        return cls(items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write)
+
+    @classmethod
+    @abstractmethod
+    def _from_dataset(
+        cls, client: CogniteClient, data_set_external_id: str
+    ) -> tuple[int | None, Iterable[T_CogniteResource]]:
+        raise NotImplementedError
+
+    @classmethod
+    def from_hierarchy(
+        cls,
+        client: CogniteClient,
+        root_asset_external_id: str,
+        namespace: Namespace | None = None,
+        to_type: Callable[[T_CogniteResource], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+        camel_case: bool = True,
+        as_write: bool = False,
+    ):
+        total, items = cls._from_hierarchy(client, root_asset_external_id)
+        return cls(items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write)
+
+    @classmethod
+    @abstractmethod
+    def _from_hierarchy(
+        cls, client: CogniteClient, root_asset_external_id: str
+    ) -> tuple[int | None, Iterable[T_CogniteResource]]:
+        raise NotImplementedError
+
+    @classmethod
+    def from_file(
+        cls,
+        file_path: str | Path,
+        namespace: Namespace | None = None,
+        to_type: Callable[[T_CogniteResource], str | None] | None = None,
+        limit: int | None = None,
+        unpack_metadata: bool = True,
+        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+        camel_case: bool = True,
+        as_write: bool = False,
+    ):
+        total, items = cls._from_file(file_path)
+        return cls(items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write)
+
+    @classmethod
+    @abstractmethod
+    def _from_file(cls, file_path: str | Path) -> tuple[int | None, Iterable[T_CogniteResource]]:
+        raise NotImplementedError

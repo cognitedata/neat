@@ -8,7 +8,7 @@ from rdflib import Namespace
 
 from cognite.neat._utils.auxiliary import create_sha256_hash
 
-from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
+from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix, T_CogniteResource
 
 
 class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
@@ -47,45 +47,24 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
 
     @classmethod
-    def from_dataset(
+    def _from_dataset(
         cls,
         client: CogniteClient,
         data_set_external_id: str,
-        namespace: Namespace | None = None,
-        to_type: Callable[[Relationship], str | None] | None = None,
-        limit: int | None = None,
-        unpack_metadata: bool = True,
-        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
-    ):
-        return cls(
-            client.relationships(data_set_external_ids=data_set_external_id),
-            namespace=namespace,
-            to_type=to_type,
-            limit=limit,
-            unpack_metadata=unpack_metadata,
-            skip_metadata_values=skip_metadata_values,
-        )
+    ) -> tuple[int | None, Iterable[Relationship]]:
+        items = client.relationships(data_set_external_ids=data_set_external_id)
+        return None, items
 
     @classmethod
-    def from_file(
-        cls,
-        file_path: str,
-        namespace: Namespace | None = None,
-        to_type: Callable[[Relationship], str | None] | None = None,
-        limit: int | None = None,
-        unpack_metadata: bool = True,
-        skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
-    ):
+    def _from_hierarchy(
+        cls, client: CogniteClient, root_asset_external_id: str
+    ) -> tuple[int | None, Iterable[T_CogniteResource]]:
+        raise NotImplementedError("Relationships do not have a hierarchy.")
+
+    @classmethod
+    def _from_file(cls, file_path: str | Path) -> tuple[int | None, Iterable[Relationship]]:
         relationships = RelationshipList.load(Path(file_path).read_text())
-        return cls(
-            relationships,
-            namespace=namespace,
-            total=len(relationships),
-            to_type=to_type,
-            limit=limit,
-            unpack_metadata=unpack_metadata,
-            skip_metadata_values=skip_metadata_values,
-        )
+        return len(relationships), relationships
 
     def _fallback_id(self, item: Relationship) -> str | None:
         if item.external_id and item.source_external_id and item.target_external_id:
