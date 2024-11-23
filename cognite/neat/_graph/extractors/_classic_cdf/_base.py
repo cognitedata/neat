@@ -132,7 +132,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             triples.extend(self._metadata_to_triples(id_, dumped.pop("metadata")))
 
         for key, value in dumped.items():
-            if value is None:
+            if value is None or value == []:
                 continue
             values = value if isinstance(value, Sequence) and not isinstance(value, str) else [value]
             for raw in values:
