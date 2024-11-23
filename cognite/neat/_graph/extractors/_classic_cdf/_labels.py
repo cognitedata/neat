@@ -10,23 +10,7 @@ from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, Instan
 
 
 class LabelsExtractor(ClassicCDFBaseExtractor[LabelDefinition]):
-    """Extract data from Cognite Data Fusions Labels into Neat.
-
-    Args:
-        items (Iterable[LabelDefinition]): An iterable of items.
-        namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
-        to_type (Callable[[LabelDefinition], str | None], optional): A function to convert an item to a type.
-            Defaults to None. If None or if the function returns None, the asset will be set to the default type.
-        total (int, optional): The total number of items to load. If passed, you will get a progress bar if rich
-            is installed. Defaults to None.
-        limit (int, optional): The maximal number of items to load. Defaults to None. This is typically used for
-            testing setup of the extractor. For example, if you are extracting 100 000 assets, you might want to
-            limit the extraction to 1000 assets to test the setup.
-        unpack_metadata (bool, optional): Whether to unpack metadata. Defaults to False, which yields the metadata as
-            a JSON string.
-        skip_metadata_values (set[str] | frozenset[str] | None, optional): If you are unpacking metadata, then
-           values in this set will be skipped.
-    """
+    """Extract data from Cognite Data Fusions Labels into Neat."""
 
     _default_rdf_type = "Label"
     _instance_id_prefix = InstanceIdPrefix.label

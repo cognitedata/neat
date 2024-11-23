@@ -10,25 +10,7 @@ from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, Instan
 
 
 class DataSetExtractor(ClassicCDFBaseExtractor[DataSet]):
-    """Extract DataSets from Cognite Data Fusions into Neat.
-
-    Args:
-        items (Iterable[Asset]): An iterable of assets.
-        namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
-        to_type (Callable[[Asset], str | None], optional): A function to convert an asset to a type. Defaults to None.
-            If None or if the function returns None, the asset will be set to the default type "Asset".
-        total (int, optional): The total number of assets to load. If passed, you will get a progress bar if rich
-            is installed. Defaults to None.
-        limit (int, optional): The maximal number of assets to load. Defaults to None. This is typically used for
-            testing setup of the extractor. For example, if you are extracting 100 000 assets, you might want to
-            limit the extraction to 1000 assets to test the setup.
-        unpack_metadata (bool, optional): Whether to unpack metadata. Defaults to False, which yields the metadata as
-            a JSON string.
-        skip_metadata_values (set[str] | frozenset[str] | None, optional): A set of values to skip when unpacking
-            metadata. Defaults to frozenset({"nan", "null", "none", ""}).
-        camel_case (bool, optional): Whether to use camelCase instead of snake_case for property names.
-            Defaults to True.
-    """
+    """Extract DataSets from Cognite Data Fusions into Neat."""
 
     _default_rdf_type = "DataSet"
     _instance_id_prefix = InstanceIdPrefix.data_set

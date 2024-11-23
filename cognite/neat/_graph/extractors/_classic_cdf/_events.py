@@ -9,25 +9,7 @@ from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, Instan
 
 
 class EventsExtractor(ClassicCDFBaseExtractor[Event]):
-    """Extract data from Cognite Data Fusions Events into Neat.
-
-    Args:
-        items (Iterable[Event]): An iterable of items.
-        namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
-        to_type (Callable[[Event], str | None], optional): A function to convert an item to a type.
-            Defaults to None. If None or if the function returns None, the asset will be set to the default type.
-        total (int, optional): The total number of items to load. If passed, you will get a progress bar if rich
-            is installed. Defaults to None.
-        limit (int, optional): The maximal number of items to load. Defaults to None. This is typically used for
-            testing setup of the extractor. For example, if you are extracting 100 000 assets, you might want to
-            limit the extraction to 1000 assets to test the setup.
-        unpack_metadata (bool, optional): Whether to unpack metadata. Defaults to False, which yields the metadata as
-            a JSON string.
-        skip_metadata_values (set[str] | frozenset[str] | None, optional): If you are unpacking metadata, then
-           values in this set will be skipped.
-        camel_case (bool, optional): Whether to use camelCase instead of snake_case for property names.
-            Defaults to True.
-    """
+    """Extract data from Cognite Data Fusions Events into Neat."""
 
     _default_rdf_type = "Event"
     _instance_id_prefix = InstanceIdPrefix.event

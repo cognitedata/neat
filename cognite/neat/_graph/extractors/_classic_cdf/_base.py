@@ -65,6 +65,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
            values in this set will be skipped.
         camel_case (bool, optional): Whether to use camelCase instead of snake_case for property names.
             Defaults to True.
+        as_write (bool, optional): Whether to use the write/request format of the items. Defaults to False.
     """
 
     _default_rdf_type: str
@@ -81,6 +82,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
         camel_case: bool = True,
+        as_write: bool = False,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.items = items
@@ -90,6 +92,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         self.unpack_metadata = unpack_metadata
         self.skip_metadata_values = skip_metadata_values
         self.camel_case = camel_case
+        self.as_write = as_write
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
