@@ -315,12 +315,12 @@ FILES = [data_sheet]
 
 def create_extractors() -> list[ClassicCDFBaseExtractor]:
     return [
-        DataSetExtractor(DATASETS, namespace=CLASSIC_CDF_NAMESPACE),
-        AssetsExtractor(ASSETS, namespace=CLASSIC_CDF_NAMESPACE),
-        RelationshipsExtractor(RELATIONSHIPS, namespace=CLASSIC_CDF_NAMESPACE),
-        TimeSeriesExtractor(TIME_SERIES, namespace=CLASSIC_CDF_NAMESPACE),
-        SequencesExtractor(SEQUENCES, namespace=CLASSIC_CDF_NAMESPACE),
-        FilesExtractor(FILES, namespace=CLASSIC_CDF_NAMESPACE),
-        LabelsExtractor(LABELS, namespace=CLASSIC_CDF_NAMESPACE),
-        EventsExtractor(EVENTS, namespace=CLASSIC_CDF_NAMESPACE),
+        DataSetExtractor(DATASETS, namespace=CLASSIC_CDF_NAMESPACE, unpack_metadata=False),
+        AssetsExtractor(ASSETS, namespace=CLASSIC_CDF_NAMESPACE, unpack_metadata=False),
+        RelationshipsExtractor(RELATIONSHIPS, namespace=CLASSIC_CDF_NAMESPACE, unpack_metadata=False),
+        TimeSeriesExtractor(TIME_SERIES, namespace=CLASSIC_CDF_NAMESPACE, unpack_metadata=False),
+        SequencesExtractor(SEQUENCES, namespace=CLASSIC_CDF_NAMESPACE, unpack_metadata=False),
+        FilesExtractor(FILES, namespace=CLASSIC_CDF_NAMESPACE, unpack_metadata=False),
+        LabelsExtractor(LABELS, namespace=CLASSIC_CDF_NAMESPACE, unpack_metadata=False),
+        EventsExtractor(EVENTS, namespace=CLASSIC_CDF_NAMESPACE, unpack_metadata=False),
     ]
