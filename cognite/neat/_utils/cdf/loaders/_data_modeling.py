@@ -18,6 +18,8 @@ from cognite.client.data_classes.data_modeling import (
     DataModelApply,
     DataModelApplyList,
     DataModelList,
+    EdgeConnection,
+    MappedProperty,
     RequiresConstraint,
     Space,
     SpaceApply,
@@ -34,6 +36,7 @@ from cognite.client.data_classes.data_modeling.ids import (
     NodeId,
     ViewId,
 )
+from cognite.client.data_classes.data_modeling.views import ReverseDirectRelation
 from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
@@ -180,7 +183,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         if view.properties:
             # All read version of views have all the properties of their parent views.
             # We need to remove these properties to compare with the local view.
-            parents = self._retrieve_view_ancestors(view.implements or [], self._cache_view_by_id)
+            parents = self._retrieve_view_ancestors(view.implements or [], False, self._cache_view_by_id)
             for parent in parents:
                 for prop_name in parent.properties.keys():
                     dumped["properties"].pop(prop_name, None)
@@ -206,10 +209,12 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
     def as_write(self, view: View) -> ViewApply:
         return ViewApply.load(self._as_write_raw(view))
 
-    def retrieve_all_ancestors(self, views: list[ViewId]) -> ViewList:
-        return ViewList(self._retrieve_view_ancestors(views, self._cache_view_by_id))
+    def retrieve_all_ancestors(self, views: list[ViewId], include_connections: bool = False) -> ViewList:
+        return ViewList(self._retrieve_view_ancestors(views, include_connections, self._cache_view_by_id))
 
-    def _retrieve_view_ancestors(self, parents: list[ViewId], cache: dict[ViewId, View]) -> list[View]:
+    def _retrieve_view_ancestors(
+        self, parents: list[ViewId], include_connections: bool, cache: dict[ViewId, View]
+    ) -> list[View]:
         """Retrieves all ancestors of a view.
 
         This will mutate the cache passed in, and return a list of views that are the ancestors
@@ -217,22 +222,24 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
 
         Args:
             parents: The parents of the view to retrieve all ancestors for
+            include_connections: Whether to include all sources.
             cache: The cache to store the views in
         """
-        parent_ids = parents.copy()
+        backlog_ids = parents.copy()
         found: list[View] = []
         found_ids: set[ViewId] = set()
-        while parent_ids:
+        while backlog_ids:
             to_lookup: set[ViewId] = set()
-            grand_parent_ids = []
-            for parent in parent_ids:
-                if parent in found_ids:
+            backlog_ids = []
+            for backlog_id in backlog_ids:
+                if backlog_id in found_ids:
                     continue
-                elif parent in cache:
-                    found.append(cache[parent])
-                    grand_parent_ids.extend(cache[parent].implements or [])
+                elif backlog_id in cache:
+                    parent_view = cache[backlog_id]
+                    found.append(parent_view)
+                    self._update_backlog(parent_view, backlog_ids, found_ids, include_connections)
                 else:
-                    to_lookup.add(parent)
+                    to_lookup.add(backlog_id)
 
             if to_lookup:
                 looked_up = self.client.data_modeling.views.retrieve(list(to_lookup))
@@ -240,10 +247,31 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
                 found.extend(looked_up)
                 found_ids.update({view.as_id() for view in looked_up})
                 for view in looked_up:
-                    grand_parent_ids.extend(view.implements or [])
+                    self._update_backlog(view, backlog_ids, found_ids, include_connections)
 
-            parent_ids = grand_parent_ids
+            backlog_ids = backlog_ids
         return found
+
+    @staticmethod
+    def _update_backlog(
+        parent_view: View, backlog_ids: list[ViewId], found_ids: set[ViewId], include_connections: bool
+    ) -> None:
+        backlog_ids.extend(parent_view.implements or [])
+        if include_connections:
+            for prop in parent_view.properties.values():
+                if isinstance(prop, MappedProperty) and prop.source and prop.source not in found_ids:
+                    backlog_ids.append(prop.source)
+                elif isinstance(prop, EdgeConnection | ReverseDirectRelation) and prop.source not in found_ids:
+                    backlog_ids.append(prop.source)
+
+                if isinstance(prop, EdgeConnection) and prop.edge_source and prop.edge_source not in found_ids:
+                    backlog_ids.append(prop.edge_source)
+                elif (
+                    isinstance(prop, ReverseDirectRelation)
+                    and isinstance(prop.through.source, ViewId)
+                    and prop.through.source not in found_ids
+                ):
+                    backlog_ids.append(prop.through.source)
 
 
 class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
