@@ -1,8 +1,11 @@
+import warnings
 from abc import ABC
 from collections import defaultdict
-from typing import Literal
+from functools import cached_property
+from typing import Any, ClassVar, Literal
 
 from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._issues.warnings import PropertyOverwritingWarning
 from cognite.neat._rules._shared import JustRules, OutRules
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.dms import DMSProperty
@@ -104,11 +107,73 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
 
     """
 
+    _mapping_fields: ClassVar[frozenset[str]] = frozenset(
+        ["connection", "value_type", "nullable", "immutable", "is_list", "default", "index", "constraint"]
+    )
+
     def __init__(self, mapping: DMSRules, data_type_conflict: Literal["overwrite"] = "overwrite") -> None:
         self.mapping = mapping
         self.data_type_conflict = data_type_conflict
 
+    @cached_property
+    def _view_by_entity_id(self):
+        return {view.view: view for view in self.mapping.views}
+
+    @cached_property
+    def _property_by_view_property(self):
+        return {(prop.view, prop.view_property): prop for prop in self.mapping.properties}
+
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         if self.data_type_conflict != "overwrite":
             raise NeatValueError(f"Invalid data_type_conflict: {self.data_type_conflict}")
-        raise NotImplementedError("This method is not yet implemented.")
+        input_rules = self._to_rules(rules)
+        new_rules = input_rules.model_copy(deep=True)
+
+        for view in new_rules.views:
+            if view.view in self._view_by_entity_id:
+                view.implements = [self._view_by_entity_id[view.view].view]
+
+        for prop in new_rules.properties:
+            if (prop.view, prop.view_property) not in self._property_by_view_property:
+                continue
+            mapping_prop = self._property_by_view_property[(prop.view, prop.view_property)]
+            to_overwrite, conflicts = self._find_overwrites(prop, mapping_prop)
+            if conflicts and self.data_type_conflict == "overwrite":
+                warnings.warn(
+                    PropertyOverwritingWarning(prop.view.as_id(), "view", prop.view_property, tuple(conflicts)),
+                    stacklevel=2,
+                )
+            elif conflicts:
+                raise NeatValueError(f"Conflicting properties for {prop.view}.{prop.view_property}: {conflicts}")
+            for field_name, value in to_overwrite.items():
+                setattr(prop, field_name, value)
+            prop.container = mapping_prop.container
+            prop.container_property = mapping_prop.container_property
+        return JustRules(new_rules)
+
+    def _find_overwrites(self, prop: DMSProperty, mapping_prop: DMSProperty) -> tuple[dict[str, Any], list[str]]:
+        """Finds the properties that need to be overwritten and returns them.
+
+        In addition, conflicting properties are returned. Note that overwriting properties that are
+        originally None is not considered a conflict. Thus, you can have properties to overwrite but no
+        conflicts.
+
+        Args:
+            prop: The property to compare.
+            mapping_prop: The property to compare against.
+
+        Returns:
+            A tuple with the properties to overwrite and the conflicting properties.
+
+        """
+        to_overwrite: dict[str, Any] = {}
+        conflicts: list[str] = []
+        for field_name in self._mapping_fields:
+            mapping_value = getattr(mapping_prop, field_name)
+            source_value = getattr(prop, field_name)
+            if mapping_value != source_value:
+                to_overwrite[field_name] = mapping_value
+                if source_value is not None:
+                    # These are used for warnings so we use the alias to make it more readable for the user
+                    conflicts.append(mapping_prop.model_fields[field_name].alias or field_name)
+        return to_overwrite, conflicts

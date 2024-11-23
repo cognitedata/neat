@@ -58,8 +58,7 @@ class PropertyValueTypeUndefinedWarning(PropertyWarning[T_Identifier]):
 
 @dataclass(unsafe_hash=True)
 class PropertyOverwritingWarning(PropertyWarning[T_Identifier]):
-    """Overwriting the {original} to {overwrite} for {property_name} in the {resource_type}
+    """Overwriting the {overwriting} for {property_name} in the {resource_type}
     with identifier {identifier}."""
 
-    original: str
-    overwrite: str
+    overwriting: tuple[str, ...]
