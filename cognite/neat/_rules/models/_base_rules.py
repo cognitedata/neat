@@ -250,7 +250,7 @@ class BaseRules(SchemaModel, ABC):
         """Returns a list of headers for the model, typically used by ExcelExporter"""
         headers_by_sheet: dict[str, list[str]] = {}
         for field_name, field in cls.model_fields.items():
-            if field_name == "validators_to_skip":
+            if field_name in ["validators_to_skip", "post_validate"]:
                 continue
             sheet_name = (field.alias or field_name) if by_alias else field_name
             annotation = field.annotation
