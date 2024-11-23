@@ -128,6 +128,7 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
             raise NeatValueError(f"Invalid data_type_conflict: {self.data_type_conflict}")
         input_rules = self._to_rules(rules)
         new_rules = input_rules.model_copy(deep=True)
+        new_rules.metadata.version += "_mapped"
 
         for view in new_rules.views:
             if mapping_view := self._view_by_entity_id.get(view.view.external_id):

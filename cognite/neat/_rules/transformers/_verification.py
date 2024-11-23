@@ -27,8 +27,9 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
 
     _rules_cls: type[T_VerifiedRules]
 
-    def __init__(self, errors: Literal["raise", "continue"]) -> None:
+    def __init__(self, errors: Literal["raise", "continue"], post_validate: bool = True) -> None:
         self.errors = errors
+        self.post_validate = post_validate
 
     def transform(self, rules: T_InputRules | OutRules[T_InputRules]) -> MaybeRules[T_VerifiedRules]:
         issues = IssueList()
@@ -39,7 +40,9 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
         verified_rules: T_VerifiedRules | None = None
         with catch_issues(issues, NeatError, NeatWarning, error_args) as future:
             rules_cls = self._get_rules_cls(in_)
-            verified_rules = rules_cls.model_validate(in_.dump())  # type: ignore[assignment]
+            dumped = in_.dump()
+            dumped["post_validate"] = self.post_validate
+            verified_rules = rules_cls.model_validate(dumped)  # type: ignore[assignment]
 
         if (future.result == "failure" or issues.has_errors or verified_rules is None) and self.errors == "raise":
             raise issues.as_errors()
