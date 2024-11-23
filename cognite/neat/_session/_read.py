@@ -118,12 +118,6 @@ class CDFClassicAPI(BaseReadAPI):
             raise ValueError("No client provided. Please provide a client to read a data model.")
         return self._client
 
-    def assets(self, root_asset_external_id: str) -> None:
-        extractor = extractors.AssetsExtractor.from_hierarchy(self._get_client, root_asset_external_id)
-        self._state.instances.store.write(extractor)
-        if self._verbose:
-            print(f"Asset hierarchy {root_asset_external_id} read successfully")
-
     def graph(self, root_asset_external_id: str) -> None:
         """Reads the classic knowledge graph from CDF.
 
