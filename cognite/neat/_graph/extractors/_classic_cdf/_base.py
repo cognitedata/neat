@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Any, Generic, TypeVar
 
 from cognite.client.data_classes._base import CogniteResource
+from pydantic import AnyHttpUrl, ValidationError
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -184,4 +185,9 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         elif key in {"sourceType", "targetType", "source_type", "target_type"} and isinstance(raw, str):
             # Relationship types. Titled so they can be looked up.
             return self.namespace[raw.title()]
+        elif key in {"unit_external_id", "unitExternalId"}:
+            try:
+                return URIRef(str(AnyHttpUrl(raw)))
+            except ValidationError:
+                return Literal(raw)
         return Literal(raw, datatype=XSD.dateTime)

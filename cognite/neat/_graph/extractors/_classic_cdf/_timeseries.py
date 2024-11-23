@@ -1,13 +1,9 @@
 from collections.abc import Callable, Set
-from datetime import datetime, timezone
 from pathlib import Path
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import TimeSeries, TimeSeriesFilter, TimeSeriesList
-from pydantic import AnyHttpUrl, ValidationError
-from rdflib import RDF, Literal, Namespace, URIRef
-
-from cognite.neat._shared import Triple
+from rdflib import Namespace
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 
@@ -34,6 +30,7 @@ class TimeSeriesExtractor(ClassicCDFBaseExtractor[TimeSeries]):
     """
 
     _default_rdf_type = "TimeSeries"
+    _instance_id_prefix = InstanceIdPrefix.time_series
 
     @classmethod
     def from_dataset(
@@ -105,97 +102,3 @@ class TimeSeriesExtractor(ClassicCDFBaseExtractor[TimeSeries]):
             unpack_metadata=unpack_metadata,
             skip_metadata_values=skip_metadata_values,
         )
-
-    def _item2triples(self, timeseries: TimeSeries) -> list[Triple]:
-        id_ = self.namespace[f"{InstanceIdPrefix.time_series}{timeseries.id}"]
-
-        # Set rdf type
-        type_ = self._get_rdf_type(timeseries)
-        triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
-
-        # Create attributes
-        if timeseries.external_id:
-            triples.append((id_, self.namespace.external_id, Literal(timeseries.external_id)))
-
-        if timeseries.name:
-            triples.append((id_, self.namespace.name, Literal(timeseries.name)))
-
-        if timeseries.is_string:
-            triples.append((id_, self.namespace.is_string, Literal(timeseries.is_string)))
-
-        if timeseries.metadata:
-            triples.extend(self._metadata_to_triples(id_, timeseries.metadata))
-
-        if timeseries.unit:
-            triples.append((id_, self.namespace.unit, Literal(timeseries.unit)))
-
-        if self.namespace.is_step:
-            triples.append((id_, self.namespace.is_step, Literal(timeseries.is_step)))
-
-        if timeseries.description:
-            triples.append((id_, self.namespace.description, Literal(timeseries.description)))
-
-        if timeseries.security_categories:
-            for category in timeseries.security_categories:
-                triples.append((id_, self.namespace.security_categories, Literal(category)))
-
-        if timeseries.created_time:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.created_time,
-                    Literal(datetime.fromtimestamp(timeseries.created_time / 1000, timezone.utc)),
-                )
-            )
-
-        if timeseries.last_updated_time:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.last_updated_time,
-                    Literal(datetime.fromtimestamp(timeseries.last_updated_time / 1000, timezone.utc)),
-                )
-            )
-
-        if timeseries.legacy_name:
-            triples.append((id_, self.namespace.legacy_name, Literal(timeseries.legacy_name)))
-
-        # Create connections
-        if timeseries.unit_external_id:
-            # try to create connection to QUDT unit catalog
-            try:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.unit_external_id,
-                        URIRef(str(AnyHttpUrl(timeseries.unit_external_id))),
-                    )
-                )
-            except ValidationError:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.unit_external_id,
-                        Literal(timeseries.unit_external_id),
-                    )
-                )
-
-        if timeseries.data_set_id:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.dataset,
-                    self.namespace[f"{InstanceIdPrefix.data_set}{timeseries.data_set_id}"],
-                )
-            )
-
-        if timeseries.asset_id:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.asset,
-                    self.namespace[f"{InstanceIdPrefix.asset}{timeseries.asset_id}"],
-                )
-            )
-
-        return triples

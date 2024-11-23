@@ -78,9 +78,17 @@ class LabelsExtractor(ClassicCDFBaseExtractor[LabelDefinition]):
         return self._label_id(item)
 
     @staticmethod
-    def _label_id(label: Label | LabelDefinition) -> str:
+    def _label_id(label: Label | LabelDefinition | dict) -> str:
         # external_id can create ill-formed URIs, so we create websafe URIs
         # since labels do not have internal ids, we use the external_id as the id
-        if label.external_id is None:
+        external_id: str | None = None
+        if isinstance(label, dict):
+            if "externalId" in label:
+                external_id = label["externalId"]
+            elif "external_id" in label:
+                external_id = label["external_id"]
+        else:
+            external_id = label.external_id
+        if external_id is None:
             raise ValueError("External id must be set of the label")
-        return quote(label.external_id)
+        return quote(external_id)
