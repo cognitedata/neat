@@ -96,6 +96,7 @@ class ClassicGraphExtractor(BaseExtractor):
         self._root_asset_external_id = root_asset_external_id
         self._data_set_external_id = data_set_external_id
         self._namespace = namespace or DEFAULT_NAMESPACE
+        self._extractor_args = dict(namespace=self._namespace, unpack_metadata=False, as_write=True, camel_case=True)
 
         self._source_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
         self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
@@ -117,11 +118,11 @@ class ClassicGraphExtractor(BaseExtractor):
         for core_node in self._classic_node_types:
             if self._data_set_external_id:
                 extractor = core_node.extractor_cls.from_dataset(
-                    self._client, self._data_set_external_id, self._namespace, unpack_metadata=False
+                    self._client, self._data_set_external_id, **self._extractor_args
                 )
             elif self._root_asset_external_id:
                 extractor = core_node.extractor_cls.from_hierarchy(
-                    self._client, self._root_asset_external_id, self._namespace, unpack_metadata=False
+                    self._client, self._root_asset_external_id, **self._extractor_args
                 )
             else:
                 raise ValueError("Exactly one of data_set_external_id or root_asset_external_id must be set.")
@@ -135,7 +136,7 @@ class ClassicGraphExtractor(BaseExtractor):
                 relationship_iterator = self._client.relationships(
                     source_external_ids=list(chunk), source_types=[start_type]
                 )
-                extractor = RelationshipsExtractor(relationship_iterator, self._namespace, unpack_metadata=False)
+                extractor = RelationshipsExtractor(relationship_iterator, **self._extractor_args)
                 # This is a private attribute, but we need to set it to log the target nodes.
                 extractor._log_target_nodes = True
 
@@ -165,28 +166,28 @@ class ClassicGraphExtractor(BaseExtractor):
                 description=f"Extracting end nodes {core_node.resource_type.removesuffix('_')}",
             ):
                 resource_iterator = api.retrieve_multiple(external_ids=list(chunk), ignore_unknown_ids=True)
-                extractor = core_node.extractor_cls(resource_iterator, self._namespace, unpack_metadata=False)
+                extractor = core_node.extractor_cls(resource_iterator, **self._extractor_args)
                 yield from self._extract_with_logging_label_dataset(extractor)
 
     def _extract_labels(self):
         for chunk in self._chunk(list(self._labels), description="Extracting labels"):
             label_iterator = self._client.labels.retrieve(external_id=list(chunk), ignore_unknown_ids=True)
-            yield from LabelsExtractor(label_iterator, self._namespace).extract()
+            yield from LabelsExtractor(label_iterator, **self._extractor_args).extract()
 
     def _extract_data_sets(self):
         for chunk in self._chunk(list(self._data_set_ids), description="Extracting data sets"):
             data_set_iterator = self._client.data_sets.retrieve_multiple(ids=list(chunk), ignore_unknown_ids=True)
-            yield from DataSetExtractor(data_set_iterator, self._namespace, unpack_metadata=False).extract()
+            yield from DataSetExtractor(data_set_iterator, **self._extractor_args).extract()
 
     def _extract_with_logging_label_dataset(
         self, extractor: ClassicCDFBaseExtractor, resource_type: InstanceIdPrefix | None = None
     ) -> Iterable[Triple]:
         for triple in extractor.extract():
-            if triple[1] == self._namespace.external_id and resource_type is not None:
+            if triple[1] == self._namespace.externalId and resource_type is not None:
                 self._source_external_ids_by_type[resource_type].add(remove_namespace_from_uri(triple[2]))
-            elif triple[1] == self._namespace.label:
+            elif triple[1] == self._namespace.labels:
                 self._labels.add(remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.label))
-            elif triple[1] == self._namespace.dataset:
+            elif triple[1] == self._namespace.datasetId:
                 self._data_set_ids.add(
                     int(remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.data_set))
                 )
