@@ -34,8 +34,8 @@ class AddAssetDepth(BaseTransformer):
         depth_typing: dict[int, str] | None = None,
     ):
         self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
-        self.root_prop = root_prop or DEFAULT_NAMESPACE.root
-        self.parent_prop = parent_prop or DEFAULT_NAMESPACE.parent
+        self.root_prop = root_prop or DEFAULT_NAMESPACE.rootId
+        self.parent_prop = parent_prop or DEFAULT_NAMESPACE.parentId
         self.depth_typing = depth_typing
 
     def transform(self, graph: Graph) -> None:

@@ -1,6 +1,6 @@
 from collections import Counter, defaultdict
 from collections.abc import Mapping
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import ClassVar, cast
 
@@ -8,7 +8,6 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues.warnings import PropertyValueTypeUndefinedWarning
 from cognite.neat._rules.models import data_types
 from cognite.neat._rules.models.data_types import AnyURI
@@ -228,14 +227,14 @@ class InferenceImporter(BaseRDFImporter):
         }
 
     def _default_metadata(self):
+        now = datetime.now(timezone.utc)
         return InformationMetadata(
             space=self.data_model_id.space,
             external_id=self.data_model_id.external_id,
             version=self.data_model_id.version,
             name="Inferred Model",
             creator="NEAT",
-            created=datetime.now(),
-            updated=datetime.now(),
+            created=now,
+            updated=now,
             description="Inferred model from knowledge graph",
-            namespace=DEFAULT_NAMESPACE,
         )
