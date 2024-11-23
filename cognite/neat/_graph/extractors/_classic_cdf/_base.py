@@ -127,13 +127,14 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         # Set rdf type
         triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
         dumped = item.dump(self.camel_case)
+        dumped.pop("id", None)
         if "metadata" in dumped:
             triples.extend(self._metadata_to_triples(id_, dumped.pop("metadata")))
 
         for key, value in dumped.items():
             if value is None:
                 continue
-            values = value if isinstance(value, Sequence) else [value]
+            values = value if isinstance(value, Sequence) and not isinstance(value, str) else [value]
             for raw in values:
                 triples.append((id_, self.namespace[key], self._as_object(raw, key)))
         return triples
