@@ -1,13 +1,10 @@
 from collections.abc import Set
-from datetime import datetime, timezone
 from pathlib import Path
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import DataSet, DataSetList
 from cognite.client.utils.useful_types import SequenceNotStr
-from rdflib import RDF, Literal, Namespace
-
-from cognite.neat._shared import Triple
+from rdflib import Namespace
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 
@@ -34,6 +31,7 @@ class DataSetExtractor(ClassicCDFBaseExtractor[DataSet]):
     """
 
     _default_rdf_type = "DataSet"
+    _instance_id_prefix = InstanceIdPrefix.data_set
 
     @classmethod
     def from_dataset(
@@ -68,45 +66,3 @@ class DataSetExtractor(ClassicCDFBaseExtractor[DataSet]):
             unpack_metadata=unpack_metadata,
             skip_metadata_values=skip_metadata_values,
         )
-
-    def _item2triples(self, item: DataSet) -> list[Triple]:
-        """Converts an asset to triples."""
-        id_ = self.namespace[f"{InstanceIdPrefix.data_set}{item.id}"]
-
-        type_ = self._get_rdf_type(item)
-
-        triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
-
-        # Create attributes
-        if item.name:
-            triples.append((id_, self.namespace.name, Literal(item.name)))
-
-        if item.description:
-            triples.append((id_, self.namespace.description, Literal(item.description)))
-
-        if item.external_id:
-            triples.append((id_, self.namespace.external_id, Literal(item.external_id)))
-
-        # properties' ref creation and update
-        triples.append(
-            (
-                id_,
-                self.namespace.created_time,
-                Literal(datetime.fromtimestamp(item.created_time / 1000, timezone.utc)),
-            )
-        )
-        triples.append(
-            (
-                id_,
-                self.namespace.last_updated_time,
-                Literal(datetime.fromtimestamp(item.last_updated_time / 1000, timezone.utc)),
-            )
-        )
-
-        if item.write_protected:
-            triples.append((id_, self.namespace.write_protected, Literal(item.write_protected)))
-
-        if item.metadata:
-            triples.extend(self._metadata_to_triples(id_, item.metadata))
-
-        return triples

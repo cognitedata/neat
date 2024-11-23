@@ -1,16 +1,12 @@
 from collections.abc import Callable, Iterable, Set
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, AssetFilter, AssetList
-from rdflib import RDF, Literal, Namespace
-
-from cognite.neat._shared import Triple
+from rdflib import Namespace
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
-from ._labels import LabelsExtractor
 
 
 class AssetsExtractor(ClassicCDFBaseExtractor[Asset]):
@@ -35,6 +31,7 @@ class AssetsExtractor(ClassicCDFBaseExtractor[Asset]):
     """
 
     _default_rdf_type = "Asset"
+    _instance_id_prefix = InstanceIdPrefix.asset
 
     @classmethod
     def from_dataset(
@@ -107,73 +104,3 @@ class AssetsExtractor(ClassicCDFBaseExtractor[Asset]):
             unpack_metadata=unpack_metadata,
             skip_metadata_values=skip_metadata_values,
         )
-
-    def _item2triples(self, asset: Asset) -> list[Triple]:
-        """Converts an asset to triples."""
-        id_ = self.namespace[f"{InstanceIdPrefix.asset}{asset.id}"]
-
-        type_ = self._get_rdf_type(asset)
-
-        triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
-
-        # Create attributes
-        if asset.name:
-            triples.append((id_, self.namespace.name, Literal(asset.name)))
-
-        if asset.description:
-            triples.append((id_, self.namespace.description, Literal(asset.description)))
-
-        if asset.external_id:
-            triples.append((id_, self.namespace.external_id, Literal(asset.external_id)))
-
-        if asset.source:
-            triples.append((id_, self.namespace.source, Literal(asset.source)))
-
-        # properties' ref creation and update
-        triples.append(
-            (
-                id_,
-                self.namespace.created_time,
-                Literal(datetime.fromtimestamp(asset.created_time / 1000, timezone.utc)),
-            )
-        )
-        triples.append(
-            (
-                id_,
-                self.namespace.last_updated_time,
-                Literal(datetime.fromtimestamp(asset.last_updated_time / 1000, timezone.utc)),
-            )
-        )
-
-        if asset.labels:
-            for label in asset.labels:
-                # external_id can create ill-formed URIs, so we create websafe URIs
-                # since labels do not have internal ids, we use the external_id as the id
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.label,
-                        self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(label)}"],
-                    )
-                )
-
-        if asset.metadata:
-            triples.extend(self._metadata_to_triples(id_, asset.metadata))
-
-        # Create connections:
-        if asset.parent_id:
-            triples.append((id_, self.namespace.parent, self.namespace[f"{InstanceIdPrefix.asset}{asset.parent_id}"]))
-
-        if asset.root_id:
-            triples.append((id_, self.namespace.root, self.namespace[f"{InstanceIdPrefix.asset}{asset.root_id}"]))
-
-        if asset.data_set_id:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.dataset,
-                    self.namespace[f"{InstanceIdPrefix.data_set}{asset.data_set_id}"],
-                )
-            )
-
-        return triples
