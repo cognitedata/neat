@@ -1,4 +1,6 @@
+import textwrap
 import warnings
+from abc import ABC
 from typing import cast
 
 from rdflib import RDF, Graph, Literal, Namespace, URIRef
@@ -75,7 +77,31 @@ class AddAssetDepth(BaseTransformer):
             return None
 
 
-class AssetTimeSeriesConnector(BaseTransformer):
+class ClassicConnector(BaseTransformer, ABC):
+    _asset_type: URIRef = DEFAULT_NAMESPACE.Asset
+    _item_type: URIRef
+    _default_attribute: URIRef
+    _connection_type: URIRef
+
+    _select_item_ids = "SELECT DISTINCT ?item_id WHERE {{?item_id a <{item_type}>}}"
+    _select_connected_assets: str = textwrap.dedent("""SELECT ?asset_id WHERE {{
+                              <{item_id}> <{attribute}> ?asset_id .
+                              ?asset_id a <{asset_type}>}}""")
+
+    def __init__(self, attribute: URIRef | None = None) -> None:
+        self._attribute = attribute or self._default_attribute
+
+    def transform(self, graph: Graph) -> None:
+        for item_id, *_ in graph.query(self._select_item_ids.format(item_type=self._item_type)):  # type: ignore[misc]
+            for asset_id, *_ in graph.query(  # type: ignore[misc]
+                self._select_connected_assets.format(
+                    item_id=item_id, attribute=self._attribute, asset_type=self._asset_type
+                )
+            ):
+                graph.add((asset_id, self._connection_type, item_id))
+
+
+class AssetTimeSeriesConnector(ClassicConnector):
     description: str = "Connects assets to timeseries, thus forming bi-directional connection"
     _use_only_once: bool = True
     _need_changes = frozenset(
@@ -84,41 +110,12 @@ class AssetTimeSeriesConnector(BaseTransformer):
             str(extractors.TimeSeriesExtractor.__name__),
         }
     )
-    _asset_template: str = """SELECT ?asset_id WHERE {{
-                              <{timeseries_id}> <{asset_prop}> ?asset_id .
-                              ?asset_id a <{asset_type}>}}"""
-
-    def __init__(
-        self,
-        asset_type: URIRef | None = None,
-        timeseries_type: URIRef | None = None,
-        asset_prop: URIRef | None = None,
-    ):
-        self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
-        self.timeseries_type = timeseries_type or DEFAULT_NAMESPACE.TimeSeries
-        self.asset_prop = asset_prop or DEFAULT_NAMESPACE.asset
-
-    def transform(self, graph: Graph) -> None:
-        for ts_id_result in graph.query(
-            f"SELECT DISTINCT ?timeseries_id WHERE {{?timeseries_id a <{self.timeseries_type}>}}"
-        ):
-            timeseries_id: URIRef = cast(tuple, ts_id_result)[0]
-
-            if asset_id_res := list(
-                graph.query(
-                    self._asset_template.format(
-                        timeseries_id=timeseries_id,
-                        asset_prop=self.asset_prop,
-                        asset_type=self.asset_type,
-                    )
-                )
-            ):
-                # timeseries can be connected to only one asset in the graph
-                asset_id = cast(list[tuple], asset_id_res)[0][0]
-                graph.add((asset_id, DEFAULT_NAMESPACE.timeSeries, timeseries_id))
+    _item_type = DEFAULT_NAMESPACE.TimeSeries
+    _default_attribute = DEFAULT_NAMESPACE.assetId
+    _connection_type = DEFAULT_NAMESPACE.timeSeries
 
 
-class AssetSequenceConnector(BaseTransformer):
+class AssetSequenceConnector(ClassicConnector):
     description: str = "Connects assets to sequences, thus forming bi-directional connection"
     _use_only_once: bool = True
     _need_changes = frozenset(
@@ -127,41 +124,12 @@ class AssetSequenceConnector(BaseTransformer):
             str(extractors.SequencesExtractor.__name__),
         }
     )
-    _asset_template: str = """SELECT ?asset_id WHERE {{
-                              <{sequence_id}> <{asset_prop}> ?asset_id .
-                              ?asset_id a <{asset_type}>}}"""
-
-    def __init__(
-        self,
-        asset_type: URIRef | None = None,
-        sequence_type: URIRef | None = None,
-        asset_prop: URIRef | None = None,
-    ):
-        self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
-        self.sequence_type = sequence_type or DEFAULT_NAMESPACE.Sequence
-        self.asset_prop = asset_prop or DEFAULT_NAMESPACE.asset
-
-    def transform(self, graph: Graph) -> None:
-        for sequency_id_result in graph.query(
-            f"SELECT DISTINCT ?sequence_id WHERE {{?sequence_id a <{self.sequence_type}>}}"
-        ):
-            sequence_id: URIRef = cast(tuple, sequency_id_result)[0]
-
-            if asset_id_res := list(
-                graph.query(
-                    self._asset_template.format(
-                        sequence_id=sequence_id,
-                        asset_prop=self.asset_prop,
-                        asset_type=self.asset_type,
-                    )
-                )
-            ):
-                # sequence can be connected to only one asset in the graph
-                asset_id = cast(list[tuple], asset_id_res)[0][0]
-                graph.add((asset_id, DEFAULT_NAMESPACE.sequence, sequence_id))
+    _item_type = DEFAULT_NAMESPACE.Sequence
+    _default_attribute = DEFAULT_NAMESPACE.assetId
+    _connection_type = DEFAULT_NAMESPACE.sequence
 
 
-class AssetFileConnector(BaseTransformer):
+class AssetFileConnector(ClassicConnector):
     description: str = "Connects assets to files, thus forming bi-directional connection"
     _use_only_once: bool = True
     _need_changes = frozenset(
@@ -170,39 +138,12 @@ class AssetFileConnector(BaseTransformer):
             str(extractors.FilesExtractor.__name__),
         }
     )
-    _asset_template: str = """SELECT ?asset_id WHERE {{
-                              <{file_id}> <{asset_prop}> ?asset_id .
-                              ?asset_id a <{asset_type}>}}"""
-
-    def __init__(
-        self,
-        asset_type: URIRef | None = None,
-        file_type: URIRef | None = None,
-        asset_prop: URIRef | None = None,
-    ):
-        self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
-        self.file_type = file_type or DEFAULT_NAMESPACE.File
-        self.asset_prop = asset_prop or DEFAULT_NAMESPACE.asset
-
-    def transform(self, graph: Graph) -> None:
-        for sequency_id_result in graph.query(f"SELECT DISTINCT ?file_id WHERE {{?file_id a <{self.file_type}>}}"):
-            file_id: URIRef = cast(tuple, sequency_id_result)[0]
-
-            if assets_id_res := list(
-                graph.query(
-                    self._asset_template.format(
-                        file_id=file_id,
-                        asset_prop=self.asset_prop,
-                        asset_type=self.asset_type,
-                    )
-                )
-            ):
-                # files can be connected to multiple assets in the graph
-                for (asset_id,) in cast(list[tuple], assets_id_res):
-                    graph.add((asset_id, DEFAULT_NAMESPACE.file, file_id))
+    _item_type = DEFAULT_NAMESPACE.File
+    _default_attribute = DEFAULT_NAMESPACE.assetIds
+    _connection_type = DEFAULT_NAMESPACE.file
 
 
-class AssetEventConnector(BaseTransformer):
+class AssetEventConnector(ClassicConnector):
     description: str = "Connects assets to events, thus forming bi-directional connection"
     _use_only_once: bool = True
     _need_changes = frozenset(
@@ -211,36 +152,9 @@ class AssetEventConnector(BaseTransformer):
             str(extractors.EventsExtractor.__name__),
         }
     )
-    _asset_template: str = """SELECT ?asset_id WHERE {{
-                              <{event_id}> <{asset_prop}> ?asset_id .
-                              ?asset_id a <{asset_type}>}}"""
-
-    def __init__(
-        self,
-        asset_type: URIRef | None = None,
-        event_type: URIRef | None = None,
-        asset_prop: URIRef | None = None,
-    ):
-        self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
-        self.event_type = event_type or DEFAULT_NAMESPACE.Event
-        self.asset_prop = asset_prop or DEFAULT_NAMESPACE.asset
-
-    def transform(self, graph: Graph) -> None:
-        for event_id_result in graph.query(f"SELECT DISTINCT ?event_id WHERE {{?event_id a <{self.event_type}>}}"):
-            event_id: URIRef = cast(tuple, event_id_result)[0]
-
-            if assets_id_res := list(
-                graph.query(
-                    self._asset_template.format(
-                        event_id=event_id,
-                        asset_prop=self.asset_prop,
-                        asset_type=self.asset_type,
-                    )
-                )
-            ):
-                # files can be connected to multiple assets in the graph
-                for (asset_id,) in cast(list[tuple], assets_id_res):
-                    graph.add((asset_id, DEFAULT_NAMESPACE.event, event_id))
+    _item_type = DEFAULT_NAMESPACE.Event
+    _default_attribute = DEFAULT_NAMESPACE.assetIds
+    _connection_type = DEFAULT_NAMESPACE.event
 
 
 class AssetRelationshipConnector(BaseTransformer):
@@ -271,9 +185,9 @@ class AssetRelationshipConnector(BaseTransformer):
     ):
         self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
         self.relationship_type = relationship_type or DEFAULT_NAMESPACE.Relationship
-        self.relationship_source_xid_prop = relationship_source_xid_prop or DEFAULT_NAMESPACE.source_external_id
-        self.relationship_target_xid_prop = relationship_target_xid_prop or DEFAULT_NAMESPACE.target_external_id
-        self.asset_xid_property = asset_xid_property or DEFAULT_NAMESPACE.external_id
+        self.relationship_source_xid_prop = relationship_source_xid_prop or DEFAULT_NAMESPACE.sourceExternalId
+        self.relationship_target_xid_prop = relationship_target_xid_prop or DEFAULT_NAMESPACE.targetExternalId
+        self.asset_xid_property = asset_xid_property or DEFAULT_NAMESPACE.externalId
 
     def transform(self, graph: Graph) -> None:
         for relationship_id_result in graph.query(
