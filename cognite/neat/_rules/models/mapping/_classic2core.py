@@ -15,7 +15,7 @@ def _read_source_file() -> str:
     return _CLASSIC_TO_CORE_MAPPING.read_text()
 
 
-def load_classic_to_core_mapping(org_name: str) -> DMSRules:
+def load_classic_to_core_mapping(org_name: str, source_space: str) -> DMSRules:
     if not org_name:
         raise NeatValueError("Organization name must be provided.")
 
@@ -25,6 +25,7 @@ def load_classic_to_core_mapping(org_name: str) -> DMSRules:
     raw_str = _read_source_file().replace("Classic", org_name)
 
     loaded = yaml.safe_load(raw_str)
+    loaded["metadata"]["space"] = source_space
 
     read: ReadRules[DMSInputRules] = YAMLImporter(loaded).to_rules()
     if not isinstance(read.rules, DMSInputRules):
