@@ -46,7 +46,7 @@ class PropertyDefinitionDuplicatedWarning(PropertyWarning[T_Identifier]):
 
 @dataclass(unsafe_hash=True)
 class PropertyValueTypeUndefinedWarning(PropertyWarning[T_Identifier]):
-    """The {resource_type} with identifier {identifier} has a property{ property_name}
+    """The {resource_type} with identifier {identifier} has a property {property_name}
     which has undefined value type. This may result in unexpected behavior when exporting rules.
     {default_action}"""
 
