@@ -11,6 +11,13 @@ from cognite.neat._utils.upload import UploadResult, UploadResultCore, UploadRes
 from ._state import SessionState
 from .exceptions import session_class_wrapper
 
+try:
+    from rich.markdown import Markdown as RichMarkdown
+
+    RICH_AVAILABLE = True
+except ImportError:
+    RICH_AVAILABLE = False
+
 
 @session_class_wrapper
 class InspectAPI:
@@ -61,14 +68,19 @@ class InspectIssues:
             closest_match = set(difflib.get_close_matches(search, unique_types))
             issues = IssueList([issue for issue in issues if type(issue).__name__ in closest_match])
 
+        issue_str = "\n".join(
+            [f"  * **{type(issue).__name__}**: {issue.as_message(include_type=False)}" for issue in issues]
+        )
+        markdown_str = f"### {len(issues)} issues found\n\n{issue_str}"
+
         if IN_NOTEBOOK:
             from IPython.display import Markdown, display
 
-            issue_str = "\n".join(
-                [f"  * **{type(issue).__name__}**: {issue.as_message(include_type=False)}" for issue in issues]
-            )
-            message = f"### {len(issues)} issues found\n\n{issue_str}"
-            display(Markdown(message))
+            display(Markdown(markdown_str))
+        elif RICH_AVAILABLE:
+            from rich import print
+
+            print(RichMarkdown(markdown_str))
 
         if return_dataframe:
             return issues.to_pandas()
