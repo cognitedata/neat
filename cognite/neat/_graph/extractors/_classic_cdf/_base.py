@@ -1,19 +1,28 @@
 import json
 import re
 import sys
-from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable, Set
-from typing import Generic, TypeVar
+from abc import ABC
+from collections.abc import Callable, Iterable, Sequence, Set
+from datetime import datetime, timezone
+from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
 
-from cognite.client.data_classes._base import CogniteResource
-from rdflib import XSD, Literal, Namespace, URIRef
+from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import string_to_ideal_type
 
-T_CogniteResource = TypeVar("T_CogniteResource", bound=CogniteResource)
+
+@runtime_checkable
+class CogniteIDResource(Protocol):
+    @property
+    def id(self) -> int | None: ...
+
+    def dump(self, camel_case: bool = True) -> dict[str, Any]: ...
+
+
+T_CogniteResource = TypeVar("T_CogniteResource", bound=CogniteIDResource)
 
 DEFAULT_SKIP_METADATA_VALUES = frozenset({"nan", "null", "none", ""})
 
@@ -66,6 +75,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     """
 
     _default_rdf_type: str
+    _instance_id_prefix: str
     _SPACE_PATTERN = re.compile(r"\s+")
 
     def __init__(
@@ -108,9 +118,24 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             if self.limit and no >= self.limit:
                 break
 
-    @abstractmethod
     def _item2triples(self, item: T_CogniteResource) -> list[Triple]:
-        raise NotImplementedError()
+        id_ = self.namespace[f"{self._instance_id_prefix}{item.id}"]
+
+        type_ = self._get_rdf_type(item)
+
+        # Set rdf type
+        triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
+        dumped = item.dump(self.camel_case)
+        if "metadata" in dumped:
+            triples.extend(self._metadata_to_triples(id_, dumped.pop("metadata")))
+
+        for key, value in dumped.items():
+            if value is None:
+                continue
+            values = value if isinstance(value, Sequence) else [value]
+            for raw in values:
+                triples.append((id_, self.namespace[key], self._as_object(raw, key)))
+        return triples
 
     def _metadata_to_triples(self, id_: URIRef, metadata: dict[str, str]) -> Iterable[Triple]:
         if self.unpack_metadata:
@@ -129,3 +154,25 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         if self.to_type:
             type_ = self.to_type(item) or type_
         return self._SPACE_PATTERN.sub("_", type_)
+
+    def _as_object(self, raw: Any, key: str) -> Literal | URIRef:
+        if key in {"data_set_id", "DataSetId"}:
+            return self.namespace[f"{InstanceIdPrefix.data_set}{raw}"]
+        elif key in {"assetId", "asset_id", "assetIds", "asset_ids"}:
+            return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
+        elif key in {
+            "startTime",
+            "endTime",
+            "createdTime",
+            "lastUpdatedTime",
+            "start_time",
+            "end_time",
+            "created_time",
+            "last_updated_time",
+        } and isinstance(raw, int):
+            return Literal(datetime.fromtimestamp(raw / 1000, timezone.utc), datatype=XSD.dateTime)
+        elif key == "labels":
+            from ._labels import LabelsExtractor
+
+            return self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(raw)}"]
+        return Literal(raw, datatype=XSD.dateTime)

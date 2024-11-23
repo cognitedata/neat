@@ -32,6 +32,7 @@ class LabelsExtractor(ClassicCDFBaseExtractor[LabelDefinition]):
     """
 
     _default_rdf_type = "Label"
+    _instance_id_prefix = InstanceIdPrefix.label
 
     @classmethod
     def from_dataset(

@@ -1,15 +1,11 @@
 from collections.abc import Callable, Set
-from datetime import datetime, timezone
 from pathlib import Path
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import FileMetadata, FileMetadataFilter, FileMetadataList
-from rdflib import RDF, Literal, Namespace
-
-from cognite.neat._shared import Triple
+from rdflib import Namespace
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
-from ._labels import LabelsExtractor
 
 
 class FilesExtractor(ClassicCDFBaseExtractor[FileMetadata]):
@@ -34,6 +30,7 @@ class FilesExtractor(ClassicCDFBaseExtractor[FileMetadata]):
     """
 
     _default_rdf_type = "File"
+    _instance_id_prefix = InstanceIdPrefix.file
 
     @classmethod
     def from_dataset(
@@ -100,105 +97,3 @@ class FilesExtractor(ClassicCDFBaseExtractor[FileMetadata]):
             unpack_metadata=unpack_metadata,
             skip_metadata_values=skip_metadata_values,
         )
-
-    def _item2triples(self, file: FileMetadata) -> list[Triple]:
-        id_ = self.namespace[f"{InstanceIdPrefix.file}{file.id}"]
-
-        type_ = self._get_rdf_type(file)
-
-        # Set rdf type
-        triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
-
-        # Create attributes
-
-        if file.external_id:
-            triples.append((id_, self.namespace.external_id, Literal(file.external_id)))
-
-        if file.source:
-            triples.append((id_, self.namespace.type, Literal(file.source)))
-
-        if file.mime_type:
-            triples.append((id_, self.namespace.mime_type, Literal(file.mime_type)))
-
-        if file.uploaded:
-            triples.append((id_, self.namespace.uploaded, Literal(file.uploaded)))
-
-        if file.source:
-            triples.append((id_, self.namespace.source, Literal(file.source)))
-
-        if file.metadata:
-            triples.extend(self._metadata_to_triples(id_, file.metadata))
-
-        if file.source_created_time:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.source_created_time,
-                    Literal(datetime.fromtimestamp(file.source_created_time / 1000, timezone.utc)),
-                )
-            )
-        if file.source_modified_time:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.source_created_time,
-                    Literal(datetime.fromtimestamp(file.source_modified_time / 1000, timezone.utc)),
-                )
-            )
-        if file.uploaded_time:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.uploaded_time,
-                    Literal(datetime.fromtimestamp(file.uploaded_time / 1000, timezone.utc)),
-                )
-            )
-
-        if file.created_time:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.created_time,
-                    Literal(datetime.fromtimestamp(file.created_time / 1000, timezone.utc)),
-                )
-            )
-
-        if file.last_updated_time:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.last_updated_time,
-                    Literal(datetime.fromtimestamp(file.last_updated_time / 1000, timezone.utc)),
-                )
-            )
-
-        if file.labels:
-            for label in file.labels:
-                # external_id can create ill-formed URIs, so we create websafe URIs
-                # since labels do not have internal ids, we use the external_id as the id
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.label,
-                        self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(label)}"],
-                    )
-                )
-
-        if file.security_categories:
-            for category in file.security_categories:
-                triples.append((id_, self.namespace.security_categories, Literal(category)))
-
-        if file.data_set_id:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.data_set_id,
-                    self.namespace[f"{InstanceIdPrefix.data_set}{file.data_set_id}"],
-                )
-            )
-
-        if file.asset_ids:
-            for asset_id in file.asset_ids:
-                triples.append((id_, self.namespace.asset, self.namespace[f"{InstanceIdPrefix.asset}{asset_id}"]))
-
-        return triples
