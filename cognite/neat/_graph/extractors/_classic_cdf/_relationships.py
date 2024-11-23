@@ -109,5 +109,5 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
                 self._target_external_ids_by_type[InstanceIdPrefix.from_str(item.target_type)].add(
                     item.target_external_id
                 )
-                return create_sha256_hash(item.external_id)
+            return create_sha256_hash(item.external_id)
         return None
