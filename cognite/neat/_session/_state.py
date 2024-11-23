@@ -172,10 +172,11 @@ class DataModelState:
         if missing := set(view_ids) - set(self._cdf_views.keys()):
             loader = ViewLoader(client)
             cdf_view_ids = list(missing)
+            found_read = loader.retrieve(cdf_view_ids)
             if include_ancestors:
-                found_read = loader.retrieve_all_ancestors(cdf_view_ids, include_connections=True)
-            else:
-                found_read = loader.retrieve(cdf_view_ids)
+                ancestors = loader.retrieve_all_ancestors(cdf_view_ids, include_connections=True)
+                found_read.extend(ancestors)
+
             found = [loader.as_write(read_view) for read_view in found_read]
             self._cdf_views.update({view.as_id(): view for view in found})
         output = [self._cdf_views[view_id] for view_id in view_ids if view_id in self._cdf_views]
