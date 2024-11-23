@@ -225,13 +225,13 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
             include_connections: Whether to include all sources.
             cache: The cache to store the views in
         """
-        backlog_ids = parents.copy()
+        next_backlog_ids = parents.copy()
         found: list[View] = []
         found_ids: set[ViewId] = set()
-        while backlog_ids:
+        while next_backlog_ids:
             to_lookup: set[ViewId] = set()
-            backlog_ids = []
-            for backlog_id in backlog_ids:
+            backlog_ids: list[ViewId] = []
+            for backlog_id in next_backlog_ids:
                 if backlog_id in found_ids:
                     continue
                 elif backlog_id in cache:
@@ -249,7 +249,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
                 for view in looked_up:
                     self._update_backlog(view, backlog_ids, found_ids, include_connections)
 
-            backlog_ids = backlog_ids
+            next_backlog_ids = backlog_ids
         return found
 
     @staticmethod
