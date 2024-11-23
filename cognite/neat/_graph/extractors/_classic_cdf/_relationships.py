@@ -31,6 +31,8 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
             a JSON string.
         skip_metadata_values (set[str] | frozenset[str] | None, optional): If you are unpacking metadata, then
            values in this set will be skipped.
+        camel_case (bool, optional): Whether to use camelCase instead of snake_case for property names.
+            Defaults to True.
     """
 
     _default_rdf_type = "Relationship"
@@ -44,6 +46,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+        camel_case: bool = True,
     ):
         super().__init__(
             items,
@@ -53,6 +56,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
             limit=limit,
             unpack_metadata=unpack_metadata,
             skip_metadata_values=skip_metadata_values,
+            camel_case=camel_case,
         )
         # This is used by the ClassicExtractor to log the target nodes, such
         # that it can extract them.

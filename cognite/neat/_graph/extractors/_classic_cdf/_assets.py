@@ -30,6 +30,8 @@ class AssetsExtractor(ClassicCDFBaseExtractor[Asset]):
             a JSON string.
         skip_metadata_values (set[str] | frozenset[str] | None, optional): A set of values to skip when unpacking
             metadata. Defaults to frozenset({"nan", "null", "none", ""}).
+        camel_case (bool, optional): Whether to use camelCase instead of snake_case for property names.
+            Defaults to True.
     """
 
     _default_rdf_type = "Asset"

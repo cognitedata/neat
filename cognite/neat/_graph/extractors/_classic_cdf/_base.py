@@ -61,6 +61,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             a JSON string.
         skip_metadata_values (set[str] | frozenset[str] | None, optional): If you are unpacking metadata, then
            values in this set will be skipped.
+        camel_case (bool, optional): Whether to use camelCase instead of snake_case for property names.
+            Defaults to True.
     """
 
     _default_rdf_type: str
@@ -75,6 +77,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
+        camel_case: bool = True,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.items = items
@@ -83,6 +86,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         self.limit = min(limit, total) if limit and total else limit
         self.unpack_metadata = unpack_metadata
         self.skip_metadata_values = skip_metadata_values
+        self.camel_case = camel_case
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""

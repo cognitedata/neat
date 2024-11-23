@@ -29,6 +29,8 @@ class FilesExtractor(ClassicCDFBaseExtractor[FileMetadata]):
             a JSON string.
         skip_metadata_values (set[str] | frozenset[str] | None, optional): If you are unpacking metadata, then
            values in this set will be skipped.
+        camel_case (bool, optional): Whether to use camelCase instead of snake_case for property names.
+            Defaults to True.
     """
 
     _default_rdf_type = "File"
