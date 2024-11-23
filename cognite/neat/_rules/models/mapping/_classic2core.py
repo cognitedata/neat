@@ -27,9 +27,12 @@ def load_classic_to_core_mapping(org_name: str) -> DMSRules:
     loaded = yaml.safe_load(raw_str)
 
     read: ReadRules[DMSInputRules] = YAMLImporter(loaded).to_rules()
-    if not isinstance(read.rules, DMSRules):
+    if not isinstance(read.rules, DMSInputRules):
         raise NeatValueError(f"Expected DMS rules, but got {type(read.rules).__name__}")
 
     verified = VerifyDMSRules(errors="raise").transform(read)
 
-    return verified.get_rules()
+    if verified.rules is None:
+        raise NeatValueError("Failed to verify the rules.")
+
+    return verified.rules
