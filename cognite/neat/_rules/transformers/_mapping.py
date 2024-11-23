@@ -8,7 +8,7 @@ from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import PropertyOverwritingWarning
 from cognite.neat._rules._shared import JustRules, OutRules
 from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models.dms import DMSProperty
+from cognite.neat._rules.models.dms import DMSProperty, DMSView
 
 from ._base import RulesTransformer
 
@@ -116,12 +116,12 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
         self.data_type_conflict = data_type_conflict
 
     @cached_property
-    def _view_by_entity_id(self):
-        return {view.view: view for view in self.mapping.views}
+    def _view_by_entity_id(self) -> dict[str, DMSView]:
+        return {view.view.external_id: view for view in self.mapping.views}
 
     @cached_property
-    def _property_by_view_property(self):
-        return {(prop.view, prop.view_property): prop for prop in self.mapping.properties}
+    def _property_by_view_property(self) -> dict[tuple[str, str], DMSProperty]:
+        return {(prop.view.external_id, prop.view_property): prop for prop in self.mapping.properties}
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         if self.data_type_conflict != "overwrite":
@@ -130,13 +130,14 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
         new_rules = input_rules.model_copy(deep=True)
 
         for view in new_rules.views:
-            if view.view in self._view_by_entity_id:
-                view.implements = [self._view_by_entity_id[view.view].view]
+            if mapping_view := self._view_by_entity_id.get(view.view.external_id):
+                view.implements = mapping_view.implements
 
         for prop in new_rules.properties:
-            if (prop.view, prop.view_property) not in self._property_by_view_property:
+            key = (prop.view.external_id, prop.view_property)
+            if key not in self._property_by_view_property:
                 continue
-            mapping_prop = self._property_by_view_property[(prop.view, prop.view_property)]
+            mapping_prop = self._property_by_view_property[key]
             to_overwrite, conflicts = self._find_overwrites(prop, mapping_prop)
             if conflicts and self.data_type_conflict == "overwrite":
                 warnings.warn(
