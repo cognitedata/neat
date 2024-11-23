@@ -1,13 +1,10 @@
 from collections.abc import Callable, Set
-from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Label, LabelDefinition, LabelDefinitionList
-from rdflib import RDF, Literal, Namespace
-
-from cognite.neat._shared import Triple
+from rdflib import Namespace
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 
@@ -75,44 +72,10 @@ class LabelsExtractor(ClassicCDFBaseExtractor[LabelDefinition]):
             skip_metadata_values=skip_metadata_values,
         )
 
-    def _item2triples(self, label: LabelDefinition) -> list[Triple]:
-        if not label.external_id:
-            return []
-
-        id_ = self.namespace[f"{InstanceIdPrefix.label}{self._label_id(label)}"]
-
-        type_ = self._get_rdf_type(label)
-        # Set rdf type
-        triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
-
-        # Create attributes
-        triples.append((id_, self.namespace.external_id, Literal(label.external_id)))
-
-        if label.name:
-            triples.append((id_, self.namespace.name, Literal(label.name)))
-
-        if label.description:
-            triples.append((id_, self.namespace.description, Literal(label.description)))
-
-        if label.created_time:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.created_time,
-                    Literal(datetime.fromtimestamp(label.created_time / 1000, timezone.utc)),
-                )
-            )
-
-        if label.data_set_id:
-            triples.append(
-                (
-                    id_,
-                    self.namespace.data_set_id,
-                    self.namespace[f"{InstanceIdPrefix.data_set}{label.data_set_id}"],
-                )
-            )
-
-        return triples
+    def _fallback_id(self, item: LabelDefinition) -> str | None:
+        if not item.external_id:
+            return None
+        return self._label_id(item)
 
     @staticmethod
     def _label_id(label: Label | LabelDefinition) -> str:

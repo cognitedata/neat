@@ -4,8 +4,9 @@ import sys
 from abc import ABC
 from collections.abc import Callable, Iterable, Sequence, Set
 from datetime import datetime, timezone
-from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
+from typing import Any, Generic, TypeVar
 
+from cognite.client.data_classes._base import CogniteResource
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -13,16 +14,7 @@ from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import string_to_ideal_type
 
-
-@runtime_checkable
-class CogniteIDResource(Protocol):
-    @property
-    def id(self) -> int | None: ...
-
-    def dump(self, camel_case: bool = True) -> dict[str, Any]: ...
-
-
-T_CogniteResource = TypeVar("T_CogniteResource", bound=CogniteIDResource)
+T_CogniteResource = TypeVar("T_CogniteResource", bound=CogniteResource)
 
 DEFAULT_SKIP_METADATA_VALUES = frozenset({"nan", "null", "none", ""})
 
@@ -119,7 +111,15 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 break
 
     def _item2triples(self, item: T_CogniteResource) -> list[Triple]:
-        id_ = self.namespace[f"{self._instance_id_prefix}{item.id}"]
+        id_value: str | None
+        if hasattr(item, "id"):
+            id_value = str(item.id)
+        else:
+            id_value = self._fallback_id(item)
+        if id_value is None:
+            return []
+
+        id_ = self.namespace[f"{self._instance_id_prefix}{id_value}"]
 
         type_ = self._get_rdf_type(item)
 
@@ -136,6 +136,12 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             for raw in values:
                 triples.append((id_, self.namespace[key], self._as_object(raw, key)))
         return triples
+
+    def _fallback_id(self, item: T_CogniteResource) -> str | None:
+        raise AttributeError(
+            f"Item of type {type(item)} does not have an id attribute. "
+            f"Please implement the _fallback_id method in the extractor."
+        )
 
     def _metadata_to_triples(self, id_: URIRef, metadata: dict[str, str]) -> Iterable[Triple]:
         if self.unpack_metadata:
@@ -175,4 +181,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             from ._labels import LabelsExtractor
 
             return self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(raw)}"]
+        elif key in {"sourceType", "targetType", "source_type", "target_type"} and isinstance(raw, str):
+            # Relationship types. Titled so they can be looked up.
+            return self.namespace[raw.title()]
         return Literal(raw, datatype=XSD.dateTime)

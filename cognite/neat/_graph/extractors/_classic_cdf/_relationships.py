@@ -1,17 +1,14 @@
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Set
-from datetime import datetime, timezone
 from pathlib import Path
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Relationship, RelationshipList
-from rdflib import RDF, Literal, Namespace
+from rdflib import Namespace
 
-from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import create_sha256_hash
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
-from ._labels import LabelsExtractor
 
 
 class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
@@ -36,6 +33,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
     """
 
     _default_rdf_type = "Relationship"
+    _instance_id_prefix = InstanceIdPrefix.relationship
 
     def __init__(
         self,
@@ -105,127 +103,11 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
             skip_metadata_values=skip_metadata_values,
         )
 
-    def _item2triples(self, relationship: Relationship) -> list[Triple]:
-        """Converts an asset to triples."""
-
-        if relationship.external_id and relationship.source_external_id and relationship.target_external_id:
-            if self._log_target_nodes and relationship.target_type and relationship.target_external_id:
-                self._target_external_ids_by_type[InstanceIdPrefix.from_str(relationship.target_type)].add(
-                    relationship.target_external_id
+    def _fallback_id(self, item: Relationship) -> str | None:
+        if item.external_id and item.source_external_id and item.target_external_id:
+            if self._log_target_nodes and item.target_type and item.target_external_id:
+                self._target_external_ids_by_type[InstanceIdPrefix.from_str(item.target_type)].add(
+                    item.target_external_id
                 )
-
-            # relationships do not have an internal id, so we generate one
-            id_ = self.namespace[f"{InstanceIdPrefix.relationship}{create_sha256_hash(relationship.external_id)}"]
-
-            type_ = self._get_rdf_type(relationship)
-            # Set rdf type
-            triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
-
-            # Set source and target types
-            if source_type := relationship.source_type:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.source_type,
-                        self.namespace[source_type.title()],
-                    )
-                )
-
-            if target_type := relationship.target_type:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.target_type,
-                        self.namespace[target_type.title()],
-                    )
-                )
-
-            # Create attributes
-
-            triples.append((id_, self.namespace.external_id, Literal(relationship.external_id)))
-
-            triples.append(
-                (
-                    id_,
-                    self.namespace.source_external_id,
-                    Literal(relationship.source_external_id),
-                )
-            )
-
-            triples.append(
-                (
-                    id_,
-                    self.namespace.target_external_id,
-                    Literal(relationship.target_external_id),
-                )
-            )
-
-            if relationship.start_time:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.start_time,
-                        Literal(datetime.fromtimestamp(relationship.start_time / 1000, timezone.utc)),
-                    )
-                )
-
-            if relationship.end_time:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.end_time,
-                        Literal(datetime.fromtimestamp(relationship.end_time / 1000, timezone.utc)),
-                    )
-                )
-
-            if relationship.created_time:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.created_time,
-                        Literal(datetime.fromtimestamp(relationship.created_time / 1000, timezone.utc)),
-                    )
-                )
-
-            if relationship.last_updated_time:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.last_updated_time,
-                        Literal(datetime.fromtimestamp(relationship.last_updated_time / 1000, timezone.utc)),
-                    )
-                )
-
-            if relationship.confidence:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.confidence,
-                        Literal(relationship.confidence),
-                    )
-                )
-
-            if relationship.labels:
-                for label in relationship.labels:
-                    # external_id can create ill-formed URIs, so we create websafe URIs
-                    # since labels do not have internal ids, we use the external_id as the id
-                    triples.append(
-                        (
-                            id_,
-                            self.namespace.label,
-                            self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(label)}"],
-                        )
-                    )
-
-            # Create connection
-            if relationship.data_set_id:
-                triples.append(
-                    (
-                        id_,
-                        self.namespace.dataset,
-                        self.namespace[f"{InstanceIdPrefix.data_set}{relationship.data_set_id}"],
-                    )
-                )
-
-            return triples
-        return []
+                return create_sha256_hash(item.external_id)
+        return None
