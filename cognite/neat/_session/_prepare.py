@@ -328,9 +328,16 @@ class DataModelPrepareAPI:
                     if rules.containers is None:
                         rules.containers = dms_ref.containers
                     else:
-                        rules.containers.extend(dms_ref.containers or [])
-                    rules.views.extend(dms_ref.views)
-                    rules.properties.extend(dms_ref.properties)
+                        existing_containers = {c.container for c in rules.containers}
+                        rules.containers.extend(
+                            [c for c in dms_ref.containers or [] if c.container not in existing_containers]
+                        )
+                    existing_views = {v.view for v in rules.views}
+                    rules.views.extend([v for v in dms_ref.views if v.view not in existing_views])
+                    existing_properties = {(p.view, p.view_property) for p in rules.properties}
+                    rules.properties.extend(
+                        [p for p in dms_ref.properties if (p.view, p.view_property) not in existing_properties]
+                    )
 
         start = datetime.now(timezone.utc)
         transformer = ToExtension(
