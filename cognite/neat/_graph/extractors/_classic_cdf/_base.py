@@ -84,7 +84,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
         camel_case: bool = True,
-        as_write: bool = True,
+        as_write: bool = False,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.items = items
@@ -178,7 +178,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         return self._SPACE_PATTERN.sub("_", type_)
 
     def _as_object(self, raw: Any, key: str) -> Literal | URIRef:
-        if key in {"data_set_id", "DataSetId"}:
+        if key in {"data_set_id", "dataSetId"}:
             return self.namespace[f"{InstanceIdPrefix.data_set}{raw}"]
         elif key in {"assetId", "asset_id", "assetIds", "asset_ids", "parentId", "rootId", "parent_id", "root_id"}:
             return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
@@ -204,8 +204,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             try:
                 return URIRef(str(AnyHttpUrl(raw)))
             except ValidationError:
-                return Literal(raw)
-        return Literal(raw, datatype=XSD.dateTime)
+                ...
+        return Literal(raw)
 
     @classmethod
     def from_dataset(
