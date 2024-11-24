@@ -180,16 +180,19 @@ class DataModelState:
             found = [loader.as_write(read_view) for read_view in found_read]
             self._cdf_views.update({view.as_id(): view for view in found})
         output = [self._cdf_views[view_id] for view_id in view_ids if view_id in self._cdf_views]
+        if not include_ancestors:
+            return output
+
         to_check = output.copy()
         seen = set(view_ids)
         while to_check:
             checking = to_check.pop()
-            for parent in checking.implements or []:
-                if parent not in seen:
-                    seen.add(parent)
-                    if parent in self._cdf_views:
-                        to_check.append(self._cdf_views[parent])
-                        output.append(self._cdf_views[parent])
+            connected_views = ViewLoader.get_connected_views(checking, seen, include_connections=True)
+            for connected_id in connected_views:
+                if connected_id in self._cdf_views:
+                    found_view = self._cdf_views[connected_id]
+                    output.append(found_view)
+                    to_check.append(found_view)
         return output
 
     def lookup_schema(
