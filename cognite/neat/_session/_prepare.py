@@ -7,6 +7,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from rdflib import URIRef
 
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.transformers import RelationshipToSchemaTransformer
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._rules._shared import InputRules, ReadRules
@@ -20,10 +21,16 @@ from cognite.neat._rules.transformers import (
     ToExtension,
     VerifyDMSRules,
 )
+from cognite.neat._store._provenance import Agent as ProvenanceAgent
 from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
+
+try:
+    from rich import print
+except ImportError:
+    ...
 
 
 @session_class_wrapper
@@ -396,3 +403,62 @@ class DataModelPrepareAPI:
             )
 
             self._state.data_model.write(output.rules, change)
+
+    def include_referenced(self) -> None:
+        """Include referenced views and containers in the data model."""
+        start = datetime.now(timezone.utc)
+
+        source_id, rules = self._state.data_model.last_verified_dms_rules
+        view_ids, container_ids = rules.imported_views_and_containers_ids(include_model_views_with_no_properties=True)
+        if not (view_ids or container_ids):
+            print(
+                f"Data model {rules.metadata.as_data_model_id()} does not have any referenced views or containers."
+                f"that is not already included in the data model."
+            )
+            return
+        if self._client is None:
+            raise NeatSessionError(
+                "No client provided. You are referencing unknown views and containers in your data model, "
+                "NEAT needs a client to lookup the definitions. "
+                "Please set the client in the session, NeatSession(client=client)."
+            )
+        schema = self._state.data_model.lookup_schema(self._client, list(view_ids), list(container_ids))
+        copy_ = rules.model_copy(deep=True)
+        copy_.metadata.version = f"{rules.metadata.version}_completed"
+        importer = DMSImporter(schema)
+        imported = importer.to_rules()
+        if imported.rules is None:
+            self._state.data_model.issue_lists.append(imported.issues)
+            raise NeatSessionError(
+                "Could not import the referenced views and containers. "
+                "See `neat.inspect.issues()` for more information."
+            )
+        verified = VerifyDMSRules("continue").transform(imported.rules)
+        if verified.rules is None:
+            self._state.data_model.issue_lists.append(verified.issues)
+            raise NeatSessionError(
+                "Could not verify the referenced views and containers. "
+                "See `neat.inspect.issues()` for more information."
+            )
+        if copy_.containers is None:
+            copy_.containers = verified.rules.containers
+        else:
+            existing_containers = {c.container for c in copy_.containers}
+            copy_.containers.extend(
+                [c for c in verified.rules.containers or [] if c.container not in existing_containers]
+            )
+        existing_views = {v.view for v in copy_.views}
+        copy_.views.extend([v for v in verified.rules.views if v.view not in existing_views])
+        end = datetime.now(timezone.utc)
+
+        change = Change.from_rules_activity(
+            copy_,
+            ProvenanceAgent(id_=DEFAULT_NAMESPACE["agent/"]),
+            start,
+            end,
+            (f"Included referenced views and containers in the data model {rules.metadata.as_data_model_id()}"),
+            self._state.data_model.provenance.source_entity(source_id)
+            or self._state.data_model.provenance.target_entity(source_id),
+        )
+
+        self._state.data_model.write(copy_, change)
