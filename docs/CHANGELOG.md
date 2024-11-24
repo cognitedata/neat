@@ -34,6 +34,9 @@ Changes are grouped as follows:
 - Bump dep on pyoxi to 0.4.3 and oxrdflib to 0.4.0
 - Increase speed in loading RDF files in oxistore
 
+### Removed
+- [BREAKING] The `neat.read.cdf.classic.asset(...)` is removed. Use the `neat.read.cdf.classic.graph(...)` instead.
+
 ## [0.98.0] - 21-11-**2024**
 ### Added
 - Support for reading `YAML`
