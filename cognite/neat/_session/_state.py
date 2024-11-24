@@ -193,6 +193,7 @@ class DataModelState:
                     found_view = self._cdf_views[connected_id]
                     output.append(found_view)
                     to_check.append(found_view)
+                seen.add(connected_id)
         return output
 
     def lookup_schema(
