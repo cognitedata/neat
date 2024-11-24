@@ -190,8 +190,13 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
             # We need to remove these properties to compare with the local view.
             parents = self._retrieve_view_ancestors(view.implements or [], False, self._cache_view_by_id)
             for parent in parents:
-                for prop_name in parent.properties.keys():
-                    dumped["properties"].pop(prop_name, None)
+                for prop_name, prop in (parent.as_write().properties or {}).items():
+                    existing = dumped["properties"].get(prop_name)
+                    if existing is None:
+                        continue
+                    if existing == prop.dump():
+                        dumped["properties"].pop(prop_name, None)
+                    # If the child overrides the parent, we keep the child's property.
 
         if "properties" in dumped and not dumped["properties"]:
             # All properties were removed, so we remove the properties key.
