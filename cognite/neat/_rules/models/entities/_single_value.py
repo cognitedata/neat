@@ -76,7 +76,10 @@ class Entity(BaseModel, extra="ignore"):
             return UnknownEntity(prefix=Undefined, suffix=Unknown)
         if defaults and isinstance(defaults, dict):
             # This is a trick to pass in default values
-            return cls.model_validate({_PARSE: data, "defaults": defaults})
+            try:
+                return cls.model_validate({_PARSE: data, "defaults": defaults})
+            except ValueError:
+                raise
         else:
             return cls.model_validate(data)
 
