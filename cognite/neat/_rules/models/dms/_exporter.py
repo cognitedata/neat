@@ -79,9 +79,11 @@ class _DMSExporter:
             view_properties_by_id, rules.views
         )
 
-        views, view_node_type_filters = self._create_views_with_node_types(
-            view_properties_by_id, view_properties_with_ancestors_by_id
-        )
+        views = self._create_views_with_node_types(view_properties_by_id, view_properties_with_ancestors_by_id)
+        view_node_type_filters: set[dm.NodeId] = set()
+        for dms_view in rules.views:
+            if isinstance(dms_view.filter_, NodeTypeFilter):
+                view_node_type_filters.update(node.as_id() for node in dms_view.filter_.inner or [])
         if rules.nodes:
             node_types = NodeApplyDict(
                 [node.as_node() for node in rules.nodes]
@@ -141,7 +143,7 @@ class _DMSExporter:
         self,
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
         view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
-    ) -> tuple[ViewApplyDict, set[dm.NodeId]]:
+    ) -> ViewApplyDict:
         input_views = list(self.rules.views)
 
         views = ViewApplyDict([dms_view.as_view() for dms_view in input_views])
@@ -155,11 +157,7 @@ class _DMSExporter:
                 if view_property is not None:
                     view.properties[prop.view_property] = view_property
 
-        unique_node_types: set[dm.NodeId] = set()
-        for view in views.values():
-            unique_node_types.add(dm.NodeId(space=view.space, external_id=view.external_id))
-
-        return views, unique_node_types
+        return views
 
     @classmethod
     def _create_edge_type_from_prop(cls, prop: DMSProperty) -> dm.DirectRelationReference:

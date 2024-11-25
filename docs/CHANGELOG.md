@@ -28,6 +28,7 @@ Changes are grouped as follows:
 ### Fixed
 - Running `neat.to.cdf.data_model(..., dry_run=True)` now counts created and deleted items correctly.
 - Bug in inference of multi-value types
+- Setting `filter` for a `view` in `DMS` sheet is no longer ignored.
 
 ### Improved
 - Bump dep on pyoxi to 0.4.3 and oxrdflib to 0.4.0

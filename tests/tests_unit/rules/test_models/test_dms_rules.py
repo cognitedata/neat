@@ -19,6 +19,7 @@ from cognite.neat._rules.models.data_types import String
 from cognite.neat._rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
+    DMSInputNode,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
@@ -166,13 +167,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     ),
                 ]
             ),
-            node_types=NodeApplyDict(
-                [
-                    dm.NodeApply(space="my_space", external_id="WindFarm"),
-                    dm.NodeApply(space="my_space", external_id="Asset"),
-                    dm.NodeApply(space="my_space", external_id="WindTurbine"),
-                ]
-            ),
+            node_types=NodeApplyDict([]),
         ),
         id="Two properties, one container, one view",
     )
@@ -284,12 +279,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=NodeApplyDict(
-            [
-                dm.NodeApply(space="my_space", external_id="WindFarm"),
-                dm.NodeApply(space="my_space", external_id="WindTurbine"),
-            ]
-        ),
+        node_types=NodeApplyDict([]),
     )
     yield pytest.param(
         dms_rules,
@@ -384,12 +374,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
         ),
-        node_types=NodeApplyDict(
-            [
-                dm.NodeApply(space="my_space", external_id="Asset"),
-                dm.NodeApply(space="my_space", external_id="WindTurbine"),
-            ]
-        ),
+        node_types=NodeApplyDict([]),
     )
 
     yield pytest.param(
@@ -587,13 +572,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=NodeApplyDict(
-            [
-                dm.NodeApply(space="my_space", external_id="Activity"),
-                dm.NodeApply(space="my_space", external_id="Asset"),
-                dm.NodeApply(space="my_space", external_id="CogniteTimeseries"),
-            ]
-        ),
+        node_types=NodeApplyDict([]),
     )
     yield pytest.param(
         dms_rules,
@@ -625,6 +604,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         containers=[
             DMSInputContainer(container="generating_unit"),
         ],
+        nodes=[DMSInputNode(node="sp_other:wind_turbine", usage="type")],
     )
 
     expected_schema = DMSSchema(
@@ -644,6 +624,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     space="my_space",
                     external_id="generating_unit",
                     version="1",
+                    filter=dm.filters.Equals(["node", "type"], {"space": "sp_other", "externalId": "wind_turbine"}),
                     properties={
                         "display_name": dm.MappedPropertyApply(
                             container=dm.ContainerId("my_space", "generating_unit"),
@@ -662,7 +643,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ]
         ),
-        node_types=NodeApplyDict([dm.NodeApply(space="my_space", external_id="generating_unit")]),
+        node_types=NodeApplyDict([dm.NodeApply(space="sp_other", external_id="wind_turbine")]),
     )
     yield pytest.param(
         dms_rules,
@@ -726,11 +707,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 dm.ViewId(space="sp_solution", external_id="Asset", version="1"),
             ],
         ),
-        node_types=NodeApplyDict(
-            [
-                dm.NodeApply(space="sp_solution", external_id="Asset"),
-            ]
-        ),
+        node_types=NodeApplyDict([]),
     )
 
     yield pytest.param(
