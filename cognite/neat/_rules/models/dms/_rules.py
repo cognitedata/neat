@@ -4,13 +4,12 @@ from typing import Any, ClassVar, Literal
 
 import pandas as pd
 from cognite.client import data_modeling as dm
-from pydantic import Field, field_serializer, field_validator, model_validator
+from pydantic import Field, field_serializer, field_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from rdflib import URIRef
 
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import COGNITE_SPACES
-from cognite.neat._issues import MultiValueError
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import (
     PrincipleMatchingSpaceAndVersionWarning,

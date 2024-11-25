@@ -242,7 +242,7 @@ class NeatError(NeatIssue, Exception):
                 if read_info_by_sheet:
                     cls._adjust_row_numbers(neat_error, read_info_by_sheet)
                 all_errors.append(neat_error)
-            elif isinstance(error, dict) len(error["loc"]) >= 4 and read_info_by_sheet:
+            elif isinstance(error, dict) and len(error["loc"]) >= 4 and read_info_by_sheet:
                 all_errors.append(RowError.from_pydantic_error(error, read_info_by_sheet))
             elif isinstance(error, dict):
                 all_errors.append(DefaultPydanticError.from_pydantic_error(error))
@@ -523,10 +523,10 @@ def catch_issues(
         try:
             yield future_result
         except ValidationError as e:
-            issues.extend(error_cls.from_errors(e.errors(), **(error_args or {})))
+            issues.extend(error_cls.from_errors(e.errors(), **(error_args or {})))  # type: ignore[arg-type]
             future_result._result = "failure"
         except (NeatError, MultiValueError) as e:
-            issues.extend(error_cls.from_errors([e], **(error_args or {})))
+            issues.extend(error_cls.from_errors([e], **(error_args or {})))  # type: ignore[arg-type, list-item]
             future_result._result = "failure"
         else:
             future_result._result = "success"

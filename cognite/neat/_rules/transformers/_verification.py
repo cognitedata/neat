@@ -46,7 +46,7 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
             dumped = in_.dump()
             verified_rules = rules_cls.model_validate(dumped)  # type: ignore[assignment]
             if self.validate:
-                validation_cls = self._get_validation_cls(verified_rules)
+                validation_cls = self._get_validation_cls(verified_rules)  # type: ignore[arg-type]
                 validation_issues = validation_cls(verified_rules).validate()
                 # We need to trigger warnings are raise exceptions such that they are caught by the context manager
                 # and processed with the read context
