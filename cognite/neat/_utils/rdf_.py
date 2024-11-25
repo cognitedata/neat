@@ -115,13 +115,24 @@ def as_neat_compliant_uri(uri: URIRef) -> URIRef:
     return URIRef(f"{namespace}{compliant_uri}")
 
 
-def convert_rdflib_content(content: RdfLiteral | URIRef | dict | list) -> Any:
-    if isinstance(content, RdfLiteral) or isinstance(content, URIRef):
+def convert_rdflib_content(
+    content: RdfLiteral | URIRef | dict | list, remove_namespace: bool = False
+) -> Any:
+    if isinstance(content, RdfLiteral):
         return content.toPython()
+    elif isinstance(content, URIRef):
+        return (
+            remove_namespace_from_uri(content)
+            if remove_namespace
+            else content.toPython()
+        )
     elif isinstance(content, dict):
-        return {key: convert_rdflib_content(value) for key, value in content.items()}
+        return {
+            key: convert_rdflib_content(value, remove_namespace)
+            for key, value in content.items()
+        }
     elif isinstance(content, list):
-        return [convert_rdflib_content(item) for item in content]
+        return [convert_rdflib_content(item, remove_namespace) for item in content]
     else:
         return content
 
