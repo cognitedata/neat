@@ -242,10 +242,13 @@ class NeatError(NeatIssue, Exception):
                 if read_info_by_sheet:
                     cls._adjust_row_numbers(neat_error, read_info_by_sheet)
                 all_errors.append(neat_error)
-            elif len(error["loc"]) >= 4 and read_info_by_sheet:
+            elif isinstance(error, dict) len(error["loc"]) >= 4 and read_info_by_sheet:
                 all_errors.append(RowError.from_pydantic_error(error, read_info_by_sheet))
-            else:
+            elif isinstance(error, dict):
                 all_errors.append(DefaultPydanticError.from_pydantic_error(error))
+            else:
+                # This is unreachable. However, in case it turns out to be reachable, we want to know about it.
+                raise ValueError(f"Unsupported error type: {error}")
         return all_errors
 
     @staticmethod
