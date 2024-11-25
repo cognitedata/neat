@@ -164,7 +164,7 @@ class DMSPostValidation:
             view_id = prop.view.as_id()
             if view_id not in defined_views:
                 errors.append(
-                    ResourceNotDefinedError[dm.ViewId](
+                    ResourceNotDefinedError(
                         identifier=view_id,
                         resource_type="view",
                         location="Views Sheet",

@@ -32,7 +32,7 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
-    @pytest.mark.skip("In progress")
+    @pytest.mark.skip("InProgress")
     def test_classic_to_dms(self, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(storage="oxigraph")
         # Hack to read in the test data.
@@ -56,8 +56,9 @@ class TestExtractToLoadFlow:
 
         neat.convert("dms")
 
-        neat.mapping.classic_to_core(org_name=None)
-        dms_rules = neat._state.data_model.last_verified_dms_rules
+        neat.mapping.classic_to_core("Classic")
+
+        dms_rules = neat._state.data_model.last_verified_dms_rules[1]
         store = neat._state.instances.store
         instances = [
             self._standardize_instance(instance)

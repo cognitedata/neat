@@ -2,8 +2,6 @@
 its sub-models and validators.
 """
 
-from __future__ import annotations
-
 import math
 import sys
 import types
@@ -39,13 +37,16 @@ from rdflib import Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.models._types import (
-    ClassEntityType,
+    ContainerEntityType,
     DataModelExternalIdType,
-    InformationPropertyType,
+    DmsPropertyType,
     SpaceType,
     StrListType,
     VersionType,
+    ViewEntityType,
 )
+from cognite.neat._rules.models.data_types import DataType
+from cognite.neat._rules.models.entities import EdgeEntity, ReverseConnectionEntity, ViewEntity
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -249,7 +250,7 @@ class BaseRules(SchemaModel, ABC):
         """Returns a list of headers for the model, typically used by ExcelExporter"""
         headers_by_sheet: dict[str, list[str]] = {}
         for field_name, field in cls.model_fields.items():
-            if field_name == "validators_to_skip":
+            if field_name in ["validators_to_skip", "post_validate"]:
                 continue
             sheet_name = (field.alias or field_name) if by_alias else field_name
             annotation = field.annotation
@@ -379,9 +380,9 @@ class SheetList(list, MutableSequence[T_SheetRow]):
     def __getitem__(self, index: SupportsIndex) -> T_SheetRow: ...
 
     @overload
-    def __getitem__(self, index: slice) -> SheetList[T_SheetRow]: ...
+    def __getitem__(self, index: slice) -> "SheetList[T_SheetRow]": ...
 
-    def __getitem__(self, index: SupportsIndex | slice, /) -> T_SheetRow | SheetList[T_SheetRow]:
+    def __getitem__(self, index: SupportsIndex | slice, /) -> "T_SheetRow | SheetList[T_SheetRow]":
         if isinstance(index, slice):
             return SheetList[T_SheetRow](super().__getitem__(index))
         return super().__getitem__(index)
@@ -399,10 +400,19 @@ ExtensionCategoryType = Annotated[
 
 
 # Immutable such that this can be used as a key in a dictionary
-class PropertyRef(BaseModel, frozen=True):
-    class_: ClassEntityType = Field(alias="Class")
-    property_: InformationPropertyType = Field(alias="Property")
+class ContainerProperty(BaseModel, frozen=True):
+    container: ContainerEntityType
+    property_: DmsPropertyType
 
 
-class ClassRef(BaseModel, frozen=True):
-    class_: ClassEntityType = Field(alias="Class")
+class ContainerDestinationProperty(ContainerProperty, frozen=True):
+    value_type: DataType | ViewEntity
+    connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = None
+
+
+class ViewRef(BaseModel, frozen=True):
+    view: ViewEntityType
+
+
+class ViewProperty(ViewRef, frozen=True):
+    property_: DmsPropertyType

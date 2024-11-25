@@ -49,7 +49,7 @@ class AddSelfReferenceProperty(BaseTransformer):
                 )
 
             traversal = SingleProperty.from_string(
-                class_=property_.class_.id,
+                class_=property_.view.id,
                 property_=f"{self.rules.metadata.prefix}:{property_.property_}",
             )
 

@@ -188,7 +188,7 @@ class ExcelReadAPI(BaseReadAPI):
                 description=f"Excel file {reader!s} read as unverified data model",
             )
             self._store_rules(input_rules, change)
-
+        self._state.data_model.issue_lists.append(input_rules.issues)
         return input_rules.issues
 
 

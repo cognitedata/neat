@@ -10,16 +10,20 @@ from rdflib import URIRef
 
 from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._issues import MultiValueError
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import (
     PrincipleMatchingSpaceAndVersionWarning,
 )
 from cognite.neat._rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
+    ContainerProperty,
     DataModelAspect,
     RoleTypes,
     SheetList,
     SheetRow,
+    ViewProperty,
+    ViewRef,
 )
 from cognite.neat._rules.models._types import (
     ClassEntityType,
@@ -180,6 +184,14 @@ class DMSProperty(SheetRow):
             return value.dump(space=metadata.space, version=metadata.version, type=default_type)
         return str(value)
 
+    def as_container_reference(self) -> ContainerProperty:
+        if self.container is None or self.container_property is None:
+            raise NeatValueError("Accessing container reference without container and container property set")
+        return ContainerProperty(container=self.container, property_=self.container_property)
+
+    def as_view_reference(self) -> ViewProperty:
+        return ViewProperty(view=self.view, property_=self.view_property)
+
 
 class DMSContainer(SheetRow):
     container: ContainerEntityType = Field(alias="Container")
@@ -277,6 +289,9 @@ class DMSView(SheetRow):
             properties={},
         )
 
+    def as_view_reference(self) -> ViewRef:
+        return ViewRef(view=self.view)
+
 
 class DMSNode(SheetRow):
     node: DMSNodeEntity = Field(alias="Node")
@@ -325,6 +340,9 @@ class DMSRules(BaseRules):
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     enum: SheetList[DMSEnum] | None = Field(None, alias="Enum")
     nodes: SheetList[DMSNode] | None = Field(None, alias="Nodes")
+    # This is a hack to allow the post_validation to be turned off when needed
+    # Will likely be moved completely out of the rules in the future
+    post_validate: bool = Field(default=True, exclude=True, repr=False)
 
     @field_validator("views")
     def matching_version_and_space(cls, value: SheetList[DMSView], info: ValidationInfo) -> SheetList[DMSView]:
@@ -361,6 +379,8 @@ class DMSRules(BaseRules):
     def post_validation(self) -> "DMSRules":
         from ._validation import DMSPostValidation
 
+        if not self.post_validate:
+            return self
         issue_list = DMSPostValidation(self).validate()
         if issue_list.warnings:
             issue_list.trigger_warnings()
