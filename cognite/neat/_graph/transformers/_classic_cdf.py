@@ -9,7 +9,7 @@ from rdflib.query import ResultRow
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat._graph import extractors
 from cognite.neat._issues.warnings import ResourceNotFoundWarning
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import Triple, add_triples_in_batch, remove_namespace_from_uri
 
 from ._base import BaseTransformer
 
@@ -93,12 +93,14 @@ class BaseAssetConnector(BaseTransformer, ABC):
 
     def transform(self, graph: Graph) -> None:
         for item_id, *_ in graph.query(self._select_item_ids.format(item_type=self._item_type)):  # type: ignore[misc]
+            triples: list[Triple] = []
             for asset_id, *_ in graph.query(  # type: ignore[misc]
                 self._select_connected_assets.format(
                     item_id=item_id, attribute=self._attribute, asset_type=self._asset_type
                 )
             ):
-                graph.add((asset_id, self._connection_type, item_id))
+                triples.append((asset_id, self._connection_type, item_id))  # type: ignore[arg-type]
+            add_triples_in_batch(graph, triples)
 
 
 class AssetTimeSeriesConnector(BaseAssetConnector):
