@@ -3,10 +3,10 @@ from collections.abc import Collection
 from datetime import datetime, timezone
 from typing import Literal, cast
 
-from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from rdflib import URIRef
 
+from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.transformers import RelationshipToSchemaTransformer
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
@@ -35,7 +35,7 @@ except ImportError:
 
 @session_class_wrapper
 class PrepareAPI:
-    def __init__(self, client: CogniteClient | None, state: SessionState, verbose: bool) -> None:
+    def __init__(self, client: NeatClient | None, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
         self.data_model = DataModelPrepareAPI(client, state, verbose)
@@ -131,7 +131,7 @@ class InstancePrepareAPI:
 
 @session_class_wrapper
 class DataModelPrepareAPI:
-    def __init__(self, client: CogniteClient | None, state: SessionState, verbose: bool) -> None:
+    def __init__(self, client: NeatClient | None, state: SessionState, verbose: bool) -> None:
         self._client = client
         self._state = state
         self._verbose = verbose

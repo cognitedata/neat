@@ -5,6 +5,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
 from cognite.neat import _version
+from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
@@ -19,7 +20,6 @@ from cognite.neat._store._provenance import (
     INSTANCES_ENTITY,
     Change,
 )
-from cognite.neat._utils.auth import _CLIENT_NAME
 
 from ._collector import _COLLECTOR, Collector
 from ._drop import DropAPI
@@ -44,12 +44,12 @@ class NeatSession:
         verbose: bool = True,
         load_engine: Literal["newest", "cache", "skip"] = "cache",
     ) -> None:
-        self._client = client
+        self._client = NeatClient(client) if client else None
         self._verbose = verbose
         self._state = SessionState(store_type=storage)
-        self.read = ReadAPI(self._state, client, verbose)
-        self.to = ToAPI(self._state, client, verbose)
-        self.prepare = PrepareAPI(client, self._state, verbose)
+        self.read = ReadAPI(self._state, self._client, verbose)
+        self.to = ToAPI(self._state, self._client, verbose)
+        self.prepare = PrepareAPI(self._client, self._state, verbose)
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
@@ -57,8 +57,6 @@ class NeatSession:
         self.drop = DropAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()
-        if self._client is not None and self._client._config is not None:
-            self._client._config.client_name = _CLIENT_NAME
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
             print(f"Neat Engine {engine_version} loaded.")
 

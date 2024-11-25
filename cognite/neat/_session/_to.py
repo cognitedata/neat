@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Any, Literal, overload
 
-from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import SpaceApply
 
+from cognite.neat._client import NeatClient
 from cognite.neat._graph import loaders
 from cognite.neat._issues import IssueList, catch_warnings
 from cognite.neat._rules import exporters
@@ -17,7 +17,7 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 @session_class_wrapper
 class ToAPI:
-    def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
+    def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
         self.cdf = CDFToAPI(state, client, verbose)
@@ -75,7 +75,7 @@ class ToAPI:
 
 @session_class_wrapper
 class CDFToAPI:
-    def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
+    def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         self._client = client
         self._state = state
         self._verbose = verbose
