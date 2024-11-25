@@ -1,4 +1,4 @@
-from cognite.neat._client.data_classes._schema import DMSSchema
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 

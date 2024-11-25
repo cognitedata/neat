@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat._client.data_classes._schema import DMSSchema
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues.errors import NeatValueError
 
 if TYPE_CHECKING:
@@ -27,14 +27,16 @@ class SchemaAPI:
         if data_model_id.version is None:
             raise NeatValueError("Data model version must be specified")
         read_views = self._client.loaders.views.retrieve(
-            view_ids, include_connections=include_connections, include_ancestor=include_ancestors
+            view_ids,  # type: ignore[arg-type]
+            include_connections=include_connections,
+            include_ancestor=include_ancestors,
         )
         views = ViewApplyDict([self._client.loaders.views.as_write(view) for view in read_views])
 
         container_set = set(container_ids) | {
             container for view in read_views for container in view.referenced_containers()
         }
-        containers = self._client.loaders.containers.retrieve(container_set)
+        containers = self._client.loaders.containers.retrieve(list(container_set))
 
         return DMSSchema(
             data_model=dm.DataModelApply(

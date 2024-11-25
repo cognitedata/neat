@@ -101,7 +101,7 @@ class DMSSchema:
         return directly_referenced_containers | inherited_referenced_containers
 
     @classmethod
-    def from_model_id(cls, client: CogniteClient, data_model_id: dm.DataModelIdentifier) -> "DMSSchema":
+    def from_model_id(cls, client: "NeatClient", data_model_id: dm.DataModelIdentifier) -> "DMSSchema":
         data_models = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True)
         if len(data_models) == 0:
             raise ValueError(f"Data model {data_model_id} not found")
@@ -111,7 +111,7 @@ class DMSSchema:
     @classmethod
     def from_data_model(
         cls,
-        client: CogniteClient,
+        client: "NeatClient",
         data_model: dm.DataModel[dm.View],
         reference_model: dm.DataModel[dm.View] | None = None,
     ) -> "DMSSchema":
@@ -177,7 +177,9 @@ class DMSSchema:
 
         # We need to include parent views in the schema to make sure that the schema is valid.
         parent_view_ids = {parent for view in views for parent in view.implements or []}
-        parents = view_loader.retrieve_all_ancestors(list(parent_view_ids - existing_view_ids))
+        parents = view_loader.retrieve(
+            list(parent_view_ids - existing_view_ids), include_ancestor=True, include_connections=True
+        )
         views.extend([parent for parent in parents if parent.as_id() not in existing_view_ids])
 
         # Converting views from read to write format requires to account for parents (implements)

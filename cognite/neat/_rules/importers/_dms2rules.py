@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, cast
 
-from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
@@ -19,6 +18,7 @@ from cognite.client.data_classes.data_modeling.views import (
 )
 from cognite.client.utils import ms_to_datetime
 
+from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList, NeatIssue
 from cognite.neat._issues.errors import FileTypeUnexpectedError, ResourceMissingIdentifierError, ResourceRetrievalError
 from cognite.neat._issues.warnings import (
@@ -95,7 +95,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     @classmethod
     def from_data_model_id(
         cls,
-        client: CogniteClient,
+        client: NeatClient,
         data_model_id: DataModelIdentifier,
         reference_model_id: DataModelIdentifier | None = None,
     ) -> "DMSImporter":
@@ -147,7 +147,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
         issue_list = IssueList()
         with _handle_issues(issue_list) as result:
-            schema = DMSSchema.from_data_model(client, user_model, ref_model)
+            schema = DMSSchema.from_data_model(NeatClient(client), user_model, ref_model)
 
         if result.result == "failure" or issue_list.has_errors:
             return cls(DMSSchema(), issue_list)

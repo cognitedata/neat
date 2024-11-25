@@ -78,7 +78,7 @@ class NeatSession:
                         "NEAT needs a client to lookup the definitions. "
                         "Please set the client in the session, NeatSession(client=client)."
                     )
-                schema = self._state.data_model.lookup_schema(self._client, list(views_ids), list(containers_ids))
+                schema = self._client.schema.retrieve(list(views_ids), list(containers_ids))
 
                 importer = DMSImporter(schema)
                 reference_rules = importer.to_rules().rules

@@ -324,7 +324,7 @@ class DataModelPrepareAPI:
                     "NEAT needs a client to lookup the definitions. "
                     "Please set the client in the session, NeatSession(client=client)."
                 )
-            schema = self._state.data_model.lookup_schema(self._client, list(view_ids), list(container_ids))
+            schema = self._client.schema.retrieve(list(view_ids), list(container_ids))
 
             importer = DMSImporter(schema)
             reference_rules = importer.to_rules().rules
@@ -422,7 +422,7 @@ class DataModelPrepareAPI:
                 "NEAT needs a client to lookup the definitions. "
                 "Please set the client in the session, NeatSession(client=client)."
             )
-        schema = self._state.data_model.lookup_schema(self._client, list(view_ids), list(container_ids))
+        schema = self._client.schema.retrieve(list(view_ids), list(container_ids))
         copy_ = rules.model_copy(deep=True)
         copy_.metadata.version = f"{rules.metadata.version}_completed"
         importer = DMSImporter(schema)
