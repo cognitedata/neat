@@ -8,7 +8,7 @@ from ._rules_input import (
     DMSInputRules,
     DMSInputView,
 )
-from ._schema import DMSSchema, PipelineSchema
+from ._schema import DMSSchema
 
 __all__ = [
     "DMSRules",
@@ -19,7 +19,6 @@ __all__ = [
     "DMSContainer",
     "DMSNode",
     "DMSEnum",
-    "PipelineSchema",
     "DMSInputRules",
     "DMSInputMetadata",
     "DMSInputView",

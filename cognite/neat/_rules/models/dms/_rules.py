@@ -391,7 +391,7 @@ class DMSRules(BaseRules):
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         from ._exporter import _DMSExporter
 
-        return _DMSExporter(self, include_pipeline, instance_space).to_schema()
+        return _DMSExporter(self, instance_space).to_schema()
 
     def _repr_html_(self) -> str:
         summary = {

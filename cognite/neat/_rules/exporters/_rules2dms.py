@@ -20,16 +20,13 @@ from cognite.neat._issues.warnings import (
     PrincipleOneModelOneSpaceWarning,
     ResourceRetrievalWarning,
 )
-from cognite.neat._rules.models.dms import DMSRules, DMSSchema, PipelineSchema
+from cognite.neat._rules.models.dms import DMSRules, DMSSchema
 from cognite.neat._utils.cdf.loaders import (
     ContainerLoader,
     DataModelingLoader,
     DataModelLoader,
-    RawDatabaseLoader,
-    RawTableLoader,
     ResourceLoader,
     SpaceLoader,
-    TransformationLoader,
     ViewLoader,
 )
 from cognite.neat._utils.upload import UploadResult
@@ -335,10 +332,6 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             to_export.append((ViewApplyList(schema.views.values()), ViewLoader(client, self.existing_handling)))
         if self.export_components.intersection({"all", "data_models"}):
             to_export.append((DataModelApplyList([schema.data_model]), DataModelLoader(client)))
-        if isinstance(schema, PipelineSchema):
-            to_export.append((schema.databases, RawDatabaseLoader(client)))
-            to_export.append((schema.raw_tables, RawTableLoader(client)))
-            to_export.append((schema.transformations, TransformationLoader(client)))
         return to_export
 
     def _validate(self, loader: ResourceLoader, items: CogniteResourceList) -> IssueList:

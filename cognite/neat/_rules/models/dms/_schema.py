@@ -1,4 +1,3 @@
-import json
 import sys
 import warnings
 import zipfile
@@ -11,8 +10,7 @@ from typing import Any, ClassVar, Literal, cast
 import yaml
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
-from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
-from cognite.client.data_classes.data_modeling import ViewApply
+from cognite.client.data_classes import DatabaseWrite, TransformationWrite
 from cognite.client.data_classes.data_modeling.views import (
     ReverseDirectRelation,
     ReverseDirectRelationApply,
@@ -23,7 +21,6 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewProperty,
     ViewPropertyApply,
 )
-from cognite.client.data_classes.transformations.common import Edges, EdgeType, Nodes, ViewInfo
 
 from cognite.neat._client.data_classes.data_modeling import (
     CogniteResourceDict,
@@ -47,10 +44,8 @@ from cognite.neat._issues.warnings import (
     ResourcesDuplicatedWarning,
 )
 from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
-from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat._utils.cdf.data_classes import (
     RawTableWrite,
-    RawTableWriteList,
 )
 from cognite.neat._utils.cdf.loaders import ViewLoader
 from cognite.neat._utils.rdf_ import get_inheritance_path
@@ -841,263 +836,3 @@ class DMSSchema:
         }
         # If a container has a required property that is not used by the view, the view is not writable
         return not bool(required_properties - used_properties)
-
-
-@dataclass
-class PipelineSchema(DMSSchema):
-    transformations: TransformationWriteList = field(default_factory=lambda: TransformationWriteList([]))
-    databases: DatabaseWriteList = field(default_factory=lambda: DatabaseWriteList([]))
-    raw_tables: RawTableWriteList = field(default_factory=lambda: RawTableWriteList([]))
-
-    _FIELD_NAME_BY_RESOURCE_TYPE: ClassVar[dict[str, str]] = {
-        **DMSSchema._FIELD_NAME_BY_RESOURCE_TYPE,
-        "raw": "raw_tables",
-    }
-
-    def __post_init__(self):
-        existing_databases = {database.name for database in self.databases}
-        table_database = {table.database for table in self.raw_tables}
-        if missing := table_database - existing_databases:
-            self.databases.extend([DatabaseWrite(name=database) for database in missing])
-
-    @classmethod
-    def _read_directory(cls, directory: Path) -> tuple[dict[str, list[Any]], dict[str, list[Path]]]:
-        data, context = super()._read_directory(directory)
-        for yaml_file in directory.rglob("*.yaml"):
-            if yaml_file.parent.name in ("transformations", "raw"):
-                attr_name = cls._FIELD_NAME_BY_RESOURCE_TYPE.get(yaml_file.parent.name, yaml_file.parent.name)
-                data.setdefault(attr_name, [])
-                context.setdefault(attr_name, [])
-                try:
-                    loaded = yaml.safe_load(yaml_file.read_text())
-                except Exception as e:
-                    warnings.warn(
-                        FileTypeUnexpectedWarning(yaml_file, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
-                    )
-                    continue
-                if isinstance(loaded, list):
-                    data[attr_name].extend(loaded)
-                    context[attr_name].extend([yaml_file] * len(loaded))
-                else:
-                    data[attr_name].append(loaded)
-                    context[attr_name].append(yaml_file)
-        return data, context
-
-    def to_directory(
-        self,
-        directory: str | Path,
-        exclude: set[str] | None = None,
-        new_line: str | None = "\n",
-        encoding: str | None = "utf-8",
-    ) -> None:
-        super().to_directory(directory, exclude)
-        exclude_set = exclude or set()
-        path_dir = Path(directory)
-        if "transformations" not in exclude_set and self.transformations:
-            transformation_dir = path_dir / "transformations"
-            transformation_dir.mkdir(exist_ok=True, parents=True)
-            for transformation in self.transformations:
-                (transformation_dir / f"{transformation.external_id}.yaml").write_text(
-                    transformation.dump_yaml(), newline=new_line, encoding=encoding
-                )
-        if "raw" not in exclude_set and self.raw_tables:
-            # The RAW Databases are not written to file. This is because cognite-toolkit expects the RAW databases
-            # to be in the same file as the RAW tables.
-            raw_dir = path_dir / "raw"
-            raw_dir.mkdir(exist_ok=True, parents=True)
-            for raw_table in self.raw_tables:
-                (raw_dir / f"{raw_table.name}.yaml").write_text(
-                    raw_table.dump_yaml(), newline=new_line, encoding=encoding
-                )
-
-    def to_zip(self, zip_file: str | Path, exclude: set[str] | None = None) -> None:
-        super().to_zip(zip_file, exclude)
-        exclude_set = exclude or set()
-        with zipfile.ZipFile(zip_file, "a") as zip_ref:
-            if "transformations" not in exclude_set:
-                for transformation in self.transformations:
-                    zip_ref.writestr(f"transformations/{transformation.external_id}.yaml", transformation.dump_yaml())
-            if "raw" not in exclude_set:
-                # The RAW Databases are not written to file. This is because cognite-toolkit expects the RAW databases
-                # to be in the same file as the RAW tables.
-                for raw_table in self.raw_tables:
-                    zip_ref.writestr(f"raw/{raw_table.name}.yaml", raw_table.dump_yaml())
-
-    @classmethod
-    def _read_zip(cls, zip_file: Path) -> tuple[dict[str, list[Any]], dict[str, list[Path]]]:
-        data, context = super()._read_zip(zip_file)
-        with zipfile.ZipFile(zip_file, "r") as zip_ref:
-            for file_info in zip_ref.infolist():
-                if file_info.filename.endswith(".yaml"):
-                    if "/" not in file_info.filename:
-                        continue
-                    filepath = Path(file_info.filename)
-                    if (parent := filepath.parent.name) in ("transformations", "raw"):
-                        attr_name = cls._FIELD_NAME_BY_RESOURCE_TYPE.get(parent, parent)
-                        data.setdefault(attr_name, [])
-                        context.setdefault(attr_name, [])
-                        try:
-                            loaded = yaml.safe_load(zip_ref.read(file_info).decode())
-                        except Exception as e:
-                            warnings.warn(
-                                FileTypeUnexpectedWarning(filepath, frozenset([".yaml", ".yml"]), str(e)), stacklevel=2
-                            )
-                            continue
-                        if isinstance(loaded, list):
-                            data[attr_name].extend(loaded)
-                            context[attr_name].extend([filepath] * len(loaded))
-                        else:
-                            data[attr_name].append(loaded)
-                            context[attr_name].append(filepath)
-        return data, context
-
-    @classmethod
-    def from_dms(cls, schema: DMSSchema, instance_space: str | None = None) -> "PipelineSchema":
-        if not schema.data_model:
-            raise ValueError("PipelineSchema must contain at least one data model")
-        first_data_model = schema.data_model
-        # The database name is limited to 32 characters
-        database_name = first_data_model.external_id[:32]
-        instance_space = instance_space or first_data_model.space
-        database = DatabaseWrite(name=database_name)
-        parent_views = {parent for view in schema.views.values() for parent in view.implements or []}
-        container_by_id = schema.containers.copy()
-
-        transformations = TransformationWriteList([])
-        raw_tables = RawTableWriteList([])
-        for view in schema.views.values():
-            if view.as_id() in parent_views:
-                # Skipping parents as they do not have their own data
-                continue
-            mapped_properties = {
-                prop_name: prop
-                for prop_name, prop in (view.properties or {}).items()
-                if isinstance(prop, dm.MappedPropertyApply)
-            }
-            if mapped_properties:
-                view_table = RawTableWrite(name=f"{view.external_id}Properties", database=database_name)
-                raw_tables.append(view_table)
-                transformation = cls._create_property_transformation(
-                    mapped_properties, view, view_table, container_by_id, instance_space
-                )
-                transformations.append(transformation)
-            connection_properties = {
-                prop_name: prop
-                for prop_name, prop in (view.properties or {}).items()
-                if isinstance(prop, dm.EdgeConnectionApply)
-            }
-            for prop_name, connection_property in connection_properties.items():
-                view_table = RawTableWrite(name=f"{view.external_id}.{prop_name}Edge", database=database_name)
-                raw_tables.append(view_table)
-                transformation = cls._create_edge_transformation(connection_property, view, view_table, instance_space)
-                transformations.append(transformation)
-
-        return cls(
-            spaces=schema.spaces,
-            data_model=schema.data_model,
-            views=schema.views,
-            containers=schema.containers,
-            transformations=transformations,
-            databases=DatabaseWriteList([database]),
-            raw_tables=raw_tables,
-        )
-
-    @classmethod
-    def _create_property_transformation(
-        cls,
-        properties: dict[str, dm.MappedPropertyApply],
-        view: ViewApply,
-        table: RawTableWrite,
-        container_by_id: dict[dm.ContainerId, dm.ContainerApply],
-        instance_space: str,
-    ) -> TransformationWrite:
-        mapping_mode = {
-            "version": 1,
-            "sourceType": "raw",
-            # 'mappings' is set here and overwritten further down to ensure the correct order
-            "mappings": [],
-            "sourceLevel1": table.database,
-            "sourceLevel2": table.name,
-        }
-        mappings = [
-            {"from": "externalId", "to": "externalId", "asType": "STRING"},
-        ]
-        select_rows = ["cast(`externalId` as STRING) as externalId"]
-        for prop_name, prop in properties.items():
-            container = container_by_id.get(prop.container)
-            if container is not None:
-                dms_type = container.properties[prop.container_property_identifier].type._type
-                if dms_type in _DATA_TYPE_BY_DMS_TYPE:
-                    sql_type = _DATA_TYPE_BY_DMS_TYPE[dms_type].sql
-                else:
-                    warnings.warn(
-                        f"Unknown DMS type '{dms_type}' for property '{prop_name}'", RuntimeWarning, stacklevel=2
-                    )
-                    sql_type = "STRING"
-            else:
-                sql_type = "STRING"
-            select_rows.append(f"cast(`{prop_name}` as {sql_type}) as {prop_name}")
-            mappings.append({"from": prop_name, "to": prop_name, "asType": sql_type})
-        mapping_mode["mappings"] = mappings
-        select = ",\n  ".join(select_rows)
-
-        return TransformationWrite(
-            external_id=f"{table.name}Transformation",
-            name=f"{table.name}Transformation",
-            ignore_null_fields=True,
-            destination=Nodes(
-                view=ViewInfo(view.space, view.external_id, view.version),
-                instance_space=instance_space,
-            ),
-            conflict_mode="upsert",
-            query=f"""/* MAPPING_MODE_ENABLED: true */
-/* {json.dumps(mapping_mode)} */
-select
-  {select}
-from
-  `{table.database}`.`{table.name}`;
-""",
-        )
-
-    @classmethod
-    def _create_edge_transformation(
-        cls, property_: dm.EdgeConnectionApply, view: ViewApply, table: RawTableWrite, instance_space: str
-    ) -> TransformationWrite:
-        start, end = view.external_id, property_.source.external_id
-        if property_.direction == "inwards":
-            start, end = end, start
-        mapping_mode = {
-            "version": 1,
-            "sourceType": "raw",
-            "mappings": [
-                {"from": "externalId", "to": "externalId", "asType": "STRING"},
-                {"from": start, "to": "startNode", "asType": "STRUCT<`space`:STRING, `externalId`:STRING>"},
-                {"from": end, "to": "endNode", "asType": "STRUCT<`space`:STRING, `externalId`:STRING>"},
-            ],
-            "sourceLevel1": table.database,
-            "sourceLevel2": table.name,
-        }
-        select_rows = [
-            "cast(`externalId` as STRING) as externalId",
-            f"node_reference('{instance_space}', `{start}`) as startNode",
-            f"node_reference('{instance_space}', `{end}`) as endNode",
-        ]
-        select = ",\n  ".join(select_rows)
-
-        return TransformationWrite(
-            external_id=f"{table.name}Transformation",
-            name=f"{table.name}Transformation",
-            ignore_null_fields=True,
-            destination=Edges(
-                instance_space=instance_space,
-                edge_type=EdgeType(space=property_.type.space, external_id=property_.type.external_id),
-            ),
-            conflict_mode="upsert",
-            query=f"""/* MAPPING_MODE_ENABLED: true */
-/* {json.dumps(mapping_mode)} */
-select
-  {select}
-from
-  `{table.database}`.`{table.name}`;
-""",
-        )
