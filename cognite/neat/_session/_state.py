@@ -6,6 +6,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
+from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
 from cognite.neat._issues import IssueList
 from cognite.neat._rules._shared import JustRules, ReadRules, VerifiedRules
 from cognite.neat._rules.models.dms._rules import DMSRules
@@ -14,7 +15,6 @@ from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._store._provenance import Change, Provenance
-from cognite.neat._utils.cdf.data_classes import ContainerApplyDict, ViewApplyDict
 from cognite.neat._utils.cdf.loaders import ViewLoader
 from cognite.neat._utils.upload import UploadResultList
 
