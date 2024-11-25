@@ -6,6 +6,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
+from cognite.neat._client import NeatClient
 from cognite.neat._client._api.data_modeling_loaders import ViewLoader
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
 from cognite.neat._issues import IssueList
@@ -170,7 +171,7 @@ class DataModelState:
         self, client: CogniteClient, view_ids: Sequence[dm.ViewId], include_ancestors: bool = True
     ) -> list[dm.ViewApply]:
         if missing := set(view_ids) - set(self._cdf_views.keys()):
-            loader = ViewLoader(client)
+            loader = ViewLoader(NeatClient(client))
             cdf_view_ids = list(missing)
             found_read = loader.retrieve(cdf_view_ids)
             if include_ancestors:

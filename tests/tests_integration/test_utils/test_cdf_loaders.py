@@ -2,7 +2,7 @@ import pytest
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
-from cognite.neat._client.api.data_modeling_loaders import ContainerLoader, ViewLoader
+from cognite.neat._client._api.data_modeling_loaders import ContainerLoader, ViewLoader
 
 
 @pytest.fixture(scope="session")

@@ -22,6 +22,7 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
+from cognite.neat._client import NeatClient
 from cognite.neat._client._api.data_modeling_loaders import ViewLoader
 from cognite.neat._client.data_classes.data_modeling import (
     CogniteResourceDict,
@@ -151,7 +152,7 @@ class DMSSchema:
             raise ValueError(f"Space(s) {space_read} not found")
         space_write = space_read.as_write()
 
-        view_loader = ViewLoader(client)
+        view_loader = ViewLoader(NeatClient(client))
 
         existing_view_ids = set(views.as_ids())
 

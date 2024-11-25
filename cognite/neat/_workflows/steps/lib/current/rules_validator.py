@@ -5,6 +5,7 @@ from typing import ClassVar
 
 from cognite.client import CogniteClient
 
+from cognite.neat._client import NeatClient
 from cognite.neat._client._api.data_modeling_loaders import ViewLoader
 from cognite.neat._issues import NeatIssueList
 from cognite.neat._issues.errors import ResourceNotFoundError, WorkflowStepNotInitializedError
@@ -75,7 +76,7 @@ class ValidateRulesAgainstCDF(Step):
         retrieved_containers = cdf_client.data_modeling.containers.retrieve(missing_containers).as_write()
         # Converting read format of views to write format requires to account for parents (implements)
         # Thus we use the loader to convert the views to write format.
-        view_loader = ViewLoader(cdf_client)
+        view_loader = ViewLoader(NeatClient(cdf_client))
         retrieved_views = [
             view_loader.as_write(view) for view in cdf_client.data_modeling.views.retrieve(missing_views)
         ]

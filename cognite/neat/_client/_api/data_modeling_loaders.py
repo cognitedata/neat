@@ -3,7 +3,6 @@ from collections.abc import Callable, Sequence
 from graphlib import TopologicalSorter
 from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, cast
 
-from cognite.client import CogniteClient
 from cognite.client.data_classes import filters
 from cognite.client.data_classes._base import (
     CogniteResourceList,
@@ -62,8 +61,8 @@ class ResourceLoader(
 ):
     resource_name: str
 
-    def __init__(self, client: CogniteClient) -> None:
-        self.client = client
+    def __init__(self, client: "NeatClient") -> None:
+        self._client = client
 
     @classmethod
     @abstractmethod
@@ -142,10 +141,10 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
         return item
 
     def create(self, items: Sequence[SpaceApply]) -> SpaceList:
-        return self.client.data_modeling.spaces.apply(items)
+        return self._client.data_modeling.spaces.apply(items)
 
     def retrieve(self, ids: SequenceNotStr[str]) -> SpaceList:
-        return self.client.data_modeling.spaces.retrieve(ids)
+        return self._client.data_modeling.spaces.retrieve(ids)
 
     def update(self, items: Sequence[SpaceApply]) -> SpaceList:
         return self.create(items)
@@ -153,7 +152,7 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
     def delete(self, ids: SequenceNotStr[str] | Sequence[Space | SpaceApply]) -> list[str]:
         if all(isinstance(item, Space) for item in ids) or all(isinstance(item, SpaceApply) for item in ids):
             ids = [cast(Space | SpaceApply, item).space for item in ids]
-        return self.client.data_modeling.spaces.delete(cast(SequenceNotStr[str], ids))
+        return self._client.data_modeling.spaces.delete(cast(SequenceNotStr[str], ids))
 
     def clean(self, space: str) -> None:
         """Deletes all data in a space.
@@ -165,42 +164,42 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
             space: The space to delete.
 
         """
-        edges = self.client.data_modeling.instances.list(
+        edges = self._client.data_modeling.instances.list(
             "edge", limit=-1, filter=filters.Equals(["edge", "space"], space)
         )
         if edges:
-            instances = self.client.data_modeling.instances.delete(edges=edges.as_ids())
+            instances = self._client.data_modeling.instances.delete(edges=edges.as_ids())
             print(f"Deleted {len(instances.edges)} edges")
-        nodes = self.client.data_modeling.instances.list(
+        nodes = self._client.data_modeling.instances.list(
             "node", limit=-1, filter=filters.Equals(["node", "space"], space)
         )
         node_types = {NodeId(node.type.space, node.type.external_id) for node in nodes if node.type}
         node_data = set(nodes.as_ids()) - node_types
         if node_data:
-            instances = self.client.data_modeling.instances.delete(nodes=list(node_data))
+            instances = self._client.data_modeling.instances.delete(nodes=list(node_data))
             print(f"Deleted {len(instances.nodes)} nodes")
         if node_types:
-            instances = self.client.data_modeling.instances.delete(nodes=list(node_types))
+            instances = self._client.data_modeling.instances.delete(nodes=list(node_types))
             print(f"Deleted {len(instances.nodes)} node types")
-        views = self.client.data_modeling.views.list(limit=-1, space=space)
+        views = self._client.data_modeling.views.list(limit=-1, space=space)
         if views:
-            deleted_views = self.client.data_modeling.views.delete(views.as_ids())
+            deleted_views = self._client.data_modeling.views.delete(views.as_ids())
             print(f"Deleted {len(deleted_views)} views")
-        containers = self.client.data_modeling.containers.list(limit=-1, space=space)
+        containers = self._client.data_modeling.containers.list(limit=-1, space=space)
         if containers:
-            deleted_containers = self.client.data_modeling.containers.delete(containers.as_ids())
+            deleted_containers = self._client.data_modeling.containers.delete(containers.as_ids())
             print(f"Deleted {len(deleted_containers)} containers")
-        if data_models := self.client.data_modeling.data_models.list(limit=-1, space=space):
-            deleted_data_models = self.client.data_modeling.data_models.delete(data_models.as_ids())
+        if data_models := self._client.data_modeling.data_models.list(limit=-1, space=space):
+            deleted_data_models = self._client.data_modeling.data_models.delete(data_models.as_ids())
             print(f"Deleted {len(deleted_data_models)} data models")
-        deleted_space = self.client.data_modeling.spaces.delete(space)
+        deleted_space = self._client.data_modeling.spaces.delete(space)
         print(f"Deleted space {deleted_space}")
 
 
 class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):
     resource_name = "views"
 
-    def __init__(self, client: CogniteClient, existing_handling: Literal["fail", "skip", "update", "force"] = "fail"):
+    def __init__(self, client: "NeatClient", existing_handling: Literal["fail", "skip", "update", "force"] = "fail"):
         super().__init__(client)
         self.existing_handling = existing_handling
         self._cache_view_by_id: dict[ViewId, View] = {}
@@ -216,18 +215,18 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
 
     def create(self, items: Sequence[ViewApply]) -> ViewList:
         if self.existing_handling == "force":
-            return self._create_force(items, self._tried_force_deploy, self.client.data_modeling.views.apply)
+            return self._create_force(items, self._tried_force_deploy, self._client.data_modeling.views.apply)
         else:
-            return self.client.data_modeling.views.apply(items)
+            return self._client.data_modeling.views.apply(items)
 
     def retrieve(self, ids: SequenceNotStr[ViewId]) -> ViewList:
-        return self.client.data_modeling.views.retrieve(cast(Sequence, ids))
+        return self._client.data_modeling.views.retrieve(cast(Sequence, ids))
 
     def update(self, items: Sequence[ViewApply]) -> ViewList:
         return self.create(items)
 
     def delete(self, ids: SequenceNotStr[ViewId]) -> list[ViewId]:
-        return self.client.data_modeling.views.delete(cast(Sequence, ids))
+        return self._client.data_modeling.views.delete(cast(Sequence, ids))
 
     def _as_write_raw(self, view: View) -> dict[str, Any]:
         dumped = view.as_write().dump()
@@ -298,7 +297,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
                     to_lookup.add(backlog_id)
 
             if to_lookup:
-                looked_up = self.client.data_modeling.views.retrieve(list(to_lookup))
+                looked_up = self._client.data_modeling.views.retrieve(list(to_lookup))
                 cache.update({view.as_id(): view for view in looked_up})
                 found.extend(looked_up)
                 found_ids.update({view.as_id() for view in looked_up})
@@ -334,7 +333,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
 class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
     resource_name = "containers"
 
-    def __init__(self, client: CogniteClient, existing_handling: Literal["fail", "skip", "update", "force"] = "fail"):
+    def __init__(self, client: "NeatClient", existing_handling: Literal["fail", "skip", "update", "force"] = "fail"):
         super().__init__(client)
         self.existing_handling = existing_handling
         self._tried_force_deploy: set[ContainerId] = set()
@@ -363,18 +362,18 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
 
     def create(self, items: Sequence[ContainerApply]) -> ContainerList:
         if self.existing_handling == "force":
-            return self._create_force(items, self._tried_force_deploy, self.client.data_modeling.containers.apply)
+            return self._create_force(items, self._tried_force_deploy, self._client.data_modeling.containers.apply)
         else:
-            return self.client.data_modeling.containers.apply(items)
+            return self._client.data_modeling.containers.apply(items)
 
     def retrieve(self, ids: SequenceNotStr[ContainerId]) -> ContainerList:
-        return self.client.data_modeling.containers.retrieve(cast(Sequence, ids))
+        return self._client.data_modeling.containers.retrieve(cast(Sequence, ids))
 
     def update(self, items: Sequence[ContainerApply]) -> ContainerList:
         return self.create(items)
 
     def delete(self, ids: SequenceNotStr[ContainerId]) -> list[ContainerId]:
-        return self.client.data_modeling.containers.delete(cast(Sequence, ids))
+        return self._client.data_modeling.containers.delete(cast(Sequence, ids))
 
     def are_equal(self, local: ContainerApply, remote: Container) -> bool:
         local_dumped = local.dump(camel_case=True)
@@ -397,16 +396,16 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
         return item
 
     def create(self, items: Sequence[DataModelApply]) -> DataModelList:
-        return self.client.data_modeling.data_models.apply(items)
+        return self._client.data_modeling.data_models.apply(items)
 
     def retrieve(self, ids: SequenceNotStr[DataModelId]) -> DataModelList:
-        return self.client.data_modeling.data_models.retrieve(cast(Sequence, ids))
+        return self._client.data_modeling.data_models.retrieve(cast(Sequence, ids))
 
     def update(self, items: Sequence[DataModelApply]) -> DataModelList:
         return self.create(items)
 
     def delete(self, ids: SequenceNotStr[DataModelId]) -> list[DataModelId]:
-        return self.client.data_modeling.data_models.delete(cast(Sequence, ids))
+        return self._client.data_modeling.data_models.delete(cast(Sequence, ids))
 
     def are_equal(self, local: DataModelApply, remote: DataModel) -> bool:
         local_dumped = local.dump()
@@ -425,7 +424,7 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
 
 
 class DataModelLoaderAPI:
-    def __init__(self, client: NeatClient) -> None:
+    def __init__(self, client: "NeatClient") -> None:
         self._client = client
         self.spaces = SpaceLoader(client)
         self.views = ViewLoader(client)
