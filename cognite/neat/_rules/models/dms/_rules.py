@@ -387,3 +387,28 @@ class DMSRules(BaseRules):
         }
 
         return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore
+
+    def imported_views_and_containers_ids(
+        self, include_model_views_with_no_properties: bool = True
+    ) -> tuple[set[dm.ViewId], set[dm.ContainerId]]:
+        existing_views = {view.view for view in self.views}
+        imported_views: set[dm.ViewId] = set()
+        for view in self.views:
+            for parent in view.implements or []:
+                if parent not in existing_views:
+                    imported_views.add(parent.as_id())
+        existing_containers = {container.container for container in self.containers or []}
+        imported_containers: set[dm.ContainerId] = set()
+        view_with_properties: set[ViewEntity] = set()
+        for prop in self.properties:
+            if prop.container and prop.container not in existing_containers:
+                imported_containers.add(prop.container.as_id())
+            if prop.view not in existing_views:
+                imported_views.add(prop.view.as_id())
+            view_with_properties.add(prop.view)
+
+        if include_model_views_with_no_properties:
+            extra_views = existing_views - view_with_properties
+            imported_views.update({view.as_id() for view in extra_views})
+
+        return imported_views, imported_containers

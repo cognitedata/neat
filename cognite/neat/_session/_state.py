@@ -172,10 +172,12 @@ class DataModelState:
         if missing := set(view_ids) - set(self._cdf_views.keys()):
             loader = ViewLoader(client)
             cdf_view_ids = list(missing)
+            found_read = loader.retrieve(cdf_view_ids)
             if include_ancestors:
-                found = loader.retrieve_all_ancestors(cdf_view_ids).as_write()
-            else:
-                found = loader.retrieve(cdf_view_ids).as_write()
+                ancestors = loader.retrieve_all_ancestors(cdf_view_ids, include_connections=True)
+                found_read.extend(ancestors)
+
+            found = [loader.as_write(read_view) for read_view in found_read]
             self._cdf_views.update({view.as_id(): view for view in found})
         output = [self._cdf_views[view_id] for view_id in view_ids if view_id in self._cdf_views]
         to_check = output.copy()
@@ -198,6 +200,11 @@ class DataModelState:
         include_ancestors: bool = True,
     ) -> DMSSchema:
         views = ViewApplyDict(self.lookup_views(client, views, include_ancestors=include_ancestors))
+
+        container_set = set(containers) | {
+            container for view in views.values() for container in view.referenced_containers()
+        }
+
         return DMSSchema(
             data_model=dm.DataModelApply(
                 space="NEAT_LOOKUP",
@@ -206,5 +213,5 @@ class DataModelState:
                 views=list(views.keys()),
             ),
             views=views,
-            containers=ContainerApplyDict(self.lookup_containers(client, containers)),
+            containers=ContainerApplyDict(self.lookup_containers(client, list(container_set))),
         )

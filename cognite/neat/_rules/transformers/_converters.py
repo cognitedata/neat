@@ -303,10 +303,11 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         self,
         new_model_id: DataModelIdentifier,
         org_name: str = "My",
-        type_: Literal["enterprise", "solution"] = "enterprise",
+        type_: Literal["enterprise", "solution", "data_product"] = "enterprise",
         mode: Literal["read", "write"] = "read",
         dummy_property: str = "GUID",
         move_connections: bool = False,
+        include: Literal["same-space", "all"] = "same-space",
     ):
         self.new_model_id = DataModelId.load(new_model_id)
         if not self.new_model_id.version:
@@ -317,6 +318,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         self.type_ = type_
         self.dummy_property = dummy_property
         self.move_connections = move_connections
+        self.include = include
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         # Copy to ensure immutability
@@ -344,6 +346,16 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
                 )
 
             return self._to_enterprise(reference_model)
+        elif self.type_ == "data_product":
+            expanded = self._expand_properties(reference_model.model_copy(deep=True))
+            if self.include == "same-space":
+                expanded.properties = SheetList[DMSProperty](
+                    [prop for prop in expanded.properties if prop.view.space == expanded.metadata.space]
+                )
+                expanded.views = SheetList[DMSView](
+                    [view for view in expanded.views if view.view.space == expanded.metadata.space]
+                )
+            return self._to_solution(expanded, remove_views_in_other_space=False)
 
         else:
             raise NeatValueError(f"Unsupported data model type: {self.type_}")
@@ -351,7 +363,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
     def _has_views_in_multiple_space(self, rules: DMSRules) -> bool:
         return any(view.view.space != rules.metadata.space for view in rules.views)
 
-    def _to_solution(self, reference_rules: DMSRules) -> JustRules[DMSRules]:
+    def _to_solution(self, reference_rules: DMSRules, remove_views_in_other_space: bool = True) -> JustRules[DMSRules]:
         """For creation of solution data model / rules specifically for mapping over existing containers."""
 
         dump = reference_rules.dump()
@@ -362,16 +374,11 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         dump["metadata"]["external_id"] = self.new_model_id.external_id
         dump["metadata"]["version"] = self.new_model_id.version
 
-        # dropping reference and last from the dump as they can cause validation
-        # issues especially if reference is enterprise model build on top of CDM
-        dump.pop("reference", None)
-        dump.pop("last", None)
-
         # Set implement to NONE for all views
         for view in dump["views"]:
             view["implements"] = None
 
-        if self._has_views_in_multiple_space(reference_rules):
+        if remove_views_in_other_space and self._has_views_in_multiple_space(reference_rules):
             views_to_remove = []
             for view in dump["views"]:
                 if ":" in view["view"]:
@@ -382,7 +389,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         solution_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
 
         # Dropping containers coming from reference model
-        solution_model.containers = SheetList[DMSContainer]()
+        solution_model.containers = None
 
         # We want to map properties to existing containers allowing extension
         for prop in solution_model.properties:
@@ -408,7 +415,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
             # Here we add ONLY dummy properties of the solution model and
             # corresponding solution model space containers to hold them
-            solution_model.containers.extend(new_containers)
+            solution_model.containers = new_containers
             solution_model.properties.extend(new_properties)
 
         return JustRules(solution_model)
@@ -446,6 +453,28 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         enterprise_properties.extend(enterprise_connections)
 
         return JustRules(enterprise_model)
+
+    @staticmethod
+    def _expand_properties(rules: DMSRules) -> DMSRules:
+        probe = DMSAnalysis(rules)
+        ancestor_properties_by_view = probe.classes_with_properties(
+            consider_inheritance=True, allow_different_namespace=True
+        )
+        property_ids_by_view = {
+            view: {prop.view_property for prop in properties}
+            for view, properties in probe.classes_with_properties(consider_inheritance=False).items()
+        }
+        for view, property_ids in property_ids_by_view.items():
+            ancestor_properties = ancestor_properties_by_view.get(view, [])
+            for prop in ancestor_properties:
+                if isinstance(prop.connection, ReverseConnectionEntity):
+                    # If you try to add a reverse direct relation of a parent, it will fail as the ValueType of the
+                    # original property will point to the parent view, and not the child.
+                    continue
+                if prop.view_property not in property_ids:
+                    rules.properties.append(prop)
+                    property_ids.add(prop.view_property)
+        return rules
 
     def _remove_cognite_affix(self, entity: _T_Entity) -> _T_Entity:
         """This method removes `Cognite` affix from the entity."""

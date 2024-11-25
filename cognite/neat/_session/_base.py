@@ -48,7 +48,7 @@ class NeatSession:
         self._state = SessionState(store_type=storage)
         self.read = ReadAPI(self._state, client, verbose)
         self.to = ToAPI(self._state, client, verbose)
-        self.prepare = PrepareAPI(self._state, verbose)
+        self.prepare = PrepareAPI(client, self._state, verbose)
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
