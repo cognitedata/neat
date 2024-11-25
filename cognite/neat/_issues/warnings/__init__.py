@@ -7,11 +7,11 @@ from cognite.neat._issues._base import DefaultWarning, NeatWarning, _get_subclas
 from . import user_modeling
 from ._external import (
     CDFAuthWarning,
+    CDFMaxIterationsWarning,
     FileItemNotSupportedWarning,
     FileMissingRequiredFieldWarning,
     FileReadWarning,
     FileTypeUnexpectedWarning,
-    CDFMaxIterationsWarning,
 )
 from ._general import NeatValueWarning, NotSupportedWarning, RegexViolationWarning
 from ._models import (

@@ -47,6 +47,7 @@ from cognite.client.data_classes.data_modeling.views import (
 )
 from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
+
 from cognite.neat._issues.warnings import CDFMaxIterationsWarning
 from cognite.neat._shared import T_ID
 
@@ -429,8 +430,8 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
 
     def _create(self, items: Sequence[ContainerApply]) -> ContainerList:
         return self._client.data_modeling.containers.apply(items)
-    
-    def retrieve(self, ids: SequenceNotStr[[ContainerId]], include_connected: bool = False)  -> ContainerList:
+
+    def retrieve(self, ids: SequenceNotStr[ContainerId], include_connected: bool = False) -> ContainerList:
         if not include_connected:
             return super().retrieve(ids)
         # Retrieve recursively updates the cache.
@@ -454,7 +455,7 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
         This method retrieves all containers that are referenced by other containers through the 'requires' constraint,
         including their parents.
         """
-        max_iterations = 10 # Limiting the number of iterations to avoid infinite loops
+        max_iterations = 10  # Limiting the number of iterations to avoid infinite loops
         found = ContainerList([])
         found_ids: set[ContainerId] = set()
         last_batch = list(container_ids)
@@ -499,7 +500,9 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
         return found
 
     @staticmethod
-    def get_connected_containers(container: Container | ContainerApply, skip: set[ContainerId] | None = None) -> set[ContainerId]:
+    def get_connected_containers(
+        container: Container | ContainerApply, skip: set[ContainerId] | None = None
+    ) -> set[ContainerId]:
         connected_containers = set()
         for constraint in container.constraints.values():
             if isinstance(constraint, RequiresConstraint):

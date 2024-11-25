@@ -1,5 +1,6 @@
-from collections import defaultdict
-from typing import Any, ClassVar, cast
+import warnings
+from collections import Counter, defaultdict
+from typing import ClassVar, cast
 
 from cognite.client import data_modeling as dm
 
@@ -9,15 +10,22 @@ from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_
 from cognite.neat._issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
     PropertyDefinitionDuplicatedError,
+    ResourceDuplicatedError,
     ResourceNotDefinedError,
+    ResourceNotFoundError,
 )
-from cognite.neat._issues.errors._properties import ReversedConnectionNotFeasibleError
+from cognite.neat._issues.errors._properties import (
+    PropertyMappingDuplicatedError,
+    PropertyNotFoundError,
+    ReversedConnectionNotFeasibleError,
+)
 from cognite.neat._issues.warnings import (
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
     UndefinedViewWarning,
 )
 from cognite.neat._issues.warnings.user_modeling import (
+    DirectRelationMissingSourceWarning,
     NotNeatSupportedFilterWarning,
     ViewPropertyLimitWarning,
 )
@@ -28,6 +36,7 @@ from cognite.neat._rules.models.entities._single_value import (
     ReverseConnectionEntity,
     ViewEntity,
 )
+from cognite.neat._utils.rdf_ import get_inheritance_path
 
 from ._rules import DMSProperty, DMSRules
 
@@ -48,9 +57,19 @@ class DMSValidation:
         self.containers = rules.containers
         self.views = rules.views
         self.issue_list = IssueList()
+
         self.probe = DMSAnalysis(rules)
 
+        self.all_properties_by_ids: dict[tuple[ViewEntity, str], DMSProperty] = {}
+
     def validate(self) -> NeatIssueList:
+        # Todo Need to lookup parent views.
+        self.all_properties_by_ids = {
+            (prop_.view, prop_.view_property): prop_
+            for properties in self.probe.classes_with_properties(True, True).values()
+            for prop_ in properties
+        }
+
         self._validate_raw_filter()
         self._consistent_container_properties()
         self._validate_value_type_existence()
@@ -58,9 +77,9 @@ class DMSValidation:
         self._referenced_views_and_containers_are_existing_and_proper_size()
 
         dms_schema = self.rules.as_schema()
+        self._validate_schema(dms_schema)
 
-        # self.issue_list.extend(dms_schema.validate())
-        self._validate_performance(dms_schema)
+        self._validate_referenced_container_limits(dms_schema)
         return self.issue_list
 
     def _consistent_container_properties(self) -> None:
@@ -159,9 +178,6 @@ class DMSValidation:
         self.issue_list.extend(errors)
 
     def _referenced_views_and_containers_are_existing_and_proper_size(self) -> None:
-        # TODO: Split this method and keep only validation that should be independent of
-        # whether view and/or container exist in the pydantic model instance
-        # other validation should be done through NeatSession.verify()
         defined_views = {view.view.as_id() for view in self.views}
 
         property_count_by_view: dict[dm.ViewId, int] = defaultdict(int)
@@ -191,9 +207,6 @@ class DMSValidation:
     def _get_mapped_container_from_view(self, view_id: dm.ViewId) -> set[dm.ContainerId]:
         # index all views, including ones from reference
         view_by_id = self.views.copy()
-        if self.reference:
-            view_by_id.update(self.reference.views)
-
         if view_id not in view_by_id:
             raise ValueError(f"View {view_id} not found")
 
@@ -211,9 +224,9 @@ class DMSValidation:
 
         return directly_referenced_containers | inherited_referenced_containers
 
-    def _validate_performance(self, dms_schema: DMSSchema) -> None:
+    def _validate_referenced_container_limits(self, dms_schema: DMSSchema) -> None:
         for view_id, view in dms_schema.views.items():
-            mapped_containers = dms_schema._get_mapped_container_from_view(view_id)
+            mapped_containers = self._get_mapped_container_from_view(view_id)
 
             if mapped_containers and len(mapped_containers) > 10:
                 self.issue_list.append(
@@ -222,17 +235,14 @@ class DMSValidation:
                         len(mapped_containers),
                     )
                 )
-                if (
-                    view.filter
-                    and isinstance(view.filter, dm.filters.HasData)
-                    and len(view.filter.dump()["hasData"]) > 10
-                ):
-                    self.issue_list.append(
-                        NotSupportedHasDataFilterLimitWarning(
-                            view_id,
-                            len(view.filter.dump()["hasData"]),
-                        )
+
+            if view.filter and isinstance(view.filter, dm.filters.HasData) and len(view.filter.dump()["hasData"]) > 10:
+                self.issue_list.append(
+                    NotSupportedHasDataFilterLimitWarning(
+                        view_id,
+                        len(view.filter.dump()["hasData"]),
                     )
+                )
 
     def _validate_raw_filter(self) -> None:
         for view in self.views:
@@ -259,21 +269,11 @@ class DMSValidation:
         if self.metadata.as_data_model_id() in COGNITE_MODELS:
             return None
 
-        properties_by_ids = {
-            f"{prop_.view!s}.{prop_.view_property}": prop_
-            for properties in self.probe.classes_with_properties(True, True).values()
-            for prop_ in properties
-        }
-
-        reversed_by_ids = {
-            id_: prop_
-            for id_, prop_ in properties_by_ids.items()
-            if prop_.connection and isinstance(prop_.connection, ReverseConnectionEntity)
-        }
-
-        for id_, prop_ in reversed_by_ids.items():
-            source_id = f"{prop_.value_type!s}." f"{cast(ReverseConnectionEntity, prop_.connection).property_}"
-            if source_id not in properties_by_ids:
+        for id_, prop_ in self.all_properties_by_ids.items():
+            if not isinstance(prop_.connection, ReverseConnectionEntity):
+                continue
+            source_id = prop_.value_type, prop_.connection.property_
+            if source_id not in self.all_properties_by_ids:
                 self.issue_list.append(
                     ReversedConnectionNotFeasibleError(
                         id_,
@@ -281,11 +281,14 @@ class DMSValidation:
                         prop_.view_property,
                         str(prop_.view),
                         str(prop_.value_type),
-                        cast(ReverseConnectionEntity, prop_.connection).property_,
+                        prop_.connection.property_,
                     )
                 )
 
-            elif source_id in properties_by_ids and properties_by_ids[source_id].value_type != prop_.view:
+            elif (
+                source_id in self.all_properties_by_ids
+                and self.all_properties_by_ids[source_id].value_type != prop_.view
+            ):
                 self.issue_list.append(
                     ReversedConnectionNotFeasibleError(
                         id_,
@@ -297,6 +300,113 @@ class DMSValidation:
                     )
                 )
 
-            else:
-                continue
+    def _validate_schema(self, schema: DMSSchema) -> list[NeatError]:
+        errors: set[NeatError] = set()
+        defined_spaces = schema.spaces.copy()
+        defined_containers = schema.containers.copy()
+        defined_views = schema.views.copy()
 
+        for container in schema.containers.values():
+            if container.space not in defined_spaces:
+                errors.add(
+                    ResourceNotFoundError[str, dm.ContainerId](container.space, "space", container.as_id(), "container")
+                )
+
+        for view in schema.views.values():
+            view_id = view.as_id()
+            if view.space not in defined_spaces:
+                errors.add(ResourceNotFoundError(view.space, "space", view_id, "view"))
+
+            for parent in view.implements or []:
+                if parent not in defined_views:
+                    errors.add(PropertyNotFoundError(parent, "view", "implements", view_id, "view"))
+
+            for prop_name, prop in (view.properties or {}).items():
+                if isinstance(prop, dm.MappedPropertyApply):
+                    ref_container = defined_containers.get(prop.container)
+                    if ref_container is None:
+                        errors.add(ResourceNotFoundError(prop.container, "container", view_id, "view"))
+                    elif prop.container_property_identifier not in ref_container.properties:
+                        errors.add(
+                            PropertyNotFoundError(
+                                prop.container,
+                                "container",
+                                prop.container_property_identifier,
+                                view_id,
+                                "view",
+                            )
+                        )
+                    else:
+                        container_property = ref_container.properties[prop.container_property_identifier]
+
+                        if isinstance(container_property.type, dm.DirectRelation) and prop.source is None:
+                            warnings.warn(
+                                DirectRelationMissingSourceWarning(view_id, prop_name),
+                                stacklevel=2,
+                            )
+
+                if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
+                    errors.add(PropertyNotFoundError(prop.source, "view", prop_name, view_id, "view"))
+
+                if (
+                    isinstance(prop, dm.EdgeConnectionApply)
+                    and prop.edge_source is not None
+                    and prop.edge_source not in defined_views
+                ):
+                    errors.add(PropertyNotFoundError(prop.edge_source, "view", prop_name, view_id, "view"))
+
+            # This allows for multiple view properties to be mapped to the same container property,
+            # as long as they have different external_id, otherwise this will lead to raising
+            # error ContainerPropertyUsedMultipleTimesError
+            property_count = Counter(
+                (prop.container, prop.container_property_identifier, view_property_identifier)
+                for view_property_identifier, prop in (view.properties or {}).items()
+                if isinstance(prop, dm.MappedPropertyApply)
+            )
+
+            for (
+                container_id,
+                container_property_identifier,
+                _,
+            ), count in property_count.items():
+                if count > 1:
+                    view_properties = [
+                        prop_name
+                        for prop_name, prop in (view.properties or {}).items()
+                        if isinstance(prop, dm.MappedPropertyApply)
+                        and (prop.container, prop.container_property_identifier)
+                        == (container_id, container_property_identifier)
+                    ]
+                    errors.add(
+                        PropertyMappingDuplicatedError(
+                            container_id,
+                            "container",
+                            container_property_identifier,
+                            frozenset({dm.PropertyId(view_id, prop_name) for prop_name in view_properties}),
+                            "view property",
+                        )
+                    )
+
+        if schema.data_model:
+            model = schema.data_model
+            if model.space not in defined_spaces:
+                errors.add(ResourceNotFoundError(model.space, "space", model.as_id(), "data model"))
+
+            view_counts: dict[dm.ViewId, int] = defaultdict(int)
+            for view_id_or_class in model.views or []:
+                view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
+                if view_id not in defined_views:
+                    errors.add(ResourceNotFoundError(view_id, "view", model.as_id(), "data model"))
+                view_counts[view_id] += 1
+
+            for view_id, count in view_counts.items():
+                if count > 1:
+                    errors.add(
+                        ResourceDuplicatedError(
+                            view_id,
+                            "view",
+                            repr(model.as_id()),
+                        )
+                    )
+
+        return list(errors)

@@ -10,8 +10,9 @@ from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules, VerifiedRules
-from cognite.neat._rules.importers import DMSImporter
-from cognite.neat._rules.models import DMSInputRules, DMSRules, SheetList
+from cognite.neat._rules.models import DMSRules
+from cognite.neat._rules.models.dms import DMSValidation
+from cognite.neat._rules.models.information import InformationValidation
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
@@ -33,8 +34,6 @@ from ._state import SessionState
 from ._to import ToAPI
 from .engine import load_neat_engine
 from .exceptions import NeatSessionError, session_class_wrapper
-from .._rules.models.dms import DMSValidation
-from .._rules.models.information import InformationValidation
 
 
 @session_class_wrapper

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict, SpaceApplyDict
+from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import ResourceNotFoundWarning
@@ -58,7 +58,8 @@ class SchemaAPI:
         data_model = data_models.latest_version()
         return self.retrieve_data_model(data_model)
 
-    def retrieve_data_model(self,
+    def retrieve_data_model(
+        self,
         data_model: dm.DataModel[dm.View],
     ) -> DMSSchema:
         """Create a schema from a data model.
@@ -92,15 +93,17 @@ class SchemaAPI:
         space_write = space_read.as_write()
 
         existing_view_ids = set(views.as_ids())
-        views = self._client.loaders.views.retrieve(list(existing_view_ids), include_connections=True, include_ancestor=True)
+        views = self._client.loaders.views.retrieve(
+            list(existing_view_ids), include_connections=True, include_ancestor=True
+        )
 
         missing = existing_view_ids - set(views.as_ids())
         if missing:
             for view_id in missing:
                 warnings.warn(
                     ResourceNotFoundWarning(view_id, "view", data_model_write.as_id(), "data model"),
-                stacklevel=2,
-            )
+                    stacklevel=2,
+                )
 
         # Converting views from read to write format requires to account for parents (implements)
         # as the read format contains all properties from all parents, while the write formate should not contain

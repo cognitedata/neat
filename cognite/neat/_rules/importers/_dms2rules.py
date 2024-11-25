@@ -80,9 +80,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = schema.containers.copy()
         self._all_views_by_id = schema.views.copy()
-        if schema.reference:
-            self._all_containers_by_id.update(schema.reference.containers.items())
-            self._all_views_by_id.update(schema.reference.views.items())
 
     def update_referenced_containers(self, containers: Iterable[dm.ContainerApply]) -> None:
         """Update the referenced containers. This is useful to add Cognite containers identified after the root schema

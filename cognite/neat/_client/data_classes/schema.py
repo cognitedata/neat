@@ -1,18 +1,16 @@
 import sys
 import warnings
 import zipfile
-from collections import ChainMap, Counter, defaultdict
+from collections import ChainMap
 from collections.abc import Iterable, MutableMapping
 from dataclasses import Field, dataclass, field, fields
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import Any, ClassVar, Literal, cast
 
 import yaml
-from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, TransformationWrite
 from cognite.client.data_classes.data_modeling.views import (
-    ReverseDirectRelation,
     ReverseDirectRelationApply,
     SingleEdgeConnection,
     SingleEdgeConnectionApply,
@@ -29,31 +27,19 @@ from cognite.neat._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat._issues import NeatError
 from cognite.neat._issues.errors import (
     NeatYamlError,
-    PropertyMappingDuplicatedError,
-    PropertyNotFoundError,
-    ResourceDuplicatedError,
-    ResourceNotFoundError,
 )
 from cognite.neat._issues.warnings import (
     FileTypeUnexpectedWarning,
-    ResourceNotFoundWarning,
-    ResourceRetrievalWarning,
     ResourcesDuplicatedWarning,
 )
-from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
-from cognite.neat._utils.rdf_ import get_inheritance_path
 from cognite.neat._utils.text import to_camel
 
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
-
-if TYPE_CHECKING:
-    from cognite.neat._client import NeatClient
 
 
 @dataclass
@@ -361,126 +347,6 @@ class DMSSchema:
             return item.name or ""
         else:
             raise ValueError(f"Cannot sort item of type {type(item)}")
-
-    def validate(self) -> list[NeatError]:
-        # TODO: This type of validation should be done in NeatSession where all the
-        # schema components which are not part of Rules are imported and the model as
-        # the whole is validated.
-
-        errors: set[NeatError] = set()
-        defined_spaces = self.spaces.copy()
-        defined_containers = self.containers.copy()
-        defined_views = self.views.copy()
-        for other_schema in [self.reference, self.last]:
-            if other_schema:
-                defined_spaces |= other_schema.spaces
-                defined_containers |= other_schema.containers
-                defined_views |= other_schema.views
-
-        for container in self.containers.values():
-            if container.space not in defined_spaces:
-                errors.add(
-                    ResourceNotFoundError[str, dm.ContainerId](container.space, "space", container.as_id(), "container")
-                )
-
-        for view in self.views.values():
-            view_id = view.as_id()
-            if view.space not in defined_spaces:
-                errors.add(ResourceNotFoundError(view.space, "space", view_id, "view"))
-
-            for parent in view.implements or []:
-                if parent not in defined_views:
-                    errors.add(PropertyNotFoundError(parent, "view", "implements", view_id, "view"))
-
-            for prop_name, prop in (view.properties or {}).items():
-                if isinstance(prop, dm.MappedPropertyApply):
-                    ref_container = defined_containers.get(prop.container)
-                    if ref_container is None:
-                        errors.add(ResourceNotFoundError(prop.container, "container", view_id, "view"))
-                    elif prop.container_property_identifier not in ref_container.properties:
-                        errors.add(
-                            PropertyNotFoundError(
-                                prop.container,
-                                "container",
-                                prop.container_property_identifier,
-                                view_id,
-                                "view",
-                            )
-                        )
-                    else:
-                        container_property = ref_container.properties[prop.container_property_identifier]
-
-                        if isinstance(container_property.type, dm.DirectRelation) and prop.source is None:
-                            warnings.warn(
-                                DirectRelationMissingSourceWarning(view_id, prop_name),
-                                stacklevel=2,
-                            )
-
-                if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
-                    errors.add(PropertyNotFoundError(prop.source, "view", prop_name, view_id, "view"))
-
-                if (
-                    isinstance(prop, dm.EdgeConnectionApply)
-                    and prop.edge_source is not None
-                    and prop.edge_source not in defined_views
-                ):
-                    errors.add(PropertyNotFoundError(prop.edge_source, "view", prop_name, view_id, "view"))
-
-            # This allows for multiple view properties to be mapped to the same container property,
-            # as long as they have different external_id, otherwise this will lead to raising
-            # error ContainerPropertyUsedMultipleTimesError
-            property_count = Counter(
-                (prop.container, prop.container_property_identifier, view_property_identifier)
-                for view_property_identifier, prop in (view.properties or {}).items()
-                if isinstance(prop, dm.MappedPropertyApply)
-            )
-
-            for (
-                container_id,
-                container_property_identifier,
-                _,
-            ), count in property_count.items():
-                if count > 1:
-                    view_properties = [
-                        prop_name
-                        for prop_name, prop in (view.properties or {}).items()
-                        if isinstance(prop, dm.MappedPropertyApply)
-                        and (prop.container, prop.container_property_identifier)
-                        == (container_id, container_property_identifier)
-                    ]
-                    errors.add(
-                        PropertyMappingDuplicatedError(
-                            container_id,
-                            "container",
-                            container_property_identifier,
-                            frozenset({dm.PropertyId(view_id, prop_name) for prop_name in view_properties}),
-                            "view property",
-                        )
-                    )
-
-        if self.data_model:
-            model = self.data_model
-            if model.space not in defined_spaces:
-                errors.add(ResourceNotFoundError(model.space, "space", model.as_id(), "data model"))
-
-            view_counts: dict[dm.ViewId, int] = defaultdict(int)
-            for view_id_or_class in model.views or []:
-                view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
-                if view_id not in defined_views:
-                    errors.add(ResourceNotFoundError(view_id, "view", model.as_id(), "data model"))
-                view_counts[view_id] += 1
-
-            for view_id, count in view_counts.items():
-                if count > 1:
-                    errors.add(
-                        ResourceDuplicatedError(
-                            view_id,
-                            "view",
-                            repr(model.as_id()),
-                        )
-                    )
-
-        return list(errors)
 
     def referenced_spaces(self, include_indirect_references: bool = True) -> set[str]:
         """Get the spaces referenced by the schema.
