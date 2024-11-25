@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, cast
 from cognite.client import CogniteClient
 from cognite.client.data_classes import filters
 from cognite.client.data_classes._base import (
+    CogniteResourceList,
     T_CogniteResourceList,
     T_WritableCogniteResource,
     T_WriteClass,
@@ -50,7 +51,7 @@ from cognite.client.utils.useful_types import SequenceNotStr
 from cognite.neat._shared import T_ID
 
 if TYPE_CHECKING:
-    from cognite.neat._client.api_client import NeatClient
+    from cognite.neat._client._api_client import NeatClient
 
 T_WritableCogniteResourceList = TypeVar("T_WritableCogniteResourceList", bound=WriteableCogniteResourceList)
 
@@ -430,3 +431,14 @@ class DataModelLoaderAPI:
         self.views = ViewLoader(client)
         self.containers = ContainerLoader(client)
         self.data_models = DataModelLoader(client)
+
+    def get_loader(self, items: Any) -> DataModelingLoader:
+        if isinstance(items, CogniteResourceList):
+            resource_name = type(items).__name__.casefold().removesuffix("list").removesuffix("apply")
+        elif isinstance(items, str):
+            resource_name = items
+        else:
+            raise ValueError(f"Cannot determine resource name from {items}")
+        if resource_name[-1] != "s":
+            resource_name += "s"
+        return getattr(self, resource_name)

@@ -2,6 +2,7 @@ import time
 from pathlib import Path
 from typing import ClassVar, Literal, cast
 
+from cognite.neat._client import NeatClient
 from cognite.neat._issues.errors import WorkflowStepNotInitializedError
 from cognite.neat._rules import exporters
 from cognite.neat._rules._shared import DMSRules, InformationRules, VerifiedRules
@@ -100,7 +101,7 @@ class DeleteDataModelFromCDF(Step):
 
         report_lines = ["# Data Model Deletion from CDF\n\n"]
         errors = []
-        for result in dms_exporter.delete_from_cdf(rules=dms_rules, client=cdf_client, dry_run=dry_run):
+        for result in dms_exporter.delete_from_cdf(rules=dms_rules, client=NeatClient(cdf_client), dry_run=dry_run):
             report_lines.append(str(result))
             errors.extend(result.error_messages)
 
@@ -220,7 +221,9 @@ class RulesToDMS(Step):
 
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
-        for result in dms_exporter.export_to_cdf_iterable(rules=dms_rules, client=cdf_client, dry_run=dry_run):
+        for result in dms_exporter.export_to_cdf_iterable(
+            rules=dms_rules, client=NeatClient(cdf_client), dry_run=dry_run
+        ):
             report_lines.append(str(result))
             errors.extend(result.error_messages)
 
@@ -584,7 +587,9 @@ class RulesToCDFTransformations(Step):
 
         report_lines = ["# DMS Schema Export to CDF\n\n"]
         errors = []
-        for result in dms_exporter.export_to_cdf_iterable(rules=dms_rules, client=cdf_client, dry_run=dry_run):
+        for result in dms_exporter.export_to_cdf_iterable(
+            rules=dms_rules, client=NeatClient(cdf_client), dry_run=dry_run
+        ):
             report_lines.append(str(result))
             errors.extend(result.error_messages)
 
