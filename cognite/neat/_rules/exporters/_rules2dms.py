@@ -15,7 +15,7 @@ from cognite.client.data_classes.data_modeling import (
 )
 from cognite.client.exceptions import CogniteAPIError
 
-from cognite.neat._client.api.data_modeling_loaders import (
+from cognite.neat._client._api.data_modeling_loaders import (
     ContainerLoader,
     DataModelingLoader,
     DataModelLoader,

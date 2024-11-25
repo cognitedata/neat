@@ -1,8 +1,3 @@
-from cognite.client import ClientConfig, CogniteClient
+from ._api_client import NeatClient
 
-
-class NeatClient(CogniteClient):
-    def __init__(self, config: ClientConfig | CogniteClient | None = None) -> None:
-        if isinstance(config, CogniteClient):
-            config = config.config
-        super().__init__(config=config)
+__all__ = ["NeatClient"]

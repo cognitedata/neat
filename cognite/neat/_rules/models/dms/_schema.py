@@ -22,7 +22,7 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
-from cognite.neat._client.api.data_modeling_loaders import ViewLoader
+from cognite.neat._client._api.data_modeling_loaders import ViewLoader
 from cognite.neat._client.data_classes.data_modeling import (
     CogniteResourceDict,
     ContainerApplyDict,

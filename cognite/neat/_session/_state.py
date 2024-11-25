@@ -6,7 +6,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
-from cognite.neat._client.api.data_modeling_loaders import ViewLoader
+from cognite.neat._client._api.data_modeling_loaders import ViewLoader
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
 from cognite.neat._issues import IssueList
 from cognite.neat._rules._shared import JustRules, ReadRules, VerifiedRules
