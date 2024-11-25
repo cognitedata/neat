@@ -95,7 +95,7 @@ class ResourceLoader(
     def retrieve(self, ids: SequenceNotStr[T_ID]) -> T_WritableCogniteResourceList:
         if not self.cache:
             return self._retrieve(ids)
-        missing_ids = [id for id in ids if id not in self._items_by_id]
+        missing_ids = [id for id in ids if id not in self._items_by_id.keys()]
         if missing_ids:
             retrieved = self._retrieve(missing_ids)
             self._items_by_id.update({self.get_id(item): item for item in retrieved})
@@ -377,26 +377,25 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         include_connections: bool = True,
         skip_ids: set[ViewId] | None = None,
     ) -> list[ViewId]:
-        connected_ids: list[ViewId] = list(view.implements or []) if include_parents else []
+        connected_ids: set[ViewId] = set(view.implements or []) if include_parents else set()
         if include_connections:
             for prop in (view.properties or {}).values():
-                found_sources: set[ViewId] = set()
                 if isinstance(prop, MappedProperty | MappedPropertyApply) and prop.source:
-                    found_sources.add(prop.source)
+                    connected_ids.add(prop.source)
                 elif isinstance(
                     prop, EdgeConnection | EdgeConnectionApply | ReverseDirectRelation | ReverseDirectRelationApply
                 ):
-                    found_sources.add(prop.source)
+                    connected_ids.add(prop.source)
 
                 if isinstance(prop, EdgeConnection | EdgeConnectionApply) and prop.edge_source:
-                    found_sources.add(prop.edge_source)
+                    connected_ids.add(prop.edge_source)
                 elif isinstance(prop, ReverseDirectRelation | ReverseDirectRelationApply) and isinstance(
                     prop.through.source, ViewId
                 ):
-                    found_sources.add(prop.through.source)
+                    connected_ids.add(prop.through.source)
         if skip_ids:
             return [view_id for view_id in connected_ids if view_id not in skip_ids]
-        return connected_ids
+        return list(connected_ids)
 
     def _create_list(self, items: Sequence[View]) -> ViewList:
         return ViewList(items)
