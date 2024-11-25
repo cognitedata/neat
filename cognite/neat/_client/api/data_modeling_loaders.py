@@ -45,7 +45,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
-from ._base import T_ID, ResourceLoader, T_WritableCogniteResourceList
+from .loader_base import T_ID, ResourceLoader, T_WritableCogniteResourceList
 
 
 class DataModelingLoader(

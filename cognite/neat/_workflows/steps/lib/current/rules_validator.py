@@ -5,11 +5,11 @@ from typing import ClassVar
 
 from cognite.client import CogniteClient
 
+from cognite.neat._client.api.data_modeling_loaders import ViewLoader
 from cognite.neat._issues import NeatIssueList
 from cognite.neat._issues.errors import ResourceNotFoundError, WorkflowStepNotInitializedError
 from cognite.neat._issues.formatters import FORMATTER_BY_NAME
 from cognite.neat._rules.models import DMSRules
-from cognite.neat._utils.cdf.loaders import ViewLoader
 from cognite.neat._workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat._workflows.steps.data_contracts import MultiRuleData
 from cognite.neat._workflows.steps.step_model import Configurable, Step

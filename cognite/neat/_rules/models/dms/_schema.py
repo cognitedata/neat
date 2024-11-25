@@ -22,6 +22,7 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
+from cognite.neat._client.api.data_modeling_loaders import ViewLoader
 from cognite.neat._client.data_classes.data_modeling import (
     CogniteResourceDict,
     ContainerApplyDict,
@@ -44,10 +45,6 @@ from cognite.neat._issues.warnings import (
     ResourcesDuplicatedWarning,
 )
 from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
-from cognite.neat._utils.cdf.data_classes import (
-    RawTableWrite,
-)
-from cognite.neat._utils.cdf.loaders import ViewLoader
 from cognite.neat._utils.rdf_ import get_inheritance_path
 from cognite.neat._utils.text import to_camel
 
@@ -521,7 +518,7 @@ class DMSSchema:
 
     @classmethod
     def _to_sortable_identifier(cls, item: Any) -> str | tuple[str, str] | tuple[str, str, str]:
-        if isinstance(item, dm.ContainerApply | dm.ViewApply | dm.DataModelApply | dm.NodeApply | RawTableWrite):
+        if isinstance(item, dm.ContainerApply | dm.ViewApply | dm.DataModelApply | dm.NodeApply):
             identifier = item.as_id().as_tuple()
             if len(identifier) == 3 and identifier[2] is None:
                 return identifier[:2]  # type: ignore[misc]
