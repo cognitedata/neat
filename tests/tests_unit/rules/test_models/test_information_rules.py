@@ -161,7 +161,7 @@ def incomplete_rules_case():
 
 class TestInformationRules:
     def test_load_valid_jon_rules(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = InformationRules.model_validate(david_spreadsheet)
+        valid_rules = InformationRules.model_validate(InformationInputRules.load(david_spreadsheet).dump())
 
         assert isinstance(valid_rules, InformationRules)
 
@@ -183,7 +183,7 @@ class TestInformationRules:
 
     @pytest.mark.parametrize("incomplete_rules, expected_exception", list(incomplete_rules_case()))
     def test_incomplete_rules(self, incomplete_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:
-        rules = InformationRules.model_validate(incomplete_rules)
+        rules = InformationRules.model_validate(InformationInputRules.load(incomplete_rules).dump())
         issues = InformationValidation(rules).validate()
 
         assert len(issues) == 2

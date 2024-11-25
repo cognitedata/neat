@@ -53,6 +53,7 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
                 if validation_issues.warnings:
                     validation_issues.trigger_warnings()
                 if validation_issues.has_errors:
+                    verified_rules = None
                     raise MultiValueError(validation_issues.errors)
 
         if (future.result == "failure" or issues.has_errors or verified_rules is None) and self.errors == "raise":
