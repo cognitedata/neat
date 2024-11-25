@@ -8,6 +8,7 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from rdflib import URIRef
 
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._issues import MultiValueError
 from cognite.neat._issues.errors import NeatValueError
@@ -47,8 +48,6 @@ from cognite.neat._rules.models.entities import (
     ViewEntity,
     ViewEntityList,
 )
-
-from ._schema import DMSSchema
 
 _DEFAULT_VERSION = "1"
 

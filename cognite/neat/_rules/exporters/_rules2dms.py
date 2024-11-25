@@ -15,12 +15,13 @@ from cognite.client.data_classes.data_modeling import (
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat._client import DataModelingLoader, NeatClient
+from cognite.neat._client.data_classes._schema import DMSSchema
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.warnings import (
     PrincipleOneModelOneSpaceWarning,
     ResourceRetrievalWarning,
 )
-from cognite.neat._rules.models.dms import DMSRules, DMSSchema
+from cognite.neat._rules.models.dms import DMSRules
 from cognite.neat._utils.upload import UploadResult
 
 from ._base import CDFExporter

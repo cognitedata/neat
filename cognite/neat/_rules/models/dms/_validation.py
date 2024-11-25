@@ -3,6 +3,7 @@ from typing import Any, ClassVar, cast
 
 from cognite.client import data_modeling as dm
 
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
@@ -28,7 +29,6 @@ from cognite.neat._rules.models.entities._single_value import (
 )
 
 from ._rules import DMSProperty, DMSRules
-from ._schema import DMSSchema
 
 
 class DMSPostValidation:

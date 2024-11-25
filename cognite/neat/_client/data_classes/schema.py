@@ -5,7 +5,7 @@ from collections import ChainMap, Counter, defaultdict
 from collections.abc import Iterable, MutableMapping
 from dataclasses import Field, dataclass, field, fields
 from pathlib import Path
-from typing import Any, ClassVar, Literal, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
 
 import yaml
 from cognite.client import CogniteClient
@@ -22,8 +22,6 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
-from cognite.neat._client import NeatClient
-from cognite.neat._client._api.data_modeling_loaders import ViewLoader
 from cognite.neat._client.data_classes.data_modeling import (
     CogniteResourceDict,
     ContainerApplyDict,
@@ -53,6 +51,9 @@ if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
+
+if TYPE_CHECKING:
+    from cognite.neat._client import NeatClient
 
 
 @dataclass
@@ -134,6 +135,8 @@ class DMSSchema:
         Returns:
             DMSSchema: The schema created from the data model.
         """
+        from cognite.neat._client._api.data_modeling_loaders import ViewLoader
+
         views = dm.ViewList(data_model.views)
 
         data_model_write = data_model.as_write()

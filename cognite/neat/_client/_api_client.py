@@ -3,6 +3,7 @@ from cognite.client import ClientConfig, CogniteClient
 from cognite.neat._utils.auth import _CLIENT_NAME
 
 from ._api.data_modeling_loaders import DataModelLoaderAPI
+from ._api.schema import SchemaAPI
 
 
 class NeatClient(CogniteClient):
@@ -13,3 +14,4 @@ class NeatClient(CogniteClient):
         if self._config is not None:
             self._config.client_name = _CLIENT_NAME
         self.loaders = DataModelLoaderAPI(self)
+        self.schema = SchemaAPI(self)

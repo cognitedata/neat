@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from graphlib import TopologicalSorter
 from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, cast
 
@@ -59,10 +59,23 @@ class ResourceLoader(
     ABC,
     Generic[T_ID, T_WriteClass, T_WritableCogniteResource, T_CogniteResourceList, T_WritableCogniteResourceList],
 ):
+    """A resource loaders is a wrapper around the Cognite SDK that does a few things:
+
+    * Standardizes the CRUD operations for a given resource.
+    * Caches the items that have been retrieved from the CDF.
+    """
+
     resource_name: str
 
     def __init__(self, client: "NeatClient") -> None:
+        # This is exposed to allow for disabling the cache.
+        self.cache = True
         self._client = client
+        # This cache is used to store the items that have been retrieved from the CDF.
+        self._items_by_id: dict[T_ID, T_WritableCogniteResource] = {}
+
+    def bust_cache(self) -> None:
+        self._items_by_id = {}
 
     @classmethod
     @abstractmethod
@@ -73,20 +86,56 @@ class ResourceLoader(
     def get_ids(cls, items: Sequence[T_WriteClass | T_WritableCogniteResource]) -> list[T_ID]:
         return [cls.get_id(item) for item in items]
 
-    @abstractmethod
     def create(self, items: Sequence[T_WriteClass]) -> T_WritableCogniteResourceList:
-        raise NotImplementedError
+        created = self._create(items)
+        if self.cache:
+            self._items_by_id.update({self.get_id(item): item for item in created})
+        return created
 
-    @abstractmethod
     def retrieve(self, ids: SequenceNotStr[T_ID]) -> T_WritableCogniteResourceList:
-        raise NotImplementedError
+        if not self.cache:
+            return self._retrieve(ids)
+        missing_ids = [id for id in ids if id not in self._items_by_id]
+        if missing_ids:
+            retrieved = self._retrieve(missing_ids)
+            self._items_by_id.update({self.get_id(item): item for item in retrieved})
+        return self._create_list([self._items_by_id[id] for id in ids])
 
-    @abstractmethod
     def update(self, items: Sequence[T_WriteClass]) -> T_WritableCogniteResourceList:
+        if not self.cache:
+            return self._update(items)
+        updated = self._update(items)
+        self._items_by_id.update({self.get_id(item): item for item in updated})
+        return updated
+
+    def delete(self, ids: SequenceNotStr[T_ID] | Sequence[T_WriteClass]) -> list[T_ID]:
+        id_list = [self.get_id(item) for item in ids]
+        if not self.cache:
+            return self._delete(id_list)
+        ids = [self.get_id(item) for item in ids]
+        deleted = self._delete(id_list)
+        for id in deleted:
+            self._items_by_id.pop(id, None)
+        return deleted
+
+    @abstractmethod
+    def _create(self, items: Sequence[T_WriteClass]) -> T_WritableCogniteResourceList:
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, ids: SequenceNotStr[T_ID]) -> list[T_ID]:
+    def _retrieve(self, ids: SequenceNotStr[T_ID]) -> T_WritableCogniteResourceList:
+        raise NotImplementedError
+
+    @abstractmethod
+    def _update(self, items: Sequence[T_WriteClass]) -> T_WritableCogniteResourceList:
+        raise NotImplementedError
+
+    @abstractmethod
+    def _delete(self, ids: SequenceNotStr[T_ID]) -> list[T_ID]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def _create_list(self, items: Sequence[T_WritableCogniteResource]) -> T_WritableCogniteResourceList:
         raise NotImplementedError
 
     def are_equal(self, local: T_WriteClass, remote: T_WritableCogniteResource) -> bool:
@@ -94,7 +143,8 @@ class ResourceLoader(
 
 
 class DataModelingLoader(
-    ResourceLoader[T_ID, T_WriteClass, T_WritableCogniteResource, T_CogniteResourceList, T_WritableCogniteResourceList]
+    ResourceLoader[T_ID, T_WriteClass, T_WritableCogniteResource, T_CogniteResourceList, T_WritableCogniteResourceList],
+    ABC,
 ):
     @classmethod
     def in_space(cls, item: T_WriteClass | T_WritableCogniteResource | T_ID, space: set[str]) -> bool:
@@ -105,28 +155,37 @@ class DataModelingLoader(
     def sort_by_dependencies(self, items: list[T_WriteClass]) -> list[T_WriteClass]:
         return items
 
+    def create(
+        self, items: Sequence[T_WriteClass], existing_handling: Literal["fail", "skip", "update", "force"] = "fail"
+    ) -> T_WritableCogniteResourceList:
+        if existing_handling != "force":
+            return super().create(items)
+
+        created = self._create_force(items, set())
+        if self.cache:
+            self._items_by_id.update({self.get_id(item): item for item in created})
+        return created
+
     def _create_force(
         self,
         items: Sequence[T_WriteClass],
         tried_force_deploy: set[T_ID],
-        create_method: Callable[[Sequence[T_WriteClass]], T_WritableCogniteResourceList],
     ) -> T_WritableCogniteResourceList:
         try:
-            return create_method(items)
+            return self._create(items)
         except CogniteAPIError as e:
-            failed_items = {failed.as_id() for failed in e.failed if hasattr(failed, "as_id")}
+            failed_ids = {self.get_id(failed) for failed in e.failed}
             to_redeploy = [
                 item
                 for item in items
-                if item.as_id() in failed_items and item.as_id() not in tried_force_deploy  # type: ignore[attr-defined]
+                if self.get_id(item) in failed_ids and self.get_id(item) not in tried_force_deploy
             ]
             if not to_redeploy:
                 # Avoid infinite loop
                 raise e
-            ids = [item.as_id() for item in to_redeploy]  # type: ignore[attr-defined]
-            tried_force_deploy.update(ids)
-            self.delete(ids)
-            return self._create_force(to_redeploy, tried_force_deploy, create_method)
+            tried_force_deploy.update([self.get_id(item) for item in to_redeploy])
+            self.delete(to_redeploy)
+            return self._create_force(to_redeploy, tried_force_deploy)
 
 
 class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, SpaceList]):
@@ -140,19 +199,22 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
             return item["space"]
         return item
 
-    def create(self, items: Sequence[SpaceApply]) -> SpaceList:
+    def _create(self, items: Sequence[SpaceApply]) -> SpaceList:
         return self._client.data_modeling.spaces.apply(items)
 
-    def retrieve(self, ids: SequenceNotStr[str]) -> SpaceList:
+    def _retrieve(self, ids: SequenceNotStr[str]) -> SpaceList:
         return self._client.data_modeling.spaces.retrieve(ids)
 
-    def update(self, items: Sequence[SpaceApply]) -> SpaceList:
-        return self.create(items)
+    def _update(self, items: Sequence[SpaceApply]) -> SpaceList:
+        return self._create(items)
 
-    def delete(self, ids: SequenceNotStr[str] | Sequence[Space | SpaceApply]) -> list[str]:
+    def _delete(self, ids: SequenceNotStr[str] | Sequence[Space | SpaceApply]) -> list[str]:
         if all(isinstance(item, Space) for item in ids) or all(isinstance(item, SpaceApply) for item in ids):
             ids = [cast(Space | SpaceApply, item).space for item in ids]
         return self._client.data_modeling.spaces.delete(cast(SequenceNotStr[str], ids))
+
+    def _create_list(self, items: Sequence[Space]) -> SpaceList:
+        return SpaceList(items)
 
     def clean(self, space: str) -> None:
         """Deletes all data in a space.
@@ -199,12 +261,6 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
 class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):
     resource_name = "views"
 
-    def __init__(self, client: "NeatClient", existing_handling: Literal["fail", "skip", "update", "force"] = "fail"):
-        super().__init__(client)
-        self.existing_handling = existing_handling
-        self._cache_view_by_id: dict[ViewId, View] = {}
-        self._tried_force_deploy: set[ViewId] = set()
-
     @classmethod
     def get_id(cls, item: View | ViewApply | ViewId | dict) -> ViewId:
         if isinstance(item, View | ViewApply):
@@ -213,19 +269,24 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
             return ViewId.load(item)
         return item
 
-    def create(self, items: Sequence[ViewApply]) -> ViewList:
-        if self.existing_handling == "force":
-            return self._create_force(items, self._tried_force_deploy, self._client.data_modeling.views.apply)
-        else:
-            return self._client.data_modeling.views.apply(items)
+    def _create(self, items: Sequence[ViewApply]) -> ViewList:
+        return self._client.data_modeling.views.apply(items)
 
-    def retrieve(self, ids: SequenceNotStr[ViewId]) -> ViewList:
+    def retrieve(
+        self, ids: SequenceNotStr[ViewId], include_connections: bool = False, include_ancestor: bool = False
+    ) -> ViewList:
+        if not include_connections and not include_ancestor:
+            return super().retrieve(ids)
+        # Retrieve recursively updates the cache.
+        return self._retrieve_recursive(ids, include_connections, include_ancestor)
+
+    def _retrieve(self, ids: SequenceNotStr[ViewId]) -> ViewList:
         return self._client.data_modeling.views.retrieve(cast(Sequence, ids))
 
-    def update(self, items: Sequence[ViewApply]) -> ViewList:
-        return self.create(items)
+    def _update(self, items: Sequence[ViewApply]) -> ViewList:
+        return self._create(items)
 
-    def delete(self, ids: SequenceNotStr[ViewId]) -> list[ViewId]:
+    def _delete(self, ids: SequenceNotStr[ViewId]) -> list[ViewId]:
         return self._client.data_modeling.views.delete(cast(Sequence, ids))
 
     def _as_write_raw(self, view: View) -> dict[str, Any]:
@@ -233,7 +294,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         if view.properties:
             # All read version of views have all the properties of their parent views.
             # We need to remove these properties to compare with the local view.
-            parents = self._retrieve_view_ancestors(view.implements or [], False, self._cache_view_by_id)
+            parents = self._retrieve_recursive(view.implements or [], include_connections=False, include_ancestors=True)
             for parent in parents:
                 for prop_name, prop in (parent.as_write().properties or {}).items():
                     existing = dumped["properties"].get(prop_name)
@@ -264,52 +325,59 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
     def as_write(self, view: View) -> ViewApply:
         return ViewApply.load(self._as_write_raw(view))
 
-    def retrieve_all_ancestors(self, views: list[ViewId], include_connections: bool = False) -> ViewList:
-        return ViewList(self._retrieve_view_ancestors(views, include_connections, self._cache_view_by_id))
-
-    def _retrieve_view_ancestors(
-        self, parents: list[ViewId], include_connections: bool, cache: dict[ViewId, View]
-    ) -> list[View]:
-        """Retrieves all ancestors of a view.
+    def _retrieve_recursive(
+        self, view_ids: SequenceNotStr[ViewId], include_connections: bool, include_ancestors: bool
+    ) -> ViewList:
+        """Retrieves all views with the
 
         This will mutate the cache passed in, and return a list of views that are the ancestors
         of the views in the parents list.
 
         Args:
-            parents: The parents of the view to retrieve all ancestors for
-            include_connections: Whether to include all sources.
-            cache: The cache to store the views in
+            view_ids: The views to retrieve.
+            include_connections: Whether to include all connected views.
+            include_ancestors: Whether to include all ancestors.
         """
-        next_backlog_ids = parents.copy()
-        found: list[View] = []
+        last_batch = list(view_ids)
+        found = ViewList([])
         found_ids: set[ViewId] = set()
-        while next_backlog_ids:
-            to_lookup: set[ViewId] = set()
-            backlog_ids: list[ViewId] = []
-            for backlog_id in next_backlog_ids:
-                if backlog_id in found_ids:
+        while last_batch:
+            to_retrieve_from_cdf: set[ViewId] = set()
+            batch_ids: list[ViewId] = []
+            for view_id in last_batch:
+                if view_id in found_ids:
                     continue
-                elif backlog_id in cache:
-                    parent_view = cache[backlog_id]
-                    found.append(parent_view)
-                    backlog_ids.extend(self.get_connected_views(parent_view, found_ids, include_connections))
+                elif view_id in self._items_by_id:
+                    view = self._items_by_id[view_id]
+                    found.append(view)
+                    batch_ids.extend(self.get_connected_views(view, include_ancestors, include_connections, found_ids))
                 else:
-                    to_lookup.add(backlog_id)
+                    to_retrieve_from_cdf.add(view_id)
 
-            if to_lookup:
-                looked_up = self._client.data_modeling.views.retrieve(list(to_lookup))
-                cache.update({view.as_id(): view for view in looked_up})
-                found.extend(looked_up)
-                found_ids.update({view.as_id() for view in looked_up})
-                for view in looked_up:
-                    backlog_ids.extend(self.get_connected_views(view, found_ids, include_connections))
+            if to_retrieve_from_cdf:
+                retrieved_batch = self._client.data_modeling.views.retrieve(list(to_retrieve_from_cdf))
+                self._items_by_id.update({view.as_id(): view for view in retrieved_batch})
+                found.extend(retrieved_batch)
+                found_ids.update({view.as_id() for view in retrieved_batch})
+                for view in retrieved_batch:
+                    batch_ids.extend(self.get_connected_views(view, include_ancestors, include_connections, found_ids))
 
-            next_backlog_ids = backlog_ids
+            last_batch = batch_ids
+
+        if self.cache is False:
+            # We must update the cache to retrieve recursively.
+            # If the cache is disabled, bust the cache to avoid storing the retrieved views.
+            self.bust_cache()
         return found
 
     @staticmethod
-    def get_connected_views(view: View | ViewApply, skip_ids: set[ViewId], include_connections: bool) -> list[ViewId]:
-        connected_ids: list[ViewId] = list(view.implements or [])
+    def get_connected_views(
+        view: View | ViewApply,
+        include_parents: bool = True,
+        include_connections: bool = True,
+        skip_ids: set[ViewId] | None = None,
+    ) -> list[ViewId]:
+        connected_ids: list[ViewId] = list(view.implements or []) if include_parents else []
         if include_connections:
             for prop in (view.properties or {}).values():
                 found_sources: set[ViewId] = set()
@@ -326,17 +394,16 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
                     prop.through.source, ViewId
                 ):
                     found_sources.add(prop.through.source)
-                connected_ids.extend([source for source in found_sources if source not in skip_ids])
+        if skip_ids:
+            return [view_id for view_id in connected_ids if view_id not in skip_ids]
         return connected_ids
+
+    def _create_list(self, items: Sequence[View]) -> ViewList:
+        return ViewList(items)
 
 
 class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
     resource_name = "containers"
-
-    def __init__(self, client: "NeatClient", existing_handling: Literal["fail", "skip", "update", "force"] = "fail"):
-        super().__init__(client)
-        self.existing_handling = existing_handling
-        self._tried_force_deploy: set[ContainerId] = set()
 
     @classmethod
     def get_id(cls, item: Container | ContainerApply | ContainerId | dict) -> ContainerId:
@@ -360,20 +427,20 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
             container_by_id[container_id] for container_id in TopologicalSorter(container_dependencies).static_order()
         ]
 
-    def create(self, items: Sequence[ContainerApply]) -> ContainerList:
-        if self.existing_handling == "force":
-            return self._create_force(items, self._tried_force_deploy, self._client.data_modeling.containers.apply)
-        else:
-            return self._client.data_modeling.containers.apply(items)
+    def _create(self, items: Sequence[ContainerApply]) -> ContainerList:
+        return self._client.data_modeling.containers.apply(items)
 
-    def retrieve(self, ids: SequenceNotStr[ContainerId]) -> ContainerList:
+    def _retrieve(self, ids: SequenceNotStr[ContainerId]) -> ContainerList:
         return self._client.data_modeling.containers.retrieve(cast(Sequence, ids))
 
-    def update(self, items: Sequence[ContainerApply]) -> ContainerList:
-        return self.create(items)
+    def _update(self, items: Sequence[ContainerApply]) -> ContainerList:
+        return self._create(items)
 
-    def delete(self, ids: SequenceNotStr[ContainerId]) -> list[ContainerId]:
+    def _delete(self, ids: SequenceNotStr[ContainerId]) -> list[ContainerId]:
         return self._client.data_modeling.containers.delete(cast(Sequence, ids))
+
+    def _create_list(self, items: Sequence[Container]) -> ContainerList:
+        return ContainerList(items)
 
     def are_equal(self, local: ContainerApply, remote: Container) -> bool:
         local_dumped = local.dump(camel_case=True)
@@ -395,17 +462,20 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
             return DataModelId.load(item)
         return item
 
-    def create(self, items: Sequence[DataModelApply]) -> DataModelList:
+    def _create(self, items: Sequence[DataModelApply]) -> DataModelList:
         return self._client.data_modeling.data_models.apply(items)
 
-    def retrieve(self, ids: SequenceNotStr[DataModelId]) -> DataModelList:
+    def _retrieve(self, ids: SequenceNotStr[DataModelId]) -> DataModelList:
         return self._client.data_modeling.data_models.retrieve(cast(Sequence, ids))
 
-    def update(self, items: Sequence[DataModelApply]) -> DataModelList:
-        return self.create(items)
+    def _update(self, items: Sequence[DataModelApply]) -> DataModelList:
+        return self._create(items)
 
-    def delete(self, ids: SequenceNotStr[DataModelId]) -> list[DataModelId]:
+    def _delete(self, ids: SequenceNotStr[DataModelId]) -> list[DataModelId]:
         return self._client.data_modeling.data_models.delete(cast(Sequence, ids))
+
+    def _create_list(self, items: Sequence[DataModel]) -> DataModelList:
+        return DataModelList(items)
 
     def are_equal(self, local: DataModelApply, remote: DataModel) -> bool:
         local_dumped = local.dump()

@@ -19,6 +19,7 @@ from cognite.neat._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues.errors import NeatTypeError, ResourceNotFoundError
 from cognite.neat._issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
 from cognite.neat._issues.warnings.user_modeling import (
@@ -41,7 +42,6 @@ from cognite.neat._rules.models.entities import (
 )
 
 from ._rules import DMSEnum, DMSMetadata, DMSProperty, DMSRules, DMSView
-from ._schema import DMSSchema
 
 
 class _DMSExporter:
