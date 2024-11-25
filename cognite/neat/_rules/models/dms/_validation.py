@@ -3,6 +3,7 @@ from typing import Any, ClassVar, cast
 
 from cognite.client import data_modeling as dm
 
+from cognite.neat._client import NeatClient
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues import IssueList, NeatError, NeatIssue, NeatIssueList
@@ -27,7 +28,6 @@ from cognite.neat._rules.models.entities._single_value import (
     ReverseConnectionEntity,
     ViewEntity,
 )
-from cognite.neat._client import NeatClient
 
 from ._rules import DMSProperty, DMSRules
 
@@ -40,7 +40,7 @@ class DMSValidation:
     # For example, changing the filter is allowed, but changing the properties is not.
     changeable_view_attributes: ClassVar[set[str]] = {"filter"}
 
-    def __init__(self, rules: DMSRules, client: NeatClient) -> None:
+    def __init__(self, rules: DMSRules, client: NeatClient | None = None) -> None:
         self.rules = rules
         self.client = client
         self.metadata = rules.metadata

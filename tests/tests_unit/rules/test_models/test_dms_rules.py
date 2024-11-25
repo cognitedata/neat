@@ -5,7 +5,6 @@ from typing import Any
 import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
-from pydantic import ValidationError
 
 from cognite.neat._client.data_classes.data_modeling import (
     ContainerApplyDict,
@@ -13,7 +12,7 @@ from cognite.neat._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat._issues import MultiValueError, NeatError
+from cognite.neat._issues import NeatError
 from cognite.neat._issues.errors import (
     PropertyDefinitionDuplicatedError,
     ResourceNotFoundError,
@@ -30,6 +29,7 @@ from cognite.neat._rules.models.dms import (
     DMSInputView,
     DMSMetadata,
     DMSSchema,
+    DMSValidation,
 )
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.transformers import (
@@ -1239,6 +1239,8 @@ class TestDMSRules:
     def test_load_valid_rules(self, raw: DMSInputRules, expected_rules: DMSRules) -> None:
         valid_rules = raw.as_rules()
         assert valid_rules.model_dump() == expected_rules.model_dump()
+        issues = DMSValidation(valid_rules).validate()
+        assert not issues
         # testing case insensitive value types
         assert isinstance(valid_rules.properties[0].value_type, String)
 
@@ -1246,18 +1248,12 @@ class TestDMSRules:
     def test_load_inconsistent_container_definitions(
         self, raw: DMSInputRules, expected_errors: list[NeatError]
     ) -> None:
-        with pytest.raises(ValueError) as e:
-            raw.as_rules()
+        rules = raw.as_rules()
+        issues = DMSValidation(rules).validate()
 
-        assert isinstance(e.value, ValidationError)
-        validation_errors = e.value.errors()
-        assert len(validation_errors) == 1, "Expected there to be exactly one validation error"
-        validation_error = validation_errors[0]
-        multi_value_error = validation_error.get("ctx", {}).get("error")
-        assert isinstance(multi_value_error, MultiValueError)
-        actual_errors = multi_value_error.errors
+        assert len(issues.errors) == 1, "Expected there to be exactly one validation error"
 
-        assert sorted(actual_errors) == sorted(expected_errors)
+        assert sorted(issues) == sorted(expected_errors)
 
     def test_alice_to_and_from_dms(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
@@ -1573,30 +1569,29 @@ class TestDMSExporter:
 
 
 def test_dms_rules_validation_error():
-    with pytest.raises(NeatError) as e:
-        dms_rules = DMSInputRules(
-            metadata=DMSInputMetadata(
-                space="my_space",
-                external_id="my_data_model",
-                version="1",
-                creator="Anders",
-                created="2024-03-16",
-                updated="2024-03-16",
+    dms_rules = DMSInputRules(
+        metadata=DMSInputMetadata(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            creator="Anders",
+            created="2024-03-16",
+            updated="2024-03-16",
+        ),
+        properties=[
+            DMSInputProperty(
+                value_type="text",
+                container="Asset",
+                container_property="name",
+                view="WindFarm",
+                view_property="name",
             ),
-            properties=[
-                DMSInputProperty(
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="WindFarm",
-                    view_property="name",
-                ),
-            ],
-            views=[DMSInputView(view="WindFarm", implements="Sourceable,Describable")],
-            containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
-        )
-
-        dms_rules.as_rules()
+        ],
+        views=[DMSInputView(view="WindFarm", implements="Sourceable,Describable")],
+        containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
+    )
+    with pytest.raises(NeatError) as e:
+        DMSValidation(dms_rules.as_rules()).validate()
 
     assert e.value == ResourceNotFoundError(
         dm.ViewId(space="my_space", external_id="Sourceable", version="1"),

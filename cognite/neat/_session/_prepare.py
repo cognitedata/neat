@@ -433,7 +433,7 @@ class DataModelPrepareAPI:
                 "Could not import the referenced views and containers. "
                 "See `neat.inspect.issues()` for more information."
             )
-        verified = VerifyDMSRules("continue", post_validate=False).transform(imported.rules)
+        verified = VerifyDMSRules("continue", validate=False).transform(imported.rules)
         if verified.rules is None:
             self._state.data_model.issue_lists.append(verified.issues)
             raise NeatSessionError(

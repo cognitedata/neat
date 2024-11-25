@@ -85,7 +85,7 @@ def _handle_issues(
         try:
             yield future_result
         except ValidationError as e:
-            issues.extend(error_cls.from_pydantic_errors(e.errors(), **(error_args or {})))
+            issues.extend(error_cls.from_errors(e.errors(), **(error_args or {})))
             future_result._result = "failure"
         else:
             future_result._result = "success"
