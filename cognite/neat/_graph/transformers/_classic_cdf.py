@@ -77,7 +77,7 @@ class AddAssetDepth(BaseTransformer):
             return None
 
 
-class ClassicConnector(BaseTransformer, ABC):
+class BaseAssetConnector(BaseTransformer, ABC):
     _asset_type: URIRef = DEFAULT_NAMESPACE.Asset
     _item_type: URIRef
     _default_attribute: URIRef
@@ -101,7 +101,7 @@ class ClassicConnector(BaseTransformer, ABC):
                 graph.add((asset_id, self._connection_type, item_id))
 
 
-class AssetTimeSeriesConnector(ClassicConnector):
+class AssetTimeSeriesConnector(BaseAssetConnector):
     description: str = "Connects assets to timeseries, thus forming bi-directional connection"
     _use_only_once: bool = True
     _need_changes = frozenset(
@@ -115,7 +115,7 @@ class AssetTimeSeriesConnector(ClassicConnector):
     _connection_type = DEFAULT_NAMESPACE.timeSeries
 
 
-class AssetSequenceConnector(ClassicConnector):
+class AssetSequenceConnector(BaseAssetConnector):
     description: str = "Connects assets to sequences, thus forming bi-directional connection"
     _use_only_once: bool = True
     _need_changes = frozenset(
@@ -129,7 +129,7 @@ class AssetSequenceConnector(ClassicConnector):
     _connection_type = DEFAULT_NAMESPACE.sequence
 
 
-class AssetFileConnector(ClassicConnector):
+class AssetFileConnector(BaseAssetConnector):
     description: str = "Connects assets to files, thus forming bi-directional connection"
     _use_only_once: bool = True
     _need_changes = frozenset(
@@ -143,7 +143,7 @@ class AssetFileConnector(ClassicConnector):
     _connection_type = DEFAULT_NAMESPACE.file
 
 
-class AssetEventConnector(ClassicConnector):
+class AssetEventConnector(BaseAssetConnector):
     description: str = "Connects assets to events, thus forming bi-directional connection"
     _use_only_once: bool = True
     _need_changes = frozenset(
