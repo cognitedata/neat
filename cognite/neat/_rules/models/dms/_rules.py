@@ -339,9 +339,6 @@ class DMSRules(BaseRules):
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     enum: SheetList[DMSEnum] | None = Field(None, alias="Enum")
     nodes: SheetList[DMSNode] | None = Field(None, alias="Nodes")
-    # This is a hack to allow the post_validation to be turned off when needed
-    # Will likely be moved completely out of the rules in the future
-    post_validate: bool = Field(default=True, exclude=True, repr=False)
 
     @field_validator("views")
     def matching_version_and_space(cls, value: SheetList[DMSView], info: ValidationInfo) -> SheetList[DMSView]:
@@ -374,20 +371,7 @@ class DMSRules(BaseRules):
                 )
         return value
 
-    @model_validator(mode="after")
-    def post_validation(self) -> "DMSRules":
-        from ._validation import DMSPostValidation
-
-        if not self.post_validate:
-            return self
-        issue_list = DMSPostValidation(self).validate()
-        if issue_list.warnings:
-            issue_list.trigger_warnings()
-        if issue_list.has_errors:
-            raise MultiValueError(issue_list.errors)
-        return self
-
-    def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
+    def as_schema(self, instance_space: str | None = None) -> DMSSchema:
         from ._exporter import _DMSExporter
 
         return _DMSExporter(self, instance_space).to_schema()

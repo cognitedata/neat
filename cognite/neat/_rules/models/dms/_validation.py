@@ -27,11 +27,12 @@ from cognite.neat._rules.models.entities._single_value import (
     ReverseConnectionEntity,
     ViewEntity,
 )
+from cognite.neat._client import NeatClient
 
 from ._rules import DMSProperty, DMSRules
 
 
-class DMSPostValidation:
+class DMSValidation:
     """This class does all the validation of the DMS rules that have dependencies between
     components."""
 
@@ -39,8 +40,9 @@ class DMSPostValidation:
     # For example, changing the filter is allowed, but changing the properties is not.
     changeable_view_attributes: ClassVar[set[str]] = {"filter"}
 
-    def __init__(self, rules: DMSRules):
+    def __init__(self, rules: DMSRules, client: NeatClient) -> None:
         self.rules = rules
+        self.client = client
         self.metadata = rules.metadata
         self.properties = rules.properties
         self.containers = rules.containers
