@@ -41,8 +41,15 @@ class FileItemNotSupportedWarning(NeatWarning):
 
 
 @dataclass(unsafe_hash=True)
-class AuthWarning(NeatWarning):
+class CDFAuthWarning(NeatWarning):
     """Failed to {action} due to {reason}"""
 
     action: str
     reason: str
+
+
+@dataclass(unsafe_hash=True)
+class CDFMaxIterationsWarning(NeatWarning):
+    """The maximum number of iterations ({max_iterations}) has been reached. {message}"""
+    message: str
+    max_iterations: int

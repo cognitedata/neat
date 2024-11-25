@@ -55,9 +55,11 @@ class DMSValidation:
         self._consistent_container_properties()
         self._validate_value_type_existence()
         self._validate_reverse_connections()
-
         self._referenced_views_and_containers_are_existing_and_proper_size()
+
         dms_schema = self.rules.as_schema()
+
+        # self.issue_list.extend(dms_schema.validate())
         self._validate_performance(dms_schema)
         return self.issue_list
 
@@ -179,11 +181,35 @@ class DMSValidation:
                 )
             else:
                 property_count_by_view[view_id] += 1
+
         for view_id, count in property_count_by_view.items():
             if count > DMS_CONTAINER_PROPERTY_SIZE_LIMIT:
                 errors.append(ViewPropertyLimitWarning(view_id, count))
 
         self.issue_list.extend(errors)
+
+    def _get_mapped_container_from_view(self, view_id: dm.ViewId) -> set[dm.ContainerId]:
+        # index all views, including ones from reference
+        view_by_id = self.views.copy()
+        if self.reference:
+            view_by_id.update(self.reference.views)
+
+        if view_id not in view_by_id:
+            raise ValueError(f"View {view_id} not found")
+
+        indexed_implemented_views = {id_: view.implements for id_, view in view_by_id.items()}
+        view_inheritance = get_inheritance_path(view_id, indexed_implemented_views)
+
+        directly_referenced_containers = view_by_id[view_id].referenced_containers()
+        inherited_referenced_containers = set()
+
+        for parent_id in view_inheritance:
+            if implemented_view := view_by_id.get(parent_id):
+                inherited_referenced_containers |= implemented_view.referenced_containers()
+            else:
+                raise ResourceNotFoundError(parent_id, "view", view_id, "view")
+
+        return directly_referenced_containers | inherited_referenced_containers
 
     def _validate_performance(self, dms_schema: DMSSchema) -> None:
         for view_id, view in dms_schema.views.items():
@@ -274,15 +300,3 @@ class DMSValidation:
             else:
                 continue
 
-    @staticmethod
-    def _changed_attributes_and_properties(
-        new_dumped: dict[str, Any], existing_dumped: dict[str, Any]
-    ) -> tuple[list[str], list[str]]:
-        """Helper method to find the changed attributes and properties between two containers or views."""
-        new_attributes = {key: value for key, value in new_dumped.items() if key != "properties"}
-        existing_attributes = {key: value for key, value in existing_dumped.items() if key != "properties"}
-        changed_attributes = [key for key in new_attributes if new_attributes[key] != existing_attributes.get(key)]
-        new_properties = new_dumped.get("properties", {})
-        existing_properties = existing_dumped.get("properties", {})
-        changed_properties = [prop for prop in new_properties if new_properties[prop] != existing_properties.get(prop)]
-        return changed_attributes, changed_properties
