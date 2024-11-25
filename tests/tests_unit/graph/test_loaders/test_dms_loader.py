@@ -9,7 +9,9 @@ from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, IMF_EXAMPLE
 
 def test_metadata_as_json_filed():
     store = NeatGraphStore.from_memory_store()
-    store.write(AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml", unpack_metadata=False))
+    store.write(
+        AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml", unpack_metadata=False, as_write=True)
+    )
 
     importer = InferenceImporter.from_graph_store(store)
 

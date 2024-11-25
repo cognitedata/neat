@@ -1,6 +1,6 @@
 from collections import Counter, defaultdict
 from collections.abc import Mapping
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import ClassVar, cast
 
@@ -8,8 +8,7 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._issues.warnings import PropertyValueTypeUndefinedWarning
+from cognite.neat._issues.warnings import PropertySkippedWarning, PropertyValueTypeUndefinedWarning
 from cognite.neat._rules.models import data_types
 from cognite.neat._rules.models.data_types import AnyURI
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
@@ -156,9 +155,21 @@ class InferenceImporter(BaseRDFImporter):
                     # this is to skip rdf:type property
                     if property_uri == RDF.type:
                         continue
+                    property_id = remove_namespace_from_uri(property_uri)
+                    if property_id in {"external_id", "externalId"}:
+                        skip_issue = PropertySkippedWarning(
+                            resource_type="Property",
+                            identifier=f"{class_id}:{property_id}",
+                            property_name=property_id,
+                            reason="External ID is assumed to be the unique identifier of the instance "
+                            "and is not part of the data model schema.",
+                        )
+                        if skip_issue not in self.issue_list:
+                            self.issue_list.append(skip_issue)
+                        continue
 
                     self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
-                    property_id = remove_namespace_from_uri(property_uri)
+
                     if isinstance(data_type_uri, URIRef):
                         data_type_uri = self.overwrite_data_types.get(data_type_uri, data_type_uri)
 
@@ -228,14 +239,14 @@ class InferenceImporter(BaseRDFImporter):
         }
 
     def _default_metadata(self):
+        now = datetime.now(timezone.utc)
         return InformationMetadata(
             space=self.data_model_id.space,
             external_id=self.data_model_id.external_id,
             version=self.data_model_id.version,
             name="Inferred Model",
             creator="NEAT",
-            created=datetime.now(),
-            updated=datetime.now(),
+            created=now,
+            updated=now,
             description="Inferred model from knowledge graph",
-            namespace=DEFAULT_NAMESPACE,
         )

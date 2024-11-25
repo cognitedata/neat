@@ -54,7 +54,7 @@ properties:
   is_list: false
   name: Parent
   nullable: true
-  value_type: Asset
+  value_type: ClassicAsset
   view: ClassicAsset
   view_property: parentId
 - connection: direct
@@ -85,7 +85,7 @@ properties:
   is_list: true
   name: Assets
   nullable: true
-  value_type: Asset
+  value_type: ClassicAsset
   view: ClassicEvent
   view_property: assetIds
 - container: cdf_cdm:CogniteDescribable
@@ -145,7 +145,7 @@ properties:
   is_list: true
   name: Assets
   nullable: true
-  value_type: Asset
+  value_type: ClassicAsset
   view: ClassicFile
   view_property: assetIds
 - container: cdf_cdm:CogniteFile
@@ -227,7 +227,7 @@ properties:
   is_list: true
   name: Assets
   nullable: true
-  value_type: Asset
+  value_type: ClassicAsset
   view: ClassicTimeSeries
   view_property: assetId
 - container: cdf_cdm:CogniteDescribable

@@ -22,7 +22,7 @@ class MappingAPI:
         source_id, rules = self._state.data_model.last_verified_dms_rules
 
         start = datetime.now(timezone.utc)
-        transformer = RuleMapper(load_classic_to_core_mapping(org_name))
+        transformer = RuleMapper(load_classic_to_core_mapping(org_name, rules.metadata.space, rules.metadata.version))
         output = transformer.transform(rules)
         end = datetime.now(timezone.utc)
 
