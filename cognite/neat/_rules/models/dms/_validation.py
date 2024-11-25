@@ -19,6 +19,7 @@ from cognite.neat._issues.warnings.user_modeling import (
     NotNeatSupportedFilterWarning,
     ViewPropertyLimitWarning,
 )
+from cognite.neat._rules.analysis import DMSAnalysis
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ContainerEntity, RawFilter
 from cognite.neat._rules.models.entities._single_value import (
@@ -45,6 +46,7 @@ class DMSPostValidation:
         self.containers = rules.containers
         self.views = rules.views
         self.issue_list = IssueList()
+        self.probe = DMSAnalysis(rules)
 
     def validate(self) -> NeatIssueList:
         self._validate_raw_filter()
@@ -229,7 +231,12 @@ class DMSPostValidation:
         if self.metadata.as_data_model_id() in COGNITE_MODELS:
             return None
 
-        properties_by_ids = {f"{prop_.view!s}.{prop_.view_property}": prop_ for prop_ in self.properties}
+        properties_by_ids = {
+            f"{prop_.view!s}.{prop_.view_property}": prop_
+            for properties in self.probe.classes_with_properties(True, True).values()
+            for prop_ in properties
+        }
+
         reversed_by_ids = {
             id_: prop_
             for id_, prop_ in properties_by_ids.items()

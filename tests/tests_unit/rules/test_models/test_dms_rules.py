@@ -12,7 +12,6 @@ from cognite.neat._issues.errors import (
     PropertyDefinitionDuplicatedError,
     ResourceNotFoundError,
 )
-from cognite.neat._issues.errors._properties import ReversedConnectionNotFeasibleError
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.data_types import String
@@ -1401,7 +1400,7 @@ class TestDMSRules:
 
         assert metadata.version == "14"
 
-    def test_reverse_property_in_parent(self) -> None:
+    def test_reverse_property(self) -> None:
         sub_core = DMSInputRules(
             DMSInputMetadata(
                 space="my_space",
@@ -1439,7 +1438,7 @@ class TestDMSRules:
 
         assert not maybe_rules.issues
 
-    def test_reverse_property_in_parent_fail(self) -> None:
+    def test_reverse_property_in_parent(self) -> None:
         sub_core = DMSInputRules(
             DMSInputMetadata(
                 space="my_space",
@@ -1475,9 +1474,7 @@ class TestDMSRules:
         )
         maybe_rules = VerifyDMSRules("continue").transform(sub_core)
 
-        assert maybe_rules.issues
-        assert len(maybe_rules.issues) == 1
-        assert isinstance(maybe_rules.issues[0], ReversedConnectionNotFeasibleError)
+        assert not maybe_rules.issues
 
 
 class TestDMSExporter:

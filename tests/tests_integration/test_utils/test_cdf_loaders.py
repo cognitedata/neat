@@ -66,6 +66,12 @@ class TestViewLoader:
             new_created.properties["count"].container_property_identifier == new_prop
         ), "The property should have been updated"
 
+    def test_find_all_connected(self, cognite_client: CogniteClient) -> None:
+        loader = ViewLoader(cognite_client)
+        views = loader.retrieve_all_ancestors([dm.ViewId("cdf_cdm", "CogniteAsset", "v1")], include_connections=True)
+
+        assert len(views) == 30, "This should return almost the entire CogniteCore model"
+
 
 class TestContainerLoader:
     def test_force_create(self, cognite_client: CogniteClient, space: dm.Space) -> None:

@@ -36,7 +36,12 @@ from cognite.client.data_classes.data_modeling.ids import (
     NodeId,
     ViewId,
 )
-from cognite.client.data_classes.data_modeling.views import ReverseDirectRelation
+from cognite.client.data_classes.data_modeling.views import (
+    EdgeConnectionApply,
+    MappedPropertyApply,
+    ReverseDirectRelation,
+    ReverseDirectRelationApply,
+)
 from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
@@ -185,8 +190,13 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
             # We need to remove these properties to compare with the local view.
             parents = self._retrieve_view_ancestors(view.implements or [], False, self._cache_view_by_id)
             for parent in parents:
-                for prop_name in parent.properties.keys():
-                    dumped["properties"].pop(prop_name, None)
+                for prop_name, prop in (parent.as_write().properties or {}).items():
+                    existing = dumped["properties"].get(prop_name)
+                    if existing is None:
+                        continue
+                    if existing == prop.dump():
+                        dumped["properties"].pop(prop_name, None)
+                    # If the child overrides the parent, we keep the child's property.
 
         if "properties" in dumped and not dumped["properties"]:
             # All properties were removed, so we remove the properties key.
@@ -237,7 +247,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
                 elif backlog_id in cache:
                     parent_view = cache[backlog_id]
                     found.append(parent_view)
-                    self._update_backlog(parent_view, backlog_ids, found_ids, include_connections)
+                    backlog_ids.extend(self.get_connected_views(parent_view, found_ids, include_connections))
                 else:
                     to_lookup.add(backlog_id)
 
@@ -247,31 +257,32 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
                 found.extend(looked_up)
                 found_ids.update({view.as_id() for view in looked_up})
                 for view in looked_up:
-                    self._update_backlog(view, backlog_ids, found_ids, include_connections)
+                    backlog_ids.extend(self.get_connected_views(view, found_ids, include_connections))
 
             next_backlog_ids = backlog_ids
         return found
 
     @staticmethod
-    def _update_backlog(
-        parent_view: View, backlog_ids: list[ViewId], found_ids: set[ViewId], include_connections: bool
-    ) -> None:
-        backlog_ids.extend(parent_view.implements or [])
+    def get_connected_views(view: View | ViewApply, skip_ids: set[ViewId], include_connections: bool) -> list[ViewId]:
+        connected_ids: list[ViewId] = list(view.implements or [])
         if include_connections:
-            for prop in parent_view.properties.values():
-                if isinstance(prop, MappedProperty) and prop.source and prop.source not in found_ids:
-                    backlog_ids.append(prop.source)
-                elif isinstance(prop, EdgeConnection | ReverseDirectRelation) and prop.source not in found_ids:
-                    backlog_ids.append(prop.source)
-
-                if isinstance(prop, EdgeConnection) and prop.edge_source and prop.edge_source not in found_ids:
-                    backlog_ids.append(prop.edge_source)
-                elif (
-                    isinstance(prop, ReverseDirectRelation)
-                    and isinstance(prop.through.source, ViewId)
-                    and prop.through.source not in found_ids
+            for prop in (view.properties or {}).values():
+                found_sources: set[ViewId] = set()
+                if isinstance(prop, MappedProperty | MappedPropertyApply) and prop.source:
+                    found_sources.add(prop.source)
+                elif isinstance(
+                    prop, EdgeConnection | EdgeConnectionApply | ReverseDirectRelation | ReverseDirectRelationApply
                 ):
-                    backlog_ids.append(prop.through.source)
+                    found_sources.add(prop.source)
+
+                if isinstance(prop, EdgeConnection | EdgeConnectionApply) and prop.edge_source:
+                    found_sources.add(prop.edge_source)
+                elif isinstance(prop, ReverseDirectRelation | ReverseDirectRelationApply) and isinstance(
+                    prop.through.source, ViewId
+                ):
+                    found_sources.add(prop.through.source)
+                connected_ids.extend([source for source in found_sources if source not in skip_ids])
+        return connected_ids
 
 
 class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
