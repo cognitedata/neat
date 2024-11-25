@@ -38,3 +38,11 @@ class FileItemNotSupportedWarning(NeatWarning):
 
     item: str
     filepath: Path
+
+
+@dataclass(unsafe_hash=True)
+class AuthWarning(NeatWarning):
+    """Failed to {action} due to {reason}"""
+
+    action: str
+    reason: str

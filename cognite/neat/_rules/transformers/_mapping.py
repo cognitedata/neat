@@ -5,10 +5,11 @@ from functools import cached_property
 from typing import Any, ClassVar, Literal
 
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._issues.warnings import PropertyOverwritingWarning
+from cognite.neat._issues.warnings import NeatValueWarning, PropertyOverwritingWarning
 from cognite.neat._rules._shared import JustRules, OutRules
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.dms import DMSProperty, DMSView
+from cognite.neat._rules.models.entities import ViewEntity
 
 from ._base import RulesTransformer
 
@@ -151,6 +152,19 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
                 setattr(prop, field_name, value)
             prop.container = mapping_prop.container
             prop.container_property = mapping_prop.container_property
+
+        existing_views = {view.view for view in new_rules.views}
+        new_value_types = {
+            prop.value_type
+            for prop in new_rules.properties
+            if isinstance(prop.value_type, ViewEntity) and prop.value_type not in existing_views
+        }
+        for new_value_type in new_value_types:
+            if mapping_view := self._view_by_entity_id.get(new_value_type.external_id):
+                new_rules.views.append(mapping_view)
+            else:
+                warnings.warn(NeatValueWarning(f"View {new_value_type} not found in mapping"), stacklevel=2)
+
         return JustRules(new_rules)
 
     def _find_overwrites(self, prop: DMSProperty, mapping_prop: DMSProperty) -> tuple[dict[str, Any], list[str]]:
