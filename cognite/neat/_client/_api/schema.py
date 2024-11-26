@@ -30,7 +30,7 @@ class SchemaAPI:
             raise NeatValueError("Data model version must be specified")
         read_views = self._client.loaders.views.retrieve(
             view_ids,  # type: ignore[arg-type]
-            include_connections=include_connections,
+            include_connected=include_connections,
             include_ancestor=include_ancestors,
         )
         views = ViewApplyDict([self._client.loaders.views.as_write(view) for view in read_views])
@@ -94,7 +94,7 @@ class SchemaAPI:
 
         existing_view_ids = set(views.as_ids())
         views = self._client.loaders.views.retrieve(
-            list(existing_view_ids), include_connections=True, include_ancestor=True
+            list(existing_view_ids), include_connected=True, include_ancestor=True
         )
 
         missing = existing_view_ids - set(views.as_ids())

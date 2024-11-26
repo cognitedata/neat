@@ -275,12 +275,12 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         return self._client.data_modeling.views.apply(items)
 
     def retrieve(
-        self, ids: SequenceNotStr[ViewId], include_connections: bool = False, include_ancestor: bool = False
+        self, ids: SequenceNotStr[ViewId], include_connected: bool = False, include_ancestor: bool = False
     ) -> ViewList:
-        if not include_connections and not include_ancestor:
+        if not include_connected and not include_ancestor:
             return super().retrieve(ids)
         # Retrieve recursively updates the cache.
-        return self._retrieve_recursive(ids, include_connections, include_ancestor)
+        return self._retrieve_recursive(ids, include_connected, include_ancestor)
 
     def _retrieve(self, ids: SequenceNotStr[ViewId]) -> ViewList:
         return self._client.data_modeling.views.retrieve(cast(Sequence, ids))

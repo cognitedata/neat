@@ -383,11 +383,6 @@ class DMSSchema:
             raise ValueError("Data model is not defined")
         all_containers = self.containers.copy()
         all_views = self.views.copy()
-        for other_schema in [self.reference, self.last]:
-            if other_schema:
-                all_containers |= other_schema.containers
-                all_views |= other_schema.views
-
         views: list[dm.View] = []
         for view in self.views.values():
             referenced_containers = ContainerApplyDict()

@@ -67,7 +67,7 @@ class TestViewLoader:
 
     def test_find_all_connected(self, neat_client: NeatClient) -> None:
         views = neat_client.loaders.views.retrieve(
-            [dm.ViewId("cdf_cdm", "CogniteAsset", "v1")], include_connections=True, include_ancestor=True
+            [dm.ViewId("cdf_cdm", "CogniteAsset", "v1")], include_connected=True, include_ancestor=True
         )
 
         assert len(views) == 30, "This should return almost the entire CogniteCore model"
