@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 
 from cognite.client import data_modeling as dm
-from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SH, SKOS, XSD, Graph, Namespace, URIRef
+from rdflib import Graph, Namespace, URIRef
 
 from cognite.neat._constants import get_default_prefixes
 from cognite.neat._issues import IssueList
@@ -16,7 +16,6 @@ from cognite.neat._rules.models.entities import UnknownEntity
 from cognite.neat._rules.models.information import (
     InformationInputRules,
 )
-from cognite.neat._rules.models.information._rules import InformationMetadata
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.rdf_ import get_namespace
 
@@ -66,9 +65,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
     def from_graph_store(
         cls,
         store: NeatGraphStore,
-        data_model_id: (
-            dm.DataModelId | tuple[str, str, str]
-        ) = DEFAULT_RDF_DATA_MODEL_ID,
+        data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_RDF_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
         language: str = "en",
@@ -86,9 +83,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
     def from_file(
         cls,
         filepath: Path,
-        data_model_id: (
-            dm.DataModelId | tuple[str, str, str]
-        ) = DEFAULT_RDF_DATA_MODEL_ID,
+        data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_RDF_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
         language: str = "en",
@@ -155,6 +150,6 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
             "created": datetime.now().replace(microsecond=0),
             "updated": datetime.now().replace(microsecond=0),
             "name": None,
-            "description": f"Data model imported using {type(self)}",
+            "description": f"Data model imported using {type(self).__name__}",
             "creator": "Neat",
         }

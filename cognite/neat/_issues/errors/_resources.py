@@ -64,7 +64,7 @@ class ResourceNotDefinedError(ResourceError[T_Identifier]):
 
 
 @dataclass(unsafe_hash=True)
-class ResourceConvertionError(ResourceError, ValueError):
+class ResourceConversionError(ResourceError, ValueError):
     """Failed to convert the {resource_type} {identifier} to {target_format}: {reason}"""
 
     fix = "Check the error message and correct the rules."

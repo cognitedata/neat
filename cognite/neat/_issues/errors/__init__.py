@@ -20,7 +20,7 @@ from ._properties import (
 )
 from ._resources import (
     ResourceChangedError,
-    ResourceConvertionError,
+    ResourceConversionError,
     ResourceCreationError,
     ResourceDuplicatedError,
     ResourceError,
@@ -58,7 +58,7 @@ __all__ = [
     "ResourceError",
     "ResourceNotDefinedError",
     "ResourceMissingIdentifierError",
-    "ResourceConvertionError",
+    "ResourceConversionError",
     "WorkflowConfigurationNotSetError",
     "WorkFlowMissingDataError",
     "WorkflowStepNotInitializedError",

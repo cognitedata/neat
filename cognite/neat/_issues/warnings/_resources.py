@@ -25,9 +25,20 @@ class ResourceNotFoundWarning(ResourceNeatWarning, Generic[T_Identifier, T_Refer
 
 
 @dataclass(unsafe_hash=True)
-class ResourceRedefinedWarning(
-    ResourceNeatWarning, Generic[T_Identifier, T_ReferenceIdentifier]
-):
+class ResourceNotDefinedWarning(ResourceNeatWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
+    """The {resource_type} {identifier} is not defined in the {location}"""
+
+    extra = "{column_name} {row_number} in {sheet_name}"
+    fix = "Define the {resource_type} {identifier} in {location}."
+
+    location: str
+    column_name: str | None = None
+    row_number: int | None = None
+    sheet_name: str | None = None
+
+
+@dataclass(unsafe_hash=True)
+class ResourceRedefinedWarning(ResourceNeatWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} {identifier} feature {feature} is being redefine from {current_value} to {new_value}.
     This will be ignored."""
 
@@ -50,12 +61,12 @@ class ResourcesDuplicatedWarning(NeatWarning, Generic[T_Identifier]):
 
 @dataclass(unsafe_hash=True)
 class ResourceRetrievalWarning(NeatWarning, Generic[T_Identifier]):
-    """Failed to retrieve {resource_type} with identifiers {resources}. Continuing without
+    """Failed to retrieve {resource_type} with identifier(s) {resources}. Continuing without
     these resources."""
 
     extra = "The error was: {error}"
 
-    fix = "Check the error."
+    fix = "Check the error and fix accordingly."
 
     resources: frozenset[T_Identifier]
     resource_type: ResourceType
@@ -66,17 +77,3 @@ class ResourceTypeNotSupportedWarning(ResourceNeatWarning[T_Identifier]):
     """The {resource_type} with identifier {identifier} is not supported. This will be ignored."""
 
     resource_type: str  # type: ignore[assignment]
-
-
-@dataclass(unsafe_hash=True)
-class ResourceNotProcessableWarning(
-    ResourceNeatWarning, Generic[T_Identifier, T_ReferenceIdentifier]
-):
-    """The {resource_type} with identifier {identifier} referred by {referred_type} {referred_by} is not supported
-    due to {reason}. This will be ignored."""
-
-    fix = "Use recommended practices"
-
-    referred_by: T_ReferenceIdentifier
-    referred_type: str
-    reason: str

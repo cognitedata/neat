@@ -1,10 +1,10 @@
 import itertools
 from collections import Counter
-from typing import cast
 
 from cognite.neat._issues import IssueList
-from cognite.neat._issues.errors import NeatValueError, ResourceNotDefinedError
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings._models import UndefinedClassWarning
+from cognite.neat._issues.warnings._resources import ResourceNotDefinedWarning
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models.entities import ClassEntity, UnknownEntity
 
@@ -44,10 +44,10 @@ class InformationPostValidation:
                 # same prefix, meaning same space
                 if not class_parent_pairs[class_] and class_.prefix == self.metadata.prefix:
                     self.issue_list.append(
-                        ResourceNotDefinedError[ClassEntity](
+                        ResourceNotDefinedWarning(
                             resource_type="class",
                             identifier=class_,
-                            location="Classes sheet",
+                            location="Properties sheet",
                         )
                     )
 
@@ -63,7 +63,7 @@ class InformationPostValidation:
                     self.issue_list.append(UndefinedClassWarning(class_id=str(parent)))
                 else:
                     self.issue_list.append(
-                        ResourceNotDefinedError[ClassEntity](
+                        ResourceNotDefinedWarning(
                             resource_type="class",
                             identifier=parent,
                             location="Classes sheet",
@@ -79,7 +79,7 @@ class InformationPostValidation:
         if missing_classes := classes_with_explicit_properties.difference(defined_classes):
             for class_ in missing_classes:
                 self.issue_list.append(
-                    ResourceNotDefinedError[ClassEntity](
+                    ResourceNotDefinedWarning(
                         resource_type="class",
                         identifier=class_,
                         location="Classes sheet",
@@ -99,9 +99,9 @@ class InformationPostValidation:
             # Todo: include row and column number
             for missing in missing_value_types:
                 self.issue_list.append(
-                    ResourceNotDefinedError[ClassEntity](
+                    ResourceNotDefinedWarning(
                         resource_type="class",
-                        identifier=cast(ClassEntity, missing),
+                        identifier=missing,
                         location="Classes sheet",
                     )
                 )

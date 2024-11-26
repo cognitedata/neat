@@ -8,11 +8,13 @@ from cognite.neat._rules.transformers import ImporterPipeline
 def test_owl_importer():
     rules = ImporterPipeline.verify(importers.OWLImporter.from_file(filepath="https://data.nobelprize.org/terms.rdf"))
 
-    assert len(rules.classes) == 11
-    assert len(rules.properties) == 16
+    assert len(rules.classes) == 4
+    assert len(rules.properties) == 10
 
     # this is rdf:PlainLiteral edge case
     assert (
-        InformationAnalysis(rules).class_property_pairs()[ClassEntity.load("neat:LaureateAward")]["motivation"].type_
+        InformationAnalysis(rules)
+        .class_property_pairs()[ClassEntity.load("neat_space:LaureateAward")]["motivation"]
+        .type_
         == EntityTypes.data_property
     )

@@ -1,4 +1,8 @@
+from typing import cast
+
 from rdflib import BNode, Graph
+from rdflib.plugins.sparql import prepareQuery
+from rdflib.query import ResultRow
 
 from cognite.neat._issues._base import IssueList
 from cognite.neat._issues.errors._general import NeatValueError
@@ -8,12 +12,8 @@ from cognite.neat._issues.warnings._resources import (
 )
 from cognite.neat._utils.rdf_ import convert_rdflib_content
 
-from rdflib.plugins.sparql import prepareQuery
 
-
-def parse_classes(
-    graph: Graph, query: str, language: str, issue_list: IssueList
-) -> list[dict]:
+def parse_classes(graph: Graph, query: str, language: str, issue_list: IssueList) -> tuple[dict, IssueList]:
     """Parse classes from graph
 
     Args:
@@ -26,11 +26,11 @@ def parse_classes(
 
     classes: dict[str, dict] = {}
 
-    query = prepareQuery(query.format(language=language))
+    query = prepareQuery(query.format(language=language), initNs={k: v for k, v in graph.namespaces()})
     expected_keys = [str(v) for v in query.algebra._vars]
 
-    for res in graph.query(query):
-        res = convert_rdflib_content(res.asdict(), True)
+    for raw in graph.query(query):
+        res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), True)
         res = {key: res.get(key, None) for key in expected_keys}
 
         class_id = res["class_"]
@@ -49,17 +49,12 @@ def parse_classes(
         if class_id not in classes:
             classes[class_id] = res
         else:
-
             # Handling implements
-            if classes[class_id]["implements"] and isinstance(
-                classes[class_id]["implements"], list
-            ):
+            if classes[class_id]["implements"] and isinstance(classes[class_id]["implements"], list):
                 if res["implements"] not in classes[class_id]["implements"]:
                     classes[class_id]["implements"].append(res["implements"])
 
-            elif classes[class_id]["implements"] and isinstance(
-                classes[class_id]["implements"], str
-            ):
+            elif classes[class_id]["implements"] and isinstance(classes[class_id]["implements"], str):
                 classes[class_id]["implements"] = [classes[class_id]["implements"]]
 
                 if res["implements"] not in classes[class_id]["implements"]:
@@ -76,9 +71,7 @@ def parse_classes(
     return classes, issue_list
 
 
-def parse_properties(
-    graph: Graph, query: str, language: str, issue_list: IssueList
-) -> list[dict]:
+def parse_properties(graph: Graph, query: str, language: str, issue_list: IssueList) -> tuple[dict, IssueList]:
     """Parse properties from graph
 
     Args:
@@ -91,11 +84,11 @@ def parse_properties(
 
     properties: dict[str, dict] = {}
 
-    query = prepareQuery(query.format(language=language))
+    query = prepareQuery(query.format(language=language), initNs={k: v for k, v in graph.namespaces()})
     expected_keys = [str(v) for v in query.algebra._vars]
 
-    for res in graph.query(query):
-        res = convert_rdflib_content(res.asdict(), True)
+    for raw in graph.query(query):
+        res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), True)
         res = {key: res.get(key, None) for key in expected_keys}
 
         property_id = res["property_"]
@@ -106,9 +99,7 @@ def parse_properties(
                 ResourceRetrievalWarning(
                     property_id,
                     "property",
-                    error=(
-                        "Unable to determine to what class property is being defined"
-                    ),
+                    error=("Unable to determine to what class property is being defined"),
                 )
             )
             continue
@@ -163,7 +154,9 @@ def handle_meta(
 ):
     if not resources[resource_id][feature] and res[feature]:
         resources[resource_id][feature] = res[feature]
-    else:
+
+    # RAISE warning only if the feature is being redefined
+    elif resources[resource_id][feature] and res[feature]:
         issue_list.append(
             ResourceRedefinedWarning(
                 identifier=resource_id,
