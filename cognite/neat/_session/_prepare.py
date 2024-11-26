@@ -13,6 +13,7 @@ from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._rules._shared import InputRules, ReadRules
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules
+from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import (
     PrefixEntities,
@@ -316,7 +317,7 @@ class DataModelPrepareAPI:
         source_id, rules = self._state.data_model.last_verified_dms_rules
 
         dms_ref: DMSRules | None = None
-        view_ids, container_ids = rules.imported_views_and_containers_ids(include_views_with_no_properties=True)
+        view_ids, container_ids = DMSValidation(rules, self._client).imported_views_and_containers_ids()
         if view_ids or container_ids:
             if self._client is None:
                 raise NeatSessionError(
@@ -324,7 +325,7 @@ class DataModelPrepareAPI:
                     "NEAT needs a client to lookup the definitions. "
                     "Please set the client in the session, NeatSession(client=client)."
                 )
-            schema = self._client.schema.retrieve(list(view_ids), list(container_ids))
+            schema = self._client.schema.retrieve([v.as_id() for v in view_ids], [c.as_id() for c in container_ids])
 
             importer = DMSImporter(schema)
             reference_rules = importer.to_rules().rules
@@ -332,11 +333,11 @@ class DataModelPrepareAPI:
                 imported = VerifyDMSRules("continue").transform(reference_rules)
                 if dms_ref := imported.rules:
                     rules = rules.model_copy(deep=True)
-                    if rules._containers is None:
-                        rules._containers = dms_ref.containers
+                    if rules.containers is None:
+                        rules.containers = dms_ref.containers
                     else:
-                        existing_containers = {c.container for c in rules._containers}
-                        rules._containers.extend(
+                        existing_containers = {c.container for c in rules.containers}
+                        rules.containers.extend(
                             [c for c in dms_ref.containers or [] if c.container not in existing_containers]
                         )
                     existing_views = {v.view for v in rules.views}
@@ -409,7 +410,7 @@ class DataModelPrepareAPI:
         start = datetime.now(timezone.utc)
 
         source_id, rules = self._state.data_model.last_verified_dms_rules
-        view_ids, container_ids = rules.imported_views_and_containers_ids(include_views_with_no_properties=True)
+        view_ids, container_ids = DMSValidation(rules, self._client).imported_views_and_containers_ids()
         if not (view_ids or container_ids):
             print(
                 f"Data model {rules.metadata.as_data_model_id()} does not have any referenced views or containers."
@@ -422,7 +423,7 @@ class DataModelPrepareAPI:
                 "NEAT needs a client to lookup the definitions. "
                 "Please set the client in the session, NeatSession(client=client)."
             )
-        schema = self._client.schema.retrieve(list(view_ids), list(container_ids))
+        schema = self._client.schema.retrieve([v.as_id() for v in view_ids], [c.as_id() for c in container_ids])
         copy_ = rules.model_copy(deep=True)
         copy_.metadata.version = f"{rules.metadata.version}_completed"
         importer = DMSImporter(schema)
@@ -440,11 +441,11 @@ class DataModelPrepareAPI:
                 "Could not verify the referenced views and containers. "
                 "See `neat.inspect.issues()` for more information."
             )
-        if copy_._containers is None:
-            copy_._containers = verified.rules.containers
+        if copy_.containers is None:
+            copy_.containers = verified.rules.containers
         else:
-            existing_containers = {c.container for c in copy_._containers}
-            copy_._containers.extend(
+            existing_containers = {c.container for c in copy_.containers}
+            copy_.containers.extend(
                 [c for c in verified.rules.containers or [] if c.container not in existing_containers]
             )
         existing_views = {v.view for v in copy_.views}

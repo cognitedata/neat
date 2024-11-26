@@ -91,8 +91,6 @@ class _DMSExporter:
         else:
             node_types = NodeApplyDict([dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters])
 
-        last_schema: DMSSchema | None = None
-
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
         data_model = rules.metadata.as_data_model()
 
@@ -103,19 +101,13 @@ class _DMSExporter:
 
         spaces = self._create_spaces(rules.metadata, containers, views, data_model)
 
-        output = DMSSchema(
+        return DMSSchema(
             spaces=spaces,
             data_model=data_model,
             views=views,
             containers=containers,
             node_types=node_types,
         )
-
-        if self._ref_schema:
-            output.reference = self._ref_schema
-        if last_schema:
-            output.last = last_schema
-        return output
 
     def _create_spaces(
         self,

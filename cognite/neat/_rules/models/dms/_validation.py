@@ -106,12 +106,14 @@ class DMSValidation:
         ref_view_by_id = {view.as_id(): view for view in referenced_views}
         ref_container_by_id = {container.as_id(): container for container in referenced_containers}
         all_containers_by_id: dict[dm.ContainerId, dm.ContainerApply | dm.Container] = {
-            **dms_schema.containers.items(),
+            **dms_schema.containers.items(),  # type: ignore[dict-item]
             **ref_container_by_id,
         }
-        all_views_by_id: dict[dm.ViewId, dm.ViewApply | dm.View] = {**dms_schema.views.items(), **ref_view_by_id}
+        all_views_by_id: dict[dm.ViewId, dm.ViewApply | dm.View] = {**dms_schema.views.items(), **ref_view_by_id}  # type: ignore[dict-item]
         properties_by_ids = self._as_properties_by_ids(dms_schema, ref_view_by_id)
-        view_properties_by_id = {view_id: (prop_id, prop) for (view_id, prop_id), prop in properties_by_ids.items()}
+        view_properties_by_id: dict[dm.ViewId, list[tuple[str, ViewProperty | ViewPropertyApply]]] = defaultdict(list)
+        for (view_id, prop_id), prop in properties_by_ids.items():
+            view_properties_by_id[view_id].append((prop_id, prop))
 
         issue_list = IssueList()
         # Neat DMS classes Validation
@@ -139,7 +141,7 @@ class DMSValidation:
         properties_by_id: dict[tuple[ViewId, str], ViewPropertyApply | ViewProperty] = {}
         for view in dms_schema.views.values():
             view_id = view.as_id()
-            for prop_id, prop in view.properties.items():
+            for prop_id, prop in (view.properties or {}).items():
                 properties_by_id[(view_id, prop_id)] = prop
             if view.implements:
                 to_check = view.implements.copy()
@@ -148,14 +150,14 @@ class DMSValidation:
                     if parent_id in dms_schema.views:
                         # Priority DMS Schema properties
                         parent_view = dms_schema.views[parent_id]
-                        for prop_id, prop in parent_view.properties.items():
+                        for prop_id, prop in (parent_view.properties or {}).items():
                             if (view_id, prop_id) not in properties_by_id:
                                 properties_by_id[(view_id, prop_id)] = prop
                         to_check.extend(parent_view.implements or [])
                     elif parent_id in ref_view_by_id:
                         # SDK properties
-                        parent_view = ref_view_by_id[parent_id]
-                        for prop_id, read_prop in parent_view.properties.items():
+                        parent_read_view = ref_view_by_id[parent_id]
+                        for prop_id, read_prop in parent_read_view.properties.items():
                             if (view_id, prop_id) not in properties_by_id:
                                 properties_by_id[(view_id, prop_id)] = read_prop
                         # Read format of views already includes all ancestor properties
@@ -273,7 +275,7 @@ class DMSValidation:
 
     @staticmethod
     def _validate_referenced_container_limits(
-        views: ViewApplyDict, view_properties_by_id: dict[dm.ViewId, tuple[str, ViewProperty | ViewPropertyApply]]
+        views: ViewApplyDict, view_properties_by_id: dict[dm.ViewId, list[tuple[str, ViewProperty | ViewPropertyApply]]]
     ) -> IssueList:
         issue_list = IssueList()
         for view_id, view in views.items():
@@ -342,7 +344,9 @@ class DMSValidation:
                             "view",
                         )
                     )
-                elif prop.container_property not in containers_by_id[container_id].properties:
+                elif (
+                    prop.container_property and prop.container_property not in containers_by_id[container_id].properties
+                ):
                     issue_list.append(
                         PropertyNotFoundError(
                             prop.container,
@@ -389,7 +393,11 @@ class DMSValidation:
                     )
                 )
                 continue
-            target_property = properties_by_ids[source_id]
+            if isinstance(source_id[0], dm.ContainerId):
+                # Todo: How to handle this case? Should not happen if you created the model with Neat
+                continue
+
+            target_property = properties_by_ids[(source_id[0], source_id[1])]
             # Validate that the target is a direct relation pointing to the view_id
             is_direct_relation = False
             if isinstance(target_property, dm.MappedProperty) and isinstance(target_property.type, dm.DirectRelation):

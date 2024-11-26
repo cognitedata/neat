@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import ClassVar
 
 from cognite.client import CogniteClient
-from cognite.client.data_classes.data_modeling import DataModelId
 
 from cognite.neat._client import NeatClient
 from cognite.neat._issues.errors import WorkflowStepNotInitializedError
@@ -288,21 +287,8 @@ class DMSToRules(Step):
                 f"or 'my_space:my_data_model', failed to parse space from {datamodel_id_str}"
             )
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
-        ref_datamodel_str = self.configs.get("Reference data model id", "")
-        ref_model_id: DataModelId | None = None
-        if ref_datamodel_str:
-            ref_model = DataModelEntity.load(ref_datamodel_str)
-            if isinstance(ref_model, DMSUnknownEntity):
-                error_text = (
-                    f"Reference data model id should be in the format 'my_space:my_data_model(version=1)' "
-                    f"or 'my_space:my_data_model', failed to parse space from {ref_datamodel_str}"
-                )
-                return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
-            ref_model_id = ref_model.as_id()
 
-        dms_importer = importers.DMSImporter.from_data_model_id(
-            NeatClient(cdf_client), datamodel_entity.as_id(), ref_model_id
-        )
+        dms_importer = importers.DMSImporter.from_data_model_id(NeatClient(cdf_client), datamodel_entity.as_id())
 
         # if role is None, it will be inferred from the rules file
         role = self.configs.get("Role")
