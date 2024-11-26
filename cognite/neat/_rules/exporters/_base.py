@@ -3,8 +3,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Generic, TypeVar
 
-from cognite.client import CogniteClient
-
+from cognite.neat._client import NeatClient
 from cognite.neat._rules._shared import T_VerifiedRules
 from cognite.neat._utils.auxiliary import class_html_doc
 from cognite.neat._utils.upload import UploadResult, UploadResultList
@@ -32,11 +31,11 @@ class BaseExporter(ABC, Generic[T_VerifiedRules, T_Export]):
 class CDFExporter(BaseExporter[T_VerifiedRules, T_Export]):
     @abstractmethod
     def export_to_cdf_iterable(
-        self, rules: T_VerifiedRules, client: CogniteClient, dry_run: bool = False, fallback_one_by_one: bool = False
+        self, rules: T_VerifiedRules, client: NeatClient, dry_run: bool = False, fallback_one_by_one: bool = False
     ) -> Iterable[UploadResult]:
         raise NotImplementedError
 
     def export_to_cdf(
-        self, rules: T_VerifiedRules, client: CogniteClient, dry_run: bool = False, fallback_one_by_one: bool = False
+        self, rules: T_VerifiedRules, client: NeatClient, dry_run: bool = False, fallback_one_by_one: bool = False
     ) -> UploadResultList:
         return UploadResultList(self.export_to_cdf_iterable(rules, client, dry_run, fallback_one_by_one))

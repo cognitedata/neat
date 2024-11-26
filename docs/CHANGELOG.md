@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.99.0] - 26-11-**2024**
 ### Changed
 - We are now using RDF datasets (namedgraphs) instead of simple graphs, enabling support for multi space
   resolution of nodes and edges in CDF.
@@ -33,6 +33,9 @@ Changes are grouped as follows:
 ### Improved
 - Bump dep on pyoxi to 0.4.3 and oxrdflib to 0.4.0
 - Increase speed in loading RDF files in oxistore
+
+### Removed
+- [BREAKING] The `neat.read.cdf.classic.asset(...)` is removed. Use the `neat.read.cdf.classic.graph(...)` instead.
 
 ## [0.98.0] - 21-11-**2024**
 ### Added

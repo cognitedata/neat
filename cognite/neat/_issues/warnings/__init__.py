@@ -6,6 +6,7 @@ from cognite.neat._issues._base import DefaultWarning, NeatWarning, _get_subclas
 
 from . import user_modeling
 from ._external import (
+    AuthWarning,
     FileItemNotSupportedWarning,
     FileMissingRequiredFieldWarning,
     FileReadWarning,
@@ -68,6 +69,7 @@ __all__ = [
     "NotSupportedViewContainerLimitWarning",
     "NotSupportedHasDataFilterLimitWarning",
     "UndefinedViewWarning",
+    "AuthWarning",
     "user_modeling",
 ]
 

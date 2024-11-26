@@ -3,9 +3,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
-from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 
+from cognite.neat._client import NeatClient
 from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
@@ -27,7 +27,7 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 @session_class_wrapper
 class ReadAPI:
-    def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
+    def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
         self.cdf = CDFReadAPI(state, client, verbose)
@@ -39,7 +39,7 @@ class ReadAPI:
 
 @session_class_wrapper
 class BaseReadAPI:
-    def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
+    def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
         self._client = client
@@ -67,12 +67,12 @@ class BaseReadAPI:
 
 @session_class_wrapper
 class CDFReadAPI(BaseReadAPI):
-    def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
+    def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         super().__init__(state, client, verbose)
         self.classic = CDFClassicAPI(state, client, verbose)
 
     @property
-    def _get_client(self) -> CogniteClient:
+    def _get_client(self) -> NeatClient:
         if self._client is None:
             raise NeatValueError("No client provided. Please provide a client to read a data model.")
         return self._client
@@ -113,16 +113,10 @@ class CDFReadAPI(BaseReadAPI):
 @session_class_wrapper
 class CDFClassicAPI(BaseReadAPI):
     @property
-    def _get_client(self) -> CogniteClient:
+    def _get_client(self) -> NeatClient:
         if self._client is None:
             raise ValueError("No client provided. Please provide a client to read a data model.")
         return self._client
-
-    def assets(self, root_asset_external_id: str) -> None:
-        extractor = extractors.AssetsExtractor.from_hierarchy(self._get_client, root_asset_external_id)
-        self._state.instances.store.write(extractor)
-        if self._verbose:
-            print(f"Asset hierarchy {root_asset_external_id} read successfully")
 
     def graph(self, root_asset_external_id: str) -> None:
         """Reads the classic knowledge graph from CDF.
@@ -219,7 +213,7 @@ class YamlReadAPI(BaseReadAPI):
                         "NEAT needs a client to lookup the container definitions. "
                         "Please set the client in the session, NeatSession(client=client)."
                     )
-                system_containers = self._state.data_model.lookup_containers(self._client, system_container_ids)
+                system_containers = self._client.loaders.containers.retrieve(system_container_ids)
                 dms_importer.update_referenced_containers(system_containers)
 
             importer = dms_importer
@@ -265,7 +259,7 @@ class CSVReadAPI(BaseReadAPI):
 
 @session_class_wrapper
 class RDFReadAPI(BaseReadAPI):
-    def __init__(self, state: SessionState, client: CogniteClient | None, verbose: bool) -> None:
+    def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         super().__init__(state, client, verbose)
         self.examples = RDFExamples(state)
 

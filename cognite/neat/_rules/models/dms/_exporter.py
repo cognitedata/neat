@@ -13,6 +13,13 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
+from cognite.neat._client.data_classes.data_modeling import (
+    ContainerApplyDict,
+    NodeApplyDict,
+    SpaceApplyDict,
+    ViewApplyDict,
+)
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues.errors import NeatTypeError, ResourceNotFoundError
 from cognite.neat._issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
 from cognite.neat._issues.warnings.user_modeling import (
@@ -33,10 +40,8 @@ from cognite.neat._rules.models.entities import (
     UnitEntity,
     ViewEntity,
 )
-from cognite.neat._utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 
 from ._rules import DMSEnum, DMSMetadata, DMSProperty, DMSRules, DMSView
-from ._schema import DMSSchema, PipelineSchema
 
 
 class _DMSExporter:
@@ -51,13 +56,7 @@ class _DMSExporter:
         instance_space (str): The space to use for the instance. Defaults to None,`Rules.metadata.space` will be used
     """
 
-    def __init__(
-        self,
-        rules: DMSRules,
-        include_pipeline: bool = False,
-        instance_space: str | None = None,
-    ):
-        self.include_pipeline = include_pipeline
+    def __init__(self, rules: DMSRules, instance_space: str | None = None):
         self.instance_space = instance_space
         self.rules = rules
         self._ref_schema = None
@@ -111,8 +110,6 @@ class _DMSExporter:
             containers=containers,
             node_types=node_types,
         )
-        if self.include_pipeline:
-            return PipelineSchema.from_dms(output, self.instance_space)
 
         if self._ref_schema:
             output.reference = self._ref_schema

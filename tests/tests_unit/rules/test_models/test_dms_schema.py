@@ -5,21 +5,13 @@ from pathlib import Path
 import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
-from cognite.client.data_classes import DatabaseWrite, DatabaseWriteList, TransformationWrite, TransformationWriteList
 
+from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat._issues import NeatError, NeatIssue, NeatWarning
 from cognite.neat._issues.errors import PropertyNotFoundError, ResourceDuplicatedError, ResourceNotFoundError
 from cognite.neat._issues.warnings import FileTypeUnexpectedWarning
 from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat._rules.models import DMSSchema
-from cognite.neat._rules.models.dms import PipelineSchema
-from cognite.neat._utils.cdf.data_classes import (
-    ContainerApplyDict,
-    RawTableWrite,
-    RawTableWriteList,
-    SpaceApplyDict,
-    ViewApplyDict,
-)
 
 
 def invalid_schema_test_cases() -> Iterable[ParameterSet]:
@@ -290,20 +282,6 @@ def valid_schema_test_cases() -> Iterable[ParameterSet]:
     )
     yield pytest.param(dms_schema, id="DMS schema")
 
-    pipeline_schema = PipelineSchema(
-        # Serializing to ensure that we are copying the object
-        spaces=SpaceApplyDict.load(dms_schema.spaces.dump()),
-        data_model=dm.DataModelApply.load(dms_schema.data_model.dump()),
-        containers=ContainerApplyDict.load(dms_schema.containers.dump()),
-        views=ViewApplyDict.load(dms_schema.views.dump()),
-        transformations=TransformationWriteList(
-            [TransformationWrite(external_id="my_transformation", ignore_null_fields=True, name="My transformation")]
-        ),
-        databases=DatabaseWriteList([DatabaseWrite(name="my_database")]),
-        raw_tables=RawTableWriteList([RawTableWrite(name="my_raw_table", database="my_database")]),
-    )
-    yield pytest.param(pipeline_schema, id="Pipeline schema")
-
 
 def invalid_raw_str_test_cases() -> Iterable[ParameterSet]:
     raw_str = """
@@ -353,15 +331,6 @@ class TestDMSSchema:
         "schema",
         list(valid_schema_test_cases()),
     )
-    def test_dump_load_schema(self, schema: DMSSchema) -> None:
-        dumped_schema = schema.dump()
-        loaded_schema = PipelineSchema.load(dumped_schema)
-        assert schema.dump() == loaded_schema.dump()
-
-    @pytest.mark.parametrize(
-        "schema",
-        list(valid_schema_test_cases()),
-    )
     def test_as_read_model(self, schema: DMSSchema) -> None:
         read_model = schema.as_read_model()
         assert isinstance(read_model, dm.DataModel)
@@ -372,7 +341,7 @@ class TestDMSSchema:
     )
     def test_to_and_from_directory(self, schema: DMSSchema, tmp_path: Path) -> None:
         schema.to_directory(tmp_path)
-        loaded_schema = PipelineSchema.from_directory(tmp_path)
+        loaded_schema = DMSSchema.from_directory(tmp_path)
         assert schema.dump() == loaded_schema.dump()
 
     @pytest.mark.parametrize(
@@ -381,7 +350,7 @@ class TestDMSSchema:
     )
     def test_to_and_from_zip(self, schema: DMSSchema, tmp_path: Path) -> None:
         schema.to_zip(tmp_path / "schema.zip")
-        loaded_schema = PipelineSchema.from_zip(tmp_path / "schema.zip")
+        loaded_schema = DMSSchema.from_zip(tmp_path / "schema.zip")
         assert schema.dump() == loaded_schema.dump()
 
     @pytest.mark.parametrize(

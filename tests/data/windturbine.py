@@ -7,6 +7,12 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import NodeApply
 from cognite.client.data_classes.data_modeling.data_types import Enum, EnumValue, UnitReference
 
+from cognite.neat._client.data_classes.data_modeling import (
+    ContainerApplyDict,
+    NodeApplyDict,
+    SpaceApplyDict,
+    ViewApplyDict,
+)
 from cognite.neat._rules.models.dms import (
     DMSInputContainer,
     DMSInputEnum,
@@ -17,7 +23,6 @@ from cognite.neat._rules.models.dms import (
     DMSInputView,
     DMSSchema,
 )
-from cognite.neat._utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 
 _SPACE = "sp_windturbine"
 

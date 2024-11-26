@@ -310,6 +310,11 @@ properties:
   view: ClassicTimeSeries
   view_property: unitExternalId
 views:
+- description: The CogniteSourceSystem core concept is used to standardize the way
+    source system is stored.
+  implements: cdf_cdm:CogniteDescribable(version=v1)
+  in_model: true
+  view: cdf_cdm:CogniteSourceSystem(version=v1)
 - description: Assets represent systems that support industrial functions or processes.
     Assets are often called 'functional location'.
   implements: cdf_cdm:CogniteAsset(version=v1)
