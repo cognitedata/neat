@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from cognite.client.data_classes.data_modeling.ids import DataModelId
-from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SH, SKOS, XSD, Namespace, URIRef, FOAF
+from rdflib import DC, DCTERMS, FOAF, OWL, RDF, RDFS, SH, SKOS, XSD, Namespace, URIRef
 
 from cognite import neat
 
