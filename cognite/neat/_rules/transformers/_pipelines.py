@@ -23,7 +23,7 @@ class ImporterPipeline(RulesPipeline[InputRules, VerifiedRules]):
 
     @classmethod
     def _create_pipeline(cls, importer: BaseImporter[InputRules], role: RoleTypes | None = None) -> "ImporterPipeline":
-        items: list[RulesTransformer] = [VerifyAnyRules(errors="continue")]
+        items: list[RulesTransformer] = [VerifyAnyRules(errors="continue", validate=True)]
         if role is not None:
             out_cls = VERIFIED_RULES_BY_ROLE[role]
             items.append(ConvertToRules(out_cls))

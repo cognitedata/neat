@@ -39,8 +39,6 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             If set, only export components in the given spaces. Defaults to None which means all spaces.
         existing_handling (Literal["fail", "skip", "update", "force"], optional): How to handle existing components.
             Defaults to "update". See below for details.
-        export_pipeline (bool, optional): Whether to export the pipeline. Defaults to False. This means setting
-            up transformations, RAW databases and tables to populate the data model.
         instance_space (str, optional): The space to use for the instance. Defaults to None.
         suppress_warnings (bool, optional): Suppress warnings. Defaults to False.
 
@@ -58,14 +56,12 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         export_components: Component | Collection[Component] = "all",
         include_space: set[str] | None = None,
         existing_handling: Literal["fail", "skip", "update", "force"] = "update",
-        export_pipeline: bool = False,
         instance_space: str | None = None,
         suppress_warnings: bool = False,
     ):
         self.export_components = {export_components} if isinstance(export_components, str) else set(export_components)
         self.include_space = include_space
         self.existing_handling = existing_handling
-        self.export_pipeline = export_pipeline
         self.instance_space = instance_space
         self.suppress_warnings = suppress_warnings
         self._schema: DMSSchema | None = None
@@ -106,7 +102,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         return exclude
 
     def export(self, rules: DMSRules) -> DMSSchema:
-        return rules.as_schema(include_pipeline=self.export_pipeline, instance_space=self.instance_space)
+        return rules.as_schema(instance_space=self.instance_space)
 
     def delete_from_cdf(
         self, rules: DMSRules, client: NeatClient, dry_run: bool = False, skip_space: bool = False

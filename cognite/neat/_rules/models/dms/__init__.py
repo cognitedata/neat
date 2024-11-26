@@ -10,6 +10,7 @@ from ._rules_input import (
     DMSInputRules,
     DMSInputView,
 )
+from ._validation import DMSValidation
 
 __all__ = [
     "DMSRules",
@@ -27,4 +28,5 @@ __all__ = [
     "DMSInputContainer",
     "DMSInputNode",
     "DMSInputEnum",
+    "DMSValidation",
 ]

@@ -1,18 +1,16 @@
 import sys
 import warnings
 import zipfile
-from collections import ChainMap, Counter, defaultdict
+from collections import ChainMap
 from collections.abc import Iterable, MutableMapping
 from dataclasses import Field, dataclass, field, fields
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import Any, ClassVar, Literal, cast
 
 import yaml
-from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import DatabaseWrite, TransformationWrite
 from cognite.client.data_classes.data_modeling.views import (
-    ReverseDirectRelation,
     ReverseDirectRelationApply,
     SingleEdgeConnection,
     SingleEdgeConnectionApply,
@@ -29,31 +27,19 @@ from cognite.neat._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat._issues import NeatError
 from cognite.neat._issues.errors import (
     NeatYamlError,
-    PropertyMappingDuplicatedError,
-    PropertyNotFoundError,
-    ResourceDuplicatedError,
-    ResourceNotFoundError,
 )
 from cognite.neat._issues.warnings import (
     FileTypeUnexpectedWarning,
-    ResourceNotFoundWarning,
-    ResourceRetrievalWarning,
     ResourcesDuplicatedWarning,
 )
-from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
-from cognite.neat._utils.rdf_ import get_inheritance_path
 from cognite.neat._utils.text import to_camel
 
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
-
-if TYPE_CHECKING:
-    from cognite.neat._client import NeatClient
 
 
 @dataclass
@@ -63,11 +49,6 @@ class DMSSchema:
     views: ViewApplyDict = field(default_factory=ViewApplyDict)
     containers: ContainerApplyDict = field(default_factory=ContainerApplyDict)
     node_types: NodeApplyDict = field(default_factory=NodeApplyDict)
-    # The last schema is the previous version of the data model. In the case, extension=addition, this
-    # should not be modified.
-    last: "DMSSchema | None" = None
-    # Reference is typically the Enterprise model, while this is the solution model.
-    reference: "DMSSchema | None" = None
 
     _FIELD_NAME_BY_RESOURCE_TYPE: ClassVar[dict[str, str]] = {
         "container": "containers",
@@ -76,177 +57,6 @@ class DMSSchema:
         "space": "spaces",
         "node": "node_types",
     }
-
-    def _get_mapped_container_from_view(self, view_id: dm.ViewId) -> set[dm.ContainerId]:
-        # index all views, including ones from reference
-        view_by_id = self.views.copy()
-        if self.reference:
-            view_by_id.update(self.reference.views)
-
-        if view_id not in view_by_id:
-            raise ValueError(f"View {view_id} not found")
-
-        indexed_implemented_views = {id_: view.implements for id_, view in view_by_id.items()}
-        view_inheritance = get_inheritance_path(view_id, indexed_implemented_views)
-
-        directly_referenced_containers = view_by_id[view_id].referenced_containers()
-        inherited_referenced_containers = set()
-
-        for parent_id in view_inheritance:
-            if implemented_view := view_by_id.get(parent_id):
-                inherited_referenced_containers |= implemented_view.referenced_containers()
-            else:
-                raise ResourceNotFoundError(parent_id, "view", view_id, "view")
-
-        return directly_referenced_containers | inherited_referenced_containers
-
-    @classmethod
-    def from_model_id(cls, client: "NeatClient", data_model_id: dm.DataModelIdentifier) -> "DMSSchema":
-        data_models = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True)
-        if len(data_models) == 0:
-            raise ValueError(f"Data model {data_model_id} not found")
-        data_model = data_models.latest_version()
-        return cls.from_data_model(client, data_model)
-
-    @classmethod
-    def from_data_model(
-        cls,
-        client: "NeatClient",
-        data_model: dm.DataModel[dm.View],
-        reference_model: dm.DataModel[dm.View] | None = None,
-    ) -> "DMSSchema":
-        """Create a schema from a data model.
-
-        If a reference model is provided, the schema will include a reference schema. To determine which views,
-        and containers to put in the reference schema, the following rule is applied:
-
-            If a view or container space is different from the data model space,
-            it will be included in the reference schema.*
-
-        *One exception to this rule is if a view is directly referenced by the data model. In this case, the view will
-        be included in the data model schema, even if the space is different.
-
-        Args:
-            client: The Cognite client used for retrieving components referenced by the data model.
-            data_model: The data model to create the schema from.
-            reference_model: (Optional) The reference model to include in the schema.
-                This is typically the Enterprise model.
-
-        Returns:
-            DMSSchema: The schema created from the data model.
-        """
-        from cognite.neat._client._api.data_modeling_loaders import ViewLoader
-
-        views = dm.ViewList(data_model.views)
-
-        data_model_write = data_model.as_write()
-        data_model_write.views = list(views.as_ids())
-
-        if reference_model:
-            views.extend(reference_model.views)
-
-        container_ids = views.referenced_containers()
-        containers = client.data_modeling.containers.retrieve(list(container_ids))
-        cls._append_referenced_containers(client, containers)
-
-        space_ids = [data_model.space, reference_model.space] if reference_model else [data_model.space]
-        space_read = client.data_modeling.spaces.retrieve(space_ids)
-        if len(space_read) != len(space_ids):
-            raise ValueError(f"Space(s) {space_read} not found")
-        space_write = space_read.as_write()
-
-        view_loader = ViewLoader(NeatClient(client))
-
-        existing_view_ids = set(views.as_ids())
-
-        # We need to include all views the edges/direct relations are pointing to have a complete schema.
-        connection_referenced_view_ids: set[dm.ViewId] = set()
-        for view in views:
-            connection_referenced_view_ids |= cls._connection_references(view)
-        connection_referenced_view_ids = connection_referenced_view_ids - existing_view_ids
-        if connection_referenced_view_ids:
-            for view_id in connection_referenced_view_ids:
-                warnings.warn(
-                    ResourceNotFoundWarning(view_id, "view", data_model_write.as_id(), "data model"),
-                    stacklevel=2,
-                )
-            connection_referenced_views = view_loader.retrieve(list(connection_referenced_view_ids))
-            if failed := connection_referenced_view_ids - set(connection_referenced_views.as_ids()):
-                warnings.warn(ResourceRetrievalWarning(frozenset(failed), "view"), stacklevel=2)
-            views.extend(connection_referenced_views)
-
-        # We need to include parent views in the schema to make sure that the schema is valid.
-        parent_view_ids = {parent for view in views for parent in view.implements or []}
-        parents = view_loader.retrieve(
-            list(parent_view_ids - existing_view_ids), include_ancestor=True, include_connections=True
-        )
-        views.extend([parent for parent in parents if parent.as_id() not in existing_view_ids])
-
-        # Converting views from read to write format requires to account for parents (implements)
-        # as the read format contains all properties from all parents, while the write formate should not contain
-        # properties from any parents.
-        # The ViewLoader as_write method looks up parents and remove properties from them.
-        view_write = ViewApplyDict([view_loader.as_write(view) for view in views])
-
-        container_write = ContainerApplyDict(containers.as_write())
-        user_space = data_model.space
-        if reference_model:
-            user_model_view_ids = set(data_model_write.views)
-            ref_model_write = reference_model.as_write()
-            ref_model_write.views = [view.as_id() for view in reference_model.views]
-
-            ref_views = ViewApplyDict(
-                [
-                    view
-                    for view_id, view in view_write.items()
-                    if (view.space != user_space) or (view_id not in user_model_view_ids)
-                ]
-            )
-            view_write = ViewApplyDict(
-                [
-                    view
-                    for view_id, view in view_write.items()
-                    if view.space == user_space or view_id in user_model_view_ids
-                ]
-            )
-
-            ref_containers = ContainerApplyDict(
-                [container for container in container_write.values() if container.space != user_space]
-            )
-            container_write = ContainerApplyDict(
-                [container for container in container_write.values() if container.space == user_space]
-            )
-
-            ref_schema: DMSSchema | None = cls(
-                spaces=SpaceApplyDict([s for s in space_write if s.space != user_space]),
-                data_model=ref_model_write,
-                views=ref_views,
-                containers=ref_containers,
-            )
-        else:
-            ref_schema = None
-        return cls(
-            spaces=SpaceApplyDict([s for s in space_write if s.space == user_space]),
-            data_model=data_model_write,
-            views=view_write,
-            containers=container_write,
-            reference=ref_schema,
-        )
-
-    @classmethod
-    def _connection_references(cls, view: dm.View) -> set[dm.ViewId]:
-        view_ids: set[dm.ViewId] = set()
-        for prop in (view.properties or {}).values():
-            if isinstance(prop, dm.MappedProperty) and isinstance(prop.type, dm.DirectRelation):
-                if prop.source:
-                    view_ids.add(prop.source)
-            elif isinstance(prop, dm.EdgeConnection):
-                view_ids.add(prop.source)
-                if prop.edge_source:
-                    view_ids.add(prop.edge_source)
-            elif isinstance(prop, ReverseDirectRelation):
-                view_ids.add(prop.source)
-        return view_ids
 
     @classmethod
     def from_directory(cls, directory: str | Path) -> Self:
@@ -538,157 +348,6 @@ class DMSSchema:
         else:
             raise ValueError(f"Cannot sort item of type {type(item)}")
 
-    def validate(self) -> list[NeatError]:
-        # TODO: This type of validation should be done in NeatSession where all the
-        # schema components which are not part of Rules are imported and the model as
-        # the whole is validated.
-
-        errors: set[NeatError] = set()
-        defined_spaces = self.spaces.copy()
-        defined_containers = self.containers.copy()
-        defined_views = self.views.copy()
-        for other_schema in [self.reference, self.last]:
-            if other_schema:
-                defined_spaces |= other_schema.spaces
-                defined_containers |= other_schema.containers
-                defined_views |= other_schema.views
-
-        for container in self.containers.values():
-            if container.space not in defined_spaces:
-                errors.add(
-                    ResourceNotFoundError[str, dm.ContainerId](container.space, "space", container.as_id(), "container")
-                )
-
-        for view in self.views.values():
-            view_id = view.as_id()
-            if view.space not in defined_spaces:
-                errors.add(ResourceNotFoundError(view.space, "space", view_id, "view"))
-
-            for parent in view.implements or []:
-                if parent not in defined_views:
-                    errors.add(PropertyNotFoundError(parent, "view", "implements", view_id, "view"))
-
-            for prop_name, prop in (view.properties or {}).items():
-                if isinstance(prop, dm.MappedPropertyApply):
-                    ref_container = defined_containers.get(prop.container)
-                    if ref_container is None:
-                        errors.add(ResourceNotFoundError(prop.container, "container", view_id, "view"))
-                    elif prop.container_property_identifier not in ref_container.properties:
-                        errors.add(
-                            PropertyNotFoundError(
-                                prop.container,
-                                "container",
-                                prop.container_property_identifier,
-                                view_id,
-                                "view",
-                            )
-                        )
-                    else:
-                        container_property = ref_container.properties[prop.container_property_identifier]
-
-                        if isinstance(container_property.type, dm.DirectRelation) and prop.source is None:
-                            warnings.warn(
-                                DirectRelationMissingSourceWarning(view_id, prop_name),
-                                stacklevel=2,
-                            )
-
-                if isinstance(prop, dm.EdgeConnectionApply) and prop.source not in defined_views:
-                    errors.add(PropertyNotFoundError(prop.source, "view", prop_name, view_id, "view"))
-
-                if (
-                    isinstance(prop, dm.EdgeConnectionApply)
-                    and prop.edge_source is not None
-                    and prop.edge_source not in defined_views
-                ):
-                    errors.add(PropertyNotFoundError(prop.edge_source, "view", prop_name, view_id, "view"))
-
-            # This allows for multiple view properties to be mapped to the same container property,
-            # as long as they have different external_id, otherwise this will lead to raising
-            # error ContainerPropertyUsedMultipleTimesError
-            property_count = Counter(
-                (prop.container, prop.container_property_identifier, view_property_identifier)
-                for view_property_identifier, prop in (view.properties or {}).items()
-                if isinstance(prop, dm.MappedPropertyApply)
-            )
-
-            for (
-                container_id,
-                container_property_identifier,
-                _,
-            ), count in property_count.items():
-                if count > 1:
-                    view_properties = [
-                        prop_name
-                        for prop_name, prop in (view.properties or {}).items()
-                        if isinstance(prop, dm.MappedPropertyApply)
-                        and (prop.container, prop.container_property_identifier)
-                        == (container_id, container_property_identifier)
-                    ]
-                    errors.add(
-                        PropertyMappingDuplicatedError(
-                            container_id,
-                            "container",
-                            container_property_identifier,
-                            frozenset({dm.PropertyId(view_id, prop_name) for prop_name in view_properties}),
-                            "view property",
-                        )
-                    )
-
-        if self.data_model:
-            model = self.data_model
-            if model.space not in defined_spaces:
-                errors.add(ResourceNotFoundError(model.space, "space", model.as_id(), "data model"))
-
-            view_counts: dict[dm.ViewId, int] = defaultdict(int)
-            for view_id_or_class in model.views or []:
-                view_id = view_id_or_class if isinstance(view_id_or_class, dm.ViewId) else view_id_or_class.as_id()
-                if view_id not in defined_views:
-                    errors.add(ResourceNotFoundError(view_id, "view", model.as_id(), "data model"))
-                view_counts[view_id] += 1
-
-            for view_id, count in view_counts.items():
-                if count > 1:
-                    errors.add(
-                        ResourceDuplicatedError(
-                            view_id,
-                            "view",
-                            repr(model.as_id()),
-                        )
-                    )
-
-        return list(errors)
-
-    @classmethod
-    def _append_referenced_containers(cls, client: CogniteClient, containers: dm.ContainerList) -> None:
-        """Containers can reference each other through the 'requires' constraint.
-
-        This method retrieves all containers that are referenced by other containers through the 'requires' constraint,
-        including their parents.
-
-        """
-        for _ in range(10):  # Limiting the number of iterations to avoid infinite loops
-            referenced_containers = {
-                const.require
-                for container in containers
-                for const in (container.constraints or {}).values()
-                if isinstance(const, dm.RequiresConstraint)
-            }
-            missing_containers = referenced_containers - set(containers.as_ids())
-            if not missing_containers:
-                break
-            found_containers = client.data_modeling.containers.retrieve(list(missing_containers))
-            containers.extend(found_containers)
-            if len(found_containers) != len(missing_containers):
-                break
-        else:
-            warnings.warn(
-                "The maximum number of iterations was reached while resolving referenced containers."
-                "There might be referenced containers that are not included in the list of containers.",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-        return None
-
     def referenced_spaces(self, include_indirect_references: bool = True) -> set[str]:
         """Get the spaces referenced by the schema.
 
@@ -724,11 +383,6 @@ class DMSSchema:
             raise ValueError("Data model is not defined")
         all_containers = self.containers.copy()
         all_views = self.views.copy()
-        for other_schema in [self.reference, self.last]:
-            if other_schema:
-                all_containers |= other_schema.containers
-                all_views |= other_schema.views
-
         views: list[dm.View] = []
         for view in self.views.values():
             referenced_containers = ContainerApplyDict()

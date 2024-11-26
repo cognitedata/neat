@@ -9,7 +9,7 @@ from rdflib import Namespace
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
-from cognite.neat._issues.warnings import AuthWarning
+from cognite.neat._issues.warnings import CDFAuthWarning
 from cognite.neat._shared import Triple
 from cognite.neat._utils.collection_ import chunker
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
@@ -117,12 +117,12 @@ class ClassicGraphExtractor(BaseExtractor):
         try:
             yield from self._extract_labels()
         except CogniteAPIError as e:
-            warnings.warn(AuthWarning("extract labels", str(e)), stacklevel=2)
+            warnings.warn(CDFAuthWarning("extract labels", str(e)), stacklevel=2)
 
         try:
             yield from self._extract_data_sets()
         except CogniteAPIError as e:
-            warnings.warn(AuthWarning("extract data sets", str(e)), stacklevel=2)
+            warnings.warn(CDFAuthWarning("extract data sets", str(e)), stacklevel=2)
 
     def _extract_core_start_nodes(self):
         for core_node in self._classic_node_types:

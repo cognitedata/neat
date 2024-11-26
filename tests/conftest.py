@@ -6,6 +6,7 @@ import pytest
 from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import (
     DMSRules,
+    InformationInputRules,
     InformationRules,
     RoleTypes,
 )
@@ -45,7 +46,7 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> InformationRules:
-    return InformationRules.model_validate(david_spreadsheet)
+    return InformationRules.model_validate(InformationInputRules.load(david_spreadsheet).dump())
 
 
 @pytest.fixture(scope="session")

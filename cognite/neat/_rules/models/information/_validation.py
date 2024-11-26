@@ -11,7 +11,7 @@ from cognite.neat._rules.models.entities import ClassEntity, UnknownEntity
 from ._rules import InformationRules
 
 
-class InformationPostValidation:
+class InformationValidation:
     """This class does all the validation of the Information rules that have dependencies
     between components."""
 

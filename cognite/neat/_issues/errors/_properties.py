@@ -34,14 +34,9 @@ class PropertyTypeNotSupportedError(PropertyError[T_Identifier]):
 
 @dataclass(unsafe_hash=True)
 class ReversedConnectionNotFeasibleError(PropertyError[T_Identifier]):
-    """The {resource_type} {property_name} with identifier {identifier} of the view {target_view_id} cannot be made
-    since view {source_view_id} does not have direct connection {direct_connection} defined,
-    or {direct_connection} value type is not {target_view_id}
-    """
+    """The {resource_type} {identifier}.{property_name} cannot be created: {reason}"""
 
-    target_view_id: str
-    source_view_id: str
-    direct_connection: str
+    reason: str
 
 
 # This is a generic error that should be used sparingly

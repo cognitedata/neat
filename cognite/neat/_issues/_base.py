@@ -210,7 +210,7 @@ class NeatError(NeatIssue, Exception):
     """This is the base class for all exceptions (errors) used in Neat."""
 
     @classmethod
-    def from_pydantic_errors(cls, errors: list[ErrorDetails], **kwargs) -> "list[NeatError]":
+    def from_errors(cls, errors: "list[ErrorDetails | NeatError]", **kwargs) -> "list[NeatError]":
         """Convert a list of pydantic errors to a list of Error instances.
 
         This is intended to be overridden in subclasses to handle specific error types.
@@ -219,24 +219,36 @@ class NeatError(NeatIssue, Exception):
         read_info_by_sheet = kwargs.get("read_info_by_sheet")
 
         for error in errors:
-            if error["type"] == "is_instance_of" and error["loc"][1] == "is-instance[SheetList]":
+            if (
+                isinstance(error, dict)
+                and error["type"] == "is_instance_of"
+                and error["loc"][1] == "is-instance[SheetList]"
+            ):
                 # Skip the error for SheetList, as it is not relevant for the user. This is an
                 # internal class used to have helper methods for a lists as .to_pandas()
                 continue
-            ctx = error.get("ctx")
-            if isinstance(ctx, dict) and isinstance(multi_error := ctx.get("error"), MultiValueError):
+            neat_error: NeatError | None = None
+            if isinstance(error, dict) and isinstance(ctx := error.get("ctx"), dict) and "error" in ctx:
+                neat_error = ctx["error"]
+            elif isinstance(error, NeatError | MultiValueError):
+                neat_error = error
+
+            if isinstance(neat_error, MultiValueError):
                 if read_info_by_sheet:
-                    for caught_error in multi_error.errors:
+                    for caught_error in neat_error.errors:
                         cls._adjust_row_numbers(caught_error, read_info_by_sheet)  # type: ignore[arg-type]
-                all_errors.extend(multi_error.errors)  # type: ignore[arg-type]
-            elif isinstance(ctx, dict) and isinstance(single_error := ctx.get("error"), NeatError):
+                all_errors.extend(neat_error.errors)  # type: ignore[arg-type]
+            elif isinstance(neat_error, NeatError):
                 if read_info_by_sheet:
-                    cls._adjust_row_numbers(single_error, read_info_by_sheet)
-                all_errors.append(single_error)
-            elif len(error["loc"]) >= 4 and read_info_by_sheet:
+                    cls._adjust_row_numbers(neat_error, read_info_by_sheet)
+                all_errors.append(neat_error)
+            elif isinstance(error, dict) and len(error["loc"]) >= 4 and read_info_by_sheet:
                 all_errors.append(RowError.from_pydantic_error(error, read_info_by_sheet))
-            else:
+            elif isinstance(error, dict):
                 all_errors.append(DefaultPydanticError.from_pydantic_error(error))
+            else:
+                # This is unreachable. However, in case it turns out to be reachable, we want to know about it.
+                raise ValueError(f"Unsupported error type: {error}")
         return all_errors
 
     @staticmethod
@@ -511,13 +523,10 @@ def catch_issues(
         try:
             yield future_result
         except ValidationError as e:
-            issues.extend(error_cls.from_pydantic_errors(e.errors(), **(error_args or {})))
+            issues.extend(error_cls.from_errors(e.errors(), **(error_args or {})))  # type: ignore[arg-type]
             future_result._result = "failure"
-        except MultiValueError as e:
-            issues.extend(e.errors)
-            future_result._result = "failure"
-        except NeatError as e:
-            issues.append(e)
+        except (NeatError, MultiValueError) as e:
+            issues.extend(error_cls.from_errors([e], **(error_args or {})))  # type: ignore[arg-type, list-item]
             future_result._result = "failure"
         else:
             future_result._result = "success"
