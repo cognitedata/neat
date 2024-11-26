@@ -1,22 +1,19 @@
 import itertools
-from typing import cast
 
 import pytest
 from cognite.client import CogniteClient
-from cognite.client import data_modeling as dm
 from cognite.client.data_classes import Row
 
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import DMSRules, InformationRules, RoleTypes, SheetList
-from cognite.neat._rules.models.dms import DMSInputRules, PipelineSchema
+from cognite.neat._rules.models.dms import DMSInputRules
 from cognite.neat._rules.models.information import (
     InformationClass,
     InformationMetadata,
     InformationProperty,
 )
-from cognite.neat._rules.transformers import ImporterPipeline, InformationToDMS
-from cognite.neat._utils.cdf.loaders import RawTableLoader, TransformationLoader
+from cognite.neat._rules.transformers import ImporterPipeline
 from tests.config import DOC_RULES
 
 
@@ -182,79 +179,6 @@ class TestDMSExporters:
 
         assert uploaded_by_name["spaces"].success == 1  # Space is not deleted
         assert uploaded_by_name["spaces"].failed == 0
-
-    @pytest.mark.skip(
-        "We are not exposing the functionality any more. "
-        "It is up for discussion if we should keep it. Does the test is not maintained."
-    )
-    def test_export_pipeline_populate_and_retrieve_data(
-        self, cognite_client: CogniteClient, table_example: InformationRules, table_example_data: dict[str, list[str]]
-    ) -> None:
-        exporter = DMSExporter(
-            existing_handling="force",
-            export_pipeline=True,
-            instance_space="sp_table_example_data",
-        )
-        dms_rules = InformationToDMS().transform(table_example).rules
-        schema = cast(PipelineSchema, exporter.export(dms_rules))
-
-        # Write Pipeline to CDF
-        uploaded = exporter.export_to_cdf(dms_rules, cognite_client, dry_run=False)
-
-        # Verify Raw Tables are written
-        assert uploaded
-        table_loader = RawTableLoader(cognite_client)
-        existing_tables = table_loader.retrieve(schema.raw_tables.as_ids())
-        missing_tables = set(schema.raw_tables.as_ids()) - set(existing_tables.as_ids())
-        assert not missing_tables, f"Missing RAW tables: {missing_tables}"
-
-        # Write data to RAW tables
-        db_name = schema.databases[0].name
-        if not cognite_client.raw.rows.list(db_name, "TableProperties", limit=-1):
-            cognite_client.raw.rows.insert(db_name, "TableProperties", table_example_data["Table"])
-        if not cognite_client.raw.rows.list(db_name, "ItemProperties", limit=-1):
-            cognite_client.raw.rows.insert(db_name, "ItemProperties", table_example_data["Item"])
-        if not cognite_client.raw.rows.list(db_name, "Table.OnEdge", limit=-1):
-            cognite_client.raw.rows.insert(db_name, "Table.OnEdge", table_example_data["TableItem"])
-
-        # Verify Transformations are written
-        transformation_loader = TransformationLoader(cognite_client)
-        existing_transformations = transformation_loader.retrieve(schema.transformations.as_external_ids())
-        missing_transformations = set(schema.transformations.as_external_ids()) - set(
-            existing_transformations.as_external_ids()
-        )
-        assert not missing_transformations, f"Missing transformations: {missing_transformations}"
-
-        # Trigger transformations (if not already triggered)
-        for transformation in existing_transformations:
-            if transformation.last_finished_job is None:
-                # As of 16. March 2024, this must be done manually as we do not set credentials for the client
-                # It is kept here to show the complete flow to populate a data model
-                cognite_client.transformations.run(transformation.id, wait=True, timeout=30.0)
-
-        # Verify data is in the data model
-        views = schema.views
-        table_view = next((view for view in views.values() if view.external_id == "Table"), None)
-        assert table_view is not None, "Table view not found"
-        table_nodes = cognite_client.data_modeling.instances.list(
-            "node", space="sp_table_example_data", sources=[table_view.as_id()], limit=-1
-        )
-        assert len(table_nodes) == len(table_example_data["Table"])
-        item_view = next((view for view in views.values() if view.external_id == "Item"), None)
-        item_nodes = cognite_client.data_modeling.instances.list(
-            "node", space="sp_table_example_data", sources=[item_view.as_id()], limit=-1
-        )
-        assert len(item_nodes) == len(table_example_data["Item"])
-
-        table_to_item_type = cast(dm.EdgeConnectionApply, table_view.properties["on"]).type
-
-        is_edge_type = dm.filters.Equals(
-            ["edge", "type"], {"space": table_to_item_type.space, "externalId": table_to_item_type.external_id}
-        )
-        table_item_edges = cognite_client.data_modeling.instances.list(
-            "edge", space="sp_table_example_data", filter=is_edge_type, limit=-1
-        )
-        assert len(table_item_edges) == len(table_example_data["TableItem"])
 
     def test_export_olav_dms_to_cdf(self, cognite_client: CogniteClient, olav_dms_rules: DMSRules) -> None:
         rules: DMSRules = olav_dms_rules

@@ -7,6 +7,12 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
+from cognite.neat._client.data_classes.data_modeling import (
+    ContainerApplyDict,
+    NodeApplyDict,
+    SpaceApplyDict,
+    ViewApplyDict,
+)
 from cognite.neat._issues import MultiValueError, NeatError
 from cognite.neat._issues.errors import (
     PropertyDefinitionDuplicatedError,
@@ -34,7 +40,6 @@ from cognite.neat._rules.transformers import (
     RulesPipeline,
     VerifyDMSRules,
 )
-from cognite.neat._utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 from tests.data import car
 
 

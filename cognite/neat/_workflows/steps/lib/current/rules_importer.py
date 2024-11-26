@@ -5,6 +5,7 @@ from typing import ClassVar
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
 
+from cognite.neat._client import NeatClient
 from cognite.neat._issues.errors import WorkflowStepNotInitializedError
 from cognite.neat._issues.formatters import FORMATTER_BY_NAME
 from cognite.neat._rules import importers
@@ -299,7 +300,9 @@ class DMSToRules(Step):
                 return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
             ref_model_id = ref_model.as_id()
 
-        dms_importer = importers.DMSImporter.from_data_model_id(cdf_client, datamodel_entity.as_id(), ref_model_id)
+        dms_importer = importers.DMSImporter.from_data_model_id(
+            NeatClient(cdf_client), datamodel_entity.as_id(), ref_model_id
+        )
 
         # if role is None, it will be inferred from the rules file
         role = self.configs.get("Role")

@@ -4,6 +4,7 @@ import pytest
 from cognite.client import CogniteClient
 from dotenv import load_dotenv
 
+from cognite.neat._client import NeatClient
 from tests.config import ROOT
 
 
@@ -23,3 +24,8 @@ def cognite_client() -> CogniteClient:
     return CogniteClient.default_oauth_client_credentials(
         cdf_cluster=cluster, project=project, tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
     )
+
+
+@pytest.fixture(scope="session")
+def neat_client(cognite_client: CogniteClient) -> NeatClient:
+    return NeatClient(cognite_client)

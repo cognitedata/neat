@@ -2,7 +2,7 @@ import pytest
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
-from cognite.neat._utils.cdf.loaders import ContainerLoader, ViewLoader
+from cognite.neat._client import NeatClient
 
 
 @pytest.fixture(scope="session")
@@ -29,7 +29,7 @@ def container_props(cognite_client: CogniteClient, space: dm.Space) -> dm.Contai
 
 
 class TestViewLoader:
-    def test_force_create(self, cognite_client: CogniteClient, container_props: dm.Container, space: dm.Space) -> None:
+    def test_force_create(self, neat_client: NeatClient, container_props: dm.Container, space: dm.Space) -> None:
         container_id = container_props.as_id()
         original = dm.ViewApply(
             space=space.space,
@@ -45,9 +45,9 @@ class TestViewLoader:
                 "count": dm.MappedPropertyApply(container=container_id, container_property_identifier="number"),
             },
         )
-        retrieved_list = cognite_client.data_modeling.views.retrieve(original.as_id())
+        retrieved_list = neat_client.data_modeling.views.retrieve(original.as_id())
         if not retrieved_list:
-            cognite_client.data_modeling.views.apply(original)
+            neat_client.data_modeling.views.apply(original)
             existing = original
         else:
             existing = retrieved_list[0]
@@ -58,23 +58,23 @@ class TestViewLoader:
             container=container_id, container_property_identifier=new_prop
         )
 
-        loader = ViewLoader(cognite_client, existing_handling="force")
-        new_created = loader.create([modified])[0]
+        new_created = neat_client.loaders.views.create([modified], existing_handling="force")[0]
 
         assert new_created.as_id() == original.as_id(), "The view version should be the same"
         assert (
             new_created.properties["count"].container_property_identifier == new_prop
         ), "The property should have been updated"
 
-    def test_find_all_connected(self, cognite_client: CogniteClient) -> None:
-        loader = ViewLoader(cognite_client)
-        views = loader.retrieve_all_ancestors([dm.ViewId("cdf_cdm", "CogniteAsset", "v1")], include_connections=True)
+    def test_find_all_connected(self, neat_client: NeatClient) -> None:
+        views = neat_client.loaders.views.retrieve(
+            [dm.ViewId("cdf_cdm", "CogniteAsset", "v1")], include_connections=True, include_ancestor=True
+        )
 
         assert len(views) == 30, "This should return almost the entire CogniteCore model"
 
 
 class TestContainerLoader:
-    def test_force_create(self, cognite_client: CogniteClient, space: dm.Space) -> None:
+    def test_force_create(self, neat_client: NeatClient, space: dm.Space) -> None:
         original = dm.ContainerApply(
             space=space.space,
             external_id="test_container",
@@ -83,9 +83,9 @@ class TestContainerLoader:
                 "number": dm.ContainerProperty(type=dm.Int64()),
             },
         )
-        retrieved = cognite_client.data_modeling.containers.retrieve(original.as_id())
+        retrieved = neat_client.data_modeling.containers.retrieve(original.as_id())
         if retrieved is None:
-            cognite_client.data_modeling.containers.apply(original)
+            neat_client.data_modeling.containers.apply(original)
             existing = original
         else:
             existing = retrieved
@@ -94,8 +94,7 @@ class TestContainerLoader:
         new_prop = dm.Float64() if isinstance(existing.properties["number"].type, dm.Int64) else dm.Int64()
         modified.properties["number"] = dm.ContainerProperty(type=new_prop)
 
-        loader = ContainerLoader(cognite_client, existing_handling="force")
-        new_created = loader.create([modified])[0]
+        new_created = neat_client.loaders.containers.create([modified], existing_handling="force")[0]
 
         assert new_created.as_id() == original.as_id(), "The container version should be the same"
         assert new_created.properties["number"].type == new_prop, "The property should have been updated"

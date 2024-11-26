@@ -3,10 +3,10 @@ from collections.abc import Collection
 from datetime import datetime, timezone
 from typing import Literal, cast
 
-from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from rdflib import URIRef
 
+from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.transformers import RelationshipToSchemaTransformer
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
@@ -35,7 +35,7 @@ except ImportError:
 
 @session_class_wrapper
 class PrepareAPI:
-    def __init__(self, client: CogniteClient | None, state: SessionState, verbose: bool) -> None:
+    def __init__(self, client: NeatClient | None, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
         self.data_model = DataModelPrepareAPI(client, state, verbose)
@@ -131,7 +131,7 @@ class InstancePrepareAPI:
 
 @session_class_wrapper
 class DataModelPrepareAPI:
-    def __init__(self, client: CogniteClient | None, state: SessionState, verbose: bool) -> None:
+    def __init__(self, client: NeatClient | None, state: SessionState, verbose: bool) -> None:
         self._client = client
         self._state = state
         self._verbose = verbose
@@ -324,7 +324,7 @@ class DataModelPrepareAPI:
                     "NEAT needs a client to lookup the definitions. "
                     "Please set the client in the session, NeatSession(client=client)."
                 )
-            schema = self._state.data_model.lookup_schema(self._client, list(view_ids), list(container_ids))
+            schema = self._client.schema.retrieve(list(view_ids), list(container_ids))
 
             importer = DMSImporter(schema)
             reference_rules = importer.to_rules().rules
@@ -422,7 +422,7 @@ class DataModelPrepareAPI:
                 "NEAT needs a client to lookup the definitions. "
                 "Please set the client in the session, NeatSession(client=client)."
             )
-        schema = self._state.data_model.lookup_schema(self._client, list(view_ids), list(container_ids))
+        schema = self._client.schema.retrieve(list(view_ids), list(container_ids))
         copy_ = rules.model_copy(deep=True)
         copy_.metadata.version = f"{rules.metadata.version}_completed"
         importer = DMSImporter(schema)

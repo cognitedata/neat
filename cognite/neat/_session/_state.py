@@ -1,21 +1,15 @@
-from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Literal, cast
 
-from cognite.client import CogniteClient
-from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
 from cognite.neat._issues import IssueList
 from cognite.neat._rules._shared import JustRules, ReadRules, VerifiedRules
 from cognite.neat._rules.models.dms._rules import DMSRules
-from cognite.neat._rules.models.dms._schema import DMSSchema
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._store._provenance import Change, Provenance
-from cognite.neat._utils.cdf.data_classes import ContainerApplyDict, ViewApplyDict
-from cognite.neat._utils.cdf.loaders import ViewLoader
 from cognite.neat._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError
@@ -62,8 +56,6 @@ class DataModelState:
     issue_lists: list[IssueList] = field(default_factory=list)
     provenance: Provenance = field(default_factory=Provenance)
     outcome: list[UploadResultList] = field(default_factory=list)
-    _cdf_containers: ContainerApplyDict = field(default_factory=ContainerApplyDict)
-    _cdf_views: ViewApplyDict = field(default_factory=ViewApplyDict)
 
     def write(self, rules: ReadRules | JustRules | VerifiedRules, change: Change) -> None:
         if change.target_entity.id_ in self._rules:
@@ -154,68 +146,3 @@ class DataModelState:
                 "No outcome available. Try using [bold].to.cdf.data_model[/bold] to upload a data model."
             )
         return self.outcome[-1]
-
-    def lookup_containers(
-        self, client: CogniteClient, container_ids: Sequence[dm.ContainerId]
-    ) -> list[dm.ContainerApply]:
-        if missing := set(container_ids) - set(self._cdf_containers.keys()):
-            cdf_container_ids = list(missing)
-            found = client.data_modeling.containers.retrieve(cdf_container_ids).as_write()
-            self._cdf_containers.update({container.as_id(): container for container in found})
-        return [
-            self._cdf_containers[container_id] for container_id in container_ids if container_id in self._cdf_containers
-        ]
-
-    def lookup_views(
-        self, client: CogniteClient, view_ids: Sequence[dm.ViewId], include_ancestors: bool = True
-    ) -> list[dm.ViewApply]:
-        if missing := set(view_ids) - set(self._cdf_views.keys()):
-            loader = ViewLoader(client)
-            cdf_view_ids = list(missing)
-            found_read = loader.retrieve(cdf_view_ids)
-            if include_ancestors:
-                ancestors = loader.retrieve_all_ancestors(cdf_view_ids, include_connections=True)
-                found_read.extend(ancestors)
-
-            found = [loader.as_write(read_view) for read_view in found_read]
-            self._cdf_views.update({view.as_id(): view for view in found})
-        output = [self._cdf_views[view_id] for view_id in view_ids if view_id in self._cdf_views]
-        if not include_ancestors:
-            return output
-
-        to_check = output.copy()
-        seen = set(view_ids)
-        while to_check:
-            checking = to_check.pop()
-            connected_views = ViewLoader.get_connected_views(checking, seen, include_connections=True)
-            for connected_id in connected_views:
-                if connected_id in self._cdf_views:
-                    found_view = self._cdf_views[connected_id]
-                    output.append(found_view)
-                    to_check.append(found_view)
-                seen.add(connected_id)
-        return output
-
-    def lookup_schema(
-        self,
-        client: CogniteClient,
-        views: list[dm.ViewId],
-        containers: list[dm.ContainerId],
-        include_ancestors: bool = True,
-    ) -> DMSSchema:
-        views = ViewApplyDict(self.lookup_views(client, views, include_ancestors=include_ancestors))
-
-        container_set = set(containers) | {
-            container for view in views.values() for container in view.referenced_containers()
-        }
-
-        return DMSSchema(
-            data_model=dm.DataModelApply(
-                space="NEAT_LOOKUP",
-                external_id="NEAT_LOOKUP",
-                version="NEAT_LOOKUP",
-                views=list(views.keys()),
-            ),
-            views=views,
-            containers=ContainerApplyDict(self.lookup_containers(client, list(container_set))),
-        )

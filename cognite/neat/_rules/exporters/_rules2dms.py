@@ -3,7 +3,6 @@ from collections.abc import Collection, Hashable, Iterable, Sequence
 from pathlib import Path
 from typing import Literal, TypeAlias, cast
 
-from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResource, CogniteResourceList
 from cognite.client.data_classes.data_modeling import (
     ContainerApplyList,
@@ -15,23 +14,14 @@ from cognite.client.data_classes.data_modeling import (
 )
 from cognite.client.exceptions import CogniteAPIError
 
+from cognite.neat._client import DataModelingLoader, NeatClient
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.warnings import (
     PrincipleOneModelOneSpaceWarning,
     ResourceRetrievalWarning,
 )
-from cognite.neat._rules.models.dms import DMSRules, DMSSchema, PipelineSchema
-from cognite.neat._utils.cdf.loaders import (
-    ContainerLoader,
-    DataModelingLoader,
-    DataModelLoader,
-    RawDatabaseLoader,
-    RawTableLoader,
-    ResourceLoader,
-    SpaceLoader,
-    TransformationLoader,
-    ViewLoader,
-)
+from cognite.neat._rules.models.dms import DMSRules
 from cognite.neat._utils.upload import UploadResult
 
 from ._base import CDFExporter
@@ -119,14 +109,14 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         return rules.as_schema(include_pipeline=self.export_pipeline, instance_space=self.instance_space)
 
     def delete_from_cdf(
-        self, rules: DMSRules, client: CogniteClient, dry_run: bool = False, skip_space: bool = False
+        self, rules: DMSRules, client: NeatClient, dry_run: bool = False, skip_space: bool = False
     ) -> Iterable[UploadResult]:
-        to_export = self._prepare_exporters(rules, client)
+        to_export = self._prepare_exporters(rules)
 
         # we need to reverse order in which we are picking up the items to delete
         # as they are sorted in the order of creation and we need to delete them in reverse order
         for items, loader in reversed(to_export):
-            if skip_space and isinstance(loader, SpaceLoader):
+            if skip_space and isinstance(items, SpaceApplyList):
                 continue
             item_ids = loader.get_ids(items)
             existing_items = loader.retrieve(item_ids)
@@ -166,9 +156,9 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             )
 
     def export_to_cdf_iterable(
-        self, rules: DMSRules, client: CogniteClient, dry_run: bool = False, fallback_one_by_one: bool = False
+        self, rules: DMSRules, client: NeatClient, dry_run: bool = False, fallback_one_by_one: bool = False
     ) -> Iterable[UploadResult]:
-        to_export = self._prepare_exporters(rules, client)
+        to_export = self._prepare_exporters(rules)
 
         result_by_name = {}
         if self.existing_handling == "force":
@@ -176,17 +166,18 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 result_by_name[delete_result.name] = delete_result
 
         redeploy_data_model = False
-        for items, loader in to_export:
+        for items in to_export:
             # The conversion from DMS to GraphQL does not seem to be triggered even if the views
             # are changed. This is a workaround to force the conversion.
-            is_redeploying = loader is DataModelingLoader and redeploy_data_model
+            is_redeploying = isinstance(items, DataModelApplyList) and redeploy_data_model
+            loader = client.loaders.get_loader(items)
 
             to_create, to_delete, to_update, unchanged = self._categorize_items_for_upload(
                 loader, items, is_redeploying
             )
 
             issue_list = IssueList()
-            warning_list = self._validate(loader, items)
+            warning_list = self._validate(loader, items, client)
             issue_list.extend(warning_list)
 
             created: set[Hashable] = set()
@@ -228,7 +219,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                     else:
                         deleted.update(loader.get_id(item) for item in to_delete)
 
-                if isinstance(loader, DataModelingLoader):
+                if isinstance(items, DataModelApplyList):
                     to_create = loader.sort_by_dependencies(to_create)
 
                 try:
@@ -294,11 +285,11 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 issues=issue_list,
             )
 
-            if loader is ViewLoader and (created or changed):
+            if isinstance(items, ViewApplyList) and (created or changed):
                 redeploy_data_model = True
 
     def _categorize_items_for_upload(
-        self, loader: ResourceLoader, items: Sequence[CogniteResource], is_redeploying
+        self, loader: DataModelingLoader, items: Sequence[CogniteResource], is_redeploying
     ) -> tuple[list[CogniteResource], list[CogniteResource], list[CogniteResource], list[CogniteResource]]:
         item_ids = loader.get_ids(items)
         cdf_items = loader.retrieve(item_ids)
@@ -306,7 +297,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         to_create, to_update, unchanged, to_delete = [], [], [], []
         for item in items:
             if (
-                isinstance(loader, DataModelingLoader)
+                isinstance(items, DataModelApplyList)
                 and self.include_space is not None
                 and not loader.in_space(item, self.include_space)
             ):
@@ -324,28 +315,24 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 to_update.append(item)
         return to_create, to_delete, to_update, unchanged
 
-    def _prepare_exporters(self, rules, client) -> list[tuple[CogniteResourceList, ResourceLoader]]:
+    def _prepare_exporters(self, rules: DMSRules) -> list[CogniteResourceList]:
         schema = self.export(rules)
-        to_export: list[tuple[CogniteResourceList, ResourceLoader]] = []
+        to_export: list[CogniteResourceList] = []
         if self.export_components.intersection({"all", "spaces"}):
-            to_export.append((SpaceApplyList(schema.spaces.values()), SpaceLoader(client)))
+            to_export.append(SpaceApplyList(schema.spaces.values()))
         if self.export_components.intersection({"all", "containers"}):
-            to_export.append((ContainerApplyList(schema.containers.values()), ContainerLoader(client)))
+            to_export.append(ContainerApplyList(schema.containers.values()))
         if self.export_components.intersection({"all", "views"}):
-            to_export.append((ViewApplyList(schema.views.values()), ViewLoader(client, self.existing_handling)))
+            to_export.append(ViewApplyList(schema.views.values()))
         if self.export_components.intersection({"all", "data_models"}):
-            to_export.append((DataModelApplyList([schema.data_model]), DataModelLoader(client)))
-        if isinstance(schema, PipelineSchema):
-            to_export.append((schema.databases, RawDatabaseLoader(client)))
-            to_export.append((schema.raw_tables, RawTableLoader(client)))
-            to_export.append((schema.transformations, TransformationLoader(client)))
+            to_export.append(DataModelApplyList([schema.data_model]))
         return to_export
 
-    def _validate(self, loader: ResourceLoader, items: CogniteResourceList) -> IssueList:
+    def _validate(self, loader: DataModelingLoader, items: CogniteResourceList, client: NeatClient) -> IssueList:
         issue_list = IssueList()
-        if isinstance(loader, DataModelLoader):
+        if isinstance(items, DataModelApplyList):
             models = cast(list[DataModelApply], items)
-            if other_models := self._exist_other_data_models(loader, models):
+            if other_models := self._exist_other_data_models(client, models):
                 warning = PrincipleOneModelOneSpaceWarning(
                     f"There are multiple data models in the same space {models[0].space}. "
                     f"Other data models in the space are {other_models}.",
@@ -357,13 +344,13 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         return issue_list
 
     @classmethod
-    def _exist_other_data_models(cls, loader: DataModelLoader, models: list[DataModelApply]) -> list[DataModelId]:
+    def _exist_other_data_models(cls, client: NeatClient, models: list[DataModelApply]) -> list[DataModelId]:
         if not models:
             return []
         space = models[0].space
         external_id = models[0].external_id
         try:
-            data_models = loader.client.data_modeling.data_models.list(space=space, limit=25, all_versions=False)
+            data_models = client.data_modeling.data_models.list(space=space, limit=25, all_versions=False)
         except CogniteAPIError as e:
             warnings.warn(ResourceRetrievalWarning(frozenset({space}), "space", str(e)), stacklevel=2)
             return []

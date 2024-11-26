@@ -8,6 +8,7 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from rdflib import URIRef
 
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._issues import MultiValueError
 from cognite.neat._issues.errors import NeatValueError
@@ -47,8 +48,6 @@ from cognite.neat._rules.models.entities import (
     ViewEntity,
     ViewEntityList,
 )
-
-from ._schema import DMSSchema
 
 _DEFAULT_VERSION = "1"
 
@@ -391,7 +390,7 @@ class DMSRules(BaseRules):
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         from ._exporter import _DMSExporter
 
-        return _DMSExporter(self, include_pipeline, instance_space).to_schema()
+        return _DMSExporter(self, instance_space).to_schema()
 
     def _repr_html_(self) -> str:
         summary = {
