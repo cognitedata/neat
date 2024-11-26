@@ -109,14 +109,14 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
         raise NotImplementedError
 
     # Todo Lru cache this method.
-    def class_parent_pairs(self, allow_different_namespace: bool = False) -> dict[T_ClassEntity, list[T_ClassEntity]]:
+    def class_parent_pairs(self, allow_different_space: bool = False) -> dict[T_ClassEntity, list[T_ClassEntity]]:
         """This only returns class - parent pairs only if parent is in the same data model"""
         class_subclass_pairs: dict[T_ClassEntity, list[T_ClassEntity]] = {}
         for cls_ in self._get_classes():
             entity = self._get_cls_entity(cls_)
             class_subclass_pairs[entity] = []
             for parent in self._get_cls_parents(cls_) or []:
-                if parent.prefix == entity.prefix or allow_different_namespace:
+                if parent.prefix == entity.prefix or allow_different_space:
                     class_subclass_pairs[entity].append(parent)
                 else:
                     warnings.warn(
