@@ -17,7 +17,7 @@ __all__ = [
     "HasDataFilterOnNoPropertiesViewWarning",
     "NodeTypeFilterOnParentViewWarning",
     "HasDataFilterOnViewWithReferencesWarning",
-    "ViewPropertyLimitWarning",
+    "ContainerPropertyLimitWarning",
     "NotNeatSupportedFilterWarning",
     "ParentInDifferentSpaceWarning",
 ]
@@ -89,7 +89,7 @@ class HasDataFilterOnViewWithReferencesWarning(UserModelingWarning):
 
 
 @dataclass(unsafe_hash=True)
-class ViewPropertyLimitWarning(UserModelingWarning):
+class ContainerPropertyLimitWarning(UserModelingWarning):
     """The number of properties in the {view_id} view is {count} which
     is more than the API limit {limit} properties.
     This can lead to performance issues.
@@ -97,7 +97,7 @@ class ViewPropertyLimitWarning(UserModelingWarning):
 
     fix = "Reduce the number of properties in the view"
 
-    view_id: ViewId
+    view_id: ContainerId
     count: int
     limit: int = DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 
