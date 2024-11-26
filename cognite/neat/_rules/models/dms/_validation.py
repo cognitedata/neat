@@ -89,7 +89,8 @@ class DMSValidation:
         imported_views, imported_containers = self.imported_views_and_containers_ids()
         if (imported_views or imported_containers) and self._client is None:
             raise CDFMissingClientError(
-                f"{self._rules.metadata.as_data_model_id()} has imported views and/or container."
+                f"{self._rules.metadata.as_data_model_id()} has imported views and/or container: "
+                f"{imported_views}, {imported_containers}."
             )
         referenced_views = ViewList([])
         referenced_containers = ContainerList([])
@@ -106,10 +107,10 @@ class DMSValidation:
         ref_view_by_id = {view.as_id(): view for view in referenced_views}
         ref_container_by_id = {container.as_id(): container for container in referenced_containers}
         all_containers_by_id: dict[dm.ContainerId, dm.ContainerApply | dm.Container] = {
-            **dms_schema.containers.items(),  # type: ignore[dict-item]
+            **dict(dms_schema.containers.items()),
             **ref_container_by_id,
         }
-        all_views_by_id: dict[dm.ViewId, dm.ViewApply | dm.View] = {**dms_schema.views.items(), **ref_view_by_id}  # type: ignore[dict-item]
+        all_views_by_id: dict[dm.ViewId, dm.ViewApply | dm.View] = {**dict(dms_schema.views.items()), **ref_view_by_id}
         properties_by_ids = self._as_properties_by_ids(dms_schema, ref_view_by_id)
         view_properties_by_id: dict[dm.ViewId, list[tuple[str, ViewProperty | ViewPropertyApply]]] = defaultdict(list)
         for (view_id, prop_id), prop in properties_by_ids.items():

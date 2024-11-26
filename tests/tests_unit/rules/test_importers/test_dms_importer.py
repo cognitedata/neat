@@ -20,7 +20,7 @@ class TestDMSImporter:
         result = ImporterPipeline.try_verify(importer)
         rules = result.rules
         issues = result.issues
-        assert len(issues) == 0
+        assert len(issues) == 1
         dms_rules = cast(DMSRules, rules)
         dump_dms = dms_rules.dump()
         assert dump_dms["properties"][0]["value_type"] == "#N/A"

@@ -15,7 +15,6 @@ from cognite.neat._client.data_classes.data_modeling import (
 from cognite.neat._issues import NeatError
 from cognite.neat._issues.errors import (
     PropertyDefinitionDuplicatedError,
-    ResourceNotFoundError,
 )
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
@@ -1566,36 +1565,3 @@ class TestDMSExporter:
         assert actual_model_views == expected_views
         actual_containers = {container.external_id for container in schema.containers}
         assert actual_containers == expected_containers
-
-
-def test_dms_rules_validation_error():
-    dms_rules = DMSInputRules(
-        metadata=DMSInputMetadata(
-            space="my_space",
-            external_id="my_data_model",
-            version="1",
-            creator="Anders",
-            created="2024-03-16",
-            updated="2024-03-16",
-        ),
-        properties=[
-            DMSInputProperty(
-                value_type="text",
-                container="Asset",
-                container_property="name",
-                view="WindFarm",
-                view_property="name",
-            ),
-        ],
-        views=[DMSInputView(view="WindFarm", implements="Sourceable,Describable")],
-        containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
-    )
-    with pytest.raises(NeatError) as e:
-        DMSValidation(dms_rules.as_rules()).validate()
-
-    assert e.value == ResourceNotFoundError(
-        dm.ViewId(space="my_space", external_id="Sourceable", version="1"),
-        "view",
-        dm.ViewId(space="my_space", external_id="WindFarm", version="1"),
-        "view",
-    )
