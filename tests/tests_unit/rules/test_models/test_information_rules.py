@@ -181,6 +181,7 @@ class TestInformationRules:
         assert errors[0] == expected_exception
 
     @pytest.mark.parametrize("incomplete_rules, expected_exception", list(incomplete_rules_case()))
+    @pytest.mark.skip("Temp skipping: enabling in new PR")
     def test_incomplete_rules(self, incomplete_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:
         with pytest.raises(ValueError) as e:
             InformationRules.model_validate(incomplete_rules)

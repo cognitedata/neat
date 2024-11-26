@@ -69,8 +69,15 @@ class InferenceImporter(BaseRDFImporter):
         data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_INFERENCE_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
+        language: str = "en",
     ) -> "InferenceImporter":
-        return super().from_graph_store(store, data_model_id, max_number_of_instance, non_existing_node_type)
+        return super().from_graph_store(
+            store,
+            data_model_id,
+            max_number_of_instance,
+            non_existing_node_type,
+            language,
+        )
 
     @classmethod
     def from_file(
@@ -79,8 +86,15 @@ class InferenceImporter(BaseRDFImporter):
         data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_INFERENCE_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
+        language: str = "en",
     ) -> "InferenceImporter":
-        return super().from_file(filepath, data_model_id, max_number_of_instance, non_existing_node_type)
+        return super().from_file(
+            filepath,
+            data_model_id,
+            max_number_of_instance,
+            non_existing_node_type,
+            language,
+        )
 
     @classmethod
     def from_json_file(
@@ -88,6 +102,7 @@ class InferenceImporter(BaseRDFImporter):
         filepath: Path,
         data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_INFERENCE_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
+        language: str = "en",
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
@@ -97,6 +112,7 @@ class InferenceImporter(BaseRDFImporter):
         filepath: Path,
         data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_INFERENCE_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
+        language: str = "en",
     ) -> "InferenceImporter":
         raise NotImplementedError("YAML file format is not supported yet.")
 

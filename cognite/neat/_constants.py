@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from cognite.client.data_classes.data_modeling.ids import DataModelId
-from rdflib import DCTERMS, OWL, RDF, RDFS, SKOS, XSD, Namespace, URIRef
+from rdflib import DC, DCTERMS, FOAF, OWL, RDF, RDFS, SH, SKOS, XSD, Namespace, URIRef
 
 from cognite import neat
 
@@ -54,13 +54,17 @@ XML_SCHEMA_NAMESPACE = Namespace("http://www.w3.org/2001/XMLSchema#")
 
 def get_default_prefixes() -> dict[str, Namespace]:
     return {
+        "owl": OWL._NS,
         "rdf": RDF._NS,
         "rdfs": RDFS._NS,
-        "dct": DCTERMS._NS,
+        "dcterms": DCTERMS._NS,
+        "dc": DC._NS,
         "skos": SKOS._NS,
-        "owl": OWL._NS,
+        "sh": SH._NS,
         "xsd": XSD._NS,
+        "imf": Namespace("http://ns.imfid.org/imf#"),
         "pav": Namespace("http://purl.org/pav/"),
+        "foaf": FOAF._NS,
     }
 
 
