@@ -5,18 +5,18 @@ from typing import ClassVar, cast
 from cognite.client import data_modeling as dm
 
 from cognite.neat._client import NeatClient
+from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues import IssueList, NeatError, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
+    CDFMissingClientError,
     PropertyDefinitionDuplicatedError,
+    PropertyMappingDuplicatedError,
+    PropertyNotFoundError,
     ResourceDuplicatedError,
     ResourceNotDefinedError,
     ResourceNotFoundError,
-)
-from cognite.neat._issues.errors._properties import (
-    PropertyMappingDuplicatedError,
-    PropertyNotFoundError,
     ReversedConnectionNotFeasibleError,
 )
 from cognite.neat._issues.warnings import (
@@ -50,23 +50,63 @@ class DMSValidation:
     changeable_view_attributes: ClassVar[set[str]] = {"filter"}
 
     def __init__(self, rules: DMSRules, client: NeatClient | None = None) -> None:
-        self.rules = rules
-        self.client = client
-        self.metadata = rules.metadata
-        self.properties = rules.properties
-        self.containers = rules.containers
-        self.views = rules.views
-        self.issue_list = IssueList()
+        self._rules = rules
+        self._client = client
+        self._metadata = rules.metadata
+        self._properties = rules.properties
+        self._containers = rules.containers
+        self._views = rules.views
+        self._issue_list = IssueList()
+        self._probe = DMSAnalysis(rules)
+        self._all_properties_by_ids: dict[tuple[ViewEntity, str], DMSProperty] = {}
 
-        self.probe = DMSAnalysis(rules)
+    def imported_views_and_containers_ids(
+        self, include_views_with_no_properties: bool = True
+    ) -> tuple[set[ViewEntity], set[ContainerEntity]]:
+        existing_views = {view.view for view in self._views}
+        imported_views: set[ViewEntity] = set()
+        for view in self._views:
+            for parent in view.implements or []:
+                if parent not in existing_views:
+                    imported_views.add(parent)
+        existing_containers = {container.container for container in self._containers or []}
+        imported_containers: set[ContainerEntity] = set()
+        view_with_properties: set[ViewEntity] = set()
+        for prop in self._properties:
+            if prop.container and prop.container not in existing_containers:
+                imported_containers.add(prop.container)
+            if prop.view not in existing_views:
+                imported_views.add(prop.view)
+            view_with_properties.add(prop.view)
 
-        self.all_properties_by_ids: dict[tuple[ViewEntity, str], DMSProperty] = {}
+        if include_views_with_no_properties:
+            extra_views = existing_views - view_with_properties
+            imported_views.update({view for view in extra_views})
+
+        return imported_views, imported_containers
 
     def validate(self) -> NeatIssueList:
+        imported_views, imported_containers = self.imported_views_and_containers_ids()
+        if (imported_views or imported_containers) and self._client is None:
+            raise CDFMissingClientError(
+                f"{self._rules.metadata.as_data_model_id()} has imported views and/or container."
+            )
+        referenced_views = ViewApplyDict()
+        referenced_containers = ContainerApplyDict()
+        if self._client:
+            retrieved_view = self._client.loaders.views.retrieve(
+                list(imported_views), include_connections=True, include_ancestor=True
+            )
+            referenced_views.update({view.as_id(): view for view in retrieved_view})
+            retrieved_containers = self._client.loaders.containers.retrieve(
+                list(imported_containers), include_connected=True
+            )
+            referenced_containers.update({container.as_id(): container for container in retrieved_containers})
+
         # Todo Need to lookup parent views.
-        self.all_properties_by_ids = {
+        self._all_properties_by_ids = {
             (prop_.view, prop_.view_property): prop_
-            for properties in self.probe.classes_with_properties(True, True).values()
+            for properties in self._probe.classes_with_properties(True, True).values()
             for prop_ in properties
         }
 
@@ -76,15 +116,15 @@ class DMSValidation:
         self._validate_reverse_connections()
         self._referenced_views_and_containers_are_existing_and_proper_size()
 
-        dms_schema = self.rules.as_schema()
+        dms_schema = self._rules.as_schema()
         self._validate_schema(dms_schema)
 
         self._validate_referenced_container_limits(dms_schema)
-        return self.issue_list
+        return self._issue_list
 
     def _consistent_container_properties(self) -> None:
         container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, DMSProperty]]] = defaultdict(list)
-        for prop_no, prop in enumerate(self.properties):
+        for prop_no, prop in enumerate(self._properties):
             if prop.container and prop.container_property:
                 container_properties_by_id[(prop.container, prop.container_property)].append((prop_no, prop))
 
@@ -175,14 +215,14 @@ class DMSValidation:
                     )
                 )
 
-        self.issue_list.extend(errors)
+        self._issue_list.extend(errors)
 
     def _referenced_views_and_containers_are_existing_and_proper_size(self) -> None:
-        defined_views = {view.view.as_id() for view in self.views}
+        defined_views = {view.view.as_id() for view in self._views}
 
         property_count_by_view: dict[dm.ViewId, int] = defaultdict(int)
         errors: list[NeatIssue] = []
-        for prop_no, prop in enumerate(self.properties):
+        for prop_no, prop in enumerate(self._properties):
             view_id = prop.view.as_id()
             if view_id not in defined_views:
                 errors.append(
@@ -202,11 +242,11 @@ class DMSValidation:
             if count > DMS_CONTAINER_PROPERTY_SIZE_LIMIT:
                 errors.append(ViewPropertyLimitWarning(view_id, count))
 
-        self.issue_list.extend(errors)
+        self._issue_list.extend(errors)
 
     def _get_mapped_container_from_view(self, view_id: dm.ViewId) -> set[dm.ContainerId]:
         # index all views, including ones from reference
-        view_by_id = self.views.copy()
+        view_by_id = self._views.copy()
         if view_id not in view_by_id:
             raise ValueError(f"View {view_id} not found")
 
@@ -229,7 +269,7 @@ class DMSValidation:
             mapped_containers = self._get_mapped_container_from_view(view_id)
 
             if mapped_containers and len(mapped_containers) > 10:
-                self.issue_list.append(
+                self._issue_list.append(
                     NotSupportedViewContainerLimitWarning(
                         view_id,
                         len(mapped_containers),
@@ -237,7 +277,7 @@ class DMSValidation:
                 )
 
             if view.filter and isinstance(view.filter, dm.filters.HasData) and len(view.filter.dump()["hasData"]) > 10:
-                self.issue_list.append(
+                self._issue_list.append(
                     NotSupportedHasDataFilterLimitWarning(
                         view_id,
                         len(view.filter.dump()["hasData"]),
@@ -245,18 +285,18 @@ class DMSValidation:
                 )
 
     def _validate_raw_filter(self) -> None:
-        for view in self.views:
+        for view in self._views:
             if view.filter_ and isinstance(view.filter_, RawFilter):
-                self.issue_list.append(
+                self._issue_list.append(
                     NotNeatSupportedFilterWarning(view.view.as_id()),
                 )
 
     def _validate_value_type_existence(self) -> None:
-        views = {prop_.view for prop_ in self.properties}.union({view_.view for view_ in self.views})
+        views = {prop_.view for prop_ in self._properties}.union({view_.view for view_ in self._views})
 
-        for prop_ in self.properties:
+        for prop_ in self._properties:
             if isinstance(prop_.value_type, ViewEntity) and prop_.value_type not in views:
-                self.issue_list.append(
+                self._issue_list.append(
                     UndefinedViewWarning(
                         str(prop_.view),
                         str(prop_.value_type),
@@ -266,15 +306,15 @@ class DMSValidation:
 
     def _validate_reverse_connections(self) -> None:
         # do not check for reverse connections in Cognite models
-        if self.metadata.as_data_model_id() in COGNITE_MODELS:
+        if self._metadata.as_data_model_id() in COGNITE_MODELS:
             return None
 
-        for id_, prop_ in self.all_properties_by_ids.items():
+        for id_, prop_ in self._all_properties_by_ids.items():
             if not isinstance(prop_.connection, ReverseConnectionEntity):
                 continue
             source_id = prop_.value_type, prop_.connection.property_
-            if source_id not in self.all_properties_by_ids:
-                self.issue_list.append(
+            if source_id not in self._all_properties_by_ids:
+                self._issue_list.append(
                     ReversedConnectionNotFeasibleError(
                         id_,
                         "reversed connection",
@@ -286,10 +326,10 @@ class DMSValidation:
                 )
 
             elif (
-                source_id in self.all_properties_by_ids
-                and self.all_properties_by_ids[source_id].value_type != prop_.view
+                source_id in self._all_properties_by_ids
+                and self._all_properties_by_ids[source_id].value_type != prop_.view
             ):
-                self.issue_list.append(
+                self._issue_list.append(
                     ReversedConnectionNotFeasibleError(
                         id_,
                         "view property",
