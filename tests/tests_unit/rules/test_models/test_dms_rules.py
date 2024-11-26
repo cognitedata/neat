@@ -908,15 +908,11 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             containers=[
-                DMSInputContainer(
-                    container="Asset",
-                ),
+                DMSInputContainer(container="Asset"),
                 DMSInputContainer(container="Plant", constraint="Asset"),
             ],
             views=[
-                DMSInputView(
-                    view="Asset",
-                ),
+                DMSInputView(view="Asset"),
                 DMSInputView(view="Plant", implements="Asset"),
                 DMSInputView(view="Generator", implements="Asset"),
                 DMSInputView(view="Reservoir", implements="Asset"),
@@ -956,8 +952,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             views=[
-                DMSInputView(view="WindTurbine"),
                 DMSInputView(view="sp_core:Asset"),
+            ],
+            containers=[
+                DMSInputContainer(container="GeneratingUnit"),
             ],
         ),
         [
@@ -1002,8 +1000,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             views=[
-                DMSInputView(view="WindTurbine"),
                 DMSInputView(view="sp_core:Asset"),
+            ],
+            containers=[
+                DMSInputContainer(container="GeneratingUnit"),
             ],
         ),
         [
@@ -1047,8 +1047,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             views=[
-                DMSInputView(view="WindTurbine"),
                 DMSInputView(view="sp_core:Asset"),
+            ],
+            containers=[
+                DMSInputContainer(container="GeneratingUnit"),
             ],
         ),
         [
@@ -1092,8 +1094,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             views=[
-                DMSInputView(view="WindTurbine"),
                 DMSInputView(view="sp_core:Asset"),
+            ],
+            containers=[
+                DMSInputContainer(container="GeneratingUnit"),
             ],
         ),
         [
@@ -1137,8 +1141,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             views=[
-                DMSInputView(view="WindTurbine"),
                 DMSInputView(view="sp_core:Asset"),
+            ],
+            containers=[
+                DMSInputContainer(container="GeneratingUnit"),
             ],
         ),
         [
@@ -1427,7 +1433,6 @@ class TestDMSRules:
             ],
             views=[
                 DMSInputView(view="CogniteVisualizable"),
-                DMSInputView(view="CogniteAsset", implements="CogniteVisualizable"),
                 DMSInputView(view="Cognite3DObject"),
             ],
             containers=[

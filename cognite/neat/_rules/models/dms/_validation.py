@@ -86,7 +86,9 @@ class DMSValidation:
         return imported_views, imported_containers
 
     def validate(self) -> NeatIssueList:
-        imported_views, imported_containers = self.imported_views_and_containers_ids()
+        imported_views, imported_containers = self.imported_views_and_containers_ids(
+            include_views_with_no_properties=False
+        )
         if (imported_views or imported_containers) and self._client is None:
             raise CDFMissingClientError(
                 f"{self._rules.metadata.as_data_model_id()} has imported views and/or container: "
