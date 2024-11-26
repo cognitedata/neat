@@ -1,4 +1,3 @@
-import warnings
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -7,7 +6,6 @@ from cognite.client import data_modeling as dm
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._issues.warnings import ResourceNotFoundWarning
 
 if TYPE_CHECKING:
     from cognite.neat._client._api_client import NeatClient
@@ -79,11 +77,11 @@ class SchemaAPI:
         Returns:
             DMSSchema: The schema created from the data model.
         """
-        views = dm.ViewList(data_model.views)
+        data_model_views = dm.ViewList(data_model.views)
         data_model_write = data_model.as_write()
-        data_model_write.views = list(views.as_ids())
+        data_model_write.views = list(data_model_views.as_ids())
 
-        container_ids = views.referenced_containers()
+        container_ids = data_model_views.referenced_containers()
         containers = self._client.loaders.containers.retrieve(list(container_ids), include_connected=True)
 
         space_ids = [data_model.space]
@@ -92,24 +90,16 @@ class SchemaAPI:
             raise NeatValueError(f"Space(s) {space_read} not found")
         space_write = space_read.as_write()
 
-        existing_view_ids = set(views.as_ids())
-        views = self._client.loaders.views.retrieve(
+        existing_view_ids = set(data_model_views.as_ids())
+        views_with_referenced = self._client.loaders.views.retrieve(
             list(existing_view_ids), include_connected=True, include_ancestor=True
         )
-
-        missing = existing_view_ids - set(views.as_ids())
-        if missing:
-            for view_id in missing:
-                warnings.warn(
-                    ResourceNotFoundWarning(view_id, "view", data_model_write.as_id(), "data model"),
-                    stacklevel=2,
-                )
 
         # Converting views from read to write format requires to account for parents (implements)
         # as the read format contains all properties from all parents, while the write formate should not contain
         # properties from any parents.
         # The ViewLoader as_write method looks up parents and remove properties from them.
-        view_write = ViewApplyDict([self._client.loaders.views.as_write(view) for view in views])
+        view_write = ViewApplyDict([self._client.loaders.views.as_write(view) for view in views_with_referenced])
 
         container_write = ContainerApplyDict(containers.as_write())
         user_space = data_model.space

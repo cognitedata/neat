@@ -90,14 +90,14 @@ class HasDataFilterOnViewWithReferencesWarning(UserModelingWarning):
 
 @dataclass(unsafe_hash=True)
 class ContainerPropertyLimitWarning(UserModelingWarning):
-    """The number of properties in the {view_id} view is {count} which
+    """The number of properties in the {container_id} view is {count} which
     is more than the API limit {limit} properties.
     This can lead to performance issues.
     Reduce the number of properties in the view."""
 
     fix = "Reduce the number of properties in the view"
 
-    view_id: ContainerId
+    container_id: ContainerId
     count: int
     limit: int = DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 
