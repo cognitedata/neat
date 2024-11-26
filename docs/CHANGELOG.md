@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Changed
+- Remove "make_compliant" from OWL and IMF importers
+- Information rules post validation is now solely raising warnings
+
 ## [0.99.0] - 26-11-**2024**
 ### Changed
 - We are now using RDF datasets (namedgraphs) instead of simple graphs, enabling support for multi space
