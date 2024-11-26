@@ -13,6 +13,13 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
+from cognite.neat._client.data_classes.data_modeling import (
+    ContainerApplyDict,
+    NodeApplyDict,
+    SpaceApplyDict,
+    ViewApplyDict,
+)
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues.errors import NeatTypeError, ResourceNotFoundError
 from cognite.neat._issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
 from cognite.neat._issues.warnings.user_modeling import (
@@ -33,10 +40,8 @@ from cognite.neat._rules.models.entities import (
     UnitEntity,
     ViewEntity,
 )
-from cognite.neat._utils.cdf.data_classes import ContainerApplyDict, NodeApplyDict, SpaceApplyDict, ViewApplyDict
 
 from ._rules import DMSEnum, DMSMetadata, DMSProperty, DMSRules, DMSView
-from ._schema import DMSSchema, PipelineSchema
 
 
 class _DMSExporter:
@@ -51,13 +56,7 @@ class _DMSExporter:
         instance_space (str): The space to use for the instance. Defaults to None,`Rules.metadata.space` will be used
     """
 
-    def __init__(
-        self,
-        rules: DMSRules,
-        include_pipeline: bool = False,
-        instance_space: str | None = None,
-    ):
-        self.include_pipeline = include_pipeline
+    def __init__(self, rules: DMSRules, instance_space: str | None = None):
         self.instance_space = instance_space
         self.rules = rules
         self._ref_schema = None
@@ -79,9 +78,11 @@ class _DMSExporter:
             view_properties_by_id, rules.views
         )
 
-        views, view_node_type_filters = self._create_views_with_node_types(
-            view_properties_by_id, view_properties_with_ancestors_by_id
-        )
+        views = self._create_views_with_node_types(view_properties_by_id, view_properties_with_ancestors_by_id)
+        view_node_type_filters: set[dm.NodeId] = set()
+        for dms_view in rules.views:
+            if isinstance(dms_view.filter_, NodeTypeFilter):
+                view_node_type_filters.update(node.as_id() for node in dms_view.filter_.inner or [])
         if rules.nodes:
             node_types = NodeApplyDict(
                 [node.as_node() for node in rules.nodes]
@@ -109,8 +110,6 @@ class _DMSExporter:
             containers=containers,
             node_types=node_types,
         )
-        if self.include_pipeline:
-            return PipelineSchema.from_dms(output, self.instance_space)
 
         if self._ref_schema:
             output.reference = self._ref_schema
@@ -141,7 +140,7 @@ class _DMSExporter:
         self,
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
         view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
-    ) -> tuple[ViewApplyDict, set[dm.NodeId]]:
+    ) -> ViewApplyDict:
         input_views = list(self.rules.views)
 
         views = ViewApplyDict([dms_view.as_view() for dms_view in input_views])
@@ -155,11 +154,7 @@ class _DMSExporter:
                 if view_property is not None:
                     view.properties[prop.view_property] = view_property
 
-        unique_node_types: set[dm.NodeId] = set()
-        for view in views.values():
-            unique_node_types.add(dm.NodeId(space=view.space, external_id=view.external_id))
-
-        return views, unique_node_types
+        return views
 
     @classmethod
     def _create_edge_type_from_prop(cls, prop: DMSProperty) -> dm.DirectRelationReference:

@@ -3,7 +3,7 @@ import sys
 from abc import ABC, abstractmethod
 from functools import total_ordering
 from types import UnionType
-from typing import Any, ClassVar, Generic, Literal, TypeVar, Union, cast, get_args, get_origin
+from typing import Any, ClassVar, Generic, Literal, TypeVar, Union, cast, get_args, get_origin, overload
 
 from cognite.client.data_classes.data_modeling import DirectRelationReference
 from cognite.client.data_classes.data_modeling.data_types import UnitReference
@@ -22,6 +22,7 @@ from pydantic import (
     model_validator,
 )
 
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._utils.text import replace_non_alphanumeric_with_underscore
 
 if sys.version_info >= (3, 11):
@@ -56,14 +57,29 @@ class Entity(BaseModel, extra="ignore"):
     suffix: str
 
     @classmethod
-    def load(cls: "type[T_Entity]", data: Any, **defaults) -> "T_Entity | UnknownEntity":
+    @overload
+    def load(cls: "type[T_Entity]", data: Any, strict: Literal[True], **defaults) -> "T_Entity": ...
+
+    @classmethod
+    @overload
+    def load(
+        cls: "type[T_Entity]", data: Any, strict: Literal[False] = False, **defaults
+    ) -> "T_Entity | UnknownEntity": ...
+
+    @classmethod
+    def load(cls: "type[T_Entity]", data: Any, strict: bool = False, **defaults) -> "T_Entity | UnknownEntity":
         if isinstance(data, cls):
             return data
         elif isinstance(data, str) and data == str(Unknown):
+            if strict:
+                raise NeatValueError(f"Failed to load entity {data!s}")
             return UnknownEntity(prefix=Undefined, suffix=Unknown)
         if defaults and isinstance(defaults, dict):
             # This is a trick to pass in default values
-            return cls.model_validate({_PARSE: data, "defaults": defaults})
+            try:
+                return cls.model_validate({_PARSE: data, "defaults": defaults})
+            except ValueError:
+                raise
         else:
             return cls.model_validate(data)
 
@@ -291,9 +307,21 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
             defaults["prefix"] = defaults.pop("space")
         return super().dump(**defaults)
 
+    @classmethod  # type: ignore[override]
+    @overload
+    def load(cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults) -> "T_DMSEntity": ...
+
     @classmethod
-    def load(cls: "type[T_DMSEntity]", data: Any, **defaults) -> "T_DMSEntity | DMSUnknownEntity":  # type: ignore[override]
+    @overload
+    def load(
+        cls: "type[T_DMSEntity]", data: Any, strict: Literal[False] = False, **defaults
+    ) -> "T_DMSEntity | DMSUnknownEntity": ...
+
+    @classmethod
+    def load(cls: "type[T_DMSEntity]", data: Any, strict: bool = False, **defaults) -> "T_DMSEntity | DMSUnknownEntity":  # type: ignore[override]
         if isinstance(data, str) and data == str(Unknown):
+            if strict:
+                raise NeatValueError(f"Failed to load entity {data!s}")
             return DMSUnknownEntity.from_id(None)
         return cast(T_DMSEntity, super().load(data, **defaults))
 

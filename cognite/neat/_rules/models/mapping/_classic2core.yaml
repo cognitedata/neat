@@ -1,0 +1,339 @@
+enum:
+- collection: timeseriesType
+  description: Time series with double floating point data points.
+  name: numeric
+  value: numeric
+- collection: timeseriesType
+  description: Time series with string data points.
+  name: string
+  value: string
+metadata:
+  created: '2024-08-29T13:49:56.696000'
+  creator: Anders Albert,Nikola Vasiljevic,Thorkild Stray
+  description: Mapping from Classic to Core
+  external_id: ClassicCoreMapping
+  name: data_product data model
+  role: DMS Architect
+  space: mapping
+  updated: '2024-08-29T13:49:56.696000'
+  version: v1.0
+properties:
+- container: cdf_cdm:CogniteDescribable
+  container_property: description
+  description: Description of the instance
+  immutable: false
+  is_list: false
+  nullable: true
+  value_type: text
+  view: ClassicAsset
+  view_property: description
+- container: cdf_cdm:CogniteDescribable
+  container_property: tags
+  description: Text based labels for generic use, limited to 1000
+  immutable: false
+  is_list: true
+  nullable: true
+  value_type: text
+  view: ClassicAsset
+  view_property: labels
+- container: cdf_cdm:CogniteDescribable
+  container_property: name
+  description: Name of the instance
+  immutable: false
+  index: name
+  is_list: false
+  nullable: true
+  value_type: text
+  view: ClassicAsset
+  view_property: name
+- connection: direct
+  container: cdf_cdm:CogniteAsset
+  container_property: assetHierarchy_parent
+  description: The parent of the asset.
+  immutable: false
+  is_list: false
+  name: Parent
+  nullable: true
+  value_type: ClassicAsset
+  view: ClassicAsset
+  view_property: parentId
+- connection: direct
+  container: cdf_cdm:CogniteSourceable
+  container_property: source
+  description: Direct relation to a source system
+  immutable: false
+  index: source
+  is_list: false
+  nullable: true
+  value_type: cdf_cdm:SourceSystem(version=v1)
+  view: ClassicAsset
+  view_property: source
+- container: cdf_cdm:CogniteDescribable
+  container_property: aliases
+  description: Alternative names for the node
+  immutable: false
+  is_list: true
+  nullable: true
+  value_type: text
+  view: ClassicEvent
+  view_property: aliases
+- connection: direct
+  container: cdf_cdm:CogniteActivity
+  container_property: assets
+  description: A list of assets the activity is related to.
+  immutable: false
+  is_list: true
+  name: Assets
+  nullable: true
+  value_type: ClassicAsset
+  view: ClassicEvent
+  view_property: assetIds
+- container: cdf_cdm:CogniteDescribable
+  container_property: description
+  description: Description of the instance
+  immutable: false
+  is_list: false
+  nullable: true
+  value_type: text
+  view: ClassicEvent
+  view_property: description
+- container: cdf_cdm:CogniteSchedulable
+  container_property: endTime
+  description: The actual end time of an activity (or similar that extends this)
+  immutable: false
+  index: endTime
+  is_list: false
+  nullable: true
+  value_type: timestamp
+  view: ClassicEvent
+  view_property: endTime
+- container: cdf_cdm:CogniteDescribable
+  container_property: tags
+  description: Text based labels for generic use, limited to 1000
+  immutable: false
+  is_list: true
+  nullable: true
+  value_type: text
+  view: ClassicEvent
+  view_property: labels
+- connection: direct
+  container: cdf_cdm:CogniteSourceable
+  container_property: source
+  description: Direct relation to a source system
+  immutable: false
+  index: source
+  is_list: false
+  nullable: true
+  value_type: cdf_cdm:SourceSystem(version=v1)
+  view: ClassicEvent
+  view_property: source
+- container: cdf_cdm:CogniteSchedulable
+  container_property: startTime
+  description: The actual start time of an activity (or similar that extends this)
+  immutable: false
+  index: startTime
+  is_list: false
+  nullable: true
+  value_type: timestamp
+  view: ClassicEvent
+  view_property: startTime
+- connection: direct
+  container: cdf_cdm:CogniteFile
+  container_property: assets
+  description: A list of assets this file is related to.
+  immutable: false
+  is_list: true
+  name: Assets
+  nullable: true
+  value_type: ClassicAsset
+  view: ClassicFile
+  view_property: assetIds
+- container: cdf_cdm:CogniteFile
+  container_property: directory
+  description: Contains the path elements from the source (if the source system has
+    a file system hierarchy or similar.)
+  immutable: false
+  is_list: false
+  name: Directory
+  nullable: true
+  value_type: text
+  view: ClassicFile
+  view_property: directory
+- container: cdf_cdm:CogniteDescribable
+  container_property: tags
+  description: Text based labels for generic use, limited to 1000
+  immutable: false
+  is_list: true
+  nullable: true
+  value_type: text
+  view: ClassicFile
+  view_property: labels
+- container: cdf_cdm:CogniteFile
+  container_property: mimeType
+  description: The MIME type of the file.
+  immutable: false
+  is_list: false
+  name: MIME type
+  nullable: true
+  value_type: text
+  view: ClassicFile
+  view_property: mimeType
+- container: cdf_cdm:CogniteDescribable
+  container_property: name
+  description: Name of the instance
+  immutable: false
+  index: name
+  is_list: false
+  nullable: true
+  value_type: text
+  view: ClassicFile
+  view_property: name
+- connection: direct
+  container: cdf_cdm:CogniteSourceable
+  container_property: source
+  description: Direct relation to a source system
+  immutable: false
+  index: source
+  is_list: false
+  nullable: true
+  value_type: cdf_cdm:SourceSystem(version=v1)
+  view: ClassicFile
+  view_property: source
+- container: cdf_cdm:CogniteSourceable
+  container_property: sourceCreatedTime
+  description: When the instance was created in source system (if available)
+  immutable: false
+  index: sourceCreatedTime
+  is_list: false
+  nullable: true
+  value_type: timestamp
+  view: ClassicFile
+  view_property: sourceCreatedTime
+- container: cdf_cdm:CogniteSourceable
+  container_property: sourceUpdatedTime
+  description: When the instance was last updated in the source system (if available)
+  immutable: false
+  index: sourceUpdatedTime
+  is_list: false
+  nullable: true
+  value_type: timestamp
+  view: ClassicFile
+  view_property: sourceModifiedTime
+- connection: direct
+  container: cdf_cdm:CogniteTimeSeries
+  container_property: assets
+  description: A list of assets the time series is related to.
+  immutable: false
+  is_list: true
+  name: Assets
+  nullable: true
+  value_type: ClassicAsset
+  view: ClassicTimeSeries
+  view_property: assetId
+- container: cdf_cdm:CogniteDescribable
+  container_property: description
+  description: Description of the instance
+  immutable: false
+  is_list: false
+  nullable: true
+  value_type: text
+  view: ClassicTimeSeries
+  view_property: description
+- container: cdf_cdm:CogniteTimeSeries
+  container_property: isStep
+  default: 0
+  description: Specifies whether the time series is a step time series or not.
+  immutable: false
+  is_list: false
+  name: Is step
+  nullable: false
+  value_type: boolean
+  view: ClassicTimeSeries
+  view_property: isStep
+- container: cdf_cdm:CogniteTimeSeries
+  container_property: type
+  description: Specifies the data type of the data points.
+  immutable: true
+  is_list: false
+  name: Type
+  nullable: false
+  value_type: enum(collection=timeseriesType)
+  view: ClassicTimeSeries
+  view_property: isString
+- container: cdf_cdm:CogniteDescribable
+  container_property: aliases
+  description: Alternative names for the node
+  immutable: false
+  is_list: true
+  nullable: true
+  value_type: text
+  view: ClassicTimeSeries
+  view_property: legacyName
+- container: cdf_cdm:CogniteDescribable
+  container_property: name
+  description: Name of the instance
+  immutable: false
+  index: name
+  is_list: false
+  nullable: true
+  value_type: text
+  view: ClassicTimeSeries
+  view_property: name
+- container: cdf_cdm:CogniteDescribable
+  container_property: tags
+  description: Text based labels for generic use, limited to 1000
+  immutable: false
+  is_list: true
+  nullable: true
+  value_type: text
+  view: ClassicTimeSeries
+  view_property: securityCategories
+- container: cdf_cdm:CogniteTimeSeries
+  container_property: sourceUnit
+  description: The unit specified in the source system.
+  immutable: false
+  is_list: false
+  name: Source unit
+  nullable: true
+  value_type: text
+  view: ClassicTimeSeries
+  view_property: unit
+- connection: direct
+  container: cdf_cdm:CogniteTimeSeries
+  container_property: unit
+  description: The unit of the time series.
+  immutable: false
+  is_list: false
+  name: Unit
+  nullable: true
+  value_type: Unit
+  view: ClassicTimeSeries
+  view_property: unitExternalId
+views:
+- description: The CogniteSourceSystem core concept is used to standardize the way
+    source system is stored.
+  implements: cdf_cdm:CogniteDescribable(version=v1)
+  in_model: true
+  view: cdf_cdm:CogniteSourceSystem(version=v1)
+- description: Assets represent systems that support industrial functions or processes.
+    Assets are often called 'functional location'.
+  implements: cdf_cdm:CogniteAsset(version=v1)
+  in_model: true
+  name: Asset
+  view: ClassicAsset
+- description: Represents activities. Activities typically happen over a period and
+    have a start and end time.
+  implements: cdf_cdm:CogniteActivity(version=v1)
+  in_model: true
+  name: Activity
+  view: ClassicEvent
+- description: Represents files.
+  implements: cdf_cdm:CogniteFile(version=v1)
+  in_model: true
+  name: File
+  view: ClassicFile
+- description: Represents a series of data points in time order.
+  implements: cdf_cdm:CogniteTimeSeries(version=v1)
+  in_model: true
+  name: Time series
+  view: ClassicTimeSeries

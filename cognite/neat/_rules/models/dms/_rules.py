@@ -8,18 +8,23 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from rdflib import URIRef
 
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._issues import MultiValueError
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import (
     PrincipleMatchingSpaceAndVersionWarning,
 )
 from cognite.neat._rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
+    ContainerProperty,
     DataModelAspect,
     RoleTypes,
     SheetList,
     SheetRow,
+    ViewProperty,
+    ViewRef,
 )
 from cognite.neat._rules.models._types import (
     ClassEntityType,
@@ -43,8 +48,6 @@ from cognite.neat._rules.models.entities import (
     ViewEntity,
     ViewEntityList,
 )
-
-from ._schema import DMSSchema
 
 _DEFAULT_VERSION = "1"
 
@@ -180,6 +183,14 @@ class DMSProperty(SheetRow):
             return value.dump(space=metadata.space, version=metadata.version, type=default_type)
         return str(value)
 
+    def as_container_reference(self) -> ContainerProperty:
+        if self.container is None or self.container_property is None:
+            raise NeatValueError("Accessing container reference without container and container property set")
+        return ContainerProperty(container=self.container, property_=self.container_property)
+
+    def as_view_reference(self) -> ViewProperty:
+        return ViewProperty(view=self.view, property_=self.view_property)
+
 
 class DMSContainer(SheetRow):
     container: ContainerEntityType = Field(alias="Container")
@@ -272,9 +283,13 @@ class DMSView(SheetRow):
             version=view_id.version or _DEFAULT_VERSION,
             name=self.name or None,
             description=self.description,
+            filter=None if self.filter_ is None else self.filter_.as_dms_filter(),
             implements=implements,
             properties={},
         )
+
+    def as_view_reference(self) -> ViewRef:
+        return ViewRef(view=self.view)
 
 
 class DMSNode(SheetRow):
@@ -324,6 +339,9 @@ class DMSRules(BaseRules):
     containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
     enum: SheetList[DMSEnum] | None = Field(None, alias="Enum")
     nodes: SheetList[DMSNode] | None = Field(None, alias="Nodes")
+    # This is a hack to allow the post_validation to be turned off when needed
+    # Will likely be moved completely out of the rules in the future
+    post_validate: bool = Field(default=True, exclude=True, repr=False)
 
     @field_validator("views")
     def matching_version_and_space(cls, value: SheetList[DMSView], info: ValidationInfo) -> SheetList[DMSView]:
@@ -360,6 +378,8 @@ class DMSRules(BaseRules):
     def post_validation(self) -> "DMSRules":
         from ._validation import DMSPostValidation
 
+        if not self.post_validate:
+            return self
         issue_list = DMSPostValidation(self).validate()
         if issue_list.warnings:
             issue_list.trigger_warnings()
@@ -370,7 +390,7 @@ class DMSRules(BaseRules):
     def as_schema(self, include_pipeline: bool = False, instance_space: str | None = None) -> DMSSchema:
         from ._exporter import _DMSExporter
 
-        return _DMSExporter(self, include_pipeline, instance_space).to_schema()
+        return _DMSExporter(self, instance_space).to_schema()
 
     def _repr_html_(self) -> str:
         summary = {
@@ -386,3 +406,28 @@ class DMSRules(BaseRules):
         }
 
         return pd.DataFrame([summary]).T.rename(columns={0: ""})._repr_html_()  # type: ignore
+
+    def imported_views_and_containers_ids(
+        self, include_model_views_with_no_properties: bool = True
+    ) -> tuple[set[dm.ViewId], set[dm.ContainerId]]:
+        existing_views = {view.view for view in self.views}
+        imported_views: set[dm.ViewId] = set()
+        for view in self.views:
+            for parent in view.implements or []:
+                if parent not in existing_views:
+                    imported_views.add(parent.as_id())
+        existing_containers = {container.container for container in self.containers or []}
+        imported_containers: set[dm.ContainerId] = set()
+        view_with_properties: set[ViewEntity] = set()
+        for prop in self.properties:
+            if prop.container and prop.container not in existing_containers:
+                imported_containers.add(prop.container.as_id())
+            if prop.view not in existing_views:
+                imported_views.add(prop.view.as_id())
+            view_with_properties.add(prop.view)
+
+        if include_model_views_with_no_properties:
+            extra_views = existing_views - view_with_properties
+            imported_views.update({view.as_id() for view in extra_views})
+
+        return imported_views, imported_containers

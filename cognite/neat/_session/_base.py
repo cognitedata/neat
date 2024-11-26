@@ -5,11 +5,13 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
 from cognite.neat import _version
+from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules, VerifiedRules
-from cognite.neat._rules.models import DMSRules
+from cognite.neat._rules.importers import DMSImporter
+from cognite.neat._rules.models import DMSInputRules, DMSRules, SheetList
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
@@ -18,10 +20,11 @@ from cognite.neat._store._provenance import (
     INSTANCES_ENTITY,
     Change,
 )
-from cognite.neat._utils.auth import _CLIENT_NAME
 
 from ._collector import _COLLECTOR, Collector
+from ._drop import DropAPI
 from ._inspect import InspectAPI
+from ._mapping import MappingAPI
 from ._prepare import PrepareAPI
 from ._read import ReadAPI
 from ._set import SetAPI
@@ -41,19 +44,19 @@ class NeatSession:
         verbose: bool = True,
         load_engine: Literal["newest", "cache", "skip"] = "cache",
     ) -> None:
-        self._client = client
+        self._client = NeatClient(client) if client else None
         self._verbose = verbose
         self._state = SessionState(store_type=storage)
-        self.read = ReadAPI(self._state, client, verbose)
-        self.to = ToAPI(self._state, client, verbose)
-        self.prepare = PrepareAPI(self._state, verbose)
+        self.read = ReadAPI(self._state, self._client, verbose)
+        self.to = ToAPI(self._state, self._client, verbose)
+        self.prepare = PrepareAPI(self._client, self._state, verbose)
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
+        self.mapping = MappingAPI(self._state)
+        self.drop = DropAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()
-        if self._client is not None and self._client._config is not None:
-            self._client._config.client_name = _CLIENT_NAME
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
             print(f"Neat Engine {engine_version} loaded.")
 
@@ -63,6 +66,28 @@ class NeatSession:
 
     def verify(self) -> IssueList:
         source_id, last_unverified_rule = self._state.data_model.last_unverified_rule
+
+        reference_rules: DMSInputRules | None = None
+        if isinstance(last_unverified_rule.rules, DMSInputRules):
+            dms_rules = last_unverified_rule.rules
+            views_ids, containers_ids = dms_rules.imported_views_and_containers_ids()
+            if views_ids or containers_ids:
+                if self._client is None:
+                    raise NeatSessionError(
+                        "No client provided. You are referencing unknown views and containers in your data model, "
+                        "NEAT needs a client to lookup the definitions. "
+                        "Please set the client in the session, NeatSession(client=client)."
+                    )
+                schema = self._client.schema.retrieve(list(views_ids), list(containers_ids))
+
+                importer = DMSImporter(schema)
+                reference_rules = importer.to_rules().rules
+
+                if reference_rules is not None:
+                    dms_rules.views.extend(reference_rules.views)
+                    if dms_rules.containers:
+                        dms_rules.containers.extend(reference_rules.containers or [])
+
         transformer = VerifyAnyRules("continue")
         start = datetime.now(timezone.utc)
         output = transformer.try_transform(last_unverified_rule)
@@ -78,6 +103,22 @@ class NeatSession:
                 self._state.data_model.provenance.source_entity(source_id)
                 or self._state.data_model.provenance.target_entity(source_id),
             )
+            if reference_rules is not None and isinstance(output.rules, DMSRules):
+                # Remove the referenced views and containers from the rules
+                ref_view_ids = set(reference_rules.as_view_entities())
+                if ref_view_ids:
+                    output.rules.views = SheetList(
+                        [view for view in output.rules.views if view.view not in ref_view_ids]
+                    )
+                ref_container_ids = reference_rules.as_container_entities()
+                if output.rules.containers and ref_container_ids:
+                    output.rules.containers = SheetList(
+                        [
+                            container
+                            for container in output.rules.containers
+                            if container.container not in ref_container_ids
+                        ]
+                    )
 
             self._state.data_model.write(output.rules, change)
 

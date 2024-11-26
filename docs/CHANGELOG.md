@@ -15,18 +15,40 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.99.0] - 26-11-**2024**
+### Changed
+- We are now using RDF datasets (namedgraphs) instead of simple graphs, enabling support for multi space
+  resolution of nodes and edges in CDF.
+
+### Added
+- Support for dropping instances of a given type with `neat.drop.instances(...)`
+- Helper methods `neat.prepare.instances.relationships_as_connection` and `neat.prepare.data_model.prefix` added
+- The `neat.verify(...)` method now looks in `CDF` for the data model if it is not found in the `NeatSession`.
+
+### Fixed
+- Running `neat.to.cdf.data_model(..., dry_run=True)` now counts created and deleted items correctly.
+- Bug in inference of multi-value types
+- Setting `filter` for a `view` in `DMS` sheet is no longer ignored.
+
+### Improved
+- Bump dep on pyoxi to 0.4.3 and oxrdflib to 0.4.0
+- Increase speed in loading RDF files in oxistore
+
+### Removed
+- [BREAKING] The `neat.read.cdf.classic.asset(...)` is removed. Use the `neat.read.cdf.classic.graph(...)` instead.
+
 ## [0.98.0] - 21-11-**2024**
 ### Added
 - Support for reading `YAML`
 - Support for writing `YAML` in toolkit format.
 - Added end-to-end test for CDM extension
+- Support for dropping instances of a given type with `neat.drop.instances(...)`
 ### Fixed
 - Verification of reversed connections was done of `property (linage)` instead of `view_property`
 ### Changed
 - [BREAKING] Rules are simplified and normalized, especially metadata
 - [BREAKING] removed `reference`, `class (linage)` and `property (linage)`.
 - [BREAKING] removed `last`, `reference`, auto-generated filters, `data_model_type`, `schema_`, `extension`
-
 
 ## [0.97.3] - 16-11-**2024**
 ### Improved

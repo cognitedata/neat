@@ -1,6 +1,6 @@
 from collections import Counter, defaultdict
 from collections.abc import Mapping
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import ClassVar, cast
 
@@ -8,8 +8,7 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._issues.warnings import PropertyValueTypeUndefinedWarning
+from cognite.neat._issues.warnings import PropertySkippedWarning, PropertyValueTypeUndefinedWarning
 from cognite.neat._rules.models import data_types
 from cognite.neat._rules.models.data_types import AnyURI
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
@@ -156,9 +155,21 @@ class InferenceImporter(BaseRDFImporter):
                     # this is to skip rdf:type property
                     if property_uri == RDF.type:
                         continue
+                    property_id = remove_namespace_from_uri(property_uri)
+                    if property_id in {"external_id", "externalId"}:
+                        skip_issue = PropertySkippedWarning(
+                            resource_type="Property",
+                            identifier=f"{class_id}:{property_id}",
+                            property_name=property_id,
+                            reason="External ID is assumed to be the unique identifier of the instance "
+                            "and is not part of the data model schema.",
+                        )
+                        if skip_issue not in self.issue_list:
+                            self.issue_list.append(skip_issue)
+                        continue
 
                     self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
-                    property_id = remove_namespace_from_uri(property_uri)
+
                     if isinstance(data_type_uri, URIRef):
                         data_type_uri = self.overwrite_data_types.get(data_type_uri, data_type_uri)
 
@@ -198,11 +209,12 @@ class InferenceImporter(BaseRDFImporter):
 
                     # USE CASE 1: If property is not present in properties
                     if id_ not in properties:
+                        definition["value_type"] = {definition["value_type"]}
                         properties[id_] = definition
 
                     # USE CASE 2: first time redefinition, value type change to multi
                     elif id_ in properties and definition["value_type"] not in properties[id_]["value_type"]:
-                        properties[id_]["value_type"] = properties[id_]["value_type"] + " | " + definition["value_type"]
+                        properties[id_]["value_type"].add(definition["value_type"])
 
                     # USE CASE 3: existing but max count is different
                     elif (
@@ -212,32 +224,12 @@ class InferenceImporter(BaseRDFImporter):
                     ):
                         properties[id_]["max_count"] = max(properties[id_]["max_count"], definition["max_count"])
 
-        # Add comments
-        for id_, property_ in properties.items():
-            if id_ not in count_by_value_type_by_property:
-                continue
-
-            count_by_value_type = count_by_value_type_by_property[id_]
-            count_list = sorted(count_by_value_type.items(), key=lambda item: item[1], reverse=True)
-            # Make the comment more readable by adapting to the number of value types
-            base_string = "<{value_type}> which occurs <{count}> times"
-            if len(count_list) == 1:
-                type_, count = count_list[0]
-                counts_str = f"with value type {base_string.format(value_type=type_, count=count)} in the graph"
-            elif len(count_list) == 2:
-                first = base_string.format(value_type=count_list[0][0], count=count_list[0][1])
-                second = base_string.format(value_type=count_list[1][0], count=count_list[1][1])
-                counts_str = f"with value types {first} and {second} in the graph"
+        # Create multi-value properties otherwise single value
+        for property_ in properties.values():
+            if len(property_["value_type"]) > 1:
+                property_["value_type"] = " | ".join([str(t) for t in property_["value_type"]])
             else:
-                first_part = ", ".join(
-                    base_string.format(value_type=type_, count=count) for type_, count in count_list[:-1]
-                )
-                last = base_string.format(value_type=count_list[-1][0], count=count_list[-1][1])
-                counts_str = f"with value types {first_part} and {last} in the graph"
-
-            class_id = property_["class_"]
-            property_id = property_["property_"]
-            property_["comment"] = f"Class <{class_id}> has property <{property_id}> {counts_str}"
+                property_["value_type"] = next(iter(property_["value_type"]))
 
         return {
             "metadata": self._default_metadata().model_dump(),
@@ -247,14 +239,14 @@ class InferenceImporter(BaseRDFImporter):
         }
 
     def _default_metadata(self):
+        now = datetime.now(timezone.utc)
         return InformationMetadata(
             space=self.data_model_id.space,
             external_id=self.data_model_id.external_id,
             version=self.data_model_id.version,
             name="Inferred Model",
             creator="NEAT",
-            created=datetime.now(),
-            updated=datetime.now(),
+            created=now,
+            updated=now,
             description="Inferred model from knowledge graph",
-            namespace=DEFAULT_NAMESPACE,
         )

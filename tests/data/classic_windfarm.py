@@ -314,13 +314,14 @@ FILES = [data_sheet]
 
 
 def create_extractors() -> list[ClassicCDFBaseExtractor]:
+    args = dict(namespace=CLASSIC_CDF_NAMESPACE, unpack_metadata=False, as_write=True)
     return [
-        DataSetExtractor(DATASETS, namespace=CLASSIC_CDF_NAMESPACE),
-        AssetsExtractor(ASSETS, namespace=CLASSIC_CDF_NAMESPACE),
-        RelationshipsExtractor(RELATIONSHIPS, namespace=CLASSIC_CDF_NAMESPACE),
-        TimeSeriesExtractor(TIME_SERIES, namespace=CLASSIC_CDF_NAMESPACE),
-        SequencesExtractor(SEQUENCES, namespace=CLASSIC_CDF_NAMESPACE),
-        FilesExtractor(FILES, namespace=CLASSIC_CDF_NAMESPACE),
-        LabelsExtractor(LABELS, namespace=CLASSIC_CDF_NAMESPACE),
-        EventsExtractor(EVENTS, namespace=CLASSIC_CDF_NAMESPACE),
+        DataSetExtractor(DATASETS, **args),
+        AssetsExtractor(ASSETS, **args),
+        RelationshipsExtractor(RELATIONSHIPS, **args),
+        TimeSeriesExtractor(TIME_SERIES, **args),
+        SequencesExtractor(SEQUENCES, **args),
+        FilesExtractor(FILES, **args),
+        LabelsExtractor(LABELS, **args),
+        EventsExtractor(EVENTS, **args),
     ]

@@ -2,7 +2,6 @@ import re
 import zipfile
 from collections import Counter
 from pathlib import Path
-from typing import cast
 
 import pytest
 from cognite.client import data_modeling as dm
@@ -10,7 +9,7 @@ from cognite.client import data_modeling as dm
 from cognite.neat._rules import importers
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.models import RoleTypes
-from cognite.neat._rules.models.dms import DMSRules, PipelineSchema
+from cognite.neat._rules.models.dms import DMSRules
 from cognite.neat._rules.transformers import ImporterPipeline
 from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
 
@@ -53,26 +52,6 @@ class TestDMSExporter:
         assert counts["view"] == len(alice_rules.views)
         assert counts["container"] == len(alice_rules.containers)
         assert counts["node"] == len(schema.node_types)
-
-    def test_export_dms_schema_with_pipeline(self, alice_rules: DMSRules, tmp_path) -> None:
-        exporter = DMSExporter(export_pipeline=True)
-        schema = cast(PipelineSchema, exporter.export(alice_rules))
-        exporter.export_to_file(alice_rules, tmp_path)
-
-        counts = Counter()
-        for yaml_file in (tmp_path / "data_models").rglob("*.yaml"):
-            if "." in yaml_file.stem:
-                resource_type = yaml_file.stem.rsplit(".")[-1]
-                counts.update([resource_type])
-        transformation_count = len(list((tmp_path / "transformations").rglob("*.yaml")))
-        table_count = len(list((tmp_path / "raw").rglob("*.yaml")))
-
-        assert counts["space"] == len(schema.spaces)
-        assert counts["datamodel"] == 1
-        assert counts["view"] == len(schema.views)
-        assert counts["container"] == len(schema.containers)
-        assert transformation_count == len(schema.transformations)
-        assert table_count == len(schema.raw_tables)
 
 
 class TestImportExportDMS:

@@ -54,3 +54,19 @@ class PropertyValueTypeUndefinedWarning(PropertyWarning[T_Identifier]):
 
     default_action: str
     recommended_action: str | None = None
+
+
+@dataclass(unsafe_hash=True)
+class PropertyOverwritingWarning(PropertyWarning[T_Identifier]):
+    """Overwriting the {overwriting} for {property_name} in the {resource_type}
+    with identifier {identifier}."""
+
+    overwriting: tuple[str, ...]
+
+
+@dataclass(unsafe_hash=True)
+class PropertySkippedWarning(PropertyWarning[T_Identifier]):
+    """The {resource_type} with identifier {identifier} has a property {property_name}
+    which is skipped. {reason}."""
+
+    reason: str

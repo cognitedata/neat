@@ -7,10 +7,11 @@ from typing import cast
 
 import pandas as pd
 from pandas import Index
-from rdflib import Graph, Namespace, URIRef
+from rdflib import Dataset, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._graph._shared import rdflib_to_oxi_type
 from cognite.neat._graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
@@ -42,7 +43,7 @@ class NeatGraphStore:
 
     def __init__(
         self,
-        graph: Graph,
+        graph: Dataset,
         rules: InformationRules | None = None,
     ):
         self.rules: InformationRules | None = None
@@ -109,7 +110,7 @@ class NeatGraphStore:
 
     @classmethod
     def from_memory_store(cls, rules: InformationRules | None = None) -> "Self":
-        return cls(Graph(identifier=DEFAULT_NAMESPACE), rules)
+        return cls(Dataset(), rules)
 
     @classmethod
     def from_sparql_store(
@@ -127,7 +128,7 @@ class NeatGraphStore:
             postAsEncoded=False,
             autocommit=False,
         )
-        graph = Graph(store=store, identifier=DEFAULT_NAMESPACE)
+        graph = Dataset(store=store)
         return cls(graph, rules)
 
     @classmethod
@@ -150,9 +151,8 @@ class NeatGraphStore:
         else:
             raise Exception("Error initializing Oxigraph store")
 
-        graph = Graph(
+        graph = Dataset(
             store=oxrdflib.OxigraphStore(store=oxi_store),
-            identifier=DEFAULT_NAMESPACE,
         )
 
         return cls(graph, rules)
@@ -162,7 +162,7 @@ class NeatGraphStore:
         success = True
 
         if isinstance(extractor, RdfFileExtractor) and not extractor.issue_list.has_errors:
-            self._parse_file(extractor.filepath, cast(str, extractor.mime_type), extractor.base_uri)
+            self._parse_file(extractor.filepath, cast(str, extractor.format), extractor.base_uri)
         elif isinstance(extractor, RdfFileExtractor):
             success = False
             issue_text = "\n".join([issue.as_message() for issue in extractor.issue_list])
@@ -244,33 +244,36 @@ class NeatGraphStore:
     def _parse_file(
         self,
         filepath: Path,
-        mime_type: str = "application/rdf+xml",
+        format: str = "turtle",
         base_uri: URIRef | None = None,
     ) -> None:
         """Imports graph data from file.
 
         Args:
             filepath : File path to file containing graph data, by default None
-            mime_type : MIME type of graph data, by default "application/rdf+xml"
-            base_uri : Add base IRI to graph, by default True
+            format : rdflib format file containing RDF graph, by default "turtle"
+            base_uri : base URI to add to graph in case of relative URIs, by default None
+
+        !!! note "Oxigraph store"
+            By default we are using non-transactional mode for parsing RDF files.
+            This gives us a significant performance boost when importing large RDF files.
+            Underhood of rdflib we are triggering oxrdflib plugin which in respect
+            calls `bulk_load` method from oxigraph store. See more at:
+            https://pyoxigraph.readthedocs.io/en/stable/store.html#pyoxigraph.Store.bulk_load
         """
 
         # Oxigraph store, do not want to type hint this as it is an optional dependency
         if type(self.graph.store).__name__ == "OxigraphStore":
+            local_import("pyoxigraph", "oxi")
 
-            def parse_to_oxi_store():
-                local_import("pyoxigraph", "oxi")
-                import pyoxigraph
-
-                cast(pyoxigraph.Store, self.graph.store._store).bulk_load(
-                    str(filepath),
-                    mime_type,
-                    base_iri=base_uri,
-                    to_graph=pyoxigraph.NamedNode(self.graph.identifier),
-                )
-                cast(pyoxigraph.Store, self.graph.store._store).optimize()
-
-            parse_to_oxi_store()
+            # this is necessary to trigger rdflib oxigraph plugin
+            self.graph.parse(
+                filepath,
+                format=rdflib_to_oxi_type(format),
+                transactional=False,
+                publicID=base_uri,
+            )
+            self.graph.store._store.optimize()  # type: ignore[attr-defined]
 
         # All other stores
         else:

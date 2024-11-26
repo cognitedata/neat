@@ -6,6 +6,7 @@ from cognite.neat._issues._base import DefaultWarning, NeatWarning, _get_subclas
 
 from . import user_modeling
 from ._external import (
+    AuthWarning,
     FileItemNotSupportedWarning,
     FileMissingRequiredFieldWarning,
     FileReadWarning,
@@ -26,6 +27,8 @@ from ._models import (
 from ._properties import (
     PropertyDefinitionDuplicatedWarning,
     PropertyNotFoundWarning,
+    PropertyOverwritingWarning,
+    PropertySkippedWarning,
     PropertyTypeNotSupportedWarning,
     PropertyValueTypeUndefinedWarning,
 )
@@ -52,6 +55,8 @@ __all__ = [
     "PropertyTypeNotSupportedWarning",
     "PropertyNotFoundWarning",
     "PropertyValueTypeUndefinedWarning",
+    "PropertyOverwritingWarning",
+    "PropertySkippedWarning",
     "ResourceNeatWarning",
     "ResourcesDuplicatedWarning",
     "RegexViolationWarning",
@@ -64,6 +69,7 @@ __all__ = [
     "NotSupportedViewContainerLimitWarning",
     "NotSupportedHasDataFilterLimitWarning",
     "UndefinedViewWarning",
+    "AuthWarning",
     "user_modeling",
 ]
 

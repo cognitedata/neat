@@ -1,13 +1,16 @@
+import warnings
 from abc import ABC
 from collections import defaultdict
+from functools import cached_property
+from typing import Any, ClassVar, Literal
 
+from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._issues.warnings import NeatValueWarning, PropertyOverwritingWarning
 from cognite.neat._rules._shared import JustRules, OutRules
-from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models._base_rules import ClassRef
-from cognite.neat._rules.models.dms import DMSProperty
-from cognite.neat._rules.models.entities import ClassEntity
-from cognite.neat._rules.models.information import InformationClass
-from cognite.neat._rules.models.mapping import RuleMapping
+from cognite.neat._rules.models import DMSRules, SheetList
+from cognite.neat._rules.models.data_types import Enum
+from cognite.neat._rules.models.dms import DMSEnum, DMSProperty, DMSView
+from cognite.neat._rules.models.entities import ViewEntity
 
 from ._base import RulesTransformer
 
@@ -96,7 +99,7 @@ class MapOneToOne(MapOntoTransformers):
         return JustRules(solution)
 
 
-class RuleMapper(RulesTransformer[InformationRules, InformationRules]):
+class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
     """Maps properties and classes using the given mapping.
 
     **Note**: This transformer mutates the input rules.
@@ -106,30 +109,102 @@ class RuleMapper(RulesTransformer[InformationRules, InformationRules]):
 
     """
 
-    def __init__(self, mapping: RuleMapping) -> None:
+    _mapping_fields: ClassVar[frozenset[str]] = frozenset(
+        ["connection", "value_type", "nullable", "immutable", "is_list", "default", "index", "constraint"]
+    )
+
+    def __init__(self, mapping: DMSRules, data_type_conflict: Literal["overwrite"] = "overwrite") -> None:
         self.mapping = mapping
+        self.data_type_conflict = data_type_conflict
 
-    def transform(self, rules: InformationRules | OutRules[InformationRules]) -> JustRules[InformationRules]:
+    @cached_property
+    def _view_by_entity_id(self) -> dict[str, DMSView]:
+        return {view.view.external_id: view for view in self.mapping.views}
+
+    @cached_property
+    def _property_by_view_property(self) -> dict[tuple[str, str], DMSProperty]:
+        return {(prop.view.external_id, prop.view_property): prop for prop in self.mapping.properties}
+
+    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
+        if self.data_type_conflict != "overwrite":
+            raise NeatValueError(f"Invalid data_type_conflict: {self.data_type_conflict}")
         input_rules = self._to_rules(rules)
+        new_rules = input_rules.model_copy(deep=True)
+        new_rules.metadata.version += "_mapped"
 
-        destination_by_source = self.mapping.properties.as_destination_by_source()
-        destination_cls_by_source = self.mapping.classes.as_destination_by_source()
-        used_destination_classes: set[ClassEntity] = set()
-        for prop in input_rules.properties:
-            if destination_prop := destination_by_source.get(prop.as_reference()):
-                prop.class_ = destination_prop.class_
-                prop.property_ = destination_prop.property_
-                used_destination_classes.add(destination_prop.class_)
-            elif destination_cls := destination_cls_by_source.get(ClassRef(Class=prop.class_)):
-                # If the property is not in the mapping, but the class is,
-                # then we should map the class to the destination
-                prop.class_ = destination_cls.class_
+        for view in new_rules.views:
+            if mapping_view := self._view_by_entity_id.get(view.view.external_id):
+                view.implements = mapping_view.implements
 
-        for cls_ in input_rules.classes:
-            if destination_cls := destination_cls_by_source.get(cls_.as_reference()):
-                cls_.class_ = destination_cls.class_
-        existing_classes = {cls_.class_ for cls_ in input_rules.classes}
-        for new_cls in used_destination_classes - existing_classes:
-            input_rules.classes.append(InformationClass(class_=new_cls))
+        for prop in new_rules.properties:
+            key = (prop.view.external_id, prop.view_property)
+            if key not in self._property_by_view_property:
+                continue
+            mapping_prop = self._property_by_view_property[key]
+            to_overwrite, conflicts = self._find_overwrites(prop, mapping_prop)
+            if conflicts and self.data_type_conflict == "overwrite":
+                warnings.warn(
+                    PropertyOverwritingWarning(prop.view.as_id(), "view", prop.view_property, tuple(conflicts)),
+                    stacklevel=2,
+                )
+            elif conflicts:
+                raise NeatValueError(f"Conflicting properties for {prop.view}.{prop.view_property}: {conflicts}")
+            for field_name, value in to_overwrite.items():
+                setattr(prop, field_name, value)
+            prop.container = mapping_prop.container
+            prop.container_property = mapping_prop.container_property
 
-        return JustRules(input_rules)
+        # Add missing views used as value types
+        existing_views = {view.view for view in new_rules.views}
+        new_value_types = {
+            prop.value_type
+            for prop in new_rules.properties
+            if isinstance(prop.value_type, ViewEntity) and prop.value_type not in existing_views
+        }
+        for new_value_type in new_value_types:
+            if mapping_view := self._view_by_entity_id.get(new_value_type.external_id):
+                new_rules.views.append(mapping_view)
+            else:
+                warnings.warn(NeatValueWarning(f"View {new_value_type} not found in mapping"), stacklevel=2)
+
+        # Add missing enums
+        existing_enum_collections = {item.collection for item in new_rules.enum or []}
+        new_enums = {
+            prop.value_type.collection
+            for prop in new_rules.properties
+            if isinstance(prop.value_type, Enum) and prop.value_type.collection not in existing_enum_collections
+        }
+        if new_enums:
+            new_rules.enum = new_rules.enum or SheetList[DMSEnum]([])
+            for item in self.mapping.enum or []:
+                if item.collection in new_enums:
+                    new_rules.enum.append(item)
+
+        return JustRules(new_rules)
+
+    def _find_overwrites(self, prop: DMSProperty, mapping_prop: DMSProperty) -> tuple[dict[str, Any], list[str]]:
+        """Finds the properties that need to be overwritten and returns them.
+
+        In addition, conflicting properties are returned. Note that overwriting properties that are
+        originally None is not considered a conflict. Thus, you can have properties to overwrite but no
+        conflicts.
+
+        Args:
+            prop: The property to compare.
+            mapping_prop: The property to compare against.
+
+        Returns:
+            A tuple with the properties to overwrite and the conflicting properties.
+
+        """
+        to_overwrite: dict[str, Any] = {}
+        conflicts: list[str] = []
+        for field_name in self._mapping_fields:
+            mapping_value = getattr(mapping_prop, field_name)
+            source_value = getattr(prop, field_name)
+            if mapping_value != source_value:
+                to_overwrite[field_name] = mapping_value
+                if source_value is not None:
+                    # These are used for warnings so we use the alias to make it more readable for the user
+                    conflicts.append(mapping_prop.model_fields[field_name].alias or field_name)
+        return to_overwrite, conflicts

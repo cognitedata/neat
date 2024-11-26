@@ -76,7 +76,7 @@ def dataclass_to_parameters(input_rules_cls: type[InputRules]) -> dict[str, set[
 def pydantic_to_parameters(verified_cls: type[BaseModel]) -> dict[str, set[str]]:
     output: dict[str, set[str]] = {}
     for name, field_ in verified_cls.model_fields.items():
-        if name == "validators_to_skip":
+        if name in ["validators_to_skip", "post_validate"]:
             continue
 
         type_ = field_.annotation
