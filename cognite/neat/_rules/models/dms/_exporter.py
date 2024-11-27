@@ -92,15 +92,13 @@ class _DMSExporter:
                 ]
             )
 
-        views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
         data_model = rules.metadata.as_data_model()
-
-        data_model_views = [view_id for view_id in views if view_id not in views_not_in_model]
-
         # Sorting to ensure deterministic order
-        data_model.views = sorted(data_model_views, key=lambda v: v.as_tuple())  # type: ignore[union-attr]
+        data_model.views = sorted(
+            [dms_view.view.as_id() for dms_view in rules.views if dms_view.in_model],
+            key=lambda x: x.as_tuple(),  # type: ignore[union-attr]
+        )
         spaces = self._create_spaces(rules.metadata, containers, views, data_model)
-
         return DMSSchema(
             spaces=spaces,
             data_model=data_model,
