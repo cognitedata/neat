@@ -111,7 +111,8 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
 
         # we need to reverse order in which we are picking up the items to delete
         # as they are sorted in the order of creation and we need to delete them in reverse order
-        for items, loader in reversed(to_export):
+        for items in reversed(to_export):
+            loader = client.loaders.get_loader(items)
             if skip_space and isinstance(items, SpaceApplyList):
                 continue
             item_ids = loader.get_ids(items)
