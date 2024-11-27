@@ -103,7 +103,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
 
     def export(self, rules: DMSRules) -> DMSSchema:
         # We do not want to include CogniteCore/CogniteProcess Inudstries in the schema
-        return rules.as_schema(instance_space=self.instance_space, remove_cdf_spaces=False)
+        return rules.as_schema(instance_space=self.instance_space, remove_cdf_spaces=True)
 
     def delete_from_cdf(
         self, rules: DMSRules, client: NeatClient, dry_run: bool = False, skip_space: bool = False
