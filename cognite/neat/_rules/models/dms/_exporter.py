@@ -73,7 +73,7 @@ class _DMSExporter:
             view_properties_by_id, rules.views
         )
 
-        views = self._create_views_with_node_types(view_properties_by_id, view_properties_with_ancestors_by_id)
+        views = self._create_views(view_properties_by_id, view_properties_with_ancestors_by_id)
         view_node_type_filters: set[dm.NodeId] = set()
         for dms_view in rules.views:
             if isinstance(dms_view.filter_, NodeTypeFilter):
@@ -128,18 +128,22 @@ class _DMSExporter:
             spaces[self.instance_space] = dm.SpaceApply(space=self.instance_space, name=self.instance_space)
         return spaces
 
-    def _create_views_with_node_types(
+    def _create_views(
         self,
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
         view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
     ) -> ViewApplyDict:
         input_views = list(self.rules.views)
 
-        views = ViewApplyDict([dms_view.as_view() for dms_view in input_views])
+        views = ViewApplyDict(
+            [
+                dms_view.as_view()
+                for dms_view in input_views
+                if not (self.remove_cdf_spaces and dms_view.view.space in COGNITE_SPACES)
+            ]
+        )
 
         for view_id, view in views.items():
-            if self.remove_cdf_spaces and view_id.space in COGNITE_SPACES:
-                continue
             view.properties = {}
             if not (view_properties := view_properties_by_id.get(view_id)):
                 continue
@@ -178,13 +182,16 @@ class _DMSExporter:
 
         containers = list(self.rules.containers or [])
 
-        containers = dm.ContainerApplyList([dms_container.as_container() for dms_container in containers])
+        containers = dm.ContainerApplyList(
+            [
+                dms_container.as_container()
+                for dms_container in containers
+                if not (self.remove_cdf_spaces and dms_container.container.space in COGNITE_SPACES)
+            ]
+        )
         container_to_drop = set()
         for container in containers:
             container_id = container.as_id()
-            if self.remove_cdf_spaces and container_id.space in COGNITE_SPACES:
-                continue
-
             if not (container_properties := container_properties_by_id.get(container_id)):
                 warnings.warn(
                     EmptyContainerWarning(container_id),
