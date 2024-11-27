@@ -265,9 +265,9 @@ class RelationshipToSchemaTransformer(BaseTransformer):
 
 SELECT (COUNT(?instance) AS ?instanceCount)
 WHERE {{
-  ?instance a cdf-classic:Relationship .
-  ?instance classic:source_type classic:{source_type} .
-  ?instance classic:target_type classic:{target_type} .
+  ?instance a classic:Relationship .
+  ?instance classic:sourceType classic:{source_type} .
+  ?instance classic:targetType classic:{target_type} .
 }}"""
 
     _instances = """PREFIX classic: <{namespace}>
@@ -275,15 +275,15 @@ WHERE {{
 SELECT ?instance
 WHERE {{
     ?instance a classic:Relationship .
-    ?instance classic:source_type classic:{source_type} .
-    ?instance classic:target_type classic:{target_type} .
+    ?instance classic:sourceType classic:{source_type} .
+    ?instance classic:targetType classic:{target_type} .
 }}"""
     _lookup_entity_query = """PREFIX classic: <{namespace}>
 
 SELECT ?entity
 WHERE {{
     ?entity a classic:{entity_type} .
-    ?entity classic:external_id "{external_id}" .
+    ?entity classic:externalId "{external_id}" .
 }}"""
 
     def transform(self, graph: Graph) -> None:
@@ -309,8 +309,8 @@ WHERE {{
         object_by_predicates = cast(
             dict[str, URIRef | Literal], {remove_namespace_from_uri(row[1]): row[2] for row in result}
         )
-        source_external_id = cast(URIRef, object_by_predicates["source_external_id"])
-        target_source_id = cast(URIRef, object_by_predicates["target_external_id"])
+        source_external_id = cast(URIRef, object_by_predicates["sourceExternalId"])
+        target_source_id = cast(URIRef, object_by_predicates["targetExternalId"])
         try:
             source_id = self._lookup_entity(graph, source_type, source_external_id)
         except ValueError:
@@ -321,7 +321,7 @@ WHERE {{
         except ValueError:
             warnings.warn(ResourceNotFoundWarning(target_source_id, "class", str(instance_id), "class"), stacklevel=2)
             return None
-        external_id = str(object_by_predicates["external_id"])
+        external_id = str(object_by_predicates["externalId"])
         # If there is properties on the relationship, we create a new intermediate node
         self._create_node(graph, object_by_predicates, external_id, source_id, target_id, self._predicate(target_type))
 
@@ -357,7 +357,7 @@ WHERE {{
 
         # Connect the new node to the source and target nodes
         graph.add((source_id, predicate, instance_id))
-        graph.add((instance_id, self._namespace["end_node"], target_id))
+        graph.add((instance_id, self._namespace["endNode"], target_id))
 
     def _predicate(self, target_type: str) -> URIRef:
         return self._namespace[f"relationship{target_type.capitalize()}"]
