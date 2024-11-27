@@ -254,7 +254,7 @@ class RelationshipToSchemaTransformer(BaseTransformer):
         self._namespace = namespace
 
     _NOT_PROPERTIES: frozenset[str] = frozenset(
-        {"source_external_id", "target_external_id", "external_id", "source_type", "target_type"}
+        {"sourceExternalId", "targetExternalId", "externalId", "sourceType", "targetType"}
     )
     _RELATIONSHIP_NODE_TYPES: tuple[str, ...] = tuple(["Asset", "Event", "File", "Sequence", "TimeSeries"])
     description = "Replaces relationships with a schema"
