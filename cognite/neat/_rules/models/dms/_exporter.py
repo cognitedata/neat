@@ -56,17 +56,10 @@ class _DMSExporter:
         instance_space (str): The space to use for the instance. Defaults to None,`Rules.metadata.space` will be used
     """
 
-    def __init__(self, rules: DMSRules, instance_space: str | None = None):
+    def __init__(self, rules: DMSRules, instance_space: str | None = None, remove_system_components: bool = True):
         self.instance_space = instance_space
         self.rules = rules
-        self._ref_schema = None
-        if self._ref_schema:
-            # We skip version as that will always be missing in the reference
-            self._ref_views_by_id = {
-                dm.ViewId(view.space, view.external_id): view for view in self._ref_schema.views.values()
-            }
-        else:
-            self._ref_views_by_id = {}  # type: ignore
+        self.remove_system_components = remove_system_components
 
     def to_schema(self) -> DMSSchema:
         rules = self.rules
@@ -98,8 +91,15 @@ class _DMSExporter:
 
         # Sorting to ensure deterministic order
         data_model.views = sorted(data_model_views, key=lambda v: v.as_tuple())  # type: ignore[union-attr]
-
         spaces = self._create_spaces(rules.metadata, containers, views, data_model)
+
+        if self.remove_system_components:
+            spaces = SpaceApplyDict([space for space in spaces.values() if not space.space.startswith("cdf")])
+            containers = ContainerApplyDict(
+                [container for container in containers.values() if not container.space.startswith("cdf")]
+            )
+            views = ViewApplyDict([view for view in views.values() if not view.space.startswith("cdf")])
+            node_types = NodeApplyDict([node for node in node_types.values() if not node.space.startswith("cdf")])
 
         return DMSSchema(
             spaces=spaces,
