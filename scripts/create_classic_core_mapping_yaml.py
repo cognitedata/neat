@@ -22,6 +22,7 @@ def main() -> None:
         neat.inspect.issues()
         return
     print(f"[bold green]Read {XLSX_FILE.name}[/bold green]")
+    # Redoing the .verify to skip the validation step.
     start = datetime.now(timezone.utc)
     transformer = VerifyDMSRules("continue", validate=False)
     source_id, last_unverified_rule = neat._state.data_model.last_unverified_rule
