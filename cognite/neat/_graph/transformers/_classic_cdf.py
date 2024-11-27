@@ -265,7 +265,7 @@ class RelationshipToSchemaTransformer(BaseTransformer):
 
 SELECT (COUNT(?instance) AS ?instanceCount)
 WHERE {{
-  ?instance a classic:Relationship .
+  ?instance a cdf-classic:Relationship .
   ?instance classic:source_type classic:{source_type} .
   ?instance classic:target_type classic:{target_type} .
 }}"""
