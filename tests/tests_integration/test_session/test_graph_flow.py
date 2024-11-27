@@ -1,6 +1,5 @@
 from typing import Any
 
-import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import InstanceApply
@@ -33,7 +32,6 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
-    @pytest.mark.skip("InProgress")
     def test_classic_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
@@ -60,6 +58,7 @@ class TestExtractToLoadFlow:
         neat.mapping.classic_to_core("Classic")
 
         neat.prepare.data_model.include_referenced()
+        neat.to.cdf.data_model(dry_run=True)
 
         dms_rules = neat._state.data_model.last_verified_dms_rules[1]
         store = neat._state.instances.store

@@ -36,7 +36,26 @@ COGNITE_MODELS = (
     DataModelId("cdf_cdm", "CogniteCore", "v1"),
     DataModelId("cdf_idm", "CogniteProcessIndustries", "v1"),
 )
-COGNITE_SPACES = frozenset(model.space for model in COGNITE_MODELS)
+COGNITE_SPACES = frozenset(
+    {model.space for model in COGNITE_MODELS}
+    | {
+        "cdf_360_image_schema",
+        "cdf_3d_schema",
+        "cdf_apm",
+        "cdf_apps_shared",
+        "cdf_cdm",
+        "cdf_cdm_3d",
+        "cdf_cdm_units",
+        "cdf_classic",
+        "cdf_core",
+        "cdf_extraction_extensions",
+        "cdf_idm",
+        "cdf_industrial_canvas",
+        "cdf_infield",
+        "cdf_time_series_data",
+        "cdf_units",
+    }
+)
 DMS_LISTABLE_PROPERTY_LIMIT = 1000
 
 EXAMPLE_RULES = PACKAGE_DIRECTORY / "_rules" / "examples"

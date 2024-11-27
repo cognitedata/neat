@@ -20,6 +20,7 @@ from cognite.neat._client.data_classes.data_modeling import (
     ViewApplyDict,
 )
 from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._issues.errors import NeatTypeError, ResourceNotFoundError
 from cognite.neat._issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
 from cognite.neat._issues.warnings.user_modeling import (
@@ -54,12 +55,13 @@ class _DMSExporter:
         include_pipeline (bool): If True, the pipeline will be included with the schema. Pipeline means the
             raw tables and transformations necessary to populate the data model.
         instance_space (str): The space to use for the instance. Defaults to None,`Rules.metadata.space` will be used
+        remove_cdf_spaces(bool): The
     """
 
-    def __init__(self, rules: DMSRules, instance_space: str | None = None, remove_system_components: bool = True):
+    def __init__(self, rules: DMSRules, instance_space: str | None = None, remove_cdf_spaces: bool = False):
         self.instance_space = instance_space
         self.rules = rules
-        self.remove_system_components = remove_system_components
+        self.remove_cdf_spaces = remove_cdf_spaces
 
     def to_schema(self) -> DMSSchema:
         rules = self.rules
@@ -82,7 +84,13 @@ class _DMSExporter:
                 + [dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters]
             )
         else:
-            node_types = NodeApplyDict([dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters])
+            node_types = NodeApplyDict(
+                [
+                    dm.NodeApply(node.space, node.external_id)
+                    for node in view_node_type_filters
+                    if not (self.remove_cdf_spaces and node.space in COGNITE_SPACES)
+                ]
+            )
 
         views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
         data_model = rules.metadata.as_data_model()
@@ -92,14 +100,6 @@ class _DMSExporter:
         # Sorting to ensure deterministic order
         data_model.views = sorted(data_model_views, key=lambda v: v.as_tuple())  # type: ignore[union-attr]
         spaces = self._create_spaces(rules.metadata, containers, views, data_model)
-
-        if self.remove_system_components:
-            spaces = SpaceApplyDict([space for space in spaces.values() if not space.space.startswith("cdf")])
-            containers = ContainerApplyDict(
-                [container for container in containers.values() if not container.space.startswith("cdf")]
-            )
-            views = ViewApplyDict([view for view in views.values() if not view.space.startswith("cdf")])
-            node_types = NodeApplyDict([node for node in node_types.values() if not node.space.startswith("cdf")])
 
         return DMSSchema(
             spaces=spaces,
@@ -138,6 +138,8 @@ class _DMSExporter:
         views = ViewApplyDict([dms_view.as_view() for dms_view in input_views])
 
         for view_id, view in views.items():
+            if self.remove_cdf_spaces and view_id.space in COGNITE_SPACES:
+                continue
             view.properties = {}
             if not (view_properties := view_properties_by_id.get(view_id)):
                 continue
@@ -180,6 +182,9 @@ class _DMSExporter:
         container_to_drop = set()
         for container in containers:
             container_id = container.as_id()
+            if self.remove_cdf_spaces and container_id.space in COGNITE_SPACES:
+                continue
+
             if not (container_properties := container_properties_by_id.get(container_id)):
                 warnings.warn(
                     EmptyContainerWarning(container_id),
