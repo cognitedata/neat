@@ -15,7 +15,7 @@ from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.models.information import InformationValidation
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
-from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
+from cognite.neat._rules.transformers import ConvertToRules, InformationToDMS, VerifyAnyRules
 from cognite.neat._rules.transformers._converters import ConversionTransformer
 from cognite.neat._store._provenance import (
     INSTANCES_ENTITY,
@@ -106,7 +106,16 @@ class NeatSession:
             print("You can inspect the issues with the .inspect.issues(...) method.")
         return output.issues
 
-    def convert(self, target: Literal["dms", "information"]) -> IssueList:
+    def convert(
+        self, target: Literal["dms", "information"], mode: Literal["edge_properties"] | None = None
+    ) -> IssueList:
+        """Converts the last verified data model to the target type.
+
+        Args:
+            target: The target type to convert the data model to.
+            mode: If the target is "dms", the mode to use for the conversion. None is used for default conversion.
+                "edge_properties" treas classes that implements Edge as edge properties.
+        """
         start = datetime.now(timezone.utc)
         issues = IssueList()
         converter: ConversionTransformer | None = None
@@ -114,7 +123,7 @@ class NeatSession:
         with catch_issues(issues):
             if target == "dms":
                 source_id, info_rules = self._state.data_model.last_verified_information_rules
-                converter = ConvertToRules(DMSRules)
+                converter = InformationToDMS(mode=mode)
                 converted_rules = converter.transform(info_rules).rules
             elif target == "information":
                 source_id, dms_rules = self._state.data_model.last_verified_dms_rules

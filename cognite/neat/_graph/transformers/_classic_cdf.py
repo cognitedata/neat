@@ -323,7 +323,10 @@ WHERE {{
             return None
         external_id = str(object_by_predicates["externalId"])
         # If there is properties on the relationship, we create a new intermediate node
-        self._create_node(graph, object_by_predicates, external_id, source_id, target_id, self._predicate(target_type))
+        edge_type = self._namespace[f"{source_type}To{target_type}Edge"]
+        self._create_node(
+            graph, object_by_predicates, external_id, source_id, target_id, self._predicate(target_type), edge_type
+        )
 
         for triple in result:
             graph.remove(triple)  # type: ignore[arg-type]
@@ -345,30 +348,28 @@ WHERE {{
         source_id: URIRef,
         target_id: URIRef,
         predicate: URIRef,
+        edge_type: URIRef,
     ) -> None:
         """Creates a new intermediate node for the relationship with properties."""
         # Create the entity with the properties
-        instance_id = self._namespace[external_id]
-        graph.add((instance_id, RDF.type, self._namespace["Edge"]))
+        edge_id = self._namespace[external_id]
+        graph.add((edge_id, RDF.type, edge_type))
         for prop_name, object_ in objects_by_predicates.items():
             if prop_name in self._NOT_PROPERTIES:
                 continue
-            graph.add((instance_id, self._namespace[prop_name], object_))
+            graph.add((edge_id, self._namespace[prop_name], object_))
 
         # Target and Source IDs will always be a combination of Asset, Sequence, Event, TimeSeries, and File.
         # If we assume source ID is an asset and target ID is a time series, then
         # before we had relationship pointing to both: timeseries <- relationship -> asset
-        # After, we want asset -> timeseries, and asset.edgeSource -> Edge
+        # After, we want asset <-> Edge -> TimeSeries
         # and the new edge will point to the asset and the timeseries through startNode and endNode
 
-        # Link the two entities directly,
-        graph.add((source_id, predicate, target_id))
-        # Create the new edge
-        graph.add((instance_id, self._namespace["startNode"], source_id))
-        graph.add((instance_id, self._namespace["endNode"], target_id))
-
-        # Link the source to the edge properties
-        graph.add((source_id, self._namespace["edgeSource"], instance_id))
+        # Link the source to the new edge
+        graph.add((source_id, predicate, edge_id))
+        # Link the edge to the source and target
+        graph.add((edge_id, self._namespace["startNode"], source_id))
+        graph.add((edge_id, self._namespace["endNode"], target_id))
 
     def _predicate(self, target_type: str) -> URIRef:
         return self._namespace[f"relationship{target_type.capitalize()}"]
