@@ -743,43 +743,9 @@ class _InformationRulesConverter:
         from cognite.neat._rules.models.dms._rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
-        value_type: DataType | ViewEntity | DMSUnknownEntity
-        if isinstance(prop.value_type, DataType):
-            value_type = prop.value_type
+        value_type = self._get_value_type(prop, default_space, default_version)
 
-        # UnknownEntity should  resolve to DMSUnknownEntity
-        # meaning end node type is unknown
-        elif isinstance(prop.value_type, UnknownEntity):
-            value_type = DMSUnknownEntity()
-
-        elif isinstance(prop.value_type, ClassEntity):
-            value_type = prop.value_type.as_view_entity(default_space, default_version)
-
-        elif isinstance(prop.value_type, MultiValueTypeInfo):
-            # Multi Object type should resolve to DMSUnknownEntity
-            # meaning end node type is unknown
-            if prop.value_type.is_multi_object_type():
-                value_type = DMSUnknownEntity()
-
-            # Multi Data type should resolve to a single data type, or it should
-            elif prop.value_type.is_multi_data_type():
-                value_type = self.convert_multi_data_type(prop.value_type)
-
-            # Mixed types default to string
-            else:
-                value_type = String()
-
-        else:
-            raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
-
-        connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = None
-        if isinstance(value_type, ViewEntity):
-            # Default connection type.
-            connection = EdgeEntity() if prop.is_list else "direct"
-
-        # defaulting to direct connection
-        elif isinstance(value_type, DMSUnknownEntity):
-            connection = "direct"
+        connection = self._get_connection(prop, value_type)
 
         container: ContainerEntity | None = None
         container_property: str | None = None
@@ -805,6 +771,49 @@ class _InformationRulesConverter:
             view=prop.class_.as_view_entity(default_space, default_version),
             view_property=prop.property_,
         )
+
+    @staticmethod
+    def _get_connection(
+        prop: InformationProperty, value_type: DataType | ViewEntity | DMSUnknownEntity
+    ) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
+        if isinstance(value_type, ViewEntity) and prop.is_list:
+            return EdgeEntity()
+        elif isinstance(value_type, ViewEntity):
+            return "direct"
+        # defaulting to direct connection
+        elif isinstance(value_type, DMSUnknownEntity):
+            return "direct"
+        return None
+
+    def _get_value_type(
+        self, prop: InformationProperty, default_space: str, default_version: str
+    ) -> DataType | ViewEntity | DMSUnknownEntity:
+        if isinstance(prop.value_type, DataType):
+            return prop.value_type
+
+        # UnknownEntity should  resolve to DMSUnknownEntity
+        # meaning end node type is unknown
+        elif isinstance(prop.value_type, UnknownEntity):
+            return DMSUnknownEntity()
+
+        elif isinstance(prop.value_type, ClassEntity):
+            return prop.value_type.as_view_entity(default_space, default_version)
+
+        elif isinstance(prop.value_type, MultiValueTypeInfo):
+            # Multi Object type should resolve to DMSUnknownEntity
+            # meaning end node type is unknown
+            if prop.value_type.is_multi_object_type():
+                return DMSUnknownEntity()
+
+            # Multi Data type should resolve to a single data type, or it should
+            elif prop.value_type.is_multi_data_type():
+                return self.convert_multi_data_type(prop.value_type)
+
+            # Mixed types default to string
+            else:
+                return String()
+
+        raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
     @classmethod
     def _to_space(cls, prefix: str) -> str:
