@@ -113,7 +113,7 @@ class InstancePrepareAPI:
             raise NeatSessionError(f"Property {property_} is not defined for type {type_}. Cannot make connection")
         return type_uri[0], property_uri[0]
 
-    def relationships_as_connections(self, limit: int = 1) -> None:
+    def relationships_as_edges(self, limit: int = 1) -> None:
         """This assumes that you have read a classic CDF knowledge graph including relationships.
 
         This transformer analyzes the relationships in the graph and modifies them to be part of the schema

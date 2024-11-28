@@ -40,7 +40,7 @@ class TestExtractToLoadFlow:
         for extractor in classic_windfarm.create_extractors():
             neat._state.instances.store.write(extractor)
 
-        neat.prepare.instances.relationships_as_connections(limit=1)
+        neat.prepare.instances.relationships_as_edges(limit=1)
         # Sequences is not yet supported
         neat.drop.instances("Sequence")
 
