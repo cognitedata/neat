@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Added
+- Support for converting relationships to edges.
+
 ## [0.99.1] - 28-11-**2024**
 ### Changed
 - Remove "make_compliant" from OWL and IMF importers
