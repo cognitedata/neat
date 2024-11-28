@@ -20,6 +20,7 @@ from cognite.neat._client.data_classes.data_modeling import (
     ViewApplyDict,
 )
 from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._issues.errors import NeatTypeError, ResourceNotFoundError
 from cognite.neat._issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
 from cognite.neat._issues.warnings.user_modeling import (
@@ -54,19 +55,13 @@ class _DMSExporter:
         include_pipeline (bool): If True, the pipeline will be included with the schema. Pipeline means the
             raw tables and transformations necessary to populate the data model.
         instance_space (str): The space to use for the instance. Defaults to None,`Rules.metadata.space` will be used
+        remove_cdf_spaces(bool): The
     """
 
-    def __init__(self, rules: DMSRules, instance_space: str | None = None):
+    def __init__(self, rules: DMSRules, instance_space: str | None = None, remove_cdf_spaces: bool = False):
         self.instance_space = instance_space
         self.rules = rules
-        self._ref_schema = None
-        if self._ref_schema:
-            # We skip version as that will always be missing in the reference
-            self._ref_views_by_id = {
-                dm.ViewId(view.space, view.external_id): view for view in self._ref_schema.views.values()
-            }
-        else:
-            self._ref_views_by_id = {}  # type: ignore
+        self.remove_cdf_spaces = remove_cdf_spaces
 
     def to_schema(self) -> DMSSchema:
         rules = self.rules
@@ -78,7 +73,7 @@ class _DMSExporter:
             view_properties_by_id, rules.views
         )
 
-        views = self._create_views_with_node_types(view_properties_by_id, view_properties_with_ancestors_by_id)
+        views = self._create_views(view_properties_by_id, view_properties_with_ancestors_by_id)
         view_node_type_filters: set[dm.NodeId] = set()
         for dms_view in rules.views:
             if isinstance(dms_view.filter_, NodeTypeFilter):
@@ -89,18 +84,21 @@ class _DMSExporter:
                 + [dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters]
             )
         else:
-            node_types = NodeApplyDict([dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters])
+            node_types = NodeApplyDict(
+                [
+                    dm.NodeApply(node.space, node.external_id)
+                    for node in view_node_type_filters
+                    if not (self.remove_cdf_spaces and node.space in COGNITE_SPACES)
+                ]
+            )
 
-        views_not_in_model = {view.view.as_id() for view in rules.views if not view.in_model}
         data_model = rules.metadata.as_data_model()
-
-        data_model_views = [view_id for view_id in views if view_id not in views_not_in_model]
-
         # Sorting to ensure deterministic order
-        data_model.views = sorted(data_model_views, key=lambda v: v.as_tuple())  # type: ignore[union-attr]
-
+        data_model.views = sorted(
+            [dms_view.view.as_id() for dms_view in rules.views if dms_view.in_model],
+            key=lambda x: x.as_tuple(),  # type: ignore[union-attr]
+        )
         spaces = self._create_spaces(rules.metadata, containers, views, data_model)
-
         return DMSSchema(
             spaces=spaces,
             data_model=data_model,
@@ -128,14 +126,20 @@ class _DMSExporter:
             spaces[self.instance_space] = dm.SpaceApply(space=self.instance_space, name=self.instance_space)
         return spaces
 
-    def _create_views_with_node_types(
+    def _create_views(
         self,
         view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
         view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
     ) -> ViewApplyDict:
         input_views = list(self.rules.views)
 
-        views = ViewApplyDict([dms_view.as_view() for dms_view in input_views])
+        views = ViewApplyDict(
+            [
+                dms_view.as_view()
+                for dms_view in input_views
+                if not (self.remove_cdf_spaces and dms_view.view.space in COGNITE_SPACES)
+            ]
+        )
 
         for view_id, view in views.items():
             view.properties = {}
@@ -176,7 +180,13 @@ class _DMSExporter:
 
         containers = list(self.rules.containers or [])
 
-        containers = dm.ContainerApplyList([dms_container.as_container() for dms_container in containers])
+        containers = dm.ContainerApplyList(
+            [
+                dms_container.as_container()
+                for dms_container in containers
+                if not (self.remove_cdf_spaces and dms_container.container.space in COGNITE_SPACES)
+            ]
+        )
         container_to_drop = set()
         for container in containers:
             container_id = container.as_id()

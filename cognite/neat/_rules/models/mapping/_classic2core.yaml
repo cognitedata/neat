@@ -65,7 +65,7 @@ properties:
   index: source
   is_list: false
   nullable: true
-  value_type: cdf_cdm:SourceSystem(version=v1)
+  value_type: cdf_cdm:CogniteSourceSystem(version=v1)
   view: ClassicAsset
   view_property: source
 - container: cdf_cdm:CogniteDescribable
@@ -124,7 +124,7 @@ properties:
   index: source
   is_list: false
   nullable: true
-  value_type: cdf_cdm:SourceSystem(version=v1)
+  value_type: cdf_cdm:CogniteSourceSystem(version=v1)
   view: ClassicEvent
   view_property: source
 - container: cdf_cdm:CogniteSchedulable
@@ -196,7 +196,7 @@ properties:
   index: source
   is_list: false
   nullable: true
-  value_type: cdf_cdm:SourceSystem(version=v1)
+  value_type: cdf_cdm:CogniteSourceSystem(version=v1)
   view: ClassicFile
   view_property: source
 - container: cdf_cdm:CogniteSourceable
@@ -306,7 +306,7 @@ properties:
   is_list: false
   name: Unit
   nullable: true
-  value_type: Unit
+  value_type: cdf_cdm:CogniteUnit(version=v1)
   view: ClassicTimeSeries
   view_property: unitExternalId
 views:
@@ -315,6 +315,10 @@ views:
   implements: cdf_cdm:CogniteDescribable(version=v1)
   in_model: true
   view: cdf_cdm:CogniteSourceSystem(version=v1)
+- description: Represents a single unit of measurement
+  implements: CogniteDescribable
+  in_model: true
+  view: cdf_cdm:CogniteUnit(version=v1)
 - description: Assets represent systems that support industrial functions or processes.
     Assets are often called 'functional location'.
   implements: cdf_cdm:CogniteAsset(version=v1)

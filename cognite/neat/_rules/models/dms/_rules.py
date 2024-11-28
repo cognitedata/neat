@@ -370,10 +370,10 @@ class DMSRules(BaseRules):
                 )
         return value
 
-    def as_schema(self, instance_space: str | None = None) -> DMSSchema:
+    def as_schema(self, instance_space: str | None = None, remove_cdf_spaces: bool = False) -> DMSSchema:
         from ._exporter import _DMSExporter
 
-        return _DMSExporter(self, instance_space).to_schema()
+        return _DMSExporter(self, instance_space, remove_cdf_spaces=remove_cdf_spaces).to_schema()
 
     def _repr_html_(self) -> str:
         summary = {

@@ -101,7 +101,8 @@ class ResourceLoader(
         if missing_ids:
             retrieved = self._retrieve(missing_ids)
             self._items_by_id.update({self.get_id(item): item for item in retrieved})
-        return self._create_list([self._items_by_id[id] for id in ids])
+        # We need to check the cache again, in case we didn't retrieve all the items.
+        return self._create_list([self._items_by_id[id] for id in ids if id in self._items_by_id])
 
     def update(self, items: Sequence[T_WriteClass]) -> T_WritableCogniteResourceList:
         if not self.cache:
@@ -579,4 +580,6 @@ class DataModelLoaderAPI:
             raise ValueError(f"Cannot determine resource name from {items}")
         if resource_name[-1] != "s":
             resource_name += "s"
+        if resource_name == "datamodels":
+            resource_name = "data_models"
         return getattr(self, resource_name)

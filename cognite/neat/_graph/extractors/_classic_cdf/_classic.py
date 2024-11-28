@@ -7,7 +7,7 @@ from cognite.client import CogniteClient
 from cognite.client.exceptions import CogniteAPIError
 from rdflib import Namespace
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._issues.warnings import CDFAuthWarning
 from cognite.neat._shared import Triple
@@ -98,7 +98,7 @@ class ClassicGraphExtractor(BaseExtractor):
             raise ValueError("Exactly one of data_set_external_id or root_asset_external_id must be set.")
         self._root_asset_external_id = root_asset_external_id
         self._data_set_external_id = data_set_external_id
-        self._namespace = namespace or DEFAULT_NAMESPACE
+        self._namespace = namespace or CLASSIC_CDF_NAMESPACE
         self._extractor_args = dict(namespace=self._namespace, unpack_metadata=False, as_write=True, camel_case=True)
 
         self._source_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)

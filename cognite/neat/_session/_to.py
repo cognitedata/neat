@@ -66,9 +66,12 @@ class ToAPI:
                     "This is required for the 'toolkit' format."
                 )
             dms_rule = self._state.data_model.last_verified_dms_rules[1]
-            exporters.DMSExporter().export_to_file(dms_rule, Path(io))
+            user_path = Path(io)
+            if user_path.suffix == "" and not user_path.exists():
+                user_path.mkdir(parents=True)
+            exporters.DMSExporter().export_to_file(dms_rule, user_path)
         else:
-            raise NeatSessionError("Please provide a valid format. {['neat', 'toolkit']}")
+            raise NeatSessionError("Please provide a valid format. 'neat' or 'toolkit'")
 
         return None
 
