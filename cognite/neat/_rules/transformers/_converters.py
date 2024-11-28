@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from collections.abc import Collection, Mapping
 from datetime import date, datetime
-from typing import Literal, TypeVar, cast, overload
+from typing import ClassVar, Literal, TypeVar, cast, overload
 
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
@@ -639,6 +639,8 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
 
 
 class _InformationRulesConverter:
+    _edge_properties: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
+
     def __init__(self, information: InformationRules):
         self.rules = information
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
@@ -681,6 +683,8 @@ class _InformationRulesConverter:
         referenced_containers: dict[ContainerEntity, Counter[ClassEntity]] = defaultdict(Counter)
         for prop in self.rules.properties:
             if ignore_undefined_value_types and isinstance(prop.value_type, UnknownEntity):
+                continue
+            if prop.class_ in edge_classes and prop.property_ in self._edge_properties:
                 continue
             dms_property = self._as_dms_property(
                 prop, default_space, default_version, edge_classes, property_to_edge, end_node_by_edge
