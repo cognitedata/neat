@@ -1,13 +1,16 @@
+from datetime import datetime
 from pathlib import Path
 
 from cognite.client import data_modeling as dm
-from rdflib import DC, DCTERMS, OWL, RDF, RDFS, SH, SKOS, XSD, Graph, Namespace, URIRef
+from rdflib import Graph, Namespace, URIRef
 
+from cognite.neat._constants import get_default_prefixes
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import FileReadError
 from cognite.neat._issues.errors._general import NeatValueError
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers._base import BaseImporter
+from cognite.neat._rules.models._base_rules import RoleTypes
 from cognite.neat._rules.models.data_types import AnyURI
 from cognite.neat._rules.models.entities import UnknownEntity
 from cognite.neat._rules.models.information import (
@@ -30,6 +33,13 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         graph: Knowledge graph
         data_model_id: Data model id to be used for the imported rules
         space: CDF Space to be used for the imported rules
+        language: Language for description and human readable entity names
+
+
+
+    !!! note "Language"
+        Language is provided as ISO 639-1 code. If not provided, English will be used as default.
+
     """
 
     def __init__(
@@ -39,6 +49,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         data_model_id: dm.DataModelId | tuple[str, str, str],
         max_number_of_instance: int,
         non_existing_node_type: UnknownEntity | AnyURI,
+        language: str,
     ) -> None:
         self.issue_list = issue_list
         self.graph = graph
@@ -48,6 +59,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
 
         self.max_number_of_instance = max_number_of_instance
         self.non_existing_node_type = non_existing_node_type
+        self.language = language
 
     @classmethod
     def from_graph_store(
@@ -56,6 +68,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_RDF_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
+        language: str = "en",
     ):
         return cls(
             IssueList(title=f"{cls.__name__} issues"),
@@ -63,6 +76,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
             data_model_id=data_model_id,
             max_number_of_instance=max_number_of_instance,
             non_existing_node_type=non_existing_node_type,
+            language=language,
         )
 
     @classmethod
@@ -72,6 +86,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_RDF_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
+        language: str = "en",
     ):
         issue_list = IssueList(title=f"{cls.__name__} issues")
 
@@ -82,15 +97,8 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
             issue_list.append(FileReadError(filepath, str(e)))
 
         # bind key namespaces
-        graph.bind("owl", OWL)
-        graph.bind("rdf", RDF)
-        graph.bind("rdfs", RDFS)
-        graph.bind("dcterms", DCTERMS)
-        graph.bind("dc", DC)
-        graph.bind("skos", SKOS)
-        graph.bind("sh", SH)
-        graph.bind("xsd", XSD)
-        graph.bind("imf", "http://ns.imfid.org/imf#")
+        for prefix, namespace in get_default_prefixes().items():
+            graph.bind(prefix, namespace)
 
         return cls(
             issue_list,
@@ -98,6 +106,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
             data_model_id=data_model_id,
             max_number_of_instance=max_number_of_instance,
             non_existing_node_type=non_existing_node_type,
+            language=language,
         )
 
     def to_rules(
@@ -129,4 +138,18 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
             prefixes: Dict of prefixes and namespaces
         """
         if Namespace(get_namespace(URI)) not in prefixes.values():
-            prefixes[f"prefix-{len(prefixes)+1}"] = Namespace(get_namespace(URI))
+            prefixes[f"prefix_{len(prefixes)+1}"] = Namespace(get_namespace(URI))
+
+    @property
+    def _metadata(self) -> dict:
+        return {
+            "role": RoleTypes.information,
+            "space": self.data_model_id.space,
+            "external_id": self.data_model_id.external_id,
+            "version": self.data_model_id.version,
+            "created": datetime.now().replace(microsecond=0),
+            "updated": datetime.now().replace(microsecond=0),
+            "name": None,
+            "description": f"Data model imported using {type(self).__name__}",
+            "creator": "Neat",
+        }

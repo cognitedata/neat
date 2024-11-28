@@ -65,3 +65,10 @@ class FileNotAFileError(NeatError, FileNotFoundError):
 
     fix = "Make sure to provide a valid file"
     filepath: Path
+
+
+@dataclass(unsafe_hash=True)
+class CDFMissingClientError(NeatError, RuntimeError):
+    """CDF client is required: {reason}"""
+
+    reason: str

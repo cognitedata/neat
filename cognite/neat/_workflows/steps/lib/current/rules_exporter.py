@@ -21,7 +21,6 @@ __all__ = [
     "RulesToOntology",
     "RulesToSHACL",
     "RulesToSemanticDataModel",
-    "RulesToCDFTransformations",
     "DeleteDataModelFromCDF",
 ]
 
@@ -530,93 +529,6 @@ class RulesToSemanticDataModel(Step):
         )
 
         return FlowMessage(output_text=output_text)
-
-
-class RulesToCDFTransformations(Step):
-    description = "This step exports transformations and RAW tables to populate a data model in CDF"
-    version = "private-alpha"
-    category = CATEGORY
-    configurables: ClassVar[list[Configurable]] = [
-        Configurable(
-            name="Dry run",
-            value="False",
-            label=("Whether to perform a dry run of the export. "),
-            options=["True", "False"],
-        ),
-        Configurable(
-            name="Instance space",
-            value="",
-            label=(
-                "The space to use for the transformations instances. If provided, "
-                "the transformations will be set to populate"
-                "this space. If not provided, the space from the input rules will be used."
-            ),
-        ),
-    ]
-
-    def run(self, rules: MultiRuleData, cdf_client: CogniteClient) -> FlowMessage:  # type: ignore[override]
-        if self.configs is None or self.data_store_path is None:
-            raise WorkflowStepNotInitializedError(type(self).__name__)
-
-        input_rules = rules.dms or rules.information
-        if input_rules is None:
-            return FlowMessage(
-                error_text="Missing DMS or Information rules in the input data! "
-                "Please ensure that a DMS or Information rules is provided!",
-                step_execution_status=StepExecutionStatus.ABORT_AND_FAIL,
-            )
-        if isinstance(input_rules, DMSRules):
-            dms_rules = input_rules
-        elif isinstance(input_rules, InformationRules):
-            dms_rules = InformationToDMS().transform(input_rules).rules
-        else:
-            raise NotImplementedError(f"Unsupported rules type {type(input_rules)}")
-
-        instance_space = self.configs.get("Instance space") or dms_rules.metadata.space
-        dry_run = self.configs.get("Dry run", "False") == "True"
-        dms_exporter = exporters.DMSExporter(
-            export_pipeline=True, instance_space=instance_space, export_components=["spaces"]
-        )
-        output_dir = self.config.staging_path
-        output_dir.mkdir(parents=True, exist_ok=True)
-        file_name = dms_rules.metadata.external_id.replace(":", "_")
-        schema_zip = f"{file_name}_pipeline.zip"
-        schema_full_path = output_dir / schema_zip
-
-        dms_exporter.export_to_file(dms_rules, schema_full_path)
-
-        report_lines = ["# DMS Schema Export to CDF\n\n"]
-        errors = []
-        for result in dms_exporter.export_to_cdf_iterable(
-            rules=dms_rules, client=NeatClient(cdf_client), dry_run=dry_run
-        ):
-            report_lines.append(str(result))
-            errors.extend(result.error_messages)
-
-        report_lines.append("\n\n# ERRORS\n\n")
-        report_lines.extend(errors)
-
-        output_dir = self.config.staging_path
-        output_dir.mkdir(parents=True, exist_ok=True)
-        report_file = "pipeline_creation_report.txt"
-        report_full_path = output_dir / report_file
-        report_full_path.write_text("\n".join(report_lines))
-
-        output_text = (
-            "<p></p>"
-            "Download Pipeline Export "
-            f'<a href="/data/staging/{report_file}?{time.time()}" '
-            f'target="_blank">Report</a>'
-            "<p></p>"
-            "Download Pipeline exported schema"
-            f'- <a href="/data/staging/{schema_zip}?{time.time()}" '
-            f'target="_blank">{schema_zip}</a>'
-        )
-
-        if errors:
-            return FlowMessage(error_text=output_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
-        else:
-            return FlowMessage(output_text=output_text)
 
 
 def _get_default_file_name(rules: MultiRuleData, file_category: str = "ontology", extension: str = "ttl") -> str:

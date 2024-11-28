@@ -15,6 +15,15 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.99.1] - 28-11-**2024**
+### Changed
+- Remove "make_compliant" from OWL and IMF importers
+- Information rules post validation is now solely raising warnings
+
+### Fixed
+- `neat.to.cdf.data_model(...)` no longer tries to deploy Cognite Models.
+- Wrong connection in `neat.mapping.classic_to_core(...)` is now fixed.
+
 ## [0.99.0] - 26-11-**2024**
 ### Changed
 - We are now using RDF datasets (namedgraphs) instead of simple graphs, enabling support for multi space

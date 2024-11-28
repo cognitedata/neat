@@ -2,6 +2,7 @@ from cognite.neat._issues._base import DefaultPydanticError, NeatError, RowError
 
 from ._external import (
     AuthorizationError,
+    CDFMissingClientError,
     FileMissingRequiredFieldError,
     FileNotAFileError,
     FileNotFoundNeatError,
@@ -20,7 +21,7 @@ from ._properties import (
 )
 from ._resources import (
     ResourceChangedError,
-    ResourceConvertionError,
+    ResourceConversionError,
     ResourceCreationError,
     ResourceDuplicatedError,
     ResourceError,
@@ -58,7 +59,7 @@ __all__ = [
     "ResourceError",
     "ResourceNotDefinedError",
     "ResourceMissingIdentifierError",
-    "ResourceConvertionError",
+    "ResourceConversionError",
     "WorkflowConfigurationNotSetError",
     "WorkFlowMissingDataError",
     "WorkflowStepNotInitializedError",
@@ -70,6 +71,7 @@ __all__ = [
     "RowError",
     "NeatTypeError",
     "ReversedConnectionNotFeasibleError",
+    "CDFMissingClientError",
 ]
 
 _NEAT_ERRORS_BY_NAME = {error.__name__: error for error in _get_subclasses(NeatError, include_base=True)}

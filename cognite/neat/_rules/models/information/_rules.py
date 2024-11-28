@@ -1,5 +1,4 @@
 import math
-import sys
 from collections.abc import Hashable
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -34,19 +33,11 @@ from cognite.neat._rules.models.entities import (
     ClassEntity,
     ClassEntityList,
     Entity,
-    MultiValueTypeInfo,
-    Undefined,
     UnknownEntity,
 )
 
 if TYPE_CHECKING:
     from cognite.neat._rules.models import DMSRules
-
-
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
 
 
 class InformationMetadata(BaseMetadata):
@@ -156,21 +147,6 @@ class InformationProperty(SheetRow):
             raise NeatValueError(f"Invalid RDF Path: {value!s}")
 
     @model_validator(mode="after")
-    def set_default_as_list(self):
-        if (
-            self.type_ == EntityTypes.data_property
-            and self.default
-            and self.is_list
-            and not isinstance(self.default, list)
-        ):
-            if isinstance(self.default, str):
-                if self.default:
-                    self.default = self.default.replace(", ", ",").split(",")
-                else:
-                    self.default = [self.default]
-        return self
-
-    @model_validator(mode="after")
     def set_type_for_default(self):
         if self.type_ == EntityTypes.data_property and self.default:
             default_value = self.default[0] if isinstance(self.default, list) else self.default
@@ -242,41 +218,6 @@ class InformationRules(BaseRules):
         elif values is None:
             values = get_default_prefixes()
         return values
-
-    @model_validator(mode="after")
-    def update_entities_prefix(self) -> Self:
-        # update expected_value_types
-        for property_ in self.properties:
-            if isinstance(property_.value_type, ClassEntity) and property_.value_type.prefix is Undefined:
-                property_.value_type.prefix = self.metadata.prefix
-
-            if isinstance(property_.value_type, MultiValueTypeInfo):
-                property_.value_type.set_default_prefix(self.metadata.prefix)
-
-            if property_.class_.prefix is Undefined:
-                property_.class_.prefix = self.metadata.prefix
-
-        # update implements
-        for class_ in self.classes:
-            if class_.implements:
-                for parent in class_.implements:
-                    if not isinstance(parent.prefix, str):
-                        parent.prefix = self.metadata.prefix
-            if class_.class_.prefix is Undefined:
-                class_.class_.prefix = self.metadata.prefix
-
-        return self
-
-    @model_validator(mode="after")
-    def post_validation(self) -> "InformationRules":
-        from ._validation import InformationPostValidation
-
-        issue_list = InformationPostValidation(self).validate()
-        if issue_list.warnings:
-            issue_list.trigger_warnings()
-        if issue_list.has_errors:
-            raise issue_list.as_exception()
-        return self
 
     def as_dms_rules(self) -> "DMSRules":
         from cognite.neat._rules.transformers._converters import _InformationRulesConverter

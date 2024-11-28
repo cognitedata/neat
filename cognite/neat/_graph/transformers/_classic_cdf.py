@@ -254,7 +254,7 @@ class RelationshipToSchemaTransformer(BaseTransformer):
         self._namespace = namespace
 
     _NOT_PROPERTIES: frozenset[str] = frozenset(
-        {"source_external_id", "target_external_id", "external_id", "source_type", "target_type"}
+        {"sourceExternalId", "targetExternalId", "externalId", "sourceType", "targetType"}
     )
     _RELATIONSHIP_NODE_TYPES: tuple[str, ...] = tuple(["Asset", "Event", "File", "Sequence", "TimeSeries"])
     description = "Replaces relationships with a schema"
@@ -266,8 +266,8 @@ class RelationshipToSchemaTransformer(BaseTransformer):
 SELECT (COUNT(?instance) AS ?instanceCount)
 WHERE {{
   ?instance a classic:Relationship .
-  ?instance classic:source_type classic:{source_type} .
-  ?instance classic:target_type classic:{target_type} .
+  ?instance classic:sourceType classic:{source_type} .
+  ?instance classic:targetType classic:{target_type} .
 }}"""
 
     _instances = """PREFIX classic: <{namespace}>
@@ -275,15 +275,15 @@ WHERE {{
 SELECT ?instance
 WHERE {{
     ?instance a classic:Relationship .
-    ?instance classic:source_type classic:{source_type} .
-    ?instance classic:target_type classic:{target_type} .
+    ?instance classic:sourceType classic:{source_type} .
+    ?instance classic:targetType classic:{target_type} .
 }}"""
     _lookup_entity_query = """PREFIX classic: <{namespace}>
 
 SELECT ?entity
 WHERE {{
     ?entity a classic:{entity_type} .
-    ?entity classic:external_id "{external_id}" .
+    ?entity classic:externalId "{external_id}" .
 }}"""
 
     def transform(self, graph: Graph) -> None:
@@ -309,8 +309,8 @@ WHERE {{
         object_by_predicates = cast(
             dict[str, URIRef | Literal], {remove_namespace_from_uri(row[1]): row[2] for row in result}
         )
-        source_external_id = cast(URIRef, object_by_predicates["source_external_id"])
-        target_source_id = cast(URIRef, object_by_predicates["target_external_id"])
+        source_external_id = cast(URIRef, object_by_predicates["sourceExternalId"])
+        target_source_id = cast(URIRef, object_by_predicates["targetExternalId"])
         try:
             source_id = self._lookup_entity(graph, source_type, source_external_id)
         except ValueError:
@@ -321,7 +321,7 @@ WHERE {{
         except ValueError:
             warnings.warn(ResourceNotFoundWarning(target_source_id, "class", str(instance_id), "class"), stacklevel=2)
             return None
-        external_id = str(object_by_predicates["external_id"])
+        external_id = str(object_by_predicates["externalId"])
         # If there is properties on the relationship, we create a new intermediate node
         self._create_node(graph, object_by_predicates, external_id, source_id, target_id, self._predicate(target_type))
 
@@ -347,7 +347,7 @@ WHERE {{
         predicate: URIRef,
     ) -> None:
         """Creates a new intermediate node for the relationship with properties."""
-        # Create new node
+        # Create the entity with the properties
         instance_id = self._namespace[external_id]
         graph.add((instance_id, RDF.type, self._namespace["Edge"]))
         for prop_name, object_ in objects_by_predicates.items():
@@ -355,9 +355,20 @@ WHERE {{
                 continue
             graph.add((instance_id, self._namespace[prop_name], object_))
 
-        # Connect the new node to the source and target nodes
-        graph.add((source_id, predicate, instance_id))
-        graph.add((instance_id, self._namespace["end_node"], target_id))
+        # Target and Source IDs will always be a combination of Asset, Sequence, Event, TimeSeries, and File.
+        # If we assume source ID is an asset and target ID is a time series, then
+        # before we had relationship pointing to both: timeseries <- relationship -> asset
+        # After, we want asset -> timeseries, and asset.edgeSource -> Edge
+        # and the new edge will point to the asset and the timeseries through startNode and endNode
+
+        # Link the two entities directly,
+        graph.add((source_id, predicate, target_id))
+        # Create the new edge
+        graph.add((instance_id, self._namespace["startNode"], source_id))
+        graph.add((instance_id, self._namespace["endNode"], target_id))
+
+        # Link the source to the edge properties
+        graph.add((source_id, self._namespace["edgeSource"], instance_id))
 
     def _predicate(self, target_type: str) -> URIRef:
         return self._namespace[f"relationship{target_type.capitalize()}"]

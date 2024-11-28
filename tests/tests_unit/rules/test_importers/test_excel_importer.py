@@ -6,9 +6,9 @@ from pydantic.version import VERSION
 
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import (
+    CDFMissingClientError,
     FileNotFoundNeatError,
     PropertyDefinitionDuplicatedError,
-    ResourceNotDefinedError,
     RowError,
 )
 from cognite.neat._issues.warnings import (
@@ -68,13 +68,12 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "missing_view_container_dms_rules.xlsx",
         IssueList(
             [
-                ResourceNotDefinedError(
-                    ViewId("neat", "Pump", "1"),
-                    "view",
-                    location="Views Sheet",
-                    column_name="View",
-                    row_number=3,
-                    sheet_name="Properties",
+                CDFMissingClientError(
+                    "DataModelId(space='neat', "
+                    "external_id='invalid_model', version='1') has "
+                    "imported views and/or container: "
+                    "{view(prefix=neat,suffix=Pump,version=1)}, "
+                    "{container(prefix=neat,suffix=Pump)}."
                 ),
             ]
         ),

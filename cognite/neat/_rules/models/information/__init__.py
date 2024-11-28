@@ -5,6 +5,7 @@ from ._rules_input import (
     InformationInputProperty,
     InformationInputRules,
 )
+from ._validation import InformationValidation
 
 __all__ = [
     "InformationRules",
@@ -15,4 +16,5 @@ __all__ = [
     "InformationInputMetadata",
     "InformationInputClass",
     "InformationInputProperty",
+    "InformationValidation",
 ]

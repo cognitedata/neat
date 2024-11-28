@@ -11,6 +11,7 @@ from cognite.neat._issues import NeatIssueList
 from cognite.neat._issues.errors import ResourceNotFoundError, WorkflowStepNotInitializedError
 from cognite.neat._issues.formatters import FORMATTER_BY_NAME
 from cognite.neat._rules.models import DMSRules
+from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat._workflows.steps.data_contracts import MultiRuleData
 from cognite.neat._workflows.steps.step_model import Configurable, Step
@@ -51,10 +52,7 @@ class ValidateRulesAgainstCDF(Step):
             )
         dms_rules = rules.dms
 
-        schema = dms_rules.as_schema()
-        errors = schema.validate()
-        if not errors:
-            return FlowMessage(output_text="Rules are complete and valid. No need to fetch from CDF.")
+        errors = DMSValidation(dms_rules, NeatClient(cdf_client)).validate()
 
         missing_spaces = [
             error.identifier
@@ -85,11 +83,11 @@ class ValidateRulesAgainstCDF(Step):
             f"and {len(retrieved_views)} views from CDF."
         )
 
+        schema = dms_rules.as_schema()
         schema.spaces.update({space.space: space for space in retrieved_spaces})
         schema.containers.update({container.as_id(): container for container in retrieved_containers})
         schema.views.update({view.as_id(): view for view in retrieved_views})
 
-        errors = schema.validate()
         if errors:
             output_dir = self.data_store_path / Path("staging")
             report_writer = FORMATTER_BY_NAME[self.configs["Report Formatter"]]()

@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from graphlib import TopologicalSorter
@@ -47,6 +48,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
+from cognite.neat._issues.warnings import CDFMaxIterationsWarning
 from cognite.neat._shared import T_ID
 
 if TYPE_CHECKING:
@@ -99,7 +101,8 @@ class ResourceLoader(
         if missing_ids:
             retrieved = self._retrieve(missing_ids)
             self._items_by_id.update({self.get_id(item): item for item in retrieved})
-        return self._create_list([self._items_by_id[id] for id in ids])
+        # We need to check the cache again, in case we didn't retrieve all the items.
+        return self._create_list([self._items_by_id[id] for id in ids if id in self._items_by_id])
 
     def update(self, items: Sequence[T_WriteClass]) -> T_WritableCogniteResourceList:
         if not self.cache:
@@ -273,12 +276,12 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         return self._client.data_modeling.views.apply(items)
 
     def retrieve(
-        self, ids: SequenceNotStr[ViewId], include_connections: bool = False, include_ancestor: bool = False
+        self, ids: SequenceNotStr[ViewId], include_connected: bool = False, include_ancestor: bool = False
     ) -> ViewList:
-        if not include_connections and not include_ancestor:
+        if not include_connected and not include_ancestor:
             return super().retrieve(ids)
         # Retrieve recursively updates the cache.
-        return self._retrieve_recursive(ids, include_connections, include_ancestor)
+        return self._retrieve_recursive(ids, include_connected, include_ancestor)
 
     def _retrieve(self, ids: SequenceNotStr[ViewId]) -> ViewList:
         return self._client.data_modeling.views.retrieve(cast(Sequence, ids))
@@ -429,6 +432,12 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
     def _create(self, items: Sequence[ContainerApply]) -> ContainerList:
         return self._client.data_modeling.containers.apply(items)
 
+    def retrieve(self, ids: SequenceNotStr[ContainerId], include_connected: bool = False) -> ContainerList:
+        if not include_connected:
+            return super().retrieve(ids)
+        # Retrieve recursively updates the cache.
+        return self._retrieve_recursive(ids)
+
     def _retrieve(self, ids: SequenceNotStr[ContainerId]) -> ContainerList:
         return self._client.data_modeling.containers.retrieve(cast(Sequence, ids))
 
@@ -440,6 +449,68 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
 
     def _create_list(self, items: Sequence[Container]) -> ContainerList:
         return ContainerList(items)
+
+    def _retrieve_recursive(self, container_ids: SequenceNotStr[ContainerId]) -> ContainerList:
+        """Containers can reference each other through the 'requires' constraint.
+
+        This method retrieves all containers that are referenced by other containers through the 'requires' constraint,
+        including their parents.
+        """
+        max_iterations = 10  # Limiting the number of iterations to avoid infinite loops
+        found = ContainerList([])
+        found_ids: set[ContainerId] = set()
+        last_batch = list(container_ids)
+        for _ in range(max_iterations):
+            if not last_batch:
+                break
+            to_retrieve_from_cdf: set[ContainerId] = set()
+            batch_ids: list[ContainerId] = []
+            for container_id in last_batch:
+                if container_id in found_ids:
+                    continue
+                elif container_id in self._items_by_id:
+                    container = self._items_by_id[container_id]
+                    found.append(container)
+                    batch_ids.extend(self.get_connected_containers(container, found_ids))
+                else:
+                    to_retrieve_from_cdf.add(container_id)
+
+            if to_retrieve_from_cdf:
+                retrieved_batch = self._client.data_modeling.containers.retrieve(list(to_retrieve_from_cdf))
+                self._items_by_id.update({view.as_id(): view for view in retrieved_batch})
+                found.extend(retrieved_batch)
+                found_ids.update({view.as_id() for view in retrieved_batch})
+                for container in retrieved_batch:
+                    batch_ids.extend(self.get_connected_containers(container, found_ids))
+
+            last_batch = batch_ids
+        else:
+            warnings.warn(
+                CDFMaxIterationsWarning(
+                    "The maximum number of iterations was reached while resolving referenced containers."
+                    "There might be referenced containers that are not included in the list of containers.",
+                    max_iterations=max_iterations,
+                ),
+                stacklevel=2,
+            )
+
+        if self.cache is False:
+            # We must update the cache to retrieve recursively.
+            # If the cache is disabled, bust the cache to avoid storing the retrieved views.
+            self.bust_cache()
+        return found
+
+    @staticmethod
+    def get_connected_containers(
+        container: Container | ContainerApply, skip: set[ContainerId] | None = None
+    ) -> set[ContainerId]:
+        connected_containers = set()
+        for constraint in container.constraints.values():
+            if isinstance(constraint, RequiresConstraint):
+                connected_containers.add(constraint.require)
+        if skip:
+            return {container_id for container_id in connected_containers if container_id not in skip}
+        return connected_containers
 
     def are_equal(self, local: ContainerApply, remote: Container) -> bool:
         local_dumped = local.dump(camel_case=True)
@@ -509,4 +580,6 @@ class DataModelLoaderAPI:
             raise ValueError(f"Cannot determine resource name from {items}")
         if resource_name[-1] != "s":
             resource_name += "s"
+        if resource_name == "datamodels":
+            resource_name = "data_models"
         return getattr(self, resource_name)

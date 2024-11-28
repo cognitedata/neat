@@ -12,6 +12,7 @@ from cognite.neat._issues.errors import PropertyNotFoundError, ResourceDuplicate
 from cognite.neat._issues.warnings import FileTypeUnexpectedWarning
 from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat._rules.models import DMSSchema
+from cognite.neat._rules.models.dms import DMSValidation
 
 
 def invalid_schema_test_cases() -> Iterable[ParameterSet]:
@@ -322,7 +323,7 @@ class TestDMSSchema:
         expected_errors = [error for error in expected if isinstance(error, NeatError)]
         expected_warnings = [warning for warning in expected if isinstance(warning, NeatWarning)]
         with warnings.catch_warnings(record=True) as warning_logger:
-            errors = schema.validate()
+            errors = DMSValidation._validate_schema(schema, dict(schema.views), dict(schema.containers))
         assert set(errors) == set(expected_errors)
         actual_warnings = [warning.message for warning in warning_logger]
         assert set(actual_warnings) == set(expected_warnings)

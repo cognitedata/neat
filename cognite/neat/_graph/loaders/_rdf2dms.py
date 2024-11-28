@@ -19,7 +19,7 @@ from rdflib import RDF
 from cognite.neat._graph._tracking import LogTracker, Tracker
 from cognite.neat._issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
-    ResourceConvertionError,
+    ResourceConversionError,
     ResourceCreationError,
     ResourceDuplicatedError,
     ResourceRetrievalError,
@@ -88,7 +88,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             data_model = rules.as_schema().as_read_model()
         except Exception as e:
             issues.append(
-                ResourceConvertionError(
+                ResourceConversionError(
                     identifier=rules.metadata.as_identifier(),
                     resource_type="DMS Rules",
                     target_format="read DMS model",

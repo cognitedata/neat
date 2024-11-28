@@ -80,9 +80,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = schema.containers.copy()
         self._all_views_by_id = schema.views.copy()
-        if schema.reference:
-            self._all_containers_by_id.update(schema.reference.containers.items())
-            self._all_views_by_id.update(schema.reference.views.items())
 
     def update_referenced_containers(self, containers: Iterable[dm.ContainerApply]) -> None:
         """Update the referenced containers. This is useful to add Cognite containers identified after the root schema
@@ -97,7 +94,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         cls,
         client: NeatClient,
         data_model_id: DataModelIdentifier,
-        reference_model_id: DataModelIdentifier | None = None,
     ) -> "DMSImporter":
         """Create a DMSImporter ready to convert the given data model to rules.
 
@@ -111,7 +107,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             DMSImporter: DMSImporter instance
         """
 
-        data_model_ids = [data_model_id, reference_model_id] if reference_model_id else [data_model_id]
+        data_model_ids = [data_model_id]
         data_models = client.data_modeling.data_models.retrieve(data_model_ids, inline_views=True)
 
         user_models = cls._find_model_in_list(data_models, data_model_id)
@@ -128,34 +124,16 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             )
         user_model = user_models.latest_version()
 
-        if reference_model_id:
-            ref_models = cls._find_model_in_list(data_models, reference_model_id)
-            if len(ref_models) == 0:
-                return cls(
-                    DMSSchema(),
-                    [
-                        ResourceRetrievalError(
-                            dm.DataModelId.load(reference_model_id),
-                            "data model",
-                            "Data Model is missing in CDF",
-                        )
-                    ],
-                )
-            ref_model: dm.DataModel[dm.View] | None = ref_models.latest_version()
-        else:
-            ref_model = None
-
         issue_list = IssueList()
         with _handle_issues(issue_list) as result:
-            schema = DMSSchema.from_data_model(NeatClient(client), user_model, ref_model)
+            schema = NeatClient(client).schema.retrieve_data_model(user_model)
 
         if result.result == "failure" or issue_list.has_errors:
             return cls(DMSSchema(), issue_list)
 
         metadata = cls._create_metadata_from_model(user_model)
-        ref_metadata = cls._create_metadata_from_model(ref_model) if ref_model else None
 
-        return cls(schema, issue_list, metadata, ref_metadata)
+        return cls(schema, issue_list, metadata, None)
 
     @classmethod
     def _find_model_in_list(

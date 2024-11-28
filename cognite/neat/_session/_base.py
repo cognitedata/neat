@@ -10,8 +10,9 @@ from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules, VerifiedRules
-from cognite.neat._rules.importers import DMSImporter
-from cognite.neat._rules.models import DMSInputRules, DMSRules, SheetList
+from cognite.neat._rules.models import DMSRules
+from cognite.neat._rules.models.dms import DMSValidation
+from cognite.neat._rules.models.information import InformationValidation
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
@@ -66,31 +67,21 @@ class NeatSession:
 
     def verify(self) -> IssueList:
         source_id, last_unverified_rule = self._state.data_model.last_unverified_rule
-
-        reference_rules: DMSInputRules | None = None
-        if isinstance(last_unverified_rule.rules, DMSInputRules):
-            dms_rules = last_unverified_rule.rules
-            views_ids, containers_ids = dms_rules.imported_views_and_containers_ids()
-            if views_ids or containers_ids:
-                if self._client is None:
-                    raise NeatSessionError(
-                        "No client provided. You are referencing unknown views and containers in your data model, "
-                        "NEAT needs a client to lookup the definitions. "
-                        "Please set the client in the session, NeatSession(client=client)."
-                    )
-                schema = self._client.schema.retrieve(list(views_ids), list(containers_ids))
-
-                importer = DMSImporter(schema)
-                reference_rules = importer.to_rules().rules
-
-                if reference_rules is not None:
-                    dms_rules.views.extend(reference_rules.views)
-                    if dms_rules.containers:
-                        dms_rules.containers.extend(reference_rules.containers or [])
-
-        transformer = VerifyAnyRules("continue")
+        transformer = VerifyAnyRules("continue", validate=False)
         start = datetime.now(timezone.utc)
         output = transformer.try_transform(last_unverified_rule)
+        if isinstance(output.rules, DMSRules):
+            issues = DMSValidation(output.rules, self._client).validate()
+        elif isinstance(output.rules, InformationRules):
+            issues = InformationValidation(output.rules).validate()
+        else:
+            raise NeatSessionError("Unsupported rule type")
+        if issues.has_errors:
+            # This is up for discussion, but I think we should not return rules that
+            # only pass the verification but not the validation.
+            output.rules = None
+        output.issues.extend(issues)
+
         end = datetime.now(timezone.utc)
 
         if output.rules:
@@ -103,22 +94,6 @@ class NeatSession:
                 self._state.data_model.provenance.source_entity(source_id)
                 or self._state.data_model.provenance.target_entity(source_id),
             )
-            if reference_rules is not None and isinstance(output.rules, DMSRules):
-                # Remove the referenced views and containers from the rules
-                ref_view_ids = set(reference_rules.as_view_entities())
-                if ref_view_ids:
-                    output.rules.views = SheetList(
-                        [view for view in output.rules.views if view.view not in ref_view_ids]
-                    )
-                ref_container_ids = reference_rules.as_container_entities()
-                if output.rules.containers and ref_container_ids:
-                    output.rules.containers = SheetList(
-                        [
-                            container
-                            for container in output.rules.containers
-                            if container.container not in ref_container_ids
-                        ]
-                    )
 
             self._state.data_model.write(output.rules, change)
 

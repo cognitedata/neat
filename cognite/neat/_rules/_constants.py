@@ -106,13 +106,9 @@ VIEW_ID_COMPLIANCE_REGEX = (
 DMS_PROPERTY_ID_COMPLIANCE_REGEX = (
     rf"(?!^({'|'.join(get_reserved_words('property'))})$)" r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
 )
-CLASS_ID_COMPLIANCE_REGEX = (
-    rf"(?!^({'|'.join(get_reserved_words('class'))})$)" r"(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
-)
+CLASS_ID_COMPLIANCE_REGEX = rf"(?!^({'|'.join(get_reserved_words('class'))})$)" r"(^[a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
 
-INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX = (
-    r"^(\*)|(?!^(Property|property)$)(^[a-zA-Z][a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
-)
+INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX = r"^(\*)|(?!^(Property|property)$)(^[a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
 VERSION_COMPLIANCE_REGEX = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
 
 
