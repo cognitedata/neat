@@ -14,6 +14,7 @@ from cognite.neat._rules._shared import InputRules, ReadRules
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.dms import DMSValidation
+from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import (
     PrefixEntities,
@@ -463,3 +464,33 @@ class DataModelPrepareAPI:
         )
 
         self._state.data_model.write(copy_, change)
+
+    def add_implements_to_classes(self, suffix: Literal["Edge"], implements: str = "Edge") -> None:
+        """All classes with the suffix will have the implements property set to the given value.
+
+        Args:
+            suffix: The suffix of the classes to add the implements property to.
+            implements:  The value of the implements property to set.
+
+        """
+        source_id, rules = self._state.data_model.last_verified_information_rules
+        start = datetime.now(timezone.utc)
+
+        output = rules.model_copy(deep=True)
+        for class_ in output.classes:
+            if class_.class_.suffix.endswith(suffix):
+                class_.implements = [ClassEntity(prefix=class_.class_.prefix, suffix=implements)]
+        output.metadata.version = f"{rules.metadata.version}.implements_{implements}"
+        end = datetime.now(timezone.utc)
+
+        change = Change.from_rules_activity(
+            output,
+            ProvenanceAgent(id_=DEFAULT_NAMESPACE["agent/"]),
+            start,
+            end,
+            (f"Added implements property to classes with suffix {suffix}"),
+            self._state.data_model.provenance.source_entity(source_id)
+            or self._state.data_model.provenance.target_entity(source_id),
+        )
+
+        self._state.data_model.write(output, change)
