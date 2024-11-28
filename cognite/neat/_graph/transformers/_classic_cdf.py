@@ -259,7 +259,7 @@ class RelationshipToSchemaTransformer(BaseTransformer):
     _RELATIONSHIP_NODE_TYPES: tuple[str, ...] = tuple(["Asset", "Event", "File", "Sequence", "TimeSeries"])
     description = "Replaces relationships with a schema"
     _use_only_once: bool = True
-    _need_changes = frozenset({str(extractors.RelationshipsExtractor.__name__)})
+    _need_changes = frozenset({})
 
     _count_by_source_target = """PREFIX classic: <{namespace}>
 
