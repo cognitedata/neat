@@ -249,11 +249,12 @@ class PrefixEntities(RulesTransformer[InputRules, InputRules]):  # type: ignore[
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
-    def __init__(self, ignore_undefined_value_types: bool = False):
+    def __init__(self, ignore_undefined_value_types: bool = False, mode: Literal["edge_properties"] | None = None):
         self.ignore_undefined_value_types = ignore_undefined_value_types
+        self.mode = mode
 
     def _transform(self, rules: InformationRules) -> DMSRules:
-        return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types)
+        return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types, self.mode)
 
 
 class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
@@ -641,7 +642,9 @@ class _InformationRulesConverter:
         self.rules = information
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
 
-    def as_dms_rules(self, ignore_undefined_value_types: bool = False) -> "DMSRules":
+    def as_dms_rules(
+        self, ignore_undefined_value_types: bool = False, mode: Literal["edge_properties"] | None = None
+    ) -> "DMSRules":
         from cognite.neat._rules.models.dms._rules import (
             DMSContainer,
             DMSProperty,

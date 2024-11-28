@@ -15,7 +15,7 @@ from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.models.information import InformationValidation
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
-from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
+from cognite.neat._rules.transformers import ConvertToRules, InformationToDMS, VerifyAnyRules
 from cognite.neat._rules.transformers._converters import ConversionTransformer
 from cognite.neat._store._provenance import (
     INSTANCES_ENTITY,
@@ -114,7 +114,7 @@ class NeatSession:
         with catch_issues(issues):
             if target == "dms":
                 source_id, info_rules = self._state.data_model.last_verified_information_rules
-                converter = ConvertToRules(DMSRules)
+                converter = InformationToDMS()
                 converted_rules = converter.transform(info_rules).rules
             elif target == "information":
                 source_id, dms_rules = self._state.data_model.last_verified_dms_rules
