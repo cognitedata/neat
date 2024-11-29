@@ -85,9 +85,7 @@ class TestViewLoader:
             include_ancestor=True,
         )
 
-        assert len(cached_views.as_ids()) == len(
-            views.as_ids()
-        ), "The cached views should be the same as the original views"
+        assert len(cached_views) == len(views), "The cached views should be the same as the original views"
 
 
 class TestContainerLoader:
