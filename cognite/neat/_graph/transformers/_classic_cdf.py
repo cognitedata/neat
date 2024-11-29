@@ -308,10 +308,9 @@ WHERE {{
                     query = self._instances.format(
                         namespace=self._namespace, source_type=source_type, target_type=target_type
                     )
+                    total = instance_count if self._limit_per_type is None else self._limit_per_type
                     for no, result in enumerate(
-                        iterate_progress_bar(
-                            graph.query(query), total=instance_count, description="Relationships to edges"
-                        )
+                        iterate_progress_bar(graph.query(query), total=total, description="Relationships to edges")
                     ):
                         if self._limit_per_type is not None and no >= self._limit_per_type:
                             break

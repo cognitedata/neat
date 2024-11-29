@@ -229,7 +229,6 @@ def remove_triples_in_batch(graph: Graph, triples: Iterable[Triple], batch_size:
     for triple in triples:
         graph.remove(triple)
         check_commit()
-
     check_commit(force_commit=True)
 
 
