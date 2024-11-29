@@ -268,7 +268,7 @@ class RelationshipAsEdgeTransformer(BaseTransformer):
     _RELATIONSHIP_NODE_TYPES: tuple[str, ...] = tuple(["Asset", "Event", "File", "Sequence", "TimeSeries"])
     description = "Replaces relationships with a schema"
     _use_only_once: bool = True
-    _need_changes = frozenset({})
+    _need_changes = frozenset({extractors.RelationshipsExtractor.__name__})
 
     _count_by_source_target = """PREFIX classic: <{namespace}>
 

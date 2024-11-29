@@ -10,6 +10,12 @@ class BaseExtractor:
     extractors must implement.
     """
 
+    def _get_activity_names(self) -> list[str]:
+        """Returns the name of the activities that the extractor performs."""
+        # This method can be overridden by sublasses that runs multiple extractors
+        # for example the ClassicGraphExtractor
+        return [type(self).__name__]
+
     @abstractmethod
     def extract(self) -> Iterable[Triple]:
         raise NotImplementedError()

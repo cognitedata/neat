@@ -109,6 +109,18 @@ class ClassicGraphExtractor(BaseExtractor):
         self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
         self._labels: set[str] = set()
         self._data_set_ids: set[int] = set()
+        self._extracted_labels = False
+        self._extracted_data_sets = False
+
+    def _get_activity_names(self) -> list[str]:
+        activities = [core_node.extractor_cls.__name__ for core_node in self._classic_node_types] + [
+            RelationshipsExtractor.__name__,
+        ]
+        if self._extracted_labels:
+            activities.append(LabelsExtractor.__name__)
+        if self._extracted_data_sets:
+            activities.append(DataSetExtractor.__name__)
+        return activities
 
     def extract(self) -> Iterable[Triple]:
         """Extracts all classic CDF Resources."""
@@ -122,11 +134,15 @@ class ClassicGraphExtractor(BaseExtractor):
             yield from self._extract_labels()
         except CogniteAPIError as e:
             warnings.warn(CDFAuthWarning("extract labels", str(e)), stacklevel=2)
+        else:
+            self._extracted_labels = True
 
         try:
             yield from self._extract_data_sets()
         except CogniteAPIError as e:
             warnings.warn(CDFAuthWarning("extract data sets", str(e)), stacklevel=2)
+        else:
+            self._extracted_data_sets = True
 
     def _extract_core_start_nodes(self):
         for core_node in self._classic_node_types:
