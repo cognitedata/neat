@@ -1,6 +1,7 @@
 import textwrap
 import warnings
 from abc import ABC
+from collections.abc import Iterable
 from typing import cast
 
 from rdflib import RDF, Graph, Literal, Namespace, URIRef
@@ -9,7 +10,12 @@ from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat._graph import extractors
 from cognite.neat._issues.warnings import ResourceNotFoundWarning
 from cognite.neat._utils.collection_ import iterate_progress_bar
-from cognite.neat._utils.rdf_ import Triple, add_triples_in_batch, remove_namespace_from_uri, remove_triples_in_batch
+from cognite.neat._utils.rdf_ import (
+    Triple,
+    add_triples_in_batch,
+    remove_instance_ids_in_batch,
+    remove_namespace_from_uri,
+)
 
 from ._base import BaseTransformer
 
@@ -305,19 +311,32 @@ WHERE {{
                     instance_count = int(instance_count_res[0])  # type: ignore[index, arg-type]
                     if instance_count < self._min_relationship_types:
                         continue
-                    query = self._instances.format(
-                        namespace=self._namespace, source_type=source_type, target_type=target_type
-                    )
-                    total = instance_count if self._limit_per_type is None else self._limit_per_type
-                    for no, result in enumerate(
-                        iterate_progress_bar(graph.query(query), total=total, description="Relationships to edges")
-                    ):
-                        if self._limit_per_type is not None and no >= self._limit_per_type:
-                            break
-                        relationship_id = cast(URIRef, result[0])  # type: ignore[index, misc]
-                        self._relationship_as_edge(graph, relationship_id, source_type, target_type)
+                    edge_triples = self._edge_triples(graph, source_type, target_type, instance_count)
+                    add_triples_in_batch(graph, edge_triples)
 
-    def _relationship_as_edge(self, graph: Graph, relationship_id: URIRef, source_type: str, target_type: str) -> None:
+    def _edge_triples(self, graph: Graph, source_type: str, target_type: str, instance_count: int) -> Iterable[Triple]:
+        query = self._instances.format(namespace=self._namespace, source_type=source_type, target_type=target_type)
+        total = instance_count if self._limit_per_type is None else self._limit_per_type
+
+        converted_relationships: list[URIRef] = []
+        for no, result in enumerate(
+            iterate_progress_bar(graph.query(query), total=total, description="Relationships to edges")
+        ):
+            if self._limit_per_type is not None and no >= self._limit_per_type:
+                break
+            relationship_id = cast(URIRef, result[0])  # type: ignore[index, misc]
+            yield from self._relationship_as_edge(graph, relationship_id, source_type, target_type)
+            converted_relationships.append(relationship_id)
+
+            if len(converted_relationships) >= 1_000:
+                remove_instance_ids_in_batch(graph, converted_relationships)
+                converted_relationships = []
+
+        remove_instance_ids_in_batch(graph, converted_relationships)
+
+    def _relationship_as_edge(
+        self, graph: Graph, relationship_id: URIRef, source_type: str, target_type: str
+    ) -> list[Triple]:
         relationship_triples = cast(list[Triple], list(graph.query(f"DESCRIBE <{relationship_id}>")))
         object_by_predicates = cast(
             dict[str, URIRef | Literal], {remove_namespace_from_uri(row[1]): row[2] for row in relationship_triples}
@@ -330,22 +349,20 @@ WHERE {{
             warnings.warn(
                 ResourceNotFoundWarning(source_external_id, "class", str(relationship_id), "class"), stacklevel=2
             )
-            return None
+            return []
         try:
             target_id = self._lookup_entity(graph, target_type, target_source_id)
         except ValueError:
             warnings.warn(
                 ResourceNotFoundWarning(target_source_id, "class", str(relationship_id), "class"), stacklevel=2
             )
-            return None
-        external_id = str(object_by_predicates["externalId"])
+            return []
+        edge_id = str(object_by_predicates["externalId"])
         # If there is properties on the relationship, we create a new intermediate node
         edge_type = self._namespace[f"{source_type}To{target_type}Edge"]
-        edge_triples = self._create_edge(
-            object_by_predicates, external_id, source_id, target_id, self._predicate(target_type), edge_type
+        return self._create_edge(
+            object_by_predicates, edge_id, source_id, target_id, self._predicate(target_type), edge_type
         )
-        add_triples_in_batch(graph, edge_triples)
-        remove_triples_in_batch(graph, relationship_triples)
 
     def _lookup_entity(self, graph: Graph, entity_type: str, external_id: str) -> URIRef:
         query = self._lookup_entity_query.format(
