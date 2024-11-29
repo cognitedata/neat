@@ -13,16 +13,26 @@ class MappingAPI:
     def __init__(self, state: SessionState):
         self._state = state
 
-    def classic_to_core(self, org_name: str) -> None:
+    def classic_to_core(self, company_prefix: str, use_parent_property_name: bool = True) -> None:
         """Map classic types to core types.
 
         Note this automatically creates an extended CogniteCore model.
 
+        Args:
+            company_prefix: Prefix used for all extended CogniteCore types.
+            use_parent_property_name: Whether to use the parent property name in the extended CogniteCore model.
+                See below for more information.
+
+        If you extend CogniteAsset, with for example, ClassicAsset. You will map the property `parentId` to `parent`.
+        If you set `user_parent_property_name` to True, the `parentId` will be renamed to `parent` after the
+        mapping is done. If you set it to False, the property will remain `parentId`.
         """
         source_id, rules = self._state.data_model.last_verified_dms_rules
 
         start = datetime.now(timezone.utc)
-        transformer = RuleMapper(load_classic_to_core_mapping(org_name, rules.metadata.space, rules.metadata.version))
+        transformer = RuleMapper(
+            load_classic_to_core_mapping(company_prefix, rules.metadata.space, rules.metadata.version)
+        )
         output = transformer.transform(rules)
         end = datetime.now(timezone.utc)
 
