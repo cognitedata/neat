@@ -256,7 +256,7 @@ class AsParentName(RulesTransformer[DMSRules, DMSRules]):
     ) -> list[ViewEntity]:
         if parents_by_view.get(view) == []:
             # We found the root.
-            return []
+            return [view]
         if view not in parents_by_view and self._client is not None:
             # Lookup the parent
             view_id = view.as_id()
@@ -310,7 +310,7 @@ class AsParentName(RulesTransformer[DMSRules, DMSRules]):
                 view_entity = ViewEntity.from_id(view_id)
                 for property_id in (view.properties or {}).keys():
                     property_ = read_properties[property_id]
-                    if not isinstance(property_, dm.MappedPropertyApply):
+                    if not isinstance(property_, dm.MappedProperty):
                         continue
                     container_entity = ContainerEntity.from_id(property_.container)
                     view_by_container_properties[(container_entity, property_.container_property_identifier)].append(

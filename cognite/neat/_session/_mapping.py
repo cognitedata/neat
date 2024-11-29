@@ -114,6 +114,7 @@ class MappingAPI:
         if not use_parent_property_name:
             return
 
+        source_id, rules = self._state.data_model.last_verified_dms_rules
         start = datetime.now(timezone.utc)
         transformer = AsParentName(self._client)
         output = transformer.transform(rules)
