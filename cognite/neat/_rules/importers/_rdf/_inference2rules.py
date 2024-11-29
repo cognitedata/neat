@@ -164,8 +164,8 @@ class InferenceImporter(BaseRDFImporter):
         # Infers all the properties of the class
         for class_id, class_definition in classes.items():
             for (  # type: ignore[misc]
-                instance,  # type: ignore[misc]
-                _,  # type: ignore[misc]
+                instance,
+                _,
             ) in self.graph.query(  # type: ignore[misc]
                 INSTANCES_OF_CLASS_QUERY.replace("class", class_definition["uri"])
                 if self.max_number_of_instance < 0
