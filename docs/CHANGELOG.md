@@ -19,6 +19,7 @@ Changes are grouped as follows:
 ### Added
 - Support for converting relationships to edges.
 - Support for setting limit when running `neat.read.cdf.classic.graph(...)`.
+- Support for using parent property name in `neat.mapping.classic_to_core(...)`.
 
 ## [0.99.1] - 28-11-**2024**
 ### Changed
