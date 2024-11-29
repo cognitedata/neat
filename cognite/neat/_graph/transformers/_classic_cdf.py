@@ -4,12 +4,12 @@ from abc import ABC
 from typing import cast
 
 from rdflib import RDF, Graph, Literal, Namespace, URIRef
-from rdflib.query import ResultRow
 
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat._graph import extractors
 from cognite.neat._issues.warnings import ResourceNotFoundWarning
-from cognite.neat._utils.rdf_ import Triple, add_triples_in_batch, remove_namespace_from_uri
+from cognite.neat._utils.collection_ import iterate_progress_bar
+from cognite.neat._utils.rdf_ import Triple, add_triples_in_batch, remove_namespace_from_uri, remove_triples_in_batch
 
 from ._base import BaseTransformer
 
@@ -235,13 +235,12 @@ class AssetRelationshipConnector(BaseTransformer):
                     graph.remove((relationship_id, self.relationship_target_xid_prop, None))
 
 
-class RelationshipToSchemaTransformer(BaseTransformer):
-    """Replaces relationships with a schema.
+class RelationshipAsEdgeTransformer(BaseTransformer):
+    """Converts relationships into edges in the graph.
 
-    This transformer analyzes the relationships in the graph and modifies them to be part of the schema
-    for Assets, Events, Files, Sequences, and TimeSeries. Relationships without any properties
-    are replaced by a simple relationship between the source and target nodes. Relationships with
-    properties are replaced by a schema that contains the properties as attributes.
+    This transformer converts relationships into edges in the graph. This is useful as the
+    edges will be picked up as part of the schema connected to Assets, Events, Files, Sequenses,
+    and TimeSeries in the InferenceImporter.
 
     Args:
         limit: The minimum number of relationships that need to be present for it
@@ -292,22 +291,25 @@ WHERE {{
                 query = self._count_by_source_target.format(
                     namespace=self._namespace, source_type=source_type, target_type=target_type
                 )
-                for instance_count in graph.query(query):
-                    if int(instance_count[0]) < self._limit:  # type: ignore[index, arg-type]
+                for instance_count_res in graph.query(query):
+                    instance_count = int(instance_count_res[0])  # type: ignore[index, arg-type]
+                    if instance_count < self._limit:
                         continue
                     query = self._instances.format(
                         namespace=self._namespace, source_type=source_type, target_type=target_type
                     )
-                    for result in graph.query(query):
+                    for result in iterate_progress_bar(
+                        graph.query(query), total=instance_count, description="Relationships to edges"
+                    ):
                         instance_id = cast(URIRef, result[0])  # type: ignore[index, misc]
                         self._convert_relationship_to_schema(graph, instance_id, source_type, target_type)
 
     def _convert_relationship_to_schema(
         self, graph: Graph, instance_id: URIRef, source_type: str, target_type: str
     ) -> None:
-        result = cast(list[ResultRow], list(graph.query(f"DESCRIBE <{instance_id}>")))
+        relationship_triples = cast(list[Triple], list(graph.query(f"DESCRIBE <{instance_id}>")))
         object_by_predicates = cast(
-            dict[str, URIRef | Literal], {remove_namespace_from_uri(row[1]): row[2] for row in result}
+            dict[str, URIRef | Literal], {remove_namespace_from_uri(row[1]): row[2] for row in relationship_triples}
         )
         source_external_id = cast(URIRef, object_by_predicates["sourceExternalId"])
         target_source_id = cast(URIRef, object_by_predicates["targetExternalId"])
@@ -324,12 +326,11 @@ WHERE {{
         external_id = str(object_by_predicates["externalId"])
         # If there is properties on the relationship, we create a new intermediate node
         edge_type = self._namespace[f"{source_type}To{target_type}Edge"]
-        self._create_node(
-            graph, object_by_predicates, external_id, source_id, target_id, self._predicate(target_type), edge_type
+        edge_triples = self._create_edge(
+            object_by_predicates, external_id, source_id, target_id, self._predicate(target_type), edge_type
         )
-
-        for triple in result:
-            graph.remove(triple)  # type: ignore[arg-type]
+        add_triples_in_batch(graph, edge_triples)
+        remove_triples_in_batch(graph, relationship_triples)
 
     def _lookup_entity(self, graph: Graph, entity_type: str, external_id: str) -> URIRef:
         query = self._lookup_entity_query.format(
@@ -340,24 +341,25 @@ WHERE {{
             return cast(URIRef, result[0][0])  # type: ignore[index]
         raise ValueError(f"Could not find entity with external_id {external_id} and type {entity_type}")
 
-    def _create_node(
+    def _create_edge(
         self,
-        graph: Graph,
         objects_by_predicates: dict[str, URIRef | Literal],
         external_id: str,
         source_id: URIRef,
         target_id: URIRef,
         predicate: URIRef,
         edge_type: URIRef,
-    ) -> None:
+    ) -> list[Triple]:
         """Creates a new intermediate node for the relationship with properties."""
         # Create the entity with the properties
+        edge_triples: list[Triple] = []
         edge_id = self._namespace[external_id]
-        graph.add((edge_id, RDF.type, edge_type))
+
+        edge_triples.append((edge_id, RDF.type, edge_type))
         for prop_name, object_ in objects_by_predicates.items():
             if prop_name in self._NOT_PROPERTIES:
                 continue
-            graph.add((edge_id, self._namespace[prop_name], object_))
+            edge_triples.append((edge_id, self._namespace[prop_name], object_))
 
         # Target and Source IDs will always be a combination of Asset, Sequence, Event, TimeSeries, and File.
         # If we assume source ID is an asset and target ID is a time series, then
@@ -366,10 +368,11 @@ WHERE {{
         # and the new edge will point to the asset and the timeseries through startNode and endNode
 
         # Link the source to the new edge
-        graph.add((source_id, predicate, edge_id))
+        edge_triples.append((source_id, predicate, edge_id))
         # Link the edge to the source and target
-        graph.add((edge_id, self._namespace["startNode"], source_id))
-        graph.add((edge_id, self._namespace["endNode"], target_id))
+        edge_triples.append((edge_id, self._namespace["startNode"], source_id))
+        edge_triples.append((edge_id, self._namespace["endNode"], target_id))
+        return edge_triples
 
     def _predicate(self, target_type: str) -> URIRef:
         return self._namespace[f"relationship{target_type.capitalize()}"]

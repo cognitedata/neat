@@ -8,7 +8,7 @@ from rdflib import URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._graph.transformers import RelationshipToSchemaTransformer
+from cognite.neat._graph.transformers import RelationshipAsEdgeTransformer
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._rules._shared import InputRules, ReadRules
 from cognite.neat._rules.importers import DMSImporter
@@ -127,7 +127,7 @@ class InstancePrepareAPI:
                 to be converted into a schema. Default is 1.
 
         """
-        transformer = RelationshipToSchemaTransformer(limit=limit)
+        transformer = RelationshipAsEdgeTransformer(limit=limit)
         self._state.instances.store.transform(transformer)
 
 

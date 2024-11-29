@@ -11,7 +11,7 @@ from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._issues.warnings import CDFAuthWarning
 from cognite.neat._shared import Triple
-from cognite.neat._utils.collection_ import chunker
+from cognite.neat._utils.collection_ import chunker, iterate_progress_bar
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._assets import AssetsExtractor
@@ -206,14 +206,4 @@ class ClassicGraphExtractor(BaseExtractor):
     @staticmethod
     def _chunk(items: Sequence, description: str) -> Iterable:
         to_iterate: Iterable = chunker(items, chunk_size=1000)
-        try:
-            from rich.progress import track
-        except ModuleNotFoundError:
-            ...
-        else:
-            to_iterate = track(
-                to_iterate,
-                total=(len(items) // 1_000) + 1,
-                description=description,
-            )
-        return to_iterate
+        return iterate_progress_bar(to_iterate, (len(items) // 1_000) + 1, description)

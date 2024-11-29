@@ -208,6 +208,31 @@ def add_triples_in_batch(graph: Graph, triples: Iterable[Triple], batch_size: in
     check_commit(force_commit=True)
 
 
+def remove_triples_in_batch(graph: Graph, triples: Iterable[Triple], batch_size: int = 10_000) -> None:
+    """Removes triples from the graph store in batches.
+
+    Args:
+        triples: list of triples to be removed from the graph store
+        batch_size: Batch size of triples per commit, by default 10_000
+    """
+    batch_count = 0
+
+    def check_commit(force_commit: bool = False):
+        """Commit nodes to the graph if batch counter is reached or if force_commit is True"""
+        nonlocal batch_count
+        batch_count += 1
+        if force_commit or batch_count >= batch_size:
+            graph.commit()
+            batch_count = 0
+            return
+
+    for triple in triples:
+        graph.remove(triple)
+        check_commit()
+
+    check_commit(force_commit=True)
+
+
 def remove_instance_ids_in_batch(graph: Graph, instance_ids: Iterable[URIRef], batch_size: int = 1_000) -> None:
     """Removes all triples related to the given instances in the graph store in batches.
 
