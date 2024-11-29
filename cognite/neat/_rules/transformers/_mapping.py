@@ -264,9 +264,9 @@ class AsParentName(RulesTransformer[DMSRules, DMSRules]):
             if not read_views:
                 # Warning? Should be caught by validation
                 raise ResourceNotFoundError(view_id, "view", data_model_id, "data model")
-            parent_view = max(read_views, key=lambda view: view.updated_time)
-            parent_view[ViewEntity.from_id(parent_view.as_id(), default_version=parent_view.version)] = [
-                ViewEntity.from_id(grand_parent.as_id()) for grand_parent in parent_view.implements or []
+            parent_view = max(read_views, key=lambda view: view.created_time)
+            parents_by_view[ViewEntity.from_id(parent_view.as_id())] = [
+                ViewEntity.from_id(grand_parent) for grand_parent in parent_view.implements or []
             ]
         elif view not in parents_by_view:
             raise CDFMissingClientError(
