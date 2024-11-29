@@ -92,6 +92,7 @@ class ClassicGraphExtractor(BaseExtractor):
         data_set_external_id: str | None = None,
         root_asset_external_id: str | None = None,
         namespace: Namespace | None = None,
+        limit_per_type: int | None = None,
     ):
         self._client = client
         if sum([bool(data_set_external_id), bool(root_asset_external_id)]) != 1:
@@ -99,7 +100,10 @@ class ClassicGraphExtractor(BaseExtractor):
         self._root_asset_external_id = root_asset_external_id
         self._data_set_external_id = data_set_external_id
         self._namespace = namespace or CLASSIC_CDF_NAMESPACE
-        self._extractor_args = dict(namespace=self._namespace, unpack_metadata=False, as_write=True, camel_case=True)
+        self._extractor_args = dict(
+            namespace=self._namespace, unpack_metadata=False, as_write=True, camel_case=True, limit=limit_per_type
+        )
+        self._limit_per_type = limit_per_type
 
         self._source_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
         self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)

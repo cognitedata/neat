@@ -114,20 +114,23 @@ class InstancePrepareAPI:
             raise NeatSessionError(f"Property {property_} is not defined for type {type_}. Cannot make connection")
         return type_uri[0], property_uri[0]
 
-    def relationships_as_edges(self, limit: int = 1) -> None:
+    def relationships_as_edges(self, min_relationship_types: int = 1, limit_per_type: int | None = None) -> None:
         """This assumes that you have read a classic CDF knowledge graph including relationships.
 
-        This transformer analyzes the relationships in the graph and modifies them to be part of the schema
-        for Assets, Events, Files, Sequences, and TimeSeries. Relationships without any properties
-        are replaced by a simple relationship between the source and target nodes. Relationships with
-        properties are replaced by a schema that contains the properties as attributes.
+        This method converts relationships into edges in the graph. This is useful as the
+        edges will be picked up as part of the schema connected to Assets, Events, Files, Sequences,
+        and TimeSeries in the InferenceImporter.
 
         Args:
-            limit: The minimum number of relationships that need to be present for it
-                to be converted into a schema. Default is 1.
+            min_relationship_types: The minimum number of relationship types that must exists to convert those
+                relationships to edges. For example, if there is only 5 relationships between Assets and TimeSeries,
+                and limit is 10, those relationships will not be converted to edges.
+            limit_per_type: The number of conversions to perform per relationship type. For example, if there are 10
+                relationships between Assets and TimeSeries, and limit_per_type is 1, only 1 of those relationships
+                will be converted to an edge. If None, all relationships will be converted.
 
         """
-        transformer = RelationshipAsEdgeTransformer(limit=limit)
+        transformer = RelationshipAsEdgeTransformer(min_relationship_types, limit_per_type)
         self._state.instances.store.transform(transformer)
 
 

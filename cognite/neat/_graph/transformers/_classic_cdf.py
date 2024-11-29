@@ -243,13 +243,23 @@ class RelationshipAsEdgeTransformer(BaseTransformer):
     and TimeSeries in the InferenceImporter.
 
     Args:
-        limit: The minimum number of relationships that need to be present for it
-            to be converted into a schema. Default is 1.
+        min_relationship_types: The minimum number of relationship types that must exists to convert those
+            relationships to edges. For example, if there is only 5 relationships between Assets and TimeSeries,
+            and limit is 10, those relationships will not be converted to edges.
+        limit_per_type: The number of conversions to perform per relationship type. For example, if there are 10
+            relationships between Assets and TimeSeries, and limit_per_type is 1, only 1 of those relationships
+            will be converted to an edge. If None, all relationships will be converted.
 
     """
 
-    def __init__(self, limit: int = 1, namespace: Namespace = CLASSIC_CDF_NAMESPACE) -> None:
-        self._limit = limit
+    def __init__(
+        self,
+        min_relationship_types: int = 1,
+        limit_per_type: int | None = None,
+        namespace: Namespace = CLASSIC_CDF_NAMESPACE,
+    ) -> None:
+        self._min_relationship_types = min_relationship_types
+        self._limit_per_type = limit_per_type
         self._namespace = namespace
 
     _NOT_PROPERTIES: frozenset[str] = frozenset(
@@ -293,14 +303,18 @@ WHERE {{
                 )
                 for instance_count_res in graph.query(query):
                     instance_count = int(instance_count_res[0])  # type: ignore[index, arg-type]
-                    if instance_count < self._limit:
+                    if instance_count < self._min_relationship_types:
                         continue
                     query = self._instances.format(
                         namespace=self._namespace, source_type=source_type, target_type=target_type
                     )
-                    for result in iterate_progress_bar(
-                        graph.query(query), total=instance_count, description="Relationships to edges"
+                    for no, result in enumerate(
+                        iterate_progress_bar(
+                            graph.query(query), total=instance_count, description="Relationships to edges"
+                        )
                     ):
+                        if self._limit_per_type is not None and no >= self._limit_per_type:
+                            break
                         instance_id = cast(URIRef, result[0])  # type: ignore[index, misc]
                         self._convert_relationship_to_schema(graph, instance_id, source_type, target_type)
 
