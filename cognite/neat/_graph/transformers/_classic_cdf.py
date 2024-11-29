@@ -273,7 +273,7 @@ class RelationshipAsEdgeTransformer(BaseTransformer):
         {"sourceExternalId", "targetExternalId", "externalId", "sourceType", "targetType"}
     )
     _RELATIONSHIP_NODE_TYPES: tuple[str, ...] = tuple(["Asset", "Event", "File", "Sequence", "TimeSeries"])
-    description = "Replaces relationships with a schema"
+    description = "Relationships converted to edges"
     _use_only_once: bool = True
     _need_changes = frozenset({extractors.RelationshipsExtractor.__name__})
 
