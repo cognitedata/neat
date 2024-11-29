@@ -78,3 +78,6 @@ class MultiValueTypeInfo(BaseModel):
     def is_mixed_type(self) -> bool:
         """Will signalize to DMS converter to fall back to string"""
         return not self.is_multi_object_type() and not self.is_multi_data_type()
+
+    def __hash__(self) -> int:
+        return hash(str(self))
