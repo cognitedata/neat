@@ -275,9 +275,12 @@ class AsParentName(RulesTransformer[DMSRules, DMSRules]):
             )
 
         inheritance_path = [view]
+        seen = {view}
         if view in parents_by_view:
             for parent in parents_by_view[view]:
-                inheritance_path.extend(self._get_inheritance_path(parent, parents_by_view, data_model_id))
+                parent_path = self._get_inheritance_path(parent, parents_by_view, data_model_id)
+                inheritance_path.extend([p for p in parent_path if p not in seen])
+                seen.update(parent_path)
         return inheritance_path
 
     def _view_by_container_properties(
@@ -295,6 +298,7 @@ class AsParentName(RulesTransformer[DMSRules, DMSRules]):
             )
             view_with_properties.add(prop.view)
 
+        # We need to look up all parent properties.
         to_lookup = {view.view.as_id() for view in rules.views if view.view not in view_with_properties}
         if to_lookup and self._client is None:
             raise CDFMissingClientError(
@@ -302,15 +306,16 @@ class AsParentName(RulesTransformer[DMSRules, DMSRules]):
             )
         elif to_lookup and self._client:
             read_views = self._client.loaders.views.retrieve(list(to_lookup), include_ancestor=True)
-            read_view_by_id = {view.as_id(): view for view in read_views}
             write_views = [self._client.loaders.views.as_write(read_view) for read_view in read_views]
-            for view in write_views:
-                view_id = view.as_id()
-                read_properties = read_view_by_id[view_id].properties
+            # We use the write/request format of the views as the read/response format contains all properties
+            # including ancestor properties. The goal is to find the property name used in the parent
+            # and thus we cannot have that repeated in the child views.
+            for write_view in write_views:
+                view_id = write_view.as_id()
                 view_entity = ViewEntity.from_id(view_id)
-                for property_id in (view.properties or {}).keys():
-                    property_ = read_properties[property_id]
-                    if not isinstance(property_, dm.MappedProperty):
+
+                for property_id, property_ in (write_view.properties or {}).items():
+                    if not isinstance(property_, dm.MappedPropertyApply):
                         continue
                     container_entity = ContainerEntity.from_id(property_.container)
                     view_by_container_properties[(container_entity, property_.container_property_identifier)].append(

@@ -80,6 +80,15 @@ class TestViewLoader:
         unique_views = set(views.as_ids())
         assert len(unique_views) == len(views), "There should be no duplicates in the list of views"
 
+        cached_views = neat_client.loaders.views.retrieve(
+            [dm.ViewId("cdf_cdm", "CogniteAsset", "v1"), dm.ViewId("cdf_cdm", "CogniteEquipment", "v1")],
+            include_ancestor=True,
+        )
+
+        assert len(cached_views.as_ids()) == len(
+            views.as_ids()
+        ), "The cached views should be the same as the original views"
+
 
 class TestContainerLoader:
     def test_force_create(self, neat_client: NeatClient, space: dm.Space) -> None:
