@@ -316,7 +316,7 @@ views:
   in_model: true
   view: cdf_cdm:CogniteSourceSystem(version=v1)
 - description: Represents a single unit of measurement
-  implements: CogniteDescribable
+  implements: cdf_cdm:CogniteDescribable(version=v1)
   in_model: true
   view: cdf_cdm:CogniteUnit(version=v1)
 - description: Assets represent systems that support industrial functions or processes.
