@@ -27,10 +27,13 @@ ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            group by ?class order by DESC(?instances)"""
 
 
-INSTANCES_OF_CLASS_QUERY = """SELECT ?s (COUNT(?p) as ?propertyCount)
-                             WHERE { ?s a <class> ; ?p ?o . }
-                             GROUP BY ?s
-                             ORDER BY DESC(?propertyCount)"""
+INSTANCES_OF_CLASS_QUERY = """SELECT ?s WHERE { ?s a <class> . }"""
+
+
+INSTANCES_OF_CLASS_RICHNESS_ORDERED_QUERY = """SELECT ?s (COUNT(?p) as ?propertyCount)
+                                               WHERE { ?s a <class> ; ?p ?o . }
+                                               GROUP BY ?s
+                                               ORDER BY DESC(?propertyCount)"""
 
 INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
                                     WHERE {<instance_id> ?property ?value .
@@ -161,16 +164,19 @@ class InferenceImporter(BaseRDFImporter):
 
             self._add_uri_namespace_to_prefixes(cast(URIRef, class_uri), prefixes)
 
+        instances_query = (
+            INSTANCES_OF_CLASS_QUERY if self.max_number_of_instance == -1 else INSTANCES_OF_CLASS_RICHNESS_ORDERED_QUERY
+        )
+
         # Infers all the properties of the class
         for class_id, class_definition in classes.items():
             for (  # type: ignore[misc]
                 instance,
                 _,
             ) in self.graph.query(  # type: ignore[misc]
-                INSTANCES_OF_CLASS_QUERY.replace("class", class_definition["uri"])
+                instances_query.replace("class", class_definition["uri"])
                 if self.max_number_of_instance < 0
-                else INSTANCES_OF_CLASS_QUERY.replace("class", class_definition["uri"])
-                + f" LIMIT {self.max_number_of_instance}"
+                else instances_query.replace("class", class_definition["uri"]) + f" LIMIT {self.max_number_of_instance}"
             ):
                 for property_uri, occurrence, data_type_uri, object_type_uri in self.graph.query(  # type: ignore[misc]
                     INSTANCE_PROPERTIES_DEFINITION.replace("instance_id", instance)
