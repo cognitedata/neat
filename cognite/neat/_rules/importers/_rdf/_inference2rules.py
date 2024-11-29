@@ -26,7 +26,11 @@ ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class . }
                            group by ?class order by DESC(?instances)"""
 
-INSTANCES_OF_CLASS_QUERY = """SELECT ?s WHERE { ?s a <class> . }"""
+
+INSTANCES_OF_CLASS_QUERY = """SELECT ?s (COUNT(?p) as ?propertyCount)
+                             WHERE { ?s a <class> ; ?p ?o . }
+                             GROUP BY ?s
+                             ORDER BY DESC(?propertyCount)"""
 
 INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occurrence) ?dataType ?objectType
                                     WHERE {<instance_id> ?property ?value .
@@ -159,7 +163,10 @@ class InferenceImporter(BaseRDFImporter):
 
         # Infers all the properties of the class
         for class_id, class_definition in classes.items():
-            for (instance,) in self.graph.query(  # type: ignore[misc]
+            for (  # type: ignore[misc]
+                instance,  # type: ignore[misc]
+                _,  # type: ignore[misc]
+            ) in self.graph.query(  # type: ignore[misc]
                 INSTANCES_OF_CLASS_QUERY.replace("class", class_definition["uri"])
                 if self.max_number_of_instance < 0
                 else INSTANCES_OF_CLASS_QUERY.replace("class", class_definition["uri"])
@@ -242,6 +249,10 @@ class InferenceImporter(BaseRDFImporter):
 
         # Create multi-value properties otherwise single value
         for property_ in properties.values():
+            # Removes non-existing node type from value type prior final conversion to string
+            if len(property_["value_type"]) > 1 and str(self.non_existing_node_type) in property_["value_type"]:
+                property_["value_type"].remove(str(self.non_existing_node_type))
+
             if len(property_["value_type"]) > 1:
                 property_["value_type"] = " | ".join([str(t) for t in property_["value_type"]])
             else:
