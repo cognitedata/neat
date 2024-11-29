@@ -314,13 +314,11 @@ WHERE {{
                     ):
                         if self._limit_per_type is not None and no >= self._limit_per_type:
                             break
-                        instance_id = cast(URIRef, result[0])  # type: ignore[index, misc]
-                        self._convert_relationship_to_schema(graph, instance_id, source_type, target_type)
+                        relationship_id = cast(URIRef, result[0])  # type: ignore[index, misc]
+                        self._relationship_as_edge(graph, relationship_id, source_type, target_type)
 
-    def _convert_relationship_to_schema(
-        self, graph: Graph, instance_id: URIRef, source_type: str, target_type: str
-    ) -> None:
-        relationship_triples = cast(list[Triple], list(graph.query(f"DESCRIBE <{instance_id}>")))
+    def _relationship_as_edge(self, graph: Graph, relationship_id: URIRef, source_type: str, target_type: str) -> None:
+        relationship_triples = cast(list[Triple], list(graph.query(f"DESCRIBE <{relationship_id}>")))
         object_by_predicates = cast(
             dict[str, URIRef | Literal], {remove_namespace_from_uri(row[1]): row[2] for row in relationship_triples}
         )
@@ -329,12 +327,16 @@ WHERE {{
         try:
             source_id = self._lookup_entity(graph, source_type, source_external_id)
         except ValueError:
-            warnings.warn(ResourceNotFoundWarning(source_external_id, "class", str(instance_id), "class"), stacklevel=2)
+            warnings.warn(
+                ResourceNotFoundWarning(source_external_id, "class", str(relationship_id), "class"), stacklevel=2
+            )
             return None
         try:
             target_id = self._lookup_entity(graph, target_type, target_source_id)
         except ValueError:
-            warnings.warn(ResourceNotFoundWarning(target_source_id, "class", str(instance_id), "class"), stacklevel=2)
+            warnings.warn(
+                ResourceNotFoundWarning(target_source_id, "class", str(relationship_id), "class"), stacklevel=2
+            )
             return None
         external_id = str(object_by_predicates["externalId"])
         # If there is properties on the relationship, we create a new intermediate node
