@@ -27,7 +27,7 @@ ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            group by ?class order by DESC(?instances)"""
 
 
-INSTANCES_OF_CLASS_QUERY = """SELECT ?s WHERE { ?s a <class> . }"""
+INSTANCES_OF_CLASS_QUERY = """SELECT ?s ?propertyCount WHERE { ?s a <class> . BIND ('Unknown' as ?propertyCount) }"""
 
 
 INSTANCES_OF_CLASS_RICHNESS_ORDERED_QUERY = """SELECT ?s (COUNT(?p) as ?propertyCount)
