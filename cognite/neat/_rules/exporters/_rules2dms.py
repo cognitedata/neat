@@ -41,6 +41,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             Defaults to "update". See below for details.
         instance_space (str, optional): The space to use for the instance. Defaults to None.
         suppress_warnings (bool, optional): Suppress warnings. Defaults to False.
+        remove_cdf_spaces (bool, optional): Skip views and containers that are system are in system spaces.
 
     ... note::
 
@@ -58,6 +59,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         existing_handling: Literal["fail", "skip", "update", "force"] = "update",
         instance_space: str | None = None,
         suppress_warnings: bool = False,
+        remove_cdf_spaces: bool = True,
     ):
         self.export_components = {export_components} if isinstance(export_components, str) else set(export_components)
         self.include_space = include_space
@@ -65,6 +67,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         self.instance_space = instance_space
         self.suppress_warnings = suppress_warnings
         self._schema: DMSSchema | None = None
+        self.remove_cdf_spaces = remove_cdf_spaces
 
     def export_to_file(self, rules: DMSRules, filepath: Path) -> None:
         """Export the rules to a file(s).
@@ -103,7 +106,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
 
     def export(self, rules: DMSRules) -> DMSSchema:
         # We do not want to include CogniteCore/CogniteProcess Inudstries in the schema
-        return rules.as_schema(instance_space=self.instance_space, remove_cdf_spaces=True)
+        return rules.as_schema(instance_space=self.instance_space, remove_cdf_spaces=self.remove_cdf_spaces)
 
     def delete_from_cdf(
         self, rules: DMSRules, client: NeatClient, dry_run: bool = False, skip_space: bool = False

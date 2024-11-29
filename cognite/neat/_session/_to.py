@@ -51,7 +51,24 @@ class ToAPI:
     @overload
     def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None: ...
 
-    def yaml(self, io: Any | None = None, format: Literal["neat", "toolkit"] = "neat") -> str | None:
+    def yaml(
+        self, io: Any | None = None, format: Literal["neat", "toolkit"] = "neat", skip_system_spaces: bool = True
+    ) -> str | None:
+        """Export the verified data model to YAML.
+
+        Args:
+            io: The file path or file-like object to write the YAML file to. Defaults to None.
+            format: The format of the YAML file. Defaults to "neat".
+            skip_system_spaces: If True, system spaces will be skipped. Defaults to True.
+
+        ... note::
+
+            - "neat": This is the format Neat uses to store the data model.
+            - "toolkit": This is the format used by Cognite Toolkit, that matches the CDF API.
+
+        Returns:
+            str | None: If io is None, the YAML string will be returned. Otherwise, None will be returned.
+        """
         if format == "neat":
             exporter = exporters.YAMLExporter()
             last_verified = self._state.data_model.last_verified_rule[1]
@@ -69,7 +86,7 @@ class ToAPI:
             user_path = Path(io)
             if user_path.suffix == "" and not user_path.exists():
                 user_path.mkdir(parents=True)
-            exporters.DMSExporter().export_to_file(dms_rule, user_path)
+            exporters.DMSExporter(remove_cdf_spaces=skip_system_spaces).export_to_file(dms_rule, user_path)
         else:
             raise NeatSessionError("Please provide a valid format. 'neat' or 'toolkit'")
 
