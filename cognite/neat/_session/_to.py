@@ -141,6 +141,7 @@ class CDFToAPI:
             dry_run: If True, no changes will be made to CDF. Defaults to False.
             drop_data: If existing is 'force' or 'recreate' and the operation will lead to data loss,
                 the component will be skipped unless drop_data is True. Defaults to False.
+                Note this only applies to spaces and containers if they contain data.
             components: The components to export. Defaults to "all".
 
         ... note::
