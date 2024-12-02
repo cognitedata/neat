@@ -109,6 +109,7 @@ class DMSValidation:
         dms_schema = self._rules.as_schema()
         ref_view_by_id = {view.as_id(): view for view in referenced_views}
         ref_container_by_id = {container.as_id(): container for container in referenced_containers}
+        # All containers and views are the Containers/Views in the DMSRules + the referenced ones
         all_containers_by_id: dict[dm.ContainerId, dm.ContainerApply | dm.Container] = {
             **dict(dms_schema.containers.items()),
             **ref_container_by_id,
@@ -116,7 +117,7 @@ class DMSValidation:
         all_views_by_id: dict[dm.ViewId, dm.ViewApply | dm.View] = {**dict(dms_schema.views.items()), **ref_view_by_id}
         properties_by_ids = self._as_properties_by_ids(dms_schema, ref_view_by_id)
         view_properties_by_id = self._as_view_properties_by_id(properties_by_ids)
-        parents_by_view = self._as_parents_by_view(all_views_by_id)
+        parents_view_ids_by_child_id = self._parent_view_ids_by_child_id(all_views_by_id)
 
         issue_list = IssueList()
         # Neat DMS classes Validation
@@ -130,7 +131,9 @@ class DMSValidation:
 
         # SDK classes validation
         issue_list.extend(self._containers_are_proper_size(dms_schema))
-        issue_list.extend(self._validate_reverse_connections(properties_by_ids, all_containers_by_id, parents_by_view))
+        issue_list.extend(
+            self._validate_reverse_connections(properties_by_ids, all_containers_by_id, parents_view_ids_by_child_id)
+        )
         issue_list.extend(self._validate_schema(dms_schema, all_views_by_id, all_containers_by_id))
         issue_list.extend(self._validate_referenced_container_limits(dms_schema.views, view_properties_by_id))
         return issue_list
@@ -181,7 +184,9 @@ class DMSValidation:
         return view_properties_by_id
 
     @staticmethod
-    def _as_parents_by_view(all_views_by_id: dict[dm.ViewId, dm.ViewApply | dm.View]) -> dict[ViewId, set[ViewId]]:
+    def _parent_view_ids_by_child_id(
+        all_views_by_id: dict[dm.ViewId, dm.ViewApply | dm.View],
+    ) -> dict[ViewId, set[ViewId]]:
         @lru_cache
         def get_parents(child_view_id: ViewId) -> set[ViewId]:
             child_view = all_views_by_id[child_view_id]
@@ -398,7 +403,7 @@ class DMSValidation:
 
     def _validate_reverse_connections(
         self,
-        properties_by_ids: dict[tuple[dm.ViewId, str], ViewPropertyApply | ViewProperty],
+        view_property_by_property_id: dict[tuple[dm.ViewId, str], ViewPropertyApply | ViewProperty],
         containers_by_id: dict[dm.ContainerId, dm.ContainerApply | dm.Container],
         parents_by_view: dict[dm.ViewId, set[dm.ViewId]],
     ) -> IssueList:
@@ -407,11 +412,11 @@ class DMSValidation:
         if self._metadata.as_data_model_id() in COGNITE_MODELS:
             return issue_list
 
-        for (view_id, prop_id), prop_ in properties_by_ids.items():
+        for (view_id, prop_id), prop_ in view_property_by_property_id.items():
             if not isinstance(prop_, ReverseDirectRelationApply | ReverseDirectRelation):
                 continue
             target_id = prop_.through.source, prop_.through.property
-            if target_id not in properties_by_ids:
+            if target_id not in view_property_by_property_id:
                 issue_list.append(
                     ReversedConnectionNotFeasibleError(
                         view_id,
@@ -425,7 +430,7 @@ class DMSValidation:
                 # Todo: How to handle this case? Should not happen if you created the model with Neat
                 continue
 
-            target_property = properties_by_ids[(target_id[0], target_id[1])]
+            target_property = view_property_by_property_id[(target_id[0], target_id[1])]
             # Validate that the target is a direct relation pointing to the view_id
             is_direct_relation = False
             if isinstance(target_property, dm.MappedProperty) and isinstance(target_property.type, dm.DirectRelation):
