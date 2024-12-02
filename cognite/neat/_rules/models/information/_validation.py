@@ -4,9 +4,13 @@ from collections import Counter
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings._models import UndefinedClassWarning
-from cognite.neat._issues.warnings._resources import ResourceNotDefinedWarning
-from cognite.neat._rules._constants import EntityTypes
+from cognite.neat._issues.warnings._resources import (
+    ResourceNotDefinedWarning,
+    ResourceRegexViolationWarning,
+)
+from cognite.neat._rules._constants import PATTERNS, EntityTypes
 from cognite.neat._rules.models.entities import ClassEntity, UnknownEntity
+from cognite.neat._rules.models.entities._multi_value import MultiValueTypeInfo
 
 from ._rules import InformationRules
 
@@ -28,6 +32,7 @@ class InformationValidation:
         self._parent_class_defined()
         self._referenced_classes_exist()
         self._referenced_value_types_exist()
+        self._regex_compliance_with_dms()
 
         return self.issue_list
 
@@ -105,6 +110,82 @@ class InformationValidation:
                         location="Classes sheet",
                     )
                 )
+
+    def _regex_compliance_with_dms(self) -> None:
+        """Check regex compliance with DMS of properties, classes and value types."""
+
+        for prop_ in self.properties:
+            if not PATTERNS.dms_property_id_compliance.match(prop_.property_):
+                self.issue_list.append(
+                    ResourceRegexViolationWarning(
+                        prop_.property_,
+                        "Property",
+                        "Properties sheet, Property column",
+                        PATTERNS.dms_property_id_compliance.pattern,
+                    )
+                )
+            if not PATTERNS.view_id_compliance.match(prop_.class_.suffix):
+                self.issue_list.append(
+                    ResourceRegexViolationWarning(
+                        prop_.class_,
+                        "Class",
+                        "Properties sheet, Class column",
+                        PATTERNS.view_id_compliance.pattern,
+                    )
+                )
+
+            # Handling Value Type
+            if (
+                isinstance(prop_.value_type, ClassEntity)
+                and prop_.value_type != UnknownEntity()
+                and not PATTERNS.view_id_compliance.match(prop_.value_type.suffix)
+            ):
+                self.issue_list.append(
+                    ResourceRegexViolationWarning(
+                        prop_.value_type,
+                        "Value Type",
+                        "Properties sheet, Value Type column",
+                        PATTERNS.view_id_compliance.pattern,
+                    )
+                )
+            if isinstance(prop_.value_type, MultiValueTypeInfo):
+                for value_type in prop_.value_type.types:
+                    if (
+                        isinstance(prop_.value_type, ClassEntity)
+                        and prop_.value_type != UnknownEntity()
+                        and not PATTERNS.view_id_compliance.match(value_type.suffix)
+                    ):
+                        self.issue_list.append(
+                            ResourceRegexViolationWarning(
+                                value_type,
+                                "Value Type",
+                                "Properties sheet, Value Type column",
+                                PATTERNS.view_id_compliance.pattern,
+                            )
+                        )
+
+        for class_ in self.classes:
+            if not PATTERNS.view_id_compliance.match(class_.class_.suffix):
+                self.issue_list.append(
+                    ResourceRegexViolationWarning(
+                        class_.class_,
+                        "Class",
+                        "Classes sheet, Class column",
+                        PATTERNS.view_id_compliance.pattern,
+                    )
+                )
+
+            if class_.implements:
+                for parent in class_.implements:
+                    if not PATTERNS.view_id_compliance.match(parent.suffix):
+                        self.issue_list.append(
+                            ResourceRegexViolationWarning(
+                                parent,
+                                "Class",
+                                "Classes sheet, Implements column",
+                                PATTERNS.view_id_compliance.pattern,
+                            )
+                        )
 
     def _class_parent_pairs(self) -> dict[ClassEntity, list[ClassEntity]]:
         class_parent_pairs: dict[ClassEntity, list[ClassEntity]] = {}
