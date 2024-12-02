@@ -213,9 +213,9 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
         return to_overwrite, conflicts
 
 
-class AsParentName(RulesTransformer[DMSRules, DMSRules]):
-    """Looks up all properties that maps to the same container property,
-    and changes the child property name to match the parent property name.
+class AsParentPropertyId(RulesTransformer[DMSRules, DMSRules]):
+    """Looks up all view properties that map to the same container property,
+    and changes the child view property id to match the parent property id.
     """
 
     def __init__(self, client: NeatClient | None = None) -> None:
@@ -226,22 +226,24 @@ class AsParentName(RulesTransformer[DMSRules, DMSRules]):
         new_rules = input_rules.model_copy(deep=True)
         new_rules.metadata.version += "_as_parent_name"
 
-        path_by_view = self._path_by_view(new_rules)
+        path_by_view = self._inheritance_path_by_view(new_rules)
         view_by_container_property = self._view_by_container_properties(new_rules)
 
-        parent_name_by_container_property = self._get_parent_name_by_container_property(
+        parent_view_property_by_container_property = self._get_parent_view_property_by_container_property(
             path_by_view, view_by_container_property
         )
 
         for prop in new_rules.properties:
             if prop.container and prop.container_property:
-                if parent_name := parent_name_by_container_property.get((prop.container, prop.container_property)):
+                if parent_name := parent_view_property_by_container_property.get(
+                    (prop.container, prop.container_property)
+                ):
                     prop.view_property = parent_name
 
         return JustRules(new_rules)
 
     # Todo: Move into Probe class. Note this means that the Probe class must take a NeatClient as an argument.
-    def _path_by_view(self, rules: DMSRules) -> dict[ViewEntity, list[ViewEntity]]:
+    def _inheritance_path_by_view(self, rules: DMSRules) -> dict[ViewEntity, list[ViewEntity]]:
         parents_by_view: dict[ViewEntity, list[ViewEntity]] = {view.view: view.implements or [] for view in rules.views}
 
         path_by_view: dict[ViewEntity, list[ViewEntity]] = {}
@@ -264,9 +266,9 @@ class AsParentName(RulesTransformer[DMSRules, DMSRules]):
             if not read_views:
                 # Warning? Should be caught by validation
                 raise ResourceNotFoundError(view_id, "view", data_model_id, "data model")
-            parent_view = max(read_views, key=lambda view: view.created_time)
-            parents_by_view[ViewEntity.from_id(parent_view.as_id())] = [
-                ViewEntity.from_id(grand_parent) for grand_parent in parent_view.implements or []
+            parent_view_latest = max(read_views, key=lambda view: view.created_time)
+            parents_by_view[ViewEntity.from_id(parent_view_latest.as_id())] = [
+                ViewEntity.from_id(grand_parent) for grand_parent in parent_view_latest.implements or []
             ]
         elif view not in parents_by_view:
             raise CDFMissingClientError(
@@ -286,14 +288,14 @@ class AsParentName(RulesTransformer[DMSRules, DMSRules]):
     def _view_by_container_properties(
         self, rules: DMSRules
     ) -> dict[tuple[ContainerEntity, str], list[tuple[ViewEntity, str]]]:
-        view_by_container_properties: dict[tuple[ContainerEntity, str], list[tuple[ViewEntity, str]]] = defaultdict(
-            list
+        view_properties_by_container_properties: dict[tuple[ContainerEntity, str], list[tuple[ViewEntity, str]]] = (
+            defaultdict(list)
         )
         view_with_properties: set[ViewEntity] = set()
         for prop in rules.properties:
             if not prop.container or not prop.container_property:
                 continue
-            view_by_container_properties[(prop.container, prop.container_property)].append(
+            view_properties_by_container_properties[(prop.container, prop.container_property)].append(
                 (prop.view, prop.view_property)
             )
             view_with_properties.add(prop.view)
@@ -318,14 +320,14 @@ class AsParentName(RulesTransformer[DMSRules, DMSRules]):
                     if not isinstance(property_, dm.MappedPropertyApply):
                         continue
                     container_entity = ContainerEntity.from_id(property_.container)
-                    view_by_container_properties[(container_entity, property_.container_property_identifier)].append(
-                        (view_entity, property_id)
-                    )
+                    view_properties_by_container_properties[
+                        (container_entity, property_.container_property_identifier)
+                    ].append((view_entity, property_id))
 
-        return view_by_container_properties
+        return view_properties_by_container_properties
 
     @staticmethod
-    def _get_parent_name_by_container_property(
+    def _get_parent_view_property_by_container_property(
         path_by_view, view_by_container_properties: dict[tuple[ContainerEntity, str], list[tuple[ViewEntity, str]]]
     ) -> dict[tuple[ContainerEntity, str], str]:
         parent_name_by_container_property: dict[tuple[ContainerEntity, str], str] = {}
