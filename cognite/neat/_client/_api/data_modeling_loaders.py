@@ -341,19 +341,19 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
             include_connections: Whether to include all connected views.
             include_ancestors: Whether to include all ancestors.
         """
-        last_batch = list(view_ids)
+        last_batch = set(view_ids)
         found = ViewList([])
         found_ids: set[ViewId] = set()
         while last_batch:
             to_retrieve_from_cdf: set[ViewId] = set()
-            batch_ids: list[ViewId] = []
+            batch_ids: set[ViewId] = set()
             for view_id in last_batch:
                 if view_id in found_ids:
                     continue
                 elif view_id in self._items_by_id:
                     view = self._items_by_id[view_id]
                     found.append(view)
-                    batch_ids.extend(self.get_connected_views(view, include_ancestors, include_connections, found_ids))
+                    batch_ids.update(self.get_connected_views(view, include_ancestors, include_connections, found_ids))
                 else:
                     to_retrieve_from_cdf.add(view_id)
 
@@ -363,7 +363,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
                 found.extend(retrieved_batch)
                 found_ids.update({view.as_id() for view in retrieved_batch})
                 for view in retrieved_batch:
-                    batch_ids.extend(self.get_connected_views(view, include_ancestors, include_connections, found_ids))
+                    batch_ids.update(self.get_connected_views(view, include_ancestors, include_connections, found_ids))
 
             last_batch = batch_ids
 

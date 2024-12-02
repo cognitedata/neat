@@ -136,14 +136,6 @@ rules:
     value_type: text
     view: ClassicAsset(version=v1_prefixed_Classic)
     view_property: description
-  - container: cdf_cdm:CogniteDescribable
-    container_property: tags
-    immutable: false
-    is_list: true
-    nullable: true
-    value_type: text
-    view: ClassicAsset(version=v1_prefixed_Classic)
-    view_property: labels
   - container: ClassicAsset
     container_property: metadata
     is_list: false
@@ -168,7 +160,7 @@ rules:
     nullable: true
     value_type: ClassicAsset(version=v1_prefixed_Classic)
     view: ClassicAsset(version=v1_prefixed_Classic)
-    view_property: parentId
+    view_property: parent
   - connection: direct
     container: ClassicAsset
     container_property: relationshipAsset
@@ -187,6 +179,14 @@ rules:
     value_type: cdf_cdm:CogniteSourceSystem
     view: ClassicAsset(version=v1_prefixed_Classic)
     view_property: source
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    immutable: false
+    is_list: true
+    nullable: true
+    value_type: text
+    view: ClassicAsset(version=v1_prefixed_Classic)
+    view_property: tags
   - connection: direct
     container: ClassicAssetToAssetEdge
     container_property: dataSetId
@@ -262,7 +262,7 @@ rules:
     nullable: true
     value_type: ClassicAsset(version=v1_prefixed_Classic)
     view: ClassicEvent(version=v1_prefixed_Classic)
-    view_property: assetIds
+    view_property: assets
   - connection: direct
     container: ClassicEvent
     container_property: dataSetId
@@ -336,7 +336,7 @@ rules:
     nullable: true
     value_type: ClassicAsset(version=v1_prefixed_Classic)
     view: ClassicFile(version=v1_prefixed_Classic)
-    view_property: assetIds
+    view_property: assets
   - connection: direct
     container: ClassicFile
     container_property: dataSetId
@@ -401,7 +401,7 @@ rules:
     nullable: true
     value_type: ClassicAsset(version=v1_prefixed_Classic)
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
-    view_property: assetId
+    view_property: assets
   - connection: edge
     is_list: true
     value_type: ClassicDataSet(version=v1_prefixed_Classic)
@@ -424,14 +424,6 @@ rules:
     value_type: boolean
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: isStep
-  - container: cdf_cdm:CogniteTimeSeries
-    container_property: type
-    immutable: true
-    is_list: false
-    nullable: false
-    value_type: enum(collection=timeseriesType)
-    view: ClassicTimeSeries(version=v1_prefixed_Classic)
-    view_property: isString
   - container: ClassicTimeSeries
     container_property: metadata
     is_list: false
@@ -448,6 +440,14 @@ rules:
     value_type: text
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: name
+  - container: cdf_cdm:CogniteTimeSeries
+    container_property: type
+    immutable: true
+    is_list: false
+    nullable: false
+    value_type: enum(collection=timeseriesType)
+    view: ClassicTimeSeries(version=v1_prefixed_Classic)
+    view_property: type
   - connection: direct
     container: cdf_cdm:CogniteTimeSeries
     container_property: unit
@@ -456,7 +456,7 @@ rules:
     nullable: true
     value_type: cdf_cdm:CogniteUnit
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
-    view_property: unitExternalId
+    view_property: unit
   views:
   - description: ''
     implements: cdf_cdm:Cognite3DTransformation,cdf_cdm:CogniteCubeMap
@@ -591,7 +591,7 @@ rules:
     name: Time series
     view: cdf_cdm:CogniteTimeSeries
   - description: Represents a single unit of measurement
-    implements: CogniteDescribable(version=v1_prefixed_Classic)
+    implements: cdf_cdm:CogniteDescribable
     in_model: true
     view: cdf_cdm:CogniteUnit
   - description: CogniteVisualizable defines the standard way to reference a related
