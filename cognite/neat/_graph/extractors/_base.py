@@ -11,8 +11,9 @@ class BaseExtractor:
     """
 
     def _get_activity_names(self) -> list[str]:
-        """Returns the name of the activities that the extractor performs."""
-        # This method can be overridden by sublasses that runs multiple extractors
+        """Returns the name of the activities that the extractor performs,
+        i.e., the actions that it performs when you call extract().."""
+        # This method can be overridden by subclasses that runs multiple extractors
         # for example the ClassicGraphExtractor
         return [type(self).__name__]
 

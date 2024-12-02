@@ -273,7 +273,7 @@ class RelationshipAsEdgeTransformer(BaseTransformer):
         {"sourceExternalId", "targetExternalId", "externalId", "sourceType", "targetType"}
     )
     _RELATIONSHIP_NODE_TYPES: tuple[str, ...] = tuple(["Asset", "Event", "File", "Sequence", "TimeSeries"])
-    description = "Relationships converted to edges"
+    description = "Converts relationships to edge"
     _use_only_once: bool = True
     _need_changes = frozenset({extractors.RelationshipsExtractor.__name__})
 
@@ -303,9 +303,9 @@ WHERE {{
 }}"""
 
     @staticmethod
-    def create_lookup_entity(graph: Graph, namespace: Namespace) -> Callable[[str, str], URIRef]:
+    def create_lookup_entity_with_external_id(graph: Graph, namespace: Namespace) -> Callable[[str, str], URIRef]:
         @lru_cache(maxsize=10_000)
-        def lookup_entity(entity_type: str, external_id: str) -> URIRef:
+        def lookup_entity_with_external_id(entity_type: str, external_id: str) -> URIRef:
             query = RelationshipAsEdgeTransformer._lookup_entity_query.format(
                 namespace=namespace, entity_type=entity_type, external_id=external_id
             )
@@ -314,10 +314,10 @@ WHERE {{
                 return cast(URIRef, result[0][0])  # type: ignore[index]
             raise ValueError(f"Could not find entity with external_id {external_id} and type {entity_type}")
 
-        return lookup_entity
+        return lookup_entity_with_external_id
 
     def transform(self, graph: Graph) -> None:
-        entity_lookup = self.create_lookup_entity(graph, self._namespace)
+        lookup_entity_with_external_id = self.create_lookup_entity_with_external_id(graph, self._namespace)
         for source_type in self._RELATIONSHIP_NODE_TYPES:
             for target_type in self._RELATIONSHIP_NODE_TYPES:
                 query = self._count_by_source_target.format(
@@ -327,7 +327,9 @@ WHERE {{
                     instance_count = int(instance_count_res[0])  # type: ignore[index, arg-type]
                     if instance_count < self._min_relationship_types:
                         continue
-                    edge_triples = self._edge_triples(graph, source_type, target_type, instance_count, entity_lookup)
+                    edge_triples = self._edge_triples(
+                        graph, source_type, target_type, instance_count, lookup_entity_with_external_id
+                    )
                     add_triples_in_batch(graph, edge_triples)
 
     def _edge_triples(
@@ -336,19 +338,21 @@ WHERE {{
         source_type: str,
         target_type: str,
         instance_count: int,
-        entity_lookup: Callable[[str, str], URIRef],
+        lookup_entity_with_external_id: Callable[[str, str], URIRef],
     ) -> Iterable[Triple]:
         query = self._instances.format(namespace=self._namespace, source_type=source_type, target_type=target_type)
-        total = instance_count if self._limit_per_type is None else self._limit_per_type
+        total_instance_count = instance_count if self._limit_per_type is None else self._limit_per_type
 
         converted_relationships: list[URIRef] = []
         for no, result in enumerate(
-            iterate_progress_bar(graph.query(query), total=total, description="Relationships to edges")
+            iterate_progress_bar(graph.query(query), total=total_instance_count, description="Relationships to edges")
         ):
             if self._limit_per_type is not None and no >= self._limit_per_type:
                 break
             relationship_id = cast(URIRef, result[0])  # type: ignore[index, misc]
-            yield from self._relationship_as_edge(graph, relationship_id, source_type, target_type, entity_lookup)
+            yield from self._relationship_as_edge(
+                graph, relationship_id, source_type, target_type, lookup_entity_with_external_id
+            )
             converted_relationships.append(relationship_id)
 
             if len(converted_relationships) >= 1_000:
@@ -363,7 +367,7 @@ WHERE {{
         relationship_id: URIRef,
         source_type: str,
         target_type: str,
-        entity_lookup: Callable[[str, str], URIRef],
+        lookup_entity_with_external_id: Callable[[str, str], URIRef],
     ) -> list[Triple]:
         relationship_triples = cast(list[Triple], list(graph.query(f"DESCRIBE <{relationship_id}>")))
         object_by_predicates = cast(
@@ -372,14 +376,14 @@ WHERE {{
         source_external_id = cast(URIRef, object_by_predicates["sourceExternalId"])
         target_source_id = cast(URIRef, object_by_predicates["targetExternalId"])
         try:
-            source_id = entity_lookup(source_type, source_external_id)
+            source_id = lookup_entity_with_external_id(source_type, source_external_id)
         except ValueError:
             warnings.warn(
                 ResourceNotFoundWarning(source_external_id, "class", str(relationship_id), "class"), stacklevel=2
             )
             return []
         try:
-            target_id = entity_lookup(target_type, target_source_id)
+            target_id = lookup_entity_with_external_id(target_type, target_source_id)
         except ValueError:
             warnings.warn(
                 ResourceNotFoundWarning(target_source_id, "class", str(relationship_id), "class"), stacklevel=2

@@ -113,7 +113,7 @@ class ClassicGraphExtractor(BaseExtractor):
         self._extracted_data_sets = False
 
     def _get_activity_names(self) -> list[str]:
-        activities = [core_node.extractor_cls.__name__ for core_node in self._classic_node_types] + [
+        activities = [data_access_object.extractor_cls.__name__ for data_access_object in self._classic_node_types] + [
             RelationshipsExtractor.__name__,
         ]
         if self._extracted_labels:
