@@ -1,7 +1,7 @@
 import warnings
 from collections import defaultdict
 from collections.abc import Collection, Hashable, Sequence
-from typing import Any
+from typing import Any, cast
 
 from cognite.client.data_classes import data_modeling as dm
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
@@ -376,103 +376,119 @@ class _DMSExporter:
         cls, prop: DMSProperty, view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]]
     ) -> ViewPropertyApply | None:
         if prop.container and prop.container_property:
-            container_prop_identifier = prop.container_property
-            extra_args: dict[str, Any] = {}
-            if prop.connection == "direct":
-                if isinstance(prop.value_type, ViewEntity):
-                    extra_args["source"] = prop.value_type.as_id()
-                elif isinstance(prop.value_type, DMSUnknownEntity):
-                    extra_args["source"] = None
-                else:
-                    # Should have been validated.
-                    raise ValueError(
-                        "If this error occurs it is a bug in NEAT, please report"
-                        f"Debug Info, Invalid valueType direct: {prop.model_dump_json()}"
-                    )
-            elif prop.connection is not None:
-                # Should have been validated.
-                raise ValueError(
-                    "If this error occurs it is a bug in NEAT, please report"
-                    f"Debug Info, Invalid connection: {prop.model_dump_json()}"
-                )
-            return dm.MappedPropertyApply(
-                container=prop.container.as_id(),
-                container_property_identifier=container_prop_identifier,
-                name=prop.name,
-                description=prop.description,
-                **extra_args,
-            )
+            return cls._create_mapped_property(prop)
         elif isinstance(prop.connection, EdgeEntity):
-            if isinstance(prop.value_type, ViewEntity):
-                source_view_id = prop.value_type.as_id()
-            else:
-                # Should have been validated.
-                raise ValueError(
-                    "If this error occurs it is a bug in NEAT, please report"
-                    f"Debug Info, Invalid valueType edge: {prop.model_dump_json()}"
-                )
-            edge_source: dm.ViewId | None = None
-            if prop.connection.properties is not None:
-                edge_source = prop.connection.properties.as_id()
-            edge_cls: type[dm.EdgeConnectionApply] = dm.MultiEdgeConnectionApply
-            # If is_list is not set, we default to a MultiEdgeConnection
-            if prop.is_list is False:
-                edge_cls = SingleEdgeConnectionApply
-
-            return edge_cls(
-                type=cls._create_edge_type_from_prop(prop),
-                source=source_view_id,
-                direction=prop.connection.direction,
-                name=prop.name,
-                description=prop.description,
-                edge_source=edge_source,
-            )
+            return cls._create_edge_property(prop)
         elif isinstance(prop.connection, ReverseConnectionEntity):
-            reverse_prop_id = prop.connection.property_
-            if isinstance(prop.value_type, ViewEntity):
-                source_view_id = prop.value_type.as_id()
-            else:
-                # Should have been validated.
-                raise ValueError(
-                    "If this error occurs it is a bug in NEAT, please report"
-                    f"Debug Info, Invalid valueType reverse connection: {prop.model_dump_json()}"
-                )
-            reverse_prop = next(
-                (
-                    prop
-                    for prop in view_properties_with_ancestors_by_id.get(source_view_id, [])
-                    if prop.view_property == reverse_prop_id
-                ),
-                None,
-            )
-            if reverse_prop is None:
-                warnings.warn(
-                    PropertyNotFoundWarning(
-                        source_view_id,
-                        "view",
-                        reverse_prop_id or "MISSING",
-                        dm.PropertyId(prop.view.as_id(), prop.view_property),
-                        "view property",
-                    ),
-                    stacklevel=2,
-                )
-
-            if reverse_prop and reverse_prop.connection == "direct":
-                args: dict[str, Any] = dict(
-                    source=source_view_id,
-                    through=dm.PropertyId(source=source_view_id, property=reverse_prop_id),
-                    name=prop.name,
-                    description=prop.description,
-                )
-                if prop.is_list in [True, None]:
-                    return dm.MultiReverseDirectRelationApply(**args)
-                else:
-                    return SingleReverseDirectRelationApply(**args)
-            else:
-                return None
-
+            return cls._create_reverse_direct_relation(prop, view_properties_with_ancestors_by_id)
         elif prop.view and prop.view_property and prop.connection:
             warnings.warn(
                 NotSupportedWarning(f"{prop.connection} in {prop.view.as_id()!r}.{prop.view_property}"), stacklevel=2
             )
         return None
+
+    @classmethod
+    def _create_mapped_property(cls, prop: DMSProperty) -> dm.MappedPropertyApply:
+        container = cast(ContainerEntity, prop.container)
+        container_prop_identifier = cast(str, prop.container_property)
+        extra_args: dict[str, Any] = {}
+        if prop.connection == "direct":
+            if isinstance(prop.value_type, ViewEntity):
+                extra_args["source"] = prop.value_type.as_id()
+            elif isinstance(prop.value_type, DMSUnknownEntity):
+                extra_args["source"] = None
+            else:
+                # Should have been validated.
+                raise ValueError(
+                    "If this error occurs it is a bug in NEAT, please report"
+                    f"Debug Info, Invalid valueType direct: {prop.model_dump_json()}"
+                )
+        elif prop.connection is not None:
+            # Should have been validated.
+            raise ValueError(
+                "If this error occurs it is a bug in NEAT, please report"
+                f"Debug Info, Invalid connection: {prop.model_dump_json()}"
+            )
+        return dm.MappedPropertyApply(
+            container=container.as_id(),
+            container_property_identifier=container_prop_identifier,
+            name=prop.name,
+            description=prop.description,
+            **extra_args,
+        )
+
+    @classmethod
+    def _create_edge_property(cls, prop: DMSProperty) -> dm.EdgeConnectionApply:
+        connection = cast(EdgeEntity, prop.connection)
+        if isinstance(prop.value_type, ViewEntity):
+            source_view_id = prop.value_type.as_id()
+        else:
+            # Should have been validated.
+            raise ValueError(
+                "If this error occurs it is a bug in NEAT, please report"
+                f"Debug Info, Invalid valueType edge: {prop.model_dump_json()}"
+            )
+        edge_source: dm.ViewId | None = None
+        if connection.properties is not None:
+            edge_source = connection.properties.as_id()
+        edge_cls: type[dm.EdgeConnectionApply] = dm.MultiEdgeConnectionApply
+        # If is_list is not set, we default to a MultiEdgeConnection
+        if prop.is_list is False:
+            edge_cls = SingleEdgeConnectionApply
+
+        return edge_cls(
+            type=cls._create_edge_type_from_prop(prop),
+            source=source_view_id,
+            direction=connection.direction,
+            name=prop.name,
+            description=prop.description,
+            edge_source=edge_source,
+        )
+
+    @classmethod
+    def _create_reverse_direct_relation(
+        cls, prop: DMSProperty, view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]]
+    ) -> dm.MultiReverseDirectRelationApply | SingleReverseDirectRelationApply | None:
+        connection = cast(ReverseConnectionEntity, prop.connection)
+        reverse_prop_id = connection.property_
+        if isinstance(prop.value_type, ViewEntity):
+            source_view_id = prop.value_type.as_id()
+        else:
+            # Should have been validated.
+            raise ValueError(
+                "If this error occurs it is a bug in NEAT, please report"
+                f"Debug Info, Invalid valueType reverse connection: {prop.model_dump_json()}"
+            )
+        reverse_prop = next(
+            (
+                prop
+                for prop in view_properties_with_ancestors_by_id.get(source_view_id, [])
+                if prop.view_property == reverse_prop_id
+            ),
+            None,
+        )
+        if reverse_prop is None:
+            warnings.warn(
+                PropertyNotFoundWarning(
+                    source_view_id,
+                    "view",
+                    reverse_prop_id or "MISSING",
+                    dm.PropertyId(prop.view.as_id(), prop.view_property),
+                    "view property",
+                ),
+                stacklevel=2,
+            )
+
+        if reverse_prop and reverse_prop.connection == "direct":
+            args: dict[str, Any] = dict(
+                source=source_view_id,
+                through=dm.PropertyId(source=source_view_id, property=reverse_prop_id),
+                name=prop.name,
+                description=prop.description,
+            )
+            if prop.is_list in [True, None]:
+                return dm.MultiReverseDirectRelationApply(**args)
+            else:
+                return SingleReverseDirectRelationApply(**args)
+        else:
+            return None
