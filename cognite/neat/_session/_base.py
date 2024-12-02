@@ -54,7 +54,7 @@ class NeatSession:
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
-        self.mapping = MappingAPI(self._state)
+        self.mapping = MappingAPI(self._state, self._client)
         self.drop = DropAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()

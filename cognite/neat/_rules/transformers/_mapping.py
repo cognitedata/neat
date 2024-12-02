@@ -4,13 +4,16 @@ from collections import defaultdict
 from functools import cached_property
 from typing import Any, ClassVar, Literal
 
-from cognite.neat._issues.errors import NeatValueError
+from cognite.client import data_modeling as dm
+
+from cognite.neat._client import NeatClient
+from cognite.neat._issues.errors import CDFMissingClientError, NeatValueError, ResourceNotFoundError
 from cognite.neat._issues.warnings import NeatValueWarning, PropertyOverwritingWarning
 from cognite.neat._rules._shared import JustRules, OutRules
 from cognite.neat._rules.models import DMSRules, SheetList
 from cognite.neat._rules.models.data_types import Enum
 from cognite.neat._rules.models.dms import DMSEnum, DMSProperty, DMSView
-from cognite.neat._rules.models.entities import ViewEntity
+from cognite.neat._rules.models.entities import ContainerEntity, ViewEntity
 
 from ._base import RulesTransformer
 
@@ -208,3 +211,130 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
                     # These are used for warnings so we use the alias to make it more readable for the user
                     conflicts.append(mapping_prop.model_fields[field_name].alias or field_name)
         return to_overwrite, conflicts
+
+
+class AsParentPropertyId(RulesTransformer[DMSRules, DMSRules]):
+    """Looks up all view properties that map to the same container property,
+    and changes the child view property id to match the parent property id.
+    """
+
+    def __init__(self, client: NeatClient | None = None) -> None:
+        self._client = client
+
+    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
+        input_rules = self._to_rules(rules)
+        new_rules = input_rules.model_copy(deep=True)
+        new_rules.metadata.version += "_as_parent_name"
+
+        path_by_view = self._inheritance_path_by_view(new_rules)
+        view_by_container_property = self._view_by_container_properties(new_rules)
+
+        parent_view_property_by_container_property = self._get_parent_view_property_by_container_property(
+            path_by_view, view_by_container_property
+        )
+
+        for prop in new_rules.properties:
+            if prop.container and prop.container_property:
+                if parent_name := parent_view_property_by_container_property.get(
+                    (prop.container, prop.container_property)
+                ):
+                    prop.view_property = parent_name
+
+        return JustRules(new_rules)
+
+    # Todo: Move into Probe class. Note this means that the Probe class must take a NeatClient as an argument.
+    def _inheritance_path_by_view(self, rules: DMSRules) -> dict[ViewEntity, list[ViewEntity]]:
+        parents_by_view: dict[ViewEntity, list[ViewEntity]] = {view.view: view.implements or [] for view in rules.views}
+
+        path_by_view: dict[ViewEntity, list[ViewEntity]] = {}
+        for view in rules.views:
+            path_by_view[view.view] = self._get_inheritance_path(
+                view.view, parents_by_view, rules.metadata.as_data_model_id()
+            )
+        return path_by_view
+
+    def _get_inheritance_path(
+        self, view: ViewEntity, parents_by_view: dict[ViewEntity, list[ViewEntity]], data_model_id: dm.DataModelId
+    ) -> list[ViewEntity]:
+        if parents_by_view.get(view) == []:
+            # We found the root.
+            return [view]
+        if view not in parents_by_view and self._client is not None:
+            # Lookup the parent
+            view_id = view.as_id()
+            read_views = self._client.loaders.views.retrieve([view_id])
+            if not read_views:
+                # Warning? Should be caught by validation
+                raise ResourceNotFoundError(view_id, "view", data_model_id, "data model")
+            parent_view_latest = max(read_views, key=lambda view: view.created_time)
+            parents_by_view[ViewEntity.from_id(parent_view_latest.as_id())] = [
+                ViewEntity.from_id(grand_parent) for grand_parent in parent_view_latest.implements or []
+            ]
+        elif view not in parents_by_view:
+            raise CDFMissingClientError(
+                f"The data model {data_model_id} is referencing a view that is not in the data model."
+                f"Please provide a client to lookup the view."
+            )
+
+        inheritance_path = [view]
+        seen = {view}
+        if view in parents_by_view:
+            for parent in parents_by_view[view]:
+                parent_path = self._get_inheritance_path(parent, parents_by_view, data_model_id)
+                inheritance_path.extend([p for p in parent_path if p not in seen])
+                seen.update(parent_path)
+        return inheritance_path
+
+    def _view_by_container_properties(
+        self, rules: DMSRules
+    ) -> dict[tuple[ContainerEntity, str], list[tuple[ViewEntity, str]]]:
+        view_properties_by_container_properties: dict[tuple[ContainerEntity, str], list[tuple[ViewEntity, str]]] = (
+            defaultdict(list)
+        )
+        view_with_properties: set[ViewEntity] = set()
+        for prop in rules.properties:
+            if not prop.container or not prop.container_property:
+                continue
+            view_properties_by_container_properties[(prop.container, prop.container_property)].append(
+                (prop.view, prop.view_property)
+            )
+            view_with_properties.add(prop.view)
+
+        # We need to look up all parent properties.
+        to_lookup = {view.view.as_id() for view in rules.views if view.view not in view_with_properties}
+        if to_lookup and self._client is None:
+            raise CDFMissingClientError(
+                f"Views {to_lookup} are not in the data model. Please provide a client to lookup the views."
+            )
+        elif to_lookup and self._client:
+            read_views = self._client.loaders.views.retrieve(list(to_lookup), include_ancestor=True)
+            write_views = [self._client.loaders.views.as_write(read_view) for read_view in read_views]
+            # We use the write/request format of the views as the read/response format contains all properties
+            # including ancestor properties. The goal is to find the property name used in the parent
+            # and thus we cannot have that repeated in the child views.
+            for write_view in write_views:
+                view_id = write_view.as_id()
+                view_entity = ViewEntity.from_id(view_id)
+
+                for property_id, property_ in (write_view.properties or {}).items():
+                    if not isinstance(property_, dm.MappedPropertyApply):
+                        continue
+                    container_entity = ContainerEntity.from_id(property_.container)
+                    view_properties_by_container_properties[
+                        (container_entity, property_.container_property_identifier)
+                    ].append((view_entity, property_id))
+
+        return view_properties_by_container_properties
+
+    @staticmethod
+    def _get_parent_view_property_by_container_property(
+        path_by_view, view_by_container_properties: dict[tuple[ContainerEntity, str], list[tuple[ViewEntity, str]]]
+    ) -> dict[tuple[ContainerEntity, str], str]:
+        parent_name_by_container_property: dict[tuple[ContainerEntity, str], str] = {}
+        for (container, container_property), view_properties in view_by_container_properties.items():
+            if len(view_properties) == 1:
+                continue
+            # Shortest path is the parent
+            _, prop_name = min(view_properties, key=lambda prop: len(path_by_view[prop[0]]))
+            parent_name_by_container_property[(container, container_property)] = prop_name
+        return parent_name_by_container_property

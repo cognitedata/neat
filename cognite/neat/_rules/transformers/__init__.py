@@ -9,7 +9,7 @@ from ._converters import (
     ToCompliantEntities,
     ToExtension,
 )
-from ._mapping import MapOneToOne, RuleMapper
+from ._mapping import AsParentPropertyId, MapOneToOne, RuleMapper
 from ._pipelines import ImporterPipeline
 from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRules
 
@@ -30,4 +30,5 @@ __all__ = [
     "ToExtension",
     "ReduceCogniteModel",
     "SetIDDMSModel",
+    "AsParentPropertyId",
 ]

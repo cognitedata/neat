@@ -54,9 +54,8 @@ class TestExtractToLoadFlow:
 
         neat.convert("dms", mode="edge_properties")
 
-        neat.mapping.classic_to_core("Classic")
+        neat.mapping.data_model.classic_to_core("Classic", use_parent_property_name=True)
 
-        neat.prepare.data_model.include_referenced()
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
         rules_str = neat.to.yaml(format="neat")
