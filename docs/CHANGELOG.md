@@ -21,6 +21,9 @@ Changes are grouped as follows:
 - Support for setting limit when running `neat.read.cdf.classic.graph(...)`.
 - Support for using parent property name in `neat.mapping.classic_to_core(...)`.
 
+### Fixed
+- Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
+
 ## [0.99.1] - 28-11-**2024**
 ### Changed
 - Remove "make_compliant" from OWL and IMF importers
