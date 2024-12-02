@@ -5,7 +5,7 @@ from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.models.mapping import load_classic_to_core_mapping
-from cognite.neat._rules.transformers import AsParentName, RuleMapper, VerifyDMSRules
+from cognite.neat._rules.transformers import AsParentPropertyId, RuleMapper, VerifyDMSRules
 from cognite.neat._store._provenance import Agent as ProvenanceAgent
 from cognite.neat._store._provenance import Change
 
@@ -15,6 +15,12 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 @session_class_wrapper
 class MappingAPI:
+    def __init__(self, state: SessionState, client: NeatClient | None = None):
+        self.data_model = DataModelMappingAPI(state, client)
+
+
+@session_class_wrapper
+class DataModelMappingAPI:
     def __init__(self, state: SessionState, client: NeatClient | None = None):
         self._state = state
         self._client = client
@@ -116,7 +122,7 @@ class MappingAPI:
 
         source_id, rules = self._state.data_model.last_verified_dms_rules
         start = datetime.now(timezone.utc)
-        transformer = AsParentName(self._client)
+        transformer = AsParentPropertyId(self._client)
         output = transformer.transform(rules)
         end = datetime.now(timezone.utc)
 
