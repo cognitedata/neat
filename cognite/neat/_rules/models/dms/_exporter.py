@@ -151,7 +151,9 @@ class _DMSExporter:
             if not (view_properties := view_properties_by_id.get(view_id)):
                 continue
             for prop in view_properties:
-                view_property = self._create_view_property(prop, view_properties_with_ancestors_by_id)
+                view_property = self._create_view_property(
+                    prop, view_properties_with_ancestors_by_id, edge_types_by_view_property_id
+                )
                 if view_property is not None:
                     view.properties[prop.view_property] = view_property
 
@@ -162,12 +164,12 @@ class _DMSExporter:
         if isinstance(prop.connection, EdgeEntity) and prop.connection.edge_type is not None:
             return prop.connection.edge_type.as_reference()
         elif isinstance(prop.value_type, ViewEntity):
-            return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
+            return cls._default_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
         else:
             raise NeatTypeError(f"Invalid valueType {prop.value_type!r}")
 
     @staticmethod
-    def _create_edge_type_from_view_id(view_id: dm.ViewId, property_: str) -> dm.DirectRelationReference:
+    def _default_edge_type_from_view_id(view_id: dm.ViewId, property_: str) -> dm.DirectRelationReference:
         return dm.DirectRelationReference(
             space=view_id.space,
             # This is the same convention as used when converting GraphQL to DMS
@@ -180,52 +182,51 @@ class _DMSExporter:
         view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
         view_by_id: dict[ViewEntity, DMSView],
     ) -> dict[tuple[ViewEntity, str], dm.DirectRelationReference]:
-        edge_connection_by_view_property_id: dict[tuple[ViewEntity, str], DMSProperty] = {}
+        edge_connection_property_by_view_property_id: dict[tuple[ViewEntity, str], DMSProperty] = {}
         for properties in view_properties_with_ancestors_by_id.values():
             for prop in properties:
                 if isinstance(prop.connection, EdgeEntity):
                     view_property_id = (prop.view, prop.view_property)
-                    edge_connection_by_view_property_id[view_property_id] = prop
+                    edge_connection_property_by_view_property_id[view_property_id] = prop
 
         edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference] = {}
 
         outwards_type_by_view_value_type: dict[tuple[ViewEntity, ViewEntity], list[dm.DirectRelationReference]] = (
             defaultdict(list)
         )
-        # First set the edge types for outwards connections
-        for (view_id, prop_id), prop in edge_connection_by_view_property_id.items():
-            if not isinstance(prop.connection, EdgeEntity):
-                continue
-            view_property_id = (prop.view, prop.view_property)
-            if prop.connection.direction == "inwards" or view_property_id in edge_connection_by_view_property_id:
+        # First set the edge types for outwards connections.
+        for (view_id, _), prop in edge_connection_property_by_view_property_id.items():
+            # We have already filtered out all non-EdgeEntity connections
+            connection = cast(EdgeEntity, prop.connection)
+            if connection.direction == "inwards":
                 continue
             view = view_by_id[view_id]
 
             edge_type = cls._get_edge_type_outwards_connection(
-                view, prop, view_by_id, edge_connection_by_view_property_id
+                view, prop, view_by_id, edge_connection_property_by_view_property_id
             )
 
-            edge_types_by_view_property_id[view_property_id] = edge_type
+            edge_types_by_view_property_id[(prop.view, prop.view_property)] = edge_type
 
             if isinstance(prop.value_type, ViewEntity):
-                outwards_type_by_view_value_type[(prop.view, prop.value_type)].append(edge_type)
+                outwards_type_by_view_value_type[(prop.value_type, prop.view)].append(edge_type)
 
         # Then inwards connections = outwards connections
-        for (view_id, prop_id), prop in edge_connection_by_view_property_id.items():
-            if not isinstance(prop.connection, EdgeEntity):
-                continue
+        for (view_id, prop_id), prop in edge_connection_property_by_view_property_id.items():
+            # We have already filtered out all non-EdgeEntity connections
+            connection = cast(EdgeEntity, prop.connection)
 
-            if prop.connection.direction == "inwards" and isinstance(prop.value_type, ViewEntity):
-                edge_type_candidates = outwards_type_by_view_value_type.get((prop.value_type, prop.view), [])
+            if connection.direction == "inwards" and isinstance(prop.value_type, ViewEntity):
+                edge_type_candidates = outwards_type_by_view_value_type.get((prop.view, prop.value_type), [])
                 if len(edge_type_candidates) == 0:
                     # Warning in validation, should not have an inwards connection without an outwards connection
-                    edge_type = cls._create_edge_type_from_view_id(prop.view, prop_id)
+                    edge_type = cls._default_edge_type_from_view_id(prop.view.as_id(), prop_id)
                 elif len(edge_type_candidates) == 1:
                     edge_type = edge_type_candidates[0]
                 else:
                     raise NeatValueError(
-                        f"Cannot infer edge type for {view_id}.{prop_id}, multiple candidates: {edge_type_candidates},"
-                        f"Please specify edge type explicitly, i.e., edge(type=<YOUR_TYPE>)."
+                        f"Cannot infer edge type for {view_id}.{prop_id}, multiple candidates: {edge_type_candidates}."
+                        "Please specify edge type explicitly, i.e., edge(type=<YOUR_TYPE>)."
                     )
                 view_property_id = (prop.view, prop.view_property)
                 edge_types_by_view_property_id[view_property_id] = edge_type
@@ -240,9 +241,12 @@ class _DMSExporter:
         view_by_id: dict[ViewEntity, DMSView],
         edge_connection_by_view_property_id: dict[tuple[ViewEntity, str], DMSProperty],
     ) -> dm.DirectRelationReference:
-        if prop.connection.edge_type is not None:
-            return prop.connection.edge_type.as_reference()
+        connection = cast(EdgeEntity, prop.connection)
+        if connection.edge_type is not None:
+            # Explicitly set edge type
+            return connection.edge_type.as_reference()
         elif view.implements:
+            # Try to look for same property in parent views
             candidates = []
             for parent_id in view.implements:
                 if parent_view := view_by_id.get(parent_id):
@@ -253,15 +257,18 @@ class _DMSExporter:
                         )
                         candidates.append(parent_edge_type)
             if len(candidates) == 0:
-                return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
+                return cls._default_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
             elif len(candidates) == 1:
                 return candidates[0]
             else:
                 raise NeatValueError(
-                    f"Cannot infer edge type for {prop.view.as_id()!r}.{prop.view_property}, multiple candidates: {candidates},"
+                    f"Cannot infer edge type for {prop.view.as_id()!r}.{prop.view_property}, "
+                    f"multiple candidates: {candidates}. "
+                    "Please specify edge type explicitly, i.e., edge(type=<YOUR_TYPE>)."
                 )
         else:
-            return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
+            # No parent view, use the default
+            return cls._default_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
 
     def _create_containers(
         self,
@@ -467,12 +474,15 @@ class _DMSExporter:
 
     @classmethod
     def _create_view_property(
-        cls, prop: DMSProperty, view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]]
+        cls,
+        prop: DMSProperty,
+        view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
+        edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference],
     ) -> ViewPropertyApply | None:
         if prop.container and prop.container_property:
             return cls._create_mapped_property(prop)
         elif isinstance(prop.connection, EdgeEntity):
-            return cls._create_edge_property(prop)
+            return cls._create_edge_property(prop, edge_types_by_view_property_id)
         elif isinstance(prop.connection, ReverseConnectionEntity):
             return cls._create_reverse_direct_relation(prop, view_properties_with_ancestors_by_id)
         elif prop.view and prop.view_property and prop.connection:
@@ -512,7 +522,9 @@ class _DMSExporter:
         )
 
     @classmethod
-    def _create_edge_property(cls, prop: DMSProperty) -> dm.EdgeConnectionApply:
+    def _create_edge_property(
+        cls, prop: DMSProperty, edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference]
+    ) -> dm.EdgeConnectionApply:
         connection = cast(EdgeEntity, prop.connection)
         if isinstance(prop.value_type, ViewEntity):
             source_view_id = prop.value_type.as_id()
@@ -531,7 +543,7 @@ class _DMSExporter:
             edge_cls = SingleEdgeConnectionApply
 
         return edge_cls(
-            type=cls._create_edge_type_from_prop(prop),
+            type=edge_types_by_view_property_id[(prop.view, prop.view_property)],
             source=source_view_id,
             direction=connection.direction,
             name=prop.name,
