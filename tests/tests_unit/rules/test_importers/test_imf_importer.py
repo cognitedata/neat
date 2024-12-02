@@ -1,10 +1,16 @@
+from cognite.neat._issues.warnings._resources import ResourceRegexViolationWarning
 from cognite.neat._rules import importers
-from cognite.neat._rules.transformers import ImporterPipeline
+from cognite.neat._rules.transformers import VerifyAnyRules
 from tests.config import IMF_EXAMPLE
 
 
 def test_imf_importer():
-    rules = ImporterPipeline.verify(importers.IMFImporter.from_file(IMF_EXAMPLE))
+    input = importers.IMFImporter.from_file(IMF_EXAMPLE).to_rules()
+    output = VerifyAnyRules("continue").try_transform(input)
 
-    assert len(rules.classes) == 63
-    assert len(rules.properties) == 62
+    regex_violations = [issue for issue in output.issues if isinstance(issue, ResourceRegexViolationWarning)]
+
+    assert len(output.rules.classes) == 63
+    assert len(output.rules.properties) == 62
+    assert len(output.issues) == 207
+    assert len(regex_violations) == 129

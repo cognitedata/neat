@@ -14,6 +14,21 @@ class ResourceNeatWarning(NeatWarning, Generic[T_Identifier]):
 
 
 @dataclass(unsafe_hash=True)
+class ResourceRegexViolationWarning(ResourceNeatWarning):
+    """The {resource_type} with identifier {identifier} in the {location} is violating
+    the CDF regex {regex}. This will lead to errors when converting to DMS data model.
+    """
+
+    fix = (
+        "Either export the data model and make the necessary changes manually"
+        " or run prepare.cdf_compliant_external_ids."
+    )
+
+    location: str
+    regex: str
+
+
+@dataclass(unsafe_hash=True)
 class ResourceNotFoundWarning(ResourceNeatWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier} referred by {referred_type} {referred_by} does not exist.
     This will be ignored."""

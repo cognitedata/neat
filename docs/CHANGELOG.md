@@ -19,6 +19,7 @@ Changes are grouped as follows:
 ### Added
 - Support for converting relationships to edges.
 - Support for setting limit when running `neat.read.cdf.classic.graph(...)`.
+- RegexViolation warning on Information rules that check if entity ids are DMS compliant
 - Support for using parent property name in `neat.mapping.classic_to_core(...)`.
 
 ### Fixed
