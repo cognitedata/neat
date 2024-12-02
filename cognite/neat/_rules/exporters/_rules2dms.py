@@ -47,7 +47,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
 
         - "fail": If any component already exists, the export will fail.
         - "skip": If any component already exists, it will be skipped.
-        - "update": If any component already exists, it will be updated.
+        - "update": If any component already exists, it will
         - "force": If any component already exists, it will be deleted and recreated.
 
     """
@@ -161,11 +161,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
     ) -> Iterable[UploadResult]:
         to_export = self._prepare_exporters(rules)
 
-        result_by_name = {}
-        if self.existing_handling == "force":
-            for delete_result in self.delete_from_cdf(rules, client, dry_run, skip_space=True):
-                result_by_name[delete_result.name] = delete_result
-
+        result_by_name: dict[str, UploadResult] = {}
         redeploy_data_model = False
         for items in to_export:
             # The conversion from DMS to GraphQL does not seem to be triggered even if the views
