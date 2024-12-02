@@ -208,7 +208,7 @@ class RulesToDMS(Step):
         dms_exporter = exporters.DMSExporter(
             export_components=frozenset(components_to_create),
             include_space=(None if multi_space_components_create else {dms_rules.metadata.space}),
-            existing_handling=existing_components_handling,
+            existing=existing_components_handling,
         )
 
         output_dir = self.config.staging_path

@@ -37,7 +37,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             Which components to export. Defaults to frozenset({"all"}).
         include_space (set[str], optional):
             If set, only export components in the given spaces. Defaults to None which means all spaces.
-        existing_handling (Literal["fail", "skip", "update", "force"], optional): How to handle existing components.
+        existing (Literal["fail", "skip", "update", "force"], optional): How to handle existing components.
             Defaults to "update". See below for details.
         instance_space (str, optional): The space to use for the instance. Defaults to None.
         suppress_warnings (bool, optional): Suppress warnings. Defaults to False.
@@ -56,14 +56,16 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         self,
         export_components: Component | Collection[Component] = "all",
         include_space: set[str] | None = None,
-        existing_handling: Literal["fail", "skip", "update", "force"] = "update",
+        existing: Literal["fail", "skip", "update", "force", "recreate"] = "update",
         instance_space: str | None = None,
         suppress_warnings: bool = False,
+        drop_data: bool = False,
         remove_cdf_spaces: bool = True,
     ):
         self.export_components = {export_components} if isinstance(export_components, str) else set(export_components)
         self.include_space = include_space
-        self.existing_handling = existing_handling
+        self.existing = existing
+        self.drop_data = drop_data
         self.instance_space = instance_space
         self.suppress_warnings = suppress_warnings
         self._schema: DMSSchema | None = None
@@ -157,7 +159,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             )
 
     def export_to_cdf_iterable(
-        self, rules: DMSRules, client: NeatClient, dry_run: bool = False, fallback_one_by_one: bool = False
+        self, rules: DMSRules, client: NeatClient, dry_run: bool = False
     ) -> Iterable[UploadResult]:
         to_export = self._prepare_exporters(rules)
 
@@ -186,14 +188,14 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             failed_deleted: set[Hashable] = set()
             error_messages: list[str] = []
             if dry_run:
-                if self.existing_handling in ["update", "force"]:
+                if self.existing in ["update", "force"]:
                     changed.update(loader.get_id(item) for item in to_update)
-                elif self.existing_handling == "skip":
+                elif self.existing == "skip":
                     skipped.update(loader.get_id(item) for item in to_update)
-                elif self.existing_handling == "fail":
+                elif self.existing == "fail":
                     failed_changed.update(loader.get_id(item) for item in to_update)
                 else:
-                    raise ValueError(f"Unsupported existing_handling {self.existing_handling}")
+                    raise ValueError(f"Unsupported existing_handling {self.existing}")
                 created.update(loader.get_id(item) for item in to_create)
                 deleted.update(loader.get_id(item) for item in to_delete)
             else:
@@ -201,7 +203,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                     try:
                         loader.delete(to_delete)
                     except CogniteAPIError as e:
-                        if fallback_one_by_one:
+                        if True:
                             for item in to_delete:
                                 try:
                                     loader.delete([item])
@@ -222,7 +224,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 try:
                     loader.create(to_create)
                 except CogniteAPIError as e:
-                    if fallback_one_by_one:
+                    if True:
                         for item in to_create:
                             try:
                                 loader.create([item])
@@ -238,11 +240,11 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 else:
                     created.update(loader.get_id(item) for item in to_create)
 
-                if self.existing_handling in ["update", "force"]:
+                if self.existing in ["update", "force"]:
                     try:
                         loader.update(to_update)
                     except CogniteAPIError as e:
-                        if fallback_one_by_one:
+                        if True:
                             for item in to_update:
                                 try:
                                     loader.update([item])
@@ -257,9 +259,9 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                             error_messages.append(f"Failed update: {e!s}")
                     else:
                         changed.update(loader.get_id(item) for item in to_update)
-                elif self.existing_handling == "skip":
+                elif self.existing == "skip":
                     skipped.update(loader.get_id(item) for item in to_update)
-                elif self.existing_handling == "fail":
+                elif self.existing == "fail":
                     failed_changed.update(loader.get_id(item) for item in to_update)
 
             if loader.resource_name in result_by_name:

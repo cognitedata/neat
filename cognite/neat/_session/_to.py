@@ -1,3 +1,4 @@
+from collections.abc import Collection
 from pathlib import Path
 from typing import Any, Literal, overload
 
@@ -9,6 +10,7 @@ from cognite.neat._issues import IssueList, catch_warnings
 from cognite.neat._rules import exporters
 from cognite.neat._rules._constants import PATTERNS
 from cognite.neat._rules._shared import VerifiedRules
+from cognite.neat._rules.exporters._rules2dms import Component
 from cognite.neat._utils.upload import UploadResultCore, UploadResultList
 
 from ._state import SessionState
@@ -126,36 +128,39 @@ class CDFToAPI:
 
     def data_model(
         self,
-        existing_handling: Literal["fail", "skip", "update", "force"] = "skip",
+        existing: Literal["fail", "skip", "update", "force", "recreate"] = "update",
         dry_run: bool = False,
-        fallback_one_by_one: bool = False,
+        drop_data: bool = False,
+        components: Component | Collection[Component] = "all",
     ):
         """Export the verified DMS data model to CDF.
 
         Args:
-            existing_handling: How to handle if component of data model exists. Defaults to "skip".
+            existing: What to do if the component already exists. Defaults to "update".
+                See the note below for more information about the options.
             dry_run: If True, no changes will be made to CDF. Defaults to False.
-            fallback_one_by_one: If True, will fall back to one-by-one upload if batch upload fails. Defaults to False.
+            drop_data: If existing is 'force' or 'recreate' and the operation will lead to data loss,
+                the component will be skipped unless drop_data is True. Defaults to False.
+            components: The components to export. Defaults to "all".
 
         ... note::
 
         - "fail": If any component already exists, the export will fail.
         - "skip": If any component already exists, it will be skipped.
         - "update": If any component already exists, it will be updated.
-        - "force": If any component already exists, it will be deleted and recreated.
+        - "force": If any component already exists, and the update fails, it will be deleted and recreated.
+        - "recreate": All components will be deleted and recreated.
 
         """
 
-        exporter = exporters.DMSExporter(existing_handling=existing_handling)
+        exporter = exporters.DMSExporter(existing=existing, export_components=components, drop_data=drop_data)
 
         if not self._client:
             raise NeatSessionError("No client provided!")
 
         conversion_issues = IssueList(action="to.cdf.data_model")
         with catch_warnings(conversion_issues):
-            result = exporter.export_to_cdf(
-                self._state.data_model.last_verified_dms_rules[1], self._client, dry_run, fallback_one_by_one
-            )
+            result = exporter.export_to_cdf(self._state.data_model.last_verified_dms_rules[1], self._client, dry_run)
         result.insert(0, UploadResultCore(name="schema", issues=conversion_issues))
         self._state.data_model.outcome.append(result)
         print("You can inspect the details with the .inspect.data_model.outcome(...) method.")
