@@ -1544,7 +1544,7 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
                 ),
                 DMSInputProperty(
                     view="WindFarm",
-                    view_property="wind_turbines",
+                    view_property="windTurbines",
                     value_type="WindTurbine",
                     connection="edge(direction=inwards)",
                 ),
@@ -1561,7 +1561,7 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
             ): dm.DirectRelationReference(space="my_space", external_id="WindTurbine.windFarm"),
             (
                 ViewEntity(space="my_space", externalId="WindFarm", version="v42"),
-                "wind_turbines",
+                "windTurbines",
             ): dm.DirectRelationReference(space="my_space", external_id="WindTurbine.windFarm"),
         },
         id="Indirect edge use outwards type",
@@ -1592,7 +1592,7 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
             ],
             views=[
                 DMSInputView(view="EnergyArea"),
-                DMSInputView(view="WindFarm"),
+                DMSInputView(view="WindFarm", implements="EnergyArea"),
             ],
         ),
         {
@@ -1705,7 +1705,7 @@ class TestDMSExporter:
         expected_edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference],
     ) -> None:
         dms_rules = DMSRules.model_validate(raw.dump())
-        view_by_id = {view: view for view in dms_rules.views}
+        view_by_id = {view.view: view for view in dms_rules.views}
         properties_by_view_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
         for prop in dms_rules.properties:
             properties_by_view_id[prop.view.as_id()].append(prop)
