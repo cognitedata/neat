@@ -21,6 +21,9 @@ Changes are grouped as follows:
 - Support for setting limit when running `neat.read.cdf.classic.graph(...)`.
 - Support for using parent property name in `neat.mapping.classic_to_core(...)`.
 
+### Changed
+- NeatEngine version to the latest release; `1.0.5`
+
 ### Fixed
 - Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
 

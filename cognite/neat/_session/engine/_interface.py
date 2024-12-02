@@ -16,7 +16,7 @@ class ConfigAPI(Protocol):
 
 
 class NeatEngine(Protocol):
-    version: str = "1.0.5"
+    version: str = "1.0.0"
 
     @property
     def set(self) -> ConfigAPI: ...
