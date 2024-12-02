@@ -21,16 +21,23 @@ Changes are grouped as follows:
 - Support for setting limit when running `neat.read.cdf.classic.graph(...)`.
 - Support for using parent property name in `neat.mapping.classic_to_core(...)`.
 
+### Fixed
+- Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
+
 ## [0.99.1] - 28-11-**2024**
 ### Changed
 - Remove "make_compliant" from OWL and IMF importers
 - Information rules post validation is now solely raising warnings
-- Renamed `neat.prepare.instances.relationships_as_connection` to `neat.prepare.instances.relationships_as_edges`. 
+- Renamed `neat.prepare.instances.relationships_as_connection` to `neat.prepare.instances.relationships_as_edges`.
   Changed how the conversion is done. The edge is as a node between the start and end node.
 
 ### Fixed
 - `neat.to.cdf.data_model(...)` no longer tries to deploy Cognite Models.
 - Wrong connection in `neat.mapping.classic_to_core(...)` is now fixed.
+
+### Improved
+- Inference, instances are ordered by no of properties
+- Inference, if Unknown value is present in multivalue property it is dropped
 
 ## [0.99.0] - 26-11-**2024**
 ### Changed
