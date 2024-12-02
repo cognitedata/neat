@@ -39,7 +39,6 @@ Changes are grouped as follows:
 - Inference, instances are ordered by no of properties
 - Inference, if Unknown value is present in multivalue property it is dropped
 
-
 ## [0.99.0] - 26-11-**2024**
 ### Changed
 - We are now using RDF datasets (namedgraphs) instead of simple graphs, enabling support for multi space

@@ -35,7 +35,7 @@ from cognite.neat._rules.models import (
     SheetList,
     data_types,
 )
-from cognite.neat._rules.models.data_types import DataType, String
+from cognite.neat._rules.models.data_types import AnyURI, DataType, String
 from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSView
 from cognite.neat._rules.models.dms._rules import DMSContainer
 from cognite.neat._rules.models.entities import (
@@ -857,6 +857,10 @@ class _InformationRulesConverter:
             # Multi Object type should resolve to DMSUnknownEntity
             # meaning end node type is unknown
             if prop.value_type.is_multi_object_type():
+                non_unknown = [type_ for type_ in prop.value_type.types if isinstance(type_, UnknownEntity)]
+                if list(non_unknown) == 1:
+                    #
+                    return non_unknown[0].as_view_entity(default_space, default_version)
                 return DMSUnknownEntity()
 
             # Multi Data type should resolve to a single data type, or it should
@@ -865,6 +869,12 @@ class _InformationRulesConverter:
 
             # Mixed types default to string
             else:
+                non_any_uri = [type_ for type_ in prop.value_type.types if type_ != AnyURI()]
+                if list(non_any_uri) == 1:
+                    if isinstance(non_any_uri[0], ClassEntity):
+                        return non_any_uri[0].as_view_entity(default_space, default_version)
+                    else:
+                        return non_any_uri[0]
                 return String()
 
         raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
