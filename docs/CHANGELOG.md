@@ -26,6 +26,9 @@ Changes are grouped as follows:
   form Info to DMS rules
 - Ability to change names of properties and views / classes and still be able to load instances
 
+### Changed
+- NeatEngine version to the latest release that has a breaking change to the interface; `2.0.0`
+
 ### Fixed
 - Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
 

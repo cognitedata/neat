@@ -9,14 +9,15 @@ class Extractor(Protocol):
 
 
 class ConfigAPI(Protocol):
-    source: str | None
+    format: str | None = None
     file: Any | None
     type: str | None
     primary_key: str | None
+    mapping: Any | None = None
 
 
 class NeatEngine(Protocol):
-    version: str = "1.0.0"
+    version: str = "2.0.0"
 
     @property
     def set(self) -> ConfigAPI: ...
