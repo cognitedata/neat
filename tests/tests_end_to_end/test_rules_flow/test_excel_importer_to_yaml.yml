@@ -26,6 +26,7 @@ metadata:
   created: '2024-02-09T00:00:00'
   creator: Jon,Emma,David
   external_id: power2consumer
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0
   name: Power to Consumer Data Model
   role: DMS Architect
   space: power

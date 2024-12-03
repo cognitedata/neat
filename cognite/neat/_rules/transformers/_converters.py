@@ -758,7 +758,7 @@ class _InformationRulesConverter:
             DMSMetadata,
         )
 
-        return DMSMetadata(
+        dms_metadata = DMSMetadata(
             space=metadata.space,
             version=metadata.version,
             external_id=metadata.external_id,
@@ -767,6 +767,11 @@ class _InformationRulesConverter:
             created=metadata.created,
             updated=metadata.updated,
         )
+
+        dms_metadata.logical = metadata.identifier
+        metadata.physical = dms_metadata.identifier
+
+        return dms_metadata
 
     def _as_dms_property(
         self,
