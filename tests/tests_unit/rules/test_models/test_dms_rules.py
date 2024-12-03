@@ -1481,6 +1481,46 @@ class TestDMSRules:
 
         assert not maybe_rules.issues
 
+    def test_subclass_parent_with_reverse_property(self) -> None:
+        extended_core = DMSInputRules(
+            DMSInputMetadata(
+                space="my_space",
+                external_id="my_data_model",
+                creator="Anders",
+                version="v42",
+            ),
+            properties=[
+                DMSInputProperty(
+                    view="CogniteVisualizable",
+                    view_property="object3D",
+                    value_type="Cognite3DObject",
+                    connection="direct",
+                    is_list=False,
+                    container="CogniteVisualizable",
+                    container_property="object3D",
+                ),
+                DMSInputProperty(
+                    view="Cognite3DObject",
+                    view_property="asset",
+                    value_type="CogniteAsset",
+                    connection="reverse(property=object3D)",
+                ),
+            ],
+            views=[
+                DMSInputView(view="CogniteVisualizable"),
+                DMSInputView(view="CogniteAsset", implements="CogniteVisualizable"),
+                DMSInputView(view="Cognite3DObject"),
+                DMSInputView(view="My3DObject", implements="Cognite3DObject"),
+            ],
+            containers=[
+                DMSInputContainer("CogniteVisualizable"),
+            ],
+        )
+        maybe_rules = VerifyDMSRules("continue").transform(extended_core)
+
+        assert not maybe_rules.issues
+        assert maybe_rules.rules is not None
+
 
 class TestDMSExporter:
     @pytest.mark.skip(reason="This test no more relevant since there will be redo of filtering")

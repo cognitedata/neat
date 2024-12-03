@@ -174,14 +174,22 @@ class NeatGraphStore:
             self._add_triples(extractor.extract())
 
         if success:
-            self.provenance.append(
-                Change.record(
-                    activity=f"{type(extractor).__name__}",
-                    start=_start,
-                    end=datetime.now(timezone.utc),
-                    description=f"Extracted triples to graph store using {type(extractor).__name__}",
-                )
+            _end = datetime.now(timezone.utc)
+            # Need to do the hasattr in case the extractor comes from NeatEngine.
+            activities = (
+                extractor._get_activity_names()
+                if hasattr(extractor, "_get_activity_names")
+                else [type(extractor).__name__]
             )
+            for activity in activities:
+                self.provenance.append(
+                    Change.record(
+                        activity=activity,
+                        start=_start,
+                        end=_end,
+                        description=f"Extracted triples to graph store using {type(extractor).__name__}",
+                    )
+                )
 
     def read(self, class_: str) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
         """Read instances for given view from the graph store."""

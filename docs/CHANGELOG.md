@@ -20,6 +20,10 @@ Changes are grouped as follows:
 - Support for converting relationships to edges.
 - Support for setting limit when running `neat.read.cdf.classic.graph(...)`.
 - RegexViolation warning on Information rules that check if entity ids are DMS compliant
+- Support for using parent property name in `neat.mapping.classic_to_core(...)`.
+
+### Fixed
+- Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
 
 ## [0.99.1] - 28-11-**2024**
 ### Changed
@@ -35,7 +39,6 @@ Changes are grouped as follows:
 ### Improved
 - Inference, instances are ordered by no of properties
 - Inference, if Unknown value is present in multivalue property it is dropped
-
 
 ## [0.99.0] - 26-11-**2024**
 ### Changed
