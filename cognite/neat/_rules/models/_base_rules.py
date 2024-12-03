@@ -337,14 +337,14 @@ class SheetRow(SchemaModel):
     neatId: URIRefType | None = Field(
         alias="Neat ID",
         description="Globally unique identifier for the property",
-        default=DEFAULT_NAMESPACE[f"neatId_{str(uuid.uuid4()).replace('-', '_')}"],
+        default=None,
     )
 
-    @field_validator("neatId", mode="before")
-    def set_neat_id(cls, value: URIRef | None) -> URIRef | None:
-        if value is None:
-            return DEFAULT_NAMESPACE[f"neatId_{str(uuid.uuid4()).replace('-', '_')}"]
-        return value
+    @model_validator(mode="after")
+    def set_neat_id(self) -> URIRef | None:
+        if self.neatId is None:
+            self.neatId = URIRef(f"{DEFAULT_NAMESPACE}{uuid.uuid4()}")
+        return self
 
     @abstractmethod
     def _identifier(self) -> tuple[Hashable, ...]:
