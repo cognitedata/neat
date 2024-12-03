@@ -658,7 +658,7 @@ class _InformationRulesConverter:
         info_metadata = self.rules.metadata
         default_version = info_metadata.version
         default_space = self._to_space(info_metadata.prefix)
-        self.dms_metadata = self._convert_metadata_to_dms(info_metadata)
+        dms_metadata = self._convert_metadata_to_dms(info_metadata)
         edge_classes: set[ClassEntity] = set()
         property_to_edge: dict[tuple[ClassEntity, str], ClassEntity] = {}
         end_node_by_edge: dict[ClassEntity, ClassEntity] = {}
@@ -730,7 +730,7 @@ class _InformationRulesConverter:
             containers.append(container)
 
         return DMSRules(
-            metadata=self.dms_metadata,
+            metadata=dms_metadata,
             properties=SheetList[DMSProperty]([prop for prop_set in properties_by_class.values() for prop in prop_set]),
             views=SheetList[DMSView](views),
             containers=SheetList[DMSContainer](containers),
