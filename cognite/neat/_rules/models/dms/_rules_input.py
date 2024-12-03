@@ -35,7 +35,7 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
     description: str | None = None
     created: datetime | str | None = None
     updated: datetime | str | None = None
-    logical: str | None = None
+    logical: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSMetadata]:
@@ -108,7 +108,7 @@ class DMSInputProperty(InputComponent[DMSProperty]):
     container_property: str | None = None
     index: str | list[str] | None = None
     constraint: str | list[str] | None = None
-    logical: str | None = None
+    logical: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSProperty]:
@@ -183,7 +183,7 @@ class DMSInputView(InputComponent[DMSView]):
     implements: str | None = None
     filter_: Literal["hasData", "nodeType", "rawFilter"] | str | None = None
     in_model: bool = True
-    logical: str | None = None
+    logical: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSView]:

@@ -33,8 +33,8 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
     description: str | None = None
     created: datetime | str | None = None
     updated: datetime | str | None = None
-    physical: str | None = None
-    conceptual: str | None = None
+    physical: str | URIRef | None = None
+    conceptual: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationMetadata]:
@@ -83,8 +83,8 @@ class InformationInputProperty(InputComponent[InformationProperty]):
     inherited: bool = False
 
     # linking
-    physical: str | None = None
-    conceptual: str | None = None
+    physical: str | URIRef | None = None
+    conceptual: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationProperty]:
@@ -105,8 +105,8 @@ class InformationInputClass(InputComponent[InformationClass]):
     implements: str | list[ClassEntity] | None = None
 
     # linking
-    physical: str | None = None
-    conceptual: str | None = None
+    physical: str | URIRef | None = None
+    conceptual: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationClass]:
