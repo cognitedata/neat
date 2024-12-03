@@ -22,6 +22,7 @@ Changes are grouped as follows:
 - RegexViolation warning on Information rules that check if entity ids are DMS compliant
 - Support for using parent property name in `neat.mapping.classic_to_core(...)`.
 - Classes that have properties but are not defined in Classes sheet will raise error
+- Ability to make connection at granular level between Info and DMS rules when doing conversion
 
 ### Fixed
 - Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
