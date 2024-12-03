@@ -22,6 +22,9 @@ Changes are grouped as follows:
 - RegexViolation warning on Information rules that check if entity ids are DMS compliant
 - Support for using parent property name in `neat.mapping.classic_to_core(...)`.
 
+### Changed
+- NeatEngine version to the latest release that has a breaking change to the interface; `2.0.0`
+
 ### Fixed
 - Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
 
