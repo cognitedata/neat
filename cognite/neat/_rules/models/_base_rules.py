@@ -348,7 +348,7 @@ class SheetRow(SchemaModel):
     @model_validator(mode="after")
     def set_neat_id(self):
         if self.neatId is None:
-            self.neatId = DEFAULT_NAMESPACE[f"neatId_{str(uuid.uuid4()).replace('-', '_')}"]
+            self.neatId = make_neat_id()
         return self
 
     @abstractmethod
