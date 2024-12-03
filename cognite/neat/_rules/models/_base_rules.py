@@ -5,6 +5,7 @@ its sub-models and validators.
 import math
 import sys
 import types
+import uuid
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Hashable, Iterator, MutableSequence, Sequence
 from datetime import datetime
@@ -42,6 +43,7 @@ from cognite.neat._rules.models._types import (
     DmsPropertyType,
     SpaceType,
     StrListType,
+    URIRefType,
     VersionType,
     ViewEntityType,
 )
@@ -332,6 +334,18 @@ class BaseRules(SchemaModel, ABC):
 
 
 class SheetRow(SchemaModel):
+    neatId: URIRefType | None = Field(
+        alias="Neat ID",
+        description="Globally unique identifier for the property",
+        default=DEFAULT_NAMESPACE[f"neatId_{str(uuid.uuid4()).replace('-', '_')}"],
+    )
+
+    @field_validator("neatId", mode="before")
+    def set_neat_id(cls, value: URIRef | None) -> URIRef | None:
+        if value is None:
+            return DEFAULT_NAMESPACE[f"neatId_{str(uuid.uuid4()).replace('-', '_')}"]
+        return value
+
     @abstractmethod
     def _identifier(self) -> tuple[Hashable, ...]:
         raise NotImplementedError()

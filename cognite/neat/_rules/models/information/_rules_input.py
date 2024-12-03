@@ -81,6 +81,7 @@ class InformationInputProperty(InputComponent[InformationProperty]):
     transformation: str | None = None
     # Only used internally
     inherited: bool = False
+    neatId: str | URIRef | None = None
 
     # linking
     physical: str | URIRef | None = None
@@ -103,7 +104,7 @@ class InformationInputClass(InputComponent[InformationClass]):
     name: str | None = None
     description: str | None = None
     implements: str | list[ClassEntity] | None = None
-
+    neatId: str | URIRef | None = None
     # linking
     physical: str | URIRef | None = None
     conceptual: str | URIRef | None = None
