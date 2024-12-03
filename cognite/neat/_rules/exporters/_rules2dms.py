@@ -176,7 +176,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             )
 
             issue_list = IssueList()
-            warning_list = self._validate(loader, items, client)
+            warning_list = self._validate(items, client)
             issue_list.extend(warning_list)
 
             created: set[Hashable] = set()
@@ -327,7 +327,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             to_export.append(DataModelApplyList([schema.data_model]))
         return to_export
 
-    def _validate(self, loader: DataModelingLoader, items: CogniteResourceList, client: NeatClient) -> IssueList:
+    def _validate(self, items: CogniteResourceList, client: NeatClient) -> IssueList:
         issue_list = IssueList()
         if isinstance(items, DataModelApplyList):
             models = cast(list[DataModelApply], items)
