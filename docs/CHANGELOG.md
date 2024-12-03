@@ -24,6 +24,7 @@ Changes are grouped as follows:
 - Classes that have properties but are not defined in Classes sheet will raise error
 - Ability to make connection at granular level between Info and DMS rules when doing conversion
   form Info to DMS rules
+- Ability to change names of properties and views / classes and still be able to load instances
 
 ### Fixed
 - Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
