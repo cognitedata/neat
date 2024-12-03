@@ -8,6 +8,7 @@ from typing import Generic, TypeVar
 
 import pandas as pd
 from pydantic import BaseModel
+from rdflib import URIRef
 
 from cognite.neat._rules.models._base_rules import BaseRules
 from cognite.neat._rules.models._rdfpath import RDFPath
@@ -107,6 +108,14 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
     @property
     def inherited_referred_classes(self) -> set[ClassEntity]:
         raise NotImplementedError
+
+    @property
+    def properties_by_neat_id(self) -> dict[URIRef, T_Property]:
+        return {prop.neatId: prop for prop in self._get_properties()}  # type: ignore
+
+    @property
+    def classes_by_neat_id(self) -> dict[URIRef, T_Property]:
+        return {class_.neatId: class_ for class_ in self._get_classes()}  # type: ignore
 
     # Todo Lru cache this method.
     def class_parent_pairs(self, allow_different_space: bool = False) -> dict[T_ClassEntity, list[T_ClassEntity]]:

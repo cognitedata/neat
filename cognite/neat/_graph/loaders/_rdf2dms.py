@@ -14,7 +14,7 @@ from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
-from rdflib import RDF
+from rdflib import RDF, URIRef
 
 from cognite.neat._graph._tracking import LogTracker, Tracker
 from cognite.neat._issues import IssueList, NeatIssue, NeatIssueList
@@ -25,8 +25,10 @@ from cognite.neat._issues.errors import (
     ResourceRetrievalError,
 )
 from cognite.neat._issues.warnings import PropertyTypeNotSupportedWarning
+from cognite.neat._rules.analysis._dms import DMSAnalysis
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
+from cognite.neat._rules.models.entities._single_value import ViewEntity
 from cognite.neat._shared import InstanceType
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
@@ -52,7 +54,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         graph_store: NeatGraphStore,
         data_model: dm.DataModel[dm.View] | None,
         instance_space: str,
-        class_by_view_id: dict[ViewId, str] | None = None,
+        class_neat_id_by_view_id: dict[ViewId, URIRef] | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         tracker: type[Tracker] | None = None,
         rules: DMSRules | None = None,
@@ -60,7 +62,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         super().__init__(graph_store)
         self.data_model = data_model
         self.instance_space = instance_space
-        self.class_by_view_id = class_by_view_id or {}
+        self.class_neat_id_by_view_id = class_neat_id_by_view_id or {}
         self._issues = IssueList(create_issues or [])
         self._tracker: type[Tracker] = tracker or LogTracker
         self.rules = rules
@@ -97,7 +99,17 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     reason=str(e),
                 )
             )
-        return cls(graph_store, data_model, instance_space, {}, issues, rules=rules)
+
+        class_neat_id_by_view_id = {view.view.as_id(): view.logical for view in rules.views if view.logical}
+
+        return cls(
+            graph_store,
+            data_model,
+            instance_space,
+            class_neat_id_by_view_id,
+            issues,
+            rules=rules,
+        )
 
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue]:
         if self._issues.has_errors and stop_on_exception:
@@ -108,6 +120,13 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if not self.data_model:
             # There should already be an error in this case.
             return
+
+        views_with_linked_properties = (
+            DMSAnalysis(self.rules).views_with_properties_linked_to_classes(consider_inheritance=True)
+            if self.rules and self.rules.metadata.logical
+            else None
+        )
+
         view_ids = [repr(v.as_id()) for v in self.data_model.views]
         tracker = self._tracker(type(self).__name__, view_ids, "views")
         for view in self.data_model.views:
@@ -119,17 +138,32 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             # this assumes no changes in the suffix of view and class
 
-            class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
+            if views_with_linked_properties:
+                # we need graceful exit if the view is not in the view_property_pairs
+                property_link_pairs = views_with_linked_properties.get(ViewEntity.from_id(view_id))
 
-            for identifier, properties in self.graph_store.read(class_name):
+                if class_neat_id := self.class_neat_id_by_view_id.get(view_id):
+                    reader = self.graph_store._read_via_rules_linkage(class_neat_id, property_link_pairs)
+                else:
+                    error_view = ResourceRetrievalError(view_id, "view", "View not linked to class")
+                    tracker.issue(error_view)
+                    if stop_on_exception:
+                        raise error_view
+                    yield error_view
+
+            else:
+                print("Loading instances without linked properties")
+                reader = self.graph_store.read(view.external_id)
+
+            for identifier, properties in reader:
                 try:
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
-                    error = ResourceCreationError(identifier, "node", error=str(e))
-                    tracker.issue(error)
+                    error_node = ResourceCreationError(identifier, "node", error=str(e))
+                    tracker.issue(error_node)
                     if stop_on_exception:
-                        raise error from e
-                    yield error
+                        raise error_node from e
+                    yield error_node
                 yield from self._create_edges(identifier, properties, edge_by_type, tracker)
             tracker.finish(repr(view_id))
 

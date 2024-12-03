@@ -31,6 +31,7 @@ from pydantic import (
     PlainSerializer,
     field_validator,
     model_serializer,
+    model_validator,
 )
 from pydantic.main import IncEx
 from pydantic_core import core_schema
@@ -333,18 +334,22 @@ class BaseRules(SchemaModel, ABC):
         return output
 
 
+def make_neat_id() -> URIRef:
+    return DEFAULT_NAMESPACE[f"neatId_{str(uuid.uuid4()).replace('-', '_')}"]
+
+
 class SheetRow(SchemaModel):
     neatId: URIRefType | None = Field(
         alias="Neat ID",
         description="Globally unique identifier for the property",
-        default=DEFAULT_NAMESPACE[f"neatId_{str(uuid.uuid4()).replace('-', '_')}"],
+        default=None,
     )
 
-    @field_validator("neatId", mode="before")
-    def set_neat_id(cls, value: URIRef | None) -> URIRef | None:
-        if value is None:
-            return DEFAULT_NAMESPACE[f"neatId_{str(uuid.uuid4()).replace('-', '_')}"]
-        return value
+    @model_validator(mode="after")
+    def set_neat_id(self):
+        if self.neatId is None:
+            self.neatId = DEFAULT_NAMESPACE[f"neatId_{str(uuid.uuid4()).replace('-', '_')}"]
+        return self
 
     @abstractmethod
     def _identifier(self) -> tuple[Hashable, ...]:

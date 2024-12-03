@@ -17,7 +17,6 @@ from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.models import InformationRules
-from cognite.neat._rules.models.dms._rules import DMSProperty, DMSView
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._shared import InstanceType, Triple
 from cognite.neat._utils.auxiliary import local_import
@@ -192,38 +191,50 @@ class NeatGraphStore:
                     )
                 )
 
-    def read_via_rules_linkage(
-        self, view: DMSView, view_properties: list[DMSProperty]
+    def _read_via_rules_linkage(
+        self, class_neat_id: URIRef, property_link_pairs: dict[str, URIRef] | None
     ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
-        # step 1. find the class entity
-        # step 2. find all the class properties
-        # step 3. generate property renaming dictionary
-        # then call .read() method, it shold
-        ...
-
-    def read(
-        self,
-        class_: str,
-        property_renaming_config: dict[str | URIRef, str] | None = None,
-    ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
-        """Read instances for given view from the graph store."""
-
-        if not self.rules:
+        if self.rules is None:
             warnings.warn("Rules not found in graph store!", stacklevel=2)
-            return None
+            return []
 
-        class_entity = ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
+        if cls := InformationAnalysis(self.rules).classes_by_neat_id.get(class_neat_id):
+            if property_link_pairs:
+                property_renaming_config = {
+                    prop_uri: prop_name
+                    for prop_name, prop_neat_id in property_link_pairs.items()
+                    if (
+                        prop_uri := InformationAnalysis(self.rules).neat_id_to_transformation_property_uri(prop_neat_id)
+                    )
+                }
+
+                return self._read_via_class_entity(cls.class_, property_renaming_config)
+            else:
+                warnings.warn("Rules not linked", stacklevel=2)
+                return []
+        else:
+            warnings.warn("Class with neat id {class_neat_id} found in rules", stacklevel=2)
+            return []
+
+    def _read_via_class_entity(
+        self,
+        class_entity: ClassEntity,
+        property_renaming_config: dict[URIRef, str] | None = None,
+    ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
+        if self.rules is None:
+            warnings.warn("Rules not found in graph store!", stacklevel=2)
+            return []  # type: ignore
 
         if class_entity not in [definition.class_ for definition in self.rules.classes]:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
-            return None
+            return []  # type: ignore
 
         if not (class_uri := InformationAnalysis(self.rules).class_uri(class_entity)):
             warnings.warn(
-                f"Class {class_} does not have namespace defined for prefix {class_entity.prefix} Rules!",
+                f"Class {class_entity.suffix} does not have namespace defined for prefix {class_entity.prefix} Rules!",
                 stacklevel=2,
             )
-            return None
+            return []  # type: ignore
 
         has_hop_transformations = InformationAnalysis(self.rules).has_hop_transformations()
         has_self_reference_transformations = InformationAnalysis(
@@ -243,7 +254,7 @@ class NeatGraphStore:
                 msg,
                 stacklevel=2,
             )
-            return None
+            return []  # type: ignore
 
         # get all the instances for give class_uri
         instance_ids = self.queries.list_instances_ids_of_class(class_uri)
@@ -259,11 +270,35 @@ class NeatGraphStore:
         for instance_id in instance_ids:
             if res := self.queries.describe(
                 instance_id=instance_id,
-                instance_type=class_,
+                instance_type=class_entity.suffix,
                 property_renaming_config=property_renaming_config,
                 property_types=property_types,
             ):
                 yield res
+
+    def read(
+        self,
+        class_: str,
+    ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
+        """Read instances for given class from the graph store.
+
+        !!! note "Assumption"
+            This method assumes that the class_ belongs to the same (name)space as
+            the rules which are attached to the graph store.
+
+        """
+
+        if not self.rules:
+            warnings.warn("Rules not found in graph store!", stacklevel=2)
+            return []
+
+        class_entity = ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
+
+        if class_entity not in [definition.class_ for definition in self.rules.classes]:
+            warnings.warn("Desired type not found in graph!", stacklevel=2)
+            return []
+
+        return self._read_via_class_entity(class_entity)
 
     def _parse_file(
         self,
