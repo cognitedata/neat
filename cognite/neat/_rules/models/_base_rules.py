@@ -14,6 +14,7 @@ from typing import (
     Any,
     ClassVar,
     Literal,
+    Self,
     SupportsIndex,
     TypeVar,
     get_args,
@@ -31,6 +32,7 @@ from pydantic import (
     PlainSerializer,
     field_validator,
     model_serializer,
+    model_validator,
 )
 from pydantic.main import IncEx
 from pydantic_core import core_schema
@@ -341,7 +343,7 @@ class SheetRow(SchemaModel):
     )
 
     @model_validator(mode="after")
-    def set_neat_id(self) -> URIRef | None:
+    def set_neat_id(self) -> Self:
         if self.neatId is None:
             self.neatId = DEFAULT_NAMESPACE[f"neatId_{str(uuid.uuid4()).replace('-', '_')}"]
         return self
