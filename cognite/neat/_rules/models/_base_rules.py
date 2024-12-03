@@ -343,9 +343,7 @@ class SheetRow(SchemaModel):
     @model_validator(mode="after")
     def set_neat_id(self) -> URIRef | None:
         if self.neatId is None:
-            self.neatId = URIRef(
-                f"{DEFAULT_NAMESPACE}/neatId_{str(uuid.uuid4()).replace('-', '_')}"
-            )
+            self.neatId = URIRef(f"{DEFAULT_NAMESPACE}/neatId_{str(uuid.uuid4()).replace('-', '_')}")
         return self
 
     @abstractmethod
