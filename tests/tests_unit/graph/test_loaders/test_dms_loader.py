@@ -15,16 +15,28 @@ def test_metadata_as_json_filed():
 
     importer = InferenceImporter.from_graph_store(store)
 
-    rules = ImporterPipeline.verify(importer)
-    store.add_rules(rules)
+    info_rules = ImporterPipeline.verify(importer)
+    dms_rules = InformationToDMS().transform(info_rules).rules
 
-    dms_rules = InformationToDMS().transform(rules).rules
+    # I am now changing property in DMS rules
+    dms_rules.properties[0].view_property = "anders_metadata"
 
+    # but also same property in INFO rules
+    info_rules.properties[0].property_ = "nikolas_metadata"
+
+    # now changed rules are added to store
+    store.add_rules(info_rules)
+
+    # but as we have linking between dms and info rules we get property in the desired
+    # format
     loader = DMSLoader.from_rules(dms_rules, store, dms_rules.metadata.space)
     instances = {instance.external_id: instance for instance in loader._load()}
 
     # metadata not unpacked but kept as Json obj
-    assert isinstance(instances["Asset_4288662884680989"].sources[0].properties["metadata"], dict)
+    assert isinstance(
+        instances["Asset_4288662884680989"].sources[0].properties["anders_metadata"],
+        dict,
+    )
 
 
 def test_imf_attribute_nodes():
