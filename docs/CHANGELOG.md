@@ -25,6 +25,9 @@ Changes are grouped as follows:
 - Ability to make connection at granular level between Info and DMS rules when doing conversion
   form Info to DMS rules
 
+### Changed
+- NeatEngine version to the latest release that has a breaking change to the interface; `2.0.0`
+
 ### Fixed
 - Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
 

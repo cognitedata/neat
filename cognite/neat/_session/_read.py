@@ -251,7 +251,7 @@ class CSVReadAPI(BaseReadAPI):
         else:
             raise NeatValueError("Only file paths are supported for CSV files")
         engine = import_engine()
-        engine.set.source = ".csv"
+        engine.set.format = "csv"
         engine.set.file = path
         engine.set.type = type
         engine.set.primary_key = primary_key
