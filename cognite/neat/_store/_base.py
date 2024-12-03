@@ -17,6 +17,7 @@ from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.models import InformationRules
+from cognite.neat._rules.models.dms._rules import DMSProperty, DMSView
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._shared import InstanceType, Triple
 from cognite.neat._utils.auxiliary import local_import
@@ -191,7 +192,20 @@ class NeatGraphStore:
                     )
                 )
 
-    def read(self, class_: str) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
+    def read_via_rules_linkage(
+        self, view: DMSView, view_properties: list[DMSProperty]
+    ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
+        # step 1. find the class entity
+        # step 2. find all the class properties
+        # step 3. generate property renaming dictionary
+        # then call .read() method, it shold
+        ...
+
+    def read(
+        self,
+        class_: str,
+        property_renaming_config: dict[str | URIRef, str] | None = None,
+    ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
         """Read instances for given view from the graph store."""
 
         if not self.rules:
@@ -235,7 +249,9 @@ class NeatGraphStore:
         instance_ids = self.queries.list_instances_ids_of_class(class_uri)
 
         # get potential property renaming config
-        property_renaming_config = InformationAnalysis(self.rules).define_property_renaming_config(class_entity)
+        property_renaming_config = property_renaming_config or InformationAnalysis(
+            self.rules
+        ).define_property_renaming_config(class_entity)
 
         # get property types to guide process of removing or not namespaces from results
         property_types = InformationAnalysis(self.rules).property_types(class_entity)

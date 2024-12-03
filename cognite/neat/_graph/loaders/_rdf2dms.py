@@ -55,6 +55,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         class_by_view_id: dict[ViewId, str] | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         tracker: type[Tracker] | None = None,
+        rules: DMSRules | None = None,
     ):
         super().__init__(graph_store)
         self.data_model = data_model
@@ -62,6 +63,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self.class_by_view_id = class_by_view_id or {}
         self._issues = IssueList(create_issues or [])
         self._tracker: type[Tracker] = tracker or LogTracker
+        self.rules = rules
 
     @classmethod
     def from_data_model_id(
@@ -95,7 +97,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     reason=str(e),
                 )
             )
-        return cls(graph_store, data_model, instance_space, {}, issues)
+        return cls(graph_store, data_model, instance_space, {}, issues, rules=rules)
 
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue]:
         if self._issues.has_errors and stop_on_exception:
@@ -114,6 +116,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             pydantic_cls, edge_by_type, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
             yield from issues
             tracker.issue(issues)
+
+            # this assumes no changes in the suffix of view and class
+
             class_name = self.class_by_view_id.get(view.as_id(), view.external_id)
 
             for identifier, properties in self.graph_store.read(class_name):
