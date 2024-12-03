@@ -22,7 +22,7 @@ Changes are grouped as follows:
 - Support for using parent property name in `neat.mapping.classic_to_core(...)`.
 
 ### Changed
-- NeatEngine version to the latest release; `1.0.5`
+- NeatEngine version to the latest release that has a breaking change to the interface; `2.0.0`
 
 ### Fixed
 - Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
