@@ -1,8 +1,8 @@
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Sequence, Collection
 from graphlib import TopologicalSorter
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar, cast, TypeAlias
 
 from cognite.client.data_classes import filters
 from cognite.client.data_classes._base import (
@@ -52,6 +52,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
+from cognite.neat._client.data_classes.data_modeling import Component
 from cognite.neat._issues.warnings import CDFMaxIterationsWarning
 from cognite.neat._shared import T_ID
 
@@ -59,7 +60,6 @@ if TYPE_CHECKING:
     from cognite.neat._client._api_client import NeatClient
 
 T_WritableCogniteResourceList = TypeVar("T_WritableCogniteResourceList", bound=WriteableCogniteResourceList)
-
 
 class ResourceLoader(
     ABC,
@@ -636,6 +636,20 @@ class DataModelLoaderAPI:
         self.containers = ContainerLoader(client)
         self.data_models = DataModelLoader(client)
         self.nodes = NodeLoader(client)
+        self._loaders = [self.spaces, self.views, self.containers, self.data_models, self.nodes]
+
+    def by_dependency_order(self, component: Component | Collection[Component] | None = None) -> list[DataModelingLoader]:
+        loader_by_type = {type(loader): loader for loader in self._loaders}
+        loader_iterable = (
+            loader_by_type[loader_cls]
+            for loader_cls in
+            TopologicalSorter({type(loader):loader.dependencies for loader in self._loaders}).static_order()
+        )
+        if component is None:
+            return list(loader_iterable)
+        components = {component} if isinstance(component, str) else set(component)
+        components = {{"node_type": "nodes"}.get(component, component) for component in components}
+        return [loader for loader in loader_iterable if loader.resource_name in components]
 
     def get_loader(self, items: Any) -> DataModelingLoader:
         if isinstance(items, CogniteResourceList):

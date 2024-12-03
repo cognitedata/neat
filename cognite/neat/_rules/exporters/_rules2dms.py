@@ -1,7 +1,7 @@
 import warnings
 from collections.abc import Collection, Hashable, Iterable, Sequence
 from pathlib import Path
-from typing import Literal, TypeAlias, cast
+from typing import Literal,  cast
 
 from cognite.client.data_classes._base import CogniteResource, CogniteResourceList
 from cognite.client.data_classes.data_modeling import (
@@ -15,6 +15,7 @@ from cognite.client.data_classes.data_modeling import (
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat._client import DataModelingLoader, NeatClient
+from cognite.neat._client.data_classes.data_modeling import Component
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.warnings import (
@@ -25,8 +26,6 @@ from cognite.neat._rules.models.dms import DMSRules
 from cognite.neat._utils.upload import UploadResult
 
 from ._base import CDFExporter
-
-Component: TypeAlias = Literal["all", "spaces", "data_models", "views", "containers", "node_types"]
 
 
 class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
@@ -54,7 +53,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
 
     def __init__(
         self,
-        export_components: Component | Collection[Component] = "all",
+        export_components: Component | Collection[Component] | None= None,
         include_space: set[str] | None = None,
         existing: Literal["fail", "skip", "update", "force", "recreate"] = "update",
         instance_space: str | None = None,
@@ -62,7 +61,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         drop_data: bool = False,
         remove_cdf_spaces: bool = True,
     ):
-        self.export_components = {export_components} if isinstance(export_components, str) else set(export_components)
+        self.export_components = export_components
         self.include_space = include_space
         self.existing = existing
         self.drop_data = drop_data
@@ -165,7 +164,9 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
 
         result_by_name: dict[str, UploadResult] = {}
         redeploy_data_model = False
-        for items in to_export:
+        for loader in client.loaders.by_dependency_order(self.export_components):
+
+
             # The conversion from DMS to GraphQL does not seem to be triggered even if the views
             # are changed. This is a workaround to force the conversion.
             is_redeploying = isinstance(items, DataModelApplyList) and redeploy_data_model

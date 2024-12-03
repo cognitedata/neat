@@ -131,7 +131,7 @@ class CDFToAPI:
         existing: Literal["fail", "skip", "update", "force", "recreate"] = "update",
         dry_run: bool = False,
         drop_data: bool = False,
-        components: Component | Collection[Component] = "all",
+        components: Component | Collection[Component] | None = None,
     ):
         """Export the verified DMS data model to CDF.
 
@@ -142,7 +142,7 @@ class CDFToAPI:
             drop_data: If existing is 'force' or 'recreate' and the operation will lead to data loss,
                 the component will be skipped unless drop_data is True. Defaults to False.
                 Note this only applies to spaces and containers if they contain data.
-            components: The components to export. Defaults to "all".
+            components: The components to export. If None, all components will be exported. Defaults to None.
 
         ... note::
 

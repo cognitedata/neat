@@ -5,6 +5,8 @@ from typing import (
     TypeVar,
     cast,
     final,
+    Literal,
+    TypeAlias,
 )
 
 import pandas as pd
@@ -23,6 +25,8 @@ from cognite.client.data_classes.data_modeling import (
 )
 from cognite.client.utils._auxiliary import load_yaml_or_json
 from cognite.client.utils._pandas_helpers import convert_nullable_int_cols
+
+Component: TypeAlias = Literal["spaces", "data_models", "views", "containers", "node_types"]
 
 T_ID = TypeVar("T_ID", bound=Hashable)
 
