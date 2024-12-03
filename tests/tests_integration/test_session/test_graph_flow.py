@@ -8,6 +8,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 from cognite.neat import NeatSession
 from cognite.neat._graph.loaders import DMSLoader
 from tests.data import classic_windfarm
+from tests.utils import remove_linking_in_rules
 
 RESERVED_PROPERTIES = frozenset(
     {
@@ -57,6 +58,8 @@ class TestExtractToLoadFlow:
         neat.mapping.data_model.classic_to_core("Classic", use_parent_property_name=True)
 
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
+
+        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
 
         rules_str = neat.to.yaml(format="neat")
 

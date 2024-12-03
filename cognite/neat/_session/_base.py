@@ -70,35 +70,37 @@ class NeatSession:
         transformer = VerifyAnyRules("continue", validate=False)
         start = datetime.now(timezone.utc)
         output = transformer.try_transform(last_unverified_rule)
-        if isinstance(output.rules, DMSRules):
-            issues = DMSValidation(output.rules, self._client).validate()
-        elif isinstance(output.rules, InformationRules):
-            issues = InformationValidation(output.rules).validate()
-        else:
-            raise NeatSessionError("Unsupported rule type")
-        if issues.has_errors:
-            # This is up for discussion, but I think we should not return rules that
-            # only pass the verification but not the validation.
-            output.rules = None
-        output.issues.extend(issues)
-
-        end = datetime.now(timezone.utc)
 
         if output.rules:
-            change = Change.from_rules_activity(
-                output.rules,
-                transformer.agent,
-                start,
-                end,
-                f"Verified data model {source_id} as {output.rules.metadata.identifier}",
-                self._state.data_model.provenance.source_entity(source_id)
-                or self._state.data_model.provenance.target_entity(source_id),
-            )
+            if isinstance(output.rules, DMSRules):
+                issues = DMSValidation(output.rules, self._client).validate()
+            elif isinstance(output.rules, InformationRules):
+                issues = InformationValidation(output.rules).validate()
+            else:
+                raise NeatSessionError("Unsupported rule type")
+            if issues.has_errors:
+                # This is up for discussion, but I think we should not return rules that
+                # only pass the verification but not the validation.
+                output.rules = None
+            output.issues.extend(issues)
 
-            self._state.data_model.write(output.rules, change)
+            end = datetime.now(timezone.utc)
 
-            if isinstance(output.rules, InformationRules):
-                self._state.instances.store.add_rules(output.rules)
+            if output.rules:
+                change = Change.from_rules_activity(
+                    output.rules,
+                    transformer.agent,
+                    start,
+                    end,
+                    f"Verified data model {source_id} as {output.rules.metadata.identifier}",
+                    self._state.data_model.provenance.source_entity(source_id)
+                    or self._state.data_model.provenance.target_entity(source_id),
+                )
+
+                self._state.data_model.write(output.rules, change)
+
+                if isinstance(output.rules, InformationRules):
+                    self._state.instances.store.add_rules(output.rules)
 
         output.issues.action = "verify"
         self._state.data_model.issue_lists.append(output.issues)
