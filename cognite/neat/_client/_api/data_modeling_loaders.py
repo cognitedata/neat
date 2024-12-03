@@ -2,7 +2,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from graphlib import TopologicalSorter
-from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar, cast
 
 from cognite.client.data_classes import filters
 from cognite.client.data_classes._base import (
@@ -23,6 +23,10 @@ from cognite.client.data_classes.data_modeling import (
     DataModelList,
     EdgeConnection,
     MappedProperty,
+    Node,
+    NodeApply,
+    NodeApplyList,
+    NodeList,
     RequiresConstraint,
     Space,
     SpaceApply,
@@ -68,6 +72,7 @@ class ResourceLoader(
     """
 
     resource_name: str
+    dependencies: "ClassVar[frozenset[type[ResourceLoader]]]" = frozenset()
 
     def __init__(self, client: "NeatClient") -> None:
         # This is exposed to allow for disabling the cache.
@@ -115,7 +120,6 @@ class ResourceLoader(
         id_list = [self.get_id(item) for item in ids]
         if not self.cache:
             return self._delete(id_list)
-        ids = [self.get_id(item) for item in ids]
         deleted = self._delete(id_list)
         for id in deleted:
             self._items_by_id.pop(id, None)
@@ -159,9 +163,9 @@ class DataModelingLoader(
         return items
 
     def create(
-        self, items: Sequence[T_WriteClass], existing_handling: Literal["fail", "skip", "update", "force"] = "fail"
+        self, items: Sequence[T_WriteClass], existing: Literal["fail", "skip", "update", "force"] = "update"
     ) -> T_WritableCogniteResourceList:
-        if existing_handling != "force":
+        if existing != "force":
             return super().create(items)
 
         created = self._create_force(items, set())
@@ -261,8 +265,127 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
         print(f"Deleted space {deleted_space}")
 
 
+class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
+    resource_name = "containers"
+    dependencies = frozenset({SpaceLoader})
+
+    @classmethod
+    def get_id(cls, item: Container | ContainerApply | ContainerId | dict) -> ContainerId:
+        if isinstance(item, Container | ContainerApply):
+            return item.as_id()
+        if isinstance(item, dict):
+            return ContainerId.load(item)
+        return item
+
+    def sort_by_dependencies(self, items: Sequence[ContainerApply]) -> list[ContainerApply]:
+        container_by_id = {container.as_id(): container for container in items}
+        container_dependencies = {
+            container.as_id(): {
+                const.require
+                for const in container.constraints.values()
+                if isinstance(const, RequiresConstraint) and const.require in container_by_id
+            }
+            for container in items
+        }
+        return [
+            container_by_id[container_id] for container_id in TopologicalSorter(container_dependencies).static_order()
+        ]
+
+    def _create(self, items: Sequence[ContainerApply]) -> ContainerList:
+        return self._client.data_modeling.containers.apply(items)
+
+    def retrieve(self, ids: SequenceNotStr[ContainerId], include_connected: bool = False) -> ContainerList:
+        if not include_connected:
+            return super().retrieve(ids)
+        # Retrieve recursively updates the cache.
+        return self._retrieve_recursive(ids)
+
+    def _retrieve(self, ids: SequenceNotStr[ContainerId]) -> ContainerList:
+        return self._client.data_modeling.containers.retrieve(cast(Sequence, ids))
+
+    def _update(self, items: Sequence[ContainerApply]) -> ContainerList:
+        return self._create(items)
+
+    def _delete(self, ids: SequenceNotStr[ContainerId]) -> list[ContainerId]:
+        return self._client.data_modeling.containers.delete(cast(Sequence, ids))
+
+    def _create_list(self, items: Sequence[Container]) -> ContainerList:
+        return ContainerList(items)
+
+    def _retrieve_recursive(self, container_ids: SequenceNotStr[ContainerId]) -> ContainerList:
+        """Containers can reference each other through the 'requires' constraint.
+
+        This method retrieves all containers that are referenced by other containers through the 'requires' constraint,
+        including their parents.
+        """
+        max_iterations = 10  # Limiting the number of iterations to avoid infinite loops
+        found = ContainerList([])
+        found_ids: set[ContainerId] = set()
+        last_batch = list(container_ids)
+        for _ in range(max_iterations):
+            if not last_batch:
+                break
+            to_retrieve_from_cdf: set[ContainerId] = set()
+            batch_ids: list[ContainerId] = []
+            for container_id in last_batch:
+                if container_id in found_ids:
+                    continue
+                elif container_id in self._items_by_id:
+                    container = self._items_by_id[container_id]
+                    found.append(container)
+                    batch_ids.extend(self.get_connected_containers(container, found_ids))
+                else:
+                    to_retrieve_from_cdf.add(container_id)
+
+            if to_retrieve_from_cdf:
+                retrieved_batch = self._client.data_modeling.containers.retrieve(list(to_retrieve_from_cdf))
+                self._items_by_id.update({view.as_id(): view for view in retrieved_batch})
+                found.extend(retrieved_batch)
+                found_ids.update({view.as_id() for view in retrieved_batch})
+                for container in retrieved_batch:
+                    batch_ids.extend(self.get_connected_containers(container, found_ids))
+
+            last_batch = batch_ids
+        else:
+            warnings.warn(
+                CDFMaxIterationsWarning(
+                    "The maximum number of iterations was reached while resolving referenced containers."
+                    "There might be referenced containers that are not included in the list of containers.",
+                    max_iterations=max_iterations,
+                ),
+                stacklevel=2,
+            )
+
+        if self.cache is False:
+            # We must update the cache to retrieve recursively.
+            # If the cache is disabled, bust the cache to avoid storing the retrieved views.
+            self.bust_cache()
+        return found
+
+    @staticmethod
+    def get_connected_containers(
+        container: Container | ContainerApply, skip: set[ContainerId] | None = None
+    ) -> set[ContainerId]:
+        connected_containers = set()
+        for constraint in container.constraints.values():
+            if isinstance(constraint, RequiresConstraint):
+                connected_containers.add(constraint.require)
+        if skip:
+            return {container_id for container_id in connected_containers if container_id not in skip}
+        return connected_containers
+
+    def are_equal(self, local: ContainerApply, remote: Container) -> bool:
+        local_dumped = local.dump(camel_case=True)
+        if "usedFor" not in local_dumped:
+            # Setting used_for to "node" as it is the default value in the CDF.
+            local_dumped["usedFor"] = "node"
+
+        return local_dumped == remote.as_write().dump(camel_case=True)
+
+
 class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):
     resource_name = "views"
+    dependencies = frozenset({SpaceLoader, ContainerLoader})
 
     @classmethod
     def get_id(cls, item: View | ViewApply | ViewId | dict) -> ViewId:
@@ -404,125 +527,9 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         return ViewList(items)
 
 
-class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
-    resource_name = "containers"
-
-    @classmethod
-    def get_id(cls, item: Container | ContainerApply | ContainerId | dict) -> ContainerId:
-        if isinstance(item, Container | ContainerApply):
-            return item.as_id()
-        if isinstance(item, dict):
-            return ContainerId.load(item)
-        return item
-
-    def sort_by_dependencies(self, items: Sequence[ContainerApply]) -> list[ContainerApply]:
-        container_by_id = {container.as_id(): container for container in items}
-        container_dependencies = {
-            container.as_id(): {
-                const.require
-                for const in container.constraints.values()
-                if isinstance(const, RequiresConstraint) and const.require in container_by_id
-            }
-            for container in items
-        }
-        return [
-            container_by_id[container_id] for container_id in TopologicalSorter(container_dependencies).static_order()
-        ]
-
-    def _create(self, items: Sequence[ContainerApply]) -> ContainerList:
-        return self._client.data_modeling.containers.apply(items)
-
-    def retrieve(self, ids: SequenceNotStr[ContainerId], include_connected: bool = False) -> ContainerList:
-        if not include_connected:
-            return super().retrieve(ids)
-        # Retrieve recursively updates the cache.
-        return self._retrieve_recursive(ids)
-
-    def _retrieve(self, ids: SequenceNotStr[ContainerId]) -> ContainerList:
-        return self._client.data_modeling.containers.retrieve(cast(Sequence, ids))
-
-    def _update(self, items: Sequence[ContainerApply]) -> ContainerList:
-        return self._create(items)
-
-    def _delete(self, ids: SequenceNotStr[ContainerId]) -> list[ContainerId]:
-        return self._client.data_modeling.containers.delete(cast(Sequence, ids))
-
-    def _create_list(self, items: Sequence[Container]) -> ContainerList:
-        return ContainerList(items)
-
-    def _retrieve_recursive(self, container_ids: SequenceNotStr[ContainerId]) -> ContainerList:
-        """Containers can reference each other through the 'requires' constraint.
-
-        This method retrieves all containers that are referenced by other containers through the 'requires' constraint,
-        including their parents.
-        """
-        max_iterations = 10  # Limiting the number of iterations to avoid infinite loops
-        found = ContainerList([])
-        found_ids: set[ContainerId] = set()
-        last_batch = list(container_ids)
-        for _ in range(max_iterations):
-            if not last_batch:
-                break
-            to_retrieve_from_cdf: set[ContainerId] = set()
-            batch_ids: list[ContainerId] = []
-            for container_id in last_batch:
-                if container_id in found_ids:
-                    continue
-                elif container_id in self._items_by_id:
-                    container = self._items_by_id[container_id]
-                    found.append(container)
-                    batch_ids.extend(self.get_connected_containers(container, found_ids))
-                else:
-                    to_retrieve_from_cdf.add(container_id)
-
-            if to_retrieve_from_cdf:
-                retrieved_batch = self._client.data_modeling.containers.retrieve(list(to_retrieve_from_cdf))
-                self._items_by_id.update({view.as_id(): view for view in retrieved_batch})
-                found.extend(retrieved_batch)
-                found_ids.update({view.as_id() for view in retrieved_batch})
-                for container in retrieved_batch:
-                    batch_ids.extend(self.get_connected_containers(container, found_ids))
-
-            last_batch = batch_ids
-        else:
-            warnings.warn(
-                CDFMaxIterationsWarning(
-                    "The maximum number of iterations was reached while resolving referenced containers."
-                    "There might be referenced containers that are not included in the list of containers.",
-                    max_iterations=max_iterations,
-                ),
-                stacklevel=2,
-            )
-
-        if self.cache is False:
-            # We must update the cache to retrieve recursively.
-            # If the cache is disabled, bust the cache to avoid storing the retrieved views.
-            self.bust_cache()
-        return found
-
-    @staticmethod
-    def get_connected_containers(
-        container: Container | ContainerApply, skip: set[ContainerId] | None = None
-    ) -> set[ContainerId]:
-        connected_containers = set()
-        for constraint in container.constraints.values():
-            if isinstance(constraint, RequiresConstraint):
-                connected_containers.add(constraint.require)
-        if skip:
-            return {container_id for container_id in connected_containers if container_id not in skip}
-        return connected_containers
-
-    def are_equal(self, local: ContainerApply, remote: Container) -> bool:
-        local_dumped = local.dump(camel_case=True)
-        if "usedFor" not in local_dumped:
-            # Setting used_for to "node" as it is the default value in the CDF.
-            local_dumped["usedFor"] = "node"
-
-        return local_dumped == remote.as_write().dump(camel_case=True)
-
-
 class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel, DataModelApplyList, DataModelList]):
     resource_name = "data_models"
+    dependencies = frozenset({SpaceLoader, ViewLoader})
 
     @classmethod
     def get_id(cls, item: DataModel | DataModelApply | DataModelId | dict) -> DataModelId:
@@ -563,6 +570,64 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
         return local_dumped == cdf_resource_dumped
 
 
+class NodeLoader(DataModelingLoader[NodeId, NodeApply, Node, NodeApplyList, NodeList]):
+    resource_name = "nodes"
+    dependencies = frozenset({SpaceLoader, ContainerLoader, ViewLoader})
+
+    @classmethod
+    def get_id(cls, item: Node | NodeApply | NodeId | dict) -> NodeId:
+        if isinstance(item, Node | NodeApply):
+            return item.as_id()
+        if isinstance(item, dict):
+            return NodeId.load(item)
+        return item
+
+    def _create(self, items: Sequence[NodeApply]) -> NodeList:
+        self._client.data_modeling.instances.apply(items)
+        return self._retrieve([item.as_id() for item in items])
+
+    def _retrieve(self, ids: SequenceNotStr[NodeId]) -> NodeList:
+        return self._client.data_modeling.instances.retrieve(cast(Sequence, ids)).nodes
+
+    def _update(self, items: Sequence[NodeApply]) -> NodeList:
+        self._client.data_modeling.instances.apply(items, replace=True)
+        return self._retrieve([item.as_id() for item in items])
+
+    def _delete(self, ids: SequenceNotStr[NodeId]) -> list[NodeId]:
+        return list(self._client.data_modeling.instances.delete(nodes=cast(Sequence, ids)).nodes)
+
+    def _create_list(self, items: Sequence[Node]) -> NodeList:
+        return NodeList(items)
+
+    def are_equal(self, local: NodeApply, remote: Node) -> bool:
+        local_dumped = local.dump()
+
+        # Note reading from a container is not supported.
+        sources = [
+            source_prop_pair.source
+            for source_prop_pair in local.sources or []
+            if isinstance(source_prop_pair.source, ViewId)
+        ]
+        if sources:
+            try:
+                cdf_resource_with_properties = self._client.data_modeling.instances.retrieve(
+                    nodes=remote.as_id(), sources=sources
+                ).nodes[0]
+            except CogniteAPIError:
+                # View does not exist, so node does not exist.
+                return False
+        else:
+            cdf_resource_with_properties = remote
+        cdf_resource_dumped = cdf_resource_with_properties.as_write().dump()
+
+        if "existingVersion" not in local_dumped:
+            # Existing version is typically not set when creating nodes, but we get it back
+            # when we retrieve the node from the server.
+            local_dumped["existingVersion"] = cdf_resource_dumped.get("existingVersion", None)
+
+        return local_dumped == cdf_resource_dumped
+
+
 class DataModelLoaderAPI:
     def __init__(self, client: "NeatClient") -> None:
         self._client = client
@@ -570,6 +635,7 @@ class DataModelLoaderAPI:
         self.views = ViewLoader(client)
         self.containers = ContainerLoader(client)
         self.data_models = DataModelLoader(client)
+        self.nodes = NodeLoader(client)
 
     def get_loader(self, items: Any) -> DataModelingLoader:
         if isinstance(items, CogniteResourceList):
