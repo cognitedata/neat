@@ -157,6 +157,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             for identifier, properties in reader:
                 try:
+                    print(view_id)
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
                     error_node = ResourceCreationError(identifier, "node", error=str(e))
@@ -283,7 +284,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         return dm.NodeApply(
             space=self.instance_space,
             external_id=identifier,
-            type=dm.DirectRelationReference(view_id.space, type_) if type_ is not None else None,
+            type=(dm.DirectRelationReference(view_id.space, view_id.external_id) if type_ is not None else None),
             sources=[dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump().items()))],
         )
 
