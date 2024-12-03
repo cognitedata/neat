@@ -9,6 +9,8 @@ from typing import Any, Literal, TypeVar, Union, get_args, get_origin
 from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, ViewId
 from rdflib import Namespace
 
+from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._rules._shared import DMSRules, InformationRules, VerifiedRules
 from cognite.neat._rules.models.data_types import DataType, String
 from cognite.neat._rules.models.entities import ClassEntity
 
@@ -96,3 +98,28 @@ def get_all_subclasses(cls: T_Type, only_concrete: bool = False) -> list[T_Type]
     return [s for s in cls.__subclasses__() if only_concrete is False or ABC not in s.__bases__] + [
         g for s in cls.__subclasses__() for g in get_all_subclasses(s, only_concrete)
     ]
+
+
+def normalize_neat_id_in_rules(rules: VerifiedRules) -> VerifiedRules:
+    if isinstance(rules, InformationRules):
+        for i, class_ in enumerate(rules.classes):
+            class_.neatId = DEFAULT_NAMESPACE[f"Class_{i}"]
+        for i, property_ in enumerate(rules.properties):
+            property_.neatId = DEFAULT_NAMESPACE[f"Property_{i}"]
+
+    elif isinstance(rules, DMSRules):
+        for i, view in enumerate(rules.views):
+            view.neatId = DEFAULT_NAMESPACE[f"View_{i}"]
+        for i, property_ in enumerate(rules.properties):
+            property_.neatId = DEFAULT_NAMESPACE[f"Property_{i}"]
+
+        if rules.containers:
+            for i, container in enumerate(rules.containers):
+                container.neatId = DEFAULT_NAMESPACE[f"Container_{i}"]
+
+        if rules.enum:
+            for i, enum in enumerate(rules.enum):
+                enum.neatId = DEFAULT_NAMESPACE[f"Enum_{i}"]
+        if rules.nodes:
+            for i, node in enumerate(rules.nodes):
+                node.neatId = DEFAULT_NAMESPACE[f"NodeType_{i}"]

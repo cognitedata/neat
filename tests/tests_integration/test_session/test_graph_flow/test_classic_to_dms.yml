@@ -4,111 +4,147 @@ rules:
   - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteSchedulable
     container: cdf_cdm:CogniteActivity
     description: Represent an activity
+    neatId: http://purl.org/cognite/neat/Container_0
     used_for: node
   - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
     container: cdf_cdm:CogniteAnnotation
     description: Annotation represents contextualization results or links
+    neatId: http://purl.org/cognite/neat/Container_1
     used_for: edge
   - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteVisualizable,cdf_cdm:CogniteSourceable
     container: cdf_cdm:CogniteAsset
     description: The asset is the bare bone representation of assets in our asset
       centric world
+    neatId: http://purl.org/cognite/neat/Container_2
     used_for: node
   - constraint: cdf_cdm:CogniteDescribable
     container: cdf_cdm:CogniteAssetClass
     description: This identifies the class of an asset
+    neatId: http://purl.org/cognite/neat/Container_3
     used_for: node
   - constraint: cdf_cdm:CogniteDescribable
     container: cdf_cdm:CogniteAssetType
     description: This identifies the type of an asset
+    neatId: http://purl.org/cognite/neat/Container_4
     used_for: node
   - container: cdf_cdm:CogniteDescribable
     description: The describable core concept is used as a standard way of holding
       the bare minimum of information about the instance.
+    neatId: http://purl.org/cognite/neat/Container_5
     used_for: all
   - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
     container: cdf_cdm:CogniteEquipment
     description: Represent a physical piece of equipment
+    neatId: http://purl.org/cognite/neat/Container_6
     used_for: node
   - constraint: cdf_cdm:CogniteDescribable
     container: cdf_cdm:CogniteEquipmentType
     description: This identifies the type of an equipment
+    neatId: http://purl.org/cognite/neat/Container_7
     used_for: node
   - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
     container: cdf_cdm:CogniteFile
     description: This concept models the underlying file from the Files resource type
+    neatId: http://purl.org/cognite/neat/Container_8
     used_for: node
   - constraint: cdf_cdm:CogniteDescribable
     container: cdf_cdm:CogniteFileCategory
     description: Specifies the category for a file (as a result of categorization/classification))
+    neatId: http://purl.org/cognite/neat/Container_9
     used_for: node
   - container: cdf_cdm:CogniteSchedulable
     description: CogniteSchedulable represents the metadata about when an activity
       (or similar) starts and ends
+    neatId: http://purl.org/cognite/neat/Container_10
     used_for: node
   - container: cdf_cdm:CogniteSourceSystem
     description: The CogniteSourceSystem core concept is used to standardize the way
       source system is stored.
+    neatId: http://purl.org/cognite/neat/Container_11
     used_for: node
   - container: cdf_cdm:CogniteSourceable
     description: The CogniteSourceable core concept is used to standardize the way
       source information is stored.
+    neatId: http://purl.org/cognite/neat/Container_12
     used_for: all
   - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
     container: cdf_cdm:CogniteTimeSeries
+    neatId: http://purl.org/cognite/neat/Container_13
     used_for: node
   - constraint: cdf_cdm:CogniteDescribable
     container: cdf_cdm:CogniteUnit
     description: Represents a single unit of measurement
+    neatId: http://purl.org/cognite/neat/Container_14
     used_for: node
   - container: cdf_cdm:CogniteVisualizable
     description: CogniteVisualizable defines the standard way to reference a related
       3D resource
+    neatId: http://purl.org/cognite/neat/Container_15
     used_for: node
   - container: cdf_cdm_3d:Cognite360Image
+    neatId: http://purl.org/cognite/neat/Container_16
     used_for: node
   - container: cdf_cdm_3d:Cognite360ImageAnnotation
+    neatId: http://purl.org/cognite/neat/Container_17
     used_for: edge
   - container: cdf_cdm_3d:Cognite3DGroup
+    neatId: http://purl.org/cognite/neat/Container_18
     used_for: node
   - container: cdf_cdm_3d:Cognite3DModel
+    neatId: http://purl.org/cognite/neat/Container_19
     used_for: node
   - container: cdf_cdm_3d:Cognite3DObject
+    neatId: http://purl.org/cognite/neat/Container_20
     used_for: node
   - container: cdf_cdm_3d:Cognite3DRevision
+    neatId: http://purl.org/cognite/neat/Container_21
     used_for: node
   - container: cdf_cdm_3d:Cognite3DTransformation
+    neatId: http://purl.org/cognite/neat/Container_22
     used_for: all
   - container: cdf_cdm_3d:CogniteCADNode
+    neatId: http://purl.org/cognite/neat/Container_23
     used_for: node
   - container: cdf_cdm_3d:CogniteCADRevision
+    neatId: http://purl.org/cognite/neat/Container_24
     used_for: node
   - container: cdf_cdm_3d:CogniteCubeMap
+    neatId: http://purl.org/cognite/neat/Container_25
     used_for: node
   - container: cdf_cdm_3d:CognitePointCloudVolume
+    neatId: http://purl.org/cognite/neat/Container_26
     used_for: node
   - container: ClassicAsset
+    neatId: http://purl.org/cognite/neat/Container_27
     used_for: all
   - container: ClassicAssetToAssetEdge
+    neatId: http://purl.org/cognite/neat/Container_28
     used_for: all
   - container: ClassicDataSet
+    neatId: http://purl.org/cognite/neat/Container_29
     used_for: all
   - container: ClassicEvent
+    neatId: http://purl.org/cognite/neat/Container_30
     used_for: all
   - container: ClassicFile
+    neatId: http://purl.org/cognite/neat/Container_31
     used_for: all
   - container: ClassicLabel
+    neatId: http://purl.org/cognite/neat/Container_32
     used_for: all
   - container: ClassicTimeSeries
+    neatId: http://purl.org/cognite/neat/Container_33
     used_for: all
   enum:
   - collection: timeseriesType
     description: Time series with double floating point data points.
     name: numeric
+    neatId: http://purl.org/cognite/neat/Enum_0
     value: numeric
   - collection: timeseriesType
     description: Time series with string data points.
     name: string
+    neatId: http://purl.org/cognite/neat/Enum_1
     value: string
   metadata:
     created: '2024-09-19T00:00:00Z'
@@ -125,7 +161,8 @@ rules:
     container: ClassicAsset
     container_property: dataSetId
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAsset.dataSetId
+    logical: http://purl.org/cognite/neat/Property_4
+    neatId: http://purl.org/cognite/neat/Property_0
     nullable: true
     value_type: ClassicDataSet(version=v1_prefixed_Classic)
     view: ClassicAsset(version=v1_prefixed_Classic)
@@ -134,7 +171,8 @@ rules:
     container_property: description
     immutable: false
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAsset.description
+    logical: http://purl.org/cognite/neat/Property_0
+    neatId: http://purl.org/cognite/neat/Property_1
     nullable: true
     value_type: text
     view: ClassicAsset(version=v1_prefixed_Classic)
@@ -142,7 +180,8 @@ rules:
   - container: ClassicAsset
     container_property: metadata
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAsset.metadata
+    logical: http://purl.org/cognite/neat/Property_7
+    neatId: http://purl.org/cognite/neat/Property_2
     nullable: true
     value_type: json
     view: ClassicAsset(version=v1_prefixed_Classic)
@@ -152,7 +191,8 @@ rules:
     immutable: false
     index: name
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAsset.name
+    logical: http://purl.org/cognite/neat/Property_3
+    neatId: http://purl.org/cognite/neat/Property_3
     nullable: true
     value_type: text
     view: ClassicAsset(version=v1_prefixed_Classic)
@@ -162,7 +202,8 @@ rules:
     container_property: assetHierarchy_parent
     immutable: false
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAsset.parentId
+    logical: http://purl.org/cognite/neat/Property_1
+    neatId: http://purl.org/cognite/neat/Property_4
     nullable: true
     value_type: ClassicAsset(version=v1_prefixed_Classic)
     view: ClassicAsset(version=v1_prefixed_Classic)
@@ -171,7 +212,8 @@ rules:
     container: ClassicAsset
     container_property: relationshipAsset
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAsset.relationshipAsset
+    logical: http://purl.org/cognite/neat/Property_5
+    neatId: http://purl.org/cognite/neat/Property_5
     nullable: true
     value_type: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
     view: ClassicAsset(version=v1_prefixed_Classic)
@@ -182,7 +224,8 @@ rules:
     immutable: false
     index: source
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAsset.source
+    logical: http://purl.org/cognite/neat/Property_2
+    neatId: http://purl.org/cognite/neat/Property_6
     nullable: true
     value_type: cdf_cdm:CogniteSourceSystem
     view: ClassicAsset(version=v1_prefixed_Classic)
@@ -191,7 +234,8 @@ rules:
     container_property: tags
     immutable: false
     is_list: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAsset.labels
+    logical: http://purl.org/cognite/neat/Property_6
+    neatId: http://purl.org/cognite/neat/Property_7
     nullable: true
     value_type: text
     view: ClassicAsset(version=v1_prefixed_Classic)
@@ -200,7 +244,8 @@ rules:
     container: ClassicAssetToAssetEdge
     container_property: dataSetId
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAssetToAssetEdge.dataSetId
+    logical: http://purl.org/cognite/neat/Property_16
+    neatId: http://purl.org/cognite/neat/Property_8
     nullable: true
     value_type: ClassicDataSet(version=v1_prefixed_Classic)
     view: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
@@ -209,7 +254,8 @@ rules:
     container: ClassicAssetToAssetEdge
     container_property: endNode
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAssetToAssetEdge.endNode
+    logical: http://purl.org/cognite/neat/Property_17
+    neatId: http://purl.org/cognite/neat/Property_9
     nullable: true
     value_type: ClassicAsset(version=v1_prefixed_Classic)
     view: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
@@ -218,7 +264,8 @@ rules:
     container: ClassicAssetToAssetEdge
     container_property: labels
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAssetToAssetEdge.labels
+    logical: http://purl.org/cognite/neat/Property_18
+    neatId: http://purl.org/cognite/neat/Property_10
     nullable: true
     value_type: ClassicLabel(version=v1_prefixed_Classic)
     view: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
@@ -227,7 +274,8 @@ rules:
     container: ClassicAssetToAssetEdge
     container_property: startNode
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAssetToAssetEdge.startNode
+    logical: http://purl.org/cognite/neat/Property_19
+    neatId: http://purl.org/cognite/neat/Property_11
     nullable: true
     value_type: ClassicAsset(version=v1_prefixed_Classic)
     view: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
@@ -235,7 +283,8 @@ rules:
   - container: ClassicAssetToAssetEdge
     container_property: type
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAssetToAssetEdge.type
+    logical: http://purl.org/cognite/neat/Property_15
+    neatId: http://purl.org/cognite/neat/Property_12
     nullable: true
     value_type: text
     view: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
@@ -243,7 +292,8 @@ rules:
   - container: ClassicDataSet
     container_property: description
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicDataSet.description
+    logical: http://purl.org/cognite/neat/Property_11
+    neatId: http://purl.org/cognite/neat/Property_13
     nullable: true
     value_type: text
     view: ClassicDataSet(version=v1_prefixed_Classic)
@@ -251,7 +301,8 @@ rules:
   - container: ClassicDataSet
     container_property: metadata
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicDataSet.metadata
+    logical: http://purl.org/cognite/neat/Property_14
+    neatId: http://purl.org/cognite/neat/Property_14
     nullable: true
     value_type: json
     view: ClassicDataSet(version=v1_prefixed_Classic)
@@ -259,7 +310,8 @@ rules:
   - container: ClassicDataSet
     container_property: name
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicDataSet.name
+    logical: http://purl.org/cognite/neat/Property_12
+    neatId: http://purl.org/cognite/neat/Property_15
     nullable: true
     value_type: text
     view: ClassicDataSet(version=v1_prefixed_Classic)
@@ -267,7 +319,8 @@ rules:
   - container: ClassicDataSet
     container_property: writeProtected
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicDataSet.writeProtected
+    logical: http://purl.org/cognite/neat/Property_13
+    neatId: http://purl.org/cognite/neat/Property_16
     nullable: true
     value_type: boolean
     view: ClassicDataSet(version=v1_prefixed_Classic)
@@ -277,7 +330,8 @@ rules:
     container_property: assets
     immutable: false
     is_list: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicEvent.assetIds
+    logical: http://purl.org/cognite/neat/Property_30
+    neatId: http://purl.org/cognite/neat/Property_17
     nullable: true
     value_type: ClassicAsset(version=v1_prefixed_Classic)
     view: ClassicEvent(version=v1_prefixed_Classic)
@@ -286,7 +340,8 @@ rules:
     container: ClassicEvent
     container_property: dataSetId
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicEvent.dataSetId
+    logical: http://purl.org/cognite/neat/Property_33
+    neatId: http://purl.org/cognite/neat/Property_18
     nullable: true
     value_type: ClassicDataSet(version=v1_prefixed_Classic)
     view: ClassicEvent(version=v1_prefixed_Classic)
@@ -295,7 +350,8 @@ rules:
     container_property: description
     immutable: false
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicEvent.description
+    logical: http://purl.org/cognite/neat/Property_28
+    neatId: http://purl.org/cognite/neat/Property_19
     nullable: true
     value_type: text
     view: ClassicEvent(version=v1_prefixed_Classic)
@@ -305,7 +361,8 @@ rules:
     immutable: false
     index: endTime
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicEvent.endTime
+    logical: http://purl.org/cognite/neat/Property_34
+    neatId: http://purl.org/cognite/neat/Property_20
     nullable: true
     value_type: timestamp
     view: ClassicEvent(version=v1_prefixed_Classic)
@@ -313,7 +370,8 @@ rules:
   - container: ClassicEvent
     container_property: metadata
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicEvent.metadata
+    logical: http://purl.org/cognite/neat/Property_36
+    neatId: http://purl.org/cognite/neat/Property_21
     nullable: true
     value_type: json
     view: ClassicEvent(version=v1_prefixed_Classic)
@@ -324,7 +382,8 @@ rules:
     immutable: false
     index: source
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicEvent.source
+    logical: http://purl.org/cognite/neat/Property_31
+    neatId: http://purl.org/cognite/neat/Property_22
     nullable: true
     value_type: cdf_cdm:CogniteSourceSystem
     view: ClassicEvent(version=v1_prefixed_Classic)
@@ -334,7 +393,8 @@ rules:
     immutable: false
     index: startTime
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicEvent.startTime
+    logical: http://purl.org/cognite/neat/Property_35
+    neatId: http://purl.org/cognite/neat/Property_23
     nullable: true
     value_type: timestamp
     view: ClassicEvent(version=v1_prefixed_Classic)
@@ -342,7 +402,8 @@ rules:
   - container: ClassicEvent
     container_property: subtype
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicEvent.subtype
+    logical: http://purl.org/cognite/neat/Property_32
+    neatId: http://purl.org/cognite/neat/Property_24
     nullable: true
     value_type: text
     view: ClassicEvent(version=v1_prefixed_Classic)
@@ -350,7 +411,8 @@ rules:
   - container: ClassicEvent
     container_property: type
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicEvent.type
+    logical: http://purl.org/cognite/neat/Property_29
+    neatId: http://purl.org/cognite/neat/Property_25
     nullable: true
     value_type: text
     view: ClassicEvent(version=v1_prefixed_Classic)
@@ -360,7 +422,8 @@ rules:
     container_property: assets
     immutable: false
     is_list: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicFile.assetIds
+    logical: http://purl.org/cognite/neat/Property_39
+    neatId: http://purl.org/cognite/neat/Property_26
     nullable: true
     value_type: ClassicAsset(version=v1_prefixed_Classic)
     view: ClassicFile(version=v1_prefixed_Classic)
@@ -369,7 +432,8 @@ rules:
     container: ClassicFile
     container_property: dataSetId
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicFile.dataSetId
+    logical: http://purl.org/cognite/neat/Property_38
+    neatId: http://purl.org/cognite/neat/Property_27
     nullable: true
     value_type: ClassicDataSet(version=v1_prefixed_Classic)
     view: ClassicFile(version=v1_prefixed_Classic)
@@ -377,7 +441,8 @@ rules:
   - container: ClassicFile
     container_property: metadata
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicFile.metadata
+    logical: http://purl.org/cognite/neat/Property_41
+    neatId: http://purl.org/cognite/neat/Property_28
     nullable: true
     value_type: json
     view: ClassicFile(version=v1_prefixed_Classic)
@@ -387,7 +452,8 @@ rules:
     immutable: false
     index: name
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicFile.name
+    logical: http://purl.org/cognite/neat/Property_37
+    neatId: http://purl.org/cognite/neat/Property_29
     nullable: true
     value_type: text
     view: ClassicFile(version=v1_prefixed_Classic)
@@ -398,7 +464,8 @@ rules:
     immutable: false
     index: source
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicFile.source
+    logical: http://purl.org/cognite/neat/Property_40
+    neatId: http://purl.org/cognite/neat/Property_30
     nullable: true
     value_type: cdf_cdm:CogniteSourceSystem
     view: ClassicFile(version=v1_prefixed_Classic)
@@ -407,7 +474,8 @@ rules:
     container: ClassicLabel
     container_property: dataSetId
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicLabel.dataSetId
+    logical: http://purl.org/cognite/neat/Property_10
+    neatId: http://purl.org/cognite/neat/Property_31
     nullable: true
     value_type: ClassicDataSet(version=v1_prefixed_Classic)
     view: ClassicLabel(version=v1_prefixed_Classic)
@@ -415,7 +483,8 @@ rules:
   - container: ClassicLabel
     container_property: description
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicLabel.description
+    logical: http://purl.org/cognite/neat/Property_8
+    neatId: http://purl.org/cognite/neat/Property_32
     nullable: true
     value_type: text
     view: ClassicLabel(version=v1_prefixed_Classic)
@@ -423,7 +492,8 @@ rules:
   - container: ClassicLabel
     container_property: name
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicLabel.name
+    logical: http://purl.org/cognite/neat/Property_9
+    neatId: http://purl.org/cognite/neat/Property_33
     nullable: true
     value_type: text
     view: ClassicLabel(version=v1_prefixed_Classic)
@@ -433,14 +503,16 @@ rules:
     container_property: assets
     immutable: false
     is_list: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicTimeSeries.assetId
+    logical: http://purl.org/cognite/neat/Property_26
+    neatId: http://purl.org/cognite/neat/Property_34
     nullable: true
     value_type: ClassicAsset(version=v1_prefixed_Classic)
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: assets
   - connection: edge
     is_list: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicTimeSeries.dataSetId
+    logical: http://purl.org/cognite/neat/Property_25
+    neatId: http://purl.org/cognite/neat/Property_35
     value_type: ClassicDataSet(version=v1_prefixed_Classic)
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: dataSetId
@@ -448,7 +520,8 @@ rules:
     container_property: description
     immutable: false
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicTimeSeries.description
+    logical: http://purl.org/cognite/neat/Property_20
+    neatId: http://purl.org/cognite/neat/Property_36
     nullable: true
     value_type: text
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
@@ -458,7 +531,8 @@ rules:
     default: 0
     immutable: false
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicTimeSeries.isStep
+    logical: http://purl.org/cognite/neat/Property_21
+    neatId: http://purl.org/cognite/neat/Property_37
     nullable: false
     value_type: boolean
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
@@ -466,7 +540,8 @@ rules:
   - container: ClassicTimeSeries
     container_property: metadata
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicTimeSeries.metadata
+    logical: http://purl.org/cognite/neat/Property_27
+    neatId: http://purl.org/cognite/neat/Property_38
     nullable: true
     value_type: json
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
@@ -476,7 +551,8 @@ rules:
     immutable: false
     index: name
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicTimeSeries.name
+    logical: http://purl.org/cognite/neat/Property_24
+    neatId: http://purl.org/cognite/neat/Property_39
     nullable: true
     value_type: text
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
@@ -485,7 +561,8 @@ rules:
     container_property: type
     immutable: true
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicTimeSeries.isString
+    logical: http://purl.org/cognite/neat/Property_23
+    neatId: http://purl.org/cognite/neat/Property_40
     nullable: false
     value_type: enum(collection=timeseriesType)
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
@@ -495,7 +572,8 @@ rules:
     container_property: unit
     immutable: false
     is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicTimeSeries.unitExternalId
+    logical: http://purl.org/cognite/neat/Property_22
+    neatId: http://purl.org/cognite/neat/Property_41
     nullable: true
     value_type: cdf_cdm:CogniteUnit
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
@@ -504,38 +582,46 @@ rules:
   - description: ''
     implements: cdf_cdm:Cognite3DTransformation,cdf_cdm:CogniteCubeMap
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_0
     view: cdf_cdm:Cognite360Image
   - description: ''
     implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteAnnotation
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_1
     view: cdf_cdm:Cognite360ImageAnnotation
   - description: Represents a logical collection of Cognite360Image instances
     implements: cdf_cdm:CogniteDescribable,cdf_cdm:Cognite3DRevision
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_2
     view: cdf_cdm:Cognite360ImageCollection
   - description: Navigational aid for traversing Cognite360ImageModel instances
     implements: cdf_cdm:CogniteDescribable,cdf_cdm:Cognite3DModel
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_3
     view: cdf_cdm:Cognite360ImageModel
   - description: A way to group images across collections. Used for creating visual
       scan history
     implements: cdf_cdm:CogniteDescribable
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_4
     view: cdf_cdm:Cognite360ImageStation
   - description: Groups revisions of 3D data of various kinds together (CAD, PointCloud,
       Image360)
     implements: cdf_cdm:CogniteDescribable
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_5
     view: cdf_cdm:Cognite3DModel
   - description: This is the virtual position representation of an object in the physical
       world, connecting an asset to one or more 3D resources
     implements: cdf_cdm:CogniteDescribable
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_6
     view: cdf_cdm:Cognite3DObject
   - description: Shared revision information for various 3D data types. Normally not
       used directly, but through CognitePointCloudRevision, Image360Collection or
       CogniteCADRevision
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_7
     view: cdf_cdm:Cognite3DRevision
   - description: The Cognite3DTransformation object defines a comprehensive 3D transformation,
       enabling precise adjustments to an object's position, orientation, and size
@@ -545,124 +631,153 @@ rules:
       is defined in "CDF space", a coordinate system where the positive Z axis is
       the up direction
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_8
     view: cdf_cdm:Cognite3DTransformation
   - description: Represents activities. Activities typically happen over a period
       and have a start and end time.
     implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteSchedulable
     in_model: true
     name: Activity
+    neatId: http://purl.org/cognite/neat/View_9
     view: cdf_cdm:CogniteActivity
   - description: Annotation represents contextualization results or links
     implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_10
     view: cdf_cdm:CogniteAnnotation
   - description: Assets represent systems that support industrial functions or processes.
       Assets are often called 'functional location'.
     implements: cdf_cdm:CogniteVisualizable,cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
     in_model: true
     name: Asset
+    neatId: http://purl.org/cognite/neat/View_11
     view: cdf_cdm:CogniteAsset
   - description: Represents the class of an asset.
     implements: cdf_cdm:CogniteDescribable
     in_model: true
     name: Asset class
+    neatId: http://purl.org/cognite/neat/View_12
     view: cdf_cdm:CogniteAssetClass
   - description: Represents the type of an asset.
     implements: cdf_cdm:CogniteDescribable
     in_model: true
     name: Asset type
+    neatId: http://purl.org/cognite/neat/View_13
     view: cdf_cdm:CogniteAssetType
   - description: Navigational aid for traversing CogniteCADModel instances
     implements: cdf_cdm:CogniteDescribable,cdf_cdm:Cognite3DModel
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_14
     view: cdf_cdm:CogniteCADModel
   - description: Represents nodes from the 3D model that have been contextualized
     implements: cdf_cdm:CogniteDescribable
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_15
     view: cdf_cdm:CogniteCADNode
   - description: ''
     implements: cdf_cdm:Cognite3DRevision
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_16
     view: cdf_cdm:CogniteCADRevision
   - description: The cube map holds references to 6 images in used to visually represent
       the surrounding environment
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_17
     view: cdf_cdm:CogniteCubeMap
   - description: The describable core concept is used as a standard way of holding
       the bare minimum of information about the instance
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_18
     view: cdf_cdm:CogniteDescribable
   - description: Equipment represents physical supplies or devices.
     implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
     in_model: true
     name: Equipment
+    neatId: http://purl.org/cognite/neat/View_19
     view: cdf_cdm:CogniteEquipment
   - description: Represents the type of equipment.
     implements: cdf_cdm:CogniteDescribable
     in_model: true
     name: Equipment type
+    neatId: http://purl.org/cognite/neat/View_20
     view: cdf_cdm:CogniteEquipmentType
   - description: Represents files.
     implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
     in_model: true
     name: File
+    neatId: http://purl.org/cognite/neat/View_21
     view: cdf_cdm:CogniteFile
   - description: Represents the categories of files as determined by contextualization
       or categorization.
     implements: cdf_cdm:CogniteDescribable
     in_model: true
     name: File category
+    neatId: http://purl.org/cognite/neat/View_22
     view: cdf_cdm:CogniteFileCategory
   - description: PointCloud volume definition
     implements: cdf_cdm:CogniteDescribable
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_23
     view: cdf_cdm:CognitePointCloudVolume
   - description: CogniteSchedulable represents the metadata about when an activity
       (or similar) starts and ends.
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_24
     view: cdf_cdm:CogniteSchedulable
   - description: The CogniteSourceSystem core concept is used to standardize the way
       source system is stored.
     implements: cdf_cdm:CogniteDescribable
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_25
     view: cdf_cdm:CogniteSourceSystem
   - in_model: true
+    neatId: http://purl.org/cognite/neat/View_26
     view: cdf_cdm:CogniteSourceable
   - description: Represents a series of data points in time order.
     implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
     in_model: true
     name: Time series
+    neatId: http://purl.org/cognite/neat/View_27
     view: cdf_cdm:CogniteTimeSeries
   - description: Represents a single unit of measurement
     implements: cdf_cdm:CogniteDescribable
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_28
     view: cdf_cdm:CogniteUnit
   - description: CogniteVisualizable defines the standard way to reference a related
       3D resource
     in_model: true
+    neatId: http://purl.org/cognite/neat/View_29
     view: cdf_cdm:CogniteVisualizable
   - implements: cdf_cdm:CogniteAsset
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAsset
+    logical: http://purl.org/cognite/neat/Class_0
+    neatId: http://purl.org/cognite/neat/View_30
     view: ClassicAsset(version=v1_prefixed_Classic)
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicAssetToAssetEdge
+    logical: http://purl.org/cognite/neat/Class_3
+    neatId: http://purl.org/cognite/neat/View_31
     view: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicDataSet
+    logical: http://purl.org/cognite/neat/Class_2
+    neatId: http://purl.org/cognite/neat/View_32
     view: ClassicDataSet(version=v1_prefixed_Classic)
   - implements: cdf_cdm:CogniteActivity
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicEvent
+    logical: http://purl.org/cognite/neat/Class_5
+    neatId: http://purl.org/cognite/neat/View_33
     view: ClassicEvent(version=v1_prefixed_Classic)
   - implements: cdf_cdm:CogniteFile
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicFile
+    logical: http://purl.org/cognite/neat/Class_6
+    neatId: http://purl.org/cognite/neat/View_34
     view: ClassicFile(version=v1_prefixed_Classic)
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicLabel
+    logical: http://purl.org/cognite/neat/Class_1
+    neatId: http://purl.org/cognite/neat/View_35
     view: ClassicLabel(version=v1_prefixed_Classic)
   - implements: cdf_cdm:CogniteTimeSeries
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic/ClassicTimeSeries
+    logical: http://purl.org/cognite/neat/Class_4
+    neatId: http://purl.org/cognite/neat/View_36
     view: ClassicTimeSeries(version=v1_prefixed_Classic)

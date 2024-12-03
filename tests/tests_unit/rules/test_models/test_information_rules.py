@@ -196,6 +196,7 @@ class TestInformationRules:
 
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         info_rules = InformationRules.model_validate(david_spreadsheet)
+
         dms_rules = InformationToDMS().transform(info_rules).rules
 
         assert isinstance(dms_rules, DMSRules)
@@ -203,15 +204,14 @@ class TestInformationRules:
         # making sure linking is done on metadata level
         assert dms_rules.metadata.logical == info_rules.metadata.identifier
 
-        info_props = {f"{prop.class_.suffix}.{prop.property_}": prop for prop in info_rules.properties}
-        dms_props = {f"{prop.view.suffix}.{prop.view_property}": prop for prop in dms_rules.properties}
+        info_props = {prop.neatId: prop for prop in info_rules.properties}
+        dms_props = {prop.neatId: prop for prop in dms_rules.properties}
 
-        for id_ in dms_props.keys():
-            dms_prop = dms_props[id_]
-            info_prop = info_props[id_]
+        for dms_id in dms_props.keys():
+            assert info_props[dms_props[dms_id].logical].physical == dms_id
 
-            assert info_prop.physical == dms_rules.metadata.namespace[id_]
-            assert dms_prop.logical == info_rules.metadata.namespace[id_]
+        for info_id in info_props.keys():
+            assert dms_props[info_props[info_id].physical].logical == info_id
 
     @pytest.mark.skip("Not sure purpose of this test, so skipping for now")
     def test_olav_as_dms(self, olav_rules: InformationRules) -> None:

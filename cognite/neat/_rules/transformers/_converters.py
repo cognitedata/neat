@@ -703,8 +703,8 @@ class _InformationRulesConverter:
                 implements=self._get_view_implements(cls_, info_metadata, mode),
             )
 
-            dms_view.logical = self.rules.metadata.namespace[cls_.class_.suffix]
-            cls_.physical = self.dms_metadata.namespace[dms_view.view.suffix]
+            dms_view.logical = cls_.neatId
+            cls_.physical = dms_view.neatId
 
             views.append(dms_view)
 
@@ -821,8 +821,8 @@ class _InformationRulesConverter:
         )
 
         # linking
-        dms_property.logical = self.rules.metadata.namespace[f"{info_property.class_.suffix}.{info_property.property_}"]
-        info_property.physical = self.dms_metadata.namespace[f"{dms_property.view.suffix}.{info_property.property_}"]
+        dms_property.logical = info_property.neatId
+        info_property.physical = dms_property.neatId
 
         return dms_property
 

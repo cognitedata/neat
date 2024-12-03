@@ -29,6 +29,8 @@ from cognite.neat._rules.models._types import (
     MultiValueTypeType,
     URIRefType,
 )
+
+# NeatIdType,
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import (
     ClassEntity,
@@ -70,6 +72,7 @@ class InformationClass(SheetRow):
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     implements: ClassEntityList | None = Field(alias="Implements", default=None)
+
     physical: URIRefType | None = Field(
         None,
         description="Link to the class representation in the physical data model aspect",
@@ -133,6 +136,7 @@ class InformationProperty(SheetRow):
         alias="Inherited",
         description="Flag to indicate if the property is inherited, only use for internal purposes",
     )
+
     physical: URIRefType | None = Field(
         None,
         description="Link to the class representation in the physical data model aspect",

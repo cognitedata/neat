@@ -108,6 +108,7 @@ class DMSInputProperty(InputComponent[DMSProperty]):
     container_property: str | None = None
     index: str | list[str] | None = None
     constraint: str | list[str] | None = None
+    neatId: str | URIRef | None = None
     logical: str | URIRef | None = None
 
     @classmethod
@@ -139,6 +140,7 @@ class DMSInputContainer(InputComponent[DMSContainer]):
     name: str | None = None
     description: str | None = None
     constraint: str | None = None
+    neatId: str | URIRef | None = None
     used_for: Literal["node", "edge", "all"] | None = None
 
     @classmethod
@@ -183,6 +185,7 @@ class DMSInputView(InputComponent[DMSView]):
     implements: str | None = None
     filter_: Literal["hasData", "nodeType", "rawFilter"] | str | None = None
     in_model: bool = True
+    neatId: str | URIRef | None = None
     logical: str | URIRef | None = None
 
     @classmethod
@@ -231,6 +234,7 @@ class DMSInputNode(InputComponent[DMSNode]):
     usage: Literal["type", "collocation"]
     name: str | None = None
     description: str | None = None
+    neatId: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSNode]:
@@ -252,6 +256,7 @@ class DMSInputEnum(InputComponent[DMSEnum]):
     value: str
     name: str | None = None
     description: str | None = None
+    neatId: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSEnum]:
