@@ -35,6 +35,7 @@ properties:
 - container: CircuitBreaker
   container_property: maxCapacity
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/CircuitBreaker.maxCapacity
   nullable: true
   value_type: float32
   view: CircuitBreaker
@@ -42,6 +43,7 @@ properties:
 - container: CurrentTransformer
   container_property: maxCapacity
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/CurrentTransformer.maxCapacity
   nullable: true
   value_type: float32
   view: CurrentTransformer
@@ -49,6 +51,7 @@ properties:
 - container: DisconnectSwitch
   container_property: maxCapacity
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/DisconnectSwitch.maxCapacity
   nullable: true
   value_type: float32
   view: DisconnectSwitch
@@ -57,18 +60,21 @@ properties:
   container: DistributionSubstation
   container_property: primaryPowerLine
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/DistributionSubstation.primaryPowerLine
   nullable: true
   value_type: Transmission
   view: DistributionSubstation
   view_property: primaryPowerLine
 - connection: edge
   is_list: true
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/DistributionSubstation.secondaryPowerLine
   value_type: DistributionLine
   view: DistributionSubstation
   view_property: secondaryPowerLine
 - container: EnergyArea
   container_property: activePower
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyArea.activePower
   nullable: false
   value_type: timeseries
   view: EnergyArea
@@ -77,6 +83,7 @@ properties:
   container: EnergyArea
   container_property: geoLocation
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyArea.geoLocation
   nullable: true
   value_type: Polygon
   view: EnergyArea
@@ -84,6 +91,7 @@ properties:
 - container: EnergyArea
   container_property: name
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyArea.name
   nullable: false
   value_type: text
   view: EnergyArea
@@ -91,6 +99,7 @@ properties:
 - container: EnergyArea
   container_property: ratedPower
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyArea.ratedPower
   nullable: false
   value_type: float32
   view: EnergyArea
@@ -98,6 +107,7 @@ properties:
 - container: EnergyConsumer
   container_property: load
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyConsumer.load
   nullable: false
   value_type: timeseries
   view: EnergyConsumer
@@ -106,6 +116,7 @@ properties:
   container: EnergyConsumer
   container_property: location
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyConsumer.location
   nullable: true
   value_type: Point
   view: EnergyConsumer
@@ -113,6 +124,7 @@ properties:
 - container: EnergyConsumer
   container_property: name
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyConsumer.name
   nullable: false
   value_type: text
   view: EnergyConsumer
@@ -120,6 +132,7 @@ properties:
 - container: GeneratingUnit
   container_property: activePower
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit.activePower
   nullable: false
   value_type: timeseries
   view: GeneratingUnit
@@ -128,6 +141,7 @@ properties:
   container: GeneratingUnit
   container_property: geoLocation
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit.geoLocation
   nullable: true
   value_type: Point
   view: GeneratingUnit
@@ -135,6 +149,7 @@ properties:
 - container: GeneratingUnit
   container_property: name
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit.name
   nullable: false
   value_type: text
   view: GeneratingUnit
@@ -142,6 +157,7 @@ properties:
 - container: GeneratingUnit
   container_property: type
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit.type
   nullable: false
   value_type: text
   view: GeneratingUnit
@@ -149,18 +165,21 @@ properties:
 - container: GeoLocation
   container_property: name
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeoLocation.name
   nullable: false
   value_type: text
   view: GeoLocation
   view_property: name
 - connection: edge
   is_list: true
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Meter.consumer
   value_type: ElectricCarCharger
   view: Meter
   view_property: consumer
 - container: Meter
   container_property: consumption
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Meter.consumption
   nullable: false
   value_type: timeseries
   view: Meter
@@ -169,17 +188,20 @@ properties:
   container: Meter
   container_property: powerLine
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Meter.powerLine
   nullable: true
   value_type: DistributionLine
   view: Meter
   view_property: powerLine
 - connection: edge
   is_list: true
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/MultiLineString.point
   value_type: Point
   view: MultiLineString
   view_property: point
 - connection: edge
   is_list: true
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/OffshoreSubstation.primaryPowerLine
   value_type: ArrayCable
   view: OffshoreSubstation
   view_property: primaryPowerLine
@@ -187,6 +209,7 @@ properties:
   container: OffshoreSubstation
   container_property: secondaryPowerLine
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/OffshoreSubstation.secondaryPowerLine
   nullable: true
   value_type: ExportCable
   view: OffshoreSubstation
@@ -195,6 +218,7 @@ properties:
   container: OnshoreSubstation
   container_property: primaryPowerLine
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/OnshoreSubstation.primaryPowerLine
   nullable: true
   value_type: ExportCable
   view: OnshoreSubstation
@@ -203,6 +227,7 @@ properties:
   container: OnshoreSubstation
   container_property: secondaryPowerLine
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/OnshoreSubstation.secondaryPowerLine
   nullable: true
   value_type: Transmission
   view: OnshoreSubstation
@@ -210,6 +235,7 @@ properties:
 - container: Point
   container_property: latitude
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Point.latitude
   nullable: false
   value_type: float32
   view: Point
@@ -217,18 +243,21 @@ properties:
 - container: Point
   container_property: longitude
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Point.longitude
   nullable: false
   value_type: float32
   view: Point
   view_property: longitude
 - connection: edge
   is_list: true
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Polygon.point
   value_type: Point
   view: Polygon
   view_property: point
 - container: PowerLine
   container_property: currentVoltage
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/PowerLine.currentVoltage
   nullable: false
   value_type: timeseries
   view: PowerLine
@@ -237,6 +266,7 @@ properties:
   container: PowerLine
   container_property: geoLocation
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/PowerLine.geoLocation
   nullable: true
   value_type: MultiLineString
   view: PowerLine
@@ -244,6 +274,7 @@ properties:
 - container: PowerLine
   container_property: length
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/PowerLine.length
   nullable: true
   value_type: float32
   view: PowerLine
@@ -252,28 +283,33 @@ properties:
   container: PowerLine
   container_property: voltageLevel
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/PowerLine.voltageLevel
   nullable: true
   value_type: VoltageLevel
   view: PowerLine
   view_property: voltageLevel
 - connection: edge
   is_list: true
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation.circuitBreaker
   value_type: CircuitBreaker
   view: Substation
   view_property: circuitBreaker
 - connection: edge
   is_list: true
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation.currentTransformer
   value_type: CurrentTransformer
   view: Substation
   view_property: currentTransformer
 - connection: edge
   is_list: true
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation.disconnectSwitch
   value_type: DisconnectSwitch
   view: Substation
   view_property: disconnectSwitch
 - container: Substation
   container_property: location
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation.location
   nullable: true
   value_type: text
   view: Substation
@@ -282,6 +318,7 @@ properties:
   container: Substation
   container_property: mainTransformer
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation.mainTransformer
   nullable: true
   value_type: VoltageTransformer
   view: Substation
@@ -289,6 +326,7 @@ properties:
 - container: Substation
   container_property: name
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation.name
   nullable: false
   value_type: text
   view: Substation
@@ -297,6 +335,7 @@ properties:
   container: Substation
   container_property: primaryPowerLine
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation.primaryPowerLine
   nullable: true
   value_type: PowerLine
   view: Substation
@@ -304,6 +343,7 @@ properties:
 - container: Substation
   container_property: primaryVoltage
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation.primaryVoltage
   nullable: false
   value_type: timeseries
   view: Substation
@@ -312,6 +352,7 @@ properties:
   container: Substation
   container_property: secondaryPowerLine
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation.secondaryPowerLine
   nullable: true
   value_type: PowerLine
   view: Substation
@@ -319,6 +360,7 @@ properties:
 - container: Substation
   container_property: secondaryVoltage
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation.secondaryVoltage
   nullable: false
   value_type: timeseries
   view: Substation
@@ -326,6 +368,7 @@ properties:
 - container: VoltageLevel
   container_property: maxLevel
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/VoltageLevel.maxLevel
   nullable: false
   value_type: float32
   view: VoltageLevel
@@ -334,6 +377,7 @@ properties:
   container: VoltageTransformer
   container_property: inputVoltageLevel
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/VoltageTransformer.inputVoltageLevel
   nullable: true
   value_type: VoltageLevel
   view: VoltageTransformer
@@ -342,12 +386,14 @@ properties:
   container: VoltageTransformer
   container_property: outputVoltageLevel
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/VoltageTransformer.outputVoltageLevel
   nullable: true
   value_type: VoltageLevel
   view: VoltageTransformer
   view_property: outputVoltageLevel
 - connection: edge
   is_list: true
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindFarm.arrayCable
   value_type: ArrayCable
   view: WindFarm
   view_property: arrayCable
@@ -355,6 +401,7 @@ properties:
   container: WindFarm
   container_property: exportCable
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindFarm.exportCable
   nullable: true
   value_type: ExportCable
   view: WindFarm
@@ -363,12 +410,14 @@ properties:
   container: WindFarm
   container_property: substation
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindFarm.substation
   nullable: true
   value_type: OffshoreSubstation
   view: WindFarm
   view_property: substation
 - connection: edge
   is_list: true
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindFarm.windTurbines
   value_type: WindTurbine
   view: WindFarm
   view_property: windTurbines
@@ -376,6 +425,7 @@ properties:
   container: WindTurbine
   container_property: arrayCableConnection
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindTurbine.arrayCableConnection
   nullable: true
   value_type: ArrayCable
   view: WindTurbine
@@ -383,6 +433,7 @@ properties:
 - container: WindTurbine
   container_property: hubHeight
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindTurbine.hubHeight
   nullable: false
   value_type: float32
   view: WindTurbine
@@ -390,6 +441,7 @@ properties:
 - container: WindTurbine
   container_property: lifeExpectancy
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindTurbine.lifeExpectancy
   nullable: true
   value_type: int32
   view: WindTurbine
@@ -397,6 +449,7 @@ properties:
 - container: WindTurbine
   container_property: manufacturer
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindTurbine.manufacturer
   nullable: true
   value_type: text
   view: WindTurbine
@@ -404,60 +457,87 @@ properties:
 - container: WindTurbine
   container_property: ratedPower
   is_list: false
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindTurbine.ratedPower
   nullable: false
   value_type: float32
   view: WindTurbine
   view_property: ratedPower
 views:
 - implements: PowerLine
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/ArrayCable
   view: ArrayCable
 - implements: ''
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/CircuitBreaker
   view: CircuitBreaker
 - implements: ''
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/CurrentTransformer
   view: CurrentTransformer
 - implements: ''
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/DisconnectSwitch
   view: DisconnectSwitch
 - implements: PowerLine
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/DistributionLine
   view: DistributionLine
 - implements: Substation
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/DistributionSubstation
   view: DistributionSubstation
 - implements: EnergyConsumer
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/ElectricCarCharger
   view: ElectricCarCharger
 - implements: ''
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyArea
   view: EnergyArea
 - implements: ''
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyConsumer
   view: EnergyConsumer
 - implements: PowerLine
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/ExportCable
   view: ExportCable
 - implements: ''
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit
   view: GeneratingUnit
 - implements: ''
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeoLocation
   view: GeoLocation
 - implements: ''
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Meter
   view: Meter
 - implements: GeoLocation
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/MultiLineString
   view: MultiLineString
 - implements: Substation
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/OffshoreSubstation
   view: OffshoreSubstation
 - implements: TransmissionSubstation
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/OnshoreSubstation
   view: OnshoreSubstation
 - implements: GeoLocation
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Point
   view: Point
 - implements: GeoLocation
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Polygon
   view: Polygon
 - implements: ''
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/PowerLine
   view: PowerLine
 - implements: ''
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation
   view: Substation
 - implements: PowerLine
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Transmission
   view: Transmission
 - implements: Substation
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/TransmissionSubstation
   view: TransmissionSubstation
 - implements: ''
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/VoltageLevel
   view: VoltageLevel
 - implements: ''
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/VoltageTransformer
   view: VoltageTransformer
 - implements: EnergyArea
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindFarm
   view: WindFarm
 - implements: GeneratingUnit
+  logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindTurbine
   view: WindTurbine

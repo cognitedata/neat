@@ -658,7 +658,7 @@ class _InformationRulesConverter:
         info_metadata = self.rules.metadata
         default_version = info_metadata.version
         default_space = self._to_space(info_metadata.prefix)
-        metadata = self._convert_metadata_to_dms(info_metadata)
+        self.dms_metadata = self._convert_metadata_to_dms(info_metadata)
         edge_classes: set[ClassEntity] = set()
         property_to_edge: dict[tuple[ClassEntity, str], ClassEntity] = {}
         end_node_by_edge: dict[ClassEntity, ClassEntity] = {}
@@ -693,15 +693,20 @@ class _InformationRulesConverter:
             if dms_property.container:
                 referenced_containers[dms_property.container][prop.class_] += 1
 
-        views: list[DMSView] = [
-            DMSView(
+        views: list[DMSView] = []
+
+        for cls_ in self.rules.classes:
+            dms_view = DMSView(
                 name=cls_.name,
                 view=cls_.class_.as_view_entity(default_space, default_version),
                 description=cls_.description,
                 implements=self._get_view_implements(cls_, info_metadata, mode),
             )
-            for cls_ in self.rules.classes
-        ]
+
+            dms_view.logical = self.rules.metadata.namespace[cls_.class_.suffix]
+            cls_.physical = self.dms_metadata.namespace[dms_view.view.suffix]
+
+            views.append(dms_view)
 
         class_by_entity = {cls_.class_: cls_ for cls_ in self.rules.classes}
 
@@ -725,7 +730,7 @@ class _InformationRulesConverter:
             containers.append(container)
 
         return DMSRules(
-            metadata=metadata,
+            metadata=self.dms_metadata,
             properties=SheetList[DMSProperty]([prop for prop_set in properties_by_class.values() for prop in prop_set]),
             views=SheetList[DMSView](views),
             containers=SheetList[DMSContainer](containers),
@@ -765,7 +770,7 @@ class _InformationRulesConverter:
 
     def _as_dms_property(
         self,
-        prop: InformationProperty,
+        info_property: InformationProperty,
         default_space: str,
         default_version: str,
         edge_classes: set[ClassEntity],
@@ -775,34 +780,46 @@ class _InformationRulesConverter:
         from cognite.neat._rules.models.dms._rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
-        value_type = self._get_value_type(prop, default_space, default_version, edge_classes, end_node_by_edge)
+        value_type = self._get_value_type(
+            info_property,
+            default_space,
+            default_version,
+            edge_classes,
+            end_node_by_edge,
+        )
 
-        connection = self._get_connection(prop, value_type, property_to_edge, default_space, default_version)
+        connection = self._get_connection(info_property, value_type, property_to_edge, default_space, default_version)
 
         container: ContainerEntity | None = None
         container_property: str | None = None
-        is_list: bool | None = prop.is_list
-        nullable: bool | None = not prop.is_mandatory
+        is_list: bool | None = info_property.is_list
+        nullable: bool | None = not info_property.is_mandatory
         if isinstance(connection, EdgeEntity):
             nullable = None
         elif connection == "direct":
             nullable = True
-            container, container_property = self._get_container(prop, default_space)
+            container, container_property = self._get_container(info_property, default_space)
         else:
-            container, container_property = self._get_container(prop, default_space)
+            container, container_property = self._get_container(info_property, default_space)
 
-        return DMSProperty(
-            name=prop.name,
+        dms_property = DMSProperty(
+            name=info_property.name,
             value_type=value_type,
             nullable=nullable,
             is_list=is_list,
             connection=connection,
-            default=prop.default,
+            default=info_property.default,
             container=container,
             container_property=container_property,
-            view=prop.class_.as_view_entity(default_space, default_version),
-            view_property=prop.property_,
+            view=info_property.class_.as_view_entity(default_space, default_version),
+            view_property=info_property.property_,
         )
+
+        # linking
+        dms_property.logical = self.rules.metadata.namespace[f"{info_property.class_.suffix}.{info_property.property_}"]
+        info_property.physical = self.dms_metadata.namespace[f"{dms_property.view.suffix}.{info_property.property_}"]
+
+        return dms_property
 
     @staticmethod
     def _get_connection(

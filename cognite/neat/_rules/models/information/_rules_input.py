@@ -82,6 +82,10 @@ class InformationInputProperty(InputComponent[InformationProperty]):
     # Only used internally
     inherited: bool = False
 
+    # linking
+    physical: str | None = None
+    conceptual: str | None = None
+
     @classmethod
     def _get_verified_cls(cls) -> type[InformationProperty]:
         return InformationProperty
@@ -99,6 +103,10 @@ class InformationInputClass(InputComponent[InformationClass]):
     name: str | None = None
     description: str | None = None
     implements: str | list[ClassEntity] | None = None
+
+    # linking
+    physical: str | None = None
+    conceptual: str | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationClass]:

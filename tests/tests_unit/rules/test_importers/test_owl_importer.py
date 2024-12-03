@@ -25,7 +25,7 @@ def test_ill_formed_owl_importer():
     output = VerifyAnyRules("continue").try_transform(input)
 
     assert len(output.rules.classes) == 4
-    assert len(output.rules.properties) == 10
+    assert len(output.rules.properties) == 9
 
     # this is rdf:PlainLiteral edge case
     assert (

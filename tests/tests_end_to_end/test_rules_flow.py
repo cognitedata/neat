@@ -26,7 +26,7 @@ class TestImportersToYAMLExporter:
         data_regression.check(exported_rules)
 
     @pytest.mark.freeze_time("2017-05-21")
-    @pytest.mark.skip("Will be fixed in separate PR")
+    @pytest.mark.skip("Needs NEAT-608 to be completed")
     def test_ontology_importer_to_yaml(self, data_regression: DataRegressionFixture, tmp_path: Path) -> None:
         neat = NeatSession(verbose=False)
 
