@@ -75,7 +75,7 @@ NamespaceType = Annotated[
 
 URIRefType = Annotated[
     rdflib.URIRef,
-    BeforeValidator(lambda value: rdflib.URIRef(TypeAdapter(HttpUrl).validate_python(value))),
+    BeforeValidator(lambda value: rdflib.URIRef(value)),
 ]
 
 PrefixType = Annotated[
