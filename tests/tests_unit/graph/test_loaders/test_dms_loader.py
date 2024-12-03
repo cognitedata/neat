@@ -2,6 +2,7 @@ from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.catalog import imf_attributes
 from cognite.neat._rules.importers import ExcelImporter, InferenceImporter
+from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
 from cognite.neat._rules.transformers import ImporterPipeline, InformationToDMS
 from cognite.neat._store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, IMF_EXAMPLE
@@ -18,23 +19,28 @@ def test_metadata_as_json_filed():
     info_rules = ImporterPipeline.verify(importer)
     dms_rules = InformationToDMS().transform(info_rules).rules
 
-    # I am now changing property in DMS rules
-    dms_rules.properties[0].view_property = "anders_metadata"
+    # simulating update of the DMS rules
+    dms_rules.views[0].view = ViewEntity.load("neat_space:MyAsset(version=inferred)")
 
-    # but also same property in INFO rules
-    info_rules.properties[0].property_ = "nikolas_metadata"
+    for prop in dms_rules.properties:
+        prop.view = ViewEntity.load("neat_space:MyAsset(version=inferred)")
+        prop.view_property = f"my_{prop.view_property}"
 
-    # now changed rules are added to store
+    # simulating update of the INFORMATION rules
+
+    info_rules.classes[0].class_ = ClassEntity.load("neat_space:YourAsset")
+    for prop in info_rules.properties:
+        prop.class_ = ClassEntity.load("neat_space:YourAsset")
+        prop.property_ = f"your_{prop.property_}"
+
     store.add_rules(info_rules)
 
-    # but as we have linking between dms and info rules we get property in the desired
-    # format
     loader = DMSLoader.from_rules(dms_rules, store, dms_rules.metadata.space)
     instances = {instance.external_id: instance for instance in loader._load()}
 
     # metadata not unpacked but kept as Json obj
     assert isinstance(
-        instances["Asset_4288662884680989"].sources[0].properties["anders_metadata"],
+        instances["Asset_4288662884680989"].sources[0].properties["my_metadata"],
         dict,
     )
 
