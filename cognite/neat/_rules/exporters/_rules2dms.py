@@ -1,11 +1,16 @@
 import warnings
-from collections.abc import Collection, Hashable, Iterable, Sequence
+from collections.abc import Collection, Hashable, Iterable
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal,  cast
+from typing import Generic, Literal, cast
 
-from cognite.client.data_classes._base import CogniteResource, CogniteResourceList
+from cognite.client.data_classes._base import (
+    CogniteResourceList,
+    T_CogniteResourceList,
+    T_WritableCogniteResource,
+    T_WriteClass,
+)
 from cognite.client.data_classes.data_modeling import (
-    ContainerApplyList,
     DataModelApply,
     DataModelApplyList,
     DataModelId,
@@ -23,9 +28,19 @@ from cognite.neat._issues.warnings import (
     ResourceRetrievalWarning,
 )
 from cognite.neat._rules.models.dms import DMSRules
+from cognite.neat._shared import T_ID
 from cognite.neat._utils.upload import UploadResult
 
+from ..._client._api.data_modeling_loaders import T_WritableCogniteResourceList
 from ._base import CDFExporter
+
+
+@dataclass
+class ItemCategorized(Generic[T_ID, T_WriteClass]):
+    to_create: list[T_WriteClass] = field(default_factory=list)
+    to_update: list[T_WriteClass] = field(default_factory=list)
+    to_delete: list[T_ID] = field(default_factory=list)
+    unchanged: list[T_WriteClass] = field(default_factory=list)
 
 
 class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
@@ -53,7 +68,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
 
     def __init__(
         self,
-        export_components: Component | Collection[Component] | None= None,
+        export_components: Component | Collection[Component] | None = None,
         include_space: set[str] | None = None,
         existing: Literal["fail", "skip", "update", "force", "recreate"] = "update",
         instance_space: str | None = None,
@@ -160,21 +175,29 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
     def export_to_cdf_iterable(
         self, rules: DMSRules, client: NeatClient, dry_run: bool = False
     ) -> Iterable[UploadResult]:
-        to_export = self._prepare_exporters(rules)
+        schema = self.export(rules)
 
-        result_by_name: dict[str, UploadResult] = {}
+        categorized_items_by_loader: dict[
+            DataModelingLoader[
+                T_ID, T_WriteClass, T_WritableCogniteResource, T_CogniteResourceList, T_WritableCogniteResourceList
+            ],
+            ItemCategorized[T_ID, T_WriteClass],
+        ] = {}
         redeploy_data_model = False
         for loader in client.loaders.by_dependency_order(self.export_components):
-
-
+            items = loader.items_from_schema(schema)
             # The conversion from DMS to GraphQL does not seem to be triggered even if the views
             # are changed. This is a workaround to force the conversion.
             is_redeploying = isinstance(items, DataModelApplyList) and redeploy_data_model
-            loader = client.loaders.get_loader(items)
 
-            to_create, to_delete, to_update, unchanged = self._categorize_items_for_upload(
-                loader, items, is_redeploying
-            )
+            categorized = self._categorize_items_for_upload(loader, items, is_redeploying)
+            categorized_items_by_loader[loader] = categorized
+
+            if isinstance(items, ViewApplyList) and (categorized.to_create or categorized.to_update):
+                redeploy_data_model = True
+
+        for loader, items in categorized_items_by_loader.items():
+            result_by_name: dict[str, UploadResult] = {}
 
             issue_list = IssueList()
             warning_list = self._validate(items, client)
@@ -285,16 +308,18 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 issues=issue_list,
             )
 
-            if isinstance(items, ViewApplyList) and (created or changed):
-                redeploy_data_model = True
-
     def _categorize_items_for_upload(
-        self, loader: DataModelingLoader, items: Sequence[CogniteResource], is_redeploying
-    ) -> tuple[list[CogniteResource], list[CogniteResource], list[CogniteResource], list[CogniteResource]]:
+        self,
+        loader: DataModelingLoader[
+            T_ID, T_WriteClass, T_WritableCogniteResource, T_CogniteResourceList, T_WritableCogniteResourceList
+        ],
+        items: T_CogniteResourceList,
+        is_redeploying: bool,
+    ) -> ItemCategorized[T_ID, T_WriteClass]:
         item_ids = loader.get_ids(items)
         cdf_items = loader.retrieve(item_ids)
         cdf_item_by_id = {loader.get_id(item): item for item in cdf_items}
-        to_create, to_update, unchanged, to_delete = [], [], [], []
+        categorized = ItemCategorized()
         for item in items:
             if (
                 isinstance(items, DataModelApplyList)
@@ -305,28 +330,15 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
 
             cdf_item = cdf_item_by_id.get(loader.get_id(item))
             if cdf_item is None:
-                to_create.append(item)
-            elif is_redeploying:
-                to_update.append(item)
-                to_delete.append(cdf_item)
+                categorized.to_create.append(item)
+            elif is_redeploying or self.existing == "recreate":
+                categorized.to_delete.append(loader.get_id(cdf_item))
+                categorized.to_create.append(item)
             elif loader.are_equal(item, cdf_item):
-                unchanged.append(item)
+                categorized.unchanged.append(item)
             else:
-                to_update.append(item)
-        return to_create, to_delete, to_update, unchanged
-
-    def _prepare_exporters(self, rules: DMSRules) -> list[CogniteResourceList]:
-        schema = self.export(rules)
-        to_export: list[CogniteResourceList] = []
-        if self.export_components.intersection({"all", "spaces"}):
-            to_export.append(SpaceApplyList(schema.spaces.values()))
-        if self.export_components.intersection({"all", "containers"}):
-            to_export.append(ContainerApplyList(schema.containers.values()))
-        if self.export_components.intersection({"all", "views"}):
-            to_export.append(ViewApplyList(schema.views.values()))
-        if self.export_components.intersection({"all", "data_models"}):
-            to_export.append(DataModelApplyList([schema.data_model]))
-        return to_export
+                categorized.to_update.append(item)
+        return categorized
 
     def _validate(self, items: CogniteResourceList, client: NeatClient) -> IssueList:
         issue_list = IssueList()

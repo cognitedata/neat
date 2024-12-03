@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 from collections.abc import Hashable, ItemsView, Iterable, Iterator, KeysView, Mapping, MutableMapping, ValuesView
 from typing import (
     Any,
+    Literal,
+    TypeAlias,
     TypeVar,
     cast,
     final,
-    Literal,
-    TypeAlias,
 )
 
 import pandas as pd

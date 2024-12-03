@@ -1,12 +1,11 @@
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Sequence, Collection
+from collections.abc import Collection, Sequence
 from graphlib import TopologicalSorter
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar, cast, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar, cast
 
 from cognite.client.data_classes import filters
 from cognite.client.data_classes._base import (
-    CogniteResourceList,
     T_CogniteResourceList,
     T_WritableCogniteResource,
     T_WriteClass,
@@ -53,6 +52,7 @@ from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
 from cognite.neat._client.data_classes.data_modeling import Component
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues.warnings import CDFMaxIterationsWarning
 from cognite.neat._shared import T_ID
 
@@ -60,6 +60,7 @@ if TYPE_CHECKING:
     from cognite.neat._client._api_client import NeatClient
 
 T_WritableCogniteResourceList = TypeVar("T_WritableCogniteResourceList", bound=WriteableCogniteResourceList)
+
 
 class ResourceLoader(
     ABC,
@@ -194,6 +195,11 @@ class DataModelingLoader(
             self.delete(to_redeploy)
             return self._create_force(to_redeploy, tried_force_deploy)
 
+    @classmethod
+    @abstractmethod
+    def items_from_schema(cls, schema: DMSSchema) -> T_CogniteResourceList:
+        raise NotImplementedError
+
 
 class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, SpaceList]):
     resource_name = "spaces"
@@ -263,6 +269,10 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
             print(f"Deleted {len(deleted_data_models)} data models")
         deleted_space = self._client.data_modeling.spaces.delete(space)
         print(f"Deleted space {deleted_space}")
+
+    @classmethod
+    def items_from_schema(cls, schema: DMSSchema) -> SpaceApplyList:
+        return SpaceApplyList(schema.spaces.values())
 
 
 class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
@@ -381,6 +391,10 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
             local_dumped["usedFor"] = "node"
 
         return local_dumped == remote.as_write().dump(camel_case=True)
+
+    @classmethod
+    def items_from_schema(cls, schema: DMSSchema) -> ContainerApplyList:
+        return ContainerApplyList(schema.containers.values())
 
 
 class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):
@@ -526,6 +540,10 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
     def _create_list(self, items: Sequence[View]) -> ViewList:
         return ViewList(items)
 
+    @classmethod
+    def items_from_schema(cls, schema: DMSSchema) -> ViewApplyList:
+        return ViewApplyList(schema.views.values())
+
 
 class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel, DataModelApplyList, DataModelList]):
     resource_name = "data_models"
@@ -568,6 +586,10 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
         )
 
         return local_dumped == cdf_resource_dumped
+
+    @classmethod
+    def items_from_schema(cls, schema: DMSSchema) -> DataModelApplyList:
+        return DataModelApplyList([schema.data_model])
 
 
 class NodeLoader(DataModelingLoader[NodeId, NodeApply, Node, NodeApplyList, NodeList]):
@@ -627,6 +649,10 @@ class NodeLoader(DataModelingLoader[NodeId, NodeApply, Node, NodeApplyList, Node
 
         return local_dumped == cdf_resource_dumped
 
+    @classmethod
+    def items_from_schema(cls, schema: DMSSchema) -> NodeApplyList:
+        return NodeApplyList(schema.node_types.values())
+
 
 class DataModelLoaderAPI:
     def __init__(self, client: "NeatClient") -> None:
@@ -638,28 +664,18 @@ class DataModelLoaderAPI:
         self.nodes = NodeLoader(client)
         self._loaders = [self.spaces, self.views, self.containers, self.data_models, self.nodes]
 
-    def by_dependency_order(self, component: Component | Collection[Component] | None = None) -> list[DataModelingLoader]:
+    def by_dependency_order(
+        self, component: Component | Collection[Component] | None = None
+    ) -> list[DataModelingLoader]:
         loader_by_type = {type(loader): loader for loader in self._loaders}
         loader_iterable = (
             loader_by_type[loader_cls]
-            for loader_cls in
-            TopologicalSorter({type(loader):loader.dependencies for loader in self._loaders}).static_order()
+            for loader_cls in TopologicalSorter(
+                {type(loader): type(loader).dependencies for loader in self._loaders}
+            ).static_order()
         )
         if component is None:
             return list(loader_iterable)
         components = {component} if isinstance(component, str) else set(component)
         components = {{"node_type": "nodes"}.get(component, component) for component in components}
         return [loader for loader in loader_iterable if loader.resource_name in components]
-
-    def get_loader(self, items: Any) -> DataModelingLoader:
-        if isinstance(items, CogniteResourceList):
-            resource_name = type(items).__name__.casefold().removesuffix("list").removesuffix("apply")
-        elif isinstance(items, str):
-            resource_name = items
-        else:
-            raise ValueError(f"Cannot determine resource name from {items}")
-        if resource_name[-1] != "s":
-            resource_name += "s"
-        if resource_name == "datamodels":
-            resource_name = "data_models"
-        return getattr(self, resource_name)
