@@ -3,6 +3,7 @@ from collections import Counter
 
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._issues.errors._resources import ResourceNotDefinedError
 from cognite.neat._issues.warnings._models import UndefinedClassWarning
 from cognite.neat._issues.warnings._resources import (
     ResourceNotDefinedWarning,
@@ -29,6 +30,7 @@ class InformationValidation:
     def validate(self) -> IssueList:
         self._namespaces_reassigned()
         self._classes_without_properties()
+        self._undefined_classes()
         self._parent_class_defined()
         self._referenced_classes_exist()
         self._referenced_value_types_exist()
@@ -37,7 +39,6 @@ class InformationValidation:
         return self.issue_list
 
     def _classes_without_properties(self) -> None:
-        # needs to be complete for this validation to pass
         defined_classes = {class_.class_ for class_ in self.classes}
         referred_classes = {property_.class_ for property_ in self.properties}
         class_parent_pairs = self._class_parent_pairs()
@@ -55,6 +56,20 @@ class InformationValidation:
                             location="Properties sheet",
                         )
                     )
+
+    def _undefined_classes(self) -> None:
+        defined_classes = {class_.class_ for class_ in self.classes}
+        referred_classes = {property_.class_ for property_ in self.properties}
+
+        if undefined_classes := referred_classes.difference(defined_classes):
+            for class_ in undefined_classes:
+                self.issue_list.append(
+                    ResourceNotDefinedError(
+                        identifier=class_,
+                        resource_type="class",
+                        location="Classes sheet",
+                    )
+                )
 
     def _parent_class_defined(self) -> None:
         """This is a validation to check if the parent class of a class is defined in the classes sheet."""
