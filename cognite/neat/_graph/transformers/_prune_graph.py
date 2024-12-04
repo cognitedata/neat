@@ -7,7 +7,7 @@ from cognite.neat._utils.text import sentence_or_string_to_camel
 from ._base import BaseTransformer
 
 
-class TwoHopFlattener:
+class TwoHopFlattener(BaseTransformer):
     """
     Transformer that will flatten the distance between a source node, an intermediate connecting node, and a
     target property that is connected to the intermediate node.
