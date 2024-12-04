@@ -29,7 +29,7 @@ def container_props(cognite_client: CogniteClient, space: dm.Space) -> dm.Contai
 
 
 class TestViewLoader:
-    def test_force_create(self, neat_client: NeatClient, container_props: dm.Container, space: dm.Space) -> None:
+    def test_force_update(self, neat_client: NeatClient, container_props: dm.Container, space: dm.Space) -> None:
         container_id = container_props.as_id()
         original = dm.ViewApply(
             space=space.space,
@@ -58,7 +58,7 @@ class TestViewLoader:
             container=container_id, container_property_identifier=new_prop
         )
 
-        new_created = neat_client.loaders.views.create([modified], existing="force")[0]
+        new_created = neat_client.loaders.views.update([modified], force=True)[0]
 
         assert new_created.as_id() == original.as_id(), "The view version should be the same"
         assert (
@@ -111,5 +111,5 @@ class TestContainerLoader:
 
         new_created = neat_client.loaders.containers.update([modified], force=True)[0]
 
-        assert new_created.as_id() == original.as_id(), "The container version should be the same"
+        assert new_created.as_id() == original.as_id(), "The container should be the same"
         assert new_created.properties["number"].type == new_prop, "The property should have been updated"
