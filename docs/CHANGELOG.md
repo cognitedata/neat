@@ -30,8 +30,10 @@ Changes are grouped as follows:
 ### Changed
 - NeatEngine version to the latest release that has a breaking change to the interface; `2.0.0`
 - NeatEngine version `2.0.1` with bugfix for getting catalog file from zipped folder
-- [BREAKING ]The `neat.to.cst.data_model(...)` has been reworked. The new method has new parameters and new
-  behavior.
+- [BREAKING ]The `neat.to.cst.data_model(...)` has been reworked. The new parameters `drop_data` and `component`
+  ensures that containers and spaces with data are not accidentally deleted, while `component` allows
+  for more granular control over what is deleted. The `fallback_one_by_one` parameter has been removed, and
+  instead is now the default behavior.
 
 ### Fixed
 - Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
