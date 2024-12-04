@@ -1,6 +1,7 @@
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Collection, Sequence
+from collections.abc import Callable, Collection, Sequence
+from dataclasses import dataclass
 from graphlib import TopologicalSorter
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
@@ -61,6 +62,20 @@ if TYPE_CHECKING:
 
 T_WritableCogniteResourceList = TypeVar("T_WritableCogniteResourceList", bound=WriteableCogniteResourceList)
 
+T_Item = TypeVar("T_Item")
+T_Out = TypeVar("T_Out")
+
+
+@dataclass
+class _LoaderAPIException(Exception, Generic[T_WritableCogniteResource]):
+    success: list[T_WritableCogniteResource]
+    failed: list[T_ID]
+    unknown: list[T_ID]
+    errors: list[CogniteAPIError]
+
+    def as_cognite_api_error(self) -> CogniteAPIError:
+        raise NotImplementedError()
+
 
 class ResourceLoader(
     ABC,
@@ -95,36 +110,71 @@ class ResourceLoader(
         return [cls.get_id(item) for item in items]
 
     def create(self, items: Sequence[T_WriteClass]) -> T_WritableCogniteResourceList:
-        created = self._create(items)
+        # Containers can have dependencies on other containers, so we sort them before creating them.
+        items = self.sort_by_dependencies(items)
+
+        exception: _LoaderAPIException[T_WritableCogniteResource] | None = None
+        try:
+            created = self._fallback_one_by_one(self._create, items)
+        except _LoaderAPIException as exception:
+            created = exception.success
         if self.cache:
             self._items_by_id.update({self.get_id(item): item for item in created})
+
+        if exception is not None:
+            raise exception.as_cognite_api_error()
+
         return created
 
     def retrieve(self, ids: SequenceNotStr[T_ID]) -> T_WritableCogniteResourceList:
+        exception: _LoaderAPIException[T_WritableCogniteResource] | None = None
         if not self.cache:
-            return self._retrieve(ids)
+            try:
+                return self._fallback_one_by_one(self._retrieve, ids)
+            except _LoaderAPIException as exception:
+                raise exception.as_cognite_api_error()
         missing_ids = [id for id in ids if id not in self._items_by_id.keys()]
         if missing_ids:
-            retrieved = self._retrieve(missing_ids)
+            try:
+                retrieved = self._retrieve(missing_ids)
+            except _LoaderAPIException as exception:
+                retrieved = exception.success
             self._items_by_id.update({self.get_id(item): item for item in retrieved})
+        if exception is not None:
+            raise exception.as_cognite_api_error()
         # We need to check the cache again, in case we didn't retrieve all the items.
         return self._create_list([self._items_by_id[id] for id in ids if id in self._items_by_id])
 
     def update(self, items: Sequence[T_WriteClass], force: bool = False) -> T_WritableCogniteResourceList:
         update_method = self._update_force if force else self._update
-        if not self.cache:
-            return update_method(items)
-        updated = update_method(items)
-        self._items_by_id.update({self.get_id(item): item for item in updated})
+        exception: _LoaderAPIException[T_WritableCogniteResource] | None = None
+        try:
+            updated = update_method(items)
+        except _LoaderAPIException as exception:
+            updated = exception.success
+
+        if self.cache:
+            self._items_by_id.update({self.get_id(item): item for item in updated})
+
+        if exception is not None:
+            raise exception.as_cognite_api_error()
+
         return updated
 
     def delete(self, ids: SequenceNotStr[T_ID] | Sequence[T_WriteClass]) -> list[T_ID]:
         id_list = [self.get_id(item) for item in ids]
-        if not self.cache:
-            return self._delete(id_list)
-        deleted = self._delete(id_list)
-        for id in deleted:
-            self._items_by_id.pop(id, None)
+        exception: _LoaderAPIException[T_WritableCogniteResource] | None = None
+        try:
+            deleted = self._delete(id_list)
+        except _LoaderAPIException as exception:
+            deleted = exception.success
+
+        if self.cache:
+            for id in deleted:
+                self._items_by_id.pop(id, None)
+        if exception is not None:
+            raise exception.as_cognite_api_error()
+
         return deleted
 
     @abstractmethod
@@ -150,8 +200,8 @@ class ResourceLoader(
     def are_equal(self, local: T_WriteClass, remote: T_WritableCogniteResource) -> bool:
         return local == remote.as_write()
 
-    def sort_by_dependencies(self, items: list[T_WriteClass]) -> list[T_WriteClass]:
-        return items
+    def sort_by_dependencies(self, items: Sequence[T_WriteClass]) -> list[T_WriteClass]:
+        return list(items)
 
     def _update_force(
         self,
@@ -177,6 +227,11 @@ class ResourceLoader(
                 raise e
             self.delete(to_redeploy)
             return self._update_force(to_redeploy, tried_force_update)
+
+    def _fallback_one_by_one(
+        self, method: Callable[[Sequence[T_Item]], Sequence[T_Out]], items: Sequence[T_Item]
+    ) -> Sequence[T_Out]:
+        raise NotImplementedError()
 
 
 class DataModelingLoader(
