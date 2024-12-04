@@ -1,7 +1,7 @@
 import warnings
 from collections import defaultdict
 from collections.abc import Collection, Hashable, Sequence
-from typing import Any
+from typing import Any, cast
 
 from cognite.client.data_classes import data_modeling as dm
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
@@ -21,7 +21,7 @@ from cognite.neat._client.data_classes.data_modeling import (
 )
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import COGNITE_SPACES
-from cognite.neat._issues.errors import NeatTypeError, ResourceNotFoundError
+from cognite.neat._issues.errors import NeatTypeError, NeatValueError, ResourceNotFoundError
 from cognite.neat._issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
 from cognite.neat._issues.warnings.user_modeling import (
     EmptyContainerWarning,
@@ -140,13 +140,20 @@ class _DMSExporter:
                 if not (self.remove_cdf_spaces and dms_view.view.space in COGNITE_SPACES)
             ]
         )
+        view_by_id = {dms_view.view: dms_view for dms_view in input_views}
+
+        edge_types_by_view_property_id = self._edge_types_by_view_property_id(
+            view_properties_with_ancestors_by_id, view_by_id
+        )
 
         for view_id, view in views.items():
             view.properties = {}
             if not (view_properties := view_properties_by_id.get(view_id)):
                 continue
             for prop in view_properties:
-                view_property = self._create_view_property(prop, view_properties_with_ancestors_by_id)
+                view_property = self._create_view_property(
+                    prop, view_properties_with_ancestors_by_id, edge_types_by_view_property_id
+                )
                 if view_property is not None:
                     view.properties[prop.view_property] = view_property
 
@@ -157,17 +164,111 @@ class _DMSExporter:
         if isinstance(prop.connection, EdgeEntity) and prop.connection.edge_type is not None:
             return prop.connection.edge_type.as_reference()
         elif isinstance(prop.value_type, ViewEntity):
-            return cls._create_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
+            return cls._default_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
         else:
             raise NeatTypeError(f"Invalid valueType {prop.value_type!r}")
 
     @staticmethod
-    def _create_edge_type_from_view_id(view_id: dm.ViewId, property_: str) -> dm.DirectRelationReference:
+    def _default_edge_type_from_view_id(view_id: dm.ViewId, property_: str) -> dm.DirectRelationReference:
         return dm.DirectRelationReference(
             space=view_id.space,
             # This is the same convention as used when converting GraphQL to DMS
             external_id=f"{view_id.external_id}.{property_}",
         )
+
+    @classmethod
+    def _edge_types_by_view_property_id(
+        cls,
+        view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
+        view_by_id: dict[ViewEntity, DMSView],
+    ) -> dict[tuple[ViewEntity, str], dm.DirectRelationReference]:
+        edge_connection_property_by_view_property_id: dict[tuple[ViewEntity, str], DMSProperty] = {}
+        for properties in view_properties_with_ancestors_by_id.values():
+            for prop in properties:
+                if isinstance(prop.connection, EdgeEntity):
+                    view_property_id = (prop.view, prop.view_property)
+                    edge_connection_property_by_view_property_id[view_property_id] = prop
+
+        edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference] = {}
+
+        outwards_type_by_view_value_type: dict[tuple[ViewEntity, ViewEntity], list[dm.DirectRelationReference]] = (
+            defaultdict(list)
+        )
+        # First set the edge types for outwards connections.
+        for (view_id, _), prop in edge_connection_property_by_view_property_id.items():
+            # We have already filtered out all non-EdgeEntity connections
+            connection = cast(EdgeEntity, prop.connection)
+            if connection.direction == "inwards":
+                continue
+            view = view_by_id[view_id]
+
+            edge_type = cls._get_edge_type_outwards_connection(
+                view, prop, view_by_id, edge_connection_property_by_view_property_id
+            )
+
+            edge_types_by_view_property_id[(prop.view, prop.view_property)] = edge_type
+
+            if isinstance(prop.value_type, ViewEntity):
+                outwards_type_by_view_value_type[(prop.value_type, prop.view)].append(edge_type)
+
+        # Then inwards connections = outwards connections
+        for (view_id, prop_id), prop in edge_connection_property_by_view_property_id.items():
+            # We have already filtered out all non-EdgeEntity connections
+            connection = cast(EdgeEntity, prop.connection)
+
+            if connection.direction == "inwards" and isinstance(prop.value_type, ViewEntity):
+                edge_type_candidates = outwards_type_by_view_value_type.get((prop.view, prop.value_type), [])
+                if len(edge_type_candidates) == 0:
+                    # Warning in validation, should not have an inwards connection without an outwards connection
+                    edge_type = cls._default_edge_type_from_view_id(prop.view.as_id(), prop_id)
+                elif len(edge_type_candidates) == 1:
+                    edge_type = edge_type_candidates[0]
+                else:
+                    raise NeatValueError(
+                        f"Cannot infer edge type for {view_id}.{prop_id}, multiple candidates: {edge_type_candidates}."
+                        "Please specify edge type explicitly, i.e., edge(type=<YOUR_TYPE>)."
+                    )
+                view_property_id = (prop.view, prop.view_property)
+                edge_types_by_view_property_id[view_property_id] = edge_type
+
+        return edge_types_by_view_property_id
+
+    @classmethod
+    def _get_edge_type_outwards_connection(
+        cls,
+        view: DMSView,
+        prop: DMSProperty,
+        view_by_id: dict[ViewEntity, DMSView],
+        edge_connection_by_view_property_id: dict[tuple[ViewEntity, str], DMSProperty],
+    ) -> dm.DirectRelationReference:
+        connection = cast(EdgeEntity, prop.connection)
+        if connection.edge_type is not None:
+            # Explicitly set edge type
+            return connection.edge_type.as_reference()
+        elif view.implements:
+            # Try to look for same property in parent views
+            candidates = []
+            for parent_id in view.implements:
+                if parent_view := view_by_id.get(parent_id):
+                    parent_prop = edge_connection_by_view_property_id.get((parent_view.view, prop.view_property))
+                    if parent_prop and isinstance(parent_prop.connection, EdgeEntity):
+                        parent_edge_type = cls._get_edge_type_outwards_connection(
+                            parent_view, parent_prop, view_by_id, edge_connection_by_view_property_id
+                        )
+                        candidates.append(parent_edge_type)
+            if len(candidates) == 0:
+                return cls._default_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
+            elif len(candidates) == 1:
+                return candidates[0]
+            else:
+                raise NeatValueError(
+                    f"Cannot infer edge type for {prop.view.as_id()!r}.{prop.view_property}, "
+                    f"multiple candidates: {candidates}. "
+                    "Please specify edge type explicitly, i.e., edge(type=<YOUR_TYPE>)."
+                )
+        else:
+            # No parent view, use the default
+            return cls._default_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
 
     def _create_containers(
         self,
@@ -373,106 +474,127 @@ class _DMSExporter:
 
     @classmethod
     def _create_view_property(
-        cls, prop: DMSProperty, view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]]
+        cls,
+        prop: DMSProperty,
+        view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
+        edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference],
     ) -> ViewPropertyApply | None:
         if prop.container and prop.container_property:
-            container_prop_identifier = prop.container_property
-            extra_args: dict[str, Any] = {}
-            if prop.connection == "direct":
-                if isinstance(prop.value_type, ViewEntity):
-                    extra_args["source"] = prop.value_type.as_id()
-                elif isinstance(prop.value_type, DMSUnknownEntity):
-                    extra_args["source"] = None
-                else:
-                    # Should have been validated.
-                    raise ValueError(
-                        "If this error occurs it is a bug in NEAT, please report"
-                        f"Debug Info, Invalid valueType direct: {prop.model_dump_json()}"
-                    )
-            elif prop.connection is not None:
-                # Should have been validated.
-                raise ValueError(
-                    "If this error occurs it is a bug in NEAT, please report"
-                    f"Debug Info, Invalid connection: {prop.model_dump_json()}"
-                )
-            return dm.MappedPropertyApply(
-                container=prop.container.as_id(),
-                container_property_identifier=container_prop_identifier,
-                name=prop.name,
-                description=prop.description,
-                **extra_args,
-            )
+            return cls._create_mapped_property(prop)
         elif isinstance(prop.connection, EdgeEntity):
-            if isinstance(prop.value_type, ViewEntity):
-                source_view_id = prop.value_type.as_id()
-            else:
-                # Should have been validated.
-                raise ValueError(
-                    "If this error occurs it is a bug in NEAT, please report"
-                    f"Debug Info, Invalid valueType edge: {prop.model_dump_json()}"
-                )
-            edge_source: dm.ViewId | None = None
-            if prop.connection.properties is not None:
-                edge_source = prop.connection.properties.as_id()
-            edge_cls: type[dm.EdgeConnectionApply] = dm.MultiEdgeConnectionApply
-            # If is_list is not set, we default to a MultiEdgeConnection
-            if prop.is_list is False:
-                edge_cls = SingleEdgeConnectionApply
-
-            return edge_cls(
-                type=cls._create_edge_type_from_prop(prop),
-                source=source_view_id,
-                direction=prop.connection.direction,
-                name=prop.name,
-                description=prop.description,
-                edge_source=edge_source,
-            )
+            return cls._create_edge_property(prop, edge_types_by_view_property_id)
         elif isinstance(prop.connection, ReverseConnectionEntity):
-            reverse_prop_id = prop.connection.property_
-            if isinstance(prop.value_type, ViewEntity):
-                source_view_id = prop.value_type.as_id()
-            else:
-                # Should have been validated.
-                raise ValueError(
-                    "If this error occurs it is a bug in NEAT, please report"
-                    f"Debug Info, Invalid valueType reverse connection: {prop.model_dump_json()}"
-                )
-            reverse_prop = next(
-                (
-                    prop
-                    for prop in view_properties_with_ancestors_by_id.get(source_view_id, [])
-                    if prop.view_property == reverse_prop_id
-                ),
-                None,
-            )
-            if reverse_prop is None:
-                warnings.warn(
-                    PropertyNotFoundWarning(
-                        source_view_id,
-                        "view",
-                        reverse_prop_id or "MISSING",
-                        dm.PropertyId(prop.view.as_id(), prop.view_property),
-                        "view property",
-                    ),
-                    stacklevel=2,
-                )
-
-            if reverse_prop and reverse_prop.connection == "direct":
-                args: dict[str, Any] = dict(
-                    source=source_view_id,
-                    through=dm.PropertyId(source=source_view_id, property=reverse_prop_id),
-                    name=prop.name,
-                    description=prop.description,
-                )
-                if prop.is_list in [True, None]:
-                    return dm.MultiReverseDirectRelationApply(**args)
-                else:
-                    return SingleReverseDirectRelationApply(**args)
-            else:
-                return None
-
+            return cls._create_reverse_direct_relation(prop, view_properties_with_ancestors_by_id)
         elif prop.view and prop.view_property and prop.connection:
             warnings.warn(
                 NotSupportedWarning(f"{prop.connection} in {prop.view.as_id()!r}.{prop.view_property}"), stacklevel=2
             )
         return None
+
+    @classmethod
+    def _create_mapped_property(cls, prop: DMSProperty) -> dm.MappedPropertyApply:
+        container = cast(ContainerEntity, prop.container)
+        container_prop_identifier = cast(str, prop.container_property)
+        extra_args: dict[str, Any] = {}
+        if prop.connection == "direct":
+            if isinstance(prop.value_type, ViewEntity):
+                extra_args["source"] = prop.value_type.as_id()
+            elif isinstance(prop.value_type, DMSUnknownEntity):
+                extra_args["source"] = None
+            else:
+                # Should have been validated.
+                raise ValueError(
+                    "If this error occurs it is a bug in NEAT, please report"
+                    f"Debug Info, Invalid valueType direct: {prop.model_dump_json()}"
+                )
+        elif prop.connection is not None:
+            # Should have been validated.
+            raise ValueError(
+                "If this error occurs it is a bug in NEAT, please report"
+                f"Debug Info, Invalid connection: {prop.model_dump_json()}"
+            )
+        return dm.MappedPropertyApply(
+            container=container.as_id(),
+            container_property_identifier=container_prop_identifier,
+            name=prop.name,
+            description=prop.description,
+            **extra_args,
+        )
+
+    @classmethod
+    def _create_edge_property(
+        cls, prop: DMSProperty, edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference]
+    ) -> dm.EdgeConnectionApply:
+        connection = cast(EdgeEntity, prop.connection)
+        if isinstance(prop.value_type, ViewEntity):
+            source_view_id = prop.value_type.as_id()
+        else:
+            # Should have been validated.
+            raise ValueError(
+                "If this error occurs it is a bug in NEAT, please report"
+                f"Debug Info, Invalid valueType edge: {prop.model_dump_json()}"
+            )
+        edge_source: dm.ViewId | None = None
+        if connection.properties is not None:
+            edge_source = connection.properties.as_id()
+        edge_cls: type[dm.EdgeConnectionApply] = dm.MultiEdgeConnectionApply
+        # If is_list is not set, we default to a MultiEdgeConnection
+        if prop.is_list is False:
+            edge_cls = SingleEdgeConnectionApply
+
+        return edge_cls(
+            type=edge_types_by_view_property_id[(prop.view, prop.view_property)],
+            source=source_view_id,
+            direction=connection.direction,
+            name=prop.name,
+            description=prop.description,
+            edge_source=edge_source,
+        )
+
+    @classmethod
+    def _create_reverse_direct_relation(
+        cls, prop: DMSProperty, view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]]
+    ) -> dm.MultiReverseDirectRelationApply | SingleReverseDirectRelationApply | None:
+        connection = cast(ReverseConnectionEntity, prop.connection)
+        reverse_prop_id = connection.property_
+        if isinstance(prop.value_type, ViewEntity):
+            source_view_id = prop.value_type.as_id()
+        else:
+            # Should have been validated.
+            raise ValueError(
+                "If this error occurs it is a bug in NEAT, please report"
+                f"Debug Info, Invalid valueType reverse connection: {prop.model_dump_json()}"
+            )
+        reverse_prop = next(
+            (
+                prop
+                for prop in view_properties_with_ancestors_by_id.get(source_view_id, [])
+                if prop.view_property == reverse_prop_id
+            ),
+            None,
+        )
+        if reverse_prop is None:
+            warnings.warn(
+                PropertyNotFoundWarning(
+                    source_view_id,
+                    "view",
+                    reverse_prop_id or "MISSING",
+                    dm.PropertyId(prop.view.as_id(), prop.view_property),
+                    "view property",
+                ),
+                stacklevel=2,
+            )
+
+        if reverse_prop and reverse_prop.connection == "direct":
+            args: dict[str, Any] = dict(
+                source=source_view_id,
+                through=dm.PropertyId(source=source_view_id, property=reverse_prop_id),
+                name=prop.name,
+                description=prop.description,
+            )
+            if prop.is_list in [True, None]:
+                return dm.MultiReverseDirectRelationApply(**args)
+            else:
+                return SingleReverseDirectRelationApply(**args)
+        else:
+            return None

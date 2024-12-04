@@ -25,9 +25,11 @@ Changes are grouped as follows:
 - Ability to make connection at granular level between Info and DMS rules when doing conversion
   form Info to DMS rules
 - Ability to change names of properties and views / classes and still be able to load instances
+- `XMLReadAPI` to extract triples from dexpi and aml files via `NeatEngine` in NeatSession
 
 ### Changed
 - NeatEngine version to the latest release that has a breaking change to the interface; `2.0.0`
+- NeatEngine version `2.0.1` with bugfix for getting catalog file from zipped folder
 
 ### Fixed
 - Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
