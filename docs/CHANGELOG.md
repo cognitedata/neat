@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.100.0] - 04-12-**2024**
 ### Added
 - Support for converting relationships to edges.
 - Support for setting limit when running `neat.read.cdf.classic.graph(...)`.
