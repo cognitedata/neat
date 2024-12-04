@@ -3,6 +3,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
 from cognite.neat._client import NeatClient
+from cognite.neat._client._api.data_modeling_loaders import MultiCogniteAPIError
 
 
 @pytest.fixture(scope="session")
@@ -113,3 +114,28 @@ class TestContainerLoader:
 
         assert new_created.as_id() == original.as_id(), "The container should be the same"
         assert new_created.properties["number"].type == new_prop, "The property should have been updated"
+
+    def test_fallback_one_by_one(self, neat_client: NeatClient, space: dm.Space) -> None:
+        valid_container = dm.ContainerApply(
+            space=space.space,
+            external_id="valid_container",
+            properties={
+                "name": dm.ContainerProperty(type=dm.Text()),
+            },
+        )
+        invalid_container = dm.ContainerApply(
+            space=space.space,
+            external_id="invalid_container-$)()&",
+            properties={
+                "name": dm.ContainerProperty(type=dm.Text()),
+            },
+        )
+
+        try:
+            try:
+                neat_client.loaders.containers.create([valid_container, invalid_container])
+            except MultiCogniteAPIError as e:
+                assert len(e.success) == 1, "Only one container should be created"
+                assert len(e.failed) == 1, "Only one container should fail"
+        finally:
+            neat_client.data_modeling.containers.delete([valid_container.as_id()])

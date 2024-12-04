@@ -112,8 +112,10 @@ class ResourceLoader(
         exception: MultiCogniteAPIError[T_ID, T_WritableCogniteResourceList] | None = None
         try:
             created = self._fallback_one_by_one(self._create, items)
-        except MultiCogniteAPIError as exception:
-            created = exception.success
+        except MultiCogniteAPIError as e:
+            created = e.success
+            exception = e
+
         if self.cache:
             self._items_by_id.update({self.get_id(item): item for item in created})
 
@@ -131,8 +133,9 @@ class ResourceLoader(
         if missing_ids:
             try:
                 retrieved = self._retrieve(missing_ids)
-            except MultiCogniteAPIError as exception:
-                retrieved = exception.success
+            except MultiCogniteAPIError as e:
+                retrieved = e.success
+                exception = e
             self._items_by_id.update({self.get_id(item): item for item in retrieved})
         if exception is not None:
             raise exception
@@ -148,8 +151,9 @@ class ResourceLoader(
         else:
             try:
                 updated = self._fallback_one_by_one(self._update, items)
-            except MultiCogniteAPIError as exception:
-                updated = exception.success
+            except MultiCogniteAPIError as e:
+                updated = e.success
+                exception = e
 
         if self.cache:
             self._items_by_id.update({self.get_id(item): item for item in updated})
@@ -165,8 +169,9 @@ class ResourceLoader(
         try:
             # We know that SequenceNotStr = Sequence
             deleted = self._fallback_one_by_one(self._delete, id_list)  # type: ignore[arg-type]
-        except MultiCogniteAPIError as exception:
-            deleted = exception.success
+        except MultiCogniteAPIError as e:
+            deleted = e.success
+            exception = e
 
         if self.cache:
             for id in deleted:
