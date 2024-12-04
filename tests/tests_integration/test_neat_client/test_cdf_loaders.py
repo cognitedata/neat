@@ -89,7 +89,7 @@ class TestViewLoader:
 
 
 class TestContainerLoader:
-    def test_force_create(self, neat_client: NeatClient, space: dm.Space) -> None:
+    def test_force_update(self, neat_client: NeatClient, space: dm.Space) -> None:
         original = dm.ContainerApply(
             space=space.space,
             external_id="test_container",
@@ -109,7 +109,7 @@ class TestContainerLoader:
         new_prop = dm.Float64() if isinstance(existing.properties["number"].type, dm.Int64) else dm.Int64()
         modified.properties["number"] = dm.ContainerProperty(type=new_prop)
 
-        new_created = neat_client.loaders.containers.create([modified], existing="force")[0]
+        new_created = neat_client.loaders.containers.update([modified], force=True)[0]
 
         assert new_created.as_id() == original.as_id(), "The container version should be the same"
         assert new_created.properties["number"].type == new_prop, "The property should have been updated"

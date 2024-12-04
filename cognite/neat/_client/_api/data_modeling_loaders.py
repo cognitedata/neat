@@ -2,7 +2,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Sequence
 from graphlib import TopologicalSorter
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
 from cognite.client.data_classes import filters
 from cognite.client.data_classes._base import (
@@ -111,9 +111,10 @@ class ResourceLoader(
         return self._create_list([self._items_by_id[id] for id in ids if id in self._items_by_id])
 
     def update(self, items: Sequence[T_WriteClass], force: bool = False) -> T_WritableCogniteResourceList:
+        update_method = self._update_force if force else self._update
         if not self.cache:
-            return self._update(items)
-        updated = self._update(items)
+            return update_method(items)
+        updated = update_method(items)
         self._items_by_id.update({self.get_id(item): item for item in updated})
         return updated
 
@@ -149,6 +150,34 @@ class ResourceLoader(
     def are_equal(self, local: T_WriteClass, remote: T_WritableCogniteResource) -> bool:
         return local == remote.as_write()
 
+    def sort_by_dependencies(self, items: list[T_WriteClass]) -> list[T_WriteClass]:
+        return items
+
+    def _update_force(
+        self,
+        items: Sequence[T_WriteClass],
+        tried_force_update: set[T_ID] | None = None,
+    ) -> T_WritableCogniteResourceList:
+        tried_force_update = tried_force_update or set()
+        try:
+            return self._update(items)
+        except CogniteAPIError as e:
+            failed_ids = {self.get_id(failed) for failed in e.failed}
+            to_redeploy: list[T_WriteClass] = []
+            for item in items:
+                item_id = self.get_id(item)
+                if item_id in failed_ids:
+                    if tried_force_update and item_id in tried_force_update:
+                        # Avoid infinite loop
+                        continue
+                    to_redeploy.append(item)
+                    tried_force_update.add(item_id)
+            if not to_redeploy:
+                # Avoid infinite loop
+                raise e
+            self.delete(to_redeploy)
+            return self._update_force(to_redeploy, tried_force_update)
+
 
 class DataModelingLoader(
     ResourceLoader[T_ID, T_WriteClass, T_WritableCogniteResource, T_CogniteResourceList, T_WritableCogniteResourceList],
@@ -159,41 +188,6 @@ class DataModelingLoader(
         if hasattr(item, "space"):
             return item.space in space
         raise ValueError(f"Item {item} does not have a space attribute")
-
-    def sort_by_dependencies(self, items: list[T_WriteClass]) -> list[T_WriteClass]:
-        return items
-
-    def create(
-        self, items: Sequence[T_WriteClass], existing: Literal["fail", "skip", "update", "force"] = "update"
-    ) -> T_WritableCogniteResourceList:
-        if existing != "force":
-            return super().create(items)
-
-        created = self._create_force(items, set())
-        if self.cache:
-            self._items_by_id.update({self.get_id(item): item for item in created})
-        return created
-
-    def _create_force(
-        self,
-        items: Sequence[T_WriteClass],
-        tried_force_deploy: set[T_ID],
-    ) -> T_WritableCogniteResourceList:
-        try:
-            return self._create(items)
-        except CogniteAPIError as e:
-            failed_ids = {self.get_id(failed) for failed in e.failed}
-            to_redeploy = [
-                item
-                for item in items
-                if self.get_id(item) in failed_ids and self.get_id(item) not in tried_force_deploy
-            ]
-            if not to_redeploy:
-                # Avoid infinite loop
-                raise e
-            tried_force_deploy.update([self.get_id(item) for item in to_redeploy])
-            self.delete(to_redeploy)
-            return self._create_force(to_redeploy, tried_force_deploy)
 
     @classmethod
     @abstractmethod
