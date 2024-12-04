@@ -168,14 +168,17 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 issue_list.extend(warning_list)
 
             results = UploadResult(loader.resource_name, issues=issue_list)  # type: ignore[var-annotated]
-            if dry_run:
-                if is_failing:
-                    results.failed_upserted.update(items.to_update_ids)
-                    results.failed_created.update(items.to_create_ids)
-                    results.failed_deleted.update(items.to_delete_ids)
-                    results.error_messages.append("Existing components found and existing_handling is 'fail'")
-                    continue
+            if is_failing:
+                # If any component already exists, the export will fail.
+                results.failed_upserted.update(items.to_update_ids)
+                results.failed_created.update(items.to_create_ids)
+                results.failed_deleted.update(items.to_delete_ids)
+                results.unchanged.update(items.unchanged_ids)
+                results.error_messages.append("Existing components found and existing_handling is 'fail'")
+                yield results
+                continue
 
+            if dry_run:
                 if self.existing in ["update", "force"]:
                     # Assume all changed are successful
                     results.changed.update(items.to_update_ids)
@@ -186,16 +189,34 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 results.unchanged.update(items.unchanged_ids)
             else:
                 if items.to_delete_ids:
-                    deleted = loader.delete(items.to_delete_ids)
-                    results.deleted.update(deleted)
+                    try:
+                        deleted = loader.delete(items.to_delete_ids)
+                    except CogniteAPIError as e:
+                        results.deleted.update([loader.get_id(item) for item in e.successful])
+                        results.failed_deleted.update([loader.get_id(item) for item in e.failed + e.unknown])
+                        results.error_messages.append(f"Failed to delete {loader.resource_name}: {e!s}")
+                    else:
+                        results.deleted.update(deleted)
 
                 if items.to_create:
-                    created = loader.create(items.to_create)
-                    results.created.update(loader.get_ids(created))
+                    try:
+                        created = loader.create(items.to_create)
+                    except CogniteAPIError as e:
+                        results.created.update([loader.get_id(item) for item in e.successful])
+                        results.failed_created.update([loader.get_id(item) for item in e.failed + e.unknown])
+                        results.error_messages.append(f"Failed to create {loader.resource_name}: {e!s}")
+                    else:
+                        results.created.update(loader.get_ids(created))
 
                 if items.to_update:
-                    updated = loader.update(items.to_update)
-                    results.changed.update(loader.get_ids(updated))
+                    try:
+                        updated = loader.update(items.to_update)
+                    except CogniteAPIError as e:
+                        results.changed.update([loader.get_id(item) for item in e.successful])
+                        results.failed_changed.update([loader.get_id(item) for item in e.failed + e.unknown])
+                        results.error_messages.append(f"Failed to update {loader.resource_name}: {e!s}")
+                    else:
+                        results.changed.update(loader.get_ids(updated))
 
                 results.unchanged.update(items.unchanged_ids)
 
