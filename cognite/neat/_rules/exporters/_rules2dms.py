@@ -139,7 +139,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         return exclude
 
     def export(self, rules: DMSRules) -> DMSSchema:
-        # We do not want to include CogniteCore/CogniteProcess Inudstries in the schema
+        # We do not want to include CogniteCore/CogniteProcess Industries in the schema
         return rules.as_schema(instance_space=self.instance_space, remove_cdf_spaces=self.remove_cdf_spaces)
 
     def delete_from_cdf(
@@ -154,10 +154,8 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
 
         categorized_items_by_loader = self._categorize_by_loader(client, schema)
 
-        is_failing = self.existing == "fail" and any(  # type: ignore[misc]
-            loader.resource_name  # type: ignore[has-type]
-            for loader, categorized in categorized_items_by_loader.values()
-            if categorized.to_update  # type: ignore[has-type]
+        is_failing = self.existing == "fail" and any(
+            loader.resource_name for loader, categorized in categorized_items_by_loader.items() if categorized.to_update
         )
 
         for loader, items in categorized_items_by_loader.items():
@@ -249,7 +247,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         item_ids = loader.get_ids(items)
         cdf_items = loader.retrieve(item_ids)
         cdf_item_by_id = {loader.get_id(item): item for item in cdf_items}
-        categorized = ItemCategorized(loader.resource_name, loader.get_id)  # type: ignore[type-var]
+        categorized = ItemCategorized[T_ID, T_WriteClass](loader.resource_name, loader.get_id)
         for item in items:
             if (
                 isinstance(items, DataModelApplyList)
@@ -262,13 +260,13 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             if cdf_item is None:
                 categorized.to_create.append(item)
             elif is_redeploying or self.existing == "recreate":
-                categorized.to_delete.append(loader.get_id(cdf_item))
+                categorized.to_delete.append(cdf_item.as_write())
                 categorized.to_create.append(item)
             elif loader.are_equal(item, cdf_item):
                 categorized.unchanged.append(item)
             else:
                 categorized.to_update.append(item)
-        return categorized  # type: ignore[return-value]
+        return categorized
 
     def _validate(self, items: list[DataModelId], client: NeatClient) -> IssueList:
         issue_list = IssueList()
