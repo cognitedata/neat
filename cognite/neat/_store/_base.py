@@ -223,18 +223,18 @@ class NeatGraphStore:
     ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
         if self.rules is None:
             warnings.warn("Rules not found in graph store!", stacklevel=2)
-            return []  # type: ignore
+            return
 
         if class_entity not in [definition.class_ for definition in self.rules.classes]:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
-            return []  # type: ignore
+            return
 
         if not (class_uri := InformationAnalysis(self.rules).class_uri(class_entity)):
             warnings.warn(
                 f"Class {class_entity.suffix} does not have namespace defined for prefix {class_entity.prefix} Rules!",
                 stacklevel=2,
             )
-            return []  # type: ignore
+            return
 
         has_hop_transformations = InformationAnalysis(self.rules).has_hop_transformations()
         has_self_reference_transformations = InformationAnalysis(
@@ -254,7 +254,7 @@ class NeatGraphStore:
                 msg,
                 stacklevel=2,
             )
-            return []  # type: ignore
+            return
 
         # get all the instances for give class_uri
         instance_ids = self.queries.list_instances_ids_of_class(class_uri)
@@ -290,15 +290,15 @@ class NeatGraphStore:
 
         if not self.rules:
             warnings.warn("Rules not found in graph store!", stacklevel=2)
-            return []
+            return
 
         class_entity = ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
 
         if class_entity not in [definition.class_ for definition in self.rules.classes]:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
-            return []
+            return
 
-        return self._read_via_class_entity(class_entity)
+        yield from self._read_via_class_entity(class_entity)
 
     def _parse_file(
         self,
