@@ -168,6 +168,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             results = UploadResult(loader.resource_name, issues=issue_list)  # type: ignore[var-annotated]
             if is_failing:
                 # If any component already exists, the export will fail.
+                # This is the same if we run dry_run or not.
                 results.failed_upserted.update(items.to_update_ids)
                 results.failed_created.update(items.to_create_ids)
                 results.failed_deleted.update(items.to_delete_ids)
@@ -207,14 +208,17 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                         results.created.update(loader.get_ids(created))
 
                 if items.to_update:
-                    try:
-                        updated = loader.update(items.to_update)
-                    except CogniteAPIError as e:
-                        results.changed.update([loader.get_id(item) for item in e.successful])
-                        results.failed_changed.update([loader.get_id(item) for item in e.failed + e.unknown])
-                        results.error_messages.append(f"Failed to update {loader.resource_name}: {e!s}")
+                    if self.existing == "skip":
+                        results.skipped.update(items.to_update_ids)
                     else:
-                        results.changed.update(loader.get_ids(updated))
+                        try:
+                            updated = loader.update(items.to_update, force=self.existing == "force")
+                        except CogniteAPIError as e:
+                            results.changed.update([loader.get_id(item) for item in e.successful])
+                            results.failed_changed.update([loader.get_id(item) for item in e.failed + e.unknown])
+                            results.error_messages.append(f"Failed to update {loader.resource_name}: {e!s}")
+                        else:
+                            results.changed.update(loader.get_ids(updated))
 
                 results.unchanged.update(items.unchanged_ids)
 

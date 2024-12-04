@@ -110,7 +110,7 @@ class ResourceLoader(
         # We need to check the cache again, in case we didn't retrieve all the items.
         return self._create_list([self._items_by_id[id] for id in ids if id in self._items_by_id])
 
-    def update(self, items: Sequence[T_WriteClass]) -> T_WritableCogniteResourceList:
+    def update(self, items: Sequence[T_WriteClass], force: bool = False) -> T_WritableCogniteResourceList:
         if not self.cache:
             return self._update(items)
         updated = self._update(items)
