@@ -137,10 +137,10 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         schema.to_zip(filepath, exclude=exclude)
 
     def _create_exclude_set(self):
-        if "all" in self.export_components:
+        if self.export_components is None:
             exclude = set()
         else:
-            exclude = {"spaces", "data_models", "views", "containers", "node_types"} - self.export_components
+            exclude = {"spaces", "data_models", "views", "containers", "node_types"} - set(self.export_components)
         return exclude
 
     def export(self, rules: DMSRules) -> DMSSchema:
