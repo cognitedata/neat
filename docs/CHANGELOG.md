@@ -21,9 +21,18 @@ Changes are grouped as follows:
 - Support for setting limit when running `neat.read.cdf.classic.graph(...)`.
 - RegexViolation warning on Information rules that check if entity ids are DMS compliant
 - Support for using parent property name in `neat.mapping.classic_to_core(...)`.
+- Classes that have properties but are not defined in Classes sheet will raise error
+- Ability to make connection at granular level between Info and DMS rules when doing conversion
+  form Info to DMS rules
+- `XMLReadAPI` to extract triples from dexpi and aml files via `NeatEngine` in NeatSession
+
+### Changed
+- NeatEngine version to the latest release that has a breaking change to the interface; `2.0.0`
+- NeatEngine version `2.0.1` with bugfix for getting catalog file from zipped folder
 
 ### Fixed
 - Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
+
 
 ## [0.99.1] - 28-11-**2024**
 ### Changed

@@ -20,7 +20,7 @@ from cognite.neat._store._provenance import Entity as ProvenanceEntity
 from cognite.neat._utils.reader import GitHubReader, NeatReader, PathReader
 
 from ._state import SessionState
-from ._wizard import NeatObjectType, RDFFileType, object_wizard, rdf_dm_wizard
+from ._wizard import NeatObjectType, RDFFileType, XMLFileType, object_wizard, rdf_dm_wizard, xml_format_wizard
 from .engine import import_engine
 from .exceptions import NeatSessionError, session_class_wrapper
 
@@ -35,6 +35,7 @@ class ReadAPI:
         self.excel = ExcelReadAPI(state, client, verbose)
         self.csv = CSVReadAPI(state, client, verbose)
         self.yaml = YamlReadAPI(state, client, verbose)
+        self.xml = XMLReadAPI(state, client, verbose)
 
 
 @session_class_wrapper
@@ -251,12 +252,54 @@ class CSVReadAPI(BaseReadAPI):
         else:
             raise NeatValueError("Only file paths are supported for CSV files")
         engine = import_engine()
-        engine.set.source = ".csv"
+        engine.set.format = "csv"
         engine.set.file = path
         engine.set.type = type
         engine.set.primary_key = primary_key
         extractor = engine.create_extractor()
 
+        self._state.instances.store.write(extractor)
+
+
+@session_class_wrapper
+class XMLReadAPI(BaseReadAPI):
+    def __call__(
+        self,
+        io: Any,
+        format: XMLFileType | None = None,
+    ) -> None:
+        reader = NeatReader.create(io)
+        if isinstance(reader, GitHubReader):
+            path = Path(tempfile.gettempdir()).resolve() / reader.name
+            path.write_text(reader.read_text())
+        elif isinstance(reader, PathReader):
+            path = reader.path
+        else:
+            raise NeatValueError("Only file paths are supported for XML files")
+        if format is None:
+            format = xml_format_wizard()
+
+        if format.lower() == "dexpi":
+            return self.dexpi(path)
+
+        if format.lower() == "aml":
+            return self.aml(path)
+
+        else:
+            raise NeatValueError("Only support XML files of DEXPI format at the moment.")
+
+    def dexpi(self, path):
+        engine = import_engine()
+        engine.set.format = "dexpi"
+        engine.set.file = path
+        extractor = engine.create_extractor()
+        self._state.instances.store.write(extractor)
+
+    def aml(self, path):
+        engine = import_engine()
+        engine.set.format = "aml"
+        engine.set.file = path
+        extractor = engine.create_extractor()
         self._state.instances.store.write(extractor)
 
 

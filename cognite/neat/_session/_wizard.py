@@ -7,10 +7,15 @@ from cognite.neat._rules._constants import PATTERNS
 
 RDFFileType = Literal["Ontology", "IMF Types", "Inference"]
 NeatObjectType = Literal["Data Model", "Instances"]
+XMLFileType = Literal["dexpi", "aml"]
 
 
 def object_wizard(message: str = "Select object") -> NeatObjectType:
     return _selection(message, get_args(NeatObjectType))
+
+
+def xml_format_wizard(message: str = "Select XML format") -> XMLFileType:
+    return _selection(message, get_args(XMLFileType))
 
 
 def rdf_dm_wizard(message: str = "Select source:") -> RDFFileType:
