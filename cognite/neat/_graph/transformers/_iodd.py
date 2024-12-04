@@ -15,7 +15,12 @@ class IODDTwoHopFlattener(TwoHopFlattener):
     )
 
     def __init__(self):
-        super().__init__(destination_node_type=IODD.TextObject, property_predicate=IODD.value, property_name="value")
+        super().__init__(
+            destination_node_type=IODD.TextObject,
+            namespace=IODD,
+            value_property_name="value",
+            delete_connecting_node=True,
+        )
 
 
 class IODDPruneDanglingNodes(PruneDanglingNodes):

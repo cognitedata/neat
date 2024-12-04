@@ -1,84 +1,131 @@
 from rdflib import Graph, Namespace, URIRef
 from rdflib.query import ResultRow
-from rdflib.term import Identifier
+
+from cognite.neat._utils.rdf_ import as_neat_compliant_uri
+from cognite.neat._utils.text import sentence_or_string_to_camel
 
 from ._base import BaseTransformer
 
 
-# TODO: Handle the cse when value is None, which will not make the TextObject resolve
-class TwoHopFlattener(BaseTransformer):
+class TwoHopFlattener:
     """
     Transformer that will flatten the distance between a source node, an intermediate connecting node, and a
     target property that is connected to the intermediate node.
     The transformation result is that the target property is attached directly to the source node, instead of having
     to go via the intermediate node.
-    The user can also provide a flag to decide if the intermediate node should be removed from the graph or not
-    after connecting the target property to the source node.
+    There is also an option to create a new predicate for the new direct relation, if there is a property on the
+    intermediate node that holds the value of the new predicate. If this parameter is not provided by the user, the
+    original predicate between the source node, and the resolved target value will be used.
+    The user can provide a flag to decide if the intermediate node should be removed from the graph or not
+    after connecting the target property to the source node. The default here is False.
+
+    If delete_connecting_node is not set, the expected number of triples after this transformation should be the same as
+    before the transformation.
+    If delete_connecting_node is set, the expected number of triples should be:
+        #triples_before - #destination_nodes * #destination_nodes_properties
 
         Ex. TwoHopFlattener:
 
-        Graph before flattening (with deletion of intermediate node):
-        node(A, rdf:type(Pump)) -(predicate("vendor"))>
-                                node(B, rdf:type(TextObject)) -(predicate("value"))> Literal("CompanyX")
+        Graph before transformation:
+        <http://purl.org/cognite/neat/Pump-1> a ns1:Pump ;
+        ns1:Attribute <http://purl.org/cognite/neat/Attribute-1234> .
 
-        Graph after flattening nodes with destination_node_type = rdf:type(TextObject), property_predicate = :value,
-        and property_name = "value":
+        <http://purl.org/cognite/neat/Attribute-1234> a ns1:Attribute ;
+        ns1:Name "ItemTagAssignmentClass" ;
+        ns1:Value "D-20PSV0002" .
 
-        node(A, rdf:type(Pump)) -(predicate("vendor"))> Literal("CompanyX")
+        Graph after transformation with args
+        (destination_node_type = ns1:Attribute, namespace = ns1, value_property_name="Value",
+        predicate_property_name = "Name", delete_connectiong_node=True):
+
+        <http://purl.org/cognite/neat/Pump-1> a ns1:Pump ;
+        ns1:ItemTagAssignmentClass "D-20PSV0002" .
+
+        Number of triples after operation: 5 - 1*3 = 2
 
     Args:
         destination_node_type: RDF.type of edge Node
-        property_predicate: Predicate to use when resolving the value from the edge node
-        property_name: name of the property that the intermediate node is pointing to
+        namespace: RDF Namespace to use when querying the graph
+        value_property_name: str with name of the property that holds the value attached to the intermediate node
+        predicate_property_name: Optional str of the property name that holds the new predicate to use when resolving
+        the intermediate connection.
         delete_connecting_node: bool if the intermediate Node and Edge between source Node
-                                and target property should be deleted. Defaults to True.
+                                and target property should be deleted. Defaults to False.
     """
 
     description: str = "Prunes the graph of specified node types that do not have connections to other nodes."
-    _query_template: str = """SELECT ?sourceNode ?property ?destinationNode ?value WHERE {{
-                                     ?sourceNode ?property ?destinationNode .
-                                     ?destinationNode a <{destination_node_type}> .
-                                     ?destinationNode <{property_predicate}> ?{property_name} . }}"""
+
+    _query_template_keep_old_predicate: str = """
+    SELECT ?sourceNode ?property_source ?destinationNode ?property_destination ?property_value WHERE {{
+        ?sourceNode ?property_source ?destinationNode .
+        ?destinationNode ?property_destination ?property_value .
+        ?destinationNode a <{destination_node_type}> .
+        ?destinationNode <{value_property_predicate}> ?property_value . }}"""
+
+    _query_template_new_predicate: str = """
+    SELECT ?sourceNode ?property ?destinationNode ?predicate_value ?property_value WHERE {{
+        ?sourceNode ?property ?destinationNode .
+        ?destinationNode a <{destination_node_type}> .
+        ?destinationNode <{predicate_property_predicate}> ?predicate_value .
+        ?destinationNode <{value_property_predicate}> ?property_value . }}"""
 
     def __init__(
         self,
         destination_node_type: URIRef,
-        property_predicate: Namespace,
-        property_name: str,
-        delete_connecting_node: bool = True,
+        namespace: Namespace,
+        value_property_name: str,
+        delete_connecting_node: bool = False,
+        predicate_property_name: str | None = None,
     ):
         self.destination_node_type = destination_node_type
-        self.property_predicate = property_predicate
-        self.property_name = property_name
+        self.namespace = namespace
+        self.value_property_predicate = self.namespace[value_property_name]
         self.delete_connecting_node = delete_connecting_node
+        self.predicate_property_name = predicate_property_name
 
-    def transform(self, graph: Graph) -> None:
-        nodes_to_delete: list[Identifier] = []
+    def transform(self, graph) -> None:
+        nodes_to_delete: list = []
 
-        graph_traversals = list(
-            graph.query(
-                self._query_template.format(
-                    destination_node_type=self.destination_node_type,
-                    property_predicate=self.property_predicate,
-                    property_name=self.property_name,
-                )
+        if self.predicate_property_name is not None:
+            predicate_property_predicate = self.namespace[self.predicate_property_name]
+            query = self._query_template_new_predicate.format(
+                destination_node_type=self.destination_node_type,
+                predicate_property_predicate=predicate_property_predicate,
+                value_property_predicate=self.value_property_predicate,
             )
-        )
+        else:
+            query = self._query_template_keep_old_predicate.format(
+                destination_node_type=self.destination_node_type,
+                value_property_predicate=self.value_property_predicate,
+            )
 
-        for path in graph_traversals:
-            if isinstance(path, ResultRow):
-                source_node, predicate, destination_node, property_value = path.asdict().values()
+        graph_traversals = graph.query(query)
 
-                # Create new connection from source node to value
-                graph.add((source_node, predicate, property_value))
-                nodes_to_delete.append(destination_node)
+        for result_raw in graph_traversals:
+            source_node, old_predicate, destination_node, new_predicate_value, new_property_value = (
+                result_raw.asdict().values()
+            )
 
-            if self.delete_connecting_node:
-                for node in nodes_to_delete:
-                    # Remove edge triples to node
-                    graph.remove((None, None, node))
-                    # Remove node triple
-                    graph.remove((node, None, None))
+            if self.predicate_property_name is not None:
+                # Ensure new predicate is URI compliant as we are creating a new predicate
+                new_predicate_value_string = sentence_or_string_to_camel(str(new_predicate_value))
+                predicate = as_neat_compliant_uri(self.namespace[new_predicate_value_string])
+            else:
+                predicate = old_predicate
+
+            # Create new connection from source node to value
+            graph.add((source_node, predicate, new_property_value))
+            # Remove old relationship between source node and destination node
+            graph.remove((source_node, predicate, destination_node))
+
+            nodes_to_delete.append(destination_node)
+
+        if self.delete_connecting_node:
+            for node in nodes_to_delete:
+                # Remove edge triples to node
+                graph.remove((None, None, node))
+                # Remove node triple
+                graph.remove((node, None, None))
 
 
 class PruneDanglingNodes(BaseTransformer):
