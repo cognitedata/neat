@@ -67,7 +67,7 @@ class DeleteDataModelFromCDF(Step):
         if self.configs is None or self.data_store_path is None:
             raise WorkflowStepNotInitializedError(type(self).__name__)
         components_to_delete = {
-            cast(Literal["all", "spaces", "data_models", "views", "containers"], key)
+            cast(Literal["spaces", "data_models", "views", "containers"], key)
             for key, value in self.complex_configs["Components"].items()
             if value
         }
@@ -180,7 +180,7 @@ class RulesToDMS(Step):
         )
         multi_space_components_create: bool = self.configs["Multi-space components create"] == "True"
         components_to_create = {
-            cast(Literal["all", "spaces", "data_models", "views", "containers"], key)
+            cast(Literal["spaces", "data_models", "views", "containers"], key)
             for key, value in self.complex_configs["Components"].items()
             if value
         }
@@ -208,7 +208,7 @@ class RulesToDMS(Step):
         dms_exporter = exporters.DMSExporter(
             export_components=frozenset(components_to_create),
             include_space=(None if multi_space_components_create else {dms_rules.metadata.space}),
-            existing_handling=existing_components_handling,
+            existing=existing_components_handling,
         )
 
         output_dir = self.config.staging_path

@@ -163,7 +163,7 @@ class TestDMSExporters:
     def test_export_alice_to_cdf(self, cognite_client: CogniteClient, alice_rules: DMSRules):
         rules: DMSRules = alice_rules
 
-        exporter = DMSExporter(existing_handling="force")
+        exporter = DMSExporter(existing="force")
 
         uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
@@ -183,7 +183,7 @@ class TestDMSExporters:
     def test_export_olav_dms_to_cdf(self, cognite_client: CogniteClient, olav_dms_rules: DMSRules) -> None:
         rules: DMSRules = olav_dms_rules
 
-        exporter = DMSExporter(existing_handling="force")
+        exporter = DMSExporter(existing="force")
 
         uploaded = exporter.export_to_cdf_iterable(rules, cognite_client, dry_run=False)
         uploaded_by_name = {entity.name: entity for entity in uploaded}
@@ -213,7 +213,7 @@ class TestDMSExporters:
         rules = reloaded.as_rules()
         schema = rules.as_schema()
         assert schema.referenced_spaces(include_indirect_references=True) == {new_space}
-        exporter = DMSExporter(existing_handling="force")
+        exporter = DMSExporter(existing="force")
         # First, we ensure that the previous version of the data model is deployed
         uploaded = exporter.export_to_cdf(rules.last, cognite_client, dry_run=False)
         failed = [entity for entity in uploaded if entity.failed]
@@ -277,7 +277,7 @@ class TestDMSExporters:
             | schema.reference.referenced_spaces(True)
         )
         assert referenced_spaces == {new_enterprise_space, new_solution_space}
-        exporter = DMSExporter(existing_handling="force")
+        exporter = DMSExporter(existing="force")
         # First, we ensure that the previous version of the data model is deployed
         uploaded = exporter.export_to_cdf(rules.last, cognite_client, dry_run=False)
         failed = [entity for entity in uploaded if entity.failed]
