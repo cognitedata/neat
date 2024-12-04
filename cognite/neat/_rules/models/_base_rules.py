@@ -334,6 +334,10 @@ class BaseRules(SchemaModel, ABC):
         return output
 
 
+def make_neat_id() -> URIRef:
+    return DEFAULT_NAMESPACE[f"neatId_{str(uuid.uuid4()).replace('-', '_')}"]
+
+
 class SheetRow(SchemaModel):
     neatId: URIRefType | None = Field(
         alias="Neat ID",

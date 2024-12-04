@@ -1,3 +1,7 @@
+from collections import defaultdict
+
+from rdflib import URIRef
+
 from cognite.neat._constants import DMS_LISTABLE_PROPERTY_LIMIT
 from cognite.neat._rules.models.dms import DMSProperty, DMSRules, DMSView
 from cognite.neat._rules.models.entities import ViewEntity
@@ -35,3 +39,19 @@ class DMSAnalysis(BaseAnalysis[DMSRules, DMSView, DMSProperty, ViewEntity, str])
 
     def _get_prop_entity(self, property_: DMSProperty) -> str:
         return property_.view_property
+
+    def views_with_properties_linked_to_classes(
+        self,
+        consider_inheritance: bool = False,
+        allow_different_namespace: bool = False,
+    ) -> dict[ViewEntity, dict[str, URIRef]]:
+        view_property_pairs = self.classes_with_properties(consider_inheritance, allow_different_namespace)
+
+        view_and_properties_with_links: dict[ViewEntity, dict[str, URIRef]] = defaultdict(dict)
+
+        for view, properties in view_property_pairs.items():
+            view_and_properties_with_links[view] = {
+                prop.view_property: prop.logical for prop in properties if prop.logical
+            }
+
+        return view_and_properties_with_links
