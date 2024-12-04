@@ -662,16 +662,22 @@ class DataModelLoaderAPI:
         self.containers = ContainerLoader(client)
         self.data_models = DataModelLoader(client)
         self.nodes = NodeLoader(client)
-        self._loaders = [self.spaces, self.views, self.containers, self.data_models, self.nodes]
+        self._loaders: list[DataModelingLoader] = [
+            self.spaces,
+            self.views,
+            self.containers,
+            self.data_models,
+            self.nodes,
+        ]
 
     def by_dependency_order(
         self, component: Component | Collection[Component] | None = None
     ) -> list[DataModelingLoader]:
         loader_by_type = {type(loader): loader for loader in self._loaders}
         loader_iterable = (
-            loader_by_type[loader_cls]
+            loader_by_type[loader_cls]  # type: ignore[index]
             for loader_cls in TopologicalSorter(
-                {type(loader): type(loader).dependencies for loader in self._loaders}
+                {type(loader): loader.dependencies for loader in self._loaders}  # type: ignore[attr-defined]
             ).static_order()
         )
         if component is None:
