@@ -17,7 +17,7 @@ from cognite.client.data_classes.data_modeling import (
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat._client import DataModelingLoader, NeatClient
-from cognite.neat._client._api.data_modeling_loaders import T_WritableCogniteResourceList
+from cognite.neat._client._api.data_modeling_loaders import MultiCogniteAPIError, T_WritableCogniteResourceList
 from cognite.neat._client.data_classes.data_modeling import Component
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues import IssueList
@@ -192,20 +192,22 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             if items.to_delete_ids:
                 try:
                     deleted = loader.delete(items.to_delete_ids)
-                except CogniteAPIError as e:
-                    results.deleted.update([loader.get_id(item) for item in e.successful])
-                    results.failed_deleted.update([loader.get_id(item) for item in e.failed + e.unknown])
-                    results.error_messages.append(f"Failed to delete {loader.resource_name}: {e!s}")
+                except MultiCogniteAPIError as e:
+                    results.deleted.update([loader.get_id(item) for item in e.success])
+                    results.failed_deleted.update([loader.get_id(item) for item in e.failed])
+                    for error in e.errors:
+                        results.error_messages.append(f"Failed to delete {loader.resource_name}: {error!s}")
                 else:
                     results.deleted.update(deleted)
 
             if items.to_create:
                 try:
                     created = loader.create(items.to_create)
-                except CogniteAPIError as e:
-                    results.created.update([loader.get_id(item) for item in e.successful])
-                    results.failed_created.update([loader.get_id(item) for item in e.failed + e.unknown])
-                    results.error_messages.append(f"Failed to create {loader.resource_name}: {e!s}")
+                except MultiCogniteAPIError as e:
+                    results.created.update([loader.get_id(item) for item in e.success])
+                    results.failed_created.update([loader.get_id(item) for item in e.failed])
+                    for error in e.errors:
+                        results.error_messages.append(f"Failed to create {loader.resource_name}: {error!s}")
                 else:
                     results.created.update(loader.get_ids(created))
 
@@ -214,10 +216,11 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             elif items.to_update:
                 try:
                     updated = loader.update(items.to_update, force=self.existing == "force")
-                except CogniteAPIError as e:
-                    results.changed.update([loader.get_id(item) for item in e.successful])
-                    results.failed_changed.update([loader.get_id(item) for item in e.failed + e.unknown])
-                    results.error_messages.append(f"Failed to update {loader.resource_name}: {e!s}")
+                except MultiCogniteAPIError as e:
+                    results.changed.update([loader.get_id(item) for item in e.success])
+                    results.failed_changed.update([loader.get_id(item) for item in e.failed])
+                    for error in e.errors:
+                        results.error_messages.append(f"Failed to update {loader.resource_name}: {error!s}")
                 else:
                     results.changed.update(loader.get_ids(updated))
 
