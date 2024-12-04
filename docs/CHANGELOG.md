@@ -29,6 +29,8 @@ Changes are grouped as follows:
 ### Changed
 - NeatEngine version to the latest release that has a breaking change to the interface; `2.0.0`
 - NeatEngine version `2.0.1` with bugfix for getting catalog file from zipped folder
+- [BREAKING ]The `neat.to.cst.data_model(...)` has been reworked. The new method has new parameters and new
+  behavior.
 
 ### Fixed
 - Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.

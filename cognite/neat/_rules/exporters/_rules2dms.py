@@ -1,5 +1,5 @@
 import warnings
-from collections.abc import Callable, Collection, Iterable
+from collections.abc import Callable, Collection, Hashable, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Generic, Literal
@@ -150,7 +150,44 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
     def delete_from_cdf(
         self, rules: DMSRules, client: NeatClient, dry_run: bool = False, skip_space: bool = False
     ) -> Iterable[UploadResult]:
-        raise NotImplementedError()
+        schema = self.export(rules)
+
+        # we need to reverse order in which we are picking up the items to delete
+        # as they are sorted in the order of creation and we need to delete them in reverse order
+        for loader in reversed(client.loaders.by_dependency_order(self.export_components)):
+            items = loader.items_from_schema(schema)
+            item_ids = loader.get_ids(items)
+            existing_items = loader.retrieve(item_ids)
+            existing_ids = set(loader.get_ids(existing_items))
+            to_delete: list[Hashable] = []
+            for item_id in item_ids:
+                if (
+                    isinstance(loader, DataModelingLoader)
+                    and self.include_space is not None
+                    and not loader.in_space(item_id, self.include_space)
+                ):
+                    continue
+
+                if item_id in existing_ids:
+                    to_delete.append(item_id)
+
+            result = UploadResult(loader.resource_name)  # type: ignore[var-annotated]
+            if dry_run:
+                result.deleted.update(to_delete)
+                yield result
+                continue
+
+            if to_delete:
+                try:
+                    deleted = loader.delete(to_delete)
+                except MultiCogniteAPIError as e:
+                    result.deleted.update([loader.get_id(item) for item in e.success])
+                    result.failed_deleted.update([loader.get_id(item) for item in e.failed])
+                    for error in e.errors:
+                        result.error_messages.append(f"Failed to delete {loader.resource_name}: {error!s}")
+                else:
+                    result.deleted.update(deleted)
+            yield result
 
     def export_to_cdf_iterable(
         self, rules: DMSRules, client: NeatClient, dry_run: bool = False
