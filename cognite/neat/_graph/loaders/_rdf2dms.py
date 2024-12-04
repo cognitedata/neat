@@ -152,7 +152,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     yield error_view
 
             else:
-                print("Loading instances without linked properties")
                 reader = self.graph_store.read(view.external_id)
 
             for identifier, properties in reader:
