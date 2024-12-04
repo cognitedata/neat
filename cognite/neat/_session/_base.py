@@ -15,7 +15,7 @@ from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.models.information import InformationValidation
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
-from cognite.neat._rules.transformers import ConvertToRules, VerifyAnyRules
+from cognite.neat._rules.transformers import ConvertToRules, InformationToDMS, VerifyAnyRules
 from cognite.neat._rules.transformers._converters import ConversionTransformer
 from cognite.neat._store._provenance import (
     INSTANCES_ENTITY,
@@ -54,7 +54,7 @@ class NeatSession:
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
-        self.mapping = MappingAPI(self._state)
+        self.mapping = MappingAPI(self._state, self._client)
         self.drop = DropAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()
@@ -70,35 +70,37 @@ class NeatSession:
         transformer = VerifyAnyRules("continue", validate=False)
         start = datetime.now(timezone.utc)
         output = transformer.try_transform(last_unverified_rule)
-        if isinstance(output.rules, DMSRules):
-            issues = DMSValidation(output.rules, self._client).validate()
-        elif isinstance(output.rules, InformationRules):
-            issues = InformationValidation(output.rules).validate()
-        else:
-            raise NeatSessionError("Unsupported rule type")
-        if issues.has_errors:
-            # This is up for discussion, but I think we should not return rules that
-            # only pass the verification but not the validation.
-            output.rules = None
-        output.issues.extend(issues)
-
-        end = datetime.now(timezone.utc)
 
         if output.rules:
-            change = Change.from_rules_activity(
-                output.rules,
-                transformer.agent,
-                start,
-                end,
-                f"Verified data model {source_id} as {output.rules.metadata.identifier}",
-                self._state.data_model.provenance.source_entity(source_id)
-                or self._state.data_model.provenance.target_entity(source_id),
-            )
+            if isinstance(output.rules, DMSRules):
+                issues = DMSValidation(output.rules, self._client).validate()
+            elif isinstance(output.rules, InformationRules):
+                issues = InformationValidation(output.rules).validate()
+            else:
+                raise NeatSessionError("Unsupported rule type")
+            if issues.has_errors:
+                # This is up for discussion, but I think we should not return rules that
+                # only pass the verification but not the validation.
+                output.rules = None
+            output.issues.extend(issues)
 
-            self._state.data_model.write(output.rules, change)
+            end = datetime.now(timezone.utc)
 
-            if isinstance(output.rules, InformationRules):
-                self._state.instances.store.add_rules(output.rules)
+            if output.rules:
+                change = Change.from_rules_activity(
+                    output.rules,
+                    transformer.agent,
+                    start,
+                    end,
+                    f"Verified data model {source_id} as {output.rules.metadata.identifier}",
+                    self._state.data_model.provenance.source_entity(source_id)
+                    or self._state.data_model.provenance.target_entity(source_id),
+                )
+
+                self._state.data_model.write(output.rules, change)
+
+                if isinstance(output.rules, InformationRules):
+                    self._state.instances.store.add_rules(output.rules)
 
         output.issues.action = "verify"
         self._state.data_model.issue_lists.append(output.issues)
@@ -106,7 +108,16 @@ class NeatSession:
             print("You can inspect the issues with the .inspect.issues(...) method.")
         return output.issues
 
-    def convert(self, target: Literal["dms", "information"]) -> IssueList:
+    def convert(
+        self, target: Literal["dms", "information"], mode: Literal["edge_properties"] | None = None
+    ) -> IssueList:
+        """Converts the last verified data model to the target type.
+
+        Args:
+            target: The target type to convert the data model to.
+            mode: If the target is "dms", the mode to use for the conversion. None is used for default conversion.
+                "edge_properties" treas classes that implements Edge as edge properties.
+        """
         start = datetime.now(timezone.utc)
         issues = IssueList()
         converter: ConversionTransformer | None = None
@@ -114,7 +125,7 @@ class NeatSession:
         with catch_issues(issues):
             if target == "dms":
                 source_id, info_rules = self._state.data_model.last_verified_information_rules
-                converter = ConvertToRules(DMSRules)
+                converter = InformationToDMS(mode=mode)
                 converted_rules = converter.transform(info_rules).rules
             elif target == "information":
                 source_id, dms_rules = self._state.data_model.last_verified_dms_rules

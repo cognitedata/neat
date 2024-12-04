@@ -27,7 +27,10 @@ from cognite.neat._rules.models._types import (
     ClassEntityType,
     InformationPropertyType,
     MultiValueTypeType,
+    URIRefType,
 )
+
+# NeatIdType,
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import (
     ClassEntity,
@@ -45,8 +48,8 @@ class InformationMetadata(BaseMetadata):
     aspect: ClassVar[DataModelAspect] = DataModelAspect.logical
 
     # Linking to Conceptual and Physical data model aspects
-    physical: URIRef | None = Field(None, description="Link to the logical data model aspect")
-    conceptual: URIRef | None = Field(None, description="Link to the logical data model aspect")
+    physical: URIRef | str | None = Field(None, description="Link to the physical data model aspect")
+    conceptual: URIRef | str | None = Field(None, description="Link to the conceptual data model aspect")
 
 
 def _get_metadata(context: Any) -> InformationMetadata | None:
@@ -69,6 +72,12 @@ class InformationClass(SheetRow):
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     implements: ClassEntityList | None = Field(alias="Implements", default=None)
+
+    physical: URIRefType | None = Field(
+        None,
+        description="Link to the class representation in the physical data model aspect",
+    )
+    conceptual: URIRefType | None = Field(None, description="Link to the conceptual data model aspect")
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.class_,)
@@ -127,6 +136,12 @@ class InformationProperty(SheetRow):
         alias="Inherited",
         description="Flag to indicate if the property is inherited, only use for internal purposes",
     )
+
+    physical: URIRefType | None = Field(
+        None,
+        description="Link to the class representation in the physical data model aspect",
+    )
+    conceptual: URIRefType | None = Field(None, description="Link to the conceptual data model aspect")
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return self.class_, self.property_

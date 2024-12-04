@@ -1,6 +1,5 @@
 from typing import Any
 
-import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import InstanceApply
@@ -8,8 +7,8 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from cognite.neat._graph.loaders import DMSLoader
-from cognite.neat._rules.exporters import YAMLExporter
 from tests.data import classic_windfarm
+from tests.utils import remove_linking_in_rules
 
 RESERVED_PROPERTIES = frozenset(
     {
@@ -33,14 +32,13 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
-    @pytest.mark.skip(reason="In Progress")
     def test_classic_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
         for extractor in classic_windfarm.create_extractors():
             neat._state.instances.store.write(extractor)
 
-        neat.prepare.instances.relationships_as_connections(limit=1)
+        neat.prepare.instances.relationships_as_edges()
         # Sequences is not yet supported
         neat.drop.instances("Sequence")
 
@@ -55,23 +53,27 @@ class TestExtractToLoadFlow:
 
         neat.verify()
 
-        neat.convert("dms")
+        neat.convert("dms", mode="edge_properties")
 
-        neat.mapping.classic_to_core("Classic")
+        neat.mapping.data_model.classic_to_core("Classic", use_parent_property_name=True)
 
-        neat.prepare.data_model.include_referenced()
-        neat.to.cdf.data_model(dry_run=True)
+        neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
-        dms_rules = neat._state.data_model.last_verified_dms_rules[1]
-        store = neat._state.instances.store
-        instances = [
-            self._standardize_instance(instance)
-            for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
-        ]
-        rules_str = YAMLExporter().export(dms_rules)
+        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
 
+        rules_str = neat.to.yaml(format="neat")
+
+        if False:
+            # In progress, not yet supported.
+            dms_rules = neat._state.data_model.last_verified_dms_rules[1]
+            store = neat._state.instances.store
+            instances = [
+                self._standardize_instance(instance)
+                for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
+            ]
+        else:
+            instances = []
         rules_dict = yaml.safe_load(rules_str)
-
         data_regression.check({"rules": rules_dict, "instances": sorted(instances, key=lambda x: x["externalId"])})
 
     @staticmethod

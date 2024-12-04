@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from collections.abc import Collection, Mapping
 from datetime import date, datetime
-from typing import Literal, TypeVar, cast, overload
+from typing import ClassVar, Literal, TypeVar, cast, overload
 
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
@@ -15,6 +15,7 @@ from cognite.neat._constants import (
 )
 from cognite.neat._issues._base import IssueList
 from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._issues.warnings._models import (
     EnterpriseModelNotBuildOnTopOfCDMWarning,
     SolutionModelBuildOnTopOfCDMWarning,
@@ -34,7 +35,7 @@ from cognite.neat._rules.models import (
     SheetList,
     data_types,
 )
-from cognite.neat._rules.models.data_types import DataType, String
+from cognite.neat._rules.models.data_types import AnyURI, DataType, String
 from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSView
 from cognite.neat._rules.models.dms._rules import DMSContainer
 from cognite.neat._rules.models.entities import (
@@ -249,11 +250,12 @@ class PrefixEntities(RulesTransformer[InputRules, InputRules]):  # type: ignore[
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
-    def __init__(self, ignore_undefined_value_types: bool = False):
+    def __init__(self, ignore_undefined_value_types: bool = False, mode: Literal["edge_properties"] | None = None):
         self.ignore_undefined_value_types = ignore_undefined_value_types
+        self.mode = mode
 
     def _transform(self, rules: InformationRules) -> DMSRules:
-        return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types)
+        return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types, self.mode)
 
 
 class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
@@ -637,11 +639,15 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
 
 
 class _InformationRulesConverter:
+    _edge_properties: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
+
     def __init__(self, information: InformationRules):
         self.rules = information
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
 
-    def as_dms_rules(self, ignore_undefined_value_types: bool = False) -> "DMSRules":
+    def as_dms_rules(
+        self, ignore_undefined_value_types: bool = False, mode: Literal["edge_properties"] | None = None
+    ) -> "DMSRules":
         from cognite.neat._rules.models.dms._rules import (
             DMSContainer,
             DMSProperty,
@@ -652,27 +658,55 @@ class _InformationRulesConverter:
         info_metadata = self.rules.metadata
         default_version = info_metadata.version
         default_space = self._to_space(info_metadata.prefix)
-        metadata = self._convert_metadata_to_dms(info_metadata)
+        dms_metadata = self._convert_metadata_to_dms(info_metadata)
+        edge_classes: set[ClassEntity] = set()
+        property_to_edge: dict[tuple[ClassEntity, str], ClassEntity] = {}
+        end_node_by_edge: dict[ClassEntity, ClassEntity] = {}
+        if mode == "edge_properties":
+            edge_classes = {
+                cls_.class_ for cls_ in self.rules.classes if cls_.implements and cls_.implements[0].suffix == "Edge"
+            }
+            property_to_edge = {
+                (prop.class_, prop.property_): prop.value_type
+                for prop in self.rules.properties
+                if prop.value_type in edge_classes and isinstance(prop.value_type, ClassEntity)
+            }
+            end_node_by_edge = {
+                prop.class_: prop.value_type
+                for prop in self.rules.properties
+                if prop.class_ in edge_classes
+                and (prop.property_ == "endNode" or prop.property_ == "end_node")
+                and isinstance(prop.value_type, ClassEntity)
+            }
 
         properties_by_class: dict[ClassEntity, list[DMSProperty]] = defaultdict(list)
         referenced_containers: dict[ContainerEntity, Counter[ClassEntity]] = defaultdict(Counter)
         for prop in self.rules.properties:
             if ignore_undefined_value_types and isinstance(prop.value_type, UnknownEntity):
                 continue
-            dms_property = self._as_dms_property(prop, default_space, default_version)
+            if prop.class_ in edge_classes and prop.property_ in self._edge_properties:
+                continue
+            dms_property = self._as_dms_property(
+                prop, default_space, default_version, edge_classes, property_to_edge, end_node_by_edge
+            )
             properties_by_class[prop.class_].append(dms_property)
             if dms_property.container:
                 referenced_containers[dms_property.container][prop.class_] += 1
 
-        views: list[DMSView] = [
-            DMSView(
+        views: list[DMSView] = []
+
+        for cls_ in self.rules.classes:
+            dms_view = DMSView(
                 name=cls_.name,
                 view=cls_.class_.as_view_entity(default_space, default_version),
                 description=cls_.description,
-                implements=self._get_view_implements(cls_, info_metadata),
+                implements=self._get_view_implements(cls_, info_metadata, mode),
             )
-            for cls_ in self.rules.classes
-        ]
+
+            dms_view.logical = cls_.neatId
+            cls_.physical = dms_view.neatId
+
+            views.append(dms_view)
 
         class_by_entity = {cls_.class_: cls_ for cls_ in self.rules.classes}
 
@@ -696,7 +730,7 @@ class _InformationRulesConverter:
             containers.append(container)
 
         return DMSRules(
-            metadata=metadata,
+            metadata=dms_metadata,
             properties=SheetList[DMSProperty]([prop for prop_set in properties_by_class.values() for prop in prop_set]),
             views=SheetList[DMSView](views),
             containers=SheetList[DMSContainer](containers),
@@ -724,7 +758,7 @@ class _InformationRulesConverter:
             DMSMetadata,
         )
 
-        return DMSMetadata(
+        dms_metadata = DMSMetadata(
             space=metadata.space,
             version=metadata.version,
             external_id=metadata.external_id,
@@ -734,74 +768,138 @@ class _InformationRulesConverter:
             updated=metadata.updated,
         )
 
-    def _as_dms_property(self, prop: InformationProperty, default_space: str, default_version: str) -> "DMSProperty":
-        """This creates the first"""
+        dms_metadata.logical = metadata.identifier
+        metadata.physical = dms_metadata.identifier
 
+        return dms_metadata
+
+    def _as_dms_property(
+        self,
+        info_property: InformationProperty,
+        default_space: str,
+        default_version: str,
+        edge_classes: set[ClassEntity],
+        property_to_edge: dict[tuple[ClassEntity, str], ClassEntity],
+        end_node_by_edge: dict[ClassEntity, ClassEntity],
+    ) -> "DMSProperty":
         from cognite.neat._rules.models.dms._rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
-        value_type: DataType | ViewEntity | DMSUnknownEntity
+        value_type = self._get_value_type(
+            info_property,
+            default_space,
+            default_version,
+            edge_classes,
+            end_node_by_edge,
+        )
+
+        connection = self._get_connection(info_property, value_type, property_to_edge, default_space, default_version)
+
+        container: ContainerEntity | None = None
+        container_property: str | None = None
+        is_list: bool | None = info_property.is_list
+        nullable: bool | None = not info_property.is_mandatory
+        if isinstance(connection, EdgeEntity):
+            nullable = None
+        elif connection == "direct":
+            nullable = True
+            container, container_property = self._get_container(info_property, default_space)
+        else:
+            container, container_property = self._get_container(info_property, default_space)
+
+        dms_property = DMSProperty(
+            name=info_property.name,
+            value_type=value_type,
+            nullable=nullable,
+            is_list=is_list,
+            connection=connection,
+            default=info_property.default,
+            container=container,
+            container_property=container_property,
+            view=info_property.class_.as_view_entity(default_space, default_version),
+            view_property=info_property.property_,
+        )
+
+        # linking
+        dms_property.logical = info_property.neatId
+        info_property.physical = dms_property.neatId
+
+        return dms_property
+
+    @staticmethod
+    def _get_connection(
+        prop: InformationProperty,
+        value_type: DataType | ViewEntity | DMSUnknownEntity,
+        property_to_edge: dict[tuple[ClassEntity, str], ClassEntity],
+        default_space: str,
+        default_version: str,
+    ) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
+        if isinstance(value_type, ViewEntity) and (prop.class_, prop.property_) in property_to_edge:
+            edge_properties = property_to_edge[(prop.class_, prop.property_)]
+            return EdgeEntity(properties=edge_properties.as_view_entity(default_space, default_version))
+        if isinstance(value_type, ViewEntity) and prop.is_list:
+            return EdgeEntity()
+        elif isinstance(value_type, ViewEntity):
+            return "direct"
+        # defaulting to direct connection
+        elif isinstance(value_type, DMSUnknownEntity):
+            return "direct"
+        return None
+
+    def _get_value_type(
+        self,
+        prop: InformationProperty,
+        default_space: str,
+        default_version: str,
+        edge_classes: set[ClassEntity],
+        end_node_by_edge: dict[ClassEntity, ClassEntity],
+    ) -> DataType | ViewEntity | DMSUnknownEntity:
         if isinstance(prop.value_type, DataType):
-            value_type = prop.value_type
+            return prop.value_type
 
         # UnknownEntity should  resolve to DMSUnknownEntity
         # meaning end node type is unknown
         elif isinstance(prop.value_type, UnknownEntity):
-            value_type = DMSUnknownEntity()
+            return DMSUnknownEntity()
 
+        elif isinstance(prop.value_type, ClassEntity) and (prop.value_type in edge_classes):
+            if prop.value_type in end_node_by_edge:
+                return end_node_by_edge[prop.value_type].as_view_entity(default_space, default_version)
+            warnings.warn(
+                NeatValueWarning(
+                    f"Edge class {prop.value_type} does not have 'endNode' property, defaulting to DMSUnknownEntity"
+                ),
+                stacklevel=2,
+            )
+            return DMSUnknownEntity()
         elif isinstance(prop.value_type, ClassEntity):
-            value_type = prop.value_type.as_view_entity(default_space, default_version)
+            return prop.value_type.as_view_entity(default_space, default_version)
 
         elif isinstance(prop.value_type, MultiValueTypeInfo):
             # Multi Object type should resolve to DMSUnknownEntity
             # meaning end node type is unknown
             if prop.value_type.is_multi_object_type():
-                value_type = DMSUnknownEntity()
+                non_unknown = [type_ for type_ in prop.value_type.types if isinstance(type_, UnknownEntity)]
+                if list(non_unknown) == 1:
+                    #
+                    return non_unknown[0].as_view_entity(default_space, default_version)
+                return DMSUnknownEntity()
 
             # Multi Data type should resolve to a single data type, or it should
             elif prop.value_type.is_multi_data_type():
-                value_type = self.convert_multi_data_type(prop.value_type)
+                return self.convert_multi_data_type(prop.value_type)
 
             # Mixed types default to string
             else:
-                value_type = String()
+                non_any_uri = [type_ for type_ in prop.value_type.types if type_ != AnyURI()]
+                if list(non_any_uri) == 1:
+                    if isinstance(non_any_uri[0], ClassEntity):
+                        return non_any_uri[0].as_view_entity(default_space, default_version)
+                    else:
+                        return non_any_uri[0]
+                return String()
 
-        else:
-            raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
-
-        connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = None
-        if isinstance(value_type, ViewEntity):
-            # Default connection type.
-            connection = EdgeEntity() if prop.is_list else "direct"
-
-        # defaulting to direct connection
-        elif isinstance(value_type, DMSUnknownEntity):
-            connection = "direct"
-
-        container: ContainerEntity | None = None
-        container_property: str | None = None
-        is_list: bool | None = prop.is_list
-        nullable: bool | None = not prop.is_mandatory
-        if isinstance(connection, EdgeEntity):
-            nullable = None
-        elif connection == "direct":
-            nullable = True
-            container, container_property = self._get_container(prop, default_space)
-        else:
-            container, container_property = self._get_container(prop, default_space)
-
-        return DMSProperty(
-            name=prop.name,
-            value_type=value_type,
-            nullable=nullable,
-            is_list=is_list,
-            connection=connection,
-            default=prop.default,
-            container=container,
-            container_property=container_property,
-            view=prop.class_.as_view_entity(default_space, default_version),
-            view_property=prop.property_,
-        )
+        raise ValueError(f"Unsupported value type: {prop.value_type.type_}")
 
     @classmethod
     def _to_space(cls, prefix: str) -> str:
@@ -823,9 +921,13 @@ class _InformationRulesConverter:
         self.property_count_by_container[container_entity] += 1
         return container_entity, prop.property_
 
-    def _get_view_implements(self, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
+    def _get_view_implements(
+        self, cls_: InformationClass, metadata: InformationMetadata, mode: Literal["edge_properties"] | None
+    ) -> list[ViewEntity]:
         implements = []
         for parent in cls_.implements or []:
+            if mode == "edge_properties" and parent.suffix == "Edge":
+                continue
             view_entity = parent.as_view_entity(metadata.prefix, metadata.version)
             implements.append(view_entity)
         return implements

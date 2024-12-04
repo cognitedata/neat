@@ -36,6 +36,7 @@ from ._properties import (
 from ._resources import (
     ResourceNeatWarning,
     ResourceNotFoundWarning,
+    ResourceRegexViolationWarning,
     ResourceRetrievalWarning,
     ResourcesDuplicatedWarning,
     ResourceTypeNotSupportedWarning,
@@ -64,6 +65,7 @@ __all__ = [
     "ResourceNotFoundWarning",
     "ResourceTypeNotSupportedWarning",
     "ResourceRetrievalWarning",
+    "ResourceRegexViolationWarning",
     "PrincipleOneModelOneSpaceWarning",
     "PrincipleMatchingSpaceAndVersionWarning",
     "PrincipleSolutionBuildsOnEnterpriseWarning",

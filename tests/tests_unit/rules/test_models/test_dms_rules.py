@@ -1,10 +1,12 @@
 import datetime
+from collections import defaultdict
 from collections.abc import Iterable
 from typing import Any
 
 import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
+from rdflib import URIRef
 
 from cognite.neat._client.data_classes.data_modeling import (
     ContainerApplyDict,
@@ -27,10 +29,12 @@ from cognite.neat._rules.models.dms import (
     DMSInputRules,
     DMSInputView,
     DMSMetadata,
+    DMSProperty,
     DMSSchema,
     DMSValidation,
 )
-from cognite.neat._rules.models.entities._single_value import UnknownEntity
+from cognite.neat._rules.models.dms._exporter import _DMSExporter
+from cognite.neat._rules.models.entities._single_value import UnknownEntity, ViewEntity
 from cognite.neat._rules.transformers import (
     DMSToInformation,
     ImporterPipeline,
@@ -40,6 +44,7 @@ from cognite.neat._rules.transformers import (
     VerifyDMSRules,
 )
 from tests.data import car
+from tests.utils import normalize_neat_id_in_rules
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
@@ -1243,6 +1248,9 @@ class TestDMSRules:
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
     def test_load_valid_rules(self, raw: DMSInputRules, expected_rules: DMSRules) -> None:
         valid_rules = raw.as_rules()
+        normalize_neat_id_in_rules(valid_rules)
+        normalize_neat_id_in_rules(expected_rules)
+
         assert valid_rules.model_dump() == expected_rules.model_dump()
         issues = DMSValidation(valid_rules).validate()
         assert not issues
@@ -1267,7 +1275,9 @@ class TestDMSRules:
         exclude = {
             # This information is lost in the conversion
             "metadata": {"created", "updated"},
-            "properties": {"__all__": {"reference"}},
+            "properties": {"__all__": {"reference", "neatId"}},
+            "views": {"__all__": {"neatId"}},
+            "containers": {"__all__": {"neatId"}},
             # The Exporter adds node types for each view as this is an Enterprise model.
             "nodes": {"__all__"},
         }
@@ -1331,6 +1341,9 @@ class TestDMSRules:
             ],
             containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
         ).as_rules()
+
+        normalize_neat_id_in_rules(dms_rules)
+
         expected_dump = {
             "metadata": {
                 "role": "DMS Architect",
@@ -1348,24 +1361,29 @@ class TestDMSRules:
                     "container_property": "name",
                     "view": "WindFarm",
                     "view_property": "name",
+                    "neatId": URIRef("http://purl.org/cognite/neat/Property_0"),
                 }
             ],
             "views": [
                 {
                     "view": "cdf_cdm:Describable",
+                    "neatId": URIRef("http://purl.org/cognite/neat/View_2"),
                 },
                 {
                     "view": "cdf_cdm:Sourceable",
+                    "neatId": URIRef("http://purl.org/cognite/neat/View_1"),
                 },
                 {
                     "view": "WindFarm",
                     "implements": "cdf_cdm:Sourceable,cdf_cdm:Describable",
+                    "neatId": URIRef("http://purl.org/cognite/neat/View_0"),
                 },
             ],
             "containers": [
                 {
                     "container": "Asset",
                     "constraint": "Sourceable,Describable",
+                    "neatId": URIRef("http://purl.org/cognite/neat/Container_0"),
                 }
             ],
         }
@@ -1481,6 +1499,128 @@ class TestDMSRules:
 
         assert not maybe_rules.issues
 
+    def test_subclass_parent_with_reverse_property(self) -> None:
+        extended_core = DMSInputRules(
+            DMSInputMetadata(
+                space="my_space",
+                external_id="my_data_model",
+                creator="Anders",
+                version="v42",
+            ),
+            properties=[
+                DMSInputProperty(
+                    view="CogniteVisualizable",
+                    view_property="object3D",
+                    value_type="Cognite3DObject",
+                    connection="direct",
+                    is_list=False,
+                    container="CogniteVisualizable",
+                    container_property="object3D",
+                ),
+                DMSInputProperty(
+                    view="Cognite3DObject",
+                    view_property="asset",
+                    value_type="CogniteAsset",
+                    connection="reverse(property=object3D)",
+                ),
+            ],
+            views=[
+                DMSInputView(view="CogniteVisualizable"),
+                DMSInputView(view="CogniteAsset", implements="CogniteVisualizable"),
+                DMSInputView(view="Cognite3DObject"),
+                DMSInputView(view="My3DObject", implements="Cognite3DObject"),
+            ],
+            containers=[
+                DMSInputContainer("CogniteVisualizable"),
+            ],
+        )
+        maybe_rules = VerifyDMSRules("continue").transform(extended_core)
+
+        assert not maybe_rules.issues
+        assert maybe_rules.rules is not None
+
+
+def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
+    yield pytest.param(
+        DMSInputRules(
+            metadata=DMSInputMetadata(
+                space="my_space",
+                external_id="my_data_model",
+                creator="Anders",
+                version="v42",
+            ),
+            properties=[
+                DMSInputProperty(
+                    view="WindTurbine",
+                    view_property="windFarm",
+                    value_type="WindFarm",
+                    connection="edge",
+                    is_list=False,
+                ),
+                DMSInputProperty(
+                    view="WindFarm",
+                    view_property="windTurbines",
+                    value_type="WindTurbine",
+                    connection="edge(direction=inwards)",
+                ),
+            ],
+            views=[
+                DMSInputView(view="WindTurbine"),
+                DMSInputView(view="WindFarm"),
+            ],
+        ),
+        {
+            (
+                ViewEntity(space="my_space", externalId="WindTurbine", version="v42"),
+                "windFarm",
+            ): dm.DirectRelationReference(space="my_space", external_id="WindTurbine.windFarm"),
+            (
+                ViewEntity(space="my_space", externalId="WindFarm", version="v42"),
+                "windTurbines",
+            ): dm.DirectRelationReference(space="my_space", external_id="WindTurbine.windFarm"),
+        },
+        id="Indirect edge use outwards type",
+    )
+
+    yield pytest.param(
+        DMSInputRules(
+            metadata=DMSInputMetadata(
+                space="my_space",
+                external_id="my_data_model",
+                creator="Anders",
+                version="v42",
+            ),
+            properties=[
+                DMSInputProperty(
+                    view="EnergyArea",
+                    view_property="units",
+                    value_type="GeneratingUnit",
+                    connection="edge",
+                    is_list=False,
+                ),
+                DMSInputProperty(
+                    view="WindFarm",
+                    view_property="units",
+                    value_type="WindTurbine",
+                    connection="edge",
+                ),
+            ],
+            views=[
+                DMSInputView(view="EnergyArea"),
+                DMSInputView(view="WindFarm", implements="EnergyArea"),
+            ],
+        ),
+        {
+            (ViewEntity(space="my_space", externalId="EnergyArea", version="v42"), "units"): dm.DirectRelationReference(
+                space="my_space", external_id="EnergyArea.units"
+            ),
+            (ViewEntity(space="my_space", externalId="WindFarm", version="v42"), "units"): dm.DirectRelationReference(
+                space="my_space", external_id="EnergyArea.units"
+            ),
+        },
+        id="Child uses parent edge",
+    )
+
 
 class TestDMSExporter:
     @pytest.mark.skip(reason="This test no more relevant since there will be redo of filtering")
@@ -1570,3 +1710,23 @@ class TestDMSExporter:
         assert actual_model_views == expected_views
         actual_containers = {container.external_id for container in schema.containers}
         assert actual_containers == expected_containers
+
+    @pytest.mark.parametrize(
+        "raw, expected_edge_types_by_view_property_id", list(edge_types_by_view_property_id_test_cases())
+    )
+    def test_edge_types_by_view_property_id(
+        self,
+        raw: DMSInputRules,
+        expected_edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference],
+    ) -> None:
+        dms_rules = DMSRules.model_validate(raw.dump())
+        view_by_id = {view.view: view for view in dms_rules.views}
+        properties_by_view_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
+        for prop in dms_rules.properties:
+            properties_by_view_id[prop.view.as_id()].append(prop)
+
+        exporter = _DMSExporter(dms_rules)
+
+        actual = exporter._edge_types_by_view_property_id(properties_by_view_id, view_by_id)
+
+        assert actual == expected_edge_types_by_view_property_id

@@ -15,14 +15,44 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.100.0] - 04-12-**2024**
+### Added
+- Support for converting relationships to edges.
+- Support for setting limit when running `neat.read.cdf.classic.graph(...)`.
+- RegexViolation warning on Information rules that check if entity ids are DMS compliant
+- Support for using parent property name in `neat.mapping.classic_to_core(...)`.
+- Classes that have properties but are not defined in Classes sheet will raise error
+- Ability to make connection at granular level between Info and DMS rules when doing conversion
+  form Info to DMS rules
+- Ability to change names of properties and views / classes and still be able to load instances
+- `XMLReadAPI` to extract triples from dexpi and aml files via `NeatEngine` in NeatSession
+
+### Changed
+- NeatEngine version to the latest release that has a breaking change to the interface; `2.0.0`
+- NeatEngine version `2.0.1` with bugfix for getting catalog file from zipped folder
+- [BREAKING ]The `neat.to.cst.data_model(...)` has been reworked. The new parameters `drop_data` and `component`
+  ensures that containers and spaces with data are not accidentally deleted, while `component` allows
+  for more granular control over what is deleted. The `fallback_one_by_one` parameter has been removed, and
+  instead is now the default behavior.
+
+### Fixed
+- Implementing a view with a reverse connection no longer raises a `ReversedConnectionNotFeasibleError`.
+
+
 ## [0.99.1] - 28-11-**2024**
 ### Changed
 - Remove "make_compliant" from OWL and IMF importers
 - Information rules post validation is now solely raising warnings
+- Renamed `neat.prepare.instances.relationships_as_connection` to `neat.prepare.instances.relationships_as_edges`.
+  Changed how the conversion is done. The edge is as a node between the start and end node.
 
 ### Fixed
 - `neat.to.cdf.data_model(...)` no longer tries to deploy Cognite Models.
 - Wrong connection in `neat.mapping.classic_to_core(...)` is now fixed.
+
+### Improved
+- Inference, instances are ordered by no of properties
+- Inference, if Unknown value is present in multivalue property it is dropped
 
 ## [0.99.0] - 26-11-**2024**
 ### Changed

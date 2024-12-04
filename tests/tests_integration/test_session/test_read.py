@@ -5,6 +5,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from tests import data
+from tests.utils import normalize_neat_id_in_rules
 
 
 class TestRead:
@@ -20,9 +21,11 @@ class TestRead:
         neat.read.yaml(data.REFERENCING_CORE, format="toolkit")
 
         issues = neat.verify()
+        normalize_neat_id_in_rules(neat._state.data_model.last_verified_dms_rules[1])
         assert not issues.has_errors
 
         neat.prepare.data_model.to_data_product(("sp_my_space", "MyProduct", "v1"), org_name="")
+        normalize_neat_id_in_rules(neat._state.data_model.last_verified_dms_rules[1])
 
         exported_yaml_str = neat.to.yaml()
         exported_rules = yaml.safe_load(exported_yaml_str)

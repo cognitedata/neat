@@ -4,23 +4,25 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Set
 from dataclasses import dataclass
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, cast
 
 import pandas as pd
-from pydantic import BaseModel
+from rdflib import URIRef
 
 from cognite.neat._rules.models._base_rules import BaseRules
 from cognite.neat._rules.models._rdfpath import RDFPath
+from cognite.neat._rules.models.dms._rules import DMSProperty, DMSView
 from cognite.neat._rules.models.entities import (
     ClassEntity,
     Entity,
 )
 from cognite.neat._rules.models.information import InformationProperty
+from cognite.neat._rules.models.information._rules import InformationClass
 from cognite.neat._utils.rdf_ import get_inheritance_path
 
 T_Rules = TypeVar("T_Rules", bound=BaseRules)
-T_Property = TypeVar("T_Property", bound=BaseModel)
-T_Class = TypeVar("T_Class", bound=BaseModel)
+T_Property = TypeVar("T_Property", bound=InformationProperty | DMSProperty)
+T_Class = TypeVar("T_Class", bound=InformationClass | DMSView)
 T_ClassEntity = TypeVar("T_ClassEntity", bound=Entity)
 T_PropertyEntity = TypeVar("T_PropertyEntity", bound=Entity | str)
 
@@ -108,6 +110,14 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
     def inherited_referred_classes(self) -> set[ClassEntity]:
         raise NotImplementedError
 
+    @property
+    def properties_by_neat_id(self) -> dict[URIRef, T_Property]:
+        return {cast(URIRef, prop.neatId): prop for prop in self._get_properties()}
+
+    @property
+    def classes_by_neat_id(self) -> dict[URIRef, T_Class]:
+        return {cast(URIRef, class_.neatId): class_ for class_ in self._get_classes()}
+
     # Todo Lru cache this method.
     def class_parent_pairs(self, allow_different_space: bool = False) -> dict[T_ClassEntity, list[T_ClassEntity]]:
         """This only returns class - parent pairs only if parent is in the same data model"""
@@ -176,7 +186,7 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
             # ParentClassEntity -> ClassEntity to match the type of class_property_pairs
             if parent in class_property_pairs:
                 for property_ in class_property_pairs[parent]:
-                    property_ = property_.model_copy()
+                    property_ = property_.model_copy()  # type: ignore
 
                     # This corresponds to importing properties from parent class
                     # making sure that the property is attached to desired child class

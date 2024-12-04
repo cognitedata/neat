@@ -101,6 +101,28 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
 
         return property_renaming_configuration
 
+    def neat_id_to_transformation_property_uri(self, property_neat_id: URIRef) -> URIRef | None:
+        if (
+            (property_ := self.properties_by_neat_id.get(property_neat_id))
+            and property_.transformation
+            and isinstance(
+                property_.transformation.traversal,
+                SingleProperty,
+            )
+            and (
+                property_.transformation.traversal.property.prefix in self.rules.prefixes
+                or property_.transformation.traversal.property.prefix == self.rules.metadata.prefix
+            )
+        ):
+            namespace = (
+                self.rules.metadata.namespace
+                if property_.transformation.traversal.property.prefix == self.rules.metadata.prefix
+                else self.rules.prefixes[property_.transformation.traversal.property.prefix]
+            )
+
+            return namespace[property_.transformation.traversal.property.suffix]
+        return None
+
     def property_types(self, class_: ClassEntity) -> dict[str, EntityTypes]:
         property_types = {}
         if definitions := self.class_property_pairs(consider_inheritance=True).get(class_, None):

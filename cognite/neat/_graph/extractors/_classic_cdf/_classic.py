@@ -11,7 +11,7 @@ from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._issues.warnings import CDFAuthWarning
 from cognite.neat._shared import Triple
-from cognite.neat._utils.collection_ import chunker
+from cognite.neat._utils.collection_ import chunker, iterate_progress_bar
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._assets import AssetsExtractor
@@ -92,6 +92,7 @@ class ClassicGraphExtractor(BaseExtractor):
         data_set_external_id: str | None = None,
         root_asset_external_id: str | None = None,
         namespace: Namespace | None = None,
+        limit_per_type: int | None = None,
     ):
         self._client = client
         if sum([bool(data_set_external_id), bool(root_asset_external_id)]) != 1:
@@ -99,12 +100,27 @@ class ClassicGraphExtractor(BaseExtractor):
         self._root_asset_external_id = root_asset_external_id
         self._data_set_external_id = data_set_external_id
         self._namespace = namespace or CLASSIC_CDF_NAMESPACE
-        self._extractor_args = dict(namespace=self._namespace, unpack_metadata=False, as_write=True, camel_case=True)
+        self._extractor_args = dict(
+            namespace=self._namespace, unpack_metadata=False, as_write=True, camel_case=True, limit=limit_per_type
+        )
+        self._limit_per_type = limit_per_type
 
         self._source_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
         self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
         self._labels: set[str] = set()
         self._data_set_ids: set[int] = set()
+        self._extracted_labels = False
+        self._extracted_data_sets = False
+
+    def _get_activity_names(self) -> list[str]:
+        activities = [data_access_object.extractor_cls.__name__ for data_access_object in self._classic_node_types] + [
+            RelationshipsExtractor.__name__,
+        ]
+        if self._extracted_labels:
+            activities.append(LabelsExtractor.__name__)
+        if self._extracted_data_sets:
+            activities.append(DataSetExtractor.__name__)
+        return activities
 
     def extract(self) -> Iterable[Triple]:
         """Extracts all classic CDF Resources."""
@@ -118,11 +134,15 @@ class ClassicGraphExtractor(BaseExtractor):
             yield from self._extract_labels()
         except CogniteAPIError as e:
             warnings.warn(CDFAuthWarning("extract labels", str(e)), stacklevel=2)
+        else:
+            self._extracted_labels = True
 
         try:
             yield from self._extract_data_sets()
         except CogniteAPIError as e:
             warnings.warn(CDFAuthWarning("extract data sets", str(e)), stacklevel=2)
+        else:
+            self._extracted_data_sets = True
 
     def _extract_core_start_nodes(self):
         for core_node in self._classic_node_types:
@@ -206,14 +226,4 @@ class ClassicGraphExtractor(BaseExtractor):
     @staticmethod
     def _chunk(items: Sequence, description: str) -> Iterable:
         to_iterate: Iterable = chunker(items, chunk_size=1000)
-        try:
-            from rich.progress import track
-        except ModuleNotFoundError:
-            ...
-        else:
-            to_iterate = track(
-                to_iterate,
-                total=(len(items) // 1_000) + 1,
-                description=description,
-            )
-        return to_iterate
+        return iterate_progress_bar(to_iterate, (len(items) // 1_000) + 1, description)

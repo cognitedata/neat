@@ -1,8 +1,10 @@
 import pytest
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
+from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat._client import NeatClient
+from cognite.neat._client._api.data_modeling_loaders import MultiCogniteAPIError
 
 
 @pytest.fixture(scope="session")
@@ -29,7 +31,7 @@ def container_props(cognite_client: CogniteClient, space: dm.Space) -> dm.Contai
 
 
 class TestViewLoader:
-    def test_force_create(self, neat_client: NeatClient, container_props: dm.Container, space: dm.Space) -> None:
+    def test_force_update(self, neat_client: NeatClient, container_props: dm.Container, space: dm.Space) -> None:
         container_id = container_props.as_id()
         original = dm.ViewApply(
             space=space.space,
@@ -58,7 +60,7 @@ class TestViewLoader:
             container=container_id, container_property_identifier=new_prop
         )
 
-        new_created = neat_client.loaders.views.create([modified], existing_handling="force")[0]
+        new_created = neat_client.loaders.views.update([modified], force=True)[0]
 
         assert new_created.as_id() == original.as_id(), "The view version should be the same"
         assert (
@@ -72,16 +74,32 @@ class TestViewLoader:
 
         assert len(views) == 30, "This should return almost the entire CogniteCore model"
 
+    def test_avoid_duplicates(self, neat_client: NeatClient) -> None:
+        views = neat_client.loaders.views.retrieve(
+            [dm.ViewId("cdf_cdm", "CogniteAsset", "v1"), dm.ViewId("cdf_cdm", "CogniteEquipment", "v1")],
+            include_ancestor=True,
+        )
+        unique_views = set(views.as_ids())
+        assert len(unique_views) == len(views), "There should be no duplicates in the list of views"
+
+        cached_views = neat_client.loaders.views.retrieve(
+            [dm.ViewId("cdf_cdm", "CogniteAsset", "v1"), dm.ViewId("cdf_cdm", "CogniteEquipment", "v1")],
+            include_ancestor=True,
+        )
+
+        assert len(cached_views) == len(views), "The cached views should be the same as the original views"
+
 
 class TestContainerLoader:
-    def test_force_create(self, neat_client: NeatClient, space: dm.Space) -> None:
+    def test_force_update(self, neat_client: NeatClient, space: dm.Space) -> None:
         original = dm.ContainerApply(
             space=space.space,
             external_id="test_container",
             properties={
                 "name": dm.ContainerProperty(type=dm.Text()),
-                "number": dm.ContainerProperty(type=dm.Int64()),
+                "number": dm.ContainerProperty(type=dm.Int64(), nullable=True),
             },
+            used_for="node",
         )
         retrieved = neat_client.data_modeling.containers.retrieve(original.as_id())
         if retrieved is None:
@@ -89,12 +107,58 @@ class TestContainerLoader:
             existing = original
         else:
             existing = retrieved
+
+        node = dm.NodeApply(
+            space=space.space,
+            external_id="node_to_populate_container",
+            sources=[
+                dm.NodeOrEdgeData(
+                    source=existing.as_id(),
+                    properties={
+                        "name": "Test",
+                    },
+                )
+            ],
+        )
+        neat_client.data_modeling.instances.apply(node)
+
         modified = dm.ContainerApply.load(original.dump_yaml())
         # Change the type for each time the test runs to require a force update
         new_prop = dm.Float64() if isinstance(existing.properties["number"].type, dm.Int64) else dm.Int64()
         modified.properties["number"] = dm.ContainerProperty(type=new_prop)
 
-        new_created = neat_client.loaders.containers.create([modified], existing_handling="force")[0]
+        try:
+            _ = neat_client.loaders.containers.update([modified], force=True, drop_data=False)[0]
+        except CogniteAPIError as e:
+            assert len(e.failed) == 1, "We should not have been able to update the container"
+        else:
+            raise AssertionError("We should not have been able to update the container")
 
-        assert new_created.as_id() == original.as_id(), "The container version should be the same"
+        new_created = neat_client.loaders.containers.update([modified], force=True, drop_data=True)[0]
+        assert new_created.as_id() == original.as_id(), "The container should be the same"
         assert new_created.properties["number"].type == new_prop, "The property should have been updated"
+
+    def test_fallback_one_by_one(self, neat_client: NeatClient, space: dm.Space) -> None:
+        valid_container = dm.ContainerApply(
+            space=space.space,
+            external_id="valid_container",
+            properties={
+                "name": dm.ContainerProperty(type=dm.Text()),
+            },
+        )
+        invalid_container = dm.ContainerApply(
+            space=space.space,
+            external_id="invalid_container-$)()&",
+            properties={
+                "name": dm.ContainerProperty(type=dm.Text()),
+            },
+        )
+
+        try:
+            try:
+                neat_client.loaders.containers.create([valid_container, invalid_container])
+            except MultiCogniteAPIError as e:
+                assert len(e.success) == 1, "Only one container should be created"
+                assert len(e.failed) == 1, "Only one container should fail"
+        finally:
+            neat_client.data_modeling.containers.delete([valid_container.as_id()])

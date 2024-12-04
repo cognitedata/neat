@@ -53,9 +53,10 @@ class TestDMSImporter:
         # This information is lost in the conversion to schema
         exclude = {
             "metadata": {"created", "updated"},
-            "properties": {"__all__": {"reference"}},
+            "properties": {"__all__": {"reference", "neatId"}},
+            "containers": {"__all__": {"neatId"}},
             "reference": {"__all__"},
-            "views": {"__all__": {"reference"}},
+            "views": {"__all__": {"reference", "neatId"}},
             # The Exporter adds node types for each view
             "nodes": {"__all__"},
         }

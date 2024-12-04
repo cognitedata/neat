@@ -1,20 +1,24 @@
 import warnings
-from collections.abc import Collection, Hashable, Iterable, Sequence
+from collections.abc import Callable, Collection, Hashable, Iterable
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal, TypeAlias, cast
+from typing import Generic, Literal
 
-from cognite.client.data_classes._base import CogniteResource, CogniteResourceList
+from cognite.client.data_classes._base import (
+    T_CogniteResourceList,
+    T_WritableCogniteResource,
+    T_WriteClass,
+)
 from cognite.client.data_classes.data_modeling import (
-    ContainerApplyList,
-    DataModelApply,
     DataModelApplyList,
     DataModelId,
-    SpaceApplyList,
     ViewApplyList,
 )
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat._client import DataModelingLoader, NeatClient
+from cognite.neat._client._api.data_modeling_loaders import MultiCogniteAPIError, T_WritableCogniteResourceList
+from cognite.neat._client.data_classes.data_modeling import Component
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.warnings import (
@@ -22,11 +26,44 @@ from cognite.neat._issues.warnings import (
     ResourceRetrievalWarning,
 )
 from cognite.neat._rules.models.dms import DMSRules
+from cognite.neat._shared import T_ID
 from cognite.neat._utils.upload import UploadResult
 
 from ._base import CDFExporter
 
-Component: TypeAlias = Literal["all", "spaces", "data_models", "views", "containers", "node_types"]
+
+@dataclass
+class ItemCategorized(Generic[T_ID, T_WriteClass]):
+    resource_name: str
+    as_id: Callable[[T_WriteClass], T_ID]
+    to_create: list[T_WriteClass] = field(default_factory=list)
+    to_update: list[T_WriteClass] = field(default_factory=list)
+    to_delete: list[T_WriteClass] = field(default_factory=list)
+    to_skip: list[T_WriteClass] = field(default_factory=list)
+    unchanged: list[T_WriteClass] = field(default_factory=list)
+
+    @property
+    def to_create_ids(self) -> list[T_ID]:
+        return [self.as_id(item) for item in self.to_create]
+
+    @property
+    def to_update_ids(self) -> list[T_ID]:
+        return [self.as_id(item) for item in self.to_update]
+
+    @property
+    def to_skip_ids(self) -> list[T_ID]:
+        return [self.as_id(item) for item in self.to_skip]
+
+    @property
+    def to_delete_ids(self) -> list[T_ID]:
+        return [self.as_id(item) for item in self.to_delete]
+
+    @property
+    def unchanged_ids(self) -> list[T_ID]:
+        return [self.as_id(item) for item in self.unchanged]
+
+    def item_ids(self) -> Iterable[T_ID]:
+        yield from (self.as_id(item) for item in self.to_create + self.to_update + self.to_delete + self.unchanged)
 
 
 class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
@@ -37,34 +74,39 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             Which components to export. Defaults to frozenset({"all"}).
         include_space (set[str], optional):
             If set, only export components in the given spaces. Defaults to None which means all spaces.
-        existing_handling (Literal["fail", "skip", "update", "force"], optional): How to handle existing components.
+        existing (Literal["fail", "skip", "update", "force"], optional): How to handle existing components.
             Defaults to "update". See below for details.
         instance_space (str, optional): The space to use for the instance. Defaults to None.
         suppress_warnings (bool, optional): Suppress warnings. Defaults to False.
+        remove_cdf_spaces (bool, optional): Skip views and containers that are system are in system spaces.
 
     ... note::
 
         - "fail": If any component already exists, the export will fail.
         - "skip": If any component already exists, it will be skipped.
-        - "update": If any component already exists, it will be updated.
+        - "update": If any component already exists, it will
         - "force": If any component already exists, it will be deleted and recreated.
 
     """
 
     def __init__(
         self,
-        export_components: Component | Collection[Component] = "all",
+        export_components: Component | Collection[Component] | None = None,
         include_space: set[str] | None = None,
-        existing_handling: Literal["fail", "skip", "update", "force"] = "update",
+        existing: Literal["fail", "skip", "update", "force", "recreate"] = "update",
         instance_space: str | None = None,
         suppress_warnings: bool = False,
+        drop_data: bool = False,
+        remove_cdf_spaces: bool = True,
     ):
-        self.export_components = {export_components} if isinstance(export_components, str) else set(export_components)
+        self.export_components = export_components
         self.include_space = include_space
-        self.existing_handling = existing_handling
+        self.existing = existing
+        self.drop_data = drop_data
         self.instance_space = instance_space
         self.suppress_warnings = suppress_warnings
         self._schema: DMSSchema | None = None
+        self.remove_cdf_spaces = remove_cdf_spaces
 
     def export_to_file(self, rules: DMSRules, filepath: Path) -> None:
         """Export the rules to a file(s).
@@ -95,30 +137,28 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         schema.to_zip(filepath, exclude=exclude)
 
     def _create_exclude_set(self):
-        if "all" in self.export_components:
+        if self.export_components is None:
             exclude = set()
         else:
-            exclude = {"spaces", "data_models", "views", "containers", "node_types"} - self.export_components
+            exclude = {"spaces", "data_models", "views", "containers", "node_types"} - set(self.export_components)
         return exclude
 
     def export(self, rules: DMSRules) -> DMSSchema:
-        # We do not want to include CogniteCore/CogniteProcess Inudstries in the schema
-        return rules.as_schema(instance_space=self.instance_space, remove_cdf_spaces=True)
+        # We do not want to include CogniteCore/CogniteProcess Industries in the schema
+        return rules.as_schema(instance_space=self.instance_space, remove_cdf_spaces=self.remove_cdf_spaces)
 
     def delete_from_cdf(
         self, rules: DMSRules, client: NeatClient, dry_run: bool = False, skip_space: bool = False
     ) -> Iterable[UploadResult]:
-        to_export = self._prepare_exporters(rules)
+        schema = self.export(rules)
 
         # we need to reverse order in which we are picking up the items to delete
         # as they are sorted in the order of creation and we need to delete them in reverse order
-        for items in reversed(to_export):
-            loader = client.loaders.get_loader(items)
-            if skip_space and isinstance(items, SpaceApplyList):
-                continue
+        for loader in reversed(client.loaders.by_dependency_order(self.export_components)):
+            items = loader.items_from_schema(schema)
             item_ids = loader.get_ids(items)
             existing_items = loader.retrieve(item_ids)
-            existing_ids = loader.get_ids(existing_items)
+            existing_ids = set(loader.get_ids(existing_items))
             to_delete: list[Hashable] = []
             for item_id in item_ids:
                 if (
@@ -131,168 +171,132 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 if item_id in existing_ids:
                     to_delete.append(item_id)
 
-            deleted: set[Hashable] = set()
-            failed_deleted: set[Hashable] = set()
-            error_messages: list[str] = []
+            result = UploadResult(loader.resource_name)  # type: ignore[var-annotated]
             if dry_run:
-                deleted.update(to_delete)
-            elif to_delete:
-                try:
-                    loader.delete(to_delete)
-                except CogniteAPIError as e:
-                    failed_deleted.update(loader.get_id(item) for item in e.failed + e.unknown)
-                    deleted.update(loader.get_id(item) for item in e.successful)
-                    error_messages.append(f"Failed delete: {e.message}")
-                else:
-                    deleted.update(to_delete)
+                result.deleted.update(to_delete)
+                yield result
+                continue
 
-            yield UploadResult(
-                name=loader.resource_name,
-                deleted=deleted,
-                failed_deleted=failed_deleted,
-                error_messages=error_messages,
-            )
+            if to_delete:
+                try:
+                    deleted = loader.delete(to_delete)
+                except MultiCogniteAPIError as e:
+                    result.deleted.update([loader.get_id(item) for item in e.success])
+                    result.failed_deleted.update([loader.get_id(item) for item in e.failed])
+                    for error in e.errors:
+                        result.error_messages.append(f"Failed to delete {loader.resource_name}: {error!s}")
+                else:
+                    result.deleted.update(deleted)
+            yield result
 
     def export_to_cdf_iterable(
-        self, rules: DMSRules, client: NeatClient, dry_run: bool = False, fallback_one_by_one: bool = False
+        self, rules: DMSRules, client: NeatClient, dry_run: bool = False
     ) -> Iterable[UploadResult]:
-        to_export = self._prepare_exporters(rules)
+        schema = self.export(rules)
 
-        result_by_name = {}
-        if self.existing_handling == "force":
-            for delete_result in self.delete_from_cdf(rules, client, dry_run, skip_space=True):
-                result_by_name[delete_result.name] = delete_result
+        categorized_items_by_loader = self._categorize_by_loader(client, schema)
 
+        is_failing = self.existing == "fail" and any(
+            loader.resource_name for loader, categorized in categorized_items_by_loader.items() if categorized.to_update
+        )
+
+        for loader, items in categorized_items_by_loader.items():
+            issue_list = IssueList()
+
+            if items.resource_name == client.loaders.data_models.resource_name:
+                warning_list = self._validate(list(items.item_ids()), client)
+                issue_list.extend(warning_list)
+
+            results = UploadResult(loader.resource_name, issues=issue_list)  # type: ignore[var-annotated]
+            if is_failing:
+                # If any component already exists, the export will fail.
+                # This is the same if we run dry_run or not.
+                results.failed_upserted.update(items.to_update_ids)
+                results.failed_created.update(items.to_create_ids)
+                results.failed_deleted.update(items.to_delete_ids)
+                results.unchanged.update(items.unchanged_ids)
+                results.error_messages.append("Existing components found and existing_handling is 'fail'")
+                yield results
+                continue
+
+            results.unchanged.update(items.unchanged_ids)
+            results.skipped.update(items.to_skip_ids)
+            if dry_run:
+                if self.existing in ["update", "force"]:
+                    # Assume all changed are successful
+                    results.changed.update(items.to_update_ids)
+                elif self.existing == "skip":
+                    results.skipped.update(items.to_update_ids)
+                results.deleted.update(items.to_delete_ids)
+                results.created.update(items.to_create_ids)
+                yield results
+                continue
+
+            if items.to_delete_ids:
+                try:
+                    deleted = loader.delete(items.to_delete_ids)
+                except MultiCogniteAPIError as e:
+                    results.deleted.update([loader.get_id(item) for item in e.success])
+                    results.failed_deleted.update([loader.get_id(item) for item in e.failed])
+                    for error in e.errors:
+                        results.error_messages.append(f"Failed to delete {loader.resource_name}: {error!s}")
+                else:
+                    results.deleted.update(deleted)
+
+            if items.to_create:
+                try:
+                    created = loader.create(items.to_create)
+                except MultiCogniteAPIError as e:
+                    results.created.update([loader.get_id(item) for item in e.success])
+                    results.failed_created.update([loader.get_id(item) for item in e.failed])
+                    for error in e.errors:
+                        results.error_messages.append(f"Failed to create {loader.resource_name}: {error!s}")
+                else:
+                    results.created.update(loader.get_ids(created))
+
+            if items.to_update and self.existing == "skip":
+                results.skipped.update(items.to_update_ids)
+            elif items.to_update:
+                try:
+                    updated = loader.update(items.to_update, force=self.existing == "force", drop_data=self.drop_data)
+                except MultiCogniteAPIError as e:
+                    results.changed.update([loader.get_id(item) for item in e.success])
+                    results.failed_changed.update([loader.get_id(item) for item in e.failed])
+                    for error in e.errors:
+                        results.error_messages.append(f"Failed to update {loader.resource_name}: {error!s}")
+                else:
+                    results.changed.update(loader.get_ids(updated))
+
+            yield results
+
+    def _categorize_by_loader(self, client: NeatClient, schema: DMSSchema) -> dict[DataModelingLoader, ItemCategorized]:
+        categorized_items_by_loader: dict[DataModelingLoader, ItemCategorized] = {}
         redeploy_data_model = False
-        for items in to_export:
+        for loader in client.loaders.by_dependency_order(self.export_components):
+            items = loader.items_from_schema(schema)
             # The conversion from DMS to GraphQL does not seem to be triggered even if the views
             # are changed. This is a workaround to force the conversion.
             is_redeploying = isinstance(items, DataModelApplyList) and redeploy_data_model
-            loader = client.loaders.get_loader(items)
 
-            to_create, to_delete, to_update, unchanged = self._categorize_items_for_upload(
-                loader, items, is_redeploying
-            )
+            categorized = self._categorize_items_for_upload(loader, items, is_redeploying)
+            categorized_items_by_loader[loader] = categorized
 
-            issue_list = IssueList()
-            warning_list = self._validate(loader, items, client)
-            issue_list.extend(warning_list)
-
-            created: set[Hashable] = set()
-            skipped: set[Hashable] = set()
-            changed: set[Hashable] = set()
-            deleted: set[Hashable] = set()
-            failed_created: set[Hashable] = set()
-            failed_changed: set[Hashable] = set()
-            failed_deleted: set[Hashable] = set()
-            error_messages: list[str] = []
-            if dry_run:
-                if self.existing_handling in ["update", "force"]:
-                    changed.update(loader.get_id(item) for item in to_update)
-                elif self.existing_handling == "skip":
-                    skipped.update(loader.get_id(item) for item in to_update)
-                elif self.existing_handling == "fail":
-                    failed_changed.update(loader.get_id(item) for item in to_update)
-                else:
-                    raise ValueError(f"Unsupported existing_handling {self.existing_handling}")
-                created.update(loader.get_id(item) for item in to_create)
-                deleted.update(loader.get_id(item) for item in to_delete)
-            else:
-                if to_delete:
-                    try:
-                        loader.delete(to_delete)
-                    except CogniteAPIError as e:
-                        if fallback_one_by_one:
-                            for item in to_delete:
-                                try:
-                                    loader.delete([item])
-                                except CogniteAPIError as item_e:
-                                    failed_deleted.add(loader.get_id(item))
-                                    error_messages.append(f"Failed delete: {item_e!s}")
-                                else:
-                                    deleted.add(loader.get_id(item))
-                        else:
-                            error_messages.append(f"Failed delete: {e!s}")
-                            failed_deleted.update(loader.get_id(item) for item in e.failed + e.unknown)
-                    else:
-                        deleted.update(loader.get_id(item) for item in to_delete)
-
-                if isinstance(items, DataModelApplyList):
-                    to_create = loader.sort_by_dependencies(to_create)
-
-                try:
-                    loader.create(to_create)
-                except CogniteAPIError as e:
-                    if fallback_one_by_one:
-                        for item in to_create:
-                            try:
-                                loader.create([item])
-                            except CogniteAPIError as item_e:
-                                failed_created.add(loader.get_id(item))
-                                error_messages.append(f"Failed create: {item_e!s}")
-                            else:
-                                created.add(loader.get_id(item))
-                    else:
-                        failed_created.update(loader.get_id(item) for item in e.failed + e.unknown)
-                        created.update(loader.get_id(item) for item in e.successful)
-                        error_messages.append(f"Failed create: {e!s}")
-                else:
-                    created.update(loader.get_id(item) for item in to_create)
-
-                if self.existing_handling in ["update", "force"]:
-                    try:
-                        loader.update(to_update)
-                    except CogniteAPIError as e:
-                        if fallback_one_by_one:
-                            for item in to_update:
-                                try:
-                                    loader.update([item])
-                                except CogniteAPIError as e_item:
-                                    failed_changed.add(loader.get_id(item))
-                                    error_messages.append(f"Failed update: {e_item!s}")
-                                else:
-                                    changed.add(loader.get_id(item))
-                        else:
-                            failed_changed.update(loader.get_id(item) for item in e.failed + e.unknown)
-                            changed.update(loader.get_id(item) for item in e.successful)
-                            error_messages.append(f"Failed update: {e!s}")
-                    else:
-                        changed.update(loader.get_id(item) for item in to_update)
-                elif self.existing_handling == "skip":
-                    skipped.update(loader.get_id(item) for item in to_update)
-                elif self.existing_handling == "fail":
-                    failed_changed.update(loader.get_id(item) for item in to_update)
-
-            if loader.resource_name in result_by_name:
-                delete_result = result_by_name[loader.resource_name]
-                deleted.update(delete_result.deleted)
-                failed_deleted.update(delete_result.failed_deleted)
-                error_messages.extend(delete_result.error_messages)
-
-            yield UploadResult(
-                name=loader.resource_name,
-                created=created,
-                changed=changed,
-                deleted=deleted,
-                unchanged={loader.get_id(item) for item in unchanged},
-                skipped=skipped,
-                failed_created=failed_created,
-                failed_changed=failed_changed,
-                failed_deleted=failed_deleted,
-                error_messages=error_messages,
-                issues=issue_list,
-            )
-
-            if isinstance(items, ViewApplyList) and (created or changed):
+            if isinstance(items, ViewApplyList) and (categorized.to_create or categorized.to_update):
                 redeploy_data_model = True
+        return categorized_items_by_loader
 
     def _categorize_items_for_upload(
-        self, loader: DataModelingLoader, items: Sequence[CogniteResource], is_redeploying
-    ) -> tuple[list[CogniteResource], list[CogniteResource], list[CogniteResource], list[CogniteResource]]:
+        self,
+        loader: DataModelingLoader[
+            T_ID, T_WriteClass, T_WritableCogniteResource, T_CogniteResourceList, T_WritableCogniteResourceList
+        ],
+        items: T_CogniteResourceList,
+        is_redeploying: bool,
+    ) -> ItemCategorized[T_ID, T_WriteClass]:
         item_ids = loader.get_ids(items)
         cdf_items = loader.retrieve(item_ids)
         cdf_item_by_id = {loader.get_id(item): item for item in cdf_items}
-        to_create, to_update, unchanged, to_delete = [], [], [], []
+        categorized = ItemCategorized[T_ID, T_WriteClass](loader.resource_name, loader.get_id)
         for item in items:
             if (
                 isinstance(items, DataModelApplyList)
@@ -303,50 +307,38 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
 
             cdf_item = cdf_item_by_id.get(loader.get_id(item))
             if cdf_item is None:
-                to_create.append(item)
-            elif is_redeploying:
-                to_update.append(item)
-                to_delete.append(cdf_item)
+                categorized.to_create.append(item)
+            elif is_redeploying or self.existing == "recreate":
+                if loader.has_data(cdf_item) and not self.drop_data:
+                    categorized.to_skip.append(cdf_item)
+                else:
+                    categorized.to_delete.append(cdf_item.as_write())
+                    categorized.to_create.append(item)
             elif loader.are_equal(item, cdf_item):
-                unchanged.append(item)
+                categorized.unchanged.append(item)
             else:
-                to_update.append(item)
-        return to_create, to_delete, to_update, unchanged
+                categorized.to_update.append(item)
+        return categorized
 
-    def _prepare_exporters(self, rules: DMSRules) -> list[CogniteResourceList]:
-        schema = self.export(rules)
-        to_export: list[CogniteResourceList] = []
-        if self.export_components.intersection({"all", "spaces"}):
-            to_export.append(SpaceApplyList(schema.spaces.values()))
-        if self.export_components.intersection({"all", "containers"}):
-            to_export.append(ContainerApplyList(schema.containers.values()))
-        if self.export_components.intersection({"all", "views"}):
-            to_export.append(ViewApplyList(schema.views.values()))
-        if self.export_components.intersection({"all", "data_models"}):
-            to_export.append(DataModelApplyList([schema.data_model]))
-        return to_export
-
-    def _validate(self, loader: DataModelingLoader, items: CogniteResourceList, client: NeatClient) -> IssueList:
+    def _validate(self, items: list[DataModelId], client: NeatClient) -> IssueList:
         issue_list = IssueList()
-        if isinstance(items, DataModelApplyList):
-            models = cast(list[DataModelApply], items)
-            if other_models := self._exist_other_data_models(client, models):
-                warning = PrincipleOneModelOneSpaceWarning(
-                    f"There are multiple data models in the same space {models[0].space}. "
-                    f"Other data models in the space are {other_models}.",
-                )
-                if not self.suppress_warnings:
-                    warnings.warn(warning, stacklevel=2)
-                issue_list.append(warning)
+        if other_models := self._exist_other_data_models(client, items):
+            warning = PrincipleOneModelOneSpaceWarning(
+                f"There are multiple data models in the same space {items[0].space}. "
+                f"Other data models in the space are {other_models}.",
+            )
+            if not self.suppress_warnings:
+                warnings.warn(warning, stacklevel=2)
+            issue_list.append(warning)
 
         return issue_list
 
     @classmethod
-    def _exist_other_data_models(cls, client: NeatClient, models: list[DataModelApply]) -> list[DataModelId]:
-        if not models:
+    def _exist_other_data_models(cls, client: NeatClient, model_ids: list[DataModelId]) -> list[DataModelId]:
+        if not model_ids:
             return []
-        space = models[0].space
-        external_id = models[0].external_id
+        space = model_ids[0].space
+        external_id = model_ids[0].external_id
         try:
             data_models = client.data_modeling.data_models.list(space=space, limit=25, all_versions=False)
         except CogniteAPIError as e:

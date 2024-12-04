@@ -1,3 +1,5 @@
+from rdflib import RDF, Literal, Namespace
+
 from cognite.neat._graph.examples import nordic44_knowledge_graph
 from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat._rules.analysis import InformationAnalysis
@@ -44,6 +46,28 @@ def test_rdf_inference():
 
     # we should have 4 multi-value property
     assert len(InformationAnalysis(rules).multi_value_properties) == 4
+
+
+def test_rdf_inference_with_removal_of_unknown_type():
+    EX = Namespace("http://example.org/")
+    SUBSTATION = Namespace("http://example.org/substation/")
+    TERMINAL = Namespace("http://example.org/terminal/")
+    store = NeatGraphStore.from_oxi_store()
+
+    store.graph.add((EX.substation1, RDF.type, SUBSTATION.Substation))
+    store.graph.add((EX.substation2, RDF.type, SUBSTATION.Substation))
+    store.graph.add((EX.substation3, RDF.type, SUBSTATION.Substation))
+    store.graph.add((EX.terminal1, RDF.type, TERMINAL.Terminal))
+    store.graph.add((EX.terminal2, RDF.type, TERMINAL.Terminal))
+    store.graph.add((EX.substation1, EX.hasTerminal, EX.terminal1))
+    store.graph.add((EX.substation2, EX.hasTerminal, EX.terminal3))
+    store.graph.add((EX.substation1, EX.name, Literal("Substation 1")))
+    store.graph.add((EX.substation3, EX.name, Literal("Substation 3")))
+
+    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store, ("inferred", "drop_unknown", "rdf")))
+
+    for prop in rules.properties:
+        assert not isinstance(prop.value_type, MultiValueTypeInfo)
 
 
 def test_rdf_inference_with_none_existing_node():

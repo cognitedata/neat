@@ -2,6 +2,7 @@ from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.catalog import imf_attributes
 from cognite.neat._rules.importers import ExcelImporter, InferenceImporter
+from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
 from cognite.neat._rules.transformers import ImporterPipeline, InformationToDMS
 from cognite.neat._store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, IMF_EXAMPLE
@@ -15,16 +16,36 @@ def test_metadata_as_json_filed():
 
     importer = InferenceImporter.from_graph_store(store)
 
-    rules = ImporterPipeline.verify(importer)
-    store.add_rules(rules)
+    info_rules = ImporterPipeline.verify(importer)
+    dms_rules = InformationToDMS().transform(info_rules).rules
 
-    dms_rules = InformationToDMS().transform(rules).rules
+    # simulating update of the DMS rules
+    dms_rules.views[0].view = ViewEntity.load("neat_space:MyAsset(version=inferred)")
+
+    for prop in dms_rules.properties:
+        prop.view = ViewEntity.load("neat_space:MyAsset(version=inferred)")
+        prop.view_property = f"my_{prop.view_property}"
+
+    # simulating update of the INFORMATION rules
+
+    info_rules.classes[0].class_ = ClassEntity.load("neat_space:YourAsset")
+    for prop in info_rules.properties:
+        prop.class_ = ClassEntity.load("neat_space:YourAsset")
+        prop.property_ = f"your_{prop.property_}"
+
+    store.add_rules(info_rules)
 
     loader = DMSLoader.from_rules(dms_rules, store, dms_rules.metadata.space)
     instances = {instance.external_id: instance for instance in loader._load()}
 
     # metadata not unpacked but kept as Json obj
-    assert isinstance(instances["Asset_4288662884680989"].sources[0].properties["metadata"], dict)
+    assert isinstance(
+        instances["Asset_4288662884680989"].sources[0].properties["my_metadata"],
+        dict,
+    )
+
+    assert instances["Asset_4288662884680989"].type.external_id == "MyAsset"
+    assert instances["Asset_4288662884680989"].type.space == "neat_space"
 
 
 def test_imf_attribute_nodes():
