@@ -196,7 +196,7 @@ class NeatGraphStore:
     ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
         if self.rules is None:
             warnings.warn("Rules not found in graph store!", stacklevel=2)
-            return []
+            return
 
         if cls := InformationAnalysis(self.rules).classes_by_neat_id.get(class_neat_id):
             if property_link_pairs:
@@ -208,13 +208,14 @@ class NeatGraphStore:
                     )
                 }
 
-                return self._read_via_class_entity(cls.class_, property_renaming_config)
+                yield from self._read_via_class_entity(cls.class_, property_renaming_config)
+                return
             else:
                 warnings.warn("Rules not linked", stacklevel=2)
-                return []
+                return
         else:
             warnings.warn("Class with neat id {class_neat_id} found in rules", stacklevel=2)
-            return []
+            return
 
     def _read_via_class_entity(
         self,
