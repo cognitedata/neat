@@ -39,6 +39,7 @@ class ItemCategorized(Generic[T_ID, T_WriteClass]):
     to_create: list[T_WriteClass] = field(default_factory=list)
     to_update: list[T_WriteClass] = field(default_factory=list)
     to_delete: list[T_WriteClass] = field(default_factory=list)
+    to_skip: list[T_WriteClass] = field(default_factory=list)
     unchanged: list[T_WriteClass] = field(default_factory=list)
 
     @property
@@ -48,6 +49,10 @@ class ItemCategorized(Generic[T_ID, T_WriteClass]):
     @property
     def to_update_ids(self) -> list[T_ID]:
         return [self.as_id(item) for item in self.to_update]
+
+    @property
+    def to_skip_ids(self) -> list[T_ID]:
+        return [self.as_id(item) for item in self.to_skip]
 
     @property
     def to_delete_ids(self) -> list[T_ID]:
@@ -177,6 +182,8 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 yield results
                 continue
 
+            results.unchanged.update(items.unchanged_ids)
+            results.skipped.update(items.to_skip_ids)
             if dry_run:
                 if self.existing in ["update", "force"]:
                     # Assume all changed are successful
@@ -185,7 +192,6 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                     results.skipped.update(items.to_update_ids)
                 results.deleted.update(items.to_delete_ids)
                 results.created.update(items.to_create_ids)
-                results.unchanged.update(items.unchanged_ids)
                 yield results
                 continue
 
@@ -215,7 +221,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 results.skipped.update(items.to_update_ids)
             elif items.to_update:
                 try:
-                    updated = loader.update(items.to_update, force=self.existing == "force")
+                    updated = loader.update(items.to_update, force=self.existing == "force", drop_data=self.drop_data)
                 except MultiCogniteAPIError as e:
                     results.changed.update([loader.get_id(item) for item in e.success])
                     results.failed_changed.update([loader.get_id(item) for item in e.failed])
@@ -223,8 +229,6 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                         results.error_messages.append(f"Failed to update {loader.resource_name}: {error!s}")
                 else:
                     results.changed.update(loader.get_ids(updated))
-
-            results.unchanged.update(items.unchanged_ids)
 
             yield results
 
@@ -268,8 +272,11 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             if cdf_item is None:
                 categorized.to_create.append(item)
             elif is_redeploying or self.existing == "recreate":
-                categorized.to_delete.append(cdf_item.as_write())
-                categorized.to_create.append(item)
+                if loader.has_data(cdf_item) and not self.drop_data:
+                    categorized.to_skip.append(cdf_item)
+                else:
+                    categorized.to_delete.append(cdf_item.as_write())
+                    categorized.to_create.append(item)
             elif loader.are_equal(item, cdf_item):
                 categorized.unchanged.append(item)
             else:

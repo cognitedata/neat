@@ -2,6 +2,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass, field
+from functools import partial
 from graphlib import TopologicalSorter
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
@@ -109,7 +110,7 @@ class ResourceLoader(
         # Containers can have dependencies on other containers, so we sort them before creating them.
         items = self.sort_by_dependencies(items)
 
-        exception: MultiCogniteAPIError[T_WritableCogniteResource] | None = None
+        exception: MultiCogniteAPIError[T_ID, T_WritableCogniteResource] | None = None
         try:
             created = self._fallback_one_by_one(self._create, items)
         except MultiCogniteAPIError as exception:
@@ -138,8 +139,10 @@ class ResourceLoader(
         # We need to check the cache again, in case we didn't retrieve all the items.
         return self._create_list([self._items_by_id[id] for id in ids if id in self._items_by_id])
 
-    def update(self, items: Sequence[T_WriteClass], force: bool = False) -> T_WritableCogniteResourceList:
-        update_method = self._update_force if force else self._update
+    def update(
+        self, items: Sequence[T_WriteClass], force: bool = False, drop_data: bool = False
+    ) -> T_WritableCogniteResourceList:
+        update_method = partial(self._update_force, drop_data=drop_data) if force else self._update
         exception: MultiCogniteAPIError[T_WritableCogniteResource] | None = None
         try:
             updated = self._fallback_one_by_one(update_method, items)
@@ -190,6 +193,9 @@ class ResourceLoader(
     def _create_list(self, items: Sequence[T_WritableCogniteResource]) -> T_WritableCogniteResourceList:
         raise NotImplementedError
 
+    def has_data(self, item_id: T_ID) -> bool:
+        return False
+
     def are_equal(self, local: T_WriteClass, remote: T_WritableCogniteResource) -> bool:
         return local == remote.as_write()
 
@@ -199,13 +205,21 @@ class ResourceLoader(
     def _update_force(
         self,
         items: Sequence[T_WriteClass],
+        drop_data: bool = False,
         tried_force_update: set[T_ID] | None = None,
+        success: T_WritableCogniteResourceList | None = None,
     ) -> T_WritableCogniteResourceList:
         tried_force_update = tried_force_update or set()
         try:
             return self._update(items)
         except CogniteAPIError as e:
-            failed_ids = {self.get_id(failed) for failed in e.failed}
+            failed_ids = {self.get_id(failed) for failed in e.failed + e.unknown}
+            success_ids = [self.get_id(success) for success in e.successful]
+            success_ = self.retrieve(success_ids)
+            if success is None:
+                success = success_
+            else:
+                success.extend(success_)
             to_redeploy: list[T_WriteClass] = []
             for item in items:
                 item_id = self.get_id(item)
@@ -213,13 +227,17 @@ class ResourceLoader(
                     if tried_force_update and item_id in tried_force_update:
                         # Avoid infinite loop
                         continue
-                    to_redeploy.append(item)
                     tried_force_update.add(item_id)
+                    if self.has_data(item_id) and not drop_data:
+                        continue
+                    to_redeploy.append(item)
             if not to_redeploy:
                 # Avoid infinite loop
                 raise e
             self.delete(to_redeploy)
-            return self._update_force(to_redeploy, tried_force_update)
+            forced = self._update_force(to_redeploy, drop_data, tried_force_update, success)
+            forced.extend(success)
+            return forced
 
     def _fallback_one_by_one(
         self, method: Callable[[Sequence[T_Item]], Sequence[T_Out]], items: Sequence[T_Item]
@@ -335,6 +353,11 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
     @classmethod
     def items_from_schema(cls, schema: DMSSchema) -> SpaceApplyList:
         return SpaceApplyList(schema.spaces.values())
+
+    def has_data(self, item_id: str) -> bool:
+        return bool(self._client.data_modeling.instances.list("node", limit=1, space=item_id)) or bool(
+            self._client.data_modeling.instances.list("edge", limit=1, space=item_id)
+        )
 
 
 class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
@@ -457,6 +480,12 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
     @classmethod
     def items_from_schema(cls, schema: DMSSchema) -> ContainerApplyList:
         return ContainerApplyList(schema.containers.values())
+
+    def has_data(self, item_id: ContainerId) -> bool:
+        has_data = filters.HasData(containers=[item_id])
+        return bool(self._client.data_modeling.instances.list("node", limit=1, filter=has_data)) or bool(
+            self._client.data_modeling.instances.list("edge", limit=1, filter=has_data)
+        )
 
 
 class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):
