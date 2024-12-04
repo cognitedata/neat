@@ -186,40 +186,42 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 results.deleted.update(items.to_delete_ids)
                 results.created.update(items.to_create_ids)
                 results.unchanged.update(items.unchanged_ids)
-            else:
-                if items.to_delete_ids:
-                    try:
-                        deleted = loader.delete(items.to_delete_ids)
-                    except CogniteAPIError as e:
-                        results.deleted.update([loader.get_id(item) for item in e.successful])
-                        results.failed_deleted.update([loader.get_id(item) for item in e.failed + e.unknown])
-                        results.error_messages.append(f"Failed to delete {loader.resource_name}: {e!s}")
-                    else:
-                        results.deleted.update(deleted)
+                yield results
+                continue
 
-                if items.to_create:
-                    try:
-                        created = loader.create(items.to_create)
-                    except CogniteAPIError as e:
-                        results.created.update([loader.get_id(item) for item in e.successful])
-                        results.failed_created.update([loader.get_id(item) for item in e.failed + e.unknown])
-                        results.error_messages.append(f"Failed to create {loader.resource_name}: {e!s}")
-                    else:
-                        results.created.update(loader.get_ids(created))
+            if items.to_delete_ids:
+                try:
+                    deleted = loader.delete(items.to_delete_ids)
+                except CogniteAPIError as e:
+                    results.deleted.update([loader.get_id(item) for item in e.successful])
+                    results.failed_deleted.update([loader.get_id(item) for item in e.failed + e.unknown])
+                    results.error_messages.append(f"Failed to delete {loader.resource_name}: {e!s}")
+                else:
+                    results.deleted.update(deleted)
 
-                if items.to_update and self.existing == "skip":
-                    results.skipped.update(items.to_update_ids)
-                elif items.to_update:
-                    try:
-                        updated = loader.update(items.to_update, force=self.existing == "force")
-                    except CogniteAPIError as e:
-                        results.changed.update([loader.get_id(item) for item in e.successful])
-                        results.failed_changed.update([loader.get_id(item) for item in e.failed + e.unknown])
-                        results.error_messages.append(f"Failed to update {loader.resource_name}: {e!s}")
-                    else:
-                        results.changed.update(loader.get_ids(updated))
+            if items.to_create:
+                try:
+                    created = loader.create(items.to_create)
+                except CogniteAPIError as e:
+                    results.created.update([loader.get_id(item) for item in e.successful])
+                    results.failed_created.update([loader.get_id(item) for item in e.failed + e.unknown])
+                    results.error_messages.append(f"Failed to create {loader.resource_name}: {e!s}")
+                else:
+                    results.created.update(loader.get_ids(created))
 
-                results.unchanged.update(items.unchanged_ids)
+            if items.to_update and self.existing == "skip":
+                results.skipped.update(items.to_update_ids)
+            elif items.to_update:
+                try:
+                    updated = loader.update(items.to_update, force=self.existing == "force")
+                except CogniteAPIError as e:
+                    results.changed.update([loader.get_id(item) for item in e.successful])
+                    results.failed_changed.update([loader.get_id(item) for item in e.failed + e.unknown])
+                    results.error_messages.append(f"Failed to update {loader.resource_name}: {e!s}")
+                else:
+                    results.changed.update(loader.get_ids(updated))
+
+            results.unchanged.update(items.unchanged_ids)
 
             yield results
 
