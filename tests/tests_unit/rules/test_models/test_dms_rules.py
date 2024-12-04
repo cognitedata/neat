@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
+from rdflib import URIRef
 
 from cognite.neat._client.data_classes.data_modeling import (
     ContainerApplyDict,
@@ -40,6 +41,7 @@ from cognite.neat._rules.transformers import (
     VerifyDMSRules,
 )
 from tests.data import car
+from tests.utils import normalize_neat_id_in_rules
 
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
@@ -1243,6 +1245,9 @@ class TestDMSRules:
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
     def test_load_valid_rules(self, raw: DMSInputRules, expected_rules: DMSRules) -> None:
         valid_rules = raw.as_rules()
+        normalize_neat_id_in_rules(valid_rules)
+        normalize_neat_id_in_rules(expected_rules)
+
         assert valid_rules.model_dump() == expected_rules.model_dump()
         issues = DMSValidation(valid_rules).validate()
         assert not issues
@@ -1267,7 +1272,9 @@ class TestDMSRules:
         exclude = {
             # This information is lost in the conversion
             "metadata": {"created", "updated"},
-            "properties": {"__all__": {"reference"}},
+            "properties": {"__all__": {"reference", "neatId"}},
+            "views": {"__all__": {"neatId"}},
+            "containers": {"__all__": {"neatId"}},
             # The Exporter adds node types for each view as this is an Enterprise model.
             "nodes": {"__all__"},
         }
@@ -1331,6 +1338,9 @@ class TestDMSRules:
             ],
             containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
         ).as_rules()
+
+        normalize_neat_id_in_rules(dms_rules)
+
         expected_dump = {
             "metadata": {
                 "role": "DMS Architect",
@@ -1348,24 +1358,29 @@ class TestDMSRules:
                     "container_property": "name",
                     "view": "WindFarm",
                     "view_property": "name",
+                    "neatId": URIRef("http://purl.org/cognite/neat/Property_0"),
                 }
             ],
             "views": [
                 {
                     "view": "cdf_cdm:Describable",
+                    "neatId": URIRef("http://purl.org/cognite/neat/View_2"),
                 },
                 {
                     "view": "cdf_cdm:Sourceable",
+                    "neatId": URIRef("http://purl.org/cognite/neat/View_1"),
                 },
                 {
                     "view": "WindFarm",
                     "implements": "cdf_cdm:Sourceable,cdf_cdm:Describable",
+                    "neatId": URIRef("http://purl.org/cognite/neat/View_0"),
                 },
             ],
             "containers": [
                 {
                     "container": "Asset",
                     "constraint": "Sourceable,Describable",
+                    "neatId": URIRef("http://purl.org/cognite/neat/Container_0"),
                 }
             ],
         }

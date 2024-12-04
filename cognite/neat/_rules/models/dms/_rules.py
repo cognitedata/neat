@@ -6,7 +6,6 @@ import pandas as pd
 from cognite.client import data_modeling as dm
 from pydantic import Field, field_serializer, field_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
-from rdflib import URIRef
 
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import COGNITE_SPACES
@@ -30,6 +29,7 @@ from cognite.neat._rules.models._types import (
     ContainerEntityType,
     DmsPropertyType,
     StrListType,
+    URIRefType,
     ViewEntityType,
 )
 from cognite.neat._rules.models.data_types import DataType
@@ -54,7 +54,7 @@ _DEFAULT_VERSION = "1"
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms
     aspect: ClassVar[DataModelAspect] = DataModelAspect.physical
-    logical: str | None = None
+    logical: URIRefType | None = None
 
     def as_space(self) -> dm.SpaceApply:
         return dm.SpaceApply(
@@ -108,7 +108,7 @@ class DMSProperty(SheetRow):
     container_property: DmsPropertyType | None = Field(None, alias="Container Property")
     index: StrListType | None = Field(None, alias="Index")
     constraint: StrListType | None = Field(None, alias="Constraint")
-    logical: URIRef | None = Field(
+    logical: URIRefType | None = Field(
         None,
         alias="Logical",
         description="Used to make connection between physical and logical data model aspect",
@@ -246,7 +246,7 @@ class DMSView(SheetRow):
     implements: ViewEntityList | None = Field(None, alias="Implements")
     filter_: HasDataFilter | NodeTypeFilter | RawFilter | None = Field(None, alias="Filter")
     in_model: bool = Field(True, alias="In Model")
-    logical: URIRef | None = Field(
+    logical: URIRefType | None = Field(
         None,
         alias="Logical",
         description="Used to make connection between physical and logical data model aspect",

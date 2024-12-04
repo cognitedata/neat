@@ -29,6 +29,7 @@ class SetAPI:
 
             start = datetime.now(timezone.utc)
             transformer = SetIDDMSModel(new_model_id)
+
             output = transformer.transform(rules)
             end = datetime.now(timezone.utc)
 
