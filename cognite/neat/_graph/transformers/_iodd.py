@@ -19,7 +19,7 @@ class IODDAttachPropertyFromTargetToSource(AttachPropertyFromTargetToSource):
             target_node_type=IODD.TextObject,
             namespace=IODD,
             target_property="value",
-            delete_connecting_node=True,
+            delete_target_node=True,
         )
 
 

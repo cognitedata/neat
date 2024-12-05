@@ -41,14 +41,14 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
             :SourceNode :PropertyName 'Target Value' .
 
 
-    The user can provide a flag to decide if the intermediate node should be removed from the graph or not
+    The user can provide a flag to decide if the intermediate target node should be removed from the graph or not
     after connecting the target property to the source node. The example illustrates this.
     The default however is False.
 
-    If delete_connecting_node is not set, the expected number of triples after this transformation should be the same as
+    If delete_target_node is not set, the expected number of triples after this transformation should be the same as
     before the transformation.
 
-    If delete_connecting_node is set, the expected number of triples should be:
+    If delete_target_node is set, the expected number of triples should be:
         #triples_before - #target_nodes * #target_nodes_properties
 
         Number of triples after operation from above example: 5 - 1*3 = 2
@@ -58,12 +58,12 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
         namespace: RDF Namespace to use when querying the graph
         target_property: str with name of the property that holds the value attached to the intermediate node
         target_property_holding_new_property_name: Optional str of the property name that holds
-        the new predicate to use when resolvingthe intermediate connection.
-        delete_connecting_node: bool if the intermediate Node and Edge between source Node
+        the new predicate to use when attaching the new property to the source node.
+        delete_target_node: bool if the intermediate Node and Edge between source Node
                                 and target property should be deleted. Defaults to False.
     """
 
-    description: str = "Prunes the graph of specified node types that do not have connections to other nodes."
+    description: str = "Attaches a target property from a target node that is connected to a source node."
 
     _query_template_use_case_a: str = """
     SELECT ?sourceNode ?sourceProperty ?targetNode ?newSourceProperty ?newSourcePropertyValue WHERE {{
@@ -85,12 +85,12 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
         namespace: Namespace,
         target_property: str,
         target_property_holding_new_property_name: str | None = None,
-        delete_connecting_node: bool = False,
+        delete_target_node: bool = False,
     ):
         self.target_node_type = target_node_type
         self.namespace = namespace
         self.target_property = self.namespace[target_property]
-        self.delete_connecting_node = delete_connecting_node
+        self.delete_target_node = delete_target_node
         self.target_property_holding_new_property_name = target_property_holding_new_property_name
 
     def transform(self, graph) -> None:
@@ -130,7 +130,7 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
 
             nodes_to_delete.append(target_node)
 
-        if self.delete_connecting_node:
+        if self.delete_target_node:
             for target_node in nodes_to_delete:
                 # Remove triples with edges to target_node
                 graph.remove((None, None, target_node))

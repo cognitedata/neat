@@ -11,7 +11,7 @@ from cognite.neat._store import NeatGraphStore
 RDF_TYPE = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 
 
-def generate_test_parameters_delete_intermediate_node() -> Iterable[ParameterSet]:
+def generate_test_parameters_delete_target_node() -> Iterable[ParameterSet]:
     target_property = "value"
     target_property_holding_new_property_name = "description"
     namespace = Namespace("http://www.io-link.com/IODD/2010/10/")
@@ -71,7 +71,7 @@ def generate_test_parameters_delete_intermediate_node() -> Iterable[ParameterSet
     )
 
 
-def generate_test_parameters_keep_intermediate_node() -> Iterable[ParameterSet]:
+def generate_test_parameters_keep_target_node() -> Iterable[ParameterSet]:
     target_property = "value"
     target_property_holding_new_property_name = "description"
     namespace = Namespace("http://www.io-link.com/IODD/2010/10/")
@@ -117,7 +117,7 @@ def generate_test_parameters_keep_intermediate_node() -> Iterable[ParameterSet]:
     expected_triples_new_predicate = [
         (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
         (namespace["Device-Source-ID"], namespace["vacuumStatus"], Literal("Vacuum system self-check completed.")),
-        # The intermediate node and its properties are kept in the graph
+        # The intermediate target node and its properties are kept in the graph
         (namespace["Text-Destination-ID"], RDF_TYPE, namespace["TextObject"]),
         (namespace["Text-Destination-ID"], namespace["value"], Literal("Vacuum system self-check completed.")),
         (namespace["Text-Destination-ID"], namespace["description"], Literal("vacuum status")),
@@ -141,7 +141,7 @@ class TestAttachPropertyFromTargetToSource:
     @pytest.mark.parametrize(
         "triples, target_node_type, namespace, "
         "target_property, target_property_holding_new_property_name, expected_triples",
-        list(generate_test_parameters_delete_intermediate_node()),
+        list(generate_test_parameters_delete_target_node()),
     )
     def test_two_hop_flattener_delete_connecting_node(
         self,
@@ -161,7 +161,7 @@ class TestAttachPropertyFromTargetToSource:
             namespace=namespace,
             target_property_holding_new_property_name=target_property_holding_new_property_name,
             target_property=target_property,
-            delete_connecting_node=True,
+            delete_target_node=True,
         )
 
         flatten_dexpi_graph.transform(store.graph)
@@ -177,7 +177,7 @@ class TestAttachPropertyFromTargetToSource:
     @pytest.mark.parametrize(
         "triples, target_node_type, namespace, "
         "target_property, target_property_holding_new_property_name, expected_triples",
-        list(generate_test_parameters_keep_intermediate_node()),
+        list(generate_test_parameters_keep_target_node()),
     )
     def test_two_hop_flattener_keep_connecting_node(
         self,
@@ -197,7 +197,7 @@ class TestAttachPropertyFromTargetToSource:
             namespace=namespace,
             target_property=target_property,
             target_property_holding_new_property_name=target_property_holding_new_property_name,
-            delete_connecting_node=False,
+            delete_target_node=False,
         )
 
         flatten_dexpi_graph.transform(store.graph)
