@@ -17,7 +17,7 @@ class NeatReader(ABC):
             url = urlparse(io)
             if url.scheme == "https" and url.netloc.endswith("github.com"):
                 return GitHubReader(io)
-            else:
+            elif url.scheme == "https":
                 return HttpFileReader(io)
 
         if isinstance(io, str | Path):

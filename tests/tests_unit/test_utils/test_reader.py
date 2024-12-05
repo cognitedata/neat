@@ -1,23 +1,27 @@
 import pytest
 
-from cognite.neat._utils.reader import GitHubReader, NeatReader, PathReader
+from cognite.neat._utils.reader import GitHubReader, HttpFileReader, NeatReader, PathReader
 from tests.data import DATA_DIR
 
 
 class TestNeatReader:
-    def test_create(self) -> None:
+    def test_create_path(self) -> None:
         reader = NeatReader.create(DATA_DIR / "car.py")
         assert isinstance(reader, PathReader)
 
-    def test_str(self) -> None:
+    def test_create_str(self) -> None:
         reader = NeatReader.create(str(DATA_DIR / "car.py"))
         assert isinstance(reader, PathReader)
 
-    def test_github(self) -> None:
+    def test_create_github_url(self) -> None:
         reader = NeatReader.create(
             "https://github.com/cognitedata/toolkit-data/blob/main/data/publicdata/sharepoint.Table.csv"
         )
         assert isinstance(reader, GitHubReader)
+
+    def test_create_any_url(self) -> None:
+        reader = NeatReader.create("https://apps-cdn.cogniteapp.com/toolkit/publicdata/valhall_file_metadata.csv")
+        assert isinstance(reader, HttpFileReader)
 
 
 class TestGithubReader:
