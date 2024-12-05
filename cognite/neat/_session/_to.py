@@ -132,7 +132,7 @@ class CDFToAPI:
         dry_run: bool = False,
         drop_data: bool = False,
         components: Component | Collection[Component] | None = None,
-    ):
+    ) -> UploadResultList:
         """Export the verified DMS data model to CDF.
 
         Args:
@@ -164,5 +164,5 @@ class CDFToAPI:
             result = exporter.export_to_cdf(self._state.data_model.last_verified_dms_rules[1], self._client, dry_run)
         result.insert(0, UploadResultCore(name="schema", issues=conversion_issues))
         self._state.data_model.outcome.append(result)
-        print("You can inspect the details with the .inspect.data_model.outcome(...) method.")
+        print("You can inspect the details with the .inspect.outcome.data_model(...) method.")
         return result
