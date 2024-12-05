@@ -33,4 +33,4 @@ class TestDataModelToCDF:
 
         result = neat.to.cdf.data_model(existing="recreate")
 
-        assert len(result) == 5
+        assert len(result) == 6

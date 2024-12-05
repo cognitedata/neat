@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass, field
 from graphlib import TopologicalSorter
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar, cast
 
 from cognite.client.data_classes import filters
 from cognite.client.data_classes._base import (
@@ -490,10 +490,23 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
         return ContainerApplyList(schema.containers.values())
 
     def has_data(self, item_id: ContainerId) -> bool:
-        has_data = filters.HasData(containers=[item_id])
-        return bool(self._client.data_modeling.instances.list("node", limit=1, filter=has_data)) or bool(
-            self._client.data_modeling.instances.list("edge", limit=1, filter=has_data)
-        )
+        has_data_filter = filters.HasData(containers=[item_id])
+        has_data = False
+        instance_type: Literal["node", "edge"]
+        # Mypy does not understand that the instance type is Literal["node", "edge"]
+        for instance_type in ["node", "edge"]:  # type: ignore[assignment]
+            try:
+                has_data = bool(
+                    self._client.data_modeling.instances.list(instance_type, limit=1, filter=has_data_filter)
+                )
+            except CogniteAPIError as e:
+                if e.code != 400:
+                    # If the container is used for nodes and we ask for edges, we get a 400 error. This
+                    # means there is no edge data for this container.
+                    raise
+            if has_data:
+                return True
+        return has_data
 
 
 class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, ViewList]):
