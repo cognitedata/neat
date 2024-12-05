@@ -7,7 +7,7 @@ from ._prune_graph import AttachPropertyFromTargetToSource, PruneDanglingNodes
 IODD = Namespace("http://www.io-link.com/IODD/2010/10/")
 
 
-class IODDTwoHopFlattener(AttachPropertyFromTargetToSource):
+class IODDAttachPropertyFromTargetToSource(AttachPropertyFromTargetToSource):
     _need_changes = frozenset(
         {
             str(IODDExtractor.__name__),
@@ -24,7 +24,7 @@ class IODDTwoHopFlattener(AttachPropertyFromTargetToSource):
 
 
 class IODDPruneDanglingNodes(PruneDanglingNodes):
-    _need_changes = frozenset({str(IODDExtractor.__name__), str(IODDTwoHopFlattener.__name__)})
+    _need_changes = frozenset({str(IODDExtractor.__name__), str(IODDAttachPropertyFromTargetToSource.__name__)})
 
     def __init__(self):
         super().__init__(node_prune_types=[IODD.TextObject])
