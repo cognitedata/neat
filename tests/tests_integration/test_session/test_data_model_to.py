@@ -27,11 +27,13 @@ def car_model(neat_client: NeatClient) -> dm.DataModelId:
         dm.NodeApplyList([node for node in car.INSTANCES if isinstance(node, dm.NodeApply)])
         .dump_yaml()
         .replace(original_instance_space, new_instance_space)
+        .replace(original_space, new_space)
     )
     edges = dm.EdgeApplyList.load(
         dm.EdgeApplyList([edge for edge in car.INSTANCES if isinstance(edge, dm.EdgeApply)])
         .dump_yaml()
         .replace(original_instance_space, new_instance_space)
+        .replace(original_space, new_space)
     )
 
     neat_client.data_modeling.spaces.apply(dm.SpaceApply(space=new_instance_space))

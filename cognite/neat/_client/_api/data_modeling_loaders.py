@@ -363,9 +363,16 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
         return SpaceApplyList(schema.spaces.values())
 
     def has_data(self, item_id: str) -> bool:
-        return bool(self._client.data_modeling.instances.list("node", limit=1, space=item_id)) or bool(
-            self._client.data_modeling.instances.list("edge", limit=1, space=item_id)
-        )
+        if self._client.data_modeling.instances.list("node", limit=1, space=item_id):
+            return True
+        if self._client.data_modeling.instances.list("edge", limit=1, space=item_id):
+            return True
+        # Need to check if there are any containers with data in the space. Typically,
+        # a schema space will not contain data, while it will have containers that have data in an instance space.
+        for container in self._client.data_modeling.containers(space=item_id, include_global=False):
+            if self._client.loaders.containers.has_data(container.as_id()):
+                return True
+        return False
 
 
 class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container, ContainerApplyList, ContainerList]):
