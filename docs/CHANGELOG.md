@@ -15,7 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-### TBD
+## TBD
+### Added
+- Support for reading a `csv` from any URL in `neat.read.csv(...)`.
+
 ## Fixed
 - The `neat.to.cdf.data_model()` no longer fails to update `space` when `existing='recreate'` and `drop_data=True`. 
   Instead, spaces are now updated, while containers are successfully deleted and recreated.
