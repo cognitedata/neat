@@ -57,3 +57,26 @@ class TestDataModelToCDF:
         assert len(result_by_name["views"].created) == 3
         assert len(result_by_name["data_models"].deleted) == 1
         assert len(result_by_name["data_models"].created) == 1
+
+    def test_to_cdf_recreate_drop_data(self, neat_client: NeatClient) -> None:
+        car_model = create_new_car_model(
+            neat_client, "test_to_cdf_recreate_drop_data", "test_to_cdf_recreate_drop_data_data"
+        )
+        neat = NeatSession(neat_client)
+
+        neat.read.cdf.data_model(car_model)
+
+        neat.verify()
+
+        result = neat.to.cdf.data_model(existing="recreate", drop_data=True)
+        result_by_name = {r.name: r for r in result}
+        assert len(result_by_name["spaces"].deleted) == 1
+        assert len(result_by_name["spaces"].created) == 1
+        assert len(result_by_name["containers"].deleted) == 3
+        assert len(result_by_name["containers"].created) == 3
+
+        # The views and data model should have been recreated, i.e., deleted and created
+        assert len(result_by_name["views"].deleted) == 3
+        assert len(result_by_name["views"].created) == 3
+        assert len(result_by_name["data_models"].deleted) == 1
+        assert len(result_by_name["data_models"].created) == 1
