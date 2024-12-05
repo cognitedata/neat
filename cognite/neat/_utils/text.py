@@ -106,6 +106,18 @@ def to_snake(string: str) -> str:
     return "_".join(map(str.lower, words))
 
 
+def sentence_or_string_to_camel(string: str) -> str:
+    # Could be a combination of kebab and pascal/camel case
+    if " " in string:
+        parts = string.split(" ")
+        try:
+            return parts[0].casefold() + "".join(word.capitalize() for word in parts[1:])
+        except IndexError:
+            return ""
+    else:
+        return to_camel(string)
+
+
 def replace_non_alphanumeric_with_underscore(text: str) -> str:
     return re.sub(r"\W+", "_", text)
 
