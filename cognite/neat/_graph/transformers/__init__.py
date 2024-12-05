@@ -7,6 +7,7 @@ from ._classic_cdf import (
     AssetTimeSeriesConnector,
     RelationshipAsEdgeTransformer,
 )
+from ._prune_graph import AttachPropertyFromTargetToSource, PruneDanglingNodes
 from ._rdfpath import AddSelfReferenceProperty, MakeConnectionOnExactMatch
 from ._value_type import SplitMultiValueProperty
 
@@ -21,6 +22,8 @@ __all__ = [
     "SplitMultiValueProperty",
     "RelationshipAsEdgeTransformer",
     "MakeConnectionOnExactMatch",
+    "AttachPropertyFromTargetToSource",
+    "PruneDanglingNodes",
 ]
 
 Transformers = (
@@ -34,4 +37,6 @@ Transformers = (
     | SplitMultiValueProperty
     | RelationshipAsEdgeTransformer
     | MakeConnectionOnExactMatch
+    | AttachPropertyFromTargetToSource
+    | PruneDanglingNodes
 )
