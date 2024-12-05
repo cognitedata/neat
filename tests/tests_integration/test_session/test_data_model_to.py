@@ -49,8 +49,9 @@ class TestDataModelToCDF:
 
         result = neat.to.cdf.data_model(existing="recreate", drop_data=False)
         result_by_name = {r.name: r for r in result}
-        # The model contain data, so should skip space and container
-        assert len(result_by_name["spaces"].skipped) == 1
+        spaces = result_by_name["spaces"]
+        assert len(spaces.changed | spaces.created | spaces.unchanged) == 1
+        # The model contain data, so should skip container
         assert len(result_by_name["containers"].skipped) == 3
         # The views and data model should have been recreated, i.e., deleted and created
         assert len(result_by_name["views"].deleted) == 3
