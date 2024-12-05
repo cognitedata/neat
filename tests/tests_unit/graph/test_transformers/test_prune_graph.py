@@ -11,7 +11,7 @@ from cognite.neat._store import NeatGraphStore
 RDF_TYPE = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 
 
-def generate_test_parameters() -> Iterable[ParameterSet]:
+def generate_test_parameters_delete_intermediate_node() -> Iterable[ParameterSet]:
     value_property_name = "value"
     predicate_property_name = "description"
     namespace = Namespace("http://www.io-link.com/IODD/2010/10/")
@@ -41,7 +41,7 @@ def generate_test_parameters() -> Iterable[ParameterSet]:
         value_property_name,
         None,
         expected_triples_keep_old_predicate,
-        id="Flatten and keep old predicates",
+        id="Flatten and keep old predicate and delete intermediate node",
     )
 
     triples_new_predicate = [
@@ -67,14 +67,80 @@ def generate_test_parameters() -> Iterable[ParameterSet]:
         value_property_name,
         predicate_property_name,
         expected_triples_new_predicate,
-        id="Flatten with new predicates",
+        id="Flatten with new predicate and delete intermediate node",
+    )
+
+
+def generate_test_parameters_keep_intermediate_node() -> Iterable[ParameterSet]:
+    value_property_name = "value"
+    predicate_property_name = "description"
+    namespace = Namespace("http://www.io-link.com/IODD/2010/10/")
+    destination_node_type = namespace["TextObject"]
+
+    triples_keep_old_predicate = [
+        (namespace["Text-Destination-ID"], RDF_TYPE, namespace["TextObject"]),
+        (namespace["Text-Destination-ID"], namespace["value"], Literal("Vacuum system self-check completed.")),
+        (namespace["Device-Source-ID"], namespace["textProperty"], namespace["Text-Destination-ID"]),
+        (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
+    ]
+
+    expected_triples_keep_old_predicate = [
+        (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
+        (namespace["Device-Source-ID"], namespace["textProperty"], Literal("Vacuum system self-check completed.")),
+        (namespace["Text-Destination-ID"], RDF_TYPE, namespace["TextObject"]),
+        (namespace["Text-Destination-ID"], namespace["value"], Literal("Vacuum system self-check completed.")),
+    ]
+
+    expected_triples_keep_old_predicate = [
+        [str(item) for item in triple] for triple in expected_triples_keep_old_predicate
+    ]
+    expected_triples_keep_old_predicate.sort()
+
+    yield pytest.param(
+        triples_keep_old_predicate,
+        destination_node_type,
+        namespace,
+        value_property_name,
+        None,
+        expected_triples_keep_old_predicate,
+        id="Flatten and keep old predicate and keep intermediate node",
+    )
+
+    triples_new_predicate = [
+        (namespace["Text-Destination-ID"], RDF_TYPE, namespace["TextObject"]),
+        (namespace["Text-Destination-ID"], namespace["value"], Literal("Vacuum system self-check completed.")),
+        (namespace["Text-Destination-ID"], namespace["description"], Literal("vacuum status")),
+        (namespace["Device-Source-ID"], namespace["textProperty"], namespace["Text-Destination-ID"]),
+        (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
+    ]
+
+    expected_triples_new_predicate = [
+        (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
+        (namespace["Device-Source-ID"], namespace["vacuumStatus"], Literal("Vacuum system self-check completed.")),
+        # The intermediate node and its properties are kept in the graph
+        (namespace["Text-Destination-ID"], RDF_TYPE, namespace["TextObject"]),
+        (namespace["Text-Destination-ID"], namespace["value"], Literal("Vacuum system self-check completed.")),
+        (namespace["Text-Destination-ID"], namespace["description"], Literal("vacuum status")),
+    ]
+
+    expected_triples_new_predicate = [[str(item) for item in triple] for triple in expected_triples_new_predicate]
+    expected_triples_new_predicate.sort()
+
+    yield pytest.param(
+        triples_new_predicate,
+        destination_node_type,
+        namespace,
+        value_property_name,
+        predicate_property_name,
+        expected_triples_new_predicate,
+        id="Flatten with new predicate and keep intermediate node",
     )
 
 
 class TestTwoHopFlattener:
     @pytest.mark.parametrize(
         "triples, destination_node_type, namespace, value_property_name, predicate_property_name, expected_triples",
-        list(generate_test_parameters()),
+        list(generate_test_parameters_delete_intermediate_node()),
     )
     def test_two_hop_flattener_delete_connecting_node(
         self,
@@ -107,10 +173,9 @@ class TestTwoHopFlattener:
         assert len(triples_after) == len(expected_triples)
         assert triples_after == expected_triples
 
-    @pytest.mark.skip("Prepare expected triples for this test")
     @pytest.mark.parametrize(
         "triples, destination_node_type, namespace, value_property_name, predicate_property_name, expected_triples",
-        list(generate_test_parameters()),
+        list(generate_test_parameters_keep_intermediate_node()),
     )
     def test_two_hop_flattener_keep_connecting_node(
         self,
@@ -139,3 +204,6 @@ class TestTwoHopFlattener:
         triples_after = [[str(item) for item in triple] for triple in triples_after]
         # Sort the triples to ensure deterministic output
         triples_after.sort()
+
+        assert len(triples_after) == len(expected_triples)
+        assert triples_after == expected_triples

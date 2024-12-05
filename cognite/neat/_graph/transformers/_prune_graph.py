@@ -101,9 +101,9 @@ class TwoHopFlattener(BaseTransformer):
 
         graph_traversals = graph.query(query)
 
-        for result_raw in graph_traversals:
+        for result in graph_traversals:
             source_node, old_predicate, destination_node, new_predicate_value, new_property_value = (
-                result_raw.asdict().values()
+                result.asdict().values()
             )
 
             if self.predicate_property_name is not None:
@@ -116,7 +116,7 @@ class TwoHopFlattener(BaseTransformer):
             # Create new connection from source node to value
             graph.add((source_node, predicate, new_property_value))
             # Remove old relationship between source node and destination node
-            graph.remove((source_node, predicate, destination_node))
+            graph.remove((source_node, old_predicate, destination_node))
 
             nodes_to_delete.append(destination_node)
 
