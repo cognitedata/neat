@@ -246,7 +246,7 @@ class CSVReadAPI(BaseReadAPI):
         reader = NeatReader.create(io)
         if isinstance(reader, HttpFileReader):
             path = Path(tempfile.gettempdir()).resolve() / reader.name
-            path.write_text(reader.read_text())
+            path.write_text(reader.read_text(), encoding="utf-8", newline="\n")
         elif isinstance(reader, PathReader):
             path = reader.path
         else:

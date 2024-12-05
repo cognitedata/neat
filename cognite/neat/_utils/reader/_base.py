@@ -140,11 +140,7 @@ class GitHubReader(HttpFileReader):
     def __init__(self, raw: str):
         self.raw = raw
         self.repo, path = self._parse_url(raw)
-        super().__init__(self._full_url, path)
-
-    @property
-    def _full_url(self) -> str:
-        return f"{self.raw_url}{self.repo}/main/{self.path}"
+        super().__init__(f"{self.raw_url}{self.repo}/main/{path}", path)
 
     @staticmethod
     def _parse_url(url: str) -> tuple[str, str]:
