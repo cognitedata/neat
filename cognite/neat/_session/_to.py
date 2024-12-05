@@ -132,7 +132,7 @@ class CDFToAPI:
         dry_run: bool = False,
         drop_data: bool = False,
         components: Component | Collection[Component] | None = None,
-    ):
+    ) -> UploadResultList:
         """Export the verified DMS data model to CDF.
 
         Args:

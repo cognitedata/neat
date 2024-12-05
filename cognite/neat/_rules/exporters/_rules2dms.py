@@ -304,12 +304,12 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 and not loader.in_space(item, self.include_space)
             ):
                 continue
-
-            cdf_item = cdf_item_by_id.get(loader.get_id(item))
+            item_id = loader.get_id(item)
+            cdf_item = cdf_item_by_id.get(item_id)
             if cdf_item is None:
                 categorized.to_create.append(item)
             elif is_redeploying or self.existing == "recreate":
-                if loader.has_data(cdf_item) and not self.drop_data:
+                if not self.drop_data and loader.has_data(item_id):
                     categorized.to_skip.append(cdf_item)
                 else:
                     categorized.to_delete.append(cdf_item.as_write())
