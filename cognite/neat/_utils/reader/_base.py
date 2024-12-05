@@ -18,7 +18,7 @@ class NeatReader(ABC):
             if url.scheme == "https" and url.netloc.endswith("github.com"):
                 return GitHubReader(io)
             elif url.scheme == "https":
-                return HttpFileReader(io)
+                return HttpFileReader(io, url.path)
 
         if isinstance(io, str | Path):
             return PathReader(Path(io))
@@ -97,8 +97,15 @@ class PathReader(NeatReader):
 
 
 class HttpFileReader(NeatReader):
-    def __init__(self, url: str):
+    def __init__(self, url: str, path: str):
         self._url = url
+        self.path = path
+
+    @property
+    def name(self) -> str:
+        if "/" in self.path:
+            return self.path.rsplit("/", maxsplit=1)[-1]
+        return self.path
 
     def read_text(self) -> str:
         response = requests.get(self._url)
@@ -132,14 +139,8 @@ class GitHubReader(HttpFileReader):
 
     def __init__(self, raw: str):
         self.raw = raw
-        self.repo, self.path = self._parse_url(raw)
-        super().__init__(self._full_url)
-
-    @property
-    def name(self) -> str:
-        if "/" in self.path:
-            return self.path.rsplit("/", maxsplit=1)[-1]
-        return self.path
+        self.repo, path = self._parse_url(raw)
+        super().__init__(self._full_url, path)
 
     @property
     def _full_url(self) -> str:
