@@ -156,7 +156,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             for identifier, properties in reader:
                 try:
-                    print(view_id)
                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
                 except ValueError as e:
                     error_node = ResourceCreationError(identifier, "node", error=str(e))
