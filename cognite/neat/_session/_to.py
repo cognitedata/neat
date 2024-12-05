@@ -150,7 +150,7 @@ class CDFToAPI:
         - "skip": If any component already exists, it will be skipped.
         - "update": If any component already exists, it will be updated.
         - "force": If any component already exists, and the update fails, it will be deleted and recreated.
-        - "recreate": All components will be deleted and recreated.
+        - "recreate": All components will be deleted and recreated. The exception is spaces, which will be updated.
 
         """
 
