@@ -17,7 +17,7 @@ from cognite.neat._rules.importers import BaseImporter
 from cognite.neat._store._provenance import Activity as ProvenanceActivity
 from cognite.neat._store._provenance import Change
 from cognite.neat._store._provenance import Entity as ProvenanceEntity
-from cognite.neat._utils.reader import GitHubReader, NeatReader, PathReader
+from cognite.neat._utils.reader import GitHubReader, HttpFileReader, NeatReader, PathReader
 
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, XMLFileType, object_wizard, rdf_dm_wizard, xml_format_wizard
@@ -244,7 +244,7 @@ class YamlReadAPI(BaseReadAPI):
 class CSVReadAPI(BaseReadAPI):
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
         reader = NeatReader.create(io)
-        if isinstance(reader, GitHubReader):
+        if isinstance(reader, HttpFileReader):
             path = Path(tempfile.gettempdir()).resolve() / reader.name
             path.write_text(reader.read_text())
         elif isinstance(reader, PathReader):
