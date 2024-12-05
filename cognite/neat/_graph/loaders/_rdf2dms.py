@@ -150,7 +150,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     if stop_on_exception:
                         raise error_view
                     yield error_view
-
+                    continue
             else:
                 reader = self.graph_store.read(view.external_id)
 
