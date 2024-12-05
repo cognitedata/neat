@@ -57,8 +57,8 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
         target_node_type: RDF.type of edge Node
         namespace: RDF Namespace to use when querying the graph
         target_property: str with name of the property that holds the value attached to the intermediate node
-        target_property_holding_new_property_name: Optional str of the property name that holds the new predicate to use when resolving
-        the intermediate connection.
+        target_property_holding_new_property_name: Optional str of the property name that holds
+        the new predicate to use when resolvingthe intermediate connection.
         delete_connecting_node: bool if the intermediate Node and Edge between source Node
                                 and target property should be deleted. Defaults to False.
     """
@@ -68,7 +68,7 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
     _query_template_use_case_a: str = """
     SELECT ?sourceNode ?sourceProperty ?targetNode ?newSourceProperty ?newSourcePropertyValue WHERE {{
         ?sourceNode ?sourceProperty ?targetNode .
-        ?targetNode ?newSourceProperty ?newSourcePropertyValue .
+        BIND( <{target_property}> as ?newSourceProperty ) .
         ?targetNode a <{target_node_type}> .
         ?targetNode <{target_property}> ?newSourcePropertyValue . }}"""
 

@@ -139,7 +139,8 @@ def generate_test_parameters_keep_intermediate_node() -> Iterable[ParameterSet]:
 
 class TestAttachPropertyFromTargetToSource:
     @pytest.mark.parametrize(
-        "triples, target_node_type, namespace, target_property, target_property_holding_new_property_name, expected_triples",
+        "triples, target_node_type, namespace, "
+        "target_property, target_property_holding_new_property_name, expected_triples",
         list(generate_test_parameters_delete_intermediate_node()),
     )
     def test_two_hop_flattener_delete_connecting_node(
@@ -174,7 +175,8 @@ class TestAttachPropertyFromTargetToSource:
         assert triples_after == expected_triples
 
     @pytest.mark.parametrize(
-        "triples, target_node_type, namespace, target_property, target_property_holding_new_property_name, expected_triples",
+        "triples, target_node_type, namespace, "
+        "target_property, target_property_holding_new_property_name, expected_triples",
         list(generate_test_parameters_keep_intermediate_node()),
     )
     def test_two_hop_flattener_keep_connecting_node(
