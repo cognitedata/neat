@@ -4,7 +4,7 @@ import pytest
 from _pytest.mark import ParameterSet
 from rdflib import Literal, Namespace, URIRef
 
-from cognite.neat._graph.transformers._prune_graph import TwoHopFlattener
+from cognite.neat._graph.transformers._prune_graph import AttachPropertyFromTargetToSource
 from cognite.neat._shared import Triple
 from cognite.neat._store import NeatGraphStore
 
@@ -12,10 +12,10 @@ RDF_TYPE = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 
 
 def generate_test_parameters_delete_intermediate_node() -> Iterable[ParameterSet]:
-    value_property_name = "value"
-    predicate_property_name = "description"
+    target_property = "value"
+    target_property_holding_new_property_name = "description"
     namespace = Namespace("http://www.io-link.com/IODD/2010/10/")
-    destination_node_type = namespace["TextObject"]
+    target_node_type = namespace["TextObject"]
 
     triples_keep_old_predicate = [
         (namespace["Text-Destination-ID"], RDF_TYPE, namespace["TextObject"]),
@@ -36,9 +36,9 @@ def generate_test_parameters_delete_intermediate_node() -> Iterable[ParameterSet
 
     yield pytest.param(
         triples_keep_old_predicate,
-        destination_node_type,
+        target_node_type,
         namespace,
-        value_property_name,
+        target_property,
         None,
         expected_triples_keep_old_predicate,
         id="Flatten and keep old predicate and delete intermediate node",
@@ -62,18 +62,18 @@ def generate_test_parameters_delete_intermediate_node() -> Iterable[ParameterSet
 
     yield pytest.param(
         triples_new_predicate,
-        destination_node_type,
+        target_node_type,
         namespace,
-        value_property_name,
-        predicate_property_name,
+        target_property,
+        target_property_holding_new_property_name,
         expected_triples_new_predicate,
         id="Flatten with new predicate and delete intermediate node",
     )
 
 
 def generate_test_parameters_keep_intermediate_node() -> Iterable[ParameterSet]:
-    value_property_name = "value"
-    predicate_property_name = "description"
+    target_property = "value"
+    target_property_holding_new_property_name = "description"
     namespace = Namespace("http://www.io-link.com/IODD/2010/10/")
     destination_node_type = namespace["TextObject"]
 
@@ -100,7 +100,7 @@ def generate_test_parameters_keep_intermediate_node() -> Iterable[ParameterSet]:
         triples_keep_old_predicate,
         destination_node_type,
         namespace,
-        value_property_name,
+        target_property,
         None,
         expected_triples_keep_old_predicate,
         id="Flatten and keep old predicate and keep intermediate node",
@@ -130,36 +130,36 @@ def generate_test_parameters_keep_intermediate_node() -> Iterable[ParameterSet]:
         triples_new_predicate,
         destination_node_type,
         namespace,
-        value_property_name,
-        predicate_property_name,
+        target_property,
+        target_property_holding_new_property_name,
         expected_triples_new_predicate,
         id="Flatten with new predicate and keep intermediate node",
     )
 
 
-class TestTwoHopFlattener:
+class TestAttachPropertyFromTargetToSource:
     @pytest.mark.parametrize(
-        "triples, destination_node_type, namespace, value_property_name, predicate_property_name, expected_triples",
+        "triples, target_node_type, namespace, target_property, target_property_holding_new_property_name, expected_triples",
         list(generate_test_parameters_delete_intermediate_node()),
     )
     def test_two_hop_flattener_delete_connecting_node(
         self,
         triples: list[Triple],
-        destination_node_type: URIRef,
+        target_node_type: URIRef,
         namespace: Namespace,
-        value_property_name: str,
-        predicate_property_name: str | None,
+        target_property: str,
+        target_property_holding_new_property_name: str | None,
         expected_triples: list[Triple],
     ):
         store = NeatGraphStore.from_memory_store()
 
         store._add_triples(triples)
 
-        flatten_dexpi_graph = TwoHopFlattener(
-            destination_node_type=destination_node_type,
+        flatten_dexpi_graph = AttachPropertyFromTargetToSource(
+            target_node_type=target_node_type,
             namespace=namespace,
-            predicate_property_name=predicate_property_name,
-            value_property_name=value_property_name,
+            target_property_holding_new_property_name=target_property_holding_new_property_name,
+            target_property=target_property,
             delete_connecting_node=True,
         )
 
@@ -174,27 +174,27 @@ class TestTwoHopFlattener:
         assert triples_after == expected_triples
 
     @pytest.mark.parametrize(
-        "triples, destination_node_type, namespace, value_property_name, predicate_property_name, expected_triples",
+        "triples, target_node_type, namespace, target_property, target_property_holding_new_property_name, expected_triples",
         list(generate_test_parameters_keep_intermediate_node()),
     )
     def test_two_hop_flattener_keep_connecting_node(
         self,
         triples: list[Triple],
-        destination_node_type: URIRef,
+        target_node_type: URIRef,
         namespace: Namespace,
-        value_property_name: str,
-        predicate_property_name: str | None,
+        target_property: str,
+        target_property_holding_new_property_name: str | None,
         expected_triples: list[Triple],
     ):
         store = NeatGraphStore.from_memory_store()
 
         store._add_triples(triples)
 
-        flatten_dexpi_graph = TwoHopFlattener(
-            destination_node_type=destination_node_type,
+        flatten_dexpi_graph = AttachPropertyFromTargetToSource(
+            target_node_type=target_node_type,
             namespace=namespace,
-            predicate_property_name=predicate_property_name,
-            value_property_name=value_property_name,
+            target_property=target_property,
+            target_property_holding_new_property_name=target_property_holding_new_property_name,
             delete_connecting_node=False,
         )
 

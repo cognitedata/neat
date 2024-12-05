@@ -2,12 +2,12 @@ from rdflib import Namespace
 
 from cognite.neat._graph.extractors import IODDExtractor
 
-from ._prune_graph import PruneDanglingNodes, TwoHopFlattener
+from ._prune_graph import AttachPropertyFromTargetToSource, PruneDanglingNodes
 
 IODD = Namespace("http://www.io-link.com/IODD/2010/10/")
 
 
-class IODDTwoHopFlattener(TwoHopFlattener):
+class IODDTwoHopFlattener(AttachPropertyFromTargetToSource):
     _need_changes = frozenset(
         {
             str(IODDExtractor.__name__),
@@ -16,9 +16,9 @@ class IODDTwoHopFlattener(TwoHopFlattener):
 
     def __init__(self):
         super().__init__(
-            destination_node_type=IODD.TextObject,
+            target_node_type=IODD.TextObject,
             namespace=IODD,
-            value_property_name="value",
+            target_property="value",
             delete_connecting_node=True,
         )
 
