@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+### TBD
+## Fixed
+- The `neat.to.cdf.data_model()` no longer fails to update `space` when `existing='recreate'` and `drop_data=True`. 
+  Instead, spaces are now updated, while containers are successfully deleted and recreated.
+
 ## [0.100.1] - 05-12-**2024**
 ### Fixed
 - The `neat.to.cdf.data_model()` no longer raises a `TypeError` when the `existing='recreate'` parameter is used.

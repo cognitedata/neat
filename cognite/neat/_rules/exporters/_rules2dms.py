@@ -12,6 +12,7 @@ from cognite.client.data_classes._base import (
 from cognite.client.data_classes.data_modeling import (
     DataModelApplyList,
     DataModelId,
+    SpaceApply,
     ViewApplyList,
 )
 from cognite.client.exceptions import CogniteAPIError
@@ -200,6 +201,32 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             loader.resource_name for loader, categorized in categorized_items_by_loader.items() if categorized.to_update
         )
 
+        deleted_by_name: dict[str, UploadResult] = {}
+        if not is_failing:
+            # Deletion is done in reverse order to take care of dependencies
+            for loader, items in reversed(categorized_items_by_loader.items()):
+                issue_list = IssueList()
+
+                if items.resource_name == client.loaders.data_models.resource_name:
+                    warning_list = self._validate(list(items.item_ids()), client)
+                    issue_list.extend(warning_list)
+
+                results = UploadResult(loader.resource_name, issues=issue_list)  # type: ignore[var-annotated]
+                if dry_run:
+                    results.deleted.update(items.to_delete_ids)
+                else:
+                    if items.to_delete_ids:
+                        try:
+                            deleted = loader.delete(items.to_delete_ids)
+                        except MultiCogniteAPIError as e:
+                            results.deleted.update([loader.get_id(item) for item in e.success])
+                            results.failed_deleted.update([loader.get_id(item) for item in e.failed])
+                            for error in e.errors:
+                                results.error_messages.append(f"Failed to delete {loader.resource_name}: {error!s}")
+                        else:
+                            results.deleted.update(deleted)
+                deleted_by_name[loader.resource_name] = results
+
         for loader, items in categorized_items_by_loader.items():
             issue_list = IssueList()
 
@@ -221,27 +248,20 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
 
             results.unchanged.update(items.unchanged_ids)
             results.skipped.update(items.to_skip_ids)
+            if delete_results := deleted_by_name.get(loader.resource_name):
+                results.deleted.update(delete_results.deleted)
+                results.failed_deleted.update(delete_results.failed_deleted)
+                results.error_messages.extend(delete_results.error_messages)
+
             if dry_run:
                 if self.existing in ["update", "force"]:
                     # Assume all changed are successful
                     results.changed.update(items.to_update_ids)
                 elif self.existing == "skip":
                     results.skipped.update(items.to_update_ids)
-                results.deleted.update(items.to_delete_ids)
                 results.created.update(items.to_create_ids)
                 yield results
                 continue
-
-            if items.to_delete_ids:
-                try:
-                    deleted = loader.delete(items.to_delete_ids)
-                except MultiCogniteAPIError as e:
-                    results.deleted.update([loader.get_id(item) for item in e.success])
-                    results.failed_deleted.update([loader.get_id(item) for item in e.failed])
-                    for error in e.errors:
-                        results.error_messages.append(f"Failed to delete {loader.resource_name}: {error!s}")
-                else:
-                    results.deleted.update(deleted)
 
             if items.to_create:
                 try:
@@ -308,7 +328,9 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
             cdf_item = cdf_item_by_id.get(item_id)
             if cdf_item is None:
                 categorized.to_create.append(item)
-            elif is_redeploying or self.existing == "recreate":
+            elif (is_redeploying or self.existing == "recreate") and not isinstance(item, SpaceApply):
+                # Spaces are not deleted, instead they are updated. Deleting a space is an expensive operation
+                # and are seldom needed. If you need to delete the space, it should be done in a different operation.
                 if not self.drop_data and loader.has_data(item_id):
                     categorized.to_skip.append(cdf_item)
                 else:
