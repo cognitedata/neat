@@ -20,6 +20,23 @@ def car_model(neat_client: NeatClient) -> dm.DataModelId:
     neat_client.data_modeling.spaces.apply(dm.SpaceApply(space=new_space))
     neat_client.data_modeling.containers.apply(container_copy)
     neat_client.data_modeling.data_models.apply(model_copy)
+
+    original_instance_space = car.INSTANCE_SPACE
+    new_instance_space = f"{new_space}_data"
+    nodes = dm.NodeApplyList.load(
+        dm.NodeApplyList([node for node in car.INSTANCES if isinstance(node, dm.NodeApply)])
+        .dump_yaml()
+        .replace(original_instance_space, new_instance_space)
+    )
+    edges = dm.EdgeApplyList.load(
+        dm.EdgeApplyList([edge for edge in car.INSTANCES if isinstance(edge, dm.EdgeApply)])
+        .dump_yaml()
+        .replace(original_instance_space, new_instance_space)
+    )
+
+    neat_client.data_modeling.spaces.apply(dm.SpaceApply(space=new_instance_space))
+    neat_client.data_modeling.instances.apply(nodes, edges)
+
     return model_copy.as_id()
 
 
@@ -31,6 +48,13 @@ class TestDataModelToCDF:
 
         neat.verify()
 
-        result = neat.to.cdf.data_model(existing="recreate")
-
-        assert len(result) == 6
+        result = neat.to.cdf.data_model(existing="recreate", drop_data=False)
+        result_by_name = {r.name: r for r in result}
+        # The model contain data, so should skip space and container
+        assert len(result_by_name["spaces"].skipped) == 1
+        assert len(result_by_name["containers"].skipped) == 3
+        # The views and data model should have been recreated, i.e., deleted and created
+        assert len(result_by_name["views"].deleted) == 3
+        assert len(result_by_name["views"].created) == 3
+        assert len(result_by_name["data_models"].deleted) == 1
+        assert len(result_by_name["data_models"].created) == 1
