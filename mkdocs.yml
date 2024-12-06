@@ -43,10 +43,10 @@ nav:
           - Reference: excel_data_modeling/logical/reference.md
           - Properties: excel_data_modeling/logical/properties.md
       - Physical Data Model:
-          - Overview: excel_data_modeling/overview.md
-          - Reference: excel_data_modeling/reference.md
-          - Properties: excel_data_modeling/properties.md
-          - Views: excel_data_modeling/views.md
+          - Overview: excel_data_modeling/physical/overview.md
+          - Reference: excel_data_modeling/physical/reference.md
+          - Properties: excel_data_modeling/physical/properties.md
+          - Views: excel_data_modeling/physical/views.md
       - Units: excel_data_modeling/units.md
   - Reference - Code API:
       - Overview: reference/overview.md
