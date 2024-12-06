@@ -1,84 +1,141 @@
 from rdflib import Graph, Namespace, URIRef
 from rdflib.query import ResultRow
-from rdflib.term import Identifier
+
+from cognite.neat._utils.rdf_ import as_neat_compliant_uri
+from cognite.neat._utils.text import sentence_or_string_to_camel
 
 from ._base import BaseTransformer
 
 
-# TODO: Handle the cse when value is None, which will not make the TextObject resolve
-class TwoHopFlattener(BaseTransformer):
+class AttachPropertyFromTargetToSource(BaseTransformer):
     """
-    Transformer that will flatten the distance between a source node, an intermediate connecting node, and a
-    target property that is connected to the intermediate node.
-    The transformation result is that the target property is attached directly to the source node, instead of having
-    to go via the intermediate node.
-    The user can also provide a flag to decide if the intermediate node should be removed from the graph or not
-    after connecting the target property to the source node.
+    Transformer that considers a TargetNode and SourceNode relationship, to extract a property that is attached to
+    the TargetNode, and attaches it to the SourceNode instead, while also deleting the edge between
+    the SourceNode and TargetNode.
+    This means that you no longer have to go via the SourceNode to TargetNode to extract
+    the desired property from TargetNode, you can get it directly from the SourceNode instead.
+    Further, there are two ways of defining the predicate for the new property to attach to
+    the SourceNode. The predicate that is used will either be the old predicate between the SourceNode and TargetNode,
+    or, the TargetNode may hold a property with a value for the new predicate to use.
+    In this case, the user must specify the name of this predicate property connected to the TargetNode.
+    Consider the following example for illustration:
 
-        Ex. TwoHopFlattener:
+        Ex. AttachPropertyFromTargetToSource
+        Graph before transformation:
 
-        Graph before flattening (with deletion of intermediate node):
-        node(A, rdf:type(Pump)) -(predicate("vendor"))>
-                                node(B, rdf:type(TextObject)) -(predicate("value"))> Literal("CompanyX")
+            :SourceNode a :SourceType .
+            :SourceNode :sourceProperty :TargetNode .
 
-        Graph after flattening nodes with destination_node_type = rdf:type(TextObject), property_predicate = :value,
-        and property_name = "value":
+            :TargetNode a :TargetType .
+            :TargetNode :propertyWhichValueWeWant 'Target Value' .
+            :TargetNode :propertyWhichValueWeMightWantAsNameForNewProperty 'PropertyName'
 
-        node(A, rdf:type(Pump)) -(predicate("vendor"))> Literal("CompanyX")
+        Use case A after transformation - attach new property to SourceNode using old predicate:
+
+            :SourceNode a :SourceType .
+            :SourceNode :sourceProperty 'Target Value' .
+
+        Use case B after transformation - extract new predicate from one of the properties of the TargetNode:
+
+            :SourceNode a :SourceType .
+            :SourceNode :PropertyName 'Target Value' .
+
+
+    The user can provide a flag to decide if the intermediate target node should be removed from the graph or not
+    after connecting the target property to the source node. The example illustrates this.
+    The default however is False.
+
+    If delete_target_node is not set, the expected number of triples after this transformation should be the same as
+    before the transformation.
+
+    If delete_target_node is set, the expected number of triples should be:
+        #triples_before - #target_nodes * #target_nodes_properties
+
+        Number of triples after operation from above example: 5 - 1*3 = 2
 
     Args:
-        destination_node_type: RDF.type of edge Node
-        property_predicate: Predicate to use when resolving the value from the edge node
-        property_name: name of the property that the intermediate node is pointing to
-        delete_connecting_node: bool if the intermediate Node and Edge between source Node
-                                and target property should be deleted. Defaults to True.
+        target_node_type: RDF.type of edge Node
+        namespace: RDF Namespace to use when querying the graph
+        target_property: str with name of the property that holds the value attached to the intermediate node
+        target_property_holding_new_property_name: Optional str of the property name that holds
+        the new predicate to use when attaching the new property to the source node.
+        delete_target_node: bool if the intermediate Node and Edge between source Node
+                                and target property should be deleted. Defaults to False.
     """
 
-    description: str = "Prunes the graph of specified node types that do not have connections to other nodes."
-    _query_template: str = """SELECT ?sourceNode ?property ?destinationNode ?value WHERE {{
-                                     ?sourceNode ?property ?destinationNode .
-                                     ?destinationNode a <{destination_node_type}> .
-                                     ?destinationNode <{property_predicate}> ?{property_name} . }}"""
+    description: str = "Attaches a target property from a target node that is connected to a source node."
+
+    _query_template_use_case_a: str = """
+    SELECT ?sourceNode ?sourceProperty ?targetNode ?newSourceProperty ?newSourcePropertyValue WHERE {{
+        ?sourceNode ?sourceProperty ?targetNode .
+        BIND( <{target_property}> as ?newSourceProperty ) .
+        ?targetNode a <{target_node_type}> .
+        ?targetNode <{target_property}> ?newSourcePropertyValue . }}"""
+
+    _query_template_use_case_b: str = """
+    SELECT ?sourceNode ?sourceProperty ?targetNode ?newSourceProperty ?newSourcePropertyValue WHERE {{
+        ?sourceNode ?sourceProperty ?targetNode .
+        ?targetNode a <{target_node_type}> .
+        ?targetNode <{target_property_holding_new_property_name}> ?newSourceProperty .
+        ?targetNode <{target_property}> ?newSourcePropertyValue . }}"""
 
     def __init__(
         self,
-        destination_node_type: URIRef,
-        property_predicate: Namespace,
-        property_name: str,
-        delete_connecting_node: bool = True,
+        target_node_type: URIRef,
+        namespace: Namespace,
+        target_property: str,
+        target_property_holding_new_property_name: str | None = None,
+        delete_target_node: bool = False,
     ):
-        self.destination_node_type = destination_node_type
-        self.property_predicate = property_predicate
-        self.property_name = property_name
-        self.delete_connecting_node = delete_connecting_node
+        self.target_node_type = target_node_type
+        self.namespace = namespace
+        self.target_property = self.namespace[target_property]
+        self.delete_target_node = delete_target_node
+        self.target_property_holding_new_property_name = target_property_holding_new_property_name
 
-    def transform(self, graph: Graph) -> None:
-        nodes_to_delete: list[Identifier] = []
+    def transform(self, graph) -> None:
+        nodes_to_delete: list[tuple] = []
 
-        graph_traversals = list(
-            graph.query(
-                self._query_template.format(
-                    destination_node_type=self.destination_node_type,
-                    property_predicate=self.property_predicate,
-                    property_name=self.property_name,
-                )
+        if self.target_property_holding_new_property_name is not None:
+            target_property_holding_new_property_name = self.namespace[self.target_property_holding_new_property_name]
+            query = self._query_template_use_case_b.format(
+                target_node_type=self.target_node_type,
+                target_property_holding_new_property_name=target_property_holding_new_property_name,
+                target_property=self.target_property,
             )
-        )
+        else:
+            query = self._query_template_use_case_a.format(
+                target_node_type=self.target_node_type,
+                target_property=self.target_property,
+            )
 
-        for path in graph_traversals:
-            if isinstance(path, ResultRow):
-                source_node, predicate, destination_node, property_value = path.asdict().values()
+        for (
+            source_node,
+            old_predicate,
+            target_node,
+            new_predicate_value,
+            new_property_value,
+        ) in graph.query(query):
+            if self.target_property_holding_new_property_name is not None:
+                # Ensure new predicate is URI compliant as we are creating a new predicate
+                new_predicate_value_string = sentence_or_string_to_camel(str(new_predicate_value))
+                predicate = as_neat_compliant_uri(self.namespace[new_predicate_value_string])
+            else:
+                predicate = old_predicate
 
-                # Create new connection from source node to value
-                graph.add((source_node, predicate, property_value))
-                nodes_to_delete.append(destination_node)
+            # Create new connection from source node to value
+            graph.add((source_node, predicate, new_property_value))
+            # Remove old relationship between source node and destination node
+            graph.remove((source_node, old_predicate, target_node))
 
-            if self.delete_connecting_node:
-                for node in nodes_to_delete:
-                    # Remove edge triples to node
-                    graph.remove((None, None, node))
-                    # Remove node triple
-                    graph.remove((node, None, None))
+            nodes_to_delete.append(target_node)
+
+        if self.delete_target_node:
+            for target_node in nodes_to_delete:
+                # Remove triples with edges to target_node
+                graph.remove((None, None, target_node))
+                # Remove target node triple and its properties
+                graph.remove((target_node, None, None))
 
 
 class PruneDanglingNodes(BaseTransformer):

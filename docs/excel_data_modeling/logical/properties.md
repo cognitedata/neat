@@ -1,7 +1,12 @@
 !!! note annotate "WIP"
-    This part of the documentation will be converted to notebooks under `user-guide`.
+
+    This part of the documentation will be converted to notebooks under `tutorials`.
+
 # Transformation Engine
-The transformation engine is the core of NEAT. It is responsible for transforming the source knowledge graph to the target knowledge graph. The transformation engine is implemented as a set of transformation rules (aka, transformation directives) which are defined in the `Rules` object. The transformation rules are defined in the `Properties` sheet of the `Rules` object. The transformation rules are executed in the order they are defined in the `Properties` sheet.
+The transformation engine is the core of NEAT. It is responsible for transforming the source knowledge graph to the 
+target knowledge graph. The transformation engine is implemented as a set of transformation rules 
+(aka, transformation directives) which are defined in the `Rules` object. The transformation rules are defined in the 
+`Properties` sheet of the `Rules` object. The transformation rules are executed in the order they are defined in the `Properties` sheet.
 
 # Transformation Rules Types
 

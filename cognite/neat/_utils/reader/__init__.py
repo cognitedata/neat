@@ -1,3 +1,3 @@
-from ._base import GitHubReader, NeatReader, PathReader
+from ._base import GitHubReader, HttpFileReader, NeatReader, PathReader
 
-__all__ = ["NeatReader", "PathReader", "GitHubReader"]
+__all__ = ["NeatReader", "PathReader", "GitHubReader", "HttpFileReader"]

@@ -68,10 +68,16 @@ class InformationClass(SheetRow):
         implements: Which classes the current class implements.
     """
 
-    class_: ClassEntityType = Field(alias="Class")
-    name: str | None = Field(alias="Name", default=None)
-    description: str | None = Field(alias="Description", default=None)
-    implements: ClassEntityList | None = Field(alias="Implements", default=None)
+    class_: ClassEntityType = Field(
+        alias="Class", description="Class id being defined, use strongly advise `PascalCase` usage."
+    )
+    name: str | None = Field(alias="Name", default=None, description="Human readable name of the class.")
+    description: str | None = Field(alias="Description", default=None, description="Short description of the class.")
+    implements: ClassEntityList | None = Field(
+        alias="Implements",
+        default=None,
+        description="List of classes (comma separated) that the current class implements (parents).",
+    )
 
     physical: URIRefType | None = Field(
         None,
@@ -119,17 +125,40 @@ class InformationProperty(SheetRow):
               knowledge graph. Defaults to None (no transformation)
     """
 
-    class_: ClassEntityType = Field(alias="Class")
-    property_: InformationPropertyType = Field(alias="Property")
-    name: str | None = Field(alias="Name", default=None)
-    description: str | None = Field(alias="Description", default=None)
-    value_type: DataType | ClassEntityType | MultiValueTypeType | UnknownEntity = Field(
-        alias="Value Type", union_mode="left_to_right"
+    class_: ClassEntityType = Field(
+        alias="Class", description="Class id that the property is defined for, strongly advise `PascalCase` usage."
     )
-    min_count: int | None = Field(alias="Min Count", default=None)
-    max_count: int | float | None = Field(alias="Max Count", default=None)
-    default: Any | None = Field(alias="Default", default=None)
-    transformation: RDFPath | None = Field(alias="Transformation", default=None)
+    property_: InformationPropertyType = Field(
+        alias="Property", description="Property id, strongly advised to `camelCase` usage."
+    )
+    name: str | None = Field(alias="Name", default=None, description="Human readable name of the property.")
+    description: str | None = Field(alias="Description", default=None, description="Short description of the property.")
+    value_type: DataType | ClassEntityType | MultiValueTypeType | UnknownEntity = Field(
+        alias="Value Type",
+        union_mode="left_to_right",
+        description="Value type that the property can hold. It takes either subset of XSD type or a class defined.",
+    )
+    min_count: int | None = Field(
+        alias="Min Count",
+        default=None,
+        description="Minimum number of values that the property can hold. "
+        "If no value is provided, the default value is  `0`, "
+        "which means that the property is optional.",
+    )
+    max_count: int | float | None = Field(
+        alias="Max Count",
+        default=None,
+        description="Maximum number of values that the property can hold. "
+        "If no value is provided, the default value is  `inf`, "
+        "which means that the property can hold any number of values (listable).",
+    )
+    default: Any | None = Field(alias="Default", default=None, description="Default value of the property.")
+    transformation: RDFPath | None = Field(
+        alias="Transformation",
+        default=None,
+        description="The rule that is used to populate the data model. "
+        "The rule is provided in a RDFPath query syntax which is converted to downstream solution query (e.g. SPARQL).",
+    )
     inherited: bool = Field(
         default=False,
         exclude=True,
@@ -221,10 +250,14 @@ class InformationProperty(SheetRow):
 
 
 class InformationRules(BaseRules):
-    metadata: InformationMetadata = Field(alias="Metadata")
-    properties: SheetList[InformationProperty] = Field(alias="Properties")
-    classes: SheetList[InformationClass] = Field(alias="Classes")
-    prefixes: dict[str, Namespace] = Field(default_factory=get_default_prefixes, alias="Prefixes")
+    metadata: InformationMetadata = Field(alias="Metadata", description="Metadata for the logical data model")
+    properties: SheetList[InformationProperty] = Field(alias="Properties", description="List of properties")
+    classes: SheetList[InformationClass] = Field(alias="Classes", description="List of classes")
+    prefixes: dict[str, Namespace] = Field(
+        alias="Prefixes",
+        default_factory=get_default_prefixes,
+        description="the definition of the prefixes that are used in the semantic data model",
+    )
 
     @field_validator("prefixes", mode="before")
     def parse_str(cls, values: Any) -> Any:

@@ -53,3 +53,27 @@ capabilities:
         - WRITE
       scope:
         all: {}
+  - sequencesAcl:
+      actions:
+      - WRITE
+      - READ
+      scope:
+        all: {}
+  - eventsAcl:
+      actions:
+      - WRITE
+      - READ
+      scope:
+        all: {}
+  - relationshipsAcl:
+      actions:
+      - WRITE
+      - READ
+      scope:
+        all: {}
+  - labelsAcl:
+      actions:
+      - WRITE
+      - READ
+      scope:
+        all: {}
