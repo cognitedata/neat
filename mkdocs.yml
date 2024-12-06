@@ -34,10 +34,10 @@ nav:
         - Extending Data Model: tutorials/data-modeling/core_extension.ipynb
   - Data Model in Excel:
       - Overview: excel_data_modeling/rules.md
-      - Model Validation: terminology/rules-validation.md
-      - Excel Input: terminology/rules-excel-input.md
-      - DMSRules: terminology/dmsrules.md
-      - Units: terminology/units.md
+      - Logical Data Model:
+          - Overview: excel_data_modeling/logical_data_model.md
+      - Physical Data Model:
+          - Overview: excel_data_modeling/physical_data_model.md
   - Reference - Code API:
       - Overview: reference/overview.md
       - Issues:

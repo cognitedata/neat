@@ -22,12 +22,12 @@ To see which value types are supported, see the
 [CDF API Spec for Container Creation](https://api-docs.cognite.com/20230101/tag/Containers/operation/ApplyContainers) section.
 The `container.properties.type.type` field specifies the type of the property. 
 
-<img src="../artifacts/figs/container_spec.png" height="200">
+<img src="../../artifacts/figs/container_spec.png" height="200">
 
 There are two `Value Type` that supports extra parameters
 
 * `float32` and `float64` - These are used to specify floating-point numbers. The `unit` parameter is 
-   used to specify the unit of the number. See [Units](units.md) for available units. See example above.
+   used to specify the unit of the number. See [Units](../units.md) for available units. See example above.
 * `enum` - This is used to specify an enumeration. You need to set `collection` to the name of the enumeration and, 
    optionally, `unknownValue` to the value that should be used when the value is unknown. See example below. When
    enumerations are used, there is expected to be a corresponding `enum` sheet in the DMS Rules file with the 
@@ -134,11 +134,11 @@ whether the view is mapping to containers in another data model.
 * If the data model type is `enterprise` and the view has no properties mapping to containers, the default filter is `NodeType`
   filter with the same node id as the view.
 
-Looking at Olav's solution model, from the [Analytic Solution Tutorial](../tutorials/data-modeling-lifecycle/part-2-analytic-solution.md#implementing-the-solution-model),
+Looking at Olav's solution model, from the [Analytic Solution Tutorial](../../tutorials/data-modeling-lifecycle/part-2-analytic-solution.md#implementing-the-solution-model),
 the `WindTurbine` and `WindFarm` views are referencing containers in the enterprise data model, so these
 will have a `nodeType` filters `nodeType(power:GeneratingUnit,powerWindTurbine)` and `nodeType(power:EnergyArea,power:WindFarm)` respectively.
 
-If we look at the enterprise data model, from the [Knowledge Acquisition Tutorial](../tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md#dms-architect-alice),
+If we look at the enterprise data model, from the [Knowledge Acquisition Tutorial](../../tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md#dms-architect-alice),
 the most of the views will use a `hasData` filter, for example, the wind turbine will use the filter
 `hasData(power:GeneratingUnit, powerWindTurbine)`. One exception is `Polygon` which only have edge properties, so it will
 use a `nodeType` filter `nodeType(power:Polygon)`.
@@ -182,4 +182,4 @@ the JSON string that defines filter is:
 
 BEWARE to properly form the JSON string, as it is easy to make mistakes. The JSON string must be a valid JSON object!
 
-The exemplary `Rules` sheet with the above filters can be downloaded using [this link](../artifacts/rules/dms-architect-rules-raw-filter-example.xlsx).
+The exemplary `Rules` sheet with the above filters can be downloaded using [this link](../../artifacts/rules/dms-architect-rules-raw-filter-example.xlsx).

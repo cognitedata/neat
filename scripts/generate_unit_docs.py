@@ -24,7 +24,7 @@ QUANTITY_SECTION_TEMPL = """## {quantity}
 
 ROW_TEMPL = """| {externalId} | {name} | {longName} | {symbol} | {qudt} |"""
 
-DESTINATION_FILE = Path(__file__).resolve().parent.parent / 'docs' / 'terminology' / 'units.md'
+DESTINATION_FILE = Path(__file__).resolve().parent.parent / 'docs' / 'excel_data_modeling' / 'physical' / 'units.md'
 
 def generate_units_md() -> None:
     response = requests.get(UNIT_SOURCE)
