@@ -254,6 +254,7 @@ class InformationRules(BaseRules):
     properties: SheetList[InformationProperty] = Field(alias="Properties", description="List of properties")
     classes: SheetList[InformationClass] = Field(alias="Classes", description="List of classes")
     prefixes: dict[str, Namespace] = Field(
+        alias="Prefixes",
         default_factory=get_default_prefixes,
         description="the definition of the prefixes that are used in the semantic data model",
     )
