@@ -1,6 +1,6 @@
 # Units
 
-This document contains a list of units that are available in the Cognite Fusion platform. It was last generated 2024-09-03.
+This document contains a list of units that are available in the Cognite Fusion platform. It was last generated 2024-12-06.
 For the most up-to-date list of units, please refer to the [units catalog](https://raw.githubusercontent.com/cognitedata/units-catalog/main/versions/v1/units.json).
 
 
@@ -429,6 +429,7 @@ For the most up-to-date list of units, please refer to the [units catalog](https
 | pressure_gradient:kilopa-per-m | KiloPA-PER-M | Kilopascal per meter | kPa/m | [https://qudt.org/vocab/unit/KiloPA-PER-M](https://qudt.org/vocab/unit/KiloPA-PER-M) |
 | pressure_gradient:pa-per-m | PA-PER-M | Pascal per meter | Pa/m |  |
 | pressure_gradient:psi-per-ft | PSI-PER-FT | Pound Force per Square Inch per Foot | psi/ft |  |
+| pressure_gradient:psi-per-m | PSI-PER-M | Pound Force per Square Inch per Meter | psi/m |  |
 
 
 ## Resistance
