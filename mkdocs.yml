@@ -32,12 +32,13 @@ nav:
         - From Source to CDF - Nordic44 Use Case: tutorials/data-onboarding/nordic44_onboarding.ipynb
       - Data Modeling:
         - Extending Data Model: tutorials/data-modeling/core_extension.ipynb
-  - Data Model in Excel:
+  - Data Model in Spreadsheet:
       - Overview: excel_data_modeling/rules.md
       - Logical Data Model:
           - Overview: excel_data_modeling/logical_data_model.md
       - Physical Data Model:
           - Overview: excel_data_modeling/physical_data_model.md
+      - Units: excel_data_modeling/units.md
   - Reference - Code API:
       - Overview: reference/overview.md
       - Issues:
