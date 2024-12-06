@@ -332,12 +332,20 @@ class DMSEnum(SheetRow):
 
 
 class DMSRules(BaseRules):
-    metadata: DMSMetadata = Field(alias="Metadata")
-    properties: SheetList[DMSProperty] = Field(alias="Properties")
-    views: SheetList[DMSView] = Field(alias="Views")
-    containers: SheetList[DMSContainer] | None = Field(None, alias="Containers")
-    enum: SheetList[DMSEnum] | None = Field(None, alias="Enum")
-    nodes: SheetList[DMSNode] | None = Field(None, alias="Nodes")
+    metadata: DMSMetadata = Field(alias="Metadata", description="Contains information about the data model.")
+    properties: SheetList[DMSProperty] = Field(
+        alias="Properties", description="Contains the properties of the data model."
+    )
+    views: SheetList[DMSView] = Field(alias="Views", description="Contains the views of the data model.")
+    containers: SheetList[DMSContainer] | None = Field(
+        None,
+        alias="Containers",
+        description="Contains the definition containers that are the physical storage of the data model.",
+    )
+    enum: SheetList[DMSEnum] | None = Field(None, alias="Enum", description="Contains the definition of enum values.")
+    nodes: SheetList[DMSNode] | None = Field(
+        None, alias="Nodes", description="Contains the definition of the node types."
+    )
 
     @field_validator("views")
     def matching_version_and_space(cls, value: SheetList[DMSView], info: ValidationInfo) -> SheetList[DMSView]:
