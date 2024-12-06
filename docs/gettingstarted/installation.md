@@ -102,7 +102,7 @@ neat = NeatSession(client)
 # Start using neat by typing neat.<TAB>
 ```
 
-!!! tip "Helper get_cognite_client"
+!!! tip "Helper get_cognite_client function"
 
     The `get_cognite_client` function is a helper function that reads the environment variables from a `.env` file
     and creates a `CogniteClient` instance. This is a common pattern when working with Cognite Data Fusio through
