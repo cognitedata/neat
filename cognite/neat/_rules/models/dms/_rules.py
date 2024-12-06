@@ -196,7 +196,7 @@ class DMSContainer(SheetRow):
     name: str | None = Field(alias="Name", default=None)
     description: str | None = Field(alias="Description", default=None)
     constraint: ContainerEntityList | None = Field(None, alias="Constraint")
-    used_for: Literal["node", "edge", "all"] | None = Field("all", alias="Used For")
+    used_for: Literal["node", "edge", "all"] = Field("all", alias="Used For")
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.container,)
