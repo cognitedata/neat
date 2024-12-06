@@ -94,20 +94,60 @@ def _metadata(context: Any) -> DMSMetadata | None:
 
 
 class DMSProperty(SheetRow):
-    view: ViewEntityType = Field(alias="View")
-    view_property: DmsPropertyType = Field(alias="View Property")
-    name: str | None = Field(alias="Name", default=None)
-    description: str | None = Field(alias="Description", default=None)
-    connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = Field(None, alias="Connection")
-    value_type: DataType | ViewEntity | DMSUnknownEntity = Field(alias="Value Type")
-    nullable: bool | None = Field(default=None, alias="Nullable")
-    immutable: bool | None = Field(default=None, alias="Immutable")
-    is_list: bool | None = Field(default=None, alias="Is List")
-    default: str | int | dict | None = Field(None, alias="Default")
-    container: ContainerEntityType | None = Field(None, alias="Container")
-    container_property: DmsPropertyType | None = Field(None, alias="Container Property")
-    index: StrListType | None = Field(None, alias="Index")
-    constraint: StrListType | None = Field(None, alias="Constraint")
+    view: ViewEntityType = Field(alias="View", description="The property identifier.")
+    view_property: DmsPropertyType = Field(alias="View Property", description="The ViewId this property belongs to")
+    name: str | None = Field(alias="Name", default=None, description="Human readable name of the property")
+    description: str | None = Field(alias="Description", default=None, description="Short description of the property")
+    connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = Field(
+        None,
+        alias="Connection",
+        description="nly applies to connection between views. "
+        "It specify how the connection should be implemented in CDF.",
+    )
+    value_type: DataType | ViewEntity | DMSUnknownEntity = Field(
+        alias="Value Type",
+        description="Value type that the property can hold. "
+        "It takes either subset of CDF primitive types or a View id",
+    )
+    nullable: bool | None = Field(
+        default=None,
+        alias="Nullable",
+        description="Used to indicate whether the property is required or not. Only applies to primitive type.",
+    )
+    immutable: bool | None = Field(
+        default=None,
+        alias="Immutable",
+        description="sed to indicate whether the property is can only be set once. Only applies to primitive type.",
+    )
+    is_list: bool | None = Field(
+        default=None,
+        alias="Is List",
+        description="Used to indicate whether the property holds single or multiple values (list). "
+        "Only applies to primitive types.",
+    )
+    default: str | int | dict | None = Field(
+        None, alias="Default", description="Specifies default value for the property."
+    )
+    container: ContainerEntityType | None = Field(
+        None,
+        alias="Container",
+        description="Specifies container where the property is stored. Only applies to primitive type.",
+    )
+    container_property: DmsPropertyType | None = Field(
+        None,
+        alias="Container Property",
+        description="Specifies property in the container where the property is stored. Only applies to primitive type.",
+    )
+    index: StrListType | None = Field(
+        None,
+        alias="Index",
+        description="The names of the indexes (comma separated) that should be created for the property.",
+    )
+    constraint: StrListType | None = Field(
+        None,
+        alias="Constraint",
+        description="The names of the uniquness (comma separated) that should be created for the property.",
+    )
     logical: URIRefType | None = Field(
         None,
         alias="Logical",
@@ -192,11 +232,21 @@ class DMSProperty(SheetRow):
 
 
 class DMSContainer(SheetRow):
-    container: ContainerEntityType = Field(alias="Container")
-    name: str | None = Field(alias="Name", default=None)
-    description: str | None = Field(alias="Description", default=None)
-    constraint: ContainerEntityList | None = Field(None, alias="Constraint")
-    used_for: Literal["node", "edge", "all"] = Field("all", alias="Used For")
+    container: ContainerEntityType = Field(
+        alias="Container", description="Container id, strongly advised to PascalCase usage."
+    )
+    name: str | None = Field(
+        alias="Name", default=None, description="Human readable name of the container being defined."
+    )
+    description: str | None = Field(
+        alias="Description", default=None, description="Short description of the node being defined."
+    )
+    constraint: ContainerEntityList | None = Field(
+        None, alias="Constraint", description="List of required (comma separated) constraints for the container"
+    )
+    used_for: Literal["node", "edge", "all"] | None = Field(
+        "all", alias="Used For", description=" Whether the container is used for nodes, edges or all."
+    )
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.container,)
@@ -240,12 +290,22 @@ class DMSContainer(SheetRow):
 
 
 class DMSView(SheetRow):
-    view: ViewEntityType = Field(alias="View")
-    name: str | None = Field(alias="Name", default=None)
-    description: str | None = Field(alias="Description", default=None)
-    implements: ViewEntityList | None = Field(None, alias="Implements")
-    filter_: HasDataFilter | NodeTypeFilter | RawFilter | None = Field(None, alias="Filter")
-    in_model: bool = Field(True, alias="In Model")
+    view: ViewEntityType = Field(alias="View", description="View id, strongly advised to PascalCase usage.")
+    name: str | None = Field(alias="Name", default=None, description="Human readable name of the view being defined.")
+    description: str | None = Field(
+        alias="Description", default=None, description="Short description of the view being defined "
+    )
+    implements: ViewEntityList | None = Field(
+        None,
+        alias="Implements",
+        description="List of parent view ids (comma separated) which the view being defined implements.",
+    )
+    filter_: HasDataFilter | NodeTypeFilter | RawFilter | None = Field(
+        None, alias="Filter", description="Explicitly define the filter for the view."
+    )
+    in_model: bool = Field(
+        True, alias="In Model", description="Indicates whether the view being defined is a part of the data model."
+    )
     logical: URIRefType | None = Field(
         None,
         alias="Logical",
@@ -292,10 +352,14 @@ class DMSView(SheetRow):
 
 
 class DMSNode(SheetRow):
-    node: DMSNodeEntity = Field(alias="Node")
-    usage: Literal["type", "collection"] = Field(alias="Usage")
-    name: str | None = Field(alias="Name", default=None)
-    description: str | None = Field(alias="Description", default=None)
+    node: DMSNodeEntity = Field(alias="Node", description="The type definition of the node.")
+    usage: Literal["type", "collection"] = Field(
+        alias="Usage", description="What the usage of the node is in the data model."
+    )
+    name: str | None = Field(alias="Name", default=None, description="Human readable name of the node being defined.")
+    description: str | None = Field(
+        alias="Description", default=None, description="Short description of the node being defined."
+    )
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.node,)
@@ -316,10 +380,10 @@ class DMSNode(SheetRow):
 
 
 class DMSEnum(SheetRow):
-    collection: ClassEntityType = Field(alias="Collection")
-    value: str = Field(alias="Value")
-    name: str | None = Field(alias="Name", default=None)
-    description: str | None = Field(alias="Description", default=None)
+    collection: ClassEntityType = Field(alias="Collection", description="The collection this enum belongs to.")
+    value: str = Field(alias="Value", description="The value of the enum.")
+    name: str | None = Field(alias="Name", default=None, description="Human readable name of the enum.")
+    description: str | None = Field(alias="Description", default=None, description="Short description of the enum.")
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return self.collection, self.value
