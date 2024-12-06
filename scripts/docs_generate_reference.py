@@ -51,12 +51,15 @@ def generate_reference(name: str, rules: type[BaseRules], target_file: Path) -> 
 
         field_cls = get_field_cls_type(field_)
         rows: list[str] = []
-        for column_name, column in field_cls.model_fields.items():
-            if column_name == "validators_to_skip":
+        for column_id, column in field_cls.model_fields.items():
+            if column_id == "validators_to_skip":
                 continue
+            column_name = column.alias or column_id
+            # Special case for space prefix
+            column_name = {"prefix":"space"}.get(column_name, column_name)
             is_mandatory = column.default is not None
             rows.append(ROW_TEMPLATE.format(
-                column_name=column.alias or column_name,
+                column_name=column_name,
                 description=column.description,
                 mandatory="Yes" if is_mandatory else "No"
             ))
