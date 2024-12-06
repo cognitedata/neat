@@ -14,14 +14,14 @@ The physical data model has the following sheets:
 
 Contains information about the data model.
 
-| Column Name | Description | Mandatory |
-|-------------|-------------|-----------|
-| prefix | None | Yes |
-| externalId | None | Yes |
-| version | None | Yes |
+| Field | Description | Mandatory |
+|----------------|-------------|-----------|
+| space | The space where the data model is defined | Yes |
+| externalId | External identifier for the data model | Yes |
+| version | Version of the data model | Yes |
 | name | Human readable name of the data model | No |
-| description | None | No |
-| creator | List of contributors to the data model creation, typically information architects are considered as contributors. | Yes |
+| description | Short description of the data model | No |
+| creator | List of contributors (comma seperated) to the data model creation, typically information architects are considered as contributors. | Yes |
 | created | Date of the data model creation | Yes |
 | updated | Date of the data model update | Yes |
 | logical | None | No |
@@ -31,7 +31,7 @@ Contains information about the data model.
 Contains the properties of the data model.
 
 | Column Name | Description | Mandatory |
-|-------------|-------------|-----------|
+|----------------|-------------|-----------|
 | Neat ID | Globally unique identifier for the property | No |
 | View | The property identifier. | Yes |
 | View Property | The ViewId this property belongs to | Yes |
@@ -54,7 +54,7 @@ Contains the properties of the data model.
 Contains the views of the data model.
 
 | Column Name | Description | Mandatory |
-|-------------|-------------|-----------|
+|----------------|-------------|-----------|
 | Neat ID | Globally unique identifier for the property | No |
 | View | View id, strongly advised to PascalCase usage. | Yes |
 | Name | Human readable name of the view being defined. | No |
@@ -69,7 +69,7 @@ Contains the views of the data model.
 Contains the definition containers that are the physical storage of the data model.
 
 | Column Name | Description | Mandatory |
-|-------------|-------------|-----------|
+|----------------|-------------|-----------|
 | Neat ID | Globally unique identifier for the property | No |
 | Container | Container id, strongly advised to PascalCase usage. | Yes |
 | Name | Human readable name of the container being defined. | No |
@@ -82,7 +82,7 @@ Contains the definition containers that are the physical storage of the data mod
 Contains the definition of enum values.
 
 | Column Name | Description | Mandatory |
-|-------------|-------------|-----------|
+|----------------|-------------|-----------|
 | Neat ID | Globally unique identifier for the property | No |
 | Collection | The collection this enum belongs to. | Yes |
 | Value | The value of the enum. | Yes |
@@ -94,7 +94,7 @@ Contains the definition of enum values.
 Contains the definition of the node types.
 
 | Column Name | Description | Mandatory |
-|-------------|-------------|-----------|
+|----------------|-------------|-----------|
 | Neat ID | Globally unique identifier for the property | No |
 | Node | The type definition of the node. | Yes |
 | Usage | What the usage of the node is in the data model. | Yes |

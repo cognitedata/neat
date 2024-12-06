@@ -25,8 +25,8 @@ SHEET_TEMPLATE = """## {sheet_name} Sheet
 
 {description}
 
-| Column Name | Description | Mandatory |
-|-------------|-------------|-----------|
+| {col_or_field} | Description | Mandatory |
+|----------------|-------------|-----------|
 {rows}
 """
 
@@ -66,6 +66,7 @@ def generate_reference(name: str, rules: type[BaseRules], target_file: Path) -> 
         sheet_list.append(SHEET_TEMPLATE.format(
             sheet_name=sheet_name,
             description=field_.description,
+            col_or_field="Field" if field_name == "metadata" else "Column Name",
             rows="\n".join(rows)
         ))
 
