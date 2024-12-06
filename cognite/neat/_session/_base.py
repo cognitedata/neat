@@ -38,6 +38,24 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 @session_class_wrapper
 class NeatSession:
+    """Creates a new NeatSession.
+
+    This is the main entry point for using Neat. It provides access to the different APIs that can be used to read,
+    write, and manipulate data and data models.
+
+    Args:
+        client: The CogniteClient to use for reading and writing data.
+        storage: The storage type to use for storing data and data models. Can be either "memory" or "oxigraph".
+            In "memory" mode works well for small data sets and when only working with data models. It is works
+            well for all notebook environments. In "oxigraph" mode, the data is stored in an Oxigraph database. This
+            is more performant for larger data sets and when working with data. Note that this option requires
+            additional dependencies to be installed and is not available in CDF Notebooks.
+        verbose: Whether to print information about the operations being performed.
+        load_engine: Whether to load the Neat Engine. Can be "newest", "cache", or "skip". "newest" will always
+            check for the newest version of the engine. "cache" will load the engine if it has been downloaded before.
+            "skip" will not load the engine.
+    """
+
     def __init__(
         self,
         client: CogniteClient | None = None,

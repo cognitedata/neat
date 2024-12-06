@@ -147,11 +147,13 @@ class BaseMetadata(SchemaModel):
     Metadata model for data model
     """
 
-    role: ClassVar[RoleTypes]
-    aspect: ClassVar[DataModelAspect]
-    space: SpaceType = Field(alias="prefix")
-    external_id: DataModelExternalIdType = Field(alias="externalId")
-    version: VersionType
+    role: ClassVar[RoleTypes] = Field(description="Role of the person creating the data model")
+    aspect: ClassVar[DataModelAspect] = Field(description="Aspect of the data model")
+    space: SpaceType = Field(alias="prefix", description="The space where the data model is defined")
+    external_id: DataModelExternalIdType = Field(
+        alias="externalId", description="External identifier for the data model"
+    )
+    version: VersionType = Field(description="Version of the data model")
 
     name: str | None = Field(
         None,
@@ -160,21 +162,23 @@ class BaseMetadata(SchemaModel):
         max_length=255,
     )
 
-    description: str | None = Field(None, min_length=1, max_length=1024)
+    description: str | None = Field(
+        None, min_length=1, max_length=1024, description="Short description of the data model"
+    )
 
     creator: StrListType = Field(
         description=(
-            "List of contributors to the data model creation, "
+            "List of contributors (comma seperated) to the data model creation, "
             "typically information architects are considered as contributors."
         ),
     )
 
     created: datetime = Field(
-        description=("Date of the data model creation"),
+        description="Date of the data model creation",
     )
 
     updated: datetime = Field(
-        description=("Date of the data model update"),
+        description="Date of the data model update",
     )
 
     @field_validator("*", mode="before")
