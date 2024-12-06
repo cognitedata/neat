@@ -18,6 +18,7 @@ nav:
       - Why NEAT?: gettingstarted/why-neat.md
       - Installation: gettingstarted/installation.md
   - Tutorials:
+      - Introduction: tutorials/introduction/introduction.ipynb
 #      - Data Modeling Lifecycle:
 #          - Overview: tutorials/data-modeling-lifecycle/overview.md
 #          - Knowledge Acquisition: tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md
