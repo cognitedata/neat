@@ -136,8 +136,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield from issues
             tracker.issue(issues)
 
-            # this assumes no changes in the suffix of view and class
-
             if views_with_linked_properties:
                 # we need graceful exit if the view is not in the view_property_pairs
                 property_link_pairs = views_with_linked_properties.get(ViewEntity.from_id(view_id))
@@ -152,6 +150,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     yield error_view
                     continue
             else:
+                # this assumes no changes in the suffix of view and class
                 reader = self.graph_store.read(view.external_id)
 
             for identifier, properties in reader:
