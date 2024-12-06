@@ -35,9 +35,11 @@ nav:
   - Data Model in Spreadsheet:
       - Overview: excel_data_modeling/rules.md
       - Logical Data Model:
-          - Overview: excel_data_modeling/logical_data_model.md
+          - Overview: excel_data_modeling/logical/overview.md
+          - Reference: excel_data_modeling/logical/reference.md
       - Physical Data Model:
-          - Overview: excel_data_modeling/physical_data_model.md
+          - Overview: excel_data_modeling/overview.md
+          - Reference: excel_data_modeling/reference.md
       - Units: excel_data_modeling/units.md
   - Reference - Code API:
       - Overview: reference/overview.md

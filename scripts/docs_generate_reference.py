@@ -36,7 +36,7 @@ def generate_reference(name: str, rules: type[BaseRules], target_file: Path) -> 
 
 if __name__ == "__main__":
     generate_reference("physical", DMSRules, DMS_REFERENCE_MD)
-    # generate_reference("logical", InformationRules, INFO_REFERENCE_MD)
+    generate_reference("logical", InformationRules, INFO_REFERENCE_MD)
 
 
 
