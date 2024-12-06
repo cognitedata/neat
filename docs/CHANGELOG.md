@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.101.0] - 06-12-**2024**
 ### Added
 - Support for reading a `csv` from any URL in `neat.read.csv(...)`.
 
