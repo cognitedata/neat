@@ -3,7 +3,7 @@
 `neat` is distributed as a Python package. It is intended to be used in a notebook environment such as, for example, 
 Jupyter Notebooks. Another notebook environment is the CDF notebooks.
 
-## CDF Notebooks
+## CDF Notebooks Environment
 
 CDF Notebooks are a part of the Cognite Data Fusion (CDF) platform. These notebooks are a great way to get started with
 `neat`, even if you have **no coding experience**.
@@ -34,7 +34,7 @@ neat = NeatSession(client)
 # Start using neat by typing neat.<TAB>
 ```
 
-## Local
+## Local Notebook Environment
 Running `neat` locally requires a Python environment as well as a notebook environment. The following steps will 
 guide youy through the installation process using [Jupyter Lab](https://jupyter.org/install) as the notebook environment.
 
