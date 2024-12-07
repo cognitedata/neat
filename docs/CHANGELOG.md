@@ -18,9 +18,9 @@ Changes are grouped as follows:
 ## TBD
 ### Fixed
 - Reading data models from CDF ensures unique names for enum collections.
-
 ### Improved
 - AttachPropertyFromTargetToSource can now convert literal to URIRef
+
 
 ## [0.101.0] - 06-12-**2024**
 ### Added
