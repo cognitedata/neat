@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Fixed
+- Reading data models from CDF ensures unique names for enum collections.
+
 ## [0.101.0] - 06-12-**2024**
 ### Added
 - Support for reading a `csv` from any URL in `neat.read.csv(...)`.
