@@ -1,6 +1,7 @@
 import itertools
 import json
 from collections.abc import Iterable, Sequence
+from graphlib import TopologicalSorter
 from pathlib import Path
 from typing import Any, get_args
 
@@ -35,7 +36,7 @@ from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
 from cognite.neat._utils.upload import UploadResult
 
-from ._base import CDFLoader
+from ._base import _END_OF_CLASS, CDFLoader
 
 
 class DMSLoader(CDFLoader[dm.InstanceApply]):
@@ -121,7 +122,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             client=client,
         )
 
-    def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue]:
+    def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue | type[_END_OF_CLASS]]:
         if self._issues.has_errors and stop_on_exception:
             raise self._issues.as_exception()
         elif self._issues.has_errors:
@@ -176,6 +177,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     yield error_node
                 yield from self._create_edges(identifier, properties, edge_by_type, tracker)
             tracker.finish(repr(view_id))
+            yield _END_OF_CLASS
 
     def write_to_file(self, filepath: Path) -> None:
         if filepath.suffix not in [".json", ".yaml", ".yml"]:
@@ -215,7 +217,43 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self, view_and_count_by_id: dict[dm.ViewId, tuple[dm.View, int]]
     ) -> dict[dm.ViewId, tuple[dm.View, int]]:
         """Sorts the views by container constraints."""
-        raise NotImplementedError("This method is not implemented yet.")
+        if not self._client:
+            return view_and_count_by_id
+        # We need to retrieve the views to ensure we get all properties, such that we can find all
+        # the containers that the view is linked to.
+        views = self._client.data_modeling.views.retrieve(
+            list(view_and_count_by_id.keys()), include_inherited_properties=True
+        )
+        container_ids_by_view_id = {view.as_id(): view.referenced_containers() for view in views}
+        referenced_containers = {
+            container for containers in container_ids_by_view_id.values() for container in containers
+        }
+        containers = self._client.data_modeling.containers.retrieve(list(referenced_containers))
+
+        required_by_container_id: dict[dm.ContainerId, set[dm.ContainerId]] = {}
+        for container in containers:
+            container_id = container.as_id()
+            required_set: set[dm.ContainerId] = set()
+            for required in container.constraints.values():
+                if isinstance(required, dm.RequiresConstraint):
+                    required_set.add(required.require)
+            required_by_container_id[container_id] = required_set
+
+        order_by_container_id: dict[dm.ContainerId, int] = {}
+        for no, container_id in enumerate(TopologicalSorter(required_by_container_id).static_order()):
+            if container_id not in required_by_container_id:
+                continue
+            order_by_container_id[container_id] = no
+
+        def sort_view(pair: tuple[dm.ViewId, tuple[dm.View, int]]) -> int:
+            view_id, _ = pair
+            container_ids = container_ids_by_view_id[view_id]
+            if not container_ids:
+                return 0
+            # We sort by the highest order of the containers the view is referencing.
+            return max(order_by_container_id.get(container_id, 0) for container_id in container_ids)
+
+        return dict(sorted(view_and_count_by_id.items(), key=sort_view))
 
     def _create_validation_classes(
         self, view: dm.View
