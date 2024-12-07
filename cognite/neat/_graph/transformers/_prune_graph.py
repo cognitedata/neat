@@ -1,6 +1,7 @@
 from rdflib import Graph, Namespace, URIRef
 from rdflib.query import ResultRow
 
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._utils.rdf_ import as_neat_compliant_uri
 from cognite.neat._utils.text import sentence_or_string_to_camel
 
@@ -55,12 +56,13 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
 
     Args:
         target_node_type: RDF.type of edge Node
-        namespace: RDF Namespace to use when querying the graph
-        target_property: str with name of the property that holds the value attached to the intermediate node
-        target_property_holding_new_property_name: Optional str of the property name that holds
-        the new predicate to use when attaching the new property to the source node.
+        target_property: URIRef of the property that holds the value attached to the intermediate node
+        target_property_holding_new_property_name: URIRef of the property which value will be new
+        property that will be added to the source node
         delete_target_node: bool if the intermediate Node and Edge between source Node
                                 and target property should be deleted. Defaults to False.
+        convert_literal_to_uri: bool if the value of the new property should be converted to URIRef. Defaults to False.
+        namespace: Namespace to use when converting value to URIRef. Defaults to DEFAULT_NAMESPACE.
     """
 
     description: str = "Attaches a target property from a target node that is connected to a source node."
@@ -82,25 +84,26 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
     def __init__(
         self,
         target_node_type: URIRef,
-        namespace: Namespace,
-        target_property: str,
-        target_property_holding_new_property_name: str | None = None,
+        target_property: URIRef,
+        target_property_holding_new_property: URIRef | None = None,
         delete_target_node: bool = False,
+        convert_literal_to_uri: bool = False,
+        namespace: Namespace | None = None,
     ):
         self.target_node_type = target_node_type
-        self.namespace = namespace
-        self.target_property = self.namespace[target_property]
+        self.target_property = target_property
         self.delete_target_node = delete_target_node
-        self.target_property_holding_new_property_name = target_property_holding_new_property_name
+        self.target_property_holding_new_property = target_property_holding_new_property
+        self.convert_literal_to_uri = convert_literal_to_uri
+        self.namespace = namespace or DEFAULT_NAMESPACE
 
     def transform(self, graph) -> None:
         nodes_to_delete: list[tuple] = []
 
-        if self.target_property_holding_new_property_name is not None:
-            target_property_holding_new_property_name = self.namespace[self.target_property_holding_new_property_name]
+        if self.target_property_holding_new_property is not None:
             query = self._query_template_use_case_b.format(
                 target_node_type=self.target_node_type,
-                target_property_holding_new_property_name=target_property_holding_new_property_name,
+                target_property_holding_new_property_name=self.target_property_holding_new_property,
                 target_property=self.target_property,
             )
         else:
@@ -116,15 +119,21 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
             new_predicate_value,
             new_property_value,
         ) in graph.query(query):
-            if self.target_property_holding_new_property_name is not None:
+            if self.target_property_holding_new_property is not None:
                 # Ensure new predicate is URI compliant as we are creating a new predicate
                 new_predicate_value_string = sentence_or_string_to_camel(str(new_predicate_value))
                 predicate = as_neat_compliant_uri(self.namespace[new_predicate_value_string])
             else:
                 predicate = old_predicate
-
             # Create new connection from source node to value
-            graph.add((source_node, predicate, new_property_value))
+            print(self.namespace[new_property_value])
+            graph.add(
+                (
+                    source_node,
+                    predicate,
+                    (self.namespace[new_property_value] if self.convert_literal_to_uri else new_property_value),
+                )
+            )
             # Remove old relationship between source node and destination node
             graph.remove((source_node, old_predicate, target_node))
 

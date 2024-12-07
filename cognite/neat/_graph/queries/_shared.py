@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from rdflib import Graph, Literal, Namespace
 from rdflib.term import URIRef
 
-from cognite.neat._constants import get_default_prefixes
+from cognite.neat._constants import get_default_prefixes_and_namespaces
 from cognite.neat._rules.models._rdfpath import (
     Hop,
     Step,
@@ -51,7 +51,7 @@ def generate_prefix_header(prefixes: dict[str, Namespace] | None = None) -> str:
         Prefix header
     """
 
-    prefixes = prefixes or get_default_prefixes()
+    prefixes = prefixes or get_default_prefixes_and_namespaces()
 
     return "".join(f"PREFIX {key}:<{value}>\n" for key, value in prefixes.items())
 
@@ -81,7 +81,7 @@ def get_predicate_id(
         ID of predicate (aka property) connecting subject and object
     """
 
-    prefixes = prefixes or get_default_prefixes()
+    prefixes = prefixes or get_default_prefixes_and_namespaces()
 
     query = """
 
@@ -123,7 +123,7 @@ def hop2property_path(
     str
         Property path string for hop traversal (e.g. ^rdf:type/rdfs:subClassOf)
     """
-    prefixes = prefixes if prefixes else get_default_prefixes()
+    prefixes = prefixes if prefixes else get_default_prefixes_and_namespaces()
 
     # setting previous step to origin, as we are starting from there
     previous_step = Step(class_=hop.class_, direction="origin")
