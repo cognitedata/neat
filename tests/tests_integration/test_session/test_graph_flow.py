@@ -42,6 +42,10 @@ class TestExtractToLoadFlow:
         # Sequences is not yet supported
         neat.drop.instances("Sequence")
 
+        neat.prepare.instances.convert_data_type(
+            ("TimeSeries", "isString"), lambda is_string: "string" if is_string else "numeric"
+        )
+
         neat.infer()
 
         # Hack to ensure deterministic output
