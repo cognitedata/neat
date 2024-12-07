@@ -81,7 +81,7 @@ class CDFLoader(BaseLoader[T_Output]):
             elif result is _END_OF_CLASS:
                 ...
             else:
-                # MyPy does not understand else means the item will be of type T_Output
+                # MyPy does not understand that 'else' means the item will be of type T_Output
                 items.append(result)  # type: ignore[arg-type]
 
             if len(items) >= self._UPLOAD_BATCH_SIZE or result is _END_OF_CLASS:

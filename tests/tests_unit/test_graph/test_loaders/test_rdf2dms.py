@@ -26,11 +26,6 @@ class TestDMSLoader:
             car_case,
             car.CAR_MODEL,
             car.INSTANCE_SPACE,
-            {
-                car.CAR_MODEL.views[0].as_id(): "Car",
-                car.CAR_MODEL.views[1].as_id(): "Manufacturer",
-                car.CAR_MODEL.views[2].as_id(): "Color",
-            },
         )
 
         loaded = loader.load(stop_on_exception=True)
