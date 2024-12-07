@@ -126,7 +126,6 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
             else:
                 predicate = old_predicate
             # Create new connection from source node to value
-            print(self.namespace[new_property_value])
             graph.add(
                 (
                     source_node,
