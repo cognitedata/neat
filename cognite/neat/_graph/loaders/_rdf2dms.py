@@ -126,10 +126,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if self.rules and self.rules.metadata.logical
             else None
         )
+        views = self.data_model.views
 
-        view_ids = [repr(v.as_id()) for v in self.data_model.views]
+        view_ids = [repr(v.as_id()) for v in views]
         tracker = self._tracker(type(self).__name__, view_ids, "views")
-        for view in self.data_model.views:
+        for view in views:
             view_id = view.as_id()
             tracker.start(repr(view_id))
             pydantic_cls, edge_by_type, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
