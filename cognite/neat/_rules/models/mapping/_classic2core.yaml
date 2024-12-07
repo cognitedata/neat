@@ -2,10 +2,12 @@ enum:
 - collection: timeseriesType
   description: Time series with double floating point data points.
   name: numeric
+  neatId: http://purl.org/cognite/neat/neatId_dc4fdda7_1942_4413_addb_8e0fdf5f7eb6
   value: numeric
 - collection: timeseriesType
   description: Time series with string data points.
   name: string
+  neatId: http://purl.org/cognite/neat/neatId_b586504a_fce3_4981_bf7a_8a2ba4a23595
   value: string
 metadata:
   created: '2024-08-29T13:49:56.696000'
@@ -23,6 +25,7 @@ properties:
   description: Description of the instance
   immutable: false
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_48ce9ff3_05de_450c_9522_e3941213a5dd
   nullable: true
   value_type: text
   view: ClassicAsset
@@ -32,6 +35,7 @@ properties:
   description: Text based labels for generic use, limited to 1000
   immutable: false
   is_list: true
+  neatId: http://purl.org/cognite/neat/neatId_f9f6baab_24cb_4072_8bac_c3f67baa1fc3
   nullable: true
   value_type: text
   view: ClassicAsset
@@ -42,6 +46,7 @@ properties:
   immutable: false
   index: name
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_e7de8ee8_d55f_4fe6_abd7_af0809b62d09
   nullable: true
   value_type: text
   view: ClassicAsset
@@ -53,6 +58,7 @@ properties:
   immutable: false
   is_list: false
   name: Parent
+  neatId: http://purl.org/cognite/neat/neatId_af7c47c9_11a4_4dca_8949_1b01756a7103
   nullable: true
   value_type: ClassicAsset
   view: ClassicAsset
@@ -64,8 +70,9 @@ properties:
   immutable: false
   index: source
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_bad0205a_eedf_4fa7_b7fd_1698d76e6327
   nullable: true
-  value_type: cdf_cdm:CogniteSourceSystem(version=v1)
+  value_type: ClassicSourceSystem
   view: ClassicAsset
   view_property: source
 - container: cdf_cdm:CogniteDescribable
@@ -73,6 +80,7 @@ properties:
   description: Alternative names for the node
   immutable: false
   is_list: true
+  neatId: http://purl.org/cognite/neat/neatId_4465d8b5_e2e6_4c8c_8aa8_304d91c8c555
   nullable: true
   value_type: text
   view: ClassicEvent
@@ -84,6 +92,7 @@ properties:
   immutable: false
   is_list: true
   name: Assets
+  neatId: http://purl.org/cognite/neat/neatId_cee2adbe_7276_41fb_8ea8_82669e75773c
   nullable: true
   value_type: ClassicAsset
   view: ClassicEvent
@@ -93,6 +102,7 @@ properties:
   description: Description of the instance
   immutable: false
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_f5bf1ed7_f016_4ff4_99b7_e97ed33cc13b
   nullable: true
   value_type: text
   view: ClassicEvent
@@ -103,6 +113,7 @@ properties:
   immutable: false
   index: endTime
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_6eda259c_e3b6_4893_b0a0_68a6702ab6af
   nullable: true
   value_type: timestamp
   view: ClassicEvent
@@ -112,6 +123,7 @@ properties:
   description: Text based labels for generic use, limited to 1000
   immutable: false
   is_list: true
+  neatId: http://purl.org/cognite/neat/neatId_09e4f4b8_2555_47d4_bc9d_6aeba48479be
   nullable: true
   value_type: text
   view: ClassicEvent
@@ -123,8 +135,9 @@ properties:
   immutable: false
   index: source
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_e1628253_d8c5_4b4c_ac29_bc71a6eddac6
   nullable: true
-  value_type: cdf_cdm:CogniteSourceSystem(version=v1)
+  value_type: ClassicSourceSystem
   view: ClassicEvent
   view_property: source
 - container: cdf_cdm:CogniteSchedulable
@@ -133,6 +146,7 @@ properties:
   immutable: false
   index: startTime
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_3f3017ab_a3fc_4425_905a_2a0aa6797152
   nullable: true
   value_type: timestamp
   view: ClassicEvent
@@ -144,6 +158,7 @@ properties:
   immutable: false
   is_list: true
   name: Assets
+  neatId: http://purl.org/cognite/neat/neatId_bb9d31f9_3ca3_40c4_88b7_91495e2a605e
   nullable: true
   value_type: ClassicAsset
   view: ClassicFile
@@ -155,6 +170,7 @@ properties:
   immutable: false
   is_list: false
   name: Directory
+  neatId: http://purl.org/cognite/neat/neatId_6336e831_277e_45a9_86b2_03aa906f7d99
   nullable: true
   value_type: text
   view: ClassicFile
@@ -164,6 +180,7 @@ properties:
   description: Text based labels for generic use, limited to 1000
   immutable: false
   is_list: true
+  neatId: http://purl.org/cognite/neat/neatId_20bb9aa4_2f52_4560_b991_bd3268e72fb9
   nullable: true
   value_type: text
   view: ClassicFile
@@ -174,6 +191,7 @@ properties:
   immutable: false
   is_list: false
   name: MIME type
+  neatId: http://purl.org/cognite/neat/neatId_cd7a7341_941d_490b_b1dd_a04aa435f4b7
   nullable: true
   value_type: text
   view: ClassicFile
@@ -184,6 +202,7 @@ properties:
   immutable: false
   index: name
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_6b7f8e63_316e_45d8_a91d_d863acf1f404
   nullable: true
   value_type: text
   view: ClassicFile
@@ -195,8 +214,9 @@ properties:
   immutable: false
   index: source
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_2e4e1a44_028c_4d69_89d8_889131a91a5f
   nullable: true
-  value_type: cdf_cdm:CogniteSourceSystem(version=v1)
+  value_type: ClassicSourceSystem
   view: ClassicFile
   view_property: source
 - container: cdf_cdm:CogniteSourceable
@@ -205,6 +225,7 @@ properties:
   immutable: false
   index: sourceCreatedTime
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_fc48cf60_ba49_476a_ba47_0b9efae3f053
   nullable: true
   value_type: timestamp
   view: ClassicFile
@@ -215,6 +236,7 @@ properties:
   immutable: false
   index: sourceUpdatedTime
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_eab2af4f_325d_4d7e_85e0_cf6c31b66955
   nullable: true
   value_type: timestamp
   view: ClassicFile
@@ -226,6 +248,7 @@ properties:
   immutable: false
   is_list: true
   name: Assets
+  neatId: http://purl.org/cognite/neat/neatId_fb2abf3c_de5f_4c2b_8846_55ebcbd41a96
   nullable: true
   value_type: ClassicAsset
   view: ClassicTimeSeries
@@ -235,6 +258,7 @@ properties:
   description: Description of the instance
   immutable: false
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_b0eef1a4_a537_4128_b39f_6e4f4ab4cc0d
   nullable: true
   value_type: text
   view: ClassicTimeSeries
@@ -246,6 +270,7 @@ properties:
   immutable: false
   is_list: false
   name: Is step
+  neatId: http://purl.org/cognite/neat/neatId_63e676cd_f804_4420_b337_1fb1ae8a551a
   nullable: false
   value_type: boolean
   view: ClassicTimeSeries
@@ -256,6 +281,7 @@ properties:
   immutable: true
   is_list: false
   name: Type
+  neatId: http://purl.org/cognite/neat/neatId_4d8ecfcf_956c_46a1_b4b3_3f24dd3f39ee
   nullable: false
   value_type: enum(collection=timeseriesType)
   view: ClassicTimeSeries
@@ -265,6 +291,7 @@ properties:
   description: Alternative names for the node
   immutable: false
   is_list: true
+  neatId: http://purl.org/cognite/neat/neatId_a2b01916_ae91_438d_bd73_f7feb2041ca4
   nullable: true
   value_type: text
   view: ClassicTimeSeries
@@ -275,6 +302,7 @@ properties:
   immutable: false
   index: name
   is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_d8e34e9b_b933_449c_aab0_469e858615c9
   nullable: true
   value_type: text
   view: ClassicTimeSeries
@@ -284,6 +312,7 @@ properties:
   description: Text based labels for generic use, limited to 1000
   immutable: false
   is_list: true
+  neatId: http://purl.org/cognite/neat/neatId_d6d9d4a9_22dc_41c9_a70f_18d061ea5ee5
   nullable: true
   value_type: text
   view: ClassicTimeSeries
@@ -294,6 +323,7 @@ properties:
   immutable: false
   is_list: false
   name: Source unit
+  neatId: http://purl.org/cognite/neat/neatId_31a35416_f1b2_4089_a05b_a5e2a020772a
   nullable: true
   value_type: text
   view: ClassicTimeSeries
@@ -305,39 +335,46 @@ properties:
   immutable: false
   is_list: false
   name: Unit
+  neatId: http://purl.org/cognite/neat/neatId_29fae491_a4f1_41d8_bea2_aa771f6bd9e2
   nullable: true
   value_type: cdf_cdm:CogniteUnit(version=v1)
   view: ClassicTimeSeries
   view_property: unitExternalId
 views:
-- description: The CogniteSourceSystem core concept is used to standardize the way
-    source system is stored.
-  implements: cdf_cdm:CogniteDescribable(version=v1)
-  in_model: true
-  view: cdf_cdm:CogniteSourceSystem(version=v1)
 - description: Represents a single unit of measurement
   implements: cdf_cdm:CogniteDescribable(version=v1)
   in_model: true
+  neatId: http://purl.org/cognite/neat/neatId_bb1b7c5a_7350_4ffa_a419_b0b1e53d0953
   view: cdf_cdm:CogniteUnit(version=v1)
 - description: Assets represent systems that support industrial functions or processes.
     Assets are often called 'functional location'.
   implements: cdf_cdm:CogniteAsset(version=v1)
   in_model: true
   name: Asset
+  neatId: http://purl.org/cognite/neat/neatId_914a5ff4_cebc_4e91_b6b6_629c445121ab
   view: ClassicAsset
 - description: Represents activities. Activities typically happen over a period and
     have a start and end time.
   implements: cdf_cdm:CogniteActivity(version=v1)
   in_model: true
   name: Activity
+  neatId: http://purl.org/cognite/neat/neatId_7d04f66d_aebc_49e4_ba45_ab893bd786f8
   view: ClassicEvent
 - description: Represents files.
   implements: cdf_cdm:CogniteFile(version=v1)
   in_model: true
   name: File
+  neatId: http://purl.org/cognite/neat/neatId_9ad24a12_d41e_41ff_b75e_b35188e2504e
   view: ClassicFile
+- description: The CogniteSourceSystem core concept is used to standardize the way
+    source system is stored.
+  implements: cdf_cdm:CogniteSourceSystem(version=v1)
+  in_model: true
+  neatId: http://purl.org/cognite/neat/neatId_5788b394_8863_4b0a_adf5_c61b62022caa
+  view: ClassicSourceSystem
 - description: Represents a series of data points in time order.
   implements: cdf_cdm:CogniteTimeSeries(version=v1)
   in_model: true
   name: Time series
+  neatId: http://purl.org/cognite/neat/neatId_3e5a20d4_8932_4721_be03_d1fa9f8a3ef2
   view: ClassicTimeSeries
