@@ -116,7 +116,7 @@ class ConvertLiteral(BaseTransformer):
         for instance, literal in iterate_progress_bar(  # type: ignore[misc]
             graph.query(iterate_query),
             total=property_count,
-            description=f"Converting {self._type_name}{self._property_name}.",
+            description=f"Converting {self._type_name}.{self._property_name}.",
         ):
             if not isinstance(literal, rdflib.Literal):
                 warnings.warn(

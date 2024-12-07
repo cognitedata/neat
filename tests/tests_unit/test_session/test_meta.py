@@ -4,7 +4,7 @@ agreed upon by the team. This includes the following:
     - All parameters should be primary types (int, str, float, bool, etc.) or list/tuple of primary types.
 """
 
-from collections.abc import Collection
+from collections.abc import Callable, Collection
 from types import NoneType, UnionType
 from typing import Any, Literal, Union, get_args, get_origin
 
@@ -30,6 +30,8 @@ def is_allowed_type(value: type) -> bool:
     if isinstance(value, str | int | float | bool):
         return True
     if value in (int, str, float, bool, None, DataModelId, Any, NoneType):
+        return True
+    if isinstance(value, Callable):
         return True
     origin = get_origin(value)
     if origin in (Literal, list, tuple, Union, UnionType, Collection):
