@@ -1,7 +1,7 @@
 import copy
-from collections.abc import Collection
+from collections.abc import Callable, Collection
 from datetime import datetime, timezone
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from rdflib import URIRef
@@ -132,6 +132,19 @@ class InstancePrepareAPI:
         """
         transformer = RelationshipAsEdgeTransformer(min_relationship_types, limit_per_type)
         self._state.instances.store.transform(transformer)
+
+    def convert_data_type(self, source: tuple[str, str], *, convert: Callable[[Any], Any]) -> None:
+        """Convert the data type of a property.
+
+        This is, for example, useful when you have a boolean property that you want to convert to an enum.
+
+        Args:
+            source: The source of the conversion. A tuple of (type, property)
+                    where property is the property that should be converted.
+            convert: The function to use for the conversion. The function should take the value of the property
+                    as input and return the converted value.
+        """
+        raise NotImplementedError("This method is not yet implemented.")
 
 
 @session_class_wrapper
