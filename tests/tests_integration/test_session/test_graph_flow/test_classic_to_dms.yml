@@ -1,4 +1,499 @@
-instances: []
+instances:
+- externalId: Asset_4
+  instanceType: node
+  sources:
+  - properties:
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Utsira wind farm
+      metadata:
+        blob: data
+      name: Utsira
+      parent: null
+      relationshipAsset: null
+      source:
+        externalId: manufacturer1
+        space: sp_instance_space
+      tags:
+      - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
+    source:
+      externalId: ClassicAsset
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicAsset
+    space: sp_windfarm
+- externalId: Asset_5
+  instanceType: node
+  sources:
+  - properties:
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Wind turbine 01
+      metadata:
+        blob: data
+      name: WT-01
+      parent:
+        externalId: http://purl.org/cognite/cdf-classic#Asset_4
+        space: sp_instance_space
+      relationshipAsset:
+        externalId: WT-01_to_MetMast
+        space: sp_instance_space
+      source:
+        externalId: manufacturer1
+        space: sp_instance_space
+      tags:
+      - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
+      - http://purl.org/cognite/cdf-classic#Label_WindTurbine
+    source:
+      externalId: ClassicAsset
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicAsset
+    space: sp_windfarm
+- externalId: Asset_6
+  instanceType: node
+  sources:
+  - properties:
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Wind turbine 02
+      metadata:
+        blob: data
+      name: WT-02
+      parent:
+        externalId: http://purl.org/cognite/cdf-classic#Asset_4
+        space: sp_instance_space
+      relationshipAsset:
+        externalId: WT-02_to_MetMast
+        space: sp_instance_space
+      source:
+        externalId: manufacturer1
+        space: sp_instance_space
+      tags:
+      - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
+      - http://purl.org/cognite/cdf-classic#Label_WindTurbine
+    source:
+      externalId: ClassicAsset
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicAsset
+    space: sp_windfarm
+- externalId: Asset_7
+  instanceType: node
+  sources:
+  - properties:
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Measurement
+      metadata:
+        blob: data
+      name: Measurement
+      parent: null
+      relationshipAsset: null
+      source:
+        externalId: manufacturer2
+        space: sp_instance_space
+      tags:
+      - http://purl.org/cognite/cdf-classic#Label_Measurement
+    source:
+      externalId: ClassicAsset
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicAsset
+    space: sp_windfarm
+- externalId: Asset_8
+  instanceType: node
+  sources:
+  - properties:
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Meteorological mast
+      metadata:
+        blob: data
+      name: MetMast
+      parent:
+        externalId: http://purl.org/cognite/cdf-classic#Asset_7
+        space: sp_instance_space
+      relationshipAsset: null
+      source:
+        externalId: manufacturer2
+        space: sp_instance_space
+      tags:
+      - http://purl.org/cognite/cdf-classic#Label_Measurement
+      - http://purl.org/cognite/cdf-classic#Label_metMast
+    source:
+      externalId: ClassicAsset
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicAsset
+    space: sp_windfarm
+- externalId: DataSet_123
+  instanceType: node
+  sources:
+  - properties:
+      description: Source data set
+      metadata:
+        information: here
+        some: extra
+      name: Source DS
+      writeProtected: true
+    source:
+      externalId: ClassicDataSet
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicDataSet
+    space: sp_windfarm
+- externalId: DataSet_124
+  instanceType: node
+  sources:
+  - properties:
+      description: Usecase 01 data set
+      metadata:
+        information: here
+        some: other
+      name: Usecase 01
+      writeProtected: false
+    source:
+      externalId: ClassicDataSet
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicDataSet
+    space: sp_windfarm
+- externalId: DataSet_125
+  instanceType: node
+  sources:
+  - properties:
+      description: Maintenance data set
+      metadata:
+        information: here
+        some: other
+      name: Maintenance
+      writeProtected: true
+    source:
+      externalId: ClassicDataSet
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicDataSet
+    space: sp_windfarm
+- externalId: Event_1
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: http://purl.org/cognite/cdf-classic#Asset_5
+        space: sp_instance_space
+      dataSetId:
+        externalId: DataSet_125
+        space: sp_instance_space
+      description: Planned maintenance
+      endTime: '1970-01-01T00:00:00.500+00:00'
+      metadata:
+        blob: data
+      source:
+        externalId: manufacturer1
+        space: sp_instance_space
+      startTime: '1970-01-01T00:00:00.400+00:00'
+      subtype: Planned
+      type: Maintenance
+    source:
+      externalId: ClassicEvent
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicEvent
+    space: sp_windfarm
+- externalId: File_2
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: http://purl.org/cognite/cdf-classic#Asset_5
+        space: sp_instance_space
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      metadata:
+        blob: data
+      name: WT-01 datasheet
+      source:
+        externalId: manufacturer1
+        space: sp_instance_space
+    source:
+      externalId: ClassicFile
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicFile
+    space: sp_windfarm
+- externalId: Label_Measurement
+  instanceType: node
+  sources:
+  - properties:
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Measurement
+      name: Measurement
+    source:
+      externalId: ClassicLabel
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicLabel
+    space: sp_windfarm
+- externalId: Label_PowerGeneratingUnit
+  instanceType: node
+  sources:
+  - properties:
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Power generating unit
+      name: Power generating unit
+    source:
+      externalId: ClassicLabel
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicLabel
+    space: sp_windfarm
+- externalId: Label_WindTurbine
+  instanceType: node
+  sources:
+  - properties:
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Wind turbine
+      name: Wind turbine
+    source:
+      externalId: ClassicLabel
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicLabel
+    space: sp_windfarm
+- externalId: Label_metMast
+  instanceType: node
+  sources:
+  - properties:
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: Meteorological mast
+      name: Meteorological mast
+    source:
+      externalId: ClassicLabel
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicLabel
+    space: sp_windfarm
+- externalId: TimeSeries_1
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: http://purl.org/cognite/cdf-classic#Asset_5
+        space: sp_instance_space
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: WT-01 production
+      isStep: false
+      metadata:
+        blob: data
+      name: WT-01 production
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: sp_instance_space
+    source:
+      externalId: ClassicTimeSeries
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicTimeSeries
+    space: sp_windfarm
+- externalId: TimeSeries_2
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: http://purl.org/cognite/cdf-classic#Asset_6
+        space: sp_instance_space
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      description: WT-02 production
+      isStep: false
+      metadata:
+        blob: data
+      name: WT-02 production
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: sp_instance_space
+    source:
+      externalId: ClassicTimeSeries
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicTimeSeries
+    space: sp_windfarm
+- externalId: TimeSeries_3
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: http://purl.org/cognite/cdf-classic#Asset_5
+        space: sp_instance_space
+      dataSetId:
+        externalId: DataSet_124
+        space: sp_instance_space
+      description: WT-01 forecast
+      isStep: false
+      metadata:
+        blob: data
+      name: WT-01 forecast
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: sp_instance_space
+    source:
+      externalId: ClassicTimeSeries
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicTimeSeries
+    space: sp_windfarm
+- externalId: TimeSeries_4
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: http://purl.org/cognite/cdf-classic#Asset_6
+        space: sp_instance_space
+      dataSetId:
+        externalId: DataSet_124
+        space: sp_instance_space
+      description: WT-02 forecast
+      isStep: false
+      metadata:
+        blob: data
+      name: WT-02 forecast
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: sp_instance_space
+    source:
+      externalId: ClassicTimeSeries
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicTimeSeries
+    space: sp_windfarm
+- externalId: WT-01_to_MetMast
+  instanceType: node
+  sources:
+  - properties:
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      endNode:
+        externalId: Asset_8
+        space: sp_instance_space
+      labels:
+        externalId: Label_metMast
+        space: sp_instance_space
+      startNode:
+        externalId: Asset_5
+        space: sp_instance_space
+      type: http://purl.org/cognite/cdf-classic#Relationship
+    source:
+      externalId: ClassicAssetToAssetEdge
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicAssetToAssetEdge
+    space: sp_windfarm
+- externalId: WT-02_to_MetMast
+  instanceType: node
+  sources:
+  - properties:
+      dataSetId:
+        externalId: DataSet_123
+        space: sp_instance_space
+      endNode:
+        externalId: Asset_8
+        space: sp_instance_space
+      labels:
+        externalId: Label_metMast
+        space: sp_instance_space
+      startNode:
+        externalId: Asset_6
+        space: sp_instance_space
+      type: http://purl.org/cognite/cdf-classic#Relationship
+    source:
+      externalId: ClassicAssetToAssetEdge
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicAssetToAssetEdge
+    space: sp_windfarm
 rules:
   containers:
   - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteSchedulable

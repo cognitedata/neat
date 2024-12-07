@@ -69,6 +69,7 @@ class TestExtractToLoadFlow:
         instances = [
             self._standardize_instance(instance)
             for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
+            if isinstance(instance, InstanceApply)
         ]
 
         remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
