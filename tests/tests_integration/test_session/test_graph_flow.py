@@ -1,5 +1,6 @@
 from typing import Any
 
+import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import InstanceApply
@@ -88,6 +89,7 @@ class TestExtractToLoadFlow:
                     value.sort()
         return instance.dump()
 
+    @pytest.mark.skip("In progress, missing to create source entities")
     def test_classic_to_cdf(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
