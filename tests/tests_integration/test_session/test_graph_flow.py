@@ -45,7 +45,7 @@ class TestExtractToLoadFlow:
         neat.prepare.instances.convert_data_type(
             ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
         )
-        neat.prepare.instances.property_to_type((None, "source"), "SourceSystem")
+        neat.prepare.instances.property_to_type((None, "source"), "SourceSystem", "name")
 
         neat.infer()
 

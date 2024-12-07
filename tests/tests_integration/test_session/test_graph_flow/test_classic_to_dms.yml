@@ -330,6 +330,34 @@ instances:
   type:
     externalId: ClassicLabel
     space: sp_windfarm
+- externalId: SourceSystem_manufacturer1
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer1
+    source:
+      externalId: ClassicSourceSystem
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicSourceSystem
+    space: sp_windfarm
+- externalId: SourceSystem_manufacturer2
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer2
+    source:
+      externalId: ClassicSourceSystem
+      space: sp_windfarm
+      type: view
+      version: v1_prefixed_Classic
+  space: sp_instance_space
+  type:
+    externalId: ClassicSourceSystem
+    space: sp_windfarm
 - externalId: TimeSeries_1
   instanceType: node
   sources:
@@ -594,6 +622,8 @@ rules:
     used_for: all
   - container: ClassicLabel
     used_for: all
+  - container: ClassicSourceSystem
+    used_for: all
   - container: ClassicTimeSeries
     used_for: all
   enum:
@@ -672,7 +702,7 @@ rules:
     index: source
     is_list: false
     nullable: true
-    value_type: cdf_cdm:CogniteSourceSystem
+    value_type: ClassicSourceSystem(version=v1_prefixed_Classic)
     view: ClassicAsset(version=v1_prefixed_Classic)
     view_property: source
   - container: cdf_cdm:CogniteDescribable
@@ -798,7 +828,7 @@ rules:
     index: source
     is_list: false
     nullable: true
-    value_type: cdf_cdm:CogniteSourceSystem
+    value_type: ClassicSourceSystem(version=v1_prefixed_Classic)
     view: ClassicEvent(version=v1_prefixed_Classic)
     view_property: source
   - container: cdf_cdm:CogniteSchedulable
@@ -864,7 +894,7 @@ rules:
     index: source
     is_list: false
     nullable: true
-    value_type: cdf_cdm:CogniteSourceSystem
+    value_type: ClassicSourceSystem(version=v1_prefixed_Classic)
     view: ClassicFile(version=v1_prefixed_Classic)
     view_property: source
   - connection: direct
@@ -888,6 +918,13 @@ rules:
     nullable: true
     value_type: text
     view: ClassicLabel(version=v1_prefixed_Classic)
+    view_property: name
+  - container: ClassicSourceSystem
+    container_property: name
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ClassicSourceSystem(version=v1_prefixed_Classic)
     view_property: name
   - connection: direct
     container: cdf_cdm:CogniteTimeSeries
@@ -1112,7 +1149,8 @@ rules:
     view: ClassicFile(version=v1_prefixed_Classic)
   - in_model: true
     view: ClassicLabel(version=v1_prefixed_Classic)
-  - in_model: true
+  - implements: cdf_cdm:CogniteSourceSystem
+    in_model: true
     view: ClassicSourceSystem(version=v1_prefixed_Classic)
   - implements: cdf_cdm:CogniteTimeSeries
     in_model: true
