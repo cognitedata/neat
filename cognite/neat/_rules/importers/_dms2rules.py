@@ -222,12 +222,13 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         schema: DMSSchema,
         metadata: DMSInputMetadata | None = None,
     ) -> DMSInputRules:
+        enum_by_container_property = self._create_enum_collections(schema.containers.values())
+
         properties: list[DMSInputProperty] = []
         for view_id, view in schema.views.items():
             view_entity = ViewEntity.from_id(view_id)
-            class_entity = view_entity.as_class()
             for prop_id, prop in (view.properties or {}).items():
-                dms_property = self._create_dms_property(prop_id, prop, view_entity, class_entity)
+                dms_property = self._create_dms_property(prop_id, prop, view_entity, enum_by_container_property)
                 if dms_property is not None:
                     properties.append(dms_property)
 
@@ -236,8 +237,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         }
 
         metadata = metadata or DMSInputMetadata.from_data_model(data_model)
-
-        enum = self._create_enum_collections(schema.containers.values())
 
         return DMSInputRules(
             metadata=metadata,
@@ -248,7 +247,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 for view_id, view in schema.views.items()
             ],
             nodes=[DMSInputNode.from_node_type(node_type) for node_type in schema.node_types.values()],
-            enum=enum,
+            enum=list(enum_by_container_property.values()) or None,
         )
 
     @classmethod
@@ -267,7 +266,11 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         )
 
     def _create_dms_property(
-        self, prop_id: str, prop: ViewPropertyApply, view_entity: ViewEntity, class_entity: ClassEntity
+        self,
+        prop_id: str,
+        prop: ViewPropertyApply,
+        view_entity: ViewEntity,
+        enum_by_container_property: dict[tuple[dm.ContainerId, str], DMSInputEnum],
     ) -> DMSInputProperty | None:
         if isinstance(prop, dm.MappedPropertyApply) and prop.container not in self._all_containers_by_id:
             self.issue_list.append(
@@ -300,7 +303,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             )
             return None
 
-        value_type = self._get_value_type(prop, view_entity, prop_id)
+        value_type = self._get_value_type(prop, view_entity, prop_id, enum_by_container_property)
         if value_type is None:
             return None
 
@@ -347,7 +350,11 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             return None
 
     def _get_value_type(
-        self, prop: ViewPropertyApply, view_entity: ViewEntity, prop_id
+        self,
+        prop: ViewPropertyApply,
+        view_entity: ViewEntity,
+        prop_id: str,
+        enum_by_container_property: dict[tuple[dm.ContainerId, str], DMSInputEnum],
     ) -> DataType | ViewEntity | DMSUnknownEntity | None:
         if isinstance(
             prop,
@@ -367,7 +374,16 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             elif isinstance(container_prop.type, PropertyTypeWithUnit) and container_prop.type.unit:
                 return DataType.load(f"{container_prop.type._type}(unit={container_prop.type.unit.external_id})")
             elif isinstance(container_prop.type, DMSEnum):
-                return Enum(collection=ClassEntity(suffix=prop_id), unknownValue=container_prop.type.unknown_value)
+                enum = enum_by_container_property.get((prop.container, prop.container_property_identifier))
+                if enum is None:
+                    # This should never happen
+                    raise ValueError(
+                        f"BUG in Neat: Enum for {prop.container}.{prop.container_property_identifier} not found"
+                    )
+
+                return Enum(
+                    collection=ClassEntity(suffix=enum.collection), unknownValue=container_prop.type.unknown_value
+                )
             else:
                 return DataType.load(container_prop.type._type)
         else:
@@ -477,12 +493,15 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         return candidates[0]
 
     @staticmethod
-    def _create_enum_collections(containers: Collection[dm.ContainerApply]) -> list[DMSInputEnum] | None:
-        enum_collections: list[DMSInputEnum] = []
+    def _create_enum_collections(
+        containers: Collection[dm.ContainerApply],
+    ) -> dict[tuple[dm.ContainerId, str], DMSInputEnum]:
+        enum_by_container_property: dict[tuple[dm.ContainerId, str], DMSInputEnum] = {}
 
         is_external_id_unique = len({container.external_id for container in containers}) == len(containers)
 
         for container in containers:
+            container_id = container.as_id()
             for prop_id, prop in container.properties.items():
                 if not isinstance(prop.type, DMSEnum):
                     continue
@@ -491,9 +510,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 else:
                     collection = f"{container.space}:{container.external_id}.{prop_id}"
                 for identifier, value in prop.type.values.items():
-                    enum_collections.append(
-                        DMSInputEnum(
-                            collection=collection, value=identifier, name=value.name, description=value.description
-                        )
+                    enum_by_container_property[(container_id, identifier)] = DMSInputEnum(
+                        collection=collection, value=identifier, name=value.name, description=value.description
                     )
-        return enum_collections
+        return enum_by_container_property
