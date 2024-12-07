@@ -136,7 +136,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if self.rules and self.rules.metadata.logical
             else None
         )
-        view_and_count_by_id = self._prepare_views(self.data_model.views)
+        view_and_count_by_id = self._select_views_with_instances(self.data_model.views)
+        if self._client:
+            view_and_count_by_id = self._sort_by_container_constraints(view_and_count_by_id)
 
         view_ids = [repr(v) for v in view_and_count_by_id.keys()]
         tracker = self._tracker(type(self).__name__, view_ids, "views")
@@ -195,19 +197,25 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 yaml.safe_dump(dumped, f, sort_keys=False)
 
-    def _prepare_views(self, views: list[dm.View]) -> dict[dm.ViewId, tuple[dm.View, int]]:
-        """Selects the views with data and sorts them by the dependency order."""
+    def _select_views_with_instances(self, views: list[dm.View]) -> dict[dm.ViewId, tuple[dm.View, int]]:
+        """Selects the views with data."""
         view_and_count_by_id: dict[dm.ViewId, tuple[dm.View, int]] = {}
         for view in views:
             view_id = view.as_id()
-            count = 0
+            neat_id = self.class_neat_id_by_view_id.get(view_id)
+            if neat_id is None:
+                continue
+            count = self.graph_store.count_type(neat_id)
             if count > 0:
                 view_and_count_by_id[view_id] = view, count
 
-        if self._client:
-            raise NotImplementedError("This is not yet implemented.")
-
         return view_and_count_by_id
+
+    def _sort_by_container_constraints(
+        self, view_and_count_by_id: dict[dm.ViewId, tuple[dm.View, int]]
+    ) -> dict[dm.ViewId, tuple[dm.View, int]]:
+        """Sorts the views by container constraints."""
+        raise NotImplementedError("This method is not implemented yet.")
 
     def _create_validation_classes(
         self, view: dm.View
