@@ -9,7 +9,7 @@ from ._classic_cdf import (
 )
 from ._prune_graph import AttachPropertyFromTargetToSource, PruneDanglingNodes
 from ._rdfpath import AddSelfReferenceProperty, MakeConnectionOnExactMatch
-from ._value_type import SplitMultiValueProperty
+from ._value_type import ConvertLiteral, SplitMultiValueProperty
 
 __all__ = [
     "AddAssetDepth",
@@ -24,6 +24,7 @@ __all__ = [
     "MakeConnectionOnExactMatch",
     "AttachPropertyFromTargetToSource",
     "PruneDanglingNodes",
+    "ConvertLiteral",
 ]
 
 Transformers = (
@@ -39,4 +40,5 @@ Transformers = (
     | MakeConnectionOnExactMatch
     | AttachPropertyFromTargetToSource
     | PruneDanglingNodes
+    | ConvertLiteral
 )

@@ -403,8 +403,11 @@ rules:
     value_type: ClassicAsset(version=v1_prefixed_Classic)
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: assets
-  - connection: edge
-    is_list: true
+  - connection: direct
+    container: ClassicTimeSeries
+    container_property: dataSetId
+    is_list: false
+    nullable: true
     value_type: ClassicDataSet(version=v1_prefixed_Classic)
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: dataSetId

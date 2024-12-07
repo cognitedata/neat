@@ -60,7 +60,7 @@ class Collector:
         if len(args) > 1:
             # The first argument is self.
             for i, arg in enumerate(args[1:]):
-                event_information[f"arg{i}"] = arg
+                event_information[f"arg{i}"] = self._serialize_value(arg)[:500]
 
         if kwargs:
             for key, value in kwargs.items():
@@ -73,6 +73,8 @@ class Collector:
             return str(value)
         if isinstance(value, list | tuple | dict):
             return str(value)
+        if callable(value):
+            return value.__name__
         return str(type(value))
 
     def _track(self, event_name: str, event_information: dict[str, Any]) -> bool:

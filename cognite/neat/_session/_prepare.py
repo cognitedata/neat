@@ -1,15 +1,14 @@
 import copy
-from collections.abc import Collection
+from collections.abc import Callable, Collection
 from datetime import datetime, timezone
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from rdflib import URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._graph.transformers import RelationshipAsEdgeTransformer
-from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
+from cognite.neat._graph.transformers import ConvertLiteral, MakeConnectionOnExactMatch, RelationshipAsEdgeTransformer
 from cognite.neat._rules._shared import InputRules, ReadRules
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules
@@ -131,6 +130,32 @@ class InstancePrepareAPI:
 
         """
         transformer = RelationshipAsEdgeTransformer(min_relationship_types, limit_per_type)
+        self._state.instances.store.transform(transformer)
+
+    def convert_data_type(self, source: tuple[str, str], *, convert: Callable[[Any], Any]) -> None:
+        """Convert the data type of a property.
+
+        This is, for example, useful when you have a boolean property that you want to convert to an enum.
+
+        Args:
+            source: The source of the conversion. A tuple of (type, property)
+                    where property is the property that should be converted.
+            convert: The function to use for the conversion. The function should take the value of the property
+                    as input and return the converted value.
+
+        Examples:
+            Convert a boolean property to a string:
+            ```python
+            neat.prepare.instances.convert_data_type(
+                ("TimeSeries", "isString"),
+                convert=lambda is_string: "string" if is_string else "numeric"
+            )
+            ```
+
+        """
+        subject_type, subject_predicate = self._get_type_and_property_uris(*source)
+
+        transformer = ConvertLiteral(subject_type, subject_predicate, convert)
         self._state.instances.store.transform(transformer)
 
 

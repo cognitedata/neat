@@ -26,6 +26,7 @@ from ._models import (
     UserModelingWarning,
 )
 from ._properties import (
+    PropertyDataTypeConversionWarning,
     PropertyDefinitionDuplicatedWarning,
     PropertyNotFoundWarning,
     PropertyOverwritingWarning,
@@ -75,6 +76,7 @@ __all__ = [
     "CDFAuthWarning",
     "user_modeling",
     "CDFMaxIterationsWarning",
+    "PropertyDataTypeConversionWarning",
 ]
 
 _NEAT_WARNINGS_BY_NAME = {warning.__name__: warning for warning in _get_subclasses(NeatWarning, include_base=True)}

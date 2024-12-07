@@ -38,9 +38,13 @@ class TestExtractToLoadFlow:
         for extractor in classic_windfarm.create_extractors():
             neat._state.instances.store.write(extractor)
 
-        neat.prepare.instances.relationships_as_edges()
         # Sequences is not yet supported
         neat.drop.instances("Sequence")
+        neat.prepare.instances.relationships_as_edges()
+
+        neat.prepare.instances.convert_data_type(
+            ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
+        )
 
         neat.infer()
 
@@ -62,7 +66,6 @@ class TestExtractToLoadFlow:
         remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
 
         rules_str = neat.to.yaml(format="neat")
-
         if False:
             # In progress, not yet supported.
             dms_rules = neat._state.data_model.last_verified_dms_rules[1]
