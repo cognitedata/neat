@@ -482,11 +482,12 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         for container in containers:
             for prop_id, prop in container.properties.items():
                 collection = f"{container.external_id}.{prop_id}"
-                if isinstance(prop.type, DMSEnum):
-                    for identifier, value in prop.type.values.items():
-                        enum_collections.append(
-                            DMSInputEnum(
-                                collection=collection, value=identifier, name=value.name, description=value.description
-                            )
+                if not isinstance(prop.type, DMSEnum):
+                    continue
+                for identifier, value in prop.type.values.items():
+                    enum_collections.append(
+                        DMSInputEnum(
+                            collection=collection, value=identifier, name=value.name, description=value.description
                         )
+                    )
         return enum_collections
