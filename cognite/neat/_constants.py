@@ -71,7 +71,7 @@ UNKNOWN_TYPE = DEFAULT_NAMESPACE.UnknownType
 XML_SCHEMA_NAMESPACE = Namespace("http://www.w3.org/2001/XMLSchema#")
 
 
-def get_default_prefixes() -> dict[str, Namespace]:
+def get_default_prefixes_and_namespaces() -> dict[str, Namespace]:
     return {
         "owl": OWL._NS,
         "rdf": RDF._NS,
@@ -84,6 +84,9 @@ def get_default_prefixes() -> dict[str, Namespace]:
         "imf": Namespace("http://ns.imfid.org/imf#"),
         "pav": Namespace("http://purl.org/pav/"),
         "foaf": FOAF._NS,
+        "dexpi": Namespace("http://sandbox.dexpi.org/rdl/"),
+        "qudt": Namespace("https://qudt.org/vocab/unit/"),
+        "iodd": Namespace("http://www.io-link.com/IODD/2010/10/"),
     }
 
 

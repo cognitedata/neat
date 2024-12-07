@@ -18,13 +18,16 @@ Changes are grouped as follows:
 ## TBD
 ### Fixed
 - Reading data models from CDF ensures unique names for enum collections.
+### Improved
+- AttachPropertyFromTargetToSource can now convert literal to URIRef
+
 
 ## [0.101.0] - 06-12-**2024**
 ### Added
 - Support for reading a `csv` from any URL in `neat.read.csv(...)`.
 
 ## Fixed
-- The `neat.to.cdf.data_model()` no longer fails to update `space` when `existing='recreate'` and `drop_data=True`. 
+- The `neat.to.cdf.data_model()` no longer fails to update `space` when `existing='recreate'` and `drop_data=True`.
   Instead, spaces are now updated, while containers are successfully deleted and recreated.
 
 ## [0.100.1] - 05-12-**2024**

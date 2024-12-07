@@ -4,7 +4,7 @@ from pathlib import Path
 from cognite.client import data_modeling as dm
 from rdflib import Graph, Namespace, URIRef
 
-from cognite.neat._constants import get_default_prefixes
+from cognite.neat._constants import get_default_prefixes_and_namespaces
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import FileReadError
 from cognite.neat._issues.errors._general import NeatValueError
@@ -97,7 +97,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
             issue_list.append(FileReadError(filepath, str(e)))
 
         # bind key namespaces
-        for prefix, namespace in get_default_prefixes().items():
+        for prefix, namespace in get_default_prefixes_and_namespaces().items():
             graph.bind(prefix, namespace)
 
         return cls(
