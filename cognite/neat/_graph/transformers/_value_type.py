@@ -168,10 +168,13 @@ class LiteralToEntity(BaseTransformer):
       ?instance <{subject_predicate}> ?property
     }}"""
 
-    def __init__(self, subject_type: URIRef | None, subject_predicate: URIRef, entity_type: str) -> None:
+    def __init__(
+        self, subject_type: URIRef | None, subject_predicate: URIRef, entity_type: str, new_property: str | None = None
+    ) -> None:
         self.subject_type = subject_type
         self.subject_predicate = subject_predicate
         self.entity_type = entity_type
+        self.new_property = new_property
 
     def transform(self, graph: Graph) -> None:
         if self.subject_type is None:
@@ -210,5 +213,7 @@ class LiteralToEntity(BaseTransformer):
             entity_type = namespace[self.entity_type]
             new_entity = namespace[f"{self.entity_type}_{value!s}"]
             graph.add((new_entity, RDF.type, entity_type))
+            if self.new_property is not None:
+                graph.add((instance, namespace[self.new_property], value))
             graph.add((instance, self.subject_predicate, new_entity))
             graph.remove((instance, self.subject_predicate, literal))

@@ -163,7 +163,7 @@ class InstancePrepareAPI:
         transformer = ConvertLiteral(subject_type, subject_predicate, convert)
         self._state.instances.store.transform(transformer)
 
-    def property_to_type(self, source: tuple[str | None, str], type: str) -> None:
+    def property_to_type(self, source: tuple[str | None, str], type: str, new_property: str | None = None) -> None:
         """Convert a property to a new type.
 
         Args:
@@ -171,6 +171,7 @@ class InstancePrepareAPI:
                     where property is the property that should be converted.
                     You can pass (None, property) to covert all properties with the given name.
             type: The new type of the property.
+            new_property: Add the identifier as a new property. If None, the new entity will not have a property.
 
         Examples:
             Convert the property 'source' to SourceSystem
@@ -186,7 +187,7 @@ class InstancePrepareAPI:
         else:
             subject_predicate = self._state.instances.store.queries.property_uri(source[1])[0]
 
-        transformer = LiteralToEntity(subject_type, subject_predicate, type)
+        transformer = LiteralToEntity(subject_type, subject_predicate, type, new_property)
         self._state.instances.store.transform(transformer)
 
 
