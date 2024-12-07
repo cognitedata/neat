@@ -186,7 +186,7 @@ class InstancePrepareAPI:
         else:
             subject_predicate = self._state.instances.store.queries.property_uri(source[1])[0]
 
-        transformer = LiteralToEntity(subject_type, subject_predicate, type, namespace=DEFAULT_NAMESPACE)
+        transformer = LiteralToEntity(subject_type, subject_predicate, type)
         self._state.instances.store.transform(transformer)
 
 

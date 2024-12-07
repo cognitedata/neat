@@ -9,7 +9,7 @@ from cognite.neat._constants import UNKNOWN_TYPE
 from cognite.neat._graph.queries import Queries
 from cognite.neat._issues.warnings import PropertyDataTypeConversionWarning
 from cognite.neat._utils.collection_ import iterate_progress_bar
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import get_namespace, remove_namespace_from_uri
 
 from ._base import BaseTransformer
 
@@ -168,13 +168,10 @@ class LiteralToEntity(BaseTransformer):
       ?instance <{subject_predicate}> ?property
     }}"""
 
-    def __init__(
-        self, subject_type: URIRef | None, subject_predicate: URIRef, entity_type: str, namespace: Namespace
-    ) -> None:
+    def __init__(self, subject_type: URIRef | None, subject_predicate: URIRef, entity_type: str) -> None:
         self.subject_type = subject_type
         self.subject_predicate = subject_predicate
         self.entity_type = entity_type
-        self.namespace = namespace
 
     def transform(self, graph: Graph) -> None:
         if self.subject_type is None:
@@ -191,7 +188,8 @@ class LiteralToEntity(BaseTransformer):
         property_count_res = list(graph.query(count_query))
         property_count = int(property_count_res[0][0])  # type: ignore [index, arg-type]
 
-        for instance, literal in iterate_progress_bar(  # type: ignore[misc]
+        instance: URIRef
+        for instance, literal in iterate_progress_bar(  # type: ignore[misc, assignment]
             graph.query(iterate_query),
             total=property_count,
             description=f"Converting {remove_namespace_from_uri(self.subject_predicate)}.",
@@ -207,9 +205,10 @@ class LiteralToEntity(BaseTransformer):
                     stacklevel=2,
                 )
                 continue
+            namespace = Namespace(get_namespace(instance))
             value = literal.toPython()
-            entity_type = self.namespace[self.entity_type]
-            new_entity = self.namespace[f"{self.entity_type}_{value!s}"]
+            entity_type = namespace[self.entity_type]
+            new_entity = namespace[f"{self.entity_type}_{value!s}"]
             graph.add((new_entity, RDF.type, entity_type))
             graph.add((instance, self.subject_predicate, new_entity))
             graph.remove((instance, self.subject_predicate, literal))
