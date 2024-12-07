@@ -378,7 +378,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 if enum is None:
                     # This should never happen
                     raise ValueError(
-                        f"BUG in Neat: Enum for {prop.container}.{prop.container_property_identifier} not found"
+                        f"BUG in Neat: Enum for {prop.container}.{prop.container_property_identifier} not found."
                     )
 
                 return Enum(
@@ -510,7 +510,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 else:
                     collection = f"{container.space}:{container.external_id}.{prop_id}"
                 for identifier, value in prop.type.values.items():
-                    enum_by_container_property[(container_id, identifier)] = DMSInputEnum(
+                    enum_by_container_property[(container_id, prop_id)] = DMSInputEnum(
                         collection=collection, value=identifier, name=value.name, description=value.description
                     )
         return enum_by_container_property
