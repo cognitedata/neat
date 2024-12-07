@@ -1,5 +1,6 @@
 import itertools
 import json
+from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from graphlib import TopologicalSorter
 from pathlib import Path
@@ -34,6 +35,7 @@ from cognite.neat._rules.models.entities._single_value import ViewEntity
 from cognite.neat._shared import InstanceType
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
+from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 from cognite.neat._utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, CDFLoader
@@ -139,45 +141,71 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         )
         view_and_count_by_id = self._select_views_with_instances(self.data_model.views)
         if self._client:
-            view_and_count_by_id = self._sort_by_container_constraints(view_and_count_by_id)
+            view_and_count_by_id, properties_point_to_self = self._sort_by_direct_relation_dependencies(
+                view_and_count_by_id
+            )
+        else:
+            properties_point_to_self = {}
 
-        view_ids = [repr(v) for v in view_and_count_by_id.keys()]
+        view_ids: list[str] = []
+        for view_id in view_and_count_by_id.keys():
+            view_ids.append(repr(view_id))
+            if view_id in properties_point_to_self:
+                # If the views have a dependency on themselves, we need to run it twice.
+                view_ids.append(f"{view_id!r} (self)")
+
         tracker = self._tracker(type(self).__name__, view_ids, "views")
         for view_id, (view, _) in view_and_count_by_id.items():
-            tracker.start(repr(view_id))
             pydantic_cls, edge_by_type, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
             yield from issues
             tracker.issue(issues)
 
-            if views_with_linked_properties:
-                # we need graceful exit if the view is not in the view_property_pairs
-                property_link_pairs = views_with_linked_properties.get(ViewEntity.from_id(view_id))
-
-                if class_neat_id := self.class_neat_id_by_view_id.get(view_id):
-                    reader = self.graph_store._read_via_rules_linkage(class_neat_id, property_link_pairs)
-                else:
-                    error_view = ResourceRetrievalError(view_id, "view", "View not linked to class")
-                    tracker.issue(error_view)
-                    if stop_on_exception:
-                        raise error_view
-                    yield error_view
-                    continue
+            if view_id in properties_point_to_self:
+                # If the view has a dependency on itself, we need to run it twice.
+                # First, to ensure that all nodes are created, and then to add the direct relations.
+                # This only applies if there is a require constraint on the container, if not
+                # we can create an empty node on the fly.
+                iterations = [properties_point_to_self[view_id], set()]
             else:
-                # this assumes no changes in the suffix of view and class
-                reader = self.graph_store.read(view.external_id)
+                iterations = [set()]
 
-            for identifier, properties in reader:
-                try:
-                    yield self._create_node(identifier, properties, pydantic_cls, view_id)
-                except ValueError as e:
-                    error_node = ResourceCreationError(identifier, "node", error=str(e))
-                    tracker.issue(error_node)
-                    if stop_on_exception:
-                        raise error_node from e
-                    yield error_node
-                yield from self._create_edges(identifier, properties, edge_by_type, tracker)
-            tracker.finish(repr(view_id))
-            yield _END_OF_CLASS
+            for skip_properties in iterations:
+                if skip_properties:
+                    track_id = f"{view_id} (self)"
+                else:
+                    track_id = repr(view_id)
+                tracker.start(track_id)
+                if views_with_linked_properties:
+                    # we need graceful exit if the view is not in the view_property_pairs
+                    property_link_pairs = views_with_linked_properties.get(ViewEntity.from_id(view_id))
+
+                    if class_neat_id := self.class_neat_id_by_view_id.get(view_id):
+                        reader = self.graph_store._read_via_rules_linkage(class_neat_id, property_link_pairs)
+                    else:
+                        error_view = ResourceRetrievalError(view_id, "view", "View not linked to class")
+                        tracker.issue(error_view)
+                        if stop_on_exception:
+                            raise error_view
+                        yield error_view
+                        continue
+                else:
+                    # this assumes no changes in the suffix of view and class
+                    reader = self.graph_store.read(view.external_id)
+
+                for identifier, properties in reader:
+                    if skip_properties:
+                        properties = {k: v for k, v in properties.items() if k not in skip_properties}
+                    try:
+                        yield self._create_node(identifier, properties, pydantic_cls, view_id)
+                    except ValueError as e:
+                        error_node = ResourceCreationError(identifier, "node", error=str(e))
+                        tracker.issue(error_node)
+                        if stop_on_exception:
+                            raise error_node from e
+                        yield error_node
+                    yield from self._create_edges(identifier, properties, edge_by_type, tracker)
+                tracker.finish(track_id)
+                yield _END_OF_CLASS
 
     def write_to_file(self, filepath: Path) -> None:
         if filepath.suffix not in [".json", ".yaml", ".yml"]:
@@ -213,12 +241,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         return view_and_count_by_id
 
-    def _sort_by_container_constraints(
+    def _sort_by_direct_relation_dependencies(
         self, view_and_count_by_id: dict[dm.ViewId, tuple[dm.View, int]]
-    ) -> dict[dm.ViewId, tuple[dm.View, int]]:
+    ) -> tuple[dict[dm.ViewId, tuple[dm.View, int]], dict[dm.ViewId, set[str]]]:
         """Sorts the views by container constraints."""
         if not self._client:
-            return view_and_count_by_id
+            return view_and_count_by_id, {}
         # We need to retrieve the views to ensure we get all properties, such that we can find all
         # the containers that the view is linked to.
         views = self._client.data_modeling.views.retrieve(
@@ -229,31 +257,30 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             container for containers in container_ids_by_view_id.values() for container in containers
         }
         containers = self._client.data_modeling.containers.retrieve(list(referenced_containers))
+        container_by_id = {container.as_id(): container for container in containers}
 
-        required_by_container_id: dict[dm.ContainerId, set[dm.ContainerId]] = {}
-        for container in containers:
-            container_id = container.as_id()
-            required_set: set[dm.ContainerId] = set()
-            for required in container.constraints.values():
-                if isinstance(required, dm.RequiresConstraint):
-                    required_set.add(required.require)
-            required_by_container_id[container_id] = required_set
+        dependency_on_self: dict[dm.ViewId, set[str]] = defaultdict(set)
+        view_id_by_dependencies: dict[dm.ViewId, set[dm.ViewId]] = {}
+        for view in views:
+            view_id = view.as_id()
+            dependencies = set()
+            for prop_id, prop in view.properties.items():
+                if isinstance(prop, dm.MappedProperty) and isinstance(prop.type, dm.DirectRelation) and prop.source:
+                    container = container_by_id[prop.container]
+                    has_require_constraint = any(
+                        isinstance(constraint, dm.RequiresConstraint) for constraint in container.constraints.values()
+                    )
+                    if has_require_constraint and prop.source == view_id:
+                        dependency_on_self[view_id].add(prop_id)
+                    elif has_require_constraint:
+                        dependencies.add(prop.source)
+            view_id_by_dependencies[view_id] = dependencies
 
-        order_by_container_id: dict[dm.ContainerId, int] = {}
-        for no, container_id in enumerate(TopologicalSorter(required_by_container_id).static_order()):
-            if container_id not in required_by_container_id:
-                continue
-            order_by_container_id[container_id] = no
+        ordered_view_ids = TopologicalSorter(view_id_by_dependencies).static_order()
 
-        def sort_view(pair: tuple[dm.ViewId, tuple[dm.View, int]]) -> int:
-            view_id, _ = pair
-            container_ids = container_ids_by_view_id[view_id]
-            if not container_ids:
-                return 0
-            # We sort by the highest order of the containers the view is referencing.
-            return max(order_by_container_id.get(container_id, 0) for container_id in container_ids)
-
-        return dict(sorted(view_and_count_by_id.items(), key=sort_view))
+        return {
+            view_id: view_and_count_by_id[view_id] for view_id in ordered_view_ids if view_id in view_and_count_by_id
+        }, dict(dependency_on_self)
 
     def _create_validation_classes(
         self, view: dm.View
@@ -326,9 +353,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
                 if list.__name__ in _get_field_value_types(cls, info):
-                    return [{"space": self.instance_space, "externalId": v} for v in value]
+                    return [{"space": self.instance_space, "externalId": remove_namespace_from_uri(v)} for v in value]
                 elif value:
-                    return {"space": self.instance_space, "externalId": value[0]}
+                    return {"space": self.instance_space, "externalId": remove_namespace_from_uri(value[0])}
                 return {}
 
             validators["parse_direct_relation"] = field_validator(*direct_relation_by_property.keys(), mode="before")(  # type: ignore[assignment]
