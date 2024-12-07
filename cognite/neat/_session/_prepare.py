@@ -8,7 +8,12 @@ from rdflib import URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._graph.transformers import ConvertLiteral, MakeConnectionOnExactMatch, RelationshipAsEdgeTransformer
+from cognite.neat._graph.transformers import (
+    ConvertLiteral,
+    LiteralToEntity,
+    MakeConnectionOnExactMatch,
+    RelationshipAsEdgeTransformer,
+)
 from cognite.neat._rules._shared import InputRules, ReadRules
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules
@@ -175,7 +180,14 @@ class InstancePrepareAPI:
             )
             ```
         """
-        ...
+        subject_type: URIRef | None = None
+        if source[0] is not None:
+            subject_type, subject_predicate = self._get_type_and_property_uris(*source)  # type: ignore[arg-type, assignment]
+        else:
+            subject_predicate = self._state.instances.store.queries.property_uri(source[1])[0]
+
+        transformer = LiteralToEntity(subject_type, subject_predicate, type, namespace=DEFAULT_NAMESPACE)
+        self._state.instances.store.transform(transformer)
 
 
 @session_class_wrapper
