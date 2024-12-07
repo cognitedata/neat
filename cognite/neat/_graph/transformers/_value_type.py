@@ -214,6 +214,6 @@ class LiteralToEntity(BaseTransformer):
             new_entity = namespace[f"{self.entity_type}_{value!s}"]
             graph.add((new_entity, RDF.type, entity_type))
             if self.new_property is not None:
-                graph.add((instance, namespace[self.new_property], value))
+                graph.add((instance, namespace[self.new_property], rdflib.Literal(value)))
             graph.add((instance, self.subject_predicate, new_entity))
             graph.remove((instance, self.subject_predicate, literal))
