@@ -13,7 +13,7 @@ instances:
       parent: null
       relationshipAsset: null
       source:
-        externalId: manufacturer1
+        externalId: SourceSystem_manufacturer1
         space: sp_instance_space
       tags:
       - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
@@ -44,7 +44,7 @@ instances:
         externalId: WT-01_to_MetMast
         space: sp_instance_space
       source:
-        externalId: manufacturer1
+        externalId: SourceSystem_manufacturer1
         space: sp_instance_space
       tags:
       - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
@@ -76,7 +76,7 @@ instances:
         externalId: WT-02_to_MetMast
         space: sp_instance_space
       source:
-        externalId: manufacturer1
+        externalId: SourceSystem_manufacturer1
         space: sp_instance_space
       tags:
       - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
@@ -104,7 +104,7 @@ instances:
       parent: null
       relationshipAsset: null
       source:
-        externalId: manufacturer2
+        externalId: SourceSystem_manufacturer2
         space: sp_instance_space
       tags:
       - http://purl.org/cognite/cdf-classic#Label_Measurement
@@ -133,7 +133,7 @@ instances:
         space: sp_instance_space
       relationshipAsset: null
       source:
-        externalId: manufacturer2
+        externalId: SourceSystem_manufacturer2
         space: sp_instance_space
       tags:
       - http://purl.org/cognite/cdf-classic#Label_Measurement
@@ -219,7 +219,7 @@ instances:
       metadata:
         blob: data
       source:
-        externalId: manufacturer1
+        externalId: SourceSystem_manufacturer1
         space: sp_instance_space
       startTime: '1970-01-01T00:00:00.400+00:00'
       subtype: Planned
@@ -247,7 +247,7 @@ instances:
         blob: data
       name: WT-01 datasheet
       source:
-        externalId: manufacturer1
+        externalId: SourceSystem_manufacturer1
         space: sp_instance_space
     source:
       externalId: ClassicFile
@@ -1112,6 +1112,8 @@ rules:
     view: ClassicFile(version=v1_prefixed_Classic)
   - in_model: true
     view: ClassicLabel(version=v1_prefixed_Classic)
+  - in_model: true
+    view: ClassicSourceSystem(version=v1_prefixed_Classic)
   - implements: cdf_cdm:CogniteTimeSeries
     in_model: true
     view: ClassicTimeSeries(version=v1_prefixed_Classic)
