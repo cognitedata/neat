@@ -135,7 +135,7 @@ metmast = Asset(
     labels=[Label("metMast"), Label("Measurement")],
     parent_id=measurment_root.id,
     parent_external_id=measurment_root.external_id,
-    id=6,
+    id=8,
     created_time=9,
     last_updated_time=10,
 )
@@ -218,6 +218,7 @@ LABELS = [
 ]
 
 wind_turbine_production = TimeSeries(
+    id=1,
     external_id="WT-01_production",
     name="WT-01 production",
     description="WT-01 production",
@@ -232,6 +233,7 @@ wind_turbine_production = TimeSeries(
 )
 
 wind_turbine_production2 = TimeSeries(
+    id=2,
     external_id="WT-02_production",
     name="WT-02 production",
     description="WT-02 production",
@@ -246,6 +248,7 @@ wind_turbine_production2 = TimeSeries(
 )
 
 wind_turbine_forecast = TimeSeries(
+    id=3,
     external_id="WT-01_forecast",
     name="WT-01 forecast",
     description="WT-01 forecast",
@@ -260,6 +263,7 @@ wind_turbine_forecast = TimeSeries(
 )
 
 wind_turbine_forecast2 = TimeSeries(
+    id=4,
     external_id="WT-02_forecast",
     name="WT-02 forecast",
     description="WT-02 forecast",
@@ -291,7 +295,7 @@ maintenance = Event(
     asset_ids=[wind_turbine.id],
     source="manufacturer1",
     metadata={"blob": "data"},
-    id=12345,
+    id=1,
     created_time=1,
     last_updated_time=2,
 )
@@ -305,7 +309,7 @@ data_sheet = FileMetadata(
     asset_ids=[wind_turbine.id],
     data_set_id=ds_source.id,
     metadata={"blob": "data"},
-    id=12345,
+    id=2,
     created_time=1,
     last_updated_time=2,
 )
