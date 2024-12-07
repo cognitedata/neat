@@ -142,6 +142,16 @@ class InstancePrepareAPI:
                     where property is the property that should be converted.
             convert: The function to use for the conversion. The function should take the value of the property
                     as input and return the converted value.
+
+        Examples:
+            Convert a boolean property to a string:
+            ```python
+            neat.prepare.instances.convert_data_type(
+                ("TimeSeries", "isString"),
+                convert=lambda is_string: "string" if is_string else "numeric"
+            )
+            ```
+
         """
         subject_type, subject_predicate = self._get_type_and_property_uris(*source)
 

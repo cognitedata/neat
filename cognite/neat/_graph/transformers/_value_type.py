@@ -2,6 +2,7 @@ import warnings
 from collections.abc import Callable
 from typing import Any
 
+import rdflib
 from rdflib import XSD, Graph, URIRef
 
 from cognite.neat._constants import UNKNOWN_TYPE
@@ -79,14 +80,14 @@ class ConvertLiteral(BaseTransformer):
 
     _count_by_properties = """SELECT (COUNT(?property) AS ?propertyCount)
     WHERE {{
-      ?instance a {subject_type} .
-      ?instance {subject_predicate} ?property
+      ?instance a <{subject_type}> .
+      ?instance <{subject_predicate}> ?property
     }}"""
 
     _properties = """SELECT ?instance ?property
     WHERE {{
-      ?instance a {subject_type} .
-      ?instance {subject_predicate} ?property
+      ?instance a <{subject_type}> .
+      ?instance <{subject_predicate}> ?property
     }}"""
 
     def __init__(
@@ -106,8 +107,8 @@ class ConvertLiteral(BaseTransformer):
             subject_type=self.subject_type, subject_predicate=self.subject_predicate
         )
 
-        property_count_res = graph.query(count_query)
-        property_count = int(property_count_res[0])  # type: ignore[index, arg-type]
+        property_count_res = list(graph.query(count_query))
+        property_count = int(property_count_res[0][0])  # type: ignore [index, arg-type]
         iterate_query = self._properties.format(
             subject_type=self.subject_type, subject_predicate=self.subject_predicate
         )
@@ -117,8 +118,20 @@ class ConvertLiteral(BaseTransformer):
             total=property_count,
             description=f"Converting {self._type_name}{self._property_name}.",
         ):
+            if not isinstance(literal, rdflib.Literal):
+                warnings.warn(
+                    PropertyDataTypeConversionWarning(
+                        str(instance),
+                        self._type_name,
+                        self._property_name,
+                        "The value is a connection and not a data type.",
+                    ),
+                    stacklevel=2,
+                )
+                continue
+            value = literal.toPython()
             try:
-                converted_literal = self.conversion(literal)
+                converted_value = self.conversion(value)
             except Exception as e:
                 warnings.warn(
                     PropertyDataTypeConversionWarning(str(instance), self._type_name, self._property_name, str(e)),
@@ -126,5 +139,5 @@ class ConvertLiteral(BaseTransformer):
                 )
                 continue
 
-            graph.add((instance, self.subject_predicate, converted_literal))
+            graph.add((instance, self.subject_predicate, rdflib.Literal(converted_value)))
             graph.remove((instance, self.subject_predicate, literal))
