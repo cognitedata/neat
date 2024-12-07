@@ -1,3 +1,6 @@
+from collections.abc import Callable
+from typing import Any
+
 from rdflib import XSD, Graph, URIRef
 
 from cognite.neat._constants import UNKNOWN_TYPE
@@ -64,3 +67,22 @@ class SplitMultiValueProperty(BaseTransformer):
                     graph.remove((s, property_uri, o))
                     new_property = URIRef(f"{property_uri}_{remove_namespace_from_uri(value_type_uri)}")
                     graph.add((s, new_property, o))
+
+
+class ConvertLiteral(BaseTransformer):
+    description: str = "ConvertLiteral is a transformer that converts a literal value."
+    _use_only_once: bool = False
+    _need_changes = frozenset({})
+
+    def __init__(
+        self,
+        subject_type: URIRef,
+        subject_predicate: URIRef,
+        conversion: Callable[[Any], Any],
+    ) -> None:
+        self.subject_type = subject_type
+        self.subject_predicate = subject_predicate
+        self.conversion = conversion
+
+    def transform(self, graph: Graph) -> None:
+        raise NotImplementedError

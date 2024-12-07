@@ -8,8 +8,7 @@ from rdflib import URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._graph.transformers import RelationshipAsEdgeTransformer
-from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
+from cognite.neat._graph.transformers import ConvertLiteral, MakeConnectionOnExactMatch, RelationshipAsEdgeTransformer
 from cognite.neat._rules._shared import InputRules, ReadRules
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules
@@ -144,7 +143,10 @@ class InstancePrepareAPI:
             convert: The function to use for the conversion. The function should take the value of the property
                     as input and return the converted value.
         """
-        raise NotImplementedError("This method is not yet implemented.")
+        subject_type, subject_predicate = self._get_type_and_property_uris(*source)
+
+        transformer = ConvertLiteral(subject_type, subject_predicate, convert)
+        self._state.instances.store.transform(transformer)
 
 
 @session_class_wrapper
