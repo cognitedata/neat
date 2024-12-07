@@ -376,7 +376,7 @@ instances:
       type: numeric
       unit:
         externalId: power:megaw
-        space: sp_instance_space
+        space: cdf_cdm_units
     source:
       externalId: ClassicTimeSeries
       space: sp_windfarm
@@ -404,7 +404,7 @@ instances:
       type: numeric
       unit:
         externalId: power:megaw
-        space: sp_instance_space
+        space: cdf_cdm_units
     source:
       externalId: ClassicTimeSeries
       space: sp_windfarm
@@ -432,7 +432,7 @@ instances:
       type: numeric
       unit:
         externalId: power:megaw
-        space: sp_instance_space
+        space: cdf_cdm_units
     source:
       externalId: ClassicTimeSeries
       space: sp_windfarm
@@ -460,7 +460,7 @@ instances:
       type: numeric
       unit:
         externalId: power:megaw
-        space: sp_instance_space
+        space: cdf_cdm_units
     source:
       externalId: ClassicTimeSeries
       space: sp_windfarm
@@ -919,8 +919,9 @@ rules:
     value_type: text
     view: ClassicLabel(version=v1_prefixed_Classic)
     view_property: name
-  - container: ClassicSourceSystem
+  - container: cdf_cdm:CogniteDescribable
     container_property: name
+    immutable: false
     is_list: false
     nullable: true
     value_type: text
