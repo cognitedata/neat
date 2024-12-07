@@ -38,7 +38,7 @@ instances:
         blob: data
       name: WT-01
       parent:
-        externalId: http://purl.org/cognite/cdf-classic#Asset_4
+        externalId: Asset_4
         space: sp_instance_space
       relationshipAsset:
         externalId: WT-01_to_MetMast
@@ -70,7 +70,7 @@ instances:
         blob: data
       name: WT-02
       parent:
-        externalId: http://purl.org/cognite/cdf-classic#Asset_4
+        externalId: Asset_4
         space: sp_instance_space
       relationshipAsset:
         externalId: WT-02_to_MetMast
@@ -129,7 +129,7 @@ instances:
         blob: data
       name: MetMast
       parent:
-        externalId: http://purl.org/cognite/cdf-classic#Asset_7
+        externalId: Asset_7
         space: sp_instance_space
       relationshipAsset: null
       source:
@@ -209,7 +209,7 @@ instances:
   sources:
   - properties:
       assets:
-      - externalId: http://purl.org/cognite/cdf-classic#Asset_5
+      - externalId: Asset_5
         space: sp_instance_space
       dataSetId:
         externalId: DataSet_125
@@ -238,7 +238,7 @@ instances:
   sources:
   - properties:
       assets:
-      - externalId: http://purl.org/cognite/cdf-classic#Asset_5
+      - externalId: Asset_5
         space: sp_instance_space
       dataSetId:
         externalId: DataSet_123
@@ -335,7 +335,7 @@ instances:
   sources:
   - properties:
       assets:
-      - externalId: http://purl.org/cognite/cdf-classic#Asset_5
+      - externalId: Asset_5
         space: sp_instance_space
       dataSetId:
         externalId: DataSet_123
@@ -363,7 +363,7 @@ instances:
   sources:
   - properties:
       assets:
-      - externalId: http://purl.org/cognite/cdf-classic#Asset_6
+      - externalId: Asset_6
         space: sp_instance_space
       dataSetId:
         externalId: DataSet_123
@@ -391,7 +391,7 @@ instances:
   sources:
   - properties:
       assets:
-      - externalId: http://purl.org/cognite/cdf-classic#Asset_5
+      - externalId: Asset_5
         space: sp_instance_space
       dataSetId:
         externalId: DataSet_124
@@ -419,7 +419,7 @@ instances:
   sources:
   - properties:
       assets:
-      - externalId: http://purl.org/cognite/cdf-classic#Asset_6
+      - externalId: Asset_6
         space: sp_instance_space
       dataSetId:
         externalId: DataSet_124
