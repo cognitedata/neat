@@ -16,6 +16,9 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Added
+- Support for converting data types with `neat.prepare.instances.convert_data_type(...)`.
+
 ### Fixed
 - Reading data models from CDF ensures unique names for enum collections.
 
