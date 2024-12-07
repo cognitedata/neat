@@ -57,7 +57,7 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
     Args:
         target_node_type: RDF.type of edge Node
         target_property: URIRef of the property that holds the value attached to the intermediate node
-        target_property_holding_new_property_name: URIRef of the property which value will be new
+        target_property_holding_new_property: URIRef of the property which value will be new
         property that will be added to the source node
         delete_target_node: bool if the intermediate Node and Edge between source Node
                                 and target property should be deleted. Defaults to False.
