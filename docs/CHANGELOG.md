@@ -21,6 +21,8 @@ Changes are grouped as follows:
 
 ### Fixed
 - Reading data models from CDF ensures unique names for enum collections.
+- The `neat.to.cdf.instances()` now accounts for the dependencies between the views when 
+  creating the instances in CDF.
 
 ## [0.101.0] - 06-12-**2024**
 ### Added
