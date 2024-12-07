@@ -158,6 +158,25 @@ class InstancePrepareAPI:
         transformer = ConvertLiteral(subject_type, subject_predicate, convert)
         self._state.instances.store.transform(transformer)
 
+    def property_to_type(self, source: tuple[str | None, str], type: str) -> None:
+        """Convert a property to a new type.
+
+        Args:
+            source: The source of the conversion. A tuple of (type, property)
+                    where property is the property that should be converted.
+                    You can pass (None, property) to covert all properties with the given name.
+            type: The new type of the property.
+
+        Examples:
+            Convert the property 'source' to SourceSystem
+            ```python
+            neat.prepare.instances.property_to_type(
+                (None, "source"), "SourceSystem"
+            )
+            ```
+        """
+        ...
+
 
 @session_class_wrapper
 class DataModelPrepareAPI:
