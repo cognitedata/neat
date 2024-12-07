@@ -87,3 +87,36 @@ class TestExtractToLoadFlow:
                 if isinstance(value, list):
                     value.sort()
         return instance.dump()
+
+    def test_classic_to_cdf(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        # Hack to read in the test data.
+        for extractor in classic_windfarm.create_extractors():
+            neat._state.instances.store.write(extractor)
+
+        # Sequences is not yet supported
+        neat.drop.instances("Sequence")
+
+        neat.prepare.instances.relationships_as_edges()
+        neat.prepare.instances.convert_data_type(
+            ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
+        )
+
+        neat.infer()
+
+        neat.prepare.data_model.prefix("Classic")
+
+        neat.verify()
+
+        neat.convert("dms", mode="edge_properties")
+        neat.mapping.data_model.classic_to_core("Classic", use_parent_property_name=True)
+
+        neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
+
+        model_result = neat.to.cdf.data_model()
+        has_errors = {res.name: res.error_messages for res in model_result if res.error_messages}
+        assert not has_errors, has_errors
+
+        instance_result = neat.to.cdf.instances()
+        has_errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
+        assert not has_errors, has_errors

@@ -136,12 +136,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if self.rules and self.rules.metadata.logical
             else None
         )
-        views = self.data_model.views
+        view_and_count_by_id = self._prepare_views(self.data_model.views)
 
-        view_ids = [repr(v.as_id()) for v in views]
+        view_ids = [repr(v) for v in view_and_count_by_id.keys()]
         tracker = self._tracker(type(self).__name__, view_ids, "views")
-        for view in views:
-            view_id = view.as_id()
+        for view_id, (view, _) in view_and_count_by_id.items():
             tracker.start(repr(view_id))
             pydantic_cls, edge_by_type, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
             yield from issues
@@ -195,6 +194,20 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 json.dump(dumped, f, indent=2)
             else:
                 yaml.safe_dump(dumped, f, sort_keys=False)
+
+    def _prepare_views(self, views: list[dm.View]) -> dict[dm.ViewId, tuple[dm.View, int]]:
+        """Selects the views with data and sorts them by the dependency order."""
+        view_and_count_by_id: dict[dm.ViewId, tuple[dm.View, int]] = {}
+        for view in views:
+            view_id = view.as_id()
+            count = 0
+            if count > 0:
+                view_and_count_by_id[view_id] = view, count
+
+        if self._client:
+            raise NotImplementedError("This is not yet implemented.")
+
+        return view_and_count_by_id
 
     def _create_validation_classes(
         self, view: dm.View
