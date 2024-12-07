@@ -16,6 +16,7 @@ from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 from rdflib import RDF, URIRef
 
+from cognite.neat._client import NeatClient
 from cognite.neat._graph._tracking import LogTracker, Tracker
 from cognite.neat._issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
@@ -47,6 +48,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         class_neat_id_by_view_id (dict[ViewId, URIRef] | None): A mapping from view id to class name. Defaults to None.
         create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
         tracker (type[Tracker] | None): The tracker to use. Defaults to None.
+        rules (DMSRules | None): The DMS rules used by the data model. This is used to lookup the
+            instances in the store. Defaults to None.
+        client (NeatClient | None): This is used to lookup containers such that the loader
+            creates instances in accordance with required constraints. Defaults to None.
     """
 
     def __init__(
@@ -58,6 +63,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         create_issues: Sequence[NeatIssue] | None = None,
         tracker: type[Tracker] | None = None,
         rules: DMSRules | None = None,
+        client: NeatClient | None = None,
     ):
         super().__init__(graph_store)
         self.data_model = data_model
@@ -66,11 +72,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self._issues = IssueList(create_issues or [])
         self._tracker: type[Tracker] = tracker or LogTracker
         self.rules = rules
+        self._client = client
 
     @classmethod
     def from_data_model_id(
         cls,
-        client: CogniteClient,
+        client: NeatClient,
         data_model_id: dm.DataModelId,
         graph_store: NeatGraphStore,
         instance_space: str,
@@ -82,10 +89,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         except Exception as e:
             issues.append(ResourceRetrievalError(data_model_id, "data model", str(e)))
 
-        return cls(graph_store, data_model, instance_space, {}, issues)
+        return cls(graph_store, data_model, instance_space, {}, issues, client=client)
 
     @classmethod
-    def from_rules(cls, rules: DMSRules, graph_store: NeatGraphStore, instance_space: str) -> "DMSLoader":
+    def from_rules(
+        cls, rules: DMSRules, graph_store: NeatGraphStore, instance_space: str, client: NeatClient | None = None
+    ) -> "DMSLoader":
         issues: list[NeatIssue] = []
         data_model: dm.DataModel[dm.View] | None = None
         try:
@@ -109,6 +118,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             class_neat_id_by_view_id,
             issues,
             rules=rules,
+            client=client,
         )
 
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue]:
