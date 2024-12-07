@@ -192,10 +192,16 @@ class LiteralToEntity(BaseTransformer):
         property_count = int(property_count_res[0][0])  # type: ignore [index, arg-type]
 
         instance: URIRef
+        description = f"Creating {remove_namespace_from_uri(self.subject_predicate)}."
+        if self.subject_type is not None:
+            description = (
+                f"Creating {remove_namespace_from_uri(self.subject_type)}."
+                f"{remove_namespace_from_uri(self.subject_predicate)}."
+            )
         for instance, literal in iterate_progress_bar(  # type: ignore[misc, assignment]
             graph.query(iterate_query),
             total=property_count,
-            description=f"Converting {remove_namespace_from_uri(self.subject_predicate)}.",
+            description=description,
         ):
             if not isinstance(literal, rdflib.Literal):
                 warnings.warn(
