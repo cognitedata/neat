@@ -1,6 +1,7 @@
 import warnings
 from collections.abc import Callable
 from typing import Any
+from urllib.parse import quote
 
 import rdflib
 from rdflib import RDF, XSD, Graph, Namespace, URIRef
@@ -217,7 +218,7 @@ class LiteralToEntity(BaseTransformer):
             namespace = Namespace(get_namespace(instance))
             value = literal.toPython()
             entity_type = namespace[self.entity_type]
-            new_entity = namespace[f"{self.entity_type}_{value!s}"]
+            new_entity = namespace[f"{self.entity_type}_{quote(value)!s}"]
             graph.add((new_entity, RDF.type, entity_type))
             if self.new_property is not None:
                 graph.add((new_entity, namespace[self.new_property], rdflib.Literal(value)))
