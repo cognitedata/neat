@@ -44,7 +44,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         graph_store (NeatGraphStore): The graph store to load the data into.
         data_model (dm.DataModel[dm.View] | None): The data model to load.
         instance_space (str): The instance space to load the data into.
-        class_by_view_id (dict[ViewId, str] | None): A mapping from view id to class name. Defaults to None.
+        class_neat_id_by_view_id (dict[ViewId, URIRef] | None): A mapping from view id to class name. Defaults to None.
         create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
         tracker (type[Tracker] | None): The tracker to use. Defaults to None.
     """

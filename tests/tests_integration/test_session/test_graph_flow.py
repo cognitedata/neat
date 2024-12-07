@@ -63,19 +63,17 @@ class TestExtractToLoadFlow:
 
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
-        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
+        # Hack to get the instances.
+        dms_rules = neat._state.data_model.last_verified_dms_rules[1]
+        store = neat._state.instances.store
+        instances = [
+            self._standardize_instance(instance)
+            for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
+        ]
 
+        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
         rules_str = neat.to.yaml(format="neat")
-        if False:
-            # In progress, not yet supported.
-            dms_rules = neat._state.data_model.last_verified_dms_rules[1]
-            store = neat._state.instances.store
-            instances = [
-                self._standardize_instance(instance)
-                for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
-            ]
-        else:
-            instances = []
+
         rules_dict = yaml.safe_load(rules_str)
         data_regression.check({"rules": rules_dict, "instances": sorted(instances, key=lambda x: x["externalId"])})
 
