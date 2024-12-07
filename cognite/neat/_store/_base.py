@@ -301,7 +301,7 @@ class NeatGraphStore:
 
         yield from self._read_via_class_entity(class_entity)
 
-    def count_type(self, neat_id: URIRef) -> int:
+    def count_of_id(self, neat_id: URIRef) -> int:
         """Count the number of instances of a given type
 
         Args:
@@ -328,6 +328,9 @@ class NeatGraphStore:
             )
             return 0
 
+        return self.count_of_type(class_uri)
+
+    def count_of_type(self, class_uri: URIRef) -> int:
         query = f"SELECT (COUNT(?instance) AS ?instanceCount) WHERE {{ ?instance a <{class_uri}> }}"
         return int(next(iter(self.graph.query(query)))[0])  # type: ignore[arg-type, index]
 

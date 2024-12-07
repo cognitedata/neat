@@ -230,12 +230,19 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     def _select_views_with_instances(self, views: list[dm.View]) -> dict[dm.ViewId, tuple[dm.View, int]]:
         """Selects the views with data."""
         view_and_count_by_id: dict[dm.ViewId, tuple[dm.View, int]] = {}
+        uri_by_type: dict[str, URIRef] = {
+            remove_namespace_from_uri(uri[0]): uri[0]  # type: ignore[misc]
+            for uri in self.graph_store.queries.list_types()
+        }
         for view in views:
             view_id = view.as_id()
             neat_id = self.class_neat_id_by_view_id.get(view_id)
-            if neat_id is None:
+            if neat_id is not None:
+                count = self.graph_store.count_of_id(neat_id)
+            elif view.external_id in uri_by_type:
+                count = self.graph_store.count_of_type(uri_by_type[view.external_id])
+            else:
                 continue
-            count = self.graph_store.count_type(neat_id)
             if count > 0:
                 view_and_count_by_id[view_id] = view, count
 
