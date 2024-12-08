@@ -101,6 +101,38 @@ class InstancePrepareAPI:
         for transformer in transformers:
             self._state.instances.store.transform(cast(Transformers, transformer))
 
+    def aml(self) -> None:
+        """Prepares extracted AutomationML graph for further usage in CDF
+
+        This method bundles several graph transformers which:
+        - attach values of attributes to nodes
+        - remove unused attributes
+        - remove edges to nodes that do not exist in the extracted graph
+
+        and therefore safeguard CDF from a bad graph
+        """
+
+        AML = get_default_prefixes_and_namespaces()["aml"]
+
+        transformers = [
+            # Remove any instance which type is unknown
+            PruneInstancesOfUnknownType(),
+            # Directly connect generic attributes
+            AttachPropertyFromTargetToSource(
+                target_property=AML.Value,
+                target_property_holding_new_property=AML.Name,
+                target_node_type=AML.Attribute,
+                delete_target_node=True,
+            ),
+            # Prune unused attributes
+            PruneTypes([AML.Attribute]),
+            # # Remove edges to nodes that do not exist in the extracted graph
+            PruneDeadEndEdges(),
+        ]
+
+        for transformer in transformers:
+            self._state.instances.store.transform(cast(Transformers, transformer))
+
     def make_connection_on_exact_match(
         self,
         source: tuple[str, str],

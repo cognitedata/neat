@@ -136,6 +136,9 @@ def remove_linking_in_rules(rules: VerifiedRules) -> VerifiedRules:
             property_.physical = None
             property_.conceptual = None
 
+        rules.metadata.conceptual = None
+        rules.metadata.physical = None
+
     elif isinstance(rules, DMSRules):
         for view in rules.views:
             view.neatId = None
@@ -154,3 +157,5 @@ def remove_linking_in_rules(rules: VerifiedRules) -> VerifiedRules:
         if rules.nodes:
             for node in rules.nodes:
                 node.neatId = None
+
+        rules.metadata.logical = None
