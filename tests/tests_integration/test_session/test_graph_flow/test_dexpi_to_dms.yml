@@ -1,0 +1,2202 @@
+instances: []
+rules:
+  containers:
+  - container: ActuatingElectricalFunction
+    used_for: all
+  - container: ActuatingFunction
+    used_for: all
+  - container: ActuatingSystem
+    used_for: all
+  - container: BallValve
+    used_for: all
+  - container: BlindFlange
+    used_for: all
+  - container: ButterflyValve
+    used_for: all
+  - container: CentrifugalPump
+    used_for: all
+  - container: CheckValve
+    used_for: all
+  - container: ControlledActuator
+    used_for: all
+  - container: CustomHeatExchanger
+    used_for: all
+  - container: CustomInlinePrimaryElement
+    used_for: all
+  - container: CustomOperatedValve
+    used_for: all
+  - container: CustomPipingComponent
+    used_for: all
+  - container: ElectricHeater
+    used_for: all
+  - container: Flange
+    used_for: all
+  - container: FlowInPipeOffPageConnector
+    used_for: all
+  - container: FlowOutPipeOffPageConnector
+    used_for: all
+  - container: FlowOutSignalOffPageConnector
+    used_for: all
+  - container: GateValve
+    used_for: all
+  - container: InstrumentationLoopFunction
+    used_for: all
+  - container: MeasuringLineFunction
+    used_for: all
+  - container: MetaData
+    used_for: all
+  - container: Note
+    used_for: all
+  - container: Nozzle
+    used_for: all
+  - container: OperatedValveReference
+    used_for: all
+  - container: PipeOffPageConnectorReferenceByNumber
+    used_for: all
+  - container: PipeReducer
+    used_for: all
+  - container: PipeTee
+    used_for: all
+  - container: PipingNetworkSegment
+    used_for: all
+  - container: PipingNetworkSystem
+    used_for: all
+  - container: PlantSystem
+    used_for: all
+  - container: PlateHeatExchanger
+    used_for: all
+  - container: PressureVessel
+    used_for: all
+  - container: ProcessInstrumentationFunction
+    used_for: all
+  - container: ProcessPlant
+    used_for: all
+  - container: ProcessSignalGeneratingFunction
+    used_for: all
+  - container: PropertyBreak
+    used_for: all
+  - container: RotaryPump
+    used_for: all
+  - container: SafetyValveOrFitting
+    used_for: all
+  - container: SignalConveyingFunction
+    used_for: all
+  - container: SignalOffPageConnectorReferenceByNumber
+    used_for: all
+  metadata:
+    created: '2024-09-19T00:00:00Z'
+    creator: NEAT
+    external_id: DEXPI
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1
+    name: Inferred Model
+    role: DMS Architect
+    space: dexpi_playground
+    updated: '2024-09-19T00:00:00Z'
+    version: v1.3.1
+  properties:
+  - container: ActuatingElectricalFunction
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ActuatingElectricalFunction
+    view_property: ComponentClassURI
+  - container: ActuatingElectricalFunction
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ActuatingElectricalFunction
+    view_property: tag
+  - container: ActuatingFunction
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ActuatingFunction
+    view_property: ComponentClassURI
+  - connection: direct
+    container: ActuatingFunction
+    container_property: isFulfilledBy
+    is_list: false
+    nullable: true
+    value_type: ActuatingSystem
+    view: ActuatingFunction
+    view_property: isFulfilledBy
+  - connection: edge
+    is_list: true
+    value_type: SignalConveyingFunction
+    view: ActuatingFunction
+    view_property: isLogicalEndOf
+  - container: ActuatingFunction
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ActuatingFunction
+    view_property: tag
+  - container: ActuatingSystem
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ActuatingSystem
+    view_property: ComponentClassURI
+  - connection: direct
+    container: ActuatingSystem
+    container_property: fulfills
+    is_list: false
+    nullable: true
+    value_type: ActuatingFunction
+    view: ActuatingSystem
+    view_property: fulfills
+  - container: ActuatingSystem
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ActuatingSystem
+    view_property: tag
+  - container: BallValve
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: BallValve
+    view_property: ComponentClassURI
+  - container: BallValve
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: BallValve
+    view_property: ComponentName
+  - container: BallValve
+    container_property: itemTagAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: BallValve
+    view_property: itemTagAssignmentClass
+  - container: BallValve
+    container_property: nominalDiameterAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: BallValve
+    view_property: nominalDiameterAssignmentClass
+  - container: BallValve
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: BallValve
+    view_property: objectDisplayNameAssignmentClass
+  - container: BallValve
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: BallValve
+    view_property: sequenceAssignmentClass
+  - container: BallValve
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: BallValve
+    view_property: tag
+  - container: BallValve
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: BallValve
+    view_property: tagTypeAssignmentClass
+  - container: BallValve
+    container_property: valvePositionAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: BallValve
+    view_property: valvePositionAssignmentClass
+  - container: BlindFlange
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: BlindFlange
+    view_property: ComponentClassURI
+  - container: BlindFlange
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: BlindFlange
+    view_property: ComponentName
+  - container: BlindFlange
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: BlindFlange
+    view_property: tag
+  - container: ButterflyValve
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ButterflyValve
+    view_property: ComponentClassURI
+  - container: ButterflyValve
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ButterflyValve
+    view_property: ComponentName
+  - container: ButterflyValve
+    container_property: itemTagAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ButterflyValve
+    view_property: itemTagAssignmentClass
+  - container: ButterflyValve
+    container_property: nominalDiameterAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ButterflyValve
+    view_property: nominalDiameterAssignmentClass
+  - container: ButterflyValve
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ButterflyValve
+    view_property: objectDisplayNameAssignmentClass
+  - container: ButterflyValve
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ButterflyValve
+    view_property: sequenceAssignmentClass
+  - container: ButterflyValve
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ButterflyValve
+    view_property: tag
+  - container: ButterflyValve
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ButterflyValve
+    view_property: tagTypeAssignmentClass
+  - container: ButterflyValve
+    container_property: valvePositionAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ButterflyValve
+    view_property: valvePositionAssignmentClass
+  - container: CentrifugalPump
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CentrifugalPump
+    view_property: ComponentClassURI
+  - container: CentrifugalPump
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CentrifugalPump
+    view_property: ComponentName
+  - connection: direct
+    container: CentrifugalPump
+    container_property: isAPartOf
+    is_list: false
+    nullable: true
+    value_type: ProcessPlant
+    view: CentrifugalPump
+    view_property: isAPartOf
+  - connection: direct
+    container: CentrifugalPump
+    container_property: isLocatedIn
+    is_list: false
+    nullable: true
+    value_type: PlantSystem
+    view: CentrifugalPump
+    view_property: isLocatedIn
+  - container: CentrifugalPump
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CentrifugalPump
+    view_property: objectDisplayNameAssignmentClass
+  - container: CentrifugalPump
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CentrifugalPump
+    view_property: sequenceAssignmentClass
+  - container: CentrifugalPump
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CentrifugalPump
+    view_property: tag
+  - container: CentrifugalPump
+    container_property: tagNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CentrifugalPump
+    view_property: tagNameAssignmentClass
+  - container: CentrifugalPump
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CentrifugalPump
+    view_property: tagTypeAssignmentClass
+  - container: CheckValve
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CheckValve
+    view_property: ComponentClassURI
+  - container: CheckValve
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CheckValve
+    view_property: ComponentName
+  - container: CheckValve
+    container_property: itemTagAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CheckValve
+    view_property: itemTagAssignmentClass
+  - container: CheckValve
+    container_property: nominalDiameterAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CheckValve
+    view_property: nominalDiameterAssignmentClass
+  - container: CheckValve
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CheckValve
+    view_property: objectDisplayNameAssignmentClass
+  - container: CheckValve
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CheckValve
+    view_property: sequenceAssignmentClass
+  - container: CheckValve
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CheckValve
+    view_property: tag
+  - container: CheckValve
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CheckValve
+    view_property: tagTypeAssignmentClass
+  - container: ControlledActuator
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ControlledActuator
+    view_property: ComponentClassURI
+  - container: ControlledActuator
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ControlledActuator
+    view_property: ComponentName
+  - container: ControlledActuator
+    container_property: failActionSpecialization
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ControlledActuator
+    view_property: failActionSpecialization
+  - container: ControlledActuator
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ControlledActuator
+    view_property: tag
+  - container: ControlledActuator
+    container_property: typeCodeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ControlledActuator
+    view_property: typeCodeAssignmentClass
+  - container: CustomHeatExchanger
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomHeatExchanger
+    view_property: ComponentClassURI
+  - container: CustomHeatExchanger
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomHeatExchanger
+    view_property: ComponentName
+  - connection: direct
+    container: CustomHeatExchanger
+    container_property: isAPartOf
+    is_list: false
+    nullable: true
+    value_type: ProcessPlant
+    view: CustomHeatExchanger
+    view_property: isAPartOf
+  - connection: direct
+    container: CustomHeatExchanger
+    container_property: isLocatedIn
+    is_list: false
+    nullable: true
+    value_type: PlantSystem
+    view: CustomHeatExchanger
+    view_property: isLocatedIn
+  - container: CustomHeatExchanger
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomHeatExchanger
+    view_property: objectDisplayNameAssignmentClass
+  - container: CustomHeatExchanger
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomHeatExchanger
+    view_property: sequenceAssignmentClass
+  - container: CustomHeatExchanger
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomHeatExchanger
+    view_property: tag
+  - container: CustomHeatExchanger
+    container_property: tagNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomHeatExchanger
+    view_property: tagNameAssignmentClass
+  - container: CustomHeatExchanger
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomHeatExchanger
+    view_property: tagTypeAssignmentClass
+  - container: CustomHeatExchanger
+    container_property: typeNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomHeatExchanger
+    view_property: typeNameAssignmentClass
+  - container: CustomHeatExchanger
+    container_property: typeURIAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomHeatExchanger
+    view_property: typeURIAssignmentClass
+  - container: CustomInlinePrimaryElement
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomInlinePrimaryElement
+    view_property: ComponentClassURI
+  - container: CustomInlinePrimaryElement
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomInlinePrimaryElement
+    view_property: ComponentName
+  - connection: direct
+    container: CustomInlinePrimaryElement
+    container_property: connection
+    is_list: false
+    nullable: true
+    value_type: ProcessInstrumentationFunction
+    view: CustomInlinePrimaryElement
+    view_property: connection
+  - connection: direct
+    container: CustomInlinePrimaryElement
+    container_property: isTheLocationOf
+    is_list: false
+    nullable: true
+    value_type: ProcessSignalGeneratingFunction
+    view: CustomInlinePrimaryElement
+    view_property: isTheLocationOf
+  - container: CustomInlinePrimaryElement
+    container_property: itemTagAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomInlinePrimaryElement
+    view_property: itemTagAssignmentClass
+  - container: CustomInlinePrimaryElement
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomInlinePrimaryElement
+    view_property: sequenceAssignmentClass
+  - container: CustomInlinePrimaryElement
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomInlinePrimaryElement
+    view_property: tag
+  - container: CustomInlinePrimaryElement
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomInlinePrimaryElement
+    view_property: tagTypeAssignmentClass
+  - container: CustomInlinePrimaryElement
+    container_property: typeNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomInlinePrimaryElement
+    view_property: typeNameAssignmentClass
+  - container: CustomInlinePrimaryElement
+    container_property: typeURIAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomInlinePrimaryElement
+    view_property: typeURIAssignmentClass
+  - container: CustomOperatedValve
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomOperatedValve
+    view_property: ComponentClassURI
+  - container: CustomOperatedValve
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomOperatedValve
+    view_property: ComponentName
+  - connection: direct
+    container: CustomOperatedValve
+    container_property: isReferencedBy
+    is_list: false
+    nullable: true
+    value_type: OperatedValveReference
+    view: CustomOperatedValve
+    view_property: isReferencedBy
+  - container: CustomOperatedValve
+    container_property: itemTagAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomOperatedValve
+    view_property: itemTagAssignmentClass
+  - container: CustomOperatedValve
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomOperatedValve
+    view_property: sequenceAssignmentClass
+  - container: CustomOperatedValve
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomOperatedValve
+    view_property: tag
+  - container: CustomOperatedValve
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomOperatedValve
+    view_property: tagTypeAssignmentClass
+  - container: CustomOperatedValve
+    container_property: typeNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomOperatedValve
+    view_property: typeNameAssignmentClass
+  - container: CustomOperatedValve
+    container_property: typeURIAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomOperatedValve
+    view_property: typeURIAssignmentClass
+  - container: CustomOperatedValve
+    container_property: typicalReferenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomOperatedValve
+    view_property: typicalReferenceAssignmentClass
+  - container: CustomPipingComponent
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomPipingComponent
+    view_property: ComponentClassURI
+  - container: CustomPipingComponent
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomPipingComponent
+    view_property: ComponentName
+  - container: CustomPipingComponent
+    container_property: itemTagAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomPipingComponent
+    view_property: itemTagAssignmentClass
+  - container: CustomPipingComponent
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomPipingComponent
+    view_property: objectDisplayNameAssignmentClass
+  - container: CustomPipingComponent
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomPipingComponent
+    view_property: tag
+  - container: CustomPipingComponent
+    container_property: typeNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomPipingComponent
+    view_property: typeNameAssignmentClass
+  - container: CustomPipingComponent
+    container_property: typeURIAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: CustomPipingComponent
+    view_property: typeURIAssignmentClass
+  - container: ElectricHeater
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ElectricHeater
+    view_property: ComponentClassURI
+  - container: ElectricHeater
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ElectricHeater
+    view_property: ComponentName
+  - connection: direct
+    container: ElectricHeater
+    container_property: connection
+    is_list: false
+    nullable: true
+    value_type: ProcessInstrumentationFunction
+    view: ElectricHeater
+    view_property: connection
+  - connection: direct
+    container: ElectricHeater
+    container_property: isAPartOf
+    is_list: false
+    nullable: true
+    value_type: ProcessPlant
+    view: ElectricHeater
+    view_property: isAPartOf
+  - connection: direct
+    container: ElectricHeater
+    container_property: isLocatedIn
+    is_list: false
+    nullable: true
+    value_type: PlantSystem
+    view: ElectricHeater
+    view_property: isLocatedIn
+  - container: ElectricHeater
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ElectricHeater
+    view_property: objectDisplayNameAssignmentClass
+  - container: ElectricHeater
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ElectricHeater
+    view_property: sequenceAssignmentClass
+  - container: ElectricHeater
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ElectricHeater
+    view_property: tag
+  - container: ElectricHeater
+    container_property: tagNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ElectricHeater
+    view_property: tagNameAssignmentClass
+  - container: ElectricHeater
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ElectricHeater
+    view_property: tagTypeAssignmentClass
+  - container: Flange
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Flange
+    view_property: ComponentClassURI
+  - container: Flange
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Flange
+    view_property: ComponentName
+  - connection: direct
+    container: Flange
+    container_property: connection
+    is_list: false
+    nullable: true
+    value_type: ProcessInstrumentationFunction
+    view: Flange
+    view_property: connection
+  - connection: direct
+    container: Flange
+    container_property: isTheLocationOf
+    is_list: false
+    nullable: true
+    value_type: ProcessSignalGeneratingFunction
+    view: Flange
+    view_property: isTheLocationOf
+  - container: Flange
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Flange
+    view_property: tag
+  - container: FlowInPipeOffPageConnector
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: FlowInPipeOffPageConnector
+    view_property: ComponentClassURI
+  - container: FlowInPipeOffPageConnector
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: FlowInPipeOffPageConnector
+    view_property: ComponentName
+  - connection: direct
+    container: FlowInPipeOffPageConnector
+    container_property: connection
+    is_list: false
+    nullable: true
+    value_type: Nozzle
+    view: FlowInPipeOffPageConnector
+    view_property: connection
+  - container: FlowInPipeOffPageConnector
+    container_property: pipeConnectorNumberAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: FlowInPipeOffPageConnector
+    view_property: pipeConnectorNumberAssignmentClass
+  - container: FlowInPipeOffPageConnector
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: FlowInPipeOffPageConnector
+    view_property: tag
+  - container: FlowOutPipeOffPageConnector
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: FlowOutPipeOffPageConnector
+    view_property: ComponentClassURI
+  - container: FlowOutPipeOffPageConnector
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: FlowOutPipeOffPageConnector
+    view_property: ComponentName
+  - container: FlowOutPipeOffPageConnector
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: FlowOutPipeOffPageConnector
+    view_property: tag
+  - container: FlowOutSignalOffPageConnector
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: FlowOutSignalOffPageConnector
+    view_property: ComponentClassURI
+  - container: FlowOutSignalOffPageConnector
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: FlowOutSignalOffPageConnector
+    view_property: ComponentName
+  - connection: direct
+    container: FlowOutSignalOffPageConnector
+    container_property: isLogicalEndOf
+    is_list: false
+    nullable: true
+    value_type: SignalConveyingFunction
+    view: FlowOutSignalOffPageConnector
+    view_property: isLogicalEndOf
+  - container: FlowOutSignalOffPageConnector
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: FlowOutSignalOffPageConnector
+    view_property: tag
+  - container: GateValve
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: GateValve
+    view_property: ComponentClassURI
+  - container: GateValve
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: GateValve
+    view_property: ComponentName
+  - connection: direct
+    container: GateValve
+    container_property: connection
+    is_list: false
+    nullable: true
+    value_type: ProcessInstrumentationFunction
+    view: GateValve
+    view_property: connection
+  - connection: direct
+    container: GateValve
+    container_property: isReferencedBy
+    is_list: false
+    nullable: true
+    value_type: OperatedValveReference
+    view: GateValve
+    view_property: isReferencedBy
+  - connection: direct
+    container: GateValve
+    container_property: isTheLocationOf
+    is_list: false
+    nullable: true
+    value_type: ProcessSignalGeneratingFunction
+    view: GateValve
+    view_property: isTheLocationOf
+  - container: GateValve
+    container_property: itemTagAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: GateValve
+    view_property: itemTagAssignmentClass
+  - container: GateValve
+    container_property: nominalDiameterAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: GateValve
+    view_property: nominalDiameterAssignmentClass
+  - container: GateValve
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: GateValve
+    view_property: objectDisplayNameAssignmentClass
+  - container: GateValve
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: GateValve
+    view_property: sequenceAssignmentClass
+  - container: GateValve
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: GateValve
+    view_property: tag
+  - container: GateValve
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: GateValve
+    view_property: tagTypeAssignmentClass
+  - container: GateValve
+    container_property: typicalReferenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: GateValve
+    view_property: typicalReferenceAssignmentClass
+  - container: GateValve
+    container_property: valvePositionAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: GateValve
+    view_property: valvePositionAssignmentClass
+  - container: InstrumentationLoopFunction
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: InstrumentationLoopFunction
+    view_property: ComponentClassURI
+  - container: InstrumentationLoopFunction
+    container_property: instrumentationLoopFunctionNumberAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: InstrumentationLoopFunction
+    view_property: instrumentationLoopFunctionNumberAssignmentClass
+  - connection: edge
+    is_list: true
+    value_type: ProcessInstrumentationFunction
+    view: InstrumentationLoopFunction
+    view_property: isACollectionIncluding
+  - connection: direct
+    container: InstrumentationLoopFunction
+    container_property: isAPartOf
+    is_list: false
+    nullable: true
+    value_type: ProcessPlant
+    view: InstrumentationLoopFunction
+    view_property: isAPartOf
+  - connection: direct
+    container: InstrumentationLoopFunction
+    container_property: isLocatedIn
+    is_list: false
+    nullable: true
+    value_type: PlantSystem
+    view: InstrumentationLoopFunction
+    view_property: isLocatedIn
+  - container: InstrumentationLoopFunction
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: InstrumentationLoopFunction
+    view_property: tag
+  - container: MeasuringLineFunction
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: MeasuringLineFunction
+    view_property: ComponentClassURI
+  - connection: direct
+    container: MeasuringLineFunction
+    container_property: hasLogicalEnd
+    is_list: false
+    nullable: true
+    value_type: ProcessInstrumentationFunction
+    view: MeasuringLineFunction
+    view_property: hasLogicalEnd
+  - connection: direct
+    container: MeasuringLineFunction
+    container_property: hasLogicalStart
+    is_list: false
+    nullable: true
+    value_type: ProcessSignalGeneratingFunction
+    view: MeasuringLineFunction
+    view_property: hasLogicalStart
+  - container: MeasuringLineFunction
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: MeasuringLineFunction
+    view_property: tag
+  - container: MetaData
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: MetaData
+    view_property: ComponentClassURI
+  - container: MetaData
+    container_property: areaIsa95NameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: MetaData
+    view_property: areaIsa95NameAssignmentClass
+  - container: MetaData
+    container_property: creatorNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: MetaData
+    view_property: creatorNameAssignmentClass
+  - container: MetaData
+    container_property: drawingNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: MetaData
+    view_property: drawingNameAssignmentClass
+  - container: MetaData
+    container_property: drawingNumberAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: MetaData
+    view_property: drawingNumberAssignmentClass
+  - container: MetaData
+    container_property: drawingSubTitleAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: MetaData
+    view_property: drawingSubTitleAssignmentClass
+  - container: MetaData
+    container_property: plantSystemIdentificationCodeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: MetaData
+    view_property: plantSystemIdentificationCodeAssignmentClass
+  - container: MetaData
+    container_property: processPlantNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: MetaData
+    view_property: processPlantNameAssignmentClass
+  - container: MetaData
+    container_property: revisionNumberAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: MetaData
+    view_property: revisionNumberAssignmentClass
+  - container: MetaData
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: MetaData
+    view_property: tag
+  - container: Note
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Note
+    view_property: ComponentClassURI
+  - container: Note
+    container_property: Label
+    is_list: true
+    nullable: true
+    value_type: text
+    view: Note
+    view_property: Label
+  - connection: direct
+    container: Note
+    container_property: isACommentReferringTo
+    is_list: false
+    nullable: true
+    value_type: PressureVessel
+    view: Note
+    view_property: isACommentReferringTo
+  - container: Note
+    container_property: localNoteIdentifierAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Note
+    view_property: localNoteIdentifierAssignmentClass
+  - container: Note
+    container_property: noteTextAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Note
+    view_property: noteTextAssignmentClass
+  - container: Note
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Note
+    view_property: tag
+  - container: Nozzle
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Nozzle
+    view_property: ComponentClassURI
+  - container: Nozzle
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Nozzle
+    view_property: ComponentName
+  - connection: direct
+    container: Nozzle
+    container_property: connection
+    is_list: false
+    nullable: true
+    value_type: '#N/A'
+    view: Nozzle
+    view_property: connection
+  - connection: direct
+    container: Nozzle
+    container_property: isTheLocationOf
+    is_list: false
+    nullable: true
+    value_type: ActuatingElectricalFunction
+    view: Nozzle
+    view_property: isTheLocationOf
+  - container: Nozzle
+    container_property: isVirtualAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Nozzle
+    view_property: isVirtualAssignmentClass
+  - container: Nozzle
+    container_property: isVirtualMountAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Nozzle
+    view_property: isVirtualMountAssignmentClass
+  - container: Nozzle
+    container_property: itemTagAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Nozzle
+    view_property: itemTagAssignmentClass
+  - container: Nozzle
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Nozzle
+    view_property: objectDisplayNameAssignmentClass
+  - container: Nozzle
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Nozzle
+    view_property: sequenceAssignmentClass
+  - container: Nozzle
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Nozzle
+    view_property: tag
+  - container: Nozzle
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: Nozzle
+    view_property: tagTypeAssignmentClass
+  - container: OperatedValveReference
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: OperatedValveReference
+    view_property: ComponentClassURI
+  - connection: direct
+    container: OperatedValveReference
+    container_property: refersTo
+    is_list: false
+    nullable: true
+    value_type: '#N/A'
+    view: OperatedValveReference
+    view_property: refersTo
+  - container: OperatedValveReference
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: OperatedValveReference
+    view_property: tag
+  - container: PipeOffPageConnectorReferenceByNumber
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipeOffPageConnectorReferenceByNumber
+    view_property: ComponentClassURI
+  - container: PipeOffPageConnectorReferenceByNumber
+    container_property: referencedConnectorNumberAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipeOffPageConnectorReferenceByNumber
+    view_property: referencedConnectorNumberAssignmentClass
+  - container: PipeOffPageConnectorReferenceByNumber
+    container_property: referencedDrawingDescriptorAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipeOffPageConnectorReferenceByNumber
+    view_property: referencedDrawingDescriptorAssignmentClass
+  - container: PipeOffPageConnectorReferenceByNumber
+    container_property: referencedDrawingNumberAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipeOffPageConnectorReferenceByNumber
+    view_property: referencedDrawingNumberAssignmentClass
+  - container: PipeOffPageConnectorReferenceByNumber
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipeOffPageConnectorReferenceByNumber
+    view_property: tag
+  - container: PipeReducer
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipeReducer
+    view_property: ComponentClassURI
+  - container: PipeReducer
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipeReducer
+    view_property: ComponentName
+  - container: PipeReducer
+    container_property: nominalDiameterInAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipeReducer
+    view_property: nominalDiameterInAssignmentClass
+  - container: PipeReducer
+    container_property: nominalDiameterOutAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipeReducer
+    view_property: nominalDiameterOutAssignmentClass
+  - container: PipeReducer
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipeReducer
+    view_property: tag
+  - container: PipeTee
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipeTee
+    view_property: ComponentClassURI
+  - connection: direct
+    container: PipeTee
+    container_property: connection
+    is_list: true
+    nullable: true
+    value_type: '#N/A'
+    view: PipeTee
+    view_property: connection
+  - container: PipeTee
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipeTee
+    view_property: tag
+  - container: PipingNetworkSegment
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSegment
+    view_property: ComponentClassURI
+  - container: PipingNetworkSegment
+    container_property: heatTracingTypeSpecialization
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSegment
+    view_property: heatTracingTypeSpecialization
+  - container: PipingNetworkSegment
+    container_property: nominalDiameterNumericalValueRepresentationAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSegment
+    view_property: nominalDiameterNumericalValueRepresentationAssignmentClass
+  - container: PipingNetworkSegment
+    container_property: segmentLineTypeRepresentationAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSegment
+    view_property: segmentLineTypeRepresentationAssignmentClass
+  - container: PipingNetworkSegment
+    container_property: slopeSpecialization
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSegment
+    view_property: slopeSpecialization
+  - container: PipingNetworkSegment
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSegment
+    view_property: tag
+  - container: PipingNetworkSystem
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSystem
+    view_property: ComponentClassURI
+  - container: PipingNetworkSystem
+    container_property: heatTraceRequiredAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSystem
+    view_property: heatTraceRequiredAssignmentClass
+  - connection: direct
+    container: PipingNetworkSystem
+    container_property: isAPartOf
+    is_list: false
+    nullable: true
+    value_type: ProcessPlant
+    view: PipingNetworkSystem
+    view_property: isAPartOf
+  - connection: direct
+    container: PipingNetworkSystem
+    container_property: isLocatedIn
+    is_list: false
+    nullable: true
+    value_type: PlantSystem
+    view: PipingNetworkSystem
+    view_property: isLocatedIn
+  - container: PipingNetworkSystem
+    container_property: itemTagAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSystem
+    view_property: itemTagAssignmentClass
+  - container: PipingNetworkSystem
+    container_property: lineDescriptionAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSystem
+    view_property: lineDescriptionAssignmentClass
+  - container: PipingNetworkSystem
+    container_property: lineSuffixAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSystem
+    view_property: lineSuffixAssignmentClass
+  - container: PipingNetworkSystem
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSystem
+    view_property: objectDisplayNameAssignmentClass
+  - container: PipingNetworkSystem
+    container_property: pipingClassCodeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSystem
+    view_property: pipingClassCodeAssignmentClass
+  - container: PipingNetworkSystem
+    container_property: productCodeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSystem
+    view_property: productCodeAssignmentClass
+  - container: PipingNetworkSystem
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSystem
+    view_property: tag
+  - container: PipingNetworkSystem
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PipingNetworkSystem
+    view_property: tagTypeAssignmentClass
+  - container: PlantSystem
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PlantSystem
+    view_property: ComponentClassURI
+  - connection: direct
+    container: PlantSystem
+    container_property: isTheLocationOf
+    is_list: true
+    nullable: true
+    value_type: '#N/A'
+    view: PlantSystem
+    view_property: isTheLocationOf
+  - container: PlantSystem
+    container_property: plantSystemIdentificationCodeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PlantSystem
+    view_property: plantSystemIdentificationCodeAssignmentClass
+  - container: PlantSystem
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PlantSystem
+    view_property: tag
+  - container: PlateHeatExchanger
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PlateHeatExchanger
+    view_property: ComponentClassURI
+  - container: PlateHeatExchanger
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PlateHeatExchanger
+    view_property: ComponentName
+  - connection: direct
+    container: PlateHeatExchanger
+    container_property: isAPartOf
+    is_list: false
+    nullable: true
+    value_type: ProcessPlant
+    view: PlateHeatExchanger
+    view_property: isAPartOf
+  - connection: direct
+    container: PlateHeatExchanger
+    container_property: isLocatedIn
+    is_list: false
+    nullable: true
+    value_type: PlantSystem
+    view: PlateHeatExchanger
+    view_property: isLocatedIn
+  - container: PlateHeatExchanger
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PlateHeatExchanger
+    view_property: objectDisplayNameAssignmentClass
+  - container: PlateHeatExchanger
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PlateHeatExchanger
+    view_property: sequenceAssignmentClass
+  - container: PlateHeatExchanger
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PlateHeatExchanger
+    view_property: tag
+  - container: PlateHeatExchanger
+    container_property: tagNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PlateHeatExchanger
+    view_property: tagNameAssignmentClass
+  - container: PlateHeatExchanger
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PlateHeatExchanger
+    view_property: tagTypeAssignmentClass
+  - container: PressureVessel
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PressureVessel
+    view_property: ComponentClassURI
+  - container: PressureVessel
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PressureVessel
+    view_property: ComponentName
+  - container: PressureVessel
+    container_property: Label
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PressureVessel
+    view_property: Label
+  - container: PressureVessel
+    container_property: elevationAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PressureVessel
+    view_property: elevationAssignmentClass
+  - connection: direct
+    container: PressureVessel
+    container_property: isAPartOf
+    is_list: false
+    nullable: true
+    value_type: ProcessPlant
+    view: PressureVessel
+    view_property: isAPartOf
+  - connection: direct
+    container: PressureVessel
+    container_property: isLocatedIn
+    is_list: false
+    nullable: true
+    value_type: PlantSystem
+    view: PressureVessel
+    view_property: isLocatedIn
+  - connection: direct
+    container: PressureVessel
+    container_property: isReferencedInComment
+    is_list: false
+    nullable: true
+    value_type: Note
+    view: PressureVessel
+    view_property: isReferencedInComment
+  - container: PressureVessel
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PressureVessel
+    view_property: objectDisplayNameAssignmentClass
+  - container: PressureVessel
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PressureVessel
+    view_property: sequenceAssignmentClass
+  - container: PressureVessel
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PressureVessel
+    view_property: tag
+  - container: PressureVessel
+    container_property: tagNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PressureVessel
+    view_property: tagNameAssignmentClass
+  - container: PressureVessel
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PressureVessel
+    view_property: tagTypeAssignmentClass
+  - container: ProcessInstrumentationFunction
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessInstrumentationFunction
+    view_property: ComponentClassURI
+  - container: ProcessInstrumentationFunction
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessInstrumentationFunction
+    view_property: ComponentName
+  - connection: direct
+    container: ProcessInstrumentationFunction
+    container_property: connection
+    is_list: true
+    nullable: true
+    value_type: '#N/A'
+    view: ProcessInstrumentationFunction
+    view_property: connection
+  - connection: direct
+    container: ProcessInstrumentationFunction
+    container_property: isAPartOf
+    is_list: false
+    nullable: true
+    value_type: '#N/A'
+    view: ProcessInstrumentationFunction
+    view_property: isAPartOf
+  - connection: direct
+    container: ProcessInstrumentationFunction
+    container_property: isLocatedIn
+    is_list: false
+    nullable: true
+    value_type: PlantSystem
+    view: ProcessInstrumentationFunction
+    view_property: isLocatedIn
+  - connection: direct
+    container: ProcessInstrumentationFunction
+    container_property: isLogicalEndOf
+    is_list: true
+    nullable: true
+    value_type: '#N/A'
+    view: ProcessInstrumentationFunction
+    view_property: isLogicalEndOf
+  - connection: edge
+    is_list: true
+    value_type: SignalConveyingFunction
+    view: ProcessInstrumentationFunction
+    view_property: isLogicalStartOf
+  - container: ProcessInstrumentationFunction
+    container_property: itemTagAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessInstrumentationFunction
+    view_property: itemTagAssignmentClass
+  - container: ProcessInstrumentationFunction
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessInstrumentationFunction
+    view_property: objectDisplayNameAssignmentClass
+  - container: ProcessInstrumentationFunction
+    container_property: processInstrumentationFunctionCategoryAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessInstrumentationFunction
+    view_property: processInstrumentationFunctionCategoryAssignmentClass
+  - container: ProcessInstrumentationFunction
+    container_property: processInstrumentationFunctionLocationAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessInstrumentationFunction
+    view_property: processInstrumentationFunctionLocationAssignmentClass
+  - container: ProcessInstrumentationFunction
+    container_property: processInstrumentationFunctionNumberAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessInstrumentationFunction
+    view_property: processInstrumentationFunctionNumberAssignmentClass
+  - container: ProcessInstrumentationFunction
+    container_property: processInstrumentationFunctionTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessInstrumentationFunction
+    view_property: processInstrumentationFunctionTypeAssignmentClass
+  - container: ProcessInstrumentationFunction
+    container_property: processInstrumentationFunctionsAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessInstrumentationFunction
+    view_property: processInstrumentationFunctionsAssignmentClass
+  - container: ProcessInstrumentationFunction
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessInstrumentationFunction
+    view_property: tag
+  - container: ProcessInstrumentationFunction
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessInstrumentationFunction
+    view_property: tagTypeAssignmentClass
+  - container: ProcessInstrumentationFunction
+    container_property: typeCodeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessInstrumentationFunction
+    view_property: typeCodeAssignmentClass
+  - container: ProcessPlant
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessPlant
+    view_property: ComponentClassURI
+  - connection: direct
+    container: ProcessPlant
+    container_property: isACollectionIncluding
+    is_list: true
+    nullable: true
+    value_type: '#N/A'
+    view: ProcessPlant
+    view_property: isACollectionIncluding
+  - container: ProcessPlant
+    container_property: processPlantIdentificationCodeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessPlant
+    view_property: processPlantIdentificationCodeAssignmentClass
+  - container: ProcessPlant
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessPlant
+    view_property: tag
+  - container: ProcessSignalGeneratingFunction
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessSignalGeneratingFunction
+    view_property: ComponentClassURI
+  - connection: direct
+    container: ProcessSignalGeneratingFunction
+    container_property: isLocatedIn
+    is_list: false
+    nullable: true
+    value_type: '#N/A'
+    view: ProcessSignalGeneratingFunction
+    view_property: isLocatedIn
+  - connection: direct
+    container: ProcessSignalGeneratingFunction
+    container_property: isLogicalStartOf
+    is_list: false
+    nullable: true
+    value_type: MeasuringLineFunction
+    view: ProcessSignalGeneratingFunction
+    view_property: isLogicalStartOf
+  - container: ProcessSignalGeneratingFunction
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: ProcessSignalGeneratingFunction
+    view_property: tag
+  - container: PropertyBreak
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PropertyBreak
+    view_property: ComponentClassURI
+  - container: PropertyBreak
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PropertyBreak
+    view_property: ComponentName
+  - container: PropertyBreak
+    container_property: breakValue1AssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PropertyBreak
+    view_property: breakValue1AssignmentClass
+  - container: PropertyBreak
+    container_property: breakValue2AssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PropertyBreak
+    view_property: breakValue2AssignmentClass
+  - connection: direct
+    container: PropertyBreak
+    container_property: connection
+    is_list: false
+    nullable: true
+    value_type: Nozzle
+    view: PropertyBreak
+    view_property: connection
+  - container: PropertyBreak
+    container_property: lineIdBreakAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PropertyBreak
+    view_property: lineIdBreakAssignmentClass
+  - container: PropertyBreak
+    container_property: pipingClassBreakSpecialization
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PropertyBreak
+    view_property: pipingClassBreakSpecialization
+  - container: PropertyBreak
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: PropertyBreak
+    view_property: tag
+  - container: RotaryPump
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: RotaryPump
+    view_property: ComponentClassURI
+  - container: RotaryPump
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: RotaryPump
+    view_property: ComponentName
+  - connection: direct
+    container: RotaryPump
+    container_property: isAPartOf
+    is_list: false
+    nullable: true
+    value_type: ProcessPlant
+    view: RotaryPump
+    view_property: isAPartOf
+  - connection: direct
+    container: RotaryPump
+    container_property: isLocatedIn
+    is_list: false
+    nullable: true
+    value_type: PlantSystem
+    view: RotaryPump
+    view_property: isLocatedIn
+  - container: RotaryPump
+    container_property: objectDisplayNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: RotaryPump
+    view_property: objectDisplayNameAssignmentClass
+  - container: RotaryPump
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: RotaryPump
+    view_property: sequenceAssignmentClass
+  - container: RotaryPump
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: RotaryPump
+    view_property: tag
+  - container: RotaryPump
+    container_property: tagNameAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: RotaryPump
+    view_property: tagNameAssignmentClass
+  - container: RotaryPump
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: RotaryPump
+    view_property: tagTypeAssignmentClass
+  - container: SafetyValveOrFitting
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SafetyValveOrFitting
+    view_property: ComponentClassURI
+  - container: SafetyValveOrFitting
+    container_property: ComponentName
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SafetyValveOrFitting
+    view_property: ComponentName
+  - container: SafetyValveOrFitting
+    container_property: itemTagAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SafetyValveOrFitting
+    view_property: itemTagAssignmentClass
+  - container: SafetyValveOrFitting
+    container_property: sequenceAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SafetyValveOrFitting
+    view_property: sequenceAssignmentClass
+  - container: SafetyValveOrFitting
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SafetyValveOrFitting
+    view_property: tag
+  - container: SafetyValveOrFitting
+    container_property: tagTypeAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SafetyValveOrFitting
+    view_property: tagTypeAssignmentClass
+  - container: SignalConveyingFunction
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SignalConveyingFunction
+    view_property: ComponentClassURI
+  - connection: direct
+    container: SignalConveyingFunction
+    container_property: hasLogicalEnd
+    is_list: false
+    nullable: true
+    value_type: '#N/A'
+    view: SignalConveyingFunction
+    view_property: hasLogicalEnd
+  - connection: direct
+    container: SignalConveyingFunction
+    container_property: hasLogicalStart
+    is_list: false
+    nullable: true
+    value_type: ProcessInstrumentationFunction
+    view: SignalConveyingFunction
+    view_property: hasLogicalStart
+  - container: SignalConveyingFunction
+    container_property: portStatusSpecialization
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SignalConveyingFunction
+    view_property: portStatusSpecialization
+  - container: SignalConveyingFunction
+    container_property: signalConveyingFunctionTypeRepresentationAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SignalConveyingFunction
+    view_property: signalConveyingFunctionTypeRepresentationAssignmentClass
+  - container: SignalConveyingFunction
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SignalConveyingFunction
+    view_property: tag
+  - container: SignalOffPageConnectorReferenceByNumber
+    container_property: ComponentClassURI
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SignalOffPageConnectorReferenceByNumber
+    view_property: ComponentClassURI
+  - container: SignalOffPageConnectorReferenceByNumber
+    container_property: referencedDrawingNumberAssignmentClass
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SignalOffPageConnectorReferenceByNumber
+    view_property: referencedDrawingNumberAssignmentClass
+  - container: SignalOffPageConnectorReferenceByNumber
+    container_property: tag
+    is_list: false
+    nullable: true
+    value_type: text
+    view: SignalOffPageConnectorReferenceByNumber
+    view_property: tag
+  views:
+  - in_model: true
+    view: ActuatingElectricalFunction
+  - in_model: true
+    view: ActuatingFunction
+  - in_model: true
+    view: ActuatingSystem
+  - in_model: true
+    view: BallValve
+  - in_model: true
+    view: BlindFlange
+  - in_model: true
+    view: ButterflyValve
+  - in_model: true
+    view: CentrifugalPump
+  - in_model: true
+    view: CheckValve
+  - in_model: true
+    view: ControlledActuator
+  - in_model: true
+    view: CustomHeatExchanger
+  - in_model: true
+    view: CustomInlinePrimaryElement
+  - in_model: true
+    view: CustomOperatedValve
+  - in_model: true
+    view: CustomPipingComponent
+  - in_model: true
+    view: ElectricHeater
+  - in_model: true
+    view: Flange
+  - in_model: true
+    view: FlowInPipeOffPageConnector
+  - in_model: true
+    view: FlowOutPipeOffPageConnector
+  - in_model: true
+    view: FlowOutSignalOffPageConnector
+  - in_model: true
+    view: GateValve
+  - in_model: true
+    view: InstrumentationLoopFunction
+  - in_model: true
+    view: MeasuringLineFunction
+  - in_model: true
+    view: MetaData
+  - in_model: true
+    view: Note
+  - in_model: true
+    view: Nozzle
+  - in_model: true
+    view: OperatedValveReference
+  - in_model: true
+    view: PipeOffPageConnectorReferenceByNumber
+  - in_model: true
+    view: PipeReducer
+  - in_model: true
+    view: PipeTee
+  - in_model: true
+    view: PipingNetworkSegment
+  - in_model: true
+    view: PipingNetworkSystem
+  - in_model: true
+    view: PlantSystem
+  - in_model: true
+    view: PlateHeatExchanger
+  - in_model: true
+    view: PressureVessel
+  - in_model: true
+    view: ProcessInstrumentationFunction
+  - in_model: true
+    view: ProcessPlant
+  - in_model: true
+    view: ProcessSignalGeneratingFunction
+  - in_model: true
+    view: PropertyBreak
+  - in_model: true
+    view: RotaryPump
+  - in_model: true
+    view: SafetyValveOrFitting
+  - in_model: true
+    view: SignalConveyingFunction
+  - in_model: true
+    view: SignalOffPageConnectorReferenceByNumber

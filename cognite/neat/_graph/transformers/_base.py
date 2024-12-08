@@ -6,7 +6,7 @@ from rdflib import Graph
 
 class BaseTransformer(ABC):
     description: str
-    _use_only_once: bool
+    _use_only_once: bool = False
     _need_changes: ClassVar[frozenset[str]] = frozenset()
 
     @abstractmethod

@@ -20,7 +20,9 @@ Changes are grouped as follows:
 - Reading data models from CDF ensures unique names for enum collections.
 ### Improved
 - AttachPropertyFromTargetToSource can now convert literal to URIRef
-
+- Handling of undefined value type properties when loading instances to CDF
+### Added
+- `.prepare.instances.dexpi()`
 
 ## [0.101.0] - 06-12-**2024**
 ### Added
