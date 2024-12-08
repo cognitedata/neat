@@ -106,9 +106,7 @@ class InstancePrepareAPI:
 
         This method bundles several graph transformers which:
         - attach values of attributes to nodes
-        - create associations between nodes
-        - remove unused generic attributes
-        - remove associations between nodes that do not exist in the extracted graph
+        - remove unused attributes
         - remove edges to nodes that do not exist in the extracted graph
 
         and therefore safeguard CDF from a bad graph
