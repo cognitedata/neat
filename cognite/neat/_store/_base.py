@@ -277,7 +277,6 @@ class NeatGraphStore:
 
         # get property types to guide process of removing or not namespaces from results
         property_types = InformationAnalysis(self.rules).property_types(class_entity)
-        print(property_types)
         for instance_id in instance_ids:
             if res := self.queries.describe(
                 instance_id=instance_id,
