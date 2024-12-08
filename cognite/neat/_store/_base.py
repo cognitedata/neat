@@ -195,8 +195,13 @@ class NeatGraphStore:
         self, class_neat_id: URIRef, property_link_pairs: dict[str, URIRef] | None
     ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
         if self.rules is None:
-            warnings.warn("Rules not found in graph store!", stacklevel=2)
+            warnings.warn("Rules not found in graph store! Aborting!", stacklevel=2)
             return
+        if self.multi_type_instances:
+            warnings.warn(
+                "Multi typed instances detected, issues with loading can occur!",
+                stacklevel=2,
+            )
 
         if cls := InformationAnalysis(self.rules).classes_by_neat_id.get(class_neat_id):
             if property_link_pairs:
@@ -225,6 +230,11 @@ class NeatGraphStore:
         if self.rules is None:
             warnings.warn("Rules not found in graph store!", stacklevel=2)
             return
+        if self.multi_type_instances:
+            warnings.warn(
+                "Multi typed instances detected, issues with loading can occur!",
+                stacklevel=2,
+            )
 
         if class_entity not in [definition.class_ for definition in self.rules.classes]:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
@@ -267,7 +277,7 @@ class NeatGraphStore:
 
         # get property types to guide process of removing or not namespaces from results
         property_types = InformationAnalysis(self.rules).property_types(class_entity)
-
+        print(property_types)
         for instance_id in instance_ids:
             if res := self.queries.describe(
                 instance_id=instance_id,
@@ -292,6 +302,11 @@ class NeatGraphStore:
         if not self.rules:
             warnings.warn("Rules not found in graph store!", stacklevel=2)
             return
+        if self.multi_type_instances:
+            warnings.warn(
+                "Multi typed instances detected, issues with loading can occur!",
+                stacklevel=2,
+            )
 
         class_entity = ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
 
@@ -390,6 +405,10 @@ class NeatGraphStore:
     def summary(self) -> pd.DataFrame:
         return pd.DataFrame(self.queries.summarize_instances(), columns=["Type", "Occurrence"])
 
+    @property
+    def multi_type_instances(self) -> dict[str, list[str]]:
+        return self.queries.multi_type_instances()
+
     def _repr_html_(self) -> str:
         provenance = self.provenance._repr_html_()
         summary: pd.DataFrame = self.summary
@@ -403,6 +422,9 @@ class NeatGraphStore:
                 f"<li>{sum(summary['Occurrence'])} instances</strong></li></ul>"
                 f"{cast(pd.DataFrame, self._shorten_summary(summary))._repr_html_()}"  # type: ignore[operator]
             )
+
+        if self.multi_type_instances:
+            summary_text += "<br><strong>Multi value instances detected! Loading could have issues!</strong></br>"  # type: ignore
 
         return f"{summary_text}" f"{provenance}"
 
