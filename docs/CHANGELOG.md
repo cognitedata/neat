@@ -18,11 +18,13 @@ Changes are grouped as follows:
 ## TBD
 ### Fixed
 - Reading data models from CDF ensures unique names for enum collections.
+- Edge creation
 ### Improved
 - AttachPropertyFromTargetToSource can now convert literal to URIRef
 - Handling of undefined value type properties when loading instances to CDF
 ### Added
 - `.prepare.instances.dexpi()`
+- `.prepare.instances.aml()`
 
 ## [0.101.0] - 06-12-**2024**
 ### Added
