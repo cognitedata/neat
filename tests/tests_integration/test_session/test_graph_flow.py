@@ -2,7 +2,11 @@ from typing import Any
 
 import yaml
 from cognite.client import CogniteClient
-from cognite.client.data_classes.data_modeling import InstanceApply
+from cognite.client.data_classes.data_modeling import (
+    EdgeApply,
+    InstanceApply,
+    NodeApply,
+)
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
@@ -99,10 +103,10 @@ class TestExtractToLoadFlow:
             # In progress, not yet supported.
             dms_rules = neat._state.data_model.last_verified_dms_rules[1]
             store = neat._state.instances.store
-            instances = [
-                self._standardize_instance(instance)
-                for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
-            ]
+            instances = list(DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load())
+
+            nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
+            edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
         else:
             instances = []
 
@@ -117,7 +121,8 @@ class TestExtractToLoadFlow:
             }
         )
 
-        assert len(instances) == 206
+        assert len(nodes) == 206
+        assert len(edges) == 40
 
     @staticmethod
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:
