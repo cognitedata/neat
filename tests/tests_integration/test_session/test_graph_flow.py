@@ -124,6 +124,49 @@ class TestExtractToLoadFlow:
         assert len(nodes) == 206
         assert len(edges) == 40
 
+    def test_aml_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        # Hack to read in the test data.
+
+        neat._state.instances.store.graph.parse(DATA_FOLDER / "aml-raw-graph.ttl")
+        neat.prepare.instances.aml()
+        neat.infer(max_number_of_instance=-1)
+
+        # Hack to ensure deterministic output
+        rules = neat._state.data_model.last_unverified_rule[1].rules
+        rules.metadata.created = "2024-09-19T00:00:00Z"
+        rules.metadata.updated = "2024-09-19T00:00:00Z"
+
+        neat.verify()
+
+        neat.convert("dms")
+        neat.set.data_model_id(("aml_playground", "AML", "terminology_3.0"))
+
+        if True:
+            # In progress, not yet supported.
+            dms_rules = neat._state.data_model.last_verified_dms_rules[1]
+            store = neat._state.instances.store
+            instances = list(DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load())
+
+            nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
+            edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
+        else:
+            instances = []
+
+        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
+        rules_str = neat.to.yaml(format="neat")
+
+        rules_dict = yaml.safe_load(rules_str)
+        data_regression.check(
+            {
+                "rules": rules_dict,
+                "instances": [],
+            }
+        )
+
+        assert len(nodes) == 973
+        assert len(edges) == 972
+
     @staticmethod
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:
         if not isinstance(instance, InstanceApply):
