@@ -150,6 +150,11 @@ class TestExtractToLoadFlow:
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
+            instances = [
+                self._standardize_instance(instance)
+                for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
+            ]
+
         else:
             instances = []
 
@@ -166,6 +171,7 @@ class TestExtractToLoadFlow:
 
         assert len(nodes) == 973
         assert len(edges) == 972
+        assert len(instances) == 206
 
     @staticmethod
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:

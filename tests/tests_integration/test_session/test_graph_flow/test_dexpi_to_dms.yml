@@ -87,6 +87,7 @@ rules:
     created: '2024-09-19T00:00:00Z'
     creator: NEAT
     external_id: DEXPI
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1
     name: Inferred Model
     role: DMS Architect
     space: dexpi_playground
