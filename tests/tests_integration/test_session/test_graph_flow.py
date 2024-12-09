@@ -171,7 +171,7 @@ class TestExtractToLoadFlow:
 
         assert len(nodes) == 973
         assert len(edges) == 972
-        assert len(instances) == 206
+        assert len(instances) == 1945
 
     @staticmethod
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:
