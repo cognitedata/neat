@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.102.0] - 09-12-**2024**
 ### Fixed
 - Reading data models from CDF ensures unique names for enum collections.
 - Edge creation
