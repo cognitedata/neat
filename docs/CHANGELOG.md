@@ -28,6 +28,8 @@ Changes are grouped as follows:
 - `.prepare.instances.dexpi()`
 - `.prepare.instances.aml()`
 
+### Changed
+- The `get_cognite_client` now prioritize the `env_file_name` parameter over loading variables from the environment.
 
 ## [0.101.0] - 06-12-**2024**
 ### Added
