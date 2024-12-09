@@ -125,6 +125,9 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             last_class: str | None = None
             item: dict[str, Any]
             for item in dumped_rules.get(sheet_name) or []:
+                if "Neat ID" in item:
+                    # Move the Neat ID to the end of the columns
+                    item["Neat ID"] = item.pop("Neat ID")
                 row = list(item.values())
                 class_ = row[0]
 
