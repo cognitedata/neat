@@ -118,6 +118,10 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             main_header = self._main_header_by_sheet_name[sheet_name]
             sheet.append([main_header] + [""] * (len(headers) - 1))
             sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
+            if headers[0] == "Neat ID":
+                # Move the Neat ID to the end of the columns
+                headers = headers[1:] + ["Neat ID"]
+
             sheet.append(headers)
 
             fill_colors = itertools.cycle(["CADCFC", "FFFFFF"])
