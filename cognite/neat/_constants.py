@@ -87,6 +87,7 @@ def get_default_prefixes_and_namespaces() -> dict[str, Namespace]:
         "dexpi": Namespace("http://sandbox.dexpi.org/rdl/"),
         "qudt": Namespace("https://qudt.org/vocab/unit/"),
         "iodd": Namespace("http://www.io-link.com/IODD/2010/10/"),
+        "aml": Namespace("https://www.automationml.org/"),
     }
 
 

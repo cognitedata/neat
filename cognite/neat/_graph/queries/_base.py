@@ -236,7 +236,6 @@ class Queries:
                 else:
                     # we should not have multiple rdf:type values
                     continue
-
         if property_values:
             return (
                 identifier,
