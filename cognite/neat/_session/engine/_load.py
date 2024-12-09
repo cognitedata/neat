@@ -37,7 +37,6 @@ def load_neat_engine(client: CogniteClient | None, location: Literal["newest", "
 
     candidates: dict[Version, Callable[[], Path]] = {}
     if location == "cache" and cache_dir.exists():
-        print(cache_dir)
         candidates = _load_from_path(cache_dir, pattern, lower_bound, upper_bound)
 
     if location == "newest" or not candidates:

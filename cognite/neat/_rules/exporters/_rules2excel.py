@@ -34,8 +34,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     Args:
         styling: The styling to use for the Excel file. Defaults to "default". See below for details
             on the different styles.
-        output_role: The role to use for the exported spreadsheet. If provided, the rules will be converted to
-            this role formate before being written to excel. If not provided, the role from the rules will be used.
         new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
             rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
             new metadata sheet in the Excel file. The model id is expected to be a tuple of (prefix, title)
