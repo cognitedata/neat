@@ -1,7 +1,9 @@
+from typing import cast
+
 from rdflib import Graph, Namespace, URIRef
-from rdflib.query import ResultRow
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._shared import Triple
 from cognite.neat._utils.rdf_ import as_neat_compliant_uri
 from cognite.neat._utils.text import sentence_or_string_to_camel
 
@@ -166,7 +168,7 @@ class PruneDanglingNodes(BaseTransformer):
         node_prune_types: list of RDF types to prune from the Graph if they are stand-alone Nodes
     """
 
-    description: str = "Prunes the graph of specified rdf types that do not have connections to other nodes."
+    description: str = "Prunes nodes of specific rdf types that do not have any connection to them."
     _query_template = """
                     SELECT ?subject
                     WHERE {{
@@ -182,10 +184,74 @@ class PruneDanglingNodes(BaseTransformer):
         self.node_prune_types = node_prune_types
 
     def transform(self, graph: Graph) -> None:
-        for object_type in self.node_prune_types:
-            nodes_without_neighbours = list(graph.query(self._query_template.format(rdf_type=object_type)))
+        for type_ in self.node_prune_types:
+            for (subject,) in list(graph.query(self._query_template.format(rdf_type=type_))):  # type: ignore
+                graph.remove((subject, None, None))
 
-            for node in nodes_without_neighbours:
-                # Remove node and its property triples in the graph
-                if isinstance(node, ResultRow):
-                    graph.remove((node["subject"], None, None))
+
+class PruneTypes(BaseTransformer):
+    """
+    Removes all the instances of specific type
+    """
+
+    description: str = "Prunes nodes of specific rdf types"
+    _query_template = """
+                        SELECT ?subject
+                        WHERE {{
+                            ?subject a <{rdf_type}> .
+                            }}
+                      """
+
+    def __init__(
+        self,
+        node_prune_types: list[URIRef],
+    ):
+        self.node_prune_types = node_prune_types
+
+    def transform(self, graph: Graph) -> None:
+        for type_ in self.node_prune_types:
+            for (subject,) in list(graph.query(self._query_template.format(rdf_type=type_))):  # type: ignore
+                graph.remove((subject, None, None))
+
+
+class PruneDeadEndEdges(BaseTransformer):
+    """
+    Removes all the triples where object is a node that is not found in graph
+    """
+
+    description: str = "Prunes the graph of specified rdf types that do not have connections to other nodes."
+    _query_template = """
+                        SELECT ?subject ?predicate ?object
+                        WHERE {
+                            ?subject ?predicate ?object .
+                            FILTER (isIRI(?object) && ?predicate != rdf:type)
+                            FILTER NOT EXISTS {?object ?p ?o .}
+
+                            }
+
+                      """
+
+    def transform(self, graph: Graph) -> None:
+        for triple in graph.query(self._query_template):
+            graph.remove(cast(Triple, triple))
+
+
+class PruneInstancesOfUnknownType(BaseTransformer):
+    """
+    Removes all the triples where object is a node that is not found in graph
+    """
+
+    description: str = "Prunes the graph of specified rdf types that do not have connections to other nodes."
+    _query_template = """
+                    SELECT DISTINCT ?subject
+                    WHERE {
+                        ?subject ?p ?o .
+                        FILTER NOT EXISTS {?subject a ?object .}
+
+                        }
+
+                    """
+
+    def transform(self, graph: Graph) -> None:
+        for (subject,) in graph.query(self._query_template):  # type: ignore
+            graph.remove((subject, None, None))

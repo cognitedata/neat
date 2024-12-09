@@ -7,6 +7,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from cognite.neat._graph.loaders import DMSLoader
+from tests.config import DATA_FOLDER
 from tests.data import classic_windfarm
 from tests.utils import remove_linking_in_rules
 
@@ -76,12 +77,56 @@ class TestExtractToLoadFlow:
         rules_dict = yaml.safe_load(rules_str)
         data_regression.check({"rules": rules_dict, "instances": sorted(instances, key=lambda x: x["externalId"])})
 
+    def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        # Hack to read in the test data.
+
+        neat._state.instances.store.graph.parse(DATA_FOLDER / "dexpi-raw-graph.ttl")
+        neat.prepare.instances.dexpi()
+        neat.infer(max_number_of_instance=-1)
+
+        # Hack to ensure deterministic output
+        rules = neat._state.data_model.last_unverified_rule[1].rules
+        rules.metadata.created = "2024-09-19T00:00:00Z"
+        rules.metadata.updated = "2024-09-19T00:00:00Z"
+
+        neat.verify()
+
+        neat.convert("dms")
+        neat.set.data_model_id(("dexpi_playground", "DEXPI", "v1.3.1"))
+
+        if True:
+            # In progress, not yet supported.
+            dms_rules = neat._state.data_model.last_verified_dms_rules[1]
+            store = neat._state.instances.store
+            instances = [
+                self._standardize_instance(instance)
+                for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
+            ]
+        else:
+            instances = []
+
+        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
+        rules_str = neat.to.yaml(format="neat")
+
+        rules_dict = yaml.safe_load(rules_str)
+        data_regression.check(
+            {
+                "rules": rules_dict,
+                "instances": [],
+            }
+        )
+
+        assert len(instances) == 206
+
     @staticmethod
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:
         if not isinstance(instance, InstanceApply):
             raise ValueError(f"Expected InstanceApply, got {type(instance)}")
         for source in instance.sources:
             for value in source.properties.values():
-                if isinstance(value, list):
+                if isinstance(value, list) and all(isinstance(v, dict) for v in value):
+                    value = sorted(value, key=lambda x: x["externalId"])
+                elif isinstance(value, list):
                     value.sort()
         return instance.dump()
