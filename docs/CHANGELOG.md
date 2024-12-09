@@ -27,6 +27,7 @@ Changes are grouped as follows:
 ### Added
 - `.prepare.instances.dexpi()`
 - `.prepare.instances.aml()`
+- DEXPI onboarding tutorial
 
 
 ## [0.101.0] - 06-12-**2024**
