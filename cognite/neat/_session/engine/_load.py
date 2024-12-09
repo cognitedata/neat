@@ -37,13 +37,14 @@ def load_neat_engine(client: CogniteClient | None, location: Literal["newest", "
 
     candidates: dict[Version, Callable[[], Path]] = {}
     if location == "cache" and cache_dir.exists():
-        print(cache_dir)
         candidates = _load_from_path(cache_dir, pattern, lower_bound, upper_bound)
 
     if location == "newest" or not candidates:
         # Loading in reverse order of priority
+        # 4. Current working directory
+        candidates = _load_from_path(Path.cwd(), pattern, lower_bound, upper_bound)
         # 3. Downloads folder
-        candidates = _load_from_path(Path.home() / "Downloads", pattern, lower_bound, upper_bound)
+        candidates.update(_load_from_path(Path.home() / "Downloads", pattern, lower_bound, upper_bound))
         # 2. CDF
         if client:
             candidates.update(_load_from_cdf(client, pattern, lower_bound, upper_bound, cache_dir))
