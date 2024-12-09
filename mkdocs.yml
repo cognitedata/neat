@@ -34,6 +34,8 @@ nav:
         - Asset Hierarchy Migration: tutorials/data-onboarding/asset_hierarchy_migration.ipynb
 #        - Asset Hierarchy Migration with Type: tutorials/data-onboarding/asset_hierarchy_migration_with_type.ipynb
         - From Source to CDF - Nordic44 Use Case: tutorials/data-onboarding/nordic44_onboarding.ipynb
+        - DEXPI Data Onboarding: tutorials/data-onboarding/dexpi/dexpi_onboarding.ipynb
+        - AML Data Onboarding: tutorials/data-onboarding/aml/aml_onboarding.ipynb
       - Data Modeling:
         - Extending Data Model: tutorials/data-modeling/core_extension.ipynb
   - Data Model in Spreadsheet:

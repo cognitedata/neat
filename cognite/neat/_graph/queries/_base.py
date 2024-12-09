@@ -209,7 +209,10 @@ class Queries:
             elif (
                 isinstance(object_, URIRef)
                 and property_types
-                and property_types.get(property_, None) == EntityTypes.object_property
+                and (
+                    property_types.get(property_, None) == EntityTypes.object_property
+                    or property_types.get(property_, None) == EntityTypes.undefined
+                )
             ):
                 value = remove_namespace_from_uri(object_, validation="prefix")
 
@@ -233,7 +236,6 @@ class Queries:
                 else:
                     # we should not have multiple rdf:type values
                     continue
-
         if property_values:
             return (
                 identifier,
@@ -358,3 +360,21 @@ class Queries:
             dropped_types[t] = len(instance_ids)
             remove_instance_ids_in_batch(self.graph, instance_ids)
         return dropped_types
+
+    def multi_type_instances(self) -> dict[str, list[str]]:
+        """Find instances with multiple types"""
+
+        query = """
+        SELECT ?instance (GROUP_CONCAT(str(?type); SEPARATOR=",") AS ?types)
+        WHERE {
+            ?instance a ?type .
+        }
+        GROUP BY ?instance
+        HAVING (COUNT(?type) > 1)
+        """
+
+        result = {}
+        for instance, types in self.graph.query(query):  # type: ignore
+            result[remove_namespace_from_uri(instance)] = remove_namespace_from_uri(types.split(","))
+
+        return result

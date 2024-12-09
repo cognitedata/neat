@@ -32,10 +32,7 @@ def get_cognite_client(env_file_name: str) -> CogniteClient:
     """
     if not env_file_name.endswith(".env"):
         raise ValueError("env_file_name must end with '.env'")
-    with suppress(KeyError):
-        variables = EnvironmentVariables.create_from_environ()
-        return variables.get_client()
-
+    # First try to load from .env file in repository root
     repo_root = _repo_root()
     if repo_root:
         with suppress(KeyError, FileNotFoundError, TypeError):
@@ -43,6 +40,11 @@ def get_cognite_client(env_file_name: str) -> CogniteClient:
             client = variables.get_client()
             print(f"Found {env_file_name} file in repository root. Loaded variables from {env_file_name} file.")
             return client
+    # Then try to load from environment variables
+    with suppress(KeyError):
+        variables = EnvironmentVariables.create_from_environ()
+        return variables.get_client()
+    # If not found, prompt the user
     variables = _prompt_user()
     if repo_root and _env_in_gitignore(repo_root, env_file_name):
         local_import("rich", "jupyter")

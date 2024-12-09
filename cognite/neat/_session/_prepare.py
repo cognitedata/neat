@@ -7,8 +7,18 @@ from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from rdflib import URIRef
 
 from cognite.neat._client import NeatClient
-from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._graph.transformers import RelationshipAsEdgeTransformer
+from cognite.neat._constants import (
+    DEFAULT_NAMESPACE,
+    get_default_prefixes_and_namespaces,
+)
+from cognite.neat._graph.transformers import (
+    AttachPropertyFromTargetToSource,
+    PruneDeadEndEdges,
+    PruneInstancesOfUnknownType,
+    PruneTypes,
+    RelationshipAsEdgeTransformer,
+    Transformers,
+)
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._rules._shared import InputRules, ReadRules
 from cognite.neat._rules.importers import DMSImporter
@@ -49,6 +59,79 @@ class InstancePrepareAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
+
+    def dexpi(self) -> None:
+        """Prepares extracted DEXPI graph for further usage in CDF
+
+        This method bundles several graph transformers which:
+        - attach values of generic attributes to nodes
+        - create associations between nodes
+        - remove unused generic attributes
+        - remove associations between nodes that do not exist in the extracted graph
+        - remove edges to nodes that do not exist in the extracted graph
+
+        and therefore safeguard CDF from a bad graph
+        """
+
+        DEXPI = get_default_prefixes_and_namespaces()["dexpi"]
+
+        transformers = [
+            # Remove any instance which type is unknown
+            PruneInstancesOfUnknownType(),
+            # Directly connect generic attributes
+            AttachPropertyFromTargetToSource(
+                target_property=DEXPI.Value,
+                target_property_holding_new_property=DEXPI.Name,
+                target_node_type=DEXPI.GenericAttribute,
+                delete_target_node=True,
+            ),
+            # Directly connect associations
+            AttachPropertyFromTargetToSource(
+                target_property=DEXPI.ItemID,
+                target_property_holding_new_property=DEXPI.Type,
+                target_node_type=DEXPI.Association,
+                delete_target_node=True,
+            ),
+            # Remove unused generic attributes and associations
+            PruneTypes([DEXPI.GenericAttribute, DEXPI.Association]),
+            # Remove edges to nodes that do not exist in the extracted graph
+            PruneDeadEndEdges(),
+        ]
+
+        for transformer in transformers:
+            self._state.instances.store.transform(cast(Transformers, transformer))
+
+    def aml(self) -> None:
+        """Prepares extracted AutomationML graph for further usage in CDF
+
+        This method bundles several graph transformers which:
+        - attach values of attributes to nodes
+        - remove unused attributes
+        - remove edges to nodes that do not exist in the extracted graph
+
+        and therefore safeguard CDF from a bad graph
+        """
+
+        AML = get_default_prefixes_and_namespaces()["aml"]
+
+        transformers = [
+            # Remove any instance which type is unknown
+            PruneInstancesOfUnknownType(),
+            # Directly connect generic attributes
+            AttachPropertyFromTargetToSource(
+                target_property=AML.Value,
+                target_property_holding_new_property=AML.Name,
+                target_node_type=AML.Attribute,
+                delete_target_node=True,
+            ),
+            # Prune unused attributes
+            PruneTypes([AML.Attribute]),
+            # # Remove edges to nodes that do not exist in the extracted graph
+            PruneDeadEndEdges(),
+        ]
+
+        for transformer in transformers:
+            self._state.instances.store.transform(cast(Transformers, transformer))
 
     def make_connection_on_exact_match(
         self,
