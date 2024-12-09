@@ -27,6 +27,7 @@ Changes are grouped as follows:
 ### Added
 - `.prepare.instances.dexpi()`
 - `.prepare.instances.aml()`
+- DEXPI onboarding tutorial
 
 ### Changed
 - The `get_cognite_client` now prioritize the `env_file_name` parameter over loading variables from the environment.

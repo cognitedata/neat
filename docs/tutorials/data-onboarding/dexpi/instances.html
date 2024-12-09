@@ -1,0 +1,737 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/css/tom-select.min.css" integrity="sha512-43fHB3GLgZfz8QXl1RPQ8O66oIgv3po9cJ5erMt1c4QISq9dYb195T3vr5ImnJPXuVroKcGBPXBFKETW8jrPNQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.0.0-rc.4/js/tom-select.complete.js" integrity="sha512-jeF9CfnvzDiw9G9xiksVjxR2lib44Gnovvkv+3CgCG6NXCD4gqlA5nDAVW5WjpA+i+/zKsUWV5xNEbW1X/HH0Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 750px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+             #loadingBar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width: 100%;
+                 height: 750px;
+                 background-color:rgba(200,200,200,0.8);
+                 -webkit-transition: all 0.5s ease;
+                 -moz-transition: all 0.5s ease;
+                 -ms-transition: all 0.5s ease;
+                 -o-transition: all 0.5s ease;
+                 transition: all 0.5s ease;
+                 opacity:1;
+             }
+
+             #bar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width:20px;
+                 height:20px;
+                 margin:auto auto auto auto;
+                 border-radius:11px;
+                 border:2px solid rgba(30,30,30,0.05);
+                 background: rgb(0, 173, 246); /* Old browsers */
+                 box-shadow: 2px 0px 4px rgba(0,0,0,0.4);
+             }
+
+             #border {
+                 position:absolute;
+                 top:10px;
+                 left:10px;
+                 width:500px;
+                 height:23px;
+                 margin:auto auto auto auto;
+                 box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
+                 border-radius:10px;
+             }
+
+             #text {
+                 position:absolute;
+                 top:8px;
+                 left:530px;
+                 width:30px;
+                 height:50px;
+                 margin:auto auto auto auto;
+                 font-size:22px;
+                 color: #000000;
+             }
+
+             div.outerBorder {
+                 position:relative;
+                 top:400px;
+                 width:600px;
+                 height:44px;
+                 margin:auto auto auto auto;
+                 border:8px solid rgba(0,0,0,0.1);
+                 background: rgb(252,252,252); /* Old browsers */
+                 background: -moz-linear-gradient(top,  rgba(252,252,252,1) 0%, rgba(237,237,237,1) 100%); /* FF3.6+ */
+                 background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(237,237,237,1))); /* Chrome,Safari4+ */
+                 background: -webkit-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Chrome10+,Safari5.1+ */
+                 background: -o-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Opera 11.10+ */
+                 background: -ms-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* IE10+ */
+                 background: linear-gradient(to bottom,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* W3C */
+                 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
+                 border-radius:72px;
+                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+             }
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+                <div id="select-menu" class="card-header">
+                    <div class="row no-gutters">
+                        <div class="col-10 pb-2">
+                            <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="selectNode([value]);"
+                            id="select-node"
+                            placeholder="Select node..."
+                            >
+                                <option selected>Select a Node by ID</option>
+                                
+                                    <option value="CustomOperatedValve-1">CustomOperatedValve-1</option>
+                                
+                                    <option value="OperatedValveReference-2">OperatedValveReference-2</option>
+                                
+                                    <option value="MeasuringLineFunction-4">MeasuringLineFunction-4</option>
+                                
+                                    <option value="ProcessSignalGeneratingFunction-4">ProcessSignalGeneratingFunction-4</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-17">ProcessInstrumentationFunction-17</option>
+                                
+                                    <option value="ActuatingFunction-2">ActuatingFunction-2</option>
+                                
+                                    <option value="SignalConveyingFunction-15">SignalConveyingFunction-15</option>
+                                
+                                    <option value="SignalConveyingFunction-13">SignalConveyingFunction-13</option>
+                                
+                                    <option value="ActuatingSystem-2">ActuatingSystem-2</option>
+                                
+                                    <option value="SignalConveyingFunction-14">SignalConveyingFunction-14</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-12">ProcessInstrumentationFunction-12</option>
+                                
+                                    <option value="InstrumentationLoopFunction-5">InstrumentationLoopFunction-5</option>
+                                
+                                    <option value="PipingNetworkSystem-19">PipingNetworkSystem-19</option>
+                                
+                                    <option value="PlantSystem-1">PlantSystem-1</option>
+                                
+                                    <option value="ProcessPlant-1">ProcessPlant-1</option>
+                                
+                                    <option value="PipingNetworkSystem-13">PipingNetworkSystem-13</option>
+                                
+                                    <option value="PipingNetworkSystem-16">PipingNetworkSystem-16</option>
+                                
+                                    <option value="PipingNetworkSystem-6">PipingNetworkSystem-6</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-11">ProcessInstrumentationFunction-11</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-16">ProcessInstrumentationFunction-16</option>
+                                
+                                    <option value="InstrumentationLoopFunction-6">InstrumentationLoopFunction-6</option>
+                                
+                                    <option value="InstrumentationLoopFunction-4">InstrumentationLoopFunction-4</option>
+                                
+                                    <option value="PipingNetworkSystem-20">PipingNetworkSystem-20</option>
+                                
+                                    <option value="PipingNetworkSystem-15">PipingNetworkSystem-15</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-3">ProcessInstrumentationFunction-3</option>
+                                
+                                    <option value="CustomHeatExchanger-1">CustomHeatExchanger-1</option>
+                                
+                                    <option value="PipingNetworkSystem-11">PipingNetworkSystem-11</option>
+                                
+                                    <option value="PipingNetworkSystem-8">PipingNetworkSystem-8</option>
+                                
+                                    <option value="InstrumentationLoopFunction-2">InstrumentationLoopFunction-2</option>
+                                
+                                    <option value="ElectricHeater-1">ElectricHeater-1</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-6">ProcessInstrumentationFunction-6</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-18">ProcessInstrumentationFunction-18</option>
+                                
+                                    <option value="PipingNetworkSystem-1">PipingNetworkSystem-1</option>
+                                
+                                    <option value="PlateHeatExchanger-1">PlateHeatExchanger-1</option>
+                                
+                                    <option value="PressureVessel-1">PressureVessel-1</option>
+                                
+                                    <option value="PipingNetworkSystem-18">PipingNetworkSystem-18</option>
+                                
+                                    <option value="PipingNetworkSystem-7">PipingNetworkSystem-7</option>
+                                
+                                    <option value="PipingNetworkSystem-14">PipingNetworkSystem-14</option>
+                                
+                                    <option value="PipingNetworkSystem-10">PipingNetworkSystem-10</option>
+                                
+                                    <option value="RotaryPump-1">RotaryPump-1</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-19">ProcessInstrumentationFunction-19</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-15">ProcessInstrumentationFunction-15</option>
+                                
+                                    <option value="PipingNetworkSystem-4">PipingNetworkSystem-4</option>
+                                
+                                    <option value="PipingNetworkSystem-2">PipingNetworkSystem-2</option>
+                                
+                                    <option value="PipingNetworkSystem-17">PipingNetworkSystem-17</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-10">ProcessInstrumentationFunction-10</option>
+                                
+                                    <option value="PipingNetworkSystem-5">PipingNetworkSystem-5</option>
+                                
+                                    <option value="CentrifugalPump-1">CentrifugalPump-1</option>
+                                
+                                    <option value="PipingNetworkSystem-3">PipingNetworkSystem-3</option>
+                                
+                                    <option value="PipingNetworkSystem-12">PipingNetworkSystem-12</option>
+                                
+                                    <option value="PipingNetworkSystem-9">PipingNetworkSystem-9</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-5">ProcessInstrumentationFunction-5</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-4">ProcessInstrumentationFunction-4</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-9">ProcessInstrumentationFunction-9</option>
+                                
+                                    <option value="ActuatingSystem-3">ActuatingSystem-3</option>
+                                
+                                    <option value="ActuatingFunction-3">ActuatingFunction-3</option>
+                                
+                                    <option value="SignalConveyingFunction-16">SignalConveyingFunction-16</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-1">ProcessInstrumentationFunction-1</option>
+                                
+                                    <option value="Note-1">Note-1</option>
+                                
+                                    <option value="OperatedValveReference-4">OperatedValveReference-4</option>
+                                
+                                    <option value="GateValve-5">GateValve-5</option>
+                                
+                                    <option value="Flange-1">Flange-1</option>
+                                
+                                    <option value="ProcessSignalGeneratingFunction-1">ProcessSignalGeneratingFunction-1</option>
+                                
+                                    <option value="ActuatingFunction-1">ActuatingFunction-1</option>
+                                
+                                    <option value="ActuatingSystem-1">ActuatingSystem-1</option>
+                                
+                                    <option value="SignalConveyingFunction-9">SignalConveyingFunction-9</option>
+                                
+                                    <option value="Nozzle-11">Nozzle-11</option>
+                                
+                                    <option value="PropertyBreak-1">PropertyBreak-1</option>
+                                
+                                    <option value="InstrumentationLoopFunction-3">InstrumentationLoopFunction-3</option>
+                                
+                                    <option value="ControlledActuator-1">ControlledActuator-1</option>
+                                
+                                    <option value="MeasuringLineFunction-3">MeasuringLineFunction-3</option>
+                                
+                                    <option value="ProcessSignalGeneratingFunction-3">ProcessSignalGeneratingFunction-3</option>
+                                
+                                    <option value="Flange-14">Flange-14</option>
+                                
+                                    <option value="SignalConveyingFunction-17">SignalConveyingFunction-17</option>
+                                
+                                    <option value="MeasuringLineFunction-5">MeasuringLineFunction-5</option>
+                                
+                                    <option value="SignalConveyingFunction-18">SignalConveyingFunction-18</option>
+                                
+                                    <option value="InstrumentationLoopFunction-8">InstrumentationLoopFunction-8</option>
+                                
+                                    <option value="ProcessSignalGeneratingFunction-5">ProcessSignalGeneratingFunction-5</option>
+                                
+                                    <option value="SignalConveyingFunction-19">SignalConveyingFunction-19</option>
+                                
+                                    <option value="ControlledActuator-4">ControlledActuator-4</option>
+                                
+                                    <option value="ControlledActuator-3">ControlledActuator-3</option>
+                                
+                                    <option value="Nozzle-7">Nozzle-7</option>
+                                
+                                    <option value="ActuatingElectricalFunction-1">ActuatingElectricalFunction-1</option>
+                                
+                                    <option value="SignalConveyingFunction-3">SignalConveyingFunction-3</option>
+                                
+                                    <option value="InstrumentationLoopFunction-1">InstrumentationLoopFunction-1</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-7">ProcessInstrumentationFunction-7</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-8">ProcessInstrumentationFunction-8</option>
+                                
+                                    <option value="SignalConveyingFunction-5">SignalConveyingFunction-5</option>
+                                
+                                    <option value="SignalConveyingFunction-8">SignalConveyingFunction-8</option>
+                                
+                                    <option value="SignalConveyingFunction-4">SignalConveyingFunction-4</option>
+                                
+                                    <option value="SignalConveyingFunction-7">SignalConveyingFunction-7</option>
+                                
+                                    <option value="SignalConveyingFunction-6">SignalConveyingFunction-6</option>
+                                
+                                    <option value="FlowOutSignalOffPageConnector-1">FlowOutSignalOffPageConnector-1</option>
+                                
+                                    <option value="Nozzle-22">Nozzle-22</option>
+                                
+                                    <option value="CustomPipingComponent-2">CustomPipingComponent-2</option>
+                                
+                                    <option value="GateValve-1">GateValve-1</option>
+                                
+                                    <option value="OperatedValveReference-1">OperatedValveReference-1</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-13">ProcessInstrumentationFunction-13</option>
+                                
+                                    <option value="ControlledActuator-2">ControlledActuator-2</option>
+                                
+                                    <option value="ProcessSignalGeneratingFunction-2">ProcessSignalGeneratingFunction-2</option>
+                                
+                                    <option value="MeasuringLineFunction-2">MeasuringLineFunction-2</option>
+                                
+                                    <option value="CustomInlinePrimaryElement-1">CustomInlinePrimaryElement-1</option>
+                                
+                                    <option value="GateValve-2">GateValve-2</option>
+                                
+                                    <option value="OperatedValveReference-3">OperatedValveReference-3</option>
+                                
+                                    <option value="GateValve-3">GateValve-3</option>
+                                
+                                    <option value="PipeTee-3">PipeTee-3</option>
+                                
+                                    <option value="PropertyBreak-2">PropertyBreak-2</option>
+                                
+                                    <option value="PipeTee-4">PipeTee-4</option>
+                                
+                                    <option value="Nozzle-21">Nozzle-21</option>
+                                
+                                    <option value="Nozzle-15">Nozzle-15</option>
+                                
+                                    <option value="ProcessInstrumentationFunction-2">ProcessInstrumentationFunction-2</option>
+                                
+                                    <option value="SignalConveyingFunction-2">SignalConveyingFunction-2</option>
+                                
+                                    <option value="Nozzle-4">Nozzle-4</option>
+                                
+                                    <option value="PipeTee-1">PipeTee-1</option>
+                                
+                                    <option value="Nozzle-10">Nozzle-10</option>
+                                
+                                    <option value="Nozzle-9">Nozzle-9</option>
+                                
+                                    <option value="ActuatingFunction-4">ActuatingFunction-4</option>
+                                
+                                    <option value="ActuatingSystem-4">ActuatingSystem-4</option>
+                                
+                                    <option value="GateValve-4">GateValve-4</option>
+                                
+                                    <option value="MeasuringLineFunction-1">MeasuringLineFunction-1</option>
+                                
+                                    <option value="SignalConveyingFunction-12">SignalConveyingFunction-12</option>
+                                
+                                    <option value="InstrumentationLoopFunction-7">InstrumentationLoopFunction-7</option>
+                                
+                                    <option value="FlowInPipeOffPageConnector-1">FlowInPipeOffPageConnector-1</option>
+                                
+                                    <option value="Nozzle-1">Nozzle-1</option>
+                                
+                                    <option value="PipeTee-6">PipeTee-6</option>
+                                
+                                    <option value="FlowOutPipeOffPageConnector-1">FlowOutPipeOffPageConnector-1</option>
+                                
+                            </select>
+                        </div>
+                        <div class="col-2 pb-2">
+                            <button type="button" class="btn btn-primary btn-block" onclick="neighbourhoodHighlight({nodes: []});">Reset Selection</button>
+                        </div>
+                    </div>
+                </div>
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+            <div id="loadingBar">
+              <div class="outerBorder">
+                <div id="text">0%</div>
+                <div id="border">
+                  <div id="bar"></div>
+                </div>
+              </div>
+            </div>
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+                  new TomSelect("#select-node",{
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      }
+                  });
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#d10db1", "id": "CustomOperatedValve-1", "label": "CustomOperatedValve-1", "shape": "dot", "size": 10, "title": "CustomOperatedValve", "type": "CustomOperatedValve"}, {"color": "#28ecc4", "id": "OperatedValveReference-2", "label": "OperatedValveReference-2", "shape": "dot", "size": 10, "title": "OperatedValveReference", "type": "OperatedValveReference"}, {"color": "#1bd7a9", "id": "MeasuringLineFunction-4", "label": "MeasuringLineFunction-4", "shape": "dot", "size": 10, "title": "MeasuringLineFunction", "type": "MeasuringLineFunction"}, {"color": "#ed15b8", "id": "ProcessSignalGeneratingFunction-4", "label": "ProcessSignalGeneratingFunction-4", "shape": "dot", "size": 10, "title": "ProcessSignalGeneratingFunction", "type": "ProcessSignalGeneratingFunction"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-17", "label": "ProcessInstrumentationFunction-17", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#3cc6a4", "id": "ActuatingFunction-2", "label": "ActuatingFunction-2", "shape": "dot", "size": 10, "title": "ActuatingFunction", "type": "ActuatingFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-15", "label": "SignalConveyingFunction-15", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-13", "label": "SignalConveyingFunction-13", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#69cb1c", "id": "ActuatingSystem-2", "label": "ActuatingSystem-2", "shape": "dot", "size": 10, "title": "ActuatingSystem", "type": "ActuatingSystem"}, {"color": "#c34693", "id": "SignalConveyingFunction-14", "label": "SignalConveyingFunction-14", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-12", "label": "ProcessInstrumentationFunction-12", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#6235e8", "id": "InstrumentationLoopFunction-5", "label": "InstrumentationLoopFunction-5", "shape": "dot", "size": 10, "title": "InstrumentationLoopFunction", "type": "InstrumentationLoopFunction"}, {"color": "#43cce9", "id": "PipingNetworkSystem-19", "label": "PipingNetworkSystem-19", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#2ca76b", "id": "PlantSystem-1", "label": "PlantSystem-1", "shape": "dot", "size": 10, "title": "PlantSystem", "type": "PlantSystem"}, {"color": "#aa3dc5", "id": "ProcessPlant-1", "label": "ProcessPlant-1", "shape": "dot", "size": 10, "title": "ProcessPlant", "type": "ProcessPlant"}, {"color": "#43cce9", "id": "PipingNetworkSystem-13", "label": "PipingNetworkSystem-13", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#43cce9", "id": "PipingNetworkSystem-16", "label": "PipingNetworkSystem-16", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#43cce9", "id": "PipingNetworkSystem-6", "label": "PipingNetworkSystem-6", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-11", "label": "ProcessInstrumentationFunction-11", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-16", "label": "ProcessInstrumentationFunction-16", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#6235e8", "id": "InstrumentationLoopFunction-6", "label": "InstrumentationLoopFunction-6", "shape": "dot", "size": 10, "title": "InstrumentationLoopFunction", "type": "InstrumentationLoopFunction"}, {"color": "#6235e8", "id": "InstrumentationLoopFunction-4", "label": "InstrumentationLoopFunction-4", "shape": "dot", "size": 10, "title": "InstrumentationLoopFunction", "type": "InstrumentationLoopFunction"}, {"color": "#43cce9", "id": "PipingNetworkSystem-20", "label": "PipingNetworkSystem-20", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#43cce9", "id": "PipingNetworkSystem-15", "label": "PipingNetworkSystem-15", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-3", "label": "ProcessInstrumentationFunction-3", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#327ba2", "id": "CustomHeatExchanger-1", "label": "CustomHeatExchanger-1", "shape": "dot", "size": 10, "title": "CustomHeatExchanger", "type": "CustomHeatExchanger"}, {"color": "#43cce9", "id": "PipingNetworkSystem-11", "label": "PipingNetworkSystem-11", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#43cce9", "id": "PipingNetworkSystem-8", "label": "PipingNetworkSystem-8", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#6235e8", "id": "InstrumentationLoopFunction-2", "label": "InstrumentationLoopFunction-2", "shape": "dot", "size": 10, "title": "InstrumentationLoopFunction", "type": "InstrumentationLoopFunction"}, {"color": "#21e126", "id": "ElectricHeater-1", "label": "ElectricHeater-1", "shape": "dot", "size": 10, "title": "ElectricHeater", "type": "ElectricHeater"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-6", "label": "ProcessInstrumentationFunction-6", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-18", "label": "ProcessInstrumentationFunction-18", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#43cce9", "id": "PipingNetworkSystem-1", "label": "PipingNetworkSystem-1", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#23e96c", "id": "PlateHeatExchanger-1", "label": "PlateHeatExchanger-1", "shape": "dot", "size": 10, "title": "PlateHeatExchanger", "type": "PlateHeatExchanger"}, {"color": "#feb71e", "id": "PressureVessel-1", "label": "PressureVessel-1", "shape": "dot", "size": 10, "title": "PressureVessel", "type": "PressureVessel"}, {"color": "#43cce9", "id": "PipingNetworkSystem-18", "label": "PipingNetworkSystem-18", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#43cce9", "id": "PipingNetworkSystem-7", "label": "PipingNetworkSystem-7", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#43cce9", "id": "PipingNetworkSystem-14", "label": "PipingNetworkSystem-14", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#43cce9", "id": "PipingNetworkSystem-10", "label": "PipingNetworkSystem-10", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#5ccb7d", "id": "RotaryPump-1", "label": "RotaryPump-1", "shape": "dot", "size": 10, "title": "RotaryPump", "type": "RotaryPump"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-19", "label": "ProcessInstrumentationFunction-19", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-15", "label": "ProcessInstrumentationFunction-15", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#43cce9", "id": "PipingNetworkSystem-4", "label": "PipingNetworkSystem-4", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#43cce9", "id": "PipingNetworkSystem-2", "label": "PipingNetworkSystem-2", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#43cce9", "id": "PipingNetworkSystem-17", "label": "PipingNetworkSystem-17", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-10", "label": "ProcessInstrumentationFunction-10", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#43cce9", "id": "PipingNetworkSystem-5", "label": "PipingNetworkSystem-5", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#8a11cb", "id": "CentrifugalPump-1", "label": "CentrifugalPump-1", "shape": "dot", "size": 10, "title": "CentrifugalPump", "type": "CentrifugalPump"}, {"color": "#43cce9", "id": "PipingNetworkSystem-3", "label": "PipingNetworkSystem-3", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#43cce9", "id": "PipingNetworkSystem-12", "label": "PipingNetworkSystem-12", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#43cce9", "id": "PipingNetworkSystem-9", "label": "PipingNetworkSystem-9", "shape": "dot", "size": 10, "title": "PipingNetworkSystem", "type": "PipingNetworkSystem"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-5", "label": "ProcessInstrumentationFunction-5", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-4", "label": "ProcessInstrumentationFunction-4", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-9", "label": "ProcessInstrumentationFunction-9", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#69cb1c", "id": "ActuatingSystem-3", "label": "ActuatingSystem-3", "shape": "dot", "size": 10, "title": "ActuatingSystem", "type": "ActuatingSystem"}, {"color": "#3cc6a4", "id": "ActuatingFunction-3", "label": "ActuatingFunction-3", "shape": "dot", "size": 10, "title": "ActuatingFunction", "type": "ActuatingFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-16", "label": "SignalConveyingFunction-16", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-1", "label": "ProcessInstrumentationFunction-1", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#b2b922", "id": "Note-1", "label": "Note-1", "shape": "dot", "size": 10, "title": "Note", "type": "Note"}, {"color": "#28ecc4", "id": "OperatedValveReference-4", "label": "OperatedValveReference-4", "shape": "dot", "size": 10, "title": "OperatedValveReference", "type": "OperatedValveReference"}, {"color": "#9bb11f", "id": "GateValve-5", "label": "GateValve-5", "shape": "dot", "size": 10, "title": "GateValve", "type": "GateValve"}, {"color": "#75d03c", "id": "Flange-1", "label": "Flange-1", "shape": "dot", "size": 10, "title": "Flange", "type": "Flange"}, {"color": "#ed15b8", "id": "ProcessSignalGeneratingFunction-1", "label": "ProcessSignalGeneratingFunction-1", "shape": "dot", "size": 10, "title": "ProcessSignalGeneratingFunction", "type": "ProcessSignalGeneratingFunction"}, {"color": "#3cc6a4", "id": "ActuatingFunction-1", "label": "ActuatingFunction-1", "shape": "dot", "size": 10, "title": "ActuatingFunction", "type": "ActuatingFunction"}, {"color": "#69cb1c", "id": "ActuatingSystem-1", "label": "ActuatingSystem-1", "shape": "dot", "size": 10, "title": "ActuatingSystem", "type": "ActuatingSystem"}, {"color": "#c34693", "id": "SignalConveyingFunction-9", "label": "SignalConveyingFunction-9", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#b92886", "id": "Nozzle-11", "label": "Nozzle-11", "shape": "dot", "size": 10, "title": "Nozzle", "type": "Nozzle"}, {"color": "#4bca3b", "id": "PropertyBreak-1", "label": "PropertyBreak-1", "shape": "dot", "size": 10, "title": "PropertyBreak", "type": "PropertyBreak"}, {"color": "#6235e8", "id": "InstrumentationLoopFunction-3", "label": "InstrumentationLoopFunction-3", "shape": "dot", "size": 10, "title": "InstrumentationLoopFunction", "type": "InstrumentationLoopFunction"}, {"color": "#2ffefa", "id": "ControlledActuator-1", "label": "ControlledActuator-1", "shape": "dot", "size": 10, "title": "ControlledActuator", "type": "ControlledActuator"}, {"color": "#1bd7a9", "id": "MeasuringLineFunction-3", "label": "MeasuringLineFunction-3", "shape": "dot", "size": 10, "title": "MeasuringLineFunction", "type": "MeasuringLineFunction"}, {"color": "#ed15b8", "id": "ProcessSignalGeneratingFunction-3", "label": "ProcessSignalGeneratingFunction-3", "shape": "dot", "size": 10, "title": "ProcessSignalGeneratingFunction", "type": "ProcessSignalGeneratingFunction"}, {"color": "#75d03c", "id": "Flange-14", "label": "Flange-14", "shape": "dot", "size": 10, "title": "Flange", "type": "Flange"}, {"color": "#c34693", "id": "SignalConveyingFunction-17", "label": "SignalConveyingFunction-17", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#1bd7a9", "id": "MeasuringLineFunction-5", "label": "MeasuringLineFunction-5", "shape": "dot", "size": 10, "title": "MeasuringLineFunction", "type": "MeasuringLineFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-18", "label": "SignalConveyingFunction-18", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#6235e8", "id": "InstrumentationLoopFunction-8", "label": "InstrumentationLoopFunction-8", "shape": "dot", "size": 10, "title": "InstrumentationLoopFunction", "type": "InstrumentationLoopFunction"}, {"color": "#ed15b8", "id": "ProcessSignalGeneratingFunction-5", "label": "ProcessSignalGeneratingFunction-5", "shape": "dot", "size": 10, "title": "ProcessSignalGeneratingFunction", "type": "ProcessSignalGeneratingFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-19", "label": "SignalConveyingFunction-19", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#2ffefa", "id": "ControlledActuator-4", "label": "ControlledActuator-4", "shape": "dot", "size": 10, "title": "ControlledActuator", "type": "ControlledActuator"}, {"color": "#2ffefa", "id": "ControlledActuator-3", "label": "ControlledActuator-3", "shape": "dot", "size": 10, "title": "ControlledActuator", "type": "ControlledActuator"}, {"color": "#b92886", "id": "Nozzle-7", "label": "Nozzle-7", "shape": "dot", "size": 10, "title": "Nozzle", "type": "Nozzle"}, {"color": "#d935bd", "id": "ActuatingElectricalFunction-1", "label": "ActuatingElectricalFunction-1", "shape": "dot", "size": 10, "title": "ActuatingElectricalFunction", "type": "ActuatingElectricalFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-3", "label": "SignalConveyingFunction-3", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#6235e8", "id": "InstrumentationLoopFunction-1", "label": "InstrumentationLoopFunction-1", "shape": "dot", "size": 10, "title": "InstrumentationLoopFunction", "type": "InstrumentationLoopFunction"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-7", "label": "ProcessInstrumentationFunction-7", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-8", "label": "ProcessInstrumentationFunction-8", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-5", "label": "SignalConveyingFunction-5", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-8", "label": "SignalConveyingFunction-8", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-4", "label": "SignalConveyingFunction-4", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-7", "label": "SignalConveyingFunction-7", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-6", "label": "SignalConveyingFunction-6", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#9bfe0b", "id": "FlowOutSignalOffPageConnector-1", "label": "FlowOutSignalOffPageConnector-1", "shape": "dot", "size": 10, "title": "FlowOutSignalOffPageConnector", "type": "FlowOutSignalOffPageConnector"}, {"color": "#b92886", "id": "Nozzle-22", "label": "Nozzle-22", "shape": "dot", "size": 10, "title": "Nozzle", "type": "Nozzle"}, {"color": "#dc14fb", "id": "CustomPipingComponent-2", "label": "CustomPipingComponent-2", "shape": "dot", "size": 10, "title": "CustomPipingComponent", "type": "CustomPipingComponent"}, {"color": "#9bb11f", "id": "GateValve-1", "label": "GateValve-1", "shape": "dot", "size": 10, "title": "GateValve", "type": "GateValve"}, {"color": "#28ecc4", "id": "OperatedValveReference-1", "label": "OperatedValveReference-1", "shape": "dot", "size": 10, "title": "OperatedValveReference", "type": "OperatedValveReference"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-13", "label": "ProcessInstrumentationFunction-13", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#2ffefa", "id": "ControlledActuator-2", "label": "ControlledActuator-2", "shape": "dot", "size": 10, "title": "ControlledActuator", "type": "ControlledActuator"}, {"color": "#ed15b8", "id": "ProcessSignalGeneratingFunction-2", "label": "ProcessSignalGeneratingFunction-2", "shape": "dot", "size": 10, "title": "ProcessSignalGeneratingFunction", "type": "ProcessSignalGeneratingFunction"}, {"color": "#1bd7a9", "id": "MeasuringLineFunction-2", "label": "MeasuringLineFunction-2", "shape": "dot", "size": 10, "title": "MeasuringLineFunction", "type": "MeasuringLineFunction"}, {"color": "#1129cc", "id": "CustomInlinePrimaryElement-1", "label": "CustomInlinePrimaryElement-1", "shape": "dot", "size": 10, "title": "CustomInlinePrimaryElement", "type": "CustomInlinePrimaryElement"}, {"color": "#9bb11f", "id": "GateValve-2", "label": "GateValve-2", "shape": "dot", "size": 10, "title": "GateValve", "type": "GateValve"}, {"color": "#28ecc4", "id": "OperatedValveReference-3", "label": "OperatedValveReference-3", "shape": "dot", "size": 10, "title": "OperatedValveReference", "type": "OperatedValveReference"}, {"color": "#9bb11f", "id": "GateValve-3", "label": "GateValve-3", "shape": "dot", "size": 10, "title": "GateValve", "type": "GateValve"}, {"color": "#911eba", "id": "PipeTee-3", "label": "PipeTee-3", "shape": "dot", "size": 10, "title": "PipeTee", "type": "PipeTee"}, {"color": "#4bca3b", "id": "PropertyBreak-2", "label": "PropertyBreak-2", "shape": "dot", "size": 10, "title": "PropertyBreak", "type": "PropertyBreak"}, {"color": "#911eba", "id": "PipeTee-4", "label": "PipeTee-4", "shape": "dot", "size": 10, "title": "PipeTee", "type": "PipeTee"}, {"color": "#b92886", "id": "Nozzle-21", "label": "Nozzle-21", "shape": "dot", "size": 10, "title": "Nozzle", "type": "Nozzle"}, {"color": "#b92886", "id": "Nozzle-15", "label": "Nozzle-15", "shape": "dot", "size": 10, "title": "Nozzle", "type": "Nozzle"}, {"color": "#dc03f8", "id": "ProcessInstrumentationFunction-2", "label": "ProcessInstrumentationFunction-2", "shape": "dot", "size": 10, "title": "ProcessInstrumentationFunction", "type": "ProcessInstrumentationFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-2", "label": "SignalConveyingFunction-2", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#b92886", "id": "Nozzle-4", "label": "Nozzle-4", "shape": "dot", "size": 10, "title": "Nozzle", "type": "Nozzle"}, {"color": "#911eba", "id": "PipeTee-1", "label": "PipeTee-1", "shape": "dot", "size": 10, "title": "PipeTee", "type": "PipeTee"}, {"color": "#b92886", "id": "Nozzle-10", "label": "Nozzle-10", "shape": "dot", "size": 10, "title": "Nozzle", "type": "Nozzle"}, {"color": "#b92886", "id": "Nozzle-9", "label": "Nozzle-9", "shape": "dot", "size": 10, "title": "Nozzle", "type": "Nozzle"}, {"color": "#3cc6a4", "id": "ActuatingFunction-4", "label": "ActuatingFunction-4", "shape": "dot", "size": 10, "title": "ActuatingFunction", "type": "ActuatingFunction"}, {"color": "#69cb1c", "id": "ActuatingSystem-4", "label": "ActuatingSystem-4", "shape": "dot", "size": 10, "title": "ActuatingSystem", "type": "ActuatingSystem"}, {"color": "#9bb11f", "id": "GateValve-4", "label": "GateValve-4", "shape": "dot", "size": 10, "title": "GateValve", "type": "GateValve"}, {"color": "#1bd7a9", "id": "MeasuringLineFunction-1", "label": "MeasuringLineFunction-1", "shape": "dot", "size": 10, "title": "MeasuringLineFunction", "type": "MeasuringLineFunction"}, {"color": "#c34693", "id": "SignalConveyingFunction-12", "label": "SignalConveyingFunction-12", "shape": "dot", "size": 10, "title": "SignalConveyingFunction", "type": "SignalConveyingFunction"}, {"color": "#6235e8", "id": "InstrumentationLoopFunction-7", "label": "InstrumentationLoopFunction-7", "shape": "dot", "size": 10, "title": "InstrumentationLoopFunction", "type": "InstrumentationLoopFunction"}, {"color": "#38d3a7", "id": "FlowInPipeOffPageConnector-1", "label": "FlowInPipeOffPageConnector-1", "shape": "dot", "size": 10, "title": "FlowInPipeOffPageConnector", "type": "FlowInPipeOffPageConnector"}, {"color": "#b92886", "id": "Nozzle-1", "label": "Nozzle-1", "shape": "dot", "size": 10, "title": "Nozzle", "type": "Nozzle"}, {"color": "#911eba", "id": "PipeTee-6", "label": "PipeTee-6", "shape": "dot", "size": 10, "title": "PipeTee", "type": "PipeTee"}, {"color": "#7929bd", "id": "FlowOutPipeOffPageConnector-1", "label": "FlowOutPipeOffPageConnector-1", "shape": "dot", "size": 10, "title": "FlowOutPipeOffPageConnector", "type": "FlowOutPipeOffPageConnector"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "grey", "from": "CustomOperatedValve-1", "label": "isReferencedBy", "to": "OperatedValveReference-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "OperatedValveReference-2", "label": "refersTo", "to": "CustomOperatedValve-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "MeasuringLineFunction-4", "label": "hasLogicalStart", "to": "ProcessSignalGeneratingFunction-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "MeasuringLineFunction-4", "label": "hasLogicalEnd", "to": "ProcessInstrumentationFunction-17", "width": 1}, {"arrows": "to", "color": "grey", "from": "ActuatingFunction-2", "label": "isLogicalEndOf", "to": "SignalConveyingFunction-15", "width": 1}, {"arrows": "to", "color": "grey", "from": "ActuatingFunction-2", "label": "isLogicalEndOf", "to": "SignalConveyingFunction-13", "width": 1}, {"arrows": "to", "color": "grey", "from": "ActuatingFunction-2", "label": "isFulfilledBy", "to": "ActuatingSystem-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "ActuatingFunction-2", "label": "isLogicalEndOf", "to": "SignalConveyingFunction-14", "width": 1}, {"arrows": "to", "color": "grey", "from": "SignalConveyingFunction-13", "label": "hasLogicalStart", "to": "ProcessInstrumentationFunction-12", "width": 1}, {"arrows": "to", "color": "grey", "from": "SignalConveyingFunction-13", "label": "hasLogicalEnd", "to": "ActuatingFunction-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "ActuatingSystem-2", "label": "fulfills", "to": "ActuatingFunction-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "InstrumentationLoopFunction-5", "label": "isACollectionIncluding", "to": "ProcessInstrumentationFunction-12", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-19", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-19", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-13", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-16", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-6", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-11", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-16", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "InstrumentationLoopFunction-6", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "InstrumentationLoopFunction-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-20", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-15", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "CustomHeatExchanger-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-11", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-8", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "InstrumentationLoopFunction-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ElectricHeater-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-6", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-18", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-12", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PlateHeatExchanger-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PressureVessel-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-18", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-17", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-7", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-14", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-10", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "RotaryPump-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-19", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-15", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-17", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-10", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-5", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "CentrifugalPump-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-12", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-9", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-5", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "PipingNetworkSystem-19", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlantSystem-1", "label": "isTheLocationOf", "to": "ProcessInstrumentationFunction-9", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-9", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-9", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ActuatingSystem-3", "label": "fulfills", "to": "ActuatingFunction-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "ActuatingFunction-3", "label": "isLogicalEndOf", "to": "SignalConveyingFunction-16", "width": 1}, {"arrows": "to", "color": "grey", "from": "ActuatingFunction-3", "label": "isFulfilledBy", "to": "ActuatingSystem-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "ElectricHeater-1", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ElectricHeater-1", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ElectricHeater-1", "label": "connection", "to": "ProcessInstrumentationFunction-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "Note-1", "label": "isACommentReferringTo", "to": "PressureVessel-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "OperatedValveReference-4", "label": "refersTo", "to": "GateValve-5", "width": 1}, {"arrows": "to", "color": "grey", "from": "Flange-1", "label": "isTheLocationOf", "to": "ProcessSignalGeneratingFunction-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "Flange-1", "label": "connection", "to": "ProcessInstrumentationFunction-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-18", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-18", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-6", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-6", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-13", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-13", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ActuatingFunction-1", "label": "isFulfilledBy", "to": "ActuatingSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ActuatingFunction-1", "label": "isLogicalEndOf", "to": "SignalConveyingFunction-9", "width": 1}, {"arrows": "to", "color": "grey", "from": "SignalConveyingFunction-9", "label": "hasLogicalStart", "to": "ProcessInstrumentationFunction-9", "width": 1}, {"arrows": "to", "color": "grey", "from": "SignalConveyingFunction-9", "label": "hasLogicalEnd", "to": "ActuatingFunction-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "Nozzle-11", "label": "connection", "to": "PropertyBreak-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-9", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-9", "label": "isAPartOf", "to": "InstrumentationLoopFunction-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-9", "label": "isLogicalStartOf", "to": "SignalConveyingFunction-9", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-9", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-9", "label": "connection", "to": "ControlledActuator-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "InstrumentationLoopFunction-3", "label": "isACollectionIncluding", "to": "ProcessInstrumentationFunction-9", "width": 1}, {"arrows": "to", "color": "grey", "from": "MeasuringLineFunction-3", "label": "hasLogicalStart", "to": "ProcessSignalGeneratingFunction-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "MeasuringLineFunction-3", "label": "hasLogicalEnd", "to": "ProcessInstrumentationFunction-16", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessSignalGeneratingFunction-3", "label": "isLocatedIn", "to": "Flange-14", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessSignalGeneratingFunction-3", "label": "isLogicalStartOf", "to": "MeasuringLineFunction-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-16", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-16", "label": "isLogicalEndOf", "to": "MeasuringLineFunction-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-16", "label": "isAPartOf", "to": "InstrumentationLoopFunction-6", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-16", "label": "isLogicalStartOf", "to": "SignalConveyingFunction-17", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-16", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-16", "label": "connection", "to": "ProcessInstrumentationFunction-15", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-7", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-7", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-4", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-4", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-18", "label": "isLogicalEndOf", "to": "MeasuringLineFunction-5", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-18", "label": "isLogicalStartOf", "to": "SignalConveyingFunction-18", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-18", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-18", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-18", "label": "isAPartOf", "to": "InstrumentationLoopFunction-8", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-18", "label": "connection", "to": "ProcessInstrumentationFunction-19", "width": 1}, {"arrows": "to", "color": "grey", "from": "MeasuringLineFunction-5", "label": "hasLogicalStart", "to": "ProcessSignalGeneratingFunction-5", "width": 1}, {"arrows": "to", "color": "grey", "from": "MeasuringLineFunction-5", "label": "hasLogicalEnd", "to": "ProcessInstrumentationFunction-18", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-19", "label": "isAPartOf", "to": "InstrumentationLoopFunction-8", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-19", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-19", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-19", "label": "isLogicalEndOf", "to": "SignalConveyingFunction-18", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-19", "label": "isLogicalStartOf", "to": "SignalConveyingFunction-19", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-19", "label": "connection", "to": "ControlledActuator-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "SignalConveyingFunction-16", "label": "hasLogicalStart", "to": "ProcessInstrumentationFunction-15", "width": 1}, {"arrows": "to", "color": "grey", "from": "SignalConveyingFunction-16", "label": "hasLogicalEnd", "to": "ActuatingFunction-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-15", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-15", "label": "isLogicalEndOf", "to": "SignalConveyingFunction-17", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-15", "label": "isAPartOf", "to": "InstrumentationLoopFunction-6", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-15", "label": "isLogicalStartOf", "to": "SignalConveyingFunction-16", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-15", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-15", "label": "connection", "to": "ControlledActuator-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "Nozzle-7", "label": "isTheLocationOf", "to": "ActuatingElectricalFunction-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-16", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-16", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "InstrumentationLoopFunction-4", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-15", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-15", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-3", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-3", "label": "isLogicalStartOf", "to": "SignalConveyingFunction-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-3", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-3", "label": "isAPartOf", "to": "InstrumentationLoopFunction-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "CustomHeatExchanger-1", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "CustomHeatExchanger-1", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-11", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-11", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-8", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-8", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "InstrumentationLoopFunction-2", "label": "isACollectionIncluding", "to": "ProcessInstrumentationFunction-6", "width": 1}, {"arrows": "to", "color": "grey", "from": "InstrumentationLoopFunction-2", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "InstrumentationLoopFunction-2", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "InstrumentationLoopFunction-2", "label": "isACollectionIncluding", "to": "ProcessInstrumentationFunction-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "InstrumentationLoopFunction-2", "label": "isACollectionIncluding", "to": "ProcessInstrumentationFunction-5", "width": 1}, {"arrows": "to", "color": "grey", "from": "InstrumentationLoopFunction-2", "label": "isACollectionIncluding", "to": "ProcessInstrumentationFunction-7", "width": 1}, {"arrows": "to", "color": "grey", "from": "InstrumentationLoopFunction-2", "label": "isACollectionIncluding", "to": "ProcessInstrumentationFunction-8", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-6", "label": "isAPartOf", "to": "InstrumentationLoopFunction-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-6", "label": "isLogicalEndOf", "to": "SignalConveyingFunction-5", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-6", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-6", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlateHeatExchanger-1", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PlateHeatExchanger-1", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-10", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-10", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-5", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipingNetworkSystem-5", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "CentrifugalPump-1", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "CentrifugalPump-1", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-5", "label": "isLogicalStartOf", "to": "SignalConveyingFunction-8", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-5", "label": "isLogicalEndOf", "to": "SignalConveyingFunction-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-5", "label": "isLogicalStartOf", "to": "SignalConveyingFunction-7", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-5", "label": "isLogicalStartOf", "to": "SignalConveyingFunction-5", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-5", "label": "isAPartOf", "to": "InstrumentationLoopFunction-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-5", "label": "isLocatedIn", "to": "PlantSystem-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-5", "label": "isLogicalStartOf", "to": "SignalConveyingFunction-6", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-5", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-5", "label": "connection", "to": "FlowOutSignalOffPageConnector-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "Nozzle-22", "label": "connection", "to": "CustomPipingComponent-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "GateValve-1", "label": "isReferencedBy", "to": "OperatedValveReference-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-13", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-13", "label": "isLogicalStartOf", "to": "SignalConveyingFunction-14", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-13", "label": "connection", "to": "ControlledActuator-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "Flange-14", "label": "isTheLocationOf", "to": "ProcessSignalGeneratingFunction-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "Flange-14", "label": "connection", "to": "ProcessInstrumentationFunction-16", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessSignalGeneratingFunction-2", "label": "isLogicalStartOf", "to": "MeasuringLineFunction-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessSignalGeneratingFunction-2", "label": "isLocatedIn", "to": "CustomInlinePrimaryElement-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "MeasuringLineFunction-2", "label": "hasLogicalStart", "to": "ProcessSignalGeneratingFunction-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "MeasuringLineFunction-2", "label": "hasLogicalEnd", "to": "ProcessInstrumentationFunction-10", "width": 1}, {"arrows": "to", "color": "grey", "from": "CustomInlinePrimaryElement-1", "label": "isTheLocationOf", "to": "ProcessSignalGeneratingFunction-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "CustomInlinePrimaryElement-1", "label": "connection", "to": "ProcessInstrumentationFunction-10", "width": 1}, {"arrows": "to", "color": "grey", "from": "GateValve-2", "label": "isReferencedBy", "to": "OperatedValveReference-3", "width": 1}, {"arrows": "to", "color": "grey", "from": "GateValve-3", "label": "isTheLocationOf", "to": "ProcessSignalGeneratingFunction-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "GateValve-3", "label": "connection", "to": "ProcessInstrumentationFunction-17", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipeTee-3", "label": "connection", "to": "PropertyBreak-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipeTee-3", "label": "connection", "to": "PipeTee-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "Nozzle-21", "label": "connection", "to": "Nozzle-15", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-2", "label": "isAPartOf", "to": "ProcessPlant-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "ProcessInstrumentationFunction-2", "label": "isLogicalStartOf", "to": "SignalConveyingFunction-2", "width": 1}, {"arrows": "to", "color": "grey", "from": "Nozzle-4", "label": "connection", "to": "PipeTee-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipeTee-1", "label": "connection", "to": "Nozzle-10", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipeTee-1", "label": "connection", "to": "Nozzle-9", "width": 1}, {"arrows": "to", "color": "grey", "from": "ActuatingFunction-4", "label": "isLogicalEndOf", "to": "SignalConveyingFunction-19", "width": 1}, {"arrows": "to", "color": "grey", "from": "ActuatingFunction-4", "label": "isFulfilledBy", "to": "ActuatingSystem-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "GateValve-4", "label": "isTheLocationOf", "to": "ProcessSignalGeneratingFunction-5", "width": 1}, {"arrows": "to", "color": "grey", "from": "GateValve-4", "label": "connection", "to": "ProcessInstrumentationFunction-18", "width": 1}, {"arrows": "to", "color": "grey", "from": "MeasuringLineFunction-1", "label": "hasLogicalEnd", "to": "ProcessInstrumentationFunction-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "MeasuringLineFunction-1", "label": "hasLogicalStart", "to": "ProcessSignalGeneratingFunction-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "SignalConveyingFunction-12", "label": "hasLogicalStart", "to": "ProcessInstrumentationFunction-11", "width": 1}, {"arrows": "to", "color": "grey", "from": "InstrumentationLoopFunction-7", "label": "isACollectionIncluding", "to": "ProcessInstrumentationFunction-17", "width": 1}, {"arrows": "to", "color": "grey", "from": "FlowInPipeOffPageConnector-1", "label": "connection", "to": "Nozzle-1", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipeTee-6", "label": "connection", "to": "GateValve-4", "width": 1}, {"arrows": "to", "color": "grey", "from": "PipeTee-6", "label": "connection", "to": "FlowOutPipeOffPageConnector-1", "width": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "repulsion": {
+            "centralGravity": 0.3,
+            "damping": 0.09,
+            "nodeDistance": 100,
+            "springConstant": 0.05,
+            "springLength": 200
+        },
+        "solver": "repulsion",
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+                    network.on("selectNode", neighbourhoodHighlight);
+                  
+
+                  
+
+
+                  
+                      network.on("stabilizationProgress", function(params) {
+                          document.getElementById('loadingBar').removeAttribute("style");
+                          var maxWidth = 496;
+                          var minWidth = 20;
+                          var widthFactor = params.iterations/params.total;
+                          var width = Math.max(minWidth,maxWidth * widthFactor);
+                          document.getElementById('bar').style.width = width + 'px';
+                          document.getElementById('text').innerHTML = Math.round(widthFactor*100) + '%';
+                      });
+                      network.once("stabilizationIterationsDone", function() {
+                          document.getElementById('text').innerHTML = '100%';
+                          document.getElementById('bar').style.width = '496px';
+                          document.getElementById('loadingBar').style.opacity = 0;
+                          // really clean the dom element
+                          setTimeout(function () {document.getElementById('loadingBar').style.display = 'none';}, 500);
+                      });
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
