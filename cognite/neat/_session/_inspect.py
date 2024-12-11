@@ -21,6 +21,10 @@ except ImportError:
 
 @session_class_wrapper
 class InspectAPI:
+    """Inspect issues or outcomes after performing operations with NeatSession.
+    To inspect properties of the current data model, try out `.properties()`.
+    """
+
     def __init__(self, state: SessionState) -> None:
         self._state = state
         self.issues = InspectIssues(state)
@@ -106,6 +110,10 @@ class InspectIssues:
 
 @session_class_wrapper
 class InspectOutcome:
+    """
+    Inspect the outcome after writing a Data Model and Instances to CDF.
+    """
+
     def __init__(self, state: SessionState) -> None:
         self.data_model = InspectUploadOutcome(lambda: state.data_model.last_outcome)
         self.instances = InspectUploadOutcome(lambda: state.instances.last_outcome)

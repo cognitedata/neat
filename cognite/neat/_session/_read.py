@@ -27,6 +27,8 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 @session_class_wrapper
 class ReadAPI:
+    """Read from a data source into NeatSession graph store."""
+
     def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
@@ -68,6 +70,11 @@ class BaseReadAPI:
 
 @session_class_wrapper
 class CDFReadAPI(BaseReadAPI):
+    """Reads from CDF Data Models.
+    Use the `.data_model()` method to load a CDF Data Model to the knowledge graph.
+
+    """
+
     def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         super().__init__(state, client, verbose)
         self.classic = CDFClassicAPI(state, client, verbose)
@@ -79,6 +86,13 @@ class CDFReadAPI(BaseReadAPI):
         return self._client
 
     def data_model(self, data_model_id: DataModelIdentifier) -> IssueList:
+        """Reads a Data Model from CDF to the knowledge graph.
+
+        Args:
+            data_model_id: Tuple of strings with the id of a CDF Data Model.
+            Notation as follows (<name_of_data_model>, <name_of_space>, <data_model_version>)
+        """
+
         data_model_id = DataModelId.load(data_model_id)
 
         if not data_model_id.version:
@@ -113,6 +127,11 @@ class CDFReadAPI(BaseReadAPI):
 
 @session_class_wrapper
 class CDFClassicAPI(BaseReadAPI):
+    """Reads from the Classic Data Model from CDF.
+    Use the `.graph()` method to load CDF core resources to the knowledge graph.
+
+    """
+
     @property
     def _get_client(self) -> NeatClient:
         if self._client is None:
@@ -168,6 +187,13 @@ class CDFClassicAPI(BaseReadAPI):
 
 @session_class_wrapper
 class ExcelReadAPI(BaseReadAPI):
+    """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
+    or a DMS Architect.
+
+    Args:
+        io: file path to the Excel sheet
+    """
+
     def __call__(self, io: Any) -> IssueList:
         reader = NeatReader.create(io)
         start = datetime.now(timezone.utc)
@@ -192,6 +218,13 @@ class ExcelReadAPI(BaseReadAPI):
 
 @session_class_wrapper
 class YamlReadAPI(BaseReadAPI):
+    """Reads a yaml with either neat rules, or several toolkit yaml files to import Data Model(s) into NeatSession.
+
+    Args:
+        io: file path to the Yaml file in the case of "neat" yaml, or path to a zip folder or directory with several
+        Yaml files in the case of "toolkit".
+    """
+
     def __call__(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> IssueList:
         reader = NeatReader.create(io)
         if not isinstance(reader, PathReader):
@@ -242,6 +275,16 @@ class YamlReadAPI(BaseReadAPI):
 
 @session_class_wrapper
 class CSVReadAPI(BaseReadAPI):
+    """Reads a csv that contains a column to use as primary key which will be the unique identifier for the type of
+    data you want to read in. Ex. a csv can hold information about assets, and their identifiers are specified in
+    a "ASSET_TAG" column.
+
+    Args:
+        io: file path or url to the csv
+        type: string that specifies what type of data the csv contains. For instance "Asset" or "Equipment"
+        primary_key: string name of the column that should be used as the unique identifier for each row of data
+    """
+
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
         reader = NeatReader.create(io)
         if isinstance(reader, HttpFileReader):
@@ -263,6 +306,13 @@ class CSVReadAPI(BaseReadAPI):
 
 @session_class_wrapper
 class XMLReadAPI(BaseReadAPI):
+    """Reads an XML file that is either of DEXPI or AML format.
+
+    Args:
+        io: file path or url to the XML
+        format: can be either "dexpi" or "aml" are the currenly supported XML source types.
+    """
+
     def __call__(
         self,
         io: Any,
@@ -289,6 +339,11 @@ class XMLReadAPI(BaseReadAPI):
             raise NeatValueError("Only support XML files of DEXPI format at the moment.")
 
     def dexpi(self, path):
+        """Reads a DEXPI file into the NeatSession.
+
+        Args:
+            io: file path or url to the DEXPI file
+        """
         engine = import_engine()
         engine.set.format = "dexpi"
         engine.set.file = path
@@ -296,6 +351,11 @@ class XMLReadAPI(BaseReadAPI):
         self._state.instances.store.write(extractor)
 
     def aml(self, path):
+        """Reads an AML file into NeatSession.
+
+        Args:
+            io: file path or url to the AML file
+        """
         engine = import_engine()
         engine.set.format = "aml"
         engine.set.file = path
@@ -305,11 +365,22 @@ class XMLReadAPI(BaseReadAPI):
 
 @session_class_wrapper
 class RDFReadAPI(BaseReadAPI):
+    """Reads an RDF source into NeatSession. Supported sources are "ontology" or "imf".
+
+    Args:
+        io: file path or url to the AML file
+    """
+
     def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         super().__init__(state, client, verbose)
         self.examples = RDFExamples(state)
 
     def ontology(self, io: Any) -> IssueList:
+        """Reads an OWL ontology source into NeatSession.
+
+        Args:
+            io: file path or url to the OWL file
+        """
         start = datetime.now(timezone.utc)
         reader = NeatReader.create(io)
         if not isinstance(reader, PathReader):
@@ -331,6 +402,11 @@ class RDFReadAPI(BaseReadAPI):
         return input_rules.issues
 
     def imf(self, io: Any) -> IssueList:
+        """Reads IMF Types provided as SHACL shapes into NeatSession.
+
+        Args:
+            io: file path or url to the IMF file
+        """
         start = datetime.now(timezone.utc)
         reader = NeatReader.create(io)
         if not isinstance(reader, PathReader):
@@ -381,10 +457,13 @@ class RDFReadAPI(BaseReadAPI):
 
 
 class RDFExamples:
+    """Used as example for reading some triples into the NeatSession knowledge grapgh."""
+
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
     @property
     def nordic44(self) -> IssueList:
+        """Reads the Nordic 44 knowledge graph into the NeatSession graph store."""
         self._state.instances.store.write(extractors.RdfFileExtractor(instances_examples.nordic44_knowledge_graph))
         return IssueList()

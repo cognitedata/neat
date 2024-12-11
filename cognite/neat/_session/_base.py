@@ -81,9 +81,18 @@ class NeatSession:
 
     @property
     def version(self) -> str:
+        """Get the current version of neat.
+
+        Returns:
+            The current version of neat used in the session.
+        """
         return _version.__version__
 
     def verify(self) -> IssueList:
+        """
+        Verify the Data Model schema before the model can be written to CDF. If verification was unsuccessful, use
+        `.inspect.issues()` to see what went wrong.
+        """
         source_id, last_unverified_rule = self._state.data_model.last_unverified_rule
         transformer = VerifyAnyRules("continue", validate=False)
         start = datetime.now(timezone.utc)
@@ -254,6 +263,10 @@ class NeatSession:
 
 @session_class_wrapper
 class OptAPI:
+    """For the user to decide if they want their usage of neat to be collected or not. We do not collect personal
+    information like name etc. only usage.
+    """
+
     def __init__(self, collector: Collector | None = None) -> None:
         self._collector = collector or _COLLECTOR
 
@@ -268,9 +281,11 @@ class OptAPI:
         )
 
     def in_(self) -> None:
+        """Consent to collection of neat user insights."""
         self._collector.enable()
         print("You have successfully opted in to data collection.")
 
     def out(self) -> None:
+        """Opt out of allowing usage of neat to be collected from current user."""
         self._collector.disable()
         print("You have successfully opted out of data collection.")

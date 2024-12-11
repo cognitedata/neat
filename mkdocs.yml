@@ -52,6 +52,13 @@ nav:
       - Units: excel_data_modeling/units.md
   - Reference - Code API:
       - Overview: reference/overview.md
+      - NeatSession:
+          - Session: reference/NeatSession/base.md
+          - Read: reference/NeatSession/read.md
+          - Prepare: reference/NeatSession/prepare.md
+          - To: reference/NeatSession/to.md
+          - Inspect: reference/NeatSession/inspect.md
+          - Show: reference/NeatSession/show.md
       - Issues:
           - Base: reference/issues/base.md
           - Errors: reference/issues/errors.md
