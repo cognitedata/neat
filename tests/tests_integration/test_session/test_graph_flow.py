@@ -1,5 +1,6 @@
 from typing import Any
 
+import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
@@ -68,19 +69,18 @@ class TestExtractToLoadFlow:
 
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
-        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
+        # Hack to get the instances.
+        dms_rules = neat._state.data_model.last_verified_dms_rules[1]
+        store = neat._state.instances.store
+        instances = [
+            self._standardize_instance(instance)
+            for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
+            if isinstance(instance, InstanceApply)
+        ]
 
+        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
         rules_str = neat.to.yaml(format="neat")
-        if False:
-            # In progress, not yet supported.
-            dms_rules = neat._state.data_model.last_verified_dms_rules[1]
-            store = neat._state.instances.store
-            instances = [
-                self._standardize_instance(instance)
-                for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
-            ]
-        else:
-            instances = []
+
         rules_dict = yaml.safe_load(rules_str)
         data_regression.check({"rules": rules_dict, "instances": sorted(instances, key=lambda x: x["externalId"])})
 
@@ -187,3 +187,37 @@ class TestExtractToLoadFlow:
                 elif isinstance(value, list):
                     value.sort()
         return instance.dump()
+
+    @pytest.mark.skip("In progress, missing to create source entities")
+    def test_classic_to_cdf(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        # Hack to read in the test data.
+        for extractor in classic_windfarm.create_extractors():
+            neat._state.instances.store.write(extractor)
+
+        # Sequences is not yet supported
+        neat.drop.instances("Sequence")
+
+        neat.prepare.instances.relationships_as_edges()
+        neat.prepare.instances.convert_data_type(
+            ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
+        )
+
+        neat.infer()
+
+        neat.prepare.data_model.prefix("Classic")
+
+        neat.verify()
+
+        neat.convert("dms", mode="edge_properties")
+        neat.mapping.data_model.classic_to_core("Classic", use_parent_property_name=True)
+
+        neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
+
+        model_result = neat.to.cdf.data_model()
+        has_errors = {res.name: res.error_messages for res in model_result if res.error_messages}
+        assert not has_errors, has_errors
+
+        instance_result = neat.to.cdf.instances()
+        has_errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
+        assert not has_errors, has_errors
