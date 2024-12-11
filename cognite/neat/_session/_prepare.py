@@ -218,7 +218,7 @@ class InstancePrepareAPI:
         self._state.instances.store.transform(transformer)
 
     def convert_data_type(self, source: tuple[str, str], *, convert: Callable[[Any], Any] | None = None) -> None:
-        """Convert the data type of a property.
+        """Convert the data type of the given property.
 
         This is, for example, useful when you have a boolean property that you want to convert to an enum.
 
