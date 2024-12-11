@@ -300,7 +300,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         json_fields: list[str] = []
         for prop_name, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
-                edge_by_property[prop.type.external_id] = prop_name, prop
+                edge_by_property[prop_name] = prop_name, prop
             if isinstance(prop, dm.MappedProperty):
                 if isinstance(prop.type, dm.DirectRelation):
                     direct_relation_by_property[prop_name] = prop.type

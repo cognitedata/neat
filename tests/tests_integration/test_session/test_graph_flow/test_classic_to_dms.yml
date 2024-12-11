@@ -609,7 +609,6 @@ rules:
     created: '2024-09-19T00:00:00Z'
     creator: NEAT
     external_id: WindFarm
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1_prefixed_Classic
     name: Inferred Model
     role: DMS Architect
     space: sp_windfarm
