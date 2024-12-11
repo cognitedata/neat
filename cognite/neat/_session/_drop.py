@@ -11,6 +11,10 @@ except ImportError:
 
 @session_class_wrapper
 class DropAPI:
+    """
+    Drop instances from the session. Check out `.instances()` for performing the operation.
+    """
+
     def __init__(self, state: SessionState):
         self._state = state
 
