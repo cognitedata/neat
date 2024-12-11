@@ -21,6 +21,11 @@ from .exceptions import session_class_wrapper
 
 @session_class_wrapper
 class ShowAPI:
+    """
+    Visualise a verified data model or instances contained in the graph store. See `.data_model()` or `.instances()`
+    for more.
+    """
+
     def __init__(self, state: SessionState) -> None:
         self._state = state
         self.data_model = ShowDataModelAPI(self._state)
@@ -65,6 +70,8 @@ class ShowBaseAPI:
 
 @session_class_wrapper
 class ShowDataModelAPI(ShowBaseAPI):
+    """Visualises the verified data model."""
+
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)
         self._state = state
@@ -228,6 +235,8 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
 
 @session_class_wrapper
 class ShowDataModelProvenanceAPI(ShowBaseAPI):
+    """Visualises the provenance or steps that have been executed in the NeatSession."""
+
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)
         self._state = state
@@ -288,6 +297,8 @@ class ShowDataModelProvenanceAPI(ShowBaseAPI):
 
 @session_class_wrapper
 class ShowInstanceAPI(ShowBaseAPI):
+    """Visualise the instances contained in the graph store."""
+
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)
         self._state = state

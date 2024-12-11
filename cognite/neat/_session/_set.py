@@ -12,12 +12,15 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 @session_class_wrapper
 class SetAPI:
+    """Used to change the name of the data model from a data model id defined by neat to a user specified name."""
+
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
 
     def data_model_id(self, new_model_id: dm.DataModelId | tuple[str, str, str]) -> None:
-        """Sets the data model ID of the latest verified data model."""
+        """Sets the data model ID of the latest verified data model. Set the data model id as a tuple of strings
+        following the template (<data_model_name>, <data_model_space>, <data_model_version>)."""
         if res := self._state.data_model.last_verified_dms_rules:
             source_id, rules = res
 
