@@ -1,1 +1,1 @@
-::: cognite.neat.session._prepare
+::: cognite.neat._session._prepare

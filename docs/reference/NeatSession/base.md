@@ -1,1 +1,1 @@
-::: cognite.neat.session._base
+::: cognite.neat._session

@@ -1,1 +1,1 @@
-::: cognite.neat.session._read
+::: cognite.neat._session._read
