@@ -217,7 +217,7 @@ class InstancePrepareAPI:
         transformer = RelationshipAsEdgeTransformer(min_relationship_types, limit_per_type)
         self._state.instances.store.transform(transformer)
 
-    def convert_data_type(self, source: tuple[str, str], *, convert: Callable[[Any], Any]) -> None:
+    def convert_data_type(self, source: tuple[str, str], *, convert: Callable[[Any], Any] | None = None) -> None:
         """Convert the data type of a property.
 
         This is, for example, useful when you have a boolean property that you want to convert to an enum.
@@ -226,7 +226,8 @@ class InstancePrepareAPI:
             source: The source of the conversion. A tuple of (type, property)
                     where property is the property that should be converted.
             convert: The function to use for the conversion. The function should take the value of the property
-                    as input and return the converted value.
+                    as input and return the converted value. Default to assume you have a string that should be
+                    converted to int, float, bool, or datetime.
 
         Examples:
             Convert a boolean property to a string:
