@@ -113,8 +113,7 @@ class CDFToAPI:
         """Export the verified DMS instances to CDF.
 
         Args:
-            space: string name of instance space to use. Leave empty to allow neat to set an instance space for you that
-            is separate from the Data Model space which is highly encouraged.
+            space: Name of instance space to use. Default is to suffix the schema space with '_instances'. Note this space is required to be different than the space with the data model.
 
         """
         if not self._client:
