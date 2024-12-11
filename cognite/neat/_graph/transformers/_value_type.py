@@ -1,15 +1,16 @@
 import warnings
 from collections.abc import Callable
 from typing import Any
+from urllib.parse import quote
 
 import rdflib
-from rdflib import XSD, Graph, URIRef
+from rdflib import RDF, XSD, Graph, Namespace, URIRef
 
 from cognite.neat._constants import UNKNOWN_TYPE
 from cognite.neat._graph.queries import Queries
 from cognite.neat._issues.warnings import PropertyDataTypeConversionWarning
 from cognite.neat._utils.collection_ import iterate_progress_bar
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import get_namespace, remove_namespace_from_uri
 
 from ._base import BaseTransformer
 
@@ -144,4 +145,86 @@ class ConvertLiteral(BaseTransformer):
                 continue
 
             graph.add((instance, self.subject_predicate, rdflib.Literal(converted_value)))
+            graph.remove((instance, self.subject_predicate, literal))
+
+
+class LiteralToEntity(BaseTransformer):
+    description = "Converts a literal value to new entity"
+
+    _count_properties_of_type = """SELECT (COUNT(?property) AS ?propertyCount)
+    WHERE {{
+      ?instance a <{subject_type}> .
+      ?instance <{subject_predicate}> ?property
+    }}"""
+
+    _properties_of_type = """SELECT ?instance ?property
+    WHERE {{
+      ?instance a <{subject_type}> .
+      ?instance <{subject_predicate}> ?property
+    }}"""
+
+    _count_properties = """SELECT (COUNT(?property) AS ?propertyCount)
+    WHERE {{
+      ?instance <{subject_predicate}> ?property
+    }}"""
+
+    _properties = """SELECT ?instance ?property
+    WHERE {{
+      ?instance <{subject_predicate}> ?property
+    }}"""
+
+    def __init__(
+        self, subject_type: URIRef | None, subject_predicate: URIRef, entity_type: str, new_property: str | None = None
+    ) -> None:
+        self.subject_type = subject_type
+        self.subject_predicate = subject_predicate
+        self.entity_type = entity_type
+        self.new_property = new_property
+
+    def transform(self, graph: Graph) -> None:
+        if self.subject_type is None:
+            count_query = self._count_properties.format(subject_predicate=self.subject_predicate)
+            iterate_query = self._properties.format(subject_predicate=self.subject_predicate)
+        else:
+            count_query = self._count_properties_of_type.format(
+                subject_type=self.subject_type, subject_predicate=self.subject_predicate
+            )
+            iterate_query = self._properties_of_type.format(
+                subject_type=self.subject_type, subject_predicate=self.subject_predicate
+            )
+
+        property_count_res = list(graph.query(count_query))
+        property_count = int(property_count_res[0][0])  # type: ignore [index, arg-type]
+
+        instance: URIRef
+        description = f"Creating {remove_namespace_from_uri(self.subject_predicate)}."
+        if self.subject_type is not None:
+            description = (
+                f"Creating {remove_namespace_from_uri(self.subject_type)}."
+                f"{remove_namespace_from_uri(self.subject_predicate)}."
+            )
+        for instance, literal in iterate_progress_bar(  # type: ignore[misc, assignment]
+            graph.query(iterate_query),
+            total=property_count,
+            description=description,
+        ):
+            if not isinstance(literal, rdflib.Literal):
+                warnings.warn(
+                    PropertyDataTypeConversionWarning(
+                        str(instance),
+                        remove_namespace_from_uri(self.subject_type) if self.subject_type else "Unknown",
+                        remove_namespace_from_uri(self.subject_predicate),
+                        "The value is a connection and not a data type.",
+                    ),
+                    stacklevel=2,
+                )
+                continue
+            namespace = Namespace(get_namespace(instance))
+            value = literal.toPython()
+            entity_type = namespace[self.entity_type]
+            new_entity = namespace[f"{self.entity_type}_{quote(value)!s}"]
+            graph.add((new_entity, RDF.type, entity_type))
+            if self.new_property is not None:
+                graph.add((new_entity, namespace[self.new_property], rdflib.Literal(value)))
+            graph.add((instance, self.subject_predicate, new_entity))
             graph.remove((instance, self.subject_predicate, literal))

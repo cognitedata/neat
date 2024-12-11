@@ -297,13 +297,17 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         edge_by_property: dict[str, tuple[str, dm.EdgeConnection]] = {}
         validators: dict[str, classmethod] = {}
         direct_relation_by_property: dict[str, dm.DirectRelation] = {}
+        unit_properties: list[str] = []
         json_fields: list[str] = []
-        for prop_name, prop in view.properties.items():
+        for prop_id, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
-                edge_by_property[prop_name] = prop_name, prop
+                edge_by_property[prop_id] = prop_id, prop
             if isinstance(prop, dm.MappedProperty):
                 if isinstance(prop.type, dm.DirectRelation):
-                    direct_relation_by_property[prop_name] = prop.type
+                    if prop.container == dm.ContainerId("cdf_cdm", "CogniteTimeSeries") and prop_id == "unit":
+                        unit_properties.append(prop_id)
+                    else:
+                        direct_relation_by_property[prop_id] = prop.type
                     python_type: Any = dict
                 else:
                     data_type = _DATA_TYPE_BY_DMS_TYPE.get(prop.type._type)
@@ -312,14 +316,14 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                             PropertyTypeNotSupportedWarning(
                                 view.as_id(),
                                 "view",
-                                prop_name,
+                                prop_id,
                                 prop.type._type,
                             )
                         )
                         continue
 
                     if data_type == Json:
-                        json_fields.append(prop_name)
+                        json_fields.append(prop_id)
                     python_type = data_type.python
                 if isinstance(prop.type, ListablePropertyType) and prop.type.is_list:
                     python_type = list[python_type]
@@ -329,7 +333,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 else:
                     default_value = ...
 
-                field_definitions[prop_name] = (python_type, default_value)
+                field_definitions[prop_id] = (python_type, default_value)
 
         def parse_list(cls, value: Any, info: ValidationInfo) -> list[str]:
             if isinstance(value, list) and list.__name__ not in _get_field_value_types(cls, info):
@@ -367,6 +371,17 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             validators["parse_direct_relation"] = field_validator(*direct_relation_by_property.keys(), mode="before")(  # type: ignore[assignment]
                 parse_direct_relation  # type: ignore[arg-type]
+            )
+
+        if unit_properties:
+
+            def parse_direct_relation_to_unit(cls, value: Any, info: ValidationInfo) -> dict | list[dict]:
+                if value:
+                    return {"space": "cdf_cdm_units", "externalId": remove_namespace_from_uri(value[0])}
+                return {}
+
+            validators["parse_direct_relation_to_unit"] = field_validator(*unit_properties, mode="before")(  # type: ignore[assignment]
+                parse_direct_relation_to_unit  # type: ignore[arg-type]
             )
 
         pydantic_cls = create_model(view.external_id, __validators__=validators, **field_definitions)  # type: ignore[arg-type, call-overload]
@@ -474,8 +489,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 (upserted.edges, source_by_edge_id),
             ]:
                 for name, subinstances in itertools.groupby(
-                    sorted(instances, key=lambda i: ids_by_source[i.as_id()]),  # type: ignore[call-overload, index, attr-defined]
-                    key=lambda i: ids_by_source[i.as_id()],  # type: ignore[index]
+                    sorted(instances, key=lambda i: ids_by_source.get(i.as_id(), "")),  # type: ignore[call-overload, index, attr-defined]
+                    key=lambda i: ids_by_source.get(i.as_id(), ""),  # type: ignore[index, attr-defined]
                 ):
                     result = UploadResult(name=name, issues=read_issues)
                     for instance in subinstances:  # type: ignore[attr-defined]
