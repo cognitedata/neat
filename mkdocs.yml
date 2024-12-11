@@ -61,7 +61,7 @@ nav:
           - Show: reference/NeatSession/show.md
       - Issues:
           - Base: reference/issues/base.md
-          - Errors: reference/issues/read.md
+          - Errors: reference/issues/errors.md
           - Warnings:
             -  Main: reference/issues/warnings.md
             -  UserModeling: reference/issues/user_model_warnings.md

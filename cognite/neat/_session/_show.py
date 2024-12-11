@@ -21,8 +21,7 @@ from .exceptions import session_class_wrapper
 
 @session_class_wrapper
 class ShowAPI:
-    """
-    Visualise a verified data model or instances contained in the graph store. See `.data_model()` or `.instances()`
+    """Visualise a verified data model or instances contained in the graph store. See `.data_model()` or `.instances()`
     for more.
     """
 
@@ -106,7 +105,7 @@ class ShowDataModelAPI(ShowBaseAPI):
 
         # Add nodes and edges from Views sheet
         for view in rules.views:
-            # if possible use human readable label coming from the view name
+            # if possible use humanreadable label coming from the view name
             if not di_graph.has_node(view.view.suffix):
                 di_graph.add_node(view.view.suffix, label=view.view.suffix)
 
@@ -130,7 +129,7 @@ class ShowDataModelAPI(ShowBaseAPI):
 
         # Add nodes and edges from Views sheet
         for class_ in rules.classes:
-            # if possible use human readable label coming from the view name
+            # if possible use humanreadable label coming from the view name
             if not di_graph.has_node(class_.class_.suffix):
                 di_graph.add_node(
                     class_.class_.suffix,

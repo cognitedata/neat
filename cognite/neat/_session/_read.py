@@ -347,7 +347,7 @@ class XMLReadAPI(BaseReadAPI):
             raise NeatValueError("Only support XML files of DEXPI format at the moment.")
 
     def dexpi(self, path):
-        """Reads a DEXPI file into NeatSession.
+        """Reads a DEXPI file into the NeatSession.
 
         Args:
             io: file path or url to the DEXPI file

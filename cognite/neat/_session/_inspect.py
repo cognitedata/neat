@@ -21,9 +21,8 @@ except ImportError:
 
 @session_class_wrapper
 class InspectAPI:
-    """
-    Inspect issues or outcomes after performing operations with NeatSession. To inspect properties of the current data
-    model, try out `.properties()`.
+    """Inspect issues or outcomes after performing operations with NeatSession.
+    To inspect properties of the current data model, try out `.properties()`.
     """
 
     def __init__(self, state: SessionState) -> None:
