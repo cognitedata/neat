@@ -71,7 +71,7 @@ class BaseReadAPI:
 @session_class_wrapper
 class CDFReadAPI(BaseReadAPI):
     """Reads from CDF Data Models.
-    Use the `.data_model()` method to load aa CDF Data Model to the knowledge graph.
+    Use the `.data_model()` method to load a CDF Data Model to the knowledge graph.
 
     """
 

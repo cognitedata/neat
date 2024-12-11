@@ -113,7 +113,8 @@ class CDFToAPI:
         """Export the verified DMS instances to CDF.
 
         Args:
-            space: Name of instance space to use. Default is to suffix the schema space with '_instances'. Note this space is required to be different than the space with the data model.
+            space: Name of instance space to use. Default is to suffix the schema space with '_instances'.
+            Note this space is required to be different than the space with the data model.
 
         """
         if not self._client:
