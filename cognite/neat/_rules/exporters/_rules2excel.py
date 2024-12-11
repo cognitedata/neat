@@ -34,8 +34,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     Args:
         styling: The styling to use for the Excel file. Defaults to "default". See below for details
             on the different styles.
-        output_role: The role to use for the exported spreadsheet. If provided, the rules will be converted to
-            this role formate before being written to excel. If not provided, the role from the rules will be used.
         new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
             rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
             new metadata sheet in the Excel file. The model id is expected to be a tuple of (prefix, title)
@@ -120,6 +118,10 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             main_header = self._main_header_by_sheet_name[sheet_name]
             sheet.append([main_header] + [""] * (len(headers) - 1))
             sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
+            if headers[0] == "Neat ID":
+                # Move the Neat ID to the end of the columns
+                headers = headers[1:] + ["Neat ID"]
+
             sheet.append(headers)
 
             fill_colors = itertools.cycle(["CADCFC", "FFFFFF"])
@@ -127,6 +129,9 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             last_class: str | None = None
             item: dict[str, Any]
             for item in dumped_rules.get(sheet_name) or []:
+                if "Neat ID" in item:
+                    # Move the Neat ID to the end of the columns
+                    item["Neat ID"] = item.pop("Neat ID")
                 row = list(item.values())
                 class_ = row[0]
 

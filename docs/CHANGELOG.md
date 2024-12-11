@@ -19,15 +19,30 @@ Changes are grouped as follows:
 ### Added
 - Support for converting data types with `neat.prepare.instances.convert_data_type(...)`.
 
+## [0.102.0] - 09-12-**2024**
 ### Fixed
 - Reading data models from CDF ensures unique names for enum collections.
+- Edge creation
+
+### Improved
+- AttachPropertyFromTargetToSource can now convert literal to URIRef
+- Handling of undefined value type properties when loading instances to CDF
+
+### Added
+- `.prepare.instances.dexpi()`
+- `.prepare.instances.aml()`
+- DEXPI onboarding tutorial
+- AML onboarding tutorial
+
+### Changed
+- The `get_cognite_client` now prioritize the `env_file_name` parameter over loading variables from the environment.
 
 ## [0.101.0] - 06-12-**2024**
 ### Added
 - Support for reading a `csv` from any URL in `neat.read.csv(...)`.
 
 ## Fixed
-- The `neat.to.cdf.data_model()` no longer fails to update `space` when `existing='recreate'` and `drop_data=True`. 
+- The `neat.to.cdf.data_model()` no longer fails to update `space` when `existing='recreate'` and `drop_data=True`.
   Instead, spaces are now updated, while containers are successfully deleted and recreated.
 
 ## [0.100.1] - 05-12-**2024**

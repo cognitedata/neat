@@ -17,9 +17,9 @@ class IODDAttachPropertyFromTargetToSource(AttachPropertyFromTargetToSource):
     def __init__(self):
         super().__init__(
             target_node_type=IODD.TextObject,
-            namespace=IODD,
-            target_property="value",
+            target_property=IODD.value,
             delete_target_node=True,
+            namespace=IODD,
         )
 
 

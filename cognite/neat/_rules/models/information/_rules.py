@@ -7,7 +7,7 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace, URIRef
 
-from cognite.neat._constants import get_default_prefixes
+from cognite.neat._constants import get_default_prefixes_and_namespaces
 from cognite.neat._issues.errors import NeatValueError, PropertyDefinitionError
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models._base_rules import (
@@ -255,7 +255,7 @@ class InformationRules(BaseRules):
     classes: SheetList[InformationClass] = Field(alias="Classes", description="List of classes")
     prefixes: dict[str, Namespace] = Field(
         alias="Prefixes",
-        default_factory=get_default_prefixes,
+        default_factory=get_default_prefixes_and_namespaces,
         description="the definition of the prefixes that are used in the semantic data model",
     )
 
@@ -264,7 +264,7 @@ class InformationRules(BaseRules):
         if isinstance(values, dict):
             return {key: Namespace(value) if isinstance(value, str) else value for key, value in values.items()}
         elif values is None:
-            values = get_default_prefixes()
+            values = get_default_prefixes_and_namespaces()
         return values
 
     def as_dms_rules(self) -> "DMSRules":
