@@ -21,7 +21,6 @@ from .exceptions import NeatSessionError, session_class_wrapper
 class ToAPI:
     """API used to write the contents of a NeatSession to a specified destination. For instance writing information
     rules or DMS rules to a NEAT rules Excel spreadsheet, or writing a verified data model to CDF.
-    Available write destinations are "cdf", "excel" and "yaml".
 
     """
 
