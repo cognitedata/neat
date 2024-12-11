@@ -21,7 +21,7 @@ from .exceptions import session_class_wrapper
 
 @session_class_wrapper
 class ShowAPI:
-    """Visualise a verified data model or instances contained in the graph store. See `.data_model()` or `.instances()`
+    """Visualise a verified data model or instances contained in the graph store. See, for example, `.data_model()` or `.instances()`
     for more.
     """
 
