@@ -2,31 +2,43 @@ from collections.abc import Iterable
 
 import pytest
 from _pytest.mark import ParameterSet
-from rdflib import Literal, Namespace, URIRef
+from rdflib import RDF, Literal, Namespace, URIRef
 
+from cognite.neat._constants import get_default_prefixes_and_namespaces
 from cognite.neat._graph.transformers._prune_graph import AttachPropertyFromTargetToSource
 from cognite.neat._shared import Triple
 from cognite.neat._store import NeatGraphStore
 
-RDF_TYPE = URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
-
 
 def generate_test_parameters_delete_target_node() -> Iterable[ParameterSet]:
-    target_property = "value"
-    target_property_holding_new_property_name = "description"
-    namespace = Namespace("http://www.io-link.com/IODD/2010/10/")
+    namespace = get_default_prefixes_and_namespaces()["iodd"]
     target_node_type = namespace["TextObject"]
+    target_property = namespace["value"]
+    target_property_holding_new_property = namespace["description"]
 
-    triples_keep_old_predicate = [
-        (namespace["Text-Destination-ID"], RDF_TYPE, namespace["TextObject"]),
-        (namespace["Text-Destination-ID"], namespace["value"], Literal("Vacuum system self-check completed.")),
-        (namespace["Device-Source-ID"], namespace["textProperty"], namespace["Text-Destination-ID"]),
-        (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
+    # YIELD Flatten and keep old predicate and delete intermediate node"
+    original_triples = [
+        (namespace["Device-Source-ID"], RDF.type, namespace["Device"]),
+        (
+            namespace["Device-Source-ID"],
+            namespace["textProperty"],
+            namespace["Text-Destination-ID"],
+        ),
+        (namespace["Text-Destination-ID"], RDF.type, target_node_type),
+        (
+            namespace["Text-Destination-ID"],
+            target_property,
+            Literal("SomethingThatCanBeNode"),
+        ),
     ]
 
     expected_triples_keep_old_predicate = [
-        (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
-        (namespace["Device-Source-ID"], namespace["textProperty"], Literal("Vacuum system self-check completed.")),
+        (namespace["Device-Source-ID"], RDF.type, namespace["Device"]),
+        (
+            namespace["Device-Source-ID"],
+            namespace["textProperty"],
+            Literal("SomethingThatCanBeNode"),
+        ),
     ]
 
     expected_triples_keep_old_predicate = [
@@ -35,60 +47,128 @@ def generate_test_parameters_delete_target_node() -> Iterable[ParameterSet]:
     expected_triples_keep_old_predicate.sort()
 
     yield pytest.param(
-        triples_keep_old_predicate,
+        original_triples,
         target_node_type,
         namespace,
         target_property,
         None,
         expected_triples_keep_old_predicate,
+        False,
         id="Flatten and keep old predicate and delete intermediate node",
     )
 
-    triples_new_predicate = [
-        (namespace["Text-Destination-ID"], RDF_TYPE, namespace["TextObject"]),
-        (namespace["Text-Destination-ID"], namespace["value"], Literal("Vacuum system self-check completed.")),
-        (namespace["Text-Destination-ID"], namespace["description"], Literal("vacuum status")),
-        (namespace["Device-Source-ID"], namespace["textProperty"], namespace["Text-Destination-ID"]),
-        (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
-    ]
+    original_triples.append(
+        (
+            namespace["Text-Destination-ID"],
+            target_property_holding_new_property,
+            Literal("vacuum status"),
+        ),
+    )
 
     expected_triples_new_predicate = [
-        (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
-        (namespace["Device-Source-ID"], namespace["vacuumStatus"], Literal("Vacuum system self-check completed.")),
+        (namespace["Device-Source-ID"], RDF.type, namespace["Device"]),
+        (
+            namespace["Device-Source-ID"],
+            namespace["vacuumStatus"],
+            Literal("SomethingThatCanBeNode"),
+        ),
     ]
 
     expected_triples_new_predicate = [[str(item) for item in triple] for triple in expected_triples_new_predicate]
     expected_triples_new_predicate.sort()
 
     yield pytest.param(
-        triples_new_predicate,
+        original_triples,
         target_node_type,
         namespace,
         target_property,
-        target_property_holding_new_property_name,
+        target_property_holding_new_property,
         expected_triples_new_predicate,
+        False,
         id="Flatten with new predicate and delete intermediate node",
+    )
+
+    original_extended = original_triples.copy()
+
+    original_extended.extend(
+        [
+            (
+                namespace["Text-Destination-ID"],
+                target_property_holding_new_property,
+                Literal("vacuum status"),
+            ),
+            (
+                namespace["SomethingThatCanBeNode"],
+                RDF.type,
+                namespace["Node"],
+            ),
+        ]
+    )
+
+    expected_triples_new_predicate = [
+        (namespace["Device-Source-ID"], RDF.type, namespace["Device"]),
+        (
+            namespace["Device-Source-ID"],
+            namespace["vacuumStatus"],
+            namespace["SomethingThatCanBeNode"],
+        ),
+        (
+            namespace["SomethingThatCanBeNode"],
+            RDF.type,
+            namespace["Node"],
+        ),
+    ]
+
+    expected_triples_new_predicate = [[str(item) for item in triple] for triple in expected_triples_new_predicate]
+    expected_triples_new_predicate.sort()
+
+    yield pytest.param(
+        original_extended,
+        target_node_type,
+        namespace,
+        target_property,
+        target_property_holding_new_property,
+        expected_triples_new_predicate,
+        True,
+        id="Flatten with new predicate, literal to URIRef, delete intermediate node",
     )
 
 
 def generate_test_parameters_keep_target_node() -> Iterable[ParameterSet]:
-    target_property = "value"
-    target_property_holding_new_property_name = "description"
-    namespace = Namespace("http://www.io-link.com/IODD/2010/10/")
-    destination_node_type = namespace["TextObject"]
+    namespace = get_default_prefixes_and_namespaces()["iodd"]
+    target_node_type = namespace["TextObject"]
+    target_property = namespace["value"]
+    target_property_holding_new_property = namespace["description"]
+    target_node_type = namespace["TextObject"]
 
-    triples_keep_old_predicate = [
-        (namespace["Text-Destination-ID"], RDF_TYPE, namespace["TextObject"]),
-        (namespace["Text-Destination-ID"], namespace["value"], Literal("Vacuum system self-check completed.")),
-        (namespace["Device-Source-ID"], namespace["textProperty"], namespace["Text-Destination-ID"]),
-        (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
+    original_triples = [
+        (namespace["Device-Source-ID"], RDF.type, namespace["Device"]),
+        (
+            namespace["Device-Source-ID"],
+            namespace["textProperty"],
+            namespace["Text-Destination-ID"],
+        ),
+        (namespace["Text-Destination-ID"], RDF.type, target_node_type),
+        (
+            namespace["Text-Destination-ID"],
+            target_property,
+            Literal("SomethingThatCanBeNode"),
+        ),
     ]
 
     expected_triples_keep_old_predicate = [
-        (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
-        (namespace["Device-Source-ID"], namespace["textProperty"], Literal("Vacuum system self-check completed.")),
-        (namespace["Text-Destination-ID"], RDF_TYPE, namespace["TextObject"]),
-        (namespace["Text-Destination-ID"], namespace["value"], Literal("Vacuum system self-check completed.")),
+        (namespace["Device-Source-ID"], RDF.type, namespace["Device"]),
+        (
+            namespace["Device-Source-ID"],
+            namespace["textProperty"],
+            Literal("SomethingThatCanBeNode"),
+        ),
+        (namespace["Text-Destination-ID"], RDF.type, target_node_type),
+        (
+            namespace["Text-Destination-ID"],
+            target_property,
+            Literal("SomethingThatCanBeNode"),
+        ),
     ]
 
     expected_triples_keep_old_predicate = [
@@ -97,30 +177,45 @@ def generate_test_parameters_keep_target_node() -> Iterable[ParameterSet]:
     expected_triples_keep_old_predicate.sort()
 
     yield pytest.param(
-        triples_keep_old_predicate,
-        destination_node_type,
+        original_triples.copy(),
+        target_node_type,
         namespace,
         target_property,
         None,
         expected_triples_keep_old_predicate,
+        False,
         id="Flatten and keep old predicate and keep intermediate node",
     )
 
-    triples_new_predicate = [
-        (namespace["Text-Destination-ID"], RDF_TYPE, namespace["TextObject"]),
-        (namespace["Text-Destination-ID"], namespace["value"], Literal("Vacuum system self-check completed.")),
-        (namespace["Text-Destination-ID"], namespace["description"], Literal("vacuum status")),
-        (namespace["Device-Source-ID"], namespace["textProperty"], namespace["Text-Destination-ID"]),
-        (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
-    ]
+    triples_new_predicate = original_triples.copy()
+
+    triples_new_predicate.append(
+        (
+            namespace["Text-Destination-ID"],
+            target_property_holding_new_property,
+            Literal("vacuum status"),
+        )
+    )
 
     expected_triples_new_predicate = [
-        (namespace["Device-Source-ID"], RDF_TYPE, namespace["Device"]),
-        (namespace["Device-Source-ID"], namespace["vacuumStatus"], Literal("Vacuum system self-check completed.")),
+        (namespace["Device-Source-ID"], RDF.type, namespace["Device"]),
+        (
+            namespace["Device-Source-ID"],
+            namespace["vacuumStatus"],
+            Literal("SomethingThatCanBeNode"),
+        ),
         # The intermediate target node and its properties are kept in the graph
-        (namespace["Text-Destination-ID"], RDF_TYPE, namespace["TextObject"]),
-        (namespace["Text-Destination-ID"], namespace["value"], Literal("Vacuum system self-check completed.")),
-        (namespace["Text-Destination-ID"], namespace["description"], Literal("vacuum status")),
+        (namespace["Text-Destination-ID"], RDF.type, target_node_type),
+        (
+            namespace["Text-Destination-ID"],
+            target_property,
+            Literal("SomethingThatCanBeNode"),
+        ),
+        (
+            namespace["Text-Destination-ID"],
+            target_property_holding_new_property,
+            Literal("vacuum status"),
+        ),
     ]
 
     expected_triples_new_predicate = [[str(item) for item in triple] for triple in expected_triples_new_predicate]
@@ -128,19 +223,77 @@ def generate_test_parameters_keep_target_node() -> Iterable[ParameterSet]:
 
     yield pytest.param(
         triples_new_predicate,
-        destination_node_type,
+        target_node_type,
         namespace,
         target_property,
-        target_property_holding_new_property_name,
+        target_property_holding_new_property,
         expected_triples_new_predicate,
+        False,
         id="Flatten with new predicate and keep intermediate node",
+    )
+
+    original_extended = original_triples.copy()
+
+    original_extended.extend(
+        [
+            (
+                namespace["Text-Destination-ID"],
+                target_property_holding_new_property,
+                Literal("vacuum status"),
+            ),
+            (
+                namespace["SomethingThatCanBeNode"],
+                RDF.type,
+                namespace["Node"],
+            ),
+        ]
+    )
+
+    expected_triples_new_predicate = [
+        (namespace["Device-Source-ID"], RDF.type, namespace["Device"]),
+        (
+            namespace["Device-Source-ID"],
+            namespace["vacuumStatus"],
+            namespace["SomethingThatCanBeNode"],
+        ),
+        # The intermediate target node and its properties are kept in the graph
+        (namespace["Text-Destination-ID"], RDF.type, target_node_type),
+        (
+            namespace["Text-Destination-ID"],
+            target_property,
+            Literal("SomethingThatCanBeNode"),
+        ),
+        (
+            namespace["Text-Destination-ID"],
+            target_property_holding_new_property,
+            Literal("vacuum status"),
+        ),
+        (
+            namespace["SomethingThatCanBeNode"],
+            RDF.type,
+            namespace["Node"],
+        ),
+    ]
+
+    expected_triples_new_predicate = [[str(item) for item in triple] for triple in expected_triples_new_predicate]
+    expected_triples_new_predicate.sort()
+
+    yield pytest.param(
+        original_extended,
+        target_node_type,
+        namespace,
+        target_property,
+        target_property_holding_new_property,
+        expected_triples_new_predicate,
+        True,
+        id="Flatten with new predicate, literal to URIRef, delete intermediate node",
     )
 
 
 class TestAttachPropertyFromTargetToSource:
     @pytest.mark.parametrize(
         "triples, target_node_type, namespace, "
-        "target_property, target_property_holding_new_property_name, expected_triples",
+        "target_property, target_property_holding_new_property, expected_triples, convert_literal_to_uri",
         list(generate_test_parameters_delete_target_node()),
     )
     def test_two_hop_flattener_delete_connecting_node(
@@ -148,23 +301,25 @@ class TestAttachPropertyFromTargetToSource:
         triples: list[Triple],
         target_node_type: URIRef,
         namespace: Namespace,
-        target_property: str,
-        target_property_holding_new_property_name: str | None,
+        target_property: URIRef,
+        target_property_holding_new_property: URIRef | None,
         expected_triples: list[Triple],
+        convert_literal_to_uri: bool,
     ):
         store = NeatGraphStore.from_memory_store()
 
         store._add_triples(triples)
 
-        flatten_dexpi_graph = AttachPropertyFromTargetToSource(
+        transformer = AttachPropertyFromTargetToSource(
             target_node_type=target_node_type,
-            namespace=namespace,
-            target_property_holding_new_property_name=target_property_holding_new_property_name,
+            target_property_holding_new_property=target_property_holding_new_property,
             target_property=target_property,
             delete_target_node=True,
+            namespace=namespace,
+            convert_literal_to_uri=convert_literal_to_uri,
         )
 
-        flatten_dexpi_graph.transform(store.graph)
+        transformer.transform(store.graph)
 
         triples_after = [triple for triple in store.graph.triples((None, None, None))]
         triples_after = [[str(item) for item in triple] for triple in triples_after]
@@ -176,7 +331,7 @@ class TestAttachPropertyFromTargetToSource:
 
     @pytest.mark.parametrize(
         "triples, target_node_type, namespace, "
-        "target_property, target_property_holding_new_property_name, expected_triples",
+        "target_property, target_property_holding_new_property, expected_triples, convert_literal_to_uri",
         list(generate_test_parameters_keep_target_node()),
     )
     def test_two_hop_flattener_keep_connecting_node(
@@ -185,22 +340,24 @@ class TestAttachPropertyFromTargetToSource:
         target_node_type: URIRef,
         namespace: Namespace,
         target_property: str,
-        target_property_holding_new_property_name: str | None,
+        target_property_holding_new_property: str | None,
         expected_triples: list[Triple],
+        convert_literal_to_uri: bool,
     ):
         store = NeatGraphStore.from_memory_store()
 
         store._add_triples(triples)
 
-        flatten_dexpi_graph = AttachPropertyFromTargetToSource(
+        transformer = AttachPropertyFromTargetToSource(
             target_node_type=target_node_type,
             namespace=namespace,
             target_property=target_property,
-            target_property_holding_new_property_name=target_property_holding_new_property_name,
+            target_property_holding_new_property=target_property_holding_new_property,
             delete_target_node=False,
+            convert_literal_to_uri=convert_literal_to_uri,
         )
 
-        flatten_dexpi_graph.transform(store.graph)
+        transformer.transform(store.graph)
 
         triples_after = [triple for triple in store.graph.triples((None, None, None))]
         triples_after = [[str(item) for item in triple] for triple in triples_after]

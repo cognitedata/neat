@@ -301,7 +301,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         json_fields: list[str] = []
         for prop_id, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
-                edge_by_property[prop.type.external_id] = prop_id, prop
+                edge_by_property[prop_id] = prop_id, prop
             if isinstance(prop, dm.MappedProperty):
                 if isinstance(prop.type, dm.DirectRelation):
                     if prop.container == dm.ContainerId("cdf_cdm", "CogniteTimeSeries") and prop_id == "unit":

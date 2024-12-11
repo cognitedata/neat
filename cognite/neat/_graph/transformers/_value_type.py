@@ -75,20 +75,24 @@ class SplitMultiValueProperty(BaseTransformer):
 
 
 class ConvertLiteral(BaseTransformer):
-    description: str = "ConvertLiteral is a transformer that converts a literal value."
+    description: str = "ConvertLiteral is a transformer that improve data typing of a literal value."
     _use_only_once: bool = False
     _need_changes = frozenset({})
 
-    _count_by_properties = """SELECT (COUNT(?property) AS ?propertyCount)
+    _count_by_properties = """SELECT (COUNT(?value) AS ?valueCount)
     WHERE {{
       ?instance a <{subject_type}> .
-      ?instance <{subject_predicate}> ?property
+      ?instance <{subject_predicate}> ?value
+       FILTER(isIRI(?value))
     }}"""
 
-    _properties = """SELECT ?instance ?property
+    _properties = """SELECT ?instance ?value
     WHERE {{
       ?instance a <{subject_type}> .
-      ?instance <{subject_predicate}> ?property
+      ?instance <{subject_predicate}> ?value
+
+      FILTER(isIRI(?value))
+
     }}"""
 
     def __init__(
