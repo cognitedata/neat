@@ -263,7 +263,7 @@ class NeatSession:
 
 @session_class_wrapper
 class OptAPI:
-    """For the user to decide if they want their usage of neat to be tracked or not. We do not collect personal
+    """For the user to decide if they want their usage of neat to be collected or not. We do not collect personal
     information like name etc. only usage.
     """
 
