@@ -27,8 +27,7 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 @session_class_wrapper
 class ReadAPI:
-    """Read from a data source into NeatSession graph store.
-    """
+    """Read from a data source into NeatSession graph store."""
 
     def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         self._state = state
