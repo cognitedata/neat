@@ -47,6 +47,10 @@ except ImportError:
 
 @session_class_wrapper
 class PrepareAPI:
+    """Apply various operations on the knowledge graph as a necessary preprocessing step before for instance
+    inferring a data model or exporting the knowledge graph to a desired destination.
+    """
+
     def __init__(self, client: NeatClient | None, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
@@ -56,6 +60,8 @@ class PrepareAPI:
 
 @session_class_wrapper
 class InstancePrepareAPI:
+    """Operations to perform on instances of data in the knowledge graph."""
+
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
@@ -219,6 +225,10 @@ class InstancePrepareAPI:
 
 @session_class_wrapper
 class DataModelPrepareAPI:
+    """Operations to perform on a data model as part of a workflow before writing the data model
+    to a desired destination.
+    """
+
     def __init__(self, client: NeatClient | None, state: SessionState, verbose: bool) -> None:
         self._client = client
         self._state = state
