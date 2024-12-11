@@ -28,13 +28,6 @@ from .exceptions import NeatSessionError, session_class_wrapper
 @session_class_wrapper
 class ReadAPI:
     """Read from a data source into NeatSession graph store.
-    Available sources are:
-        - cdf
-        - rdf
-        - excel
-        - csv
-        - yaml
-        - xml
     """
 
     def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
