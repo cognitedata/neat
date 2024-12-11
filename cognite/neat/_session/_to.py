@@ -19,6 +19,12 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 @session_class_wrapper
 class ToAPI:
+    """API used to write the contents of a NeatSession to a specified destination. For instance writing information
+    rules or DMS rules to a NEAT rules Excel spreadsheet, or writing a verified data model to CDF.
+    Available write destinations are "cdf", "excel" and "yaml".
+
+    """
+
     def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
@@ -97,12 +103,21 @@ class ToAPI:
 
 @session_class_wrapper
 class CDFToAPI:
+    """Write a verified Data Model and Instances to CDF."""
+
     def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         self._client = client
         self._state = state
         self._verbose = verbose
 
     def instances(self, space: str | None = None) -> UploadResultList:
+        """Export the verified DMS instances to CDF.
+
+        Args:
+            space: string name of instance space to use. Leave empty to allow neat to set an instance space for you that
+            is separate from the Data Model space which is highly encouraged.
+
+        """
         if not self._client:
             raise NeatSessionError("No CDF client provided!")
 
