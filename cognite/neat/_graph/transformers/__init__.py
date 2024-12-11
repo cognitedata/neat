@@ -15,7 +15,7 @@ from ._prune_graph import (
     PruneTypes,
 )
 from ._rdfpath import AddSelfReferenceProperty, MakeConnectionOnExactMatch
-from ._value_type import SplitMultiValueProperty
+from ._value_type import ConvertLiteral, SplitMultiValueProperty
 
 __all__ = [
     "AddAssetDepth",
@@ -33,6 +33,7 @@ __all__ = [
     "PruneTypes",
     "PruneDeadEndEdges",
     "PruneInstancesOfUnknownType",
+    "ConvertLiteral",
 ]
 
 Transformers = (
@@ -51,4 +52,5 @@ Transformers = (
     | PruneTypes
     | PruneDeadEndEdges
     | PruneInstancesOfUnknownType
+    | ConvertLiteral
 )
