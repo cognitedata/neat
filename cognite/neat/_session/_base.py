@@ -205,6 +205,17 @@ class NeatSession:
         Args:
             model_id: The ID of the inferred data model.
             max_number_of_instance: The maximum number of instances to use for inference.
+
+        Example:
+
+            >>>from cognite.neat import get_cognite_client
+            >>>from cognite.neat import NeatSession
+
+            >>>client = get_cognite_client(env_file_name=".env")
+            >>>neat = NeatSession(client)
+            >>>neat.read.csv("your_csv_file.csv", type="example", primary_key="example_id")
+            >>>neat.infer()
+            'No issues found'
         """
         model_id = dm.DataModelId.load(model_id)
 
