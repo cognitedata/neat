@@ -20,8 +20,6 @@ nav:
   - Tutorials:
       - Introduction:
           - Introduction: tutorials/introduction/introduction.ipynb
-          - Working with Metadata: tutorials/introduction/working_with_metadata.ipynb
-          - Connecting Metadata: tutorials/introduction/connecting_metadata.ipynb
 #      - Data Modeling Lifecycle:
 #          - Overview: tutorials/data-modeling-lifecycle/overview.md
 #          - Knowledge Acquisition: tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md
@@ -31,11 +29,13 @@ nav:
 #          - Business Solution Model: tutorials/data-modeling-lifecycle/part-5-business-solution-model.md
 #          - User Personas: tutorials/data-modeling-lifecycle/user-personas.md
       - Data Onboarding:
-        - Asset Hierarchy Migration: tutorials/data-onboarding/asset_hierarchy_migration.ipynb
+        - CDF Classic Onboarding: tutorials/data-onboarding/asset_hierarchy_migration.ipynb
 #        - Asset Hierarchy Migration with Type: tutorials/data-onboarding/asset_hierarchy_migration_with_type.ipynb
-        - From Source to CDF - Nordic44 Use Case: tutorials/data-onboarding/nordic44_onboarding.ipynb
-        - DEXPI Data Onboarding: tutorials/data-onboarding/dexpi/dexpi_onboarding.ipynb
-        - AML Data Onboarding: tutorials/data-onboarding/aml/aml_onboarding.ipynb
+        - CSV Onboarding: tutorials/data-onboarding/csv_onboarding.ipynb
+        - Multi CSVs Onboarding: tutorials/data-onboarding/multi_csv_onboarding.ipynb
+        - RDF Onboarding : tutorials/data-onboarding/nordic44_onboarding.ipynb
+        - DEXPI Onboarding: tutorials/data-onboarding/dexpi/dexpi_onboarding.ipynb
+        - AML Onboarding: tutorials/data-onboarding/aml/aml_onboarding.ipynb
       - Data Modeling:
         - Extending Data Model: tutorials/data-modeling/core_extension.ipynb
   - Data Model in Spreadsheet:
@@ -50,15 +50,15 @@ nav:
           - Properties: excel_data_modeling/physical/properties.md
           - Views: excel_data_modeling/physical/views.md
       - Units: excel_data_modeling/units.md
-  - Reference - Code API:
+  - NeatSession:
+      - Session: reference/NeatSession/base.md
+      - Read: reference/NeatSession/read.md
+      - Prepare: reference/NeatSession/prepare.md
+      - To: reference/NeatSession/to.md
+      - Inspect: reference/NeatSession/inspect.md
+      - Show: reference/NeatSession/show.md
+  - Contributor Docs:
       - Overview: reference/overview.md
-      - NeatSession:
-          - Session: reference/NeatSession/base.md
-          - Read: reference/NeatSession/read.md
-          - Prepare: reference/NeatSession/prepare.md
-          - To: reference/NeatSession/to.md
-          - Inspect: reference/NeatSession/inspect.md
-          - Show: reference/NeatSession/show.md
       - Issues:
           - Base: reference/issues/base.md
           - Errors: reference/issues/errors.md
