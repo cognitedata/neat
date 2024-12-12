@@ -32,7 +32,6 @@ def load_neat_engine(client: CogniteClient | None, location: Literal["newest", "
     upper_bound = Version(f"{lower_bound.major + 1}.0.0")
 
     cache_dir = Path(tempfile.gettempdir()) / PACKAGE_NAME
-    print(cache_dir)
     cache_dir.mkdir(exist_ok=True)
     pattern = re.compile(rf"{PACKAGE_NAME}-(\d+\.\d+\.\d+)-{PYVERSION}.zip")
 
