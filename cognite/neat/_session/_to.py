@@ -70,8 +70,8 @@ class ToAPI:
 
         ... note::
 
-            - "neat": This is the format Neat uses to store the data model.
-            - "toolkit": This is the format used by Cognite Toolkit, that matches the CDF API.
+                - "neat": This is the format Neat uses to store the data model.
+                - "toolkit": This is the format used by Cognite Toolkit, that matches the CDF API.
 
         Returns:
             str | None: If io is None, the YAML string will be returned. Otherwise, None will be returned.
@@ -160,11 +160,11 @@ class CDFToAPI:
 
         ... note::
 
-        - "fail": If any component already exists, the export will fail.
-        - "skip": If any component already exists, it will be skipped.
-        - "update": If any component already exists, it will be updated.
-        - "force": If any component already exists, and the update fails, it will be deleted and recreated.
-        - "recreate": All components will be deleted and recreated. The exception is spaces, which will be updated.
+            - "fail": If any component already exists, the export will fail.
+            - "skip": If any component already exists, it will be skipped.
+            - "update": If any component already exists, it will be updated.
+            - "force": If any component already exists, and the update fails, it will be deleted and recreated.
+            - "recreate": All components will be deleted and recreated. The exception is spaces, which will be updated.
 
         """
 

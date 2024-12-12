@@ -71,11 +71,11 @@ class InstancePrepareAPI:
         """Prepares extracted DEXPI graph for further usage in CDF
 
         This method bundles several graph transformers which:
-        - attach values of generic attributes to nodes
-        - create associations between nodes
-        - remove unused generic attributes
-        - remove associations between nodes that do not exist in the extracted graph
-        - remove edges to nodes that do not exist in the extracted graph
+            - attach values of generic attributes to nodes
+            - create associations between nodes
+            - remove unused generic attributes
+            - remove associations between nodes that do not exist in the extracted graph
+            - remove edges to nodes that do not exist in the extracted graph
 
         and therefore safeguard CDF from a bad graph
         """
@@ -112,9 +112,9 @@ class InstancePrepareAPI:
         """Prepares extracted AutomationML graph for further usage in CDF
 
         This method bundles several graph transformers which:
-        - attach values of attributes to nodes
-        - remove unused attributes
-        - remove edges to nodes that do not exist in the extracted graph
+            - attach values of attributes to nodes
+            - remove unused attributes
+            - remove edges to nodes that do not exist in the extracted graph
 
         and therefore safeguard CDF from a bad graph
         """
@@ -328,9 +328,9 @@ class DataModelPrepareAPI:
         !!! note "Enterprise Data Model Creation"
             Always create an enterprise data model from a Cognite Data Model as this will
             assure all the Cognite Data Fusion applications to run smoothly, such as
-            - Search
-            - Atlas AI
-            - ...
+                - Search
+                - Atlas AI
+                - ...
 
         !!! note "Move Connections"
             If you want to move the connections to the new data model, set the move_connections
