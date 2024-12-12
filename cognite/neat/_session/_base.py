@@ -54,6 +54,14 @@ class NeatSession:
         load_engine: Whether to load the Neat Engine. Can be "newest", "cache", or "skip". "newest" will always
             check for the newest version of the engine. "cache" will load the engine if it has been downloaded before.
             "skip" will not load the engine.
+
+    Example:
+
+        >>>from cognite.neat import get_cognite_client
+        >>>from cognite.neat import NeatSession
+
+        >>>client = get_cognite_client(env_file_name=".env")
+        >>>neat = NeatSession(client)
     """
 
     def __init__(
@@ -92,6 +100,15 @@ class NeatSession:
         """
         Verify the Data Model schema before the model can be written to CDF. If verification was unsuccessful, use
         `.inspect.issues()` to see what went wrong.
+
+        Example:
+
+            # From an active NeatSession
+            ...
+            >>>neat.read.csv("your_csv_file.csv", type="example", primary_key="example_id")
+            >>>neat.infer()
+            >>>neat.verify()
+            'No issues found'
         """
         source_id, last_unverified_rule = self._state.data_model.last_unverified_rule
         transformer = VerifyAnyRules("continue", validate=False)
@@ -208,11 +225,8 @@ class NeatSession:
 
         Example:
 
-            >>>from cognite.neat import get_cognite_client
-            >>>from cognite.neat import NeatSession
-
-            >>>client = get_cognite_client(env_file_name=".env")
-            >>>neat = NeatSession(client)
+            # From an active NeatSession
+            ...
             >>>neat.read.csv("your_csv_file.csv", type="example", primary_key="example_id")
             >>>neat.infer()
             'No issues found'
