@@ -23,8 +23,10 @@ class SetAPI:
         following the template (<data_model_space>, <data_model_name>, <data_model_version>).
 
         Example:
-            >>>neat.set.data_model_id(("my_data_model_space", "My_Data_Model", "v1"))
-            Data model ID set to ('my_data_model_space', 'My_Data_Model', 'v1')
+            Set a new data model id:
+            ```python
+            neat.set.data_model_id(("my_data_model_space", "My_Data_Model", "v1"))
+            ```
         """
         if res := self._state.data_model.last_verified_dms_rules:
             source_id, rules = res

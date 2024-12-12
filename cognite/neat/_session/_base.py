@@ -56,12 +56,14 @@ class NeatSession:
             "skip" will not load the engine.
 
     Example:
+        Instantiate a NeatSession:
+        ```python
+        from cognite.neat import get_cognite_client
+        from cognite.neat import NeatSession
 
-        >>>from cognite.neat import get_cognite_client
-        >>>from cognite.neat import NeatSession
-
-        >>>client = get_cognite_client(env_file_name=".env")
-        >>>neat = NeatSession(client)
+        client = get_cognite_client(env_file_name=".env")
+        neat = NeatSession(client)
+        ```
     """
 
     def __init__(

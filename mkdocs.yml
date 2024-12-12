@@ -56,6 +56,7 @@ nav:
       - To: reference/NeatSession/to.md
       - Inspect: reference/NeatSession/inspect.md
       - Show: reference/NeatSession/show.md
+      - Drop: reference/NeatSession/drop.md
   - Contributor Docs:
       - Overview: reference/overview.md
       - Issues:

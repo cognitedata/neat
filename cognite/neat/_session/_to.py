@@ -68,10 +68,9 @@ class ToAPI:
             format: The format of the YAML file. Defaults to "neat".
             skip_system_spaces: If True, system spaces will be skipped. Defaults to True.
 
-        ... note::
-
-                - "neat": This is the format Neat uses to store the data model.
-                - "toolkit": This is the format used by Cognite Toolkit, that matches the CDF API.
+        !!! note "YAML formats"
+            - "neat": This is the format Neat uses to store the data model.
+            - "toolkit": This is the format used by Cognite Toolkit, that matches the CDF API.
 
         Returns:
             str | None: If io is None, the YAML string will be returned. Otherwise, None will be returned.
@@ -158,8 +157,7 @@ class CDFToAPI:
                 Note this only applies to spaces and containers if they contain data.
             components: The components to export. If None, all components will be exported. Defaults to None.
 
-        ... note::
-
+        !!! note "Data Model creation modes"
             - "fail": If any component already exists, the export will fail.
             - "skip": If any component already exists, it will be skipped.
             - "update": If any component already exists, it will be updated.

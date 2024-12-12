@@ -151,12 +151,12 @@ class CDFClassicAPI(BaseReadAPI):
 
         The Classic Graph consists of the following core resource type.
 
-        Classic Node CDF Resources:
-         - Assets
-         - TimeSeries
-         - Sequences
-         - Events
-         - Files
+        !!! note "Classic Node CDF Resources"
+             - Assets
+             - TimeSeries
+             - Sequences
+             - Events
+             - Files
 
         All the classic node CDF resources can have one or more connections to one or more assets. This
         will match a direct relationship in the data modeling of CDF.
@@ -171,13 +171,12 @@ class CDFClassicAPI(BaseReadAPI):
         This extractor will extract the classic CDF graph into Neat starting from either a data set or a root asset.
 
         It works as follows:
-
-        1. Extract all core nodes (assets, time series, sequences, events, files) filtered by the given data set or
-           root asset.
-        2. Extract all relationships starting from any of the extracted core nodes.
-        3. Extract all core nodes that are targets of the relationships that are not already extracted.
-        4. Extract all labels that are connected to the extracted core nodes/relationships.
-        5. Extract all data sets that are connected to the extracted core nodes/relationships.
+            1. Extract all core nodes (assets, time series, sequences, events, files) filtered by the given data set or
+               root asset.
+            2. Extract all relationships starting from any of the extracted core nodes.
+            3. Extract all core nodes that are targets of the relationships that are not already extracted.
+            4. Extract all labels that are connected to the extracted core nodes/relationships.
+            5. Extract all data sets that are connected to the extracted core nodes/relationships.
 
         Args:
             root_asset_external_id: The external id of the root asset
@@ -311,10 +310,9 @@ class CSVReadAPI(BaseReadAPI):
         primary_key: string name of the column that should be used as the unique identifier for each row of data
 
     Example:
-
-        # From an active NeatSession
-        ...
-        >>>neat.read.csv("url_or_path_to_csv_file")
+        ```python
+        neat.read.csv("url_or_path_to_csv_file")
+        ```
     """
 
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
@@ -376,12 +374,10 @@ class XMLReadAPI(BaseReadAPI):
         Args:
             io: file path or url to the DEXPI file
 
-
         Example:
-
-            # From an active NeatSession
-            ...
-            >>>neat.read.xml.dexpi("url_or_path_to_dexpi_file")
+            ```python
+            neat.read.xml.dexpi("url_or_path_to_dexpi_file")
+            ```
         """
         engine = import_engine()
         engine.set.format = "dexpi"
@@ -395,12 +391,10 @@ class XMLReadAPI(BaseReadAPI):
         Args:
             io: file path or url to the AML file
 
-
         Example:
-
-            # From an active NeatSession
-            ...
-            >>>neat.read.xml.aml("url_or_path_to_aml_file")
+            ```python
+            neat.read.xml.aml("url_or_path_to_aml_file")
+            ```
         """
         engine = import_engine()
         engine.set.format = "aml"
@@ -427,12 +421,10 @@ class RDFReadAPI(BaseReadAPI):
         Args:
             io: file path or url to the OWL file
 
-
         Example:
-
-            # From an active NeatSession
-            ...
-            >>>neat.read.rdf.ontology("url_or_path_owl_file")
+            ```python
+            neat.read.rdf.ontology("url_or_path_to_owl_source")
+            ```
         """
         start = datetime.now(timezone.utc)
         reader = NeatReader.create(io)
@@ -460,12 +452,10 @@ class RDFReadAPI(BaseReadAPI):
         Args:
             io: file path or url to the IMF file
 
-
         Example:
-
-            # From an active NeatSession
-            ...
-            >>>neat.read.rdf.imf("url_or_path_imf_file")
+            ```python
+            neat.read.rdf.imf("url_or_path_to_imf_source")
+            ```
         """
         start = datetime.now(timezone.utc)
         reader = NeatReader.create(io)

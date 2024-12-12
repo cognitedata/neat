@@ -48,11 +48,10 @@ class InspectAPI:
         """Returns the properties of the current data model.
 
         Example:
-
+            ```python
             # From an active NeatSession
-            ...
-            >>>neat.inspect.properties
-            ...
+            neat.inspect.properties
+            ```
         """
         return self._state.data_model.last_verified_rule[1].properties.to_pandas()
 
