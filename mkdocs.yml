@@ -29,10 +29,9 @@ nav:
 #          - Business Solution Model: tutorials/data-modeling-lifecycle/part-5-business-solution-model.md
 #          - User Personas: tutorials/data-modeling-lifecycle/user-personas.md
       - Data Onboarding:
-        - CDF Classic Onboarding: tutorials/data-onboarding/asset_hierarchy_migration.ipynb
-#        - Asset Hierarchy Migration with Type: tutorials/data-onboarding/asset_hierarchy_migration_with_type.ipynb
         - CSV Onboarding: tutorials/data-onboarding/csv_onboarding.ipynb
         - Multi CSVs Onboarding: tutorials/data-onboarding/multi_csv_onboarding.ipynb
+        - CDF Classic Onboarding: tutorials/data-onboarding/asset_hierarchy_migration.ipynb
         - RDF Onboarding : tutorials/data-onboarding/nordic44_onboarding.ipynb
         - DEXPI Onboarding: tutorials/data-onboarding/dexpi/dexpi_onboarding.ipynb
         - AML Onboarding: tutorials/data-onboarding/aml/aml_onboarding.ipynb
