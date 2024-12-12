@@ -1,7 +1,7 @@
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 
@@ -436,16 +436,20 @@ class RDFReadAPI(BaseReadAPI):
         if type is None:
             type = object_wizard()
 
-        if type.lower() == "Data Model".lower():
+        type = type.lower()
+
+        if type == "data model":
             source = source or rdf_dm_wizard("What type of data model is the RDF?")
-            if source == "Ontology":
+            source = cast(str, source).lower()  # type: ignore
+
+            if source == "ontology":
                 return self.ontology(io)
-            elif source == "IMF":
+            elif source == "imf types":
                 return self.imf(io)
             else:
-                raise ValueError(f"Expected ontology, imf or instances, got {source}")
+                raise ValueError(f"Expected ontology, imf types or instances, got {source}")
 
-        elif type.lower() == "Instances".lower():
+        elif type == "instances":
             reader = NeatReader.create(io)
             if not isinstance(reader, PathReader):
                 raise NeatValueError("Only file paths are supported for RDF files")
