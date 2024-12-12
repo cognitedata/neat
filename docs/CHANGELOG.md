@@ -19,6 +19,10 @@ Changes are grouped as follows:
 ### Added
 - Support for converting data types with `neat.prepare.instances.convert_data_type(...)`.
 
+### Fixed
+- The `neat.to.cdf.instances()` now accounts for the dependencies between the views when 
+  creating the instances in CDF.
+
 ## [0.102.0] - 09-12-**2024**
 ### Fixed
 - Reading data models from CDF ensures unique names for enum collections.

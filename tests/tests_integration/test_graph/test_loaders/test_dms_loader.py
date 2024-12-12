@@ -2,6 +2,7 @@ import pytest
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
+from cognite.neat._client import NeatClient
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.importers import InferenceImporter
 from cognite.neat._rules.transformers import ImporterPipeline
@@ -34,11 +35,11 @@ def car_store() -> NeatGraphStore:
 
 class TestDMSLoader:
     def test_load_car_example(
-        self, cognite_client: CogniteClient, deployed_car_model: dm.DataModelId, car_store: NeatGraphStore
+        self, neat_client: NeatClient, deployed_car_model: dm.DataModelId, car_store: NeatGraphStore
     ) -> None:
-        loader = DMSLoader.from_data_model_id(cognite_client, deployed_car_model, car_store, car.INSTANCE_SPACE)
+        loader = DMSLoader.from_data_model_id(neat_client, deployed_car_model, car_store, car.INSTANCE_SPACE)
 
-        result = loader.load_into_cdf(cognite_client, dry_run=False)
+        result = loader.load_into_cdf(neat_client, dry_run=False)
 
         assert len(result) == 4
 

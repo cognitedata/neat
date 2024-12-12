@@ -134,6 +134,7 @@ class CDFToAPI:
             self._state.data_model.last_verified_dms_rules[1],
             self._state.instances.store,
             instance_space=space,
+            client=self._client,
         )
         result = loader.load_into_cdf(self._client)
         self._state.instances.outcome.append(result)
