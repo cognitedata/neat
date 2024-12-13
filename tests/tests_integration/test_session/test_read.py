@@ -4,6 +4,7 @@ from cognite.client import CogniteClient
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
+from cognite.neat._rules.catalog import hello_world_pump
 from tests import data
 from tests.utils import normalize_neat_id_in_rules
 
@@ -32,3 +33,12 @@ class TestRead:
         assert len(exported_rules["properties"]) == len(view.properties) + 1
 
         data_regression.check(exported_rules)
+
+    def test_read_pump_hello_world(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(client=cognite_client)
+
+        neat.read.excel(hello_world_pump)
+
+        issues = neat.verify()
+
+        assert not issues.has_errors
