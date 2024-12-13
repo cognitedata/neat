@@ -90,7 +90,12 @@ class CDFReadAPI(BaseReadAPI):
 
         Args:
             data_model_id: Tuple of strings with the id of a CDF Data Model.
-            Notation as follows (<name_of_data_model>, <name_of_space>, <data_model_version>)
+            Notation as follows (<name_of_space>, <name_of_data_model>, <data_model_version>)
+
+        Example:
+            ```python
+            neat.read.cdf.data_model(("example_data_model_space", "EXAMPLE_DATA_MODEL", "v1"))
+            ```
         """
 
         data_model_id = DataModelId.load(data_model_id)
@@ -143,12 +148,12 @@ class CDFClassicAPI(BaseReadAPI):
 
         The Classic Graph consists of the following core resource type.
 
-        Classic Node CDF Resources:
-         - Assets
-         - TimeSeries
-         - Sequences
-         - Events
-         - Files
+        !!! note "Classic Node CDF Resources"
+             - Assets
+             - TimeSeries
+             - Sequences
+             - Events
+             - Files
 
         All the classic node CDF resources can have one or more connections to one or more assets. This
         will match a direct relationship in the data modeling of CDF.
@@ -163,13 +168,12 @@ class CDFClassicAPI(BaseReadAPI):
         This extractor will extract the classic CDF graph into Neat starting from either a data set or a root asset.
 
         It works as follows:
-
-        1. Extract all core nodes (assets, time series, sequences, events, files) filtered by the given data set or
-           root asset.
-        2. Extract all relationships starting from any of the extracted core nodes.
-        3. Extract all core nodes that are targets of the relationships that are not already extracted.
-        4. Extract all labels that are connected to the extracted core nodes/relationships.
-        5. Extract all data sets that are connected to the extracted core nodes/relationships.
+            1. Extract all core nodes (assets, time series, sequences, events, files) filtered by the given data set or
+               root asset.
+            2. Extract all relationships starting from any of the extracted core nodes.
+            3. Extract all core nodes that are targets of the relationships that are not already extracted.
+            4. Extract all labels that are connected to the extracted core nodes/relationships.
+            5. Extract all data sets that are connected to the extracted core nodes/relationships.
 
         Args:
             root_asset_external_id: The external id of the root asset
@@ -192,6 +196,11 @@ class ExcelReadAPI(BaseReadAPI):
 
     Args:
         io: file path to the Excel sheet
+
+    Example:
+        ```python
+        neat.read.excel("information_or_dms_rules_sheet.xlsx")
+        ```
     """
 
     def __call__(self, io: Any) -> IssueList:
@@ -223,6 +232,11 @@ class YamlReadAPI(BaseReadAPI):
     Args:
         io: file path to the Yaml file in the case of "neat" yaml, or path to a zip folder or directory with several
         Yaml files in the case of "toolkit".
+
+    Example:
+        ```python
+        neat.read.yaml("path_to_toolkit_yamls")
+        ```
     """
 
     def __call__(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> IssueList:
@@ -283,6 +297,13 @@ class CSVReadAPI(BaseReadAPI):
         io: file path or url to the csv
         type: string that specifies what type of data the csv contains. For instance "Asset" or "Equipment"
         primary_key: string name of the column that should be used as the unique identifier for each row of data
+
+    Example:
+        ```python
+        type_described_in_table = "Turbine"
+        column_with_identifier = "UNIQUE_TAG_NAME"
+        neat.read.csv("url_or_path_to_csv_file", type=type_described_in_table, primary_key=column_with_identifier)
+        ```
     """
 
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
@@ -343,6 +364,11 @@ class XMLReadAPI(BaseReadAPI):
 
         Args:
             io: file path or url to the DEXPI file
+
+        Example:
+            ```python
+            neat.read.xml.dexpi("url_or_path_to_dexpi_file")
+            ```
         """
         engine = import_engine()
         engine.set.format = "dexpi"
@@ -355,6 +381,11 @@ class XMLReadAPI(BaseReadAPI):
 
         Args:
             io: file path or url to the AML file
+
+        Example:
+            ```python
+            neat.read.xml.aml("url_or_path_to_aml_file")
+            ```
         """
         engine = import_engine()
         engine.set.format = "aml"
@@ -368,7 +399,7 @@ class RDFReadAPI(BaseReadAPI):
     """Reads an RDF source into NeatSession. Supported sources are "ontology" or "imf".
 
     Args:
-        io: file path or url to the AML file
+        io: file path or url to the RDF source
     """
 
     def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
@@ -380,6 +411,11 @@ class RDFReadAPI(BaseReadAPI):
 
         Args:
             io: file path or url to the OWL file
+
+        Example:
+            ```python
+            neat.read.rdf.ontology("url_or_path_to_owl_source")
+            ```
         """
         start = datetime.now(timezone.utc)
         reader = NeatReader.create(io)
@@ -406,6 +442,11 @@ class RDFReadAPI(BaseReadAPI):
 
         Args:
             io: file path or url to the IMF file
+
+        Example:
+            ```python
+            neat.read.rdf.imf("url_or_path_to_imf_source")
+            ```
         """
         start = datetime.now(timezone.utc)
         reader = NeatReader.create(io)
