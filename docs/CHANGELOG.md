@@ -20,7 +20,9 @@ Changes are grouped as follows:
 - Support for converting data types with `neat.prepare.instances.convert_data_type(...)`.
 
 ### Fixed
-- Implementing a view with a reverse connection and not overwriting reverse connection from the paretn,
+- The `neat.to.cdf.instances()` now accounts for the dependencies between the views when 
+  creating the instances in CDF.
+- Implementing a view with a reverse connection and not overwriting reverse connection from the parent,
   no longer returns a `ReversedConnectionNotFeasibleError` in `neat.verify()`.
 
 ## [0.102.0] - 09-12-**2024**
