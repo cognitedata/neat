@@ -269,64 +269,6 @@ function highlightFilter(filter) {
                                 
                                     <option value="CogniteTimeSeries">CogniteTimeSeries</option>
                                 
-                                    <option value="Cognite360Image">Cognite360Image</option>
-                                
-                                    <option value="Cognite360ImageAnnotation">Cognite360ImageAnnotation</option>
-                                
-                                    <option value="Cognite360ImageCollection">Cognite360ImageCollection</option>
-                                
-                                    <option value="Cognite360ImageModel">Cognite360ImageModel</option>
-                                
-                                    <option value="Cognite360ImageStation">Cognite360ImageStation</option>
-                                
-                                    <option value="Cognite3DModel">Cognite3DModel</option>
-                                
-                                    <option value="Cognite3DObject">Cognite3DObject</option>
-                                
-                                    <option value="Cognite3DRevision">Cognite3DRevision</option>
-                                
-                                    <option value="Cognite3DTransformation">Cognite3DTransformation</option>
-                                
-                                    <option value="CogniteActivity">CogniteActivity</option>
-                                
-                                    <option value="CogniteAnnotation">CogniteAnnotation</option>
-                                
-                                    <option value="CogniteAsset">CogniteAsset</option>
-                                
-                                    <option value="CogniteAssetClass">CogniteAssetClass</option>
-                                
-                                    <option value="CogniteAssetType">CogniteAssetType</option>
-                                
-                                    <option value="CogniteCADModel">CogniteCADModel</option>
-                                
-                                    <option value="CogniteCADNode">CogniteCADNode</option>
-                                
-                                    <option value="CogniteCADRevision">CogniteCADRevision</option>
-                                
-                                    <option value="CogniteCubeMap">CogniteCubeMap</option>
-                                
-                                    <option value="CogniteDescribable">CogniteDescribable</option>
-                                
-                                    <option value="CogniteEquipment">CogniteEquipment</option>
-                                
-                                    <option value="CogniteEquipmentType">CogniteEquipmentType</option>
-                                
-                                    <option value="CogniteFile">CogniteFile</option>
-                                
-                                    <option value="CogniteFileCategory">CogniteFileCategory</option>
-                                
-                                    <option value="CognitePointCloudVolume">CognitePointCloudVolume</option>
-                                
-                                    <option value="CogniteSchedulable">CogniteSchedulable</option>
-                                
-                                    <option value="CogniteSourceSystem">CogniteSourceSystem</option>
-                                
-                                    <option value="CogniteSourceable">CogniteSourceable</option>
-                                
-                                    <option value="CogniteUnit">CogniteUnit</option>
-                                
-                                    <option value="CogniteVisualizable">CogniteVisualizable</option>
-                                
                             </select>
                         </div>
                         <div class="col-2 pb-2">
@@ -379,7 +321,7 @@ function highlightFilter(filter) {
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "Documentation", "label": "Documentation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Pump", "label": "Pump", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Facility", "label": "Facility", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteTimeSeries", "label": "CogniteTimeSeries", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Cognite360Image", "label": "Cognite360Image", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Cognite360ImageAnnotation", "label": "Cognite360ImageAnnotation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Cognite360ImageCollection", "label": "Cognite360ImageCollection", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Cognite360ImageModel", "label": "Cognite360ImageModel", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Cognite360ImageStation", "label": "Cognite360ImageStation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Cognite3DModel", "label": "Cognite3DModel", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Cognite3DObject", "label": "Cognite3DObject", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Cognite3DRevision", "label": "Cognite3DRevision", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Cognite3DTransformation", "label": "Cognite3DTransformation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteActivity", "label": "CogniteActivity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteAnnotation", "label": "CogniteAnnotation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteAsset", "label": "CogniteAsset", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteAssetClass", "label": "CogniteAssetClass", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteAssetType", "label": "CogniteAssetType", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteCADModel", "label": "CogniteCADModel", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteCADNode", "label": "CogniteCADNode", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteCADRevision", "label": "CogniteCADRevision", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteCubeMap", "label": "CogniteCubeMap", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteDescribable", "label": "CogniteDescribable", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteEquipment", "label": "CogniteEquipment", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteEquipmentType", "label": "CogniteEquipmentType", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteFile", "label": "CogniteFile", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteFileCategory", "label": "CogniteFileCategory", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CognitePointCloudVolume", "label": "CognitePointCloudVolume", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteSchedulable", "label": "CogniteSchedulable", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteSourceSystem", "label": "CogniteSourceSystem", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteSourceable", "label": "CogniteSourceable", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteUnit", "label": "CogniteUnit", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteVisualizable", "label": "CogniteVisualizable", "shape": "dot", "size": 10}]);
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "Documentation", "label": "Documentation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Pump", "label": "Pump", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Facility", "label": "Facility", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteTimeSeries", "label": "CogniteTimeSeries", "shape": "dot", "size": 10}]);
                   edges = new vis.DataSet([{"arrows": "to", "from": "Documentation", "label": "relatedPumps", "to": "Pump", "width": 1}, {"arrows": "to", "from": "Facility", "label": "hasPumps", "to": "Pump", "width": 1}, {"arrows": "to", "from": "Pump", "label": "documentation", "to": "Documentation", "width": 1}, {"arrows": "to", "from": "Pump", "label": "livesIn", "to": "Facility", "width": 1}, {"arrows": "to", "from": "Pump", "label": "temperature", "to": "CogniteTimeSeries", "width": 1}]);
 
                   nodeColors = {};
