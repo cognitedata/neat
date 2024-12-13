@@ -103,7 +103,7 @@ plugins:
         python:
           options:
             show_root_heading: true
-            show_source: true
+            show_source: false
             members_order: source
   - autorefs
   - search

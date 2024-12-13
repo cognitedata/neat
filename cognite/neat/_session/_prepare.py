@@ -184,22 +184,26 @@ class InstancePrepareAPI:
         Example:
             Make connection on exact match:
             ```python
-            neat = NeatSession(client)
-
+            # From an active NeatSession
             neat.read.csv("workitem.Table.csv",
                           type = "Activity",
                           primary_key="sourceId")
 
-            neat.read.csv("https://github.com/cognitedata/toolkit-data/blob/main/data/publicdata/assets.Table.csv",
+            neat.read.csv("assets.Table.csv",
                           type="Asset",
                           primary_key="WMT_TAG_GLOBALID")
-            source = (URIRef("http://purl.org/cognite/neat/Activity"),
-                      URIRef("http://purl.org/cognite/neat/workorderItemname"))
 
+            # Here we specify what column from the source table we should use when we link it with a column in the
+            # target table. In this case, it is the "workorderItemname" column in the source table
+            source = ("Activity", "workorderItemname")
+
+            # Here we give a name to the new property that is created when a match between the source and target is
+            # found
             connection = "asset"
 
-            target = (URIRef("http://purl.org/cognite/neat/Asset"),
-                      URIRef("http://purl.org/cognite/neat/wmtTagName"))
+            # Here we specify what column from the target table we should use when searching for a match.
+            # In this case, it is the "wmtTagName" column in the target table
+            target = ("Asset", "wmtTagName")
 
             neat.prepare.instances.make_connection_on_exact_match(source, target, connection)
             ```

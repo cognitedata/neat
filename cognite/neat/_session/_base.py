@@ -56,12 +56,22 @@ class NeatSession:
             "skip" will not load the engine.
 
     Example:
-        Instantiate a NeatSession:
+        Instantiate a NeatSession outside CDF jupyter notebook (needs instantiation of a CogniteClient)
         ```python
         from cognite.neat import get_cognite_client
         from cognite.neat import NeatSession
 
         client = get_cognite_client(env_file_name=".env")
+        neat = NeatSession(client)
+        ```
+
+    Example:
+        Instantiate a NeatSession inside a CDF jupyter notebook (use your user's CogniteClient directly)
+        ```python
+        from cognite.client import CogniteClient
+        from cognite.neat import NeatSession
+
+        client = CogniteClient()
         neat = NeatSession(client)
         ```
     """
@@ -95,6 +105,11 @@ class NeatSession:
 
         Returns:
             The current version of neat used in the session.
+
+        Example:
+            ```python
+            neat.version
+            ```
         """
         return _version.__version__
 
@@ -104,13 +119,14 @@ class NeatSession:
         `.inspect.issues()` to see what went wrong.
 
         Example:
-
+            Verify a data model after reading a source file and inferring the data model
+            ```python
             # From an active NeatSession
             ...
-            >>>neat.read.csv("your_csv_file.csv", type="example", primary_key="example_id")
-            >>>neat.infer()
-            >>>neat.verify()
-            'No issues found'
+            neat.read.xml.dexpi("url_or_path_to_dexpi_file")
+            neat.infer()
+            neat.verify()
+            ```
         """
         source_id, last_unverified_rule = self._state.data_model.last_unverified_rule
         transformer = VerifyAnyRules("continue", validate=False)
@@ -163,6 +179,18 @@ class NeatSession:
             target: The target type to convert the data model to.
             mode: If the target is "dms", the mode to use for the conversion. None is used for default conversion.
                 "edge_properties" treas classes that implements Edge as edge properties.
+
+        Example:
+            Convert to DMS rules
+            ```python
+            neat.convert(target="dms")
+            ```
+
+        Example:
+            Convert to Information rules
+            ```python
+            neat.convert(target="information")
+            ```
         """
         start = datetime.now(timezone.utc)
         issues = IssueList()
@@ -226,12 +254,13 @@ class NeatSession:
             max_number_of_instance: The maximum number of instances to use for inference.
 
         Example:
-
+            Infer a data model after reading a source file
+            ```python
             # From an active NeatSession
             ...
-            >>>neat.read.csv("your_csv_file.csv", type="example", primary_key="example_id")
-            >>>neat.infer()
-            'No issues found'
+            neat.read.xml.dexpi("url_or_path_to_dexpi_file")
+            neat.infer()
+            ```
         """
         model_id = dm.DataModelId.load(model_id)
 

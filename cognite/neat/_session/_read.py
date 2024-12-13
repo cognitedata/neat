@@ -93,12 +93,9 @@ class CDFReadAPI(BaseReadAPI):
             Notation as follows (<name_of_space>, <name_of_data_model>, <data_model_version>)
 
         Example:
-
-            # From an active NeatSession
-            ...
-            >>>neat.read.cdf.data_model(("example_data_model_space", "EXAMPLE_DATA_MODEL", "v1"))
-             Data model read passed
-            'No issues found'
+            ```python
+            neat.read.cdf.data_model(("example_data_model_space", "EXAMPLE_DATA_MODEL", "v1"))
+            ```
         """
 
         data_model_id = DataModelId.load(data_model_id)
@@ -201,13 +198,9 @@ class ExcelReadAPI(BaseReadAPI):
         io: file path to the Excel sheet
 
     Example:
-
-        # From an active NeatSession
-        ...
-        >>>neat.read.excel("information_or_dms_rules_sheet.xlsx")
-         Data model read passed
-        'No issues found'
-
+        ```python
+        neat.read.excel("information_or_dms_rules_sheet.xlsx")
+        ```
     """
 
     def __call__(self, io: Any) -> IssueList:
@@ -241,13 +234,9 @@ class YamlReadAPI(BaseReadAPI):
         Yaml files in the case of "toolkit".
 
     Example:
-
-        # From an active NeatSession
-        ...
-        >>>neat.read.yaml("path_to_toolkit_yamls")
-         Data model read passed
-        'No issues found'
-
+        ```python
+        neat.read.yaml("path_to_toolkit_yamls")
+        ```
     """
 
     def __call__(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> IssueList:
@@ -311,7 +300,9 @@ class CSVReadAPI(BaseReadAPI):
 
     Example:
         ```python
-        neat.read.csv("url_or_path_to_csv_file")
+        type_described_in_table = "Turbine"
+        column_with_identifier = "UNIQUE_TAG_NAME"
+        neat.read.csv("url_or_path_to_csv_file", type=type_described_in_table, primary_key=column_with_identifier)
         ```
     """
 

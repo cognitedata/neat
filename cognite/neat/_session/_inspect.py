@@ -24,18 +24,23 @@ class InspectAPI:
     """Inspect issues or outcomes after performing operations with NeatSession.
     To inspect properties of the current data model, try out `.properties()`.
 
-    Examples:
+    Example:
+        Inspect issues
+        ```python
+        neat.inspect.issues()
+        ```
 
-        # From an active NeatSession
-        ...
-        >>>neat.inspect.issues()
-        No issues found.
-        >>>neat.inspect.issues()
-        No issues found.
-        >>>neat.inspect.outcome.data_model()
-        ...
-        >>>neat.inspect.outcome.instances()
-        ...
+    Example:
+        Inspect outcome after writing a data model
+        ```python
+        neat.inspect.outcome.data_model()
+        ```
+
+    Example:
+        Inspect outcome after writing instances
+        ```python
+        neat.inspect.outcome.instances()
+        ```
     """
 
     def __init__(self, state: SessionState) -> None:
@@ -48,6 +53,7 @@ class InspectAPI:
         """Returns the properties of the current data model.
 
         Example:
+            Inspect properties of the current data model
             ```python
             # From an active NeatSession
             neat.inspect.properties

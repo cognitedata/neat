@@ -23,6 +23,26 @@ from .exceptions import session_class_wrapper
 class ShowAPI:
     """Visualise a verified data model or instances contained in the graph store.
     See, for example, `.data_model()` or `.instances()` for more.
+
+    Example:
+        Show instances
+        ```python
+        from cognite.neat import NeatSession
+        from cognite.neat import get_cognite_client
+
+        client = get_cognite_client(env_file_path=".env")
+        neat = NeatSession(client, storage="oxigraph") # Storage optimised for storage visualisation
+
+        # .... intermediate steps of reading, infering verifying and converting a data model and instances
+
+        neat.show.instances()
+        ```
+
+    Example:
+        Show data model
+        ```python
+        neat.show.data_model()
+        ```
     """
 
     def __init__(self, state: SessionState) -> None:

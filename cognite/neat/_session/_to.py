@@ -39,6 +39,20 @@ class ToAPI:
         Args:
             io: The file path or file-like object to write the Excel file to.
             model: The format of the data model to export. Defaults to None.
+
+        Example:
+            Export information model to excel rules sheet
+            ```python
+            information_rules_file_name = "information_rules.xlsx"
+            neat.to.excel(information_rules_file_name, model="information")
+            ```
+
+        Example:
+            Export data model to excel rules sheet
+            ```python
+            dms_rules_file_name = "dms_rules.xlsx"
+            neat.to.excel(information_rules_file_name, model="dms")
+            ```
         """
         exporter = exporters.ExcelExporter()
         rules: VerifiedRules
@@ -74,6 +88,27 @@ class ToAPI:
 
         Returns:
             str | None: If io is None, the YAML string will be returned. Otherwise, None will be returned.
+
+        Example:
+            Export to yaml file in the case of "neat" format
+            ```python
+            your_yaml_file_name = "neat_rules.yaml"
+            neat.to.yaml(your_yaml_file_name, format="neat")
+            ```
+
+        Example:
+            Export yaml files as a zip folder in the case of "toolkit" format
+            ```python
+            your_zip_folder_name = "toolkit_data_model_files.zip"
+            neat.to.yaml(your_zip_folder_name, format="toolkit")
+            ```
+
+        Example:
+            Export yaml files to a folder in the case of "toolkit" format
+            ```python
+            your_folder_name = "my_project/data_model_files"
+            neat.to.yaml(your_folder_name, format="toolkit")
+            ```
         """
         if format == "neat":
             exporter = exporters.YAMLExporter()
