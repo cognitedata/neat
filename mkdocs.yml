@@ -36,6 +36,7 @@ nav:
         - DEXPI Onboarding: tutorials/data-onboarding/dexpi/dexpi_onboarding.ipynb
         - AML Onboarding: tutorials/data-onboarding/aml/aml_onboarding.ipynb
       - Data Modeling:
+        - My First Data Model: tutorials/data-modeling/cold_start.ipynb
         - Extending Data Model: tutorials/data-modeling/core_extension.ipynb
   - Data Model in Spreadsheet:
       - Overview: excel_data_modeling/rules.md
