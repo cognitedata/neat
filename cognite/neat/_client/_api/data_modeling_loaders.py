@@ -609,6 +609,7 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
                 elif view_id in self._items_by_id:
                     view = self._items_by_id[view_id]
                     found.append(view)
+                    found_ids.add(view_id)
                     batch_ids.update(self.get_connected_views(view, include_ancestors, include_connections, found_ids))
                 else:
                     to_retrieve_from_cdf.add(view_id)
@@ -620,7 +621,6 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
                 found_ids.update({view.as_id() for view in retrieved_batch})
                 for view in retrieved_batch:
                     batch_ids.update(self.get_connected_views(view, include_ancestors, include_connections, found_ids))
-
             last_batch = batch_ids
 
         if self.cache is False:

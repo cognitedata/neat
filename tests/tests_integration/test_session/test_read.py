@@ -40,5 +40,6 @@ class TestRead:
         neat.read.excel(hello_world_pump)
 
         issues = neat.verify()
+        neat.prepare.data_model.include_referenced()
 
         assert not issues.has_errors
