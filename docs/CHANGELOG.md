@@ -22,6 +22,7 @@ Changes are grouped as follows:
 ### Fixed
 - The `neat.to.cdf.instances()` now accounts for the dependencies between the views when 
   creating the instances in CDF.
+- Dumping any data model in neat now uses `space` and not `prefix` in the Metadata sheet.
 
 ## [0.102.0] - 09-12-**2024**
 ### Fixed

@@ -149,7 +149,7 @@ class BaseMetadata(SchemaModel):
 
     role: ClassVar[RoleTypes] = Field(description="Role of the person creating the data model")
     aspect: ClassVar[DataModelAspect] = Field(description="Aspect of the data model")
-    space: SpaceType = Field(alias="prefix", description="The space where the data model is defined")
+    space: SpaceType = Field(description="The space where the data model is defined")
     external_id: DataModelExternalIdType = Field(
         alias="externalId", description="External identifier for the data model"
     )
@@ -234,15 +234,6 @@ class BaseMetadata(SchemaModel):
     def namespace(self) -> Namespace:
         """Namespace for the data model used for the entities in the data model."""
         return Namespace(f"{self.identifier}/")
-
-    @model_serializer(mode="wrap", when_used="always")
-    def always_prefix_as_space(self, serializer: Callable) -> dict:
-        dumped: dict[str, Any] = {}
-        for key, value in serializer(self).items():
-            # Iterate over the dictionary and replace the key 'prefix' with 'space'
-            # and maintain the order of the keys.
-            dumped[{"prefix": "space"}.get(key, key)] = value
-        return dumped
 
 
 class BaseRules(SchemaModel, ABC):
