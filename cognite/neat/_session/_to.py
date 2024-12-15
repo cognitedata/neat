@@ -54,7 +54,7 @@ class ToAPI:
             neat.to.excel(information_rules_file_name, model="dms")
             ```
         """
-        exporter = exporters.ExcelExporter()
+        exporter = exporters.ExcelExporter(styling="maximal")
         rules: VerifiedRules
         if model == "information" or model == "logical":
             rules = self._state.data_model.last_verified_information_rules[1]
