@@ -117,7 +117,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
             main_header = self._main_header_by_sheet_name[sheet_name]
             sheet.append([main_header] + [""] * (len(headers) - 1))
-            sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
+
             if headers[0] == "Neat ID":
                 # Move the Neat ID to the end of the columns
                 headers = headers[1:] + ["Neat ID"]
@@ -157,12 +157,13 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 # This freezes all rows above the given row
                 sheet.freeze_panes = sheet["A3"]
 
-                sheet["A1"].alignment = Alignment(horizontal="center")
+                sheet["A1"].alignment = Alignment(horizontal="left")
 
             if self._styling_level > 1:
                 # Make the header row bold, larger, and colored
-                sheet["A1"].font = Font(bold=True, size=20)
-                sheet["A1"].fill = PatternFill(fgColor="FFC000", patternType="solid")
+                for cell, *_ in sheet.iter_cols(min_row=1, max_row=1, min_col=1, max_col=len(headers)):
+                    cell.font = Font(bold=True, size=20)
+                    cell.fill = PatternFill(fgColor="FFC000", patternType="solid")
                 for cell in sheet["2"]:
                     cell.font = Font(bold=True, size=14)
 
