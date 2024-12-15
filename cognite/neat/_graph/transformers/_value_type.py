@@ -167,22 +167,36 @@ class LiteralToEntity(BaseTransformer):
     WHERE {{
       ?instance a <{subject_type}> .
       ?instance <{subject_predicate}> ?property
+      FILTER(isLiteral(?property))
+    }}"""
+    _count_connections_of_type = """SELECT (COUNT(?property) AS ?propertyCount)
+    WHERE {{
+      ?instance a <{subject_type}> .
+      ?instance <{subject_predicate}> ?property
+      FILTER(isIRI(?property))
     }}"""
 
     _properties_of_type = """SELECT ?instance ?property
     WHERE {{
       ?instance a <{subject_type}> .
       ?instance <{subject_predicate}> ?property
+      FILTER(isLiteral(?property))
     }}"""
 
     _count_properties = """SELECT (COUNT(?property) AS ?propertyCount)
     WHERE {{
       ?instance <{subject_predicate}> ?property
+      FILTER(isLiteral(?property))
     }}"""
-
+    _count_connections = """SELECT (COUNT(?property) AS ?propertyCount)
+        WHERE {{
+          ?instance <{subject_predicate}> ?property
+          FILTER(isIRI(?property))
+        }}"""
     _properties = """SELECT ?instance ?property
     WHERE {{
       ?instance <{subject_predicate}> ?property
+      FILTER(isLiteral(?property))
     }}"""
 
     def __init__(
@@ -197,12 +211,27 @@ class LiteralToEntity(BaseTransformer):
         if self.subject_type is None:
             count_query = self._count_properties.format(subject_predicate=self.subject_predicate)
             iterate_query = self._properties.format(subject_predicate=self.subject_predicate)
+            connection_count_query = self._count_connections.format(subject_predicate=self.subject_predicate)
         else:
             count_query = self._count_properties_of_type.format(
                 subject_type=self.subject_type, subject_predicate=self.subject_predicate
             )
             iterate_query = self._properties_of_type.format(
                 subject_type=self.subject_type, subject_predicate=self.subject_predicate
+            )
+            connection_count_query = self._count_connections_of_type.format(
+                subject_type=self.subject_type, subject_predicate=self.subject_predicate
+            )
+
+        connection_count_res = list(graph.query(connection_count_query))
+        connection_count = int(connection_count_res[0][0])  # type: ignore [index, arg-type]
+        if connection_count > 0:
+            warnings.warn(
+                NeatValueWarning(
+                    f"Skipping {connection_count} of {remove_namespace_from_uri(self.subject_predicate)} "
+                    f"as these are connections and not data values."
+                ),
+                stacklevel=2,
             )
 
         property_count_res = list(graph.query(count_query))
@@ -220,19 +249,8 @@ class LiteralToEntity(BaseTransformer):
             total=property_count,
             description=description,
         ):
-            if not isinstance(literal, rdflib.Literal):
-                warnings.warn(
-                    PropertyDataTypeConversionWarning(
-                        str(instance),
-                        remove_namespace_from_uri(self.subject_type) if self.subject_type else "Unknown",
-                        remove_namespace_from_uri(self.subject_predicate),
-                        "The value is a connection and not a data type.",
-                    ),
-                    stacklevel=2,
-                )
-                continue
+            value = cast(rdflib.Literal, literal).toPython()
             namespace = Namespace(get_namespace(instance))
-            value = literal.toPython()
             entity_type = namespace[self.entity_type]
             new_entity = namespace[f"{self.entity_type}_{quote(value)!s}"]
             graph.add((new_entity, RDF.type, entity_type))
