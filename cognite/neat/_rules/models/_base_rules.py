@@ -235,6 +235,15 @@ class BaseMetadata(SchemaModel):
         """Namespace for the data model used for the entities in the data model."""
         return Namespace(f"{self.identifier}/")
 
+    @model_serializer(mode="wrap", when_used="always")
+    def always_prefix_as_space(self, serializer: Callable) -> dict:
+        dumped: dict[str, Any] = {}
+        for key, value in serializer(self).items():
+            # Iterate over the dictionary and replace the key 'prefix' with 'space'
+            # and maintain the order of the keys.
+            dumped[{"prefix": "space"}.get(key, key)] = value
+        return dumped
+
 
 class BaseRules(SchemaModel, ABC):
     """
