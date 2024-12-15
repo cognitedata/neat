@@ -7,14 +7,14 @@ from ._yaml2rules import YAMLImporter
 
 __all__ = [
     "BaseImporter",
-    "OWLImporter",
-    "IMFImporter",
     "DMSImporter",
+    "DTDLImporter",
     "ExcelImporter",
     "GoogleSheetImporter",
-    "DTDLImporter",
-    "YAMLImporter",
+    "IMFImporter",
     "InferenceImporter",
+    "OWLImporter",
+    "YAMLImporter",
 ]
 
 RulesImporters = (

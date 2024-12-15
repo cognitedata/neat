@@ -7,15 +7,15 @@ from ._rules2yaml import YAMLExporter
 
 __all__ = [
     "BaseExporter",
-    "DMSExporter",
     "CDFExporter",
-    "SemanticDataModelExporter",
-    "OWLExporter",
-    "GraphExporter",
-    "SHACLExporter",
+    "DMSExporter",
     "ExcelExporter",
-    "YAMLExporter",
+    "GraphExporter",
     "InstanceTemplateExporter",
+    "OWLExporter",
+    "SHACLExporter",
+    "SemanticDataModelExporter",
+    "YAMLExporter",
 ]
 
 

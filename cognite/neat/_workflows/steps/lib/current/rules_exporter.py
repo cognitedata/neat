@@ -16,12 +16,12 @@ from cognite.neat._workflows.steps.data_contracts import CogniteClient, MultiRul
 from cognite.neat._workflows.steps.step_model import Configurable, Step
 
 __all__ = [
+    "DeleteDataModelFromCDF",
     "RulesToDMS",
     "RulesToExcel",
     "RulesToOntology",
     "RulesToSHACL",
     "RulesToSemanticDataModel",
-    "DeleteDataModelFromCDF",
 ]
 
 

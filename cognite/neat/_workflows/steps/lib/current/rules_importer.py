@@ -19,10 +19,10 @@ from cognite.neat._workflows.steps.step_model import Configurable, Step
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 
 __all__ = [
-    "ExcelToRules",
-    "OntologyToRules",
-    "IMFToRules",
     "DMSToRules",
+    "ExcelToRules",
+    "IMFToRules",
+    "OntologyToRules",
     "RulesInferenceFromRdfFile",
 ]
 
