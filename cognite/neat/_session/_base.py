@@ -54,6 +54,26 @@ class NeatSession:
         load_engine: Whether to load the Neat Engine. Can be "newest", "cache", or "skip". "newest" will always
             check for the newest version of the engine. "cache" will load the engine if it has been downloaded before.
             "skip" will not load the engine.
+
+    Example:
+        Instantiate a NeatSession outside CDF jupyter notebook (needs instantiation of a CogniteClient)
+        ```python
+        from cognite.neat import get_cognite_client
+        from cognite.neat import NeatSession
+
+        client = get_cognite_client(env_file_name=".env")
+        neat = NeatSession(client)
+        ```
+
+    Example:
+        Instantiate a NeatSession inside a CDF jupyter notebook (use your user's CogniteClient directly)
+        ```python
+        from cognite.client import CogniteClient
+        from cognite.neat import NeatSession
+
+        client = CogniteClient()
+        neat = NeatSession(client)
+        ```
     """
 
     def __init__(
@@ -81,9 +101,33 @@ class NeatSession:
 
     @property
     def version(self) -> str:
+        """Get the current version of neat.
+
+        Returns:
+            The current version of neat used in the session.
+
+        Example:
+            ```python
+            neat.version
+            ```
+        """
         return _version.__version__
 
     def verify(self) -> IssueList:
+        """
+        Verify the Data Model schema before the model can be written to CDF. If verification was unsuccessful, use
+        `.inspect.issues()` to see what went wrong.
+
+        Example:
+            Verify a data model after reading a source file and inferring the data model
+            ```python
+            # From an active NeatSession
+            ...
+            neat.read.xml.dexpi("url_or_path_to_dexpi_file")
+            neat.infer()
+            neat.verify()
+            ```
+        """
         source_id, last_unverified_rule = self._state.data_model.last_unverified_rule
         transformer = VerifyAnyRules("continue", validate=False)
         start = datetime.now(timezone.utc)
@@ -135,6 +179,18 @@ class NeatSession:
             target: The target type to convert the data model to.
             mode: If the target is "dms", the mode to use for the conversion. None is used for default conversion.
                 "edge_properties" treas classes that implements Edge as edge properties.
+
+        Example:
+            Convert to DMS rules
+            ```python
+            neat.convert(target="dms")
+            ```
+
+        Example:
+            Convert to Information rules
+            ```python
+            neat.convert(target="information")
+            ```
         """
         start = datetime.now(timezone.utc)
         issues = IssueList()
@@ -196,6 +252,15 @@ class NeatSession:
         Args:
             model_id: The ID of the inferred data model.
             max_number_of_instance: The maximum number of instances to use for inference.
+
+        Example:
+            Infer a data model after reading a source file
+            ```python
+            # From an active NeatSession
+            ...
+            neat.read.xml.dexpi("url_or_path_to_dexpi_file")
+            neat.infer()
+            ```
         """
         model_id = dm.DataModelId.load(model_id)
 
@@ -254,6 +319,10 @@ class NeatSession:
 
 @session_class_wrapper
 class OptAPI:
+    """For the user to decide if they want their usage of neat to be collected or not. We do not collect personal
+    information like name etc. only usage.
+    """
+
     def __init__(self, collector: Collector | None = None) -> None:
         self._collector = collector or _COLLECTOR
 
@@ -268,9 +337,11 @@ class OptAPI:
         )
 
     def in_(self) -> None:
+        """Consent to collection of neat user insights."""
         self._collector.enable()
         print("You have successfully opted in to data collection.")
 
     def out(self) -> None:
+        """Opt out of allowing usage of neat to be collected from current user."""
         self._collector.disable()
         print("You have successfully opted out of data collection.")

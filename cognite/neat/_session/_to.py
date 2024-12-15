@@ -19,6 +19,11 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 @session_class_wrapper
 class ToAPI:
+    """API used to write the contents of a NeatSession to a specified destination. For instance writing information
+    rules or DMS rules to a NEAT rules Excel spreadsheet, or writing a verified data model to CDF.
+
+    """
+
     def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
@@ -34,6 +39,20 @@ class ToAPI:
         Args:
             io: The file path or file-like object to write the Excel file to.
             model: The format of the data model to export. Defaults to None.
+
+        Example:
+            Export information model to excel rules sheet
+            ```python
+            information_rules_file_name = "information_rules.xlsx"
+            neat.to.excel(information_rules_file_name, model="information")
+            ```
+
+        Example:
+            Export data model to excel rules sheet
+            ```python
+            dms_rules_file_name = "dms_rules.xlsx"
+            neat.to.excel(information_rules_file_name, model="dms")
+            ```
         """
         exporter = exporters.ExcelExporter()
         rules: VerifiedRules
@@ -63,13 +82,33 @@ class ToAPI:
             format: The format of the YAML file. Defaults to "neat".
             skip_system_spaces: If True, system spaces will be skipped. Defaults to True.
 
-        ... note::
-
+        !!! note "YAML formats"
             - "neat": This is the format Neat uses to store the data model.
             - "toolkit": This is the format used by Cognite Toolkit, that matches the CDF API.
 
         Returns:
             str | None: If io is None, the YAML string will be returned. Otherwise, None will be returned.
+
+        Example:
+            Export to yaml file in the case of "neat" format
+            ```python
+            your_yaml_file_name = "neat_rules.yaml"
+            neat.to.yaml(your_yaml_file_name, format="neat")
+            ```
+
+        Example:
+            Export yaml files as a zip folder in the case of "toolkit" format
+            ```python
+            your_zip_folder_name = "toolkit_data_model_files.zip"
+            neat.to.yaml(your_zip_folder_name, format="toolkit")
+            ```
+
+        Example:
+            Export yaml files to a folder in the case of "toolkit" format
+            ```python
+            your_folder_name = "my_project/data_model_files"
+            neat.to.yaml(your_folder_name, format="toolkit")
+            ```
         """
         if format == "neat":
             exporter = exporters.YAMLExporter()
@@ -97,12 +136,21 @@ class ToAPI:
 
 @session_class_wrapper
 class CDFToAPI:
+    """Write a verified Data Model and Instances to CDF."""
+
     def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         self._client = client
         self._state = state
         self._verbose = verbose
 
     def instances(self, space: str | None = None) -> UploadResultList:
+        """Export the verified DMS instances to CDF.
+
+        Args:
+            space: Name of instance space to use. Default is to suffix the schema space with '_instances'.
+            Note this space is required to be different than the space with the data model.
+
+        """
         if not self._client:
             raise NeatSessionError("No CDF client provided!")
 
@@ -145,13 +193,12 @@ class CDFToAPI:
                 Note this only applies to spaces and containers if they contain data.
             components: The components to export. If None, all components will be exported. Defaults to None.
 
-        ... note::
-
-        - "fail": If any component already exists, the export will fail.
-        - "skip": If any component already exists, it will be skipped.
-        - "update": If any component already exists, it will be updated.
-        - "force": If any component already exists, and the update fails, it will be deleted and recreated.
-        - "recreate": All components will be deleted and recreated. The exception is spaces, which will be updated.
+        !!! note "Data Model creation modes"
+            - "fail": If any component already exists, the export will fail.
+            - "skip": If any component already exists, it will be skipped.
+            - "update": If any component already exists, it will be updated.
+            - "force": If any component already exists, and the update fails, it will be deleted and recreated.
+            - "recreate": All components will be deleted and recreated. The exception is spaces, which will be updated.
 
         """
 
