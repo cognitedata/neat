@@ -2,12 +2,13 @@ from collections.abc import Iterable
 
 import pytest
 from _pytest.mark import ParameterSet
-from rdflib import RDF, Literal, Namespace, URIRef
+from rdflib import RDF
 
 from cognite.neat._constants import get_default_prefixes_and_namespaces
-from cognite.neat._graph.transformers import AttachPropertyFromTargetToSource, PruneDeadEndEdges
+from cognite.neat._graph.transformers import PruneDeadEndEdges
 from cognite.neat._shared import Triple
 from cognite.neat._store import NeatGraphStore
+
 
 def generate_test_parameters_unknown_types() -> Iterable[ParameterSet]:
     namespace = get_default_prefixes_and_namespaces()["iodd"]
@@ -41,21 +42,21 @@ def generate_test_parameters_unknown_types() -> Iterable[ParameterSet]:
     triples_removed = 1
 
     yield pytest.param(
-            original_triples,
-            expected_triples,
-            triples_removed,
-            id="Flatten with new predicate, literal to URIRef, delete intermediate node",
-        )
+        original_triples,
+        expected_triples,
+        triples_removed,
+        id="Flatten with new predicate, literal to URIRef, delete intermediate node",
+    )
 
 
 class TestPruneGraph:
-
     @pytest.mark.parametrize(
         "original_triples, expected_triples, triples_removed",
         generate_test_parameters_unknown_types(),
     )
-    def test_prune_instances_of_unknown_type(self, original_triples: list[Triple], expected_triples: list[Triple],
-                                             triples_removed: int):
+    def test_prune_instances_of_unknown_type(
+        self, original_triples: list[Triple], expected_triples: list[Triple], triples_removed: int
+    ):
         store = NeatGraphStore.from_memory_store()
 
         store._add_triples(original_triples)
@@ -67,12 +68,9 @@ class TestPruneGraph:
         # Sort the triples to ensure deterministic output
         triples_after.sort()
 
-        assert triples_after ==  expected_triples
+        assert triples_after == expected_triples
         assert len(triples_after) == len(expected_triples)
 
+    def test_prune_dead_end_edges(self): ...
 
-    def test_prune_dead_end_edges(self):
-        ...
-
-    def test_prune_types(self):
-        ...
+    def test_prune_types(self): ...
