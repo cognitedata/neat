@@ -61,6 +61,11 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
         """Provenance agent for the importer."""
         return ProvenanceAgent(id_=DEFAULT_NAMESPACE[f"agent/{type(self).__name__}"])
 
+    @property
+    def description(self) -> str:
+        """Get the description of the transformer."""
+        return "MISSING DESCRIPTION"
+
 
 class RulesPipeline(list, MutableSequence[RulesTransformer], Generic[T_RulesIn, T_RulesOut]):
     def transform(self, rules: T_RulesIn | OutRules[T_RulesIn]) -> OutRules[T_RulesOut]:
