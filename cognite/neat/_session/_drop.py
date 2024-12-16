@@ -11,6 +11,10 @@ except ImportError:
 
 @session_class_wrapper
 class DropAPI:
+    """
+    Drop instances from the session. Check out `.instances()` for performing the operation.
+    """
+
     def __init__(self, state: SessionState):
         self._state = state
 
@@ -19,6 +23,12 @@ class DropAPI:
 
         Args:
             type: The type of instances to drop.
+
+        Example:
+            ```python
+            node_type_to_drop = "Pump"
+            neat.drop.instances(node_type_to_drop)
+            ```
         """
         type_list = type if isinstance(type, list) else [type]
         uri_type_type = dict((v, k) for k, v in self._state.instances.store.queries.types.items())

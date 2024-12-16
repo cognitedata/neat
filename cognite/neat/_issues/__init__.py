@@ -15,14 +15,14 @@ from ._base import (
 )
 
 __all__ = [
-    "NeatIssue",
-    "NeatError",
-    "NeatWarning",
     "DefaultWarning",
-    "NeatIssueList",
+    "FutureResult",
     "IssueList",
     "MultiValueError",
-    "catch_warnings",
+    "NeatError",
+    "NeatIssue",
+    "NeatIssueList",
+    "NeatWarning",
     "catch_issues",
-    "FutureResult",
+    "catch_warnings",
 ]

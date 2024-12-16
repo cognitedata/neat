@@ -1,3 +1,5 @@
+from cognite.client.data_classes.data_modeling import InstanceApply
+
 from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.catalog import imf_attributes
@@ -36,7 +38,7 @@ def test_metadata_as_json_filed():
     store.add_rules(info_rules)
 
     loader = DMSLoader.from_rules(dms_rules, store, dms_rules.metadata.space)
-    instances = {instance.external_id: instance for instance in loader._load()}
+    instances = {instance.external_id: instance for instance in loader._load() if isinstance(instance, InstanceApply)}
 
     # metadata not unpacked but kept as Json obj
     assert isinstance(

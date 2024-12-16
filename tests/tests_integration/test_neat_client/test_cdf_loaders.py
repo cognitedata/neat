@@ -162,3 +162,24 @@ class TestContainerLoader:
                 assert len(e.failed) == 1, "Only one container should fail"
         finally:
             neat_client.data_modeling.containers.delete([valid_container.as_id()])
+
+
+class TestSchemaLoader:
+    def test_retrieve_schema(self, neat_client: NeatClient, space: dm.Space) -> None:
+        schema = neat_client.schema.retrieve(
+            [
+                dm.ViewId("cdf_cdm", "CogniteAsset", "v1"),
+                dm.ViewId("cdf_cdm", "CogniteDescribable", "v1"),
+                dm.ViewId("cdf_cdm", "CogniteSourcable", "v1"),
+                dm.ViewId("cdf_cdm", "CogniteFile", "v1"),
+                dm.ViewId("cdf_cdm", "CogniteTimeSeries", "v1"),
+            ],
+            [
+                dm.ContainerId("cdf_cdm", "CogniteFile"),
+                dm.ContainerId("cdf_cdm", "CogniteTimeSeries"),
+                dm.ContainerId("cdf_cdm", "CogniteDescribable"),
+            ],
+        )
+
+        assert len(schema.containers) == 27
+        assert len(schema.views) == 30

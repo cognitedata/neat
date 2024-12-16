@@ -20,7 +20,7 @@ class SchemaAPI:
         view_ids: Sequence[dm.ViewId],
         container_ids: Sequence[dm.ContainerId],
         include_ancestors: bool = True,
-        include_connections=True,
+        include_connections: bool = True,
         data_model_id: dm.DataModelId | None = None,
     ) -> DMSSchema:
         data_model_id = data_model_id or dm.DataModelId("NEAT_LOOKUP", "NEAT_LOOKUP", "NEAT_LOOKUP")

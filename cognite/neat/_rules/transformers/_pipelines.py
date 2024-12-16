@@ -1,13 +1,16 @@
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules._shared import InputRules, MaybeRules, VerifiedRules
-from cognite.neat._rules.importers import BaseImporter
 from cognite.neat._rules.models import VERIFIED_RULES_BY_ROLE, RoleTypes
 
 from ._base import RulesPipeline, RulesTransformer
 from ._converters import ConvertToRules
 from ._verification import VerifyAnyRules
+
+if TYPE_CHECKING:
+    from cognite.neat._rules.importers import BaseImporter
 
 
 class ImporterPipeline(RulesPipeline[InputRules, VerifiedRules]):
@@ -15,14 +18,16 @@ class ImporterPipeline(RulesPipeline[InputRules, VerifiedRules]):
 
     def __init__(
         self,
-        importer: BaseImporter[InputRules],
+        importer: "BaseImporter[InputRules]",
         items: Iterable[RulesTransformer[InputRules, VerifiedRules]] | None = None,
     ) -> None:
         super().__init__(items or [])
         self._importer = importer
 
     @classmethod
-    def _create_pipeline(cls, importer: BaseImporter[InputRules], role: RoleTypes | None = None) -> "ImporterPipeline":
+    def _create_pipeline(
+        cls, importer: "BaseImporter[InputRules]", role: RoleTypes | None = None
+    ) -> "ImporterPipeline":
         items: list[RulesTransformer] = [VerifyAnyRules(errors="continue", validate=True)]
         if role is not None:
             out_cls = VERIFIED_RULES_BY_ROLE[role]
@@ -30,7 +35,7 @@ class ImporterPipeline(RulesPipeline[InputRules, VerifiedRules]):
         return cls(importer, items)
 
     @classmethod
-    def try_verify(cls, importer: BaseImporter, role: RoleTypes | None = None) -> MaybeRules[VerifiedRules]:
+    def try_verify(cls, importer: "BaseImporter", role: RoleTypes | None = None) -> MaybeRules[VerifiedRules]:
         """This is a standard pipeline that verifies, convert and return the rules from the importer.
 
         Args:
@@ -43,7 +48,7 @@ class ImporterPipeline(RulesPipeline[InputRules, VerifiedRules]):
         return cls._create_pipeline(importer, role).try_execute()
 
     @classmethod
-    def verify(cls, importer: BaseImporter, role: RoleTypes | None = None) -> VerifiedRules:
+    def verify(cls, importer: "BaseImporter", role: RoleTypes | None = None) -> VerifiedRules:
         """Verify the rules."""
         return cls._create_pipeline(importer, role).execute()
 

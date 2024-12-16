@@ -315,6 +315,39 @@ class NeatGraphStore:
 
         yield from self._read_via_class_entity(class_entity)
 
+    def count_of_id(self, neat_id: URIRef) -> int:
+        """Count the number of instances of a given type
+
+        Args:
+            neat_id: Type for which instances are to be counted
+
+        Returns:
+            Number of instances
+        """
+        if not self.rules:
+            warnings.warn("Rules not found in graph store!", stacklevel=2)
+            return 0
+
+        class_entity = next(
+            (definition.class_ for definition in self.rules.classes if definition.neatId == neat_id), None
+        )
+        if not class_entity:
+            warnings.warn("Desired type not found in graph!", stacklevel=2)
+            return 0
+
+        if not (class_uri := InformationAnalysis(self.rules).class_uri(class_entity)):
+            warnings.warn(
+                f"Class {class_entity.suffix} does not have namespace defined for prefix {class_entity.prefix} Rules!",
+                stacklevel=2,
+            )
+            return 0
+
+        return self.count_of_type(class_uri)
+
+    def count_of_type(self, class_uri: URIRef) -> int:
+        query = f"SELECT (COUNT(?instance) AS ?instanceCount) WHERE {{ ?instance a <{class_uri}> }}"
+        return int(next(iter(self.graph.query(query)))[0])  # type: ignore[arg-type, index]
+
     def _parse_file(
         self,
         filepath: Path,

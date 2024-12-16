@@ -17,21 +17,21 @@ from ._mock_graph_generator import MockGraphGenerator
 from ._rdf_file import RdfFileExtractor
 
 __all__ = [
-    "BaseExtractor",
     "AssetsExtractor",
+    "BaseExtractor",
     "ClassicGraphExtractor",
+    "DMSExtractor",
     "DataSetExtractor",
-    "MockGraphGenerator",
-    "RelationshipsExtractor",
-    "TimeSeriesExtractor",
-    "SequencesExtractor",
+    "DexpiExtractor",
     "EventsExtractor",
     "FilesExtractor",
-    "LabelsExtractor",
-    "RdfFileExtractor",
-    "DexpiExtractor",
-    "DMSExtractor",
     "IODDExtractor",
+    "LabelsExtractor",
+    "MockGraphGenerator",
+    "RdfFileExtractor",
+    "RelationshipsExtractor",
+    "SequencesExtractor",
+    "TimeSeriesExtractor",
 ]
 
 
