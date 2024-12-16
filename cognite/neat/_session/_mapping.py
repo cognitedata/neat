@@ -38,6 +38,11 @@ class DataModelMappingAPI:
         If you extend CogniteAsset, with for example, ClassicAsset. You will map the property `parentId` to `parent`.
         If you set `user_parent_property_name` to True, the `parentId` will be renamed to `parent` after the
         mapping is done. If you set it to False, the property will remain `parentId`.
+
+        Example:
+            ```python
+            neat.mapping.classic_to_core(company_prefix="WindFarmX", use_parent_property_name=True)
+            ```
         """
         source_id, rules = self._state.data_model.last_verified_dms_rules
 

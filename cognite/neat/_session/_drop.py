@@ -23,6 +23,12 @@ class DropAPI:
 
         Args:
             type: The type of instances to drop.
+
+        Example:
+            ```python
+            node_type_to_drop = "Pump"
+            neat.drop.instances(node_type_to_drop)
+            ```
         """
         type_list = type if isinstance(type, list) else [type]
         uri_type_type = dict((v, k) for k, v in self._state.instances.store.queries.types.items())
