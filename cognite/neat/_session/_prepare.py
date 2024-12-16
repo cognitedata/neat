@@ -14,6 +14,7 @@ from cognite.neat._constants import (
 from cognite.neat._graph.transformers import (
     AttachPropertyFromTargetToSource,
     ConvertLiteral,
+    LiteralToEntity,
     PruneDeadEndEdges,
     PruneInstancesOfUnknownType,
     PruneTypes,
@@ -285,6 +286,33 @@ class InstancePrepareAPI:
         subject_type, subject_predicate = self._get_type_and_property_uris(*source)
 
         transformer = ConvertLiteral(subject_type, subject_predicate, convert)
+        self._state.instances.store.transform(transformer)
+
+    def property_to_type(self, source: tuple[str | None, str], type: str, new_property: str | None = None) -> None:
+        """Convert a property to a new type.
+
+        Args:
+            source: The source of the conversion. A tuple of (type, property)
+                    where property is the property that should be converted.
+                    You can pass (None, property) to covert all properties with the given name.
+            type: The new type of the property.
+            new_property: Add the identifier as a new property. If None, the new entity will not have a property.
+
+        Example:
+            Convert the property 'source' to SourceSystem
+            ```python
+            neat.prepare.instances.property_to_type(
+                (None, "source"), "SourceSystem"
+            )
+            ```
+        """
+        subject_type: URIRef | None = None
+        if source[0] is not None:
+            subject_type, subject_predicate = self._get_type_and_property_uris(*source)  # type: ignore[arg-type, assignment]
+        else:
+            subject_predicate = self._state.instances.store.queries.property_uri(source[1])[0]
+
+        transformer = LiteralToEntity(subject_type, subject_predicate, type, new_property)
         self._state.instances.store.transform(transformer)
 
 

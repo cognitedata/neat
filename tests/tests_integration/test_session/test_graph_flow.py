@@ -1,6 +1,5 @@
 from typing import Any
 
-import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
@@ -51,6 +50,7 @@ class TestExtractToLoadFlow:
         neat.prepare.instances.convert_data_type(
             ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
         )
+        neat.prepare.instances.property_to_type((None, "source"), "SourceSystem", "name")
 
         neat.infer()
 
@@ -188,7 +188,6 @@ class TestExtractToLoadFlow:
                     value.sort()
         return instance.dump()
 
-    @pytest.mark.skip("In progress, missing to create source entities")
     def test_classic_to_cdf(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
@@ -202,6 +201,7 @@ class TestExtractToLoadFlow:
         neat.prepare.instances.convert_data_type(
             ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
         )
+        neat.prepare.instances.property_to_type((None, "source"), "SourceSystem", "name")
 
         neat.infer()
 
@@ -214,7 +214,7 @@ class TestExtractToLoadFlow:
 
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
-        model_result = neat.to.cdf.data_model()
+        model_result = neat.to.cdf.data_model(existing="force")
         has_errors = {res.name: res.error_messages for res in model_result if res.error_messages}
         assert not has_errors, has_errors
 

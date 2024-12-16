@@ -18,6 +18,7 @@ Changes are grouped as follows:
 ## TBD
 ### Added
 - Support for converting data types with `neat.prepare.instances.convert_data_type(...)`.
+- Support for converting data types to connection with `neat.prepare.instances.property_to_type(...)`.
 
 ### Fixed
 - The `neat.to.cdf.instances()` now accounts for the dependencies between the views when 
