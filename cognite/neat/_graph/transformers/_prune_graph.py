@@ -220,7 +220,17 @@ class PruneDeadEndEdges(BaseTransformer):
     """
 
     description: str = "Prunes the graph of specified rdf types that do not have connections to other nodes."
-    _query_template = """
+    _count_query = """
+                    SELECT (COUNT(?object) AS ?objectCount)
+                    WHERE {
+                        ?subject ?predicate ?object .
+                        FILTER (isIRI(?object) && ?predicate != rdf:type)
+                        FILTER NOT EXISTS {?object ?p ?o .}
+                        }
+
+                    """
+
+    _iteration_query = """
                         SELECT ?subject ?predicate ?object
                         WHERE {
                             ?subject ?predicate ?object .
@@ -232,7 +242,10 @@ class PruneDeadEndEdges(BaseTransformer):
                       """
 
     def transform(self, graph: Graph) -> None:
-        for triple in graph.query(self._query_template):
+        non_existing_count = list(graph.query(self._count_query))
+        non_existing_count_number = int(non_existing_count[0][0])  # type: ignore [index, arg-type]
+
+        for triple in graph.query(self._iteration_query):
             graph.remove(cast(Triple, triple))
 
 
@@ -241,7 +254,7 @@ class PruneInstancesOfUnknownType(BaseTransformer):
     Removes all the triples where object is a node that is not found in graph
     """
 
-    description: str = "Prunes the graph of specified rdf types that do not have connections to other nodes."
+    description: str = "Prunes the graph of triples where the object is a node that is not found in the graph."
     _query_template = """
                     SELECT DISTINCT ?subject
                     WHERE {
