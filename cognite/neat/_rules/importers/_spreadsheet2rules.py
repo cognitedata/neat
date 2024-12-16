@@ -11,7 +11,7 @@ from typing import Literal, cast
 import pandas as pd
 from cognite.client.utils._importing import local_import
 from pandas import ExcelFile
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
 
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import (
@@ -273,6 +273,14 @@ class ExcelImporter(BaseImporter[T_InputRules]):
         rules_cls = INPUT_RULES_BY_ROLE[original_role]
         rules = cast(T_InputRules, rules_cls.load(sheets))
         return ReadRules(rules, issue_list, {"read_info_by_sheet": read_info_by_sheet})
+
+    @property
+    def description(self) -> str:
+        return f"Excel file {self.filepath.name} read as unverified data model"
+
+    @property
+    def source_uri(self) -> URIRef:
+        return URIRef(f"file://{self.filepath.name}")
 
 
 class GoogleSheetImporter(BaseImporter[T_InputRules]):
