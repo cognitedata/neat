@@ -4,7 +4,9 @@ from typing import Any, cast
 
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._rules._shared import OutRules, T_VerifiedRules
 from cognite.neat._rules.exporters import BaseExporter
+from cognite.neat._rules.exporters._base import T_Export
 from cognite.neat._rules.importers import BaseImporter
 from cognite.neat._rules.transformers import RulesTransformer
 
@@ -21,7 +23,7 @@ class NeatRulesStore:
             was_attributed_to=UNKNOWN_AGENT,
             id_=importer.source_uri,
         )
-        return self._run(importer.to_rules, agent, source_entity, importer.description)
+        return self._run(importer.to_rules, agent, source_entity, importer.description)[1]
 
     def transform(self, transformer: RulesTransformer) -> IssueList:
         last_entity = self.get_last_successful_entity()
@@ -31,24 +33,33 @@ class NeatRulesStore:
             transformer.agent,
             last_entity,
             transformer.description,
-        )
+        )[1]
 
-    def read(self, exporter: BaseExporter) -> IssueList:
+    def read(self, exporter: BaseExporter[T_VerifiedRules, T_Export]) -> T_Export:
         last_entity = self.get_last_successful_entity()
-        return self._run(
-            lambda: exporter.export(last_entity.result),
+        result = last_entity.result
+        if not isinstance(result, OutRules):
+            raise NeatValueError(f"Expected OutRules, got {type(result)}")
+        rules = result.get_rules()
+
+        result, _ = self._run(
+            lambda: exporter.export(rules),  # type: ignore[arg-type]
             exporter.agent,
             last_entity,
             exporter.description,
         )
+        return result
 
-    def _run(self, action: Callable[[], Any], agent: Agent, source_entity: Entity, description: str) -> IssueList:
+    def _run(
+        self, action: Callable[[], Any], agent: Agent, source_entity: Entity, description: str
+    ) -> tuple[Any, IssueList]:
         start = datetime.now(timezone.utc)
         issue_list = IssueList()
         with catch_issues(issue_list) as _:
-            input_rules = action()
+            result = action()
         end = datetime.now(timezone.utc)
-        issue_list.extend(input_rules.issues)
+        if hasattr(result, "issues") and isinstance(result.issues, IssueList):
+            issue_list.extend(result.issues)
 
         activity = Activity(
             was_associated_with=agent,
@@ -59,7 +70,7 @@ class NeatRulesStore:
         target_entity = ModelEntity(
             was_attributed_to=agent,
             was_generated_by=activity,
-            result=input_rules,
+            result=result,
         )
 
         change = Change(
@@ -70,7 +81,7 @@ class NeatRulesStore:
             source_entity=source_entity,
         )
         self.provenance.append(change)
-        return issue_list
+        return result, issue_list
 
     def get_last_entity(self) -> ModelEntity:
         if not self.provenance:

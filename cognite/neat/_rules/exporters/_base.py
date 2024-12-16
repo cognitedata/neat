@@ -32,8 +32,10 @@ class BaseExporter(ABC, Generic[T_VerifiedRules, T_Export]):
         return class_html_doc(cls, include_factory_methods=False)
 
     @property
-    def agent(self) -> ProvenanceAgent:
+    def agent(self) -> "ProvenanceAgent":
         """Provenance agent for the importer."""
+        from cognite.neat._store._provenance import Agent as ProvenanceAgent
+
         return ProvenanceAgent(id_=DEFAULT_NAMESPACE[f"agent/{type(self).__name__}"])
 
     @property

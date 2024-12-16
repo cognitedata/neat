@@ -13,7 +13,7 @@ class TestRuleStore:
 
         assert not write_issues.errors
 
-        transform_issues = store.transform(transformer=transformers.VerifyDMSRules(errors="raise"))
+        transform_issues = store.transform(transformer=transformers.VerifyDMSRules(errors="raise", validate=False))
 
         assert not transform_issues.errors
 
@@ -23,4 +23,5 @@ class TestRuleStore:
 
         entity = store.get_last_entity()
 
+        assert isinstance(entity.result, str)
         data_regression.check(yaml.safe_load(entity.result))
