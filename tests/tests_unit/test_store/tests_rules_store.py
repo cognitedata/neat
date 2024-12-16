@@ -6,7 +6,7 @@ from cognite.neat._store import NeatRulesStore
 
 
 class TestRuleStore:
-    def test_write_transform_read(self, data_regression: DataRegressionFixture) -> None:
+    def test_write_transform_read(self, deterministic_uuid4: None, data_regression: DataRegressionFixture) -> None:
         store = NeatRulesStore()
 
         write_issues = store.write(importers.ExcelImporter(catalog.hello_world_pump))
@@ -17,11 +17,7 @@ class TestRuleStore:
 
         assert not transform_issues.errors
 
-        read_issues = store.read(exporters.YAMLExporter())
+        result = store.read(exporters.YAMLExporter())
 
-        assert not read_issues.errors
-
-        entity = store.get_last_entity()
-
-        assert isinstance(entity.result, str)
-        data_regression.check(yaml.safe_load(entity.result))
+        assert isinstance(result, str)
+        data_regression.check(yaml.safe_load(result))
