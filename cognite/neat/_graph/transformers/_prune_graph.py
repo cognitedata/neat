@@ -4,6 +4,7 @@ from rdflib import Graph, Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._shared import Triple
+from cognite.neat._utils.collection_ import iterate_progress_bar
 from cognite.neat._utils.rdf_ import as_neat_compliant_uri
 from cognite.neat._utils.text import sentence_or_string_to_camel
 
@@ -230,7 +231,7 @@ class PruneDeadEndEdges(BaseTransformer):
 
                     """
 
-    _iteration_query = """
+    _iterate_query = """
                         SELECT ?subject ?predicate ?object
                         WHERE {
                             ?subject ?predicate ?object .
@@ -245,7 +246,11 @@ class PruneDeadEndEdges(BaseTransformer):
         non_existing_count = list(graph.query(self._count_query))
         non_existing_count_number = int(non_existing_count[0][0])  # type: ignore [index, arg-type]
 
-        for triple in graph.query(self._iteration_query):
+        for triple in iterate_progress_bar(  # type: ignore[misc]
+            graph.query(self._iterate_query),
+            total=non_existing_count_number,
+            description="Removing non-existent object nodes.",
+        ):
             graph.remove(cast(Triple, triple))
 
 
