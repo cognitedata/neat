@@ -199,23 +199,6 @@ class ExcelReadAPI(BaseReadAPI):
         """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
         or a DMS Architect.
 
-    Args:
-        io: file path to the Excel sheet
-
-    Example:
-        ```python
-        neat.read.excel("information_or_dms_rules_sheet.xlsx")
-        ```
-    """
-
-    def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
-        super().__init__(state, client, verbose)
-        self.examples = ExcelExampleAPI(state, client, verbose)
-
-    def __call__(self, io: Any) -> IssueList:
-        """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
-        or a DMS Architect.
-
         Args:
             io: file path to the Excel sheet
         """
@@ -234,31 +217,6 @@ class ExcelReadAPI(BaseReadAPI):
                 start,
                 end,
                 description=f"Excel file {reader!s} read as unverified data model",
-            )
-            self._store_rules(input_rules, change)
-        self._state.data_model.issue_lists.append(input_rules.issues)
-        return input_rules.issues
-
-
-@session_class_wrapper
-class ExcelExampleAPI(BaseReadAPI):
-    """Used as example for reading some data model into the NeatSession."""
-
-    @property
-    def pump_example(self) -> IssueList:
-        """Reads the Nordic 44 knowledge graph into the NeatSession graph store."""
-        start = datetime.now(timezone.utc)
-        importer: importers.ExcelImporter = importers.ExcelImporter(catalog.hello_world_pump)
-        input_rules: ReadRules = importer.to_rules()
-        end = datetime.now(timezone.utc)
-
-        if input_rules.rules:
-            change = Change.from_rules_activity(
-                input_rules,
-                importer.agent,
-                start,
-                end,
-                description="Pump Example read as unverified data model",
             )
             self._store_rules(input_rules, change)
         self._state.data_model.issue_lists.append(input_rules.issues)

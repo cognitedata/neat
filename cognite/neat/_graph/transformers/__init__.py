@@ -29,8 +29,6 @@ __all__ = [
     "ConvertLiteral",
     "LiteralToEntity",
     "MakeConnectionOnExactMatch",
-    "ConvertLiteral",
-    "MakeConnectionOnExactMatch",
     "PruneDanglingNodes",
     "PruneDeadEndEdges",
     "PruneInstancesOfUnknownType",
