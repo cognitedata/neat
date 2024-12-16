@@ -9,9 +9,9 @@ from cognite.neat._workflows.model import (
 
 __all__ = [
     "BaseWorkflow",
-    "WorkflowStepDefinition",
-    "WorkflowManager",
-    "WorkflowStepEvent",
-    "WorkflowFullStateReport",
     "FlowMessage",
+    "WorkflowFullStateReport",
+    "WorkflowManager",
+    "WorkflowStepDefinition",
+    "WorkflowStepEvent",
 ]

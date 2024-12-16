@@ -15,25 +15,26 @@ from ._prune_graph import (
     PruneTypes,
 )
 from ._rdfpath import AddSelfReferenceProperty, MakeConnectionOnExactMatch
-from ._value_type import ConvertLiteral, SplitMultiValueProperty
+from ._value_type import ConvertLiteral, LiteralToEntity, SplitMultiValueProperty
 
 __all__ = [
     "AddAssetDepth",
-    "AssetTimeSeriesConnector",
-    "AssetSequenceConnector",
-    "AssetFileConnector",
-    "AssetEventConnector",
-    "AssetRelationshipConnector",
     "AddSelfReferenceProperty",
-    "SplitMultiValueProperty",
-    "RelationshipAsEdgeTransformer",
-    "MakeConnectionOnExactMatch",
+    "AssetEventConnector",
+    "AssetFileConnector",
+    "AssetRelationshipConnector",
+    "AssetSequenceConnector",
+    "AssetTimeSeriesConnector",
     "AttachPropertyFromTargetToSource",
+    "ConvertLiteral",
+    "LiteralToEntity",
+    "MakeConnectionOnExactMatch",
     "PruneDanglingNodes",
-    "PruneTypes",
     "PruneDeadEndEdges",
     "PruneInstancesOfUnknownType",
-    "ConvertLiteral",
+    "PruneTypes",
+    "RelationshipAsEdgeTransformer",
+    "SplitMultiValueProperty",
 ]
 
 Transformers = (
@@ -53,4 +54,5 @@ Transformers = (
     | PruneDeadEndEdges
     | PruneInstancesOfUnknownType
     | ConvertLiteral
+    | LiteralToEntity
 )

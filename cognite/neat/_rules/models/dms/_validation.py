@@ -1,5 +1,6 @@
 import warnings
 from collections import Counter, defaultdict
+from collections.abc import Mapping
 from functools import lru_cache
 from typing import ClassVar
 
@@ -115,7 +116,9 @@ class DMSValidation:
             **ref_container_by_id,
         }
         all_views_by_id: dict[dm.ViewId, dm.ViewApply | dm.View] = {**dict(dms_schema.views.items()), **ref_view_by_id}
-        properties_by_ids = self._as_properties_by_ids(dms_schema, ref_view_by_id)
+        properties_by_ids = self._as_properties_by_ids(dms_schema.views, ref_view_by_id)
+        ref_properties_by_ids = self._as_properties_by_ids(ref_view_by_id, {})
+        all_properties_by_ids = {**ref_properties_by_ids, **properties_by_ids}
         view_properties_by_id = self._as_view_properties_by_id(properties_by_ids)
         parents_view_ids_by_child_id = self._parent_view_ids_by_child_id(all_views_by_id)
 
@@ -132,7 +135,9 @@ class DMSValidation:
         # SDK classes validation
         issue_list.extend(self._containers_are_proper_size(dms_schema))
         issue_list.extend(
-            self._validate_reverse_connections(properties_by_ids, all_containers_by_id, parents_view_ids_by_child_id)
+            self._validate_reverse_connections(
+                properties_by_ids, all_containers_by_id, parents_view_ids_by_child_id, all_properties_by_ids
+            )
         )
         issue_list.extend(self._validate_schema(dms_schema, all_views_by_id, all_containers_by_id))
         issue_list.extend(self._validate_referenced_container_limits(dms_schema.views, view_properties_by_id))
@@ -140,22 +145,22 @@ class DMSValidation:
 
     @staticmethod
     def _as_properties_by_ids(
-        dms_schema: DMSSchema, ref_view_by_id: dict[dm.ViewId, dm.View]
+        view_by_id: Mapping[dm.ViewId, dm.ViewApply] | Mapping[dm.ViewId, dm.View],
+        ref_view_by_id: dict[dm.ViewId, dm.View],
     ) -> dict[tuple[ViewId, str], ViewPropertyApply | ViewProperty]:
         # Priority DMS schema properties.
         # No need to do long lookups in ref_views as these already contain all ancestor properties.
         properties_by_id: dict[tuple[ViewId, str], ViewPropertyApply | ViewProperty] = {}
-        for view in dms_schema.views.values():
-            view_id = view.as_id()
+        for view_id, view in view_by_id.items():
             for prop_id, prop in (view.properties or {}).items():
                 properties_by_id[(view_id, prop_id)] = prop
             if view.implements:
                 to_check = view.implements.copy()
                 while to_check:
                     parent_id = to_check.pop()
-                    if parent_id in dms_schema.views:
-                        # Priority DMS Schema properties
-                        parent_view = dms_schema.views[parent_id]
+                    if parent_id in view_by_id:
+                        # Priority of the DMS schema properties
+                        parent_view = view_by_id[parent_id]
                         for prop_id, prop in (parent_view.properties or {}).items():
                             if (view_id, prop_id) not in properties_by_id:
                                 properties_by_id[(view_id, prop_id)] = prop
@@ -406,6 +411,7 @@ class DMSValidation:
         view_property_by_property_id: dict[tuple[dm.ViewId, str], ViewPropertyApply | ViewProperty],
         containers_by_id: dict[dm.ContainerId, dm.ContainerApply | dm.Container],
         parents_by_view: dict[dm.ViewId, set[dm.ViewId]],
+        all_view_property_by_property_id: dict[tuple[dm.ViewId, str], ViewPropertyApply | ViewProperty],
     ) -> IssueList:
         issue_list = IssueList()
         # do not check for reverse connections in Cognite models
@@ -416,7 +422,7 @@ class DMSValidation:
             if not isinstance(prop_, ReverseDirectRelationApply | ReverseDirectRelation):
                 continue
             target_id = prop_.through.source, prop_.through.property
-            if target_id not in view_property_by_property_id:
+            if target_id not in all_view_property_by_property_id:
                 issue_list.append(
                     ReversedConnectionNotFeasibleError(
                         view_id,
@@ -430,7 +436,7 @@ class DMSValidation:
                 # Todo: How to handle this case? Should not happen if you created the model with Neat
                 continue
 
-            target_property = view_property_by_property_id[(target_id[0], target_id[1])]
+            target_property = all_view_property_by_property_id[(target_id[0], target_id[1])]
             # Validate that the target is a direct relation pointing to the view_id
             is_direct_relation = False
             if isinstance(target_property, dm.MappedProperty) and isinstance(target_property.type, dm.DirectRelation):

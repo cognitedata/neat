@@ -11,7 +11,7 @@ from cognite.client.credentials import CredentialProvider, OAuthClientCredential
 from cognite.neat import _version
 from cognite.neat._utils.auxiliary import local_import
 
-__all__ = ["get_cognite_client", "EnvironmentVariables"]
+__all__ = ["EnvironmentVariables", "get_cognite_client"]
 
 _LOGIN_FLOW: TypeAlias = Literal["infer", "client_credentials", "interactive", "token"]
 _VALID_LOGIN_FLOWS = get_args(_LOGIN_FLOW)

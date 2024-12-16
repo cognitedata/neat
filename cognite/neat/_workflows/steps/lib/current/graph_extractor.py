@@ -10,7 +10,7 @@ from cognite.neat._workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat._workflows.steps.data_contracts import MultiRuleData, NeatGraph
 from cognite.neat._workflows.steps.step_model import Configurable, Step
 
-__all__ = ["GraphFromRdfFile", "GraphFromMockData"]
+__all__ = ["GraphFromMockData", "GraphFromRdfFile"]
 
 CATEGORY = __name__.split(".")[-1].replace("_", " ").title()
 

@@ -32,12 +32,12 @@ else:
 
 
 __all__ = [
-    "NeatIssue",
-    "NeatError",
-    "NeatWarning",
     "DefaultWarning",
-    "NeatIssueList",
     "MultiValueError",
+    "NeatError",
+    "NeatIssue",
+    "NeatIssueList",
+    "NeatWarning",
 ]
 
 T_Identifier = TypeVar("T_Identifier", bound=Hashable)
