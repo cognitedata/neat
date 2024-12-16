@@ -11,7 +11,7 @@ from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules import importers
+from cognite.neat._rules import catalog, importers
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers import BaseImporter
 from cognite.neat._store._provenance import Activity as ProvenanceActivity
@@ -203,7 +203,17 @@ class ExcelReadAPI(BaseReadAPI):
         ```
     """
 
+    def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
+        super().__init__(state, client, verbose)
+        self.examples = ExcelExampleAPI(state, client, verbose)
+
     def __call__(self, io: Any) -> IssueList:
+        """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
+        or a DMS Architect.
+
+        Args:
+            io: file path to the Excel sheet
+        """
         reader = NeatReader.create(io)
         start = datetime.now(timezone.utc)
         if not isinstance(reader, PathReader):
@@ -219,6 +229,31 @@ class ExcelReadAPI(BaseReadAPI):
                 start,
                 end,
                 description=f"Excel file {reader!s} read as unverified data model",
+            )
+            self._store_rules(input_rules, change)
+        self._state.data_model.issue_lists.append(input_rules.issues)
+        return input_rules.issues
+
+
+@session_class_wrapper
+class ExcelExampleAPI(BaseReadAPI):
+    """Used as example for reading some data model into the NeatSession."""
+
+    @property
+    def pump_example(self) -> IssueList:
+        """Reads the Nordic 44 knowledge graph into the NeatSession graph store."""
+        start = datetime.now(timezone.utc)
+        importer: importers.ExcelImporter = importers.ExcelImporter(catalog.hello_world_pump)
+        input_rules: ReadRules = importer.to_rules()
+        end = datetime.now(timezone.utc)
+
+        if input_rules.rules:
+            change = Change.from_rules_activity(
+                input_rules,
+                importer.agent,
+                start,
+                end,
+                description="Pump Example read as unverified data model",
             )
             self._store_rules(input_rules, change)
         self._state.data_model.issue_lists.append(input_rules.issues)
@@ -501,6 +536,7 @@ class RDFReadAPI(BaseReadAPI):
             raise NeatSessionError(f"Expected data model or instances, got {type}")
 
 
+@session_class_wrapper
 class RDFExamples:
     """Used as example for reading some triples into the NeatSession knowledge grapgh."""
 

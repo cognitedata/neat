@@ -123,8 +123,17 @@ class ShowDataModelAPI(ShowBaseAPI):
         """Generate a DiGraph from the last verified DMS rules."""
         di_graph = nx.DiGraph()
 
+        # Views with properties or used as ValueType
+        # If a view is not used in properties or as ValueType, it is not added to the graph
+        # as we typically do not have the properties for it.
+        used_views = {prop_.view for prop_ in rules.properties} | {
+            prop_.value_type for prop_ in rules.properties if isinstance(prop_.value_type, ViewEntity)
+        }
+
         # Add nodes and edges from Views sheet
         for view in rules.views:
+            if view.view not in used_views:
+                continue
             # if possible use humanreadable label coming from the view name
             if not di_graph.has_node(view.view.suffix):
                 di_graph.add_node(view.view.suffix, label=view.view.suffix)
