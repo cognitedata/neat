@@ -261,28 +261,35 @@ function highlightFilter(filter) {
                             >
                                 <option selected>Select a Node by ID</option>
                                 
+                                    <option value="Documentation">Documentation</option>
+
+                                    <option value="Pump">Pump</option>
+
+                                    <option value="Facility">Facility</option>
+
+                                    <option value="CogniteTimeSeries">CogniteTimeSeries</option>
                                     <option value="MyOrgActivity">MyOrgActivity</option>
-                                
+
                                     <option value="MyOrgAsset">MyOrgAsset</option>
-                                
+
                                     <option value="MyOrgEquipment">MyOrgEquipment</option>
-                                
+
                                     <option value="MyOrgSourceSystem">MyOrgSourceSystem</option>
-                                
+
                                     <option value="MyOrgTimeSeries">MyOrgTimeSeries</option>
-                                
+
                                     <option value="MyOrgAssetClass">MyOrgAssetClass</option>
-                                
+
                                     <option value="MyOrgFile">MyOrgFile</option>
-                                
+
                                     <option value="MyOrgAssetType">MyOrgAssetType</option>
-                                
+
                                     <option value="MyOrgEquipmentType">MyOrgEquipmentType</option>
-                                
+
                                     <option value="MyOrgFileCategory">MyOrgFileCategory</option>
-                                
+
                                     <option value="MyOrgUnit">MyOrgUnit</option>
-                                
+
                             </select>
                         </div>
                         <div class="col-2 pb-2">
@@ -335,6 +342,8 @@ function highlightFilter(filter) {
                   
 
                   // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "Documentation", "label": "Documentation", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Pump", "label": "Pump", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Facility", "label": "Facility", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteTimeSeries", "label": "CogniteTimeSeries", "shape": "dot", "size": 10}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "Documentation", "label": "relatedPumps", "to": "Pump", "width": 1}, {"arrows": "to", "from": "Facility", "label": "hasPumps", "to": "Pump", "width": 1}, {"arrows": "to", "from": "Pump", "label": "documentation", "to": "Documentation", "width": 1}, {"arrows": "to", "from": "Pump", "label": "livesIn", "to": "Facility", "width": 1}, {"arrows": "to", "from": "Pump", "label": "temperature", "to": "CogniteTimeSeries", "width": 1}]);
                   nodes = new vis.DataSet([{"color": "#97c2fc", "id": "MyOrgActivity", "label": "MyOrgActivity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "MyOrgAsset", "label": "MyOrgAsset", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "MyOrgEquipment", "label": "MyOrgEquipment", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "MyOrgSourceSystem", "label": "MyOrgSourceSystem", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "MyOrgTimeSeries", "label": "MyOrgTimeSeries", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "MyOrgAssetClass", "label": "MyOrgAssetClass", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "MyOrgFile", "label": "MyOrgFile", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "MyOrgAssetType", "label": "MyOrgAssetType", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "MyOrgEquipmentType", "label": "MyOrgEquipmentType", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "MyOrgFileCategory", "label": "MyOrgFileCategory", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "MyOrgUnit", "label": "MyOrgUnit", "shape": "dot", "size": 10}]);
                   edges = new vis.DataSet([{"arrows": "to", "from": "MyOrgActivity", "label": "Assets", "to": "MyOrgAsset", "width": 1}, {"arrows": "to", "from": "MyOrgActivity", "label": "Equipment", "to": "MyOrgEquipment", "width": 1}, {"arrows": "to", "from": "MyOrgActivity", "label": "source", "to": "MyOrgSourceSystem", "width": 1}, {"arrows": "to", "from": "MyOrgActivity", "label": "Time series", "to": "MyOrgTimeSeries", "width": 1}, {"arrows": "to", "from": "MyOrgAsset", "label": "Activities", "to": "MyOrgActivity", "width": 1}, {"arrows": "to", "from": "MyOrgAsset", "label": "Asset class", "to": "MyOrgAssetClass", "width": 1}, {"arrows": "to", "from": "MyOrgAsset", "label": "Root", "to": "MyOrgAsset", "width": 1}, {"arrows": "to", "from": "MyOrgAsset", "label": "Equipment", "to": "MyOrgEquipment", "width": 1}, {"arrows": "to", "from": "MyOrgAsset", "label": "Files", "to": "MyOrgFile", "width": 1}, {"arrows": "to", "from": "MyOrgAsset", "label": "source", "to": "MyOrgSourceSystem", "width": 1}, {"arrows": "to", "from": "MyOrgAsset", "label": "Time series", "to": "MyOrgTimeSeries", "width": 1}, {"arrows": "to", "from": "MyOrgAsset", "label": "Asset type", "to": "MyOrgAssetType", "width": 1}, {"arrows": "to", "from": "MyOrgAssetType", "label": "Asset class", "to": "MyOrgAssetClass", "width": 1}, {"arrows": "to", "from": "MyOrgEquipment", "label": "Activities", "to": "MyOrgActivity", "width": 1}, {"arrows": "to", "from": "MyOrgEquipment", "label": "Asset", "to": "MyOrgAsset", "width": 1}, {"arrows": "to", "from": "MyOrgEquipment", "label": "Equipment type", "to": "MyOrgEquipmentType", "width": 1}, {"arrows": "to", "from": "MyOrgEquipment", "label": "Files", "to": "MyOrgFile", "width": 1}, {"arrows": "to", "from": "MyOrgEquipment", "label": "source", "to": "MyOrgSourceSystem", "width": 1}, {"arrows": "to", "from": "MyOrgEquipment", "label": "Time series", "to": "MyOrgTimeSeries", "width": 1}, {"arrows": "to", "from": "MyOrgFile", "label": "Assets", "to": "MyOrgAsset", "width": 1}, {"arrows": "to", "from": "MyOrgFile", "label": "Category", "to": "MyOrgFileCategory", "width": 1}, {"arrows": "to", "from": "MyOrgFile", "label": "Equipment", "to": "MyOrgEquipment", "width": 1}, {"arrows": "to", "from": "MyOrgFile", "label": "source", "to": "MyOrgSourceSystem", "width": 1}, {"arrows": "to", "from": "MyOrgTimeSeries", "label": "Activities", "to": "MyOrgActivity", "width": 1}, {"arrows": "to", "from": "MyOrgTimeSeries", "label": "Assets", "to": "MyOrgAsset", "width": 1}, {"arrows": "to", "from": "MyOrgTimeSeries", "label": "Equipment", "to": "MyOrgEquipment", "width": 1}, {"arrows": "to", "from": "MyOrgTimeSeries", "label": "source", "to": "MyOrgSourceSystem", "width": 1}, {"arrows": "to", "from": "MyOrgTimeSeries", "label": "Unit", "to": "MyOrgUnit", "width": 1}]);
 

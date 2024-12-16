@@ -23,6 +23,24 @@ except ImportError:
 class InspectAPI:
     """Inspect issues or outcomes after performing operations with NeatSession.
     To inspect properties of the current data model, try out `.properties()`.
+
+    Example:
+        Inspect issues
+        ```python
+        neat.inspect.issues()
+        ```
+
+    Example:
+        Inspect outcome after writing a data model
+        ```python
+        neat.inspect.outcome.data_model()
+        ```
+
+    Example:
+        Inspect outcome after writing instances
+        ```python
+        neat.inspect.outcome.instances()
+        ```
     """
 
     def __init__(self, state: SessionState) -> None:
@@ -32,7 +50,15 @@ class InspectAPI:
 
     @property
     def properties(self) -> pd.DataFrame:
-        """Returns the properties of the current data model."""
+        """Returns the properties of the current data model.
+
+        Example:
+            Inspect properties of the current data model
+            ```python
+            # From an active NeatSession
+            neat.inspect.properties
+            ```
+        """
         return self._state.data_model.last_verified_rule[1].properties.to_pandas()
 
 

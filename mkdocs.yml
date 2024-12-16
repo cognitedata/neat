@@ -57,6 +57,7 @@ nav:
       - To: reference/NeatSession/to.md
       - Inspect: reference/NeatSession/inspect.md
       - Show: reference/NeatSession/show.md
+      - Drop: reference/NeatSession/drop.md
   - Contributor Docs:
       - Overview: reference/overview.md
       - Issues:
@@ -103,7 +104,7 @@ plugins:
         python:
           options:
             show_root_heading: true
-            show_source: true
+            show_source: false
             members_order: source
   - autorefs
   - search

@@ -1,16 +1,17 @@
 import warnings
 from collections.abc import Callable
 from typing import Any, cast
+from urllib.parse import quote
 
 import rdflib
-from rdflib import XSD, Graph, URIRef
+from rdflib import RDF, XSD, Graph, Namespace, URIRef
 
 from cognite.neat._constants import UNKNOWN_TYPE
 from cognite.neat._graph.queries import Queries
 from cognite.neat._issues.warnings import NeatValueWarning, PropertyDataTypeConversionWarning
 from cognite.neat._utils.auxiliary import string_to_ideal_type
 from cognite.neat._utils.collection_ import iterate_progress_bar
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import get_namespace, remove_namespace_from_uri
 
 from ._base import BaseTransformer
 
@@ -156,4 +157,104 @@ class ConvertLiteral(BaseTransformer):
                 continue
 
             graph.add((instance, self.subject_predicate, rdflib.Literal(converted_value)))
+            graph.remove((instance, self.subject_predicate, literal))
+
+
+class LiteralToEntity(BaseTransformer):
+    description = "Converts a literal value to new entity"
+
+    _count_properties_of_type = """SELECT (COUNT(?property) AS ?propertyCount)
+    WHERE {{
+      ?instance a <{subject_type}> .
+      ?instance <{subject_predicate}> ?property
+      FILTER(isLiteral(?property))
+    }}"""
+    _count_connections_of_type = """SELECT (COUNT(?property) AS ?propertyCount)
+    WHERE {{
+      ?instance a <{subject_type}> .
+      ?instance <{subject_predicate}> ?property
+      FILTER(isIRI(?property))
+    }}"""
+
+    _properties_of_type = """SELECT ?instance ?property
+    WHERE {{
+      ?instance a <{subject_type}> .
+      ?instance <{subject_predicate}> ?property
+      FILTER(isLiteral(?property))
+    }}"""
+
+    _count_properties = """SELECT (COUNT(?property) AS ?propertyCount)
+    WHERE {{
+      ?instance <{subject_predicate}> ?property
+      FILTER(isLiteral(?property))
+    }}"""
+    _count_connections = """SELECT (COUNT(?property) AS ?propertyCount)
+        WHERE {{
+          ?instance <{subject_predicate}> ?property
+          FILTER(isIRI(?property))
+        }}"""
+    _properties = """SELECT ?instance ?property
+    WHERE {{
+      ?instance <{subject_predicate}> ?property
+      FILTER(isLiteral(?property))
+    }}"""
+
+    def __init__(
+        self, subject_type: URIRef | None, subject_predicate: URIRef, entity_type: str, new_property: str | None = None
+    ) -> None:
+        self.subject_type = subject_type
+        self.subject_predicate = subject_predicate
+        self.entity_type = entity_type
+        self.new_property = new_property
+
+    def transform(self, graph: Graph) -> None:
+        if self.subject_type is None:
+            count_query = self._count_properties.format(subject_predicate=self.subject_predicate)
+            iterate_query = self._properties.format(subject_predicate=self.subject_predicate)
+            connection_count_query = self._count_connections.format(subject_predicate=self.subject_predicate)
+        else:
+            count_query = self._count_properties_of_type.format(
+                subject_type=self.subject_type, subject_predicate=self.subject_predicate
+            )
+            iterate_query = self._properties_of_type.format(
+                subject_type=self.subject_type, subject_predicate=self.subject_predicate
+            )
+            connection_count_query = self._count_connections_of_type.format(
+                subject_type=self.subject_type, subject_predicate=self.subject_predicate
+            )
+
+        connection_count_res = list(graph.query(connection_count_query))
+        connection_count = int(connection_count_res[0][0])  # type: ignore [index, arg-type]
+        if connection_count > 0:
+            warnings.warn(
+                NeatValueWarning(
+                    f"Skipping {connection_count} of {remove_namespace_from_uri(self.subject_predicate)} "
+                    f"as these are connections and not data values."
+                ),
+                stacklevel=2,
+            )
+
+        property_count_res = list(graph.query(count_query))
+        property_count = int(property_count_res[0][0])  # type: ignore [index, arg-type]
+
+        instance: URIRef
+        description = f"Creating {remove_namespace_from_uri(self.subject_predicate)}."
+        if self.subject_type is not None:
+            description = (
+                f"Creating {remove_namespace_from_uri(self.subject_type)}."
+                f"{remove_namespace_from_uri(self.subject_predicate)}."
+            )
+        for instance, literal in iterate_progress_bar(  # type: ignore[misc, assignment]
+            graph.query(iterate_query),
+            total=property_count,
+            description=description,
+        ):
+            value = cast(rdflib.Literal, literal).toPython()
+            namespace = Namespace(get_namespace(instance))
+            entity_type = namespace[self.entity_type]
+            new_entity = namespace[f"{self.entity_type}_{quote(value)!s}"]
+            graph.add((new_entity, RDF.type, entity_type))
+            if self.new_property is not None:
+                graph.add((new_entity, namespace[self.new_property], rdflib.Literal(value)))
+            graph.add((instance, self.subject_predicate, new_entity))
             graph.remove((instance, self.subject_predicate, literal))

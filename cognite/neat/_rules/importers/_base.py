@@ -3,15 +3,17 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from contextlib import contextmanager, suppress
 from datetime import datetime
-from typing import Any, Generic, Literal
+from typing import TYPE_CHECKING, Any, Generic, Literal
 
 from pydantic import ValidationError
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList, NeatError, NeatWarning
 from cognite.neat._rules._shared import ReadRules, T_InputRules
-from cognite.neat._store._provenance import Agent as ProvenanceAgent
 from cognite.neat._utils.auxiliary import class_html_doc
+
+if TYPE_CHECKING:
+    from cognite.neat._store._provenance import Agent as ProvenanceAgent
 
 
 class BaseImporter(ABC, Generic[T_InputRules]):
@@ -48,8 +50,10 @@ class BaseImporter(ABC, Generic[T_InputRules]):
         return class_html_doc(cls)
 
     @property
-    def agent(self) -> ProvenanceAgent:
+    def agent(self) -> "ProvenanceAgent":
         """Provenance agent for the importer."""
+        from cognite.neat._store._provenance import Agent as ProvenanceAgent
+
         return ProvenanceAgent(id_=DEFAULT_NAMESPACE[f"agent/{type(self).__name__}"])
 
 
