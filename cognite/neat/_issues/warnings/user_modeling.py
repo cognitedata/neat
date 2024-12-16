@@ -12,12 +12,12 @@ from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from ._models import UserModelingWarning
 
 __all__ = [
+    "ContainerPropertyLimitWarning",
     "DirectRelationMissingSourceWarning",
     "EmptyContainerWarning",
     "HasDataFilterOnNoPropertiesViewWarning",
-    "NodeTypeFilterOnParentViewWarning",
     "HasDataFilterOnViewWithReferencesWarning",
-    "ContainerPropertyLimitWarning",
+    "NodeTypeFilterOnParentViewWarning",
     "NotNeatSupportedFilterWarning",
     "ParentInDifferentSpaceWarning",
 ]

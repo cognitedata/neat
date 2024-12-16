@@ -5,7 +5,7 @@ from pathlib import Path
 
 from ._base import NeatError, NeatIssueList, NeatWarning
 
-__all__ = ["Formatter", "BasicHTML", "FORMATTER_BY_NAME"]
+__all__ = ["FORMATTER_BY_NAME", "BasicHTML", "Formatter"]
 
 
 class Formatter(ABC):

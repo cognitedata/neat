@@ -14,11 +14,11 @@ CATEGORY = "IO Steps"
 
 
 __all__ = [
-    "DownloadFileFromGitHub",
-    "UploadFileToGitHub",
-    "DownloadFileFromCDF",
-    "UploadFileToCDF",
     "DownloadDataFromRestApiToFile",
+    "DownloadFileFromCDF",
+    "DownloadFileFromGitHub",
+    "UploadFileToCDF",
+    "UploadFileToGitHub",
 ]
 
 

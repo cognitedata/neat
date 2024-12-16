@@ -232,9 +232,8 @@ def _remove_higher_occurring_sym_pair(
             index = class_linkage[
                 (class_linkage.source_class == source) & (class_linkage.target_class == target)
             ].index.values[0]
-        elif (
-            second_sym_property_occurrence is None
-            or first_sym_property_occurrence <= second_sym_property_occurrence
+        elif second_sym_property_occurrence is None or (
+            first_sym_property_occurrence <= second_sym_property_occurrence
             and second_sym_property_occurrence > first_sym_property_occurrence
         ):
             # this means that target occurrence is unbounded
