@@ -298,7 +298,7 @@ class InstancePrepareAPI:
             type: The new type of the property.
             new_property: Add the identifier as a new property. If None, the new entity will not have a property.
 
-        Examples:
+        Example:
             Convert the property 'source' to SourceSystem
             ```python
             neat.prepare.instances.property_to_type(
