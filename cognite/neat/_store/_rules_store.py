@@ -4,7 +4,7 @@ from cognite.neat._rules.transformers import RulesTransformer
 from ._provenance import Provenance
 
 
-class NeatModelStore:
+class NeatRulesStore:
     def __init__(self):
         self._provenance = Provenance()
 
