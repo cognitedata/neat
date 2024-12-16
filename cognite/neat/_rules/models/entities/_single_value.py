@@ -201,16 +201,28 @@ class Entity(BaseModel, extra="ignore"):
             for field_name, field in self.model_fields.items()
             if (v := getattr(self, field_name)) is not None and field_name not in {"prefix", "suffix"}
         }
+        # We only remove the default values if all the fields are default
+        # For example, if we dump `cdf_cdm:CogniteAsset(version=v1)` and the default is `version=v1`,
+        # we should not remove it unless the space is `cdf_cdm`
+        to_delete: list[str] = []
         if isinstance(defaults, dict):
             for key, value in defaults.items():
                 if key in model_dump and model_dump[key] == value:
-                    del model_dump[key]
-        # Sorting to ensure deterministic order
-        args = ",".join(f"{k}={v}" for k, v in sorted(model_dump.items(), key=lambda x: x[0]))
-        if self.prefix == Undefined or (isinstance(defaults, dict) and self.prefix == defaults.get("prefix")):
+                    to_delete.append(key)
+            if self.prefix == defaults.get("prefix") and len(to_delete) == len(defaults) - 1:
+                base_id = str(self.suffix)
+            else:
+                # Not all fields are default so we dump the full entity definition
+                to_delete = []
+                base_id = f"{self.prefix}:{self.suffix!s}"
+        elif self.prefix == Undefined:
             base_id = str(self.suffix)
         else:
             base_id = f"{self.prefix}:{self.suffix!s}"
+        for key in to_delete:
+            del model_dump[key]
+        # Sorting to ensure deterministic order
+        args = ",".join(f"{k}={v}" for k, v in sorted(model_dump.items(), key=lambda x: x[0]))
         if args:
             return f"{base_id}({args})"
         else:
