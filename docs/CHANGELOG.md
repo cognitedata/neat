@@ -25,6 +25,7 @@ Changes are grouped as follows:
   creating the instances in CDF.
 - Implementing a view with a reverse connection and not overwriting reverse connection from the parent,
   no longer returns a `ReversedConnectionNotFeasibleError` in `neat.verify()`.
+- Dumping any data model in neat now uses `space` and not `prefix` in the Metadata sheet.
 
 ## [0.102.0] - 09-12-**2024**
 ### Fixed

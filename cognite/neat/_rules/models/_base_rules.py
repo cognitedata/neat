@@ -149,7 +149,7 @@ class BaseMetadata(SchemaModel):
 
     role: ClassVar[RoleTypes] = Field(description="Role of the person creating the data model")
     aspect: ClassVar[DataModelAspect] = Field(description="Aspect of the data model")
-    space: SpaceType = Field(alias="prefix", description="The space where the data model is defined")
+    space: SpaceType = Field(description="The space where the data model is defined")
     external_id: DataModelExternalIdType = Field(
         alias="externalId", description="External identifier for the data model"
     )
