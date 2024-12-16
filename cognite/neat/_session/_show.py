@@ -106,16 +106,15 @@ class ShowDataModelAPI(ShowBaseAPI):
         rules = self._state.data_model.last_verified_rule[1]
 
         if isinstance(rules, DMSRules):
-            di_graph = self._generate_dms_di_graph(self._state.data_model.last_verified_dms_rules[1])
-            name = "dms_data_model.html"
+            di_graph = self._generate_dms_di_graph(rules)
         elif isinstance(rules, InformationRules):
-            di_graph = self._generate_info_di_graph(self._state.data_model.last_verified_information_rules[1])
-            name = "information_data_model.html"
+            di_graph = self._generate_info_di_graph(rules)
         else:
             # This should never happen, but we need to handle it to satisfy mypy
             raise NeatSessionError(
                 f"Unsupported type {type(rules) }. Make sure you have either information or DMS rules."
             )
+        name = f"{rules.metadata.identifier!s}.html"
 
         return self._generate_visualization(di_graph, name)
 
@@ -195,17 +194,15 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
         rules = self._state.data_model.last_verified_rule[1]
 
         if isinstance(rules, DMSRules):
-            di_graph = self._generate_dms_di_graph(self._state.data_model.last_verified_dms_rules[1])
-            name = "dms_data_model_implements.html"
+            di_graph = self._generate_dms_di_graph(rules)
         elif isinstance(rules, InformationRules):
-            di_graph = self._generate_info_di_graph(self._state.data_model.last_verified_information_rules[1])
-            name = "information_data_model_implements.html"
+            di_graph = self._generate_info_di_graph(rules)
         else:
             # This should never happen, but we need to handle it to satisfy mypy
             raise NeatSessionError(
                 f"Unsupported type {type(rules) }. Make sure you have either information or DMS rules."
             )
-
+        name = f"{rules.metadata.identifier!s}_implements.html"
         return self._generate_visualization(di_graph, name)
 
     def _generate_dms_di_graph(self, rules: DMSRules) -> nx.DiGraph:
