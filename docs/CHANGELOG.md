@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.103.0] - 16-12-**2024**
 ### Added
 - Support for converting data types with `neat.prepare.instances.convert_data_type(...)`.
 - Support for converting data types to connection with `neat.prepare.instances.property_to_type(...)`.
@@ -26,6 +26,9 @@ Changes are grouped as follows:
 - Implementing a view with a reverse connection and not overwriting reverse connection from the parent,
   no longer returns a `ReversedConnectionNotFeasibleError` in `neat.verify()`.
 - Dumping any data model in neat now uses `space` and not `prefix` in the Metadata sheet.
+
+### Changed
+- To the newest release of neatengine; `v.2.0.3`
 
 ## [0.102.0] - 09-12-**2024**
 ### Fixed
