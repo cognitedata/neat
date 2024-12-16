@@ -20,12 +20,13 @@ import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional, TypeVar
+from typing import Generic, Optional, TypeVar
 
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from rdflib import PROV, RDF, Literal, URIRef
 
 from cognite.neat._constants import CDF_NAMESPACE, DEFAULT_NAMESPACE
+from cognite.neat._issues import IssueList
 from cognite.neat._rules._shared import JustRules, ReadRules, VerifiedRules
 from cognite.neat._shared import FrozenNeatObject, NeatList, Triple
 
@@ -50,6 +51,7 @@ UNKNOWN_AGENT = Agent(acted_on_behalf_of="UNKNOWN", id_=DEFAULT_NAMESPACE["unkno
 @dataclass(frozen=True)
 class Entity:
     was_attributed_to: Agent
+    issues: IssueList = field(default_factory=IssueList)
     was_generated_by: Optional["Activity"] = field(default=None, repr=False)
     id_: URIRef = DEFAULT_NAMESPACE["graph-store"]
 
@@ -115,6 +117,14 @@ class Entity:
             was_attributed_to=UNKNOWN_AGENT,
             id_=DEFAULT_NAMESPACE[f"unknown-entity/{uuid.uuid4()}"],
         )
+
+
+T_Result = TypeVar("T_Result")
+
+
+@dataclass(frozen=True)
+class ModelEntity(Entity, Generic[T_Result]):
+    result: T_Result | None = None
 
 
 INSTANCES_ENTITY = Entity(was_attributed_to=NEAT_AGENT, id_=CDF_NAMESPACE["instances"])
