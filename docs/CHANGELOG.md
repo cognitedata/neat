@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Fixed
+- Writing a model to Excel or YAML no longer skips specifying version and space of Views unless they both match.
+
 ## [0.103.0] - 16-12-**2024**
 ### Added
 - Support for converting data types with `neat.prepare.instances.convert_data_type(...)`.
