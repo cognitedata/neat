@@ -202,12 +202,12 @@ class ExcelReadAPI(BaseReadAPI):
         neat.read.excel("information_or_dms_rules_sheet.xlsx")
         ```
     """
+
     def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
         super().__init__(state, client, verbose)
         self.examples = ExcelExampleAPI(state, client, verbose)
 
     def __call__(self, io: Any) -> IssueList:
-      
         """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
         or a DMS Architect.
 
