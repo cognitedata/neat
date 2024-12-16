@@ -13,6 +13,7 @@ from cognite.neat._rules.models.dms._rules import DMSRules
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._session.exceptions import NeatSessionError
+from cognite.neat._utils.io_ import to_directory_compatible
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._state import SessionState
@@ -114,7 +115,8 @@ class ShowDataModelAPI(ShowBaseAPI):
             raise NeatSessionError(
                 f"Unsupported type {type(rules) }. Make sure you have either information or DMS rules."
             )
-        name = f"{rules.metadata.identifier!s}.html"
+        identifier = to_directory_compatible(str(rules.metadata.identifier))
+        name = f"{identifier}.html"
 
         return self._generate_visualization(di_graph, name)
 
@@ -202,7 +204,8 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
             raise NeatSessionError(
                 f"Unsupported type {type(rules) }. Make sure you have either information or DMS rules."
             )
-        name = f"{rules.metadata.identifier!s}_implements.html"
+        identifier = to_directory_compatible(str(rules.metadata.identifier))
+        name = f"{identifier}_implements.html"
         return self._generate_visualization(di_graph, name)
 
     def _generate_dms_di_graph(self, rules: DMSRules) -> nx.DiGraph:
