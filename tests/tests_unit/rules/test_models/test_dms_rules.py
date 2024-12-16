@@ -1335,9 +1335,11 @@ class TestDMSRules:
                 ),
             ],
             views=[
-                DMSInputView(view="WindFarm", implements="cdf_cdm:Sourceable,cdf_cdm:Describable"),
-                DMSInputView(view="cdf_cdm:Sourceable"),
-                DMSInputView(view="cdf_cdm:Describable"),
+                DMSInputView(
+                    view="WindFarm", implements="cdf_cdm:Sourceable(version=v1),cdf_cdm:Describable(version=v1)"
+                ),
+                DMSInputView(view="cdf_cdm:Sourceable(version=v1)"),
+                DMSInputView(view="cdf_cdm:Describable(version=v1)"),
             ],
             containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
         ).as_rules()
@@ -1366,16 +1368,16 @@ class TestDMSRules:
             ],
             "views": [
                 {
-                    "view": "cdf_cdm:Describable",
+                    "view": "cdf_cdm:Describable(version=v1)",
                     "neatId": URIRef("http://purl.org/cognite/neat/View_2"),
                 },
                 {
-                    "view": "cdf_cdm:Sourceable",
+                    "view": "cdf_cdm:Sourceable(version=v1)",
                     "neatId": URIRef("http://purl.org/cognite/neat/View_1"),
                 },
                 {
                     "view": "WindFarm",
-                    "implements": "cdf_cdm:Sourceable,cdf_cdm:Describable",
+                    "implements": "cdf_cdm:Sourceable(version=v1),cdf_cdm:Describable(version=v1)",
                     "neatId": URIRef("http://purl.org/cognite/neat/View_0"),
                 },
             ],
