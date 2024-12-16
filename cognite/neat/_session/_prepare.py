@@ -14,6 +14,7 @@ from cognite.neat._constants import (
 from cognite.neat._graph.transformers import (
     AttachPropertyFromTargetToSource,
     ConvertLiteral,
+    LiteralToEntity,
     PruneDeadEndEdges,
     PruneInstancesOfUnknownType,
     PruneTypes,
@@ -70,14 +71,20 @@ class InstancePrepareAPI:
     def dexpi(self) -> None:
         """Prepares extracted DEXPI graph for further usage in CDF
 
-        This method bundles several graph transformers which:
-        - attach values of generic attributes to nodes
-        - create associations between nodes
-        - remove unused generic attributes
-        - remove associations between nodes that do not exist in the extracted graph
-        - remove edges to nodes that do not exist in the extracted graph
+        !!! note "This method bundles several graph transformers which"
+            - attach values of generic attributes to nodes
+            - create associations between nodes
+            - remove unused generic attributes
+            - remove associations between nodes that do not exist in the extracted graph
+            - remove edges to nodes that do not exist in the extracted graph
 
         and therefore safeguard CDF from a bad graph
+
+        Example:
+            Apply Dexpi specific transformations:
+            ```python
+            neat.prepare.instances.dexpi()
+            ```
         """
 
         DEXPI = get_default_prefixes_and_namespaces()["dexpi"]
@@ -111,12 +118,18 @@ class InstancePrepareAPI:
     def aml(self) -> None:
         """Prepares extracted AutomationML graph for further usage in CDF
 
-        This method bundles several graph transformers which:
-        - attach values of attributes to nodes
-        - remove unused attributes
-        - remove edges to nodes that do not exist in the extracted graph
+        !!! note "This method bundles several graph transformers which"
+            - attach values of attributes to nodes
+            - remove unused attributes
+            - remove edges to nodes that do not exist in the extracted graph
 
         and therefore safeguard CDF from a bad graph
+
+        Example:
+            Apply AML specific transformations:
+            ```python
+            neat.prepare.instances.aml()
+            ```
         """
 
         AML = get_default_prefixes_and_namespaces()["aml"]
@@ -169,7 +182,32 @@ class InstancePrepareAPI:
             target value, as follows:
             (SourceType)-[connection]->(TargetType)
 
+        Example:
+            Make connection on exact match:
+            ```python
+            # From an active NeatSession
+            neat.read.csv("workitem.Table.csv",
+                          type = "Activity",
+                          primary_key="sourceId")
 
+            neat.read.csv("assets.Table.csv",
+                          type="Asset",
+                          primary_key="WMT_TAG_GLOBALID")
+
+            # Here we specify what column from the source table we should use when we link it with a column in the
+            # target table. In this case, it is the "workorderItemname" column in the source table
+            source = ("Activity", "workorderItemname")
+
+            # Here we give a name to the new property that is created when a match between the source and target is
+            # found
+            connection = "asset"
+
+            # Here we specify what column from the target table we should use when searching for a match.
+            # In this case, it is the "wmtTagName" column in the target table
+            target = ("Asset", "wmtTagName")
+
+            neat.prepare.instances.make_connection_on_exact_match(source, target, connection)
+            ```
         """
 
         subject_type, subject_predicate = self._get_type_and_property_uris(*source)
@@ -235,7 +273,7 @@ class InstancePrepareAPI:
                     as input and return the converted value. Default to assume you have a string that should be
                     converted to int, float, bool, or datetime.
 
-        Examples:
+        Example:
             Convert a boolean property to a string:
             ```python
             neat.prepare.instances.convert_data_type(
@@ -248,6 +286,33 @@ class InstancePrepareAPI:
         subject_type, subject_predicate = self._get_type_and_property_uris(*source)
 
         transformer = ConvertLiteral(subject_type, subject_predicate, convert)
+        self._state.instances.store.transform(transformer)
+
+    def property_to_type(self, source: tuple[str | None, str], type: str, new_property: str | None = None) -> None:
+        """Convert a property to a new type.
+
+        Args:
+            source: The source of the conversion. A tuple of (type, property)
+                    where property is the property that should be converted.
+                    You can pass (None, property) to covert all properties with the given name.
+            type: The new type of the property.
+            new_property: Add the identifier as a new property. If None, the new entity will not have a property.
+
+        Example:
+            Convert the property 'source' to SourceSystem
+            ```python
+            neat.prepare.instances.property_to_type(
+                (None, "source"), "SourceSystem"
+            )
+            ```
+        """
+        subject_type: URIRef | None = None
+        if source[0] is not None:
+            subject_type, subject_predicate = self._get_type_and_property_uris(*source)  # type: ignore[arg-type, assignment]
+        else:
+            subject_predicate = self._state.instances.store.queries.property_uri(source[1])[0]
+
+        transformer = LiteralToEntity(subject_type, subject_predicate, type, new_property)
         self._state.instances.store.transform(transformer)
 
 
@@ -326,13 +391,15 @@ class DataModelPrepareAPI:
             move_connections: If True, the connections will be moved to the new data model.
 
         !!! note "Enterprise Data Model Creation"
+
             Always create an enterprise data model from a Cognite Data Model as this will
             assure all the Cognite Data Fusion applications to run smoothly, such as
-            - Search
-            - Atlas AI
-            - ...
+                - Search
+                - Atlas AI
+                - ...
 
         !!! note "Move Connections"
+
             If you want to move the connections to the new data model, set the move_connections
             to True. This will move the connections to the new data model and use new model
             views as the source and target views.
@@ -383,6 +450,7 @@ class DataModelPrepareAPI:
             dummy_property: The dummy property to use as placeholder for the views in the new data model.
 
         !!! note "Solution Data Model Mode"
+
             The read-only solution model will only be able to read from the existing containers
             from the enterprise data model, therefore the solution data model will not have
             containers in the solution data model space. Meaning the solution data model views

@@ -20,7 +20,14 @@ class SetAPI:
 
     def data_model_id(self, new_model_id: dm.DataModelId | tuple[str, str, str]) -> None:
         """Sets the data model ID of the latest verified data model. Set the data model id as a tuple of strings
-        following the template (<data_model_name>, <data_model_space>, <data_model_version>)."""
+        following the template (<data_model_space>, <data_model_name>, <data_model_version>).
+
+        Example:
+            Set a new data model id:
+            ```python
+            neat.set.data_model_id(("my_data_model_space", "My_Data_Model", "v1"))
+            ```
+        """
         if res := self._state.data_model.last_verified_dms_rules:
             source_id, rules = res
 
