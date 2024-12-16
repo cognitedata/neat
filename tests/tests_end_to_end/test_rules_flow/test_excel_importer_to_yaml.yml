@@ -1,44 +1,44 @@
 containers:
-- container: power:CircuitBreaker
+- container: CircuitBreaker
   neatId: http://purl.org/cognite/neat/Container_16
-- container: power:CurrentTransformer
+- container: CurrentTransformer
   neatId: http://purl.org/cognite/neat/Container_13
-- container: power:DisconnectSwitch
+- container: DisconnectSwitch
   neatId: http://purl.org/cognite/neat/Container_17
-- constraint: power:Substation
-  container: power:DistributionSubstation
+- constraint: Substation
+  container: DistributionSubstation
   neatId: http://purl.org/cognite/neat/Container_8
-- container: power:EnergyArea
+- container: EnergyArea
   neatId: http://purl.org/cognite/neat/Container_2
-- container: power:EnergyConsumer
+- container: EnergyConsumer
   neatId: http://purl.org/cognite/neat/Container_10
-- container: power:GeneratingUnit
+- container: GeneratingUnit
   neatId: http://purl.org/cognite/neat/Container_0
-- container: power:GeoLocation
+- container: GeoLocation
   neatId: http://purl.org/cognite/neat/Container_11
-- container: power:Meter
+- container: Meter
   neatId: http://purl.org/cognite/neat/Container_9
-- constraint: power:Substation
-  container: power:OffshoreSubstation
+- constraint: Substation
+  container: OffshoreSubstation
   neatId: http://purl.org/cognite/neat/Container_6
-- container: power:OnshoreSubstation
+- container: OnshoreSubstation
   neatId: http://purl.org/cognite/neat/Container_7
-- constraint: power:GeoLocation
-  container: power:Point
+- constraint: GeoLocation
+  container: Point
   neatId: http://purl.org/cognite/neat/Container_12
-- container: power:PowerLine
+- container: PowerLine
   neatId: http://purl.org/cognite/neat/Container_4
-- container: power:Substation
+- container: Substation
   neatId: http://purl.org/cognite/neat/Container_5
-- container: power:VoltageLevel
+- container: VoltageLevel
   neatId: http://purl.org/cognite/neat/Container_15
-- container: power:VoltageTransformer
+- container: VoltageTransformer
   neatId: http://purl.org/cognite/neat/Container_14
-- constraint: power:EnergyArea
-  container: power:WindFarm
+- constraint: EnergyArea
+  container: WindFarm
   neatId: http://purl.org/cognite/neat/Container_3
-- constraint: power:GeneratingUnit
-  container: power:WindTurbine
+- constraint: GeneratingUnit
+  container: WindTurbine
   neatId: http://purl.org/cognite/neat/Container_1
 metadata:
   created: '2024-02-09T00:00:00'
@@ -51,7 +51,7 @@ metadata:
   updated: '2024-02-09T00:00:00'
   version: 0.1.0
 properties:
-- container: power:CircuitBreaker
+- container: CircuitBreaker
   container_property: maxCapacity
   is_list: false
   logical: http://purl.org/cognite/neat/Property_52
@@ -60,7 +60,7 @@ properties:
   value_type: float32
   view: CircuitBreaker
   view_property: maxCapacity
-- container: power:CurrentTransformer
+- container: CurrentTransformer
   container_property: maxCapacity
   is_list: false
   logical: http://purl.org/cognite/neat/Property_48
@@ -69,7 +69,7 @@ properties:
   value_type: float32
   view: CurrentTransformer
   view_property: maxCapacity
-- container: power:DisconnectSwitch
+- container: DisconnectSwitch
   container_property: maxCapacity
   is_list: false
   logical: http://purl.org/cognite/neat/Property_53
@@ -79,7 +79,7 @@ properties:
   view: DisconnectSwitch
   view_property: maxCapacity
 - connection: direct
-  container: power:DistributionSubstation
+  container: DistributionSubstation
   container_property: primaryPowerLine
   is_list: false
   logical: http://purl.org/cognite/neat/Property_35
@@ -88,14 +88,14 @@ properties:
   value_type: Transmission
   view: DistributionSubstation
   view_property: primaryPowerLine
-- connection: :edge(direction=outwards)
+- connection: edge
   is_list: true
   logical: http://purl.org/cognite/neat/Property_36
   neatId: http://purl.org/cognite/neat/Property_36
   value_type: DistributionLine
   view: DistributionSubstation
   view_property: secondaryPowerLine
-- container: power:EnergyArea
+- container: EnergyArea
   container_property: activePower
   is_list: false
   logical: http://purl.org/cognite/neat/Property_12
@@ -105,7 +105,7 @@ properties:
   view: EnergyArea
   view_property: activePower
 - connection: direct
-  container: power:EnergyArea
+  container: EnergyArea
   container_property: geoLocation
   is_list: false
   logical: http://purl.org/cognite/neat/Property_10
@@ -114,7 +114,7 @@ properties:
   value_type: Polygon
   view: EnergyArea
   view_property: geoLocation
-- container: power:EnergyArea
+- container: EnergyArea
   container_property: name
   is_list: false
   logical: http://purl.org/cognite/neat/Property_9
@@ -123,7 +123,7 @@ properties:
   value_type: text
   view: EnergyArea
   view_property: name
-- container: power:EnergyArea
+- container: EnergyArea
   container_property: ratedPower
   is_list: false
   logical: http://purl.org/cognite/neat/Property_11
@@ -132,7 +132,7 @@ properties:
   value_type: float32
   view: EnergyArea
   view_property: ratedPower
-- container: power:EnergyConsumer
+- container: EnergyConsumer
   container_property: load
   is_list: false
   logical: http://purl.org/cognite/neat/Property_42
@@ -142,7 +142,7 @@ properties:
   view: EnergyConsumer
   view_property: load
 - connection: direct
-  container: power:EnergyConsumer
+  container: EnergyConsumer
   container_property: location
   is_list: false
   logical: http://purl.org/cognite/neat/Property_41
@@ -151,7 +151,7 @@ properties:
   value_type: Point
   view: EnergyConsumer
   view_property: location
-- container: power:EnergyConsumer
+- container: EnergyConsumer
   container_property: name
   is_list: false
   logical: http://purl.org/cognite/neat/Property_40
@@ -160,7 +160,7 @@ properties:
   value_type: text
   view: EnergyConsumer
   view_property: name
-- container: power:GeneratingUnit
+- container: GeneratingUnit
   container_property: activePower
   is_list: false
   logical: http://purl.org/cognite/neat/Property_2
@@ -170,7 +170,7 @@ properties:
   view: GeneratingUnit
   view_property: activePower
 - connection: direct
-  container: power:GeneratingUnit
+  container: GeneratingUnit
   container_property: geoLocation
   is_list: false
   logical: http://purl.org/cognite/neat/Property_3
@@ -179,7 +179,7 @@ properties:
   value_type: Point
   view: GeneratingUnit
   view_property: geoLocation
-- container: power:GeneratingUnit
+- container: GeneratingUnit
   container_property: name
   is_list: false
   logical: http://purl.org/cognite/neat/Property_0
@@ -188,7 +188,7 @@ properties:
   value_type: text
   view: GeneratingUnit
   view_property: name
-- container: power:GeneratingUnit
+- container: GeneratingUnit
   container_property: type
   is_list: false
   logical: http://purl.org/cognite/neat/Property_1
@@ -197,7 +197,7 @@ properties:
   value_type: text
   view: GeneratingUnit
   view_property: type
-- container: power:GeoLocation
+- container: GeoLocation
   container_property: name
   is_list: false
   logical: http://purl.org/cognite/neat/Property_43
@@ -206,14 +206,14 @@ properties:
   value_type: text
   view: GeoLocation
   view_property: name
-- connection: :edge(direction=outwards)
+- connection: edge
   is_list: true
   logical: http://purl.org/cognite/neat/Property_38
   neatId: http://purl.org/cognite/neat/Property_38
   value_type: ElectricCarCharger
   view: Meter
   view_property: consumer
-- container: power:Meter
+- container: Meter
   container_property: consumption
   is_list: false
   logical: http://purl.org/cognite/neat/Property_39
@@ -223,7 +223,7 @@ properties:
   view: Meter
   view_property: consumption
 - connection: direct
-  container: power:Meter
+  container: Meter
   container_property: powerLine
   is_list: false
   logical: http://purl.org/cognite/neat/Property_37
@@ -232,14 +232,14 @@ properties:
   value_type: DistributionLine
   view: Meter
   view_property: powerLine
-- connection: :edge(direction=outwards)
+- connection: edge
   is_list: true
   logical: http://purl.org/cognite/neat/Property_46
   neatId: http://purl.org/cognite/neat/Property_46
   value_type: Point
   view: MultiLineString
   view_property: point
-- connection: :edge(direction=outwards)
+- connection: edge
   is_list: true
   logical: http://purl.org/cognite/neat/Property_31
   neatId: http://purl.org/cognite/neat/Property_31
@@ -247,7 +247,7 @@ properties:
   view: OffshoreSubstation
   view_property: primaryPowerLine
 - connection: direct
-  container: power:OffshoreSubstation
+  container: OffshoreSubstation
   container_property: secondaryPowerLine
   is_list: false
   logical: http://purl.org/cognite/neat/Property_32
@@ -257,7 +257,7 @@ properties:
   view: OffshoreSubstation
   view_property: secondaryPowerLine
 - connection: direct
-  container: power:OnshoreSubstation
+  container: OnshoreSubstation
   container_property: primaryPowerLine
   is_list: false
   logical: http://purl.org/cognite/neat/Property_33
@@ -267,7 +267,7 @@ properties:
   view: OnshoreSubstation
   view_property: primaryPowerLine
 - connection: direct
-  container: power:OnshoreSubstation
+  container: OnshoreSubstation
   container_property: secondaryPowerLine
   is_list: false
   logical: http://purl.org/cognite/neat/Property_34
@@ -276,7 +276,7 @@ properties:
   value_type: Transmission
   view: OnshoreSubstation
   view_property: secondaryPowerLine
-- container: power:Point
+- container: Point
   container_property: latitude
   is_list: false
   logical: http://purl.org/cognite/neat/Property_44
@@ -285,7 +285,7 @@ properties:
   value_type: float32
   view: Point
   view_property: latitude
-- container: power:Point
+- container: Point
   container_property: longitude
   is_list: false
   logical: http://purl.org/cognite/neat/Property_45
@@ -294,14 +294,14 @@ properties:
   value_type: float32
   view: Point
   view_property: longitude
-- connection: :edge(direction=outwards)
+- connection: edge
   is_list: true
   logical: http://purl.org/cognite/neat/Property_47
   neatId: http://purl.org/cognite/neat/Property_47
   value_type: Point
   view: Polygon
   view_property: point
-- container: power:PowerLine
+- container: PowerLine
   container_property: currentVoltage
   is_list: false
   logical: http://purl.org/cognite/neat/Property_19
@@ -311,7 +311,7 @@ properties:
   view: PowerLine
   view_property: currentVoltage
 - connection: direct
-  container: power:PowerLine
+  container: PowerLine
   container_property: geoLocation
   is_list: false
   logical: http://purl.org/cognite/neat/Property_18
@@ -320,7 +320,7 @@ properties:
   value_type: MultiLineString
   view: PowerLine
   view_property: geoLocation
-- container: power:PowerLine
+- container: PowerLine
   container_property: length
   is_list: false
   logical: http://purl.org/cognite/neat/Property_20
@@ -330,7 +330,7 @@ properties:
   view: PowerLine
   view_property: length
 - connection: direct
-  container: power:PowerLine
+  container: PowerLine
   container_property: voltageLevel
   is_list: false
   logical: http://purl.org/cognite/neat/Property_17
@@ -339,28 +339,28 @@ properties:
   value_type: VoltageLevel
   view: PowerLine
   view_property: voltageLevel
-- connection: :edge(direction=outwards)
+- connection: edge
   is_list: true
   logical: http://purl.org/cognite/neat/Property_24
   neatId: http://purl.org/cognite/neat/Property_24
   value_type: CircuitBreaker
   view: Substation
   view_property: circuitBreaker
-- connection: :edge(direction=outwards)
+- connection: edge
   is_list: true
   logical: http://purl.org/cognite/neat/Property_25
   neatId: http://purl.org/cognite/neat/Property_25
   value_type: CurrentTransformer
   view: Substation
   view_property: currentTransformer
-- connection: :edge(direction=outwards)
+- connection: edge
   is_list: true
   logical: http://purl.org/cognite/neat/Property_23
   neatId: http://purl.org/cognite/neat/Property_23
   value_type: DisconnectSwitch
   view: Substation
   view_property: disconnectSwitch
-- container: power:Substation
+- container: Substation
   container_property: location
   is_list: false
   logical: http://purl.org/cognite/neat/Property_22
@@ -370,7 +370,7 @@ properties:
   view: Substation
   view_property: location
 - connection: direct
-  container: power:Substation
+  container: Substation
   container_property: mainTransformer
   is_list: false
   logical: http://purl.org/cognite/neat/Property_26
@@ -379,7 +379,7 @@ properties:
   value_type: VoltageTransformer
   view: Substation
   view_property: mainTransformer
-- container: power:Substation
+- container: Substation
   container_property: name
   is_list: false
   logical: http://purl.org/cognite/neat/Property_21
@@ -389,7 +389,7 @@ properties:
   view: Substation
   view_property: name
 - connection: direct
-  container: power:Substation
+  container: Substation
   container_property: primaryPowerLine
   is_list: false
   logical: http://purl.org/cognite/neat/Property_27
@@ -398,7 +398,7 @@ properties:
   value_type: PowerLine
   view: Substation
   view_property: primaryPowerLine
-- container: power:Substation
+- container: Substation
   container_property: primaryVoltage
   is_list: false
   logical: http://purl.org/cognite/neat/Property_29
@@ -408,7 +408,7 @@ properties:
   view: Substation
   view_property: primaryVoltage
 - connection: direct
-  container: power:Substation
+  container: Substation
   container_property: secondaryPowerLine
   is_list: false
   logical: http://purl.org/cognite/neat/Property_28
@@ -417,7 +417,7 @@ properties:
   value_type: PowerLine
   view: Substation
   view_property: secondaryPowerLine
-- container: power:Substation
+- container: Substation
   container_property: secondaryVoltage
   is_list: false
   logical: http://purl.org/cognite/neat/Property_30
@@ -426,7 +426,7 @@ properties:
   value_type: timeseries
   view: Substation
   view_property: secondaryVoltage
-- container: power:VoltageLevel
+- container: VoltageLevel
   container_property: maxLevel
   is_list: false
   logical: http://purl.org/cognite/neat/Property_51
@@ -436,7 +436,7 @@ properties:
   view: VoltageLevel
   view_property: maxLevel
 - connection: direct
-  container: power:VoltageTransformer
+  container: VoltageTransformer
   container_property: inputVoltageLevel
   is_list: false
   logical: http://purl.org/cognite/neat/Property_50
@@ -446,7 +446,7 @@ properties:
   view: VoltageTransformer
   view_property: inputVoltageLevel
 - connection: direct
-  container: power:VoltageTransformer
+  container: VoltageTransformer
   container_property: outputVoltageLevel
   is_list: false
   logical: http://purl.org/cognite/neat/Property_49
@@ -455,7 +455,7 @@ properties:
   value_type: VoltageLevel
   view: VoltageTransformer
   view_property: outputVoltageLevel
-- connection: :edge(direction=outwards)
+- connection: edge
   is_list: true
   logical: http://purl.org/cognite/neat/Property_15
   neatId: http://purl.org/cognite/neat/Property_15
@@ -463,7 +463,7 @@ properties:
   view: WindFarm
   view_property: arrayCable
 - connection: direct
-  container: power:WindFarm
+  container: WindFarm
   container_property: exportCable
   is_list: false
   logical: http://purl.org/cognite/neat/Property_16
@@ -473,7 +473,7 @@ properties:
   view: WindFarm
   view_property: exportCable
 - connection: direct
-  container: power:WindFarm
+  container: WindFarm
   container_property: substation
   is_list: false
   logical: http://purl.org/cognite/neat/Property_14
@@ -482,7 +482,7 @@ properties:
   value_type: OffshoreSubstation
   view: WindFarm
   view_property: substation
-- connection: :edge(direction=outwards)
+- connection: edge
   is_list: true
   logical: http://purl.org/cognite/neat/Property_13
   neatId: http://purl.org/cognite/neat/Property_13
@@ -490,7 +490,7 @@ properties:
   view: WindFarm
   view_property: windTurbines
 - connection: direct
-  container: power:WindTurbine
+  container: WindTurbine
   container_property: arrayCableConnection
   is_list: false
   logical: http://purl.org/cognite/neat/Property_7
@@ -499,7 +499,7 @@ properties:
   value_type: ArrayCable
   view: WindTurbine
   view_property: arrayCableConnection
-- container: power:WindTurbine
+- container: WindTurbine
   container_property: hubHeight
   is_list: false
   logical: http://purl.org/cognite/neat/Property_6
@@ -508,7 +508,7 @@ properties:
   value_type: float32
   view: WindTurbine
   view_property: hubHeight
-- container: power:WindTurbine
+- container: WindTurbine
   container_property: lifeExpectancy
   is_list: false
   logical: http://purl.org/cognite/neat/Property_8
@@ -517,7 +517,7 @@ properties:
   value_type: int32
   view: WindTurbine
   view_property: lifeExpectancy
-- container: power:WindTurbine
+- container: WindTurbine
   container_property: manufacturer
   is_list: false
   logical: http://purl.org/cognite/neat/Property_4
@@ -526,7 +526,7 @@ properties:
   value_type: text
   view: WindTurbine
   view_property: manufacturer
-- container: power:WindTurbine
+- container: WindTurbine
   container_property: ratedPower
   is_list: false
   logical: http://purl.org/cognite/neat/Property_5

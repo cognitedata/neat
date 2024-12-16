@@ -610,28 +610,28 @@ rules:
     used_for: node
   - container: cdf_cdm_3d:CognitePointCloudVolume
     used_for: node
-  - container: neat_space:ClassicAsset
+  - container: ClassicAsset
     used_for: all
-  - container: neat_space:ClassicAssetToAssetEdge
+  - container: ClassicAssetToAssetEdge
     used_for: all
-  - container: neat_space:ClassicDataSet
+  - container: ClassicDataSet
     used_for: all
-  - container: neat_space:ClassicEvent
+  - container: ClassicEvent
     used_for: all
-  - container: neat_space:ClassicFile
+  - container: ClassicFile
     used_for: all
-  - container: neat_space:ClassicLabel
+  - container: ClassicLabel
     used_for: all
-  - container: neat_space:ClassicSourceSystem
+  - container: ClassicSourceSystem
     used_for: all
-  - container: neat_space:ClassicTimeSeries
+  - container: ClassicTimeSeries
     used_for: all
   enum:
-  - collection: :timeseriesType
+  - collection: timeseriesType
     description: Time series with double floating point data points.
     name: numeric
     value: numeric
-  - collection: :timeseriesType
+  - collection: timeseriesType
     description: Time series with string data points.
     name: string
     value: string
@@ -646,7 +646,7 @@ rules:
     version: v1
   properties:
   - connection: direct
-    container: neat_space:ClassicAsset
+    container: ClassicAsset
     container_property: dataSetId
     is_list: false
     nullable: true
@@ -661,7 +661,7 @@ rules:
     value_type: text
     view: neat_space:ClassicAsset(version=v1_prefixed_Classic)
     view_property: description
-  - container: neat_space:ClassicAsset
+  - container: ClassicAsset
     container_property: metadata
     is_list: false
     nullable: true
@@ -687,7 +687,7 @@ rules:
     view: neat_space:ClassicAsset(version=v1_prefixed_Classic)
     view_property: parent
   - connection: direct
-    container: neat_space:ClassicAsset
+    container: ClassicAsset
     container_property: relationshipAsset
     is_list: false
     nullable: true
@@ -713,7 +713,7 @@ rules:
     view: neat_space:ClassicAsset(version=v1_prefixed_Classic)
     view_property: tags
   - connection: direct
-    container: neat_space:ClassicAssetToAssetEdge
+    container: ClassicAssetToAssetEdge
     container_property: dataSetId
     is_list: false
     nullable: true
@@ -721,7 +721,7 @@ rules:
     view: neat_space:ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
     view_property: dataSetId
   - connection: direct
-    container: neat_space:ClassicAssetToAssetEdge
+    container: ClassicAssetToAssetEdge
     container_property: endNode
     is_list: false
     nullable: true
@@ -729,7 +729,7 @@ rules:
     view: neat_space:ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
     view_property: endNode
   - connection: direct
-    container: neat_space:ClassicAssetToAssetEdge
+    container: ClassicAssetToAssetEdge
     container_property: labels
     is_list: false
     nullable: true
@@ -737,42 +737,42 @@ rules:
     view: neat_space:ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
     view_property: labels
   - connection: direct
-    container: neat_space:ClassicAssetToAssetEdge
+    container: ClassicAssetToAssetEdge
     container_property: startNode
     is_list: false
     nullable: true
     value_type: neat_space:ClassicAsset(version=v1_prefixed_Classic)
     view: neat_space:ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
     view_property: startNode
-  - container: neat_space:ClassicAssetToAssetEdge
+  - container: ClassicAssetToAssetEdge
     container_property: type
     is_list: false
     nullable: true
     value_type: text
     view: neat_space:ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
     view_property: type
-  - container: neat_space:ClassicDataSet
+  - container: ClassicDataSet
     container_property: description
     is_list: false
     nullable: true
     value_type: text
     view: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
     view_property: description
-  - container: neat_space:ClassicDataSet
+  - container: ClassicDataSet
     container_property: metadata
     is_list: false
     nullable: true
     value_type: json
     view: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
     view_property: metadata
-  - container: neat_space:ClassicDataSet
+  - container: ClassicDataSet
     container_property: name
     is_list: false
     nullable: true
     value_type: text
     view: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
     view_property: name
-  - container: neat_space:ClassicDataSet
+  - container: ClassicDataSet
     container_property: writeProtected
     is_list: false
     nullable: true
@@ -789,7 +789,7 @@ rules:
     view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: assets
   - connection: direct
-    container: neat_space:ClassicEvent
+    container: ClassicEvent
     container_property: dataSetId
     is_list: false
     nullable: true
@@ -813,7 +813,7 @@ rules:
     value_type: timestamp
     view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: endTime
-  - container: neat_space:ClassicEvent
+  - container: ClassicEvent
     container_property: metadata
     is_list: false
     nullable: true
@@ -839,14 +839,14 @@ rules:
     value_type: timestamp
     view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: startTime
-  - container: neat_space:ClassicEvent
+  - container: ClassicEvent
     container_property: subtype
     is_list: false
     nullable: true
     value_type: text
     view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: subtype
-  - container: neat_space:ClassicEvent
+  - container: ClassicEvent
     container_property: type
     is_list: false
     nullable: true
@@ -863,14 +863,14 @@ rules:
     view: neat_space:ClassicFile(version=v1_prefixed_Classic)
     view_property: assets
   - connection: direct
-    container: neat_space:ClassicFile
+    container: ClassicFile
     container_property: dataSetId
     is_list: false
     nullable: true
     value_type: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
     view: neat_space:ClassicFile(version=v1_prefixed_Classic)
     view_property: dataSetId
-  - container: neat_space:ClassicFile
+  - container: ClassicFile
     container_property: metadata
     is_list: false
     nullable: true
@@ -897,21 +897,21 @@ rules:
     view: neat_space:ClassicFile(version=v1_prefixed_Classic)
     view_property: source
   - connection: direct
-    container: neat_space:ClassicLabel
+    container: ClassicLabel
     container_property: dataSetId
     is_list: false
     nullable: true
     value_type: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
     view: neat_space:ClassicLabel(version=v1_prefixed_Classic)
     view_property: dataSetId
-  - container: neat_space:ClassicLabel
+  - container: ClassicLabel
     container_property: description
     is_list: false
     nullable: true
     value_type: text
     view: neat_space:ClassicLabel(version=v1_prefixed_Classic)
     view_property: description
-  - container: neat_space:ClassicLabel
+  - container: ClassicLabel
     container_property: name
     is_list: false
     nullable: true
@@ -936,7 +936,7 @@ rules:
     view: neat_space:ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: assets
   - connection: direct
-    container: neat_space:ClassicTimeSeries
+    container: ClassicTimeSeries
     container_property: dataSetId
     is_list: false
     nullable: true
@@ -960,7 +960,7 @@ rules:
     value_type: boolean
     view: neat_space:ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: isStep
-  - container: neat_space:ClassicTimeSeries
+  - container: ClassicTimeSeries
     container_property: metadata
     is_list: false
     nullable: true
@@ -981,7 +981,7 @@ rules:
     immutable: true
     is_list: false
     nullable: false
-    value_type: enum(collection=:timeseriesType)
+    value_type: enum(collection=timeseriesType)
     view: neat_space:ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: type
   - connection: direct
