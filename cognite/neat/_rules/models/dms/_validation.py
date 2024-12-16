@@ -194,6 +194,8 @@ class DMSValidation:
     ) -> dict[ViewId, set[ViewId]]:
         @lru_cache
         def get_parents(child_view_id: ViewId) -> set[ViewId]:
+            if child_view_id not in all_views_by_id:
+                return set()
             child_view = all_views_by_id[child_view_id]
             parents = set(child_view.implements or [])
             for parent_id in child_view.implements or []:
