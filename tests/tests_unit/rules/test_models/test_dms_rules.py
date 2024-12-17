@@ -1335,9 +1335,11 @@ class TestDMSRules:
                 ),
             ],
             views=[
-                DMSInputView(view="WindFarm", implements="cdf_cdm:Sourceable,cdf_cdm:Describable"),
-                DMSInputView(view="cdf_cdm:Sourceable"),
-                DMSInputView(view="cdf_cdm:Describable"),
+                DMSInputView(
+                    view="WindFarm", implements="cdf_cdm:Sourceable(version=v1),cdf_cdm:Describable(version=v1)"
+                ),
+                DMSInputView(view="cdf_cdm:Sourceable(version=v1)"),
+                DMSInputView(view="cdf_cdm:Describable(version=v1)"),
             ],
             containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
         ).as_rules()
@@ -1366,16 +1368,16 @@ class TestDMSRules:
             ],
             "views": [
                 {
-                    "view": "cdf_cdm:Describable",
+                    "view": "cdf_cdm:Describable(version=v1)",
                     "neatId": URIRef("http://purl.org/cognite/neat/View_2"),
                 },
                 {
-                    "view": "cdf_cdm:Sourceable",
+                    "view": "cdf_cdm:Sourceable(version=v1)",
                     "neatId": URIRef("http://purl.org/cognite/neat/View_1"),
                 },
                 {
                     "view": "WindFarm",
-                    "implements": "cdf_cdm:Sourceable,cdf_cdm:Describable",
+                    "implements": "cdf_cdm:Sourceable(version=v1),cdf_cdm:Describable(version=v1)",
                     "neatId": URIRef("http://purl.org/cognite/neat/View_0"),
                 },
             ],
@@ -1538,6 +1540,37 @@ class TestDMSRules:
 
         assert not maybe_rules.issues
         assert maybe_rules.rules is not None
+
+    def test_dump_dms_rules_keep_version(self) -> None:
+        rules = DMSInputRules(
+            metadata=DMSInputMetadata(
+                space="my_space",
+                external_id="my_data_model",
+                version="v1",
+                creator="Anders",
+            ),
+            properties=[
+                DMSInputProperty(
+                    view="MyView",
+                    view_property="name",
+                    value_type="text",
+                    container="cdf_cdm:CogniteDescribable",
+                )
+            ],
+            views=[
+                DMSInputView(view="MyView", implements="cdf_cdm:CogniteDescribable(version=v1)"),
+                DMSInputView("cdf_cdm:CogniteDescribable(version=v1)"),
+            ],
+            containers=[DMSInputContainer("cdf_cdm:CogniteDescribable")],
+        )
+        verified = rules.as_rules()
+
+        assert isinstance(verified, DMSRules)
+
+        dumped = verified.dump(entities_exclude_defaults=True)
+
+        view_ids = {view["view"] for view in dumped["views"]}
+        assert "cdf_cdm:CogniteDescribable(version=v1)" in view_ids
 
 
 def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
