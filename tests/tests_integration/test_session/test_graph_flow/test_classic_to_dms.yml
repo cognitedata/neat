@@ -19,13 +19,13 @@ instances:
       - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
     source:
       externalId: ClassicAsset
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicAsset
-    space: sp_windfarm
+    space: neat_space
 - externalId: Asset_5
   instanceType: node
   sources:
@@ -51,13 +51,13 @@ instances:
       - http://purl.org/cognite/cdf-classic#Label_WindTurbine
     source:
       externalId: ClassicAsset
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicAsset
-    space: sp_windfarm
+    space: neat_space
 - externalId: Asset_6
   instanceType: node
   sources:
@@ -83,13 +83,13 @@ instances:
       - http://purl.org/cognite/cdf-classic#Label_WindTurbine
     source:
       externalId: ClassicAsset
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicAsset
-    space: sp_windfarm
+    space: neat_space
 - externalId: Asset_7
   instanceType: node
   sources:
@@ -110,13 +110,13 @@ instances:
       - http://purl.org/cognite/cdf-classic#Label_Measurement
     source:
       externalId: ClassicAsset
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicAsset
-    space: sp_windfarm
+    space: neat_space
 - externalId: Asset_8
   instanceType: node
   sources:
@@ -140,13 +140,13 @@ instances:
       - http://purl.org/cognite/cdf-classic#Label_metMast
     source:
       externalId: ClassicAsset
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicAsset
-    space: sp_windfarm
+    space: neat_space
 - externalId: DataSet_123
   instanceType: node
   sources:
@@ -159,13 +159,13 @@ instances:
       writeProtected: true
     source:
       externalId: ClassicDataSet
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicDataSet
-    space: sp_windfarm
+    space: neat_space
 - externalId: DataSet_124
   instanceType: node
   sources:
@@ -178,13 +178,13 @@ instances:
       writeProtected: false
     source:
       externalId: ClassicDataSet
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicDataSet
-    space: sp_windfarm
+    space: neat_space
 - externalId: DataSet_125
   instanceType: node
   sources:
@@ -197,13 +197,13 @@ instances:
       writeProtected: true
     source:
       externalId: ClassicDataSet
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicDataSet
-    space: sp_windfarm
+    space: neat_space
 - externalId: Event_1
   instanceType: node
   sources:
@@ -226,13 +226,13 @@ instances:
       type: Maintenance
     source:
       externalId: ClassicEvent
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicEvent
-    space: sp_windfarm
+    space: neat_space
 - externalId: File_2
   instanceType: node
   sources:
@@ -251,13 +251,13 @@ instances:
         space: sp_instance_space
     source:
       externalId: ClassicFile
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicFile
-    space: sp_windfarm
+    space: neat_space
 - externalId: Label_Measurement
   instanceType: node
   sources:
@@ -269,13 +269,13 @@ instances:
       name: Measurement
     source:
       externalId: ClassicLabel
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicLabel
-    space: sp_windfarm
+    space: neat_space
 - externalId: Label_PowerGeneratingUnit
   instanceType: node
   sources:
@@ -287,13 +287,13 @@ instances:
       name: Power generating unit
     source:
       externalId: ClassicLabel
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicLabel
-    space: sp_windfarm
+    space: neat_space
 - externalId: Label_WindTurbine
   instanceType: node
   sources:
@@ -305,13 +305,13 @@ instances:
       name: Wind turbine
     source:
       externalId: ClassicLabel
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicLabel
-    space: sp_windfarm
+    space: neat_space
 - externalId: Label_metMast
   instanceType: node
   sources:
@@ -323,13 +323,13 @@ instances:
       name: Meteorological mast
     source:
       externalId: ClassicLabel
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicLabel
-    space: sp_windfarm
+    space: neat_space
 - externalId: SourceSystem_manufacturer1
   instanceType: node
   sources:
@@ -337,13 +337,13 @@ instances:
       name: manufacturer1
     source:
       externalId: ClassicSourceSystem
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicSourceSystem
-    space: sp_windfarm
+    space: neat_space
 - externalId: SourceSystem_manufacturer2
   instanceType: node
   sources:
@@ -351,13 +351,13 @@ instances:
       name: manufacturer2
     source:
       externalId: ClassicSourceSystem
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicSourceSystem
-    space: sp_windfarm
+    space: neat_space
 - externalId: TimeSeries_1
   instanceType: node
   sources:
@@ -379,13 +379,13 @@ instances:
         space: cdf_cdm_units
     source:
       externalId: ClassicTimeSeries
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicTimeSeries
-    space: sp_windfarm
+    space: neat_space
 - externalId: TimeSeries_2
   instanceType: node
   sources:
@@ -407,13 +407,13 @@ instances:
         space: cdf_cdm_units
     source:
       externalId: ClassicTimeSeries
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicTimeSeries
-    space: sp_windfarm
+    space: neat_space
 - externalId: TimeSeries_3
   instanceType: node
   sources:
@@ -435,13 +435,13 @@ instances:
         space: cdf_cdm_units
     source:
       externalId: ClassicTimeSeries
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicTimeSeries
-    space: sp_windfarm
+    space: neat_space
 - externalId: TimeSeries_4
   instanceType: node
   sources:
@@ -463,13 +463,13 @@ instances:
         space: cdf_cdm_units
     source:
       externalId: ClassicTimeSeries
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicTimeSeries
-    space: sp_windfarm
+    space: neat_space
 - externalId: WT-01_to_MetMast
   instanceType: node
   sources:
@@ -489,13 +489,13 @@ instances:
       type: http://purl.org/cognite/cdf-classic#Relationship
     source:
       externalId: ClassicAssetToAssetEdge
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicAssetToAssetEdge
-    space: sp_windfarm
+    space: neat_space
 - externalId: WT-02_to_MetMast
   instanceType: node
   sources:
@@ -515,13 +515,13 @@ instances:
       type: http://purl.org/cognite/cdf-classic#Relationship
     source:
       externalId: ClassicAssetToAssetEdge
-      space: sp_windfarm
+      space: neat_space
       type: view
       version: v1_prefixed_Classic
   space: sp_instance_space
   type:
     externalId: ClassicAssetToAssetEdge
-    space: sp_windfarm
+    space: neat_space
 rules:
   containers:
   - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteSchedulable
@@ -650,8 +650,8 @@ rules:
     container_property: dataSetId
     is_list: false
     nullable: true
-    value_type: ClassicDataSet(version=v1_prefixed_Classic)
-    view: ClassicAsset(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAsset(version=v1_prefixed_Classic)
     view_property: dataSetId
   - container: cdf_cdm:CogniteDescribable
     container_property: description
@@ -659,14 +659,14 @@ rules:
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicAsset(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAsset(version=v1_prefixed_Classic)
     view_property: description
   - container: ClassicAsset
     container_property: metadata
     is_list: false
     nullable: true
     value_type: json
-    view: ClassicAsset(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAsset(version=v1_prefixed_Classic)
     view_property: metadata
   - container: cdf_cdm:CogniteDescribable
     container_property: name
@@ -675,7 +675,7 @@ rules:
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicAsset(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAsset(version=v1_prefixed_Classic)
     view_property: name
   - connection: direct
     container: cdf_cdm:CogniteAsset
@@ -683,16 +683,16 @@ rules:
     immutable: false
     is_list: false
     nullable: true
-    value_type: ClassicAsset(version=v1_prefixed_Classic)
-    view: ClassicAsset(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicAsset(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAsset(version=v1_prefixed_Classic)
     view_property: parent
   - connection: direct
     container: ClassicAsset
     container_property: relationshipAsset
     is_list: false
     nullable: true
-    value_type: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
-    view: ClassicAsset(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAsset(version=v1_prefixed_Classic)
     view_property: relationshipAsset
   - connection: direct
     container: cdf_cdm:CogniteSourceable
@@ -701,8 +701,8 @@ rules:
     index: source
     is_list: false
     nullable: true
-    value_type: ClassicSourceSystem(version=v1_prefixed_Classic)
-    view: ClassicAsset(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicSourceSystem(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAsset(version=v1_prefixed_Classic)
     view_property: source
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
@@ -710,74 +710,74 @@ rules:
     is_list: true
     nullable: true
     value_type: text
-    view: ClassicAsset(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAsset(version=v1_prefixed_Classic)
     view_property: tags
   - connection: direct
     container: ClassicAssetToAssetEdge
     container_property: dataSetId
     is_list: false
     nullable: true
-    value_type: ClassicDataSet(version=v1_prefixed_Classic)
-    view: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
     view_property: dataSetId
   - connection: direct
     container: ClassicAssetToAssetEdge
     container_property: endNode
     is_list: false
     nullable: true
-    value_type: ClassicAsset(version=v1_prefixed_Classic)
-    view: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicAsset(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
     view_property: endNode
   - connection: direct
     container: ClassicAssetToAssetEdge
     container_property: labels
     is_list: false
     nullable: true
-    value_type: ClassicLabel(version=v1_prefixed_Classic)
-    view: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicLabel(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
     view_property: labels
   - connection: direct
     container: ClassicAssetToAssetEdge
     container_property: startNode
     is_list: false
     nullable: true
-    value_type: ClassicAsset(version=v1_prefixed_Classic)
-    view: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicAsset(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
     view_property: startNode
   - container: ClassicAssetToAssetEdge
     container_property: type
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
     view_property: type
   - container: ClassicDataSet
     container_property: description
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicDataSet(version=v1_prefixed_Classic)
+    view: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
     view_property: description
   - container: ClassicDataSet
     container_property: metadata
     is_list: false
     nullable: true
     value_type: json
-    view: ClassicDataSet(version=v1_prefixed_Classic)
+    view: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
     view_property: metadata
   - container: ClassicDataSet
     container_property: name
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicDataSet(version=v1_prefixed_Classic)
+    view: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
     view_property: name
   - container: ClassicDataSet
     container_property: writeProtected
     is_list: false
     nullable: true
     value_type: boolean
-    view: ClassicDataSet(version=v1_prefixed_Classic)
+    view: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
     view_property: writeProtected
   - connection: direct
     container: cdf_cdm:CogniteActivity
@@ -785,16 +785,16 @@ rules:
     immutable: false
     is_list: true
     nullable: true
-    value_type: ClassicAsset(version=v1_prefixed_Classic)
-    view: ClassicEvent(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicAsset(version=v1_prefixed_Classic)
+    view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: assets
   - connection: direct
     container: ClassicEvent
     container_property: dataSetId
     is_list: false
     nullable: true
-    value_type: ClassicDataSet(version=v1_prefixed_Classic)
-    view: ClassicEvent(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
+    view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: dataSetId
   - container: cdf_cdm:CogniteDescribable
     container_property: description
@@ -802,7 +802,7 @@ rules:
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicEvent(version=v1_prefixed_Classic)
+    view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: description
   - container: cdf_cdm:CogniteSchedulable
     container_property: endTime
@@ -811,14 +811,14 @@ rules:
     is_list: false
     nullable: true
     value_type: timestamp
-    view: ClassicEvent(version=v1_prefixed_Classic)
+    view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: endTime
   - container: ClassicEvent
     container_property: metadata
     is_list: false
     nullable: true
     value_type: json
-    view: ClassicEvent(version=v1_prefixed_Classic)
+    view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: metadata
   - connection: direct
     container: cdf_cdm:CogniteSourceable
@@ -827,8 +827,8 @@ rules:
     index: source
     is_list: false
     nullable: true
-    value_type: ClassicSourceSystem(version=v1_prefixed_Classic)
-    view: ClassicEvent(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicSourceSystem(version=v1_prefixed_Classic)
+    view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: source
   - container: cdf_cdm:CogniteSchedulable
     container_property: startTime
@@ -837,21 +837,21 @@ rules:
     is_list: false
     nullable: true
     value_type: timestamp
-    view: ClassicEvent(version=v1_prefixed_Classic)
+    view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: startTime
   - container: ClassicEvent
     container_property: subtype
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicEvent(version=v1_prefixed_Classic)
+    view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: subtype
   - container: ClassicEvent
     container_property: type
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicEvent(version=v1_prefixed_Classic)
+    view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
     view_property: type
   - connection: direct
     container: cdf_cdm:CogniteFile
@@ -859,23 +859,23 @@ rules:
     immutable: false
     is_list: true
     nullable: true
-    value_type: ClassicAsset(version=v1_prefixed_Classic)
-    view: ClassicFile(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicAsset(version=v1_prefixed_Classic)
+    view: neat_space:ClassicFile(version=v1_prefixed_Classic)
     view_property: assets
   - connection: direct
     container: ClassicFile
     container_property: dataSetId
     is_list: false
     nullable: true
-    value_type: ClassicDataSet(version=v1_prefixed_Classic)
-    view: ClassicFile(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
+    view: neat_space:ClassicFile(version=v1_prefixed_Classic)
     view_property: dataSetId
   - container: ClassicFile
     container_property: metadata
     is_list: false
     nullable: true
     value_type: json
-    view: ClassicFile(version=v1_prefixed_Classic)
+    view: neat_space:ClassicFile(version=v1_prefixed_Classic)
     view_property: metadata
   - container: cdf_cdm:CogniteDescribable
     container_property: name
@@ -884,7 +884,7 @@ rules:
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicFile(version=v1_prefixed_Classic)
+    view: neat_space:ClassicFile(version=v1_prefixed_Classic)
     view_property: name
   - connection: direct
     container: cdf_cdm:CogniteSourceable
@@ -893,30 +893,30 @@ rules:
     index: source
     is_list: false
     nullable: true
-    value_type: ClassicSourceSystem(version=v1_prefixed_Classic)
-    view: ClassicFile(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicSourceSystem(version=v1_prefixed_Classic)
+    view: neat_space:ClassicFile(version=v1_prefixed_Classic)
     view_property: source
   - connection: direct
     container: ClassicLabel
     container_property: dataSetId
     is_list: false
     nullable: true
-    value_type: ClassicDataSet(version=v1_prefixed_Classic)
-    view: ClassicLabel(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
+    view: neat_space:ClassicLabel(version=v1_prefixed_Classic)
     view_property: dataSetId
   - container: ClassicLabel
     container_property: description
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicLabel(version=v1_prefixed_Classic)
+    view: neat_space:ClassicLabel(version=v1_prefixed_Classic)
     view_property: description
   - container: ClassicLabel
     container_property: name
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicLabel(version=v1_prefixed_Classic)
+    view: neat_space:ClassicLabel(version=v1_prefixed_Classic)
     view_property: name
   - container: cdf_cdm:CogniteDescribable
     container_property: name
@@ -924,7 +924,7 @@ rules:
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicSourceSystem(version=v1_prefixed_Classic)
+    view: neat_space:ClassicSourceSystem(version=v1_prefixed_Classic)
     view_property: name
   - connection: direct
     container: cdf_cdm:CogniteTimeSeries
@@ -932,16 +932,16 @@ rules:
     immutable: false
     is_list: true
     nullable: true
-    value_type: ClassicAsset(version=v1_prefixed_Classic)
-    view: ClassicTimeSeries(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicAsset(version=v1_prefixed_Classic)
+    view: neat_space:ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: assets
   - connection: direct
     container: ClassicTimeSeries
     container_property: dataSetId
     is_list: false
     nullable: true
-    value_type: ClassicDataSet(version=v1_prefixed_Classic)
-    view: ClassicTimeSeries(version=v1_prefixed_Classic)
+    value_type: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
+    view: neat_space:ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: dataSetId
   - container: cdf_cdm:CogniteDescribable
     container_property: description
@@ -949,7 +949,7 @@ rules:
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicTimeSeries(version=v1_prefixed_Classic)
+    view: neat_space:ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: description
   - container: cdf_cdm:CogniteTimeSeries
     container_property: isStep
@@ -958,14 +958,14 @@ rules:
     is_list: false
     nullable: false
     value_type: boolean
-    view: ClassicTimeSeries(version=v1_prefixed_Classic)
+    view: neat_space:ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: isStep
   - container: ClassicTimeSeries
     container_property: metadata
     is_list: false
     nullable: true
     value_type: json
-    view: ClassicTimeSeries(version=v1_prefixed_Classic)
+    view: neat_space:ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: metadata
   - container: cdf_cdm:CogniteDescribable
     container_property: name
@@ -974,7 +974,7 @@ rules:
     is_list: false
     nullable: true
     value_type: text
-    view: ClassicTimeSeries(version=v1_prefixed_Classic)
+    view: neat_space:ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: name
   - container: cdf_cdm:CogniteTimeSeries
     container_property: type
@@ -982,7 +982,7 @@ rules:
     is_list: false
     nullable: false
     value_type: enum(collection=timeseriesType)
-    view: ClassicTimeSeries(version=v1_prefixed_Classic)
+    view: neat_space:ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: type
   - connection: direct
     container: cdf_cdm:CogniteTimeSeries
@@ -990,46 +990,46 @@ rules:
     immutable: false
     is_list: false
     nullable: true
-    value_type: cdf_cdm:CogniteUnit
-    view: ClassicTimeSeries(version=v1_prefixed_Classic)
+    value_type: cdf_cdm:CogniteUnit(version=v1)
+    view: neat_space:ClassicTimeSeries(version=v1_prefixed_Classic)
     view_property: unit
   views:
   - description: ''
-    implements: cdf_cdm:Cognite3DTransformation,cdf_cdm:CogniteCubeMap
+    implements: cdf_cdm:Cognite3DTransformation(version=v1),cdf_cdm:CogniteCubeMap(version=v1)
     in_model: true
-    view: cdf_cdm:Cognite360Image
+    view: cdf_cdm:Cognite360Image(version=v1)
   - description: ''
-    implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteAnnotation
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1),cdf_cdm:CogniteAnnotation(version=v1)
     in_model: true
-    view: cdf_cdm:Cognite360ImageAnnotation
+    view: cdf_cdm:Cognite360ImageAnnotation(version=v1)
   - description: Represents a logical collection of Cognite360Image instances
-    implements: cdf_cdm:CogniteDescribable,cdf_cdm:Cognite3DRevision
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DRevision(version=v1)
     in_model: true
-    view: cdf_cdm:Cognite360ImageCollection
+    view: cdf_cdm:Cognite360ImageCollection(version=v1)
   - description: Navigational aid for traversing Cognite360ImageModel instances
-    implements: cdf_cdm:CogniteDescribable,cdf_cdm:Cognite3DModel
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
     in_model: true
-    view: cdf_cdm:Cognite360ImageModel
+    view: cdf_cdm:Cognite360ImageModel(version=v1)
   - description: A way to group images across collections. Used for creating visual
       scan history
-    implements: cdf_cdm:CogniteDescribable
+    implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
-    view: cdf_cdm:Cognite360ImageStation
+    view: cdf_cdm:Cognite360ImageStation(version=v1)
   - description: Groups revisions of 3D data of various kinds together (CAD, PointCloud,
       Image360)
-    implements: cdf_cdm:CogniteDescribable
+    implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
-    view: cdf_cdm:Cognite3DModel
+    view: cdf_cdm:Cognite3DModel(version=v1)
   - description: This is the virtual position representation of an object in the physical
       world, connecting an asset to one or more 3D resources
-    implements: cdf_cdm:CogniteDescribable
+    implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
-    view: cdf_cdm:Cognite3DObject
+    view: cdf_cdm:Cognite3DObject(version=v1)
   - description: Shared revision information for various 3D data types. Normally not
       used directly, but through CognitePointCloudRevision, Image360Collection or
       CogniteCADRevision
     in_model: true
-    view: cdf_cdm:Cognite3DRevision
+    view: cdf_cdm:Cognite3DRevision(version=v1)
   - description: The Cognite3DTransformation object defines a comprehensive 3D transformation,
       enabling precise adjustments to an object's position, orientation, and size
       in the 3D coordinate system. It allows for the translation of objects along
@@ -1038,120 +1038,120 @@ rules:
       is defined in "CDF space", a coordinate system where the positive Z axis is
       the up direction
     in_model: true
-    view: cdf_cdm:Cognite3DTransformation
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
   - description: Represents activities. Activities typically happen over a period
       and have a start and end time.
-    implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteSchedulable
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1),cdf_cdm:CogniteSchedulable(version=v1)
     in_model: true
     name: Activity
-    view: cdf_cdm:CogniteActivity
+    view: cdf_cdm:CogniteActivity(version=v1)
   - description: Annotation represents contextualization results or links
-    implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
     in_model: true
-    view: cdf_cdm:CogniteAnnotation
+    view: cdf_cdm:CogniteAnnotation(version=v1)
   - description: Assets represent systems that support industrial functions or processes.
       Assets are often called 'functional location'.
-    implements: cdf_cdm:CogniteVisualizable,cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    implements: cdf_cdm:CogniteVisualizable(version=v1),cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
     in_model: true
     name: Asset
-    view: cdf_cdm:CogniteAsset
+    view: cdf_cdm:CogniteAsset(version=v1)
   - description: Represents the class of an asset.
-    implements: cdf_cdm:CogniteDescribable
+    implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
     name: Asset class
-    view: cdf_cdm:CogniteAssetClass
+    view: cdf_cdm:CogniteAssetClass(version=v1)
   - description: Represents the type of an asset.
-    implements: cdf_cdm:CogniteDescribable
+    implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
     name: Asset type
-    view: cdf_cdm:CogniteAssetType
+    view: cdf_cdm:CogniteAssetType(version=v1)
   - description: Navigational aid for traversing CogniteCADModel instances
-    implements: cdf_cdm:CogniteDescribable,cdf_cdm:Cognite3DModel
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
     in_model: true
-    view: cdf_cdm:CogniteCADModel
+    view: cdf_cdm:CogniteCADModel(version=v1)
   - description: Represents nodes from the 3D model that have been contextualized
-    implements: cdf_cdm:CogniteDescribable
+    implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
-    view: cdf_cdm:CogniteCADNode
+    view: cdf_cdm:CogniteCADNode(version=v1)
   - description: ''
-    implements: cdf_cdm:Cognite3DRevision
+    implements: cdf_cdm:Cognite3DRevision(version=v1)
     in_model: true
-    view: cdf_cdm:CogniteCADRevision
+    view: cdf_cdm:CogniteCADRevision(version=v1)
   - description: The cube map holds references to 6 images in used to visually represent
       the surrounding environment
     in_model: true
-    view: cdf_cdm:CogniteCubeMap
+    view: cdf_cdm:CogniteCubeMap(version=v1)
   - description: The describable core concept is used as a standard way of holding
       the bare minimum of information about the instance
     in_model: true
-    view: cdf_cdm:CogniteDescribable
+    view: cdf_cdm:CogniteDescribable(version=v1)
   - description: Equipment represents physical supplies or devices.
-    implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
     in_model: true
     name: Equipment
-    view: cdf_cdm:CogniteEquipment
+    view: cdf_cdm:CogniteEquipment(version=v1)
   - description: Represents the type of equipment.
-    implements: cdf_cdm:CogniteDescribable
+    implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
     name: Equipment type
-    view: cdf_cdm:CogniteEquipmentType
+    view: cdf_cdm:CogniteEquipmentType(version=v1)
   - description: Represents files.
-    implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
     in_model: true
     name: File
-    view: cdf_cdm:CogniteFile
+    view: cdf_cdm:CogniteFile(version=v1)
   - description: Represents the categories of files as determined by contextualization
       or categorization.
-    implements: cdf_cdm:CogniteDescribable
+    implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
     name: File category
-    view: cdf_cdm:CogniteFileCategory
+    view: cdf_cdm:CogniteFileCategory(version=v1)
   - description: PointCloud volume definition
-    implements: cdf_cdm:CogniteDescribable
+    implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
-    view: cdf_cdm:CognitePointCloudVolume
+    view: cdf_cdm:CognitePointCloudVolume(version=v1)
   - description: CogniteSchedulable represents the metadata about when an activity
       (or similar) starts and ends.
     in_model: true
-    view: cdf_cdm:CogniteSchedulable
+    view: cdf_cdm:CogniteSchedulable(version=v1)
   - description: The CogniteSourceSystem core concept is used to standardize the way
       source system is stored.
-    implements: cdf_cdm:CogniteDescribable
+    implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
-    view: cdf_cdm:CogniteSourceSystem
+    view: cdf_cdm:CogniteSourceSystem(version=v1)
   - in_model: true
-    view: cdf_cdm:CogniteSourceable
+    view: cdf_cdm:CogniteSourceable(version=v1)
   - description: Represents a series of data points in time order.
-    implements: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
     in_model: true
     name: Time series
-    view: cdf_cdm:CogniteTimeSeries
+    view: cdf_cdm:CogniteTimeSeries(version=v1)
   - description: Represents a single unit of measurement
-    implements: cdf_cdm:CogniteDescribable
+    implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
-    view: cdf_cdm:CogniteUnit
+    view: cdf_cdm:CogniteUnit(version=v1)
   - description: CogniteVisualizable defines the standard way to reference a related
       3D resource
     in_model: true
-    view: cdf_cdm:CogniteVisualizable
-  - implements: cdf_cdm:CogniteAsset
+    view: cdf_cdm:CogniteVisualizable(version=v1)
+  - implements: cdf_cdm:CogniteAsset(version=v1)
     in_model: true
-    view: ClassicAsset(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAsset(version=v1_prefixed_Classic)
   - in_model: true
-    view: ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
+    view: neat_space:ClassicAssetToAssetEdge(version=v1_prefixed_Classic)
   - in_model: true
-    view: ClassicDataSet(version=v1_prefixed_Classic)
-  - implements: cdf_cdm:CogniteActivity
+    view: neat_space:ClassicDataSet(version=v1_prefixed_Classic)
+  - implements: cdf_cdm:CogniteActivity(version=v1)
     in_model: true
-    view: ClassicEvent(version=v1_prefixed_Classic)
-  - implements: cdf_cdm:CogniteFile
+    view: neat_space:ClassicEvent(version=v1_prefixed_Classic)
+  - implements: cdf_cdm:CogniteFile(version=v1)
     in_model: true
-    view: ClassicFile(version=v1_prefixed_Classic)
+    view: neat_space:ClassicFile(version=v1_prefixed_Classic)
   - in_model: true
-    view: ClassicLabel(version=v1_prefixed_Classic)
-  - implements: cdf_cdm:CogniteSourceSystem
+    view: neat_space:ClassicLabel(version=v1_prefixed_Classic)
+  - implements: cdf_cdm:CogniteSourceSystem(version=v1)
     in_model: true
-    view: ClassicSourceSystem(version=v1_prefixed_Classic)
-  - implements: cdf_cdm:CogniteTimeSeries
+    view: neat_space:ClassicSourceSystem(version=v1_prefixed_Classic)
+  - implements: cdf_cdm:CogniteTimeSeries(version=v1)
     in_model: true
-    view: ClassicTimeSeries(version=v1_prefixed_Classic)
+    view: neat_space:ClassicTimeSeries(version=v1_prefixed_Classic)

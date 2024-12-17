@@ -6,6 +6,7 @@ from cognite.neat._rules.models.entities import (
     AssetEntity,
     ClassEntity,
     DataModelEntity,
+    DMSEntity,
     DMSNodeEntity,
     DMSUnknownEntity,
     EdgeEntity,
@@ -34,8 +35,8 @@ TEST_CASES = [
     ),
     (
         ClassEntity,
-        "subject:person",
-        ClassEntity(prefix="subject", suffix="person", version=DEFAULT_VERSION),
+        "person",
+        ClassEntity(prefix=DEFAULT_SPACE, suffix="person", version=DEFAULT_VERSION),
     ),
     (
         ViewEntity,
@@ -47,11 +48,6 @@ TEST_CASES = [
         ViewEntity,
         "Person",
         ViewEntity(space=DEFAULT_SPACE, externalId="Person", version=DEFAULT_VERSION),
-    ),
-    (
-        ViewEntity,
-        "Person(version=3)",
-        ViewEntity(space=DEFAULT_SPACE, externalId="Person", version="3"),
     ),
     (
         ViewEntity,
@@ -78,22 +74,22 @@ TEST_CASES = [
         "edge(properties=Owns,type=ownership)",
         EdgeEntity(
             properties=ViewEntity(space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="Owns"),
-            type=DMSNodeEntity(space="sp_my_space", externalId="ownership"),
-        ),
-    ),
-    (
-        EdgeEntity,
-        "edge(properties=Owns(version=34),type=ownership)",
-        EdgeEntity(
-            properties=ViewEntity(space=DEFAULT_SPACE, version="34", externalId="Owns"),
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
         ),
     ),
     (
         EdgeEntity,
-        "edge(type=ownership)",
+        "edge(properties=my_other_space:Owns(version=34),type=ownership)",
         EdgeEntity(
+            properties=ViewEntity(space="my_other_space", version="34", externalId="Owns"),
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
+        ),
+    ),
+    (
+        EdgeEntity,
+        "edge(type=my_node_type_space:ownership)",
+        EdgeEntity(
+            type=DMSNodeEntity(space="my_node_type_space", externalId="ownership"),
         ),
     ),
     (
@@ -108,14 +104,22 @@ TEST_CASES = [
 
 
 class TestEntities:
-    @pytest.mark.parametrize("cls_, raw, expected", TEST_CASES)
+    @pytest.mark.parametrize(
+        "cls_, raw, expected", TEST_CASES, ids=[f"{cls_.__name__} {raw}" for cls_, raw, _ in TEST_CASES]
+    )
     def test_load_dump(self, cls_: type[Entity], raw: str, expected: Entity) -> None:
-        loaded = cls_.load(raw, space=DEFAULT_SPACE, version=DEFAULT_VERSION)
+        if issubclass(cls_, DMSEntity):
+            defaults = {"space": DEFAULT_SPACE, "version": DEFAULT_VERSION}
+        elif issubclass(cls_, AssetEntity | RelationshipEntity):
+            defaults = {}
+        else:
+            defaults = {"prefix": DEFAULT_SPACE, "version": DEFAULT_VERSION}
+
+        loaded = cls_.load(raw, **defaults)
 
         assert loaded == expected
 
-        dumped = loaded.dump(space=DEFAULT_SPACE, version=DEFAULT_VERSION)
-
+        dumped = loaded.dump(**defaults)
         assert dumped == raw
 
 
