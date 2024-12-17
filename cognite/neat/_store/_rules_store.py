@@ -18,7 +18,7 @@ class NeatRulesStore:
     def __init__(self):
         self.provenance = Provenance()
 
-    def write(self, importer: BaseImporter) -> IssueList:
+    def import_(self, importer: BaseImporter) -> IssueList:
         agent = importer.agent
         source_entity = Entity(
             was_attributed_to=UNKNOWN_AGENT,
@@ -36,7 +36,7 @@ class NeatRulesStore:
             transformer.description,
         )[1]
 
-    def read(self, exporter: BaseExporter[T_VerifiedRules, T_Export], path: Path | None = None) -> T_Export:
+    def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export], path: Path | None = None) -> T_Export:
         last_entity = self.get_last_successful_entity()
         result = last_entity.result
         if not isinstance(result, OutRules):

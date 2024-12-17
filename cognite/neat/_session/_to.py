@@ -113,9 +113,9 @@ class ToAPI:
         if format == "neat":
             exporter = exporters.YAMLExporter()
             if io is None:
-                return self._state.rule_store.read(exporter)
+                return self._state.rule_store.export(exporter)
 
-            self._state.rule_store.read(exporter, Path(io))
+            self._state.rule_store.export(exporter, Path(io))
         elif format == "toolkit":
             if io is None or not isinstance(io, str | Path):
                 raise NeatSessionError(
@@ -125,7 +125,7 @@ class ToAPI:
             user_path = Path(io)
             if user_path.suffix == "" and not user_path.exists():
                 user_path.mkdir(parents=True)
-            self._state.rule_store.read(exporters.DMSExporter(remove_cdf_spaces=skip_system_spaces), user_path)
+            self._state.rule_store.export(exporters.DMSExporter(remove_cdf_spaces=skip_system_spaces), user_path)
         else:
             raise NeatSessionError("Please provide a valid format. 'neat' or 'toolkit'")
 
