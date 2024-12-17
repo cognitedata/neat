@@ -112,22 +112,20 @@ class ToAPI:
         """
         if format == "neat":
             exporter = exporters.YAMLExporter()
-            last_verified = self._state.data_model.last_verified_rule[1]
             if io is None:
-                return exporter.export(last_verified)
+                return self._state.rule_store.read(exporter)
 
-            exporter.export_to_file(last_verified, Path(io))
+            self._state.rule_store.read(exporter, Path(io))
         elif format == "toolkit":
             if io is None or not isinstance(io, str | Path):
                 raise NeatSessionError(
                     "Please provide a zip file or directory path to write the YAML files to."
                     "This is required for the 'toolkit' format."
                 )
-            dms_rule = self._state.data_model.last_verified_dms_rules[1]
             user_path = Path(io)
             if user_path.suffix == "" and not user_path.exists():
                 user_path.mkdir(parents=True)
-            exporters.DMSExporter(remove_cdf_spaces=skip_system_spaces).export_to_file(dms_rule, user_path)
+            self._state.rule_store.read(exporters.DMSExporter(remove_cdf_spaces=skip_system_spaces), user_path)
         else:
             raise NeatSessionError("Please provide a valid format. 'neat' or 'toolkit'")
 

@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, cast
 
 from cognite.neat._issues import IssueList, catch_issues
@@ -35,7 +36,7 @@ class NeatRulesStore:
             transformer.description,
         )[1]
 
-    def read(self, exporter: BaseExporter[T_VerifiedRules, T_Export]) -> T_Export:
+    def read(self, exporter: BaseExporter[T_VerifiedRules, T_Export], path: Path | None = None) -> T_Export:
         last_entity = self.get_last_successful_entity()
         result = last_entity.result
         if not isinstance(result, OutRules):
@@ -43,7 +44,7 @@ class NeatRulesStore:
         rules = result.get_rules()
 
         result, _ = self._run(
-            lambda: exporter.export(rules),  # type: ignore[arg-type]
+            lambda: exporter.export(rules) if path is None else exporter.export_to_file(rules, path),  # type: ignore[arg-type]
             exporter.agent,
             last_entity,
             exporter.description,
