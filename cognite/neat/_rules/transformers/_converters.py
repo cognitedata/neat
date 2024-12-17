@@ -9,6 +9,7 @@ from typing import ClassVar, Literal, TypeVar, cast, overload
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
 
+from cognite.neat._client import NeatClient
 from cognite.neat._constants import (
     COGNITE_MODELS,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
@@ -28,6 +29,7 @@ from cognite.neat._rules._shared import (
     VerifiedRules,
 )
 from cognite.neat._rules.analysis import DMSAnalysis
+from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import (
     DMSInputRules,
     DMSRules,
@@ -36,7 +38,7 @@ from cognite.neat._rules.models import (
     data_types,
 )
 from cognite.neat._rules.models.data_types import AnyURI, DataType, String
-from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSView
+from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSValidation, DMSView
 from cognite.neat._rules.models.dms._rules import DMSContainer
 from cognite.neat._rules.models.entities import (
     ClassEntity,
@@ -59,11 +61,8 @@ from cognite.neat._rules.models.information._rules_input import (
 from cognite.neat._utils.collection_ import remove_list_elements
 from cognite.neat._utils.text import to_camel
 
-from ._base import RulesTransformer, T_RulesIn, T_RulesOut
-from cognite.neat._client import NeatClient
+from ._base import RulesTransformer
 from ._verification import VerifyDMSRules
-from cognite.neat._rules.models.dms import DMSValidation
-from cognite.neat._rules.importers import DMSImporter
 
 T_VerifiedInRules = TypeVar("T_VerifiedInRules", bound=VerifiedRules)
 T_VerifiedOutRules = TypeVar("T_VerifiedOutRules", bound=VerifiedRules)
@@ -565,10 +564,9 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
     @property
     def description(self) -> str:
         if self.type_ == "enterprise":
-            f"Prepared data model {self.new_model_id} to be enterprise data "
-            f"model."
+            return f"Prepared data model {self.new_model_id} to be enterprise data model."
         elif self.type_ == "solution":
-            f"Prepared data model {self.new_model_id} to be solution data model."
+            return f"Prepared data model {self.new_model_id} to be solution data model."
         elif self.type_ == "data_product":
             return f"Prepared data model {self.new_model_id} to be data product model."
         else:
@@ -657,24 +655,28 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
     def description(self) -> str:
         return f"Removed {len(self.drop_external_ids) + len(self.drop_collection)} views from data model"
 
+
 class IncludeReferenced(RulesTransformer[DMSRules, DMSRules]):
     def __init__(self, client: NeatClient) -> None:
         self._client = client
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         dms_rules = self._to_rules(rules)
-        view_ids, container_ids = DMSValidation(rules, self._client).imported_views_and_containers_ids()
+        view_ids, container_ids = DMSValidation(dms_rules, self._client).imported_views_and_containers_ids()
         if not (view_ids or container_ids):
             warnings.warn(
                 NeatValueWarning(
-                f"Data model {rules.metadata.as_data_model_id()} does not have any referenced views or containers."
-                f"that is not already included in the data model."), stacklevel=2
+                    f"Data model {dms_rules.metadata.as_data_model_id()} does not have any "
+                    "referenced views or containers."
+                    "that is not already included in the data model."
+                ),
+                stacklevel=2,
             )
-            return dms_rules
+            return JustRules(dms_rules)
 
         schema = self._client.schema.retrieve([v.as_id() for v in view_ids], [c.as_id() for c in container_ids])
-        copy_ = rules.model_copy(deep=True)
-        copy_.metadata.version = f"{rules.metadata.version}_completed"
+        copy_ = dms_rules.model_copy(deep=True)
+        copy_.metadata.version = f"{copy_.metadata.version}_completed"
         importer = DMSImporter(schema)
         imported = importer.to_rules()
         if imported.rules is None:
@@ -712,12 +714,13 @@ class AddClassImplements(RulesTransformer[InformationRules, InformationRules]):
         for class_ in output.classes:
             if class_.class_.suffix.endswith(self.suffix):
                 class_.implements = [ClassEntity(prefix=class_.class_.prefix, suffix=self.implements)]
-        output.metadata.version = f"{rules.metadata.version}.implements_{self.implements}"
+        output.metadata.version = f"{output.metadata.version}.implements_{self.implements}"
         return JustRules(output)
 
     @property
     def description(self) -> str:
         return f"Added implements property to classes with suffix {self.suffix}"
+
 
 class _InformationRulesConverter:
     _edge_properties: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})

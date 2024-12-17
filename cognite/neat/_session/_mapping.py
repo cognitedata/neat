@@ -1,16 +1,11 @@
-from datetime import datetime, timezone
-
 from cognite.neat._client import NeatClient
-from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._rules.importers import DMSImporter
-from cognite.neat._rules.models.dms import DMSValidation
+from cognite.neat._issues import IssueList
+from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.mapping import load_classic_to_core_mapping
-from cognite.neat._rules.transformers import AsParentPropertyId, RuleMapper, IncludeReferenced
+from cognite.neat._rules.transformers import AsParentPropertyId, IncludeReferenced, RuleMapper
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
-from .._issues import IssueList
-from .._rules.models import DMSRules
 
 
 @session_class_wrapper
@@ -52,12 +47,10 @@ class DataModelMappingAPI:
         if self._client is None:
             raise NeatSessionError("Client is required to map classic to core")
 
-        transformers = [RuleMapper(
-                load_classic_to_core_mapping(company_prefix, rules.metadata.space, rules.metadata.version)
-            ),
-            IncludeReferenced(self._client)
+        transformers = [
+            RuleMapper(load_classic_to_core_mapping(company_prefix, rules.metadata.space, rules.metadata.version)),
+            IncludeReferenced(self._client),
         ]
         if use_parent_property_name:
             transformers.append(AsParentPropertyId())
         return self._state.rule_store.transform(*transformers)
-

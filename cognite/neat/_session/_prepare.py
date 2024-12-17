@@ -1,6 +1,4 @@
-import copy
 from collections.abc import Callable, Collection
-from datetime import datetime, timezone
 from typing import Any, Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
@@ -8,7 +6,6 @@ from rdflib import URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import (
-    DEFAULT_NAMESPACE,
     get_default_prefixes_and_namespaces,
 )
 from cognite.neat._graph.transformers import (
@@ -22,29 +19,18 @@ from cognite.neat._graph.transformers import (
     Transformers,
 )
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
-from cognite.neat._rules.importers import DMSImporter
-from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models.dms import DMSValidation
-from cognite.neat._rules.models.entities import ClassEntity
+from cognite.neat._issues import IssueList
 from cognite.neat._rules.transformers import (
+    AddClassImplements,
+    IncludeReferenced,
     PrefixEntities,
     ReduceCogniteModel,
     ToCompliantEntities,
     ToExtension,
-    VerifyDMSRules,
-    IncludeReferenced, AddClassImplements,
 )
-from cognite.neat._store._provenance import Agent as ProvenanceAgent
-from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
-from .._issues import IssueList
-
-try:
-    from rich import print
-except ImportError:
-    ...
 
 
 @session_class_wrapper
@@ -417,7 +403,6 @@ class DataModelPrepareAPI:
             )
         )
 
-
     def to_data_product(
         self,
         data_model_id: DataModelIdentifier,
@@ -443,12 +428,12 @@ class DataModelPrepareAPI:
             )
         transformers = [
             IncludeReferenced(self._client),
-             ToExtension(
-            new_model_id=data_model_id,
-            org_name=org_name,
-            type_="data_product",
-            include=include,
-            )
+            ToExtension(
+                new_model_id=data_model_id,
+                org_name=org_name,
+                type_="data_product",
+                include=include,
+            ),
         ]
 
         self._state.rule_store.transform(*transformers)
@@ -464,7 +449,7 @@ class DataModelPrepareAPI:
         """
         return self._state.rule_store.transform(ReduceCogniteModel(drop))
 
-    def include_referenced(self) -> None:
+    def include_referenced(self) -> IssueList:
         """Include referenced views and containers in the data model."""
         if self._client is None:
             raise NeatSessionError(

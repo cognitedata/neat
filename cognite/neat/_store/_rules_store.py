@@ -28,15 +28,17 @@ class NeatRulesStore:
 
     def transform(self, *transformer: RulesTransformer) -> IssueList:
         all_issues = IssueList()
-        for transformer in transformer:
+        for item in transformer:
             last_entity = self.get_last_successful_entity()
 
             transform_issues = self._run(
-            lambda: transformer.transform(last_entity.result),
-            transformer.agent,
-            last_entity,
-            transformer.description,
-        )[1]
+                # The item and last_entity will change in the loop, however, this will
+                # be ok as the run method will execute the lambda immediately
+                lambda: item.transform(last_entity),  # noqa: B023
+                item.agent,
+                last_entity,
+                item.description,
+            )[1]
             all_issues.extend(transform_issues)
         return all_issues
 
