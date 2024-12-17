@@ -1,14 +1,10 @@
-from typing import cast
-
 from rdflib import Graph, Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._shared import Triple
-from cognite.neat._utils.collection_ import iterate_progress_bar
 from cognite.neat._utils.rdf_ import as_neat_compliant_uri
 from cognite.neat._utils.text import sentence_or_string_to_camel
 
-from ._base import BaseTransformer
+from ._base import BaseTransformer, BaseTransformerStandardised
 
 
 class AttachPropertyFromTargetToSource(BaseTransformer):
@@ -215,43 +211,38 @@ class PruneTypes(BaseTransformer):
                 graph.remove((subject, None, None))
 
 
-class PruneDeadEndEdges(BaseTransformer):
+class PruneDeadEndEdges(BaseTransformerStandardised):
     """
     Removes all the triples where object is a node that is not found in graph
     """
 
-    description: str = "Prunes the graph of specified rdf types that do not have connections to other nodes."
-    _count_query = """
-                    SELECT (COUNT(?object) AS ?objectCount)
-                    WHERE {
-                        ?subject ?predicate ?object .
-                        FILTER (isIRI(?object) && ?predicate != rdf:type)
-                        FILTER NOT EXISTS {?object ?p ?o .}
-                        }
+    def description(self) -> str:
+        return "Pruning the graph of triples where object is a node that is not found in graph."
 
-                    """
+    def operation(self) -> str:
+        return "remove"
 
-    _iterate_query = """
-                        SELECT ?subject ?predicate ?object
+    def _iterate_query(self) -> str:
+        _iterate_query = """
+                         SELECT ?subject ?predicate ?object
+                         WHERE {
+                             ?subject ?predicate ?object .
+                             FILTER (isIRI(?object) && ?predicate != rdf:type)
+                             FILTER NOT EXISTS {?object ?p ?o .}
+                             }
+                         """
+        return _iterate_query
+
+    def _target_edges_count_query(self) -> str:
+        _count_query = """
+                        SELECT (COUNT(?object) AS ?objectCount)
                         WHERE {
                             ?subject ?predicate ?object .
                             FILTER (isIRI(?object) && ?predicate != rdf:type)
                             FILTER NOT EXISTS {?object ?p ?o .}
-
                             }
-
-                      """
-
-    def transform(self, graph: Graph) -> None:
-        non_existing_count = list(graph.query(self._count_query))
-        non_existing_count_number = int(non_existing_count[0][0])  # type: ignore [index, arg-type]
-
-        for triple in iterate_progress_bar(  # type: ignore[misc]
-            graph.query(self._iterate_query),
-            total=non_existing_count_number,
-            description="Removing non-existent object nodes.",
-        ):
-            graph.remove(cast(Triple, triple))
+                        """
+        return _count_query
 
 
 class PruneInstancesOfUnknownType(BaseTransformer):

@@ -39,29 +39,37 @@ def generate_test_parameters_unknown_types() -> Iterable[ParameterSet]:
     ]
     expected_triples = [[str(item) for item in triple] for triple in expected_triples]
     expected_triples.sort()
-    triples_removed = 1
+    removed_triples = [
+        str(
+            (
+                namespace["Device-ID"],
+                namespace["someProperty"],
+                namespace["Not-an-existing-node-ID"],
+            )
+        )
+    ]
 
     yield pytest.param(
         original_triples,
         expected_triples,
-        triples_removed,
+        removed_triples,
         id="Flatten with new predicate, literal to URIRef, delete intermediate node",
     )
 
 
 class TestPruneGraph:
     @pytest.mark.parametrize(
-        "original_triples, expected_triples, triples_removed",
+        "original_triples, expected_triples, removed_triples",
         generate_test_parameters_unknown_types(),
     )
     def test_prune_instances_of_unknown_type(
-        self, original_triples: list[Triple], expected_triples: list[Triple], triples_removed: int
+        self, original_triples: list[Triple], expected_triples: list[Triple], removed_triples: list[Triple]
     ):
         store = NeatGraphStore.from_memory_store()
 
         store._add_triples(original_triples)
 
-        PruneDeadEndEdges().transform(store.graph)
+        transformation_result = PruneDeadEndEdges().transform(store.graph)
 
         triples_after = [triple for triple in store.graph.triples((None, None, None))]
         triples_after = [[str(item) for item in triple] for triple in triples_after]
@@ -70,6 +78,10 @@ class TestPruneGraph:
 
         assert triples_after == expected_triples
         assert len(triples_after) == len(expected_triples)
+
+        # Verify transformation result object
+        assert len(transformation_result.issues) == 0
+        assert transformation_result.removed == removed_triples
 
     def test_prune_dead_end_edges(self): ...
 
