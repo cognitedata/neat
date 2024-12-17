@@ -16,7 +16,7 @@ class TestToYaml:
     def test_to_yaml(self, tmp_path: Path) -> None:
         neat = NeatSession()
         # Hack to read in model.
-        neat._state.rule_store.write(RuleImporter())
+        neat._state.rule_store.import_(RuleImporter())
 
         neat.verify()
         neat.to.yaml(tmp_path, format="toolkit")
