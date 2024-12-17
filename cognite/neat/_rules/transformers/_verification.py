@@ -69,6 +69,10 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
     def _get_validation_cls(self, rules: T_VerifiedRules) -> type:
         return self._validation_cls
 
+    @property
+    def description(self) -> str:
+        return "Verify rules"
+
 
 class VerifyDMSRules(VerificationTransformer[DMSInputRules, DMSRules]):
     """Class to verify DMS rules."""

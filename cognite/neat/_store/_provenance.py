@@ -20,7 +20,7 @@ import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Generic, Optional, TypeVar
+from typing import Any, Optional, TypeVar
 
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from rdflib import PROV, RDF, Literal, URIRef
@@ -119,12 +119,9 @@ class Entity:
         )
 
 
-T_Result = TypeVar("T_Result")
-
-
 @dataclass(frozen=True)
-class ModelEntity(Entity, Generic[T_Result]):
-    result: T_Result | None = None
+class ModelEntity(Entity):
+    result: Any | None = None
 
 
 INSTANCES_ENTITY = Entity(was_attributed_to=NEAT_AGENT, id_=CDF_NAMESPACE["instances"])

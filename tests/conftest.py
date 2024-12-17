@@ -1,3 +1,5 @@
+import random
+import uuid
 from typing import Any
 
 import pandas as pd
@@ -120,3 +122,14 @@ def svein_harald_dms_rules() -> DMSRules:
 @pytest.fixture(scope="session")
 def olav_rebuild_dms_rules() -> DMSRules:
     return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx"), role=RoleTypes.dms)
+
+
+@pytest.fixture(scope="function")
+def deterministic_uuid4(monkeypatch) -> None:
+    rd = random.Random()
+    rd.seed(42)
+
+    def deterministic_uuid4():
+        return uuid.UUID(int=rd.getrandbits(128), version=4)
+
+    monkeypatch.setattr("cognite.neat._rules.models._base_rules.uuid.uuid4", deterministic_uuid4)
