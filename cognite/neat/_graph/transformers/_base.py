@@ -54,7 +54,8 @@ class BaseTransformerStandardised(ABC):
 
     def _skip_query(self) -> str | None:  # noqa: B027
         """
-        Overwrite to fetch all affected triples (subjects, objects and predicates) in the graph as a result of the transformation.
+        Overwrite to fetch all affected triples (subjects, objects and predicates) in
+        the graph as a result of the transformation.
         Returns:
             A query string.
         """
