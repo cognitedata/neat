@@ -1,8 +1,9 @@
 from abc import ABC
 from typing import Any, Literal
 
+from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList, MultiValueError, NeatError, NeatWarning, catch_issues
-from cognite.neat._issues.errors import NeatTypeError
+from cognite.neat._issues.errors import NeatTypeError, NeatValueError
 from cognite.neat._rules._shared import (
     InputRules,
     MaybeRules,
@@ -30,9 +31,12 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
     _rules_cls: type[T_VerifiedRules]
     _validation_cls: type
 
-    def __init__(self, errors: Literal["raise", "continue"], validate: bool = True) -> None:
+    def __init__(
+        self, errors: Literal["raise", "continue"], validate: bool = True, client: NeatClient | None = None
+    ) -> None:
         self.errors = errors
         self.validate = validate
+        self._client = client
 
     def transform(self, rules: T_InputRules | OutRules[T_InputRules]) -> MaybeRules[T_VerifiedRules]:
         issues = IssueList()
@@ -47,7 +51,13 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
             verified_rules = rules_cls.model_validate(dumped)  # type: ignore[assignment]
             if self.validate:
                 validation_cls = self._get_validation_cls(verified_rules)  # type: ignore[arg-type]
-                validation_issues = validation_cls(verified_rules).validate()
+                if issubclass(validation_cls, DMSValidation):
+                    validation_issues = DMSValidation(verified_rules, self._client).validate()  # type: ignore[arg-type]
+                elif isinstance(validation_cls, InformationRules):
+                    validation_issues = InformationValidation(verified_rules).validate()
+                else:
+                    raise NeatValueError("Unsupported rule type")
+
                 # We need to trigger warnings are raise exceptions such that they are caught by the context manager
                 # and processed with the read context
                 if validation_issues.warnings:

@@ -10,9 +10,6 @@ from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import ReadRules, VerifiedRules
-from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models.dms import DMSValidation
-from cognite.neat._rules.models.information import InformationValidation
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, InformationToDMS, VerifyAnyRules
@@ -128,47 +125,12 @@ class NeatSession:
             neat.verify()
             ```
         """
-        source_id, last_unverified_rule = self._state.data_model.last_unverified_rule
-        transformer = VerifyAnyRules("continue", validate=False)
-        start = datetime.now(timezone.utc)
-        output = transformer.try_transform(last_unverified_rule)
+        transformer = VerifyAnyRules("continue", validate=True, client=self._client)
+        issues = self._state.rule_store.transform(transformer)
 
-        if output.rules:
-            if isinstance(output.rules, DMSRules):
-                issues = DMSValidation(output.rules, self._client).validate()
-            elif isinstance(output.rules, InformationRules):
-                issues = InformationValidation(output.rules).validate()
-            else:
-                raise NeatSessionError("Unsupported rule type")
-            if issues.has_errors:
-                # This is up for discussion, but I think we should not return rules that
-                # only pass the verification but not the validation.
-                output.rules = None
-            output.issues.extend(issues)
-
-            end = datetime.now(timezone.utc)
-
-            if output.rules:
-                change = Change.from_rules_activity(
-                    output.rules,
-                    transformer.agent,
-                    start,
-                    end,
-                    f"Verified data model {source_id} as {output.rules.metadata.identifier}",
-                    self._state.data_model.provenance.source_entity(source_id)
-                    or self._state.data_model.provenance.target_entity(source_id),
-                )
-
-                self._state.data_model.write(output.rules, change)
-
-                if isinstance(output.rules, InformationRules):
-                    self._state.instances.store.add_rules(output.rules)
-
-        output.issues.action = "verify"
-        self._state.data_model.issue_lists.append(output.issues)
-        if output.issues:
+        if issues:
             print("You can inspect the issues with the .inspect.issues(...) method.")
-        return output.issues
+        return issues
 
     def convert(
         self, target: Literal["dms", "information"], mode: Literal["edge_properties"] | None = None

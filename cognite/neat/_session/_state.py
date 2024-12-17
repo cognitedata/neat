@@ -8,7 +8,7 @@ from cognite.neat._rules._shared import JustRules, ReadRules, VerifiedRules
 from cognite.neat._rules.models.dms._rules import DMSRules
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
-from cognite.neat._store import NeatGraphStore
+from cognite.neat._store import NeatGraphStore, NeatRulesStore
 from cognite.neat._store._provenance import Change, Provenance
 from cognite.neat._utils.upload import UploadResultList
 
@@ -19,6 +19,7 @@ class SessionState:
     def __init__(self, store_type: Literal["memory", "oxigraph"]) -> None:
         self.instances = InstancesState(store_type)
         self.data_model = DataModelState()
+        self.rule_store = NeatRulesStore()
 
 
 @dataclass
