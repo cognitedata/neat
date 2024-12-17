@@ -26,15 +26,19 @@ class NeatRulesStore:
         )
         return self._run(importer.to_rules, agent, source_entity, importer.description)[1]
 
-    def transform(self, transformer: RulesTransformer) -> IssueList:
-        last_entity = self.get_last_successful_entity()
+    def transform(self, *transformer: RulesTransformer) -> IssueList:
+        all_issues = IssueList()
+        for transformer in transformer:
+            last_entity = self.get_last_successful_entity()
 
-        return self._run(
+            transform_issues = self._run(
             lambda: transformer.transform(last_entity.result),
             transformer.agent,
             last_entity,
             transformer.description,
         )[1]
+            all_issues.extend(transform_issues)
+        return all_issues
 
     def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export], path: Path | None = None) -> T_Export:
         last_entity = self.get_last_successful_entity()

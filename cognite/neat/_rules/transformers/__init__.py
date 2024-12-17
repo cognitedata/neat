@@ -8,12 +8,15 @@ from ._converters import (
     SetIDDMSModel,
     ToCompliantEntities,
     ToExtension,
+    IncludeReferenced,
+    AddClassImplements,
 )
 from ._mapping import AsParentPropertyId, MapOneToOne, RuleMapper
 from ._pipelines import ImporterPipeline
 from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRules
 
 __all__ = [
+    "AddClassImplements",
     "AsParentPropertyId",
     "ConvertToRules",
     "DMSToInformation",
@@ -31,4 +34,5 @@ __all__ = [
     "VerifyAnyRules",
     "VerifyDMSRules",
     "VerifyInformationRules",
+    "IncludeReferenced",
 ]

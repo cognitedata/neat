@@ -8,6 +8,7 @@ from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
+from .._issues import IssueList
 
 
 @session_class_wrapper
@@ -18,7 +19,7 @@ class SetAPI:
         self._state = state
         self._verbose = verbose
 
-    def data_model_id(self, new_model_id: dm.DataModelId | tuple[str, str, str]) -> None:
+    def data_model_id(self, new_model_id: dm.DataModelId | tuple[str, str, str]) -> IssueList:
         """Sets the data model ID of the latest verified data model. Set the data model id as a tuple of strings
         following the template (<data_model_space>, <data_model_name>, <data_model_version>).
 

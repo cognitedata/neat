@@ -199,35 +199,12 @@ class NeatSession:
             ```
         """
         model_id = dm.DataModelId.load(model_id)
-
-        start = datetime.now(timezone.utc)
         importer = importers.InferenceImporter.from_graph_store(
             store=self._state.instances.store,
             max_number_of_instance=max_number_of_instance,
+            data_model_id=model_id,
         )
-        inferred_rules: ReadRules = importer.to_rules()
-        end = datetime.now(timezone.utc)
-
-        if model_id.space:
-            cast(InformationInputRules, inferred_rules.rules).metadata.space = model_id.space
-        if model_id.external_id:
-            cast(InformationInputRules, inferred_rules.rules).metadata.external_id = model_id.external_id
-
-        if model_id.version:
-            cast(InformationInputRules, inferred_rules.rules).metadata.version = model_id.version
-
-        # Provenance
-        change = Change.from_rules_activity(
-            inferred_rules,
-            importer.agent,
-            start,
-            end,
-            "Inferred data model",
-            INSTANCES_ENTITY,
-        )
-
-        self._state.data_model.write(inferred_rules, change)
-        return inferred_rules.issues
+        return self._state.rule_store.import_(importer)
 
     def _repr_html_(self) -> str:
         state = self._state

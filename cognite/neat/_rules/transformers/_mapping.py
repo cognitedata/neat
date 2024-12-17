@@ -212,6 +212,10 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
                     conflicts.append(mapping_prop.model_fields[field_name].alias or field_name)
         return to_overwrite, conflicts
 
+    @property
+    def description(self) -> str:
+        return f"Mapping to {self.mapping.metadata.as_data_model_id()!r}."
+
 
 class AsParentPropertyId(RulesTransformer[DMSRules, DMSRules]):
     """Looks up all view properties that map to the same container property,
@@ -338,3 +342,7 @@ class AsParentPropertyId(RulesTransformer[DMSRules, DMSRules]):
             _, prop_name = min(view_properties, key=lambda prop: len(path_by_view[prop[0]]))
             parent_name_by_container_property[(container, container_property)] = prop_name
         return parent_name_by_container_property
+
+    @property
+    def description(self) -> str:
+        return "Renaming property names to parent name"

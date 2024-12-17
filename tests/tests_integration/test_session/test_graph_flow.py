@@ -37,7 +37,7 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
-    def test_classic_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
+    def test_classic_to_dms(self, deterministic_uuid4: None, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
         for extractor in classic_windfarm.create_extractors():
@@ -55,7 +55,7 @@ class TestExtractToLoadFlow:
         neat.infer()
 
         # Hack to ensure deterministic output
-        rules = neat._state.data_model.last_unverified_rule[1].rules
+        rules = neat._state.rule_store.get_last_entity().result.rules
         rules.metadata.created = "2024-09-19T00:00:00Z"
         rules.metadata.updated = "2024-09-19T00:00:00Z"
 
