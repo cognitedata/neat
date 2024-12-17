@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.103.1] - 17-12-**2024**
 ### Fixed
 - Writing a model to Excel or YAML no longer skips specifying version and space of Views unless they both match.
 
