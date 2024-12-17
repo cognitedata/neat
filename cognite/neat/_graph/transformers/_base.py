@@ -5,7 +5,7 @@ from rdflib import Graph
 
 from cognite.neat._issues import IssueList
 from cognite.neat._utils.collection_ import iterate_progress_bar
-from cognite.neat._utils.graph_transformations_report import GraphTransformationResultCore
+from cognite.neat._utils.graph_transformations_report import GraphTransformationResult
 
 
 class BaseTransformer(ABC):
@@ -45,7 +45,8 @@ class BaseTransformerStandardised(ABC):
 
     def _target_edges_count_query(self) -> str | None:  # noqa: B027
         """
-        Overwrite to fetch all affected edges (object triples) in the graph as a result of the transformation.
+        Overwrite to fetch all affected triples (subjects, objects and predicates) in the graph
+        as a result of the transformation.
         Returns:
             A query string.
         """
@@ -68,7 +69,7 @@ class BaseTransformerStandardised(ABC):
         """
         raise NotImplementedError()
 
-    def transform(self, graph: Graph) -> GraphTransformationResultCore:
+    def transform(self, graph: Graph) -> GraphTransformationResult:
         added_entities = []
         removed_entities = []
         skipped_entities = []
@@ -124,7 +125,7 @@ class BaseTransformerStandardised(ABC):
                     graph.remove(formatted_triple)
                     removed_entities.append(str(triple))
 
-        return GraphTransformationResultCore(
+        return GraphTransformationResult(
             name=self.__class__.__name__,
             affected_nodes_count=affected_nodes_count if affected_nodes_count else None,
             added=added_entities,
