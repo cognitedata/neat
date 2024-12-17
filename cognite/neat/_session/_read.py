@@ -215,24 +215,9 @@ class ExcelReadAPI(BaseReadAPI):
             io: file path to the Excel sheet
         """
         reader = NeatReader.create(io)
-        start = datetime.now(timezone.utc)
         if not isinstance(reader, PathReader):
             raise NeatValueError("Only file paths are supported for Excel files")
-        importer: importers.ExcelImporter = importers.ExcelImporter(reader.path)
-        input_rules: ReadRules = importer.to_rules()
-        end = datetime.now(timezone.utc)
-
-        if input_rules.rules:
-            change = Change.from_rules_activity(
-                input_rules,
-                importer.agent,
-                start,
-                end,
-                description=f"Excel file {reader!s} read as unverified data model",
-            )
-            self._store_rules(input_rules, change)
-        self._state.data_model.issue_lists.append(input_rules.issues)
-        return input_rules.issues
+        return self._state.rule_store.import_(importers.ExcelImporter(reader.path))
 
 
 @session_class_wrapper

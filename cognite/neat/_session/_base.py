@@ -6,10 +6,10 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat import _version
 from cognite.neat._client import NeatClient
-from cognite.neat._issues import IssueList, catch_issues
+from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
-from cognite.neat._rules._shared import ReadRules, VerifiedRules
+from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, InformationToDMS, VerifyAnyRules
@@ -154,43 +154,17 @@ class NeatSession:
             neat.convert(target="information")
             ```
         """
-        start = datetime.now(timezone.utc)
-        issues = IssueList()
-        converter: ConversionTransformer | None = None
-        converted_rules: VerifiedRules | None = None
-        with catch_issues(issues):
-            if target == "dms":
-                source_id, info_rules = self._state.data_model.last_verified_information_rules
-                converter = InformationToDMS(mode=mode)
-                converted_rules = converter.transform(info_rules).rules
-            elif target == "information":
-                source_id, dms_rules = self._state.data_model.last_verified_dms_rules
-                converter = ConvertToRules(InformationRules)
-                converted_rules = converter.transform(dms_rules).rules
-            else:
-                # Session errors are not caught by the catch_issues context manager
-                raise NeatSessionError(f"Target {target} not supported.")
+        converter: ConversionTransformer
+        if target == "dms":
+            converter = InformationToDMS(mode=mode)
+        elif target == "information":
+            converter = ConvertToRules(InformationRules)
+        else:
+            raise NeatSessionError(f"Target {target} not supported.")
+        issues = self._state.rule_store.transform(converter)
 
-        end = datetime.now(timezone.utc)
-        if issues:
-            self._state.data_model.issue_lists.append(issues)
-
-        if converted_rules is not None and converter is not None:
-            # Provenance
-            change = Change.from_rules_activity(
-                converted_rules,
-                converter.agent,
-                start,
-                end,
-                f"Converted data model {source_id} to {converted_rules.metadata.identifier}",
-                self._state.data_model.provenance.source_entity(source_id)
-                or self._state.data_model.provenance.target_entity(source_id),
-            )
-
-            self._state.data_model.write(converted_rules, change)
-
-            if self._verbose and not issues.has_errors:
-                print(f"Rules converted to {target}")
+        if self._verbose and not issues.has_errors:
+            print(f"Rules converted to {target}")
         else:
             print("Conversion failed.")
         if issues:
