@@ -45,7 +45,7 @@ class BaseTransformerStandardised(ABC):
 
     def _target_edges_count_query(self) -> str | None:  # noqa: B027
         """
-        Overwrite to fetch all affected triples (subjects, objects and predicates) in the graph
+        Overwrite to fetch all affected edges (objects) in the graph
         as a result of the transformation.
         Returns:
             A query string.
@@ -54,7 +54,7 @@ class BaseTransformerStandardised(ABC):
 
     def _skip_query(self) -> str | None:  # noqa: B027
         """
-        Overwrite to fetch all affected edges (object triples) in the graph as a result of the transformation.
+        Overwrite to fetch all affected triples (subjects, objects and predicates) in the graph as a result of the transformation.
         Returns:
             A query string.
         """
