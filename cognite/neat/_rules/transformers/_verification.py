@@ -53,8 +53,8 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
                 validation_cls = self._get_validation_cls(verified_rules)  # type: ignore[arg-type]
                 if issubclass(validation_cls, DMSValidation):
                     validation_issues = DMSValidation(verified_rules, self._client).validate()  # type: ignore[arg-type]
-                elif isinstance(validation_cls, InformationValidation):
-                    validation_issues = InformationValidation(verified_rules).validate()
+                elif issubclass(validation_cls, InformationValidation):
+                    validation_issues = InformationValidation(verified_rules).validate()  # type: ignore[arg-type]
                 else:
                     raise NeatValueError("Unsupported rule type")
 
