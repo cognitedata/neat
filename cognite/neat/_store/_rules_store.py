@@ -55,6 +55,7 @@ class NeatRulesStore:
     ) -> tuple[Any, IssueList]:
         start = datetime.now(timezone.utc)
         issue_list = IssueList()
+        result: Any = None
         with catch_issues(issue_list) as _:
             result = action()
         end = datetime.now(timezone.utc)
