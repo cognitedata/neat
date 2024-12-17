@@ -1,11 +1,9 @@
 from abc import ABC
 from dataclasses import dataclass, field
-from functools import total_ordering
-from typing import Any, Generic
+from typing import Any
 
 from cognite.neat._issues import IssueList
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._shared import T_ID, NeatList, NeatObject
+from cognite.neat._shared import NeatList, NeatObject
 
 
 @dataclass
@@ -16,7 +14,6 @@ class GraphTransformationResultCore(NeatObject, ABC):
     removed: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)
     issues: IssueList = field(default_factory=IssueList)
-
 
     def dump(self, aggregate: bool = True) -> dict[str, Any]:
         output: dict[str, Any] = {"name": self.name}
