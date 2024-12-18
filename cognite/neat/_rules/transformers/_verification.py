@@ -32,14 +32,14 @@ class VerificationTransformer(RulesTransformer[T_ReadInputRules, T_VerifiedRules
         self._client = client
 
     def transform(self, rules: T_ReadInputRules) -> T_VerifiedRules:
-        issues = IssueList()
         in_ = rules.rules
         if in_ is None:
             raise NeatValueError("Cannot verify rules. The reading of the rules failed.")
         error_args = rules.read_context
         verified_rules: T_VerifiedRules | None = None
         # We need to catch issues as we use the error args to provide extra context for the errors/warnings
-        # For example, which row in the spreadsheet the error occurred on.
+        # For example, which row in the spreadsheet the error occurred o
+        issues = IssueList()
         with catch_issues(issues, NeatError, NeatWarning, error_args) as _:
             rules_cls = self._get_rules_cls(rules)
             dumped = in_.dump()
@@ -95,9 +95,9 @@ class VerifyAnyRules(VerificationTransformer[T_ReadInputRules, VerifiedRules]):
     """Class to verify arbitrary rules"""
 
     def _get_rules_cls(self, in_: T_ReadInputRules) -> type[VerifiedRules]:
-        if isinstance(in_, InformationInputRules):
+        if isinstance(in_.rules, InformationInputRules):
             return InformationRules
-        elif isinstance(in_, DMSInputRules):
+        elif isinstance(in_.rules, DMSInputRules):
             return DMSRules
         else:
             raise NeatTypeError(f"Unsupported rules type: {type(in_)}")
