@@ -133,7 +133,6 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
             raise NeatValueError(f"Invalid data_type_conflict: {self.data_type_conflict}")
         input_rules = self._to_rules(rules)
         new_rules = input_rules.model_copy(deep=True)
-        new_rules.metadata.version += "_mapped"
 
         for view in new_rules.views:
             if mapping_view := self._view_by_entity_id.get(view.view.external_id):
@@ -228,7 +227,6 @@ class AsParentPropertyId(RulesTransformer[DMSRules, DMSRules]):
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         input_rules = self._to_rules(rules)
         new_rules = input_rules.model_copy(deep=True)
-        new_rules.metadata.version += "_as_parent_name"
 
         path_by_view = self._inheritance_path_by_view(new_rules)
         view_by_container_property = self._view_by_container_properties(new_rules)
