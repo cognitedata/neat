@@ -8,7 +8,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
-from cognite.neat._rules._shared import ReadRules
+from cognite.neat._rules.models._base_input import InputRules
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.transformers import ConvertToRules, InformationToDMS, VerifyAnyRules
 from cognite.neat._rules.transformers._converters import ConversionTransformer
@@ -204,19 +204,19 @@ class NeatSession:
         state = self._state
         if (
             not state.instances.has_store
-            and not state.data_model.has_unverified_rules
-            and not state.data_model.has_verified_rules
+            and not state.rule_store.has_unverified_rules
+            and not state.rule_store.has_verified_rules
         ):
             return "<strong>Empty session</strong>. Get started by reading something with the <em>.read</em> attribute."
 
         output = []
 
-        if state.data_model.has_unverified_rules and not state.data_model.has_verified_rules:
-            rules: ReadRules = state.data_model.last_unverified_rule[1]
-            output.append(f"<H2>Unverified Data Model</H2><br />{rules.rules._repr_html_()}")  # type: ignore
+        if state.rule_store.has_unverified_rules and not state.rule_store.has_verified_rules:
+            rules: InputRules = state.rule_store.last_unverified_rule
+            output.append(f"<H2>Unverified Data Model</H2><br />{rules._repr_html_()}")  # type: ignore
 
-        if state.data_model.has_verified_rules:
-            output.append(f"<H2>Verified Data Model</H2><br />{state.data_model.last_verified_rule[1]._repr_html_()}")  # type: ignore
+        if state.rule_store.has_verified_rules:
+            output.append(f"<H2>Verified Data Model</H2><br />{state.rule_store.last_verified_rule._repr_html_()}")  # type: ignore
 
         if state.instances.has_store:
             output.append(f"<H2>Instances</H2> {state.instances.store._repr_html_()}")

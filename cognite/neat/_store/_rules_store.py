@@ -1,15 +1,21 @@
 from collections.abc import Callable
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 from typing import Any, cast
 
+from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules._shared import OutRules, T_VerifiedRules
+from cognite.neat._rules._shared import OutRules, ReadRules, T_VerifiedRules
 from cognite.neat._rules.exporters import BaseExporter
-from cognite.neat._rules.exporters._base import T_Export
+from cognite.neat._rules.exporters._base import CDFExporter, T_Export
 from cognite.neat._rules.importers import BaseImporter
+from cognite.neat._rules.models import DMSRules, InformationRules
+from cognite.neat._rules.models._base_input import InputRules
+from cognite.neat._rules.models._base_rules import BaseRules
 from cognite.neat._rules.transformers import RulesTransformer
+from cognite.neat._utils.upload import UploadResultList
 
 from ._provenance import UNKNOWN_AGENT, Activity, Agent, Change, Entity, ModelEntity, Provenance
 
@@ -43,18 +49,24 @@ class NeatRulesStore:
         return all_issues
 
     def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export], path: Path | None = None) -> T_Export:
+        return self._export(exporter.export, exporter.agent, exporter.description)
+
+    def export_to_file(self, exporter: BaseExporter[T_VerifiedRules, T_Export], path: Path) -> None:
+        return self._export(partial(exporter.export_to_file, filepath=path), exporter.agent, exporter.description)
+
+    def export_to_cdf(self, exporter: CDFExporter, client: NeatClient, dry_run: bool) -> UploadResultList:
+        return self._export(
+            partial(exporter.export_to_cdf, client=client, dry_run=dry_run), exporter.agent, exporter.description
+        )
+
+    def _export(self, action: Callable[[Any], Any], agent: Agent, description: str) -> Any:
         last_entity = self.get_last_successful_entity()
         result = last_entity.result
         if not isinstance(result, OutRules):
             raise NeatValueError(f"Expected OutRules, got {type(result)}")
         rules = result.get_rules()
 
-        result, _ = self._run(
-            lambda: exporter.export(rules) if path is None else exporter.export_to_file(rules, path),  # type: ignore[arg-type]
-            exporter.agent,
-            last_entity,
-            exporter.description,
-        )
+        result, _ = self._run(lambda: action(rules), agent, last_entity, description)
         return result
 
     def _run(
@@ -101,3 +113,62 @@ class NeatRulesStore:
             if isinstance(change.target_entity, ModelEntity) and change.target_entity.result:
                 return change.target_entity
         raise NeatValueError("No successful entity found in the provenance.")
+
+    @property
+    def has_unverified_rules(self) -> bool:
+        return any(
+            isinstance(change.target_entity, ModelEntity)
+            and isinstance(change.target_entity.result, ReadRules)
+            and change.target_entity.result.rules is not None
+            for change in self.provenance
+        )
+
+    @property
+    def has_verified_rules(self) -> bool:
+        return any(
+            isinstance(change.target_entity, ModelEntity) and isinstance(change.target_entity.result, BaseRules)
+            for change in self.provenance
+        )
+
+    @property
+    def last_unverified_rule(self) -> InputRules:
+        for change in reversed(self.provenance):
+            if (
+                isinstance(change.target_entity, ModelEntity)
+                and isinstance(change.target_entity.result, ReadRules)
+                and change.target_entity.result.rules is not None
+            ):
+                return change.target_entity.result.rules
+
+        raise NeatValueError("No unverified rule found in the provenance.")
+
+    @property
+    def last_verified_rule(self) -> DMSRules | InformationRules:
+        for change in reversed(self.provenance):
+            if isinstance(change.target_entity, ModelEntity) and isinstance(
+                change.target_entity.result, DMSRules | InformationRules
+            ):
+                return change.target_entity.result
+        raise NeatValueError("No verified rule found in the provenance.")
+
+    @property
+    def last_verified_dms_rules(self) -> DMSRules:
+        for change in reversed(self.provenance):
+            if isinstance(change.target_entity, ModelEntity) and isinstance(change.target_entity.result, DMSRules):
+                return change.target_entity.result
+        raise NeatValueError("No verified DMS rules found in the provenance.")
+
+    @property
+    def last_issues(self) -> IssueList:
+        if not self.provenance:
+            raise NeatValueError("No issues found in the provenance.")
+        return self.provenance[-1].target_entity.result.issues
+
+    @property
+    def last_outcome(self) -> UploadResultList:
+        for change in reversed(self.provenance):
+            if isinstance(change.target_entity, ModelEntity) and isinstance(
+                change.target_entity.result, UploadResultList
+            ):
+                return change.target_entity.result
+        raise NeatValueError("No outcome found in the provenance.")

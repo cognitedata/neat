@@ -99,12 +99,12 @@ class ShowDataModelAPI(ShowBaseAPI):
         self.implements = ShowDataModelImplementsAPI(self._state)
 
     def __call__(self) -> Any:
-        if not self._state.data_model.has_verified_rules:
+        if not self._state.rule_store.has_verified_rules:
             raise NeatSessionError(
                 "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
             )
 
-        rules = self._state.data_model.last_verified_rule[1]
+        rules = self._state.rule_store.last_verified_rule
 
         if isinstance(rules, DMSRules):
             di_graph = self._generate_dms_di_graph(rules)
@@ -188,12 +188,12 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
         self._state = state
 
     def __call__(self) -> Any:
-        if not self._state.data_model.has_verified_rules:
+        if not self._state.rule_store.has_verified_rules:
             raise NeatSessionError(
                 "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
             )
 
-        rules = self._state.data_model.last_verified_rule[1]
+        rules = self._state.rule_store.last_verified_rule
 
         if isinstance(rules, DMSRules):
             di_graph = self._generate_dms_di_graph(rules)
@@ -270,7 +270,7 @@ class ShowDataModelProvenanceAPI(ShowBaseAPI):
         self._state = state
 
     def __call__(self) -> Any:
-        if not self._state.data_model.provenance:
+        if not self._state.rule_store.provenance:
             raise NeatSessionError("No data model available. Try using [bold].read[/bold] to load data model.")
 
         di_graph = self._generate_dm_provenance_di_graph_and_types()
@@ -280,7 +280,7 @@ class ShowDataModelProvenanceAPI(ShowBaseAPI):
         di_graph = nx.DiGraph()
         hex_colored_types = _generate_hex_color_per_type(["Agent", "Entity", "Activity"])
 
-        for change in self._state.data_model.provenance:
+        for change in self._state.rule_store.provenance:
             source = self._shorten_id(change.source_entity.id_)
             target = self._shorten_id(change.target_entity.id_)
             agent = self._shorten_id(change.agent.id_)
