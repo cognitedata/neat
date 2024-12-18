@@ -60,6 +60,9 @@ class TestExtractToLoadFlow:
         rules.metadata.created = "2024-09-19T00:00:00Z"
         rules.metadata.updated = "2024-09-19T00:00:00Z"
 
+        # Sorting the properties to ensure deterministic output
+        rules.properties = sorted(rules.properties, key=lambda x: (x.class_, x.property_))
+
         neat.prepare.data_model.prefix("Classic")
 
         neat.verify()
