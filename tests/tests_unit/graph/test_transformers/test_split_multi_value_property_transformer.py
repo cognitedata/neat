@@ -3,7 +3,6 @@ from cognite.neat._graph.extractors import RdfFileExtractor
 from cognite.neat._graph.transformers._value_type import SplitMultiValueProperty
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.importers import InferenceImporter
-from cognite.neat._rules.transformers import ImporterPipeline
 from cognite.neat._store import NeatGraphStore
 
 

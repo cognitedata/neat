@@ -5,7 +5,7 @@ from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.catalog import imf_attributes
 from cognite.neat._rules.importers import ExcelImporter, InferenceImporter
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
-from cognite.neat._rules.transformers import ImporterPipeline, InformationToDMS
+from cognite.neat._rules.transformers import InformationToDMS
 from cognite.neat._store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, IMF_EXAMPLE
 

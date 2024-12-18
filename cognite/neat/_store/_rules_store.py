@@ -11,7 +11,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules._shared import OutRules, ReadRules, T_VerifiedRules, VerifiedRules
+from cognite.neat._rules._shared import ReadRules, T_VerifiedRules, VerifiedRules
 from cognite.neat._rules.exporters import BaseExporter
 from cognite.neat._rules.exporters._base import CDFExporter, T_Export
 from cognite.neat._rules.importers import BaseImporter
@@ -78,7 +78,7 @@ class NeatRulesStore:
         for change in reversed(self.provenance):
             if (
                 isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, OutRules)
+                and isinstance(change.target_entity.result, ReadRules)
                 and isinstance(change.target_entity.result.get_rules(), DMSRules)
             ):
                 last_entity = change.target_entity
@@ -128,7 +128,7 @@ class NeatRulesStore:
         identifier: rdflib.URIRef
         if result is None:
             identifier = EMPTY_ENTITY.id_
-        elif isinstance(result, OutRules):
+        elif isinstance(result, ReadRules):
             input_rules = result.get_rules()
             if input_rules is None:
                 identifier = EMPTY_ENTITY.id_
@@ -169,7 +169,7 @@ class NeatRulesStore:
     def has_verified_rules(self) -> bool:
         return any(
             isinstance(change.target_entity, ModelEntity)
-            and isinstance(change.target_entity.result, OutRules)
+            and isinstance(change.target_entity.result, ReadRules)
             and isinstance(change.target_entity.result.get_rules(), DMSRules | InformationRules)
             for change in self.provenance
         )
@@ -191,7 +191,7 @@ class NeatRulesStore:
         for change in reversed(self.provenance):
             if (
                 isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, OutRules)
+                and isinstance(change.target_entity.result, ReadRules)
                 and isinstance(change.target_entity.result.get_rules(), DMSRules | InformationRules)
             ):
                 return change.target_entity.result.get_rules()  # type: ignore[return-value]
@@ -202,7 +202,7 @@ class NeatRulesStore:
         for change in reversed(self.provenance):
             if (
                 isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, OutRules)
+                and isinstance(change.target_entity.result, ReadRules)
                 and isinstance(change.target_entity.result.get_rules(), DMSRules)
             ):
                 return change.target_entity.result.get_rules()  # type: ignore[return-value]

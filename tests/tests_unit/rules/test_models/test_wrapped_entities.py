@@ -13,7 +13,6 @@ from cognite.neat._rules.models.entities import (
     RawFilter,
     WrappedEntity,
 )
-from cognite.neat._rules.transformers import ImporterPipeline
 from tests import config
 
 RAW_FILTER_EXAMPLE = """{"and": [

@@ -2,10 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._rules._shared import (
-    OutRules,
-    Rules,
-)
+from cognite.neat._rules._shared import Rules
 from cognite.neat._store._provenance import Agent as ProvenanceAgent
 
 T_RulesIn = TypeVar("T_RulesIn", bound=Rules)
@@ -16,7 +13,7 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
     """This is the base class for all rule transformers."""
 
     @abstractmethod
-    def transform(self, rules: T_RulesIn) -> OutRules[T_RulesOut]:
+    def transform(self, rules: T_RulesIn) -> T_RulesOut:
         """Transform the input rules into the output rules."""
         raise NotImplementedError()
 

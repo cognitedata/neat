@@ -1,4 +1,3 @@
-from cognite.neat._rules._shared import JustRules
 from cognite.neat._rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,

@@ -11,7 +11,6 @@ from cognite.neat._rules import importers
 from cognite.neat._rules._shared import InputRules
 from cognite.neat._rules.models import RoleTypes
 from cognite.neat._rules.models.entities import DataModelEntity, DMSUnknownEntity
-from cognite.neat._rules.transformers import ImporterPipeline
 from cognite.neat._workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat._workflows.steps.data_contracts import MultiRuleData
 from cognite.neat._workflows.steps.step_model import Configurable, Step

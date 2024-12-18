@@ -3,7 +3,6 @@ from pathlib import Path
 from cognite.neat._rules.exporters import YAMLExporter
 from cognite.neat._rules.importers import YAMLImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.transformers import ImporterPipeline
 
 
 class TestYAMLExporter:

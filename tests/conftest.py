@@ -13,7 +13,6 @@ from cognite.neat._rules.models import (
     RoleTypes,
 )
 from cognite.neat._rules.models.dms import DMSInputRules
-from cognite.neat._rules.transformers import ImporterPipeline
 from cognite.neat._utils.spreadsheet import read_individual_sheet
 from tests.config import DATA_FOLDER, DOC_RULES
 

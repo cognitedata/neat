@@ -7,7 +7,6 @@ from cognite.neat._rules.importers import InferenceImporter
 from cognite.neat._rules.models.data_types import DataType, Integer, Json, Long
 from cognite.neat._rules.models.entities import MultiValueTypeInfo
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
-from cognite.neat._rules.transformers import ImporterPipeline
 from cognite.neat._store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, DATA_FOLDER
 from tests.data import car

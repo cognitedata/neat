@@ -27,7 +27,7 @@ from rdflib import PROV, RDF, Literal, URIRef
 
 from cognite.neat._constants import CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList
-from cognite.neat._rules._shared import JustRules, ReadRules, VerifiedRules
+from cognite.neat._rules._shared import ReadRules, VerifiedRules
 from cognite.neat._shared import FrozenNeatObject, NeatList, Triple
 
 
@@ -86,7 +86,7 @@ class Entity:
     @classmethod
     def from_rules(
         cls,
-        rules: ReadRules | JustRules | VerifiedRules,
+        rules: ReadRules  | VerifiedRules,
         agent: Agent | None = None,
         activity: "Activity | None" = None,
     ) -> "Entity":
@@ -98,7 +98,7 @@ class Entity:
                 id_=rules.metadata.identifier,
             )
 
-        elif isinstance(rules, ReadRules | JustRules) and rules.rules is not None:
+        elif isinstance(rules, ReadRules) and rules.rules is not None:
             return cls(
                 was_attributed_to=agent,
                 was_generated_by=activity,
@@ -193,7 +193,7 @@ class Change(FrozenNeatObject):
     @classmethod
     def from_rules_activity(
         cls,
-        rules: ReadRules | JustRules | VerifiedRules,
+        rules: ReadRules | VerifiedRules,
         agent: Agent,
         start: datetime,
         end: datetime,

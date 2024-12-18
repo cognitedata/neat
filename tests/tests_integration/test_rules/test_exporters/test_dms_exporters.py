@@ -13,7 +13,6 @@ from cognite.neat._rules.models.information import (
     InformationMetadata,
     InformationProperty,
 )
-from cognite.neat._rules.transformers import ImporterPipeline
 from tests.config import DOC_RULES
 
 

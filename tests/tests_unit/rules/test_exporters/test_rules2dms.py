@@ -10,7 +10,6 @@ from cognite.neat._rules import importers
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.models import RoleTypes
 from cognite.neat._rules.models.dms import DMSRules
-from cognite.neat._rules.transformers import ImporterPipeline
 from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
 
 

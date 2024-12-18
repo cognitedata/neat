@@ -8,7 +8,7 @@ from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, 
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import DMSImporter, ExcelImporter
 from cognite.neat._rules.models import DMSRules, DMSSchema, RoleTypes
-from cognite.neat._rules.transformers import DMSToInformation, ImporterPipeline, VerifyDMSRules
+from cognite.neat._rules.transformers import DMSToInformation, VerifyDMSRules
 from tests.config import DOC_RULES
 from tests.data import windturbine
 

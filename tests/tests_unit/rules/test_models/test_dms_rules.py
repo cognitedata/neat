@@ -37,10 +37,8 @@ from cognite.neat._rules.models.dms._exporter import _DMSExporter
 from cognite.neat._rules.models.entities._single_value import UnknownEntity, ViewEntity
 from cognite.neat._rules.transformers import (
     DMSToInformation,
-    ImporterPipeline,
     InformationToDMS,
     MapOneToOne,
-    RulesPipeline,
     VerifyDMSRules,
 )
 from tests.data import car
@@ -1395,13 +1393,15 @@ class TestDMSRules:
         assert actual_dump == expected_dump
 
     def test_create_reference(self) -> None:
+        info_rules = car.get_care_rules()
+
         pipeline = RulesPipeline[InformationRules, DMSRules](
             [
                 InformationToDMS(),
                 MapOneToOne(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"}),
             ]
         )
-        dms_rules = pipeline.run(car.CAR_RULES)
+        dms_rules = pipeline.run()
 
         schema = dms_rules.as_schema()
         view_by_external_id = {view.external_id: view for view in schema.views.values()}

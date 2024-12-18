@@ -10,11 +10,8 @@ from cognite.neat._rules.models.information._rules_input import InformationInput
 
 VerifiedRules: TypeAlias = InformationRules | DMSRules
 InputRules: TypeAlias = DMSInputRules | InformationInputRules
-Rules: TypeAlias = DMSInputRules | InformationInputRules | InformationRules | DMSRules
-T_Rules = TypeVar("T_Rules", bound=Rules)
 T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
 T_InputRules = TypeVar("T_InputRules", bound=InputRules)
-
 
 @dataclass
 class ReadRules(Generic[T_InputRules]):
@@ -22,3 +19,7 @@ class ReadRules(Generic[T_InputRules]):
 
     rules: T_InputRules | None
     read_context: dict[str, Any]
+
+Rules: TypeAlias = DMSInputRules | InformationInputRules | InformationRules | DMSRules | ReadRules
+T_Rules = TypeVar("T_Rules", bound=Rules)
+
