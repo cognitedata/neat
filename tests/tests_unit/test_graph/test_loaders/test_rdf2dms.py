@@ -2,6 +2,7 @@ import pytest
 
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.importers import InferenceImporter
+from cognite.neat._rules.transformers import VerifyInformationRules
 from cognite.neat._store import NeatGraphStore
 from tests.data import car
 
@@ -12,8 +13,8 @@ def car_case() -> NeatGraphStore:
 
     for triple in car.TRIPLES:
         store.graph.add(triple)
-
-    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
+    read_rules = InferenceImporter.from_graph_store(store).to_rules()
+    rules = VerifyInformationRules().transform(read_rules)
     store.add_rules(rules)
 
     return store
@@ -21,11 +22,7 @@ def car_case() -> NeatGraphStore:
 
 class TestDMSLoader:
     def test_load_car_example(self, car_case: NeatGraphStore) -> None:
-        loader = DMSLoader(
-            car_case,
-            car.CAR_MODEL,
-            car.INSTANCE_SPACE,
-        )
+        loader = DMSLoader(car_case, car.CAR_MODEL, car.INSTANCE_SPACE)
 
         loaded = loader.load(stop_on_exception=True)
 

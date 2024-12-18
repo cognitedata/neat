@@ -78,14 +78,13 @@ class NeatRulesStore:
         for change in reversed(self.provenance):
             if (
                 isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, ReadRules)
-                and isinstance(change.target_entity.result.get_rules(), DMSRules)
+                and isinstance(change.target_entity.result, DMSRules)
             ):
                 last_entity = change.target_entity
                 break
         if last_entity is None:
             raise NeatValueError("No verified DMS rules found in the provenance.")
-        rules = last_entity.result.get_rules()  # type: ignore[union-attr]
+        rules = last_entity.result
         result, _ = self._run(lambda: action(rules), agent, last_entity, description)
         return result
 
@@ -129,11 +128,10 @@ class NeatRulesStore:
         if result is None:
             identifier = EMPTY_ENTITY.id_
         elif isinstance(result, ReadRules):
-            input_rules = result.get_rules()
-            if input_rules is None:
+            if result.rules is None:
                 identifier = EMPTY_ENTITY.id_
             else:
-                identifier = input_rules.metadata.identifier
+                identifier = result.rules.metadata.identifier
         elif isinstance(result, VerifiedRules):
             identifier = result.metadata.identifier
         else:
@@ -169,8 +167,7 @@ class NeatRulesStore:
     def has_verified_rules(self) -> bool:
         return any(
             isinstance(change.target_entity, ModelEntity)
-            and isinstance(change.target_entity.result, ReadRules)
-            and isinstance(change.target_entity.result.get_rules(), DMSRules | InformationRules)
+            and isinstance(change.target_entity.result, DMSRules | InformationRules)
             for change in self.provenance
         )
 
@@ -191,10 +188,9 @@ class NeatRulesStore:
         for change in reversed(self.provenance):
             if (
                 isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, ReadRules)
-                and isinstance(change.target_entity.result.get_rules(), DMSRules | InformationRules)
+                and isinstance(change.target_entity.result, DMSRules | InformationRules)
             ):
-                return change.target_entity.result.get_rules()  # type: ignore[return-value]
+                return change.target_entity.result
         raise NeatValueError("No verified rule found in the provenance.")
 
     @property
@@ -202,10 +198,9 @@ class NeatRulesStore:
         for change in reversed(self.provenance):
             if (
                 isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, ReadRules)
-                and isinstance(change.target_entity.result.get_rules(), DMSRules)
+                and isinstance(change.target_entity.result, DMSRules)
             ):
-                return change.target_entity.result.get_rules()  # type: ignore[return-value]
+                return change.target_entity.result
         raise NeatValueError("No verified DMS rules found in the provenance.")
 
     @property
