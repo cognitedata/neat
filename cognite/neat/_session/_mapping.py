@@ -52,5 +52,5 @@ class DataModelMappingAPI:
             IncludeReferenced(self._client),
         ]
         if use_parent_property_name:
-            transformers.append(AsParentPropertyId())
+            transformers.append(AsParentPropertyId(self._client))
         return self._state.rule_store.transform(*transformers)
