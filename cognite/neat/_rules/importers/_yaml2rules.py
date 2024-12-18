@@ -36,20 +36,26 @@ class YAMLImporter(BaseImporter[T_InputRules]):
         raw_data: dict[str, Any],
         read_issues: list[NeatIssue] | None = None,
         filepaths: list[Path] | None = None,
+        source_name: str = "Unknown",
     ) -> None:
         self.raw_data = raw_data
         self._read_issues = IssueList(read_issues)
         self._filepaths = filepaths
+        self._source_name = source_name
+
+    @property
+    def description(self) -> str:
+        return f"YAML file {self._source_name} read as unverified data model"
 
     @classmethod
-    def from_file(cls, filepath: Path):
+    def from_file(cls, filepath: Path, source_name: str = "Unknown") -> "YAMLImporter":
         if not filepath.exists():
             return cls({}, [FileNotFoundNeatError(filepath)])
         elif not filepath.is_file():
             return cls({}, [FileNotAFileError(filepath)])
         elif filepath.suffix not in [".yaml", ".yml"]:
             return cls({}, [FileTypeUnexpectedError(filepath, frozenset([".yaml", ".yml"]))])
-        return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath])
+        return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath], source_name=source_name)
 
     def to_rules(self) -> ReadRules[T_InputRules]:
         if self._read_issues.has_errors or not self.raw_data:

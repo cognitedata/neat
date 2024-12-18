@@ -94,6 +94,7 @@ class InferenceImporter(BaseRDFImporter):
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
         language: str = "en",
+        source_name: str = "Unknown",
     ) -> "InferenceImporter":
         return super().from_file(
             filepath,
@@ -101,6 +102,7 @@ class InferenceImporter(BaseRDFImporter):
             max_number_of_instance,
             non_existing_node_type,
             language,
+            source_name=source_name,
         )
 
     @classmethod

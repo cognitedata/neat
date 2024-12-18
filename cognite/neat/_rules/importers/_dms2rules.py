@@ -89,6 +89,14 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 continue
             self._all_containers_by_id[container.as_id()] = container
 
+    @property
+    def description(self) -> str:
+        if self.root_schema.data_model is not None:
+            identifier = f"{self.root_schema.data_model.as_id().as_tuple()!s}"
+        else:
+            identifier = "Unknown"
+        return f"DMS Data model {identifier} read as unverified data model"
+
     @classmethod
     def from_data_model_id(
         cls,

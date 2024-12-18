@@ -50,6 +50,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         max_number_of_instance: int,
         non_existing_node_type: UnknownEntity | AnyURI,
         language: str,
+        source_name: str = "Unknown",
     ) -> None:
         self.issue_list = issue_list
         self.graph = graph
@@ -60,6 +61,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         self.max_number_of_instance = max_number_of_instance
         self.non_existing_node_type = non_existing_node_type
         self.language = language
+        self.source_name = source_name
 
     @classmethod
     def from_graph_store(
@@ -87,6 +89,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
         language: str = "en",
+        source_name: str = "Unknown",
     ):
         issue_list = IssueList(title=f"{cls.__name__} issues")
 
@@ -107,6 +110,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
             max_number_of_instance=max_number_of_instance,
             non_existing_node_type=non_existing_node_type,
             language=language,
+            source_name=source_name,
         )
 
     def to_rules(
