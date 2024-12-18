@@ -4,7 +4,6 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat._rules import importers
-from cognite.neat._rules.transformers import VerifyDMSRules
 from cognite.neat._rules.models.entities import (
     ContainerEntity,
     DMSFilter,
@@ -14,6 +13,7 @@ from cognite.neat._rules.models.entities import (
     RawFilter,
     WrappedEntity,
 )
+from cognite.neat._rules.transformers import VerifyDMSRules
 from tests import config
 
 RAW_FILTER_EXAMPLE = """{"and": [
@@ -121,7 +121,9 @@ class TestWrappedEntities:
         )
 
     def test_raw_filter_in_sheet(self) -> None:
-        read_rules = importers.ExcelImporter(config.DOC_RULES / "dms-architect-rules-raw-filter-example.xlsx").to_rules()
+        read_rules = importers.ExcelImporter(
+            config.DOC_RULES / "dms-architect-rules-raw-filter-example.xlsx"
+        ).to_rules()
         rules = VerifyDMSRules().transform(read_rules)
 
         assert rules.views[0].filter_ == RawFilter.load(

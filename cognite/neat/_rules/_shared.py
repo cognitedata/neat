@@ -13,6 +13,7 @@ InputRules: TypeAlias = DMSInputRules | InformationInputRules
 T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
 T_InputRules = TypeVar("T_InputRules", bound=InputRules)
 
+
 @dataclass
 class ReadRules(Generic[T_InputRules]):
     """This represents a rules that has been read."""
@@ -20,6 +21,6 @@ class ReadRules(Generic[T_InputRules]):
     rules: T_InputRules | None
     read_context: dict[str, Any]
 
+
 Rules: TypeAlias = DMSInputRules | InformationInputRules | InformationRules | DMSRules | ReadRules
 T_Rules = TypeVar("T_Rules", bound=Rules)
-

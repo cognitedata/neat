@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from cognite.neat._issues import IssueList, NeatIssue, MultiValueError
+from cognite.neat._issues import IssueList, MultiValueError, NeatIssue
 from cognite.neat._issues.warnings import (
     FileItemNotSupportedWarning,
     FileMissingRequiredFieldWarning,

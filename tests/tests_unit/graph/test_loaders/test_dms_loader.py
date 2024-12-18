@@ -55,7 +55,7 @@ def test_imf_attribute_nodes():
     # as well omitting to remove namespace from values if
     # properties are not specified to be object properties
 
-    info_rules =ExcelImporter(imf_attributes).to_rules().rules.as_verified_rules()
+    info_rules = ExcelImporter(imf_attributes).to_rules().rules.as_verified_rules()
 
     dms_rules = InformationToDMS().transform(info_rules)
 

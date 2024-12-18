@@ -1,4 +1,4 @@
-from cognite.neat._issues import catch_issues, IssueList
+from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.warnings._resources import ResourceRegexViolationWarning
 from cognite.neat._rules import importers
 from cognite.neat._rules.transformers import VerifyAnyRules

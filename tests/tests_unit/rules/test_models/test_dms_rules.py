@@ -14,9 +14,8 @@ from cognite.neat._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat._issues import NeatError, IssueList, catch_issues
+from cognite.neat._issues import IssueList, NeatError, catch_issues
 from cognite.neat._issues.errors import PropertyDefinitionDuplicatedError
-
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules

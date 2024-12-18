@@ -86,7 +86,7 @@ class Entity:
     @classmethod
     def from_rules(
         cls,
-        rules: ReadRules  | VerifiedRules,
+        rules: ReadRules | VerifiedRules,
         agent: Agent | None = None,
         activity: "Activity | None" = None,
     ) -> "Entity":

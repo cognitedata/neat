@@ -5,8 +5,8 @@ from cognite.neat._issues.errors import ResourceMissingIdentifierError, Resource
 from cognite.neat._issues.warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
 from cognite.neat._rules.importers import DTDLImporter
 from cognite.neat._rules.importers._dtdl2rules.spec import DTMI, Interface
-from cognite.neat._rules.transformers import VerifyInformationRules
 from cognite.neat._rules.models import InformationRules
+from cognite.neat._rules.transformers import VerifyInformationRules
 from tests.tests_unit.rules.test_importers.constants import DTDL_IMPORTER_DATA
 
 

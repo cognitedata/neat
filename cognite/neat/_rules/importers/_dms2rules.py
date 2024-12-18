@@ -19,7 +19,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat._client import NeatClient
-from cognite.neat._issues import IssueList, NeatIssue, MultiValueError
+from cognite.neat._issues import IssueList, MultiValueError, NeatIssue
 from cognite.neat._issues.errors import FileTypeUnexpectedError, ResourceMissingIdentifierError, ResourceRetrievalError
 from cognite.neat._issues.warnings import (
     PropertyNotFoundWarning,

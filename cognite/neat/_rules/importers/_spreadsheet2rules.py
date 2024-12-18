@@ -13,7 +13,7 @@ from cognite.client.utils._importing import local_import
 from pandas import ExcelFile
 from rdflib import Namespace, URIRef
 
-from cognite.neat._issues import IssueList
+from cognite.neat._issues import IssueList, MultiValueError
 from cognite.neat._issues.errors import (
     FileMissingRequiredFieldError,
     FileNotFoundNeatError,
@@ -29,7 +29,7 @@ from cognite.neat._rules.models import (
 )
 from cognite.neat._utils.spreadsheet import SpreadsheetRead, read_individual_sheet
 from cognite.neat._utils.text import humanize_collection
-from cognite.neat._issues import MultiValueError
+
 from ._base import BaseImporter
 
 SOURCE_SHEET__TARGET_FIELD__HEADERS = [
