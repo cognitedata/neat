@@ -23,6 +23,7 @@ from cognite.neat._issues.warnings._models import (
 )
 from cognite.neat._rules._shared import (
     InputRules,
+    ReadRules,
     VerifiedRules,
 )
 from cognite.neat._rules.analysis import DMSAnalysis
@@ -73,15 +74,17 @@ class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRul
     ...
 
 
-class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInputRules]):  # type: ignore[misc]
+class ToCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]):  # type: ignore[misc]
     """Converts input rules to rules with compliant entity IDs that match regex patters used
     by DMS schema components."""
 
-    def transform(self, rules: InformationInputRules) -> InformationInputRules:
-        copy = dataclasses.replace(rules)
+    def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
+        if rules.rules is None:
+            return rules
+        copy = dataclasses.replace(rules.rules)
         copy.classes = self._fix_classes(copy.classes)
         copy.properties = self._fix_properties(copy.properties)
-        return copy
+        return ReadRules(copy, rules.read_context)
 
     @classmethod
     def _fix_entity(cls, entity: str) -> str:
@@ -167,14 +170,16 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
         return fixed_definitions
 
 
-class PrefixEntities(RulesTransformer[InputRules, InputRules]):  # type: ignore[misc]
+class PrefixEntities(RulesTransformer[ReadRules[InputRules], ReadRules[InputRules]]):  # type: ignore[misc]
     """Prefixes all entities with a given prefix."""
 
     def __init__(self, prefix: str) -> None:
         self._prefix = prefix
 
-    def transform(self, rules: InputRules) -> InputRules:
-        copy = dataclasses.replace(rules)
+    def transform(self, rules: ReadRules[InputRules]) -> ReadRules[InputRules]:
+        if rules.rules is None:
+            return rules
+        copy = dataclasses.replace(rules.rules)
         if isinstance(copy, InformationInputRules):
             prefixed_by_class: dict[str, str] = {}
             for cls in copy.classes:
@@ -185,7 +190,7 @@ class PrefixEntities(RulesTransformer[InputRules, InputRules]):  # type: ignore[
                 prop.class_ = self._with_prefix(prop.class_)
                 if str(prop.value_type) in prefixed_by_class:
                     prop.value_type = prefixed_by_class[str(prop.value_type)]
-            return copy
+            return ReadRules(copy, rules.read_context)
         elif isinstance(copy, DMSInputRules):
             prefixed_by_view: dict[str, str] = {}
             for view in copy.views:
@@ -199,7 +204,7 @@ class PrefixEntities(RulesTransformer[InputRules, InputRules]):  # type: ignore[
             if copy.containers:
                 for container in copy.containers:
                     container.container = self._with_prefix(container.container)
-            return copy
+            return ReadRules(copy, rules.read_context)
         raise NeatValueError(f"Unsupported rules type: {type(copy)}")
 
     @overload
@@ -659,26 +664,20 @@ class IncludeReferenced(RulesTransformer[DMSRules, DMSRules]):
         importer = DMSImporter(schema)
         imported = importer.to_rules()
         if imported.rules is None:
-            imported.issues.trigger_warnings()
-            raise imported.issues.as_errors("Could not import the referenced views and containers.")
+            raise NeatValueError("Could not import the referenced views and containers.")
 
-        verified = VerifyDMSRules("continue", validate=False).transform(imported.rules)
-        if verified.rules is None:
-            verified.issues.trigger_warnings()
-            raise verified.issues.as_errors("Could not verify the referenced views and containers.")
+        verified = VerifyDMSRules(validate=False).transform(imported)
         if copy_.containers is None:
-            copy_.containers = verified.rules.containers
+            copy_.containers = verified.containers
         else:
             existing_containers = {c.container for c in copy_.containers}
-            copy_.containers.extend(
-                [c for c in verified.rules.containers or [] if c.container not in existing_containers]
-            )
+            copy_.containers.extend([c for c in verified.containers or [] if c.container not in existing_containers])
         existing_views = {v.view for v in copy_.views}
-        copy_.views.extend([v for v in verified.rules.views if v.view not in existing_views])
+        copy_.views.extend([v for v in verified.views if v.view not in existing_views])
         if self.include_properties:
             existing_properties = {(p.view, p.view_property) for p in copy_.properties}
             copy_.properties.extend(
-                [p for p in verified.rules.properties if (p.view, p.view_property) not in existing_properties]
+                [p for p in verified.properties if (p.view, p.view_property) not in existing_properties]
             )
 
         return copy_
@@ -694,7 +693,7 @@ class AddClassImplements(RulesTransformer[InformationRules, InformationRules]):
         self.suffix = suffix
 
     def transform(self, rules: InformationRules) -> InformationRules:
-        info_rules = self._to_rules(rules)
+        info_rules = rules
         output = info_rules.model_copy(deep=True)
         for class_ in output.classes:
             if class_.class_.suffix.endswith(self.suffix):

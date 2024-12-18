@@ -9,18 +9,21 @@ from cognite.neat._rules.models.dms._rules_input import DMSInputRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 
 VerifiedRules: TypeAlias = InformationRules | DMSRules
-InputRules: TypeAlias = DMSInputRules | InformationInputRules
+
 T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
-T_InputRules = TypeVar("T_InputRules", bound=InputRules)
+T_PureInputRules = TypeVar("T_PureInputRules", bound=DMSInputRules | InformationInputRules)
 
 
 @dataclass
-class ReadRules(Generic[T_InputRules]):
+class ReadRules(Generic[T_PureInputRules]):
     """This represents a rules that has been read."""
 
-    rules: T_InputRules | None
+    rules: T_PureInputRules | None
     read_context: dict[str, Any]
 
 
-Rules: TypeAlias = DMSInputRules | InformationInputRules | InformationRules | DMSRules | ReadRules
+InputRules: TypeAlias = ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
+T_InputRules = TypeVar("T_InputRules", bound=InputRules)
+
+Rules: TypeAlias = InformationRules | DMSRules | ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
 T_Rules = TypeVar("T_Rules", bound=Rules)

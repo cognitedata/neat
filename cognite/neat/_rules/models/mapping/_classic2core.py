@@ -32,9 +32,6 @@ def load_classic_to_core_mapping(org_name: str, source_space: str, source_versio
     if not isinstance(read.rules, DMSInputRules):
         raise NeatValueError(f"Expected DMS rules, but got {type(read.rules).__name__}")
 
-    verified = VerifyDMSRules(errors="raise", validate=False).transform(read)
+    verified = VerifyDMSRules(validate=False).transform(read)
 
-    if verified.rules is None:
-        raise NeatValueError("Failed to verify the rules.")
-
-    return verified.rules
+    return verified
