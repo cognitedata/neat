@@ -10,20 +10,20 @@ from rdflib import URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList, NeatError, NeatWarning
-from cognite.neat._rules._shared import ReadRules, T_InputRules
+from cognite.neat._rules._shared import ReadRules, T_PureInputRules
 from cognite.neat._utils.auxiliary import class_html_doc
 
 if TYPE_CHECKING:
     from cognite.neat._store._provenance import Agent as ProvenanceAgent
 
 
-class BaseImporter(ABC, Generic[T_InputRules]):
+class BaseImporter(ABC, Generic[T_PureInputRules]):
     """
     BaseImporter class which all importers inherit from.
     """
 
     @abstractmethod
-    def to_rules(self) -> ReadRules[T_InputRules]:
+    def to_rules(self) -> ReadRules[T_PureInputRules]:
         """Creates `Rules` object from the data for target role."""
         raise NotImplementedError()
 

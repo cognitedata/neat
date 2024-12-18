@@ -11,13 +11,13 @@ from cognite.neat._issues.errors import (
     FileTypeUnexpectedError,
 )
 from cognite.neat._issues.warnings import NeatValueWarning
-from cognite.neat._rules._shared import ReadRules, T_InputRules
+from cognite.neat._rules._shared import ReadRules, T_PureInputRules
 from cognite.neat._rules.models import INPUT_RULES_BY_ROLE, RoleTypes
 
 from ._base import BaseImporter
 
 
-class YAMLImporter(BaseImporter[T_InputRules]):
+class YAMLImporter(BaseImporter[T_PureInputRules]):
     """Imports the rules from a YAML file.
 
     Args:
@@ -57,7 +57,7 @@ class YAMLImporter(BaseImporter[T_InputRules]):
             return cls({}, [FileTypeUnexpectedError(filepath, frozenset([".yaml", ".yml"]))])
         return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath], source_name=source_name)
 
-    def to_rules(self) -> ReadRules[T_InputRules]:
+    def to_rules(self) -> ReadRules[T_PureInputRules]:
         if self._read_issues.has_errors or not self.raw_data:
             self._read_issues.trigger_warnings()
             raise MultiValueError(self._read_issues.errors)
@@ -91,10 +91,10 @@ class YAMLImporter(BaseImporter[T_InputRules]):
         role_enum = RoleTypes(role_input)
         rules_cls = INPUT_RULES_BY_ROLE[role_enum]
 
-        rules = cast(T_InputRules, rules_cls.load(self.raw_data))
+        rules = cast(T_PureInputRules, rules_cls.load(self.raw_data))
 
         issue_list.trigger_warnings()
         if self._read_issues.has_errors:
             raise MultiValueError(self._read_issues.errors)
 
-        return ReadRules(rules, {})
+        return ReadRules[T_PureInputRules](rules, {})

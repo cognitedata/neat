@@ -262,9 +262,9 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
         if isinstance(rules, self._out_cls):
             return rules
         if isinstance(rules, InformationRules) and self._out_cls is DMSRules:
-            return InformationToDMS().transform(rules).rules
+            return InformationToDMS().transform(rules)
         if isinstance(rules, DMSRules) and self._out_cls is InformationRules:
-            return DMSToInformation().transform(rules).rules
+            return DMSToInformation().transform(rules)
         raise ValueError(f"Unsupported conversion from {type(rules)} to {self._out_cls}")
 
 

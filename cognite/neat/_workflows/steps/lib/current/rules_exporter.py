@@ -201,7 +201,7 @@ class RulesToDMS(Step):
         if isinstance(input_rules, DMSRules):
             dms_rules = input_rules
         elif isinstance(input_rules, InformationRules):
-            dms_rules = InformationToDMS().transform(input_rules).rules
+            dms_rules = InformationToDMS().transform(input_rules)
         else:
             raise NotImplementedError(f"Unsupported rules type {type(input_rules)}")
 
@@ -324,7 +324,7 @@ class RulesToExcel(Step):
             ...
         elif output_role is RoleTypes.dms:
             if isinstance(rule_instance, InformationRules):
-                rule_instance = InformationToDMS().transform(rule_instance).rules
+                rule_instance = InformationToDMS().transform(rule_instance)
             else:
                 raise NotImplementedError(f"Role {output_role} is not supported for {type(rules).__name__} rules")
         elif output_role is RoleTypes.information:
@@ -394,7 +394,7 @@ class RulesToOntology(Step):
 
         input_rules = rules.information or rules.dms
         if isinstance(input_rules, DMSRules):
-            info_rules = DMSToInformation().transform(input_rules).rules
+            info_rules = DMSToInformation().transform(input_rules)
         elif isinstance(input_rules, InformationRules):
             info_rules = input_rules
         else:
