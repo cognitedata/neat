@@ -10,11 +10,13 @@ instances:
       metadata:
         blob: data
       name: Utsira
-      parentId: null
+      parent: null
       relationshipAsset: null
       source:
         externalId: SourceSystem_manufacturer1
         space: sp_instance_space
+      tags:
+      - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -23,18 +25,6 @@ instances:
   space: sp_instance_space
   type:
     externalId: ClassicAsset
-    space: sp_windfarm
-- endNode:
-    externalId: Label_PowerGeneratingUnit
-    space: sp_instance_space
-  externalId: Asset_4.labels.Label_PowerGeneratingUnit
-  instanceType: edge
-  space: sp_instance_space
-  startNode:
-    externalId: Asset_4
-    space: sp_instance_space
-  type:
-    externalId: ClassicAsset.labels
     space: sp_windfarm
 - externalId: Asset_5
   instanceType: node
@@ -47,7 +37,7 @@ instances:
       metadata:
         blob: data
       name: WT-01
-      parentId:
+      parent:
         externalId: Asset_4
         space: sp_instance_space
       relationshipAsset:
@@ -56,6 +46,9 @@ instances:
       source:
         externalId: SourceSystem_manufacturer1
         space: sp_instance_space
+      tags:
+      - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
+      - http://purl.org/cognite/cdf-classic#Label_WindTurbine
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -64,30 +57,6 @@ instances:
   space: sp_instance_space
   type:
     externalId: ClassicAsset
-    space: sp_windfarm
-- endNode:
-    externalId: Label_PowerGeneratingUnit
-    space: sp_instance_space
-  externalId: Asset_5.labels.Label_PowerGeneratingUnit
-  instanceType: edge
-  space: sp_instance_space
-  startNode:
-    externalId: Asset_5
-    space: sp_instance_space
-  type:
-    externalId: ClassicAsset.labels
-    space: sp_windfarm
-- endNode:
-    externalId: Label_WindTurbine
-    space: sp_instance_space
-  externalId: Asset_5.labels.Label_WindTurbine
-  instanceType: edge
-  space: sp_instance_space
-  startNode:
-    externalId: Asset_5
-    space: sp_instance_space
-  type:
-    externalId: ClassicAsset.labels
     space: sp_windfarm
 - externalId: Asset_6
   instanceType: node
@@ -100,7 +69,7 @@ instances:
       metadata:
         blob: data
       name: WT-02
-      parentId:
+      parent:
         externalId: Asset_4
         space: sp_instance_space
       relationshipAsset:
@@ -109,6 +78,9 @@ instances:
       source:
         externalId: SourceSystem_manufacturer1
         space: sp_instance_space
+      tags:
+      - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
+      - http://purl.org/cognite/cdf-classic#Label_WindTurbine
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -117,30 +89,6 @@ instances:
   space: sp_instance_space
   type:
     externalId: ClassicAsset
-    space: sp_windfarm
-- endNode:
-    externalId: Label_PowerGeneratingUnit
-    space: sp_instance_space
-  externalId: Asset_6.labels.Label_PowerGeneratingUnit
-  instanceType: edge
-  space: sp_instance_space
-  startNode:
-    externalId: Asset_6
-    space: sp_instance_space
-  type:
-    externalId: ClassicAsset.labels
-    space: sp_windfarm
-- endNode:
-    externalId: Label_WindTurbine
-    space: sp_instance_space
-  externalId: Asset_6.labels.Label_WindTurbine
-  instanceType: edge
-  space: sp_instance_space
-  startNode:
-    externalId: Asset_6
-    space: sp_instance_space
-  type:
-    externalId: ClassicAsset.labels
     space: sp_windfarm
 - externalId: Asset_7
   instanceType: node
@@ -153,11 +101,13 @@ instances:
       metadata:
         blob: data
       name: Measurement
-      parentId: null
+      parent: null
       relationshipAsset: null
       source:
         externalId: SourceSystem_manufacturer2
         space: sp_instance_space
+      tags:
+      - http://purl.org/cognite/cdf-classic#Label_Measurement
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -166,18 +116,6 @@ instances:
   space: sp_instance_space
   type:
     externalId: ClassicAsset
-    space: sp_windfarm
-- endNode:
-    externalId: Label_Measurement
-    space: sp_instance_space
-  externalId: Asset_7.labels.Label_Measurement
-  instanceType: edge
-  space: sp_instance_space
-  startNode:
-    externalId: Asset_7
-    space: sp_instance_space
-  type:
-    externalId: ClassicAsset.labels
     space: sp_windfarm
 - externalId: Asset_8
   instanceType: node
@@ -190,13 +128,16 @@ instances:
       metadata:
         blob: data
       name: MetMast
-      parentId:
+      parent:
         externalId: Asset_7
         space: sp_instance_space
       relationshipAsset: null
       source:
         externalId: SourceSystem_manufacturer2
         space: sp_instance_space
+      tags:
+      - http://purl.org/cognite/cdf-classic#Label_Measurement
+      - http://purl.org/cognite/cdf-classic#Label_metMast
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -205,30 +146,6 @@ instances:
   space: sp_instance_space
   type:
     externalId: ClassicAsset
-    space: sp_windfarm
-- endNode:
-    externalId: Label_Measurement
-    space: sp_instance_space
-  externalId: Asset_8.labels.Label_Measurement
-  instanceType: edge
-  space: sp_instance_space
-  startNode:
-    externalId: Asset_8
-    space: sp_instance_space
-  type:
-    externalId: ClassicAsset.labels
-    space: sp_windfarm
-- endNode:
-    externalId: Label_metMast
-    space: sp_instance_space
-  externalId: Asset_8.labels.Label_metMast
-  instanceType: edge
-  space: sp_instance_space
-  startNode:
-    externalId: Asset_8
-    space: sp_instance_space
-  type:
-    externalId: ClassicAsset.labels
     space: sp_windfarm
 - externalId: DataSet_123
   instanceType: node
@@ -291,8 +208,8 @@ instances:
   instanceType: node
   sources:
   - properties:
-      assetIds:
-        externalId: Asset_5
+      assets:
+      - externalId: Asset_5
         space: sp_instance_space
       dataSetId:
         externalId: DataSet_125
@@ -320,8 +237,8 @@ instances:
   instanceType: node
   sources:
   - properties:
-      assetIds:
-        externalId: Asset_5
+      assets:
+      - externalId: Asset_5
         space: sp_instance_space
       dataSetId:
         externalId: DataSet_123
@@ -445,19 +362,21 @@ instances:
   instanceType: node
   sources:
   - properties:
-      assetId:
-        externalId: Asset_5
+      assets:
+      - externalId: Asset_5
         space: sp_instance_space
       dataSetId:
         externalId: DataSet_123
         space: sp_instance_space
       description: WT-01 production
       isStep: false
-      isString: numeric
       metadata:
         blob: data
       name: WT-01 production
-      unitExternalId: power:megaw
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: cdf_cdm_units
     source:
       externalId: ClassicTimeSeries
       space: sp_windfarm
@@ -471,19 +390,21 @@ instances:
   instanceType: node
   sources:
   - properties:
-      assetId:
-        externalId: Asset_6
+      assets:
+      - externalId: Asset_6
         space: sp_instance_space
       dataSetId:
         externalId: DataSet_123
         space: sp_instance_space
       description: WT-02 production
       isStep: false
-      isString: numeric
       metadata:
         blob: data
       name: WT-02 production
-      unitExternalId: power:megaw
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: cdf_cdm_units
     source:
       externalId: ClassicTimeSeries
       space: sp_windfarm
@@ -497,19 +418,21 @@ instances:
   instanceType: node
   sources:
   - properties:
-      assetId:
-        externalId: Asset_5
+      assets:
+      - externalId: Asset_5
         space: sp_instance_space
       dataSetId:
         externalId: DataSet_124
         space: sp_instance_space
       description: WT-01 forecast
       isStep: false
-      isString: numeric
       metadata:
         blob: data
       name: WT-01 forecast
-      unitExternalId: power:megaw
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: cdf_cdm_units
     source:
       externalId: ClassicTimeSeries
       space: sp_windfarm
@@ -523,19 +446,21 @@ instances:
   instanceType: node
   sources:
   - properties:
-      assetId:
-        externalId: Asset_6
+      assets:
+      - externalId: Asset_6
         space: sp_instance_space
       dataSetId:
         externalId: DataSet_124
         space: sp_instance_space
       description: WT-02 forecast
       isStep: false
-      isString: numeric
       metadata:
         blob: data
       name: WT-02 forecast
-      unitExternalId: power:megaw
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: cdf_cdm_units
     source:
       externalId: ClassicTimeSeries
       space: sp_windfarm
@@ -599,6 +524,119 @@ instances:
     space: sp_windfarm
 rules:
   containers:
+  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteSchedulable
+    container: cdf_cdm:CogniteActivity
+    description: Represent an activity
+    neatId: http://purl.org/cognite/neat/neatId_48ca7651_92f5_4f7b_8323_d342df6a8f93
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    container: cdf_cdm:CogniteAnnotation
+    description: Annotation represents contextualization results or links
+    neatId: http://purl.org/cognite/neat/neatId_96ef2ad6_b97e_4703_86c8_adfe7bf47042
+    used_for: edge
+  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteVisualizable,cdf_cdm:CogniteSourceable
+    container: cdf_cdm:CogniteAsset
+    description: The asset is the bare bone representation of assets in our asset
+      centric world
+    neatId: http://purl.org/cognite/neat/neatId_b63b4dc3_a559_4463_b9e1_3ceab0cbc61f
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable
+    container: cdf_cdm:CogniteAssetClass
+    description: This identifies the class of an asset
+    neatId: http://purl.org/cognite/neat/neatId_ff233d5f_6ced_415d_9800_7c0287ea7ff5
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable
+    container: cdf_cdm:CogniteAssetType
+    description: This identifies the type of an asset
+    neatId: http://purl.org/cognite/neat/neatId_680bac63_b856_4035_bdc9_829015eabb27
+    used_for: node
+  - container: cdf_cdm:CogniteDescribable
+    description: The describable core concept is used as a standard way of holding
+      the bare minimum of information about the instance.
+    neatId: http://purl.org/cognite/neat/neatId_046a0df5_cafd_4613_b2bb_912d7da67785
+    used_for: all
+  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    container: cdf_cdm:CogniteEquipment
+    description: Represent a physical piece of equipment
+    neatId: http://purl.org/cognite/neat/neatId_a9f948b2_4e63_44bb_be49_3f43b118f68d
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable
+    container: cdf_cdm:CogniteEquipmentType
+    description: This identifies the type of an equipment
+    neatId: http://purl.org/cognite/neat/neatId_4ac9778d_8da8_4ee4_8df5_6ac6f96b648a
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    container: cdf_cdm:CogniteFile
+    description: This concept models the underlying file from the Files resource type
+    neatId: http://purl.org/cognite/neat/neatId_b8a6171f_1ee3_4dc4_bb04_8a8b405bfdc9
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable
+    container: cdf_cdm:CogniteFileCategory
+    description: Specifies the category for a file (as a result of categorization/classification))
+    neatId: http://purl.org/cognite/neat/neatId_b0ae8f08_c31e_4bbc_b36c_b62b892e6161
+    used_for: node
+  - container: cdf_cdm:CogniteSchedulable
+    description: CogniteSchedulable represents the metadata about when an activity
+      (or similar) starts and ends
+    neatId: http://purl.org/cognite/neat/neatId_be2d740a_1e9b_43bc_90c7_c006314d3441
+    used_for: node
+  - container: cdf_cdm:CogniteSourceSystem
+    description: The CogniteSourceSystem core concept is used to standardize the way
+      source system is stored.
+    neatId: http://purl.org/cognite/neat/neatId_5a104129_54ae_4d1b_8ce6_424dbef59fe6
+    used_for: node
+  - container: cdf_cdm:CogniteSourceable
+    description: The CogniteSourceable core concept is used to standardize the way
+      source information is stored.
+    neatId: http://purl.org/cognite/neat/neatId_5738811d_70c2_403f_ba8d_03aa782a65e0
+    used_for: all
+  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    container: cdf_cdm:CogniteTimeSeries
+    neatId: http://purl.org/cognite/neat/neatId_b540b30e_039f_4a25_8d61_68bd2defe193
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable
+    container: cdf_cdm:CogniteUnit
+    description: Represents a single unit of measurement
+    neatId: http://purl.org/cognite/neat/neatId_98c7472a_864e_4a13_829c_fc0cfa02eaec
+    used_for: node
+  - container: cdf_cdm:CogniteVisualizable
+    description: CogniteVisualizable defines the standard way to reference a related
+      3D resource
+    neatId: http://purl.org/cognite/neat/neatId_1a432f0a_7daa_49f0_80b6_fce2de53790a
+    used_for: node
+  - container: cdf_cdm_3d:Cognite360Image
+    neatId: http://purl.org/cognite/neat/neatId_40a26c60_0d27_4659_b72a_da9b2f32751e
+    used_for: node
+  - container: cdf_cdm_3d:Cognite360ImageAnnotation
+    neatId: http://purl.org/cognite/neat/neatId_3d85de89_c217_4429_8e20_07247d137018
+    used_for: edge
+  - container: cdf_cdm_3d:Cognite3DGroup
+    neatId: http://purl.org/cognite/neat/neatId_4e7ed827_455a_4762_b428_a656b3ee4d3b
+    used_for: node
+  - container: cdf_cdm_3d:Cognite3DModel
+    neatId: http://purl.org/cognite/neat/neatId_d52721e7_19bc_443e_bb02_bebb48729a4d
+    used_for: node
+  - container: cdf_cdm_3d:Cognite3DObject
+    neatId: http://purl.org/cognite/neat/neatId_30e912f2_f2b4_4abf_8441_aefd0299436a
+    used_for: node
+  - container: cdf_cdm_3d:Cognite3DRevision
+    neatId: http://purl.org/cognite/neat/neatId_a34b6cf6_2053_4a42_b1af_db65b289f224
+    used_for: node
+  - container: cdf_cdm_3d:Cognite3DTransformation
+    neatId: http://purl.org/cognite/neat/neatId_bd1531c8_3764_4bda_b108_d4482f65fafa
+    used_for: all
+  - container: cdf_cdm_3d:CogniteCADNode
+    neatId: http://purl.org/cognite/neat/neatId_6786d506_38ba_4abc_8b53_05e517d2582e
+    used_for: node
+  - container: cdf_cdm_3d:CogniteCADRevision
+    neatId: http://purl.org/cognite/neat/neatId_8db06746_7927_4973_9e78_1fd794e0d3ba
+    used_for: node
+  - container: cdf_cdm_3d:CogniteCubeMap
+    neatId: http://purl.org/cognite/neat/neatId_5c62b3a2_3a3c_463e_8bd6_cee631b1b099
+    used_for: node
+  - container: cdf_cdm_3d:CognitePointCloudVolume
+    neatId: http://purl.org/cognite/neat/neatId_0ba6eab9_4639_447b_a067_bdac88bd13d1
+    used_for: node
   - container: ClassicAsset
     neatId: http://purl.org/cognite/neat/neatId_ce9e1a11_fcbb_4e59_bbdd_cf7c9c96e9ec
     used_for: all
@@ -623,6 +661,17 @@ rules:
   - container: ClassicTimeSeries
     neatId: http://purl.org/cognite/neat/neatId_afffcfd2_341e_440b_97c7_00aab7b56ea7
     used_for: all
+  enum:
+  - collection: timeseriesType
+    description: Time series with double floating point data points.
+    name: numeric
+    neatId: http://purl.org/cognite/neat/neatId_d4e42064_7c60_4bfc_b629_a873345f0ee2
+    value: numeric
+  - collection: timeseriesType
+    description: Time series with string data points.
+    name: string
+    neatId: http://purl.org/cognite/neat/neatId_8bb46fae_572d_464a_bc61_1055b0aa6c5d
+    value: string
   metadata:
     created: '2024-09-19T00:00:00Z'
     creator: NEAT
@@ -644,8 +693,9 @@ rules:
     value_type: ClassicDataSet
     view: ClassicAsset
     view_property: dataSetId
-  - container: ClassicAsset
+  - container: cdf_cdm:CogniteDescribable
     container_property: description
+    immutable: false
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_a28defe3_9bf0_4273_9247_6f57a5e5a5ab
     neatId: http://purl.org/cognite/neat/neatId_7c441fe7_ab42_40a7_874a_493b3ceddf2d
@@ -653,13 +703,6 @@ rules:
     value_type: text
     view: ClassicAsset
     view_property: description
-  - connection: edge
-    is_list: true
-    logical: http://purl.org/cognite/neat/neatId_3eabedcb_baa8_4dd4_88bd_64072bcfbe01
-    neatId: http://purl.org/cognite/neat/neatId_b92da22b_21df_406f_8a0b_3c3336d8393a
-    value_type: ClassicLabel
-    view: ClassicAsset
-    view_property: labels
   - container: ClassicAsset
     container_property: metadata
     is_list: false
@@ -669,8 +712,10 @@ rules:
     value_type: json
     view: ClassicAsset
     view_property: metadata
-  - container: ClassicAsset
+  - container: cdf_cdm:CogniteDescribable
     container_property: name
+    immutable: false
+    index: name
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_b02b61c4_a3d7_4628_ace6_6fa2fd5166e6
     neatId: http://purl.org/cognite/neat/neatId_7914c120_c8dc_419f_be35_11287900f7f9
@@ -679,15 +724,16 @@ rules:
     view: ClassicAsset
     view_property: name
   - connection: direct
-    container: ClassicAsset
-    container_property: parentId
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_parent
+    immutable: false
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_5304317f_af42_412f_b838_b3268e944239
     neatId: http://purl.org/cognite/neat/neatId_1825bc54_30be_445f_a835_14f2ceb81f9d
     nullable: true
     value_type: ClassicAsset
     view: ClassicAsset
-    view_property: parentId
+    view_property: parent
   - connection: direct
     container: ClassicAsset
     container_property: relationshipAsset
@@ -699,8 +745,10 @@ rules:
     view: ClassicAsset
     view_property: relationshipAsset
   - connection: direct
-    container: ClassicAsset
+    container: cdf_cdm:CogniteSourceable
     container_property: source
+    immutable: false
+    index: source
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_ce177b4e_0837_48a3_9261_a7ab3aa2e4f9
     neatId: http://purl.org/cognite/neat/neatId_dd2467ac_778e_4db3_a93d_ffbc6c6fa611
@@ -708,6 +756,16 @@ rules:
     value_type: ClassicSourceSystem
     view: ClassicAsset
     view_property: source
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/neatId_3eabedcb_baa8_4dd4_88bd_64072bcfbe01
+    neatId: http://purl.org/cognite/neat/neatId_b92da22b_21df_406f_8a0b_3c3336d8393a
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: tags
   - connection: direct
     container: ClassicAssetToAssetEdge
     container_property: dataSetId
@@ -794,15 +852,16 @@ rules:
     view: ClassicDataSet
     view_property: writeProtected
   - connection: direct
-    container: ClassicEvent
-    container_property: assetIds
-    is_list: false
+    container: cdf_cdm:CogniteActivity
+    container_property: assets
+    immutable: false
+    is_list: true
     logical: http://purl.org/cognite/neat/neatId_7e570ddf_8270_40a8_a369_b584ff5e9ff0
     neatId: http://purl.org/cognite/neat/neatId_03c72ba8_d605_4770_8a63_f881ffd0f9d5
     nullable: true
     value_type: ClassicAsset
     view: ClassicEvent
-    view_property: assetIds
+    view_property: assets
   - connection: direct
     container: ClassicEvent
     container_property: dataSetId
@@ -813,8 +872,9 @@ rules:
     value_type: ClassicDataSet
     view: ClassicEvent
     view_property: dataSetId
-  - container: ClassicEvent
+  - container: cdf_cdm:CogniteDescribable
     container_property: description
+    immutable: false
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_28f49481_a0a0_4dc4_a720_9bdf1c11f735
     neatId: http://purl.org/cognite/neat/neatId_680ac07a_2a93_4d62_bc83_5dc0d9441fa5
@@ -822,8 +882,10 @@ rules:
     value_type: text
     view: ClassicEvent
     view_property: description
-  - container: ClassicEvent
+  - container: cdf_cdm:CogniteSchedulable
     container_property: endTime
+    immutable: false
+    index: endTime
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_98ae4334_6c12_4ce8_ae34_0454cac5b68c
     neatId: http://purl.org/cognite/neat/neatId_dd59ba71_36b8_4481_bb3a_4e3e7c52fa17
@@ -841,8 +903,10 @@ rules:
     view: ClassicEvent
     view_property: metadata
   - connection: direct
-    container: ClassicEvent
+    container: cdf_cdm:CogniteSourceable
     container_property: source
+    immutable: false
+    index: source
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_405cacec_8774_49a9_b7d2_1e02ff01cf99
     neatId: http://purl.org/cognite/neat/neatId_63f2ae24_fc3d_4348_808d_4127610461e3
@@ -850,8 +914,10 @@ rules:
     value_type: ClassicSourceSystem
     view: ClassicEvent
     view_property: source
-  - container: ClassicEvent
+  - container: cdf_cdm:CogniteSchedulable
     container_property: startTime
+    immutable: false
+    index: startTime
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_f143262f_dc5c_4eed_8da0_365bf89897b9
     neatId: http://purl.org/cognite/neat/neatId_c8fe3ccd_c8b8_49c6_ad30_49cf43e458fc
@@ -878,15 +944,16 @@ rules:
     view: ClassicEvent
     view_property: type
   - connection: direct
-    container: ClassicFile
-    container_property: assetIds
-    is_list: false
+    container: cdf_cdm:CogniteFile
+    container_property: assets
+    immutable: false
+    is_list: true
     logical: http://purl.org/cognite/neat/neatId_5715bd6f_a416_4293_84c2_e2e3444ea7c8
     neatId: http://purl.org/cognite/neat/neatId_7c967f79_b7e9_4aca_a970_65e18e46d534
     nullable: true
     value_type: ClassicAsset
     view: ClassicFile
-    view_property: assetIds
+    view_property: assets
   - connection: direct
     container: ClassicFile
     container_property: dataSetId
@@ -906,8 +973,10 @@ rules:
     value_type: json
     view: ClassicFile
     view_property: metadata
-  - container: ClassicFile
+  - container: cdf_cdm:CogniteDescribable
     container_property: name
+    immutable: false
+    index: name
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_f8cda88b_436d_46e2_b83c_fe0be037e5ed
     neatId: http://purl.org/cognite/neat/neatId_504867ba_bf7b_439b_8f9a_ea4b8acd4e10
@@ -916,8 +985,10 @@ rules:
     view: ClassicFile
     view_property: name
   - connection: direct
-    container: ClassicFile
+    container: cdf_cdm:CogniteSourceable
     container_property: source
+    immutable: false
+    index: source
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_81f76d1c_2dbc_4134_830f_f46e8026695f
     neatId: http://purl.org/cognite/neat/neatId_7a0ecfea_958c_49ba_8cd6_20c20ea2622b
@@ -953,8 +1024,9 @@ rules:
     value_type: text
     view: ClassicLabel
     view_property: name
-  - container: ClassicSourceSystem
+  - container: cdf_cdm:CogniteDescribable
     container_property: name
+    immutable: false
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_f4188f3f_8a14_4e62_a95b_4715c333e861
     neatId: http://purl.org/cognite/neat/neatId_dca02eec_acda_4acc_9165_e21098543881
@@ -963,15 +1035,16 @@ rules:
     view: ClassicSourceSystem
     view_property: name
   - connection: direct
-    container: ClassicTimeSeries
-    container_property: assetId
-    is_list: false
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: assets
+    immutable: false
+    is_list: true
     logical: http://purl.org/cognite/neat/neatId_eb2263dd_87c5_421e_ac24_a3c5c754108f
     neatId: http://purl.org/cognite/neat/neatId_f10c718b_1eb0_438a_a75d_d5af3c365296
     nullable: true
     value_type: ClassicAsset
     view: ClassicTimeSeries
-    view_property: assetId
+    view_property: assets
   - connection: direct
     container: ClassicTimeSeries
     container_property: dataSetId
@@ -982,8 +1055,9 @@ rules:
     value_type: ClassicDataSet
     view: ClassicTimeSeries
     view_property: dataSetId
-  - container: ClassicTimeSeries
+  - container: cdf_cdm:CogniteDescribable
     container_property: description
+    immutable: false
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_5cec4eb5_edd9_4831_9ca3_5cfb04fc6d82
     neatId: http://purl.org/cognite/neat/neatId_14fcdd54_9e8f_4965_8a2c_827e98326856
@@ -991,24 +1065,17 @@ rules:
     value_type: text
     view: ClassicTimeSeries
     view_property: description
-  - container: ClassicTimeSeries
+  - container: cdf_cdm:CogniteTimeSeries
     container_property: isStep
+    default: 0
+    immutable: false
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_ce88cb2d_d4e8_4839_bc3e_058be0f3eab0
     neatId: http://purl.org/cognite/neat/neatId_90b2b633_956b_4c0c_a849_9b926b5252e3
-    nullable: true
+    nullable: false
     value_type: boolean
     view: ClassicTimeSeries
     view_property: isStep
-  - container: ClassicTimeSeries
-    container_property: isString
-    is_list: false
-    logical: http://purl.org/cognite/neat/neatId_3da9c2a9_0ed4_4f1a_bd4c_bf374eb93eff
-    neatId: http://purl.org/cognite/neat/neatId_42c18a62_ef48_48d5_90fd_9d3f85d51695
-    nullable: true
-    value_type: text
-    view: ClassicTimeSeries
-    view_property: isString
   - container: ClassicTimeSeries
     container_property: metadata
     is_list: false
@@ -1018,8 +1085,10 @@ rules:
     value_type: json
     view: ClassicTimeSeries
     view_property: metadata
-  - container: ClassicTimeSeries
+  - container: cdf_cdm:CogniteDescribable
     container_property: name
+    immutable: false
+    index: name
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_d0e6e660_7c69_4ee1_bb5e_4bcf15ed6269
     neatId: http://purl.org/cognite/neat/neatId_21813d25_6552_48a6_83ff_50113d1a85dd
@@ -1027,17 +1096,200 @@ rules:
     value_type: text
     view: ClassicTimeSeries
     view_property: name
-  - container: ClassicTimeSeries
-    container_property: unitExternalId
+  - container: cdf_cdm:CogniteTimeSeries
+    container_property: type
+    immutable: true
+    is_list: false
+    logical: http://purl.org/cognite/neat/neatId_3da9c2a9_0ed4_4f1a_bd4c_bf374eb93eff
+    neatId: http://purl.org/cognite/neat/neatId_42c18a62_ef48_48d5_90fd_9d3f85d51695
+    nullable: false
+    value_type: enum(collection=timeseriesType)
+    view: ClassicTimeSeries
+    view_property: type
+  - connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: unit
+    immutable: false
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_885f6e66_c2b6_42c5_ba5d_310011b7e948
     neatId: http://purl.org/cognite/neat/neatId_750cab75_4ccc_4bc2_a53f_8a28abf3e3fc
     nullable: true
-    value_type: text
+    value_type: cdf_cdm:CogniteUnit(version=v1)
     view: ClassicTimeSeries
-    view_property: unitExternalId
+    view_property: unit
   views:
+  - description: ''
+    implements: cdf_cdm:Cognite3DTransformation(version=v1),cdf_cdm:CogniteCubeMap(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_75b17a55_d426_4982_a43e_4288a2b5b498
+    view: cdf_cdm:Cognite360Image(version=v1)
+  - description: ''
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1),cdf_cdm:CogniteAnnotation(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_7701f7bb_7bc6_4e1f_864e_e6e389c5b31a
+    view: cdf_cdm:Cognite360ImageAnnotation(version=v1)
+  - description: Represents a logical collection of Cognite360Image instances
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DRevision(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_97ac6aa8_bb24_48a3_9363_57b66f81cf4f
+    view: cdf_cdm:Cognite360ImageCollection(version=v1)
+  - description: Navigational aid for traversing Cognite360ImageModel instances
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_989d9d4a_e15c_4666_8797_b2c957207246
+    view: cdf_cdm:Cognite360ImageModel(version=v1)
+  - description: A way to group images across collections. Used for creating visual
+      scan history
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_ab0e664e_9c3e_42d5_91e1_aa9676f72255
+    view: cdf_cdm:Cognite360ImageStation(version=v1)
+  - description: Groups revisions of 3D data of various kinds together (CAD, PointCloud,
+      Image360)
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_4223623b_cc3e_4dde_9ad5_cf06364d7c87
+    view: cdf_cdm:Cognite3DModel(version=v1)
+  - description: This is the virtual position representation of an object in the physical
+      world, connecting an asset to one or more 3D resources
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_90e0f4a0_fbdd_4933_8bd5_8bf61efd76e9
+    view: cdf_cdm:Cognite3DObject(version=v1)
+  - description: Shared revision information for various 3D data types. Normally not
+      used directly, but through CognitePointCloudRevision, Image360Collection or
+      CogniteCADRevision
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_8e485223_46b9_4991_a14e_b70db380c73a
+    view: cdf_cdm:Cognite3DRevision(version=v1)
+  - description: The Cognite3DTransformation object defines a comprehensive 3D transformation,
+      enabling precise adjustments to an object's position, orientation, and size
+      in the 3D coordinate system. It allows for the translation of objects along
+      the three spatial axes, rotation around these axes using Euler angles, and scaling
+      along each axis to modify the object's dimensions. The object's transformation
+      is defined in "CDF space", a coordinate system where the positive Z axis is
+      the up direction
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_4767d76c_162f_4a24_af43_613cd4aac9a3
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
+  - description: Represents activities. Activities typically happen over a period
+      and have a start and end time.
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1),cdf_cdm:CogniteSchedulable(version=v1)
+    in_model: true
+    name: Activity
+    neatId: http://purl.org/cognite/neat/neatId_3e2b6091_a092_452a_94a0_57a7b0cc1b3b
+    view: cdf_cdm:CogniteActivity(version=v1)
+  - description: Annotation represents contextualization results or links
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_7cd0129d_2e8d_4e87_9334_20e6d9d80b8d
+    view: cdf_cdm:CogniteAnnotation(version=v1)
+  - description: Assets represent systems that support industrial functions or processes.
+      Assets are often called 'functional location'.
+    implements: cdf_cdm:CogniteVisualizable(version=v1),cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    name: Asset
+    neatId: http://purl.org/cognite/neat/neatId_4fa03f26_f6f7_40cc_a9ec_8e49d1bdb8c0
+    view: cdf_cdm:CogniteAsset(version=v1)
+  - description: Represents the class of an asset.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    name: Asset class
+    neatId: http://purl.org/cognite/neat/neatId_4d3485c5_c5c1_4eb4_b27b_3d901a16342c
+    view: cdf_cdm:CogniteAssetClass(version=v1)
+  - description: Represents the type of an asset.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    name: Asset type
+    neatId: http://purl.org/cognite/neat/neatId_ce3714af_99b4_4350_af2b_99b4d9acd158
+    view: cdf_cdm:CogniteAssetType(version=v1)
+  - description: Navigational aid for traversing CogniteCADModel instances
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_c01f36bf_3e6d_458b_b367_c28de1b294de
+    view: cdf_cdm:CogniteCADModel(version=v1)
+  - description: Represents nodes from the 3D model that have been contextualized
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_eb6c1016_cee6_44d0_9dac_6e8345241ea6
+    view: cdf_cdm:CogniteCADNode(version=v1)
+  - description: ''
+    implements: cdf_cdm:Cognite3DRevision(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_3ed8c56c_da09_4fa0_9282_8d8044b591f7
+    view: cdf_cdm:CogniteCADRevision(version=v1)
+  - description: The cube map holds references to 6 images in used to visually represent
+      the surrounding environment
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_7e8adee7_0758_4201_961e_16d16105716b
+    view: cdf_cdm:CogniteCubeMap(version=v1)
+  - description: The describable core concept is used as a standard way of holding
+      the bare minimum of information about the instance
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_e87466d7_ad66_41bd_9367_6a024fdc6e1b
+    view: cdf_cdm:CogniteDescribable(version=v1)
+  - description: Equipment represents physical supplies or devices.
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/neatId_7d7ddbed_d284_476c_ab88_f83dd97dc9cd
+    view: cdf_cdm:CogniteEquipment(version=v1)
+  - description: Represents the type of equipment.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    name: Equipment type
+    neatId: http://purl.org/cognite/neat/neatId_a6846099_f729_4951_8591_31d2bbda0242
+    view: cdf_cdm:CogniteEquipmentType(version=v1)
+  - description: Represents files.
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    name: File
+    neatId: http://purl.org/cognite/neat/neatId_9793b9b4_1374_4146_b2c5_bd89b70b3420
+    view: cdf_cdm:CogniteFile(version=v1)
+  - description: Represents the categories of files as determined by contextualization
+      or categorization.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    name: File category
+    neatId: http://purl.org/cognite/neat/neatId_11a72609_5edd_4bbf_a959_76636daa2e68
+    view: cdf_cdm:CogniteFileCategory(version=v1)
+  - description: PointCloud volume definition
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_2d174fc9_6f7c_45ea_a72a_6d8eb5122df8
+    view: cdf_cdm:CognitePointCloudVolume(version=v1)
+  - description: CogniteSchedulable represents the metadata about when an activity
+      (or similar) starts and ends.
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_5cb85aed_f5f6_4c97_aefb_63b11b049863
+    view: cdf_cdm:CogniteSchedulable(version=v1)
+  - description: The CogniteSourceSystem core concept is used to standardize the way
+      source system is stored.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_f1043785_658b_4523_a014_1de9f54ad0a2
+    view: cdf_cdm:CogniteSourceSystem(version=v1)
   - in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_8861fe18_58e2_4888_8a83_81bec85aca46
+    view: cdf_cdm:CogniteSourceable(version=v1)
+  - description: Represents a series of data points in time order.
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    name: Time series
+    neatId: http://purl.org/cognite/neat/neatId_edcb8cb6_0692_4c63_9424_aed51bac5c15
+    view: cdf_cdm:CogniteTimeSeries(version=v1)
+  - description: Represents a single unit of measurement
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_f3397b4c_b6e0_4701_8ea3_7edbf72bf50d
+    view: cdf_cdm:CogniteUnit(version=v1)
+  - description: CogniteVisualizable defines the standard way to reference a related
+      3D resource
+    in_model: true
+    neatId: http://purl.org/cognite/neat/neatId_033d2bce_575a_4d2c_a5c5_650c8186a576
+    view: cdf_cdm:CogniteVisualizable(version=v1)
+  - implements: cdf_cdm:CogniteAsset(version=v1)
+    in_model: true
     logical: http://purl.org/cognite/neat/neatId_a8e56e0c_20de_435d_a031_d750c40db9b4
     neatId: http://purl.org/cognite/neat/neatId_ef8c485b_c07a_40f2_add4_253b50f0fd0a
     view: ClassicAsset
@@ -1049,11 +1301,13 @@ rules:
     logical: http://purl.org/cognite/neat/neatId_edcd465e_3638_4821_b6e0_7cc06c52c49f
     neatId: http://purl.org/cognite/neat/neatId_8181a8cc_3691_47eb_89a2_688b12c136e0
     view: ClassicDataSet
-  - in_model: true
+  - implements: cdf_cdm:CogniteActivity(version=v1)
+    in_model: true
     logical: http://purl.org/cognite/neat/neatId_5f987c71_a65e_488e_abf3_ad39fec21bbe
     neatId: http://purl.org/cognite/neat/neatId_702cdd20_2862_48b8_88f4_ef125e9953d2
     view: ClassicEvent
-  - in_model: true
+  - implements: cdf_cdm:CogniteFile(version=v1)
+    in_model: true
     logical: http://purl.org/cognite/neat/neatId_7394988f_847f_49b4_a64d_1bcb702753a1
     neatId: http://purl.org/cognite/neat/neatId_4d71c366_b41b_4143_8b10_550cd5704f32
     view: ClassicFile
@@ -1061,11 +1315,13 @@ rules:
     logical: http://purl.org/cognite/neat/neatId_2a45c2ab_8cbf_4db0_b264_accc79ac1b1e
     neatId: http://purl.org/cognite/neat/neatId_9f044aed_7552_4327_8262_7f7312922f83
     view: ClassicLabel
-  - in_model: true
+  - implements: cdf_cdm:CogniteSourceSystem(version=v1)
+    in_model: true
     logical: http://purl.org/cognite/neat/neatId_66245bfa_4fcc_439a_b683_d2e6337ea2df
     neatId: http://purl.org/cognite/neat/neatId_3e896c64_e117_4ac3_919c_4ea3e1805081
     view: ClassicSourceSystem
-  - in_model: true
+  - implements: cdf_cdm:CogniteTimeSeries(version=v1)
+    in_model: true
     logical: http://purl.org/cognite/neat/neatId_9b49bd26_df57_459a_8715_a10343dac043
     neatId: http://purl.org/cognite/neat/neatId_19985f15_ff00_4d4d_9020_59e4ff9ab5c2
     view: ClassicTimeSeries
