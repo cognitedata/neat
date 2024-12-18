@@ -22,11 +22,11 @@ class TestRead:
         neat.read.yaml(data.REFERENCING_CORE, format="toolkit")
 
         issues = neat.verify()
-        normalize_neat_id_in_rules(neat._state.data_model.last_verified_dms_rules[1])
+        normalize_neat_id_in_rules(neat._state.rule_store.last_verified_dms_rules)
         assert not issues.has_errors
 
         neat.prepare.data_model.to_data_product(("sp_my_space", "MyProduct", "v1"), org_name="")
-        normalize_neat_id_in_rules(neat._state.data_model.last_verified_dms_rules[1])
+        normalize_neat_id_in_rules(neat._state.rule_store.last_verified_dms_rules)
 
         exported_yaml_str = neat.to.yaml()
         exported_rules = yaml.safe_load(exported_yaml_str)

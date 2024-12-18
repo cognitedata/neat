@@ -57,7 +57,7 @@ class TestExtractToLoadFlow:
         neat.infer()
 
         # Hack to ensure deterministic output
-        rules = neat._state.rule_store.get_last_entity().result.rules
+        rules = neat._state.rule_store.last_unverified_rule
         rules.metadata.created = "2024-09-19T00:00:00Z"
         rules.metadata.updated = "2024-09-19T00:00:00Z"
 
@@ -72,7 +72,7 @@ class TestExtractToLoadFlow:
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
         # Hack to get the instances.
-        dms_rules = neat._state.data_model.last_verified_dms_rules[1]
+        dms_rules = neat._state.rule_store.last_verified_dms_rules
         store = neat._state.instances.store
         instances = [
             self._standardize_instance(instance)
@@ -80,7 +80,6 @@ class TestExtractToLoadFlow:
             if isinstance(instance, InstanceApply)
         ]
 
-        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
         rules_str = neat.to.yaml(format="neat")
 
         rules_dict = yaml.safe_load(rules_str)
@@ -95,7 +94,7 @@ class TestExtractToLoadFlow:
         neat.infer(max_number_of_instance=-1)
 
         # Hack to ensure deterministic output
-        rules = neat._state.data_model.last_unverified_rule[1].rules
+        rules = neat._state.rule_store.last_unverified_rule
         rules.metadata.created = "2024-09-19T00:00:00Z"
         rules.metadata.updated = "2024-09-19T00:00:00Z"
 
@@ -106,7 +105,7 @@ class TestExtractToLoadFlow:
 
         if True:
             # In progress, not yet supported.
-            dms_rules = neat._state.data_model.last_verified_dms_rules[1]
+            dms_rules = neat._state.rule_store.last_verified_dms_rules
             store = neat._state.instances.store
             instances = list(DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load())
 
@@ -115,7 +114,7 @@ class TestExtractToLoadFlow:
         else:
             instances = []
 
-        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
+        remove_linking_in_rules(neat._state.rule_store.last_verified_dms_rules)
         rules_str = neat.to.yaml(format="neat")
 
         rules_dict = yaml.safe_load(rules_str)
@@ -138,7 +137,7 @@ class TestExtractToLoadFlow:
         neat.infer(max_number_of_instance=-1)
 
         # Hack to ensure deterministic output
-        rules = neat._state.data_model.last_unverified_rule[1].rules
+        rules = neat._state.rule_store.last_unverified_rule
         rules.metadata.created = "2024-09-19T00:00:00Z"
         rules.metadata.updated = "2024-09-19T00:00:00Z"
 
@@ -149,7 +148,7 @@ class TestExtractToLoadFlow:
 
         if True:
             # In progress, not yet supported.
-            dms_rules = neat._state.data_model.last_verified_dms_rules[1]
+            dms_rules = neat._state.rule_store.last_verified_dms_rules
             store = neat._state.instances.store
             instances = list(DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load())
 
@@ -163,7 +162,7 @@ class TestExtractToLoadFlow:
         else:
             instances = []
 
-        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
+        remove_linking_in_rules(neat._state.rule_store.last_verified_dms_rules)
         rules_str = neat.to.yaml(format="neat")
 
         rules_dict = yaml.safe_load(rules_str)
