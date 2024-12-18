@@ -64,8 +64,6 @@ class TestDTDLImporter:
         with catch_issues(issues):
             rules = VerifyInformationRules().transform(read_rules)
 
-        assert issues == expected_issues
-
         assert rules is None
         assert len(issues) == 1
         actual_issue = issues[0]

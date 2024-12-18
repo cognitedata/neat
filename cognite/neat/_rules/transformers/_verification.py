@@ -41,7 +41,7 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
         verified_rules: T_VerifiedRules | None = None
         # We need to catch issues as we use the error args to provide extra context for the errors/warnings
         # For example, which row in the spreadsheet the error occurred on.
-        with catch_issues(issues, NeatError, NeatWarning, error_args) as future:
+        with catch_issues(issues, NeatError, NeatWarning, error_args) as _:
             rules_cls = self._get_rules_cls(in_)
             dumped = in_.dump()
             verified_rules = rules_cls.model_validate(dumped)  # type: ignore[assignment]
@@ -63,7 +63,8 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
         issues.trigger_warnings()
         if issues.has_errors:
             raise MultiValueError(issues.errors)
-
+        if verified_rules is None:
+            raise NeatValueError("Rules were not verified")
         return verified_rules
 
     def _get_rules_cls(self, in_: T_InputRules) -> type[T_VerifiedRules]:

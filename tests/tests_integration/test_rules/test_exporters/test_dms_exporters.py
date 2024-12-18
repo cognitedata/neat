@@ -6,7 +6,7 @@ from cognite.client.data_classes import Row
 
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import ExcelImporter
-from cognite.neat._rules.models import DMSRules, InformationRules, RoleTypes, SheetList
+from cognite.neat._rules.models import DMSRules, InformationRules, SheetList
 from cognite.neat._rules.models.dms import DMSInputRules
 from cognite.neat._rules.models.information import (
     InformationClass,
@@ -22,7 +22,7 @@ def alice_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
+    return excel_importer.to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
@@ -31,7 +31,7 @@ def olav_dms_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
+    return excel_importer.to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
@@ -40,7 +40,7 @@ def olav_rebuilt_dms_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
+    return excel_importer.to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
@@ -49,7 +49,7 @@ def svein_harald_dms_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
+    return excel_importer.to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")

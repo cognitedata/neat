@@ -9,8 +9,9 @@ from cognite.neat._issues.errors import WorkflowStepNotInitializedError
 from cognite.neat._issues.formatters import FORMATTER_BY_NAME
 from cognite.neat._rules import importers
 from cognite.neat._rules._shared import InputRules
-from cognite.neat._rules.models import RoleTypes
+from cognite.neat._rules.models import DMSRules, InformationRules, RoleTypes
 from cognite.neat._rules.models.entities import DataModelEntity, DMSUnknownEntity
+from cognite.neat._rules.transformers import DMSToInformation, InformationToDMS, VerifyAnyRules
 from cognite.neat._workflows.model import FlowMessage, StepExecutionStatus
 from cognite.neat._workflows.steps.data_contracts import MultiRuleData
 from cognite.neat._workflows.steps.step_model import Configurable, Step
@@ -76,7 +77,18 @@ class ExcelToRules(Step):
             role_enum = RoleTypes[role]
 
         excel_importer = importers.ExcelImporter[InputRules](rules_file_path)
-        result = ImporterPipeline.try_verify(excel_importer, role_enum)
+        read_rules = excel_importer.to_rules()
+        rules = VerifyAnyRules().transform(read_rules)
+        if role_enum is RoleTypes.dms and isinstance(rules, InformationRules):
+            result = InformationToDMS().transform(rules)
+        elif role_enum is RoleTypes.dms and isinstance(rules, DMSRules):
+            result = rules
+        elif role_enum is RoleTypes.information and isinstance(rules, InformationRules):
+            result = rules
+        elif role_enum is RoleTypes.information and isinstance(rules, DMSRules):
+            result = DMSToInformation().transform(rules)
+        else:
+            raise ValueError(f"Role {role_enum} is not supported for rules of type {type(rules)}")
 
         if result.rules is None:
             output_dir = self.config.staging_path
@@ -92,7 +104,7 @@ class ExcelToRules(Step):
 
         output_text = "Rules validation passed successfully!"
 
-        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(result.rules)
+        return FlowMessage(output_text=output_text), MultiRuleData.from_rules(result)
 
 
 class OntologyToRules(Step):
@@ -138,27 +150,8 @@ class OntologyToRules(Step):
             error_text = "Expected either 'File name' in the step config or 'File uploader' step uploading Excel Rules."
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
-        # if role is None, it will be inferred from the rules file
-        role = self.configs.get("Role")
-        role_enum = None
-        if role != "infer" and role is not None:
-            role_enum = RoleTypes[role]
-
         ontology_importer = importers.OWLImporter.from_file(filepath=rules_file_path)
-        result = ImporterPipeline.try_verify(ontology_importer, role_enum)
-
-        if result.rules is None:
-            output_dir = self.config.staging_path
-            report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
-            report_writer.write_to_file(result.issues, file_or_dir_path=output_dir)
-            report_file = report_writer.default_file_name
-            error_text = (
-                "<p></p>"
-                f'<a href="/data/staging/{report_file}?{time.time()}" '
-                f'target="_blank">Failed to validate rules, click here for report</a>'
-            )
-            return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
-
+        result = ontology_importer.to_rules().rules.as_verified_rules()
         output_text = "Rules validation passed successfully!"
 
         return FlowMessage(output_text=output_text), MultiRuleData.from_rules(result.rules)
@@ -209,26 +202,8 @@ class IMFToRules(Step):
             error_text = "Expected either 'File name' in the step config or 'File uploader' step uploading Excel Rules."
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
-        # if role is None, it will be inferred from the rules file
-        role = self.configs.get("Role")
-        role_enum = None
-        if role != "infer" and role is not None:
-            role_enum = RoleTypes[role]
-
         ontology_importer = importers.IMFImporter.from_file(rules_file_path)
-        result = ImporterPipeline.try_verify(ontology_importer, role_enum)
-
-        if result.rules is None:
-            output_dir = self.config.staging_path
-            report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
-            report_writer.write_to_file(result.issues, file_or_dir_path=output_dir)
-            report_file = report_writer.default_file_name
-            error_text = (
-                "<p></p>"
-                f'<a href="/data/staging/{report_file}?{time.time()}" '
-                f'target="_blank">Failed to validate rules, click here for report</a>'
-            )
-            return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+        result = ontology_importer.to_rules().rules.as_verified_rules()
 
         output_text = "Rules validation passed successfully!"
 
@@ -289,25 +264,7 @@ class DMSToRules(Step):
 
         dms_importer = importers.DMSImporter.from_data_model_id(NeatClient(cdf_client), datamodel_entity.as_id())
 
-        # if role is None, it will be inferred from the rules file
-        role = self.configs.get("Role")
-        role_enum = None
-        if role != "infer" and role is not None:
-            role_enum = RoleTypes[role]
-
-        result = ImporterPipeline.try_verify(dms_importer, role_enum)
-
-        if result.rules is None:
-            output_dir = self.config.staging_path
-            report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
-            report_writer.write_to_file(result.issues, file_or_dir_path=output_dir)
-            report_file = report_writer.default_file_name
-            error_text = (
-                "<p></p>"
-                f'<a href="/data/staging/{report_file}?{time.time()}" '
-                f'target="_blank">Failed to validate rules, click here for report</a>'
-            )
-            return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+        result = dms_importer.to_rules().rules.as_verified_rules()
 
         output_text = "Rules import and validation passed successfully!"
 
@@ -369,28 +326,10 @@ class RulesInferenceFromRdfFile(Step):
             error_text = "Expected either 'File name' in the step config or 'File uploader' step uploading Excel Rules."
             return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
 
-        # if role is None, it will be inferred from the rules file
-        role = self.configs.get("Role")
-        role_enum = None
-        if role != "infer" and role is not None:
-            role_enum = RoleTypes[role]
-
         inference_importer = importers.InferenceImporter.from_file(
             rdf_file_path, max_number_of_instance=max_number_of_instance
         )
-        result = ImporterPipeline.try_verify(inference_importer, role_enum)
-
-        if result.rules is None:
-            output_dir = self.config.staging_path
-            report_writer = FORMATTER_BY_NAME[self.configs["Report formatter"]]()
-            report_writer.write_to_file(result.issues, file_or_dir_path=output_dir)
-            report_file = report_writer.default_file_name
-            error_text = (
-                "<p></p>"
-                f'<a href="/data/staging/{report_file}?{time.time()}" '
-                f'target="_blank">Failed to validate rules, click here for report</a>'
-            )
-            return FlowMessage(error_text=error_text, step_execution_status=StepExecutionStatus.ABORT_AND_FAIL)
+        result = inference_importer.to_rules().rules.as_verified_rules()
 
         output_text = "Rules validation passed successfully!"
 

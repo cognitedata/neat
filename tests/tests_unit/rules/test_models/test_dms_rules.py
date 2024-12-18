@@ -1394,7 +1394,7 @@ class TestDMSRules:
     def test_create_reference(self) -> None:
         info_rules = car.get_care_rules()
         dms_rules = InformationToDMS().transform(info_rules)
-        mapped = MapOneToOne(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"}).transform(dms_rules)
+        dms_rules = MapOneToOne(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"}).transform(dms_rules)
 
         schema = dms_rules.as_schema()
         view_by_external_id = {view.external_id: view for view in schema.views.values()}
