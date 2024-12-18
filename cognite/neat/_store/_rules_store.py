@@ -74,12 +74,18 @@ class NeatRulesStore:
         )
 
     def _export(self, action: Callable[[Any], Any], agent: Agent, description: str) -> Any:
-        last_entity = self.get_last_successful_entity()
-        result = last_entity.result
-        if not isinstance(result, OutRules):
-            raise NeatValueError(f"Expected OutRules, got {type(result)}")
-        rules = result.get_rules()
-
+        last_entity: ModelEntity | None = None
+        for change in reversed(self.provenance):
+            if (
+                isinstance(change.target_entity, ModelEntity)
+                and isinstance(change.target_entity.result, OutRules)
+                and isinstance(change.target_entity.result.get_rules(), DMSRules)
+            ):
+                last_entity = change.target_entity
+                break
+        if last_entity is None:
+            raise NeatValueError("No verified DMS rules found in the provenance.")
+        rules = last_entity.result.get_rules()  # type: ignore[union-attr]
         result, _ = self._run(lambda: action(rules), agent, last_entity, description)
         return result
 
