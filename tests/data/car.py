@@ -1,3 +1,4 @@
+from functools import lru_cache
 from pathlib import Path
 
 from cognite.client import data_modeling as dm
@@ -14,7 +15,7 @@ from cognite.neat._rules.models.dms import (
     DMSInputRules,
     DMSInputView,
 )
-from cognite.neat._rules.transformers import ImporterPipeline
+from cognite.neat._rules.transformers import VerifyInformationRules
 
 _neat = DEFAULT_NAMESPACE
 TRIPLES = tuple(
@@ -61,9 +62,12 @@ CONTAINERS = dm.ContainerApplyList(
     ]
 )
 
-CAR_RULES: InformationRules = ImporterPipeline.verify(
-    importers.ExcelImporter(Path(__file__).resolve().parent / "info-arch-car-rules.xlsx")
-)
+
+@lru_cache(maxsize=1)
+def get_care_rules() -> InformationRules:
+    read_rules = importers.ExcelImporter(Path(__file__).resolve().parent / "info-arch-car-rules.xlsx").to_rules()
+    return VerifyInformationRules().transform(read_rules)
+
 
 CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     space=MODEL_SPACE,
@@ -185,7 +189,7 @@ BASE_MODEL: DMSRules = DMSInputRules(
             container_property="name",
         )
     ],
-).as_rules()
+).as_verified_rules()
 
 NODE_TYPES = dm.NodeApplyList(
     [

@@ -3,8 +3,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import DataModelId
 
 from cognite.neat._rules.importers import DMSImporter, ExcelImporter
-from cognite.neat._rules.models import DataModelType, DMSRules, InformationRules, RoleTypes
-from cognite.neat._rules.transformers import ImporterPipeline
+from cognite.neat._rules.models import DataModelType, DMSRules, InformationRules
 from tests.config import DOC_RULES
 
 
@@ -14,7 +13,7 @@ def alice_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
+    return excel_importer.to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
@@ -28,7 +27,7 @@ def olav_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
+    return excel_importer.to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
@@ -41,7 +40,7 @@ class TestDMSImporter:
     def test_import_alice_from_cdf(self, cognite_client: CogniteClient, alice_data_model_id: DataModelId):
         dms_exporter = DMSImporter.from_data_model_id(cognite_client, alice_data_model_id)
 
-        rules = ImporterPipeline.verify(dms_exporter, role=RoleTypes.information)
+        rules = dms_exporter.to_rules().rules.as_verified_rules()
 
         assert isinstance(rules, InformationRules)
         assert rules.metadata.data_model_type is DataModelType.enterprise
@@ -55,7 +54,7 @@ class TestDMSImporter:
             olav_data_model_id.space
         }, "The direct reference should be the data model space."
 
-        rules = ImporterPipeline.verify(dms_importer, role=RoleTypes.dms)
+        rules = dms_importer.to_rules().rules.as_verified_rules()
 
         assert isinstance(rules, DMSRules)
         assert rules.metadata.as_data_model_id() == olav_data_model_id

@@ -1,4 +1,3 @@
-from cognite.neat._rules._shared import JustRules
 from cognite.neat._rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
@@ -32,9 +31,9 @@ class TestClassicToCoreMapper:
             ],
             views=[DMSInputView(view="MyAsset")],
             containers=[DMSInputContainer(container="Asset")],
-        ).as_rules()
+        ).as_verified_rules()
 
-        input_rules = JustRules(input_)
+        input_rules = input_
 
         mapping = DMSInputRules(
             metadata=DMSInputMetadata(
@@ -57,9 +56,9 @@ class TestClassicToCoreMapper:
                 DMSInputView(view="cdf_cdm:CogniteAsset(version=v1)"),
             ],
             containers=[DMSInputContainer(container="cdf_cdm:CogniteAsset")],
-        ).as_rules()
+        ).as_verified_rules()
 
-        transformed = RuleMapper(mapping).transform(input_rules).rules
+        transformed = RuleMapper(mapping).transform(input_rules)
 
         assert len(transformed.properties) == 1
         prop = transformed.properties[0]

@@ -3,7 +3,6 @@ from cognite.neat._graph.extractors import RdfFileExtractor
 from cognite.neat._graph.transformers._value_type import SplitMultiValueProperty
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.importers import InferenceImporter
-from cognite.neat._rules.transformers import ImporterPipeline
 from cognite.neat._store import NeatGraphStore
 
 
@@ -14,5 +13,5 @@ def test_split_multi_value_property():
 
     store.transform(SplitMultiValueProperty())
 
-    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
+    rules = InferenceImporter.from_graph_store(store).to_rules().rules.as_verified_rules()
     assert len(InformationAnalysis(rules).multi_value_properties) == 0

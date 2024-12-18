@@ -14,10 +14,9 @@ from cognite.neat._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat._issues import NeatError
-from cognite.neat._issues.errors import (
-    PropertyDefinitionDuplicatedError,
-)
+from cognite.neat._issues import IssueList, NeatError, catch_issues
+from cognite.neat._issues.errors import PropertyDefinitionDuplicatedError
+from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.data_types import String
@@ -37,10 +36,8 @@ from cognite.neat._rules.models.dms._exporter import _DMSExporter
 from cognite.neat._rules.models.entities._single_value import UnknownEntity, ViewEntity
 from cognite.neat._rules.transformers import (
     DMSToInformation,
-    ImporterPipeline,
     InformationToDMS,
     MapOneToOne,
-    RulesPipeline,
     VerifyDMSRules,
 )
 from tests.data import car
@@ -801,7 +798,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 DMSInputView(view="sp_core:Asset(version=1)"),
                 DMSInputView(view="WindTurbine", implements="sp_core:Asset(version=1)"),
             ],
-        ).as_rules(),
+        ).as_verified_rules(),
         id="Two properties, two containers, two views. Primary data types, no relations.",
     )
 
@@ -922,7 +919,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 DMSInputView(view="Generator", implements="Asset"),
                 DMSInputView(view="Reservoir", implements="Asset"),
             ],
-        ).as_rules(),
+        ).as_verified_rules(),
         id="Five properties, two containers, four views. Direct relations and Multiedge.",
     )
 
@@ -1225,7 +1222,7 @@ def case_unknown_value_types():
 
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = DMSInputRules.load(alice_spreadsheet).as_rules()
+        valid_rules = DMSInputRules.load(alice_spreadsheet).as_verified_rules()
 
         assert isinstance(valid_rules, DMSRules)
 
@@ -1242,12 +1239,12 @@ class TestDMSRules:
     @pytest.mark.parametrize("raw, no_properties", list(case_unknown_value_types()))
     def test_case_unknown_value_types(self, raw: dict[str, dict[str, Any]], no_properties: int) -> None:
         rules = InformationRules.model_validate(raw)
-        dms_rules = InformationToDMS(ignore_undefined_value_types=True).transform(rules).rules
+        dms_rules = InformationToDMS(ignore_undefined_value_types=True).transform(rules)
         assert len(dms_rules.properties) == no_properties
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
     def test_load_valid_rules(self, raw: DMSInputRules, expected_rules: DMSRules) -> None:
-        valid_rules = raw.as_rules()
+        valid_rules = raw.as_verified_rules()
         normalize_neat_id_in_rules(valid_rules)
         normalize_neat_id_in_rules(expected_rules)
 
@@ -1261,7 +1258,7 @@ class TestDMSRules:
     def test_load_inconsistent_container_definitions(
         self, raw: DMSInputRules, expected_errors: list[NeatError]
     ) -> None:
-        rules = raw.as_rules()
+        rules = raw.as_verified_rules()
         issues = DMSValidation(rules).validate()
 
         assert len(issues.errors) == 1, "Expected there to be exactly one validation error"
@@ -1270,7 +1267,7 @@ class TestDMSRules:
 
     def test_alice_to_and_from_dms(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
-        recreated_rules = ImporterPipeline.verify(DMSImporter(schema))
+        recreated_rules = DMSImporter(schema).to_rules().rules.as_verified_rules()
 
         exclude = {
             # This information is lost in the conversion
@@ -1290,7 +1287,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, input_rules: DMSInputRules, expected_schema: DMSSchema) -> None:
-        rules = input_rules.as_rules()
+        rules = input_rules.as_verified_rules()
         actual_schema = rules.as_schema()
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
@@ -1310,8 +1307,8 @@ class TestDMSRules:
         assert actual_schema.node_types.dump() == expected_schema.node_types.dump()
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        alice_rules = DMSInputRules.load(alice_spreadsheet).as_rules()
-        info_rules = DMSToInformation().transform(alice_rules).rules
+        alice_rules = DMSInputRules.load(alice_spreadsheet).as_verified_rules()
+        info_rules = DMSToInformation().transform(alice_rules)
 
         assert isinstance(info_rules, InformationRules)
 
@@ -1342,7 +1339,7 @@ class TestDMSRules:
                 DMSInputView(view="cdf_cdm:Describable(version=v1)"),
             ],
             containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
-        ).as_rules()
+        ).as_verified_rules()
 
         normalize_neat_id_in_rules(dms_rules)
 
@@ -1395,13 +1392,9 @@ class TestDMSRules:
         assert actual_dump == expected_dump
 
     def test_create_reference(self) -> None:
-        pipeline = RulesPipeline[InformationRules, DMSRules](
-            [
-                InformationToDMS(),
-                MapOneToOne(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"}),
-            ]
-        )
-        dms_rules = pipeline.run(car.CAR_RULES)
+        info_rules = car.get_care_rules()
+        dms_rules = InformationToDMS().transform(info_rules)
+        dms_rules = MapOneToOne(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"}).transform(dms_rules)
 
         schema = dms_rules.as_schema()
         view_by_external_id = {view.external_id: view for view in schema.views.values()}
@@ -1459,9 +1452,11 @@ class TestDMSRules:
                 DMSInputContainer("CogniteVisualizable"),
             ],
         )
-        maybe_rules = VerifyDMSRules("continue").transform(sub_core)
+        issue_list = IssueList()
+        with catch_issues(issue_list):
+            VerifyDMSRules().transform(ReadRules(sub_core, {}))
 
-        assert not maybe_rules.issues
+        assert not issue_list
 
     def test_reverse_property_in_parent(self) -> None:
         sub_core = DMSInputRules(
@@ -1497,9 +1492,11 @@ class TestDMSRules:
                 DMSInputContainer("CogniteVisualizable"),
             ],
         )
-        maybe_rules = VerifyDMSRules("continue").transform(sub_core)
+        issues = IssueList()
+        with catch_issues(issues):
+            _ = VerifyDMSRules().transform(ReadRules(sub_core, {}))
 
-        assert not maybe_rules.issues
+        assert not issues
 
     def test_subclass_parent_with_reverse_property(self) -> None:
         extended_core = DMSInputRules(
@@ -1536,10 +1533,12 @@ class TestDMSRules:
                 DMSInputContainer("CogniteVisualizable"),
             ],
         )
-        maybe_rules = VerifyDMSRules("continue").transform(extended_core)
+        issues = IssueList()
+        with catch_issues(issues):
+            rules = VerifyDMSRules().transform(ReadRules(extended_core, {}))
 
-        assert not maybe_rules.issues
-        assert maybe_rules.rules is not None
+        assert not issues
+        assert rules is not None
 
     def test_dump_dms_rules_keep_version(self) -> None:
         rules = DMSInputRules(
@@ -1563,7 +1562,7 @@ class TestDMSRules:
             ],
             containers=[DMSInputContainer("cdf_cdm:CogniteDescribable")],
         )
-        verified = rules.as_rules()
+        verified = rules.as_verified_rules()
 
         assert isinstance(verified, DMSRules)
 

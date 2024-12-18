@@ -6,14 +6,13 @@ from cognite.client.data_classes import Row
 
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import ExcelImporter
-from cognite.neat._rules.models import DMSRules, InformationRules, RoleTypes, SheetList
+from cognite.neat._rules.models import DMSRules, InformationRules, SheetList
 from cognite.neat._rules.models.dms import DMSInputRules
 from cognite.neat._rules.models.information import (
     InformationClass,
     InformationMetadata,
     InformationProperty,
 )
-from cognite.neat._rules.transformers import ImporterPipeline
 from tests.config import DOC_RULES
 
 
@@ -23,7 +22,7 @@ def alice_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
+    return excel_importer.to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
@@ -32,7 +31,7 @@ def olav_dms_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
+    return excel_importer.to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
@@ -41,7 +40,7 @@ def olav_rebuilt_dms_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
+    return excel_importer.to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
@@ -50,7 +49,7 @@ def svein_harald_dms_rules() -> DMSRules:
 
     excel_importer = ExcelImporter(filepath)
 
-    return ImporterPipeline.verify(excel_importer, role=RoleTypes.dms)
+    return excel_importer.to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
@@ -210,7 +209,7 @@ class TestDMSExporters:
         dumped["Metadata"]["space"] = new_space
         dumped["Last"]["Metadata"]["space"] = new_space
         reloaded = DMSInputRules.load(dumped)
-        rules = reloaded.as_rules()
+        rules = reloaded.as_verified_rules()
         schema = rules.as_schema()
         assert schema.referenced_spaces(include_indirect_references=True) == {new_space}
         exporter = DMSExporter(existing="force")
@@ -269,7 +268,7 @@ class TestDMSExporters:
             container["Container"] = container["Container"].replace("power", new_enterprise_space)
             container["Class (linage)"] = container["Class (linage)"].replace("power", new_enterprise_space)
         dumped["Last"]["Reference"] = dumped["Reference"]
-        rules = DMSInputRules.load(dumped).as_rules()
+        rules = DMSInputRules.load(dumped).as_verified_rules()
         schema = rules.as_schema()
         referenced_spaces = (
             schema.referenced_spaces(True)

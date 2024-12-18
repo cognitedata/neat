@@ -14,7 +14,7 @@ class SpreadsheetRead:
     such that the error/warning messages are accurate.
     """
 
-    header_row: int = 0
+    header_row: int = 1
     empty_rows: list[int] = field(default_factory=list)
     is_one_indexed: bool = True
 
@@ -22,13 +22,13 @@ class SpreadsheetRead:
         self.empty_rows = sorted(self.empty_rows)
 
     def adjusted_row_number(self, row_no: int) -> int:
-        output = row_no + self.header_row + (1 if self.is_one_indexed else 0)
+        output = row_no
         for empty_row in self.empty_rows:
             if empty_row <= output:
                 output += 1
             else:
                 break
-        return output
+        return output + self.header_row + (1 if self.is_one_indexed else 0)
 
 
 @overload
@@ -71,7 +71,8 @@ def read_individual_sheet(
         raw["Value Type"] = raw["Value Type"].replace(float("nan"), "#N/A")
     output = raw.replace(float("nan"), None).to_dict(orient="records")
     if return_read_info:
-        return output, SpreadsheetRead(header_row=skiprows, empty_rows=empty_rows, is_one_indexed=True)
+        # If no rows are skipped, row 1 is the header row.
+        return output, SpreadsheetRead(header_row=skiprows + 1, empty_rows=empty_rows, is_one_indexed=True)
     return output
 
 

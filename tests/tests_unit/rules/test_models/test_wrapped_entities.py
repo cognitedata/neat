@@ -13,7 +13,7 @@ from cognite.neat._rules.models.entities import (
     RawFilter,
     WrappedEntity,
 )
-from cognite.neat._rules.transformers import ImporterPipeline
+from cognite.neat._rules.transformers import VerifyDMSRules
 from tests import config
 
 RAW_FILTER_EXAMPLE = """{"and": [
@@ -121,9 +121,10 @@ class TestWrappedEntities:
         )
 
     def test_raw_filter_in_sheet(self) -> None:
-        rules = ImporterPipeline.verify(
-            importers.ExcelImporter(config.DOC_RULES / "dms-architect-rules-raw-filter-example.xlsx")
-        )
+        read_rules = importers.ExcelImporter(
+            config.DOC_RULES / "dms-architect-rules-raw-filter-example.xlsx"
+        ).to_rules()
+        rules = VerifyDMSRules().transform(read_rules)
 
         assert rules.views[0].filter_ == RawFilter.load(
             """rawFilter({"equals": {"property": ["node", "type"],

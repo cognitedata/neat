@@ -9,7 +9,6 @@ from cognite.client import data_modeling as dm
 from cognite.neat._client import NeatClient
 from cognite.neat._issues.errors import CDFMissingClientError, NeatValueError, ResourceNotFoundError
 from cognite.neat._issues.warnings import NeatValueWarning, PropertyOverwritingWarning
-from cognite.neat._rules._shared import JustRules, OutRules
 from cognite.neat._rules.models import DMSRules, SheetList
 from cognite.neat._rules.models.data_types import Enum
 from cognite.neat._rules.models.dms import DMSEnum, DMSProperty, DMSView
@@ -55,8 +54,8 @@ class MapOneToOne(MapOntoTransformers):
         self.view_extension_mapping = view_extension_mapping
         self.default_extension = default_extension
 
-    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
-        solution: DMSRules = self._to_rules(rules)
+    def transform(self, rules: DMSRules) -> DMSRules:
+        solution: DMSRules = rules
         view_by_external_id = {view.view.external_id: view for view in solution.views}
         ref_view_by_external_id = {view.view.external_id: view for view in self.reference.views}
 
@@ -99,7 +98,7 @@ class MapOneToOne(MapOntoTransformers):
                     prop.container = ref_prop.container
                     prop.container_property = ref_prop.container_property
 
-        return JustRules(solution)
+        return solution
 
 
 class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
@@ -128,10 +127,10 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
     def _property_by_view_property(self) -> dict[tuple[str, str], DMSProperty]:
         return {(prop.view.external_id, prop.view_property): prop for prop in self.mapping.properties}
 
-    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
+    def transform(self, rules: DMSRules) -> DMSRules:
         if self.data_type_conflict != "overwrite":
             raise NeatValueError(f"Invalid data_type_conflict: {self.data_type_conflict}")
-        input_rules = self._to_rules(rules)
+        input_rules = rules
         new_rules = input_rules.model_copy(deep=True)
 
         for view in new_rules.views:
@@ -182,7 +181,7 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
                 if item.collection in new_enums:
                     new_rules.enum.append(item)
 
-        return JustRules(new_rules)
+        return new_rules
 
     def _find_overwrites(self, prop: DMSProperty, mapping_prop: DMSProperty) -> tuple[dict[str, Any], list[str]]:
         """Finds the properties that need to be overwritten and returns them.
@@ -224,8 +223,8 @@ class AsParentPropertyId(RulesTransformer[DMSRules, DMSRules]):
     def __init__(self, client: NeatClient | None = None) -> None:
         self._client = client
 
-    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
-        input_rules = self._to_rules(rules)
+    def transform(self, rules: DMSRules) -> DMSRules:
+        input_rules = rules
         new_rules = input_rules.model_copy(deep=True)
 
         path_by_view = self._inheritance_path_by_view(new_rules)
@@ -242,7 +241,7 @@ class AsParentPropertyId(RulesTransformer[DMSRules, DMSRules]):
                 ):
                     prop.view_property = parent_name
 
-        return JustRules(new_rules)
+        return new_rules
 
     # Todo: Move into Probe class. Note this means that the Probe class must take a NeatClient as an argument.
     def _inheritance_path_by_view(self, rules: DMSRules) -> dict[ViewEntity, list[ViewEntity]]:

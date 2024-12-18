@@ -11,7 +11,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules._shared import OutRules, ReadRules, T_VerifiedRules, VerifiedRules
+from cognite.neat._rules._shared import ReadRules, T_VerifiedRules, VerifiedRules
 from cognite.neat._rules.exporters import BaseExporter
 from cognite.neat._rules.exporters._base import CDFExporter, T_Export
 from cognite.neat._rules.importers import BaseImporter
@@ -76,16 +76,12 @@ class NeatRulesStore:
     def _export(self, action: Callable[[Any], Any], agent: Agent, description: str) -> Any:
         last_entity: ModelEntity | None = None
         for change in reversed(self.provenance):
-            if (
-                isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, OutRules)
-                and isinstance(change.target_entity.result.get_rules(), DMSRules)
-            ):
+            if isinstance(change.target_entity, ModelEntity) and isinstance(change.target_entity.result, DMSRules):
                 last_entity = change.target_entity
                 break
         if last_entity is None:
             raise NeatValueError("No verified DMS rules found in the provenance.")
-        rules = last_entity.result.get_rules()  # type: ignore[union-attr]
+        rules = last_entity.result
         result, _ = self._run(lambda: action(rules), agent, last_entity, description)
         return result
 
@@ -128,12 +124,11 @@ class NeatRulesStore:
         identifier: rdflib.URIRef
         if result is None:
             identifier = EMPTY_ENTITY.id_
-        elif isinstance(result, OutRules):
-            input_rules = result.get_rules()
-            if input_rules is None:
+        elif isinstance(result, ReadRules):
+            if result.rules is None:
                 identifier = EMPTY_ENTITY.id_
             else:
-                identifier = input_rules.metadata.identifier
+                identifier = result.rules.metadata.identifier
         elif isinstance(result, VerifiedRules):
             identifier = result.metadata.identifier
         else:
@@ -169,8 +164,7 @@ class NeatRulesStore:
     def has_verified_rules(self) -> bool:
         return any(
             isinstance(change.target_entity, ModelEntity)
-            and isinstance(change.target_entity.result, OutRules)
-            and isinstance(change.target_entity.result.get_rules(), DMSRules | InformationRules)
+            and isinstance(change.target_entity.result, DMSRules | InformationRules)
             for change in self.provenance
         )
 
@@ -189,23 +183,17 @@ class NeatRulesStore:
     @property
     def last_verified_rule(self) -> DMSRules | InformationRules:
         for change in reversed(self.provenance):
-            if (
-                isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, OutRules)
-                and isinstance(change.target_entity.result.get_rules(), DMSRules | InformationRules)
+            if isinstance(change.target_entity, ModelEntity) and isinstance(
+                change.target_entity.result, DMSRules | InformationRules
             ):
-                return change.target_entity.result.get_rules()  # type: ignore[return-value]
+                return change.target_entity.result
         raise NeatValueError("No verified rule found in the provenance.")
 
     @property
     def last_verified_dms_rules(self) -> DMSRules:
         for change in reversed(self.provenance):
-            if (
-                isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, OutRules)
-                and isinstance(change.target_entity.result.get_rules(), DMSRules)
-            ):
-                return change.target_entity.result.get_rules()  # type: ignore[return-value]
+            if isinstance(change.target_entity, ModelEntity) and isinstance(change.target_entity.result, DMSRules):
+                return change.target_entity.result
         raise NeatValueError("No verified DMS rules found in the provenance.")
 
     @property
