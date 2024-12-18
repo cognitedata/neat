@@ -13,7 +13,6 @@ from cognite.neat import NeatSession
 from cognite.neat._graph.loaders import DMSLoader
 from tests.config import DATA_FOLDER
 from tests.data import classic_windfarm
-from tests.utils import remove_linking_in_rules
 
 RESERVED_PROPERTIES = frozenset(
     {
@@ -85,7 +84,9 @@ class TestExtractToLoadFlow:
         rules_dict = yaml.safe_load(rules_str)
         data_regression.check({"rules": rules_dict, "instances": sorted(instances, key=lambda x: x["externalId"])})
 
-    def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
+    def test_dexpi_to_dms(
+        self, deterministic_uuid4: None, cognite_client: CogniteClient, data_regression: DataRegressionFixture
+    ) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
 
@@ -114,7 +115,6 @@ class TestExtractToLoadFlow:
         else:
             instances = []
 
-        remove_linking_in_rules(neat._state.rule_store.last_verified_dms_rules)
         rules_str = neat.to.yaml(format="neat")
 
         rules_dict = yaml.safe_load(rules_str)
@@ -128,7 +128,9 @@ class TestExtractToLoadFlow:
         assert len(nodes) == 206
         assert len(edges) == 40
 
-    def test_aml_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
+    def test_aml_to_dms(
+        self, deterministic_uuid4: None, cognite_client: CogniteClient, data_regression: DataRegressionFixture
+    ) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
 
@@ -162,7 +164,6 @@ class TestExtractToLoadFlow:
         else:
             instances = []
 
-        remove_linking_in_rules(neat._state.rule_store.last_verified_dms_rules)
         rules_str = neat.to.yaml(format="neat")
 
         rules_dict = yaml.safe_load(rules_str)
