@@ -27,7 +27,10 @@ class TestRead:
 
         exported_yaml_str = neat.to.yaml()
         exported_rules = yaml.safe_load(exported_yaml_str)
-        assert len(exported_rules["properties"]) == len(view.properties) + 1
+        assert (
+            # CogniteDescribable + 1 extra in REFERENCING_CORE
+            len(exported_rules["properties"]) == len(view.properties) + 1
+        )
 
         data_regression.check(exported_rules)
 

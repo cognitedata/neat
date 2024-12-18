@@ -427,7 +427,7 @@ class DataModelPrepareAPI:
                 "Please set the client in the session, NeatSession(client=client)."
             )
         transformers = [
-            IncludeReferenced(self._client),
+            IncludeReferenced(self._client, include_properties=True),
             ToExtension(
                 new_model_id=data_model_id,
                 org_name=org_name,

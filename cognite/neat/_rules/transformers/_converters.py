@@ -657,8 +657,9 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
 
 
 class IncludeReferenced(RulesTransformer[DMSRules, DMSRules]):
-    def __init__(self, client: NeatClient) -> None:
+    def __init__(self, client: NeatClient, include_properties: bool = False) -> None:
         self._client = client
+        self.include_properties = include_properties
 
     def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
         dms_rules = self._to_rules(rules)
@@ -696,6 +697,12 @@ class IncludeReferenced(RulesTransformer[DMSRules, DMSRules]):
             )
         existing_views = {v.view for v in copy_.views}
         copy_.views.extend([v for v in verified.rules.views if v.view not in existing_views])
+        if self.include_properties:
+            existing_properties = {(p.view, p.view_property) for p in copy_.properties}
+            copy_.properties.extend(
+                [p for p in verified.rules.properties if (p.view, p.view_property) not in existing_properties]
+            )
+
         return JustRules(copy_)
 
     @property
