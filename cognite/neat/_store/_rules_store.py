@@ -127,7 +127,7 @@ class NeatRulesStore:
         return any(
             isinstance(change.target_entity, ModelEntity)
             and isinstance(change.target_entity.result, OutRules)
-            and change.target_entity.result.get_rules() is not None
+            and isinstance(change.target_entity.result.get_rules(), DMSRules | InformationRules)
             for change in self.provenance
         )
 

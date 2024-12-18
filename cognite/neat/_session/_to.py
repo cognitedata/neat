@@ -30,26 +30,24 @@ class ToAPI:
     def excel(
         self,
         io: Any,
-        model: Literal["dms", "information", "logical", "physical"] | None,
     ) -> None:
         """Export the verified data model to Excel.
 
         Args:
             io: The file path or file-like object to write the Excel file to.
-            model: The format of the data model to export. Defaults to None.
 
         Example:
             Export information model to excel rules sheet
             ```python
             information_rules_file_name = "information_rules.xlsx"
-            neat.to.excel(information_rules_file_name, model="information")
+            neat.to.excel(information_rules_file_name)
             ```
 
         Example:
             Export data model to excel rules sheet
             ```python
             dms_rules_file_name = "dms_rules.xlsx"
-            neat.to.excel(information_rules_file_name, model="dms")
+            neat.to.excel(information_rules_file_name)
             ```
         """
         exporter = exporters.ExcelExporter(styling="maximal")
