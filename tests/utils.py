@@ -123,39 +123,3 @@ def normalize_neat_id_in_rules(rules: VerifiedRules) -> VerifiedRules:
         if rules.nodes:
             for i, node in enumerate(rules.nodes):
                 node.neatId = DEFAULT_NAMESPACE[f"NodeType_{i}"]
-
-
-def remove_linking_in_rules(rules: VerifiedRules) -> VerifiedRules:
-    if isinstance(rules, InformationRules):
-        for class_ in rules.classes:
-            class_.neatId = None
-            class_.physical = None
-            class_.conceptual = None
-        for property_ in rules.properties:
-            property_.neatId = None
-            property_.physical = None
-            property_.conceptual = None
-
-        rules.metadata.conceptual = None
-        rules.metadata.physical = None
-
-    elif isinstance(rules, DMSRules):
-        for view in rules.views:
-            view.neatId = None
-            view.logical = None
-        for property_ in rules.properties:
-            property_.neatId = None
-            property_.logical = None
-
-        if rules.containers:
-            for container in rules.containers:
-                container.neatId = None
-
-        if rules.enum:
-            for enum in rules.enum:
-                enum.neatId = None
-        if rules.nodes:
-            for node in rules.nodes:
-                node.neatId = None
-
-        rules.metadata.logical = None

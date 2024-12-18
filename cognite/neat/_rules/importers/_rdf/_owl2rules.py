@@ -78,3 +78,7 @@ class OWLImporter(BaseRDFImporter):
         }
 
         return components
+
+    @property
+    def description(self) -> str:
+        return f"Ontology {self.source_name} read as unverified data model"

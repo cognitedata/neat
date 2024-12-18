@@ -13,7 +13,6 @@ from cognite.neat import NeatSession
 from cognite.neat._graph.loaders import DMSLoader
 from tests.config import DATA_FOLDER
 from tests.data import classic_windfarm
-from tests.utils import remove_linking_in_rules
 
 RESERVED_PROPERTIES = frozenset(
     {
@@ -37,7 +36,9 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
-    def test_classic_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
+    def test_classic_to_dms(
+        self, deterministic_uuid4: None, cognite_client: CogniteClient, data_regression: DataRegressionFixture
+    ) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
         for extractor in classic_windfarm.create_extractors():
@@ -55,9 +56,12 @@ class TestExtractToLoadFlow:
         neat.infer()
 
         # Hack to ensure deterministic output
-        rules = neat._state.data_model.last_unverified_rule[1].rules
+        rules = neat._state.rule_store.last_unverified_rule
         rules.metadata.created = "2024-09-19T00:00:00Z"
         rules.metadata.updated = "2024-09-19T00:00:00Z"
+
+        # Sorting the properties to ensure deterministic output
+        rules.properties = sorted(rules.properties, key=lambda x: (x.class_, x.property_))
 
         neat.prepare.data_model.prefix("Classic")
 
@@ -70,7 +74,7 @@ class TestExtractToLoadFlow:
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
         # Hack to get the instances.
-        dms_rules = neat._state.data_model.last_verified_dms_rules[1]
+        dms_rules = neat._state.rule_store.last_verified_dms_rules
         store = neat._state.instances.store
         instances = [
             self._standardize_instance(instance)
@@ -78,13 +82,14 @@ class TestExtractToLoadFlow:
             if isinstance(instance, InstanceApply)
         ]
 
-        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
         rules_str = neat.to.yaml(format="neat")
 
         rules_dict = yaml.safe_load(rules_str)
         data_regression.check({"rules": rules_dict, "instances": sorted(instances, key=lambda x: x["externalId"])})
 
-    def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
+    def test_dexpi_to_dms(
+        self, deterministic_uuid4: None, cognite_client: CogniteClient, data_regression: DataRegressionFixture
+    ) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
 
@@ -93,7 +98,7 @@ class TestExtractToLoadFlow:
         neat.infer(max_number_of_instance=-1)
 
         # Hack to ensure deterministic output
-        rules = neat._state.data_model.last_unverified_rule[1].rules
+        rules = neat._state.rule_store.last_unverified_rule
         rules.metadata.created = "2024-09-19T00:00:00Z"
         rules.metadata.updated = "2024-09-19T00:00:00Z"
 
@@ -104,7 +109,7 @@ class TestExtractToLoadFlow:
 
         if True:
             # In progress, not yet supported.
-            dms_rules = neat._state.data_model.last_verified_dms_rules[1]
+            dms_rules = neat._state.rule_store.last_verified_dms_rules
             store = neat._state.instances.store
             instances = list(DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load())
 
@@ -113,7 +118,6 @@ class TestExtractToLoadFlow:
         else:
             instances = []
 
-        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
         rules_str = neat.to.yaml(format="neat")
 
         rules_dict = yaml.safe_load(rules_str)
@@ -127,7 +131,9 @@ class TestExtractToLoadFlow:
         assert len(nodes) == 206
         assert len(edges) == 40
 
-    def test_aml_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
+    def test_aml_to_dms(
+        self, deterministic_uuid4: None, cognite_client: CogniteClient, data_regression: DataRegressionFixture
+    ) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
 
@@ -136,7 +142,7 @@ class TestExtractToLoadFlow:
         neat.infer(max_number_of_instance=-1)
 
         # Hack to ensure deterministic output
-        rules = neat._state.data_model.last_unverified_rule[1].rules
+        rules = neat._state.rule_store.last_unverified_rule
         rules.metadata.created = "2024-09-19T00:00:00Z"
         rules.metadata.updated = "2024-09-19T00:00:00Z"
 
@@ -147,7 +153,7 @@ class TestExtractToLoadFlow:
 
         if True:
             # In progress, not yet supported.
-            dms_rules = neat._state.data_model.last_verified_dms_rules[1]
+            dms_rules = neat._state.rule_store.last_verified_dms_rules
             store = neat._state.instances.store
             instances = list(DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load())
 
@@ -161,7 +167,6 @@ class TestExtractToLoadFlow:
         else:
             instances = []
 
-        remove_linking_in_rules(neat._state.data_model.last_verified_dms_rules[1])
         rules_str = neat.to.yaml(format="neat")
 
         rules_dict = yaml.safe_load(rules_str)

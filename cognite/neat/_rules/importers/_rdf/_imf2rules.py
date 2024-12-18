@@ -74,6 +74,10 @@ PROPERTIES_QUERY = """
 class IMFImporter(BaseRDFImporter):
     """Convert IMF Types provided as SHACL shapes to Input Rules."""
 
+    @property
+    def description(self) -> str:
+        return f"IMF Types {self.source_name} read as unverified data model"
+
     def _to_rules_components(
         self,
     ) -> dict:

@@ -7,20 +7,16 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from tests.config import DATA_FOLDER, DOC_RULES
-from tests.utils import normalize_neat_id_in_rules
 
 
 class TestImportersToYAMLExporter:
-    def test_excel_importer_to_yaml(self, data_regression: DataRegressionFixture) -> None:
+    def test_excel_importer_to_yaml(self, deterministic_uuid4: None, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(verbose=False)
 
         neat.read.excel(DOC_RULES / "information-architect-david.xlsx")
         neat.verify()
-        normalize_neat_id_in_rules(neat._state.data_model.last_verified_information_rules[1])
 
         neat.convert("dms")
-
-        normalize_neat_id_in_rules(neat._state.data_model.last_verified_dms_rules[1])
 
         exported_yaml_str = neat.to.yaml()
 
@@ -28,7 +24,6 @@ class TestImportersToYAMLExporter:
         data_regression.check(exported_rules)
 
         exported_rules = yaml.safe_load(exported_yaml_str)
-
         data_regression.check(exported_rules)
 
     @pytest.mark.freeze_time("2017-05-21")
@@ -55,7 +50,6 @@ class TestImportersToYAMLExporter:
         neat.read.excel(DATA_FOLDER / "isa_plus_cdm.xlsx")
 
         neat.verify()
-        normalize_neat_id_in_rules(neat._state.data_model.last_verified_dms_rules[1])
         exported_yaml_str = neat.to.yaml()
         exported_rules = yaml.safe_load(exported_yaml_str)
         data_regression.check(exported_rules)

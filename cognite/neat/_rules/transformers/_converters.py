@@ -9,6 +9,7 @@ from typing import ClassVar, Literal, TypeVar, cast, overload
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
 
+from cognite.neat._client import NeatClient
 from cognite.neat._constants import (
     COGNITE_MODELS,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
@@ -28,6 +29,7 @@ from cognite.neat._rules._shared import (
     VerifiedRules,
 )
 from cognite.neat._rules.analysis import DMSAnalysis
+from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import (
     DMSInputRules,
     DMSRules,
@@ -36,7 +38,7 @@ from cognite.neat._rules.models import (
     data_types,
 )
 from cognite.neat._rules.models.data_types import AnyURI, DataType, String
-from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSView
+from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSValidation, DMSView
 from cognite.neat._rules.models.dms._rules import DMSContainer
 from cognite.neat._rules.models.entities import (
     ClassEntity,
@@ -60,6 +62,7 @@ from cognite.neat._utils.collection_ import remove_list_elements
 from cognite.neat._utils.text import to_camel
 
 from ._base import RulesTransformer
+from ._verification import VerifyDMSRules
 
 T_VerifiedInRules = TypeVar("T_VerifiedInRules", bound=VerifiedRules)
 T_VerifiedOutRules = TypeVar("T_VerifiedOutRules", bound=VerifiedRules)
@@ -189,8 +192,6 @@ class PrefixEntities(RulesTransformer[InputRules, InputRules]):  # type: ignore[
         return ReadRules(self._transform(self._to_rules(rules)), IssueList(), {})
 
     def _transform(self, rules: InputRules) -> InputRules:
-        rules.metadata.version += f"_prefixed_{self._prefix}"
-
         if isinstance(rules, InformationInputRules):
             # Todo Make Not mutate input class
             prefixed_by_class: dict[str, str] = {}
@@ -558,6 +559,17 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
         return new_properties
 
+    @property
+    def description(self) -> str:
+        if self.type_ == "enterprise":
+            return f"Prepared data model {self.new_model_id} to be enterprise data model."
+        elif self.type_ == "solution":
+            return f"Prepared data model {self.new_model_id} to be solution data model."
+        elif self.type_ == "data_product":
+            return f"Prepared data model {self.new_model_id} to be data product model."
+        else:
+            return f"Unsupported data model type: {self.type_}"
+
 
 class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
     _ASSET_VIEW = ViewId("cdf_cdm", "CogniteAsset", "v1")
@@ -636,6 +648,82 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
         if "3D" not in self.drop_collection:
             return False
         return prop.view.as_id() == self._ASSET_VIEW and prop.view_property == "object3D"
+
+    @property
+    def description(self) -> str:
+        return f"Removed {len(self.drop_external_ids) + len(self.drop_collection)} views from data model"
+
+
+class IncludeReferenced(RulesTransformer[DMSRules, DMSRules]):
+    def __init__(self, client: NeatClient, include_properties: bool = False) -> None:
+        self._client = client
+        self.include_properties = include_properties
+
+    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
+        dms_rules = self._to_rules(rules)
+        view_ids, container_ids = DMSValidation(dms_rules, self._client).imported_views_and_containers_ids()
+        if not (view_ids or container_ids):
+            warnings.warn(
+                NeatValueWarning(
+                    f"Data model {dms_rules.metadata.as_data_model_id()} does not have any "
+                    "referenced views or containers."
+                    "that is not already included in the data model."
+                ),
+                stacklevel=2,
+            )
+            return JustRules(dms_rules)
+
+        schema = self._client.schema.retrieve([v.as_id() for v in view_ids], [c.as_id() for c in container_ids])
+        copy_ = dms_rules.model_copy(deep=True)
+        importer = DMSImporter(schema)
+        imported = importer.to_rules()
+        if imported.rules is None:
+            imported.issues.trigger_warnings()
+            raise imported.issues.as_errors("Could not import the referenced views and containers.")
+
+        verified = VerifyDMSRules("continue", validate=False).transform(imported.rules)
+        if verified.rules is None:
+            verified.issues.trigger_warnings()
+            raise verified.issues.as_errors("Could not verify the referenced views and containers.")
+        if copy_.containers is None:
+            copy_.containers = verified.rules.containers
+        else:
+            existing_containers = {c.container for c in copy_.containers}
+            copy_.containers.extend(
+                [c for c in verified.rules.containers or [] if c.container not in existing_containers]
+            )
+        existing_views = {v.view for v in copy_.views}
+        copy_.views.extend([v for v in verified.rules.views if v.view not in existing_views])
+        if self.include_properties:
+            existing_properties = {(p.view, p.view_property) for p in copy_.properties}
+            copy_.properties.extend(
+                [p for p in verified.rules.properties if (p.view, p.view_property) not in existing_properties]
+            )
+
+        return JustRules(copy_)
+
+    @property
+    def description(self) -> str:
+        return "Included referenced views and containers in the data model."
+
+
+class AddClassImplements(RulesTransformer[InformationRules, InformationRules]):
+    def __init__(self, implements: str, suffix: str):
+        self.implements = implements
+        self.suffix = suffix
+
+    def transform(self, rules: InformationRules | OutRules[InformationRules]) -> JustRules[InformationRules]:
+        info_rules = self._to_rules(rules)
+        output = info_rules.model_copy(deep=True)
+        for class_ in output.classes:
+            if class_.class_.suffix.endswith(self.suffix):
+                class_.implements = [ClassEntity(prefix=class_.class_.prefix, suffix=self.implements)]
+        output.metadata.version = f"{output.metadata.version}.implements_{self.implements}"
+        return JustRules(output)
+
+    @property
+    def description(self) -> str:
+        return f"Added implements property to classes with suffix {self.suffix}"
 
 
 class _InformationRulesConverter:
