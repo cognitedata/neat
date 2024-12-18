@@ -1,13 +1,10 @@
 from abc import ABC
-from typing import Any, Literal
 
 from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList, MultiValueError, NeatError, NeatWarning, catch_issues
 from cognite.neat._issues.errors import NeatTypeError, NeatValueError
 from cognite.neat._rules._shared import (
     InputRules,
-    MaybeRules,
-    OutRules,
     ReadRules,
     T_InputRules,
     T_VerifiedRules,
@@ -31,20 +28,19 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
     _rules_cls: type[T_VerifiedRules]
     _validation_cls: type
 
-    def __init__(
-        self, errors: Literal["raise", "continue"], validate: bool = True, client: NeatClient | None = None
-    ) -> None:
-        self.errors = errors
+    def __init__(self, validate: bool = True, client: NeatClient | None = None) -> None:
         self.validate = validate
         self._client = client
 
-    def transform(self, rules: T_InputRules | OutRules[T_InputRules]) -> MaybeRules[T_VerifiedRules]:
+    def transform(self, rules: ReadRules[T_InputRules]) -> T_VerifiedRules:
         issues = IssueList()
-        in_: T_InputRules = self._to_rules(rules)
-        error_args: dict[str, Any] = {}
-        if isinstance(rules, ReadRules):
-            error_args = rules.read_context
+        if rules.rules is None:
+            raise NeatValueError("Cannot verify rules. The reading of the rules failed.")
+        in_ = rules.rules
+        error_args = rules.read_context
         verified_rules: T_VerifiedRules | None = None
+        # We need to catch issues as we use the error args to provide extra context for the errors/warnings
+        # For example, which row in the spreadsheet the error occurred on.
         with catch_issues(issues, NeatError, NeatWarning, error_args) as future:
             rules_cls = self._get_rules_cls(in_)
             dumped = in_.dump()
@@ -57,21 +53,13 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
                     validation_issues = InformationValidation(verified_rules).validate()  # type: ignore[arg-type]
                 else:
                     raise NeatValueError("Unsupported rule type")
+                issues.extend(validation_issues)
+        # Raise issues which is expected to be handled outside of this method
+        issues.trigger_warnings()
+        if issues.has_errors:
+            raise MultiValueError(issues.errors)
 
-                # We need to trigger warnings are raise exceptions such that they are caught by the context manager
-                # and processed with the read context
-                if validation_issues.warnings:
-                    validation_issues.trigger_warnings()
-                if validation_issues.has_errors:
-                    verified_rules = None
-                    raise MultiValueError(validation_issues.errors)
-
-        if (future.result == "failure" or issues.has_errors or verified_rules is None) and self.errors == "raise":
-            raise issues.as_errors()
-        return MaybeRules[T_VerifiedRules](
-            rules=verified_rules,
-            issues=issues,
-        )
+        return verified_rules
 
     def _get_rules_cls(self, in_: T_InputRules) -> type[T_VerifiedRules]:
         return self._rules_cls

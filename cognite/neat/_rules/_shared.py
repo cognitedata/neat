@@ -1,8 +1,6 @@
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Generic, TypeAlias, TypeVar
 
-from cognite.neat._issues import IssueList
 from cognite.neat._rules.models import (
     DMSRules,
     InformationRules,
@@ -19,38 +17,8 @@ T_InputRules = TypeVar("T_InputRules", bound=InputRules)
 
 
 @dataclass
-class OutRules(Generic[T_Rules], ABC):
-    """This is a base class for all rule states."""
+class ReadRules(Generic[T_InputRules]):
+    """This represents a rules that has been read."""
 
-    @abstractmethod
-    def get_rules(self) -> T_Rules | None:
-        """Get the rules from the state."""
-        raise NotImplementedError()
-
-
-@dataclass
-class JustRules(OutRules[T_Rules]):
-    """This represents a rule that exists"""
-
-    rules: T_Rules
-
-    def get_rules(self) -> T_Rules:
-        return self.rules
-
-
-@dataclass
-class MaybeRules(OutRules[T_Rules]):
-    """This represents a rule that may or may not exist"""
-
-    rules: T_Rules | None
-    issues: IssueList
-
-    def get_rules(self) -> T_Rules | None:
-        return self.rules
-
-
-@dataclass
-class ReadRules(MaybeRules[T_Rules]):
-    """This represents a rule that does not exist"""
-
+    rules: T_InputRules | None
     read_context: dict[str, Any]
