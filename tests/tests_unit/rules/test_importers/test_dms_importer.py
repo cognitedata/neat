@@ -7,7 +7,8 @@ from cognite.client import data_modeling as dm
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import DMSImporter, ExcelImporter
-from cognite.neat._rules.models import DMSRules, DMSSchema, RoleTypes
+from cognite.neat._rules.models import DMSRules, DMSSchema
+from cognite.neat._issues import catch_issues, IssueList
 from cognite.neat._rules.transformers import DMSToInformation, VerifyDMSRules
 from tests.config import DOC_RULES
 from tests.data import windturbine
@@ -17,9 +18,9 @@ class TestDMSImporter:
     def test_import_with_direct_relation_none(self) -> None:
         importer = DMSImporter(SCHEMA_WITH_DIRECT_RELATION_NONE)
 
-        result = ImporterPipeline.try_verify(importer)
-        rules = result.rules
-        issues = result.issues
+        issues = IssueList()
+        with catch_issues(issues):
+            rules = VerifyDMSRules().transform(importer.to_rules())
         assert len(issues) == 1
         dms_rules = cast(DMSRules, rules)
         dump_dms = dms_rules.dump()
@@ -29,7 +30,7 @@ class TestDMSImporter:
         assert dump_dms["views"][0]["name"] == "OneView"
         assert dump_dms["views"][0]["description"] == "One View"
 
-        info_rules = DMSToInformation().transform(rules).rules
+        info_rules = DMSToInformation().transform(rules)
         dump_info = info_rules.dump()
         assert dump_info["properties"][0]["value_type"] == "#N/A"
 
@@ -40,13 +41,15 @@ class TestDMSImporter:
         ],
     )
     def test_import_rules_from_tutorials(self, filepath: Path) -> None:
-        dms_rules = cast(DMSRules, ImporterPipeline.verify(ExcelImporter(filepath), role=RoleTypes.dms))
+        dms_rules = ExcelImporter(filepath).to_rules().rules.as_rules()
         # We must have the reference to be able to convert back to schema
         schema = dms_rules.as_schema()
         dms_importer = DMSImporter(schema)
 
-        result = ImporterPipeline.try_verify(dms_importer)
-        rules, issues = result.rules, result.issues
+        issues = IssueList()
+        with catch_issues(issues):
+            rules = VerifyDMSRules().transform(dms_importer.to_rules())
+
         issue_str = "\n".join([issue.as_message() for issue in issues])
         assert rules is not None, f"Failed to import rules {issue_str}"
         assert isinstance(rules, DMSRules)
@@ -75,7 +78,7 @@ class TestDMSImporter:
         assert result.rules is not None
         assert result.rules.dump() == windturbine.INPUT_RULES.dump()
 
-        rules = VerifyDMSRules(errors="raise").transform(result).get_rules()
+        rules = VerifyDMSRules().transform(result)
         assert isinstance(rules, DMSRules)
 
         dms_recreated = DMSExporter().export(rules)
@@ -100,10 +103,7 @@ class TestDMSImporter:
     def test_import_export_schema_with_inwards_edge_with_properties(self) -> None:
         importer = DMSImporter(SCHEMA_INWARDS_EDGE_WITH_PROPERTIES)
 
-        result = ImporterPipeline.try_verify(importer)
-        rules = cast(DMSRules, result.rules)
-        issues = result.issues
-        assert len(issues) == 0
+        rules = importer.to_rules().rules.as_rules()
 
         dms_recreated = DMSExporter().export(rules)
 

@@ -26,7 +26,7 @@ def car_store() -> NeatGraphStore:
     for triple in car.TRIPLES:
         store.graph.add(triple)
 
-    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
+    rules = InferenceImporter.from_graph_store(store).to_rules().rules.as_rules()
     store.add_rules(rules)
 
     return store
