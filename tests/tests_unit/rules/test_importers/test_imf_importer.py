@@ -8,8 +8,8 @@ from tests.config import IMF_EXAMPLE
 def test_imf_importer():
     issues = IssueList()
     with catch_issues(issues):
-        input = importers.IMFImporter.from_file(IMF_EXAMPLE).to_rules()
-        rules = VerifyAnyRules().transform(input)
+        read_rules = importers.IMFImporter.from_file(IMF_EXAMPLE).to_rules()
+        rules = VerifyAnyRules().transform(read_rules)
 
     regex_violations = [issue for issue in issues if isinstance(issue, ResourceRegexViolationWarning)]
 

@@ -71,7 +71,7 @@ class TestImportExportDMS:
             if isinstance(rules, DMSRules):
                 dms_rules = rules
             elif isinstance(rules, InformationRules):
-                dms_rules = InformationRules().transform(rules)
+                dms_rules = InformationToDMS().transform(rules)
             else:
                 raise ValueError(f"Unexpected rules type: {type(rules)}")
 
