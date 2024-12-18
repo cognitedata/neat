@@ -40,7 +40,7 @@ class NeatRulesStore:
             transform_issues = self._run(
                 # The item and last_entity will change in the loop, however, this will
                 # be ok as the run method will execute the lambda immediately
-                lambda: item.transform(last_entity),  # noqa: B023
+                lambda: item.transform(last_entity.result),  # noqa: B023
                 item.agent,
                 last_entity,
                 item.description,
