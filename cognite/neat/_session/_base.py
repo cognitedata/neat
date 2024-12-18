@@ -119,7 +119,7 @@ class NeatSession:
             neat.verify()
             ```
         """
-        transformer = VerifyAnyRules(validate=True, client=self._client)
+        transformer = VerifyAnyRules(validate=True, client=self._client)  # type: ignore[var-annotated]
         issues = self._state.rule_store.transform(transformer)
         if not issues.has_errors:
             rules = self._state.rule_store.last_verified_rule

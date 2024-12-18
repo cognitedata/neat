@@ -1,10 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, Generic, TypeAlias, TypeVar
 
-from jedi.plugins.stdlib import Wrapped
-from ntsecuritycon import TOKEN_READ
-from winnt import TRANSACTION_GENERIC_READ
-
 from cognite.neat._rules.models import (
     DMSRules,
     InformationRules,

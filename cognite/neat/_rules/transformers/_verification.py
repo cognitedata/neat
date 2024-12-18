@@ -4,8 +4,8 @@ from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList, MultiValueError, NeatError, NeatWarning, catch_issues
 from cognite.neat._issues.errors import NeatTypeError, NeatValueError
 from cognite.neat._rules._shared import (
-    ReadInputRules,
     ReadRules,
+    T_InputRules,
     T_ReadInputRules,
     T_VerifiedRules,
     VerifiedRules,
@@ -22,7 +22,7 @@ from cognite.neat._rules.models.information import InformationValidation
 from ._base import RulesTransformer
 
 
-class VerificationTransformer(RulesTransformer[T_ReadInputRules, T_VerifiedRules], ABC):
+class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], ABC):
     """Base class for all verification transformers."""
 
     _rules_cls: type[T_VerifiedRules]
@@ -32,11 +32,11 @@ class VerificationTransformer(RulesTransformer[T_ReadInputRules, T_VerifiedRules
         self.validate = validate
         self._client = client
 
-    def transform(self, rules: ReadRules[T_ReadInputRules]) -> T_VerifiedRules:
+    def transform(self, rules: ReadRules[T_InputRules]) -> T_VerifiedRules:
         issues = IssueList()
-        if rules.rules is None:
-            raise NeatValueError("Cannot verify rules. The reading of the rules failed.")
         in_ = rules.rules
+        if in_ is None:
+            raise NeatValueError("Cannot verify rules. The reading of the rules failed.")
         error_args = rules.read_context
         verified_rules: T_VerifiedRules | None = None
         # We need to catch issues as we use the error args to provide extra context for the errors/warnings
@@ -92,10 +92,10 @@ class VerifyInformationRules(VerificationTransformer[InformationInputRules, Info
     _validation_cls = InformationValidation
 
 
-class VerifyAnyRules(VerificationTransformer[ReadInputRules, VerifiedRules]):
+class VerifyAnyRules(VerificationTransformer[T_ReadInputRules, VerifiedRules]):
     """Class to verify arbitrary rules"""
 
-    def _get_rules_cls(self, in_: ReadInputRules) -> type[VerifiedRules]:
+    def _get_rules_cls(self, in_: T_ReadInputRules) -> type[VerifiedRules]:
         if isinstance(in_, InformationInputRules):
             return InformationRules
         elif isinstance(in_, DMSInputRules):
@@ -103,7 +103,7 @@ class VerifyAnyRules(VerificationTransformer[ReadInputRules, VerifiedRules]):
         else:
             raise NeatTypeError(f"Unsupported rules type: {type(in_)}")
 
-    def _get_validation_cls(self, rules: T_VerifiedRules) -> type:
+    def _get_validation_cls(self, rules: VerifiedRules) -> type:
         if isinstance(rules, InformationRules):
             return InformationValidation
         elif isinstance(rules, DMSRules):

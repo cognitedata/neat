@@ -24,6 +24,7 @@ from cognite.neat._issues.warnings._models import (
 from cognite.neat._rules._shared import (
     ReadInputRules,
     ReadRules,
+    T_InputRules,
     VerifiedRules,
 )
 from cognite.neat._rules.analysis import DMSAnalysis
@@ -81,7 +82,7 @@ class ToCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], Rea
     def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
         if rules.rules is None:
             return rules
-        copy = dataclasses.replace(rules.rules)
+        copy: InformationInputRules = dataclasses.replace(rules.rules)
         copy.classes = self._fix_classes(copy.classes)
         copy.properties = self._fix_properties(copy.properties)
         return ReadRules(copy, rules.read_context)
@@ -170,16 +171,17 @@ class ToCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], Rea
         return fixed_definitions
 
 
-class PrefixEntities(RulesTransformer[ReadRules[ReadInputRules], ReadRules[ReadInputRules]]):  # type: ignore[misc]
+class PrefixEntities(RulesTransformer[ReadRules[T_InputRules], ReadRules[T_InputRules]]):  # type: ignore[type-var]
     """Prefixes all entities with a given prefix."""
 
     def __init__(self, prefix: str) -> None:
         self._prefix = prefix
 
-    def transform(self, rules: ReadRules[ReadInputRules]) -> ReadRules[ReadInputRules]:
-        if rules.rules is None:
+    def transform(self, rules: ReadRules[T_InputRules]) -> ReadRules[T_InputRules]:
+        in_ = rules.rules
+        if in_ is None:
             return rules
-        copy = dataclasses.replace(rules.rules)
+        copy: T_InputRules = dataclasses.replace(in_)
         if isinstance(copy, InformationInputRules):
             prefixed_by_class: dict[str, str] = {}
             for cls in copy.classes:
@@ -190,7 +192,7 @@ class PrefixEntities(RulesTransformer[ReadRules[ReadInputRules], ReadRules[ReadI
                 prop.class_ = self._with_prefix(prop.class_)
                 if str(prop.value_type) in prefixed_by_class:
                     prop.value_type = prefixed_by_class[str(prop.value_type)]
-            return ReadRules(copy, rules.read_context)
+            return ReadRules(copy, rules.read_context)  # type: ignore[arg-type]
         elif isinstance(copy, DMSInputRules):
             prefixed_by_view: dict[str, str] = {}
             for view in copy.views:
