@@ -14,10 +14,10 @@ from cognite.neat._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat._issues import NeatError
-from cognite.neat._issues.errors import (
-    PropertyDefinitionDuplicatedError,
-)
+from cognite.neat._issues import NeatError, IssueList, catch_issues
+from cognite.neat._issues.errors import PropertyDefinitionDuplicatedError
+
+from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.data_types import String
@@ -1240,7 +1240,7 @@ class TestDMSRules:
     @pytest.mark.parametrize("raw, no_properties", list(case_unknown_value_types()))
     def test_case_unknown_value_types(self, raw: dict[str, dict[str, Any]], no_properties: int) -> None:
         rules = InformationRules.model_validate(raw)
-        dms_rules = InformationToDMS(ignore_undefined_value_types=True).transform(rules).rules
+        dms_rules = InformationToDMS(ignore_undefined_value_types=True).transform(rules)
         assert len(dms_rules.properties) == no_properties
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
@@ -1268,7 +1268,7 @@ class TestDMSRules:
 
     def test_alice_to_and_from_dms(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
-        recreated_rules = ImporterPipeline.verify(DMSImporter(schema))
+        recreated_rules = DMSImporter(schema).to_rules().rules.as_rules()
 
         exclude = {
             # This information is lost in the conversion
@@ -1309,7 +1309,7 @@ class TestDMSRules:
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         alice_rules = DMSInputRules.load(alice_spreadsheet).as_rules()
-        info_rules = DMSToInformation().transform(alice_rules).rules
+        info_rules = DMSToInformation().transform(alice_rules)
 
         assert isinstance(info_rules, InformationRules)
 
@@ -1394,14 +1394,8 @@ class TestDMSRules:
 
     def test_create_reference(self) -> None:
         info_rules = car.get_care_rules()
-
-        pipeline = RulesPipeline[InformationRules, DMSRules](
-            [
-                InformationToDMS(),
-                MapOneToOne(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"}),
-            ]
-        )
-        dms_rules = pipeline.run()
+        dms_rules = InformationToDMS().transform(info_rules)
+        mapped = MapOneToOne(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"}).transform(dms_rules)
 
         schema = dms_rules.as_schema()
         view_by_external_id = {view.external_id: view for view in schema.views.values()}
@@ -1459,9 +1453,11 @@ class TestDMSRules:
                 DMSInputContainer("CogniteVisualizable"),
             ],
         )
-        maybe_rules = VerifyDMSRules("continue").transform(sub_core)
+        issue_list = IssueList()
+        with catch_issues(issue_list):
+            VerifyDMSRules().transform(ReadRules(sub_core, {}))
 
-        assert not maybe_rules.issues
+        assert not issue_list
 
     def test_reverse_property_in_parent(self) -> None:
         sub_core = DMSInputRules(
@@ -1497,9 +1493,11 @@ class TestDMSRules:
                 DMSInputContainer("CogniteVisualizable"),
             ],
         )
-        maybe_rules = VerifyDMSRules("continue").transform(sub_core)
+        issues = IssueList()
+        with catch_issues(issues):
+            _ = VerifyDMSRules().transform(ReadRules(sub_core, {}))
 
-        assert not maybe_rules.issues
+        assert not issues
 
     def test_subclass_parent_with_reverse_property(self) -> None:
         extended_core = DMSInputRules(
@@ -1536,10 +1534,12 @@ class TestDMSRules:
                 DMSInputContainer("CogniteVisualizable"),
             ],
         )
-        maybe_rules = VerifyDMSRules("continue").transform(extended_core)
+        issues = IssueList()
+        with catch_issues(issues):
+            rules = VerifyDMSRules().transform(ReadRules(extended_core, {}))
 
-        assert not maybe_rules.issues
-        assert maybe_rules.rules is not None
+        assert not issues
+        assert rules is not None
 
     def test_dump_dms_rules_keep_version(self) -> None:
         rules = DMSInputRules(

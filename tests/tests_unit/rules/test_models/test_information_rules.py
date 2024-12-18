@@ -197,7 +197,7 @@ class TestInformationRules:
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         info_rules = InformationRules.model_validate(david_spreadsheet)
 
-        dms_rules = InformationToDMS().transform(info_rules).rules
+        dms_rules = InformationToDMS().transform(info_rules)
 
         assert isinstance(dms_rules, DMSRules)
 
@@ -297,7 +297,7 @@ class TestInformationRulesConverter:
             ],
         ).as_rules()
 
-        dms_rules = InformationToDMS().transform(info).rules
+        dms_rules = InformationToDMS().transform(info)
 
         assert len(dms_rules.containers) == 2
 
@@ -399,7 +399,7 @@ class TestInformationConverter:
     ) -> None:
         input_rules = InformationInputRules.load(rules_dict)
 
-        rules = ToCompliantEntities().transform(input_rules).get_rules().as_rules()
+        rules = ToCompliantEntities().transform(input_rules).as_rules()
 
         assert rules.classes[0].class_.prefix == "power_or_not"
         assert rules.properties[0].property_ == "IdentifiedObject_name"

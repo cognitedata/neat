@@ -33,7 +33,7 @@ class TestClassicToCoreMapper:
             containers=[DMSInputContainer(container="Asset")],
         ).as_rules()
 
-        input_rules = JustRules(input_)
+        input_rules = input_
 
         mapping = DMSInputRules(
             metadata=DMSInputMetadata(
@@ -58,7 +58,7 @@ class TestClassicToCoreMapper:
             containers=[DMSInputContainer(container="cdf_cdm:CogniteAsset")],
         ).as_rules()
 
-        transformed = RuleMapper(mapping).transform(input_rules).rules
+        transformed = RuleMapper(mapping).transform(input_rules)
 
         assert len(transformed.properties) == 1
         prop = transformed.properties[0]

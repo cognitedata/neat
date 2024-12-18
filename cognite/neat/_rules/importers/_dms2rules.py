@@ -19,7 +19,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat._client import NeatClient
-from cognite.neat._issues import IssueList, NeatIssue
+from cognite.neat._issues import IssueList, NeatIssue, MultiValueError
 from cognite.neat._issues.errors import FileTypeUnexpectedError, ResourceMissingIdentifierError, ResourceRetrievalError
 from cognite.neat._issues.warnings import (
     PropertyNotFoundWarning,
@@ -205,12 +205,14 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         if self.issue_list.has_errors:
             # In case there were errors during the import, the to_rules method will return None
             self._end = datetime.now(timezone.utc)
-            return ReadRules(None, self.issue_list, {})
+            self.issue_list.trigger_warnings()
+            raise MultiValueError(self.issue_list.errors)
 
         if not self.root_schema.data_model:
             self.issue_list.append(ResourceMissingIdentifierError("data model", type(self.root_schema).__name__))
             self._end = datetime.now(timezone.utc)
-            return ReadRules(None, self.issue_list, {})
+            self.issue_list.trigger_warnings()
+            raise MultiValueError(self.issue_list.errors)
 
         model = self.root_schema.data_model
 
@@ -221,8 +223,10 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         )
 
         self._end = datetime.now(timezone.utc)
-
-        return ReadRules(user_rules, self.issue_list, {})
+        self.issue_list.trigger_warnings()
+        if self.issue_list.has_errors:
+            raise MultiValueError(self.issue_list.errors)
+        return ReadRules(user_rules, {})
 
     def _create_rule_components(
         self,
