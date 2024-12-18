@@ -11,6 +11,7 @@ from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
 
 from cognite.neat._client import NeatClient
+from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
 from cognite.neat._constants import (
     COGNITE_MODELS,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
@@ -663,7 +664,11 @@ class IncludeReferenced(RulesTransformer[DMSRules, DMSRules]):
 
         schema = self._client.schema.retrieve([v.as_id() for v in view_ids], [c.as_id() for c in container_ids])
         copy_ = dms_rules.model_copy(deep=True)
+        # Sorting to ensure deterministic order
+        schema.containers = ContainerApplyDict(sorted(schema.containers.items(), key=lambda x: x[0].as_tuple()))
+        schema.views = ViewApplyDict(sorted(schema.views.items(), key=lambda x: x[0].as_tuple()))
         importer = DMSImporter(schema)
+
         imported = importer.to_rules()
         if imported.rules is None:
             raise NeatValueError("Could not import the referenced views and containers.")
