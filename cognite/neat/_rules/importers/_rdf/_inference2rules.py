@@ -16,6 +16,7 @@ from cognite.neat._rules.models.information import (
     InformationMetadata,
 )
 from cognite.neat._store import NeatGraphStore
+from cognite.neat._store._provenance import INSTANCES_ENTITY
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri, uri_to_short_form
 
 from ._base import DEFAULT_NON_EXISTING_NODE_TYPE, BaseRDFImporter
@@ -285,3 +286,7 @@ class InferenceImporter(BaseRDFImporter):
             updated=now,
             description="Inferred model from knowledge graph",
         )
+
+    @property
+    def source_uri(self) -> URIRef:
+        return INSTANCES_ENTITY.id_

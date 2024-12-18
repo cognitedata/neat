@@ -1,13 +1,16 @@
-from collections.abc import Callable
+from collections.abc import Callable, Hashable
 from datetime import datetime, timezone
 from functools import partial
 from pathlib import Path
 from typing import Any, cast
 
+import rdflib
+
 from cognite.neat._client import NeatClient
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules._shared import OutRules, ReadRules, T_VerifiedRules
+from cognite.neat._rules._shared import OutRules, ReadRules, T_VerifiedRules, VerifiedRules
 from cognite.neat._rules.exporters import BaseExporter
 from cognite.neat._rules.exporters._base import CDFExporter, T_Export
 from cognite.neat._rules.importers import BaseImporter
@@ -16,12 +19,13 @@ from cognite.neat._rules.models._base_input import InputRules
 from cognite.neat._rules.transformers import RulesTransformer
 from cognite.neat._utils.upload import UploadResultList
 
-from ._provenance import UNKNOWN_AGENT, Activity, Agent, Change, Entity, ModelEntity, Provenance
+from ._provenance import EMPTY_ENTITY, UNKNOWN_AGENT, Activity, Agent, Change, Entity, ModelEntity, Provenance
 
 
 class NeatRulesStore:
-    def __init__(self):
+    def __init__(self) -> None:
         self.provenance = Provenance()
+        self._iteration_by_id: dict[Hashable, int] = {}
 
     def import_(self, importer: BaseImporter) -> IssueList:
         agent = importer.agent
@@ -90,6 +94,7 @@ class NeatRulesStore:
             was_attributed_to=agent,
             was_generated_by=activity,
             result=result,
+            id_=self._create_id(result),
         )
 
         change = Change(
@@ -101,6 +106,27 @@ class NeatRulesStore:
         )
         self.provenance.append(change)
         return result, issue_list
+
+    def _create_id(self, result: Any) -> rdflib.URIRef:
+        identifier: rdflib.URIRef
+        if result is None:
+            identifier = EMPTY_ENTITY.id_
+        elif isinstance(result, OutRules):
+            input_rules = result.get_rules()
+            if input_rules is None:
+                identifier = EMPTY_ENTITY.id_
+            else:
+                identifier = input_rules.metadata.identifier
+        elif isinstance(result, VerifiedRules):
+            identifier = result.metadata.identifier
+        else:
+            identifier = DEFAULT_NAMESPACE["unknown-entity"]
+
+        if identifier not in self._iteration_by_id:
+            self._iteration_by_id[identifier] = 1
+            return identifier
+        self._iteration_by_id[identifier] += 1
+        return identifier + f"/Iteration_{self._iteration_by_id[identifier]}"
 
     def get_last_entity(self) -> ModelEntity:
         if not self.provenance:

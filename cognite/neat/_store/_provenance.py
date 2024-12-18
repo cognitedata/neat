@@ -125,6 +125,7 @@ class ModelEntity(Entity):
 
 
 INSTANCES_ENTITY = Entity(was_attributed_to=NEAT_AGENT, id_=CDF_NAMESPACE["instances"])
+EMPTY_ENTITY = Entity(was_attributed_to=NEAT_AGENT, id_=DEFAULT_NAMESPACE["empty-entity"])
 
 
 @dataclass(frozen=True)
