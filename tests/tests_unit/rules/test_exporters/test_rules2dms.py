@@ -6,12 +6,12 @@ from pathlib import Path
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat._issues import catch_issues, IssueList
+from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._rules import importers
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.dms import DMSRules
-from cognite.neat._rules.transformers import VerifyAnyRules, InformationToDMS
+from cognite.neat._rules.transformers import InformationToDMS, VerifyAnyRules
 from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
 
 

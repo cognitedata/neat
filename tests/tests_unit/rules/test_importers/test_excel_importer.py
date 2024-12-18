@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
-from cognite.neat._store import NeatRulesStore
+
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import (
     CDFMissingClientError,
@@ -16,8 +16,9 @@ from cognite.neat._issues.warnings import (
     NotSupportedViewContainerLimitWarning,
 )
 from cognite.neat._rules.importers import ExcelImporter
-from cognite.neat._rules.models import DMSRules, InformationRules, RoleTypes
+from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.transformers import VerifyAnyRules
+from cognite.neat._store import NeatRulesStore
 from tests.config import DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 

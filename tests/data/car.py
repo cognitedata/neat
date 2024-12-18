@@ -8,7 +8,6 @@ from rdflib.term import Literal
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules import importers
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.transformers import VerifyInformationRules
 from cognite.neat._rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
@@ -16,7 +15,7 @@ from cognite.neat._rules.models.dms import (
     DMSInputRules,
     DMSInputView,
 )
-
+from cognite.neat._rules.transformers import VerifyInformationRules
 
 _neat = DEFAULT_NAMESPACE
 TRIPLES = tuple(
@@ -62,6 +61,7 @@ CONTAINERS = dm.ContainerApplyList(
         ),
     ]
 )
+
 
 @lru_cache(maxsize=1)
 def get_care_rules() -> InformationRules:

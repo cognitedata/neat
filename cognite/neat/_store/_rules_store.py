@@ -76,10 +76,7 @@ class NeatRulesStore:
     def _export(self, action: Callable[[Any], Any], agent: Agent, description: str) -> Any:
         last_entity: ModelEntity | None = None
         for change in reversed(self.provenance):
-            if (
-                isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, DMSRules)
-            ):
+            if isinstance(change.target_entity, ModelEntity) and isinstance(change.target_entity.result, DMSRules):
                 last_entity = change.target_entity
                 break
         if last_entity is None:
@@ -186,9 +183,8 @@ class NeatRulesStore:
     @property
     def last_verified_rule(self) -> DMSRules | InformationRules:
         for change in reversed(self.provenance):
-            if (
-                isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, DMSRules | InformationRules)
+            if isinstance(change.target_entity, ModelEntity) and isinstance(
+                change.target_entity.result, DMSRules | InformationRules
             ):
                 return change.target_entity.result
         raise NeatValueError("No verified rule found in the provenance.")
@@ -196,10 +192,7 @@ class NeatRulesStore:
     @property
     def last_verified_dms_rules(self) -> DMSRules:
         for change in reversed(self.provenance):
-            if (
-                isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, DMSRules)
-            ):
+            if isinstance(change.target_entity, ModelEntity) and isinstance(change.target_entity.result, DMSRules):
                 return change.target_entity.result
         raise NeatValueError("No verified DMS rules found in the provenance.")
 
