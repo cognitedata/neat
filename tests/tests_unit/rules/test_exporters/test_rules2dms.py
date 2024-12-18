@@ -6,10 +6,12 @@ from pathlib import Path
 import pytest
 from cognite.client import data_modeling as dm
 
+from cognite.neat._issues import catch_issues, IssueList
 from cognite.neat._rules import importers
 from cognite.neat._rules.exporters import DMSExporter
-from cognite.neat._rules.models import RoleTypes
+from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.dms import DMSRules
+from cognite.neat._rules.transformers import VerifyAnyRules, InformationToDMS
 from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
 
 
@@ -62,7 +64,18 @@ class TestImportExportDMS:
         ],
     )
     def test_import_excel_export_dms(self, filepath: Path) -> None:
-        dms_rules = ImporterPipeline.verify(importers.ExcelImporter(filepath), role=RoleTypes.dms)
+        issues = IssueList()
+        with catch_issues(issues) as future:
+            importer = importers.ExcelImporter(filepath)
+            rules = VerifyAnyRules().transform(importer.to_rules())
+            if isinstance(rules, DMSRules):
+                dms_rules = rules
+            elif isinstance(rules, InformationRules):
+                dms_rules = InformationRules().transform(rules)
+            else:
+                raise ValueError(f"Unexpected rules type: {type(rules)}")
+
+        assert future.result == "success", f"Import failed with issues: {issues}"
 
         exported = DMSExporter().export(dms_rules)
 

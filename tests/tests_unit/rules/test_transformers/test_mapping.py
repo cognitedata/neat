@@ -31,7 +31,7 @@ class TestClassicToCoreMapper:
             ],
             views=[DMSInputView(view="MyAsset")],
             containers=[DMSInputContainer(container="Asset")],
-        ).as_rules()
+        ).as_verified_rules()
 
         input_rules = input_
 
@@ -56,7 +56,7 @@ class TestClassicToCoreMapper:
                 DMSInputView(view="cdf_cdm:CogniteAsset(version=v1)"),
             ],
             containers=[DMSInputContainer(container="cdf_cdm:CogniteAsset")],
-        ).as_rules()
+        ).as_verified_rules()
 
         transformed = RuleMapper(mapping).transform(input_rules)
 

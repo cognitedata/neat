@@ -41,7 +41,7 @@ class TestDMSImporter:
         ],
     )
     def test_import_rules_from_tutorials(self, filepath: Path) -> None:
-        dms_rules = ExcelImporter(filepath).to_rules().rules.as_rules()
+        dms_rules = ExcelImporter(filepath).to_rules().rules.as_verified_rules()
         # We must have the reference to be able to convert back to schema
         schema = dms_rules.as_schema()
         dms_importer = DMSImporter(schema)
@@ -103,7 +103,7 @@ class TestDMSImporter:
     def test_import_export_schema_with_inwards_edge_with_properties(self) -> None:
         importer = DMSImporter(SCHEMA_INWARDS_EDGE_WITH_PROPERTIES)
 
-        rules = importer.to_rules().rules.as_rules()
+        rules = importer.to_rules().rules.as_verified_rules()
 
         dms_recreated = DMSExporter().export(rules)
 

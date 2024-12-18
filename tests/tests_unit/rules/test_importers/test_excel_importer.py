@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from pydantic.version import VERSION
-
+from cognite.neat._store import NeatRulesStore
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import (
     CDFMissingClientError,
@@ -139,19 +139,21 @@ class TestExcelImporter:
         rule_type: type[DMSRules] | type[InformationRules],
     ):
         issues = IssueList()
+        rules = None
         with catch_issues(issues):
             importer = ExcelImporter(filepath)
-            rules = VerifyAnyRules().transform(importer.to_rules())
+            # Cannot validate as we have no client
+            rules = VerifyAnyRules(validate=False).transform(importer.to_rules())
 
         assert isinstance(rules, rule_type)
 
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())
     def test_import_invalid_rules(self, filepath: Path, expected_issues: IssueList):
+        store = NeatRulesStore()
         importer = ExcelImporter(filepath)
-
-        issues = IssueList()
-        with catch_issues(issues):
-            _ = VerifyAnyRules().transform(importer.to_rules())
+        issues = store.import_(importer)
+        next_issues = store.transform(VerifyAnyRules())
+        issues.extend(next_issues)
 
         issues = sorted(issues)
         expected_issues = sorted(expected_issues)

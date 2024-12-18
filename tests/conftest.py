@@ -26,7 +26,7 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def alice_rules(alice_spreadsheet: dict[str, dict[str, Any]]) -> DMSRules:
-    return DMSInputRules.load(alice_spreadsheet).as_rules()
+    return DMSInputRules.load(alice_spreadsheet).as_verified_rules()
 
 
 @pytest.fixture(scope="session")
@@ -91,27 +91,27 @@ def emma_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def olav_rules() -> InformationRules:
-    return ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx").to_rules().rules.as_rules()
+    return ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx").to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
 def olav_dms_rules() -> DMSRules:
-    return ExcelImporter(DOC_RULES / "dms-analytics-olav.xlsx").to_rules().rules.as_rules()
+    return ExcelImporter(DOC_RULES / "dms-analytics-olav.xlsx").to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
 def svein_harald_information_rules() -> InformationRules:
-    return ExcelImporter(DOC_RULES / "information-addition-svein-harald.xlsx").to_rules().rules.as_rules()
+    return ExcelImporter(DOC_RULES / "information-addition-svein-harald.xlsx").to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
 def svein_harald_dms_rules() -> DMSRules:
-    return ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx").to_rules().rules.as_rules()
+    return ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx").to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
 def olav_rebuild_dms_rules() -> DMSRules:
-    return ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx").to_rules().rules.as_rules()
+    return ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx").to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="function")

@@ -209,7 +209,7 @@ class TestDMSExporters:
         dumped["Metadata"]["space"] = new_space
         dumped["Last"]["Metadata"]["space"] = new_space
         reloaded = DMSInputRules.load(dumped)
-        rules = reloaded.as_rules()
+        rules = reloaded.as_verified_rules()
         schema = rules.as_schema()
         assert schema.referenced_spaces(include_indirect_references=True) == {new_space}
         exporter = DMSExporter(existing="force")
@@ -268,7 +268,7 @@ class TestDMSExporters:
             container["Container"] = container["Container"].replace("power", new_enterprise_space)
             container["Class (linage)"] = container["Class (linage)"].replace("power", new_enterprise_space)
         dumped["Last"]["Reference"] = dumped["Reference"]
-        rules = DMSInputRules.load(dumped).as_rules()
+        rules = DMSInputRules.load(dumped).as_verified_rules()
         schema = rules.as_schema()
         referenced_spaces = (
             schema.referenced_spaces(True)

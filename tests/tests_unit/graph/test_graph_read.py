@@ -18,7 +18,7 @@ def test_asset_extractor():
     extractor = AssetsExtractor.from_dataset(client_mock, data_set_external_id="nordic44", unpack_metadata=True)
     store.write(extractor)
 
-    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
+    rules = InferenceImporter.from_graph_store(store).to_rules().rules.as_verified_rules()
     store.add_rules(rules)
 
     assert len([instance for instance in store.read("Asset")]) == 4

@@ -3,7 +3,7 @@ from typing import Any, cast
 
 import yaml
 
-from cognite.neat._issues import IssueList, NeatIssue
+from cognite.neat._issues import IssueList, NeatIssue, MultiValueError
 from cognite.neat._issues.errors import (
     FileMissingRequiredFieldError,
     FileNotAFileError,
@@ -59,7 +59,9 @@ class YAMLImporter(BaseImporter[T_InputRules]):
 
     def to_rules(self) -> ReadRules[T_InputRules]:
         if self._read_issues.has_errors or not self.raw_data:
-            return ReadRules(None, self._read_issues, {})
+            self._read_issues.trigger_warnings()
+            raise MultiValueError(self._read_issues.errors)
+
         issue_list = IssueList(title="YAML Importer", issues=self._read_issues)
 
         if not self._filepaths:
@@ -75,13 +77,15 @@ class YAMLImporter(BaseImporter[T_InputRules]):
 
         if "metadata" not in self.raw_data:
             self._read_issues.append(FileMissingRequiredFieldError(metadata_file, "section", "metadata"))
-            return ReadRules(None, self._read_issues, {})
+            issue_list.trigger_warnings()
+            raise MultiValueError(self._read_issues.errors)
 
         metadata = self.raw_data["metadata"]
 
         if "role" not in metadata:
             self._read_issues.append(FileMissingRequiredFieldError(metadata, "metadata", "role"))
-            return ReadRules(None, self._read_issues, {})
+            issue_list.trigger_warnings()
+            raise MultiValueError(self._read_issues.errors)
 
         role_input = RoleTypes(metadata["role"])
         role_enum = RoleTypes(role_input)
@@ -89,4 +93,8 @@ class YAMLImporter(BaseImporter[T_InputRules]):
 
         rules = cast(T_InputRules, rules_cls.load(self.raw_data))
 
-        return ReadRules(rules, issue_list, {})
+        issue_list.trigger_warnings()
+        if self._read_issues.has_errors:
+            raise MultiValueError(self._read_issues.errors)
+
+        return ReadRules(rules, {})

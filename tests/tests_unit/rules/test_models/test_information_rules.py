@@ -295,7 +295,7 @@ class TestInformationRulesConverter:
                 )
                 for no in range(DMS_CONTAINER_PROPERTY_SIZE_LIMIT + 1)
             ],
-        ).as_rules()
+        ).as_verified_rules()
 
         dms_rules = InformationToDMS().transform(info)
 
@@ -399,7 +399,7 @@ class TestInformationConverter:
     ) -> None:
         input_rules = InformationInputRules.load(rules_dict)
 
-        rules = ToCompliantEntities().transform(input_rules).as_rules()
+        rules = ToCompliantEntities().transform(input_rules).as_verified_rules()
 
         assert rules.classes[0].class_.prefix == "power_or_not"
         assert rules.properties[0].property_ == "IdentifiedObject_name"

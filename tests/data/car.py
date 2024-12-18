@@ -189,7 +189,7 @@ BASE_MODEL: DMSRules = DMSInputRules(
             container_property="name",
         )
     ],
-).as_rules()
+).as_verified_rules()
 
 NODE_TYPES = dm.NodeApplyList(
     [
