@@ -20,7 +20,7 @@ from cognite.neat._issues.errors import (
     FileReadError,
 )
 from cognite.neat._issues.warnings import FileMissingRequiredFieldWarning
-from cognite.neat._rules._shared import ReadRules, T_PureInputRules
+from cognite.neat._rules._shared import ReadRules, T_InputRules
 from cognite.neat._rules.models import (
     INPUT_RULES_BY_ROLE,
     VERIFIED_RULES_BY_ROLE,
@@ -240,7 +240,7 @@ class SpreadsheetReader:
         return sheets, read_info_by_sheet
 
 
-class ExcelImporter(BaseImporter[T_PureInputRules]):
+class ExcelImporter(BaseImporter[T_InputRules]):
     """Import rules from an Excel file.
 
     Args:
@@ -250,7 +250,7 @@ class ExcelImporter(BaseImporter[T_PureInputRules]):
     def __init__(self, filepath: Path):
         self.filepath = filepath
 
-    def to_rules(self) -> ReadRules[T_PureInputRules]:
+    def to_rules(self) -> ReadRules[T_InputRules]:
         issue_list = IssueList(title=f"'{self.filepath.name}'")
         if not self.filepath.exists():
             raise FileNotFoundNeatError(self.filepath)
@@ -272,7 +272,7 @@ class ExcelImporter(BaseImporter[T_PureInputRules]):
         read_info_by_sheet = user_read.read_info_by_sheet
 
         rules_cls = INPUT_RULES_BY_ROLE[original_role]
-        rules = cast(T_PureInputRules, rules_cls.load(sheets))
+        rules = cast(T_InputRules, rules_cls.load(sheets))
         return ReadRules(rules, {"read_info_by_sheet": read_info_by_sheet})
 
     @property
@@ -284,7 +284,7 @@ class ExcelImporter(BaseImporter[T_PureInputRules]):
         return URIRef(f"file://{self.filepath.name}")
 
 
-class GoogleSheetImporter(BaseImporter[T_PureInputRules]):
+class GoogleSheetImporter(BaseImporter[T_InputRules]):
     """Import rules from a Google Sheet.
 
     .. warning::
@@ -300,7 +300,7 @@ class GoogleSheetImporter(BaseImporter[T_PureInputRules]):
         self.sheet_id = sheet_id
         self.skiprows = skiprows
 
-    def to_rules(self) -> ReadRules[T_PureInputRules]:
+    def to_rules(self) -> ReadRules[T_InputRules]:
         raise NotImplementedError("Google Sheet Importer is not yet implemented.")
 
     def _get_sheets(self) -> dict[str, pd.DataFrame]:

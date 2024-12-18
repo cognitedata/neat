@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Any, Generic, TypeAlias, TypeVar
 
+from jedi.plugins.stdlib import Wrapped
+
 from cognite.neat._rules.models import (
     DMSRules,
     InformationRules,
@@ -11,19 +13,20 @@ from cognite.neat._rules.models.information._rules_input import InformationInput
 VerifiedRules: TypeAlias = InformationRules | DMSRules
 
 T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
-T_PureInputRules = TypeVar("T_PureInputRules", bound=DMSInputRules | InformationInputRules)
+InputRules: TypeAlias = DMSInputRules | InformationInputRules
+T_InputRules = TypeVar("T_InputRules", bound=InputRules)
 
 
 @dataclass
-class ReadRules(Generic[T_PureInputRules]):
+class ReadRules(Generic[T_InputRules]):
     """This represents a rules that has been read."""
 
-    rules: T_PureInputRules | None
+    rules: T_InputRules | None
     read_context: dict[str, Any]
 
 
-InputRules: TypeAlias = ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
-T_InputRules = TypeVar("T_InputRules", bound=InputRules)
+WrappedInputRules: TypeAlias = ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
+T_WrappedInputRules = TypeVar("T_WrappedInputRules", bound=WrappedInputRules)
 
 Rules: TypeAlias = InformationRules | DMSRules | ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
 T_Rules = TypeVar("T_Rules", bound=Rules)

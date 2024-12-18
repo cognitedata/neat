@@ -22,7 +22,7 @@ from cognite.neat._issues.warnings._models import (
     SolutionModelBuildOnTopOfCDMWarning,
 )
 from cognite.neat._rules._shared import (
-    InputRules,
+    WrappedInputRules,
     ReadRules,
     VerifiedRules,
 )
@@ -64,8 +64,8 @@ from ._verification import VerifyDMSRules
 
 T_VerifiedInRules = TypeVar("T_VerifiedInRules", bound=VerifiedRules)
 T_VerifiedOutRules = TypeVar("T_VerifiedOutRules", bound=VerifiedRules)
-T_InputInRules = TypeVar("T_InputInRules", bound=InputRules)
-T_InputOutRules = TypeVar("T_InputOutRules", bound=InputRules)
+T_InputInRules = TypeVar("T_InputInRules", bound=WrappedInputRules)
+T_InputOutRules = TypeVar("T_InputOutRules", bound=WrappedInputRules)
 
 
 class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRules], ABC):
@@ -170,13 +170,13 @@ class ToCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], Rea
         return fixed_definitions
 
 
-class PrefixEntities(RulesTransformer[ReadRules[InputRules], ReadRules[InputRules]]):  # type: ignore[misc]
+class PrefixEntities(RulesTransformer[ReadRules[WrappedInputRules], ReadRules[WrappedInputRules]]):  # type: ignore[misc]
     """Prefixes all entities with a given prefix."""
 
     def __init__(self, prefix: str) -> None:
         self._prefix = prefix
 
-    def transform(self, rules: ReadRules[InputRules]) -> ReadRules[InputRules]:
+    def transform(self, rules: ReadRules[WrappedInputRules]) -> ReadRules[WrappedInputRules]:
         if rules.rules is None:
             return rules
         copy = dataclasses.replace(rules.rules)
