@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from cognite.client import CogniteClient
 
@@ -76,7 +76,7 @@ class ExcelToRules(Step):
 
         excel_importer = importers.ExcelImporter(rules_file_path)  # type: ignore[var-annotated]
         read_rules = excel_importer.to_rules()
-        rules = VerifyAnyRules().transform(read_rules)
+        rules = VerifyAnyRules[Any]().transform(read_rules)
         result: DMSRules | InformationRules
         if role_enum is RoleTypes.dms and isinstance(rules, InformationRules):
             result = InformationToDMS().transform(rules)

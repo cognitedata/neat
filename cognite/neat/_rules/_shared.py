@@ -26,5 +26,7 @@ class ReadRules(Generic[T_InputRules]):
 ReadInputRules: TypeAlias = ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
 T_ReadInputRules = TypeVar("T_ReadInputRules", bound=ReadInputRules)
 
-Rules: TypeAlias = InformationRules | DMSRules | ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
+Rules: TypeAlias = (
+    InformationRules | DMSRules | ReadRules[DMSInputRules] | ReadRules[InformationInputRules] | T_ReadInputRules
+)
 T_Rules = TypeVar("T_Rules", bound=Rules)

@@ -5,7 +5,6 @@ from cognite.neat._issues import IssueList, MultiValueError, NeatError, NeatWarn
 from cognite.neat._issues.errors import NeatTypeError, NeatValueError
 from cognite.neat._rules._shared import (
     ReadRules,
-    T_InputRules,
     T_ReadInputRules,
     T_VerifiedRules,
     VerifiedRules,
@@ -22,7 +21,7 @@ from cognite.neat._rules.models.information import InformationValidation
 from ._base import RulesTransformer
 
 
-class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], ABC):
+class VerificationTransformer(RulesTransformer[T_ReadInputRules, T_VerifiedRules], ABC):
     """Base class for all verification transformers."""
 
     _rules_cls: type[T_VerifiedRules]
@@ -32,7 +31,7 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
         self.validate = validate
         self._client = client
 
-    def transform(self, rules: ReadRules[T_InputRules]) -> T_VerifiedRules:
+    def transform(self, rules: T_ReadInputRules) -> T_VerifiedRules:
         issues = IssueList()
         in_ = rules.rules
         if in_ is None:
@@ -42,7 +41,7 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
         # We need to catch issues as we use the error args to provide extra context for the errors/warnings
         # For example, which row in the spreadsheet the error occurred on.
         with catch_issues(issues, NeatError, NeatWarning, error_args) as _:
-            rules_cls = self._get_rules_cls(in_)
+            rules_cls = self._get_rules_cls(rules)
             dumped = in_.dump()
             verified_rules = rules_cls.model_validate(dumped)  # type: ignore[assignment]
             if self.validate:
@@ -78,14 +77,14 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
         return "Verify rules"
 
 
-class VerifyDMSRules(VerificationTransformer[DMSInputRules, DMSRules]):
+class VerifyDMSRules(VerificationTransformer[ReadRules[DMSInputRules], DMSRules]):
     """Class to verify DMS rules."""
 
     _rules_cls = DMSRules
     _validation_cls = DMSValidation
 
 
-class VerifyInformationRules(VerificationTransformer[InformationInputRules, InformationRules]):
+class VerifyInformationRules(VerificationTransformer[ReadRules[InformationInputRules], InformationRules]):
     """Class to verify Information rules."""
 
     _rules_cls = InformationRules
