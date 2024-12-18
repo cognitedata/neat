@@ -1,3 +1,4 @@
+import hashlib
 from collections.abc import Callable, Hashable
 from datetime import datetime, timezone
 from functools import partial
@@ -26,6 +27,16 @@ class NeatRulesStore:
     def __init__(self) -> None:
         self.provenance = Provenance()
         self._iteration_by_id: dict[Hashable, int] = {}
+
+    def calculate_provenance_hash(self, shorten: bool = True) -> str:
+        sha256_hash = hashlib.sha256()
+        for change in self.provenance:
+            for id_ in [change.agent.id_, change.activity.id_, change.target_entity.id_, change.source_entity.id_]:
+                sha256_hash.update(str(id_).encode("utf-8"))
+        calculated_hash = sha256_hash.hexdigest()
+        if shorten:
+            return calculated_hash[:8]
+        return calculated_hash
 
     def import_(self, importer: BaseImporter) -> IssueList:
         agent = importer.agent

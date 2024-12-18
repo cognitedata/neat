@@ -274,7 +274,8 @@ class ShowDataModelProvenanceAPI(ShowBaseAPI):
             raise NeatSessionError("No data model available. Try using [bold].read[/bold] to load data model.")
 
         di_graph = self._generate_dm_provenance_di_graph_and_types()
-        return self._generate_visualization(di_graph, name="data_model_provenance.html")
+        unique_hash = self._state.rule_store.calculate_provenance_hash(shorten=True)
+        return self._generate_visualization(di_graph, name=f"data_model_provenance_{unique_hash}.html")
 
     def _generate_dm_provenance_di_graph_and_types(self) -> nx.DiGraph:
         di_graph = nx.DiGraph()
