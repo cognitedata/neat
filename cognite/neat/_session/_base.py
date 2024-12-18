@@ -121,6 +121,10 @@ class NeatSession:
         """
         transformer = VerifyAnyRules("continue", validate=True, client=self._client)
         issues = self._state.rule_store.transform(transformer)
+        if not issues.has_errors:
+            rules = self._state.rule_store.last_verified_rule
+            if isinstance(rules, InformationRules):
+                self._state.instances.store.add_rules(rules)
 
         if issues:
             print("You can inspect the issues with the .inspect.issues(...) method.")
