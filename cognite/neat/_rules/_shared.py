@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from typing import Any, Generic, TypeAlias, TypeVar
 
 from jedi.plugins.stdlib import Wrapped
+from ntsecuritycon import TOKEN_READ
+from winnt import TRANSACTION_GENERIC_READ
 
 from cognite.neat._rules.models import (
     DMSRules,
@@ -25,8 +27,8 @@ class ReadRules(Generic[T_InputRules]):
     read_context: dict[str, Any]
 
 
-WrappedInputRules: TypeAlias = ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
-T_WrappedInputRules = TypeVar("T_WrappedInputRules", bound=WrappedInputRules)
+ReadInputRules: TypeAlias = ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
+T_ReadInputRules = TypeVar("T_ReadInputRules", bound=ReadInputRules)
 
 Rules: TypeAlias = InformationRules | DMSRules | ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
 T_Rules = TypeVar("T_Rules", bound=Rules)

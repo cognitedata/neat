@@ -8,7 +8,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._issues.errors import WorkflowStepNotInitializedError
 from cognite.neat._issues.formatters import FORMATTER_BY_NAME
 from cognite.neat._rules import importers
-from cognite.neat._rules._shared import WrappedInputRules
+from cognite.neat._rules._shared import ReadInputRules
 from cognite.neat._rules.models import DMSRules, InformationRules, RoleTypes
 from cognite.neat._rules.models.entities import DataModelEntity, DMSUnknownEntity
 from cognite.neat._rules.transformers import DMSToInformation, InformationToDMS, VerifyAnyRules
@@ -76,7 +76,7 @@ class ExcelToRules(Step):
         if role != "infer" and role is not None:
             role_enum = RoleTypes[role]
 
-        excel_importer = importers.ExcelImporter[WrappedInputRules](rules_file_path)
+        excel_importer = importers.ExcelImporter[ReadInputRules](rules_file_path)
         read_rules = excel_importer.to_rules()
         rules = VerifyAnyRules().transform(read_rules)
         if role_enum is RoleTypes.dms and isinstance(rules, InformationRules):

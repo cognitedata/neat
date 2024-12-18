@@ -4,9 +4,9 @@ from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList, MultiValueError, NeatError, NeatWarning, catch_issues
 from cognite.neat._issues.errors import NeatTypeError, NeatValueError
 from cognite.neat._rules._shared import (
-    WrappedInputRules,
+    ReadInputRules,
     ReadRules,
-    T_WrappedInputRules,
+    T_ReadInputRules,
     T_VerifiedRules,
     VerifiedRules,
 )
@@ -22,7 +22,7 @@ from cognite.neat._rules.models.information import InformationValidation
 from ._base import RulesTransformer
 
 
-class VerificationTransformer(RulesTransformer[T_WrappedInputRules, T_VerifiedRules], ABC):
+class VerificationTransformer(RulesTransformer[T_ReadInputRules, T_VerifiedRules], ABC):
     """Base class for all verification transformers."""
 
     _rules_cls: type[T_VerifiedRules]
@@ -32,7 +32,7 @@ class VerificationTransformer(RulesTransformer[T_WrappedInputRules, T_VerifiedRu
         self.validate = validate
         self._client = client
 
-    def transform(self, rules: ReadRules[T_WrappedInputRules]) -> T_VerifiedRules:
+    def transform(self, rules: ReadRules[T_ReadInputRules]) -> T_VerifiedRules:
         issues = IssueList()
         if rules.rules is None:
             raise NeatValueError("Cannot verify rules. The reading of the rules failed.")
@@ -67,7 +67,7 @@ class VerificationTransformer(RulesTransformer[T_WrappedInputRules, T_VerifiedRu
             raise NeatValueError("Rules were not verified")
         return verified_rules
 
-    def _get_rules_cls(self, in_: T_WrappedInputRules) -> type[T_VerifiedRules]:
+    def _get_rules_cls(self, in_: T_ReadInputRules) -> type[T_VerifiedRules]:
         return self._rules_cls
 
     def _get_validation_cls(self, rules: T_VerifiedRules) -> type:
@@ -92,10 +92,10 @@ class VerifyInformationRules(VerificationTransformer[InformationInputRules, Info
     _validation_cls = InformationValidation
 
 
-class VerifyAnyRules(VerificationTransformer[WrappedInputRules, VerifiedRules]):
+class VerifyAnyRules(VerificationTransformer[ReadInputRules, VerifiedRules]):
     """Class to verify arbitrary rules"""
 
-    def _get_rules_cls(self, in_: WrappedInputRules) -> type[VerifiedRules]:
+    def _get_rules_cls(self, in_: ReadInputRules) -> type[VerifiedRules]:
         if isinstance(in_, InformationInputRules):
             return InformationRules
         elif isinstance(in_, DMSInputRules):
