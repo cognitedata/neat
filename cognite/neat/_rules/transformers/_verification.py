@@ -53,7 +53,12 @@ class VerificationTransformer(RulesTransformer[T_InputRules, T_VerifiedRules], A
                     validation_issues = InformationValidation(verified_rules).validate()  # type: ignore[arg-type]
                 else:
                     raise NeatValueError("Unsupported rule type")
-                issues.extend(validation_issues)
+
+                # Need to trigger and raise such that the catch_issues can add the extra context
+                validation_issues.trigger_warnings()
+                if validation_issues.has_errors:
+                    raise MultiValueError(validation_issues.errors)
+
         # Raise issues which is expected to be handled outside of this method
         issues.trigger_warnings()
         if issues.has_errors:

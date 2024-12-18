@@ -37,7 +37,7 @@ def invalid_rules_filepaths():
                 RowError(
                     sheet_name="Properties",
                     column="Is List",
-                    row=4,
+                    row=5,
                     type="bool_parsing",
                     msg="Input should be a valid boolean, unable to interpret input",
                     input="Apple",
@@ -57,7 +57,7 @@ def invalid_rules_filepaths():
                     "container",
                     "maxFlow",
                     frozenset({"float32", "float64"}),
-                    (3, 4),
+                    (4, 5),
                     "rows",
                 ),
             ]
@@ -149,11 +149,11 @@ class TestExcelImporter:
 
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())
     def test_import_invalid_rules(self, filepath: Path, expected_issues: IssueList):
-        store = NeatRulesStore()
         importer = ExcelImporter(filepath)
-        issues = store.import_(importer)
-        next_issues = store.transform(VerifyAnyRules())
-        issues.extend(next_issues)
+        issues = IssueList()
+        with catch_issues(issues):
+            read_rules = importer.to_rules()
+            _ = VerifyAnyRules().transform(read_rules)
 
         issues = sorted(issues)
         expected_issues = sorted(expected_issues)

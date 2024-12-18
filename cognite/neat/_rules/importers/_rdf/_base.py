@@ -125,7 +125,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         rules_dict = self._to_rules_components()
 
         rules = InformationInputRules.load(rules_dict)
-
+        self.issue_list.trigger_warnings()
         return ReadRules(rules, {})
 
     def _to_rules_components(self) -> dict:
