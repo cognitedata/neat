@@ -677,7 +677,6 @@ class IncludeReferenced(RulesTransformer[DMSRules, DMSRules]):
 
         schema = self._client.schema.retrieve([v.as_id() for v in view_ids], [c.as_id() for c in container_ids])
         copy_ = dms_rules.model_copy(deep=True)
-        copy_.metadata.version = f"{copy_.metadata.version}_completed"
         importer = DMSImporter(schema)
         imported = importer.to_rules()
         if imported.rules is None:
