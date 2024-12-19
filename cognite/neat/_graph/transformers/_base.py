@@ -85,7 +85,6 @@ class BaseTransformerStandardised(ABC):
             outcome.skipped = skipped_count
 
         if properties_count == 0:
-            outcome.affected_nodes_count = 0
             return outcome
 
         result_iterable = graph.query(self._iterate_query())
