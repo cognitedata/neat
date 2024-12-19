@@ -21,6 +21,7 @@ from cognite.neat._rules.models.entities import (
     load_connection,
     load_dms_value_type,
 )
+from cognite.neat._utils.rdf_ import uri_display_name
 
 from ._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
 
@@ -288,6 +289,14 @@ class DMSInputRules(InputRules[DMSRules]):
             "Enum": [enum.dump() for enum in self.enum or []] or None,
             "Nodes": [node_type.dump(default_space) for node_type in self.nodes or []] or None,
         }
+
+    @classmethod
+    def display_type_name(cls) -> str:
+        return "UnverifiedDMSModel"
+
+    @property
+    def display_name(self):
+        return uri_display_name(self.metadata.identifier)
 
     def _repr_html_(self) -> str:
         summary = {

@@ -80,6 +80,10 @@ class ToCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], Rea
     """Converts input rules to rules with compliant entity IDs that match regex patters used
     by DMS schema components."""
 
+    @property
+    def description(self) -> str:
+        return "Ensures externalIDs are compliant with CDF"
+
     def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
         if rules.rules is None:
             return rules
@@ -177,6 +181,10 @@ class PrefixEntities(RulesTransformer[ReadRules[T_InputRules], ReadRules[T_Input
 
     def __init__(self, prefix: str) -> None:
         self._prefix = prefix
+
+    @property
+    def description(self) -> str:
+        return f"Prefixes all views with {self._prefix!r}"
 
     def transform(self, rules: ReadRules[T_InputRules]) -> ReadRules[T_InputRules]:
         in_ = rules.rules
@@ -277,6 +285,10 @@ _T_Entity = TypeVar("_T_Entity", bound=ClassEntity | ViewEntity)
 class SetIDDMSModel(RulesTransformer[DMSRules, DMSRules]):
     def __init__(self, new_id: DataModelId | tuple[str, str, str]):
         self.new_id = DataModelId.load(new_id)
+
+    @property
+    def description(self) -> str:
+        return f"Sets the Data Model ID to {self.new_id.as_tuple()}"
 
     def transform(self, rules: DMSRules) -> DMSRules:
         if self.new_id.version is None:

@@ -42,7 +42,7 @@ class BaseExporter(ABC, Generic[T_VerifiedRules, T_Export]):
 
     @property
     def description(self) -> str:
-        return self.__doc__ or "Missing description"
+        return "MISSING DESCRIPTION"
 
     @classmethod
     @lru_cache(maxsize=1)

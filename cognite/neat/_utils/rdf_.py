@@ -257,3 +257,11 @@ def remove_instance_ids_in_batch(graph: Graph, instance_ids: Iterable[URIRef], b
         check_commit()
 
     check_commit(force_commit=True)
+
+
+def uri_display_name(thing: URIRef) -> str:
+    if "https://cognitedata.com/dms/data-model/" in thing:
+        return "DMS(" + ",".join(thing.replace("https://cognitedata.com/dms/data-model/", "").split("/")) + ")"
+    elif "http://purl.org/cognite/neat/data-model/" in thing:
+        return "NEAT(" + ",".join(thing.replace("http://purl.org/cognite/neat/data-model/", "").split("/")) + ")"
+    return remove_namespace_from_uri(thing)

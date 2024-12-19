@@ -202,7 +202,7 @@ class NeatSession:
             max_number_of_instance=max_number_of_instance,
             data_model_id=model_id,
         )
-        return self._state.rule_store.import_(importer)
+        return self._state.rule_import(importer)
 
     def _repr_html_(self) -> str:
         state = self._state
