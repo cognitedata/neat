@@ -79,7 +79,7 @@ class CDFReadAPI(BaseReadAPI):
             raise NeatSessionError("Data model version is required to read a data model.")
 
         importer = importers.DMSImporter.from_data_model_id(self._get_client, data_model_id)
-        return self._state.rule_store.import_(importer)
+        return self._state.rule_import(importer)
 
 
 @session_class_wrapper
@@ -169,7 +169,7 @@ class ExcelReadAPI(BaseReadAPI):
         reader = NeatReader.create(io)
         if not isinstance(reader, PathReader):
             raise NeatValueError("Only file paths are supported for Excel files")
-        return self._state.rule_store.import_(importers.ExcelImporter(reader.path))
+        return self._state.rule_import(importers.ExcelImporter(reader.path))
 
 
 @session_class_wrapper
@@ -180,7 +180,7 @@ class ExcelExampleAPI(BaseReadAPI):
     def pump_example(self) -> IssueList:
         """Reads the Hello World pump example into the NeatSession."""
         importer: importers.ExcelImporter = importers.ExcelImporter(catalog.hello_world_pump)
-        return self._state.rule_store.import_(importer)
+        return self._state.rule_import(importer)
 
 
 @session_class_wrapper
@@ -228,7 +228,7 @@ class YamlReadAPI(BaseReadAPI):
             importer = dms_importer
         else:
             raise NeatValueError(f"Unsupported YAML format: {format}")
-        return self._state.rule_store.import_(importer)
+        return self._state.rule_import(importer)
 
 
 @session_class_wrapper
@@ -365,7 +365,7 @@ class RDFReadAPI(BaseReadAPI):
         if not isinstance(reader, PathReader):
             raise NeatValueError("Only file paths are supported for RDF files")
         importer = importers.OWLImporter.from_file(reader.path, source_name=f"file {reader!s}")
-        return self._state.rule_store.import_(importer)
+        return self._state.rule_import(importer)
 
     def imf(self, io: Any) -> IssueList:
         """Reads IMF Types provided as SHACL shapes into NeatSession.
@@ -382,7 +382,7 @@ class RDFReadAPI(BaseReadAPI):
         if not isinstance(reader, PathReader):
             raise NeatValueError("Only file paths are supported for RDF files")
         importer = importers.IMFImporter.from_file(reader.path, source_name=f"file {reader!s}")
-        return self._state.rule_store.import_(importer)
+        return self._state.rule_import(importer)
 
     def __call__(
         self,

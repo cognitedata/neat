@@ -315,7 +315,7 @@ class DataModelPrepareAPI:
 
     def cdf_compliant_external_ids(self) -> IssueList:
         """Convert data model component external ids to CDF compliant entities."""
-        return self._state.rule_store.transform(ToCompliantEntities())
+        return self._state.rule_transform(ToCompliantEntities())
 
     def prefix(self, prefix: str) -> IssueList:
         """Prefix all views in the data model with the given prefix.
@@ -324,7 +324,7 @@ class DataModelPrepareAPI:
             prefix: The prefix to add to the views in the data model.
 
         """
-        return self._state.rule_store.transform(PrefixEntities(prefix))
+        return self._state.rule_transform(PrefixEntities(prefix))
 
     def to_enterprise(
         self,
@@ -356,7 +356,7 @@ class DataModelPrepareAPI:
             views as the source and target views.
 
         """
-        return self._state.rule_store.transform(
+        return self._state.rule_transform(
             ToExtension(
                 new_model_id=data_model_id,
                 org_name=org_name,
@@ -393,7 +393,7 @@ class DataModelPrepareAPI:
             the containers in the solution data model space.
 
         """
-        return self._state.rule_store.transform(
+        return self._state.rule_transform(
             ToExtension(
                 new_model_id=data_model_id,
                 org_name=org_name,
@@ -436,7 +436,7 @@ class DataModelPrepareAPI:
             ),
         ]
 
-        self._state.rule_store.transform(*transformers)
+        self._state.rule_transform(*transformers)
 
     def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]) -> IssueList:
         """This is a special method that allow you to drop parts of the data model.
@@ -447,7 +447,7 @@ class DataModelPrepareAPI:
                 drops multiple views at once. You can also pass externalIds of views to drop individual views.
 
         """
-        return self._state.rule_store.transform(ReduceCogniteModel(drop))
+        return self._state.rule_transform(ReduceCogniteModel(drop))
 
     def include_referenced(self) -> IssueList:
         """Include referenced views and containers in the data model."""
@@ -457,7 +457,7 @@ class DataModelPrepareAPI:
                 "NEAT needs a client to lookup the definitions. "
                 "Please set the client in the session, NeatSession(client=client)."
             )
-        return self._state.rule_store.transform(IncludeReferenced(self._client))
+        return self._state.rule_transform(IncludeReferenced(self._client))
 
     def add_implements_to_classes(self, suffix: Literal["Edge"], implements: str = "Edge") -> IssueList:
         """All classes with the suffix will have the implements property set to the given value.
@@ -467,4 +467,4 @@ class DataModelPrepareAPI:
             implements:  The value of the implements property to set.
 
         """
-        return self._state.rule_store.transform(AddClassImplements(implements, suffix))
+        return self._state.rule_transform(AddClassImplements(implements, suffix))
