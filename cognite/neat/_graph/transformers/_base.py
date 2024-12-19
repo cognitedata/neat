@@ -7,7 +7,6 @@ from rdflib.query import ResultRow
 from cognite.neat._shared import Triple
 from cognite.neat._utils.collection_ import iterate_progress_bar
 from cognite.neat._utils.graph_transformations_report import GraphTransformationResult
-from cognite.neat._utils.rdf_ import add_triples_in_batch, remove_triples_in_batch
 
 To_Add_Triples: TypeAlias = list[Triple]
 To_Remove_Triples: TypeAlias = list[Triple]
@@ -68,41 +67,40 @@ class BaseTransformerStandardised(ABC):
 
     def transform(self, graph: Graph) -> GraphTransformationResult:
         outcome = GraphTransformationResult(self.__class__.__name__)
-        to_add: list[Triple] = []
-        to_remove: list[Triple] = []
+        to_add_count = to_remove_count = 0
 
-        properties_count_res = list(graph.query(self._count_query()))
-        properties_count = int(properties_count_res[0][0])  # type: ignore [index, arg-type]
+        iteration_count_res = list(graph.query(self._count_query()))
+        iteration_count = int(iteration_count_res[0][0])  # type: ignore [index, arg-type]
 
-        outcome.affected_nodes_count = properties_count
+        outcome.affected_nodes_count = iteration_count
 
         if self._skip_count_query():
             skipped_count_res = list(graph.query(self._skip_count_query()))
             skipped_count = int(skipped_count_res[0][0])  # type: ignore [index, arg-type]
             outcome.skipped = skipped_count
 
-        if properties_count == 0:
+        if iteration_count == 0:
             return outcome
 
         result_iterable = graph.query(self._iterate_query())
-        if properties_count > self._use_iterate_bar_threshold:
+        if iteration_count > self._use_iterate_bar_threshold:
             result_iterable = iterate_progress_bar(  # type: ignore[misc, assignment]
                 result_iterable,
-                total=properties_count,
+                total=iteration_count,
                 description=self.description,
             )
 
         for row in result_iterable:
             row = cast(ResultRow, row)
             triples_to_add_from_row, triples_to_remove_from_row = self.operation(row)
+            to_add_count += len(triples_to_add_from_row)
+            to_remove_count += len(triples_to_remove_from_row)
 
-            to_add.extend(triples_to_add_from_row)
-            to_remove.extend(triples_to_remove_from_row)
+            for triple in triples_to_remove_from_row:
+                graph.remove(triple)
+            for triple in triples_to_add_from_row:
+                graph.add(triple)
 
-        if to_remove:
-            remove_triples_in_batch(graph, to_remove)
-            outcome.removed = len(to_remove)
-        if to_add:
-            add_triples_in_batch(graph, to_add)
-            outcome.added = len(to_add)
+        outcome.added = to_add_count
+        outcome.removed = to_remove_count
         return outcome

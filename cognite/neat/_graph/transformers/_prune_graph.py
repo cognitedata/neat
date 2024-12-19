@@ -224,29 +224,27 @@ class PruneDeadEndEdges(BaseTransformerStandardised):
 
     def operation(self, row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
         triple_to_remove = cast(Triple, row)
-        return ([], [triple_to_remove])
+        return [], [triple_to_remove]
 
     def _iterate_query(self) -> str:
-        _iterate_query = """
-                         SELECT ?subject ?predicate ?object
-                         WHERE {
-                             ?subject ?predicate ?object .
-                             FILTER (isIRI(?object) && ?predicate != rdf:type)
-                             FILTER NOT EXISTS {?object ?p ?o .}
-                             }
-                         """
-        return _iterate_query
+        return """
+                 SELECT ?subject ?predicate ?object
+                 WHERE {
+                     ?subject ?predicate ?object .
+                     FILTER (isIRI(?object) && ?predicate != rdf:type)
+                     FILTER NOT EXISTS {?object ?p ?o .}
+                     }
+                 """
 
     def _count_query(self) -> str:
-        _count_query = """
-                        SELECT (COUNT(?object) AS ?objectCount)
-                        WHERE {
-                            ?subject ?predicate ?object .
-                            FILTER (isIRI(?object) && ?predicate != rdf:type)
-                            FILTER NOT EXISTS {?object ?p ?o .}
-                            }
-                        """
-        return _count_query
+        return """
+                SELECT (COUNT(?object) AS ?objectCount)
+                WHERE {
+                    ?subject ?predicate ?object .
+                    FILTER (isIRI(?object) && ?predicate != rdf:type)
+                    FILTER NOT EXISTS {?object ?p ?o .}
+                    }
+                """
 
 
 class PruneInstancesOfUnknownType(BaseTransformerStandardised):
@@ -257,7 +255,7 @@ class PruneInstancesOfUnknownType(BaseTransformerStandardised):
     description: str = "Prunes the graph of triples where the object is a node that is not found in the graph."
 
     def _iterate_query(self) -> str:
-        query = """
+        return """
                 SELECT DISTINCT ?subject
                 WHERE {
                     ?subject ?p ?o .
@@ -265,19 +263,17 @@ class PruneInstancesOfUnknownType(BaseTransformerStandardised):
 
                     }
                 """
-        return query
 
     def _count_query(self) -> str:
-        query = """
+        return """
                 SELECT (COUNT(DISTINCT ?subject) as ?count)
                 WHERE {
                     ?subject ?p ?o .
                     FILTER NOT EXISTS {?subject a ?object .}
                     }
                 """
-        return query
 
     def operation(self, query_result_row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
         (subject,) = query_result_row
         remove_triple = cast(Triple, (subject, None, None))
-        return ([], [remove_triple])
+        return [], [remove_triple]
