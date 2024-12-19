@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Literal, cast
 
 from cognite.neat._issues import IssueList
-from cognite.neat._rules.importers import BaseImporter
+from cognite.neat._rules.importers import BaseImporter, InferenceImporter
 from cognite.neat._rules.transformers import RulesTransformer
 from cognite.neat._store import NeatGraphStore, NeatRulesStore
 from cognite.neat._store._rules_store import ModelEntity
@@ -44,7 +44,10 @@ class SessionState:
     def rule_import(self, importer: BaseImporter) -> IssueList:
         issues = self.rule_store.import_(importer)
         result = cast(ModelEntity, self.rule_store.provenance[-1].target_entity).display_name
-        issues.action = f"Imported {result}"
+        if isinstance(importer, InferenceImporter):
+            issues.action = f"Inferred {result}"
+        else:
+            issues.action = f"Read {result}"
         if issues:
             issues.hint = "Use the .inspect.issues() for more details."
         return issues

@@ -261,15 +261,9 @@ function highlightFilter(filter) {
                             >
                                 <option selected>Select a Node by ID</option>
                                 
-                                    <option value="UNKNOWN">UNKNOWN</option>
+                                    <option value="Activity">Activity</option>
                                 
-                                    <option value="InferenceImporter">InferenceImporter</option>
-                                
-                                    <option value="graph-store">graph-store</option>
-                                
-                                    <option value="VerifyAnyRules">VerifyAnyRules</option>
-                                
-                                    <option value="InformationToDMS">InformationToDMS</option>
+                                    <option value="Asset">Asset</option>
                                 
                             </select>
                         </div>
@@ -323,8 +317,8 @@ function highlightFilter(filter) {
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"color": "#b92886", "id": "UNKNOWN", "label": "UNKNOWN", "shape": "dot", "size": 10, "title": "Entity", "type": "Entity"}, {"color": "#01cdb4", "id": "InferenceImporter", "label": "InferenceImporter", "shape": "dot", "size": 10, "title": "Agent", "type": "Agent"}, {"color": "#b92886", "id": "graph-store", "label": "graph-store", "shape": "dot", "size": 10, "title": "Entity", "type": "Entity"}, {"color": "#01cdb4", "id": "VerifyAnyRules", "label": "VerifyAnyRules", "shape": "dot", "size": 10, "title": "Agent", "type": "Agent"}, {"color": "#01cdb4", "id": "InformationToDMS", "label": "InformationToDMS", "shape": "dot", "size": 10, "title": "Agent", "type": "Agent"}]);
-                  edges = new vis.DataSet([{"arrows": "to", "color": "grey", "from": "UNKNOWN", "label": "used", "to": "InferenceImporter", "width": 1}, {"arrows": "to", "color": "grey", "from": "graph-store", "label": "used", "to": "VerifyAnyRules", "width": 1}, {"arrows": "to", "color": "grey", "from": "graph-store", "label": "used", "to": "InformationToDMS", "width": 1}, {"arrows": "to", "color": "grey", "from": "InferenceImporter", "label": "generated", "to": "graph-store", "width": 1}, {"arrows": "to", "color": "grey", "from": "VerifyAnyRules", "label": "generated", "to": "graph-store", "width": 1}, {"arrows": "to", "color": "grey", "from": "InformationToDMS", "label": "generated", "to": "graph-store", "width": 1}]);
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "Activity", "label": "Activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Asset", "label": "Asset", "shape": "dot", "size": 10}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "Activity", "label": "asset", "to": "Asset", "width": 1}]);
 
                   nodeColors = {};
                   allNodes = nodes.get({ returnType: "Object" });

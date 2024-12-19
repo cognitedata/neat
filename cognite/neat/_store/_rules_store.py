@@ -52,6 +52,7 @@ class NeatRulesStore:
         self.provenance = Provenance()
         self.exports_by_source_entity_id: dict[rdflib.URIRef, list[Change]] = defaultdict(list)
         self.pruned_by_source_entity_id: dict[rdflib.URIRef, list[Provenance]] = defaultdict(list)
+        self._last_outcome: UploadResultList | None = None
         self._iteration_by_id: dict[Hashable, int] = {}
 
     def calculate_provenance_hash(self, shorten: bool = True) -> str:
@@ -217,6 +218,7 @@ class NeatRulesStore:
             source_entity=source_entity,
         )
         self.exports_by_source_entity_id[source_entity.id_].append(change)
+        self._last_outcome = result
         return result
 
     def prune_until_compatible(self, transformer: RulesTransformer) -> list[Change]:
@@ -375,9 +377,6 @@ class NeatRulesStore:
 
     @property
     def last_outcome(self) -> UploadResultList:
-        for change in reversed(self.provenance):
-            if isinstance(change.target_entity, ModelEntity) and isinstance(
-                change.target_entity.result, UploadResultList
-            ):
-                return change.target_entity.result
+        if self._last_outcome is not None:
+            return self._last_outcome
         raise NeatValueError("No outcome found in the provenance.")
