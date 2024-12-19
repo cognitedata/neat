@@ -20,9 +20,8 @@ import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional, TypeVar
+from typing import Optional
 
-from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from rdflib import PROV, RDF, Literal, URIRef
 
 from cognite.neat._constants import CDF_NAMESPACE, DEFAULT_NAMESPACE
@@ -72,27 +71,11 @@ class Entity:
         return output
 
     @classmethod
-    def from_data_model_id(cls, data_model_id: DataModelIdentifier) -> "Entity":
-        data_model_id = DataModelId.load(data_model_id)
-
-        return cls(
-            was_attributed_to=CDF_AGENT,
-            id_=CDF_NAMESPACE[
-                f"dms/data-model/{data_model_id.space}/{data_model_id.external_id}/{data_model_id.version}"
-            ],
-        )
-
-    @classmethod
     def new_unknown_entity(cls) -> "Entity":
         return cls(
             was_attributed_to=UNKNOWN_AGENT,
             id_=DEFAULT_NAMESPACE[f"unknown-entity/{uuid.uuid4()}"],
         )
-
-
-@dataclass(frozen=True)
-class ModelEntity(Entity):
-    result: Any | None = None
 
 
 INSTANCES_ENTITY = Entity(was_attributed_to=NEAT_AGENT, id_=CDF_NAMESPACE["instances"])
@@ -171,11 +154,8 @@ class Change(FrozenNeatObject):
         }
 
 
-T_Change = TypeVar("T_Change", bound=Change)
-
-
 class Provenance(NeatList[Change]):
-    def __init__(self, changes: Sequence[T_Change] | None = None):
+    def __init__(self, changes: Sequence[Change] | None = None):
         super().__init__(changes or [])
 
     def activity_took_place(self, activity: str) -> bool:

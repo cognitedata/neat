@@ -1,5 +1,6 @@
 import hashlib
 from collections.abc import Callable, Hashable
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from functools import partial
 from pathlib import Path
@@ -11,7 +12,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules._shared import ReadRules, T_VerifiedRules, VerifiedRules
+from cognite.neat._rules._shared import ReadRules, Rules, T_VerifiedRules, VerifiedRules
 from cognite.neat._rules.exporters import BaseExporter
 from cognite.neat._rules.exporters._base import CDFExporter, T_Export
 from cognite.neat._rules.importers import BaseImporter
@@ -20,7 +21,17 @@ from cognite.neat._rules.models._base_input import InputRules
 from cognite.neat._rules.transformers import RulesTransformer
 from cognite.neat._utils.upload import UploadResultList
 
-from ._provenance import EMPTY_ENTITY, UNKNOWN_AGENT, Activity, Agent, Change, Entity, ModelEntity, Provenance
+from ._provenance import EMPTY_ENTITY, UNKNOWN_AGENT, Activity, Agent, Change, Entity, Provenance
+
+
+@dataclass(frozen=True)
+class ModelEntity(Entity):
+    result: Rules | None = None
+
+
+@dataclass(frozen=True)
+class OutcomeEntity(Entity):
+    result: UploadResultList | None = None
 
 
 class NeatRulesStore:
@@ -44,14 +55,14 @@ class NeatRulesStore:
             was_attributed_to=UNKNOWN_AGENT,
             id_=importer.source_uri,
         )
-        return self._run(importer.to_rules, agent, source_entity, importer.description)[1]
+        return self._do_activity(importer.to_rules, agent, source_entity, importer.description)[1]
 
     def transform(self, *transformer: RulesTransformer) -> IssueList:
         all_issues = IssueList()
         for item in transformer:
             last_entity = self.get_last_successful_entity()
 
-            transform_issues = self._run(
+            transform_issues = self._do_activity(
                 # The item and last_entity will change in the loop, however, this will
                 # be ok as the run method will execute the lambda immediately
                 lambda: item.transform(last_entity.result),  # noqa: B023
@@ -82,20 +93,18 @@ class NeatRulesStore:
         if last_entity is None:
             raise NeatValueError("No verified DMS rules found in the provenance.")
         rules = last_entity.result
-        result, _ = self._run(lambda: action(rules), agent, last_entity, description)
+        result, _ = self._do_activity(lambda: action(rules), agent, last_entity, description)
         return result
 
-    def _run(
-        self, action: Callable[[], Any], agent: Agent, source_entity: Entity, description: str
+    def _do_activity(
+        self, action: Callable[[], Rules | None], agent: Agent, source_entity: Entity, description: str
     ) -> tuple[Any, IssueList]:
         start = datetime.now(timezone.utc)
         issue_list = IssueList()
-        result: Any = None
+        result: Rules | None = None
         with catch_issues(issue_list) as _:
             result = action()
         end = datetime.now(timezone.utc)
-        if hasattr(result, "issues") and isinstance(result.issues, IssueList):
-            issue_list.extend(result.issues)
 
         activity = Activity(
             was_associated_with=agent,
@@ -107,9 +116,9 @@ class NeatRulesStore:
             was_attributed_to=agent,
             was_generated_by=activity,
             result=result,
+            issues=issue_list,
             id_=self._create_id(result),
         )
-
         change = Change(
             agent=agent,
             activity=activity,

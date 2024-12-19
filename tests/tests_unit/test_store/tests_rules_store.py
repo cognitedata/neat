@@ -21,7 +21,7 @@ class TestRuleStore:
 
         assert not write_issues.errors
 
-        transform_issues = store.transform(transformer=transformers.VerifyDMSRules(errors="raise", validate=False))
+        transform_issues = store.transform(transformers.VerifyDMSRules(validate=False))
 
         assert not transform_issues.errors
 
@@ -40,7 +40,7 @@ class TestRuleStore:
 
         assert not write_issues.errors
 
-        transform_issues = store.transform(transformer=FailingTransformer())
+        transform_issues = store.transform(FailingTransformer())
 
         assert len(transform_issues.errors) == 1
         error = transform_issues.errors[0]
