@@ -178,3 +178,5 @@ real_cases/
 
 # Excel chache files
 ~*.xlsx
+docs/**/*.aml
+docs/**/*.xml
