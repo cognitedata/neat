@@ -83,12 +83,18 @@ class VerifyDMSRules(VerificationTransformer[ReadRules[DMSInputRules], DMSRules]
     _rules_cls = DMSRules
     _validation_cls = DMSValidation
 
+    def transform(self, rules: ReadRules[DMSInputRules]) -> DMSRules:
+        return super().transform(rules)
+
 
 class VerifyInformationRules(VerificationTransformer[ReadRules[InformationInputRules], InformationRules]):
     """Class to verify Information rules."""
 
     _rules_cls = InformationRules
     _validation_cls = InformationValidation
+
+    def transform(self, rules: ReadRules[InformationInputRules]) -> InformationRules:
+        return super().transform(rules)
 
 
 class VerifyAnyRules(VerificationTransformer[T_ReadInputRules, VerifiedRules]):
