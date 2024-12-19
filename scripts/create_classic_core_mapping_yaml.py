@@ -34,17 +34,17 @@ def main() -> None:
         return
 
     print("[bold green]Verified[/bold green]")
-    change = Change.from_rules_activity(
-        result.rules,
-        transformer.agent,
-        start,
-        end,
-        f"Verified data model {source_id} as {result.rules.metadata.identifier}",
-        neat._state.data_model.provenance.source_entity(source_id)
-        or neat._state.data_model.provenance.target_entity(source_id),
-    )
-
-    neat._state.data_model.write(result.rules, change)
+    # change = Change.from_rules_activity(
+    #     result.rules,
+    #     transformer.agent,
+    #     start,
+    #     end,
+    #     f"Verified data model {source_id} as {result.rules.metadata.identifier}",
+    #     neat._state.data_model.provenance.source_entity(source_id)
+    #     or neat._state.data_model.provenance.target_entity(source_id),
+    # )
+    #
+    # neat._state.data_model.write(result.rules, change)
 
     neat.to.yaml(TARGET_FILE, format="neat")
     print(f"[bold green]Wrote {TARGET_FILE.name}[/bold green]")

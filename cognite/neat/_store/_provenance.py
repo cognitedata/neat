@@ -27,7 +27,6 @@ from rdflib import PROV, RDF, Literal, URIRef
 
 from cognite.neat._constants import CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList
-from cognite.neat._rules._shared import ReadRules, VerifiedRules
 from cognite.neat._shared import FrozenNeatObject, NeatList, Triple
 
 
@@ -82,34 +81,6 @@ class Entity:
                 f"dms/data-model/{data_model_id.space}/{data_model_id.external_id}/{data_model_id.version}"
             ],
         )
-
-    @classmethod
-    def from_rules(
-        cls,
-        rules: ReadRules | VerifiedRules,
-        agent: Agent | None = None,
-        activity: "Activity | None" = None,
-    ) -> "Entity":
-        agent = agent or UNKNOWN_AGENT
-        if isinstance(rules, VerifiedRules):
-            return cls(
-                was_attributed_to=agent,
-                was_generated_by=activity,
-                id_=rules.metadata.identifier,
-            )
-
-        elif isinstance(rules, ReadRules) and rules.rules is not None:
-            return cls(
-                was_attributed_to=agent,
-                was_generated_by=activity,
-                id_=rules.rules.metadata.identifier,
-            )
-        else:
-            return cls(
-                was_attributed_to=agent,
-                was_generated_by=activity,
-                id_=DEFAULT_NAMESPACE["unknown-entity"],
-            )
 
     @classmethod
     def new_unknown_entity(cls) -> "Entity":
@@ -188,34 +159,6 @@ class Change(FrozenNeatObject):
             activity=activity,
             target_entity=target_entity,
             description=description,
-        )
-
-    @classmethod
-    def from_rules_activity(
-        cls,
-        rules: ReadRules | VerifiedRules,
-        agent: Agent,
-        start: datetime,
-        end: datetime,
-        description: str,
-        source_entity: Entity | None = None,
-    ) -> "Change":
-        source_entity = source_entity or Entity.new_unknown_entity()
-        activity = Activity(
-            started_at_time=start,
-            ended_at_time=end,
-            was_associated_with=agent,
-            used=source_entity,
-        )
-
-        target_entity = Entity.from_rules(rules, agent, activity)
-
-        return cls(
-            agent=agent,
-            activity=activity,
-            target_entity=target_entity,
-            description=description,
-            source_entity=source_entity,
         )
 
     def dump(self, aggregate: bool = True) -> dict[str, str]:

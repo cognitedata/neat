@@ -62,10 +62,10 @@ class NeatRulesStore:
             all_issues.extend(transform_issues)
         return all_issues
 
-    def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export], path: Path | None = None) -> T_Export:
+    def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export]) -> T_Export:
         return self._export(exporter.export, exporter.agent, exporter.description)
 
-    def export_to_file(self, exporter: BaseExporter[T_VerifiedRules, T_Export], path: Path) -> None:
+    def export_to_file(self, exporter: BaseExporter, path: Path) -> None:
         return self._export(partial(exporter.export_to_file, filepath=path), exporter.agent, exporter.description)
 
     def export_to_cdf(self, exporter: CDFExporter, client: NeatClient, dry_run: bool) -> UploadResultList:
