@@ -274,7 +274,7 @@ class PruneInstancesOfUnknownType(BaseTransformerStandardised):
                 SELECT (COUNT(DISTINCT ?subject) as ?count)
                 WHERE {
                     ?subject ?p ?o .
-                    FILTER NOT EXISTS {?subject a ?object .}                    
+                    FILTER NOT EXISTS {?subject a ?object .}
                     }
                 """
         return query
