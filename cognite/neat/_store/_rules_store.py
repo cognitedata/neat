@@ -1,4 +1,5 @@
 import hashlib
+from collections import defaultdict
 from collections.abc import Callable, Hashable
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -37,6 +38,8 @@ class OutcomeEntity(Entity):
 class NeatRulesStore:
     def __init__(self) -> None:
         self.provenance = Provenance()
+        self._exports_by_target_entity_id: dict[rdflib.URIRef, Change] = {}
+        self._pruned_by_target_entity_id: dict[rdflib.URIRef, Provenance] = defaultdict(Provenance)
         self._iteration_by_id: dict[Hashable, int] = {}
 
     def calculate_provenance_hash(self, shorten: bool = True) -> str:
@@ -83,6 +86,17 @@ class NeatRulesStore:
         return self._export(
             partial(exporter.export_to_cdf, client=client, dry_run=dry_run), exporter.agent, exporter.description
         )
+
+    def prune_until_compatible(self, transformer: RulesTransformer) -> list[Change]:
+        """Prune the provenance until the last successful entity is compatible with the transformer.
+
+        Args:
+            transformer: The transformer to check compatibility with.
+
+        Returns:
+            The changes that were pruned.
+        """
+        raise NotImplementedError()
 
     def _export(self, action: Callable[[Any], Any], agent: Agent, description: str) -> Any:
         last_entity: ModelEntity | None = None
