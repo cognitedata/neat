@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Generic, TypeAlias, TypeVar
+from typing import Any, Generic, TypeAlias, TypeVar, get_args
 
 from cognite.neat._rules.models import (
     DMSRules,
@@ -21,6 +21,16 @@ class ReadRules(Generic[T_InputRules]):
 
     rules: T_InputRules | None
     read_context: dict[str, Any]
+
+    @classmethod
+    def display_type_name(cls) -> str:
+        return get_args(cls)[0].display_type_name()
+
+    @property
+    def display_name(self):
+        if self.rules is None:
+            return "FailedRead"
+        return self.rules.display_name
 
 
 ReadInputRules: TypeAlias = ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
