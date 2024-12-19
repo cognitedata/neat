@@ -39,8 +39,8 @@ class OutcomeEntity(Entity):
 class NeatRulesStore:
     def __init__(self) -> None:
         self.provenance = Provenance()
-        self.exports_by_target_entity_id: dict[rdflib.URIRef, list[Change]] = defaultdict(list)
-        self.pruned_by_target_entity_id: dict[rdflib.URIRef, list[Provenance]] = defaultdict(list)
+        self.exports_by_source_entity_id: dict[rdflib.URIRef, list[Change]] = defaultdict(list)
+        self.pruned_by_source_entity_id: dict[rdflib.URIRef, list[Provenance]] = defaultdict(list)
         self._iteration_by_id: dict[Hashable, int] = {}
 
     def calculate_provenance_hash(self, shorten: bool = True) -> str:
@@ -124,7 +124,7 @@ class NeatRulesStore:
             description=exporter.description,
             source_entity=source_entity,
         )
-        self.exports_by_target_entity_id[source_entity.id_].append(change)
+        self.exports_by_source_entity_id[source_entity.id_].append(change)
         return result
 
     def export_to_file(self, exporter: BaseExporter, path: Path) -> None:
@@ -164,7 +164,7 @@ class NeatRulesStore:
             description=exporter.description,
             source_entity=source_entity,
         )
-        self.exports_by_target_entity_id[source_entity.id_].append(change)
+        self.exports_by_source_entity_id[source_entity.id_].append(change)
 
     def export_to_cdf(self, exporter: CDFExporter, client: NeatClient, dry_run: bool) -> UploadResultList:
         last_change = self.provenance[-1]
@@ -205,7 +205,7 @@ class NeatRulesStore:
             description=exporter.description,
             source_entity=source_entity,
         )
-        self.exports_by_target_entity_id[source_entity.id_].append(change)
+        self.exports_by_source_entity_id[source_entity.id_].append(change)
         return result
 
     def prune_until_compatible(self, transformer: RulesTransformer) -> list[Change]:
@@ -231,7 +231,7 @@ class NeatRulesStore:
             return []
         self.provenance = self.provenance[: -len(pruned_candidates)]
         pruned_candidates.reverse()
-        self.pruned_by_target_entity_id[self.provenance[-1].target_entity.id_].append(Provenance(pruned_candidates))
+        self.pruned_by_source_entity_id[self.provenance[-1].target_entity.id_].append(Provenance(pruned_candidates))
         return pruned_candidates
 
     def _export(self, action: Callable[[Any], Any], agent: Agent, description: str) -> Any:

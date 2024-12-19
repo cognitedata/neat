@@ -279,7 +279,7 @@ class ShowDataModelProvenanceAPI(ShowBaseAPI):
 
     def _generate_dm_provenance_di_graph_and_types(self) -> nx.DiGraph:
         di_graph = nx.DiGraph()
-        hex_colored_types = _generate_hex_color_per_type(["Agent", "Entity", "Activity"])
+        hex_colored_types = _generate_hex_color_per_type(["Agent", "Entity", "Activity", "Export", "Pruned"])
 
         for change in self._state.rule_store.provenance:
             source = self._shorten_id(change.source_entity.id_)
@@ -312,6 +312,33 @@ class ShowDataModelProvenanceAPI(ShowBaseAPI):
 
             di_graph.add_edge(source, agent, label="used", color="grey")
             di_graph.add_edge(agent, target, label="generated", color="grey")
+
+        for source_id, exports in self._state.rule_store.exports_by_source_entity_id.items():
+            source_shorten = self._shorten_id(source_id)
+            for export in exports:
+                export_id = self._shorten_id(export.target_entity.id_)
+                di_graph.add_node(
+                    export_id,
+                    label=export_id,
+                    type="Export",
+                    title="Export",
+                    color=hex_colored_types["Export"],
+                )
+                di_graph.add_edge(source_shorten, export_id, label="exported", color="grey")
+
+        for pruned_lists in self._state.rule_store.pruned_by_source_entity_id.values():
+            for prune_path in pruned_lists:
+                for change in prune_path:
+                    source = self._shorten_id(change.source_entity.id_)
+                    target = self._shorten_id(change.target_entity.id_)
+                    di_graph.add_node(
+                        target,
+                        label=target,
+                        type="Pruned",
+                        title="Pruned",
+                        color=hex_colored_types["Pruned"],
+                    )
+                    di_graph.add_edge(source, target, label="pruned", color="grey")
 
         return di_graph
 
