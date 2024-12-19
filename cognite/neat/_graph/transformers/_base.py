@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import ClassVar, TypeAlias
+from typing import ClassVar, TypeAlias, cast
 
 from rdflib import Graph
 from rdflib.query import ResultRow
@@ -75,13 +75,13 @@ class BaseTransformerStandardised(ABC):
         to_remove: list[Triple] = []
 
         properties_count_res = list(graph.query(self._count_query()))
-        properties_count = int(properties_count_res[0][0])
+        properties_count = int(properties_count_res[0][0])  # type: ignore [index, arg-type]
 
         outcome.affected_nodes_count = properties_count
 
         if self._skip_count_query():
             skipped_count_res = list(graph.query(self._skip_count_query()))
-            skipped_count = int(skipped_count_res[0][0])
+            skipped_count = int(skipped_count_res[0][0])  # type: ignore [index, arg-type]
             outcome.skipped = skipped_count
 
         if properties_count == 0:
@@ -89,13 +89,14 @@ class BaseTransformerStandardised(ABC):
 
         result_iterable = graph.query(self._iterate_query())
         if properties_count > self._use_iterate_bar_threshold:
-            result_iterable = iterate_progress_bar(
+            result_iterable = iterate_progress_bar(  # type: ignore[misc, assignment]
                 result_iterable,
                 total=properties_count,
                 description=self.description(),
             )
 
         for row in result_iterable:
+            row = cast(ResultRow, row)
             triples_to_add_from_row, triples_to_remove_from_row = self.operation(row)
 
             to_add.extend(triples_to_add_from_row)
