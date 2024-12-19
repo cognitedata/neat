@@ -46,7 +46,7 @@ class MockGraphGenerator(BaseExtractor):
             # fixes potential issues with circular dependencies
             from cognite.neat._rules.transformers import DMSToInformation
 
-            self.rules = DMSToInformation().transform(rules).rules
+            self.rules = DMSToInformation().transform(rules)
         elif isinstance(rules, InformationRules):
             self.rules = rules
         else:

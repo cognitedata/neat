@@ -1,5 +1,4 @@
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, cast
 
@@ -12,11 +11,7 @@ from cognite.neat._graph import extractors
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules import catalog, importers
-from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers import BaseImporter
-from cognite.neat._store._provenance import Activity as ProvenanceActivity
-from cognite.neat._store._provenance import Change
-from cognite.neat._store._provenance import Entity as ProvenanceEntity
 from cognite.neat._utils.reader import GitHubReader, HttpFileReader, NeatReader, PathReader
 
 from ._state import SessionState
@@ -46,26 +41,6 @@ class BaseReadAPI:
         self._state = state
         self._verbose = verbose
         self._client = client
-
-    def _store_rules(self, rules: ReadRules, change: Change) -> IssueList:
-        if self._verbose:
-            if rules.issues.has_errors:
-                print("Data model read failed")
-            else:
-                print("Data model read passed")
-
-        if rules.rules:
-            self._state.data_model.write(rules, change)
-
-        return rules.issues
-
-    def _return_filepath(self, io: Any) -> Path:
-        if isinstance(io, str):
-            return Path(io)
-        elif isinstance(io, Path):
-            return io
-        else:
-            raise NeatValueError(f"Expected str or Path, got {type(io)}")
 
 
 @session_class_wrapper
@@ -103,31 +78,8 @@ class CDFReadAPI(BaseReadAPI):
         if not data_model_id.version:
             raise NeatSessionError("Data model version is required to read a data model.")
 
-        # actual reading of data model
-        start = datetime.now(timezone.utc)
         importer = importers.DMSImporter.from_data_model_id(self._get_client, data_model_id)
-        rules = importer.to_rules()
-        end = datetime.now(timezone.utc)
-
-        # provenance information
-        source_entity = ProvenanceEntity.from_data_model_id(data_model_id)
-        agent = importer.agent
-        activity = ProvenanceActivity(
-            was_associated_with=agent,
-            ended_at_time=end,
-            used=source_entity,
-            started_at_time=start,
-        )
-        target_entity = ProvenanceEntity.from_rules(rules, agent, activity)
-        change = Change(
-            source_entity=source_entity,
-            agent=agent,
-            activity=activity,
-            target_entity=target_entity,
-            description=f"DMS Data model {data_model_id.as_tuple()} read as unverified data model",
-        )
-
-        return self._store_rules(rules, change)
+        return self._state.rule_import(importer)
 
 
 @session_class_wrapper
@@ -215,24 +167,9 @@ class ExcelReadAPI(BaseReadAPI):
             io: file path to the Excel sheet
         """
         reader = NeatReader.create(io)
-        start = datetime.now(timezone.utc)
         if not isinstance(reader, PathReader):
             raise NeatValueError("Only file paths are supported for Excel files")
-        importer: importers.ExcelImporter = importers.ExcelImporter(reader.path)
-        input_rules: ReadRules = importer.to_rules()
-        end = datetime.now(timezone.utc)
-
-        if input_rules.rules:
-            change = Change.from_rules_activity(
-                input_rules,
-                importer.agent,
-                start,
-                end,
-                description=f"Excel file {reader!s} read as unverified data model",
-            )
-            self._store_rules(input_rules, change)
-        self._state.data_model.issue_lists.append(input_rules.issues)
-        return input_rules.issues
+        return self._state.rule_import(importers.ExcelImporter(reader.path))
 
 
 @session_class_wrapper
@@ -241,23 +178,9 @@ class ExcelExampleAPI(BaseReadAPI):
 
     @property
     def pump_example(self) -> IssueList:
-        """Reads the Nordic 44 knowledge graph into the NeatSession graph store."""
-        start = datetime.now(timezone.utc)
+        """Reads the Hello World pump example into the NeatSession."""
         importer: importers.ExcelImporter = importers.ExcelImporter(catalog.hello_world_pump)
-        input_rules: ReadRules = importer.to_rules()
-        end = datetime.now(timezone.utc)
-
-        if input_rules.rules:
-            change = Change.from_rules_activity(
-                input_rules,
-                importer.agent,
-                start,
-                end,
-                description="Pump Example read as unverified data model",
-            )
-            self._store_rules(input_rules, change)
-        self._state.data_model.issue_lists.append(input_rules.issues)
-        return input_rules.issues
+        return self._state.rule_import(importer)
 
 
 @session_class_wrapper
@@ -278,10 +201,9 @@ class YamlReadAPI(BaseReadAPI):
         reader = NeatReader.create(io)
         if not isinstance(reader, PathReader):
             raise NeatValueError("Only file paths are supported for YAML files")
-        start = datetime.now(timezone.utc)
         importer: BaseImporter
         if format == "neat":
-            importer = importers.YAMLImporter.from_file(reader.path)
+            importer = importers.YAMLImporter.from_file(reader.path, source_name=f"{reader!s}")
         elif format == "toolkit":
             if reader.path.is_file():
                 dms_importer = importers.DMSImporter.from_zip_file(reader.path)
@@ -289,6 +211,7 @@ class YamlReadAPI(BaseReadAPI):
                 dms_importer = importers.DMSImporter.from_directory(reader.path)
             else:
                 raise NeatValueError(f"Unsupported YAML format: {format}")
+
             ref_containers = dms_importer.root_schema.referenced_container()
             if system_container_ids := [
                 container_id for container_id in ref_containers if container_id.space in COGNITE_SPACES
@@ -305,21 +228,7 @@ class YamlReadAPI(BaseReadAPI):
             importer = dms_importer
         else:
             raise NeatValueError(f"Unsupported YAML format: {format}")
-        input_rules: ReadRules = importer.to_rules()
-
-        end = datetime.now(timezone.utc)
-
-        if input_rules.rules:
-            change = Change.from_rules_activity(
-                input_rules,
-                importer.agent,
-                start,
-                end,
-                description=f"YAML file {reader!s} read as unverified data model",
-            )
-            self._store_rules(input_rules, change)
-
-        return input_rules.issues
+        return self._state.rule_import(importer)
 
 
 @session_class_wrapper
@@ -452,25 +361,11 @@ class RDFReadAPI(BaseReadAPI):
             neat.read.rdf.ontology("url_or_path_to_owl_source")
             ```
         """
-        start = datetime.now(timezone.utc)
         reader = NeatReader.create(io)
         if not isinstance(reader, PathReader):
             raise NeatValueError("Only file paths are supported for RDF files")
-        importer = importers.OWLImporter.from_file(reader.path)
-        input_rules: ReadRules = importer.to_rules()
-        end = datetime.now(timezone.utc)
-
-        if input_rules.rules:
-            change = Change.from_rules_activity(
-                input_rules,
-                importer.agent,
-                start,
-                end,
-                description=f"Ontology file {reader!s} read as unverified data model",
-            )
-            self._store_rules(input_rules, change)
-
-        return input_rules.issues
+        importer = importers.OWLImporter.from_file(reader.path, source_name=f"file {reader!s}")
+        return self._state.rule_import(importer)
 
     def imf(self, io: Any) -> IssueList:
         """Reads IMF Types provided as SHACL shapes into NeatSession.
@@ -483,25 +378,11 @@ class RDFReadAPI(BaseReadAPI):
             neat.read.rdf.imf("url_or_path_to_imf_source")
             ```
         """
-        start = datetime.now(timezone.utc)
         reader = NeatReader.create(io)
         if not isinstance(reader, PathReader):
             raise NeatValueError("Only file paths are supported for RDF files")
-        importer = importers.IMFImporter.from_file(reader.path)
-        input_rules: ReadRules = importer.to_rules()
-        end = datetime.now(timezone.utc)
-
-        if input_rules.rules:
-            change = Change.from_rules_activity(
-                input_rules,
-                importer.agent,
-                start,
-                end,
-                description=f"IMF Types file {reader!s} read as unverified data model",
-            )
-            self._store_rules(input_rules, change)
-
-        return input_rules.issues
+        importer = importers.IMFImporter.from_file(reader.path, source_name=f"file {reader!s}")
+        return self._state.rule_import(importer)
 
     def __call__(
         self,

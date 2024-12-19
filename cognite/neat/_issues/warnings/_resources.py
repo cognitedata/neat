@@ -21,7 +21,7 @@ class ResourceRegexViolationWarning(ResourceNeatWarning):
 
     fix = (
         "Either export the data model and make the necessary changes manually"
-        " or run prepare.cdf_compliant_external_ids."
+        " or run prepare.data_model.cdf_compliant_external_ids."
     )
 
     location: str

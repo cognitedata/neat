@@ -1,6 +1,4 @@
-import copy
 from collections.abc import Callable, Collection
-from datetime import datetime, timezone
 from typing import Any, Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
@@ -8,7 +6,6 @@ from rdflib import URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import (
-    DEFAULT_NAMESPACE,
     get_default_prefixes_and_namespaces,
 )
 from cognite.neat._graph.transformers import (
@@ -22,29 +19,18 @@ from cognite.neat._graph.transformers import (
     Transformers,
 )
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
-from cognite.neat._rules._shared import InputRules, ReadRules
-from cognite.neat._rules.importers import DMSImporter
-from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models.dms import DMSValidation
-from cognite.neat._rules.models.entities import ClassEntity
-from cognite.neat._rules.models.information._rules_input import InformationInputRules
+from cognite.neat._issues import IssueList
 from cognite.neat._rules.transformers import (
+    AddClassImplements,
+    IncludeReferenced,
     PrefixEntities,
     ReduceCogniteModel,
     ToCompliantEntities,
     ToExtension,
-    VerifyDMSRules,
 )
-from cognite.neat._store._provenance import Agent as ProvenanceAgent
-from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
-
-try:
-    from rich import print
-except ImportError:
-    ...
 
 
 @session_class_wrapper
@@ -327,53 +313,18 @@ class DataModelPrepareAPI:
         self._state = state
         self._verbose = verbose
 
-    def cdf_compliant_external_ids(self) -> None:
+    def cdf_compliant_external_ids(self) -> IssueList:
         """Convert data model component external ids to CDF compliant entities."""
-        source_id, rules = self._state.data_model.last_info_unverified_rule
+        return self._state.rule_transform(ToCompliantEntities())
 
-        start = datetime.now(timezone.utc)
-        transformer = ToCompliantEntities()
-        output: ReadRules[InformationInputRules] = transformer.transform(rules)
-        end = datetime.now(timezone.utc)
-
-        change = Change.from_rules_activity(
-            output,
-            transformer.agent,
-            start,
-            end,
-            "Converted external ids to CDF compliant entities",
-            self._state.data_model.provenance.source_entity(source_id)
-            or self._state.data_model.provenance.target_entity(source_id),
-        )
-
-        self._state.data_model.write(output, change)
-
-    def prefix(self, prefix: str) -> None:
+    def prefix(self, prefix: str) -> IssueList:
         """Prefix all views in the data model with the given prefix.
 
         Args:
             prefix: The prefix to add to the views in the data model.
 
         """
-        source_id, rules = self._state.data_model.last_unverified_rule
-
-        start = datetime.now(timezone.utc)
-        transformer = PrefixEntities(prefix)
-        new_rules = cast(InputRules, copy.deepcopy(rules.get_rules()))
-        output = transformer.transform(new_rules)
-        end = datetime.now(timezone.utc)
-
-        change = Change.from_rules_activity(
-            output,
-            transformer.agent,
-            start,
-            end,
-            "Added prefix to the data model views",
-            self._state.data_model.provenance.source_entity(source_id)
-            or self._state.data_model.provenance.target_entity(source_id),
-        )
-
-        self._state.data_model.write(output, change)
+        return self._state.rule_transform(PrefixEntities(prefix))
 
     def to_enterprise(
         self,
@@ -381,7 +332,7 @@ class DataModelPrepareAPI:
         org_name: str = "My",
         dummy_property: str = "GUID",
         move_connections: bool = False,
-    ) -> None:
+    ) -> IssueList:
         """Uses the current data model as a basis to create enterprise data model
 
         Args:
@@ -405,34 +356,15 @@ class DataModelPrepareAPI:
             views as the source and target views.
 
         """
-        if input := self._state.data_model.last_verified_dms_rules:
-            source_id, rules = input
-
-            start = datetime.now(timezone.utc)
-            transformer = ToExtension(
+        return self._state.rule_transform(
+            ToExtension(
                 new_model_id=data_model_id,
                 org_name=org_name,
                 type_="enterprise",
                 dummy_property=dummy_property,
                 move_connections=move_connections,
             )
-            output = transformer.transform(rules)
-            end = datetime.now(timezone.utc)
-
-            change = Change.from_rules_activity(
-                output,
-                transformer.agent,
-                start,
-                end,
-                (
-                    f"Prepared data model {data_model_id} to be enterprise data "
-                    f"model on top of {rules.metadata.as_data_model_id()}"
-                ),
-                self._state.data_model.provenance.source_entity(source_id)
-                or self._state.data_model.provenance.target_entity(source_id),
-            )
-
-            self._state.data_model.write(output.rules, change)
+        )
 
     def to_solution(
         self,
@@ -440,7 +372,7 @@ class DataModelPrepareAPI:
         org_name: str = "My",
         mode: Literal["read", "write"] = "read",
         dummy_property: str = "GUID",
-    ) -> None:
+    ) -> IssueList:
         """Uses the current data model as a basis to create solution data model
 
         Args:
@@ -461,34 +393,15 @@ class DataModelPrepareAPI:
             the containers in the solution data model space.
 
         """
-        if input := self._state.data_model.last_verified_dms_rules:
-            source_id, rules = input
-
-            start = datetime.now(timezone.utc)
-            transformer = ToExtension(
+        return self._state.rule_transform(
+            ToExtension(
                 new_model_id=data_model_id,
                 org_name=org_name,
                 type_="solution",
                 mode=mode,
                 dummy_property=dummy_property,
             )
-            output = transformer.transform(rules)
-            end = datetime.now(timezone.utc)
-
-            change = Change.from_rules_activity(
-                output,
-                transformer.agent,
-                start,
-                end,
-                (
-                    f"Prepared data model {data_model_id} to be solution data model "
-                    f"on top of {rules.metadata.as_data_model_id()}"
-                ),
-                self._state.data_model.provenance.source_entity(source_id)
-                or self._state.data_model.provenance.target_entity(source_id),
-            )
-
-            self._state.data_model.write(output.rules, change)
+        )
 
     def to_data_product(
         self,
@@ -507,65 +420,25 @@ class DataModelPrepareAPI:
             include: The views to include in the data product data model. Can be either "same-space" or "all".
                 If you set same-space, only the views in the same space as the data model will be included.
         """
-        source_id, rules = self._state.data_model.last_verified_dms_rules
-
-        dms_ref: DMSRules | None = None
-        view_ids, container_ids = DMSValidation(rules, self._client).imported_views_and_containers_ids()
-        if view_ids or container_ids:
-            if self._client is None:
-                raise NeatSessionError(
-                    "No client provided. You are referencing unknown views and containers in your data model, "
-                    "NEAT needs a client to lookup the definitions. "
-                    "Please set the client in the session, NeatSession(client=client)."
-                )
-            schema = self._client.schema.retrieve([v.as_id() for v in view_ids], [c.as_id() for c in container_ids])
-
-            importer = DMSImporter(schema)
-            reference_rules = importer.to_rules().rules
-            if reference_rules is not None:
-                imported = VerifyDMSRules("continue").transform(reference_rules)
-                if dms_ref := imported.rules:
-                    rules = rules.model_copy(deep=True)
-                    if rules.containers is None:
-                        rules.containers = dms_ref.containers
-                    else:
-                        existing_containers = {c.container for c in rules.containers}
-                        rules.containers.extend(
-                            [c for c in dms_ref.containers or [] if c.container not in existing_containers]
-                        )
-                    existing_views = {v.view for v in rules.views}
-                    rules.views.extend([v for v in dms_ref.views if v.view not in existing_views])
-                    existing_properties = {(p.view, p.view_property) for p in rules.properties}
-                    rules.properties.extend(
-                        [p for p in dms_ref.properties if (p.view, p.view_property) not in existing_properties]
-                    )
-
-        start = datetime.now(timezone.utc)
-        transformer = ToExtension(
-            new_model_id=data_model_id,
-            org_name=org_name,
-            type_="data_product",
-            include=include,
-        )
-        output = transformer.transform(rules)
-        end = datetime.now(timezone.utc)
-
-        change = Change.from_rules_activity(
-            output,
-            transformer.agent,
-            start,
-            end,
-            (
-                f"Prepared data model {data_model_id} to be data product model "
-                f"on top of {rules.metadata.as_data_model_id()}"
+        if self._client is None:
+            raise NeatSessionError(
+                "No client provided. You are referencing unknown views and containers in your data model, "
+                "NEAT needs a client to lookup the definitions. "
+                "Please set the client in the session, NeatSession(client=client)."
+            )
+        transformers = [
+            IncludeReferenced(self._client, include_properties=True),
+            ToExtension(
+                new_model_id=data_model_id,
+                org_name=org_name,
+                type_="data_product",
+                include=include,
             ),
-            self._state.data_model.provenance.source_entity(source_id)
-            or self._state.data_model.provenance.target_entity(source_id),
-        )
+        ]
 
-        self._state.data_model.write(output.rules, change)
+        self._state.rule_transform(*transformers)
 
-    def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]) -> None:
+    def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]) -> IssueList:
         """This is a special method that allow you to drop parts of the data model.
         This only applies to Cognite Data Models.
 
@@ -574,90 +447,19 @@ class DataModelPrepareAPI:
                 drops multiple views at once. You can also pass externalIds of views to drop individual views.
 
         """
-        if input := self._state.data_model.last_verified_dms_rules:
-            source_id, rules = input
-            start = datetime.now(timezone.utc)
+        return self._state.rule_transform(ReduceCogniteModel(drop))
 
-            transformer = ReduceCogniteModel(drop)
-            output = transformer.transform(rules)
-            output.rules.metadata.version = f"{rules.metadata.version}.reduced"
-
-            end = datetime.now(timezone.utc)
-
-            change = Change.from_rules_activity(
-                output,
-                transformer.agent,
-                start,
-                end,
-                (
-                    f"Reduced data model {rules.metadata.as_data_model_id()}"
-                    f"on top of {rules.metadata.as_data_model_id()}"
-                ),
-                self._state.data_model.provenance.source_entity(source_id),
-            )
-
-            self._state.data_model.write(output.rules, change)
-
-    def include_referenced(self) -> None:
+    def include_referenced(self) -> IssueList:
         """Include referenced views and containers in the data model."""
-        start = datetime.now(timezone.utc)
-
-        source_id, rules = self._state.data_model.last_verified_dms_rules
-        view_ids, container_ids = DMSValidation(rules, self._client).imported_views_and_containers_ids()
-        if not (view_ids or container_ids):
-            print(
-                f"Data model {rules.metadata.as_data_model_id()} does not have any referenced views or containers."
-                f"that is not already included in the data model."
-            )
-            return
         if self._client is None:
             raise NeatSessionError(
                 "No client provided. You are referencing unknown views and containers in your data model, "
                 "NEAT needs a client to lookup the definitions. "
                 "Please set the client in the session, NeatSession(client=client)."
             )
-        schema = self._client.schema.retrieve([v.as_id() for v in view_ids], [c.as_id() for c in container_ids])
-        copy_ = rules.model_copy(deep=True)
-        copy_.metadata.version = f"{rules.metadata.version}_completed"
-        importer = DMSImporter(schema)
-        imported = importer.to_rules()
-        if imported.rules is None:
-            self._state.data_model.issue_lists.append(imported.issues)
-            raise NeatSessionError(
-                "Could not import the referenced views and containers. "
-                "See `neat.inspect.issues()` for more information."
-            )
-        verified = VerifyDMSRules("continue", validate=False).transform(imported.rules)
-        if verified.rules is None:
-            self._state.data_model.issue_lists.append(verified.issues)
-            raise NeatSessionError(
-                "Could not verify the referenced views and containers. "
-                "See `neat.inspect.issues()` for more information."
-            )
-        if copy_.containers is None:
-            copy_.containers = verified.rules.containers
-        else:
-            existing_containers = {c.container for c in copy_.containers}
-            copy_.containers.extend(
-                [c for c in verified.rules.containers or [] if c.container not in existing_containers]
-            )
-        existing_views = {v.view for v in copy_.views}
-        copy_.views.extend([v for v in verified.rules.views if v.view not in existing_views])
-        end = datetime.now(timezone.utc)
+        return self._state.rule_transform(IncludeReferenced(self._client))
 
-        change = Change.from_rules_activity(
-            copy_,
-            ProvenanceAgent(id_=DEFAULT_NAMESPACE["agent/"]),
-            start,
-            end,
-            (f"Included referenced views and containers in the data model {rules.metadata.as_data_model_id()}"),
-            self._state.data_model.provenance.source_entity(source_id)
-            or self._state.data_model.provenance.target_entity(source_id),
-        )
-
-        self._state.data_model.write(copy_, change)
-
-    def add_implements_to_classes(self, suffix: Literal["Edge"], implements: str = "Edge") -> None:
+    def add_implements_to_classes(self, suffix: Literal["Edge"], implements: str = "Edge") -> IssueList:
         """All classes with the suffix will have the implements property set to the given value.
 
         Args:
@@ -665,24 +467,4 @@ class DataModelPrepareAPI:
             implements:  The value of the implements property to set.
 
         """
-        source_id, rules = self._state.data_model.last_verified_information_rules
-        start = datetime.now(timezone.utc)
-
-        output = rules.model_copy(deep=True)
-        for class_ in output.classes:
-            if class_.class_.suffix.endswith(suffix):
-                class_.implements = [ClassEntity(prefix=class_.class_.prefix, suffix=implements)]
-        output.metadata.version = f"{rules.metadata.version}.implements_{implements}"
-        end = datetime.now(timezone.utc)
-
-        change = Change.from_rules_activity(
-            output,
-            ProvenanceAgent(id_=DEFAULT_NAMESPACE["agent/"]),
-            start,
-            end,
-            (f"Added implements property to classes with suffix {suffix}"),
-            self._state.data_model.provenance.source_entity(source_id)
-            or self._state.data_model.provenance.target_entity(source_id),
-        )
-
-        self._state.data_model.write(output, change)
+        return self._state.rule_transform(AddClassImplements(implements, suffix))

@@ -1,10 +1,9 @@
-from datetime import datetime, timezone
-
 from cognite.client import data_modeling as dm
 
 from cognite.neat._constants import COGNITE_MODELS
+from cognite.neat._issues import IssueList
+from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.transformers import SetIDDMSModel
-from cognite.neat._store._provenance import Change
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
@@ -18,7 +17,7 @@ class SetAPI:
         self._state = state
         self._verbose = verbose
 
-    def data_model_id(self, new_model_id: dm.DataModelId | tuple[str, str, str]) -> None:
+    def data_model_id(self, new_model_id: dm.DataModelId | tuple[str, str, str]) -> IssueList:
         """Sets the data model ID of the latest verified data model. Set the data model id as a tuple of strings
         following the template (<data_model_space>, <data_model_name>, <data_model_version>).
 
@@ -28,34 +27,11 @@ class SetAPI:
             neat.set.data_model_id(("my_data_model_space", "My_Data_Model", "v1"))
             ```
         """
-        if res := self._state.data_model.last_verified_dms_rules:
-            source_id, rules = res
-
+        rules = self._state.rule_store.get_last_successful_entity().result
+        if isinstance(rules, DMSRules):
             if rules.metadata.as_data_model_id() in COGNITE_MODELS:
                 raise NeatSessionError(
                     "Cannot change the data model ID of a Cognite Data Model in NeatSession"
                     " due to temporarily issue with the reverse direct relation interpretation"
                 )
-
-            start = datetime.now(timezone.utc)
-            transformer = SetIDDMSModel(new_model_id)
-
-            output = transformer.transform(rules)
-            end = datetime.now(timezone.utc)
-
-            # Provenance
-            change = Change.from_rules_activity(
-                output.rules,
-                transformer.agent,
-                start,
-                end,
-                "Changed data model id",
-                self._state.data_model.provenance.source_entity(source_id)
-                or self._state.data_model.provenance.target_entity(source_id),
-            )
-
-            self._state.data_model.write(output.rules, change)
-            if self._verbose:
-                print(f"Data model ID set to {new_model_id}")
-        else:
-            print("No verified DMS data model available")
+        return self._state.rule_transform(SetIDDMSModel(new_model_id))

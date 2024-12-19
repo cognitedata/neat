@@ -1,3 +1,4 @@
+import pytest
 import yaml
 from pytest_regressions.data_regression import DataRegressionFixture
 
@@ -14,18 +15,18 @@ class FailingTransformer(RulesTransformer[DMSInputRules, DMSRules]):
 
 
 class TestRuleStore:
-    def test_write_transform_read(self, deterministic_uuid4: None, data_regression: DataRegressionFixture) -> None:
+    def test_import_transform_export(self, deterministic_uuid4: None, data_regression: DataRegressionFixture) -> None:
         store = NeatRulesStore()
 
-        write_issues = store.write(importers.ExcelImporter(catalog.hello_world_pump))
+        import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump))
 
-        assert not write_issues.errors
+        assert not import_issues.errors
 
-        transform_issues = store.transform(transformer=transformers.VerifyDMSRules(errors="raise", validate=False))
+        transform_issues = store.transform(transformers.VerifyDMSRules(validate=False))
 
         assert not transform_issues.errors
 
-        result = store.read(exporters.YAMLExporter())
+        result = store.export(exporters.YAMLExporter())
 
         assert isinstance(result, str)
         last_entity = store.get_last_successful_entity()
@@ -33,16 +34,45 @@ class TestRuleStore:
 
         data_regression.check(yaml.safe_load(result))
 
-    def test_write_fail_transform(self, deterministic_uuid4: None) -> None:
+    def test_import_fail_transform(self, deterministic_uuid4: None) -> None:
         store = NeatRulesStore()
 
-        write_issues = store.write(importers.ExcelImporter(catalog.hello_world_pump))
+        import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump))
 
-        assert not write_issues.errors
+        assert not import_issues.errors
 
-        transform_issues = store.transform(transformer=FailingTransformer())
+        transform_issues = store.transform(FailingTransformer())
 
         assert len(transform_issues.errors) == 1
         error = transform_issues.errors[0]
         assert isinstance(error, NeatValueError)
         assert "This transformer always fails" in error.as_message()
+
+    def test_import_invalid_transformer(self, deterministic_uuid4: None) -> None:
+        store = NeatRulesStore()
+
+        import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump))
+
+        assert not import_issues.errors
+
+        with pytest.raises(NeatValueError):
+            _ = store.transform(transformers.VerifyInformationRules(validate=False))
+
+    def test_import_prune_until_compatible(self, deterministic_uuid4: None) -> None:
+        store = NeatRulesStore()
+        # Gives us unverified information rules
+        issues = store.import_(importers.ExcelImporter(catalog.imf_attributes))
+
+        assert not issues
+        # Verify the information rules
+        issues = store.transform(transformers.VerifyInformationRules(validate=False))
+        assert not issues
+
+        # We want ot run a transformer on unverified rules, so we need to go back to the unverified state
+        next_transformer = transformers.ToCompliantEntities()
+        pruned = store.prune_until_compatible(next_transformer)
+        # Removes the VerifiedInformationRules
+        assert len(pruned) == 1
+
+        issues = store.transform(next_transformer)
+        assert not issues

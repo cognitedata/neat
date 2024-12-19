@@ -14,6 +14,7 @@ from cognite.neat._rules.models.entities import (
     UnknownEntity,
     load_value_type,
 )
+from cognite.neat._utils.rdf_ import uri_display_name
 
 from ._rules import (
     InformationClass,
@@ -149,6 +150,14 @@ class InformationInputRules(InputRules[InformationRules]):
             Classes=[class_.dump(default_prefix) for class_ in self.classes],
             Prefixes=self.prefixes,
         )
+
+    @classmethod
+    def display_type_name(cls) -> str:
+        return "UnverifiedInformationModel"
+
+    @property
+    def display_name(self):
+        return uri_display_name(self.metadata.identifier)
 
     def _repr_html_(self) -> str:
         summary = {

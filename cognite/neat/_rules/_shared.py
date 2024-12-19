@@ -1,8 +1,6 @@
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Generic, TypeAlias, TypeVar
 
-from cognite.neat._issues import IssueList
 from cognite.neat._rules.models import (
     DMSRules,
     InformationRules,
@@ -11,46 +9,32 @@ from cognite.neat._rules.models.dms._rules_input import DMSInputRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
 
 VerifiedRules: TypeAlias = InformationRules | DMSRules
-InputRules: TypeAlias = DMSInputRules | InformationInputRules
-Rules: TypeAlias = DMSInputRules | InformationInputRules | InformationRules | DMSRules
-T_Rules = TypeVar("T_Rules", bound=Rules)
+
 T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
+InputRules: TypeAlias = DMSInputRules | InformationInputRules
 T_InputRules = TypeVar("T_InputRules", bound=InputRules)
 
 
 @dataclass
-class OutRules(Generic[T_Rules], ABC):
-    """This is a base class for all rule states."""
+class ReadRules(Generic[T_InputRules]):
+    """This represents a rules that has been read."""
 
-    @abstractmethod
-    def get_rules(self) -> T_Rules | None:
-        """Get the rules from the state."""
-        raise NotImplementedError()
-
-
-@dataclass
-class JustRules(OutRules[T_Rules]):
-    """This represents a rule that exists"""
-
-    rules: T_Rules
-
-    def get_rules(self) -> T_Rules:
-        return self.rules
-
-
-@dataclass
-class MaybeRules(OutRules[T_Rules]):
-    """This represents a rule that may or may not exist"""
-
-    rules: T_Rules | None
-    issues: IssueList
-
-    def get_rules(self) -> T_Rules | None:
-        return self.rules
-
-
-@dataclass
-class ReadRules(MaybeRules[T_Rules]):
-    """This represents a rule that does not exist"""
-
+    rules: T_InputRules | None
     read_context: dict[str, Any]
+
+    @classmethod
+    def display_type_name(cls) -> str:
+        return "UnverifiedModel"
+
+    @property
+    def display_name(self):
+        if self.rules is None:
+            return "FailedRead"
+        return self.rules.display_name
+
+
+ReadInputRules: TypeAlias = ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
+T_ReadInputRules = TypeVar("T_ReadInputRules", bound=ReadInputRules)
+
+Rules: TypeAlias = InformationRules | DMSRules | ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
+T_Rules = TypeVar("T_Rules", bound=Rules)

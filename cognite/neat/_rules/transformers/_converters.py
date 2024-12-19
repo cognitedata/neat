@@ -1,6 +1,7 @@
+import dataclasses
 import re
 import warnings
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import Counter, defaultdict
 from collections.abc import Collection, Mapping
 from datetime import date, datetime
@@ -9,11 +10,12 @@ from typing import ClassVar, Literal, TypeVar, cast, overload
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
 
+from cognite.neat._client import NeatClient
+from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
 from cognite.neat._constants import (
     COGNITE_MODELS,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
 )
-from cognite.neat._issues._base import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._issues.warnings._models import (
@@ -21,13 +23,13 @@ from cognite.neat._issues.warnings._models import (
     SolutionModelBuildOnTopOfCDMWarning,
 )
 from cognite.neat._rules._shared import (
-    InputRules,
-    JustRules,
-    OutRules,
+    ReadInputRules,
     ReadRules,
+    T_InputRules,
     VerifiedRules,
 )
 from cognite.neat._rules.analysis import DMSAnalysis
+from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import (
     DMSInputRules,
     DMSRules,
@@ -36,7 +38,7 @@ from cognite.neat._rules.models import (
     data_types,
 )
 from cognite.neat._rules.models.data_types import AnyURI, DataType, String
-from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSView
+from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSValidation, DMSView
 from cognite.neat._rules.models.dms._rules import DMSContainer
 from cognite.neat._rules.models.entities import (
     ClassEntity,
@@ -60,40 +62,35 @@ from cognite.neat._utils.collection_ import remove_list_elements
 from cognite.neat._utils.text import to_camel
 
 from ._base import RulesTransformer
+from ._verification import VerifyDMSRules
 
 T_VerifiedInRules = TypeVar("T_VerifiedInRules", bound=VerifiedRules)
 T_VerifiedOutRules = TypeVar("T_VerifiedOutRules", bound=VerifiedRules)
-T_InputInRules = TypeVar("T_InputInRules", bound=InputRules)
-T_InputOutRules = TypeVar("T_InputOutRules", bound=InputRules)
+T_InputInRules = TypeVar("T_InputInRules", bound=ReadInputRules)
+T_InputOutRules = TypeVar("T_InputOutRules", bound=ReadInputRules)
 
 
 class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRules], ABC):
     """Base class for all conversion transformers."""
 
-    def transform(self, rules: T_VerifiedInRules | OutRules[T_VerifiedInRules]) -> JustRules[T_VerifiedOutRules]:
-        out = self._transform(self._to_rules(rules))
-        return JustRules(out)
-
-    @abstractmethod
-    def _transform(self, rules: T_VerifiedInRules) -> T_VerifiedOutRules:
-        raise NotImplementedError()
+    ...
 
 
-class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInputRules]):  # type: ignore[misc]
+class ToCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]):  # type: ignore[misc]
     """Converts input rules to rules with compliant entity IDs that match regex patters used
     by DMS schema components."""
 
-    def transform(
-        self, rules: InformationInputRules | OutRules[InformationInputRules]
-    ) -> ReadRules[InformationInputRules]:
-        return ReadRules(self._transform(self._to_rules(rules)), IssueList(), {})
+    @property
+    def description(self) -> str:
+        return "Ensures externalIDs are compliant with CDF"
 
-    def _transform(self, rules: InformationInputRules) -> InformationInputRules:
-        rules.classes = self._fix_classes(rules.classes)
-        rules.properties = self._fix_properties(rules.properties)
-        rules.metadata.version += "_dms_compliant"
-
-        return rules
+    def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
+        if rules.rules is None:
+            return rules
+        copy: InformationInputRules = dataclasses.replace(rules.rules)
+        copy.classes = self._fix_classes(copy.classes)
+        copy.properties = self._fix_properties(copy.properties)
+        return ReadRules(copy, rules.read_context)
 
     @classmethod
     def _fix_entity(cls, entity: str) -> str:
@@ -179,46 +176,47 @@ class ToCompliantEntities(RulesTransformer[InformationInputRules, InformationInp
         return fixed_definitions
 
 
-class PrefixEntities(RulesTransformer[InputRules, InputRules]):  # type: ignore[misc]
+class PrefixEntities(RulesTransformer[ReadRules[T_InputRules], ReadRules[T_InputRules]]):  # type: ignore[type-var]
     """Prefixes all entities with a given prefix."""
 
     def __init__(self, prefix: str) -> None:
         self._prefix = prefix
 
-    def transform(self, rules: InputRules | OutRules[InputRules]) -> ReadRules[InputRules]:
-        return ReadRules(self._transform(self._to_rules(rules)), IssueList(), {})
+    @property
+    def description(self) -> str:
+        return f"Prefixes all views with {self._prefix!r}"
 
-    def _transform(self, rules: InputRules) -> InputRules:
-        rules.metadata.version += f"_prefixed_{self._prefix}"
-
-        if isinstance(rules, InformationInputRules):
-            # Todo Make Not mutate input class
+    def transform(self, rules: ReadRules[T_InputRules]) -> ReadRules[T_InputRules]:
+        in_ = rules.rules
+        if in_ is None:
+            return rules
+        copy: T_InputRules = dataclasses.replace(in_)
+        if isinstance(copy, InformationInputRules):
             prefixed_by_class: dict[str, str] = {}
-            for cls in rules.classes:
+            for cls in copy.classes:
                 prefixed = str(self._with_prefix(cls.class_))
                 prefixed_by_class[str(cls.class_)] = prefixed
                 cls.class_ = prefixed
-            for prop in rules.properties:
+            for prop in copy.properties:
                 prop.class_ = self._with_prefix(prop.class_)
                 if str(prop.value_type) in prefixed_by_class:
                     prop.value_type = prefixed_by_class[str(prop.value_type)]
-            return rules
-        elif isinstance(rules, DMSInputRules):
-            # Todo not mutate input class new_dms = copy.deepcopy(rules)
+            return ReadRules(copy, rules.read_context)  # type: ignore[arg-type]
+        elif isinstance(copy, DMSInputRules):
             prefixed_by_view: dict[str, str] = {}
-            for view in rules.views:
+            for view in copy.views:
                 prefixed = str(self._with_prefix(view.view))
                 prefixed_by_view[str(view.view)] = prefixed
                 view.view = prefixed
-            for dms_prop in rules.properties:
+            for dms_prop in copy.properties:
                 dms_prop.view = self._with_prefix(dms_prop.view)
                 if str(dms_prop.value_type) in prefixed_by_view:
                     dms_prop.value_type = prefixed_by_view[str(dms_prop.value_type)]
-            if rules.containers:
-                for container in rules.containers:
+            if copy.containers:
+                for container in copy.containers:
                     container.container = self._with_prefix(container.container)
-            return rules
-        raise NeatValueError(f"Unsupported rules type: {type(rules)}")
+            return ReadRules(copy, rules.read_context)
+        raise NeatValueError(f"Unsupported rules type: {type(copy)}")
 
     @overload
     def _with_prefix(self, raw: str) -> str: ...
@@ -254,14 +252,14 @@ class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
         self.ignore_undefined_value_types = ignore_undefined_value_types
         self.mode = mode
 
-    def _transform(self, rules: InformationRules) -> DMSRules:
+    def transform(self, rules: InformationRules) -> DMSRules:
         return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types, self.mode)
 
 
 class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
     """Converts DMSRules to InformationRules."""
 
-    def _transform(self, rules: DMSRules) -> InformationRules:
+    def transform(self, rules: DMSRules) -> InformationRules:
         return _DMSRulesConverter(rules).as_information_rules()
 
 
@@ -271,13 +269,13 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
     def __init__(self, out_cls: type[VerifiedRules]):
         self._out_cls = out_cls
 
-    def _transform(self, rules: VerifiedRules) -> VerifiedRules:
+    def transform(self, rules: VerifiedRules) -> VerifiedRules:
         if isinstance(rules, self._out_cls):
             return rules
         if isinstance(rules, InformationRules) and self._out_cls is DMSRules:
-            return InformationToDMS().transform(rules).rules
+            return InformationToDMS().transform(rules)
         if isinstance(rules, DMSRules) and self._out_cls is InformationRules:
-            return DMSToInformation().transform(rules).rules
+            return DMSToInformation().transform(rules)
         raise ValueError(f"Unsupported conversion from {type(rules)} to {self._out_cls}")
 
 
@@ -288,16 +286,20 @@ class SetIDDMSModel(RulesTransformer[DMSRules, DMSRules]):
     def __init__(self, new_id: DataModelId | tuple[str, str, str]):
         self.new_id = DataModelId.load(new_id)
 
-    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
+    @property
+    def description(self) -> str:
+        return f"Sets the Data Model ID to {self.new_id.as_tuple()}"
+
+    def transform(self, rules: DMSRules) -> DMSRules:
         if self.new_id.version is None:
             raise NeatValueError("Version is required when setting a new Data Model ID")
-        dump = self._to_rules(rules).dump()
+        dump = rules.dump()
         dump["metadata"]["space"] = self.new_id.space
         dump["metadata"]["external_id"] = self.new_id.external_id
         dump["metadata"]["version"] = self.new_id.version
         # Serialize and deserialize to set the new space and external_id
         # as the default values for the new model.
-        return JustRules(DMSRules.model_validate(DMSInputRules.load(dump).dump()))
+        return DMSRules.model_validate(DMSInputRules.load(dump).dump())
 
 
 class ToExtension(RulesTransformer[DMSRules, DMSRules]):
@@ -322,9 +324,9 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         self.move_connections = move_connections
         self.include = include
 
-    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
+    def transform(self, rules: DMSRules) -> DMSRules:
         # Copy to ensure immutability
-        reference_model = self._to_rules(rules)
+        reference_model = rules
         reference_model_id = reference_model.metadata.as_data_model_id()
 
         # if model is solution then we need to get correct space for views and containers
@@ -365,7 +367,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
     def _has_views_in_multiple_space(self, rules: DMSRules) -> bool:
         return any(view.view.space != rules.metadata.space for view in rules.views)
 
-    def _to_solution(self, reference_rules: DMSRules, remove_views_in_other_space: bool = True) -> JustRules[DMSRules]:
+    def _to_solution(self, reference_rules: DMSRules, remove_views_in_other_space: bool = True) -> DMSRules:
         """For creation of solution data model / rules specifically for mapping over existing containers."""
 
         dump = reference_rules.dump()
@@ -420,9 +422,9 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
             solution_model.containers = new_containers
             solution_model.properties.extend(new_properties)
 
-        return JustRules(solution_model)
+        return solution_model
 
-    def _to_enterprise(self, reference_model: DMSRules) -> JustRules[DMSRules]:
+    def _to_enterprise(self, reference_model: DMSRules) -> DMSRules:
         dump = reference_model.dump()
 
         # This will create reference model components in the enterprise model space
@@ -454,7 +456,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
         enterprise_properties.extend(enterprise_connections)
 
-        return JustRules(enterprise_model)
+        return enterprise_model
 
     @staticmethod
     def _expand_properties(rules: DMSRules) -> DMSRules:
@@ -558,6 +560,17 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
         return new_properties
 
+    @property
+    def description(self) -> str:
+        if self.type_ == "enterprise":
+            return f"Prepared data model {self.new_model_id} to be enterprise data model."
+        elif self.type_ == "solution":
+            return f"Prepared data model {self.new_model_id} to be solution data model."
+        elif self.type_ == "data_product":
+            return f"Prepared data model {self.new_model_id} to be data product model."
+        else:
+            return f"Unsupported data model type: {self.type_}"
+
 
 class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
     _ASSET_VIEW = ViewId("cdf_cdm", "CogniteAsset", "v1")
@@ -605,8 +618,8 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
         )
         self.drop_external_ids = {external_id for external_id in drop if external_id not in self._VIEW_BY_COLLECTION}
 
-    def transform(self, rules: DMSRules | OutRules[DMSRules]) -> JustRules[DMSRules]:
-        verified = self._to_rules(rules)
+    def transform(self, rules: DMSRules) -> DMSRules:
+        verified = rules
         if verified.metadata.as_data_model_id() not in COGNITE_MODELS:
             raise NeatValueError(f"Can only reduce Cognite Data Models, not {verified.metadata.as_data_model_id()}")
 
@@ -630,12 +643,86 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
 
         new_model.properties = new_properties
 
-        return JustRules(new_model)
+        return new_model
 
     def _is_asset_3D_property(self, prop: DMSProperty) -> bool:
         if "3D" not in self.drop_collection:
             return False
         return prop.view.as_id() == self._ASSET_VIEW and prop.view_property == "object3D"
+
+    @property
+    def description(self) -> str:
+        return f"Removed {len(self.drop_external_ids) + len(self.drop_collection)} views from data model"
+
+
+class IncludeReferenced(RulesTransformer[DMSRules, DMSRules]):
+    def __init__(self, client: NeatClient, include_properties: bool = False) -> None:
+        self._client = client
+        self.include_properties = include_properties
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        dms_rules = rules
+        view_ids, container_ids = DMSValidation(dms_rules, self._client).imported_views_and_containers_ids()
+        if not (view_ids or container_ids):
+            warnings.warn(
+                NeatValueWarning(
+                    f"Data model {dms_rules.metadata.as_data_model_id()} does not have any "
+                    "referenced views or containers."
+                    "that is not already included in the data model."
+                ),
+                stacklevel=2,
+            )
+            return dms_rules
+
+        schema = self._client.schema.retrieve([v.as_id() for v in view_ids], [c.as_id() for c in container_ids])
+        copy_ = dms_rules.model_copy(deep=True)
+        # Sorting to ensure deterministic order
+        schema.containers = ContainerApplyDict(sorted(schema.containers.items(), key=lambda x: x[0].as_tuple()))
+        schema.views = ViewApplyDict(sorted(schema.views.items(), key=lambda x: x[0].as_tuple()))
+        importer = DMSImporter(schema)
+
+        imported = importer.to_rules()
+        if imported.rules is None:
+            raise NeatValueError("Could not import the referenced views and containers.")
+
+        verified = VerifyDMSRules(validate=False).transform(imported)
+        if copy_.containers is None:
+            copy_.containers = verified.containers
+        else:
+            existing_containers = {c.container for c in copy_.containers}
+            copy_.containers.extend([c for c in verified.containers or [] if c.container not in existing_containers])
+        existing_views = {v.view for v in copy_.views}
+        copy_.views.extend([v for v in verified.views if v.view not in existing_views])
+        if self.include_properties:
+            existing_properties = {(p.view, p.view_property) for p in copy_.properties}
+            copy_.properties.extend(
+                [p for p in verified.properties if (p.view, p.view_property) not in existing_properties]
+            )
+
+        return copy_
+
+    @property
+    def description(self) -> str:
+        return "Included referenced views and containers in the data model."
+
+
+class AddClassImplements(RulesTransformer[InformationRules, InformationRules]):
+    def __init__(self, implements: str, suffix: str):
+        self.implements = implements
+        self.suffix = suffix
+
+    def transform(self, rules: InformationRules) -> InformationRules:
+        info_rules = rules
+        output = info_rules.model_copy(deep=True)
+        for class_ in output.classes:
+            if class_.class_.suffix.endswith(self.suffix):
+                class_.implements = [ClassEntity(prefix=class_.class_.prefix, suffix=self.implements)]
+        output.metadata.version = f"{output.metadata.version}.implements_{self.implements}"
+        return output
+
+    @property
+    def description(self) -> str:
+        return f"Added implements property to classes with suffix {self.suffix}"
 
 
 class _InformationRulesConverter:
