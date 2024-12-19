@@ -250,22 +250,36 @@ class PruneDeadEndEdges(BaseTransformerStandardised):
         return _count_query
 
 
-class PruneInstancesOfUnknownType(BaseTransformer):
+class PruneInstancesOfUnknownType(BaseTransformerStandardised):
     """
     Removes all the triples where object is a node that is not found in graph
     """
 
-    description: str = "Prunes the graph of triples where the object is a node that is not found in the graph."
-    _query_template = """
-                    SELECT DISTINCT ?subject
-                    WHERE {
-                        ?subject ?p ?o .
-                        FILTER NOT EXISTS {?subject a ?object .}
+    def description(self) -> str:
+        return "Prunes the graph of triples where the object is a node that is not found in the graph."
 
-                        }
+    def _iterate_query(self) -> str:
+        query = """
+                SELECT DISTINCT ?subject
+                WHERE {
+                    ?subject ?p ?o .
+                    FILTER NOT EXISTS {?subject a ?object .}
 
-                    """
+                    }
+                """
+        return query
 
-    def transform(self, graph: Graph) -> None:
-        for (subject,) in graph.query(self._query_template):  # type: ignore
-            graph.remove((subject, None, None))
+    def _count_query(self) -> str:
+        query = """
+                SELECT (COUNT(DISTINCT ?subject) as ?count)
+                WHERE {
+                    ?subject ?p ?o .
+                    FILTER NOT EXISTS {?subject a ?object .}                    
+                    }
+                """
+        return query
+
+    def operation(self, query_result_row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
+        (subject,) = query_result_row
+        remove_triple = cast(Triple, (subject, None, None))
+        return ([], [remove_triple])

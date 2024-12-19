@@ -80,7 +80,7 @@ class BaseTransformerStandardised(ABC):
         outcome.affected_nodes_count = properties_count
 
         if self._skip_count_query():
-            skipped_count_res = list(graph.query(self._count_query()))
+            skipped_count_res = list(graph.query(self._skip_count_query()))
             skipped_count = int(skipped_count_res[0][0])
             outcome.skipped = skipped_count
 
