@@ -33,7 +33,7 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
 
     def is_valid_input(self, rules: T_RulesIn) -> bool:
         """Check if the input rules are valid."""
-        types = self._transform_type_hint()
+        types = self.transform_type_hint()
         for type_ in types:
             if get_origin(type_) is ReadRules:
                 inner = get_args(type_)[0]
@@ -45,7 +45,7 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
 
     @classmethod
     @lru_cache(maxsize=1)
-    def _transform_type_hint(cls) -> tuple[type, ...]:
+    def transform_type_hint(cls) -> tuple[type, ...]:
         # This is an expensive operation, so we cache the result
         signature = inspect.signature(cls.transform)
         annotation = signature.parameters["rules"].annotation

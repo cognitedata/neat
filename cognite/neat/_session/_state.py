@@ -2,16 +2,33 @@ from dataclasses import dataclass, field
 from typing import Literal, cast
 
 from cognite.neat._issues import IssueList
+from cognite.neat._rules.transformers import RulesTransformer
 from cognite.neat._store import NeatGraphStore, NeatRulesStore
 from cognite.neat._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError
+
+try:
+    from rich import print
+except ImportError:
+    ...
 
 
 class SessionState:
     def __init__(self, store_type: Literal["memory", "oxigraph"]) -> None:
         self.instances = InstancesState(store_type)
         self.rule_store = NeatRulesStore()
+
+    def rule_transform(self, *transformer: RulesTransformer) -> IssueList:
+        if not transformer:
+            raise NeatSessionError("No transformers provided.")
+        first_transformer = transformer[0]
+        pruned = self.rule_store.prune_until_compatible(first_transformer)
+        if pruned:
+            print(f"Pruned transformers: {pruned}")
+            raise NotImplementedError()
+
+        return self.rule_store.transform(*transformer)
 
 
 @dataclass

@@ -120,7 +120,7 @@ class NeatSession:
             ```
         """
         transformer = VerifyAnyRules(validate=True, client=self._client)  # type: ignore[var-annotated]
-        issues = self._state.rule_store.transform(transformer)
+        issues = self._state.rule_transform(transformer)
         if not issues.has_errors:
             rules = self._state.rule_store.last_verified_rule
             if isinstance(rules, InformationRules):
@@ -159,7 +159,7 @@ class NeatSession:
             converter = ConvertToRules(InformationRules)
         else:
             raise NeatSessionError(f"Target {target} not supported.")
-        issues = self._state.rule_store.transform(converter)
+        issues = self._state.rule_transform(converter)
 
         if self._verbose and not issues.has_errors:
             print(f"Rules converted to {target}")
