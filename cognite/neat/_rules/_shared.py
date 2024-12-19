@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Generic, TypeAlias, TypeVar, get_args
+from typing import Any, Generic, TypeAlias, TypeVar
 
 from cognite.neat._rules.models import (
     DMSRules,
@@ -24,7 +24,7 @@ class ReadRules(Generic[T_InputRules]):
 
     @classmethod
     def display_type_name(cls) -> str:
-        return get_args(cls)[0].display_type_name()
+        return "UnverifiedModel"
 
     @property
     def display_name(self):

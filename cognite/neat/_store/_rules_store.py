@@ -30,6 +30,17 @@ from .exceptions import EmptyStore, InvalidInputOperation
 class ModelEntity(Entity):
     result: Rules | None = None
 
+    @property
+    def display_name(self) -> str:
+        if self.result is None:
+            return "Failed"
+        if isinstance(self.result, ReadRules):
+            if self.result.rules is None:
+                return "FailedRead"
+            return self.result.rules.display_type_name()
+        else:
+            return self.result.display_type_name()
+
 
 @dataclass(frozen=True)
 class OutcomeEntity(Entity):

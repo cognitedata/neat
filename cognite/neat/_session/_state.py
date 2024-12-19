@@ -4,6 +4,7 @@ from typing import Literal, cast
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.transformers import RulesTransformer
 from cognite.neat._store import NeatGraphStore, NeatRulesStore
+from cognite.neat._store._rules_store import ModelEntity
 from cognite.neat._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError
@@ -30,7 +31,12 @@ class SessionState:
             location = self.rule_store.provenance[-1].description
             print(f"The {action} expects {type_hint}. Moving back {len(pruned)} steps to {location}.")
 
-        return self.rule_store.transform(*transformer)
+        start = cast(ModelEntity, self.rule_store.provenance[-1].target_entity).display_name
+        issues = self.rule_store.transform(*transformer)
+        end = cast(ModelEntity, self.rule_store.provenance[-1].target_entity).display_name
+        issues.action = f"{start} &#8594; {end}"
+        issues.hint = "Use the .inspect.issues() for more details."
+        return issues
 
 
 @dataclass
