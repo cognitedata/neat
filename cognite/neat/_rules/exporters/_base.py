@@ -46,8 +46,8 @@ class BaseExporter(ABC, Generic[T_VerifiedRules, T_Export]):
 
     @classmethod
     @lru_cache(maxsize=1)
-    def source_type(cls) -> tuple[type, ...]:
-        base_exporter = cls.__orig_bases__[0]
+    def source_types(cls) -> tuple[type, ...]:
+        base_exporter = cls.__orig_bases__[0]  # type: ignore[attr-defined]
         source_type = get_args(base_exporter)[0]
         if get_origin(source_type) in [Union, UnionType]:
             return get_args(source_type)

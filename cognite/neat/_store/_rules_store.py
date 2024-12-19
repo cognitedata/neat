@@ -33,7 +33,7 @@ class ModelEntity(Entity):
 
 @dataclass(frozen=True)
 class OutcomeEntity(Entity):
-    result: UploadResultList | Path | None = None
+    result: UploadResultList | Path | str | None = None
 
 
 class NeatRulesStore:
@@ -87,15 +87,61 @@ class NeatRulesStore:
         return all_issues
 
     def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export]) -> T_Export:
-        return self._export(exporter.export, exporter.agent, exporter.description)
+        last_change = self.provenance[-1]
+        source_entity = last_change.target_entity
+        if not isinstance(source_entity, ModelEntity):
+            # Todo: Provenance should be of an entity type
+            raise ValueError("Bug in neat: The last entity in the provenance is not a model entity.")
+        expected_types = exporter.source_types()
+        if not any(isinstance(source_entity.result, type_) for type_ in expected_types):
+            raise InvalidInputOperation(expected=expected_types, got=type(source_entity.result))
+
+        agent = exporter.agent
+        start = datetime.now(timezone.utc)
+        issue_list = IssueList()
+        with catch_issues(issue_list) as _:
+            # Validate the type of the result
+            result = exporter.export(source_entity.result)  # type: ignore[arg-type]
+        end = datetime.now(timezone.utc)
+        target_id = DEFAULT_NAMESPACE["export-result"]
+        activity = Activity(
+            was_associated_with=agent,
+            ended_at_time=end,
+            started_at_time=start,
+            used=source_entity,
+        )
+        target_entity = OutcomeEntity(
+            was_attributed_to=agent,
+            was_generated_by=activity,
+            result=type(result).__name__,
+            issues=issue_list,
+            id_=target_id,
+        )
+        change = Change(
+            agent=agent,
+            activity=activity,
+            target_entity=target_entity,
+            description=exporter.description,
+            source_entity=source_entity,
+        )
+        self._exports_by_target_entity_id[source_entity.id_].append(change)
+        return result
 
     def export_to_file(self, exporter: BaseExporter, path: Path) -> None:
+        last_change = self.provenance[-1]
+        source_entity = last_change.target_entity
+        if not isinstance(source_entity, ModelEntity):
+            # Todo: Provenance should be of an entity type
+            raise ValueError("Bug in neat: The last entity in the provenance is not a model entity.")
+        expected_types = exporter.source_types()
+        if not any(isinstance(source_entity.result, type_) for type_ in expected_types):
+            raise InvalidInputOperation(expected=expected_types, got=type(source_entity.result))
         target_id = DEFAULT_NAMESPACE[path.name]
         agent = exporter.agent
         start = datetime.now(timezone.utc)
         issue_list = IssueList()
         with catch_issues(issue_list) as _:
-            exporter.export_to_file(result, path)
+            exporter.export_to_file(source_entity.result, path)
         end = datetime.now(timezone.utc)
 
         activity = Activity(
@@ -121,9 +167,46 @@ class NeatRulesStore:
         self._exports_by_target_entity_id[source_entity.id_].append(change)
 
     def export_to_cdf(self, exporter: CDFExporter, client: NeatClient, dry_run: bool) -> UploadResultList:
-        return self._export(
-            partial(exporter.export_to_cdf, client=client, dry_run=dry_run), exporter.agent, exporter.description
+        last_change = self.provenance[-1]
+        source_entity = last_change.target_entity
+        if not isinstance(source_entity, ModelEntity):
+            # Todo: Provenance should be of an entity type
+            raise ValueError("Bug in neat: The last entity in the provenance is not a model entity.")
+        expected_types = exporter.source_types()
+        if not any(isinstance(source_entity.result, type_) for type_ in expected_types):
+            raise InvalidInputOperation(expected=expected_types, got=type(source_entity.result))
+
+        agent = exporter.agent
+        start = datetime.now(timezone.utc)
+        target_id = DEFAULT_NAMESPACE["upload-result"]
+        issue_list = IssueList()
+        result: UploadResultList | None = None
+        with catch_issues(issue_list) as _:
+            result = exporter.export_to_cdf(source_entity.result, client, dry_run)
+        end = datetime.now(timezone.utc)
+
+        activity = Activity(
+            was_associated_with=agent,
+            ended_at_time=end,
+            started_at_time=start,
+            used=source_entity,
         )
+        target_entity = OutcomeEntity(
+            was_attributed_to=agent,
+            was_generated_by=activity,
+            result=result,
+            issues=issue_list,
+            id_=target_id,
+        )
+        change = Change(
+            agent=agent,
+            activity=activity,
+            target_entity=target_entity,
+            description=exporter.description,
+            source_entity=source_entity,
+        )
+        self._exports_by_target_entity_id[source_entity.id_].append(change)
+        return result
 
     def prune_until_compatible(self, transformer: RulesTransformer) -> list[Change]:
         """Prune the provenance until the last successful entity is compatible with the transformer.

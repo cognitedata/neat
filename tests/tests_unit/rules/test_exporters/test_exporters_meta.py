@@ -13,7 +13,7 @@ class TestExporters:
     def test_valid_source_type(self, exporter_cls: type[BaseExporter]) -> None:
         valid_sources = {DMSRules, InformationRules}
 
-        source_types = exporter_cls.source_type()
+        source_types = exporter_cls.source_types()
 
         invalid_sources = set(source_types) - valid_sources
 
