@@ -61,16 +61,25 @@ class NeatRulesStore:
         return self._do_activity(importer.to_rules, agent, source_entity, importer.description)[1]
 
     def transform(self, *transformer: RulesTransformer) -> IssueList:
+        if not self.provenance:
+            raise NeatValueError("Store is empty. Start by importing rules.")
+
         all_issues = IssueList()
         for item in transformer:
-            last_entity = self.get_last_successful_entity()
+            last_change = self.provenance[-1]
+            source_entity = last_change.target_entity
+            if not isinstance(source_entity, ModelEntity):
+                # Todo: Provenance should be of an entity type
+                raise ValueError("Bug in neat: The last entity in the provenance is not a model entity.")
+            transformer_input = source_entity.result
+
+            if not item.is_valid_input(transformer_input):
+                raise NeatValueError(f"Invalid input for transformer {item.__class__.__name__}")
 
             transform_issues = self._do_activity(
-                # The item and last_entity will change in the loop, however, this will
-                # be ok as the run method will execute the lambda immediately
-                lambda: item.transform(last_entity.result),  # noqa: B023
+                partial(item.transform, rules=transformer_input),
                 item.agent,
-                last_entity,
+                source_entity,
                 item.description,
             )[1]
             all_issues.extend(transform_issues)
@@ -223,7 +232,7 @@ class NeatRulesStore:
     def last_issues(self) -> IssueList:
         if not self.provenance:
             raise NeatValueError("No issues found in the provenance.")
-        return self.provenance[-1].target_entity.result.issues
+        return self.provenance[-1].target_entity.issues
 
     @property
     def last_outcome(self) -> UploadResultList:

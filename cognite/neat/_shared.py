@@ -1,7 +1,7 @@
 from abc import abstractmethod
-from collections.abc import Hashable, Sequence
+from collections.abc import Hashable, Iterator, Sequence
 from dataclasses import dataclass
-from typing import Any, TypeAlias, TypeVar
+from typing import Any, SupportsIndex, TypeAlias, TypeVar, overload
 
 import pandas as pd
 from rdflib import Literal, URIRef
@@ -50,6 +50,21 @@ class NeatList(list, Sequence[T_NeatObject]):
 
     def _repr_html_(self) -> str:
         return self.to_pandas()._repr_html_()  # type: ignore[operator]
+
+    # Implemented to get correct type hints
+    def __iter__(self) -> Iterator[T_NeatObject]:
+        return super().__iter__()
+
+    @overload
+    def __getitem__(self, index: SupportsIndex) -> T_NeatObject: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> "NeatList[T_NeatObject]": ...
+
+    def __getitem__(self, index: SupportsIndex | slice, /) -> "T_NeatObject | NeatList[T_NeatObject]":
+        if isinstance(index, slice):
+            return type(self)(super().__getitem__(index))
+        return super().__getitem__(index)
 
 
 Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
