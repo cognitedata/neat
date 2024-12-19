@@ -39,7 +39,7 @@ class NeatRulesStore:
     def __init__(self) -> None:
         self.provenance = Provenance()
         self._exports_by_target_entity_id: dict[rdflib.URIRef, Change] = {}
-        self._pruned_by_target_entity_id: dict[rdflib.URIRef, Provenance] = defaultdict(Provenance)
+        self._pruned_by_target_entity_id: dict[rdflib.URIRef, list[Provenance]] = defaultdict(list)
         self._iteration_by_id: dict[Hashable, int] = {}
 
     def calculate_provenance_hash(self, shorten: bool = True) -> str:
@@ -105,7 +105,22 @@ class NeatRulesStore:
         Returns:
             The changes that were pruned.
         """
-        raise NotImplementedError()
+        pruned_candidates: list[Change] = []
+        for change in reversed(self.provenance):
+            if not isinstance(change.target_entity, ModelEntity):
+                continue
+            if not transformer.is_valid_input(change.target_entity.result):
+                pruned_candidates.append(change)
+            else:
+                break
+        else:
+            raise NeatValueError("No compatible entity found in the provenance.")
+        if not pruned_candidates:
+            return []
+        self.provenance = self.provenance[: -len(pruned_candidates)]
+        pruned_candidates.reverse()
+        self._pruned_by_target_entity_id[self.provenance[-1].target_entity.id_].append(Provenance(pruned_candidates))
+        return pruned_candidates
 
     def _export(self, action: Callable[[Any], Any], agent: Agent, description: str) -> Any:
         last_entity: ModelEntity | None = None
