@@ -5,7 +5,6 @@ from cognite.client import data_modeling as dm
 from cognite.neat._client import NeatClient
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.importers import InferenceImporter
-from cognite.neat._rules.transformers import ImporterPipeline
 from cognite.neat._store import NeatGraphStore
 from tests.data import car
 
@@ -22,12 +21,12 @@ def deployed_car_model(cognite_client: CogniteClient) -> dm.DataModelId:
 
 @pytest.fixture()
 def car_store() -> NeatGraphStore:
-    store = NeatGraphStore.from_memory_store(rules=car.CAR_RULES)
+    store = NeatGraphStore.from_memory_store(rules=car.get_care_rules())
 
     for triple in car.TRIPLES:
         store.graph.add(triple)
 
-    rules = ImporterPipeline.verify(InferenceImporter.from_graph_store(store))
+    rules = InferenceImporter.from_graph_store(store).to_rules().rules.as_verified_rules()
     store.add_rules(rules)
 
     return store

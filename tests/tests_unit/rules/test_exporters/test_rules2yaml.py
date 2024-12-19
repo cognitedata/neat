@@ -3,7 +3,6 @@ from pathlib import Path
 from cognite.neat._rules.exporters import YAMLExporter
 from cognite.neat._rules.importers import YAMLImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.transformers import ImporterPipeline
 
 
 class TestYAMLExporter:
@@ -12,7 +11,7 @@ class TestYAMLExporter:
         exporter.export_to_file(alice_rules, tmp_path / "tmp.yaml")
         importer = YAMLImporter.from_file(tmp_path / "tmp.yaml")
 
-        recreated_rules = ImporterPipeline.verify(importer)
+        recreated_rules = importer.to_rules().rules.as_verified_rules()
 
         assert alice_rules.dump() == recreated_rules.dump()
 
@@ -21,6 +20,6 @@ class TestYAMLExporter:
         exporter.export_to_file(david_rules, tmp_path / "tmp.yaml")
         importer = YAMLImporter.from_file(tmp_path / "tmp.yaml")
 
-        recreated_rules = ImporterPipeline.verify(importer)
+        recreated_rules = importer.to_rules().rules.as_verified_rules()
 
         assert david_rules.dump() == recreated_rules.dump()

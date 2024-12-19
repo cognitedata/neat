@@ -5,7 +5,7 @@ from cognite.client import data_modeling as dm
 from rdflib import Graph, Namespace, URIRef
 
 from cognite.neat._constants import get_default_prefixes_and_namespaces
-from cognite.neat._issues import IssueList
+from cognite.neat._issues import IssueList, MultiValueError
 from cognite.neat._issues.errors import FileReadError
 from cognite.neat._issues.errors._general import NeatValueError
 from cognite.neat._rules._shared import ReadRules
@@ -13,9 +13,7 @@ from cognite.neat._rules.importers._base import BaseImporter
 from cognite.neat._rules.models._base_rules import RoleTypes
 from cognite.neat._rules.models.data_types import AnyURI
 from cognite.neat._rules.models.entities import UnknownEntity
-from cognite.neat._rules.models.information import (
-    InformationInputRules,
-)
+from cognite.neat._rules.models.information import InformationInputRules
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.rdf_ import get_namespace
 
@@ -119,16 +117,16 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         """
         Creates `Rules` object from the data for target role.
         """
-
         if self.issue_list.has_errors:
             # In case there were errors during the import, the to_rules method will return None
-            return ReadRules(None, self.issue_list, {})
+            self.issue_list.trigger_warnings()
+            raise MultiValueError(self.issue_list.errors)
 
         rules_dict = self._to_rules_components()
 
         rules = InformationInputRules.load(rules_dict)
-
-        return ReadRules(rules, self.issue_list, {})
+        self.issue_list.trigger_warnings()
+        return ReadRules(rules, {})
 
     def _to_rules_components(self) -> dict:
         raise NotImplementedError()

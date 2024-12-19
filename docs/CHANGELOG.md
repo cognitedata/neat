@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Improved
+- When using a `NeatSession` object in a notebook. The return issues now has context for what actions they
+  were caused by. In addition, the `NeatSession` object now ensures a linear provenance path for the
+  data modeling.
+
 ## [0.103.1] - 17-12-**2024**
 ### Fixed
 - Writing a model to Excel or YAML no longer skips specifying version and space of Views unless they both match.

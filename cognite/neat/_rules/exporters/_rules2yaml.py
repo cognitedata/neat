@@ -43,6 +43,10 @@ class YAMLExporter(BaseExporter[VerifiedRules, str]):
         self.files = files
         self.output = output
 
+    @property
+    def description(self) -> str:
+        return "Export verified model to YAML."
+
     def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
         """Exports transformation rules to YAML/JSON file(s)."""
         if self.files == "single":
