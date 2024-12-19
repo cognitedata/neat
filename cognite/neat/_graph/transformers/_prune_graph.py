@@ -220,8 +220,7 @@ class PruneDeadEndEdges(BaseTransformerStandardised):
     Removes all the triples where object is a node that is not found in graph
     """
 
-    def description(self) -> str:
-        return "Pruning the graph of triples where object is a node that is not found in graph."
+    description: str = "Pruning the graph of triples where object is a node that is not found in graph."
 
     def operation(self, row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
         triple_to_remove = cast(Triple, row)
@@ -255,8 +254,7 @@ class PruneInstancesOfUnknownType(BaseTransformerStandardised):
     Removes all the triples where object is a node that is not found in graph
     """
 
-    def description(self) -> str:
-        return "Prunes the graph of triples where the object is a node that is not found in the graph."
+    description: str = "Prunes the graph of triples where the object is a node that is not found in the graph."
 
     def _iterate_query(self) -> str:
         query = """

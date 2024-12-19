@@ -28,13 +28,10 @@ class BaseTransformerStandardised(ABC):
     are doing more specialised operations, please overwrite the .transform() method.
     """
 
+    description: str
     _use_only_once: bool = False
     _need_changes: ClassVar[frozenset[str]] = frozenset()
     _use_iterate_bar_threshold: int = 500
-
-    @abstractmethod
-    def description(self) -> str:
-        raise NotImplementedError()
 
     @abstractmethod
     def operation(self, query_result_row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
@@ -92,7 +89,7 @@ class BaseTransformerStandardised(ABC):
             result_iterable = iterate_progress_bar(  # type: ignore[misc, assignment]
                 result_iterable,
                 total=properties_count,
-                description=self.description(),
+                description=self.description,
             )
 
         for row in result_iterable:
