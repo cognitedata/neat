@@ -34,4 +34,4 @@ class SetAPI:
                     "Cannot change the data model ID of a Cognite Data Model in NeatSession"
                     " due to temporarily issue with the reverse direct relation interpretation"
                 )
-        return self._state.rule_store.transform(SetIDDMSModel(new_model_id))
+        return self._state.rule_transform(SetIDDMSModel(new_model_id))

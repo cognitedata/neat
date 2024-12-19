@@ -1,10 +1,16 @@
+import sys
 from abc import abstractmethod
-from collections.abc import Hashable, Sequence
+from collections.abc import Hashable, Iterator, Sequence
 from dataclasses import dataclass
-from typing import Any, TypeAlias, TypeVar
+from typing import Any, SupportsIndex, TypeAlias, TypeVar, overload
 
 import pandas as pd
 from rdflib import Literal, URIRef
+
+if sys.version_info <= (3, 11):
+    from typing_extensions import Self
+else:
+    from typing import Self
 
 T_ID = TypeVar("T_ID", bound=Hashable)
 
@@ -50,6 +56,21 @@ class NeatList(list, Sequence[T_NeatObject]):
 
     def _repr_html_(self) -> str:
         return self.to_pandas()._repr_html_()  # type: ignore[operator]
+
+    # Implemented to get correct type hints
+    def __iter__(self) -> Iterator[T_NeatObject]:
+        return super().__iter__()
+
+    @overload
+    def __getitem__(self, index: SupportsIndex) -> T_NeatObject: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Self: ...
+
+    def __getitem__(self, index: SupportsIndex | slice, /) -> T_NeatObject | Self:
+        if isinstance(index, slice):
+            return type(self)(super().__getitem__(index))
+        return super().__getitem__(index)
 
 
 Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
