@@ -1,11 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import ClassVar, Literal
+from typing import ClassVar, TypeAlias
 
 from rdflib import Graph
+from rdflib.query import ResultRow
 
-from cognite.neat._issues import IssueList
+from cognite.neat._shared import Triple
 from cognite.neat._utils.collection_ import iterate_progress_bar
 from cognite.neat._utils.graph_transformations_report import GraphTransformationResult
+from cognite.neat._utils.rdf_ import add_triples_in_batch, remove_triples_in_batch
+
+To_Add_Triples: TypeAlias = list[Triple]
+To_Remove_Triples: TypeAlias = list[Triple]
 
 
 class BaseTransformer(ABC):
@@ -32,34 +37,20 @@ class BaseTransformerStandardised(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def operation(self) -> Literal["add", "remove"]:
+    def operation(self, query_result_row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
+        """The operations to perform on each row resulting from the ._iterate_query() method.
+        The operation should return a list of triples to add and to remove.
+        """
         raise NotImplementedError()
 
-    def _target_properties_count_query(self) -> str | None:  # noqa: B027
+    @abstractmethod
+    def _count_query(self) -> str:
         """
         Overwrite to fetch all affected properties in the graph as a result of the transformation.
         Returns:
             A query string.
         """
-        ...
-
-    def _target_edges_count_query(self) -> str | None:  # noqa: B027
-        """
-        Overwrite to fetch all affected edges (objects) in the graph
-        as a result of the transformation.
-        Returns:
-            A query string.
-        """
-        ...
-
-    def _skip_query(self) -> str | None:  # noqa: B027
-        """
-        Overwrite to fetch all affected triples (subjects, objects and predicates) in
-        the graph as a result of the transformation.
-        Returns:
-            A query string.
-        """
-        ...
+        raise NotImplementedError()
 
     @abstractmethod
     def _iterate_query(self) -> str:
@@ -70,67 +61,51 @@ class BaseTransformerStandardised(ABC):
         """
         raise NotImplementedError()
 
+    def _skip_count_query(self) -> str:
+        """
+        The query to use for extracting target triples from the graph and performing the transformation.
+        Returns:
+            A query string.
+        """
+        return ""
+
     def transform(self, graph: Graph) -> GraphTransformationResult:
-        added_entities = []
-        removed_entities = []
-        skipped_entities = []
-        affected_nodes_count = 0
-        issues: IssueList = IssueList([])
+        outcome = GraphTransformationResult(self.__class__.__name__)
+        to_add: list[Triple] = []
+        to_remove: list[Triple] = []
 
-        if self._skip_query():
-            skipped_entities = graph.query(self._skip_query())
-            skipped_entities = [str(triple) for triple in skipped_entities]
+        properties_count_res = list(graph.query(self._count_query()))
+        properties_count = int(properties_count_res[0][0])
 
-        targets = list(graph.query(self._iterate_query()))
+        outcome.affected_nodes_count = properties_count
 
-        if len(targets) == 0:
-            issues.append("Transformation has no effect. Found 0 target triples in the graph.")
+        if self._skip_count_query():
+            skipped_count_res = list(graph.query(self._count_query()))
+            skipped_count = int(skipped_count_res[0][0])
+            outcome.skipped = skipped_count
 
-        if self._target_properties_count_query():
-            affected_nodes_count += len(list(graph.query(self._target_properties_count_query())))
-        if self._target_edges_count_query():
-            affected_nodes_count += len(list(graph.query(self._target_edges_count_query())))
+        if properties_count == 0:
+            outcome.affected_nodes_count = 0
+            return outcome
 
-        use_iterate_bar = True if len(targets) > self._use_iterate_bar_threshold else False
-        if use_iterate_bar:
-            for triple in iterate_progress_bar(  # type: ignore[misc]
-                targets,
-                total=len(targets),
-                description=self.description,
-            ):
-                mask = [None, None, None, None]
-                for i, item in enumerate(triple):
-                    mask[i] = item
-                formatted_triple = tuple(mask)
+        result_iterable = graph.query(self._iterate_query())
+        if properties_count > self._use_iterate_bar_threshold:
+            result_iterable = iterate_progress_bar(
+                result_iterable,
+                total=properties_count,
+                description=self.description(),
+            )
 
-                if self.operation() == "add":
-                    graph.add(formatted_triple)
-                    added_entities.append(str(triple))
+        for row in result_iterable:
+            triples_to_add_from_row, triples_to_remove_from_row = self.operation(row)
 
-                elif self.operation() == "remove":
-                    graph.remove(formatted_triple)
-                    removed_entities.append(str(triple))
+            to_add.extend(triples_to_add_from_row)
+            to_remove.extend(triples_to_remove_from_row)
 
-        else:
-            for triple in targets:
-                mask = [None, None, None, None]
-                for i, item in enumerate(triple):
-                    mask[i] = item
-                formatted_triple = tuple(mask)
-
-                if self.operation() == "add":
-                    graph.add(formatted_triple)
-                    added_entities.append(str(triple))
-
-                elif self.operation() == "remove":
-                    graph.remove(formatted_triple)
-                    removed_entities.append(str(triple))
-
-        return GraphTransformationResult(
-            name=self.__class__.__name__,
-            affected_nodes_count=affected_nodes_count if affected_nodes_count else None,
-            added=added_entities,
-            removed=removed_entities,
-            skipped=skipped_entities,
-            issues=issues,
-        )
+        if to_remove:
+            remove_triples_in_batch(graph, to_remove)
+            outcome.removed = len(to_remove)
+        if to_add:
+            add_triples_in_batch(graph, to_add)
+            outcome.added = len(to_add)
+        return outcome

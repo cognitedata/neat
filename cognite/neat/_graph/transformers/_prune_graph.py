@@ -1,10 +1,14 @@
+from typing import cast
+
 from rdflib import Graph, Namespace, URIRef
+from rdflib.query import ResultRow
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._shared import Triple
 from cognite.neat._utils.rdf_ import as_neat_compliant_uri
 from cognite.neat._utils.text import sentence_or_string_to_camel
 
-from ._base import BaseTransformer, BaseTransformerStandardised
+from ._base import BaseTransformer, BaseTransformerStandardised, To_Add_Triples, To_Remove_Triples
 
 
 class AttachPropertyFromTargetToSource(BaseTransformer):
@@ -219,8 +223,9 @@ class PruneDeadEndEdges(BaseTransformerStandardised):
     def description(self) -> str:
         return "Pruning the graph of triples where object is a node that is not found in graph."
 
-    def operation(self) -> str:
-        return "remove"
+    def operation(self, row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
+        triple_to_remove = cast(Triple, row)
+        return ([], [triple_to_remove])
 
     def _iterate_query(self) -> str:
         _iterate_query = """
@@ -233,7 +238,7 @@ class PruneDeadEndEdges(BaseTransformerStandardised):
                          """
         return _iterate_query
 
-    def _target_edges_count_query(self) -> str:
+    def _count_query(self) -> str:
         _count_query = """
                         SELECT (COUNT(?object) AS ?objectCount)
                         WHERE {

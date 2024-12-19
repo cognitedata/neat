@@ -1,8 +1,7 @@
 from abc import ABC
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
-from cognite.neat._issues import IssueList
 from cognite.neat._shared import NeatList, NeatObject
 
 
@@ -10,23 +9,20 @@ from cognite.neat._shared import NeatList, NeatObject
 class GraphTransformationResult(NeatObject, ABC):
     name: str
     affected_nodes_count: int | None = None
-    added: list[str] = field(default_factory=list)
-    removed: list[str] = field(default_factory=list)
-    skipped: list[str] = field(default_factory=list)
-    issues: IssueList = field(default_factory=IssueList)
+    added: int | None = None
+    removed: int | None = None
+    skipped: int | None = None
 
     def dump(self, aggregate: bool = True) -> dict[str, Any]:
         output: dict[str, Any] = {"name": self.name}
         if self.added:
-            output["added"] = len(self.added) if aggregate else self.added
+            output["added"] = self.added
         if self.removed:
-            output["removed"] = len(self.removed) if aggregate else self.removed
+            output["removed"] = self.removed
         if self.skipped:
-            output["skipped"] = len(self.skipped) if aggregate else self.skipped
+            output["skipped"] = self.skipped
         if self.affected_nodes_count:
             output["affected nodes"] = self.affected_nodes_count
-        if self.issues:
-            output["issues"] = len(self.issues) if aggregate else [issue.dump() for issue in self.issues]
         return output
 
 
