@@ -22,6 +22,16 @@ class ReadRules(Generic[T_InputRules]):
     rules: T_InputRules | None
     read_context: dict[str, Any]
 
+    @classmethod
+    def display_type_name(cls) -> str:
+        return "UnverifiedModel"
+
+    @property
+    def display_name(self):
+        if self.rules is None:
+            return "FailedRead"
+        return self.rules.display_name
+
 
 ReadInputRules: TypeAlias = ReadRules[DMSInputRules] | ReadRules[InformationInputRules]
 T_ReadInputRules = TypeVar("T_ReadInputRules", bound=ReadInputRules)

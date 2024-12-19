@@ -46,6 +46,10 @@ class OWLExporter(GraphExporter):
     def export(self, rules: InformationRules) -> Graph:
         return Ontology.from_rules(rules).as_owl()
 
+    @property
+    def description(self) -> str:
+        return "Export verified information model to OWL."
+
 
 class SHACLExporter(GraphExporter):
     """Exports rules to a SHACL graph."""
@@ -53,12 +57,20 @@ class SHACLExporter(GraphExporter):
     def export(self, rules: InformationRules) -> Graph:
         return Ontology.from_rules(rules).as_shacl()
 
+    @property
+    def description(self) -> str:
+        return "Export verified information model to SHACL."
+
 
 class SemanticDataModelExporter(GraphExporter):
-    """Exports verified information rules to a semantic data model."""
+    """Exports verified information model to a semantic data model."""
 
     def export(self, rules: InformationRules) -> Graph:
         return Ontology.from_rules(rules).as_semantic_data_model()
+
+    @property
+    def description(self) -> str:
+        return "Export verified information model to a semantic data model."
 
 
 class OntologyModel(BaseModel):
