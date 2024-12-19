@@ -25,8 +25,10 @@ class SessionState:
         first_transformer = transformer[0]
         pruned = self.rule_store.prune_until_compatible(first_transformer)
         if pruned:
-            print(f"Pruned transformers: {pruned}")
-            raise NotImplementedError()
+            type_hint = first_transformer.transform_type_hint()
+            action = first_transformer.description
+            location = self.rule_store.provenance[-1].description
+            print(f"The {action} expects {type_hint}. Moving back {len(pruned)} steps to {location}.")
 
         return self.rule_store.transform(*transformer)
 

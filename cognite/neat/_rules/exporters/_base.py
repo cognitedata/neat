@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic, TypeVar
+from types import UnionType
+from typing import TYPE_CHECKING, Generic, TypeVar, Union, get_args, get_origin
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -42,8 +44,17 @@ class BaseExporter(ABC, Generic[T_VerifiedRules, T_Export]):
     def description(self) -> str:
         return self.__doc__ or "Missing description"
 
+    @classmethod
+    @lru_cache(maxsize=1)
+    def source_type(cls) -> tuple[type, ...]:
+        base_exporter = cls.__orig_bases__[0]
+        source_type = get_args(base_exporter)[0]
+        if get_origin(source_type) in [Union, UnionType]:
+            return get_args(source_type)
+        return (source_type,)
 
-class CDFExporter(BaseExporter[T_VerifiedRules, T_Export]):
+
+class CDFExporter(BaseExporter[T_VerifiedRules, T_Export], ABC):
     @abstractmethod
     def export_to_cdf_iterable(
         self, rules: T_VerifiedRules, client: NeatClient, dry_run: bool = False

@@ -23,6 +23,7 @@ from cognite.neat._rules.transformers import RulesTransformer
 from cognite.neat._utils.upload import UploadResultList
 
 from ._provenance import EMPTY_ENTITY, UNKNOWN_AGENT, Activity, Agent, Change, Entity, Provenance
+from .exceptions import EmptyStore, InvalidInputOperation
 
 
 @dataclass(frozen=True)
@@ -32,13 +33,13 @@ class ModelEntity(Entity):
 
 @dataclass(frozen=True)
 class OutcomeEntity(Entity):
-    result: UploadResultList | None = None
+    result: UploadResultList | Path | None = None
 
 
 class NeatRulesStore:
     def __init__(self) -> None:
         self.provenance = Provenance()
-        self._exports_by_target_entity_id: dict[rdflib.URIRef, Change] = {}
+        self._exports_by_target_entity_id: dict[rdflib.URIRef, list[Change]] = defaultdict(list)
         self._pruned_by_target_entity_id: dict[rdflib.URIRef, list[Provenance]] = defaultdict(list)
         self._iteration_by_id: dict[Hashable, int] = {}
 
@@ -62,7 +63,7 @@ class NeatRulesStore:
 
     def transform(self, *transformer: RulesTransformer) -> IssueList:
         if not self.provenance:
-            raise NeatValueError("Store is empty. Start by importing rules.")
+            raise EmptyStore()
 
         all_issues = IssueList()
         for item in transformer:
@@ -74,7 +75,7 @@ class NeatRulesStore:
             transformer_input = source_entity.result
 
             if not item.is_valid_input(transformer_input):
-                raise NeatValueError(f"Invalid input for transformer {item.__class__.__name__}")
+                raise InvalidInputOperation(expected=item.transform_type_hint(), got=type(transformer_input))
 
             transform_issues = self._do_activity(
                 partial(item.transform, rules=transformer_input),
@@ -89,7 +90,35 @@ class NeatRulesStore:
         return self._export(exporter.export, exporter.agent, exporter.description)
 
     def export_to_file(self, exporter: BaseExporter, path: Path) -> None:
-        return self._export(partial(exporter.export_to_file, filepath=path), exporter.agent, exporter.description)
+        target_id = DEFAULT_NAMESPACE[path.name]
+        agent = exporter.agent
+        start = datetime.now(timezone.utc)
+        issue_list = IssueList()
+        with catch_issues(issue_list) as _:
+            exporter.export_to_file(result, path)
+        end = datetime.now(timezone.utc)
+
+        activity = Activity(
+            was_associated_with=agent,
+            ended_at_time=end,
+            started_at_time=start,
+            used=source_entity,
+        )
+        target_entity = OutcomeEntity(
+            was_attributed_to=agent,
+            was_generated_by=activity,
+            result=path,
+            issues=issue_list,
+            id_=target_id,
+        )
+        change = Change(
+            agent=agent,
+            activity=activity,
+            target_entity=target_entity,
+            description=exporter.description,
+            source_entity=source_entity,
+        )
+        self._exports_by_target_entity_id[source_entity.id_].append(change)
 
     def export_to_cdf(self, exporter: CDFExporter, client: NeatClient, dry_run: bool) -> UploadResultList:
         return self._export(
@@ -164,6 +193,7 @@ class NeatRulesStore:
             description=description,
             source_entity=source_entity,
         )
+
         self.provenance.append(change)
         return result, issue_list
 
