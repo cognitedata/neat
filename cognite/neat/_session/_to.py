@@ -5,10 +5,13 @@ from typing import Any, Literal, overload
 from cognite.client.data_classes.data_modeling import SpaceApply
 
 from cognite.neat._client import NeatClient
+from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._graph import loaders
 from cognite.neat._rules import exporters
 from cognite.neat._rules._constants import PATTERNS
+from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.exporters._rules2dms import Component
+from cognite.neat._rules.models.dms import DMSMetadata
 from cognite.neat._utils.upload import UploadResultList
 
 from ._state import SessionState
@@ -64,7 +67,20 @@ class ToAPI:
             neat.to.excel(dms_rules_file_name, include_reference=True)
             ```
         """
-        exporter = exporters.ExcelExporter(styling="maximal")
+        reference_rules_by_prefix: dict[str, VerifiedRules] | None = None
+        if include_reference and self._state.last_reference:
+            if (
+                isinstance(self._state.last_reference.metadata, DMSMetadata)
+                and self._state.last_reference.metadata.as_data_model_id() in COGNITE_MODELS
+            ):
+                prefix = "CDM"
+            else:
+                prefix = "Ref"
+            reference_rules_by_prefix = {
+                prefix: self._state.last_reference,
+            }
+
+        exporter = exporters.ExcelExporter(styling="maximal", reference_rules_by_prefix=reference_rules_by_prefix)
         return self._state.rule_store.export_to_file(exporter, Path(io))
 
     @overload
