@@ -8,9 +8,10 @@ from cognite.neat._shared import Triple
 from cognite.neat._utils.rdf_ import as_neat_compliant_uri
 from cognite.neat._utils.text import sentence_or_string_to_camel
 
-from ._base import BaseTransformer, BaseTransformerStandardised, To_Add_Triples, To_Remove_Triples
+from ._base import BaseTransformer, BaseTransformerStandardised, RowTransformationOutput
 
 
+# TODO: Standardise after figuring out the bug which appears when running test_iodd_transformers.py
 class AttachPropertyFromTargetToSource(BaseTransformer):
     """
     Transformer that considers a TargetNode and SourceNode relationship, to extract a property that is attached to
@@ -149,6 +150,7 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
                 graph.remove((target_node, None, None))
 
 
+# TODO: Remove or adapt IODD
 class PruneDanglingNodes(BaseTransformer):
     """
     Knowledge graph pruner and resolver. Will remove rdf triples from graph that does not have connections
@@ -190,18 +192,12 @@ class PruneDanglingNodes(BaseTransformer):
                 graph.remove((subject, None, None))
 
 
-class PruneTypes(BaseTransformer):
+class PruneTypes(BaseTransformerStandardised):
     """
     Removes all the instances of specific type
     """
 
     description: str = "Prunes nodes of specific rdf types"
-    _query_template = """
-                        SELECT ?subject
-                        WHERE {{
-                            ?subject a <{rdf_type}> .
-                            }}
-                      """
 
     def __init__(
         self,
@@ -209,10 +205,42 @@ class PruneTypes(BaseTransformer):
     ):
         self.node_prune_types = node_prune_types
 
-    def transform(self, graph: Graph) -> None:
-        for type_ in self.node_prune_types:
-            for (subject,) in list(graph.query(self._query_template.format(rdf_type=type_))):  # type: ignore
-                graph.remove((subject, None, None))
+    def _iterate_query(self) -> str:
+        filter_string = ""
+        for node in self.node_prune_types:
+            filter_string += f" <{node}> "
+
+        query = """
+                SELECT ?subject
+                WHERE {{
+                  ?subject a ?type .
+                  VALUES ?type {{ {rdf_types_string} }}
+                }}
+                """
+        return query.format(rdf_types_string=filter_string)
+
+    def _count_query(self) -> str:
+        filter_string = ""
+        for node in self.node_prune_types:
+            filter_string += f" <{node}> "
+
+        query = """
+                SELECT ( COUNT( ?subject ) as ?count )
+                WHERE {{
+                  ?subject a ?type .
+                  VALUES ?type {{ {rdf_types_string} }}
+                }}
+                """
+        return query.format(rdf_types_string=filter_string)
+
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
+        row_output = RowTransformationOutput()
+
+        (subject,) = query_result_row
+        row_output.remove_triples.append((subject, None, None))  # type: ignore
+        row_output.instances_removed_count = 1
+
+        return row_output
 
 
 class PruneDeadEndEdges(BaseTransformerStandardised):
@@ -221,10 +249,6 @@ class PruneDeadEndEdges(BaseTransformerStandardised):
     """
 
     description: str = "Pruning the graph of triples where object is a node that is not found in graph."
-
-    def operation(self, row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
-        triple_to_remove = cast(Triple, row)
-        return [], [triple_to_remove]
 
     def _iterate_query(self) -> str:
         return """
@@ -238,13 +262,20 @@ class PruneDeadEndEdges(BaseTransformerStandardised):
 
     def _count_query(self) -> str:
         return """
-                SELECT (COUNT(?object) AS ?objectCount)
+                SELECT (COUNT(?object) AS ?count)
                 WHERE {
                     ?subject ?predicate ?object .
                     FILTER (isIRI(?object) && ?predicate != rdf:type)
                     FILTER NOT EXISTS {?object ?p ?o .}
                     }
                 """
+
+    def operation(self, row: ResultRow) -> RowTransformationOutput:
+        row_output = RowTransformationOutput()
+        row_output.remove_triples.append(cast(Triple, row))
+        row_output.instances_modified_count = 1
+
+        return row_output
 
 
 class PruneInstancesOfUnknownType(BaseTransformerStandardised):
@@ -273,7 +304,10 @@ class PruneInstancesOfUnknownType(BaseTransformerStandardised):
                     }
                 """
 
-    def operation(self, query_result_row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
+        row_output = RowTransformationOutput()
         (subject,) = query_result_row
-        remove_triple = cast(Triple, (subject, None, None))
-        return [], [remove_triple]
+        row_output.remove_triples.append(cast(Triple, (subject, None, None)))
+        row_output.instances_removed_count = 1
+
+        return row_output

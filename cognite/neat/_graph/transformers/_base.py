@@ -1,15 +1,27 @@
+import dataclasses
+import warnings
 from abc import ABC, abstractmethod
 from typing import ClassVar, TypeAlias, cast
 
 from rdflib import Graph
 from rdflib.query import ResultRow
 
+from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._shared import Triple
 from cognite.neat._utils.collection_ import iterate_progress_bar
 from cognite.neat._utils.graph_transformations_report import GraphTransformationResult
 
 To_Add_Triples: TypeAlias = list[Triple]
 To_Remove_Triples: TypeAlias = list[Triple]
+
+
+@dataclasses.dataclass
+class RowTransformationOutput:
+    remove_triples: To_Remove_Triples = dataclasses.field(default_factory=list)
+    add_triples: To_Add_Triples = dataclasses.field(default_factory=list)
+    instances_removed_count: int = 0
+    instances_added_count: int = 0
+    instances_modified_count: int = 0
 
 
 class BaseTransformer(ABC):
@@ -33,7 +45,7 @@ class BaseTransformerStandardised(ABC):
     _use_iterate_bar_threshold: int = 500
 
     @abstractmethod
-    def operation(self, query_result_row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
         """The operations to perform on each row resulting from the ._iterate_query() method.
         The operation should return a list of triples to add and to remove.
         """
@@ -67,7 +79,7 @@ class BaseTransformerStandardised(ABC):
 
     def transform(self, graph: Graph) -> GraphTransformationResult:
         outcome = GraphTransformationResult(self.__class__.__name__)
-        to_add_count = to_remove_count = 0
+        outcome.added = outcome.modified = outcome.removed = 0
 
         iteration_count_res = list(graph.query(self._count_query()))
         iteration_count = int(iteration_count_res[0][0])  # type: ignore [index, arg-type]
@@ -77,6 +89,10 @@ class BaseTransformerStandardised(ABC):
         if self._skip_count_query():
             skipped_count_res = list(graph.query(self._skip_count_query()))
             skipped_count = int(skipped_count_res[0][0])  # type: ignore [index, arg-type]
+            warnings.warn(
+                NeatValueWarning(f"Skipping {skipped_count} properties in transformation {self.__class__.__name__}"),
+                stacklevel=2,
+            )
             outcome.skipped = skipped_count
 
         if iteration_count == 0:
@@ -92,15 +108,15 @@ class BaseTransformerStandardised(ABC):
 
         for row in result_iterable:
             row = cast(ResultRow, row)
-            triples_to_add_from_row, triples_to_remove_from_row = self.operation(row)
-            to_add_count += len(triples_to_add_from_row)
-            to_remove_count += len(triples_to_remove_from_row)
+            row_output = self.operation(row)
 
-            for triple in triples_to_remove_from_row:
-                graph.remove(triple)
-            for triple in triples_to_add_from_row:
+            outcome.added += row_output.instances_added_count
+            outcome.removed += row_output.instances_removed_count
+            outcome.modified += row_output.instances_modified_count
+
+            for triple in row_output.add_triples:
                 graph.add(triple)
+            for triple in row_output.remove_triples:
+                graph.remove(triple)
 
-        outcome.added = to_add_count
-        outcome.removed = to_remove_count
         return outcome
