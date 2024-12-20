@@ -11,7 +11,7 @@ from cognite.neat._utils.text import sentence_or_string_to_camel
 from ._base import BaseTransformer, BaseTransformerStandardised, To_Add_Triples, To_Remove_Triples
 
 
-class AttachPropertyFromTargetToSource(BaseTransformer):
+class AttachPropertyFromTargetToSource(BaseTransformer):  # TODO: split in two?
     """
     Transformer that considers a TargetNode and SourceNode relationship, to extract a property that is attached to
     the TargetNode, and attaches it to the SourceNode instead, while also deleting the edge between
@@ -149,7 +149,7 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
                 graph.remove((target_node, None, None))
 
 
-class PruneDanglingNodes(BaseTransformer):
+class PruneDanglingNodes(BaseTransformer):  # TODO: remove?
     """
     Knowledge graph pruner and resolver. Will remove rdf triples from graph that does not have connections
     to other nodes, and traverse graph for specified types to resolve the value in the final node and link it to
