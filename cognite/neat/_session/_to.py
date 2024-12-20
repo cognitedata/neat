@@ -30,11 +30,15 @@ class ToAPI:
     def excel(
         self,
         io: Any,
+        include_reference: bool = True,
     ) -> None:
         """Export the verified data model to Excel.
 
         Args:
             io: The file path or file-like object to write the Excel file to.
+            include_reference: If True, the reference data model will be included. Defaults to True.
+                Note that this only applies if you have created the data model using the
+                .to_enterprise(), .to_solution(), or .to_data_product() methods.
 
         Example:
             Export information model to excel rules sheet
@@ -44,10 +48,20 @@ class ToAPI:
             ```
 
         Example:
-            Export data model to excel rules sheet
+            Read CogniteCore model, convert it to an enterprise model, and export it to an excel file
             ```python
+            client = CogniteClient()
+            neat = NeatSession(client)
+
+            neat.read.cdf(("cdf_cdm", "CogniteCore", "v1"))
+            neat.verify()
+            neat.prepare.data_model.to_enterprise(
+                data_model_id=("sp_doctrino_space", "ExtensionCore", "v1"),
+                org_name="MyOrg",
+                move_connections=True
+            )
             dms_rules_file_name = "dms_rules.xlsx"
-            neat.to.excel(information_rules_file_name)
+            neat.to.excel(dms_rules_file_name, include_reference=True)
             ```
         """
         exporter = exporters.ExcelExporter(styling="maximal")
