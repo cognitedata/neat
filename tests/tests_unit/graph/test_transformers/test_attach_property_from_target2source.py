@@ -136,7 +136,6 @@ def generate_test_parameters_delete_target_node() -> Iterable[ParameterSet]:
 
 def generate_test_parameters_keep_target_node() -> Iterable[ParameterSet]:
     namespace = get_default_prefixes_and_namespaces()["iodd"]
-    target_node_type = namespace["TextObject"]
     target_property = namespace["value"]
     target_property_holding_new_property = namespace["description"]
     target_node_type = namespace["TextObject"]

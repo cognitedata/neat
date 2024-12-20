@@ -2,15 +2,16 @@ from typing import cast
 from urllib.parse import quote
 
 from rdflib import Graph, URIRef
+from rdflib.query import ResultRow
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
 from cognite.neat._rules.models.information import InformationRules
 from cognite.neat._shared import Triple
-from cognite.neat._utils.rdf_ import add_triples_in_batch, remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
-from ._base import BaseTransformer
+from ._base import BaseTransformer, BaseTransformerStandardised, RowTransformationOutput
 
 
 class ReduceHopTraversal(BaseTransformer):
@@ -19,6 +20,7 @@ class ReduceHopTraversal(BaseTransformer):
     ...
 
 
+# TODO: Standardise
 class AddSelfReferenceProperty(BaseTransformer):
     description: str = "Adds property that contains id of reference to all references of given class in Rules"
     _use_only_once: bool = True
@@ -56,17 +58,10 @@ class AddSelfReferenceProperty(BaseTransformer):
             property_.transformation = RDFPath(traversal=traversal)
 
 
-class MakeConnectionOnExactMatch(BaseTransformer):
+class MakeConnectionOnExactMatch(BaseTransformerStandardised):
     description: str = "Adds property that contains id of reference to all references of given class in Rules"
     _use_only_once: bool = True
     _need_changes = frozenset({})
-    _ref_template: str = """SELECT DISTINCT ?subject ?object
-                            WHERE {{
-                                ?subject a <{subject_type}> .
-                                ?subject <{subject_predicate}> ?value .
-                                ?object <{object_predicate}> ?value .
-                                ?object a <{object_type}> .
-                            }}"""
 
     def __init__(
         self,
@@ -90,20 +85,45 @@ class MakeConnectionOnExactMatch(BaseTransformer):
 
         self.limit = limit
 
-    def transform(self, graph: Graph) -> None:
-        query = self._ref_template.format(
+    def _iterate_query(self) -> str:
+        query = """SELECT DISTINCT ?subject ?object
+                            WHERE {{
+                                ?subject a <{subject_type}> .
+                                ?subject <{subject_predicate}> ?value .
+                                ?object <{object_predicate}> ?value .
+                                ?object a <{object_type}> .
+                            }}"""
+
+        if self.limit and isinstance(self.limit, int) and self.limit > 0:
+            query += f" LIMIT {self.limit}"
+
+        return query.format(
             subject_type=self.subject_type,
             subject_predicate=self.subject_predicate,
             object_type=self.object_type,
             object_predicate=self.object_predicate,
         )
 
-        if self.limit and isinstance(self.limit, int) and self.limit > 0:
-            query += f" LIMIT {self.limit}"
+    def _count_query(self) -> str:
+        query = """SELECT (COUNT(DISTINCT (?subject ?object)) as ?count)
+                    WHERE {{
+                        ?subject a <{subject_type}> .
+                        ?subject <{subject_predicate}> ?value .
+                        ?object <{object_predicate}> ?value .
+                        ?object a <{object_type}> .
+                    }}"""
+        return query.format(
+            subject_type=self.subject_type,
+            subject_predicate=self.subject_predicate,
+            object_type=self.object_type,
+            object_predicate=self.object_predicate,
+        )
 
-        triples: list[Triple] = []
-        for subject, object in graph.query(query):  # type: ignore [misc]
-            triples.append(cast(Triple, (subject, self.connection, object)))
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
+        row_output = RowTransformationOutput()
 
-        print(f"Found {len(triples)} connections. Adding them to the graph...")
-        add_triples_in_batch(graph, triples)
+        subject, object = query_result_row
+
+        row_output.add_triples.append(cast(Triple, (subject, self.connection, object)))
+        row_output.instances_added_count += 1
+        return row_output

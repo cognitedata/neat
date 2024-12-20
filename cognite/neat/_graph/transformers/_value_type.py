@@ -13,9 +13,10 @@ from cognite.neat._issues.warnings import PropertyDataTypeConversionWarning
 from cognite.neat._utils.auxiliary import string_to_ideal_type
 from cognite.neat._utils.rdf_ import get_namespace, remove_namespace_from_uri
 
-from ._base import BaseTransformer, BaseTransformerStandardised, To_Add_Triples, To_Remove_Triples
+from ._base import BaseTransformer, BaseTransformerStandardised, RowTransformationOutput
 
 
+# TODO: Standardise
 class SplitMultiValueProperty(BaseTransformer):
     description: str = (
         "SplitMultiValueProperty is a transformer that splits a "
@@ -119,9 +120,8 @@ class ConvertLiteral(BaseTransformerStandardised):
                     }}"""
         return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
 
-    def operation(self, query_result_row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
-        to_add: To_Add_Triples = []
-        to_remove: To_Remove_Triples = []
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
+        row_output = RowTransformationOutput()
 
         instance, literal = query_result_row
         value = cast(rdflib.Literal, literal).toPython()
@@ -133,10 +133,12 @@ class ConvertLiteral(BaseTransformerStandardised):
                 PropertyDataTypeConversionWarning(str(instance), self._type_name, self._property_name, str(e)),
                 stacklevel=2,
             )
-        to_add.append((instance, self.subject_predicate, rdflib.Literal(converted_value)))  # type: ignore[arg-type]
-        to_remove.append((instance, self.subject_predicate, literal))  # type: ignore[arg-type]
+        row_output.add_triples.append((instance, self.subject_predicate, rdflib.Literal(converted_value)))  # type: ignore[arg-type]
+        row_output.remove_triples.append((instance, self.subject_predicate, literal))  # type: ignore[arg-type]
+        row_output.instances_added_count += 1
+        row_output.instances_removed_count += 1
 
-        return to_add, to_remove
+        return row_output
 
 
 class LiteralToEntity(BaseTransformerStandardised):
@@ -202,19 +204,22 @@ class LiteralToEntity(BaseTransformerStandardised):
 
             return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
 
-    def operation(self, query_result_row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
-        to_add: To_Add_Triples = []
-        to_remove: To_Remove_Triples = []
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
+        row_output = RowTransformationOutput()
 
         instance, literal = query_result_row
         value = cast(rdflib.Literal, literal).toPython()
         namespace = Namespace(get_namespace(instance))  # type: ignore[arg-type]
         entity_type = namespace[self.entity_type]
         new_entity = namespace[f"{self.entity_type}_{quote(value)!s}"]
-        to_add.append((new_entity, RDF.type, entity_type))
+        row_output.add_triples.append((new_entity, RDF.type, entity_type))
+        row_output.instances_added_count += 1
         if self.new_property is not None:
-            to_add.append((new_entity, namespace[self.new_property], rdflib.Literal(value)))  # type: ignore[arg-type]
-        to_add.append((instance, self.subject_predicate, new_entity))  # type: ignore[arg-type]
-        to_remove.append((instance, self.subject_predicate, literal))  # type: ignore[arg-type]
+            row_output.add_triples.append((new_entity, namespace[self.new_property], rdflib.Literal(value)))  # type: ignore[arg-type]
+            row_output.instances_added_count += 1
+        row_output.add_triples.append((instance, self.subject_predicate, new_entity))  # type: ignore[arg-type]
+        row_output.instances_added_count += 1
+        row_output.remove_triples.append((instance, self.subject_predicate, literal))  # type: ignore[arg-type]
+        row_output.instances_removed_count += 1
 
-        return to_add, to_remove
+        return row_output
