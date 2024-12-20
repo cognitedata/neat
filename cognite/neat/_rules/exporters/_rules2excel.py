@@ -102,7 +102,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self._write_sheets(workbook, dumped_user_rules, rules, sheet_prefix=self.sheet_prefix)
         if self.reference_rules_by_prefix:
             for prefix, reference_rules in self.reference_rules_by_prefix.items():
-                dumped_reference_rules = reference_rules.dump(by_alias=True)
+                dumped_reference_rules = reference_rules.dump(by_alias=True, entities_exclude_defaults=False)
                 self._write_sheets(workbook, dumped_reference_rules, reference_rules, sheet_prefix=prefix)
                 self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix=prefix)
 
