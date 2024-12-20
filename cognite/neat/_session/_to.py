@@ -67,7 +67,7 @@ class ToAPI:
             neat.to.excel(dms_rules_file_name, include_reference=True)
             ```
         """
-        reference_rules_by_prefix: dict[str, VerifiedRules] | None = None
+        reference_rules_with_prefix: tuple[VerifiedRules, str] | None = None
         if include_reference and self._state.last_reference:
             if (
                 isinstance(self._state.last_reference.metadata, DMSMetadata)
@@ -76,11 +76,9 @@ class ToAPI:
                 prefix = "CDM"
             else:
                 prefix = "Ref"
-            reference_rules_by_prefix = {
-                prefix: self._state.last_reference,
-            }
+            reference_rules_with_prefix = self._state.last_reference, prefix
 
-        exporter = exporters.ExcelExporter(styling="maximal", reference_rules_by_prefix=reference_rules_by_prefix)
+        exporter = exporters.ExcelExporter(styling="maximal", reference_rules_with_prefix=reference_rules_with_prefix)
         return self._state.rule_store.export_to_file(exporter, Path(io))
 
     @overload
