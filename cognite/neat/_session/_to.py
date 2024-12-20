@@ -5,10 +5,13 @@ from typing import Any, Literal, overload
 from cognite.client.data_classes.data_modeling import SpaceApply
 
 from cognite.neat._client import NeatClient
+from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._graph import loaders
 from cognite.neat._rules import exporters
 from cognite.neat._rules._constants import PATTERNS
+from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.exporters._rules2dms import Component
+from cognite.neat._rules.models.dms import DMSMetadata
 from cognite.neat._utils.upload import UploadResultList
 
 from ._state import SessionState
@@ -30,11 +33,15 @@ class ToAPI:
     def excel(
         self,
         io: Any,
+        include_reference: bool = True,
     ) -> None:
         """Export the verified data model to Excel.
 
         Args:
             io: The file path or file-like object to write the Excel file to.
+            include_reference: If True, the reference data model will be included. Defaults to True.
+                Note that this only applies if you have created the data model using the
+                .to_enterprise(), .to_solution(), or .to_data_product() methods.
 
         Example:
             Export information model to excel rules sheet
@@ -44,13 +51,34 @@ class ToAPI:
             ```
 
         Example:
-            Export data model to excel rules sheet
+            Read CogniteCore model, convert it to an enterprise model, and export it to an excel file
             ```python
+            client = CogniteClient()
+            neat = NeatSession(client)
+
+            neat.read.cdf(("cdf_cdm", "CogniteCore", "v1"))
+            neat.verify()
+            neat.prepare.data_model.to_enterprise(
+                data_model_id=("sp_doctrino_space", "ExtensionCore", "v1"),
+                org_name="MyOrg",
+                move_connections=True
+            )
             dms_rules_file_name = "dms_rules.xlsx"
-            neat.to.excel(information_rules_file_name)
+            neat.to.excel(dms_rules_file_name, include_reference=True)
             ```
         """
-        exporter = exporters.ExcelExporter(styling="maximal")
+        reference_rules_with_prefix: tuple[VerifiedRules, str] | None = None
+        if include_reference and self._state.last_reference:
+            if (
+                isinstance(self._state.last_reference.metadata, DMSMetadata)
+                and self._state.last_reference.metadata.as_data_model_id() in COGNITE_MODELS
+            ):
+                prefix = "CDM"
+            else:
+                prefix = "Ref"
+            reference_rules_with_prefix = self._state.last_reference, prefix
+
+        exporter = exporters.ExcelExporter(styling="maximal", reference_rules_with_prefix=reference_rules_with_prefix)
         return self._state.rule_store.export_to_file(exporter, Path(io))
 
     @overload

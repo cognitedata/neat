@@ -3,7 +3,8 @@ from typing import Literal, cast
 
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.importers import BaseImporter, InferenceImporter
-from cognite.neat._rules.transformers import RulesTransformer
+from cognite.neat._rules.models import DMSRules, InformationRules
+from cognite.neat._rules.transformers import RulesTransformer, ToExtension
 from cognite.neat._store import NeatGraphStore, NeatRulesStore
 from cognite.neat._store._rules_store import ModelEntity
 from cognite.neat._utils.rdf_ import uri_display_name
@@ -17,6 +18,7 @@ class SessionState:
     def __init__(self, store_type: Literal["memory", "oxigraph"]) -> None:
         self.instances = InstancesState(store_type)
         self.rule_store = NeatRulesStore()
+        self.last_reference: DMSRules | InformationRules | None = None
 
     def rule_transform(self, *transformer: RulesTransformer) -> IssueList:
         if not transformer:
@@ -33,6 +35,12 @@ class SessionState:
                 f"The {action} actions expects a {expected}. "
                 f"Moving back {len(pruned)} {step_str} to the last {location}."
             )
+        if (
+            any(isinstance(t, ToExtension) for t in transformer)
+            and isinstance(self.rule_store.provenance[-1].target_entity, ModelEntity)
+            and isinstance(self.rule_store.provenance[-1].target_entity.result, DMSRules | InformationRules)
+        ):
+            self.last_reference = self.rule_store.provenance[-1].target_entity.result
 
         start = cast(ModelEntity, self.rule_store.provenance[-1].target_entity).display_name
         issues = self.rule_store.transform(*transformer)
