@@ -135,8 +135,7 @@ class ConvertLiteral(BaseTransformerStandardised):
             )
         row_output.add_triples.append((instance, self.subject_predicate, rdflib.Literal(converted_value)))  # type: ignore[arg-type]
         row_output.remove_triples.append((instance, self.subject_predicate, literal))  # type: ignore[arg-type]
-        row_output.instances_added_count += 1
-        row_output.instances_removed_count += 1
+        row_output.instances_modified_count += 1
 
         return row_output
 
@@ -213,13 +212,14 @@ class LiteralToEntity(BaseTransformerStandardised):
         entity_type = namespace[self.entity_type]
         new_entity = namespace[f"{self.entity_type}_{quote(value)!s}"]
         row_output.add_triples.append((new_entity, RDF.type, entity_type))
-        row_output.instances_added_count += 1
+        row_output.instances_added_count += 1  # we add one new entity
+
         if self.new_property is not None:
             row_output.add_triples.append((new_entity, namespace[self.new_property], rdflib.Literal(value)))  # type: ignore[arg-type]
-            row_output.instances_added_count += 1
+            row_output.instances_modified_count += 1  # we modify the new entity
+
         row_output.add_triples.append((instance, self.subject_predicate, new_entity))  # type: ignore[arg-type]
-        row_output.instances_added_count += 1
         row_output.remove_triples.append((instance, self.subject_predicate, literal))  # type: ignore[arg-type]
-        row_output.instances_removed_count += 1
+        row_output.instances_modified_count += 1  # we modify the old entity
 
         return row_output

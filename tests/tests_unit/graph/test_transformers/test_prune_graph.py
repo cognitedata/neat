@@ -80,7 +80,7 @@ class TestPruneGraph:
         assert len(triples_after) == len(expected_triples)
 
         # Verify transformation result object
-        assert transformation_result.removed == len(removed_triples)
+        assert transformation_result.modified == len(removed_triples)
 
     def test_prune_dead_end_edges(self): ...
 

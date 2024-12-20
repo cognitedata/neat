@@ -12,6 +12,7 @@ class GraphTransformationResult(NeatObject, ABC):
     added: int | None = None
     removed: int | None = None
     skipped: int | None = None
+    modified: int | None = None
 
     def dump(self, aggregate: bool = True) -> dict[str, Any]:
         output: dict[str, Any] = {"name": self.name}
@@ -23,6 +24,8 @@ class GraphTransformationResult(NeatObject, ABC):
             output["skipped"] = self.skipped
         if self.affected_nodes_count:
             output["affected nodes"] = self.affected_nodes_count
+        if self.modified:
+            output["modified instances"] = self.modified
         return output
 
 

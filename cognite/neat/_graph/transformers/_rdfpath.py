@@ -112,6 +112,10 @@ class MakeConnectionOnExactMatch(BaseTransformerStandardised):
                         ?object <{object_predicate}> ?value .
                         ?object a <{object_type}> .
                     }}"""
+
+        if self.limit and isinstance(self.limit, int) and self.limit > 0:
+            query += f" LIMIT {self.limit}"
+
         return query.format(
             subject_type=self.subject_type,
             subject_predicate=self.subject_predicate,
@@ -125,5 +129,5 @@ class MakeConnectionOnExactMatch(BaseTransformerStandardised):
         subject, object = query_result_row
 
         row_output.add_triples.append(cast(Triple, (subject, self.connection, object)))
-        row_output.instances_added_count += 1
+        row_output.instances_modified_count += 1
         return row_output

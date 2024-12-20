@@ -21,6 +21,7 @@ class RowTransformationOutput:
     add_triples: To_Add_Triples = dataclasses.field(default_factory=list)
     instances_removed_count: int = 0
     instances_added_count: int = 0
+    instances_modified_count: int = 0
 
 
 class BaseTransformer(ABC):
@@ -78,7 +79,7 @@ class BaseTransformerStandardised(ABC):
 
     def transform(self, graph: Graph) -> GraphTransformationResult:
         outcome = GraphTransformationResult(self.__class__.__name__)
-        to_add_count = to_remove_count = 0
+        outcome.added = outcome.modified = outcome.removed = 0
 
         iteration_count_res = list(graph.query(self._count_query()))
         iteration_count = int(iteration_count_res[0][0])  # type: ignore [index, arg-type]
@@ -109,14 +110,13 @@ class BaseTransformerStandardised(ABC):
             row = cast(ResultRow, row)
             row_output = self.operation(row)
 
-            to_add_count += row_output.instances_added_count
-            to_remove_count += row_output.instances_removed_count
+            outcome.added += row_output.instances_added_count
+            outcome.removed += row_output.instances_removed_count
+            outcome.modified += row_output.instances_modified_count
 
             for triple in row_output.add_triples:
                 graph.add(triple)
             for triple in row_output.remove_triples:
                 graph.remove(triple)
 
-        outcome.added = to_add_count
-        outcome.removed = to_remove_count
         return outcome
