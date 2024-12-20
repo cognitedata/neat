@@ -20,14 +20,12 @@ import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Generic, Optional, TypeVar
+from typing import Optional
 
-from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from rdflib import PROV, RDF, Literal, URIRef
 
 from cognite.neat._constants import CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList
-from cognite.neat._rules._shared import JustRules, ReadRules, VerifiedRules
 from cognite.neat._shared import FrozenNeatObject, NeatList, Triple
 
 
@@ -73,45 +71,6 @@ class Entity:
         return output
 
     @classmethod
-    def from_data_model_id(cls, data_model_id: DataModelIdentifier) -> "Entity":
-        data_model_id = DataModelId.load(data_model_id)
-
-        return cls(
-            was_attributed_to=CDF_AGENT,
-            id_=CDF_NAMESPACE[
-                f"dms/data-model/{data_model_id.space}/{data_model_id.external_id}/{data_model_id.version}"
-            ],
-        )
-
-    @classmethod
-    def from_rules(
-        cls,
-        rules: ReadRules | JustRules | VerifiedRules,
-        agent: Agent | None = None,
-        activity: "Activity | None" = None,
-    ) -> "Entity":
-        agent = agent or UNKNOWN_AGENT
-        if isinstance(rules, VerifiedRules):
-            return cls(
-                was_attributed_to=agent,
-                was_generated_by=activity,
-                id_=rules.metadata.identifier,
-            )
-
-        elif isinstance(rules, ReadRules | JustRules) and rules.rules is not None:
-            return cls(
-                was_attributed_to=agent,
-                was_generated_by=activity,
-                id_=rules.rules.metadata.identifier,
-            )
-        else:
-            return cls(
-                was_attributed_to=agent,
-                was_generated_by=activity,
-                id_=DEFAULT_NAMESPACE["unknown-entity"],
-            )
-
-    @classmethod
     def new_unknown_entity(cls) -> "Entity":
         return cls(
             was_attributed_to=UNKNOWN_AGENT,
@@ -119,15 +78,8 @@ class Entity:
         )
 
 
-T_Result = TypeVar("T_Result")
-
-
-@dataclass(frozen=True)
-class ModelEntity(Entity, Generic[T_Result]):
-    result: T_Result | None = None
-
-
 INSTANCES_ENTITY = Entity(was_attributed_to=NEAT_AGENT, id_=CDF_NAMESPACE["instances"])
+EMPTY_ENTITY = Entity(was_attributed_to=NEAT_AGENT, id_=DEFAULT_NAMESPACE["empty-entity"])
 
 
 @dataclass(frozen=True)
@@ -192,34 +144,6 @@ class Change(FrozenNeatObject):
             description=description,
         )
 
-    @classmethod
-    def from_rules_activity(
-        cls,
-        rules: ReadRules | JustRules | VerifiedRules,
-        agent: Agent,
-        start: datetime,
-        end: datetime,
-        description: str,
-        source_entity: Entity | None = None,
-    ) -> "Change":
-        source_entity = source_entity or Entity.new_unknown_entity()
-        activity = Activity(
-            started_at_time=start,
-            ended_at_time=end,
-            was_associated_with=agent,
-            used=source_entity,
-        )
-
-        target_entity = Entity.from_rules(rules, agent, activity)
-
-        return cls(
-            agent=agent,
-            activity=activity,
-            target_entity=target_entity,
-            description=description,
-            source_entity=source_entity,
-        )
-
     def dump(self, aggregate: bool = True) -> dict[str, str]:
         return {
             "Source Entity": self.source_entity.id_,
@@ -230,11 +154,8 @@ class Change(FrozenNeatObject):
         }
 
 
-T_Change = TypeVar("T_Change", bound=Change)
-
-
 class Provenance(NeatList[Change]):
-    def __init__(self, changes: Sequence[T_Change] | None = None):
+    def __init__(self, changes: Sequence[Change] | None = None):
         super().__init__(changes or [])
 
     def activity_took_place(self, activity: str) -> bool:

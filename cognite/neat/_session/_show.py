@@ -5,7 +5,6 @@ from typing import Any, cast
 import networkx as nx
 from IPython.display import HTML, display
 from pyvis.network import Network as PyVisNetwork  # type: ignore
-from rdflib import URIRef
 
 from cognite.neat._constants import IN_NOTEBOOK, IN_PYODIDE
 from cognite.neat._rules._constants import EntityTypes
@@ -13,7 +12,8 @@ from cognite.neat._rules.models.dms._rules import DMSRules
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._session.exceptions import NeatSessionError
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.io_ import to_directory_compatible
+from cognite.neat._utils.rdf_ import remove_namespace_from_uri, uri_display_name
 
 from ._state import SessionState
 from .exceptions import session_class_wrapper
@@ -98,24 +98,24 @@ class ShowDataModelAPI(ShowBaseAPI):
         self.implements = ShowDataModelImplementsAPI(self._state)
 
     def __call__(self) -> Any:
-        if not self._state.data_model.has_verified_rules:
+        if not self._state.rule_store.has_verified_rules:
             raise NeatSessionError(
                 "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
             )
 
-        rules = self._state.data_model.last_verified_rule[1]
+        rules = self._state.rule_store.last_verified_rule
 
         if isinstance(rules, DMSRules):
-            di_graph = self._generate_dms_di_graph(self._state.data_model.last_verified_dms_rules[1])
-            name = "dms_data_model.html"
+            di_graph = self._generate_dms_di_graph(rules)
         elif isinstance(rules, InformationRules):
-            di_graph = self._generate_info_di_graph(self._state.data_model.last_verified_information_rules[1])
-            name = "information_data_model.html"
+            di_graph = self._generate_info_di_graph(rules)
         else:
             # This should never happen, but we need to handle it to satisfy mypy
             raise NeatSessionError(
                 f"Unsupported type {type(rules) }. Make sure you have either information or DMS rules."
             )
+        identifier = to_directory_compatible(str(rules.metadata.identifier))
+        name = f"{identifier}.html"
 
         return self._generate_visualization(di_graph, name)
 
@@ -187,25 +187,24 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
         self._state = state
 
     def __call__(self) -> Any:
-        if not self._state.data_model.has_verified_rules:
+        if not self._state.rule_store.has_verified_rules:
             raise NeatSessionError(
                 "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
             )
 
-        rules = self._state.data_model.last_verified_rule[1]
+        rules = self._state.rule_store.last_verified_rule
 
         if isinstance(rules, DMSRules):
-            di_graph = self._generate_dms_di_graph(self._state.data_model.last_verified_dms_rules[1])
-            name = "dms_data_model_implements.html"
+            di_graph = self._generate_dms_di_graph(rules)
         elif isinstance(rules, InformationRules):
-            di_graph = self._generate_info_di_graph(self._state.data_model.last_verified_information_rules[1])
-            name = "information_data_model_implements.html"
+            di_graph = self._generate_info_di_graph(rules)
         else:
             # This should never happen, but we need to handle it to satisfy mypy
             raise NeatSessionError(
                 f"Unsupported type {type(rules) }. Make sure you have either information or DMS rules."
             )
-
+        identifier = to_directory_compatible(str(rules.metadata.identifier))
+        name = f"{identifier}_implements.html"
         return self._generate_visualization(di_graph, name)
 
     def _generate_dms_di_graph(self, rules: DMSRules) -> nx.DiGraph:
@@ -270,20 +269,21 @@ class ShowDataModelProvenanceAPI(ShowBaseAPI):
         self._state = state
 
     def __call__(self) -> Any:
-        if not self._state.data_model.provenance:
+        if not self._state.rule_store.provenance:
             raise NeatSessionError("No data model available. Try using [bold].read[/bold] to load data model.")
 
         di_graph = self._generate_dm_provenance_di_graph_and_types()
-        return self._generate_visualization(di_graph, name="data_model_provenance.html")
+        unique_hash = self._state.rule_store.calculate_provenance_hash(shorten=True)
+        return self._generate_visualization(di_graph, name=f"data_model_provenance_{unique_hash}.html")
 
     def _generate_dm_provenance_di_graph_and_types(self) -> nx.DiGraph:
         di_graph = nx.DiGraph()
-        hex_colored_types = _generate_hex_color_per_type(["Agent", "Entity", "Activity"])
+        hex_colored_types = _generate_hex_color_per_type(["Agent", "Entity", "Activity", "Export", "Pruned"])
 
-        for change in self._state.data_model.provenance:
-            source = self._shorten_id(change.source_entity.id_)
-            target = self._shorten_id(change.target_entity.id_)
-            agent = self._shorten_id(change.agent.id_)
+        for change in self._state.rule_store.provenance:
+            source = uri_display_name(change.source_entity.id_)
+            target = uri_display_name(change.target_entity.id_)
+            agent = uri_display_name(change.agent.id_)
 
             di_graph.add_node(
                 source,
@@ -312,15 +312,34 @@ class ShowDataModelProvenanceAPI(ShowBaseAPI):
             di_graph.add_edge(source, agent, label="used", color="grey")
             di_graph.add_edge(agent, target, label="generated", color="grey")
 
-        return di_graph
+        for source_id, exports in self._state.rule_store.exports_by_source_entity_id.items():
+            source_shorten = uri_display_name(source_id)
+            for export in exports:
+                export_id = uri_display_name(export.target_entity.id_)
+                di_graph.add_node(
+                    export_id,
+                    label=export_id,
+                    type="Export",
+                    title="Export",
+                    color=hex_colored_types["Export"],
+                )
+                di_graph.add_edge(source_shorten, export_id, label="exported", color="grey")
 
-    @staticmethod
-    def _shorten_id(thing: URIRef) -> str:
-        if "https://cognitedata.com/dms/data-model/" in thing:
-            return "DMS(" + ",".join(thing.replace("https://cognitedata.com/dms/data-model/", "").split("/")) + ")"
-        elif "http://purl.org/cognite/neat/data-model/" in thing:
-            return "NEAT(" + ",".join(thing.replace("http://purl.org/cognite/neat/data-model/", "").split("/")) + ")"
-        return remove_namespace_from_uri(thing)
+        for pruned_lists in self._state.rule_store.pruned_by_source_entity_id.values():
+            for prune_path in pruned_lists:
+                for change in prune_path:
+                    source = uri_display_name(change.source_entity.id_)
+                    target = uri_display_name(change.target_entity.id_)
+                    di_graph.add_node(
+                        target,
+                        label=target,
+                        type="Pruned",
+                        title="Pruned",
+                        color=hex_colored_types["Pruned"],
+                    )
+                    di_graph.add_edge(source, target, label="pruned", color="grey")
+
+        return di_graph
 
 
 @session_class_wrapper

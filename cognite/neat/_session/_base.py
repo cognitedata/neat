@@ -1,26 +1,17 @@
-from datetime import datetime, timezone
-from typing import Literal, cast
+from typing import Literal
 
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
 from cognite.neat import _version
 from cognite.neat._client import NeatClient
-from cognite.neat._issues import IssueList, catch_issues
+from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
-from cognite.neat._rules._shared import ReadRules, VerifiedRules
-from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models.dms import DMSValidation
-from cognite.neat._rules.models.information import InformationValidation
+from cognite.neat._rules.models._base_input import InputRules
 from cognite.neat._rules.models.information._rules import InformationRules
-from cognite.neat._rules.models.information._rules_input import InformationInputRules
 from cognite.neat._rules.transformers import ConvertToRules, InformationToDMS, VerifyAnyRules
 from cognite.neat._rules.transformers._converters import ConversionTransformer
-from cognite.neat._store._provenance import (
-    INSTANCES_ENTITY,
-    Change,
-)
 
 from ._collector import _COLLECTOR, Collector
 from ._drop import DropAPI
@@ -128,47 +119,16 @@ class NeatSession:
             neat.verify()
             ```
         """
-        source_id, last_unverified_rule = self._state.data_model.last_unverified_rule
-        transformer = VerifyAnyRules("continue", validate=False)
-        start = datetime.now(timezone.utc)
-        output = transformer.try_transform(last_unverified_rule)
+        transformer = VerifyAnyRules(validate=True, client=self._client)  # type: ignore[var-annotated]
+        issues = self._state.rule_transform(transformer)
+        if not issues.has_errors:
+            rules = self._state.rule_store.last_verified_rule
+            if isinstance(rules, InformationRules):
+                self._state.instances.store.add_rules(rules)
 
-        if output.rules:
-            if isinstance(output.rules, DMSRules):
-                issues = DMSValidation(output.rules, self._client).validate()
-            elif isinstance(output.rules, InformationRules):
-                issues = InformationValidation(output.rules).validate()
-            else:
-                raise NeatSessionError("Unsupported rule type")
-            if issues.has_errors:
-                # This is up for discussion, but I think we should not return rules that
-                # only pass the verification but not the validation.
-                output.rules = None
-            output.issues.extend(issues)
-
-            end = datetime.now(timezone.utc)
-
-            if output.rules:
-                change = Change.from_rules_activity(
-                    output.rules,
-                    transformer.agent,
-                    start,
-                    end,
-                    f"Verified data model {source_id} as {output.rules.metadata.identifier}",
-                    self._state.data_model.provenance.source_entity(source_id)
-                    or self._state.data_model.provenance.target_entity(source_id),
-                )
-
-                self._state.data_model.write(output.rules, change)
-
-                if isinstance(output.rules, InformationRules):
-                    self._state.instances.store.add_rules(output.rules)
-
-        output.issues.action = "verify"
-        self._state.data_model.issue_lists.append(output.issues)
-        if output.issues:
+        if issues:
             print("You can inspect the issues with the .inspect.issues(...) method.")
-        return output.issues
+        return issues
 
     def convert(
         self, target: Literal["dms", "information"], mode: Literal["edge_properties"] | None = None
@@ -192,43 +152,17 @@ class NeatSession:
             neat.convert(target="information")
             ```
         """
-        start = datetime.now(timezone.utc)
-        issues = IssueList()
-        converter: ConversionTransformer | None = None
-        converted_rules: VerifiedRules | None = None
-        with catch_issues(issues):
-            if target == "dms":
-                source_id, info_rules = self._state.data_model.last_verified_information_rules
-                converter = InformationToDMS(mode=mode)
-                converted_rules = converter.transform(info_rules).rules
-            elif target == "information":
-                source_id, dms_rules = self._state.data_model.last_verified_dms_rules
-                converter = ConvertToRules(InformationRules)
-                converted_rules = converter.transform(dms_rules).rules
-            else:
-                # Session errors are not caught by the catch_issues context manager
-                raise NeatSessionError(f"Target {target} not supported.")
+        converter: ConversionTransformer
+        if target == "dms":
+            converter = InformationToDMS(mode=mode)
+        elif target == "information":
+            converter = ConvertToRules(InformationRules)
+        else:
+            raise NeatSessionError(f"Target {target} not supported.")
+        issues = self._state.rule_transform(converter)
 
-        end = datetime.now(timezone.utc)
-        if issues:
-            self._state.data_model.issue_lists.append(issues)
-
-        if converted_rules is not None and converter is not None:
-            # Provenance
-            change = Change.from_rules_activity(
-                converted_rules,
-                converter.agent,
-                start,
-                end,
-                f"Converted data model {source_id} to {converted_rules.metadata.identifier}",
-                self._state.data_model.provenance.source_entity(source_id)
-                or self._state.data_model.provenance.target_entity(source_id),
-            )
-
-            self._state.data_model.write(converted_rules, change)
-
-            if self._verbose and not issues.has_errors:
-                print(f"Rules converted to {target}")
+        if self._verbose and not issues.has_errors:
+            print(f"Rules converted to {target}")
         else:
             print("Conversion failed.")
         if issues:
@@ -263,53 +197,30 @@ class NeatSession:
             ```
         """
         model_id = dm.DataModelId.load(model_id)
-
-        start = datetime.now(timezone.utc)
         importer = importers.InferenceImporter.from_graph_store(
             store=self._state.instances.store,
             max_number_of_instance=max_number_of_instance,
+            data_model_id=model_id,
         )
-        inferred_rules: ReadRules = importer.to_rules()
-        end = datetime.now(timezone.utc)
-
-        if model_id.space:
-            cast(InformationInputRules, inferred_rules.rules).metadata.space = model_id.space
-        if model_id.external_id:
-            cast(InformationInputRules, inferred_rules.rules).metadata.external_id = model_id.external_id
-
-        if model_id.version:
-            cast(InformationInputRules, inferred_rules.rules).metadata.version = model_id.version
-
-        # Provenance
-        change = Change.from_rules_activity(
-            inferred_rules,
-            importer.agent,
-            start,
-            end,
-            "Inferred data model",
-            INSTANCES_ENTITY,
-        )
-
-        self._state.data_model.write(inferred_rules, change)
-        return inferred_rules.issues
+        return self._state.rule_import(importer)
 
     def _repr_html_(self) -> str:
         state = self._state
         if (
             not state.instances.has_store
-            and not state.data_model.has_unverified_rules
-            and not state.data_model.has_verified_rules
+            and not state.rule_store.has_unverified_rules
+            and not state.rule_store.has_verified_rules
         ):
             return "<strong>Empty session</strong>. Get started by reading something with the <em>.read</em> attribute."
 
         output = []
 
-        if state.data_model.has_unverified_rules and not state.data_model.has_verified_rules:
-            rules: ReadRules = state.data_model.last_unverified_rule[1]
-            output.append(f"<H2>Unverified Data Model</H2><br />{rules.rules._repr_html_()}")  # type: ignore
+        if state.rule_store.has_unverified_rules and not state.rule_store.has_verified_rules:
+            rules: InputRules = state.rule_store.last_unverified_rule
+            output.append(f"<H2>Unverified Data Model</H2><br />{rules._repr_html_()}")  # type: ignore
 
-        if state.data_model.has_verified_rules:
-            output.append(f"<H2>Verified Data Model</H2><br />{state.data_model.last_verified_rule[1]._repr_html_()}")  # type: ignore
+        if state.rule_store.has_verified_rules:
+            output.append(f"<H2>Verified Data Model</H2><br />{state.rule_store.last_verified_rule._repr_html_()}")  # type: ignore
 
         if state.instances.has_store:
             output.append(f"<H2>Instances</H2> {state.instances.store._repr_html_()}")

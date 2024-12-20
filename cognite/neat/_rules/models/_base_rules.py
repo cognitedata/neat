@@ -50,6 +50,7 @@ from cognite.neat._rules.models._types import (
 )
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import EdgeEntity, ReverseConnectionEntity, ViewEntity
+from cognite.neat._utils.rdf_ import uri_display_name
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -284,6 +285,10 @@ class BaseRules(SchemaModel, ABC):
                 if field_name != "validators_to_skip" and not field.exclude
             ]
         return headers_by_sheet
+
+    @property
+    def display_name(self):
+        return uri_display_name(self.metadata.identifier)
 
     def dump(
         self,

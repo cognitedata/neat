@@ -1,17 +1,13 @@
+import random
+import uuid
 from typing import Any
 
 import pandas as pd
 import pytest
 
 from cognite.neat._rules.importers import ExcelImporter
-from cognite.neat._rules.models import (
-    DMSRules,
-    InformationInputRules,
-    InformationRules,
-    RoleTypes,
-)
+from cognite.neat._rules.models import DMSRules, InformationInputRules, InformationRules
 from cognite.neat._rules.models.dms import DMSInputRules
-from cognite.neat._rules.transformers import ImporterPipeline
 from cognite.neat._utils.spreadsheet import read_individual_sheet
 from tests.config import DATA_FOLDER, DOC_RULES
 
@@ -30,7 +26,7 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def alice_rules(alice_spreadsheet: dict[str, dict[str, Any]]) -> DMSRules:
-    return DMSInputRules.load(alice_spreadsheet).as_rules()
+    return DMSInputRules.load(alice_spreadsheet).as_verified_rules()
 
 
 @pytest.fixture(scope="session")
@@ -95,28 +91,35 @@ def emma_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def olav_rules() -> InformationRules:
-    return ImporterPipeline.verify(
-        ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx"), role=RoleTypes.information
-    )
+    return ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx").to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
 def olav_dms_rules() -> DMSRules:
-    return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-analytics-olav.xlsx"), role=RoleTypes.dms)
+    return ExcelImporter(DOC_RULES / "dms-analytics-olav.xlsx").to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
 def svein_harald_information_rules() -> InformationRules:
-    return ImporterPipeline.verify(
-        ExcelImporter(DOC_RULES / "information-addition-svein-harald.xlsx"), role=RoleTypes.information
-    )
+    return ExcelImporter(DOC_RULES / "information-addition-svein-harald.xlsx").to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
 def svein_harald_dms_rules() -> DMSRules:
-    return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx"), role=RoleTypes.dms)
+    return ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx").to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
 def olav_rebuild_dms_rules() -> DMSRules:
-    return ImporterPipeline.verify(ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx"), role=RoleTypes.dms)
+    return ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx").to_rules().rules.as_verified_rules()
+
+
+@pytest.fixture(scope="function")
+def deterministic_uuid4(monkeypatch) -> None:
+    rd = random.Random()
+    rd.seed(42)
+
+    def deterministic_uuid4():
+        return uuid.UUID(int=rd.getrandbits(128), version=4)
+
+    monkeypatch.setattr("cognite.neat._rules.models._base_rules.uuid.uuid4", deterministic_uuid4)

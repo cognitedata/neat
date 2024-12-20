@@ -447,6 +447,10 @@ class DMSRules(BaseRules):
 
         return _DMSExporter(self, instance_space, remove_cdf_spaces=remove_cdf_spaces).to_schema()
 
+    @classmethod
+    def display_type_name(cls) -> str:
+        return "VerifiedDMSModel"
+
     def _repr_html_(self) -> str:
         summary = {
             "aspect": self.metadata.aspect,

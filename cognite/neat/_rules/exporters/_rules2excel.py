@@ -76,6 +76,10 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self._styling_level = self.style_options.index(styling)
         self.new_model_id = new_model_id
 
+    @property
+    def description(self) -> str:
+        return "Export verified model to Excel."
+
     def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
         """Exports transformation rules to excel file."""
         data = self.export(rules)
