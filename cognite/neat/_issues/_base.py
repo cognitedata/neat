@@ -485,7 +485,7 @@ class IssueList(NeatIssueList[NeatIssue]):
                 table = agg_df._repr_html_()  # type: ignore[operator]
             else:
                 table = agg_df.head()._repr_html_()  # type: ignore[operator]
-            body += f"<br{table}"
+            body += f"<br />{table}"
 
             if self.hint:
                 body += f"<br />Hint: {self.hint}"
