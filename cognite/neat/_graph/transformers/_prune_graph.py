@@ -1,13 +1,14 @@
 from typing import cast
 
 from rdflib import Graph, Namespace, URIRef
+from rdflib.query import ResultRow
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._shared import Triple
 from cognite.neat._utils.rdf_ import as_neat_compliant_uri
 from cognite.neat._utils.text import sentence_or_string_to_camel
 
-from ._base import BaseTransformer
+from ._base import BaseTransformer, BaseTransformerStandardised, To_Add_Triples, To_Remove_Triples
 
 
 class AttachPropertyFromTargetToSource(BaseTransformer):
@@ -214,44 +215,65 @@ class PruneTypes(BaseTransformer):
                 graph.remove((subject, None, None))
 
 
-class PruneDeadEndEdges(BaseTransformer):
+class PruneDeadEndEdges(BaseTransformerStandardised):
     """
     Removes all the triples where object is a node that is not found in graph
     """
 
-    description: str = "Prunes the graph of specified rdf types that do not have connections to other nodes."
-    _query_template = """
-                        SELECT ?subject ?predicate ?object
-                        WHERE {
-                            ?subject ?predicate ?object .
-                            FILTER (isIRI(?object) && ?predicate != rdf:type)
-                            FILTER NOT EXISTS {?object ?p ?o .}
+    description: str = "Pruning the graph of triples where object is a node that is not found in graph."
 
-                            }
+    def operation(self, row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
+        triple_to_remove = cast(Triple, row)
+        return [], [triple_to_remove]
 
-                      """
+    def _iterate_query(self) -> str:
+        return """
+                 SELECT ?subject ?predicate ?object
+                 WHERE {
+                     ?subject ?predicate ?object .
+                     FILTER (isIRI(?object) && ?predicate != rdf:type)
+                     FILTER NOT EXISTS {?object ?p ?o .}
+                     }
+                 """
 
-    def transform(self, graph: Graph) -> None:
-        for triple in graph.query(self._query_template):
-            graph.remove(cast(Triple, triple))
+    def _count_query(self) -> str:
+        return """
+                SELECT (COUNT(?object) AS ?objectCount)
+                WHERE {
+                    ?subject ?predicate ?object .
+                    FILTER (isIRI(?object) && ?predicate != rdf:type)
+                    FILTER NOT EXISTS {?object ?p ?o .}
+                    }
+                """
 
 
-class PruneInstancesOfUnknownType(BaseTransformer):
+class PruneInstancesOfUnknownType(BaseTransformerStandardised):
     """
     Removes all the triples where object is a node that is not found in graph
     """
 
-    description: str = "Prunes the graph of specified rdf types that do not have connections to other nodes."
-    _query_template = """
-                    SELECT DISTINCT ?subject
-                    WHERE {
-                        ?subject ?p ?o .
-                        FILTER NOT EXISTS {?subject a ?object .}
+    description: str = "Prunes the graph of triples where the object is a node that is not found in the graph."
 
-                        }
+    def _iterate_query(self) -> str:
+        return """
+                SELECT DISTINCT ?subject
+                WHERE {
+                    ?subject ?p ?o .
+                    FILTER NOT EXISTS {?subject a ?object .}
 
-                    """
+                    }
+                """
 
-    def transform(self, graph: Graph) -> None:
-        for (subject,) in graph.query(self._query_template):  # type: ignore
-            graph.remove((subject, None, None))
+    def _count_query(self) -> str:
+        return """
+                SELECT (COUNT(DISTINCT ?subject) as ?count)
+                WHERE {
+                    ?subject ?p ?o .
+                    FILTER NOT EXISTS {?subject a ?object .}
+                    }
+                """
+
+    def operation(self, query_result_row: ResultRow) -> tuple[To_Add_Triples, To_Remove_Triples]:
+        (subject,) = query_result_row
+        remove_triple = cast(Triple, (subject, None, None))
+        return [], [remove_triple]
