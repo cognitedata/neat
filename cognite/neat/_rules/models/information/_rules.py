@@ -272,6 +272,10 @@ class InformationRules(BaseRules):
 
         return _InformationRulesConverter(self).as_dms_rules()
 
+    @classmethod
+    def display_type_name(cls) -> str:
+        return "VerifiedInformationModel"
+
     def _repr_html_(self) -> str:
         summary = {
             "type": "Logical Data Model",

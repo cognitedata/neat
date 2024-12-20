@@ -68,6 +68,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         styling: Style = "default",
         new_model_id: tuple[str, str] | None = None,
         sheet_prefix: str | None = None,
+        reference_rules_with_prefix: tuple[VerifiedRules, str] | None = None,
     ):
         self.sheet_prefix = sheet_prefix or ""
         if styling not in self.style_options:
@@ -75,6 +76,11 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self.styling = styling
         self._styling_level = self.style_options.index(styling)
         self.new_model_id = new_model_id
+        self.reference_rules_with_prefix = reference_rules_with_prefix
+
+    @property
+    def description(self) -> str:
+        return "Export verified model to Excel."
 
     def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
         """Exports transformation rules to excel file."""
@@ -94,6 +100,11 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         self._write_metadata_sheet(workbook, dumped_user_rules["Metadata"], sheet_prefix=self.sheet_prefix)
         self._write_sheets(workbook, dumped_user_rules, rules, sheet_prefix=self.sheet_prefix)
+        if self.reference_rules_with_prefix:
+            reference_rules, prefix = self.reference_rules_with_prefix
+            dumped_reference_rules = reference_rules.dump(entities_exclude_defaults=False, by_alias=True)
+            self._write_sheets(workbook, dumped_reference_rules, reference_rules, sheet_prefix=prefix)
+            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix=prefix)
 
         if isinstance(rules, InformationRules) and rules.prefixes:
             self._write_prefixes_sheet(workbook, rules.prefixes)

@@ -390,11 +390,16 @@ class NeatIssueList(list, Sequence[T_NeatIssue], ABC):
     """This is a generic list of NeatIssues."""
 
     def __init__(
-        self, issues: Sequence[T_NeatIssue] | None = None, title: str | None = None, action: str | None = None
+        self,
+        issues: Sequence[T_NeatIssue] | None = None,
+        title: str | None = None,
+        action: str | None = None,
+        hint: str | None = None,
     ):
         super().__init__(issues or [])
         self.title = title
         self.action = action
+        self.hint = hint
 
     @property
     def errors(self) -> Self:
@@ -405,6 +410,11 @@ class NeatIssueList(list, Sequence[T_NeatIssue], ABC):
     def has_errors(self) -> bool:
         """Return True if this list contains any errors."""
         return any(isinstance(issue, NeatError) for issue in self)
+
+    @property
+    def has_warnings(self) -> bool:
+        """Return True if this list contains any warnings."""
+        return any(isinstance(issue, NeatWarning) for issue in self)
 
     @property
     def warnings(self) -> Self:
@@ -455,14 +465,31 @@ class IssueList(NeatIssueList[NeatIssue]):
     """This is a list of NeatIssues."""
 
     def _repr_html_(self) -> str | None:
-        if not self:
-            return "<p>'No issues found'</p>"
-        df = self.to_pandas()
-        agg_df = df["NeatIssue"].value_counts().to_frame()
-        if len(agg_df) < 10:
-            return agg_df._repr_html_()  # type: ignore[operator]
+        if self.action and not self:
+            header = f"Success: {self.action}"
+        elif self.action and self.has_errors:
+            header = f"Failed: {self.action}"
+        elif self.action and self.has_warnings:
+            header = f"Succeeded with warnings: {self.action}"
+        elif not self:
+            header = "No issues found"
         else:
-            return agg_df.head()._repr_html_()  # type: ignore[operator]
+            header = ""
+
+        body = f"<p>{header}</p>"
+
+        if self:
+            df = self.to_pandas()
+            agg_df = df["NeatIssue"].value_counts().to_frame()
+            if len(agg_df) < 10:
+                table = agg_df._repr_html_()  # type: ignore[operator]
+            else:
+                table = agg_df.head()._repr_html_()  # type: ignore[operator]
+            body += f"<br />{table}"
+
+            if self.hint:
+                body += f"<br />Hint: {self.hint}"
+        return body
 
 
 T_Cls = TypeVar("T_Cls")

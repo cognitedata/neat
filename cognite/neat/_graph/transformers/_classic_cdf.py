@@ -21,6 +21,7 @@ from cognite.neat._utils.rdf_ import (
 from ._base import BaseTransformer
 
 
+# TODO: standardise
 class AddAssetDepth(BaseTransformer):
     description: str = "Adds depth of asset in the asset hierarchy to the graph"
     _use_only_once: bool = True
@@ -84,6 +85,7 @@ class AddAssetDepth(BaseTransformer):
             return None
 
 
+# TODO: standardise
 class BaseAssetConnector(BaseTransformer, ABC):
     _asset_type: URIRef = DEFAULT_NAMESPACE.Asset
     _item_type: URIRef
@@ -166,6 +168,7 @@ class AssetEventConnector(BaseAssetConnector):
     _connection_type = DEFAULT_NAMESPACE.event
 
 
+# TODO: standardise
 class AssetRelationshipConnector(BaseTransformer):
     description: str = "Connects assets via relationships"
     _use_only_once: bool = True
@@ -242,6 +245,7 @@ class AssetRelationshipConnector(BaseTransformer):
                     graph.remove((relationship_id, self.relationship_target_xid_prop, None))
 
 
+# TODO: standardise
 class RelationshipAsEdgeTransformer(BaseTransformer):
     """Converts relationships into edges in the graph.
 

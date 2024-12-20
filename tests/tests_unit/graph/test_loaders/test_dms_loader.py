@@ -5,7 +5,7 @@ from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.catalog import imf_attributes
 from cognite.neat._rules.importers import ExcelImporter, InferenceImporter
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
-from cognite.neat._rules.transformers import ImporterPipeline, InformationToDMS
+from cognite.neat._rules.transformers import InformationToDMS
 from cognite.neat._store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, IMF_EXAMPLE
 
@@ -18,8 +18,8 @@ def test_metadata_as_json_filed():
 
     importer = InferenceImporter.from_graph_store(store)
 
-    info_rules = ImporterPipeline.verify(importer)
-    dms_rules = InformationToDMS().transform(info_rules).rules
+    info_rules = importer.to_rules().rules.as_verified_rules()
+    dms_rules = InformationToDMS().transform(info_rules)
 
     # simulating update of the DMS rules
     dms_rules.views[0].view = ViewEntity.load("neat_space:MyAsset(version=inferred)")
@@ -55,9 +55,9 @@ def test_imf_attribute_nodes():
     # as well omitting to remove namespace from values if
     # properties are not specified to be object properties
 
-    info_rules = ImporterPipeline.verify(ExcelImporter(imf_attributes))
+    info_rules = ExcelImporter(imf_attributes).to_rules().rules.as_verified_rules()
 
-    dms_rules = InformationToDMS().transform(info_rules).rules
+    dms_rules = InformationToDMS().transform(info_rules)
 
     store = NeatGraphStore.from_oxi_store(rules=info_rules)
     store.write(RdfFileExtractor(IMF_EXAMPLE))

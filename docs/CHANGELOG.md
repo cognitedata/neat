@@ -15,6 +15,17 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.104.0] - 20-12-**2024**
+### Improved
+- When using a `NeatSession` object in a notebook. The return issues now has context for what actions they
+  were caused by. In addition, the `NeatSession` object now ensures a linear provenance path for the
+  data modeling.
+
+### Added
+- Writing a model to Excel now includes the reference data model if the model was created from another model
+  using the `prepare.data_model.to_enterprise(...)`, `neat.prepare.data_model.to_solution(...)`, or 
+  `neat.prepare.data_model.to_data_product(...)` methods.
+
 ## [0.103.1] - 17-12-**2024**
 ### Fixed
 - Writing a model to Excel or YAML no longer skips specifying version and space of Views unless they both match.

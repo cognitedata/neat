@@ -42,6 +42,10 @@ class InstanceTemplateExporter(BaseExporter[InformationRules, Workbook]):
         self.auto_identifier_type = auto_identifier_type
         self.add_drop_down_list = add_drop_down_list
 
+    @property
+    def description(self) -> str:
+        return "Export verified information instance template to Excel."
+
     def export(
         self,
         rules: InformationRules,

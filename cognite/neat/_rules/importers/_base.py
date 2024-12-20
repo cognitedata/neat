@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Generic, Literal
 
 from pydantic import ValidationError
+from rdflib import URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList, NeatError, NeatWarning
@@ -55,6 +56,14 @@ class BaseImporter(ABC, Generic[T_InputRules]):
         from cognite.neat._store._provenance import Agent as ProvenanceAgent
 
         return ProvenanceAgent(id_=DEFAULT_NAMESPACE[f"agent/{type(self).__name__}"])
+
+    @property
+    def description(self) -> str:
+        return "MISSING DESCRIPTION"
+
+    @property
+    def source_uri(self) -> URIRef:
+        return DEFAULT_NAMESPACE["UNKNOWN"]
 
 
 class _FutureResult:

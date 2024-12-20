@@ -109,6 +109,10 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         self._schema: DMSSchema | None = None
         self.remove_cdf_spaces = remove_cdf_spaces
 
+    @property
+    def description(self) -> str:
+        return "Export verified DMS Model to CDF."
+
     def export_to_file(self, rules: DMSRules, filepath: Path) -> None:
         """Export the rules to a file(s).
 

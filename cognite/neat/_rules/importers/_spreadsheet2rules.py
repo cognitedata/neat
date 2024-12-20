@@ -11,9 +11,9 @@ from typing import Literal, cast
 import pandas as pd
 from cognite.client.utils._importing import local_import
 from pandas import ExcelFile
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
 
-from cognite.neat._issues import IssueList
+from cognite.neat._issues import IssueList, MultiValueError
 from cognite.neat._issues.errors import (
     FileMissingRequiredFieldError,
     FileNotFoundNeatError,
@@ -253,18 +253,19 @@ class ExcelImporter(BaseImporter[T_InputRules]):
     def to_rules(self) -> ReadRules[T_InputRules]:
         issue_list = IssueList(title=f"'{self.filepath.name}'")
         if not self.filepath.exists():
-            issue_list.append(FileNotFoundNeatError(self.filepath))
-            return ReadRules(None, issue_list, {})
+            raise FileNotFoundNeatError(self.filepath)
 
         with pd.ExcelFile(self.filepath) as excel_file:
             user_reader = SpreadsheetReader(issue_list)
 
             user_read = user_reader.read(excel_file, self.filepath)
-            if user_read is None or issue_list.has_errors:
-                return ReadRules(None, issue_list, {})
 
+        issue_list.trigger_warnings()
         if issue_list.has_errors:
-            return ReadRules(None, issue_list, {})
+            raise MultiValueError(issue_list.errors)
+
+        if user_read is None:
+            return ReadRules(None, {})
 
         sheets = user_read.sheets
         original_role = user_read.role
@@ -272,7 +273,15 @@ class ExcelImporter(BaseImporter[T_InputRules]):
 
         rules_cls = INPUT_RULES_BY_ROLE[original_role]
         rules = cast(T_InputRules, rules_cls.load(sheets))
-        return ReadRules(rules, issue_list, {"read_info_by_sheet": read_info_by_sheet})
+        return ReadRules(rules, {"read_info_by_sheet": read_info_by_sheet})
+
+    @property
+    def description(self) -> str:
+        return f"Excel file {self.filepath.name} read as unverified data model"
+
+    @property
+    def source_uri(self) -> URIRef:
+        return URIRef(f"file://{self.filepath.name}")
 
 
 class GoogleSheetImporter(BaseImporter[T_InputRules]):

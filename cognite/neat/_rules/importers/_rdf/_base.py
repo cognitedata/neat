@@ -5,7 +5,7 @@ from cognite.client import data_modeling as dm
 from rdflib import Graph, Namespace, URIRef
 
 from cognite.neat._constants import get_default_prefixes_and_namespaces
-from cognite.neat._issues import IssueList
+from cognite.neat._issues import IssueList, MultiValueError
 from cognite.neat._issues.errors import FileReadError
 from cognite.neat._issues.errors._general import NeatValueError
 from cognite.neat._rules._shared import ReadRules
@@ -13,9 +13,7 @@ from cognite.neat._rules.importers._base import BaseImporter
 from cognite.neat._rules.models._base_rules import RoleTypes
 from cognite.neat._rules.models.data_types import AnyURI
 from cognite.neat._rules.models.entities import UnknownEntity
-from cognite.neat._rules.models.information import (
-    InformationInputRules,
-)
+from cognite.neat._rules.models.information import InformationInputRules
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.rdf_ import get_namespace
 
@@ -50,6 +48,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         max_number_of_instance: int,
         non_existing_node_type: UnknownEntity | AnyURI,
         language: str,
+        source_name: str = "Unknown",
     ) -> None:
         self.issue_list = issue_list
         self.graph = graph
@@ -60,6 +59,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         self.max_number_of_instance = max_number_of_instance
         self.non_existing_node_type = non_existing_node_type
         self.language = language
+        self.source_name = source_name
 
     @classmethod
     def from_graph_store(
@@ -87,6 +87,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
         language: str = "en",
+        source_name: str = "Unknown",
     ):
         issue_list = IssueList(title=f"{cls.__name__} issues")
 
@@ -107,6 +108,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
             max_number_of_instance=max_number_of_instance,
             non_existing_node_type=non_existing_node_type,
             language=language,
+            source_name=source_name,
         )
 
     def to_rules(
@@ -115,16 +117,16 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         """
         Creates `Rules` object from the data for target role.
         """
-
         if self.issue_list.has_errors:
             # In case there were errors during the import, the to_rules method will return None
-            return ReadRules(None, self.issue_list, {})
+            self.issue_list.trigger_warnings()
+            raise MultiValueError(self.issue_list.errors)
 
         rules_dict = self._to_rules_components()
 
         rules = InformationInputRules.load(rules_dict)
-
-        return ReadRules(rules, self.issue_list, {})
+        self.issue_list.trigger_warnings()
+        return ReadRules(rules, {})
 
     def _to_rules_components(self) -> dict:
         raise NotImplementedError()

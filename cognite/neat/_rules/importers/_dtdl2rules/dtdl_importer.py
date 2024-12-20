@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from cognite.neat._issues import IssueList, NeatIssue
+from cognite.neat._issues import IssueList, MultiValueError, NeatIssue
 from cognite.neat._issues.warnings import (
     FileItemNotSupportedWarning,
     FileMissingRequiredFieldWarning,
@@ -144,5 +144,8 @@ class DTDLImporter(BaseImporter[InformationInputRules]):
             properties=converter.properties,
             classes=converter.classes,
         )
+        converter.issues.trigger_warnings()
+        if converter.issues.has_errors:
+            raise MultiValueError(converter.issues.errors)
 
-        return ReadRules(rules, converter.issues, {})
+        return ReadRules(rules, {})
