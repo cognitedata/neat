@@ -60,7 +60,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         schema: The schema containing the data model.
         read_issues: A list of issues that occurred during the import.
         metadata: Metadata for the data model.
-        ref_metadata: Metadata for the reference data model.
 
     """
 
@@ -69,14 +68,9 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         schema: DMSSchema,
         read_issues: Sequence[NeatIssue] | None = None,
         metadata: DMSInputMetadata | None = None,
-        ref_metadata: DMSInputMetadata | None = None,
     ):
-        # Calling this root schema to distinguish it from
-        # * User Schema
-        # * Reference Schema
         self.root_schema = schema
         self.metadata = metadata
-        self.ref_metadata = ref_metadata
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = schema.containers.copy()
         self._all_views_by_id = schema.views.copy()
@@ -107,8 +101,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
         Args:
             client: Instantiated CogniteClient to retrieve data model.
-            reference_model_id: The reference data model to retrieve. This is the data model that
-                the given data model is built on top of, typically, an enterprise data model.
             data_model_id: Data Model to retrieve.
 
         Returns:
@@ -141,7 +133,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
         metadata = cls._create_metadata_from_model(user_model)
 
-        return cls(schema, issue_list, metadata, None)
+        return cls(schema, issue_list, metadata)
 
     @classmethod
     def _find_model_in_list(
