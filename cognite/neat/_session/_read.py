@@ -5,7 +5,7 @@ from cognite.client.data_classes.data_modeling import DataModelId, DataModelIden
 from cognite.neat._client import NeatClient
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
-from cognite.neat._issues import IssueList, catch_warnings
+from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import MissingCogniteClientWarning
 from cognite.neat._rules import catalog, importers
@@ -201,15 +201,14 @@ class YamlReadAPI(BaseReadAPI):
         if format == "neat":
             importer = importers.YAMLImporter.from_file(path, source_name=f"{reader!s}")
         elif format == "toolkit":
-            issue_list = IssueList()
-            with catch_warnings(issue_list):
-                importer = importers.DMSImporter.from_path(path, self._client)
-            if issue_list.has_warning_type(MissingCogniteClientWarning):
+            dms_importer = importers.DMSImporter.from_path(path, self._client)
+            if dms_importer.issue_list.has_warning_type(MissingCogniteClientWarning):
                 raise NeatSessionError(
                     "No client provided. You are referencing Cognite containers in your data model, "
                     "NEAT needs a client to lookup the container definitions. "
                     "Please set the client in the session, NeatSession(client=client)."
                 )
+            importer = dms_importer
         else:
             raise NeatValueError(f"Unsupported YAML format: {format}")
         return self._state.rule_import(importer)
