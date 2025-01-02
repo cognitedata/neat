@@ -41,6 +41,7 @@ from ._resources import (
     ResourceRetrievalWarning,
     ResourcesDuplicatedWarning,
     ResourceTypeNotSupportedWarning,
+    ResourceUnknownWarning,
 )
 
 __all__ = [
@@ -74,6 +75,7 @@ __all__ = [
     "ResourceRegexViolationWarning",
     "ResourceRetrievalWarning",
     "ResourceTypeNotSupportedWarning",
+    "ResourceUnknownWarning",
     "ResourcesDuplicatedWarning",
     "UndefinedViewWarning",
     "UserModelingWarning",

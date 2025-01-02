@@ -33,6 +33,7 @@ from cognite.neat._issues.warnings import (
     PropertyTypeNotSupportedWarning,
     ResourceNotFoundWarning,
     ResourcesDuplicatedWarning,
+    ResourceUnknownWarning,
 )
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers._base import BaseImporter, _handle_issues
@@ -407,8 +408,11 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         elif isinstance(prop, dm.MappedPropertyApply):
             container_prop = self._container_prop_unsafe(cast(dm.MappedPropertyApply, prop))
             if isinstance(container_prop.type, dm.DirectRelation):
-                if prop.source is None or prop.source not in self._all_views_by_id:
+                if prop.source is None:
                     return DMSUnknownEntity()
+                elif prop.source not in self._all_containers_by_id:
+                    self.issue_list.append(ResourceUnknownWarning(prop.source, "view", view_entity.as_id(), "view"))
+                    return ViewEntity.from_id(prop.source)
                 else:
                     return ViewEntity.from_id(prop.source)
             elif isinstance(container_prop.type, PropertyTypeWithUnit) and container_prop.type.unit:
