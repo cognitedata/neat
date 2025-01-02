@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Added
+- All `neat.read` methods now supports reading from a URL.
+
 ## [0.104.0] - 20-12-**2024**
 ### Improved
 - When using a `NeatSession` object in a notebook. The return issues now has context for what actions they
