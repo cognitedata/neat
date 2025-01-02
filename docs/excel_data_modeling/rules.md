@@ -17,7 +17,7 @@ neat.read.excel("path/to/excel/file.xlsx")
 
 
 # Writing a data model to an Excel file
-neat.to.excel("path/to/excel/file.xlsx", model="logical")
+neat.to.excel("path/to/excel/file.xlsx")
 ```
 
 Neat data models comes in two flavors, `logical` (`information`) and `physical` (`dms`). The `logical` data model
