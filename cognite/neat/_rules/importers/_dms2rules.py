@@ -1,7 +1,7 @@
 import warnings
 from collections import Counter, defaultdict
 from collections.abc import Collection, Iterable, Sequence
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Literal, cast
 
@@ -227,25 +227,18 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     def to_rules(self) -> ReadRules[DMSInputRules]:
         if self.issue_list.has_errors:
             # In case there were errors during the import, the to_rules method will return None
-            self._end = datetime.now(timezone.utc)
             self.issue_list.trigger_warnings()
             raise MultiValueError(self.issue_list.errors)
 
         if not self.root_schema.data_model:
             self.issue_list.append(ResourceMissingIdentifierError("data model", type(self.root_schema).__name__))
-            self._end = datetime.now(timezone.utc)
             self.issue_list.trigger_warnings()
             raise MultiValueError(self.issue_list.errors)
 
         model = self.root_schema.data_model
 
-        user_rules = self._create_rule_components(
-            model,
-            self.root_schema,
-            self.metadata,
-        )
+        user_rules = self._create_rule_components(model, self.root_schema, self.metadata)
 
-        self._end = datetime.now(timezone.utc)
         self.issue_list.trigger_warnings()
         if self.issue_list.has_errors:
             raise MultiValueError(self.issue_list.errors)
@@ -257,7 +250,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         schema: DMSSchema,
         metadata: DMSInputMetadata | None = None,
     ) -> DMSInputRules:
-        enum_by_container_property = self._create_enum_collections(schema.containers.values())
+        enum_by_container_property = self._create_enum_collections(self._all_containers_by_id.values())
         enum_collection_by_container_property = {
             key: enum_list[0].collection for key, enum_list in enum_by_container_property.items() if enum_list
         }
