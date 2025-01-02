@@ -1,3 +1,4 @@
+import warnings
 from collections import Counter, defaultdict
 from collections.abc import Collection, Iterable, Sequence
 from datetime import datetime, timezone
@@ -20,8 +21,14 @@ from cognite.client.utils import ms_to_datetime
 
 from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList, MultiValueError, NeatIssue
-from cognite.neat._issues.errors import FileTypeUnexpectedError, ResourceMissingIdentifierError, ResourceRetrievalError
+from cognite.neat._issues.errors import (
+    FileTypeUnexpectedError,
+    NeatValueError,
+    ResourceMissingIdentifierError,
+    ResourceRetrievalError,
+)
 from cognite.neat._issues.warnings import (
+    MissingCogniteClientWarning,
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
     ResourceNotFoundWarning,
@@ -68,20 +75,18 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         schema: DMSSchema,
         read_issues: Sequence[NeatIssue] | None = None,
         metadata: DMSInputMetadata | None = None,
+        referenced_containers: Iterable[dm.ContainerApply] | None = None,
     ):
         self.root_schema = schema
         self.metadata = metadata
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = schema.containers.copy()
         self._all_views_by_id = schema.views.copy()
-
-    def update_referenced_containers(self, containers: Iterable[dm.ContainerApply]) -> None:
-        """Update the referenced containers. This is useful to add Cognite containers identified after the root schema
-        is read"""
-        for container in containers:
-            if container.as_id() in self._all_containers_by_id:
-                continue
-            self._all_containers_by_id[container.as_id()] = container
+        if referenced_containers is not None:
+            for container in referenced_containers:
+                if container.as_id() in self._all_containers_by_id:
+                    continue
+                self._all_containers_by_id[container.as_id()] = container
 
     @property
     def description(self) -> str:
@@ -133,7 +138,9 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
         metadata = cls._create_metadata_from_model(user_model)
 
-        return cls(schema, issue_list, metadata)
+        return cls(
+            schema, issue_list, metadata, referenced_containers=cls._lookup_referenced_containers(schema, client)
+        )
 
     @classmethod
     def _find_model_in_list(
@@ -174,15 +181,15 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         )
 
     @classmethod
-    def from_directory(cls, directory: str | Path) -> "DMSImporter":
+    def from_directory(cls, directory: str | Path, client: NeatClient | None = None) -> "DMSImporter":
         issue_list = IssueList()
         with _handle_issues(issue_list) as _:
             schema = DMSSchema.from_directory(directory)
         # If there were errors during the import, the to_rules
-        return cls(schema, issue_list)
+        return cls(schema, issue_list, referenced_containers=cls._lookup_referenced_containers(schema, client))
 
     @classmethod
-    def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
+    def from_zip_file(cls, zip_file: str | Path, client: NeatClient | None = None) -> "DMSImporter":
         if Path(zip_file).suffix != ".zip":
             return cls(
                 DMSSchema(),
@@ -191,7 +198,31 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         issue_list = IssueList()
         with _handle_issues(issue_list) as _:
             schema = DMSSchema.from_zip(zip_file)
-        return cls(schema, issue_list)
+        return cls(schema, issue_list, referenced_containers=cls._lookup_referenced_containers(schema, client))
+
+    @classmethod
+    def _lookup_referenced_containers(
+        cls, schema: DMSSchema, client: NeatClient | None = None
+    ) -> Iterable[dm.ContainerApply]:
+        ref_containers = schema.referenced_container()
+        if not ref_containers:
+            return []
+        elif client is None:
+            id_ = ""
+            if schema.data_model:
+                id_ = f" {schema.data_model.as_id()!r}"
+            warnings.warn(MissingCogniteClientWarning(f"importing full DMS model{id_}"), stacklevel=2)
+            return []
+        return client.loaders.containers.retrieve(list(ref_containers), format="write")
+
+    @classmethod
+    def from_path(cls, path: Path, client: NeatClient | None = None) -> "DMSImporter":
+        if path.is_file():
+            return cls.from_zip_file(path, client)
+        elif path.is_dir():
+            return cls.from_directory(path, client)
+        else:
+            raise NeatValueError(f"Unsupported YAML format: {format}")
 
     def to_rules(self) -> ReadRules[DMSInputRules]:
         if self.issue_list.has_errors:

@@ -13,7 +13,7 @@ from ._external import (
     FileReadWarning,
     FileTypeUnexpectedWarning,
 )
-from ._general import NeatValueWarning, NotSupportedWarning, RegexViolationWarning
+from ._general import MissingCogniteClientWarning, NeatValueWarning, NotSupportedWarning, RegexViolationWarning
 from ._models import (
     BreakingModelingPrincipleWarning,
     CDFNotSupportedWarning,
@@ -53,6 +53,7 @@ __all__ = [
     "FileMissingRequiredFieldWarning",
     "FileReadWarning",
     "FileTypeUnexpectedWarning",
+    "MissingCogniteClientWarning",
     "NeatValueWarning",
     "NotSupportedHasDataFilterLimitWarning",
     "NotSupportedViewContainerLimitWarning",
