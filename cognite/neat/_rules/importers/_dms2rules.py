@@ -410,7 +410,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             if isinstance(container_prop.type, dm.DirectRelation):
                 if prop.source is None:
                     return DMSUnknownEntity()
-                elif prop.source not in self._all_containers_by_id:
+                elif prop.source not in self._all_views_by_id:
                     self.issue_list.append(ResourceUnknownWarning(prop.source, "view", view_entity.as_id(), "view"))
                     return ViewEntity.from_id(prop.source)
                 else:
