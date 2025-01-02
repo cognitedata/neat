@@ -1,3 +1,4 @@
+import tempfile
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from io import StringIO
@@ -59,6 +60,10 @@ class NeatReader(ABC):
     def exists(self) -> bool:
         raise NotImplementedError
 
+    @abstractmethod
+    def materialize_path(self) -> Path:
+        raise NotImplementedError
+
 
 class PathReader(NeatReader):
     def __init__(self, path: Path):
@@ -94,6 +99,9 @@ class PathReader(NeatReader):
 
     def exists(self) -> bool:
         return self.path.exists()
+
+    def materialize_path(self) -> Path:
+        return self.path
 
 
 class HttpFileReader(NeatReader):
@@ -132,6 +140,12 @@ class HttpFileReader(NeatReader):
     def exists(self) -> bool:
         response = requests.head(self._url)
         return 200 <= response.status_code < 400
+
+    def materialize_path(self) -> Path:
+        path = Path(tempfile.gettempdir()).resolve() / "neat" / self.name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.read_text(), encoding="utf-8", newline="\n")
+        return path
 
 
 class GitHubReader(HttpFileReader):
