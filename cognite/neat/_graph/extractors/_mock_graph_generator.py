@@ -183,7 +183,7 @@ def _get_generation_order(
     parent_col: str = "source_class",
     child_col: str = "target_class",
 ) -> dict:
-    parent_child_list: list[list[str]] = class_linkage[[parent_col, child_col]].values.tolist()
+    parent_child_list: list[list[str]] = class_linkage[[parent_col, child_col]].values.tolist()  # type: ignore[assignment]
     # Build a directed graph and a list of all names that have no parent
     graph: dict[str, set] = {name: set() for tup in parent_child_list for name in tup}
     has_parent: dict[str, bool] = {name: False for tup in parent_child_list for name in tup}

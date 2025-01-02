@@ -229,8 +229,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 if isinstance(selected_column, MergedCell):
                     selected_column = column_cells[1]
 
-                current = sheet.column_dimensions[selected_column.column_letter].width or (max_length + 0.5)
-                sheet.column_dimensions[selected_column.column_letter].width = min(
+                current = sheet.column_dimensions[selected_column.column_letter].width or (max_length + 0.5)  # type: ignore[union-attr]
+                sheet.column_dimensions[selected_column.column_letter].width = min(  # type: ignore[union-attr]
                     max(current, max_length + 0.5), MAX_COLUMN_WIDTH
                 )
         return None

@@ -109,6 +109,9 @@ mkdocs-glightbox = { version = "*", optional = true }
 pymdown-extensions = { version = "*", optional = true }
 mkdocs-autorefs = { version = "^0.5.0", optional = true }
 mkdocstrings = { version = "*", optional = true, extras = ["python"] }
+# dependencies for mkdocstrings
+# 3.1.0 breaks nbconvert
+mistune= {version ="3.0.2", optional= true}
 pyvis = "^0.3.2"
 
 [tool.poetry.extras]
@@ -123,6 +126,7 @@ docs = [
     "pymdown-extensions",
     "mkdocstrings",
     "mkdocs-autorefs",
+    "mistune",
 ]
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 oxi = ["oxrdflib", "pyoxigraph"]
