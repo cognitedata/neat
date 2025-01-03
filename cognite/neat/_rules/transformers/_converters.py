@@ -305,7 +305,10 @@ class SetIDDMSModel(RulesTransformer[DMSRules, DMSRules]):
 class ToExtensionModel(RulesTransformer[DMSRules, DMSRules], ABC):
     type_: ClassVar[str]
 
-    def __init__(self, org_name: str):
+    def __init__(self, new_model_id: DataModelIdentifier, org_name: str):
+        self.new_model_id = DataModelId.load(new_model_id)
+        if not self.new_model_id.version:
+            raise NeatValueError("Version is required for the new model.")
         self.org_name = org_name
 
     def _remove_cognite_affix(self, entity: _T_Entity) -> _T_Entity:
@@ -317,6 +320,9 @@ class ToExtensionModel(RulesTransformer[DMSRules, DMSRules], ABC):
             return ClassEntity(prefix=entity.prefix, suffix=new_suffix, version=entity.version)  # type: ignore[return-value]
         raise ValueError(f"Unsupported entity type: {type(entity)}")
 
+    @property
+    def description(self) -> str:
+        return f"Prepared data model {self.new_model_id} to be {self.type_.replace('_', ' ')} data model."
 
 class ToEnterpriseModel(ToExtensionModel):
     type_: ClassVar[str] = "enterprise"
@@ -328,10 +334,7 @@ class ToEnterpriseModel(ToExtensionModel):
         dummy_property: str = "GUID",
         move_connections: bool = False,
     ):
-        super().__init__(org_name)
-        self.new_model_id = DataModelId.load(new_model_id)
-        if not self.new_model_id.version:
-            raise NeatValueError("Version is required for the new model.")
+        super().__init__(new_model_id, org_name)
         self.dummy_property = dummy_property
         self.move_connections = move_connections
 
@@ -450,10 +453,6 @@ class ToEnterpriseModel(ToExtensionModel):
 
         return new_properties
 
-    @property
-    def description(self) -> str:
-        return f"Prepared data model {self.new_model_id} to be enterprise data model."
-
 
 class ToSolutionModel(ToExtensionModel):
     type_: ClassVar[str] = "solution"
@@ -465,11 +464,7 @@ class ToSolutionModel(ToExtensionModel):
         mode: Literal["read", "write"] = "read",
         dummy_property: str = "GUID",
     ):
-        super().__init__(org_name)
-        self.new_model_id = DataModelId.load(new_model_id)
-        if not self.new_model_id.version:
-            raise NeatValueError("Version is required for the new model.")
-
+        super().__init__(new_model_id, org_name)
         self.mode = mode
         self.dummy_property = dummy_property
 
@@ -489,7 +484,8 @@ class ToSolutionModel(ToExtensionModel):
 
         return self._to_solution(reference_model)
 
-    def _has_views_in_multiple_space(self, rules: DMSRules) -> bool:
+    @staticmethod
+    def _has_views_in_multiple_space(rules: DMSRules) -> bool:
         return any(view.view.space != rules.metadata.space for view in rules.views)
 
     def _to_solution(self, reference_rules: DMSRules, remove_views_in_other_space: bool = True) -> DMSRules:
@@ -591,10 +587,6 @@ class ToSolutionModel(ToExtensionModel):
 
         return new_views, new_containers, new_properties
 
-    @property
-    def description(self) -> str:
-        return f"Prepared data model {self.new_model_id} to be solution data model."
-
 
 class ToDataProductModel(ToExtensionModel):
     type_: ClassVar[str] = "data_product"
@@ -605,11 +597,7 @@ class ToDataProductModel(ToExtensionModel):
         org_name: str = "My",
         include: Literal["same-space", "all"] = "same-space",
     ):
-        super().__init__(org_name)
-        self.new_model_id = DataModelId.load(new_model_id)
-        if not self.new_model_id.version:
-            raise NeatValueError("Version is required for the new model.")
-
+        super().__init__(new_model_id, org_name)
         self.include = include
 
     def transform(self, rules: DMSRules) -> DMSRules:
@@ -749,10 +737,6 @@ class ToDataProductModel(ToExtensionModel):
                     rules.properties.append(prop)
                     property_ids.add(prop.view_property)
         return rules
-
-    @property
-    def description(self) -> str:
-        return f"Prepared data model {self.new_model_id} to be data product model."
 
 
 class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
