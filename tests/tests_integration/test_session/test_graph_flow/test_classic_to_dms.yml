@@ -1020,10 +1020,6 @@ instances:
       metadata:
         blob: data
       name: Utsira
-      parent: null
-      path: null
-      relationshipAsset: null
-      root: null
       source:
         externalId: SourceSystem_manufacturer1
         space: sp_instance_space
@@ -1052,11 +1048,9 @@ instances:
       parent:
         externalId: Asset_4
         space: sp_instance_space
-      path: null
       relationshipAsset:
         externalId: WT-01_to_MetMast
         space: sp_instance_space
-      root: null
       source:
         externalId: SourceSystem_manufacturer1
         space: sp_instance_space
@@ -1086,11 +1080,9 @@ instances:
       parent:
         externalId: Asset_4
         space: sp_instance_space
-      path: null
       relationshipAsset:
         externalId: WT-02_to_MetMast
         space: sp_instance_space
-      root: null
       source:
         externalId: SourceSystem_manufacturer1
         space: sp_instance_space
@@ -1117,10 +1109,6 @@ instances:
       metadata:
         blob: data
       name: Measurement
-      parent: null
-      path: null
-      relationshipAsset: null
-      root: null
       source:
         externalId: SourceSystem_manufacturer2
         space: sp_instance_space
@@ -1149,9 +1137,6 @@ instances:
       parent:
         externalId: Asset_7
         space: sp_instance_space
-      path: null
-      relationshipAsset: null
-      root: null
       source:
         externalId: SourceSystem_manufacturer2
         space: sp_instance_space
