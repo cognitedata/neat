@@ -6,7 +6,6 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat._issues import catch_issues
-from cognite.neat._issues.warnings import ResourceNotFoundWarning
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import DMSImporter, ExcelImporter
 from cognite.neat._rules.models import DMSRules, DMSSchema
@@ -132,8 +131,7 @@ class TestDMSImporter:
         with catch_issues() as issues:
             _ = importer.to_rules()
 
-        assert len(issues) == 1
-        assert issues.has_warnings(ResourceNotFoundWarning)
+        assert len(issues) == 0
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
