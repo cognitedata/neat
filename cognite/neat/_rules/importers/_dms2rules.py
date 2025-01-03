@@ -78,7 +78,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         metadata: DMSInputMetadata | None = None,
         referenced_containers: Iterable[dm.ContainerApply] | None = None,
     ):
-        self.root_schema = schema
+        self.schema = schema
         self.metadata = metadata
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = schema.containers.copy()
@@ -91,8 +91,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
     @property
     def description(self) -> str:
-        if self.root_schema.data_model is not None:
-            identifier = f"{self.root_schema.data_model.as_id().as_tuple()!s}"
+        if self.schema.data_model is not None:
+            identifier = f"{self.schema.data_model.as_id().as_tuple()!s}"
         else:
             identifier = "Unknown"
         return f"DMS Data model {identifier} read as unverified data model"
@@ -238,14 +238,14 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             self.issue_list.trigger_warnings()
             raise MultiValueError(self.issue_list.errors)
 
-        if not self.root_schema.data_model:
-            self.issue_list.append(ResourceMissingIdentifierError("data model", type(self.root_schema).__name__))
+        if not self.schema.data_model:
+            self.issue_list.append(ResourceMissingIdentifierError("data model", type(self.schema).__name__))
             self.issue_list.trigger_warnings()
             raise MultiValueError(self.issue_list.errors)
 
-        model = self.root_schema.data_model
+        model = self.schema.data_model
 
-        user_rules = self._create_rule_components(model, self.root_schema, self.metadata)
+        user_rules = self._create_rule_components(model, self.schema, self.metadata)
 
         self.issue_list.trigger_warnings()
         if self.issue_list.has_errors:
@@ -423,7 +423,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 )
                 if collection is None:
                     # If the collection is not found, that means the model is referencing an enum in a container
-                    # outside of the model. This needs to be fetched from CDF.
+                    # outside the model. This needs to be fetched from CDF.
                     raise ResourceNotFoundError(
                         identifier=f"{prop.container}.{prop.container_property_identifier}",
                         resource_type="container property",

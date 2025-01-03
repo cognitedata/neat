@@ -6,6 +6,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat._issues import catch_issues
+from cognite.neat._issues.warnings import ResourceNotFoundWarning
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import DMSImporter, ExcelImporter
 from cognite.neat._rules.models import DMSRules, DMSSchema
@@ -108,12 +109,31 @@ class TestDMSImporter:
         assert dms_recreated.views.dump() == SCHEMA_INWARDS_EDGE_WITH_PROPERTIES.views.dump()
 
     def test_import_schema_with_referenced_enum(self) -> None:
-        importer = DMSImporter(SCHEMA_WITH_REFERENCED_ENUM)
+        importer = DMSImporter(
+            SCHEMA_WITH_REFERENCED_ENUM,
+            referenced_containers=[
+                dm.ContainerApply(
+                    space="cdf_cdm",
+                    external_id="CogniteTimeSeries",
+                    properties={
+                        "type": dm.ContainerProperty(
+                            type=dm.data_types.Enum(
+                                {
+                                    "numeric": dm.data_types.EnumValue(),
+                                    "string": dm.data_types.EnumValue(),
+                                }
+                            )
+                        )
+                    },
+                )
+            ],
+        )
 
         with catch_issues() as issues:
-            read_rules = importer.to_rules()
+            _ = importer.to_rules()
 
         assert len(issues) == 1
+        assert issues.has_warnings(ResourceNotFoundWarning)
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
@@ -244,4 +264,3 @@ SCHEMA_WITH_REFERENCED_ENUM = DMSSchema(
         ]
     ),
 )
-
