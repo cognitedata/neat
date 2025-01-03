@@ -304,7 +304,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if isinstance(prop, dm.EdgeConnection):
                 edge_by_property[prop_id] = prop_id, prop
             if isinstance(prop, dm.MappedProperty):
-                if is_readonly_property(prop.container, prop_id):
+                if is_readonly_property(prop.container, prop.container_property_identifier):
                     continue
 
                 if isinstance(prop.type, dm.DirectRelation):
