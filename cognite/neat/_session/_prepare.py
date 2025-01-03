@@ -27,7 +27,7 @@ from cognite.neat._rules.transformers import (
     ReduceCogniteModel,
     ToCompliantEntities,
     ToDataProductModel,
-    ToEnterprise,
+    ToEnterpriseModel,
     ToSolution,
 )
 
@@ -359,10 +359,9 @@ class DataModelPrepareAPI:
 
         """
         return self._state.rule_transform(
-            ToEnterprise(
+            ToEnterpriseModel(
                 new_model_id=data_model_id,
                 org_name=org_name,
-                type_="enterprise",
                 dummy_property=dummy_property,
                 move_connections=move_connections,
             )

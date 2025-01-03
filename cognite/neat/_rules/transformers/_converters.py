@@ -572,7 +572,141 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
             return f"Unsupported data model type: {self.type_}"
 
 
-class ToEnterprise(ToExtension): ...
+class ToEnterpriseModel(ToExtension):
+    type_: ClassVar[str] = "enterprise"
+    def __init__(
+        self,
+        new_model_id: DataModelIdentifier,
+        org_name: str = "My",
+        dummy_property: str = "GUID",
+        move_connections: bool = False,
+    ):
+        self.new_model_id = DataModelId.load(new_model_id)
+        if not self.new_model_id.version:
+            raise NeatValueError("Version is required for the new model.")
+        self.org_name = org_name
+        self.dummy_property = dummy_property
+        self.move_connections = move_connections
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        reference_model_id = rules.metadata.as_data_model_id()
+        if reference_model_id not in COGNITE_MODELS:
+            warnings.warn(
+                EnterpriseModelNotBuildOnTopOfCDMWarning(reference_model_id=reference_model_id).as_message(),
+                stacklevel=2,
+            )
+
+        return self._to_enterprise(rules)
+
+    def _to_enterprise(self, reference_model: DMSRules) -> DMSRules:
+        dump = reference_model.dump()
+
+        # This will create reference model components in the enterprise model space
+        enterprise_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
+
+        # Post validation metadata update:
+        enterprise_model.metadata.name = self.type_
+        enterprise_model.metadata.name = f"{self.org_name} {self.type_} data model"
+        enterprise_model.metadata.space = self.new_model_id.space
+        enterprise_model.metadata.external_id = self.new_model_id.external_id
+        enterprise_model.metadata.version = cast(str, self.new_model_id.version)
+
+        # Here we are creating enterprise specific components
+        enterprise_views, enterprise_containers, enterprise_properties = self._get_new_components(enterprise_model)
+
+        # And we are adding them to the enterprise model
+        # extending reference views with new ones
+        enterprise_model.views.extend(enterprise_views)
+
+        # Move connections from reference model to enterprise model
+        if self.move_connections:
+            enterprise_connections = self._move_connections(enterprise_model)
+        else:
+            enterprise_connections = SheetList[DMSProperty]()
+
+        # while overwriting containers and properties with new ones
+        enterprise_model.containers = enterprise_containers
+        enterprise_model.properties = enterprise_properties
+
+        enterprise_properties.extend(enterprise_connections)
+
+        return enterprise_model
+
+    def _get_new_components(
+        self, rules: DMSRules
+    ) -> tuple[SheetList[DMSView], SheetList[DMSContainer], SheetList[DMSProperty]]:
+        new_views = SheetList[DMSView]()
+        new_containers = SheetList[DMSContainer]()
+        new_properties = SheetList[DMSProperty]()
+
+        for definition in rules.views:
+            view_entity = self._remove_cognite_affix(definition.view)
+
+            view_entity.version = cast(str, self.new_model_id.version)
+            view_entity.prefix = self.new_model_id.space
+            container_entity = ContainerEntity(space=view_entity.prefix, externalId=view_entity.external_id)
+
+            view = DMSView(
+                view=view_entity,
+                implements=[definition.view],
+                in_model=True,
+                name=definition.name,
+            )
+
+            container = DMSContainer(
+                container=container_entity,
+            )
+
+            property_ = DMSProperty(
+                view=view_entity,
+                view_property=f"{to_camel(view_entity.suffix)}{self.dummy_property}",
+                value_type=String(),
+                nullable=True,
+                immutable=False,
+                is_list=False,
+                container=container_entity,
+                container_property=f"{to_camel(view_entity.suffix)}{self.dummy_property}",
+            )
+
+            new_properties.append(property_)
+            new_views.append(view)
+            new_containers.append(container)
+
+        return new_views, new_containers, new_properties
+
+    def _move_connections(self, rules: DMSRules) -> SheetList[DMSProperty]:
+        implements: dict[ViewEntity, list[ViewEntity]] = defaultdict(list)
+        new_properties = SheetList[DMSProperty]()
+
+        for view in rules.views:
+            if view.view.space == rules.metadata.space and view.implements:
+                for implemented_view in view.implements:
+                    implements.setdefault(implemented_view, []).append(view.view)
+
+        # currently only supporting single implementation of reference view in enterprise view
+        # connections that do not have properties
+        if all(len(v) == 1 for v in implements.values()):
+            for prop_ in rules.properties:
+                if (
+                    prop_.view.space != rules.metadata.space
+                    and prop_.connection
+                    and isinstance(prop_.value_type, ViewEntity)
+                    and implements.get(prop_.view)
+                    and implements.get(prop_.value_type)
+                ):
+                    if isinstance(prop_.connection, EdgeEntity) and prop_.connection.properties:
+                        continue
+                    new_property = prop_.model_copy(deep=True)
+                    new_property.view = implements[prop_.view][0]
+                    new_property.value_type = implements[prop_.value_type][0]
+                    new_properties.append(new_property)
+
+        return new_properties
+
+    @property
+    def description(self) -> str:
+        return f"Prepared data model {self.new_model_id} to be enterprise data model."
+
 
 
 class ToSolution(ToExtension): ...
