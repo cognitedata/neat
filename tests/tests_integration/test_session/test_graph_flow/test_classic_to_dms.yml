@@ -32,18 +32,6 @@ data_product:
     view: ClassicAsset
     view_property: aliases
   - connection: direct
-    container: cdf_cdm:CogniteAsset
-    container_property: assetClass
-    description: Specifies the class of the asset. It's a direct relation to CogniteAssetClass.
-    immutable: false
-    is_list: false
-    name: Asset class
-    neatId: http://purl.org/cognite/neat/neatId_eec259dc_7f95_497c_a76a_a6ced50755d9
-    nullable: true
-    value_type: cdf_cdm:CogniteAssetClass(version=v1)
-    view: ClassicAsset
-    view_property: assetClass
-  - connection: direct
     container: sp_windfarm:ClassicAsset
     container_property: dataSetId
     is_list: false
@@ -84,18 +72,6 @@ data_product:
     view: ClassicAsset
     view_property: name
   - connection: direct
-    constraint: uniqueObject3D
-    container: cdf_cdm:CogniteVisualizable
-    container_property: object3D
-    description: Direct relation to an Object3D instance representing the 3D resource
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_c1101266_2408_46dc_9346_d1a9f6802cdb
-    nullable: true
-    value_type: cdf_cdm:Cognite3DObject(version=v1)
-    view: ClassicAsset
-    view_property: object3D
-  - connection: direct
     container: cdf_cdm:CogniteAsset
     container_property: assetHierarchy_parent
     immutable: false
@@ -106,20 +82,6 @@ data_product:
     value_type: ClassicAsset
     view: ClassicAsset
     view_property: parent
-  - connection: direct
-    container: cdf_cdm:CogniteAsset
-    container_property: assetHierarchy_path
-    description: An automatically updated ordered list of this asset's ancestors,
-      starting with the root asset. Enables subtree filtering to find all assets under
-      a parent.
-    immutable: false
-    is_list: true
-    name: Path
-    neatId: http://purl.org/cognite/neat/neatId_1d0bc9bd_e9b5_45cf_9766_5cdafe049059
-    nullable: true
-    value_type: cdf_cdm:CogniteAsset(version=v1)
-    view: ClassicAsset
-    view_property: path
   - container: cdf_cdm:CogniteAsset
     container_property: assetHierarchy_path_last_updated_time
     description: The last time the path was updated for this asset.
@@ -141,19 +103,6 @@ data_product:
     value_type: ClassicAssetToAssetEdge
     view: ClassicAsset
     view_property: relationshipAsset
-  - connection: direct
-    container: cdf_cdm:CogniteAsset
-    container_property: assetHierarchy_root
-    description: An automatically updated reference to the top-level asset of the
-      hierarchy.
-    immutable: false
-    is_list: false
-    name: Root
-    neatId: http://purl.org/cognite/neat/neatId_3985fb62_17dc_4eff_a872_13f98d605936
-    nullable: true
-    value_type: cdf_cdm:CogniteAsset(version=v1)
-    view: ClassicAsset
-    view_property: root
   - connection: direct
     container: cdf_cdm:CogniteSourceable
     container_property: source
@@ -242,18 +191,6 @@ data_product:
     value_type: text
     view: ClassicAsset
     view_property: tags
-  - connection: direct
-    container: cdf_cdm:CogniteAsset
-    container_property: type
-    description: Specifies the type of the asset. It's a direct relation to CogniteAssetType.
-    immutable: false
-    is_list: false
-    name: Asset type
-    neatId: http://purl.org/cognite/neat/neatId_b495db4e_8245_4fb4_8ab7_706eb77350ca
-    nullable: true
-    value_type: cdf_cdm:CogniteAssetType(version=v1)
-    view: ClassicAsset
-    view_property: type
   - connection: direct
     container: sp_windfarm:ClassicAssetToAssetEdge
     container_property: dataSetId
@@ -391,18 +328,6 @@ data_product:
     value_type: timestamp
     view: ClassicEvent
     view_property: endTime
-  - connection: direct
-    container: cdf_cdm:CogniteActivity
-    container_property: equipment
-    description: A list of equipment the activity is related to.
-    immutable: false
-    is_list: true
-    name: Equipment
-    neatId: http://purl.org/cognite/neat/neatId_49bc473f_ed7b_4656_a18a_15368c99a894
-    nullable: true
-    value_type: cdf_cdm:CogniteEquipment(version=v1)
-    view: ClassicEvent
-    view_property: equipment
   - container: sp_windfarm:ClassicEvent
     container_property: metadata
     is_list: false
@@ -553,18 +478,6 @@ data_product:
     value_type: text
     view: ClassicEvent
     view_property: tags
-  - connection: direct
-    container: cdf_cdm:CogniteActivity
-    container_property: timeSeries
-    description: A list of time series the activity is related to.
-    immutable: false
-    is_list: true
-    name: Time series
-    neatId: http://purl.org/cognite/neat/neatId_7c16128d_b2c0_4394_a17f_29e170286046
-    nullable: true
-    value_type: cdf_cdm:CogniteTimeSeries(version=v1)
-    view: ClassicEvent
-    view_property: timeSeries
   - container: sp_windfarm:ClassicEvent
     container_property: type
     is_list: false
@@ -595,19 +508,6 @@ data_product:
     value_type: ClassicAsset
     view: ClassicFile
     view_property: assets
-  - connection: direct
-    container: cdf_cdm:CogniteFile
-    container_property: category
-    description: Specifies the detected category the file belongs to. It's a direct
-      relation to an instance of CogniteFileCategory.
-    immutable: false
-    is_list: false
-    name: Category
-    neatId: http://purl.org/cognite/neat/neatId_aee1e86b_9ea5_46aa_a1ee_6c5bdeef580f
-    nullable: true
-    value_type: cdf_cdm:CogniteFileCategory(version=v1)
-    view: ClassicFile
-    view_property: category
   - connection: direct
     container: sp_windfarm:ClassicFile
     container_property: dataSetId
@@ -912,18 +812,6 @@ data_product:
     value_type: text
     view: ClassicTimeSeries
     view_property: description
-  - connection: direct
-    container: cdf_cdm:CogniteTimeSeries
-    container_property: equipment
-    description: A list of equipment the time series is related to.
-    immutable: false
-    is_list: true
-    name: Equipment
-    neatId: http://purl.org/cognite/neat/neatId_5da8d6d2_f8b3_4a8b_a05f_b8bc8a16a06c
-    nullable: true
-    value_type: cdf_cdm:CogniteEquipment(version=v1)
-    view: ClassicTimeSeries
-    view_property: equipment
   - container: cdf_cdm:CogniteTimeSeries
     container_property: isStep
     default: 0
@@ -955,18 +843,6 @@ data_product:
     value_type: text
     view: ClassicTimeSeries
     view_property: name
-  - connection: direct
-    container: cdf_cdm:CogniteSourceable
-    container_property: source
-    description: Direct relation to a source system
-    immutable: false
-    index: source
-    is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_3810ae66_5a31_44cc_8d4b_69a99b689c88
-    nullable: true
-    value_type: cdf_cdm:CogniteSourceSystem(version=v1)
-    view: ClassicTimeSeries
-    view_property: source
   - container: cdf_cdm:CogniteSourceable
     container_property: sourceContext
     description: Context of the source id. For systems where the sourceId is globally
@@ -1064,17 +940,6 @@ data_product:
     value_type: enum(collection=timeseriesType)
     view: ClassicTimeSeries
     view_property: type
-  - connection: direct
-    container: cdf_cdm:CogniteTimeSeries
-    container_property: unit
-    immutable: false
-    is_list: false
-    logical: http://purl.org/cognite/neat/neatId_885f6e66_c2b6_42c5_ba5d_310011b7e948
-    neatId: http://purl.org/cognite/neat/neatId_750cab75_4ccc_4bc2_a53f_8a28abf3e3fc
-    nullable: true
-    value_type: cdf_cdm:CogniteUnit(version=v1)
-    view: ClassicTimeSeries
-    view_property: unit
   views:
   - filter_: hasData(sp_windfarm:ClassicAsset(version=v1))
     in_model: true
