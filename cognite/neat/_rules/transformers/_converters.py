@@ -46,6 +46,7 @@ from cognite.neat._rules.models.entities import (
     DMSUnknownEntity,
     EdgeEntity,
     Entity,
+    HasDataFilter,
     MultiValueTypeInfo,
     ReverseConnectionEntity,
     T_Entity,
@@ -552,8 +553,14 @@ class ToSolutionModel(ToExtensionModel):
             solution_model.properties.extend(new_properties)
         elif self.mode == "read":
             # Inherit view filter from original model to ensure the same instances are returned.
-            for _ in solution_model.views:
-                raise NotImplementedError
+            ref_views_by_external_id = {
+                view.view.external_id: view
+                for view in reference_rules.views
+                if view.view.space == reference_rules.metadata.space
+            }
+            for view in solution_model.views:
+                if ref_view := ref_views_by_external_id.get(view.view.external_id):
+                    view.filter_ = HasDataFilter(inner=[ref_view.view])
 
         return solution_model
 
