@@ -182,19 +182,19 @@ class ExcelExampleAPI(BaseReadAPI):
 
 @session_class_wrapper
 class YamlReadAPI(BaseReadAPI):
-    """Reads a yaml with either neat rules, or several toolkit yaml files to import Data Model(s) into NeatSession.
-
-    Args:
-        io: file path to the Yaml file in the case of "neat" yaml, or path to a zip folder or directory with several
-        Yaml files in the case of "toolkit".
-
-    Example:
-        ```python
-        neat.read.yaml("path_to_toolkit_yamls")
-        ```
-    """
-
     def __call__(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> IssueList:
+        """Reads a yaml with either neat rules, or several toolkit yaml files to import Data Model(s) into NeatSession.
+
+        Args:
+            io: File path to the Yaml file in the case of "neat" yaml, or path to a zip folder or directory with several
+                Yaml files in the case of "toolkit".
+            format: The format of the yaml file(s). Can be either "neat" or "toolkit".
+
+        Example:
+            ```python
+            neat.read.yaml("path_to_toolkit_yamls")
+            ```
+        """
         reader = NeatReader.create(io)
         path = reader.materialize_path()
         importer: BaseImporter
