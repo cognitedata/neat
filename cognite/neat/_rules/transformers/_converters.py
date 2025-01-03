@@ -572,6 +572,15 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
             return f"Unsupported data model type: {self.type_}"
 
 
+class ToEnterprise(ToExtension): ...
+
+
+class ToSolution(ToExtension): ...
+
+
+class ToDataProductModel(ToExtension): ...
+
+
 class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
     _ASSET_VIEW = ViewId("cdf_cdm", "CogniteAsset", "v1")
     _VIEW_BY_COLLECTION: Mapping[Literal["3D", "Annotation", "BaseViews"], frozenset[ViewId]] = {
