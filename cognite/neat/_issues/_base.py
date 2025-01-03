@@ -505,43 +505,23 @@ def _get_subclasses(cls_: type[T_Cls], include_base: bool = False) -> Iterable[t
 
 
 @contextmanager
-def catch_warnings(
-    issues: IssueList | None = None,
-    warning_cls: type[NeatWarning] = DefaultWarning,
-) -> Iterator[IssueList]:
+def catch_warnings() -> Iterator[IssueList]:
     """Catch warnings and append them to the issues list."""
-    issues = issues or IssueList()
+    issues = IssueList()
     with warnings.catch_warnings(record=True) as warning_logger:
         warnings.simplefilter("always")
         try:
             yield issues
         finally:
             if warning_logger:
-                issues.extend([warning_cls.from_warning(warning) for warning in warning_logger])  # type: ignore[misc]
-
-
-class FutureResult:
-    def __init__(self) -> None:
-        self._result: Literal["success", "failure", "pending"] = "pending"
-
-    @property
-    def result(self) -> Literal["success", "failure", "pending"]:
-        return self._result
+                issues.extend([NeatWarning.from_warning(warning) for warning in warning_logger])  # type: ignore[misc]
 
 
 @contextmanager
-def catch_issues(
-    issues: IssueList | None = None,
-    error_cls: type[NeatError] = NeatError,
-    warning_cls: type[NeatWarning] = NeatWarning,
-    error_args: dict[str, Any] | None = None,
-) -> Iterator[IssueList]:
+def catch_issues(error_args: dict[str, Any] | None = None) -> Iterator[IssueList]:
     """This is an internal help function to handle issues and warnings.
 
     Args:
-        issues: The issues list to append to.
-        error_cls: The class used to convert errors to issues.
-        warning_cls:  The class used to convert warnings to issues.
         error_args: Additional arguments to pass to the error class. The only use case as of (2025-01-03) is to pass
             the read_info_by_sheet to the error class such that the row numbers can be adjusted to match the source
             spreadsheet.
@@ -550,7 +530,7 @@ def catch_issues(
         IssueList: The list of issues.
 
     """
-    with catch_warnings(issues, warning_cls) as issues:
+    with catch_warnings() as issues:
         try:
             yield issues
         except ValidationError as e:
