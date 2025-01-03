@@ -9,9 +9,6 @@ from cognite.neat import NeatSession
 from tests.config import DATA_FOLDER, DOC_RULES
 from tests.data import COGNITE_CORE_ZIP
 
-THIS_FOLDER = Path(__file__).resolve(strict=True).parent
-SNAPSHOTS_DIR = THIS_FOLDER / Path(__file__).stem
-
 
 class TestImportersToYAMLExporter:
     def test_excel_importer_to_yaml(self, deterministic_uuid4: None, data_regression: DataRegressionFixture) -> None:
