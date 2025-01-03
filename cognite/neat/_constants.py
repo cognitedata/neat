@@ -1,6 +1,8 @@
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.ids import DataModelId
 from rdflib import DC, DCTERMS, FOAF, OWL, RDF, RDFS, SH, SKOS, XSD, Namespace, URIRef
 
@@ -139,3 +141,11 @@ def get_asset_read_only_properties_with_connection() -> "list[DMSProperty]":
     from cognite.neat._rules.models.dms import DMSProperty
 
     return [DMSProperty.model_validate(item) for item in (_ASSET_ROOT_PROPERTY, _ASSET_PATH_PROPERTY)]
+
+
+READONLY_PROPERTIES: Mapping[dm.ContainerId, frozenset[str]] = {
+    dm.ContainerId("cdf_cdm", "CogniteAsset"): frozenset(
+        {"assetHierarchy_root", "assetHierarchy_path", "assetHierarchy_path_last_updated_time"}
+    ),
+    dm.ContainerId("cdf_cdm", "CogniteFile"): frozenset({"isUploaded", "uploadedTime"}),
+}
