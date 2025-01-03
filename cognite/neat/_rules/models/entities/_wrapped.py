@@ -9,7 +9,7 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerId, NodeId
 from pydantic import BaseModel, model_serializer, model_validator
 
-from ._single_value import ContainerEntity, DMSNodeEntity, Entity
+from ._single_value import ContainerEntity, DMSNodeEntity, Entity, ViewEntity
 
 
 @total_ordering
@@ -121,6 +121,8 @@ class DMSFilter(WrappedEntity):
             return HasDataFilter(
                 inner=[
                     ContainerEntity(space=entry["space"], externalId=entry["externalId"])
+                    if entry["type"] == "container"
+                    else ViewEntity(space=entry["space"], externalId=entry["externalId"], version=entry["version"])
                     for entry in body
                     if isinstance(entry, dict) and "space" in entry and "externalId" in entry
                 ]
@@ -161,21 +163,24 @@ class NodeTypeFilter(DMSFilter):
 
 class HasDataFilter(DMSFilter):
     name: ClassVar[str] = "hasData"
-    _inner_cls: ClassVar[type[ContainerEntity]] = ContainerEntity
-    inner: list[ContainerEntity] | None = None  # type: ignore[assignment]
+    _inner_cls: ClassVar[type[ContainerEntity | ViewEntity]] = ContainerEntity
+    inner: list[ContainerEntity | ViewEntity] | None = None  # type: ignore[assignment]
 
     def as_dms_filter(self, default: Collection[ContainerId] | None = None) -> dm.Filter:
         containers: list[ContainerId]
         if self.inner:
-            containers = [container.as_id() for container in self.inner]
+            containers = [item.as_id() for item in self.inner if isinstance(item, ContainerEntity)]
+            views = [item.as_id() for item in self.inner if isinstance(item, ViewEntity)]
         elif default:
             containers = list(default)
+            views = []
         else:
             raise ValueError("Empty hasData filter, please provide a default containers.")
 
         return dm.filters.HasData(
             # Sorting to ensure deterministic order
-            containers=sorted(containers, key=lambda container: container.as_tuple())  # type: ignore[union-attr]
+            containers=sorted(containers, key=lambda container: container.as_tuple()),  # type: ignore[union-attr]
+            views=sorted(views, key=lambda view: view.as_tuple()),  # type: ignore[union-attr]
         )
 
 

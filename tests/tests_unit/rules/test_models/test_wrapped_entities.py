@@ -11,6 +11,7 @@ from cognite.neat._rules.models.entities import (
     HasDataFilter,
     NodeTypeFilter,
     RawFilter,
+    ViewEntity,
     WrappedEntity,
 )
 from cognite.neat._rules.transformers import VerifyDMSRules
@@ -84,6 +85,10 @@ class TestWrappedEntities:
             (
                 dm.filters.HasData(containers=[dm.ContainerId(space="space", external_id="container1")]),
                 HasDataFilter(inner=[ContainerEntity(space="space", externalId="container1")]),
+            ),
+            (
+                dm.filters.HasData(views=[dm.ViewId(space="space", external_id="view1", version="v1")]),
+                HasDataFilter(inner=[ViewEntity(space="space", externalId="view1", version="v1")]),
             ),
             (
                 dm.filters.Equals(["node", "type"], {"space": "space", "externalId": "node1"}),

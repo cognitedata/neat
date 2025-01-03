@@ -1,71 +1,4 @@
 data_product:
-  containers:
-  - container: Neat360Image
-    neatId: http://purl.org/cognite/neat/neatId_40a26c60_0d27_4659_b72a_da9b2f32751e
-  - container: Neat360ImageAnnotation
-    neatId: http://purl.org/cognite/neat/neatId_afbb411a_a123_4a8c_93b7_a88612f70c97
-  - container: Neat360ImageCollection
-    neatId: http://purl.org/cognite/neat/neatId_8edddfcd_1e52_4770_bf89_7142fe716b14
-  - container: Neat360ImageModel
-    neatId: http://purl.org/cognite/neat/neatId_e893be3d_7354_4a6f_a160_745985c7504b
-  - container: Neat360ImageStation
-    neatId: http://purl.org/cognite/neat/neatId_f5c9b047_9c10_4572_8f6b_40d09efba58b
-  - container: Neat3DModel
-    neatId: http://purl.org/cognite/neat/neatId_3d67cde9_2834_44c0_94c8_b3b4a911d192
-  - container: Neat3DObject
-    neatId: http://purl.org/cognite/neat/neatId_085b15fb_4a8f_4810_b84c_2f29980402a2
-  - container: Neat3DRevision
-    neatId: http://purl.org/cognite/neat/neatId_43b9da13_ec85_4f37_bbc1_a987aff8754d
-  - container: Neat3DTransformation
-    neatId: http://purl.org/cognite/neat/neatId_398d1ca6_8b68_40b5_9d61_fac36cd5e859
-  - container: NeatActivity
-    neatId: http://purl.org/cognite/neat/neatId_9854ce4e_4ebf_45c3_8ae9_b4a72a79ea68
-  - container: NeatAnnotation
-    neatId: http://purl.org/cognite/neat/neatId_670acc5c_b321_4f21_8dd8_eb85b04d3376
-  - container: NeatAsset
-    neatId: http://purl.org/cognite/neat/neatId_bc0a6a5d_6e99_4e3e_a3b1_37fc0a3450fc
-  - container: NeatAssetClass
-    neatId: http://purl.org/cognite/neat/neatId_964db03f_9340_4fad_9c4a_d56bd6016237
-  - container: NeatAssetType
-    neatId: http://purl.org/cognite/neat/neatId_2cd94cbb_c19a_458c_835b_1c8c0a4c9f7f
-  - container: NeatCADModel
-    neatId: http://purl.org/cognite/neat/neatId_d0725b5c_a281_4044_af96_288295d82980
-  - container: NeatCADNode
-    neatId: http://purl.org/cognite/neat/neatId_292bd156_db94_4570_9ac7_0ec0ab8ddeb4
-  - container: NeatCADRevision
-    neatId: http://purl.org/cognite/neat/neatId_0964fbbf_8cd3_41b0_82b0_1cfdd045dd1c
-  - container: NeatCubeMap
-    neatId: http://purl.org/cognite/neat/neatId_d32e6dcd_83bc_4478_9d6a_c7b86778043b
-  - container: NeatDescribable
-    neatId: http://purl.org/cognite/neat/neatId_9f64eeed_5c9d_427d_84b8_71bb300568d2
-  - container: NeatDiagramAnnotation
-    neatId: http://purl.org/cognite/neat/neatId_49bc473f_ed7b_4656_a18a_15368c99a894
-  - container: NeatEquipment
-    neatId: http://purl.org/cognite/neat/neatId_b5b453ca_3d42_493c_8c9f_d3349bdf0377
-  - container: NeatEquipmentType
-    neatId: http://purl.org/cognite/neat/neatId_1d0bc9bd_e9b5_45cf_9766_5cdafe049059
-  - container: NeatFile
-    neatId: http://purl.org/cognite/neat/neatId_b495db4e_8245_4fb4_8ab7_706eb77350ca
-  - container: NeatFileCategory
-    neatId: http://purl.org/cognite/neat/neatId_30cbd755_6232_417a_a507_41818d1fb540
-  - container: NeatPointCloudModel
-    neatId: http://purl.org/cognite/neat/neatId_dabac50d_ca3d_4859_85ce_099c46b82659
-  - container: NeatPointCloudRevision
-    neatId: http://purl.org/cognite/neat/neatId_d664d264_4c6e_47ff_b9de_7a3a486822b9
-  - container: NeatPointCloudVolume
-    neatId: http://purl.org/cognite/neat/neatId_551ac8ea_585a_4afa_bbfd_cc1289e06ab3
-  - container: NeatSchedulable
-    neatId: http://purl.org/cognite/neat/neatId_3d225c30_b28f_41de_bb14_0bc3304b8590
-  - container: NeatSourceSystem
-    neatId: http://purl.org/cognite/neat/neatId_e9d68f23_b489_4070_b914_f8a8bea4ff31
-  - container: NeatSourceable
-    neatId: http://purl.org/cognite/neat/neatId_f6febc0e_7ecd_4baf_a6f0_5fcffb16e5db
-  - container: NeatTimeSeries
-    neatId: http://purl.org/cognite/neat/neatId_1986b4b2_70b7_4868_9854_80f0dfcaf0b7
-  - container: NeatUnit
-    neatId: http://purl.org/cognite/neat/neatId_1327f1bc_2784_478f_b84f_16b3a79fbfaf
-  - container: NeatVisualizable
-    neatId: http://purl.org/cognite/neat/neatId_541cdfcd_da0d_4a5f_948f_8b74a65bb1f2
   enum:
   - collection: Cognite3DGroup.groupType
     name: Station360
@@ -144,10 +77,10 @@ data_product:
   metadata:
     created: '2025-01-03T00:00:00'
     creator: MISSING
-    external_id: Solution
-    name: TeamNeat solution data model
+    external_id: DataProduct
+    name: data_product data model
     role: DMS Architect
-    space: sp_solution
+    space: sp_data_product
     updated: '2025-01-03T00:00:00'
     version: v1
   properties:
@@ -171,11 +104,11 @@ data_product:
     value_type: text
     view: Neat360Image
     view_property: neat360ImageGUID
-  - container: Neat360Image
+  - container: sp_solution:Neat360Image
     container_property: neat360ImageGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_1d34d08e_7a4c_45d4_9c99_e04cf0e98b3b
+    neatId: http://purl.org/cognite/neat/neatId_7de31a51_6694_4343_90ba_58e3d2762bdc
     nullable: true
     value_type: text
     view: Neat360Image
@@ -201,11 +134,11 @@ data_product:
     value_type: text
     view: Neat360ImageAnnotation
     view_property: neat360ImageAnnotationGUID
-  - container: Neat360ImageAnnotation
+  - container: sp_solution:Neat360ImageAnnotation
     container_property: neat360ImageAnnotationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_cfa701cd_2631_400b_a6d7_94d30db95301
+    neatId: http://purl.org/cognite/neat/neatId_15ce6a66_4dc8_4a1e_b2f9_e5fa90164161
     nullable: true
     value_type: text
     view: Neat360ImageAnnotation
@@ -230,11 +163,11 @@ data_product:
     value_type: text
     view: Neat360ImageCollection
     view_property: neat360ImageCollectionGUID
-  - container: Neat360ImageCollection
+  - container: sp_solution:Neat360ImageCollection
     container_property: neat360ImageCollectionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_989bc4da_9b37_422b_aa8a_616fc3b290d0
+    neatId: http://purl.org/cognite/neat/neatId_c693da11_39c6_41ca_9e50_aa42ca6dfda1
     nullable: true
     value_type: text
     view: Neat360ImageCollection
@@ -255,11 +188,11 @@ data_product:
     value_type: text
     view: Neat360ImageModel
     view_property: neat360ImageModelGUID
-  - container: Neat360ImageModel
+  - container: sp_solution:Neat360ImageModel
     container_property: neat360ImageModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_96a9954f_dc33_41f9_8c1f_55ab715629ee
+    neatId: http://purl.org/cognite/neat/neatId_9191b363_4e2d_4645_adc7_cac7fd72b050
     nullable: true
     value_type: text
     view: Neat360ImageModel
@@ -273,11 +206,11 @@ data_product:
     value_type: text
     view: Neat360ImageStation
     view_property: neat360ImageStationGUID
-  - container: Neat360ImageStation
+  - container: sp_solution:Neat360ImageStation
     container_property: neat360ImageStationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_c342bd2b_f295_456e_9967_5f06bd767e35
+    neatId: http://purl.org/cognite/neat/neatId_43bfd931_3605_4f54_a021_c0ca3531968d
     nullable: true
     value_type: text
     view: Neat360ImageStation
@@ -291,11 +224,11 @@ data_product:
     value_type: text
     view: Neat3DModel
     view_property: neat3DModelGUID
-  - container: Neat3DModel
+  - container: sp_solution:Neat3DModel
     container_property: neat3DModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_2812859a_1337_439e_8d4f_5d272c7f0b79
+    neatId: http://purl.org/cognite/neat/neatId_b07aa066_7354_45ea_a894_9b8d00af5b3a
     nullable: true
     value_type: text
     view: Neat3DModel
@@ -334,11 +267,11 @@ data_product:
     value_type: text
     view: Neat3DObject
     view_property: neat3DObjectGUID
-  - container: Neat3DObject
+  - container: sp_solution:Neat3DObject
     container_property: neat3DObjectGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_48603b32_b4fb_4eb9_89c1_3de73b4206c5
+    neatId: http://purl.org/cognite/neat/neatId_1238d630_743b_45a2_9c0f_2fcfb3f6fe0d
     nullable: true
     value_type: text
     view: Neat3DObject
@@ -370,11 +303,11 @@ data_product:
     value_type: text
     view: Neat3DRevision
     view_property: neat3DRevisionGUID
-  - container: Neat3DRevision
+  - container: sp_solution:Neat3DRevision
     container_property: neat3DRevisionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_96fc734d_a003_4d28_8a8f_3653c9af18f8
+    neatId: http://purl.org/cognite/neat/neatId_32a447b2_ef04_457d_8dcc_c33aa9434aa0
     nullable: true
     value_type: text
     view: Neat3DRevision
@@ -388,11 +321,11 @@ data_product:
     value_type: text
     view: Neat3DTransformation
     view_property: neat3DTransformationGUID
-  - container: Neat3DTransformation
+  - container: sp_solution:Neat3DTransformation
     container_property: neat3DTransformationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_44007d5a_e88d_4719_a624_2b40a5cb63a2
+    neatId: http://purl.org/cognite/neat/neatId_0f44704f_1247_4a4e_a469_98e8d39e198b
     nullable: true
     value_type: text
     view: Neat3DTransformation
@@ -430,11 +363,11 @@ data_product:
     value_type: text
     view: NeatActivity
     view_property: neatActivityGUID
-  - container: NeatActivity
+  - container: sp_solution:NeatActivity
     container_property: neatActivityGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_ebd34616_91b7_4d8e_9301_6989bfbbb17f
+    neatId: http://purl.org/cognite/neat/neatId_77fc9703_1fd5_4423_b06c_5c5649e2623d
     nullable: true
     value_type: text
     view: NeatActivity
@@ -460,11 +393,11 @@ data_product:
     value_type: text
     view: NeatAnnotation
     view_property: neatAnnotationGUID
-  - container: NeatAnnotation
+  - container: sp_solution:NeatAnnotation
     container_property: neatAnnotationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_8a3c3b5e_801e_41da_85b1_ed25f1533ae8
+    neatId: http://purl.org/cognite/neat/neatId_9918ee46_1497_4658_b010_f7197e695d0d
     nullable: true
     value_type: text
     view: NeatAnnotation
@@ -523,11 +456,11 @@ data_product:
     value_type: text
     view: NeatAsset
     view_property: neatAssetGUID
-  - container: NeatAsset
+  - container: sp_solution:NeatAsset
     container_property: neatAssetGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_069f14f1_4018_4c6e_9a8c_fa3c5283aac7
+    neatId: http://purl.org/cognite/neat/neatId_ac9ed156_f63f_4e41_ba9a_ca5e176132ed
     nullable: true
     value_type: text
     view: NeatAsset
@@ -600,11 +533,11 @@ data_product:
     value_type: text
     view: NeatAssetClass
     view_property: neatAssetClassGUID
-  - container: NeatAssetClass
+  - container: sp_solution:NeatAssetClass
     container_property: neatAssetClassGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_c3c75611_ffe3_4a49_854f_92fff366bad4
+    neatId: http://purl.org/cognite/neat/neatId_9384ec2b_44fe_4cae_9248_a9a7ac1aa554
     nullable: true
     value_type: text
     view: NeatAssetClass
@@ -631,11 +564,11 @@ data_product:
     value_type: text
     view: NeatAssetType
     view_property: neatAssetTypeGUID
-  - container: NeatAssetType
+  - container: sp_solution:NeatAssetType
     container_property: neatAssetTypeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_7135f221_a6c9_437f_84da_d06a7872bdeb
+    neatId: http://purl.org/cognite/neat/neatId_ff37d19c_2e76_428b_8735_44f9ea83bf00
     nullable: true
     value_type: text
     view: NeatAssetType
@@ -649,11 +582,11 @@ data_product:
     value_type: text
     view: NeatCADModel
     view_property: neatCADModelGUID
-  - container: NeatCADModel
+  - container: sp_solution:NeatCADModel
     container_property: neatCADModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_785299f4_175b_498d_b814_01027de1bdfe
+    neatId: http://purl.org/cognite/neat/neatId_5230dfbd_5553_42fe_a889_803e5913f9d3
     nullable: true
     value_type: text
     view: NeatCADModel
@@ -685,11 +618,11 @@ data_product:
     value_type: text
     view: NeatCADNode
     view_property: neatCADNodeGUID
-  - container: NeatCADNode
+  - container: sp_solution:NeatCADNode
     container_property: neatCADNodeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_7ed70ed7_b194_490b_a961_929e546e035a
+    neatId: http://purl.org/cognite/neat/neatId_668409e3_f1f8_443e_a99f_131849c8a43f
     nullable: true
     value_type: text
     view: NeatCADNode
@@ -737,11 +670,11 @@ data_product:
     value_type: text
     view: NeatCADRevision
     view_property: neatCADRevisionGUID
-  - container: NeatCADRevision
+  - container: sp_solution:NeatCADRevision
     container_property: neatCADRevisionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_409d3602_5084_4242_968b_1625746f7891
+    neatId: http://purl.org/cognite/neat/neatId_c5c5b37a_f85e_46a1_9dad_09b252c21221
     nullable: true
     value_type: text
     view: NeatCADRevision
@@ -803,11 +736,11 @@ data_product:
     value_type: text
     view: NeatCubeMap
     view_property: neatCubeMapGUID
-  - container: NeatCubeMap
+  - container: sp_solution:NeatCubeMap
     container_property: neatCubeMapGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_de8ede0b_a85c_4e4a_804b_6fabfcf56188
+    neatId: http://purl.org/cognite/neat/neatId_0de051a6_69ca_47d2_b644_14fd8ae769ed
     nullable: true
     value_type: text
     view: NeatCubeMap
@@ -845,11 +778,11 @@ data_product:
     value_type: text
     view: NeatDescribable
     view_property: neatDescribableGUID
-  - container: NeatDescribable
+  - container: sp_solution:NeatDescribable
     container_property: neatDescribableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_71299889_a01a_4992_bf9d_3e64c1a6423b
+    neatId: http://purl.org/cognite/neat/neatId_445dcc38_341c_4494_8d36_6dfcc28ebd70
     nullable: true
     value_type: text
     view: NeatDescribable
@@ -863,11 +796,11 @@ data_product:
     value_type: text
     view: NeatDiagramAnnotation
     view_property: neatDiagramAnnotationGUID
-  - container: NeatDiagramAnnotation
+  - container: sp_solution:NeatDiagramAnnotation
     container_property: neatDiagramAnnotationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_7c16128d_b2c0_4394_a17f_29e170286046
+    neatId: http://purl.org/cognite/neat/neatId_a14923c2_f920_464c_8763_fcd01f15c7b6
     nullable: true
     value_type: text
     view: NeatDiagramAnnotation
@@ -925,11 +858,11 @@ data_product:
     value_type: text
     view: NeatEquipment
     view_property: neatEquipmentGUID
-  - container: NeatEquipment
+  - container: sp_solution:NeatEquipment
     container_property: neatEquipmentGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_03802b70_8d03_491e_8f8d_5238288b78b5
+    neatId: http://purl.org/cognite/neat/neatId_3985fb62_17dc_4eff_a872_13f98d605936
     nullable: true
     value_type: text
     view: NeatEquipment
@@ -951,11 +884,11 @@ data_product:
     value_type: text
     view: NeatEquipmentType
     view_property: neatEquipmentTypeGUID
-  - container: NeatEquipmentType
+  - container: sp_solution:NeatEquipmentType
     container_property: neatEquipmentTypeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_a5d04d53_1e12_42e3_b272_92b6762172ed
+    neatId: http://purl.org/cognite/neat/neatId_eec259dc_7f95_497c_a76a_a6ced50755d9
     nullable: true
     value_type: text
     view: NeatEquipmentType
@@ -1002,11 +935,11 @@ data_product:
     value_type: text
     view: NeatFile
     view_property: neatFileGUID
-  - container: NeatFile
+  - container: sp_solution:NeatFile
     container_property: neatFileGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_7b85179a_d5b0_47e0_aa5d_932b45ff2c83
+    neatId: http://purl.org/cognite/neat/neatId_74eff545_3e65_4603_b8e3_654bfaf14ff0
     nullable: true
     value_type: text
     view: NeatFile
@@ -1020,11 +953,11 @@ data_product:
     value_type: text
     view: NeatFileCategory
     view_property: neatFileCategoryGUID
-  - container: NeatFileCategory
+  - container: sp_solution:NeatFileCategory
     container_property: neatFileCategoryGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_bf0d073d_821c_4336_9970_cf60ebff8d15
+    neatId: http://purl.org/cognite/neat/neatId_11df12d7_dd30_4e89_a2f2_35f2e11b868d
     nullable: true
     value_type: text
     view: NeatFileCategory
@@ -1038,11 +971,11 @@ data_product:
     value_type: text
     view: NeatPointCloudModel
     view_property: neatPointCloudModelGUID
-  - container: NeatPointCloudModel
+  - container: sp_solution:NeatPointCloudModel
     container_property: neatPointCloudModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_c9a7d91f_ef2a_4713_9702_10496a39aaa6
+    neatId: http://purl.org/cognite/neat/neatId_00a81de9_d20f_47d0_8465_6d6b81fb18b3
     nullable: true
     value_type: text
     view: NeatPointCloudModel
@@ -1074,11 +1007,11 @@ data_product:
     value_type: text
     view: NeatPointCloudRevision
     view_property: neatPointCloudRevisionGUID
-  - container: NeatPointCloudRevision
+  - container: sp_solution:NeatPointCloudRevision
     container_property: neatPointCloudRevisionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_a8f1e091_ffb8_402d_9475_dbc996418ced
+    neatId: http://purl.org/cognite/neat/neatId_7250ee18_260a_4962_9d81_b7f57d5911c6
     nullable: true
     value_type: text
     view: NeatPointCloudRevision
@@ -1103,11 +1036,11 @@ data_product:
     value_type: text
     view: NeatPointCloudVolume
     view_property: neatPointCloudVolumeGUID
-  - container: NeatPointCloudVolume
+  - container: sp_solution:NeatPointCloudVolume
     container_property: neatPointCloudVolumeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_6090d697_8b1e_4b9d_834b_9fbb8d4a75b8
+    neatId: http://purl.org/cognite/neat/neatId_de9e3757_5260_401e_aecf_67d2749176f4
     nullable: true
     value_type: text
     view: NeatPointCloudVolume
@@ -1143,11 +1076,11 @@ data_product:
     value_type: text
     view: NeatSchedulable
     view_property: neatSchedulableGUID
-  - container: NeatSchedulable
+  - container: sp_solution:NeatSchedulable
     container_property: neatSchedulableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_db23aa8c_3bca_4f85_a20a_60ac9261549d
+    neatId: http://purl.org/cognite/neat/neatId_517400f8_0b2c_482a_a928_8e92c68a152f
     nullable: true
     value_type: text
     view: NeatSchedulable
@@ -1161,11 +1094,11 @@ data_product:
     value_type: text
     view: NeatSourceSystem
     view_property: neatSourceSystemGUID
-  - container: NeatSourceSystem
+  - container: sp_solution:NeatSourceSystem
     container_property: neatSourceSystemGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_fd08b32c_62d6_4e93_a198_5d54cfb87e6f
+    neatId: http://purl.org/cognite/neat/neatId_a6eab79e_d21c_42f8_8ada_4f80a9e782d4
     nullable: true
     value_type: text
     view: NeatSourceSystem
@@ -1179,11 +1112,11 @@ data_product:
     value_type: text
     view: NeatSourceable
     view_property: neatSourceableGUID
-  - container: NeatSourceable
+  - container: sp_solution:NeatSourceable
     container_property: neatSourceableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_f72169bb_8096_4718_a051_acef097a1e10
+    neatId: http://purl.org/cognite/neat/neatId_19b17e80_dea4_4e17_94fd_9ad39716108e
     nullable: true
     value_type: text
     view: NeatSourceable
@@ -1242,11 +1175,11 @@ data_product:
     value_type: text
     view: NeatTimeSeries
     view_property: neatTimeSeriesGUID
-  - container: NeatTimeSeries
+  - container: sp_solution:NeatTimeSeries
     container_property: neatTimeSeriesGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_03edd1f8_74f9_4d17_a912_b4bf86a4bae4
+    neatId: http://purl.org/cognite/neat/neatId_def57689_68f4_4bce_a4e7_5e8eb8f21423
     nullable: true
     value_type: text
     view: NeatTimeSeries
@@ -1272,11 +1205,11 @@ data_product:
     value_type: text
     view: NeatUnit
     view_property: neatUnitGUID
-  - container: NeatUnit
+  - container: sp_solution:NeatUnit
     container_property: neatUnitGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_43d88870_f81d_4aa1_8812_0a8e78308930
+    neatId: http://purl.org/cognite/neat/neatId_65c17795_b155_46bc_9f8d_ed9756abf2f1
     nullable: true
     value_type: text
     view: NeatUnit
@@ -1290,11 +1223,11 @@ data_product:
     value_type: text
     view: NeatVisualizable
     view_property: neatVisualizableGUID
-  - container: NeatVisualizable
+  - container: sp_solution:NeatVisualizable
     container_property: neatVisualizableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_889b78d5_dbfd_497e_aca2_b148da330aa1
+    neatId: http://purl.org/cognite/neat/neatId_a075e927_5110_4492_b442_7e0b61484bb3
     nullable: true
     value_type: text
     view: NeatVisualizable
@@ -1312,112 +1245,145 @@ data_product:
     view: NeatVisualizable
     view_property: object3D
   views:
-  - in_model: true
+  - filter_: hasData(sp_solution:Neat360Image(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_6d3ee1dc_8139_4443_a45b_712eb8225688
     view: Neat360Image
-  - in_model: true
+  - filter_: hasData(sp_solution:Neat360ImageAnnotation(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_c074718e_425a_409f_b337_c59979844388
     view: Neat360ImageAnnotation
-  - in_model: true
+  - filter_: hasData(sp_solution:Neat360ImageCollection(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_709b7d97_464c_44af_bd3f_3799a07295e9
     view: Neat360ImageCollection
-  - in_model: true
+  - filter_: hasData(sp_solution:Neat360ImageModel(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_269cd696_236c_4b87_94a0_bccb8a476a87
     view: Neat360ImageModel
-  - in_model: true
+  - filter_: hasData(sp_solution:Neat360ImageStation(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_7746d0ba_8ae8_405b_94b4_a48268586eba
     view: Neat360ImageStation
-  - in_model: true
+  - filter_: hasData(sp_solution:Neat3DModel(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_05000bc6_b20d_4b6e_b231_1f1795863a76
     view: Neat3DModel
-  - in_model: true
+  - filter_: hasData(sp_solution:Neat3DObject(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_63d62a39_c0e3_4efd_8c71_e0fe5a0cdd7c
     view: Neat3DObject
-  - in_model: true
+  - filter_: hasData(sp_solution:Neat3DRevision(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_e5d6f6e6_9a6e_42f5_8cc4_29038bcf53a1
     view: Neat3DRevision
-  - in_model: true
+  - filter_: hasData(sp_solution:Neat3DTransformation(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_cc530e36_addc_4e13_ab3b_4d37560c95ee
     view: Neat3DTransformation
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatActivity(version=v1))
+    in_model: true
     name: Activity
     neatId: http://purl.org/cognite/neat/neatId_e82c7d7b_06e7_45f9_88bc_539c9f4c3b79
     view: NeatActivity
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatAnnotation(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_2e85cb21_7631_4e9d_9de9_f86322bd3388
     view: NeatAnnotation
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatAsset(version=v1))
+    in_model: true
     name: Asset
     neatId: http://purl.org/cognite/neat/neatId_473bd358_610e_4a64_a130_1617c2dff335
     view: NeatAsset
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatAssetClass(version=v1))
+    in_model: true
     name: Asset class
     neatId: http://purl.org/cognite/neat/neatId_0d557b61_8a17_4dfe_bfc0_0dc804f64d86
     view: NeatAssetClass
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatAssetType(version=v1))
+    in_model: true
     name: Asset type
     neatId: http://purl.org/cognite/neat/neatId_07f194f9_c115_4d6d_8a4e_5b70a6d964a3
     view: NeatAssetType
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatCADModel(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_1d48a071_ab61_47b1_b93b_4c3220500494
     view: NeatCADModel
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatCADNode(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_f6b751f7_9b74_4245_9b1b_c8952af43ab7
     view: NeatCADNode
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatCADRevision(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_edcb8cb6_0692_4c63_9424_aed51bac5c15
     view: NeatCADRevision
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatCubeMap(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_9793b9b4_1374_4146_b2c5_bd89b70b3420
     view: NeatCubeMap
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatDescribable(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_ce3714af_99b4_4350_af2b_99b4d9acd158
     view: NeatDescribable
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatDiagramAnnotation(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_11a72609_5edd_4bbf_a959_76636daa2e68
     view: NeatDiagramAnnotation
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatEquipment(version=v1))
+    in_model: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/neatId_5cb85aed_f5f6_4c97_aefb_63b11b049863
     view: NeatEquipment
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatEquipmentType(version=v1))
+    in_model: true
     name: Equipment type
     neatId: http://purl.org/cognite/neat/neatId_a6846099_f729_4951_8591_31d2bbda0242
     view: NeatEquipmentType
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatFile(version=v1))
+    in_model: true
     name: File
     neatId: http://purl.org/cognite/neat/neatId_97ac6aa8_bb24_48a3_9363_57b66f81cf4f
     view: NeatFile
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatFileCategory(version=v1))
+    in_model: true
     name: File category
     neatId: http://purl.org/cognite/neat/neatId_c01f36bf_3e6d_458b_b367_c28de1b294de
     view: NeatFileCategory
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatPointCloudModel(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_7cd0129d_2e8d_4e87_9334_20e6d9d80b8d
     view: NeatPointCloudModel
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatPointCloudRevision(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_8e485223_46b9_4991_a14e_b70db380c73a
     view: NeatPointCloudRevision
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatPointCloudVolume(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_3d85de89_c217_4429_8e20_07247d137018
     view: NeatPointCloudVolume
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatSchedulable(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_6786d506_38ba_4abc_8b53_05e517d2582e
     view: NeatSchedulable
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatSourceSystem(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_ff233d5f_6ced_415d_9800_7c0287ea7ff5
     view: NeatSourceSystem
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatSourceable(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_b8a6171f_1ee3_4dc4_bb04_8a8b405bfdc9
     view: NeatSourceable
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatTimeSeries(version=v1))
+    in_model: true
     name: Time series
     neatId: http://purl.org/cognite/neat/neatId_bd1531c8_3764_4bda_b108_d4482f65fafa
     view: NeatTimeSeries
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatUnit(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_d52721e7_19bc_443e_bb02_bebb48729a4d
     view: NeatUnit
-  - in_model: true
+  - filter_: hasData(sp_solution:NeatVisualizable(version=v1))
+    in_model: true
     neatId: http://purl.org/cognite/neat/neatId_0ba6eab9_4639_447b_a067_bdac88bd13d1
     view: NeatVisualizable
 enterprise:
@@ -2766,71 +2732,71 @@ enterprise:
 solution:
   containers:
   - container: Neat360Image
-    neatId: http://purl.org/cognite/neat/neatId_40a26c60_0d27_4659_b72a_da9b2f32751e
+    neatId: http://purl.org/cognite/neat/neatId_1d34d08e_7a4c_45d4_9c99_e04cf0e98b3b
   - container: Neat360ImageAnnotation
-    neatId: http://purl.org/cognite/neat/neatId_afbb411a_a123_4a8c_93b7_a88612f70c97
+    neatId: http://purl.org/cognite/neat/neatId_cfa701cd_2631_400b_a6d7_94d30db95301
   - container: Neat360ImageCollection
-    neatId: http://purl.org/cognite/neat/neatId_8edddfcd_1e52_4770_bf89_7142fe716b14
+    neatId: http://purl.org/cognite/neat/neatId_989bc4da_9b37_422b_aa8a_616fc3b290d0
   - container: Neat360ImageModel
-    neatId: http://purl.org/cognite/neat/neatId_e893be3d_7354_4a6f_a160_745985c7504b
+    neatId: http://purl.org/cognite/neat/neatId_96a9954f_dc33_41f9_8c1f_55ab715629ee
   - container: Neat360ImageStation
-    neatId: http://purl.org/cognite/neat/neatId_f5c9b047_9c10_4572_8f6b_40d09efba58b
+    neatId: http://purl.org/cognite/neat/neatId_c342bd2b_f295_456e_9967_5f06bd767e35
   - container: Neat3DModel
-    neatId: http://purl.org/cognite/neat/neatId_3d67cde9_2834_44c0_94c8_b3b4a911d192
+    neatId: http://purl.org/cognite/neat/neatId_2812859a_1337_439e_8d4f_5d272c7f0b79
   - container: Neat3DObject
-    neatId: http://purl.org/cognite/neat/neatId_085b15fb_4a8f_4810_b84c_2f29980402a2
+    neatId: http://purl.org/cognite/neat/neatId_48603b32_b4fb_4eb9_89c1_3de73b4206c5
   - container: Neat3DRevision
-    neatId: http://purl.org/cognite/neat/neatId_43b9da13_ec85_4f37_bbc1_a987aff8754d
+    neatId: http://purl.org/cognite/neat/neatId_96fc734d_a003_4d28_8a8f_3653c9af18f8
   - container: Neat3DTransformation
-    neatId: http://purl.org/cognite/neat/neatId_398d1ca6_8b68_40b5_9d61_fac36cd5e859
+    neatId: http://purl.org/cognite/neat/neatId_44007d5a_e88d_4719_a624_2b40a5cb63a2
   - container: NeatActivity
-    neatId: http://purl.org/cognite/neat/neatId_9854ce4e_4ebf_45c3_8ae9_b4a72a79ea68
+    neatId: http://purl.org/cognite/neat/neatId_ebd34616_91b7_4d8e_9301_6989bfbbb17f
   - container: NeatAnnotation
-    neatId: http://purl.org/cognite/neat/neatId_670acc5c_b321_4f21_8dd8_eb85b04d3376
+    neatId: http://purl.org/cognite/neat/neatId_8a3c3b5e_801e_41da_85b1_ed25f1533ae8
   - container: NeatAsset
-    neatId: http://purl.org/cognite/neat/neatId_bc0a6a5d_6e99_4e3e_a3b1_37fc0a3450fc
+    neatId: http://purl.org/cognite/neat/neatId_069f14f1_4018_4c6e_9a8c_fa3c5283aac7
   - container: NeatAssetClass
-    neatId: http://purl.org/cognite/neat/neatId_964db03f_9340_4fad_9c4a_d56bd6016237
+    neatId: http://purl.org/cognite/neat/neatId_c3c75611_ffe3_4a49_854f_92fff366bad4
   - container: NeatAssetType
-    neatId: http://purl.org/cognite/neat/neatId_2cd94cbb_c19a_458c_835b_1c8c0a4c9f7f
+    neatId: http://purl.org/cognite/neat/neatId_7135f221_a6c9_437f_84da_d06a7872bdeb
   - container: NeatCADModel
-    neatId: http://purl.org/cognite/neat/neatId_d0725b5c_a281_4044_af96_288295d82980
+    neatId: http://purl.org/cognite/neat/neatId_785299f4_175b_498d_b814_01027de1bdfe
   - container: NeatCADNode
-    neatId: http://purl.org/cognite/neat/neatId_292bd156_db94_4570_9ac7_0ec0ab8ddeb4
+    neatId: http://purl.org/cognite/neat/neatId_7ed70ed7_b194_490b_a961_929e546e035a
   - container: NeatCADRevision
-    neatId: http://purl.org/cognite/neat/neatId_0964fbbf_8cd3_41b0_82b0_1cfdd045dd1c
+    neatId: http://purl.org/cognite/neat/neatId_409d3602_5084_4242_968b_1625746f7891
   - container: NeatCubeMap
-    neatId: http://purl.org/cognite/neat/neatId_d32e6dcd_83bc_4478_9d6a_c7b86778043b
+    neatId: http://purl.org/cognite/neat/neatId_de8ede0b_a85c_4e4a_804b_6fabfcf56188
   - container: NeatDescribable
-    neatId: http://purl.org/cognite/neat/neatId_9f64eeed_5c9d_427d_84b8_71bb300568d2
+    neatId: http://purl.org/cognite/neat/neatId_71299889_a01a_4992_bf9d_3e64c1a6423b
   - container: NeatDiagramAnnotation
-    neatId: http://purl.org/cognite/neat/neatId_49bc473f_ed7b_4656_a18a_15368c99a894
+    neatId: http://purl.org/cognite/neat/neatId_7c16128d_b2c0_4394_a17f_29e170286046
   - container: NeatEquipment
-    neatId: http://purl.org/cognite/neat/neatId_b5b453ca_3d42_493c_8c9f_d3349bdf0377
+    neatId: http://purl.org/cognite/neat/neatId_03802b70_8d03_491e_8f8d_5238288b78b5
   - container: NeatEquipmentType
-    neatId: http://purl.org/cognite/neat/neatId_1d0bc9bd_e9b5_45cf_9766_5cdafe049059
+    neatId: http://purl.org/cognite/neat/neatId_a5d04d53_1e12_42e3_b272_92b6762172ed
   - container: NeatFile
-    neatId: http://purl.org/cognite/neat/neatId_b495db4e_8245_4fb4_8ab7_706eb77350ca
+    neatId: http://purl.org/cognite/neat/neatId_7b85179a_d5b0_47e0_aa5d_932b45ff2c83
   - container: NeatFileCategory
-    neatId: http://purl.org/cognite/neat/neatId_30cbd755_6232_417a_a507_41818d1fb540
+    neatId: http://purl.org/cognite/neat/neatId_bf0d073d_821c_4336_9970_cf60ebff8d15
   - container: NeatPointCloudModel
-    neatId: http://purl.org/cognite/neat/neatId_dabac50d_ca3d_4859_85ce_099c46b82659
+    neatId: http://purl.org/cognite/neat/neatId_c9a7d91f_ef2a_4713_9702_10496a39aaa6
   - container: NeatPointCloudRevision
-    neatId: http://purl.org/cognite/neat/neatId_d664d264_4c6e_47ff_b9de_7a3a486822b9
+    neatId: http://purl.org/cognite/neat/neatId_a8f1e091_ffb8_402d_9475_dbc996418ced
   - container: NeatPointCloudVolume
-    neatId: http://purl.org/cognite/neat/neatId_551ac8ea_585a_4afa_bbfd_cc1289e06ab3
+    neatId: http://purl.org/cognite/neat/neatId_6090d697_8b1e_4b9d_834b_9fbb8d4a75b8
   - container: NeatSchedulable
-    neatId: http://purl.org/cognite/neat/neatId_3d225c30_b28f_41de_bb14_0bc3304b8590
+    neatId: http://purl.org/cognite/neat/neatId_db23aa8c_3bca_4f85_a20a_60ac9261549d
   - container: NeatSourceSystem
-    neatId: http://purl.org/cognite/neat/neatId_e9d68f23_b489_4070_b914_f8a8bea4ff31
+    neatId: http://purl.org/cognite/neat/neatId_fd08b32c_62d6_4e93_a198_5d54cfb87e6f
   - container: NeatSourceable
-    neatId: http://purl.org/cognite/neat/neatId_f6febc0e_7ecd_4baf_a6f0_5fcffb16e5db
+    neatId: http://purl.org/cognite/neat/neatId_f72169bb_8096_4718_a051_acef097a1e10
   - container: NeatTimeSeries
-    neatId: http://purl.org/cognite/neat/neatId_1986b4b2_70b7_4868_9854_80f0dfcaf0b7
+    neatId: http://purl.org/cognite/neat/neatId_03edd1f8_74f9_4d17_a912_b4bf86a4bae4
   - container: NeatUnit
-    neatId: http://purl.org/cognite/neat/neatId_1327f1bc_2784_478f_b84f_16b3a79fbfaf
+    neatId: http://purl.org/cognite/neat/neatId_43d88870_f81d_4aa1_8812_0a8e78308930
   - container: NeatVisualizable
-    neatId: http://purl.org/cognite/neat/neatId_541cdfcd_da0d_4a5f_948f_8b74a65bb1f2
+    neatId: http://purl.org/cognite/neat/neatId_889b78d5_dbfd_497e_aca2_b148da330aa1
   enum:
   - collection: Cognite3DGroup.groupType
     name: Station360
@@ -2910,7 +2876,7 @@ solution:
     created: '2025-01-03T00:00:00'
     creator: MISSING
     external_id: Solution
-    name: TeamNeat solution data model
+    name: My solution data model
     role: DMS Architect
     space: sp_solution
     updated: '2025-01-03T00:00:00'
@@ -2940,7 +2906,7 @@ solution:
     container_property: neat360ImageGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_1d34d08e_7a4c_45d4_9c99_e04cf0e98b3b
+    neatId: http://purl.org/cognite/neat/neatId_7de31a51_6694_4343_90ba_58e3d2762bdc
     nullable: true
     value_type: text
     view: Neat360Image
@@ -2970,7 +2936,7 @@ solution:
     container_property: neat360ImageAnnotationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_cfa701cd_2631_400b_a6d7_94d30db95301
+    neatId: http://purl.org/cognite/neat/neatId_15ce6a66_4dc8_4a1e_b2f9_e5fa90164161
     nullable: true
     value_type: text
     view: Neat360ImageAnnotation
@@ -2999,7 +2965,7 @@ solution:
     container_property: neat360ImageCollectionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_989bc4da_9b37_422b_aa8a_616fc3b290d0
+    neatId: http://purl.org/cognite/neat/neatId_c693da11_39c6_41ca_9e50_aa42ca6dfda1
     nullable: true
     value_type: text
     view: Neat360ImageCollection
@@ -3024,7 +2990,7 @@ solution:
     container_property: neat360ImageModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_96a9954f_dc33_41f9_8c1f_55ab715629ee
+    neatId: http://purl.org/cognite/neat/neatId_9191b363_4e2d_4645_adc7_cac7fd72b050
     nullable: true
     value_type: text
     view: Neat360ImageModel
@@ -3042,7 +3008,7 @@ solution:
     container_property: neat360ImageStationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_c342bd2b_f295_456e_9967_5f06bd767e35
+    neatId: http://purl.org/cognite/neat/neatId_43bfd931_3605_4f54_a021_c0ca3531968d
     nullable: true
     value_type: text
     view: Neat360ImageStation
@@ -3060,7 +3026,7 @@ solution:
     container_property: neat3DModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_2812859a_1337_439e_8d4f_5d272c7f0b79
+    neatId: http://purl.org/cognite/neat/neatId_b07aa066_7354_45ea_a894_9b8d00af5b3a
     nullable: true
     value_type: text
     view: Neat3DModel
@@ -3103,7 +3069,7 @@ solution:
     container_property: neat3DObjectGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_48603b32_b4fb_4eb9_89c1_3de73b4206c5
+    neatId: http://purl.org/cognite/neat/neatId_1238d630_743b_45a2_9c0f_2fcfb3f6fe0d
     nullable: true
     value_type: text
     view: Neat3DObject
@@ -3139,7 +3105,7 @@ solution:
     container_property: neat3DRevisionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_96fc734d_a003_4d28_8a8f_3653c9af18f8
+    neatId: http://purl.org/cognite/neat/neatId_32a447b2_ef04_457d_8dcc_c33aa9434aa0
     nullable: true
     value_type: text
     view: Neat3DRevision
@@ -3157,7 +3123,7 @@ solution:
     container_property: neat3DTransformationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_44007d5a_e88d_4719_a624_2b40a5cb63a2
+    neatId: http://purl.org/cognite/neat/neatId_0f44704f_1247_4a4e_a469_98e8d39e198b
     nullable: true
     value_type: text
     view: Neat3DTransformation
@@ -3199,7 +3165,7 @@ solution:
     container_property: neatActivityGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_ebd34616_91b7_4d8e_9301_6989bfbbb17f
+    neatId: http://purl.org/cognite/neat/neatId_77fc9703_1fd5_4423_b06c_5c5649e2623d
     nullable: true
     value_type: text
     view: NeatActivity
@@ -3229,7 +3195,7 @@ solution:
     container_property: neatAnnotationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_8a3c3b5e_801e_41da_85b1_ed25f1533ae8
+    neatId: http://purl.org/cognite/neat/neatId_9918ee46_1497_4658_b010_f7197e695d0d
     nullable: true
     value_type: text
     view: NeatAnnotation
@@ -3292,7 +3258,7 @@ solution:
     container_property: neatAssetGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_069f14f1_4018_4c6e_9a8c_fa3c5283aac7
+    neatId: http://purl.org/cognite/neat/neatId_ac9ed156_f63f_4e41_ba9a_ca5e176132ed
     nullable: true
     value_type: text
     view: NeatAsset
@@ -3369,7 +3335,7 @@ solution:
     container_property: neatAssetClassGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_c3c75611_ffe3_4a49_854f_92fff366bad4
+    neatId: http://purl.org/cognite/neat/neatId_9384ec2b_44fe_4cae_9248_a9a7ac1aa554
     nullable: true
     value_type: text
     view: NeatAssetClass
@@ -3400,7 +3366,7 @@ solution:
     container_property: neatAssetTypeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_7135f221_a6c9_437f_84da_d06a7872bdeb
+    neatId: http://purl.org/cognite/neat/neatId_ff37d19c_2e76_428b_8735_44f9ea83bf00
     nullable: true
     value_type: text
     view: NeatAssetType
@@ -3418,7 +3384,7 @@ solution:
     container_property: neatCADModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_785299f4_175b_498d_b814_01027de1bdfe
+    neatId: http://purl.org/cognite/neat/neatId_5230dfbd_5553_42fe_a889_803e5913f9d3
     nullable: true
     value_type: text
     view: NeatCADModel
@@ -3454,7 +3420,7 @@ solution:
     container_property: neatCADNodeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_7ed70ed7_b194_490b_a961_929e546e035a
+    neatId: http://purl.org/cognite/neat/neatId_668409e3_f1f8_443e_a99f_131849c8a43f
     nullable: true
     value_type: text
     view: NeatCADNode
@@ -3506,7 +3472,7 @@ solution:
     container_property: neatCADRevisionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_409d3602_5084_4242_968b_1625746f7891
+    neatId: http://purl.org/cognite/neat/neatId_c5c5b37a_f85e_46a1_9dad_09b252c21221
     nullable: true
     value_type: text
     view: NeatCADRevision
@@ -3572,7 +3538,7 @@ solution:
     container_property: neatCubeMapGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_de8ede0b_a85c_4e4a_804b_6fabfcf56188
+    neatId: http://purl.org/cognite/neat/neatId_0de051a6_69ca_47d2_b644_14fd8ae769ed
     nullable: true
     value_type: text
     view: NeatCubeMap
@@ -3614,7 +3580,7 @@ solution:
     container_property: neatDescribableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_71299889_a01a_4992_bf9d_3e64c1a6423b
+    neatId: http://purl.org/cognite/neat/neatId_445dcc38_341c_4494_8d36_6dfcc28ebd70
     nullable: true
     value_type: text
     view: NeatDescribable
@@ -3632,7 +3598,7 @@ solution:
     container_property: neatDiagramAnnotationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_7c16128d_b2c0_4394_a17f_29e170286046
+    neatId: http://purl.org/cognite/neat/neatId_a14923c2_f920_464c_8763_fcd01f15c7b6
     nullable: true
     value_type: text
     view: NeatDiagramAnnotation
@@ -3694,7 +3660,7 @@ solution:
     container_property: neatEquipmentGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_03802b70_8d03_491e_8f8d_5238288b78b5
+    neatId: http://purl.org/cognite/neat/neatId_3985fb62_17dc_4eff_a872_13f98d605936
     nullable: true
     value_type: text
     view: NeatEquipment
@@ -3720,7 +3686,7 @@ solution:
     container_property: neatEquipmentTypeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_a5d04d53_1e12_42e3_b272_92b6762172ed
+    neatId: http://purl.org/cognite/neat/neatId_eec259dc_7f95_497c_a76a_a6ced50755d9
     nullable: true
     value_type: text
     view: NeatEquipmentType
@@ -3771,7 +3737,7 @@ solution:
     container_property: neatFileGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_7b85179a_d5b0_47e0_aa5d_932b45ff2c83
+    neatId: http://purl.org/cognite/neat/neatId_74eff545_3e65_4603_b8e3_654bfaf14ff0
     nullable: true
     value_type: text
     view: NeatFile
@@ -3789,7 +3755,7 @@ solution:
     container_property: neatFileCategoryGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_bf0d073d_821c_4336_9970_cf60ebff8d15
+    neatId: http://purl.org/cognite/neat/neatId_11df12d7_dd30_4e89_a2f2_35f2e11b868d
     nullable: true
     value_type: text
     view: NeatFileCategory
@@ -3807,7 +3773,7 @@ solution:
     container_property: neatPointCloudModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_c9a7d91f_ef2a_4713_9702_10496a39aaa6
+    neatId: http://purl.org/cognite/neat/neatId_00a81de9_d20f_47d0_8465_6d6b81fb18b3
     nullable: true
     value_type: text
     view: NeatPointCloudModel
@@ -3843,7 +3809,7 @@ solution:
     container_property: neatPointCloudRevisionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_a8f1e091_ffb8_402d_9475_dbc996418ced
+    neatId: http://purl.org/cognite/neat/neatId_7250ee18_260a_4962_9d81_b7f57d5911c6
     nullable: true
     value_type: text
     view: NeatPointCloudRevision
@@ -3872,7 +3838,7 @@ solution:
     container_property: neatPointCloudVolumeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_6090d697_8b1e_4b9d_834b_9fbb8d4a75b8
+    neatId: http://purl.org/cognite/neat/neatId_de9e3757_5260_401e_aecf_67d2749176f4
     nullable: true
     value_type: text
     view: NeatPointCloudVolume
@@ -3912,7 +3878,7 @@ solution:
     container_property: neatSchedulableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_db23aa8c_3bca_4f85_a20a_60ac9261549d
+    neatId: http://purl.org/cognite/neat/neatId_517400f8_0b2c_482a_a928_8e92c68a152f
     nullable: true
     value_type: text
     view: NeatSchedulable
@@ -3930,7 +3896,7 @@ solution:
     container_property: neatSourceSystemGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_fd08b32c_62d6_4e93_a198_5d54cfb87e6f
+    neatId: http://purl.org/cognite/neat/neatId_a6eab79e_d21c_42f8_8ada_4f80a9e782d4
     nullable: true
     value_type: text
     view: NeatSourceSystem
@@ -3948,7 +3914,7 @@ solution:
     container_property: neatSourceableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_f72169bb_8096_4718_a051_acef097a1e10
+    neatId: http://purl.org/cognite/neat/neatId_19b17e80_dea4_4e17_94fd_9ad39716108e
     nullable: true
     value_type: text
     view: NeatSourceable
@@ -4011,7 +3977,7 @@ solution:
     container_property: neatTimeSeriesGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_03edd1f8_74f9_4d17_a912_b4bf86a4bae4
+    neatId: http://purl.org/cognite/neat/neatId_def57689_68f4_4bce_a4e7_5e8eb8f21423
     nullable: true
     value_type: text
     view: NeatTimeSeries
@@ -4041,7 +4007,7 @@ solution:
     container_property: neatUnitGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_43d88870_f81d_4aa1_8812_0a8e78308930
+    neatId: http://purl.org/cognite/neat/neatId_65c17795_b155_46bc_9f8d_ed9756abf2f1
     nullable: true
     value_type: text
     view: NeatUnit
@@ -4059,7 +4025,7 @@ solution:
     container_property: neatVisualizableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/neatId_889b78d5_dbfd_497e_aca2_b148da330aa1
+    neatId: http://purl.org/cognite/neat/neatId_a075e927_5110_4492_b442_7e0b61484bb3
     nullable: true
     value_type: text
     view: NeatVisualizable
