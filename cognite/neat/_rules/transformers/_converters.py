@@ -302,7 +302,8 @@ class SetIDDMSModel(RulesTransformer[DMSRules, DMSRules]):
         return DMSRules.model_validate(DMSInputRules.load(dump).dump())
 
 
-class ToExtension(RulesTransformer[DMSRules, DMSRules]):
+class ToExtensionModel(RulesTransformer[DMSRules, DMSRules]):
+    type_: ClassVar[str]
     def __init__(
         self,
         new_model_id: DataModelIdentifier,
@@ -572,7 +573,7 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
             return f"Unsupported data model type: {self.type_}"
 
 
-class ToEnterpriseModel(ToExtension):
+class ToEnterpriseModel(ToExtensionModel):
     type_: ClassVar[str] = "enterprise"
     def __init__(
         self,
@@ -708,7 +709,7 @@ class ToEnterpriseModel(ToExtension):
         return f"Prepared data model {self.new_model_id} to be enterprise data model."
 
 
-class ToSolutionModel(ToExtension):
+class ToSolutionModel(ToExtensionModel):
     type_: ClassVar[str] = "solution"
     def __init__(
         self,
@@ -806,7 +807,7 @@ class ToSolutionModel(ToExtension):
         return f"Prepared data model {self.new_model_id} to be solution data model."
 
 
-class ToDataProductModel(ToEnterpriseModel):
+class ToDataProductModel(ToExtensionModel):
     type_: ClassVar[str] = "data_product"
     def __init__(
         self,

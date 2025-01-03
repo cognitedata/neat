@@ -13,7 +13,7 @@ from cognite.neat._rules.transformers import (
     RuleMapper,
     RulesTransformer,
     SetIDDMSModel,
-    ToExtension,
+    ToExtensionModel,
 )
 
 TRANSFORMATION_CLASSES = list(RulesTransformer.__subclasses__())
@@ -25,7 +25,7 @@ def instantiated_transformers_cls() -> Iterable[RulesTransformer]:
             continue
         if issubclass(transformation_cls, PrefixEntities):
             yield transformation_cls(prefix="test")
-        elif issubclass(transformation_cls, SetIDDMSModel | ToExtension):
+        elif issubclass(transformation_cls, SetIDDMSModel | ToExtensionModel):
             yield transformation_cls(("my_space", "my_id", "v1"))
         elif issubclass(transformation_cls, ReduceCogniteModel):
             yield transformation_cls("3D")
