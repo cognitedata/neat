@@ -581,12 +581,22 @@ class ToDataProductModel(ToSolutionModel):
         # Copy to ensure immutability
         expanded = self._expand_properties(rules.model_copy(deep=True))
         if self.include == "same-space":
-            expanded.properties = SheetList[DMSProperty](
-                [prop for prop in expanded.properties if prop.view.space == expanded.metadata.space]
-            )
             expanded.views = SheetList[DMSView](
                 [view for view in expanded.views if view.view.space == expanded.metadata.space]
             )
+            used_view_entities = {view.view for view in expanded.views}
+            expanded.properties = SheetList[DMSProperty](
+                [
+                    prop
+                    for prop in expanded.properties
+                    if prop.view.space == expanded.metadata.space
+                    and (
+                        (isinstance(prop.value_type, ViewEntity) and prop.value_type in used_view_entities)
+                        or not isinstance(prop.value_type, ViewEntity)
+                    )
+                ]
+            )
+
         return self._to_solution(expanded)
 
     @staticmethod
