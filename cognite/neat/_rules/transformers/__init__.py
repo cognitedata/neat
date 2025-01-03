@@ -9,7 +9,10 @@ from ._converters import (
     ReduceCogniteModel,
     SetIDDMSModel,
     ToCompliantEntities,
+    ToDataProductModel,
+    ToEnterprise,
     ToExtension,
+    ToSolution,
 )
 from ._mapping import AsParentPropertyId, MapOneToOne, RuleMapper
 from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRules
@@ -28,7 +31,10 @@ __all__ = [
     "RulesTransformer",
     "SetIDDMSModel",
     "ToCompliantEntities",
+    "ToDataProductModel",
+    "ToEnterprise",
     "ToExtension",
+    "ToSolution",
     "VerifyAnyRules",
     "VerifyDMSRules",
     "VerifyInformationRules",
