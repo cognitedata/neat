@@ -207,7 +207,7 @@ class DMSSchema:
             if "containers" not in exclude_set:
                 for container in self.containers.values():
                     zip_ref.writestr(
-                        f"data_models/containers{container.external_id}.container.yaml", container.dump_yaml()
+                        f"data_models/containers/{container.external_id}.container.yaml", container.dump_yaml()
                     )
             if "node_types" not in exclude_set:
                 for node in self.node_types.values():
