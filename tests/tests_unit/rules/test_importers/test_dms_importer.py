@@ -244,4 +244,3 @@ SCHEMA_WITH_REFERENCED_ENUM = DMSSchema(
         ]
     ),
 )
-
