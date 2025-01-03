@@ -3,9 +3,17 @@ from pathlib import Path
 import pytest
 import requests
 import yaml
+from cognite.client.data_classes.data_modeling import (
+    Container,
+    ContainerApply,
+    ContainerId,
+    ContainerList,
+)
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
+from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat._client.testing import monkeypatch_neat_client
 from tests.config import DATA_FOLDER, DOC_RULES
 from tests.data import COGNITE_CORE_ZIP
 
@@ -58,31 +66,65 @@ class TestImportersToYAMLExporter:
     @pytest.mark.usefixtures("deterministic_uuid4")
     @pytest.mark.freeze_time("2025-01-03")
     def test_to_extension_transformer(self, data_regression: DataRegressionFixture) -> None:
-        neat = NeatSession(verbose=False)
+        cdf_simulation = DMSSchema.from_zip(COGNITE_CORE_ZIP)
 
-        neat.read.yaml(COGNITE_CORE_ZIP, format="toolkit")
+        def lookup_containers(ids: list[ContainerId]) -> ContainerList:
+            return ContainerList(
+                [
+                    as_container_read(cdf_simulation.containers[container_id])
+                    for container_id in ids
+                    if container_id in cdf_simulation.containers
+                ]
+            )
 
-        neat.verify()
+        def pickup_containers(container: list[ContainerApply]) -> ContainerList:
+            for item in container:
+                container_id = item.as_id()
+                if container_id not in cdf_simulation.containers:
+                    cdf_simulation.containers[container_id] = item
+            return ContainerList([as_container_read(item) for item in container])
 
-        neat.prepare.data_model.to_enterprise(("sp_enterprise", "Enterprise", "v1"), "Neat", move_connections=True)
+        with monkeypatch_neat_client() as client:
+            # In the data product, we need to be able to look up the containers
+            client.data_modeling.containers.retrieve.side_effect = lookup_containers
+            client.data_modeling.containers.apply.side_effect = pickup_containers
 
-        enterprise_yml_str = neat.to.yaml()
+            neat = NeatSession(client, verbose=False)
 
-        neat.prepare.data_model.to_solution(
-            ("sp_solution", "Solution", "v1"),
-            mode="write",
-        )
+            neat.read.yaml(COGNITE_CORE_ZIP, format="toolkit")
 
-        solution_yml_str = neat.to.yaml()
+            neat.verify()
 
-        neat.prepare.data_model.to_data_product(("sp_data_product", "DataProduct", "v1"))
+            neat.prepare.data_model.to_enterprise(("sp_enterprise", "Enterprise", "v1"), "Neat", move_connections=True)
 
-        data_product_yml_str = neat.to.yaml()
+            enterprise_yml_str = neat.to.yaml()
 
-        data_regression.check(
-            {
-                "enterprise": yaml.safe_load(enterprise_yml_str),
-                "solution": yaml.safe_load(solution_yml_str),
-                "data_product": yaml.safe_load(data_product_yml_str),
-            }
-        )
+            # Writing to CDF such that the mock client can look up the containers in the data product step.
+            neat.to.cdf.data_model()
+
+            neat.prepare.data_model.to_solution(("sp_solution", "Solution", "v1"), mode="write")
+
+            solution_yml_str = neat.to.yaml()
+
+            neat.prepare.data_model.to_data_product(("sp_data_product", "DataProduct", "v1"))
+
+            data_product_yml_str = neat.to.yaml()
+
+            data_regression.check(
+                {
+                    "enterprise": yaml.safe_load(enterprise_yml_str),
+                    "solution": yaml.safe_load(solution_yml_str),
+                    "data_product": yaml.safe_load(data_product_yml_str),
+                }
+            )
+
+
+def as_container_read(container: ContainerApply) -> Container:
+    return Container.load(
+        {
+            **container.dump(),
+            "isGlobal": True,
+            "lastUpdatedTime": 1,
+            "createdTime": 0,
+        }
+    )
