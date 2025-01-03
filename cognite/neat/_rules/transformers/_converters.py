@@ -415,15 +415,14 @@ class ToEnterpriseModel(ToExtensionModel):
         # for each view
         enterprise_views, enterprise_containers, enterprise_properties = self._create_new_views(enterprise_model)
 
-        # We keep the reference views, while adding new enterprise views
+        # We keep the reference views, and adding new enterprise views...
         enterprise_model.views.extend(enterprise_views)
 
-        # Move connections from reference model to new enterprise model
         if self.move_connections:
-            enterprise_connections = self._move_connections(enterprise_model)
-            enterprise_properties.extend(enterprise_connections)
+            # Move connections from reference model to new enterprise model
+            enterprise_properties.extend(self._move_connections(enterprise_model))
 
-        # However, we do not want to keep the reference containers and properties
+        # ... however, we do not want to keep the reference containers and properties
         enterprise_model.containers = enterprise_containers
         enterprise_model.properties = enterprise_properties
 
