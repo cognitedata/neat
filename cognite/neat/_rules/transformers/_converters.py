@@ -467,10 +467,12 @@ class ToSolutionModel(ToExtensionModel):
         new_model_id: DataModelIdentifier,
         org_name: str = "My",
         mode: Literal["read", "write"] = "read",
-        dummy_property: str = "GUID",
+        dummy_property: str | None = "GUID",
+        remove_views_in_other_space: bool = True,
     ):
-        super().__init__(new_model_id, org_name, dummy_property)
+        super().__init__(new_model_id, org_name, dummy_property if mode == "write" else None)
         self.mode = mode
+        self.remove_views_in_other_space = remove_views_in_other_space
 
     def transform(self, rules: DMSRules) -> DMSRules:
         reference_model = rules
@@ -492,41 +494,43 @@ class ToSolutionModel(ToExtensionModel):
     def _has_views_in_multiple_space(rules: DMSRules) -> bool:
         return any(view.view.space != rules.metadata.space for view in rules.views)
 
-    def _to_solution(self, reference_rules: DMSRules, remove_views_in_other_space: bool = True) -> DMSRules:
+    def _to_solution(self, reference_rules: DMSRules) -> DMSRules:
         """For creation of solution data model / rules specifically for mapping over existing containers."""
 
-        dump = reference_rules.dump()
+        dump = reference_rules.dump(entities_exclude_defaults=True)
 
         # Prepare new model metadata prior validation
+        # Since we dropped the defaults, all entities will update the space and version
+        # to the new model space and version
         dump["metadata"]["name"] = f"{self.org_name} {self.type_} data model"
         dump["metadata"]["space"] = self.new_model_id.space
         dump["metadata"]["external_id"] = self.new_model_id.external_id
         dump["metadata"]["version"] = self.new_model_id.version
 
-        # Set implement to NONE for all views
-        for view in dump["views"]:
-            view["implements"] = None
-
-        if remove_views_in_other_space and self._has_views_in_multiple_space(reference_rules):
-            views_to_remove = []
-            for view in dump["views"]:
-                if ":" in view["view"]:
-                    views_to_remove.append(view)
-
-            dump["views"] = remove_list_elements(dump["views"], views_to_remove)
-
         solution_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
 
-        # Dropping containers coming from reference model
-        solution_model.containers = None
-
-        # We want to map properties to existing containers allowing extension
+        # This is not desirable for the containers, so we manually fix that here.
+        # It is easier to change the space for all entities and then revert the containers, than
+        # to change the space for all entities except the containers.
         for prop in solution_model.properties:
             if prop.container and prop.container.space == self.new_model_id.space:
+                # If the container is in the new model space, we want to map it to the reference model space
+                # This is reverting the .dump() -> .load() above.
                 prop.container = ContainerEntity(
                     space=reference_rules.metadata.space,
                     externalId=prop.container.suffix,
                 )
+
+        for view in solution_model.views:
+            view.implements = None
+
+        if self.remove_views_in_other_space and self._has_views_in_multiple_space(reference_rules):
+            solution_model.views = SheetList[DMSView](
+                [view for view in solution_model.views if view.view.space == solution_model.metadata.space]
+            )
+
+        # Dropping containers coming from reference model
+        solution_model.containers = None
 
         # If reference model on which we are mapping one of Cognite Data Models
         # since we want to affix these with the organization name
@@ -540,55 +544,13 @@ class ToSolutionModel(ToExtensionModel):
                 view.view = self._remove_cognite_affix(view.view)
 
         if self.mode == "write":
-            _, new_containers, new_properties = self._get_new_components(solution_model)
+            _, new_containers, new_properties = self._create_new_views(solution_model)
             # Here we add ONLY dummy properties of the solution model and
             # corresponding solution model space containers to hold them
             solution_model.containers = new_containers
             solution_model.properties.extend(new_properties)
 
         return solution_model
-
-    def _get_new_components(
-        self, rules: DMSRules
-    ) -> tuple[SheetList[DMSView], SheetList[DMSContainer], SheetList[DMSProperty]]:
-        new_views = SheetList[DMSView]()
-        new_containers = SheetList[DMSContainer]()
-        new_properties = SheetList[DMSProperty]()
-
-        for definition in rules.views:
-            view_entity = self._remove_cognite_affix(definition.view)
-
-            view_entity.version = cast(str, self.new_model_id.version)
-            view_entity.prefix = self.new_model_id.space
-            container_entity = ContainerEntity(space=view_entity.prefix, externalId=view_entity.external_id)
-
-            view = DMSView(
-                view=view_entity,
-                implements=[definition.view],
-                in_model=True,
-                name=definition.name,
-            )
-
-            container = DMSContainer(
-                container=container_entity,
-            )
-
-            property_ = DMSProperty(
-                view=view_entity,
-                view_property=f"{to_camel(view_entity.suffix)}{self.dummy_property}",
-                value_type=String(),
-                nullable=True,
-                immutable=False,
-                is_list=False,
-                container=container_entity,
-                container_property=f"{to_camel(view_entity.suffix)}{self.dummy_property}",
-            )
-
-            new_properties.append(property_)
-            new_views.append(view)
-            new_containers.append(container)
-
-        return new_views, new_containers, new_properties
 
 
 class ToDataProductModel(ToExtensionModel):
