@@ -10,7 +10,7 @@ from ._converters import (
     SetIDDMSModel,
     ToCompliantEntities,
     ToDataProductModel,
-    ToEnterprise,
+    ToEnterpriseModel,
     ToExtension,
     ToSolution,
 )
@@ -32,7 +32,7 @@ __all__ = [
     "SetIDDMSModel",
     "ToCompliantEntities",
     "ToDataProductModel",
-    "ToEnterprise",
+    "ToEnterpriseModel",
     "ToExtension",
     "ToSolution",
     "VerifyAnyRules",
