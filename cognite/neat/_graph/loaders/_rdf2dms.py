@@ -19,6 +19,7 @@ from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 from rdflib import RDF, URIRef
 
 from cognite.neat._client import NeatClient
+from cognite.neat._constants import is_readonly_property
 from cognite.neat._graph._tracking import LogTracker, Tracker
 from cognite.neat._issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
@@ -303,6 +304,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if isinstance(prop, dm.EdgeConnection):
                 edge_by_property[prop_id] = prop_id, prop
             if isinstance(prop, dm.MappedProperty):
+                if is_readonly_property(prop.container, prop_id):
+                    continue
+
                 if isinstance(prop.type, dm.DirectRelation):
                     if prop.container == dm.ContainerId("cdf_cdm", "CogniteTimeSeries") and prop_id == "unit":
                         unit_properties.append(prop_id)

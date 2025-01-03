@@ -149,3 +149,7 @@ READONLY_PROPERTIES: Mapping[dm.ContainerId, frozenset[str]] = {
     ),
     dm.ContainerId("cdf_cdm", "CogniteFile"): frozenset({"isUploaded", "uploadedTime"}),
 }
+
+
+def is_readonly_property(container: dm.ContainerId, identifier: str) -> bool:
+    return container in READONLY_PROPERTIES and identifier in READONLY_PROPERTIES[container]
