@@ -24,7 +24,6 @@ from cognite.neat._issues.errors import (
     FileTypeUnexpectedError,
     NeatValueError,
     ResourceMissingIdentifierError,
-    ResourceNotFoundError,
     ResourceRetrievalError,
 )
 from cognite.neat._issues.warnings import (
@@ -422,14 +421,9 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                     (prop.container, prop.container_property_identifier)
                 )
                 if collection is None:
-                    # If the collection is not found, that means the model is referencing an enum in a container
-                    # outside the model. This needs to be fetched from CDF.
-                    raise ResourceNotFoundError(
-                        identifier=f"{prop.container}.{prop.container_property_identifier}",
-                        resource_type="container property",
-                        referred_by=f"{view_entity.as_id()}.{prop_id}",
-                        referred_type="enum",
-                        more="The enum is not found in the model, can you pass in a client to retrieve it?",
+                    # This should never happen
+                    raise ValueError(
+                        f"BUG in Neat: Enum for {prop.container}.{prop.container_property_identifier} not found."
                     )
 
                 return Enum(collection=ClassEntity(suffix=collection), unknownValue=container_prop.type.unknown_value)
