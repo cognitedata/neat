@@ -9,9 +9,10 @@ from tests import data
 
 
 class TestRead:
+    @pytest.mark.usefixtures("deterministic_uuid4")
     @pytest.mark.freeze_time("2024-11-22")
     def test_read_model_referencing_core(
-        self, deterministic_uuid4: None, cognite_client: CogniteClient, data_regression: DataRegressionFixture
+        self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
     ) -> None:
         neat = NeatSession(client=cognite_client)
         # The CogniteDescribable view is referenced in the REFERENCING_CORE model read below.
