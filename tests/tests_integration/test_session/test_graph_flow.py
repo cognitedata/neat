@@ -84,8 +84,18 @@ class TestExtractToLoadFlow:
 
         rules_str = neat.to.yaml(format="neat")
 
+        neat.prepare.data_model.to_data_product(("sp_data_product", "DataProduct", "v1"))
+
+        data_product_dict = yaml.safe_load(neat.to.yaml(format="neat"))
+
         rules_dict = yaml.safe_load(rules_str)
-        data_regression.check({"rules": rules_dict, "instances": sorted(instances, key=lambda x: x["externalId"])})
+        data_regression.check(
+            {
+                "rules": rules_dict,
+                "data_product": data_product_dict,
+                "instances": sorted(instances, key=lambda x: x["externalId"]),
+            }
+        )
 
     def test_dexpi_to_dms(
         self, deterministic_uuid4: None, cognite_client: CogniteClient, data_regression: DataRegressionFixture
