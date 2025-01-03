@@ -431,7 +431,6 @@ class DataModelPrepareAPI:
             ToDataProductModel(
                 new_model_id=data_model_id,
                 org_name=org_name,
-                type_="data_product",
                 include=include,
             ),
         ]

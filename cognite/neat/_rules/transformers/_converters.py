@@ -806,7 +806,120 @@ class ToSolutionModel(ToExtension):
         return f"Prepared data model {self.new_model_id} to be solution data model."
 
 
-class ToDataProductModel(ToExtension): ...
+class ToDataProductModel(ToEnterpriseModel):
+    type_: ClassVar[str] = "data_product"
+    def __init__(
+        self,
+        new_model_id: DataModelIdentifier,
+        org_name: str = "My",
+        include: Literal["same-space", "all"] = "same-space",
+    ):
+        self.new_model_id = DataModelId.load(new_model_id)
+        if not self.new_model_id.version:
+            raise NeatValueError("Version is required for the new model.")
+
+        self.org_name = org_name
+        self.include = include
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        # Copy to ensure immutability
+        reference_model = rules
+        reference_model_id = reference_model.metadata.as_data_model_id()
+        expanded = self._expand_properties(reference_model.model_copy(deep=True))
+        if self.include == "same-space":
+            expanded.properties = SheetList[DMSProperty](
+                [prop for prop in expanded.properties if prop.view.space == expanded.metadata.space]
+            )
+            expanded.views = SheetList[DMSView](
+                [view for view in expanded.views if view.view.space == expanded.metadata.space]
+            )
+        return self._to_solution(expanded, remove_views_in_other_space=False)
+
+    def _has_views_in_multiple_space(self, rules: DMSRules) -> bool:
+        return any(view.view.space != rules.metadata.space for view in rules.views)
+
+    def _to_solution(self, reference_rules: DMSRules, remove_views_in_other_space: bool = True) -> DMSRules:
+        """For creation of solution data model / rules specifically for mapping over existing containers."""
+
+        dump = reference_rules.dump()
+
+        # Prepare new model metadata prior validation
+        dump["metadata"]["name"] = f"{self.org_name} {self.type_} data model"
+        dump["metadata"]["space"] = self.new_model_id.space
+        dump["metadata"]["external_id"] = self.new_model_id.external_id
+        dump["metadata"]["version"] = self.new_model_id.version
+
+        # Set implement to NONE for all views
+        for view in dump["views"]:
+            view["implements"] = None
+
+        if remove_views_in_other_space and self._has_views_in_multiple_space(reference_rules):
+            views_to_remove = []
+            for view in dump["views"]:
+                if ":" in view["view"]:
+                    views_to_remove.append(view)
+
+            dump["views"] = remove_list_elements(dump["views"], views_to_remove)
+
+        solution_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
+
+        # Dropping containers coming from reference model
+        solution_model.containers = None
+
+        # We want to map properties to existing containers allowing extension
+        for prop in solution_model.properties:
+            if prop.container and prop.container.space == self.new_model_id.space:
+                prop.container = ContainerEntity(
+                    space=reference_rules.metadata.space,
+                    externalId=prop.container.suffix,
+                )
+
+        # If reference model on which we are mapping one of Cognite Data Models
+        # since we want to affix these with the organization name
+        if reference_rules.metadata.as_data_model_id() in COGNITE_MODELS:
+            # Remove Cognite affix in view external_id / suffix.
+            for prop in solution_model.properties:
+                prop.view = self._remove_cognite_affix(prop.view)
+                if isinstance(prop.value_type, ViewEntity):
+                    prop.value_type = self._remove_cognite_affix(prop.value_type)
+            for view in solution_model.views:
+                view.view = self._remove_cognite_affix(view.view)
+
+        if self.mode == "write":
+            _, new_containers, new_properties = self._get_new_components(solution_model)
+
+            # Here we add ONLY dummy properties of the solution model and
+            # corresponding solution model space containers to hold them
+            solution_model.containers = new_containers
+            solution_model.properties.extend(new_properties)
+
+        return solution_model
+
+    @staticmethod
+    def _expand_properties(rules: DMSRules) -> DMSRules:
+        probe = DMSAnalysis(rules)
+        ancestor_properties_by_view = probe.classes_with_properties(
+            consider_inheritance=True, allow_different_namespace=True
+        )
+        property_ids_by_view = {
+            view: {prop.view_property for prop in properties}
+            for view, properties in probe.classes_with_properties(consider_inheritance=False).items()
+        }
+        for view, property_ids in property_ids_by_view.items():
+            ancestor_properties = ancestor_properties_by_view.get(view, [])
+            for prop in ancestor_properties:
+                if isinstance(prop.connection, ReverseConnectionEntity):
+                    # If you try to add a reverse direct relation of a parent, it will fail as the ValueType of the
+                    # original property will point to the parent view, and not the child.
+                    continue
+                if prop.view_property not in property_ids:
+                    rules.properties.append(prop)
+                    property_ids.add(prop.view_property)
+        return rules
+
+    @property
+    def description(self) -> str:
+        return f"Prepared data model {self.new_model_id} to be data product model."
 
 
 class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
