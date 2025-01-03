@@ -121,6 +121,8 @@ class DMSFilter(WrappedEntity):
             return HasDataFilter(
                 inner=[
                     ContainerEntity(space=entry["space"], externalId=entry["externalId"])
+                    if entry["type"] == "container"
+                    else ViewEntity(space=entry["space"], externalId=entry["externalId"], version=entry["version"])
                     for entry in body
                     if isinstance(entry, dict) and "space" in entry and "externalId" in entry
                 ]
