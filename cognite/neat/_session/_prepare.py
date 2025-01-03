@@ -28,7 +28,7 @@ from cognite.neat._rules.transformers import (
     ToCompliantEntities,
     ToDataProductModel,
     ToEnterpriseModel,
-    ToSolution,
+    ToSolutionModel,
 )
 
 from ._state import SessionState
@@ -395,10 +395,9 @@ class DataModelPrepareAPI:
 
         """
         return self._state.rule_transform(
-            ToSolution(
+            ToSolutionModel(
                 new_model_id=data_model_id,
                 org_name=org_name,
-                type_="solution",
                 mode=mode,
                 dummy_property=dummy_property,
             )
