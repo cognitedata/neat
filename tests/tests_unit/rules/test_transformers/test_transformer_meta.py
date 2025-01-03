@@ -19,7 +19,7 @@ from cognite.neat._rules.transformers import (
 TRANSFORMATION_CLASSES = list(RulesTransformer.__subclasses__())
 
 
-def instansiated_transformers_cls() -> Iterable[RulesTransformer]:
+def instantiated_transformers_cls() -> Iterable[RulesTransformer]:
     for transformation_cls in TRANSFORMATION_CLASSES:
         if ABC in transformation_cls.__bases__:
             continue
@@ -50,7 +50,7 @@ class TestRuleTransformer:
         assert not invalid_type_hints, f"Invalid type hints: {invalid_type_hints}"
 
     @pytest.mark.parametrize(
-        "transformer", [pytest.param(v, id=type(v).__name__) for v in instansiated_transformers_cls()]
+        "transformer", [pytest.param(v, id=type(v).__name__) for v in instantiated_transformers_cls()]
     )
     def test_has_description(self, transformer: RulesTransformer) -> None:
         assert transformer.description != "MISSING DESCRIPTION", f"Missing description for {transformer}"
