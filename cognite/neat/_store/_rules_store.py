@@ -110,8 +110,7 @@ class NeatRulesStore:
 
         agent = exporter.agent
         start = datetime.now(timezone.utc)
-        issue_list = IssueList()
-        with catch_issues(issue_list) as _:
+        with catch_issues() as issue_list:
             # Validate the type of the result
             result = exporter.export(source_entity.result)  # type: ignore[arg-type]
         end = datetime.now(timezone.utc)
@@ -151,8 +150,7 @@ class NeatRulesStore:
         target_id = DEFAULT_NAMESPACE[path.name]
         agent = exporter.agent
         start = datetime.now(timezone.utc)
-        issue_list = IssueList()
-        with catch_issues(issue_list) as _:
+        with catch_issues() as issue_list:
             exporter.export_to_file(source_entity.result, path)
         end = datetime.now(timezone.utc)
 
@@ -191,9 +189,8 @@ class NeatRulesStore:
         agent = exporter.agent
         start = datetime.now(timezone.utc)
         target_id = DEFAULT_NAMESPACE["upload-result"]
-        issue_list = IssueList()
         result: UploadResultList | None = None
-        with catch_issues(issue_list) as _:
+        with catch_issues() as issue_list:
             result = exporter.export_to_cdf(source_entity.result, client, dry_run)
         end = datetime.now(timezone.utc)
 
@@ -263,9 +260,8 @@ class NeatRulesStore:
         self, action: Callable[[], Rules | None], agent: Agent, source_entity: Entity, description: str
     ) -> tuple[Any, IssueList]:
         start = datetime.now(timezone.utc)
-        issue_list = IssueList()
         result: Rules | None = None
-        with catch_issues(issue_list) as _:
+        with catch_issues() as issue_list:
             result = action()
         end = datetime.now(timezone.utc)
 

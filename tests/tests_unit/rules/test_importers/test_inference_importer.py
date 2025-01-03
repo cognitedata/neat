@@ -2,7 +2,7 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat._graph.examples import nordic44_knowledge_graph
 from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
-from cognite.neat._issues import IssueList, catch_issues
+from cognite.neat._issues import catch_issues
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.importers import InferenceImporter
 from cognite.neat._rules.models.data_types import DataType, Integer, Json, Long
@@ -19,8 +19,7 @@ def test_rdf_inference():
     extractor = RdfFileExtractor(nordic44_knowledge_graph, base_uri="http://nordic44.com/")
     store.write(extractor)
 
-    issues = IssueList()
-    with catch_issues(issues):
+    with catch_issues():
         importer = InferenceImporter.from_graph_store(store, ("inferred", "nordic44_data_model", "rdf"))
         rules = VerifyAnyRules().transform(importer.to_rules())
 
@@ -66,8 +65,7 @@ def test_rdf_inference_with_removal_of_unknown_type():
     store.graph.add((EX.substation1, EX.name, Literal("Substation 1")))
     store.graph.add((EX.substation3, EX.name, Literal("Substation 3")))
 
-    issues = IssueList()
-    with catch_issues(issues):
+    with catch_issues():
         importer = InferenceImporter.from_graph_store(store, ("inferred", "drop_unknown", "rdf"))
         rules = VerifyAnyRules().transform(importer.to_rules())
 
@@ -80,8 +78,7 @@ def test_rdf_inference_with_none_existing_node():
     extractor = RdfFileExtractor(DATA_FOLDER / "low-quality-graph.ttl")
     store.write(extractor)
 
-    issues = IssueList()
-    with catch_issues(issues):
+    with catch_issues():
         importer = InferenceImporter.from_graph_store(store, non_existing_node_type=UnknownEntity())
         rules = VerifyAnyRules().transform(importer.to_rules())
 
@@ -100,8 +97,7 @@ def test_json_value_type_inference():
 
     store.write(extractor)
 
-    issues = IssueList()
-    with catch_issues(issues):
+    with catch_issues():
         importer = InferenceImporter.from_graph_store(store)
         rules = VerifyAnyRules().transform(importer.to_rules())
 
@@ -118,8 +114,7 @@ def test_integer_as_long():
     for triple in car.TRIPLES:
         store.graph.add(triple)
 
-    issues = IssueList()
-    with catch_issues(issues):
+    with catch_issues():
         importer = InferenceImporter.from_graph_store(store)
         rules = VerifyAnyRules().transform(importer.to_rules())
 

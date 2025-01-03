@@ -138,9 +138,8 @@ class TestExcelImporter:
         filepath: Path,
         rule_type: type[DMSRules] | type[InformationRules],
     ):
-        issues = IssueList()
         rules = None
-        with catch_issues(issues):
+        with catch_issues():
             importer = ExcelImporter(filepath)
             # Cannot validate as we have no client
             rules = VerifyAnyRules(validate=False).transform(importer.to_rules())
@@ -150,8 +149,7 @@ class TestExcelImporter:
     @pytest.mark.parametrize("filepath, expected_issues", invalid_rules_filepaths())
     def test_import_invalid_rules(self, filepath: Path, expected_issues: IssueList):
         importer = ExcelImporter(filepath)
-        issues = IssueList()
-        with catch_issues(issues):
+        with catch_issues() as issues:
             read_rules = importer.to_rules()
             _ = VerifyAnyRules().transform(read_rules)
 

@@ -1,7 +1,7 @@
 from abc import ABC
 
 from cognite.neat._client import NeatClient
-from cognite.neat._issues import IssueList, MultiValueError, NeatError, NeatWarning, catch_issues
+from cognite.neat._issues import MultiValueError, catch_issues
 from cognite.neat._issues.errors import NeatTypeError, NeatValueError
 from cognite.neat._rules._shared import (
     ReadRules,
@@ -39,8 +39,7 @@ class VerificationTransformer(RulesTransformer[T_ReadInputRules, T_VerifiedRules
         verified_rules: T_VerifiedRules | None = None
         # We need to catch issues as we use the error args to provide extra context for the errors/warnings
         # For example, which row in the spreadsheet the error occurred o
-        issues = IssueList()
-        with catch_issues(issues, NeatError, NeatWarning, error_args) as _:
+        with catch_issues(error_args=error_args) as issues:
             rules_cls = self._get_rules_cls(rules)
             dumped = in_.dump()
             verified_rules = rules_cls.model_validate(dumped)  # type: ignore[assignment]

@@ -14,7 +14,7 @@ from cognite.neat._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat._issues import IssueList, NeatError, catch_issues
+from cognite.neat._issues import NeatError, catch_issues
 from cognite.neat._issues.errors import PropertyDefinitionDuplicatedError
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers import DMSImporter
@@ -1452,8 +1452,7 @@ class TestDMSRules:
                 DMSInputContainer("CogniteVisualizable"),
             ],
         )
-        issue_list = IssueList()
-        with catch_issues(issue_list):
+        with catch_issues() as issue_list:
             VerifyDMSRules().transform(ReadRules(sub_core, {}))
 
         assert not issue_list
@@ -1492,8 +1491,7 @@ class TestDMSRules:
                 DMSInputContainer("CogniteVisualizable"),
             ],
         )
-        issues = IssueList()
-        with catch_issues(issues):
+        with catch_issues() as issues:
             _ = VerifyDMSRules().transform(ReadRules(sub_core, {}))
 
         assert not issues
@@ -1533,8 +1531,7 @@ class TestDMSRules:
                 DMSInputContainer("CogniteVisualizable"),
             ],
         )
-        issues = IssueList()
-        with catch_issues(issues):
+        with catch_issues() as issues:
             rules = VerifyDMSRules().transform(ReadRules(extended_core, {}))
 
         assert not issues

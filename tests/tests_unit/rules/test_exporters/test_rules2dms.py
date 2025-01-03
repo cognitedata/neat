@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat._issues import IssueList, catch_issues
+from cognite.neat._issues import catch_issues
 from cognite.neat._rules import importers
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.models import InformationRules
@@ -64,8 +64,7 @@ class TestImportExportDMS:
         ],
     )
     def test_import_excel_export_dms(self, filepath: Path) -> None:
-        issues = IssueList()
-        with catch_issues(issues) as future:
+        with catch_issues() as issues:
             importer = importers.ExcelImporter(filepath)
             rules = VerifyAnyRules().transform(importer.to_rules())
             if isinstance(rules, DMSRules):
@@ -75,7 +74,7 @@ class TestImportExportDMS:
             else:
                 raise ValueError(f"Unexpected rules type: {type(rules)}")
 
-        assert future.result == "success", f"Import failed with issues: {issues}"
+        assert not issues.has_errors, f"Import failed with issues: {issues}"
 
         exported = DMSExporter().export(dms_rules)
 
