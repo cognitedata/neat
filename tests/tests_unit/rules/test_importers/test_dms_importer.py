@@ -107,6 +107,14 @@ class TestDMSImporter:
 
         assert dms_recreated.views.dump() == SCHEMA_INWARDS_EDGE_WITH_PROPERTIES.views.dump()
 
+    def test_import_schema_with_referenced_enum(self) -> None:
+        importer = DMSImporter(SCHEMA_WITH_REFERENCED_ENUM)
+
+        with catch_issues() as issues:
+            read_rules = importer.to_rules()
+
+        assert len(issues) == 1
+
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
     data_model=dm.DataModelApply(
@@ -209,3 +217,31 @@ SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
         ]
     ),
 )
+
+SCHEMA_WITH_REFERENCED_ENUM = DMSSchema(
+    data_model=dm.DataModelApply(
+        space="neat",
+        external_id="data_model",
+        version="v1",
+        views=[
+            dm.ViewId("neat", "OneView", "v1"),
+        ],
+    ),
+    spaces=SpaceApplyDict([dm.SpaceApply(space="neat")]),
+    views=ViewApplyDict(
+        [
+            dm.ViewApply(
+                space="neat",
+                external_id="OneView",
+                version="1",
+                properties={
+                    "type": dm.MappedPropertyApply(
+                        container=dm.ContainerId("cdf_cdm", "CogniteTimeSeries"),
+                        container_property_identifier="type",
+                    )
+                },
+            )
+        ]
+    ),
+)
+
