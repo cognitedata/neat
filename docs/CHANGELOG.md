@@ -33,6 +33,9 @@ Changes are grouped as follows:
 - The `neat.prepare.data_model.to_data_product(include="same-space")` method no longer produces data models that uses
   values types that are not part of the data model. This ensures that the data model is self-contained. This is solved
   by dropping all properties that have a value type that is not part of the data model.
+- The `neat.to.cdf.instances(...)` now correctly ignores read-only properties when creating instances in CDF.
+- The `neat.mapping.data_model.classic_to_core(...)` now automatically includes the `path`and `root` properties
+  when mapping to `CogniteAsset`
 
 ## [0.104.0] - 20-12-**2024**
 ### Improved
