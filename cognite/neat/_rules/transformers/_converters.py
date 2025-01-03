@@ -411,22 +411,21 @@ class ToEnterpriseModel(ToExtensionModel):
         enterprise_model.metadata.external_id = self.new_model_id.external_id
         enterprise_model.metadata.version = cast(str, self.new_model_id.version)
 
-        # Here we are creating enterprise views with a single container container a dummy property
+        # Here we are creating enterprise views with a single container with a dummy property
         # for each view
         enterprise_views, enterprise_containers, enterprise_properties = self._create_new_views(enterprise_model)
 
-        # And we are adding them to the enterprise model
-        # extending reference views with new ones
+        # We keep the reference views, while adding new enterprise views
         enterprise_model.views.extend(enterprise_views)
 
-        # while overwriting containers and properties with new ones
-        enterprise_model.containers = enterprise_containers
-        enterprise_model.properties = enterprise_properties
-
-        # Move connections from reference model to enterprise model
+        # Move connections from reference model to new enterprise model
         if self.move_connections:
             enterprise_connections = self._move_connections(enterprise_model)
-            enterprise_model.properties.extend(enterprise_connections)
+            enterprise_properties.extend(enterprise_connections)
+
+        # However, we do not want to keep the reference containers and properties
+        enterprise_model.containers = enterprise_containers
+        enterprise_model.properties = enterprise_properties
 
         return enterprise_model
 
