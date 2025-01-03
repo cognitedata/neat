@@ -20,11 +20,13 @@ from cognite.neat._graph.transformers import (
 )
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._issues import IssueList
+from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
     AddClassImplements,
     IncludeReferenced,
     PrefixEntities,
     ReduceCogniteModel,
+    RulesTransformer,
     ToCompliantEntities,
     ToDataProductModel,
     ToEnterpriseModel,
@@ -416,24 +418,32 @@ class DataModelPrepareAPI:
 
         Args:
             data_model_id: The data product data model id that is being created.
-            org_name: Organization name to use for the views in the new data model.
+            org_name: Organization name used as prefix if the model is building on top of a Cognite Data Model.
             include: The views to include in the data product data model. Can be either "same-space" or "all".
-                If you set same-space, only the views in the same space as the data model will be included.
+                If you set same-space, only the properties of the views in the same space as the data model
+                will be included.
         """
-        if self._client is None:
+
+        view_ids, container_ids = DMSValidation(
+            self._state.rule_store.last_verified_dms_rules
+        ).imported_views_and_containers_ids()
+        transformers: list[RulesTransformer] = []
+        if (view_ids or container_ids) and self._client is None:
             raise NeatSessionError(
                 "No client provided. You are referencing unknown views and containers in your data model, "
                 "NEAT needs a client to lookup the definitions. "
                 "Please set the client in the session, NeatSession(client=client)."
             )
-        transformers = [
-            IncludeReferenced(self._client, include_properties=True),
+        elif (view_ids or container_ids) and self._client:
+            transformers.append(IncludeReferenced(self._client, include_properties=True))
+
+        transformers.append(
             ToDataProductModel(
                 new_model_id=data_model_id,
                 org_name=org_name,
                 include=include,
-            ),
-        ]
+            )
+        )
 
         self._state.rule_transform(*transformers)
 

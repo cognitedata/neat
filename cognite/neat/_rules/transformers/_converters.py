@@ -541,6 +541,8 @@ class ToSolutionModel(ToExtensionModel):
                     prop.value_type = self._remove_cognite_affix(prop.value_type)
             for view in solution_model.views:
                 view.view = self._remove_cognite_affix(view.view)
+                if view.implements:
+                    view.implements = [self._remove_cognite_affix(implemented) for implemented in view.implements]
 
         if self.mode == "write":
             _, new_containers, new_properties = self._create_new_views(solution_model)
@@ -548,6 +550,10 @@ class ToSolutionModel(ToExtensionModel):
             # corresponding solution model space containers to hold them
             solution_model.containers = new_containers
             solution_model.properties.extend(new_properties)
+        elif self.mode == "read":
+            # Inherit view filter from original model to ensure the same instances are returned.
+            for _ in solution_model.views:
+                raise NotImplementedError
 
         return solution_model
 
@@ -565,9 +571,8 @@ class ToDataProductModel(ToSolutionModel):
         self.include = include
 
     def transform(self, rules: DMSRules) -> DMSRules:
-        reference_model = rules
         # Copy to ensure immutability
-        expanded = self._expand_properties(reference_model.model_copy(deep=True))
+        expanded = self._expand_properties(rules.model_copy(deep=True))
         if self.include == "same-space":
             expanded.properties = SheetList[DMSProperty](
                 [prop for prop in expanded.properties if prop.view.space == expanded.metadata.space]
@@ -690,7 +695,7 @@ class IncludeReferenced(RulesTransformer[DMSRules, DMSRules]):
 
     def transform(self, rules: DMSRules) -> DMSRules:
         dms_rules = rules
-        view_ids, container_ids = DMSValidation(dms_rules, self._client).imported_views_and_containers_ids()
+        view_ids, container_ids = DMSValidation(dms_rules).imported_views_and_containers_ids()
         if not (view_ids or container_ids):
             warnings.warn(
                 NeatValueWarning(

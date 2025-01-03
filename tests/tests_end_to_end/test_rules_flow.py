@@ -70,13 +70,12 @@ class TestImportersToYAMLExporter:
 
         neat.prepare.data_model.to_solution(
             ("sp_solution", "Solution", "v1"),
-            "TeamNeat",
             mode="write",
         )
 
         solution_yml_str = neat.to.yaml()
 
-        neat.prepare.data_model.to_data_product(("sp_data_product", "DataProduct", "v1"), "TeamNeat2")
+        neat.prepare.data_model.to_data_product(("sp_data_product", "DataProduct", "v1"))
 
         data_product_yml_str = neat.to.yaml()
 
