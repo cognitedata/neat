@@ -1,4 +1,4 @@
-from collections import Counter, defaultdict
+from collections import defaultdict
 from collections.abc import Collection, Iterable, Sequence
 from datetime import datetime
 from pathlib import Path
@@ -211,7 +211,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     def _lookup_referenced_containers(
         cls, schema: DMSSchema, issue_list: IssueList, client: NeatClient | None = None
     ) -> Iterable[dm.ContainerApply]:
-        ref_containers = schema.referenced_container()
+        ref_containers = schema.externally_referenced_containers()
         if not ref_containers:
             return []
         elif client is None:
@@ -288,21 +288,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             ],
             nodes=[DMSInputNode.from_node_type(node_type) for node_type in schema.node_types.values()],
             enum=[enum for enum_list in enum_by_container_property.values() for enum in enum_list] or None,
-        )
-
-    @classmethod
-    def _create_default_metadata(
-        cls, views: Sequence[dm.View | dm.ViewApply], is_ref: bool = False
-    ) -> DMSInputMetadata:
-        now = datetime.now().replace(microsecond=0)
-        space = Counter(view.space for view in views).most_common(1)[0][0]
-        return DMSInputMetadata(
-            space=space,
-            external_id="Unknown",
-            version="0.1.0",
-            creator="Unknown",
-            created=now,
-            updated=now,
         )
 
     def _create_dms_property(

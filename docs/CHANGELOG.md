@@ -22,6 +22,7 @@ Changes are grouped as follows:
 ### Fixed
 - `neat.read.yaml(...)` no longer raises a `ValueError` if a view is referencing an enum property in a container
   that is not part of the model.
+- `neat.read.yaml('....zip', format='toolkit')` now correctly puts containers into a subfolder in the zip file.
 
 ### Improved
 - `neat.read.yaml(..., format="toolkit")` no longer removes direct relations sources that points to views that are not
