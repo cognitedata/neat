@@ -405,7 +405,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             space=self.instance_space,
             external_id=identifier,
             type=(dm.DirectRelationReference(view_id.space, view_id.external_id) if type_ is not None else None),
-            sources=[dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump().items()))],
+            sources=[
+                dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump(exclude_unset=True).items()))
+            ],
         )
 
     def _create_edges(
