@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass, field
 from graphlib import TopologicalSorter
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar, cast, overload
 
 from cognite.client.data_classes import filters
 from cognite.client.data_classes._base import (
@@ -124,23 +124,37 @@ class ResourceLoader(
 
         return created
 
-    def retrieve(self, ids: SequenceNotStr[T_ID]) -> T_WritableCogniteResourceList:
+    @overload
+    def retrieve(
+        self, ids: SequenceNotStr[T_ID], format: Literal["read"] = "read"
+    ) -> T_WritableCogniteResourceList: ...
+
+    @overload
+    def retrieve(self, ids: SequenceNotStr[T_ID], format: Literal["write"] = "write") -> T_CogniteResourceList: ...
+
+    def retrieve(
+        self, ids: SequenceNotStr[T_ID], format: Literal["read", "write"] = "read"
+    ) -> T_WritableCogniteResourceList | T_CogniteResourceList:
         if not self.cache:
             # We now that SequenceNotStr = Sequence
-            return self._fallback_one_by_one(self._retrieve, ids)  # type: ignore[arg-type]
-        exception: MultiCogniteAPIError[T_ID, T_WritableCogniteResourceList] | None = None
-        missing_ids = [id for id in ids if id not in self._items_by_id.keys()]
-        if missing_ids:
-            try:
-                retrieved = self._retrieve(missing_ids)
-            except MultiCogniteAPIError as e:
-                retrieved = e.success
-                exception = e
-            self._items_by_id.update({self.get_id(item): item for item in retrieved})
-        if exception is not None:
-            raise exception
-        # We need to check the cache again, in case we didn't retrieve all the items.
-        return self._create_list([self._items_by_id[id] for id in ids if id in self._items_by_id])
+            output = self._fallback_one_by_one(self._retrieve, ids)  # type: ignore[arg-type]
+        else:
+            exception: MultiCogniteAPIError[T_ID, T_WritableCogniteResourceList] | None = None
+            missing_ids = [id for id in ids if id not in self._items_by_id.keys()]
+            if missing_ids:
+                try:
+                    retrieved = self._retrieve(missing_ids)
+                except MultiCogniteAPIError as e:
+                    retrieved = e.success
+                    exception = e
+                self._items_by_id.update({self.get_id(item): item for item in retrieved})
+            if exception is not None:
+                raise exception
+            # We need to check the cache again, in case we didn't retrieve all the items.
+            output = self._create_list([self._items_by_id[id] for id in ids if id in self._items_by_id])
+        if format == "write":
+            return cast(T_CogniteResourceList, output.as_write())
+        return output
 
     def update(
         self, items: Sequence[T_WriteClass], force: bool = False, drop_data: bool = False
@@ -404,11 +418,30 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
     def _create(self, items: Sequence[ContainerApply]) -> ContainerList:
         return self._client.data_modeling.containers.apply(items)
 
-    def retrieve(self, ids: SequenceNotStr[ContainerId], include_connected: bool = False) -> ContainerList:
+    @overload
+    def retrieve(
+        self, ids: SequenceNotStr[ContainerId], format: Literal["read"] = "read", include_connected: bool = False
+    ) -> ContainerList: ...
+
+    @overload
+    def retrieve(
+        self, ids: SequenceNotStr[ContainerId], format: Literal["write"] = "write", include_connected: bool = False
+    ) -> ContainerApplyList: ...
+
+    def retrieve(
+        self,
+        ids: SequenceNotStr[ContainerId],
+        format: Literal["read", "write"] = "read",
+        include_connected: bool = False,
+    ) -> ContainerList | ContainerApplyList:
         if not include_connected:
             return super().retrieve(ids)
+
         # Retrieve recursively updates the cache.
-        return self._retrieve_recursive(ids)
+        output = self._retrieve_recursive(ids)
+        if format == "write":
+            return output.as_write()
+        return output
 
     def _retrieve(self, ids: SequenceNotStr[ContainerId]) -> ContainerList:
         return self._client.data_modeling.containers.retrieve(cast(Sequence, ids))
@@ -531,13 +564,40 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
     def _create(self, items: Sequence[ViewApply]) -> ViewList:
         return self._client.data_modeling.views.apply(items)
 
+    @overload
     def retrieve(
-        self, ids: SequenceNotStr[ViewId], include_connected: bool = False, include_ancestor: bool = False
-    ) -> ViewList:
+        self,
+        ids: SequenceNotStr[ViewId],
+        format: Literal["read"] = "read",
+        include_connected: bool = False,
+        include_ancestor: bool = False,
+    ) -> ViewList: ...
+
+    @overload
+    def retrieve(
+        self,
+        ids: SequenceNotStr[ViewId],
+        format: Literal["write"] = "write",
+        include_connected: bool = False,
+        include_ancestor: bool = False,
+    ) -> ViewApplyList: ...
+
+    def retrieve(
+        self,
+        ids: SequenceNotStr[ViewId],
+        format: Literal["read", "write"] = "read",
+        include_connected: bool = False,
+        include_ancestor: bool = False,
+    ) -> ViewList | ViewApplyList:
         if not include_connected and not include_ancestor:
-            return super().retrieve(ids)
-        # Retrieve recursively updates the cache.
-        return self._retrieve_recursive(ids, include_connected, include_ancestor)
+            # Default .as_write() method does not work for views as they include parent properties.
+            output = super().retrieve(ids)
+        else:
+            # Retrieve recursively updates the cache.
+            output = self._retrieve_recursive(ids, include_connected, include_ancestor)
+        if format == "write":
+            return ViewApplyList([self.as_write(view) for view in output])
+        return output
 
     def _retrieve(self, ids: SequenceNotStr[ViewId]) -> ViewList:
         return self._client.data_modeling.views.retrieve(cast(Sequence, ids))

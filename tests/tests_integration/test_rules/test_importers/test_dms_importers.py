@@ -50,7 +50,7 @@ class TestDMSImporter:
     ):
         dms_importer = DMSImporter.from_data_model_id(cognite_client, olav_data_model_id, alice_data_model_id)
 
-        assert dms_importer.root_schema.referenced_spaces(include_indirect_references=False) == {
+        assert dms_importer.schema.referenced_spaces(include_indirect_references=False) == {
             olav_data_model_id.space
         }, "The direct reference should be the data model space."
 

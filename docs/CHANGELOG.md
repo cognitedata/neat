@@ -19,6 +19,14 @@ Changes are grouped as follows:
 ### Added
 - All `neat.read` methods now supports reading from a URL.
 
+### Fixed
+- `neat.read.yaml(...)` no longer raises a `ValueError` if a view is referencing an enum property in a container
+  that is not part of the model.
+
+### Improved
+- `neat.read.yaml(..., format="toolkit")` no longer removes direct relations sources that points to views that are not
+  part of the model.
+
 ## [0.104.0] - 20-12-**2024**
 ### Improved
 - When using a `NeatSession` object in a notebook. The return issues now has context for what actions they

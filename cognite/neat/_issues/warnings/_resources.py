@@ -40,6 +40,17 @@ class ResourceNotFoundWarning(ResourceNeatWarning, Generic[T_Identifier, T_Refer
 
 
 @dataclass(unsafe_hash=True)
+class ResourceUnknownWarning(ResourceNeatWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
+    """The {resource_type} with identifier {identifier} referred by {referred_type} {referred_by} is unknown.
+    Will continue, but the model is incomplete."""
+
+    referred_by: T_ReferenceIdentifier
+    referred_type: str
+
+    fix = "You can maybe retrieve the resource from the CDF."
+
+
+@dataclass(unsafe_hash=True)
 class ResourceNotDefinedWarning(ResourceNeatWarning, Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} {identifier} is not defined in the {location}"""
 

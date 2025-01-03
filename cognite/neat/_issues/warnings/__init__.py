@@ -13,7 +13,7 @@ from ._external import (
     FileReadWarning,
     FileTypeUnexpectedWarning,
 )
-from ._general import NeatValueWarning, NotSupportedWarning, RegexViolationWarning
+from ._general import MissingCogniteClientWarning, NeatValueWarning, NotSupportedWarning, RegexViolationWarning
 from ._models import (
     BreakingModelingPrincipleWarning,
     CDFNotSupportedWarning,
@@ -41,6 +41,7 @@ from ._resources import (
     ResourceRetrievalWarning,
     ResourcesDuplicatedWarning,
     ResourceTypeNotSupportedWarning,
+    ResourceUnknownWarning,
 )
 
 __all__ = [
@@ -53,6 +54,7 @@ __all__ = [
     "FileMissingRequiredFieldWarning",
     "FileReadWarning",
     "FileTypeUnexpectedWarning",
+    "MissingCogniteClientWarning",
     "NeatValueWarning",
     "NotSupportedHasDataFilterLimitWarning",
     "NotSupportedViewContainerLimitWarning",
@@ -73,6 +75,7 @@ __all__ = [
     "ResourceRegexViolationWarning",
     "ResourceRetrievalWarning",
     "ResourceTypeNotSupportedWarning",
+    "ResourceUnknownWarning",
     "ResourcesDuplicatedWarning",
     "UndefinedViewWarning",
     "UserModelingWarning",

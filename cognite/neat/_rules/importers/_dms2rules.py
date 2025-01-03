@@ -1,6 +1,6 @@
 from collections import Counter, defaultdict
 from collections.abc import Collection, Iterable, Sequence
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Literal, cast
 
@@ -20,12 +20,19 @@ from cognite.client.utils import ms_to_datetime
 
 from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList, MultiValueError, NeatIssue
-from cognite.neat._issues.errors import FileTypeUnexpectedError, ResourceMissingIdentifierError, ResourceRetrievalError
+from cognite.neat._issues.errors import (
+    FileTypeUnexpectedError,
+    NeatValueError,
+    ResourceMissingIdentifierError,
+    ResourceRetrievalError,
+)
 from cognite.neat._issues.warnings import (
+    MissingCogniteClientWarning,
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
     ResourceNotFoundWarning,
     ResourcesDuplicatedWarning,
+    ResourceUnknownWarning,
 )
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers._base import BaseImporter, _handle_issues
@@ -60,7 +67,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         schema: The schema containing the data model.
         read_issues: A list of issues that occurred during the import.
         metadata: Metadata for the data model.
-        ref_metadata: Metadata for the reference data model.
 
     """
 
@@ -69,30 +75,23 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         schema: DMSSchema,
         read_issues: Sequence[NeatIssue] | None = None,
         metadata: DMSInputMetadata | None = None,
-        ref_metadata: DMSInputMetadata | None = None,
+        referenced_containers: Iterable[dm.ContainerApply] | None = None,
     ):
-        # Calling this root schema to distinguish it from
-        # * User Schema
-        # * Reference Schema
-        self.root_schema = schema
+        self.schema = schema
         self.metadata = metadata
-        self.ref_metadata = ref_metadata
         self.issue_list = IssueList(read_issues)
         self._all_containers_by_id = schema.containers.copy()
         self._all_views_by_id = schema.views.copy()
-
-    def update_referenced_containers(self, containers: Iterable[dm.ContainerApply]) -> None:
-        """Update the referenced containers. This is useful to add Cognite containers identified after the root schema
-        is read"""
-        for container in containers:
-            if container.as_id() in self._all_containers_by_id:
-                continue
-            self._all_containers_by_id[container.as_id()] = container
+        if referenced_containers is not None:
+            for container in referenced_containers:
+                if container.as_id() in self._all_containers_by_id:
+                    continue
+                self._all_containers_by_id[container.as_id()] = container
 
     @property
     def description(self) -> str:
-        if self.root_schema.data_model is not None:
-            identifier = f"{self.root_schema.data_model.as_id().as_tuple()!s}"
+        if self.schema.data_model is not None:
+            identifier = f"{self.schema.data_model.as_id().as_tuple()!s}"
         else:
             identifier = "Unknown"
         return f"DMS Data model {identifier} read as unverified data model"
@@ -107,8 +106,6 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
         Args:
             client: Instantiated CogniteClient to retrieve data model.
-            reference_model_id: The reference data model to retrieve. This is the data model that
-                the given data model is built on top of, typically, an enterprise data model.
             data_model_id: Data Model to retrieve.
 
         Returns:
@@ -141,7 +138,12 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
         metadata = cls._create_metadata_from_model(user_model)
 
-        return cls(schema, issue_list, metadata, None)
+        return cls(
+            schema,
+            issue_list,
+            metadata,
+            referenced_containers=cls._lookup_referenced_containers(schema, issue_list, client),
+        )
 
     @classmethod
     def _find_model_in_list(
@@ -182,15 +184,17 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         )
 
     @classmethod
-    def from_directory(cls, directory: str | Path) -> "DMSImporter":
+    def from_directory(cls, directory: str | Path, client: NeatClient | None = None) -> "DMSImporter":
         issue_list = IssueList()
         with _handle_issues(issue_list) as _:
             schema = DMSSchema.from_directory(directory)
         # If there were errors during the import, the to_rules
-        return cls(schema, issue_list)
+        return cls(
+            schema, issue_list, referenced_containers=cls._lookup_referenced_containers(schema, issue_list, client)
+        )
 
     @classmethod
-    def from_zip_file(cls, zip_file: str | Path) -> "DMSImporter":
+    def from_zip_file(cls, zip_file: str | Path, client: NeatClient | None = None) -> "DMSImporter":
         if Path(zip_file).suffix != ".zip":
             return cls(
                 DMSSchema(),
@@ -199,30 +203,49 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         issue_list = IssueList()
         with _handle_issues(issue_list) as _:
             schema = DMSSchema.from_zip(zip_file)
-        return cls(schema, issue_list)
+        return cls(
+            schema, issue_list, referenced_containers=cls._lookup_referenced_containers(schema, issue_list, client)
+        )
+
+    @classmethod
+    def _lookup_referenced_containers(
+        cls, schema: DMSSchema, issue_list: IssueList, client: NeatClient | None = None
+    ) -> Iterable[dm.ContainerApply]:
+        ref_containers = schema.referenced_container()
+        if not ref_containers:
+            return []
+        elif client is None:
+            id_ = ""
+            if schema.data_model:
+                id_ = f" {schema.data_model.as_id()!r}"
+            issue_list.append(MissingCogniteClientWarning(f"importing full DMS model{id_}"))
+            return []
+        return client.loaders.containers.retrieve(list(ref_containers), format="write")
+
+    @classmethod
+    def from_path(cls, path: Path, client: NeatClient | None = None) -> "DMSImporter":
+        if path.is_file():
+            return cls.from_zip_file(path, client)
+        elif path.is_dir():
+            return cls.from_directory(path, client)
+        else:
+            raise NeatValueError(f"Unsupported YAML format: {format}")
 
     def to_rules(self) -> ReadRules[DMSInputRules]:
         if self.issue_list.has_errors:
             # In case there were errors during the import, the to_rules method will return None
-            self._end = datetime.now(timezone.utc)
             self.issue_list.trigger_warnings()
             raise MultiValueError(self.issue_list.errors)
 
-        if not self.root_schema.data_model:
-            self.issue_list.append(ResourceMissingIdentifierError("data model", type(self.root_schema).__name__))
-            self._end = datetime.now(timezone.utc)
+        if not self.schema.data_model:
+            self.issue_list.append(ResourceMissingIdentifierError("data model", type(self.schema).__name__))
             self.issue_list.trigger_warnings()
             raise MultiValueError(self.issue_list.errors)
 
-        model = self.root_schema.data_model
+        model = self.schema.data_model
 
-        user_rules = self._create_rule_components(
-            model,
-            self.root_schema,
-            self.metadata,
-        )
+        user_rules = self._create_rule_components(model, self.schema, self.metadata)
 
-        self._end = datetime.now(timezone.utc)
         self.issue_list.trigger_warnings()
         if self.issue_list.has_errors:
             raise MultiValueError(self.issue_list.errors)
@@ -234,7 +257,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         schema: DMSSchema,
         metadata: DMSInputMetadata | None = None,
     ) -> DMSInputRules:
-        enum_by_container_property = self._create_enum_collections(schema.containers.values())
+        enum_by_container_property = self._create_enum_collections(self._all_containers_by_id.values())
         enum_collection_by_container_property = {
             key: enum_list[0].collection for key, enum_list in enum_by_container_property.items() if enum_list
         }
@@ -384,8 +407,11 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         elif isinstance(prop, dm.MappedPropertyApply):
             container_prop = self._container_prop_unsafe(cast(dm.MappedPropertyApply, prop))
             if isinstance(container_prop.type, dm.DirectRelation):
-                if prop.source is None or prop.source not in self._all_views_by_id:
+                if prop.source is None:
                     return DMSUnknownEntity()
+                elif prop.source not in self._all_views_by_id:
+                    self.issue_list.append(ResourceUnknownWarning(prop.source, "view", view_entity.as_id(), "view"))
+                    return ViewEntity.from_id(prop.source)
                 else:
                     return ViewEntity.from_id(prop.source)
             elif isinstance(container_prop.type, PropertyTypeWithUnit) and container_prop.type.unit:
