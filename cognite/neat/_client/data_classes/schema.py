@@ -378,6 +378,10 @@ class DMSSchema:
         referenced_containers |= set(self.containers.keys())
         return referenced_containers
 
+    def externally_referenced_containers(self) -> set[dm.ContainerId]:
+        """Get the containers referenced by the schema that are not defined in the schema."""
+        return {container for container in self.referenced_container() if container not in self.containers}
+
     def as_read_model(self) -> dm.DataModel[dm.View]:
         if self.data_model is None:
             raise ValueError("Data model is not defined")

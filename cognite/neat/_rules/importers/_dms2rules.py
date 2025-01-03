@@ -211,7 +211,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     def _lookup_referenced_containers(
         cls, schema: DMSSchema, issue_list: IssueList, client: NeatClient | None = None
     ) -> Iterable[dm.ContainerApply]:
-        ref_containers = schema.referenced_container()
+        ref_containers = schema.externally_referenced_containers()
         if not ref_containers:
             return []
         elif client is None:
