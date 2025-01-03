@@ -7,6 +7,7 @@ from typing import Any, ClassVar, Literal
 from cognite.client import data_modeling as dm
 
 from cognite.neat._client import NeatClient
+from cognite.neat._constants import get_asset_read_only_properties_with_connection
 from cognite.neat._issues.errors import CDFMissingClientError, NeatValueError, ResourceNotFoundError
 from cognite.neat._issues.warnings import NeatValueWarning, PropertyOverwritingWarning
 from cognite.neat._rules.models import DMSRules, SheetList
@@ -137,6 +138,10 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
             if mapping_view := self._view_by_entity_id.get(view.view.external_id):
                 view.implements = mapping_view.implements
 
+        # This is a special case, if this property is in the mapping, we want ot automatically add the path and parent
+        # properties to the view.
+        asset_parent_property = ContainerEntity(space="cdf_cdm", externalId="CogniteAsset"), "assetHierarchy_parent"
+        read_only_properties: list[DMSProperty] = []
         for prop in new_rules.properties:
             key = (prop.view.external_id, prop.view_property)
             if key not in self._property_by_view_property:
@@ -150,10 +155,25 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
                 )
             elif conflicts:
                 raise NeatValueError(f"Conflicting properties for {prop.view}.{prop.view_property}: {conflicts}")
+
             for field_name, value in to_overwrite.items():
                 setattr(prop, field_name, value)
             prop.container = mapping_prop.container
             prop.container_property = mapping_prop.container_property
+
+            if (prop.container, prop.container_property) == asset_parent_property:
+                # Add the read-only properties to the view.
+                # Note we have to do this after the current loop as we are iterating over the properties and
+                # thus we cannot modify the list.
+                for read_only_prop in get_asset_read_only_properties_with_connection():
+                    # The value type of path and root will always be the same as the parent property.
+                    new_read_only_prop = read_only_prop.model_copy(
+                        update={"view": prop.view, "value_type": prop.value_type}
+                    )
+                    read_only_properties.append(new_read_only_prop)
+
+        if read_only_properties:
+            new_rules.properties.extend(read_only_properties)
 
         # Add missing views used as value types
         existing_views = {view.view for view in new_rules.views}
