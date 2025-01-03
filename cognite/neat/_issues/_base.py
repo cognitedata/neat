@@ -508,14 +508,15 @@ def _get_subclasses(cls_: type[T_Cls], include_base: bool = False) -> Iterable[t
 def catch_warnings(
     issues: IssueList | None = None,
     warning_cls: type[NeatWarning] = DefaultWarning,
-) -> Iterator[None]:
+) -> Iterator[IssueList]:
     """Catch warnings and append them to the issues list."""
+    issues = issues or IssueList()
     with warnings.catch_warnings(record=True) as warning_logger:
         warnings.simplefilter("always")
         try:
-            yield None
+            yield issues
         finally:
-            if warning_logger and issues is not None:
+            if warning_logger:
                 issues.extend([warning_cls.from_warning(warning) for warning in warning_logger])  # type: ignore[misc]
 
 
@@ -530,30 +531,29 @@ class FutureResult:
 
 @contextmanager
 def catch_issues(
-    issues: IssueList,
+    issues: IssueList | None = None,
     error_cls: type[NeatError] = NeatError,
     warning_cls: type[NeatWarning] = NeatWarning,
     error_args: dict[str, Any] | None = None,
-) -> Iterator[FutureResult]:
+) -> Iterator[IssueList]:
     """This is an internal help function to handle issues and warnings.
 
     Args:
         issues: The issues list to append to.
         error_cls: The class used to convert errors to issues.
         warning_cls:  The class used to convert warnings to issues.
+        error_args: Additional arguments to pass to the error class. The only use case as of (2025-01-03) is to pass
+            the read_info_by_sheet to the error class such that the row numbers can be adjusted to match the source
+            spreadsheet.
 
     Returns:
-        FutureResult: A future result object that can be used to check the result of the context manager.
+        IssueList: The list of issues.
+
     """
-    with catch_warnings(issues, warning_cls):
-        future_result = FutureResult()
+    with catch_warnings(issues, warning_cls) as issues:
         try:
-            yield future_result
+            yield issues
         except ValidationError as e:
-            issues.extend(error_cls.from_errors(e.errors(), **(error_args or {})))  # type: ignore[arg-type]
-            future_result._result = "failure"
+            issues.extend(NeatError.from_errors(e.errors(), **(error_args or {})))  # type: ignore[arg-type]
         except (NeatError, MultiValueError) as e:
-            issues.extend(error_cls.from_errors([e], **(error_args or {})))  # type: ignore[arg-type, list-item]
-            future_result._result = "failure"
-        else:
-            future_result._result = "success"
+            issues.extend(NeatError.from_errors([e], **(error_args or {})))  # type: ignore[arg-type, list-item]

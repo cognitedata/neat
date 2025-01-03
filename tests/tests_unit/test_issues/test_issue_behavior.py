@@ -1,11 +1,11 @@
 import warnings
 
+import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat._issues import IssueList
+from cognite.neat._issues import IssueList, catch_issues, catch_warnings
 from cognite.neat._issues.errors import ResourceCreationError, ResourceNotDefinedError
 from cognite.neat._issues.warnings import NeatValueWarning
-from cognite.neat._rules.transformers._verification import catch_issues
 
 
 class TestIssues:
@@ -13,8 +13,7 @@ class TestIssues:
         """Test that an issue is raised in the context manager."""
         my_error = ResourceCreationError(identifier="missing", resource_type="space", error="No CDF Connection")
 
-        errors = IssueList()
-        with catch_issues(issues=errors):
+        with catch_issues() as errors:
             raise my_error
 
         assert errors == IssueList([my_error])
@@ -23,14 +22,21 @@ class TestIssues:
         """Test that a warning is caught in the context manager."""
         my_warning = NeatValueWarning("This is a warning")
 
-        warning_list = IssueList()
-        with catch_issues(issues=warning_list):
+        with catch_warnings() as warning_list:
             warnings.warn(my_warning, stacklevel=2)
 
         assert warning_list == IssueList([my_warning])
 
+    def test_raise_error_in_warning_contextmanager(self) -> None:
+        """Test that an error is raised in the warning context manager."""
+        with pytest.raises(ResourceCreationError):
+            with catch_warnings() as warning_list:
+                raise ResourceCreationError(identifier="missing", resource_type="space", error="No CDF Connection")
+
+        assert len(warning_list) == 0
+
     def test_dump_generic_specified(self) -> None:
-        my_issue = ResourceNotDefinedError[dm.ViewId](
+        my_issue = ResourceNotDefinedError(
             identifier=dm.ViewId("neat", "SKUKpi", "v1"),
             location="View Sheet",
             row_number=66,
