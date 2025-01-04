@@ -52,6 +52,32 @@ def test_sequences_extractor(client_mock: CogniteClient) -> None:
     assert len(g) == 22
 
 
+def test_sequence_extractor_unpack_columns(client_mock: CogniteClient) -> None:
+    g = Graph()
+    for triple in SequencesExtractor.from_dataset(
+        client_mock, data_set_external_id="some data set", as_write=True, unpack_columns=True
+    ).extract():
+        g.add(triple)
+
+    assert unique_properties(g) == {
+        "assetId",
+        "dataSetId",
+        "name",
+        "externalId",
+        "type",
+        "0Values",
+        "1Values",
+        "2Values",
+        "3Values",
+        "0",
+        "1",
+        "2",
+        "3",
+        "columnOrder",
+    }
+    assert len(g) == 40
+
+
 def unique_properties(g: Graph) -> set[str]:
     result = g.query("""
     select distinct ?predicate

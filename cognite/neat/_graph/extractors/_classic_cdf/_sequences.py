@@ -6,7 +6,7 @@ from typing import Any
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Sequence, SequenceFilter
-from rdflib import XSD, Literal, Namespace, URIRef
+from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._client.data_classes.neat_sequence import NeatSequence, NeatSequenceList
 from cognite.neat._shared import Triple
@@ -38,6 +38,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
     """
 
     _default_rdf_type = "Sequence"
+    _column_rdf_type = "ColumnClass"
     _instance_id_prefix = InstanceIdPrefix.sequence
 
     def __init__(
@@ -181,6 +182,12 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
 
     def _item2triples_special_cases(self, id_: URIRef, dumped: dict[str, Any]) -> list[Triple]:
         """For sequences, columns and rows are special cases.'"""
+        if self.unpack_columns:
+            return self._unpack_columns(id_, dumped)
+        else:
+            return self._default_columns_and_rows(id_, dumped)
+
+    def _default_columns_and_rows(self, id_: URIRef, dumped: dict[str, Any]) -> list[Triple]:
         triples: list[Triple] = []
         if "columns" in dumped:
             columns = dumped.pop("columns")
@@ -200,4 +207,44 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
             triples.extend(
                 [(id_, self.namespace.rows, Literal(json.dumps(row), datatype=XSD._NS["json"])) for row in rows]
             )
+        return triples
+
+    def _unpack_columns(self, id_: URIRef, dumped: dict[str, Any]) -> list[Triple]:
+        triples: list[Triple] = []
+        columnValueTypes: list[str] = []
+        column_order: list[str] = []
+        if columns := dumped.pop("columns", None):
+            for col in columns:
+                external_id = col.pop("externalId")
+                column_order.append(external_id)
+                value_type = col.pop("valueType")
+                columnValueTypes.append(value_type)
+
+                col_id = self.namespace[f"Column_{external_id}"]
+                type_ = self.namespace[self._column_rdf_type]
+                triples.append((col_id, RDF.type, type_))
+                if metadata := col.pop("metadata", None):
+                    triples.extend(self._metadata_to_triples(col_id, metadata))
+                # Should only be name and description left in col
+                for key, value in col.items():
+                    if value is None:
+                        continue
+                    triples.append((col_id, self.namespace[key], Literal(value, datatype=XSD.string)))
+
+            triples.append(
+                (id_, self.namespace.columnOrder, Literal(json.dumps(column_order), datatype=XSD._NS["json"]))
+            )
+            triples.append(
+                (id_, self.namespace.columnValueTypes, Literal(json.dumps(columnValueTypes), datatype=XSD._NS["json"]))
+            )
+        if rows := dumped.pop("rows", None):
+            values_by_column: list[list[Any]] = [[] for _ in column_order]
+            for row in rows:
+                for i, value in enumerate(row["values"]):
+                    values_by_column[i].append(value)
+            for col_name, values in zip(column_order, values_by_column, strict=False):
+                triples.append(
+                    (id_, self.namespace[f"{col_name}Values"], Literal(json.dumps(values), datatype=XSD._NS["json"]))
+                )
+
         return triples
