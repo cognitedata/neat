@@ -147,6 +147,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                     (
                         id_,
                         self.namespace.columns,
+                        # Rows have a rowNumber, so we introduce colNumber here to be consistent.
                         Literal(json.dumps({"colNumber": no, **col}), datatype=XSD._NS["json"]),
                     )
                     for no, col in enumerate(columns, 1)
