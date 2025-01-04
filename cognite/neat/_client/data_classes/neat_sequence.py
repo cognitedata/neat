@@ -16,7 +16,11 @@ from cognite.client.data_classes import (
     SequenceRow,
 )
 from cognite.client.data_classes._base import (
+    CogniteResourceList,
+    ExternalIDTransformerMixin,
+    IdTransformerMixin,
     WriteableCogniteResource,
+    WriteableCogniteResourceList,
 )
 
 if sys.version_info >= (3, 11):
@@ -243,3 +247,15 @@ class NeatSequence(NeatSequenceCore):
         if self.rows is not None:
             dumped["rows"] = [row.dump(camel_case) for row in self.rows]
         return dumped
+
+
+class NeatSequenceWriteList(CogniteResourceList[NeatSequenceWrite], ExternalIDTransformerMixin):
+    _RESOURCE = NeatSequenceWrite
+
+
+class NeatSequenceList(WriteableCogniteResourceList[NeatSequenceWrite, NeatSequence], IdTransformerMixin):
+    _RESOURCE = NeatSequence
+
+    def as_write(self) -> NeatSequenceWriteList:
+        """Returns a writeable version of this sequence list."""
+        return NeatSequenceWriteList([item.as_write() for item in self], cognite_client=self._get_cognite_client())
