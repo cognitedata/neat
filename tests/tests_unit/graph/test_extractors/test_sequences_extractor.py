@@ -6,6 +6,7 @@ from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
 from cognite.neat._graph.extractors import SequencesExtractor
+from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 
@@ -29,7 +30,31 @@ def test_sequences_extractor():
 
     g = Graph()
 
-    for triple in SequencesExtractor.from_dataset(client_mock, data_set_external_id="some data set").extract():
+    for triple in SequencesExtractor.from_dataset(
+        client_mock, data_set_external_id="some data set", as_write=False
+    ).extract():
         g.add(triple)
 
     assert len(g) == 26
+    assert unique_properties(g) == {
+        "assetId",
+        "columns",
+        "rows",
+        "dataSetId",
+        "createdTime",
+        "lastUpdatedTime",
+        "name",
+        "externalId",
+        "type",
+    }
+
+
+def unique_properties(g: Graph) -> set[str]:
+    result = g.query("""
+    select distinct ?predicate
+    where {
+        ?subject ?predicate ?object
+    }
+    """)
+
+    return {remove_namespace_from_uri(row[0]) for row in result}
