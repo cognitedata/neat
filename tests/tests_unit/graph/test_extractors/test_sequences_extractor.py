@@ -32,4 +32,4 @@ def test_sequences_extractor():
     for triple in SequencesExtractor.from_dataset(client_mock, data_set_external_id="some data set").extract():
         g.add(triple)
 
-    assert len(g) == 20
+    assert len(g) == 26
