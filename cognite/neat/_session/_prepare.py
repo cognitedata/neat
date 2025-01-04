@@ -10,6 +10,7 @@ from cognite.neat._constants import (
 )
 from cognite.neat._graph.transformers import (
     AttachPropertyFromTargetToSource,
+    ConnectionToLiteral,
     ConvertLiteral,
     LiteralToEntity,
     PruneDeadEndEdges,
@@ -303,6 +304,33 @@ class InstancePrepareAPI:
             subject_predicate = self._state.instances.store.queries.property_uri(source[1])[0]
 
         transformer = LiteralToEntity(subject_type, subject_predicate, type, new_property)
+        self._state.instances.store.transform(transformer)
+
+    def connection_to_data_type(self, source: tuple[str | None, str]) -> None:
+        """Converts a connection to a data type.
+
+        Args:
+            source: The source of the conversion. A tuple of (type, property)
+                    where property is the property that should be converted.
+                    You can pass (None, property) to covert all properties with the given name.
+
+        Example:
+
+            Convert all properties 'labels' from a connection to a string:
+
+            ```python
+            neat.prepare.instances.connection_to_data_type(
+                (None, "labels")
+            )
+            ```
+
+        """
+        subject_type: URIRef | None = None
+        if source[0] is not None:
+            subject_type, subject_predicate = self._get_type_and_property_uris(*source)  # type: ignore[arg-type, assignment]
+        else:
+            subject_predicate = self._state.instances.store.queries.property_uri(source[1])[0]
+        transformer = ConnectionToLiteral(subject_type, subject_predicate)
         self._state.instances.store.transform(transformer)
 
 
