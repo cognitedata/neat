@@ -6,6 +6,7 @@ from abc import ABC
 from collections.abc import Sequence
 from typing import Any, cast
 
+import cognite.client.data_classes as cdc
 from cognite.client import CogniteClient
 from cognite.client.data_classes import (
     SequenceColumn,
@@ -192,6 +193,16 @@ class NeatSequence(NeatSequenceCore):
         else:
             raise ValueError(f"columns must be a sequence of SequenceColumn objects not {type(columns)}")
         self._cognite_client = cast("CogniteClient", cognite_client)
+
+    @classmethod
+    def from_cognite_sequence(
+        cls, sequence: cdc.Sequence, rows: Sequence[cdc.SequenceRow] | None = None
+    ) -> "NeatSequence":
+        """Create a NeatSequence from a Cognite Sequence object."""
+        args = sequence.dump(camel_case=True)
+        if rows is not None:
+            args["rows"] = [row.dump(camel_case=True) for row in rows]
+        return cls._load(args)
 
     @classmethod
     def _load(cls, resource: dict, cognite_client: CogniteClient | None = None) -> Self:
