@@ -68,6 +68,7 @@ class TestExtractToLoadFlow:
 
         neat.verify()
 
+        neat.prepare.data_model.add_implements_to_classes("Edge", "Edge")
         neat.convert("dms", mode="edge_properties")
 
         neat.mapping.data_model.classic_to_core("Classic", use_parent_property_name=True)
