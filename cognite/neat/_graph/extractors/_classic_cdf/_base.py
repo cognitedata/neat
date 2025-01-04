@@ -143,7 +143,14 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         if "columns" in dumped:
             columns = dumped.pop("columns")
             triples.extend(
-                [(id_, self.namespace.columns, Literal(json.dumps(col), datatype=XSD._NS["json"])) for col in columns]
+                [
+                    (
+                        id_,
+                        self.namespace.columns,
+                        Literal(json.dumps({"colNumber": no, **col}), datatype=XSD._NS["json"]),
+                    )
+                    for no, col in enumerate(columns, 1)
+                ]
             )
         if "rows" in dumped:
             rows = dumped.pop("rows")
