@@ -139,25 +139,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         dumped.pop("parentExternalId", None)
         if "metadata" in dumped:
             triples.extend(self._metadata_to_triples(id_, dumped.pop("metadata")))
-        # Special handling of columns and rows for Sequences
-        if "columns" in dumped:
-            columns = dumped.pop("columns")
-            triples.extend(
-                [
-                    (
-                        id_,
-                        self.namespace.columns,
-                        # Rows have a rowNumber, so we introduce colNumber here to be consistent.
-                        Literal(json.dumps({"colNumber": no, **col}), datatype=XSD._NS["json"]),
-                    )
-                    for no, col in enumerate(columns, 1)
-                ]
-            )
-        if "rows" in dumped:
-            rows = dumped.pop("rows")
-            triples.extend(
-                [(id_, self.namespace.rows, Literal(json.dumps(row), datatype=XSD._NS["json"])) for row in rows]
-            )
+
+        triples.extend(self._item2triples_special_cases(id_, dumped))
 
         for key, value in dumped.items():
             if value is None or value == []:
@@ -166,6 +149,10 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             for raw in values:
                 triples.append((id_, self.namespace[key], self._as_object(raw, key)))
         return triples
+
+    def _item2triples_special_cases(self, id_: URIRef, dumped: dict[str, Any]) -> list[Triple]:
+        """This can be overridden to handle special cases for the item."""
+        return []
 
     def _fallback_id(self, item: T_CogniteResource) -> str | None:
         raise AttributeError(
