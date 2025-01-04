@@ -142,8 +142,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         # Special handling of columns and rows for Sequences
         if "columns" in dumped:
             columns = dumped.pop("columns")
-            triples.append(
-                (id_, self.namespace.columns, Literal(json.dumps({"columns": columns}), datatype=XSD._NS["json"]))
+            triples.extend(
+                [(id_, self.namespace.columns, Literal(json.dumps(col), datatype=XSD._NS["json"])) for col in columns]
             )
         if "rows" in dumped:
             rows = dumped.pop("rows")
