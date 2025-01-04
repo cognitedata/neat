@@ -45,7 +45,6 @@ class TestExtractToLoadFlow:
             neat._state.instances.store.write(extractor)
 
         # Sequences is not yet supported
-        neat.drop.instances("Sequence")
         neat.prepare.instances.relationships_as_edges()
 
         neat.prepare.instances.convert_data_type(
@@ -60,7 +59,6 @@ class TestExtractToLoadFlow:
         rules = neat._state.rule_store.last_unverified_rule
         rules.metadata.created = "2024-09-19T00:00:00Z"
         rules.metadata.updated = "2024-09-19T00:00:00Z"
-
         # Sorting the properties to ensure deterministic output
         rules.properties = sorted(rules.properties, key=lambda x: (x.class_, x.property_))
 
