@@ -105,27 +105,30 @@ class MapOneToOne(MapOntoTransformers):
 class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
     """Maps properties and classes using the given mapping.
 
-    **Note**: This transformer mutates the input rules.
-
     Args:
-        mapping: The mapping to use.
-
+        mapping: The mapping to use represented as a DMSRules object.
+        data_type_conflict: How to handle data type conflicts. The default is "overwrite".
+        move_connections: For all view mappings, move the connections to the new view.
+            Default is True.
     """
 
     _mapping_fields: ClassVar[frozenset[str]] = frozenset(
         ["connection", "value_type", "nullable", "immutable", "is_list", "default", "index", "constraint"]
     )
 
-    def __init__(self, mapping: DMSRules, data_type_conflict: Literal["overwrite"] = "overwrite") -> None:
+    def __init__(
+        self, mapping: DMSRules, data_type_conflict: Literal["overwrite"] = "overwrite", move_connections: bool = True
+    ) -> None:
         self.mapping = mapping
         self.data_type_conflict = data_type_conflict
+        self.move_connections = move_connections
 
     @cached_property
-    def _view_by_entity_id(self) -> dict[str, DMSView]:
+    def _mapping_view_by_entity_id(self) -> dict[str, DMSView]:
         return {view.view.external_id: view for view in self.mapping.views}
 
     @cached_property
-    def _property_by_view_property(self) -> dict[tuple[str, str], DMSProperty]:
+    def _mapping_property_by_view_property(self) -> dict[tuple[str, str], DMSProperty]:
         return {(prop.view.external_id, prop.view_property): prop for prop in self.mapping.properties}
 
     def transform(self, rules: DMSRules) -> DMSRules:
@@ -135,7 +138,7 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
         new_rules = input_rules.model_copy(deep=True)
 
         for view in new_rules.views:
-            if mapping_view := self._view_by_entity_id.get(view.view.external_id):
+            if mapping_view := self._mapping_view_by_entity_id.get(view.view.external_id):
                 view.implements = mapping_view.implements
 
         # This is a special case, if this property is in the mapping, we want ot automatically add the path and parent
@@ -144,9 +147,9 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
         read_only_properties: list[DMSProperty] = []
         for prop in new_rules.properties:
             key = (prop.view.external_id, prop.view_property)
-            if key not in self._property_by_view_property:
+            if key not in self._mapping_property_by_view_property:
                 continue
-            mapping_prop = self._property_by_view_property[key]
+            mapping_prop = self._mapping_property_by_view_property[key]
             to_overwrite, conflicts = self._find_overwrites(prop, mapping_prop)
             if conflicts and self.data_type_conflict == "overwrite":
                 warnings.warn(
@@ -175,7 +178,8 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
         if read_only_properties:
             new_rules.properties.extend(read_only_properties)
 
-        # Add missing views used as value types
+        # Add missing views that used as value types. This can occur if one property maps to another property
+        # that is using a value type that is not in the input rules.
         existing_views = {view.view for view in new_rules.views}
         new_value_types = {
             prop.value_type
@@ -183,7 +187,7 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
             if isinstance(prop.value_type, ViewEntity) and prop.value_type not in existing_views
         }
         for new_value_type in new_value_types:
-            if mapping_view := self._view_by_entity_id.get(new_value_type.external_id):
+            if mapping_view := self._mapping_view_by_entity_id.get(new_value_type.external_id):
                 new_rules.views.append(mapping_view)
             else:
                 warnings.warn(NeatValueWarning(f"View {new_value_type} not found in mapping"), stacklevel=2)
