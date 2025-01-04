@@ -15,6 +15,7 @@ from cognite.client.data_classes import (
     TimeSeries,
 )
 
+from cognite.neat._client.data_classes.neat_sequence import NeatSequence
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._graph.extractors import (
     AssetsExtractor,
@@ -195,6 +196,8 @@ power_curve = Sequence(
     description="Power curve from manufacturer 1",
     asset_id=wind_turbine.id,
     columns=SEQUENCE_COLUMNS,
+    created_time=1,
+    last_updated_time=2,
 )
 
 SEQUENCES = [power_curve]
@@ -219,6 +222,7 @@ SEQUENCE_ROWS = SequenceRows(
     external_id="power_curve_manufacturer1",
 )
 
+NEAT_SEQUENCES = [NeatSequence.from_cognite_sequence(power_curve, SEQUENCE_ROWS.rows)]
 
 LABELS = [
     LabelDefinition(
@@ -354,7 +358,7 @@ def create_extractors() -> list[ClassicCDFBaseExtractor]:
         AssetsExtractor(ASSETS, **args),
         RelationshipsExtractor(RELATIONSHIPS, **args),
         TimeSeriesExtractor(TIME_SERIES, **args),
-        SequencesExtractor(SEQUENCES, **args),
+        SequencesExtractor(NEAT_SEQUENCES, **args),
         FilesExtractor(FILES, **args),
         LabelsExtractor(LABELS, **args),
         EventsExtractor(EVENTS, **args),
