@@ -221,6 +221,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
                 columnValueTypes.append(value_type)
 
                 col_id = self.namespace[f"Column_{external_id}"]
+                triples.append((id_, self.namespace[external_id], col_id))
                 type_ = self.namespace[self._column_rdf_type]
                 triples.append((col_id, RDF.type, type_))
                 if metadata := col.pop("metadata", None):
