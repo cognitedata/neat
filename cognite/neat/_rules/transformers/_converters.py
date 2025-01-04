@@ -575,7 +575,8 @@ class ToSolutionModel(ToExtensionModel):
             solution_model.containers = new_containers
             solution_model.properties.extend(new_properties)
         elif self.mode == "read":
-            # Inherit view filter from original model to ensure the same instances are returned.
+            # Inherit view filter from original model to ensure the same instances are returned
+            # when querying the new view.
             ref_views_by_external_id = {
                 view.view.external_id: view
                 for view in reference_rules.views
@@ -592,7 +593,8 @@ class ToSolutionModel(ToExtensionModel):
                     elif self.filter_type == "container" and (
                         ref_containers := ref_containers_by_ref_view.get(ref_view.view)
                     ):
-                        view.filter_ = HasDataFilter(inner=list(ref_containers))
+                        # Sorting to ensure deterministic order
+                        view.filter_ = HasDataFilter(inner=sorted(ref_containers))
 
         return solution_model
 
