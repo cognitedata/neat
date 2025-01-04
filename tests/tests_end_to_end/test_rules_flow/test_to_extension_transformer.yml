@@ -1245,144 +1245,144 @@ data_product:
     view: NeatVisualizable
     view_property: object3D
   views:
-  - filter_: hasData(sp_solution:Neat360Image(version=v1))
+  - filter_: hasData(cdf_cdm_3d:Cognite360Image,sp_enterprise:Neat360Image,sp_solution:Neat360Image)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_6d3ee1dc_8139_4443_a45b_712eb8225688
     view: Neat360Image
-  - filter_: hasData(sp_solution:Neat360ImageAnnotation(version=v1))
+  - filter_: hasData(sp_enterprise:Neat360ImageAnnotation,sp_solution:Neat360ImageAnnotation)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_c074718e_425a_409f_b337_c59979844388
     view: Neat360ImageAnnotation
-  - filter_: hasData(sp_solution:Neat360ImageCollection(version=v1))
+  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:Neat360ImageCollection,sp_solution:Neat360ImageCollection)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_709b7d97_464c_44af_bd3f_3799a07295e9
     view: Neat360ImageCollection
-  - filter_: hasData(sp_solution:Neat360ImageModel(version=v1))
+  - filter_: hasData(sp_enterprise:Neat360ImageModel,sp_solution:Neat360ImageModel)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_269cd696_236c_4b87_94a0_bccb8a476a87
     view: Neat360ImageModel
-  - filter_: hasData(sp_solution:Neat360ImageStation(version=v1))
+  - filter_: hasData(sp_enterprise:Neat360ImageStation,sp_solution:Neat360ImageStation)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_7746d0ba_8ae8_405b_94b4_a48268586eba
     view: Neat360ImageStation
-  - filter_: hasData(sp_solution:Neat3DModel(version=v1))
+  - filter_: hasData(cdf_cdm_3d:Cognite3DModel,sp_enterprise:Neat3DModel,sp_solution:Neat3DModel)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_05000bc6_b20d_4b6e_b231_1f1795863a76
     view: Neat3DModel
-  - filter_: hasData(sp_solution:Neat3DObject(version=v1))
+  - filter_: hasData(sp_enterprise:Neat3DObject,sp_solution:Neat3DObject)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_63d62a39_c0e3_4efd_8c71_e0fe5a0cdd7c
     view: Neat3DObject
-  - filter_: hasData(sp_solution:Neat3DRevision(version=v1))
+  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:Neat3DRevision,sp_solution:Neat3DRevision)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_e5d6f6e6_9a6e_42f5_8cc4_29038bcf53a1
     view: Neat3DRevision
-  - filter_: hasData(sp_solution:Neat3DTransformation(version=v1))
+  - filter_: hasData(sp_enterprise:Neat3DTransformation,sp_solution:Neat3DTransformation)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_cc530e36_addc_4e13_ab3b_4d37560c95ee
     view: Neat3DTransformation
-  - filter_: hasData(sp_solution:NeatActivity(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteActivity,sp_enterprise:NeatActivity,sp_solution:NeatActivity)
     in_model: true
     name: Activity
     neatId: http://purl.org/cognite/neat/neatId_e82c7d7b_06e7_45f9_88bc_539c9f4c3b79
     view: NeatActivity
-  - filter_: hasData(sp_solution:NeatAnnotation(version=v1))
+  - filter_: hasData(sp_enterprise:NeatAnnotation,sp_solution:NeatAnnotation)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_2e85cb21_7631_4e9d_9de9_f86322bd3388
     view: NeatAnnotation
-  - filter_: hasData(sp_solution:NeatAsset(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteAsset,sp_enterprise:NeatAsset,sp_solution:NeatAsset)
     in_model: true
     name: Asset
     neatId: http://purl.org/cognite/neat/neatId_473bd358_610e_4a64_a130_1617c2dff335
     view: NeatAsset
-  - filter_: hasData(sp_solution:NeatAssetClass(version=v1))
+  - filter_: hasData(sp_enterprise:NeatAssetClass,sp_solution:NeatAssetClass)
     in_model: true
     name: Asset class
     neatId: http://purl.org/cognite/neat/neatId_0d557b61_8a17_4dfe_bfc0_0dc804f64d86
     view: NeatAssetClass
-  - filter_: hasData(sp_solution:NeatAssetType(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteAssetType,sp_enterprise:NeatAssetType,sp_solution:NeatAssetType)
     in_model: true
     name: Asset type
     neatId: http://purl.org/cognite/neat/neatId_07f194f9_c115_4d6d_8a4e_5b70a6d964a3
     view: NeatAssetType
-  - filter_: hasData(sp_solution:NeatCADModel(version=v1))
+  - filter_: hasData(sp_enterprise:NeatCADModel,sp_solution:NeatCADModel)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_1d48a071_ab61_47b1_b93b_4c3220500494
     view: NeatCADModel
-  - filter_: hasData(sp_solution:NeatCADNode(version=v1))
+  - filter_: hasData(cdf_cdm_3d:CogniteCADNode,sp_enterprise:NeatCADNode,sp_solution:NeatCADNode)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_f6b751f7_9b74_4245_9b1b_c8952af43ab7
     view: NeatCADNode
-  - filter_: hasData(sp_solution:NeatCADRevision(version=v1))
+  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:NeatCADRevision,sp_solution:NeatCADRevision)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_edcb8cb6_0692_4c63_9424_aed51bac5c15
     view: NeatCADRevision
-  - filter_: hasData(sp_solution:NeatCubeMap(version=v1))
+  - filter_: hasData(cdf_cdm_3d:CogniteCubeMap,sp_enterprise:NeatCubeMap,sp_solution:NeatCubeMap)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_9793b9b4_1374_4146_b2c5_bd89b70b3420
     view: NeatCubeMap
-  - filter_: hasData(sp_solution:NeatDescribable(version=v1))
+  - filter_: hasData(sp_enterprise:NeatDescribable,sp_solution:NeatDescribable)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_ce3714af_99b4_4350_af2b_99b4d9acd158
     view: NeatDescribable
-  - filter_: hasData(sp_solution:NeatDiagramAnnotation(version=v1))
+  - filter_: hasData(sp_enterprise:NeatDiagramAnnotation,sp_solution:NeatDiagramAnnotation)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_11a72609_5edd_4bbf_a959_76636daa2e68
     view: NeatDiagramAnnotation
-  - filter_: hasData(sp_solution:NeatEquipment(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteEquipment,sp_enterprise:NeatEquipment,sp_solution:NeatEquipment)
     in_model: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/neatId_5cb85aed_f5f6_4c97_aefb_63b11b049863
     view: NeatEquipment
-  - filter_: hasData(sp_solution:NeatEquipmentType(version=v1))
+  - filter_: hasData(sp_enterprise:NeatEquipmentType,sp_solution:NeatEquipmentType)
     in_model: true
     name: Equipment type
     neatId: http://purl.org/cognite/neat/neatId_a6846099_f729_4951_8591_31d2bbda0242
     view: NeatEquipmentType
-  - filter_: hasData(sp_solution:NeatFile(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteFile,sp_enterprise:NeatFile,sp_solution:NeatFile)
     in_model: true
     name: File
     neatId: http://purl.org/cognite/neat/neatId_97ac6aa8_bb24_48a3_9363_57b66f81cf4f
     view: NeatFile
-  - filter_: hasData(sp_solution:NeatFileCategory(version=v1))
+  - filter_: hasData(sp_enterprise:NeatFileCategory,sp_solution:NeatFileCategory)
     in_model: true
     name: File category
     neatId: http://purl.org/cognite/neat/neatId_c01f36bf_3e6d_458b_b367_c28de1b294de
     view: NeatFileCategory
-  - filter_: hasData(sp_solution:NeatPointCloudModel(version=v1))
+  - filter_: hasData(sp_enterprise:NeatPointCloudModel,sp_solution:NeatPointCloudModel)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_7cd0129d_2e8d_4e87_9334_20e6d9d80b8d
     view: NeatPointCloudModel
-  - filter_: hasData(sp_solution:NeatPointCloudRevision(version=v1))
+  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:NeatPointCloudRevision,sp_solution:NeatPointCloudRevision)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_8e485223_46b9_4991_a14e_b70db380c73a
     view: NeatPointCloudRevision
-  - filter_: hasData(sp_solution:NeatPointCloudVolume(version=v1))
+  - filter_: hasData(cdf_cdm_3d:CognitePointCloudVolume,sp_enterprise:NeatPointCloudVolume,sp_solution:NeatPointCloudVolume)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_3d85de89_c217_4429_8e20_07247d137018
     view: NeatPointCloudVolume
-  - filter_: hasData(sp_solution:NeatSchedulable(version=v1))
+  - filter_: hasData(sp_enterprise:NeatSchedulable,sp_solution:NeatSchedulable)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_6786d506_38ba_4abc_8b53_05e517d2582e
     view: NeatSchedulable
-  - filter_: hasData(sp_solution:NeatSourceSystem(version=v1))
+  - filter_: hasData(sp_enterprise:NeatSourceSystem,sp_solution:NeatSourceSystem)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_ff233d5f_6ced_415d_9800_7c0287ea7ff5
     view: NeatSourceSystem
-  - filter_: hasData(sp_solution:NeatSourceable(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteSourceable,sp_enterprise:NeatSourceable,sp_solution:NeatSourceable)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_b8a6171f_1ee3_4dc4_bb04_8a8b405bfdc9
     view: NeatSourceable
-  - filter_: hasData(sp_solution:NeatTimeSeries(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteTimeSeries,sp_enterprise:NeatTimeSeries,sp_solution:NeatTimeSeries)
     in_model: true
     name: Time series
     neatId: http://purl.org/cognite/neat/neatId_bd1531c8_3764_4bda_b108_d4482f65fafa
     view: NeatTimeSeries
-  - filter_: hasData(sp_solution:NeatUnit(version=v1))
+  - filter_: hasData(sp_enterprise:NeatUnit,sp_solution:NeatUnit)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_d52721e7_19bc_443e_bb02_bebb48729a4d
     view: NeatUnit
-  - filter_: hasData(sp_solution:NeatVisualizable(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteVisualizable,sp_enterprise:NeatVisualizable,sp_solution:NeatVisualizable)
     in_model: true
     neatId: http://purl.org/cognite/neat/neatId_0ba6eab9_4639_447b_a067_bdac88bd13d1
     view: NeatVisualizable
