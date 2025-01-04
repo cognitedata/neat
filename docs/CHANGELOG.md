@@ -37,6 +37,8 @@ Changes are grouped as follows:
 - The `neat.to.cdf.instances(...)` now correctly ignores read-only properties when creating instances in CDF.
 - The `neat.mapping.data_model.classic_to_core(...)` now automatically includes the `path`and `root` properties
   when mapping to `CogniteAsset`
+- Reading sequences from CDF using `read.cdf.classic.graph(...)` now includes `rows`. In addition, the `columns` are
+  now created as a list and not a blob.
 
 ## [0.104.0] - 20-12-**2024**
 ### Improved
