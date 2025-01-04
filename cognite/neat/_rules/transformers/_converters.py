@@ -460,6 +460,27 @@ class ToEnterpriseModel(ToExtensionModel):
 
 
 class ToSolutionModel(ToExtensionModel):
+    """Creates a solution data model based on an existing data model.
+
+    The solution data model will create a new view for each view in the existing model.
+
+    Args:
+        new_model_id: DataData model identifier for the new model.
+        org_name: If the existing model is a Cognite Data Model, this will replace the "Cognite" affix.
+        mode: The mode of the solution model. Either "read" or "write". A "write" model will create a new
+            container for each view with a dummy property. Read mode will only inherit the view filter from the
+            original model.
+        dummy_property: Only applicable if mode='write'. The identifier of the dummy property in the newly created
+            container.
+        exclude_views_in_other_space: Whether to exclude views that are not in the same space as the existing model,
+            when creating the solution model.
+        filter_type: If mode="read", this is the type of filter to apply to the new views. The filter is used to
+            ensure that the new views will return the same instance as the original views. The view filter is the
+            simplest filter, but it has limitation in the fusion UI. The container filter is in essence a more
+            verbose version of the view filter, and it has better support in the fusion UI. The default is "container".
+
+    """
+
     type_: ClassVar[str] = "solution"
 
     def __init__(
@@ -468,11 +489,13 @@ class ToSolutionModel(ToExtensionModel):
         org_name: str = "My",
         mode: Literal["read", "write"] = "read",
         dummy_property: str | None = "GUID",
-        remove_views_in_other_space: bool = True,
+        exclude_views_in_other_space: bool = True,
+        filter_type: Literal["container", "view"] = "container",
     ):
         super().__init__(new_model_id, org_name, dummy_property if mode == "write" else None)
         self.mode = mode
-        self.remove_views_in_other_space = remove_views_in_other_space
+        self.exclude_views_in_other_space = exclude_views_in_other_space
+        self.filter_type = filter_type
 
     def transform(self, rules: DMSRules) -> DMSRules:
         reference_model = rules
@@ -524,7 +547,7 @@ class ToSolutionModel(ToExtensionModel):
         for view in solution_model.views:
             view.implements = None
 
-        if self.remove_views_in_other_space and self._has_views_in_multiple_space(reference_rules):
+        if self.exclude_views_in_other_space and self._has_views_in_multiple_space(reference_rules):
             solution_model.views = SheetList[DMSView](
                 [view for view in solution_model.views if view.view.space == solution_model.metadata.space]
             )
@@ -574,7 +597,7 @@ class ToDataProductModel(ToSolutionModel):
         org_name: str = "My",
         include: Literal["same-space", "all"] = "same-space",
     ):
-        super().__init__(new_model_id, org_name, mode="read", dummy_property=None, remove_views_in_other_space=False)
+        super().__init__(new_model_id, org_name, mode="read", dummy_property=None, exclude_views_in_other_space=False)
         self.include = include
 
     def transform(self, rules: DMSRules) -> DMSRules:
