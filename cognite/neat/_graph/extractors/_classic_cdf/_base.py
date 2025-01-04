@@ -139,10 +139,16 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         dumped.pop("parentExternalId", None)
         if "metadata" in dumped:
             triples.extend(self._metadata_to_triples(id_, dumped.pop("metadata")))
+        # Special handling of columns and rows for Sequences
         if "columns" in dumped:
             columns = dumped.pop("columns")
             triples.append(
                 (id_, self.namespace.columns, Literal(json.dumps({"columns": columns}), datatype=XSD._NS["json"]))
+            )
+        if "rows" in dumped:
+            rows = dumped.pop("rows")
+            triples.extend(
+                [(id_, self.namespace.rows, Literal(json.dumps(row), datatype=XSD._NS["json"])) for row in rows]
             )
 
         for key, value in dumped.items():
