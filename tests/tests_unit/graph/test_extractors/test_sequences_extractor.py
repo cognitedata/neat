@@ -74,8 +74,9 @@ def test_sequence_extractor_unpack_columns(client_mock: CogniteClient) -> None:
         "2",
         "3",
         "columnOrder",
+        "columnValueTypes",
     }
-    assert len(g) == 40
+    assert len(g) == 34
 
 
 def unique_properties(g: Graph) -> set[str]:
