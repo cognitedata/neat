@@ -11,7 +11,7 @@ from cognite.neat._issues.warnings import PropertyOverwritingWarning
 from cognite.neat._rules.models import DMSRules, SheetList
 from cognite.neat._rules.models.data_types import Enum
 from cognite.neat._rules.models.dms import DMSEnum, DMSProperty
-from cognite.neat._rules.models.entities import ContainerEntity, ViewEntity
+from cognite.neat._rules.models.entities import ClassEntity, ContainerEntity, ViewEntity
 
 from ._base import RulesTransformer
 
@@ -134,24 +134,15 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
                 # This is to ensure that all ValueTypes are present in the resulting rules.
                 # For example, if a property is a direct relation to an Equipment view, we need to add
                 # the Equipment view to the rules.
-                if mapping_view.view.space == self.mapping.metadata.space:
-                    new_view = mapping_view.model_copy(
-                        update={
-                            "view": ViewEntity(
-                                space=new_rules.metadata.space,
-                                externalId=mapping_view.view.external_id,
-                                version=new_rules.metadata.version,
-                            )
-                        }
-                    )
-                else:
-                    new_view = mapping_view
-                new_rules.views.append(new_view)
+                new_rules.views.append(mapping_view)
 
         properties_by_view_property = {
             (prop.view.external_id, prop.view_property): prop for prop in new_rules.properties
         }
         existing_enum_collections = {item.collection for item in new_rules.enum or []}
+        mapping_enums_by_collection: dict[ClassEntity, list[DMSEnum]] = defaultdict(list)
+        for item in self.mapping.enum or []:
+            mapping_enums_by_collection[item.collection].append(item)
         for mapping_prop in self.mapping.properties:
             if existing_prop := properties_by_view_property.get(
                 (mapping_prop.view.external_id, mapping_prop.view_property)
@@ -177,13 +168,17 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
                 # All connections must be included in the rules. This is to update the
                 # ValueTypes of the implemented views.
                 new_rules.properties.append(mapping_prop)
+            else:
+                # Skipping mapped properties that are not in the input rules.
+                continue
 
             if (
                 isinstance(mapping_prop.value_type, Enum)
                 and mapping_prop.value_type.collection not in existing_enum_collections
             ):
-                new_rules.enum = new_rules.enum or SheetList[DMSEnum]([])
-                new_rules.enum.append(mapping_prop.value_type)
+                if not new_rules.enum:
+                    new_rules.enum = SheetList[DMSEnum]([])
+                new_rules.enum.extend(mapping_enums_by_collection[mapping_prop.value_type.collection])
 
         return new_rules
 
