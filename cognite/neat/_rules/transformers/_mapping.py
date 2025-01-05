@@ -1,7 +1,6 @@
 import warnings
 from abc import ABC
 from collections import defaultdict
-from functools import cached_property
 from typing import Any, ClassVar, Literal
 
 from cognite.client import data_modeling as dm
@@ -11,7 +10,7 @@ from cognite.neat._issues.errors import CDFMissingClientError, NeatValueError, R
 from cognite.neat._issues.warnings import PropertyOverwritingWarning
 from cognite.neat._rules.models import DMSRules, SheetList
 from cognite.neat._rules.models.data_types import Enum
-from cognite.neat._rules.models.dms import DMSEnum, DMSProperty, DMSView
+from cognite.neat._rules.models.dms import DMSEnum, DMSProperty
 from cognite.neat._rules.models.entities import ContainerEntity, ViewEntity
 
 from ._base import RulesTransformer
@@ -120,14 +119,6 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
         self.mapping = mapping
         self.data_type_conflict = data_type_conflict
 
-    @cached_property
-    def _mapping_view_by_external_id(self) -> dict[str, DMSView]:
-        return {view.view.external_id: view for view in self.mapping.views}
-
-    @cached_property
-    def _mapping_property_by_view_property(self) -> dict[tuple[str, str], DMSProperty]:
-        return {(prop.view.external_id, prop.view_property): prop for prop in self.mapping.properties}
-
     def transform(self, rules: DMSRules) -> DMSRules:
         if self.data_type_conflict != "overwrite":
             raise NeatValueError(f"Invalid data_type_conflict: {self.data_type_conflict}")
@@ -143,7 +134,19 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
                 # This is to ensure that all ValueTypes are present in the resulting rules.
                 # For example, if a property is a direct relation to an Equipment view, we need to add
                 # the Equipment view to the rules.
-                new_rules.views.append(mapping_view)
+                if mapping_view.view.space == self.mapping.metadata.space:
+                    new_view = mapping_view.model_copy(
+                        update={
+                            "view": ViewEntity(
+                                space=new_rules.metadata.space,
+                                externalId=mapping_view.view.external_id,
+                                version=new_rules.metadata.version,
+                            )
+                        }
+                    )
+                else:
+                    new_view = mapping_view
+                new_rules.views.append(new_view)
 
         properties_by_view_property = {
             (prop.view.external_id, prop.view_property): prop for prop in new_rules.properties
@@ -171,7 +174,8 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
                 existing_prop.container = mapping_prop.container
                 existing_prop.container_property = mapping_prop.container_property
             elif isinstance(mapping_prop.value_type, ViewEntity):
-                # All connections must be included in the rules.
+                # All connections must be included in the rules. This is to update the
+                # ValueTypes of the implemented views.
                 new_rules.properties.append(mapping_prop)
 
             if (
