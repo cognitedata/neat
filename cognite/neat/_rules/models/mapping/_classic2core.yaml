@@ -1,13 +1,17 @@
+containers:
+- container: ClassicEquipment
+  neatId: http://purl.org/cognite/neat/neatId_bb7e4121_bc17_46c7_a93d_c855f710ccbe
+  used_for: node
 enum:
 - collection: timeseriesType
   description: Time series with double floating point data points.
   name: numeric
-  neatId: http://purl.org/cognite/neat/neatId_12e55cfb_60be_482c_99b3_02c0edf950d1
+  neatId: http://purl.org/cognite/neat/neatId_797b05f5_c67d_4aed_a40b_6a6042f16321
   value: numeric
 - collection: timeseriesType
   description: Time series with string data points.
   name: string
-  neatId: http://purl.org/cognite/neat/neatId_5f9adb90_fad6_4d4e_ba7b_5a7e28fcc04c
+  neatId: http://purl.org/cognite/neat/neatId_97f686d4_c02a_460e_991a_e7fd109c7c01
   value: string
 metadata:
   created: '2024-08-29T13:49:56.696000'
@@ -24,7 +28,7 @@ properties:
   description: An automatically updated list of activities related to the asset.
   is_list: true
   name: Activities
-  neatId: http://purl.org/cognite/neat/neatId_1fe7871c_f6e0_40ad_bc3b_d2ff70986d9b
+  neatId: http://purl.org/cognite/neat/neatId_9058e127_cdfa_45ae_a6c0_fcdb199264e1
   value_type: ClassicEvent
   view: ClassicAsset
   view_property: activities
@@ -32,7 +36,7 @@ properties:
   description: An automatically updated list of assets with this asset as their parent.
   is_list: true
   name: Children
-  neatId: http://purl.org/cognite/neat/neatId_76c4ffb3_409a_41af_8431_ee6212825fce
+  neatId: http://purl.org/cognite/neat/neatId_127f7603_6370_469a_a31f_f40e92697fb6
   value_type: ClassicAsset
   view: ClassicAsset
   view_property: children
@@ -41,7 +45,7 @@ properties:
   description: Description of the instance
   immutable: false
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_fadae7fd_ac77_4c26_bfe8_d78ed13f91f9
+  neatId: http://purl.org/cognite/neat/neatId_c3275410_d533_4e82_9392_84a69571f3f0
   nullable: true
   value_type: text
   view: ClassicAsset
@@ -50,7 +54,7 @@ properties:
   description: An automatically updated list of equipment related to the asset.
   is_list: true
   name: Equipment
-  neatId: http://purl.org/cognite/neat/neatId_ce6851fe_6292_455e_b2f4_fc2fa1eac1fe
+  neatId: http://purl.org/cognite/neat/neatId_de038f8e_9ed6_439b_84da_f85386607136
   value_type: ClassicEquipment
   view: ClassicAsset
   view_property: equipment
@@ -58,7 +62,7 @@ properties:
   description: An automatically updated list of files related to the asset.
   is_list: true
   name: Files
-  neatId: http://purl.org/cognite/neat/neatId_906d7886_b9dd_4b30_850e_fdf9e20f7d4c
+  neatId: http://purl.org/cognite/neat/neatId_8d2a9b16_fd29_4cde_9578_7038c13dabd4
   value_type: ClassicFile
   view: ClassicAsset
   view_property: files
@@ -67,7 +71,7 @@ properties:
   description: Text based labels for generic use, limited to 1000
   immutable: false
   is_list: true
-  neatId: http://purl.org/cognite/neat/neatId_eb983130_95f3_4ff3_9ff9_0cdbee80fa55
+  neatId: http://purl.org/cognite/neat/neatId_b11b5446_1b50_47f3_bc42_7f8abef437fe
   nullable: true
   value_type: text
   view: ClassicAsset
@@ -78,7 +82,7 @@ properties:
   immutable: false
   index: name
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_b76eb741_cd49_4cee_9dd6_6eed480a2d3c
+  neatId: http://purl.org/cognite/neat/neatId_bec8eafc_4c53_401b_98dc_57cdb98525ef
   nullable: true
   value_type: text
   view: ClassicAsset
@@ -90,7 +94,7 @@ properties:
   immutable: false
   is_list: false
   name: Parent
-  neatId: http://purl.org/cognite/neat/neatId_f9455ec3_3ab1_4e43_95a5_4324d2f0f87a
+  neatId: http://purl.org/cognite/neat/neatId_53e67f4d_f847_4406_a20e_25d9e24fca86
   nullable: true
   value_type: ClassicAsset
   view: ClassicAsset
@@ -103,7 +107,7 @@ properties:
   immutable: false
   is_list: true
   name: Path
-  neatId: http://purl.org/cognite/neat/neatId_493effe7_8181_49c1_a60e_ae5634058270
+  neatId: http://purl.org/cognite/neat/neatId_97d45ff7_058b_40c0_8d34_5572564f19d3
   nullable: true
   value_type: ClassicAsset
   view: ClassicAsset
@@ -115,7 +119,7 @@ properties:
   immutable: false
   is_list: false
   name: Root
-  neatId: http://purl.org/cognite/neat/neatId_24af56f2_a871_4908_88ec_6cd5d0ac458d
+  neatId: http://purl.org/cognite/neat/neatId_30ddc92c_4a30_4743_aff4_ed0270a39a21
   nullable: true
   value_type: ClassicAsset
   view: ClassicAsset
@@ -127,7 +131,7 @@ properties:
   immutable: false
   index: source
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_a5343965_96fe_4f6a_aedf_1c31bba6f54d
+  neatId: http://purl.org/cognite/neat/neatId_2ae86694_8a5d_42ca_9f61_105379cbce73
   nullable: true
   value_type: ClassicSourceSystem
   view: ClassicAsset
@@ -136,7 +140,7 @@ properties:
   description: An automatically updated list of time series related to the asset.
   is_list: true
   name: Time series
-  neatId: http://purl.org/cognite/neat/neatId_dc652eca_a470_42bd_be27_39a996021deb
+  neatId: http://purl.org/cognite/neat/neatId_a59ab1b1_c3d5_4f53_bf4d_473ab9e25b0e
   value_type: ClassicTimeSeries
   view: ClassicAsset
   view_property: timeSeries
@@ -144,7 +148,7 @@ properties:
   description: An automatically updated list of activities related to the equipment.
   is_list: true
   name: Activities
-  neatId: http://purl.org/cognite/neat/neatId_d64c0f48_71d6_4e87_99ec_f8b1ae58c28b
+  neatId: http://purl.org/cognite/neat/neatId_9d2e445e_51eb_4abb_b4c8_dc67697d728e
   value_type: ClassicEvent
   view: ClassicEquipment
   view_property: activities
@@ -155,11 +159,20 @@ properties:
   immutable: false
   is_list: false
   name: Asset
-  neatId: http://purl.org/cognite/neat/neatId_c40e111e_19dd_44a2_9814_118a9cd3b80a
+  neatId: http://purl.org/cognite/neat/neatId_14907de8_b97f_4696_ac7c_65d87d969049
   nullable: true
   value_type: ClassicAsset
   view: ClassicEquipment
   view_property: asset
+- container: ClassicEquipment
+  container_property: classicEquipmentGUID
+  immutable: false
+  is_list: false
+  neatId: http://purl.org/cognite/neat/neatId_daffaf42_d75c_436f_beac_91199f70932f
+  nullable: true
+  value_type: text
+  view: ClassicEquipment
+  view_property: classicEquipmentGUID
 - connection: direct
   container: cdf_cdm:CogniteEquipment
   container_property: files
@@ -167,7 +180,7 @@ properties:
   immutable: false
   is_list: true
   name: Files
-  neatId: http://purl.org/cognite/neat/neatId_ebd5b40e_895e_45d7_b0d2_20669c1de5bd
+  neatId: http://purl.org/cognite/neat/neatId_72cca8d9_9a0d_4e79_93c9_cef63b3d1889
   nullable: true
   value_type: ClassicFile
   view: ClassicEquipment
@@ -179,7 +192,7 @@ properties:
   immutable: false
   index: source
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_76263d79_f08a_427c_b83e_4fa55c40426d
+  neatId: http://purl.org/cognite/neat/neatId_bd31051b_63c6_4226_8836_d9f3713afef3
   nullable: true
   value_type: ClassicSourceSystem
   view: ClassicEquipment
@@ -188,7 +201,7 @@ properties:
   description: An automatically updated list of time series related to the equipment.
   is_list: true
   name: Time series
-  neatId: http://purl.org/cognite/neat/neatId_c56875ff_f32e_4e99_9897_449baa5ae01b
+  neatId: http://purl.org/cognite/neat/neatId_f94199fc_3523_450d_84d7_6ad0df10cc4f
   value_type: ClassicTimeSeries
   view: ClassicEquipment
   view_property: timeSeries
@@ -197,7 +210,7 @@ properties:
   description: Alternative names for the node
   immutable: false
   is_list: true
-  neatId: http://purl.org/cognite/neat/neatId_ef151265_c942_4246_b54f_737a13c8506b
+  neatId: http://purl.org/cognite/neat/neatId_4dc1493d_2f7d_4c3e_8556_97b1c13ea6ab
   nullable: true
   value_type: text
   view: ClassicEvent
@@ -209,7 +222,7 @@ properties:
   immutable: false
   is_list: true
   name: Assets
-  neatId: http://purl.org/cognite/neat/neatId_7b47cf3c_0a54_4f45_a68d_c0e9fa556198
+  neatId: http://purl.org/cognite/neat/neatId_4ec2a68e_1030_403b_b107_c998880da468
   nullable: true
   value_type: ClassicAsset
   view: ClassicEvent
@@ -219,7 +232,7 @@ properties:
   description: Description of the instance
   immutable: false
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_90a8df89_4f31_469f_8940_1ff7ac74ef58
+  neatId: http://purl.org/cognite/neat/neatId_8890ae4a_6429_4002_9cae_78c3e4f868f7
   nullable: true
   value_type: text
   view: ClassicEvent
@@ -230,7 +243,7 @@ properties:
   immutable: false
   index: endTime
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_5581c388_1913_46b3_a573_9592a077310f
+  neatId: http://purl.org/cognite/neat/neatId_8ef52490_bcd6_45cf_92db_532fa19cac82
   nullable: true
   value_type: timestamp
   view: ClassicEvent
@@ -242,7 +255,7 @@ properties:
   immutable: false
   is_list: true
   name: Equipment
-  neatId: http://purl.org/cognite/neat/neatId_38a3f4dd_a63e_441e_b47f_469fcb073d43
+  neatId: http://purl.org/cognite/neat/neatId_b19b32c3_aa6e_43dc_a27d_c9f76a294b63
   nullable: true
   value_type: ClassicEquipment
   view: ClassicEvent
@@ -252,7 +265,7 @@ properties:
   description: Text based labels for generic use, limited to 1000
   immutable: false
   is_list: true
-  neatId: http://purl.org/cognite/neat/neatId_9418db99_c4bb_41e2_8992_7b58f380265d
+  neatId: http://purl.org/cognite/neat/neatId_0d4ee2f5_9f69_4bed_9425_1cfb3f67206c
   nullable: true
   value_type: text
   view: ClassicEvent
@@ -264,7 +277,7 @@ properties:
   immutable: false
   index: source
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_eaf1cd71_2e00_45ee_a122_5fe7e3c3cb2d
+  neatId: http://purl.org/cognite/neat/neatId_c5969c32_e96b_4c94_832f_5364b838fc2a
   nullable: true
   value_type: ClassicSourceSystem
   view: ClassicEvent
@@ -275,7 +288,7 @@ properties:
   immutable: false
   index: startTime
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_79d42175_40b7_46de_a1a9_ac2f75e4d86a
+  neatId: http://purl.org/cognite/neat/neatId_25111812_f05c_47f5_901e_f82ccc6ed099
   nullable: true
   value_type: timestamp
   view: ClassicEvent
@@ -287,7 +300,7 @@ properties:
   immutable: false
   is_list: true
   name: Time series
-  neatId: http://purl.org/cognite/neat/neatId_ab14ad7e_b50a_411b_82d8_f4b1dd32668a
+  neatId: http://purl.org/cognite/neat/neatId_8741da5d_97e2_4d68_8d0f_730f17042d9d
   nullable: true
   value_type: ClassicTimeSeries
   view: ClassicEvent
@@ -299,7 +312,7 @@ properties:
   immutable: false
   is_list: true
   name: Assets
-  neatId: http://purl.org/cognite/neat/neatId_ddbf417a_20d8_49ba_bb68_f697b73f8430
+  neatId: http://purl.org/cognite/neat/neatId_49ac77e9_21fd_4987_9c85_48cc42fa6583
   nullable: true
   value_type: ClassicAsset
   view: ClassicFile
@@ -311,7 +324,7 @@ properties:
   immutable: false
   is_list: false
   name: Directory
-  neatId: http://purl.org/cognite/neat/neatId_34927e5d_2ee8_4dbe_ae17_385845980975
+  neatId: http://purl.org/cognite/neat/neatId_4076aa57_8d74_414c_bac8_0a358e471ecc
   nullable: true
   value_type: text
   view: ClassicFile
@@ -320,7 +333,7 @@ properties:
   description: An automatically updated list of equipment this file is related to.
   is_list: true
   name: Equipment
-  neatId: http://purl.org/cognite/neat/neatId_44f0cf23_e566_491e_9e59_626153049388
+  neatId: http://purl.org/cognite/neat/neatId_7810e930_e85f_4dbf_afc1_0cae559aa035
   value_type: ClassicEquipment
   view: ClassicFile
   view_property: equipment
@@ -329,7 +342,7 @@ properties:
   description: Text based labels for generic use, limited to 1000
   immutable: false
   is_list: true
-  neatId: http://purl.org/cognite/neat/neatId_9701f440_976e_4b76_a6ab_f42943fe5e99
+  neatId: http://purl.org/cognite/neat/neatId_637da076_d2a6_41dc_b0f3_e8800f17ba5f
   nullable: true
   value_type: text
   view: ClassicFile
@@ -340,7 +353,7 @@ properties:
   immutable: false
   is_list: false
   name: MIME type
-  neatId: http://purl.org/cognite/neat/neatId_729466bb_25e2_42dc_a120_da7f0598e934
+  neatId: http://purl.org/cognite/neat/neatId_ce1d8507_aec7_4189_922d_8084909ecd71
   nullable: true
   value_type: text
   view: ClassicFile
@@ -351,7 +364,7 @@ properties:
   immutable: false
   index: name
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_6faf4ff6_9690_4cf4_a846_e82258a74823
+  neatId: http://purl.org/cognite/neat/neatId_7f766b8e_dd9a_41b5_a989_12607e27c4ba
   nullable: true
   value_type: text
   view: ClassicFile
@@ -363,7 +376,7 @@ properties:
   immutable: false
   index: source
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_9e6dc9a6_7770_451b_aee8_d275255eebe7
+  neatId: http://purl.org/cognite/neat/neatId_050092ac_080f_46e8_bdf9_7dfa61158191
   nullable: true
   value_type: ClassicSourceSystem
   view: ClassicFile
@@ -374,7 +387,7 @@ properties:
   immutable: false
   index: sourceCreatedTime
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_0dba587e_c182_4d6d_a9e5_2dedb6d2f75f
+  neatId: http://purl.org/cognite/neat/neatId_16fa6dbb_58a3_481d_9bfb_48940cd34d5a
   nullable: true
   value_type: timestamp
   view: ClassicFile
@@ -385,7 +398,7 @@ properties:
   immutable: false
   index: sourceUpdatedTime
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_abb2c94f_3622_4d6a_8643_99aebc308448
+  neatId: http://purl.org/cognite/neat/neatId_9d626527_9cf4_4df9_b82a_c71aa7ebe4cb
   nullable: true
   value_type: timestamp
   view: ClassicFile
@@ -394,7 +407,7 @@ properties:
   container_property: name
   immutable: false
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_7ff8a8c8_1ce7_4f16_af52_63308b049586
+  neatId: http://purl.org/cognite/neat/neatId_77d10af9_1638_4800_9a8f_0e31c7fd4c16
   nullable: true
   value_type: text
   view: ClassicSourceSystem
@@ -404,7 +417,7 @@ properties:
     to.
   is_list: true
   name: Activities
-  neatId: http://purl.org/cognite/neat/neatId_9f48d2ae_46bc_44fc_83d6_e65ff3048b10
+  neatId: http://purl.org/cognite/neat/neatId_4dd4937e_8c18_42ae_a03e_ac6df70f3159
   value_type: ClassicEvent
   view: ClassicTimeSeries
   view_property: activities
@@ -415,7 +428,7 @@ properties:
   immutable: false
   is_list: true
   name: Assets
-  neatId: http://purl.org/cognite/neat/neatId_d0ca2734_86e2_4dfe_8b80_8fa19d32a7e7
+  neatId: http://purl.org/cognite/neat/neatId_78d5fc39_8487_45d8_a118_b3519f944ead
   nullable: true
   value_type: ClassicAsset
   view: ClassicTimeSeries
@@ -425,7 +438,7 @@ properties:
   description: Description of the instance
   immutable: false
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_7789be71_2900_4a41_9d5c_800784b78a3b
+  neatId: http://purl.org/cognite/neat/neatId_421f69b9_460d_4bce_ae79_efc233eb6a7a
   nullable: true
   value_type: text
   view: ClassicTimeSeries
@@ -437,7 +450,7 @@ properties:
   immutable: false
   is_list: true
   name: Equipment
-  neatId: http://purl.org/cognite/neat/neatId_641ade9e_f5f2_4acc_beec_f23bce104997
+  neatId: http://purl.org/cognite/neat/neatId_786d14cf_cf7d_4859_92a7_51bf19b557e0
   nullable: true
   value_type: ClassicEquipment
   view: ClassicTimeSeries
@@ -449,7 +462,7 @@ properties:
   immutable: false
   is_list: false
   name: Is step
-  neatId: http://purl.org/cognite/neat/neatId_7cc34589_3792_434b_ac7d_87b4cbf40687
+  neatId: http://purl.org/cognite/neat/neatId_3c04c07d_15e9_4ef2_95cd_89410215513a
   nullable: false
   value_type: boolean
   view: ClassicTimeSeries
@@ -460,7 +473,7 @@ properties:
   immutable: true
   is_list: false
   name: Type
-  neatId: http://purl.org/cognite/neat/neatId_6d8b8de3_22bc_46eb_9643_cc9d2d85745b
+  neatId: http://purl.org/cognite/neat/neatId_82015271_2d18_4d19_a4f4_ab74f0c2ef1b
   nullable: false
   value_type: enum(collection=timeseriesType)
   view: ClassicTimeSeries
@@ -470,7 +483,7 @@ properties:
   description: Alternative names for the node
   immutable: false
   is_list: true
-  neatId: http://purl.org/cognite/neat/neatId_aaca9ee2_7ca6_4c0f_8422_6703c98d3ee3
+  neatId: http://purl.org/cognite/neat/neatId_5848e41f_1b5c_401a_ab59_72822e0dcc70
   nullable: true
   value_type: text
   view: ClassicTimeSeries
@@ -481,7 +494,7 @@ properties:
   immutable: false
   index: name
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_a031170a_daf7_4e14_b664_ee1eda4f98c9
+  neatId: http://purl.org/cognite/neat/neatId_38c55983_af5b_4f62_ac62_8c788c12009e
   nullable: true
   value_type: text
   view: ClassicTimeSeries
@@ -491,7 +504,7 @@ properties:
   description: Text based labels for generic use, limited to 1000
   immutable: false
   is_list: true
-  neatId: http://purl.org/cognite/neat/neatId_b2d71ecb_c9e2_4e35_b04c_4a8f59645622
+  neatId: http://purl.org/cognite/neat/neatId_b30b7973_0a45_412e_a1e6_2f791ae37ae4
   nullable: true
   value_type: text
   view: ClassicTimeSeries
@@ -503,7 +516,7 @@ properties:
   immutable: false
   index: source
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_2c65ca17_9eb3_4b18_a11e_fa46c6cec923
+  neatId: http://purl.org/cognite/neat/neatId_9fb95a34_b79b_490f_8362_fc8009874b01
   nullable: true
   value_type: ClassicSourceSystem
   view: ClassicTimeSeries
@@ -514,7 +527,7 @@ properties:
   immutable: false
   is_list: false
   name: Source unit
-  neatId: http://purl.org/cognite/neat/neatId_00456ce8_8572_4500_8258_bbe07d5dfb27
+  neatId: http://purl.org/cognite/neat/neatId_7abfaf90_2178_4e02_8b2f_95bb221d7a30
   nullable: true
   value_type: text
   view: ClassicTimeSeries
@@ -526,7 +539,7 @@ properties:
   immutable: false
   is_list: false
   name: Unit
-  neatId: http://purl.org/cognite/neat/neatId_2bc4cb17_d8ac_40b9_a410_f36e5bbd57dc
+  neatId: http://purl.org/cognite/neat/neatId_650ad782_a303_4c06_b700_16ba3d1c695b
   nullable: true
   value_type: cdf_cdm:CogniteUnit(version=v1)
   view: ClassicTimeSeries
@@ -535,43 +548,43 @@ views:
 - description: Represents a single unit of measurement
   implements: cdf_cdm:CogniteDescribable(version=v1)
   in_model: true
-  neatId: http://purl.org/cognite/neat/neatId_8a663a54_b4bf_4746_972f_c665e72470df
+  neatId: http://purl.org/cognite/neat/neatId_9be483e1_8313_4558_b7df_0268a58a6bc8
   view: cdf_cdm:CogniteUnit(version=v1)
 - description: Assets represent systems that support industrial functions or processes.
     Assets are often called 'functional location'.
   implements: cdf_cdm:CogniteAsset(version=v1)
   in_model: true
   name: Asset
-  neatId: http://purl.org/cognite/neat/neatId_af3855ac_72c3_494a_b925_e99527020031
+  neatId: http://purl.org/cognite/neat/neatId_be2316ba_03ce_4f6a_9ee3_30c94dcb15ad
   view: ClassicAsset
 - description: Equipment represents physical supplies or devices.
   implements: cdf_cdm:CogniteEquipment(version=v1)
   in_model: true
   name: Equipment
-  neatId: http://purl.org/cognite/neat/neatId_1894d6d9_88d3_4a0e_8888_d7d9fdf9a4d1
+  neatId: http://purl.org/cognite/neat/neatId_0e02efdf_7279_49e7_a027_a77002e69134
   view: ClassicEquipment
 - description: Represents activities. Activities typically happen over a period and
     have a start and end time.
   implements: cdf_cdm:CogniteActivity(version=v1)
   in_model: true
   name: Activity
-  neatId: http://purl.org/cognite/neat/neatId_4b071ae8_956d_4b0f_aff8_9651f1942c68
+  neatId: http://purl.org/cognite/neat/neatId_539c7bd5_adb5_466a_909d_607ed7a3cd5c
   view: ClassicEvent
 - description: Represents files.
   implements: cdf_cdm:CogniteFile(version=v1)
   in_model: true
   name: File
-  neatId: http://purl.org/cognite/neat/neatId_48e36681_a7b2_4a87_b475_92168f5a42e3
+  neatId: http://purl.org/cognite/neat/neatId_3f7a661f_5b2b_4a4c_9ae8_e443d8c0ee1c
   view: ClassicFile
 - description: The CogniteSourceSystem core concept is used to standardize the way
     source system is stored.
   implements: cdf_cdm:CogniteSourceSystem(version=v1)
   in_model: true
-  neatId: http://purl.org/cognite/neat/neatId_c7a65b9c_35de_49cd_a361_98b92a241334
+  neatId: http://purl.org/cognite/neat/neatId_53b8b70c_eb54_4b92_9d9d_d77722badea0
   view: ClassicSourceSystem
 - description: Represents a series of data points in time order.
   implements: cdf_cdm:CogniteTimeSeries(version=v1)
   in_model: true
   name: Time series
-  neatId: http://purl.org/cognite/neat/neatId_4d198457_0f47_467d_ba61_193f59259e41
+  neatId: http://purl.org/cognite/neat/neatId_a5f93a7e_9e4a_4229_92bc_ef8e372d86a2
   view: ClassicTimeSeries
