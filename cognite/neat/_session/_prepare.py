@@ -333,6 +333,28 @@ class InstancePrepareAPI:
         transformer = ConnectionToLiteral(subject_type, subject_predicate)
         self._state.instances.store.transform(transformer)
 
+    def classic_to_core(self) -> None:
+        """Prepares extracted CDF classic graph for the Core Data model.
+
+        !!! note "This method bundles several graph transformers which"
+            - Convert relationships to edges
+            - Convert TimeSeries.type from bool to enum
+            - Convert all properties 'source' to a connection to SourceSystem
+            - Convert all properties 'labels' from a connection to a string
+
+        Example:
+            Apply classic to core transformations:
+            ```python
+            neat.prepare.instances.classic_to_core()
+            ```
+        """
+        self.relationships_as_edges()
+        self.convert_data_type(
+            ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
+        )
+        self.property_to_type((None, "source"), "SourceSystem", "name")
+        self.connection_to_data_type((None, "labels"))
+
 
 @session_class_wrapper
 class DataModelPrepareAPI:

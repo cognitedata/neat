@@ -44,14 +44,7 @@ class TestExtractToLoadFlow:
         for extractor in classic_windfarm.create_extractors():
             neat._state.instances.store.write(extractor)
 
-        # Sequences is not yet supported
-        neat.prepare.instances.relationships_as_edges()
-
-        neat.prepare.instances.convert_data_type(
-            ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
-        )
-        neat.prepare.instances.property_to_type((None, "source"), "SourceSystem", "name")
-        neat.prepare.instances.connection_to_data_type((None, "labels"))
+        neat.prepare.instances.classic_to_core()
 
         neat.infer()
 
