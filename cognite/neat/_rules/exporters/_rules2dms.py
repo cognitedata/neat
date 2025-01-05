@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Generic, Literal
 
+from cognite.client import data_modeling as dm
 from cognite.client.data_classes._base import (
     T_CogniteResourceList,
     T_WritableCogniteResource,
@@ -19,7 +20,7 @@ from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat._client import DataModelingLoader, NeatClient
 from cognite.neat._client._api.data_modeling_loaders import MultiCogniteAPIError, T_WritableCogniteResourceList
-from cognite.neat._client.data_classes.data_modeling import Component
+from cognite.neat._client.data_classes.data_modeling import Component, ViewApplyDict
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.warnings import (
@@ -199,6 +200,10 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
     ) -> Iterable[UploadResult]:
         schema = self.export(rules)
 
+        # The CDF UI does not deal well with a child view overwriting a parent property with the same name
+        # This is a workaround to remove the duplicated properties
+        self._remove_duplicated_properties(schema.views, client)
+
         categorized_items_by_loader = self._categorize_by_loader(client, schema)
 
         is_failing = self.existing == "fail" and any(
@@ -376,3 +381,32 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                 for data_model in data_models
                 if (data_model.space, data_model.external_id) != (space, external_id)
             ]
+
+    @staticmethod
+    def _remove_duplicated_properties(views: ViewApplyDict, client: NeatClient) -> None:
+        parent_view_ids = {parent for view in views.values() for parent in view.implements}
+        parent_view_list = client.data_modeling.views.retrieve(
+            list(parent_view_ids), include_inherited_properties=False
+        )
+        parent_view_by_id = {view.as_id(): view.as_write() for view in parent_view_list}
+        for view in views.values():
+            if view.implements is None:
+                continue
+            for parent_id in view.implements:
+                if not (parent_view := parent_view_by_id.get(parent_id)):
+                    continue
+                for shared_prop_id in set(view.properties or {}) & set(parent_view.properties or {}):
+                    if view.properties is None or parent_view.properties is None:
+                        continue
+                    prop = view.properties[shared_prop_id]
+                    parent_prop = parent_view.properties[shared_prop_id]
+                    if (
+                        isinstance(prop, dm.MappedPropertyApply)
+                        and isinstance(parent_prop, dm.MappedPropertyApply)
+                        and (
+                            prop.container_property_identifier == parent_prop.container_property_identifier
+                            and prop.container == parent_prop.container
+                            and prop.source == parent_prop.source
+                        )
+                    ):
+                        view.properties.pop(shared_prop_id)
