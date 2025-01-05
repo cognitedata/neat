@@ -8,6 +8,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._constants import (
     get_default_prefixes_and_namespaces,
 )
+from cognite.neat._graph import extractors
 from cognite.neat._graph.transformers import (
     AttachPropertyFromTargetToSource,
     ConnectionToLiteral,
@@ -353,7 +354,12 @@ class InstancePrepareAPI:
             ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
         )
         self.property_to_type((None, "source"), "SourceSystem", "name")
-        self.connection_to_data_type((None, "labels"))
+        for type_ in [
+            extractors.EventsExtractor._default_rdf_type,
+            extractors.AssetsExtractor._default_rdf_type,
+            extractors.FilesExtractor._default_rdf_type,
+        ]:
+            self.connection_to_data_type((type_, "labels"))
 
 
 @session_class_wrapper
