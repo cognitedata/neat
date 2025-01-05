@@ -801,7 +801,6 @@ class AddClassImplements(RulesTransformer[InformationRules, InformationRules]):
         for class_ in output.classes:
             if class_.class_.suffix.endswith(self.suffix):
                 class_.implements = [ClassEntity(prefix=class_.class_.prefix, suffix=self.implements)]
-        output.metadata.version = f"{output.metadata.version}.implements_{self.implements}"
         return output
 
     @property
