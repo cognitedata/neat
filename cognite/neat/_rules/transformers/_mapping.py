@@ -7,9 +7,8 @@ from typing import Any, ClassVar, Literal
 from cognite.client import data_modeling as dm
 
 from cognite.neat._client import NeatClient
-from cognite.neat._constants import get_asset_read_only_properties_with_connection
 from cognite.neat._issues.errors import CDFMissingClientError, NeatValueError, ResourceNotFoundError
-from cognite.neat._issues.warnings import NeatValueWarning, PropertyOverwritingWarning
+from cognite.neat._issues.warnings import PropertyOverwritingWarning
 from cognite.neat._rules.models import DMSRules, SheetList
 from cognite.neat._rules.models.data_types import Enum
 from cognite.neat._rules.models.dms import DMSEnum, DMSProperty, DMSView
@@ -108,23 +107,21 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
     Args:
         mapping: The mapping to use represented as a DMSRules object.
         data_type_conflict: How to handle data type conflicts. The default is "overwrite".
-        move_connections: For all view mappings, move the connections to the new view.
-            Default is True.
+            A data type conflicts occurs when the data type of a property in the mapping is different from the
+            data type of the property in the input rules. If "overwrite" the data type in the input rules is overwritten
+            with the data type in the mapping.
     """
 
     _mapping_fields: ClassVar[frozenset[str]] = frozenset(
         ["connection", "value_type", "nullable", "immutable", "is_list", "default", "index", "constraint"]
     )
 
-    def __init__(
-        self, mapping: DMSRules, data_type_conflict: Literal["overwrite"] = "overwrite", move_connections: bool = True
-    ) -> None:
+    def __init__(self, mapping: DMSRules, data_type_conflict: Literal["overwrite"] = "overwrite") -> None:
         self.mapping = mapping
         self.data_type_conflict = data_type_conflict
-        self.move_connections = move_connections
 
     @cached_property
-    def _mapping_view_by_entity_id(self) -> dict[str, DMSView]:
+    def _mapping_view_by_external_id(self) -> dict[str, DMSView]:
         return {view.view.external_id: view for view in self.mapping.views}
 
     @cached_property
@@ -137,73 +134,52 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
         input_rules = rules
         new_rules = input_rules.model_copy(deep=True)
 
-        for view in new_rules.views:
-            if mapping_view := self._mapping_view_by_entity_id.get(view.view.external_id):
-                view.implements = mapping_view.implements
-
-        # This is a special case, if this property is in the mapping, we want ot automatically add the path and parent
-        # properties to the view.
-        asset_parent_property = ContainerEntity(space="cdf_cdm", externalId="CogniteAsset"), "assetHierarchy_parent"
-        read_only_properties: list[DMSProperty] = []
-        for prop in new_rules.properties:
-            key = (prop.view.external_id, prop.view_property)
-            if key not in self._mapping_property_by_view_property:
-                continue
-            mapping_prop = self._mapping_property_by_view_property[key]
-            to_overwrite, conflicts = self._find_overwrites(prop, mapping_prop)
-            if conflicts and self.data_type_conflict == "overwrite":
-                warnings.warn(
-                    PropertyOverwritingWarning(prop.view.as_id(), "view", prop.view_property, tuple(conflicts)),
-                    stacklevel=2,
-                )
-            elif conflicts:
-                raise NeatValueError(f"Conflicting properties for {prop.view}.{prop.view_property}: {conflicts}")
-
-            for field_name, value in to_overwrite.items():
-                setattr(prop, field_name, value)
-            prop.container = mapping_prop.container
-            prop.container_property = mapping_prop.container_property
-
-            if (prop.container, prop.container_property) == asset_parent_property:
-                # Add the read-only properties to the view.
-                # Note we have to do this after the current loop as we are iterating over the properties and
-                # thus we cannot modify the list.
-                for read_only_prop in get_asset_read_only_properties_with_connection():
-                    # The value type of path and root will always be the same as the parent property.
-                    new_read_only_prop = read_only_prop.model_copy(
-                        update={"view": prop.view, "value_type": prop.value_type}
-                    )
-                    read_only_properties.append(new_read_only_prop)
-
-        if read_only_properties:
-            new_rules.properties.extend(read_only_properties)
-
-        # Add missing views that used as value types. This can occur if one property maps to another property
-        # that is using a value type that is not in the input rules.
-        existing_views = {view.view for view in new_rules.views}
-        new_value_types = {
-            prop.value_type
-            for prop in new_rules.properties
-            if isinstance(prop.value_type, ViewEntity) and prop.value_type not in existing_views
-        }
-        for new_value_type in new_value_types:
-            if mapping_view := self._mapping_view_by_entity_id.get(new_value_type.external_id):
-                new_rules.views.append(mapping_view)
+        views_by_external_id = {view.view.external_id: view for view in new_rules.views}
+        for mapping_view in self.mapping.views:
+            if existing_view := views_by_external_id.get(mapping_view.view.external_id):
+                existing_view.implements = mapping_view.implements
             else:
-                warnings.warn(NeatValueWarning(f"View {new_value_type} not found in mapping"), stacklevel=2)
+                # We need to add all the views in the mapping that are not in the input rules.
+                # This is to ensure that all ValueTypes are present in the resulting rules.
+                # For example, if a property is a direct relation to an Equipment view, we need to add
+                # the Equipment view to the rules.
+                new_rules.views.append(mapping_view)
 
-        # Add missing enums
-        existing_enum_collections = {item.collection for item in new_rules.enum or []}
-        new_enums = {
-            prop.value_type.collection
-            for prop in new_rules.properties
-            if isinstance(prop.value_type, Enum) and prop.value_type.collection not in existing_enum_collections
+        properties_by_view_property = {
+            (prop.view.external_id, prop.view_property): prop for prop in new_rules.properties
         }
-        if new_enums:
-            new_rules.enum = new_rules.enum or SheetList[DMSEnum]([])
-            for item in self.mapping.enum or []:
-                if item.collection in new_enums:
-                    new_rules.enum.append(item)
+        existing_enum_collections = {item.collection for item in new_rules.enum or []}
+        for mapping_prop in self.mapping.properties:
+            if existing_prop := properties_by_view_property.get(
+                (mapping_prop.view.external_id, mapping_prop.view_property)
+            ):
+                to_overwrite, conflicts = self._find_overwrites(existing_prop, mapping_prop)
+                if conflicts and self.data_type_conflict == "overwrite":
+                    warnings.warn(
+                        PropertyOverwritingWarning(
+                            existing_prop.view.as_id(), "view", existing_prop.view_property, tuple(conflicts)
+                        ),
+                        stacklevel=2,
+                    )
+                elif conflicts:
+                    raise NeatValueError(
+                        f"Conflicting properties for {existing_prop.view}.{existing_prop.view_property}: {conflicts}"
+                    )
+
+                for field_name, value in to_overwrite.items():
+                    setattr(existing_prop, field_name, value)
+                existing_prop.container = mapping_prop.container
+                existing_prop.container_property = mapping_prop.container_property
+            elif isinstance(mapping_prop.value_type, ViewEntity):
+                # All connections must be included in the rules.
+                new_rules.properties.append(mapping_prop)
+
+            if (
+                isinstance(mapping_prop.value_type, Enum)
+                and mapping_prop.value_type.collection not in existing_enum_collections
+            ):
+                new_rules.enum = new_rules.enum or SheetList[DMSEnum]([])
+                new_rules.enum.append(mapping_prop.value_type)
 
         return new_rules
 
