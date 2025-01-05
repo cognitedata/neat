@@ -202,14 +202,7 @@ class TestExtractToLoadFlow:
         for extractor in classic_windfarm.create_extractors():
             neat._state.instances.store.write(extractor)
 
-        # Sequences is not yet supported
-        neat.drop.instances("Sequence")
-
-        neat.prepare.instances.relationships_as_edges()
-        neat.prepare.instances.convert_data_type(
-            ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
-        )
-        neat.prepare.instances.property_to_type((None, "source"), "SourceSystem", "name")
+        neat.prepare.instances.classic_to_core()
 
         neat.infer()
 
@@ -217,8 +210,9 @@ class TestExtractToLoadFlow:
 
         neat.verify()
 
+        neat.prepare.data_model.add_implements_to_classes("Edge", "Edge")
         neat.convert("dms", mode="edge_properties")
-        neat.mapping.data_model.classic_to_core("Classic", use_parent_property_name=True)
+        neat.mapping.data_model.classic_to_core("Classic")
 
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
