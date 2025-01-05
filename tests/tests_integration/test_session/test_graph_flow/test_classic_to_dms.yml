@@ -266,13 +266,14 @@ data_product:
     value_type: ClassicDataSet
     view: ClassicAssetToAssetEdge
     view_property: dataSetId
-  - container: sp_windfarm:ClassicAssetToAssetEdge
+  - connection: direct
+    container: sp_windfarm:ClassicAssetToAssetEdge
     container_property: labels
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_24933b83_7577_40a9_a491_f0b2ea1fca65
     neatId: http://purl.org/cognite/neat/neatId_680ac07a_2a93_4d62_bc83_5dc0d9441fa5
     nullable: true
-    value_type: text
+    value_type: ClassicLabel
     view: ClassicAssetToAssetEdge
     view_property: labels
   - container: sp_windfarm:ClassicAssetToAssetEdge
@@ -1842,7 +1843,9 @@ instances:
       dataSetId:
         externalId: DataSet_123
         space: sp_instance_space
-      labels: Label_metMast
+      labels:
+        externalId: Label_metMast
+        space: sp_instance_space
       type: http://purl.org/cognite/cdf-classic#Relationship
     source:
       externalId: ClassicAssetToAssetEdge
@@ -1860,7 +1863,9 @@ instances:
       dataSetId:
         externalId: DataSet_123
         space: sp_instance_space
-      labels: Label_metMast
+      labels:
+        externalId: Label_metMast
+        space: sp_instance_space
       type: http://purl.org/cognite/cdf-classic#Relationship
     source:
       externalId: ClassicAssetToAssetEdge
@@ -2196,13 +2201,14 @@ rules:
     value_type: ClassicDataSet
     view: ClassicAssetToAssetEdge
     view_property: dataSetId
-  - container: ClassicAssetToAssetEdge
+  - connection: direct
+    container: ClassicAssetToAssetEdge
     container_property: labels
     is_list: false
     logical: http://purl.org/cognite/neat/neatId_24933b83_7577_40a9_a491_f0b2ea1fca65
     neatId: http://purl.org/cognite/neat/neatId_680ac07a_2a93_4d62_bc83_5dc0d9441fa5
     nullable: true
-    value_type: text
+    value_type: ClassicLabel
     view: ClassicAssetToAssetEdge
     view_property: labels
   - container: ClassicAssetToAssetEdge
