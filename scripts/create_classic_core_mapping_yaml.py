@@ -20,5 +20,6 @@ def main() -> None:
     YAMLExporter().export_to_file(dms_rules, TARGET_FILE)
     print(f"[bold green]Wrote {TARGET_FILE.name}[/bold green]")
 
+
 if __name__ == "__main__":
     main()
