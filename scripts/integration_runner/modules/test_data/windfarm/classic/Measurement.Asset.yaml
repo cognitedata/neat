@@ -1,0 +1,9 @@
+externalId: Measurement
+name: Measurement
+description: Measurement
+dataSetId: 123
+metadata:
+  blob: data
+source: manufacturer2
+labels:
+- externalId: Measurement

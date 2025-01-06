@@ -1,0 +1,10 @@
+externalId: WT-01_forecast
+name: WT-01 forecast
+isString: false
+metadata:
+  blob: data
+unitExternalId: power:megaw
+assetId: 5
+isStep: false
+description: WT-01 forecast
+dataSetId: 124

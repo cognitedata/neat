@@ -1,0 +1,7 @@
+externalId: source_ds
+name: Source DS
+description: Source data set
+metadata:
+  some: extra
+  information: here
+writeProtected: true

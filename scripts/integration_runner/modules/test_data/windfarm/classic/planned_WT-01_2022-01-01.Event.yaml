@@ -1,0 +1,12 @@
+externalId: planned:WT-01:2022-01-01
+dataSetId: 125
+startTime: 400
+endTime: 500
+type: Maintenance
+subtype: Planned
+description: Planned maintenance
+metadata:
+  blob: data
+assetIds:
+- 5
+source: manufacturer1

@@ -1,0 +1,8 @@
+externalId: WT-02_to_MetMast
+sourceExternalId: WT-02
+sourceType: Asset
+targetExternalId: MetMast
+targetType: Asset
+dataSetId: 123
+labels:
+- externalId: metMast

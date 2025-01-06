@@ -7,6 +7,9 @@ default_env = "dev"
 # It will be updated by the 'cdf module upgrade' command.
 version = "0.3.23"
 
+[alpha_flags]
+classic = true
+
 
 [plugins]
 run = true

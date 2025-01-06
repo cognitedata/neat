@@ -1,0 +1,7 @@
+externalId: usecase_01
+name: Usecase 01
+description: Usecase 01 data set
+metadata:
+  some: other
+  information: here
+writeProtected: false

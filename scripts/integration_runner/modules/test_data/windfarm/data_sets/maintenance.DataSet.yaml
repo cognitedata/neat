@@ -1,0 +1,7 @@
+externalId: maintenance
+name: Maintenance
+description: Maintenance data set
+metadata:
+  some: other
+  information: here
+writeProtected: true
