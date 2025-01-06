@@ -27,3 +27,10 @@ class RegexViolationWarning(NeatWarning):
     identifier: str
     pattern_name: str
     motivation: str | None = None
+
+
+@dataclass(unsafe_hash=True)
+class MissingCogniteClientWarning(NeatWarning):
+    """Missing Cognite Client required for {functionality}"""
+
+    functionality: str
