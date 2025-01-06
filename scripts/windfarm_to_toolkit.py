@@ -1,3 +1,5 @@
+import yaml
+
 from tests.data import classic_windfarm
 from pathlib import Path
 from cognite.client.data_classes._base import WriteableCogniteResource
@@ -11,6 +13,8 @@ LOADER_BY_RESOURCE_TYPE = {
 }
 
 def main() -> None:
+    data_set_external_id_by_id = {item.id: item.external_id for item in classic_windfarm.DATASETS}
+    asset_external_id_by_id = {item.id: item.external_id for item in classic_windfarm.ASSETS}
     obj: WriteableCogniteResource
     for obj in [
         *classic_windfarm.DATASETS,
@@ -31,7 +35,15 @@ def main() -> None:
             else:
                 raise NotImplementedError
             filepath.parent.mkdir(exist_ok=True, parents=True)
-            filepath.write_text(obj.as_write().dump_yaml())
+            dumped = obj.as_write().dump(camel_case=True)
+            if data_set_id := dumped.pop("dataSetId", None):
+                dumped["dataSetExternalId"] = data_set_external_id_by_id[data_set_id]
+            if asset_ids := dumped.pop("assetIds", None):
+                dumped["assetExternalIds"] = [asset_external_id_by_id[asset_id] for asset_id in asset_ids]
+            if asset_id := dumped.pop("assetId", None):
+                dumped["assetExternalId"] = asset_external_id_by_id[asset_id]
+            dumped.pop("parentId", None)
+            filepath.write_text(yaml.safe_dump(dumped, sort_keys=False))
         else:
             print(f"Skipping {type(obj).__name__} as it does not have a resource folder")
 

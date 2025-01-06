@@ -1,4 +1,4 @@
 externalId: PowerGeneratingUnit
 name: Power generating unit
 description: Power generating unit
-dataSetId: 123
+dataSetExternalId: source_ds

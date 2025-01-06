@@ -1,4 +1,4 @@
 externalId: WindTurbine
 name: Wind turbine
 description: Wind turbine
-dataSetId: 123
+dataSetExternalId: source_ds

@@ -1,6 +1,5 @@
 name: Power curve Manufacturer 1
 description: Power curve from manufacturer 1
-assetId: 5
 externalId: power_curve_manufacturer1
 metadata:
   blob: data
@@ -18,3 +17,4 @@ columns:
   valueType: Double
   metadata:
     blob: data
+assetExternalId: WT-01

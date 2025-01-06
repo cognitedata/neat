@@ -1,9 +1,9 @@
 externalId: Utsira
 name: Utsira
 description: Utsira wind farm
-dataSetId: 123
 metadata:
   blob: data
 source: manufacturer1
 labels:
 - externalId: PowerGeneratingUnit
+dataSetExternalId: source_ds

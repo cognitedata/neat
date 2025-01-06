@@ -4,7 +4,7 @@ isString: false
 metadata:
   blob: data
 unitExternalId: power:megaw
-assetId: 5
 isStep: false
 description: WT-01 production
-dataSetId: 123
+dataSetExternalId: source_ds
+assetExternalId: WT-01

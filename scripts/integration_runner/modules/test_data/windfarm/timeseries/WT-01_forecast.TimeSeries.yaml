@@ -4,7 +4,7 @@ isString: false
 metadata:
   blob: data
 unitExternalId: power:megaw
-assetId: 5
 isStep: false
 description: WT-01 forecast
-dataSetId: 124
+dataSetExternalId: usecase_01
+assetExternalId: WT-01

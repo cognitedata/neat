@@ -3,6 +3,6 @@ name: WT-01 datasheet
 source: manufacturer1
 metadata:
   blob: data
-assetIds:
-- 5
-dataSetId: 123
+dataSetExternalId: source_ds
+assetExternalIds:
+- WT-01

@@ -1,12 +1,11 @@
 externalId: MetMast
 name: MetMast
-parentId: 7
 parentExternalId: Measurement
 description: Meteorological mast
-dataSetId: 123
 metadata:
   blob: data
 source: manufacturer2
 labels:
 - externalId: metMast
 - externalId: Measurement
+dataSetExternalId: source_ds

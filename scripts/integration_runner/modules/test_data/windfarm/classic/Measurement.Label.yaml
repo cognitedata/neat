@@ -1,4 +1,4 @@
 externalId: Measurement
 name: Measurement
 description: Measurement
-dataSetId: 123
+dataSetExternalId: source_ds
