@@ -143,7 +143,7 @@ def get_asset_read_only_properties_with_connection() -> "list[DMSProperty]":
     return [DMSProperty.model_validate(item) for item in (_ASSET_ROOT_PROPERTY, _ASSET_PATH_PROPERTY)]
 
 
-READONLY_PROPERTIES: Mapping[dm.ContainerId, frozenset[str]] = {
+READONLY_PROPERTIES_BY_CONTAINER: Mapping[dm.ContainerId, frozenset[str]] = {
     dm.ContainerId("cdf_cdm", "CogniteAsset"): frozenset(
         {"assetHierarchy_root", "assetHierarchy_path", "assetHierarchy_path_last_updated_time"}
     ),
@@ -151,5 +151,5 @@ READONLY_PROPERTIES: Mapping[dm.ContainerId, frozenset[str]] = {
 }
 
 
-def is_readonly_property(container: dm.ContainerId, identifier: str) -> bool:
-    return container in READONLY_PROPERTIES and identifier in READONLY_PROPERTIES[container]
+def is_readonly_property(container: dm.ContainerId, property_: str) -> bool:
+    return container in READONLY_PROPERTIES_BY_CONTAINER and property_ in READONLY_PROPERTIES_BY_CONTAINER[container]
