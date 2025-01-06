@@ -1,3 +1,4 @@
+import numpy as np
 from cognite.client.data_classes import (
     Asset,
     DataSet,
@@ -8,9 +9,13 @@ from cognite.client.data_classes import (
     Relationship,
     Sequence,
     SequenceColumn,
+    SequenceColumnList,
+    SequenceRow,
+    SequenceRows,
     TimeSeries,
 )
 
+from cognite.neat._client.data_classes.neat_sequence import NeatSequence
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._graph.extractors import (
     AssetsExtractor,
@@ -87,7 +92,7 @@ wind_turbine = Asset(
     name="WT-01",
     description="Wind turbine 01",
     data_set_id=ds_source.id,
-    metadata={"blob": "data"},
+    metadata={"blob": "data", "turbineType": "V112/3075"},
     source="manufacturer1",
     labels=[Label("WindTurbine"), Label("PowerGeneratingUnit")],
     parent_id=root.id,
@@ -102,7 +107,7 @@ wind_turbine2 = Asset(
     name="WT-02",
     description="Wind turbine 02",
     data_set_id=ds_source.id,
-    metadata={"blob": "data"},
+    metadata={"blob": "data", "turbineType": "V112/3075"},
     source="manufacturer1",
     labels=[Label("WindTurbine"), Label("PowerGeneratingUnit")],
     parent_id=root.id,
@@ -164,13 +169,8 @@ turbine_to_metmast2 = Relationship(
 
 RELATIONSHIPS = [turbine_to_metmast, turbine_to_metmast2]
 
-power_curve = Sequence(
-    id=1,
-    name="Power curve Manufacturer 1",
-    external_id="power_curve_manufacturer1",
-    metadata={"blob": "data"},
-    description="Power curve from manufacturer 1",
-    columns=[
+SEQUENCE_COLUMNS = SequenceColumnList(
+    [
         SequenceColumn(
             external_id="wind_speed",
             name="Wind speed",
@@ -185,10 +185,44 @@ power_curve = Sequence(
             metadata={"blob": "data"},
             value_type="Double",
         ),
-    ],
+    ]
+)
+
+power_curve = Sequence(
+    id=1,
+    name="Power curve Manufacturer 1",
+    external_id="power_curve_manufacturer1",
+    metadata={"blob": "data", "turbineType": "V112/3075"},
+    description="Power curve from manufacturer 1",
+    asset_id=wind_turbine.id,
+    columns=SEQUENCE_COLUMNS,
+    created_time=1,
+    last_updated_time=2,
 )
 
 SEQUENCES = [power_curve]
+
+_WIND_SPEEDS = np.arange(0, 25.5, 0.5).tolist()
+_RAW_POWER = """0	0	0	0	0	0	7000	53000	123000		208000	309000		427000	567000		732000
+927000	1149000	1401000		1688000		2006000	2348000	2693000		3011000	3252000		3388000	3436000	3448000	3450000
+3450000	3450000	3450000	3450000	3450000	3450000	3450000	3450000	3450000	3450000	3450000	3450000	3450000	3450000	3450000
+3450000	3450000	3450000	3450000	3450000	3450000	3450000	3450000	3450000"""
+_POWER = list(map(float, _RAW_POWER.replace("\n", " ").split()))
+
+SEQUENCE_ROWS = SequenceRows(
+    rows=[
+        SequenceRow(
+            row_number=row_no,
+            values=[speed, power],
+        )
+        for row_no, (speed, power) in enumerate(zip(_WIND_SPEEDS, _POWER, strict=False))
+    ],
+    columns=SEQUENCE_COLUMNS,
+    id=1,
+    external_id="power_curve_manufacturer1",
+)
+
+NEAT_SEQUENCES = [NeatSequence.from_cognite_sequence(power_curve, SEQUENCE_ROWS.rows)]
 
 LABELS = [
     LabelDefinition(
@@ -324,7 +358,7 @@ def create_extractors() -> list[ClassicCDFBaseExtractor]:
         AssetsExtractor(ASSETS, **args),
         RelationshipsExtractor(RELATIONSHIPS, **args),
         TimeSeriesExtractor(TIME_SERIES, **args),
-        SequencesExtractor(SEQUENCES, **args),
+        SequencesExtractor(NEAT_SEQUENCES, **args),
         FilesExtractor(FILES, **args),
         LabelsExtractor(LABELS, **args),
         EventsExtractor(EVENTS, **args),
