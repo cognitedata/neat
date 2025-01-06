@@ -35,6 +35,11 @@ class NeatReader(ABC):
         raise NotImplementedError()
 
     @abstractmethod
+    def read_bytes(self) -> bytes:
+        """Read the buffer as bytes"""
+        raise NotImplementedError()
+
+    @abstractmethod
     def size(self) -> int:
         """Size of the buffer in bytes"""
         raise NotImplementedError()
@@ -76,6 +81,9 @@ class PathReader(NeatReader):
 
     def read_text(self) -> str:
         return self.path.read_text()
+
+    def read_bytes(self) -> bytes:
+        return self.path.read_bytes()
 
     def size(self) -> int:
         return self.path.stat().st_size
@@ -120,6 +128,11 @@ class HttpFileReader(NeatReader):
         response.raise_for_status()
         return response.text
 
+    def read_bytes(self) -> bytes:
+        response = requests.get(self._url)
+        response.raise_for_status()
+        return response.content
+
     def size(self) -> int:
         response = requests.head(self._url)
         response.raise_for_status()
@@ -144,7 +157,7 @@ class HttpFileReader(NeatReader):
     def materialize_path(self) -> Path:
         path = Path(tempfile.gettempdir()).resolve() / "neat" / self.name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(self.read_text(), encoding="utf-8", newline="\n")
+        path.write_bytes(self.read_bytes())
         return path
 
 
