@@ -237,7 +237,7 @@ class ConnectionToLiteral(BaseTransformerStandardised):
             query = """SELECT ?instance ?object
             WHERE {{
               ?instance <{subject_predicate}> ?object
-              FILTER(isIRI(?property))
+              FILTER(isIRI(?object))
             }}"""
             return query.format(subject_predicate=self.subject_predicate)
         else:
@@ -245,7 +245,7 @@ class ConnectionToLiteral(BaseTransformerStandardised):
                 WHERE {{
                   ?instance a <{subject_type}> .
                   ?instance <{subject_predicate}> ?object
-                  FILTER(isIRI(?property))
+                  FILTER(isIRI(?object))
                 }}"""
             return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
 
@@ -254,7 +254,7 @@ class ConnectionToLiteral(BaseTransformerStandardised):
             query = """SELECT (COUNT(?object) AS ?objectCount)
                         WHERE {{
                           ?instance <{subject_predicate}> ?object
-                          FILTER(isLiteral(?property))
+                          FILTER(isLiteral(?object))
                         }}"""
             return query.format(subject_predicate=self.subject_predicate)
         else:
@@ -262,7 +262,7 @@ class ConnectionToLiteral(BaseTransformerStandardised):
                         WHERE {{
                           ?instance a <{subject_type}> .
                           ?instance <{subject_predicate}> ?object
-                          FILTER(isLiteral(?property))
+                          FILTER(isLiteral(?object))
                         }}"""
             return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
 
@@ -271,7 +271,7 @@ class ConnectionToLiteral(BaseTransformerStandardised):
             query = """SELECT (COUNT(?object) AS ?objectCount)
                 WHERE {{
                   ?instance <{subject_predicate}> ?object
-                  FILTER(isIRI(?property))
+                  FILTER(isIRI(?object))
                 }}"""
             return query.format(subject_predicate=self.subject_predicate)
         else:
@@ -279,7 +279,7 @@ class ConnectionToLiteral(BaseTransformerStandardised):
                         WHERE {{
                           ?instance a <{subject_type}> .
                           ?instance <{subject_predicate}> ?object
-                          FILTER(isIRI(?property))
+                          FILTER(isIRI(?object))
                         }}"""
 
             return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
