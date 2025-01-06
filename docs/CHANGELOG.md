@@ -35,10 +35,12 @@ Changes are grouped as follows:
   values types that are not part of the data model. This ensures that the data model is self-contained. This is solved
   by dropping all properties that have a value type that is not part of the data model.
 - The `neat.to.cdf.instances(...)` now correctly ignores read-only properties when creating instances in CDF.
-- The `neat.mapping.data_model.classic_to_core(...)` now automatically includes the `path`and `root` properties
-  when mapping to `CogniteAsset`
 - Reading sequences from CDF using `read.cdf.classic.graph(...)` now includes `rows`. In addition, the `columns` are
   now created as a list and not a blob.
+
+### Changed
+- The `neat.mapping.data_model.classic_to_core(...)` now includes all connection properties from the view that
+  it is implementing.
 
 ## [0.104.0] - 20-12-**2024**
 ### Improved
