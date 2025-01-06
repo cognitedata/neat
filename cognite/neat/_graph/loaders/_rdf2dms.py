@@ -347,9 +347,14 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             return value
 
-        def parse_json_string(cls, value: Any, info: ValidationInfo) -> dict:
+        def parse_json_string(cls, value: Any, info: ValidationInfo) -> dict | list:
             if isinstance(value, dict):
                 return value
+            elif isinstance(value, list):
+                try:
+                    return [json.loads(v) if isinstance(v, str) else v for v in value]
+                except json.JSONDecodeError as error:
+                    raise ValueError(f"Not valid JSON string for {info.field_name}: {value}, error {error}") from error
             elif isinstance(value, str):
                 try:
                     return json.loads(value)
