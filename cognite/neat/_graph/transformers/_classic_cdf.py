@@ -375,7 +375,8 @@ WHERE {{
     ) -> list[Triple]:
         relationship_triples = cast(list[Triple], list(graph.query(f"DESCRIBE <{relationship_id}>")))
         object_by_predicates = cast(
-            dict[str, URIRef | Literal], {remove_namespace_from_uri(row[1]): row[2] for row in relationship_triples}
+            dict[str, URIRef | Literal],
+            {remove_namespace_from_uri(row[1]): row[2] for row in relationship_triples if row[1] != RDF.type},
         )
         source_external_id = cast(URIRef, object_by_predicates["sourceExternalId"])
         target_source_id = cast(URIRef, object_by_predicates["targetExternalId"])
