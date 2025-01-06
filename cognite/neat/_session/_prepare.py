@@ -22,6 +22,7 @@ from cognite.neat._graph.transformers import (
 )
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._issues import IssueList
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
     AddClassImplements,
@@ -34,6 +35,7 @@ from cognite.neat._rules.transformers import (
     ToEnterpriseModel,
     ToSolutionModel,
 )
+from cognite.neat._utils.text import humanize_collection
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
@@ -201,9 +203,11 @@ class InstancePrepareAPI:
             neat.prepare.instances.make_connection_on_exact_match(source, target, connection)
             ```
         """
-
-        subject_type, subject_predicate = self._get_type_and_property_uris(*source)
-        object_type, object_predicate = self._get_type_and_property_uris(*target)
+        try:
+            subject_type, subject_predicate = self._get_type_and_property_uris(*source)
+            object_type, object_predicate = self._get_type_and_property_uris(*target)
+        except NeatValueError as e:
+            raise NeatSessionError(f"Cannot make connection: {e}") from None
 
         transformer = MakeConnectionOnExactMatch(
             subject_type,
@@ -221,17 +225,19 @@ class InstancePrepareAPI:
         property_uri = self._state.instances.store.queries.property_uri(property_)
 
         if not type_uri:
-            raise NeatSessionError(f"Type {type_} does not exist in the graph.")
+            raise NeatValueError(f"Type {type_} does not exist in the graph.")
         elif len(type_uri) > 1:
-            raise NeatSessionError(f"{type_} has multiple ids found in the graph: {','.join(type_uri)}.")
+            raise NeatValueError(f"{type_} has multiple ids found in the graph: {humanize_collection(type_uri)}.")
 
         if not property_uri:
-            raise NeatSessionError(f"Property {property_} does not exist in the graph.")
+            raise NeatValueError(f"Property {property_} does not exist in the graph.")
         elif len(type_uri) > 1:
-            raise NeatSessionError(f"{property_} has multiple ids found in the graph: {','.join(property_uri)}.")
+            raise NeatValueError(
+                f"{property_} has multiple ids found in the graph: {humanize_collection(property_uri)}."
+            )
 
         if not self._state.instances.store.queries.type_with_property(type_uri[0], property_uri[0]):
-            raise NeatSessionError(f"Property {property_} is not defined for type {type_}. Cannot make connection")
+            raise NeatValueError(f"Property {property_} is not defined for type {type_}.")
         return type_uri[0], property_uri[0]
 
     def relationships_as_edges(self, min_relationship_types: int = 1, limit_per_type: int | None = None) -> None:
@@ -275,7 +281,10 @@ class InstancePrepareAPI:
             ```
 
         """
-        subject_type, subject_predicate = self._get_type_and_property_uris(*source)
+        try:
+            subject_type, subject_predicate = self._get_type_and_property_uris(*source)
+        except NeatValueError as e:
+            raise NeatSessionError(f"Cannot convert data type: {e}") from None
 
         transformer = ConvertLiteral(subject_type, subject_predicate, convert)
         self._state.instances.store.transform(transformer)
@@ -300,7 +309,10 @@ class InstancePrepareAPI:
         """
         subject_type: URIRef | None = None
         if source[0] is not None:
-            subject_type, subject_predicate = self._get_type_and_property_uris(*source)  # type: ignore[arg-type, assignment]
+            try:
+                subject_type, subject_predicate = self._get_type_and_property_uris(*source)  # type: ignore[arg-type, assignment]
+            except NeatValueError as e:
+                raise NeatSessionError(f"Cannot convert to type: {e}") from None
         else:
             subject_predicate = self._state.instances.store.queries.property_uri(source[1])[0]
 
@@ -328,7 +340,10 @@ class InstancePrepareAPI:
         """
         subject_type: URIRef | None = None
         if source[0] is not None:
-            subject_type, subject_predicate = self._get_type_and_property_uris(*source)  # type: ignore[arg-type, assignment]
+            try:
+                subject_type, subject_predicate = self._get_type_and_property_uris(*source)  # type: ignore[arg-type, assignment]
+            except NeatValueError as e:
+                raise NeatSessionError(f"Cannot convert to data type: {e}") from None
         else:
             subject_predicate = self._state.instances.store.queries.property_uri(source[1])[0]
         transformer = ConnectionToLiteral(subject_type, subject_predicate)
@@ -359,7 +374,15 @@ class InstancePrepareAPI:
             extractors.AssetsExtractor._default_rdf_type,
             extractors.FilesExtractor._default_rdf_type,
         ]:
-            self.connection_to_data_type((type_, "labels"))
+            try:
+                subject_type, subject_predicate = self._get_type_and_property_uris(type_, "labels")
+            except NeatValueError:
+                # If the type_.labels does not exist, continue. This is not an error, it just means that the
+                # Labels is not used in the graph for that type.
+                continue
+            else:
+                transformer = ConnectionToLiteral(subject_type, subject_predicate)
+                self._state.instances.store.transform(transformer)
 
 
 @session_class_wrapper
