@@ -49,6 +49,7 @@ nav:
           - Reference: excel_data_modeling/physical/reference.md
           - Properties: excel_data_modeling/physical/properties.md
           - Views: excel_data_modeling/physical/views.md
+          - Enum: excel_data_modeling/physical/enum.md
       - Units: excel_data_modeling/units.md
   - NeatSession:
       - Session: reference/NeatSession/base.md
