@@ -3,7 +3,6 @@ as some helper classes to handle them like NeatIssueList"""
 
 from ._base import (
     DefaultWarning,
-    FutureResult,
     IssueList,
     MultiValueError,
     NeatError,
@@ -16,7 +15,6 @@ from ._base import (
 
 __all__ = [
     "DefaultWarning",
-    "FutureResult",
     "IssueList",
     "MultiValueError",
     "NeatError",

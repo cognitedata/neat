@@ -1,4 +1,4 @@
-from cognite.neat._issues import IssueList, catch_issues
+from cognite.neat._issues import catch_issues
 from cognite.neat._rules import importers
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.analysis import InformationAnalysis
@@ -8,8 +8,7 @@ from cognite.neat._rules.transformers._verification import VerifyAnyRules
 
 def test_ill_formed_owl_importer():
     input = importers.OWLImporter.from_file(filepath="https://data.nobelprize.org/terms.rdf").to_rules()
-    issues = IssueList()
-    with catch_issues(issues):
+    with catch_issues() as issues:
         rules = VerifyAnyRules().transform(input)
 
     assert len(issues) == 6
@@ -25,8 +24,7 @@ def test_ill_formed_owl_importer():
 
     input.rules.properties = acceptable_properties
 
-    issues = IssueList()
-    with catch_issues(issues):
+    with catch_issues():
         rules = VerifyAnyRules().transform(input)
 
     assert len(rules.classes) == 4
