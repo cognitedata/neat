@@ -19,9 +19,9 @@ below shows the enumeration for the `CoginteTimeseries.type` and `CogniteAnnotat
 | CogniteAnnotation.status | Suggested | Suggested |                                                     |
 
 The `Collection` column is the unique identifier for the enumeration, in the example above, we have two
-enumerations, `CogniteTimeseries.type` and `CogniteAnnotation.status`. We use `Collection` as a way to group a collection of enums to make it easy to reference them in `Properties` sheet. The `Value` column contains the allowed
-values for each enumeration. The `Name` and `Description` columns are optional and contain the display/human-readable name
-and description of the enumeration value respectively.
+enumerations, `CogniteTimeseries.type` and `CogniteAnnotation.status`. The `Value` column contains the allowed
+values for each enumeration. The `Name` and `Description` columns are optional and contain the display name
+and description of the enumeration value.
 
 
 ## Referencing an enumeration
