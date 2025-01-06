@@ -17,4 +17,5 @@ columns:
   valueType: Double
   metadata:
     blob: data
+dataSetExternalId: source_ds
 assetExternalId: WT-01
