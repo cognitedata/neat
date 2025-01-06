@@ -338,7 +338,7 @@ EVENTS = [maintenance]
 
 data_sheet = FileMetadata(
     external_id="WT-01_datasheet",
-    name="WT-01 datasheet",
+    name="WT-01_datasheet.txt",
     source="manufacturer1",
     asset_ids=[wind_turbine.id],
     data_set_id=ds_source.id,
