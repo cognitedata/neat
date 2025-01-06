@@ -59,7 +59,9 @@ class InspectAPI:
             neat.inspect.properties
             ```
         """
-        return self._state.rule_store.last_verified_rule.properties.to_pandas()
+        df = self._state.rule_store.last_verified_rule.properties.to_pandas()
+        df.drop(columns=["neatId"], errors="ignore", inplace=True)
+        return df
 
 
 @session_class_wrapper
