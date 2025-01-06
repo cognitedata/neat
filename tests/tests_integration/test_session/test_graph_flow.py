@@ -44,14 +44,7 @@ class TestExtractToLoadFlow:
         for extractor in classic_windfarm.create_extractors():
             neat._state.instances.store.write(extractor)
 
-        # Sequences is not yet supported
-        neat.prepare.instances.relationships_as_edges()
-
-        neat.prepare.instances.convert_data_type(
-            ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
-        )
-        neat.prepare.instances.property_to_type((None, "source"), "SourceSystem", "name")
-        neat.prepare.instances.connection_to_data_type((None, "labels"))
+        neat.prepare.instances.classic_to_core()
 
         neat.infer()
 
@@ -195,10 +188,17 @@ class TestExtractToLoadFlow:
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:
         if not isinstance(instance, InstanceApply):
             raise ValueError(f"Expected InstanceApply, got {type(instance)}")
+
+        def dict_sort(v: dict[str, Any]) -> str:
+            for key in ["externalId", "rowNumber", "colNumber"]:
+                if key in v:
+                    return v[key]
+            return str(v)
+
         for source in instance.sources:
             for value in source.properties.values():
                 if isinstance(value, list) and all(isinstance(v, dict) for v in value):
-                    value = sorted(value, key=lambda x: x["externalId"])
+                    value.sort(key=dict_sort)
                 elif isinstance(value, list):
                     value.sort()
         return instance.dump()
@@ -209,14 +209,7 @@ class TestExtractToLoadFlow:
         for extractor in classic_windfarm.create_extractors():
             neat._state.instances.store.write(extractor)
 
-        # Sequences is not yet supported
-        neat.drop.instances("Sequence")
-
-        neat.prepare.instances.relationships_as_edges()
-        neat.prepare.instances.convert_data_type(
-            ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
-        )
-        neat.prepare.instances.property_to_type((None, "source"), "SourceSystem", "name")
+        neat.prepare.instances.classic_to_core()
 
         neat.infer()
 
@@ -224,8 +217,9 @@ class TestExtractToLoadFlow:
 
         neat.verify()
 
+        neat.prepare.data_model.add_implements_to_classes("Edge", "Edge")
         neat.convert("dms", mode="edge_properties")
-        neat.mapping.data_model.classic_to_core("Classic", use_parent_property_name=True)
+        neat.mapping.data_model.classic_to_core("Classic")
 
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
