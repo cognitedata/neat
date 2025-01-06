@@ -188,10 +188,17 @@ class TestExtractToLoadFlow:
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:
         if not isinstance(instance, InstanceApply):
             raise ValueError(f"Expected InstanceApply, got {type(instance)}")
+
+        def dict_sort(v: dict[str, Any]) -> str:
+            for key in ["externalId", "rowNumber", "colNumber"]:
+                if key in v:
+                    return v[key]
+            return str(v)
+
         for source in instance.sources:
             for value in source.properties.values():
                 if isinstance(value, list) and all(isinstance(v, dict) for v in value):
-                    value = sorted(value, key=lambda x: x["externalId"])
+                    value.sort(key=dict_sort)
                 elif isinstance(value, list):
                     value.sort()
         return instance.dump()
