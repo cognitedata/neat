@@ -26,7 +26,9 @@ from cognite.neat._rules.transformers import (
     PrefixEntities,
     ReduceCogniteModel,
     ToCompliantEntities,
-    ToExtension,
+    ToDataProductModel,
+    ToEnterpriseModel,
+    ToSolutionModel,
 )
 
 from ._state import SessionState
@@ -357,10 +359,9 @@ class DataModelPrepareAPI:
 
         """
         return self._state.rule_transform(
-            ToExtension(
+            ToEnterpriseModel(
                 new_model_id=data_model_id,
                 org_name=org_name,
-                type_="enterprise",
                 dummy_property=dummy_property,
                 move_connections=move_connections,
             )
@@ -394,10 +395,9 @@ class DataModelPrepareAPI:
 
         """
         return self._state.rule_transform(
-            ToExtension(
+            ToSolutionModel(
                 new_model_id=data_model_id,
                 org_name=org_name,
-                type_="solution",
                 mode=mode,
                 dummy_property=dummy_property,
             )
@@ -428,10 +428,9 @@ class DataModelPrepareAPI:
             )
         transformers = [
             IncludeReferenced(self._client, include_properties=True),
-            ToExtension(
+            ToDataProductModel(
                 new_model_id=data_model_id,
                 org_name=org_name,
-                type_="data_product",
                 include=include,
             ),
         ]

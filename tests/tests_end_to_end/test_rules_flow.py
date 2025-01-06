@@ -7,6 +7,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from tests.config import DATA_FOLDER, DOC_RULES
+from tests.data import COGNITE_CORE_ZIP
 
 
 class TestImportersToYAMLExporter:
@@ -53,3 +54,36 @@ class TestImportersToYAMLExporter:
         exported_yaml_str = neat.to.yaml()
         exported_rules = yaml.safe_load(exported_yaml_str)
         data_regression.check(exported_rules)
+
+    @pytest.mark.usefixtures("deterministic_uuid4")
+    @pytest.mark.freeze_time("2025-01-03")
+    def test_to_extension_transformer(self, data_regression: DataRegressionFixture) -> None:
+        neat = NeatSession(verbose=False)
+
+        neat.read.yaml(COGNITE_CORE_ZIP, format="toolkit")
+
+        neat.verify()
+
+        neat.prepare.data_model.to_enterprise(("sp_enterprise", "Enterprise", "v1"), "Neat", move_connections=True)
+
+        enterprise_yml_str = neat.to.yaml()
+
+        neat.prepare.data_model.to_solution(
+            ("sp_solution", "Solution", "v1"),
+            "TeamNeat",
+            mode="write",
+        )
+
+        solution_yml_str = neat.to.yaml()
+
+        neat.prepare.data_model.to_data_product(("sp_data_product", "DataProduct", "v1"), "TeamNeat2")
+
+        data_product_yml_str = neat.to.yaml()
+
+        data_regression.check(
+            {
+                "enterprise": yaml.safe_load(enterprise_yml_str),
+                "solution": yaml.safe_load(solution_yml_str),
+                "data_product": yaml.safe_load(data_product_yml_str),
+            }
+        )

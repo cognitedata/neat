@@ -4,7 +4,7 @@ from typing import Literal, cast
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.importers import BaseImporter, InferenceImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.transformers import RulesTransformer, ToExtension
+from cognite.neat._rules.transformers import RulesTransformer, ToExtensionModel
 from cognite.neat._store import NeatGraphStore, NeatRulesStore
 from cognite.neat._store._rules_store import ModelEntity
 from cognite.neat._utils.rdf_ import uri_display_name
@@ -36,7 +36,7 @@ class SessionState:
                 f"Moving back {len(pruned)} {step_str} to the last {location}."
             )
         if (
-            any(isinstance(t, ToExtension) for t in transformer)
+            any(isinstance(t, ToExtensionModel) for t in transformer)
             and isinstance(self.rule_store.provenance[-1].target_entity, ModelEntity)
             and isinstance(self.rule_store.provenance[-1].target_entity.result, DMSRules | InformationRules)
         ):

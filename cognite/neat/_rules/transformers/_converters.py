@@ -58,7 +58,6 @@ from cognite.neat._rules.models.information._rules_input import (
     InformationInputProperty,
     InformationInputRules,
 )
-from cognite.neat._utils.collection_ import remove_list_elements
 from cognite.neat._utils.text import to_camel
 
 from ._base import RulesTransformer
@@ -302,127 +301,101 @@ class SetIDDMSModel(RulesTransformer[DMSRules, DMSRules]):
         return DMSRules.model_validate(DMSInputRules.load(dump).dump())
 
 
-class ToExtension(RulesTransformer[DMSRules, DMSRules]):
+class ToExtensionModel(RulesTransformer[DMSRules, DMSRules], ABC):
+    type_: ClassVar[str]
+
+    def __init__(self, new_model_id: DataModelIdentifier, org_name: str, dummy_property: str | None = None) -> None:
+        self.new_model_id = DataModelId.load(new_model_id)
+        if not self.new_model_id.version:
+            raise NeatValueError("Version is required for the new model.")
+        self.org_name = org_name
+        self.dummy_property = dummy_property
+
+    @property
+    def description(self) -> str:
+        return f"Prepared data model {self.new_model_id} to be {self.type_.replace('_', ' ')} data model."
+
+    def _create_new_views(
+        self, rules: DMSRules
+    ) -> tuple[SheetList[DMSView], SheetList[DMSContainer], SheetList[DMSProperty]]:
+        """Creates new views for the new model.
+
+        If the dummy property is provided, it will also create a new container for each view
+        with a single property that is the dummy property.
+        """
+        new_views = SheetList[DMSView]()
+        new_containers = SheetList[DMSContainer]()
+        new_properties = SheetList[DMSProperty]()
+
+        for definition in rules.views:
+            view_entity = self._remove_cognite_affix(definition.view)
+            view_entity.version = cast(str, self.new_model_id.version)
+            view_entity.prefix = self.new_model_id.space
+
+            new_views.append(
+                DMSView(
+                    view=view_entity,
+                    implements=[definition.view],
+                    in_model=True,
+                    name=definition.name,
+                )
+            )
+            if self.dummy_property is None:
+                continue
+
+            container_entity = ContainerEntity(space=view_entity.prefix, externalId=view_entity.external_id)
+
+            container = DMSContainer(container=container_entity)
+
+            prefix = to_camel(view_entity.suffix)
+            property_ = DMSProperty(
+                view=view_entity,
+                view_property=f"{prefix}{self.dummy_property}",
+                value_type=String(),
+                nullable=True,
+                immutable=False,
+                is_list=False,
+                container=container_entity,
+                container_property=f"{prefix}{self.dummy_property}",
+            )
+
+            new_properties.append(property_)
+            new_containers.append(container)
+
+        return new_views, new_containers, new_properties
+
+    def _remove_cognite_affix(self, entity: _T_Entity) -> _T_Entity:
+        """This method removes `Cognite` affix from the entity."""
+        new_suffix = entity.suffix.replace("Cognite", self.org_name or "")
+        if isinstance(entity, ViewEntity):
+            return ViewEntity(space=entity.space, externalId=new_suffix, version=entity.version)  # type: ignore[return-value]
+        elif isinstance(entity, ClassEntity):
+            return ClassEntity(prefix=entity.prefix, suffix=new_suffix, version=entity.version)  # type: ignore[return-value]
+        raise ValueError(f"Unsupported entity type: {type(entity)}")
+
+
+class ToEnterpriseModel(ToExtensionModel):
+    type_: ClassVar[str] = "enterprise"
+
     def __init__(
         self,
         new_model_id: DataModelIdentifier,
         org_name: str = "My",
-        type_: Literal["enterprise", "solution", "data_product"] = "enterprise",
-        mode: Literal["read", "write"] = "read",
         dummy_property: str = "GUID",
         move_connections: bool = False,
-        include: Literal["same-space", "all"] = "same-space",
     ):
-        self.new_model_id = DataModelId.load(new_model_id)
-        if not self.new_model_id.version:
-            raise NeatValueError("Version is required for the new model.")
-
-        self.org_name = org_name
-        self.mode = mode
-        self.type_ = type_
-        self.dummy_property = dummy_property
+        super().__init__(new_model_id, org_name, dummy_property)
         self.move_connections = move_connections
-        self.include = include
 
     def transform(self, rules: DMSRules) -> DMSRules:
-        # Copy to ensure immutability
-        reference_model = rules
-        reference_model_id = reference_model.metadata.as_data_model_id()
+        reference_model_id = rules.metadata.as_data_model_id()
+        if reference_model_id not in COGNITE_MODELS:
+            warnings.warn(
+                EnterpriseModelNotBuildOnTopOfCDMWarning(reference_model_id=reference_model_id).as_message(),
+                stacklevel=2,
+            )
 
-        # if model is solution then we need to get correct space for views and containers
-        if self.type_ == "solution":
-            if self.mode not in ["read", "write"]:
-                raise NeatValueError(f"Unsupported mode: {self.mode}")
-
-            if reference_model_id in COGNITE_MODELS:
-                warnings.warn(
-                    SolutionModelBuildOnTopOfCDMWarning(reference_model_id=reference_model_id),
-                    stacklevel=2,
-                )
-
-            return self._to_solution(reference_model)
-
-        elif self.type_ == "enterprise":
-            if reference_model_id not in COGNITE_MODELS:
-                warnings.warn(
-                    EnterpriseModelNotBuildOnTopOfCDMWarning(reference_model_id=reference_model_id).as_message(),
-                    stacklevel=2,
-                )
-
-            return self._to_enterprise(reference_model)
-        elif self.type_ == "data_product":
-            expanded = self._expand_properties(reference_model.model_copy(deep=True))
-            if self.include == "same-space":
-                expanded.properties = SheetList[DMSProperty](
-                    [prop for prop in expanded.properties if prop.view.space == expanded.metadata.space]
-                )
-                expanded.views = SheetList[DMSView](
-                    [view for view in expanded.views if view.view.space == expanded.metadata.space]
-                )
-            return self._to_solution(expanded, remove_views_in_other_space=False)
-
-        else:
-            raise NeatValueError(f"Unsupported data model type: {self.type_}")
-
-    def _has_views_in_multiple_space(self, rules: DMSRules) -> bool:
-        return any(view.view.space != rules.metadata.space for view in rules.views)
-
-    def _to_solution(self, reference_rules: DMSRules, remove_views_in_other_space: bool = True) -> DMSRules:
-        """For creation of solution data model / rules specifically for mapping over existing containers."""
-
-        dump = reference_rules.dump()
-
-        # Prepare new model metadata prior validation
-        dump["metadata"]["name"] = f"{self.org_name} {self.type_} data model"
-        dump["metadata"]["space"] = self.new_model_id.space
-        dump["metadata"]["external_id"] = self.new_model_id.external_id
-        dump["metadata"]["version"] = self.new_model_id.version
-
-        # Set implement to NONE for all views
-        for view in dump["views"]:
-            view["implements"] = None
-
-        if remove_views_in_other_space and self._has_views_in_multiple_space(reference_rules):
-            views_to_remove = []
-            for view in dump["views"]:
-                if ":" in view["view"]:
-                    views_to_remove.append(view)
-
-            dump["views"] = remove_list_elements(dump["views"], views_to_remove)
-
-        solution_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
-
-        # Dropping containers coming from reference model
-        solution_model.containers = None
-
-        # We want to map properties to existing containers allowing extension
-        for prop in solution_model.properties:
-            if prop.container and prop.container.space == self.new_model_id.space:
-                prop.container = ContainerEntity(
-                    space=reference_rules.metadata.space,
-                    externalId=prop.container.suffix,
-                )
-
-        # If reference model on which we are mapping one of Cognite Data Models
-        # since we want to affix these with the organization name
-        if reference_rules.metadata.as_data_model_id() in COGNITE_MODELS:
-            # Remove Cognite affix in view external_id / suffix.
-            for prop in solution_model.properties:
-                prop.view = self._remove_cognite_affix(prop.view)
-                if isinstance(prop.value_type, ViewEntity):
-                    prop.value_type = self._remove_cognite_affix(prop.value_type)
-            for view in solution_model.views:
-                view.view = self._remove_cognite_affix(view.view)
-
-        if self.mode == "write":
-            _, new_containers, new_properties = self._get_new_components(solution_model)
-
-            # Here we add ONLY dummy properties of the solution model and
-            # corresponding solution model space containers to hold them
-            solution_model.containers = new_containers
-            solution_model.properties.extend(new_properties)
-
-        return solution_model
+        return self._to_enterprise(rules)
 
     def _to_enterprise(self, reference_model: DMSRules) -> DMSRules:
         dump = reference_model.dump()
@@ -437,101 +410,25 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
         enterprise_model.metadata.external_id = self.new_model_id.external_id
         enterprise_model.metadata.version = cast(str, self.new_model_id.version)
 
-        # Here we are creating enterprise specific components
-        enterprise_views, enterprise_containers, enterprise_properties = self._get_new_components(enterprise_model)
+        # Here we are creating enterprise views with a single container with a dummy property
+        # for each view
+        enterprise_views, enterprise_containers, enterprise_properties = self._create_new_views(enterprise_model)
 
-        # And we are adding them to the enterprise model
-        # extending reference views with new ones
+        # We keep the reference views, and adding new enterprise views...
         enterprise_model.views.extend(enterprise_views)
 
-        # Move connections from reference model to enterprise model
         if self.move_connections:
-            enterprise_connections = self._move_connections(enterprise_model)
-        else:
-            enterprise_connections = SheetList[DMSProperty]()
+            # Move connections from reference model to new enterprise model
+            enterprise_properties.extend(self._move_connections(enterprise_model))
 
-        # while overwriting containers and properties with new ones
+        # ... however, we do not want to keep the reference containers and properties
         enterprise_model.containers = enterprise_containers
         enterprise_model.properties = enterprise_properties
-
-        enterprise_properties.extend(enterprise_connections)
 
         return enterprise_model
 
     @staticmethod
-    def _expand_properties(rules: DMSRules) -> DMSRules:
-        probe = DMSAnalysis(rules)
-        ancestor_properties_by_view = probe.classes_with_properties(
-            consider_inheritance=True, allow_different_namespace=True
-        )
-        property_ids_by_view = {
-            view: {prop.view_property for prop in properties}
-            for view, properties in probe.classes_with_properties(consider_inheritance=False).items()
-        }
-        for view, property_ids in property_ids_by_view.items():
-            ancestor_properties = ancestor_properties_by_view.get(view, [])
-            for prop in ancestor_properties:
-                if isinstance(prop.connection, ReverseConnectionEntity):
-                    # If you try to add a reverse direct relation of a parent, it will fail as the ValueType of the
-                    # original property will point to the parent view, and not the child.
-                    continue
-                if prop.view_property not in property_ids:
-                    rules.properties.append(prop)
-                    property_ids.add(prop.view_property)
-        return rules
-
-    def _remove_cognite_affix(self, entity: _T_Entity) -> _T_Entity:
-        """This method removes `Cognite` affix from the entity."""
-        new_suffix = entity.suffix.replace("Cognite", self.org_name or "")
-        if isinstance(entity, ViewEntity):
-            return ViewEntity(space=entity.space, externalId=new_suffix, version=entity.version)  # type: ignore[return-value]
-        elif isinstance(entity, ClassEntity):
-            return ClassEntity(prefix=entity.prefix, suffix=new_suffix, version=entity.version)  # type: ignore[return-value]
-        raise ValueError(f"Unsupported entity type: {type(entity)}")
-
-    def _get_new_components(
-        self, rules: DMSRules
-    ) -> tuple[SheetList[DMSView], SheetList[DMSContainer], SheetList[DMSProperty]]:
-        new_views = SheetList[DMSView]()
-        new_containers = SheetList[DMSContainer]()
-        new_properties = SheetList[DMSProperty]()
-
-        for definition in rules.views:
-            view_entity = self._remove_cognite_affix(definition.view)
-
-            view_entity.version = cast(str, self.new_model_id.version)
-            view_entity.prefix = self.new_model_id.space
-            container_entity = ContainerEntity(space=view_entity.prefix, externalId=view_entity.external_id)
-
-            view = DMSView(
-                view=view_entity,
-                implements=[definition.view],
-                in_model=True,
-                name=definition.name,
-            )
-
-            container = DMSContainer(
-                container=container_entity,
-            )
-
-            property_ = DMSProperty(
-                view=view_entity,
-                view_property=f"{to_camel(view_entity.suffix)}{self.dummy_property}",
-                value_type=String(),
-                nullable=True,
-                immutable=False,
-                is_list=False,
-                container=container_entity,
-                container_property=f"{to_camel(view_entity.suffix)}{self.dummy_property}",
-            )
-
-            new_properties.append(property_)
-            new_views.append(view)
-            new_containers.append(container)
-
-        return new_views, new_containers, new_properties
-
-    def _move_connections(self, rules: DMSRules) -> SheetList[DMSProperty]:
+    def _move_connections(rules: DMSRules) -> SheetList[DMSProperty]:
         implements: dict[ViewEntity, list[ViewEntity]] = defaultdict(list)
         new_properties = SheetList[DMSProperty]()
 
@@ -560,16 +457,147 @@ class ToExtension(RulesTransformer[DMSRules, DMSRules]):
 
         return new_properties
 
-    @property
-    def description(self) -> str:
-        if self.type_ == "enterprise":
-            return f"Prepared data model {self.new_model_id} to be enterprise data model."
-        elif self.type_ == "solution":
-            return f"Prepared data model {self.new_model_id} to be solution data model."
-        elif self.type_ == "data_product":
-            return f"Prepared data model {self.new_model_id} to be data product model."
-        else:
-            return f"Unsupported data model type: {self.type_}"
+
+class ToSolutionModel(ToExtensionModel):
+    type_: ClassVar[str] = "solution"
+
+    def __init__(
+        self,
+        new_model_id: DataModelIdentifier,
+        org_name: str = "My",
+        mode: Literal["read", "write"] = "read",
+        dummy_property: str | None = "GUID",
+        remove_views_in_other_space: bool = True,
+    ):
+        super().__init__(new_model_id, org_name, dummy_property if mode == "write" else None)
+        self.mode = mode
+        self.remove_views_in_other_space = remove_views_in_other_space
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        reference_model = rules
+        reference_model_id = reference_model.metadata.as_data_model_id()
+
+        # if model is solution then we need to get correct space for views and containers
+        if self.mode not in ["read", "write"]:
+            raise NeatValueError(f"Unsupported mode: {self.mode}")
+
+        if reference_model_id in COGNITE_MODELS:
+            warnings.warn(
+                SolutionModelBuildOnTopOfCDMWarning(reference_model_id=reference_model_id),
+                stacklevel=2,
+            )
+
+        return self._to_solution(reference_model)
+
+    @staticmethod
+    def _has_views_in_multiple_space(rules: DMSRules) -> bool:
+        return any(view.view.space != rules.metadata.space for view in rules.views)
+
+    def _to_solution(self, reference_rules: DMSRules) -> DMSRules:
+        """For creation of solution data model / rules specifically for mapping over existing containers."""
+
+        dump = reference_rules.dump(entities_exclude_defaults=True)
+
+        # Prepare new model metadata prior validation
+        # Since we dropped the defaults, all entities will update the space and version
+        # to the new model space and version
+        dump["metadata"]["name"] = f"{self.org_name} {self.type_} data model"
+        dump["metadata"]["space"] = self.new_model_id.space
+        dump["metadata"]["external_id"] = self.new_model_id.external_id
+        dump["metadata"]["version"] = self.new_model_id.version
+
+        solution_model = DMSRules.model_validate(DMSInputRules.load(dump).dump())
+
+        # This is not desirable for the containers, so we manually fix that here.
+        # It is easier to change the space for all entities and then revert the containers, than
+        # to change the space for all entities except the containers.
+        for prop in solution_model.properties:
+            if prop.container and prop.container.space == self.new_model_id.space:
+                # If the container is in the new model space, we want to map it to the reference model space
+                # This is reverting the .dump() -> .load() above.
+                prop.container = ContainerEntity(
+                    space=reference_rules.metadata.space,
+                    externalId=prop.container.suffix,
+                )
+
+        for view in solution_model.views:
+            view.implements = None
+
+        if self.remove_views_in_other_space and self._has_views_in_multiple_space(reference_rules):
+            solution_model.views = SheetList[DMSView](
+                [view for view in solution_model.views if view.view.space == solution_model.metadata.space]
+            )
+
+        # Dropping containers coming from reference model
+        solution_model.containers = None
+
+        # If reference model on which we are mapping one of Cognite Data Models
+        # since we want to affix these with the organization name
+        if reference_rules.metadata.as_data_model_id() in COGNITE_MODELS:
+            # Remove Cognite affix in view external_id / suffix.
+            for prop in solution_model.properties:
+                prop.view = self._remove_cognite_affix(prop.view)
+                if isinstance(prop.value_type, ViewEntity):
+                    prop.value_type = self._remove_cognite_affix(prop.value_type)
+            for view in solution_model.views:
+                view.view = self._remove_cognite_affix(view.view)
+
+        if self.mode == "write":
+            _, new_containers, new_properties = self._create_new_views(solution_model)
+            # Here we add ONLY dummy properties of the solution model and
+            # corresponding solution model space containers to hold them
+            solution_model.containers = new_containers
+            solution_model.properties.extend(new_properties)
+
+        return solution_model
+
+
+class ToDataProductModel(ToSolutionModel):
+    type_: ClassVar[str] = "data_product"
+
+    def __init__(
+        self,
+        new_model_id: DataModelIdentifier,
+        org_name: str = "My",
+        include: Literal["same-space", "all"] = "same-space",
+    ):
+        super().__init__(new_model_id, org_name, mode="read", dummy_property=None, remove_views_in_other_space=False)
+        self.include = include
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        reference_model = rules
+        # Copy to ensure immutability
+        expanded = self._expand_properties(reference_model.model_copy(deep=True))
+        if self.include == "same-space":
+            expanded.properties = SheetList[DMSProperty](
+                [prop for prop in expanded.properties if prop.view.space == expanded.metadata.space]
+            )
+            expanded.views = SheetList[DMSView](
+                [view for view in expanded.views if view.view.space == expanded.metadata.space]
+            )
+        return self._to_solution(expanded)
+
+    @staticmethod
+    def _expand_properties(rules: DMSRules) -> DMSRules:
+        probe = DMSAnalysis(rules)
+        ancestor_properties_by_view = probe.classes_with_properties(
+            consider_inheritance=True, allow_different_namespace=True
+        )
+        property_ids_by_view = {
+            view: {prop.view_property for prop in properties}
+            for view, properties in probe.classes_with_properties(consider_inheritance=False).items()
+        }
+        for view, property_ids in property_ids_by_view.items():
+            ancestor_properties = ancestor_properties_by_view.get(view, [])
+            for prop in ancestor_properties:
+                if isinstance(prop.connection, ReverseConnectionEntity):
+                    # If you try to add a reverse direct relation of a parent, it will fail as the ValueType of the
+                    # original property will point to the parent view, and not the child.
+                    continue
+                if prop.view_property not in property_ids:
+                    rules.properties.append(prop)
+                    property_ids.add(prop.view_property)
+        return rules
 
 
 class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
