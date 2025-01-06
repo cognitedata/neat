@@ -19,6 +19,7 @@ Changes are grouped as follows:
 ### Added
 - All `neat.read` methods now supports reading from a URL.
 - `neat.prepare.instances.connection_to_data_type(...)` added to convert connection to data type.
+- `neat.prepare.instances.classic_to_core()` which bundles the preparation from classic to core.
 
 ### Fixed
 - `neat.read.yaml(...)` no longer raises a `ValueError` if a view is referencing an enum property in a container
