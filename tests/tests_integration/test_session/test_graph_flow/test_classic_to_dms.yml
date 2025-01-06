@@ -968,42 +968,42 @@ data_product:
     view: ClassicTimeSeries
     view_property: type
   views:
-  - filter_: hasData(sp_windfarm:ClassicAsset(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteAsset,cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,sp_windfarm:ClassicAsset)
     in_model: true
     logical: http://purl.org/cognite/neat/neatId_a8e56e0c_20de_435d_a031_d750c40db9b4
     neatId: http://purl.org/cognite/neat/neatId_ef8c485b_c07a_40f2_add4_253b50f0fd0a
     view: ClassicAsset
-  - filter_: hasData(sp_windfarm:ClassicAssetToAssetEdge(version=v1))
+  - filter_: hasData(sp_windfarm:ClassicAssetToAssetEdge)
     in_model: true
     logical: http://purl.org/cognite/neat/neatId_b09b2a5c_badc_432a_8159_0f538a0f4efb
     neatId: http://purl.org/cognite/neat/neatId_5958a499_eeea_463e_a1e8_ac6843e42caf
     view: ClassicAssetToAssetEdge
-  - filter_: hasData(sp_windfarm:ClassicDataSet(version=v1))
+  - filter_: hasData(sp_windfarm:ClassicDataSet)
     in_model: true
     logical: http://purl.org/cognite/neat/neatId_edcd465e_3638_4821_b6e0_7cc06c52c49f
     neatId: http://purl.org/cognite/neat/neatId_8181a8cc_3691_47eb_89a2_688b12c136e0
     view: ClassicDataSet
-  - filter_: hasData(sp_windfarm:ClassicEvent(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteActivity,cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSchedulable,cdf_cdm:CogniteSourceable,sp_windfarm:ClassicEvent)
     in_model: true
     logical: http://purl.org/cognite/neat/neatId_5f987c71_a65e_488e_abf3_ad39fec21bbe
     neatId: http://purl.org/cognite/neat/neatId_702cdd20_2862_48b8_88f4_ef125e9953d2
     view: ClassicEvent
-  - filter_: hasData(sp_windfarm:ClassicFile(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteDescribable,cdf_cdm:CogniteFile,cdf_cdm:CogniteSourceable,sp_windfarm:ClassicFile)
     in_model: true
     logical: http://purl.org/cognite/neat/neatId_7394988f_847f_49b4_a64d_1bcb702753a1
     neatId: http://purl.org/cognite/neat/neatId_4d71c366_b41b_4143_8b10_550cd5704f32
     view: ClassicFile
-  - filter_: hasData(sp_windfarm:ClassicLabel(version=v1))
+  - filter_: hasData(sp_windfarm:ClassicLabel)
     in_model: true
     logical: http://purl.org/cognite/neat/neatId_2a45c2ab_8cbf_4db0_b264_accc79ac1b1e
     neatId: http://purl.org/cognite/neat/neatId_9f044aed_7552_4327_8262_7f7312922f83
     view: ClassicLabel
-  - filter_: hasData(sp_windfarm:ClassicSourceSystem(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceSystem)
     in_model: true
     logical: http://purl.org/cognite/neat/neatId_66245bfa_4fcc_439a_b683_d2e6337ea2df
     neatId: http://purl.org/cognite/neat/neatId_3e896c64_e117_4ac3_919c_4ea3e1805081
     view: ClassicSourceSystem
-  - filter_: hasData(sp_windfarm:ClassicTimeSeries(version=v1))
+  - filter_: hasData(cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteTimeSeries,sp_windfarm:ClassicTimeSeries)
     in_model: true
     logical: http://purl.org/cognite/neat/neatId_9b49bd26_df57_459a_8715_a10343dac043
     neatId: http://purl.org/cognite/neat/neatId_19985f15_ff00_4d4d_9020_59e4ff9ab5c2

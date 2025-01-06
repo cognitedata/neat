@@ -27,8 +27,8 @@ Changes are grouped as follows:
 ### Improved
 - `neat.read.yaml(..., format="toolkit")` no longer removes direct relations sources that points to views that are not
   part of the model.
-- When using the `neat.prepare.data_model.to_soluctin(...mode="read")` and `neat.prepare.data_model.to_data_product()`
-  methods, the newly created views inherits the filter from the source data model views. This ensures that the new
+- When using the `neat.prepare.data_model.to_solution(...mode="read")` and `neat.prepare.data_model.to_data_product()`
+  methods, the newly created views inherits the filter from the source data model containers. This ensures that the new
   views will return the same instances as the source views.
 - The `neat.prepare.data_model.to_data_product(include="same-space")` method no longer produces data models that uses
   values types that are not part of the data model. This ensures that the data model is self-contained. This is solved
