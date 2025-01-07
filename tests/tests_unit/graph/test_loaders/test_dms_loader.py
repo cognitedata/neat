@@ -74,19 +74,24 @@ def test_imf_attribute_nodes():
     assert len(store.multi_type_instances) == 63
 
 
-def test_extract_above_direct_relation_limit(self) -> None:
-    neat = NeatSession()
-    assets = [Asset(id=i, name=f"Asset_{i}") for i in range(12, 1001)]
-    file = FileMetadata(id=1, name="P&ID file", asset_ids=list(range(1, 1001)))
+def test_extract_above_direct_relation_limit() -> None:
+    with monkeypatch_cognite_client() as client:
+        neat = NeatSession(client)
+        assets = [Asset(id=i, name=f"Asset_{i}") for i in range(1, 1001)]
+        file = FileMetadata(id=1, name="P&ID file", asset_ids=list(range(1, 1001)))
 
-    neat._state.instances.store.write(AssetsExtractor(assets, namespace=CLASSIC_CDF_NAMESPACE, as_write=False))
-    neat._state.instances.store.write(FilesExtractor([file], namespace=CLASSIC_CDF_NAMESPACE, as_write=False))
+        neat._state.instances.store.write(AssetsExtractor(assets, namespace=CLASSIC_CDF_NAMESPACE, as_write=True))
+        neat._state.instances.store.write(FilesExtractor([file], namespace=CLASSIC_CDF_NAMESPACE, as_write=True))
 
-    neat.infer()
-    neat.verify()
-    neat.convert("dms")
+        neat.infer(max_number_of_instance=2)
+        neat.prepare.data_model.prefix("Classic")
+        neat.verify()
+        neat.convert("dms")
+        schema = neat._state.rule_store.last_verified_dms_rules.as_schema()
 
-    with monkeypatch_cognite_client as client:
+        client.iam.verify_capabilities.return_value = []
+        client.data_modeling.views.retrieve.return_value = schema.views.values()
+        client.data_modeling.containers.retrieve.return_value = schema.containers.values()
         neat.to.cdf.instances()
 
-    assert client.data_modeling.instances.create.call_count == 2
+    assert client.data_modeling.instances.apply.call_count == 4
