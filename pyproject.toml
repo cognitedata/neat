@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.104.0"
+version = "0.105.0"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -167,9 +167,7 @@ types-openpyxl = "^3"
 types-requests = "^2"
 types-setuptools = "^68"
 networkx-stubs = "^0.0.1"
-#cognite-toolkit = "^0.3.23"
-# Needed to fix bug in sequence
-cognite-toolkit = { git = "https://github.com/cognitedata/toolkit.git", branch = "warning-empty-csv" }
+cognite-toolkit = "^0.3.23"
 
 
 [build-system]

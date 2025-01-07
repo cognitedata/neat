@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.105.0] - 07-01-**2025**
 ### Added
 - All `neat.read` methods now supports reading from a URL.
 - `neat.prepare.instances.connection_to_data_type(...)` added to convert connection to data type.

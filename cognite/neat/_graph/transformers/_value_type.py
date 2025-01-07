@@ -234,52 +234,52 @@ class ConnectionToLiteral(BaseTransformerStandardised):
 
     def _iterate_query(self) -> str:
         if self.subject_type is None:
-            query = """SELECT ?instance ?property
+            query = """SELECT ?instance ?object
             WHERE {{
-              ?instance <{subject_predicate}> ?property
-              FILTER(isIRI(?property))
+              ?instance <{subject_predicate}> ?object
+              FILTER(isIRI(?object))
             }}"""
             return query.format(subject_predicate=self.subject_predicate)
         else:
-            query = """SELECT ?instance ?property
+            query = """SELECT ?instance ?object
                 WHERE {{
                   ?instance a <{subject_type}> .
-                  ?instance <{subject_predicate}> ?property
-                  FILTER(isIRI(?property))
+                  ?instance <{subject_predicate}> ?object
+                  FILTER(isIRI(?object))
                 }}"""
             return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
 
     def _skip_count_query(self) -> str:
         if self.subject_type is None:
-            query = """SELECT (COUNT(?property) AS ?propertyCount)
+            query = """SELECT (COUNT(?object) AS ?objectCount)
                         WHERE {{
-                          ?instance <{subject_predicate}> ?property
-                          FILTER(isLiteral(?property))
+                          ?instance <{subject_predicate}> ?object
+                          FILTER(isLiteral(?object))
                         }}"""
             return query.format(subject_predicate=self.subject_predicate)
         else:
-            query = """SELECT (COUNT(?property) AS ?propertyCount)
+            query = """SELECT (COUNT(?object) AS ?objectCount)
                         WHERE {{
                           ?instance a <{subject_type}> .
-                          ?instance <{subject_predicate}> ?property
-                          FILTER(isLiteral(?property))
+                          ?instance <{subject_predicate}> ?object
+                          FILTER(isLiteral(?object))
                         }}"""
             return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
 
     def _count_query(self) -> str:
         if self.subject_type is None:
-            query = """SELECT (COUNT(?property) AS ?propertyCount)
+            query = """SELECT (COUNT(?object) AS ?objectCount)
                 WHERE {{
-                  ?instance <{subject_predicate}> ?property
-                  FILTER(isIRI(?property))
+                  ?instance <{subject_predicate}> ?object
+                  FILTER(isIRI(?object))
                 }}"""
             return query.format(subject_predicate=self.subject_predicate)
         else:
-            query = """SELECT (COUNT(?property) AS ?propertyCount)
+            query = """SELECT (COUNT(?object) AS ?objectCount)
                         WHERE {{
                           ?instance a <{subject_type}> .
-                          ?instance <{subject_predicate}> ?property
-                          FILTER(isIRI(?property))
+                          ?instance <{subject_predicate}> ?object
+                          FILTER(isIRI(?object))
                         }}"""
 
             return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
