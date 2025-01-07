@@ -1,0 +1,8 @@
+externalId: WT-01_datasheet
+name: WT-01_datasheet.txt
+source: manufacturer1
+metadata:
+  blob: data
+dataSetExternalId: source_ds
+assetExternalIds:
+- WT-01

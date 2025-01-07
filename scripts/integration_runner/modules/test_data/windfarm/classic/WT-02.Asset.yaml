@@ -1,0 +1,12 @@
+externalId: WT-02
+name: WT-02
+parentExternalId: Utsira
+description: Wind turbine 02
+metadata:
+  blob: data
+  turbineType: V112/3075
+source: manufacturer1
+labels:
+- externalId: WindTurbine
+- externalId: PowerGeneratingUnit
+dataSetExternalId: source_ds

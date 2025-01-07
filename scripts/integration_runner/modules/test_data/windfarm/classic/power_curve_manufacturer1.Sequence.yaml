@@ -1,0 +1,21 @@
+name: Power curve Manufacturer 1
+description: Power curve from manufacturer 1
+externalId: power_curve_manufacturer1
+metadata:
+  blob: data
+  turbineType: V112/3075
+columns:
+- externalId: wind_speed
+  name: Wind speed
+  description: Wind speed
+  valueType: Double
+  metadata:
+    blob: data
+- externalId: power
+  name: Power
+  description: Power
+  valueType: Double
+  metadata:
+    blob: data
+dataSetExternalId: source_ds
+assetExternalId: WT-01

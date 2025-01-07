@@ -198,6 +198,7 @@ power_curve = Sequence(
     columns=SEQUENCE_COLUMNS,
     created_time=1,
     last_updated_time=2,
+    data_set_id=ds_source.id,
 )
 
 SEQUENCES = [power_curve]
@@ -338,7 +339,7 @@ EVENTS = [maintenance]
 
 data_sheet = FileMetadata(
     external_id="WT-01_datasheet",
-    name="WT-01 datasheet",
+    name="WT-01_datasheet.txt",
     source="manufacturer1",
     asset_ids=[wind_turbine.id],
     data_set_id=ds_source.id,

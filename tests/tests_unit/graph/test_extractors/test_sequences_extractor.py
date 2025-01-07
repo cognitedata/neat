@@ -1,8 +1,5 @@
-from unittest.mock import MagicMock
-
 import pytest
 from cognite.client import CogniteClient
-from cognite.client._api.sequences import SequencesAPI, SequencesDataAPI
 from cognite.client.data_classes import SequenceList, SequenceRowsList
 from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
@@ -22,10 +19,6 @@ def client_mock() -> CogniteClient:
 
     with monkeypatch_cognite_client() as client_mock:
         sequences = SequenceList.load((CLASSIC_CDF_EXTRACTOR_DATA / "sequences.yaml").read_text())
-        # Bug in SDK, sequences is mocked incorrectly
-        client_mock.sequences = MagicMock(spec=SequencesAPI)
-        client_mock.sequences.rows = MagicMock(spec_set=SequencesDataAPI)
-
         client_mock.config.max_workers = 10
         client_mock.sequences.return_value = sequences
         client_mock.sequences.aggregate_count.return_value = len(sequences)
