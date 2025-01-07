@@ -20,7 +20,7 @@ def test_exact_match() -> None:
     output = io.StringIO()
     with contextlib.redirect_stdout(output):
         neat.prepare.instances.make_connection_on_exact_match(
-            ("Asset", "name"), ("FileMetadata", "source"), connection="files", limit=None
+            ("Asset", "name"), ("File", "source"), connection="files", limit=None
         )
     printed_statements = output.getvalue()
     assert not printed_statements.startswith(
