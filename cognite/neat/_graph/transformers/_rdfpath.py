@@ -88,10 +88,10 @@ class MakeConnectionOnExactMatch(BaseTransformerStandardised):
     def _iterate_query(self) -> str:
         query = """SELECT DISTINCT ?subject ?object
                             WHERE {{
-                                ?subject a <{subject_type}> .
-                                ?subject <{subject_predicate}> ?value .
-                                ?object <{object_predicate}> ?value .
-                                ?object a <{object_type}> .
+                                ?subject a <{subject_type}> ;
+                                        <{subject_predicate}> ?value .
+                                ?object a <{object_type}> ;
+                                        <{object_predicate}> ?value .
                             }}"""
 
         if self.limit and isinstance(self.limit, int) and self.limit > 0:
@@ -107,10 +107,10 @@ class MakeConnectionOnExactMatch(BaseTransformerStandardised):
     def _count_query(self) -> str:
         query = """SELECT (COUNT(DISTINCT (?subject ?object)) as ?count)
                     WHERE {{
-                        ?subject a <{subject_type}> .
-                        ?subject <{subject_predicate}> ?value .
-                        ?object <{object_predicate}> ?value .
-                        ?object a <{object_type}> .
+                        ?subject a <{subject_type}> ;
+                                <{subject_predicate}> ?value .
+                        ?object a <{object_type}> ;
+                                <{object_predicate}> ?value .
                     }}"""
 
         if self.limit and isinstance(self.limit, int) and self.limit > 0:
