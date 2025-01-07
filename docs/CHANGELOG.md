@@ -43,6 +43,7 @@ Changes are grouped as follows:
 ### Changed
 - The `neat.mapping.data_model.classic_to_core(...)` now includes all connection properties from the view that
   it is implementing.
+- `AddAssetDepth` is now based on `BaseTransformerStandardised` template
 
 ## [0.104.0] - 20-12-**2024**
 ### Improved
@@ -52,7 +53,7 @@ Changes are grouped as follows:
 
 ### Added
 - Writing a model to Excel now includes the reference data model if the model was created from another model
-  using the `prepare.data_model.to_enterprise(...)`, `neat.prepare.data_model.to_solution(...)`, or 
+  using the `prepare.data_model.to_enterprise(...)`, `neat.prepare.data_model.to_solution(...)`, or
   `neat.prepare.data_model.to_data_product(...)` methods.
 
 ## [0.103.1] - 17-12-**2024**
@@ -65,7 +66,7 @@ Changes are grouped as follows:
 - Support for converting data types to connection with `neat.prepare.instances.property_to_type(...)`.
 
 ### Fixed
-- The `neat.to.cdf.instances()` now accounts for the dependencies between the views when 
+- The `neat.to.cdf.instances()` now accounts for the dependencies between the views when
   creating the instances in CDF.
 - Implementing a view with a reverse connection and not overwriting reverse connection from the parent,
   no longer returns a `ReversedConnectionNotFeasibleError` in `neat.verify()`.
