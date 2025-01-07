@@ -27,7 +27,8 @@ class SchemaAPI:
         if data_model_id.version is None:
             raise NeatValueError("Data model version must be specified")
         read_views = self._client.loaders.views.retrieve(
-            view_ids,  # type: ignore[arg-type]
+            list(view_ids),
+            format="read",
             include_connected=include_connections,
             include_ancestor=include_ancestors,
         )

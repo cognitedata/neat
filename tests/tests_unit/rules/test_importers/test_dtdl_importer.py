@@ -15,8 +15,7 @@ class TestDTDLImporter:
         # In the example data, there is a property with an Object that does not have an identifier.
         expected_issues = IssueList([ResourceMissingIdentifierError("Object")])
 
-        issues = IssueList()
-        with catch_issues(issues):
+        with catch_issues() as issues:
             read_rules = DTDLImporter.from_directory(DTDL_IMPORTER_DATA / "energy-grid").to_rules()
             _ = VerifyInformationRules().transform(read_rules)
 
@@ -34,8 +33,7 @@ class TestDTDLImporter:
                 ResourceTypeNotSupportedWarning("com_example:Thermostat(version=1).response", "Command.Response"),
             ]
         )
-        issues = IssueList()
-        with catch_issues(issues):
+        with catch_issues() as issues:
             read_rules = DTDLImporter.from_zip(DTDL_IMPORTER_DATA / "TemperatureController.zip").to_rules()
             rules = VerifyInformationRules().transform(read_rules)
 
@@ -60,8 +58,7 @@ class TestDTDLImporter:
         )
 
         read_rules = dtdl_importer.to_rules()
-        issues = IssueList()
-        with catch_issues(issues):
+        with catch_issues() as issues:
             rules = VerifyInformationRules().transform(read_rules)
 
         assert rules is None

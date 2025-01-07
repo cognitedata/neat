@@ -1,9 +1,15 @@
+from collections.abc import Mapping
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.ids import DataModelId
 from rdflib import DC, DCTERMS, FOAF, OWL, RDF, RDFS, SH, SKOS, XSD, Namespace, URIRef
 
 from cognite import neat
+
+if TYPE_CHECKING:
+    from cognite.neat._rules.models.dms import DMSProperty
 
 
 def _is_in_notebook() -> bool:
@@ -97,3 +103,53 @@ DEFAULT_DOCS_URL = "https://cognite-neat.readthedocs-hosted.com/en/latest/"
 
 DMS_CONTAINER_PROPERTY_SIZE_LIMIT = 100
 DMS_VIEW_CONTAINER_SIZE_LIMIT = 10
+
+_ASSET_ROOT_PROPERTY = {
+    "connection": "direct",
+    "container": "cdf_cdm:CogniteAsset",
+    "container_property": "assetHierarchy_root",
+    "description": "An automatically updated reference to the top-level asset of the hierarchy.",
+    "immutable": False,
+    "is_list": False,
+    "name": "Root",
+    "nullable": True,
+    "value_type": "cdf_cdm:CogniteAsset(version=v1)",
+    "view": "cdf_cdm:CogniteAsset(version=v1)",
+    "view_property": "root",
+}
+
+_ASSET_PATH_PROPERTY = {
+    "connection": "direct",
+    "container": "cdf_cdm:CogniteAsset",
+    "container_property": "assetHierarchy_path",
+    "description": (
+        "An automatically updated ordered list of this asset's ancestors, starting with the root asset. "
+        "Enables subtree filtering to find all assets under a parent."
+    ),
+    "immutable": False,
+    "is_list": True,
+    "name": "Path",
+    "nullable": True,
+    "value_type": "cdf_cdm:CogniteAsset(version=v1)",
+    "view": "cdf_cdm:CogniteAsset(version=v1)",
+    "view_property": "path",
+}
+
+
+def get_asset_read_only_properties_with_connection() -> "list[DMSProperty]":
+    """Gets the asset read-only properties with connection, i.e. Root and Path."""
+    from cognite.neat._rules.models.dms import DMSProperty
+
+    return [DMSProperty.model_validate(item) for item in (_ASSET_ROOT_PROPERTY, _ASSET_PATH_PROPERTY)]
+
+
+READONLY_PROPERTIES_BY_CONTAINER: Mapping[dm.ContainerId, frozenset[str]] = {
+    dm.ContainerId("cdf_cdm", "CogniteAsset"): frozenset(
+        {"assetHierarchy_root", "assetHierarchy_path", "assetHierarchy_path_last_updated_time"}
+    ),
+    dm.ContainerId("cdf_cdm", "CogniteFile"): frozenset({"isUploaded", "uploadedTime"}),
+}
+
+
+def is_readonly_property(container: dm.ContainerId, property_: str) -> bool:
+    return container in READONLY_PROPERTIES_BY_CONTAINER and property_ in READONLY_PROPERTIES_BY_CONTAINER[container]

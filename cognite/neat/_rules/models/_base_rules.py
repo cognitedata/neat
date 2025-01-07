@@ -398,7 +398,10 @@ class SheetList(list, MutableSequence[T_SheetRow]):
 
     def _repr_html_(self) -> str:
         """Returns HTML representation of ResourceDict."""
-        return self.to_pandas(drop_na_columns=True)._repr_html_()  # type: ignore[operator]
+        df = self.to_pandas(drop_na_columns=True)
+        if "neatId" in df.columns:
+            df = df.drop(columns=["neatId"])
+        return df._repr_html_()  # type: ignore[operator]
 
     # Implemented to get correct type hints
     def __iter__(self) -> Iterator[T_SheetRow]:

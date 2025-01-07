@@ -15,6 +15,35 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.105.0] - 07-01-**2025**
+### Added
+- All `neat.read` methods now supports reading from a URL.
+- `neat.prepare.instances.connection_to_data_type(...)` added to convert connection to data type.
+- `neat.prepare.instances.classic_to_core()` which bundles the preparation from classic to core.
+
+### Fixed
+- `neat.read.yaml(...)` no longer raises a `ValueError` if a view is referencing an enum property in a container
+  that is not part of the model.
+- `neat.read.yaml('....zip', format='toolkit')` now correctly puts containers into a subfolder in the zip file.
+- `neat.to.cdf.data_model(...)` now correctly handles list of json objects in the `properties` field of a view.
+
+### Improved
+- `neat.read.yaml(..., format="toolkit")` no longer removes direct relations sources that points to views that are not
+  part of the model.
+- When using the `neat.prepare.data_model.to_solution(...mode="read")` and `neat.prepare.data_model.to_data_product()`
+  methods, the newly created views inherits the filter from the source data model containers. This ensures that the new
+  views will return the same instances as the source views.
+- The `neat.prepare.data_model.to_data_product(include="same-space")` method no longer produces data models that uses
+  values types that are not part of the data model. This ensures that the data model is self-contained. This is solved
+  by dropping all properties that have a value type that is not part of the data model.
+- The `neat.to.cdf.instances(...)` now correctly ignores read-only properties when creating instances in CDF.
+- Reading sequences from CDF using `read.cdf.classic.graph(...)` now includes `rows`. In addition, the `columns` are
+  now created as a list and not a blob.
+
+### Changed
+- The `neat.mapping.data_model.classic_to_core(...)` now includes all connection properties from the view that
+  it is implementing.
+
 ## [0.104.0] - 20-12-**2024**
 ### Improved
 - When using a `NeatSession` object in a notebook. The return issues now has context for what actions they

@@ -8,7 +8,17 @@ from cognite.neat._utils.auxiliary import get_classmethods, get_parameters_by_me
 
 @pytest.mark.parametrize(
     "cls_, expected_methods",
-    [(DMSImporter, [DMSImporter.from_data_model_id, DMSImporter.from_directory, DMSImporter.from_zip_file])],
+    [
+        (
+            DMSImporter,
+            [
+                DMSImporter.from_data_model_id,
+                DMSImporter.from_directory,
+                DMSImporter.from_path,
+                DMSImporter.from_zip_file,
+            ],
+        )
+    ],
 )
 def test_get_classmethods(cls_, expected_methods: list) -> None:
     assert get_classmethods(cls_) == expected_methods

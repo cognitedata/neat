@@ -60,7 +60,8 @@ properties:
   view: MyDescribable
   view_property: tags
 views:
-- in_model: true
+- filter_: hasData(cdf_cdm:CogniteDescribable,sp_referencing_core:MyDescribable)
+  in_model: true
   name: MyDescribable
   neatId: http://purl.org/cognite/neat/neatId_bd9c66b3_ad3c_4d6d_9a3d_1fa7bc8960a9
   view: MyDescribable

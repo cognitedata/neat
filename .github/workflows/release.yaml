@@ -59,19 +59,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - id: version
-        name: NEAT Version
-        # Read the version from the cognite/neat/_version.py file
-        run: echo "version=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' cognite/neat/_version.py)" >> $GITHUB_ENV
-
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64/v8
-          push: true
-          tags: cognite/neat:latest, cognite/neat:${{ env.version }}
+#      - id: version
+#        name: NEAT Version
+#        # Read the version from the cognite/neat/_version.py file
+#        run: echo "version=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' cognite/neat/_version.py)" >> $GITHUB_ENV
+#
+#      - name: Build and push
+#        uses: docker/build-push-action@v4
+#        with:
+#          context: .
+#          file: ./Dockerfile
+#          platforms: linux/amd64,linux/arm64/v8
+#          push: true
+#          tags: cognite/neat:latest, cognite/neat:${{ env.version }}
 
   release-to-f25e:
     runs-on: ubuntu-latest
@@ -110,13 +110,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        env:
-          VERSION: ${{ env.version }}
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64/v8
-          push: true
-          tags: scsproduction.azurecr.io/neat:${{ env.version }}
+#      - name: Build and push
+#        uses: docker/build-push-action@v4
+#        env:
+#          VERSION: ${{ env.version }}
+#        with:
+#          context: .
+#          file: ./Dockerfile
+#          platforms: linux/amd64,linux/arm64/v8
+#          push: true
+#          tags: scsproduction.azurecr.io/neat:${{ env.version }}

@@ -1,18 +1,16 @@
-import tempfile
-from pathlib import Path
 from typing import Any, Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 
 from cognite.neat._client import NeatClient
-from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._issues.warnings import MissingCogniteClientWarning
 from cognite.neat._rules import catalog, importers
 from cognite.neat._rules.importers import BaseImporter
-from cognite.neat._utils.reader import GitHubReader, HttpFileReader, NeatReader, PathReader
+from cognite.neat._utils.reader import NeatReader
 
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, XMLFileType, object_wizard, rdf_dm_wizard, xml_format_wizard
@@ -167,9 +165,8 @@ class ExcelReadAPI(BaseReadAPI):
             io: file path to the Excel sheet
         """
         reader = NeatReader.create(io)
-        if not isinstance(reader, PathReader):
-            raise NeatValueError("Only file paths are supported for Excel files")
-        return self._state.rule_import(importers.ExcelImporter(reader.path))
+        path = reader.materialize_path()
+        return self._state.rule_import(importers.ExcelImporter(path))
 
 
 @session_class_wrapper
@@ -185,46 +182,32 @@ class ExcelExampleAPI(BaseReadAPI):
 
 @session_class_wrapper
 class YamlReadAPI(BaseReadAPI):
-    """Reads a yaml with either neat rules, or several toolkit yaml files to import Data Model(s) into NeatSession.
-
-    Args:
-        io: file path to the Yaml file in the case of "neat" yaml, or path to a zip folder or directory with several
-        Yaml files in the case of "toolkit".
-
-    Example:
-        ```python
-        neat.read.yaml("path_to_toolkit_yamls")
-        ```
-    """
-
     def __call__(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> IssueList:
+        """Reads a yaml with either neat rules, or several toolkit yaml files to import Data Model(s) into NeatSession.
+
+        Args:
+            io: File path to the Yaml file in the case of "neat" yaml, or path to a zip folder or directory with several
+                Yaml files in the case of "toolkit".
+            format: The format of the yaml file(s). Can be either "neat" or "toolkit".
+
+        Example:
+            ```python
+            neat.read.yaml("path_to_toolkit_yamls")
+            ```
+        """
         reader = NeatReader.create(io)
-        if not isinstance(reader, PathReader):
-            raise NeatValueError("Only file paths are supported for YAML files")
+        path = reader.materialize_path()
         importer: BaseImporter
         if format == "neat":
-            importer = importers.YAMLImporter.from_file(reader.path, source_name=f"{reader!s}")
+            importer = importers.YAMLImporter.from_file(path, source_name=f"{reader!s}")
         elif format == "toolkit":
-            if reader.path.is_file():
-                dms_importer = importers.DMSImporter.from_zip_file(reader.path)
-            elif reader.path.is_dir():
-                dms_importer = importers.DMSImporter.from_directory(reader.path)
-            else:
-                raise NeatValueError(f"Unsupported YAML format: {format}")
-
-            ref_containers = dms_importer.root_schema.referenced_container()
-            if system_container_ids := [
-                container_id for container_id in ref_containers if container_id.space in COGNITE_SPACES
-            ]:
-                if self._client is None:
-                    raise NeatSessionError(
-                        "No client provided. You are referencing Cognite containers in your data model, "
-                        "NEAT needs a client to lookup the container definitions. "
-                        "Please set the client in the session, NeatSession(client=client)."
-                    )
-                system_containers = self._client.loaders.containers.retrieve(system_container_ids)
-                dms_importer.update_referenced_containers(system_containers)
-
+            dms_importer = importers.DMSImporter.from_path(path, self._client)
+            if dms_importer.issue_list.has_warning_type(MissingCogniteClientWarning):
+                raise NeatSessionError(
+                    "No client provided. You are referencing Cognite containers in your data model, "
+                    "NEAT needs a client to lookup the container definitions. "
+                    "Please set the client in the session, NeatSession(client=client)."
+                )
             importer = dms_importer
         else:
             raise NeatValueError(f"Unsupported YAML format: {format}")
@@ -251,17 +234,9 @@ class CSVReadAPI(BaseReadAPI):
     """
 
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
-        reader = NeatReader.create(io)
-        if isinstance(reader, HttpFileReader):
-            path = Path(tempfile.gettempdir()).resolve() / reader.name
-            path.write_text(reader.read_text(), encoding="utf-8", newline="\n")
-        elif isinstance(reader, PathReader):
-            path = reader.path
-        else:
-            raise NeatValueError("Only file paths are supported for CSV files")
         engine = import_engine()
         engine.set.format = "csv"
-        engine.set.file = path
+        engine.set.file = NeatReader.create(io).materialize_path()
         engine.set.type = type
         engine.set.primary_key = primary_key
         extractor = engine.create_extractor()
@@ -283,14 +258,7 @@ class XMLReadAPI(BaseReadAPI):
         io: Any,
         format: XMLFileType | None = None,
     ) -> None:
-        reader = NeatReader.create(io)
-        if isinstance(reader, GitHubReader):
-            path = Path(tempfile.gettempdir()).resolve() / reader.name
-            path.write_text(reader.read_text())
-        elif isinstance(reader, PathReader):
-            path = reader.path
-        else:
-            raise NeatValueError("Only file paths are supported for XML files")
+        path = NeatReader.create(io).materialize_path()
         if format is None:
             format = xml_format_wizard()
 
@@ -303,7 +271,7 @@ class XMLReadAPI(BaseReadAPI):
         else:
             raise NeatValueError("Only support XML files of DEXPI format at the moment.")
 
-    def dexpi(self, path):
+    def dexpi(self, io: Any) -> None:
         """Reads a DEXPI file into the NeatSession.
 
         Args:
@@ -314,13 +282,14 @@ class XMLReadAPI(BaseReadAPI):
             neat.read.xml.dexpi("url_or_path_to_dexpi_file")
             ```
         """
+        path = NeatReader.create(io).materialize_path()
         engine = import_engine()
         engine.set.format = "dexpi"
         engine.set.file = path
         extractor = engine.create_extractor()
         self._state.instances.store.write(extractor)
 
-    def aml(self, path):
+    def aml(self, io: Any):
         """Reads an AML file into NeatSession.
 
         Args:
@@ -331,6 +300,7 @@ class XMLReadAPI(BaseReadAPI):
             neat.read.xml.aml("url_or_path_to_aml_file")
             ```
         """
+        path = NeatReader.create(io).materialize_path()
         engine = import_engine()
         engine.set.format = "aml"
         engine.set.file = path
@@ -362,9 +332,7 @@ class RDFReadAPI(BaseReadAPI):
             ```
         """
         reader = NeatReader.create(io)
-        if not isinstance(reader, PathReader):
-            raise NeatValueError("Only file paths are supported for RDF files")
-        importer = importers.OWLImporter.from_file(reader.path, source_name=f"file {reader!s}")
+        importer = importers.OWLImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
         return self._state.rule_import(importer)
 
     def imf(self, io: Any) -> IssueList:
@@ -379,9 +347,7 @@ class RDFReadAPI(BaseReadAPI):
             ```
         """
         reader = NeatReader.create(io)
-        if not isinstance(reader, PathReader):
-            raise NeatValueError("Only file paths are supported for RDF files")
-        importer = importers.IMFImporter.from_file(reader.path, source_name=f"file {reader!s}")
+        importer = importers.IMFImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
         return self._state.rule_import(importer)
 
     def __call__(
@@ -408,10 +374,7 @@ class RDFReadAPI(BaseReadAPI):
 
         elif type == "instances":
             reader = NeatReader.create(io)
-            if not isinstance(reader, PathReader):
-                raise NeatValueError("Only file paths are supported for RDF files")
-
-            self._state.instances.store.write(extractors.RdfFileExtractor(reader.path))
+            self._state.instances.store.write(extractors.RdfFileExtractor(reader.materialize_path()))
             return IssueList()
         else:
             raise NeatSessionError(f"Expected data model or instances, got {type}")

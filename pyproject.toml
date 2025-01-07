@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cognite-neat"
-version = "0.104.0"
+version = "0.105.0"
 readme = "README.md"
 description = "Knowledge graph transformation"
 authors = [
@@ -109,6 +109,9 @@ mkdocs-glightbox = { version = "*", optional = true }
 pymdown-extensions = { version = "*", optional = true }
 mkdocs-autorefs = { version = "^0.5.0", optional = true }
 mkdocstrings = { version = "*", optional = true, extras = ["python"] }
+# dependencies for mkdocstrings
+# 3.1.0 breaks nbconvert
+mistune= {version ="3.0.2", optional= true}
 pyvis = "^0.3.2"
 
 [tool.poetry.extras]
@@ -123,6 +126,7 @@ docs = [
     "pymdown-extensions",
     "mkdocstrings",
     "mkdocs-autorefs",
+    "mistune",
 ]
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 oxi = ["oxrdflib", "pyoxigraph"]
@@ -163,7 +167,7 @@ types-openpyxl = "^3"
 types-requests = "^2"
 types-setuptools = "^68"
 networkx-stubs = "^0.0.1"
-cognite-toolkit = "^0.2.4"
+cognite-toolkit = "^0.3.23"
 
 
 [build-system]

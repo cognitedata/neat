@@ -223,3 +223,75 @@ class LiteralToEntity(BaseTransformerStandardised):
         row_output.instances_modified_count += 1  # we modify the old entity
 
         return row_output
+
+
+class ConnectionToLiteral(BaseTransformerStandardised):
+    description = "Converts an entity connection to a literal value"
+
+    def __init__(self, subject_type: URIRef | None, subject_predicate: URIRef) -> None:
+        self.subject_type = subject_type
+        self.subject_predicate = subject_predicate
+
+    def _iterate_query(self) -> str:
+        if self.subject_type is None:
+            query = """SELECT ?instance ?object
+            WHERE {{
+              ?instance <{subject_predicate}> ?object
+              FILTER(isIRI(?object))
+            }}"""
+            return query.format(subject_predicate=self.subject_predicate)
+        else:
+            query = """SELECT ?instance ?object
+                WHERE {{
+                  ?instance a <{subject_type}> .
+                  ?instance <{subject_predicate}> ?object
+                  FILTER(isIRI(?object))
+                }}"""
+            return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
+
+    def _skip_count_query(self) -> str:
+        if self.subject_type is None:
+            query = """SELECT (COUNT(?object) AS ?objectCount)
+                        WHERE {{
+                          ?instance <{subject_predicate}> ?object
+                          FILTER(isLiteral(?object))
+                        }}"""
+            return query.format(subject_predicate=self.subject_predicate)
+        else:
+            query = """SELECT (COUNT(?object) AS ?objectCount)
+                        WHERE {{
+                          ?instance a <{subject_type}> .
+                          ?instance <{subject_predicate}> ?object
+                          FILTER(isLiteral(?object))
+                        }}"""
+            return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
+
+    def _count_query(self) -> str:
+        if self.subject_type is None:
+            query = """SELECT (COUNT(?object) AS ?objectCount)
+                WHERE {{
+                  ?instance <{subject_predicate}> ?object
+                  FILTER(isIRI(?object))
+                }}"""
+            return query.format(subject_predicate=self.subject_predicate)
+        else:
+            query = """SELECT (COUNT(?object) AS ?objectCount)
+                        WHERE {{
+                          ?instance a <{subject_type}> .
+                          ?instance <{subject_predicate}> ?object
+                          FILTER(isIRI(?object))
+                        }}"""
+
+            return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
+
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
+        row_output = RowTransformationOutput()
+
+        instance, object_entity = cast(tuple[URIRef, URIRef], query_result_row)
+        value = remove_namespace_from_uri(object_entity)
+
+        row_output.add_triples.append((instance, self.subject_predicate, rdflib.Literal(value)))
+        row_output.remove_triples.append((instance, self.subject_predicate, object_entity))
+        row_output.instances_modified_count += 1
+
+        return row_output

@@ -1,0 +1,72 @@
+- id: 85080677975658
+  externalId: VoltageLevelVSCurrentLevel
+  columns:
+  - externalId: "0"
+    valueType: DOUBLE
+    metadata: {}
+    createdTime: 1700503112069
+    lastUpdatedTime: 1700503112069
+  - externalId: "1"
+    valueType: DOUBLE
+    metadata: {}
+    createdTime: 1700503112069
+    lastUpdatedTime: 1700503112069
+  - externalId: "2"
+    valueType: DOUBLE
+    metadata: {}
+    createdTime: 1700503112069
+    lastUpdatedTime: 1700503112069
+  - externalId: "3"
+    valueType: DOUBLE
+    metadata: {}
+    createdTime: 1700503112069
+    lastUpdatedTime: 1700503112069
+  rows:
+    - rowNumber: 0
+      values:
+      - 0.0
+      - 1.0
+      - 2.0
+      - 3.0
+    - rowNumber: 1
+      values:
+      - 4.0
+      - 5.0
+      - 6.0
+      - 7.0
+- id: 82080677975658
+  externalId: CurrentLevelVSVoltageLevel
+  columns:
+  - externalId: "0"
+    valueType: DOUBLE
+    metadata: {}
+    createdTime: 1700503112069
+    lastUpdatedTime: 1700503112069
+  - externalId: "1"
+    valueType: DOUBLE
+    metadata: {}
+    createdTime: 1700503112069
+    lastUpdatedTime: 1700503112069
+  - externalId: "2"
+    valueType: DOUBLE
+    metadata: {}
+    createdTime: 1700503112069
+    lastUpdatedTime: 1700503112069
+  - externalId: "3"
+    valueType: DOUBLE
+    metadata: {}
+    createdTime: 1700503112069
+    lastUpdatedTime: 1700503112069
+  rows:
+  - rowNumber: 0
+    values:
+    - 8.0
+    - 9.0
+    - 10.0
+    - 11.0
+  - rowNumber: 1
+    values:
+    - 12.0
+    - 13.0
+    - 14.0
+    - 15.0

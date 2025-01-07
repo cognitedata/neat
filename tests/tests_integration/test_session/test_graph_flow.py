@@ -1,5 +1,6 @@
 from typing import Any
 
+import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
@@ -36,22 +37,14 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
-    def test_classic_to_dms(
-        self, deterministic_uuid4: None, cognite_client: CogniteClient, data_regression: DataRegressionFixture
-    ) -> None:
+    @pytest.mark.usefixtures("deterministic_uuid4")
+    def test_classic_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
         for extractor in classic_windfarm.create_extractors():
             neat._state.instances.store.write(extractor)
 
-        # Sequences is not yet supported
-        neat.drop.instances("Sequence")
-        neat.prepare.instances.relationships_as_edges()
-
-        neat.prepare.instances.convert_data_type(
-            ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
-        )
-        neat.prepare.instances.property_to_type((None, "source"), "SourceSystem", "name")
+        neat.prepare.instances.classic_to_core()
 
         neat.infer()
 
@@ -59,7 +52,6 @@ class TestExtractToLoadFlow:
         rules = neat._state.rule_store.last_unverified_rule
         rules.metadata.created = "2024-09-19T00:00:00Z"
         rules.metadata.updated = "2024-09-19T00:00:00Z"
-
         # Sorting the properties to ensure deterministic output
         rules.properties = sorted(rules.properties, key=lambda x: (x.class_, x.property_))
 
@@ -67,6 +59,7 @@ class TestExtractToLoadFlow:
 
         neat.verify()
 
+        neat.prepare.data_model.add_implements_to_classes("Edge", "Edge")
         neat.convert("dms", mode="edge_properties")
 
         neat.mapping.data_model.classic_to_core("Classic", use_parent_property_name=True)
@@ -84,8 +77,18 @@ class TestExtractToLoadFlow:
 
         rules_str = neat.to.yaml(format="neat")
 
+        neat.prepare.data_model.to_data_product(("sp_data_product", "DataProduct", "v1"))
+
+        data_product_dict = yaml.safe_load(neat.to.yaml(format="neat"))
+
         rules_dict = yaml.safe_load(rules_str)
-        data_regression.check({"rules": rules_dict, "instances": sorted(instances, key=lambda x: x["externalId"])})
+        data_regression.check(
+            {
+                "rules": rules_dict,
+                "data_product": data_product_dict,
+                "instances": sorted(instances, key=lambda x: x["externalId"]),
+            }
+        )
 
     def test_dexpi_to_dms(
         self, deterministic_uuid4: None, cognite_client: CogniteClient, data_regression: DataRegressionFixture
@@ -185,10 +188,17 @@ class TestExtractToLoadFlow:
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:
         if not isinstance(instance, InstanceApply):
             raise ValueError(f"Expected InstanceApply, got {type(instance)}")
+
+        def dict_sort(v: dict[str, Any]) -> str:
+            for key in ["externalId", "rowNumber", "colNumber"]:
+                if key in v:
+                    return v[key]
+            return str(v)
+
         for source in instance.sources:
             for value in source.properties.values():
                 if isinstance(value, list) and all(isinstance(v, dict) for v in value):
-                    value = sorted(value, key=lambda x: x["externalId"])
+                    value.sort(key=dict_sort)
                 elif isinstance(value, list):
                     value.sort()
         return instance.dump()
@@ -199,14 +209,7 @@ class TestExtractToLoadFlow:
         for extractor in classic_windfarm.create_extractors():
             neat._state.instances.store.write(extractor)
 
-        # Sequences is not yet supported
-        neat.drop.instances("Sequence")
-
-        neat.prepare.instances.relationships_as_edges()
-        neat.prepare.instances.convert_data_type(
-            ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
-        )
-        neat.prepare.instances.property_to_type((None, "source"), "SourceSystem", "name")
+        neat.prepare.instances.classic_to_core()
 
         neat.infer()
 
@@ -214,8 +217,9 @@ class TestExtractToLoadFlow:
 
         neat.verify()
 
+        neat.prepare.data_model.add_implements_to_classes("Edge", "Edge")
         neat.convert("dms", mode="edge_properties")
-        neat.mapping.data_model.classic_to_core("Classic", use_parent_property_name=True)
+        neat.mapping.data_model.classic_to_core("Classic")
 
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 

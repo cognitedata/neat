@@ -207,7 +207,7 @@ class DMSSchema:
             if "containers" not in exclude_set:
                 for container in self.containers.values():
                     zip_ref.writestr(
-                        f"data_models/containers{container.external_id}.container.yaml", container.dump_yaml()
+                        f"data_models/containers/{container.external_id}.container.yaml", container.dump_yaml()
                     )
             if "node_types" not in exclude_set:
                 for node in self.node_types.values():
@@ -377,6 +377,10 @@ class DMSSchema:
         }
         referenced_containers |= set(self.containers.keys())
         return referenced_containers
+
+    def externally_referenced_containers(self) -> set[dm.ContainerId]:
+        """Get the containers referenced by the schema that are not defined in the schema."""
+        return {container for container in self.referenced_container() if container not in self.containers}
 
     def as_read_model(self) -> dm.DataModel[dm.View]:
         if self.data_model is None:

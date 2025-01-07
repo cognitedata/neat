@@ -77,3 +77,9 @@ capabilities:
       - READ
       scope:
         all: {}
+  - locationFiltersAcl:
+      actions:
+      - WRITE
+      - READ
+      scope:
+        all: {}

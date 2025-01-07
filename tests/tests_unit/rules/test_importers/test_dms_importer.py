@@ -5,7 +5,7 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
-from cognite.neat._issues import IssueList, catch_issues
+from cognite.neat._issues import catch_issues
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import DMSImporter, ExcelImporter
 from cognite.neat._rules.models import DMSRules, DMSSchema
@@ -18,8 +18,7 @@ class TestDMSImporter:
     def test_import_with_direct_relation_none(self) -> None:
         importer = DMSImporter(SCHEMA_WITH_DIRECT_RELATION_NONE)
 
-        issues = IssueList()
-        with catch_issues(issues):
+        with catch_issues() as issues:
             rules = VerifyDMSRules().transform(importer.to_rules())
         assert len(issues) == 1
         dms_rules = cast(DMSRules, rules)
@@ -46,8 +45,7 @@ class TestDMSImporter:
         schema = dms_rules.as_schema()
         dms_importer = DMSImporter(schema)
 
-        issues = IssueList()
-        with catch_issues(issues):
+        with catch_issues() as issues:
             rules = VerifyDMSRules().transform(dms_importer.to_rules())
 
         issue_str = "\n".join([issue.as_message() for issue in issues])
@@ -108,6 +106,32 @@ class TestDMSImporter:
         dms_recreated = DMSExporter().export(rules)
 
         assert dms_recreated.views.dump() == SCHEMA_INWARDS_EDGE_WITH_PROPERTIES.views.dump()
+
+    def test_import_schema_with_referenced_enum(self) -> None:
+        importer = DMSImporter(
+            SCHEMA_WITH_REFERENCED_ENUM,
+            referenced_containers=[
+                dm.ContainerApply(
+                    space="cdf_cdm",
+                    external_id="CogniteTimeSeries",
+                    properties={
+                        "type": dm.ContainerProperty(
+                            type=dm.data_types.Enum(
+                                {
+                                    "numeric": dm.data_types.EnumValue(),
+                                    "string": dm.data_types.EnumValue(),
+                                }
+                            )
+                        )
+                    },
+                )
+            ],
+        )
+
+        with catch_issues() as issues:
+            _ = importer.to_rules()
+
+        assert len(issues) == 0
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
@@ -205,6 +229,33 @@ SCHEMA_INWARDS_EDGE_WITH_PROPERTIES = DMSSchema(
                 properties={
                     "distance": dm.ContainerProperty(
                         type=dm.data_types.Float64(),
+                    )
+                },
+            )
+        ]
+    ),
+)
+
+SCHEMA_WITH_REFERENCED_ENUM = DMSSchema(
+    data_model=dm.DataModelApply(
+        space="neat",
+        external_id="data_model",
+        version="v1",
+        views=[
+            dm.ViewId("neat", "OneView", "v1"),
+        ],
+    ),
+    spaces=SpaceApplyDict([dm.SpaceApply(space="neat")]),
+    views=ViewApplyDict(
+        [
+            dm.ViewApply(
+                space="neat",
+                external_id="OneView",
+                version="1",
+                properties={
+                    "type": dm.MappedPropertyApply(
+                        container=dm.ContainerId("cdf_cdm", "CogniteTimeSeries"),
+                        container_property_identifier="type",
                     )
                 },
             )
