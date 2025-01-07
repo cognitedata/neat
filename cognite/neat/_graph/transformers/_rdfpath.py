@@ -105,7 +105,7 @@ class MakeConnectionOnExactMatch(BaseTransformerStandardised):
         )
 
     def _count_query(self) -> str:
-        query = """SELECT (COUNT(DISTINCT (?subject ?object)) as ?count)
+        query = """SELECT (COUNT(DISTINCT ?subject) as ?count)
                     WHERE {{
                         ?subject a <{subject_type}> ;
                                 <{subject_predicate}> ?value .
