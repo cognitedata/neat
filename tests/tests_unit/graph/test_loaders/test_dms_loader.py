@@ -88,6 +88,7 @@ def test_extract_above_direct_relation_limit() -> None:
         neat.verify()
         neat.convert("dms")
         dms_rules = neat._state.rule_store.last_verified_dms_rules
+        # Default conversion uses edges for connections. We need to change it to direct relations
         asset_ids = next(prop for prop in dms_rules.properties if prop.view_property == "assetIds")
         asset_ids.connection = "direct"
         asset_ids.container_property = "assetIds"
