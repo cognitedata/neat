@@ -167,7 +167,7 @@ types-openpyxl = "^3"
 types-requests = "^2"
 types-setuptools = "^68"
 networkx-stubs = "^0.0.1"
-cognite-toolkit = "^0.3.23"
+cognite-toolkit = "^0.3.24"
 
 
 [build-system]
