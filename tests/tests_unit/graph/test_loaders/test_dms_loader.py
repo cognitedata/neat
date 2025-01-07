@@ -3,7 +3,7 @@ from cognite.client.data_classes.data_modeling import InstanceApply
 from cognite.client.testing import monkeypatch_cognite_client
 
 from cognite.neat import NeatSession
-from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DMS_DIRECT_RELATION_LIST_LIMIT
 from cognite.neat._graph.extractors import AssetsExtractor, FilesExtractor, RdfFileExtractor
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.catalog import imf_attributes
@@ -76,7 +76,7 @@ def test_imf_attribute_nodes():
 
 def test_extract_above_direct_relation_limit() -> None:
     with monkeypatch_cognite_client() as client:
-        neat = NeatSession(client)
+        neat = NeatSession(client, storage="oxigraph")
         assets = [Asset(id=i, name=f"Asset_{i}") for i in range(1, 1001)]
         file = FileMetadata(id=1, name="P&ID file", asset_ids=list(range(1, 1001)))
 
@@ -87,11 +87,19 @@ def test_extract_above_direct_relation_limit() -> None:
         neat.prepare.data_model.prefix("Classic")
         neat.verify()
         neat.convert("dms")
-        schema = neat._state.rule_store.last_verified_dms_rules.as_schema()
+        dms_rules = neat._state.rule_store.last_verified_dms_rules
+        asset_ids = next(prop for prop in dms_rules.properties if prop.view_property == "assetIds")
+        asset_ids.connection = "direct"
+
+        schema = dms_rules.as_schema()
 
         client.iam.verify_capabilities.return_value = []
         client.data_modeling.views.retrieve.return_value = schema.views.values()
         client.data_modeling.containers.retrieve.return_value = schema.containers.values()
         neat.to.cdf.instances()
 
-    assert client.data_modeling.instances.apply.call_count == 4
+    # Twice for the asset due to the self-relation, parentId
+    # and once for the file
+    assert client.data_modeling.instances.apply.call_count == 3
+    file_node = client.data_modeling.instances.apply.call_args_list[2].args[0][0]
+    assert len(file_node.sources[0].properties[0].properties["assetIds"]) == DMS_DIRECT_RELATION_LIST_LIMIT
