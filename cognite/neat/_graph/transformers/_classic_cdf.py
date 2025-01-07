@@ -27,9 +27,6 @@ class AddAssetDepth(BaseTransformerStandardised):
     _use_only_once: bool = True
     _need_changes = frozenset({str(extractors.AssetsExtractor.__name__)})
 
-    _depth_template: str = """SELECT (COUNT(?parent) as ?parentCount) WHERE {{
-                              <{asset_id}> <{parent_prop}>+ ?parent .}}"""
-
     def __init__(
         self,
         asset_type: URIRef | None = None,
