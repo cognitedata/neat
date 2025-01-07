@@ -43,7 +43,6 @@ Changes are grouped as follows:
 ### Changed
 - The `neat.mapping.data_model.classic_to_core(...)` now includes all connection properties from the view that
   it is implementing.
-- `AddAssetDepth` is now based on `BaseTransformerStandardised` template
 
 ## [0.104.0] - 20-12-**2024**
 ### Improved
