@@ -8,7 +8,7 @@ from cognite.neat._graph.extractors import AssetsExtractor, FilesExtractor, RdfF
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.catalog import imf_attributes
 from cognite.neat._rules.importers import ExcelImporter, InferenceImporter
-from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
+from cognite.neat._rules.models.entities._single_value import ClassEntity, ContainerEntity, ViewEntity
 from cognite.neat._rules.transformers import InformationToDMS
 from cognite.neat._store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, IMF_EXAMPLE
@@ -90,6 +90,8 @@ def test_extract_above_direct_relation_limit() -> None:
         dms_rules = neat._state.rule_store.last_verified_dms_rules
         asset_ids = next(prop for prop in dms_rules.properties if prop.view_property == "assetIds")
         asset_ids.connection = "direct"
+        asset_ids.container_property = "assetIds"
+        asset_ids.container = ContainerEntity.load("neat_space:ClassicFile")
 
         schema = dms_rules.as_schema()
 
@@ -102,4 +104,5 @@ def test_extract_above_direct_relation_limit() -> None:
     # and once for the file
     assert client.data_modeling.instances.apply.call_count == 3
     file_node = client.data_modeling.instances.apply.call_args_list[2].args[0][0]
-    assert len(file_node.sources[0].properties[0].properties["assetIds"]) == DMS_DIRECT_RELATION_LIST_LIMIT
+    assert file_node.sources[0].source.external_id == "ClassicFile"
+    assert len(file_node.sources[0].properties["assetIds"]) == DMS_DIRECT_RELATION_LIST_LIMIT
