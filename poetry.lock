@@ -5513,4 +5513,4 @@ service = ["fastapi", "prometheus-client", "python-multipart", "schedule", "uvic
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "3d4acb663d924a3426fb327453eb08298379acd1c645ee29185768f2e3167a87"
+content-hash = "f59170918d991fdbd5f4876d36e743d8a525c48a58d92883114ca655b790a11e"
