@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Generic
 
+from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT
 from cognite.neat._issues._base import ResourceType
 
 from ._resources import ResourceNeatWarning, T_Identifier, T_ReferenceIdentifier
@@ -77,3 +78,13 @@ class PropertyDataTypeConversionWarning(PropertyWarning[T_Identifier]):
     """The {resource_type} with identifier {identifier} failed to convert the property {property_name}: {error}"""
 
     error: str
+
+
+@dataclass(unsafe_hash=True)
+class PropertyDirectRelationLimitWarning(PropertyWarning[T_Identifier]):
+    """The listable direct relation property {property_name} in the {resource_type} with identifier {identifier}
+    has more than {limit} relations. Extra relations will be ignored."""
+
+    resource_type = "view"
+
+    limit: int = DMS_DIRECT_RELATION_LIST_LIMIT
