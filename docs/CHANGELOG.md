@@ -16,6 +16,10 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Added
+- `neat.to.cdf.instances()` now automatically ignore relations above the DMS limit of 100. This is to ensure that
+  the instances are successfully loaded into CDF. A warning is issued to the user if any relations are ignored.
+
 ### Fixed
 - The `neat.prepare.instances.make_connection_on_exact_match` no longer raises a `SyntaxError` when called.
 
