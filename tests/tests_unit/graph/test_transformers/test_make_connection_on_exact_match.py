@@ -4,7 +4,7 @@ import io
 from cognite.client.data_classes import Asset, FileMetadata
 
 from cognite.neat import NeatSession
-from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._classic_cdf._assets import AssetsExtractor
 from cognite.neat._graph.extractors._classic_cdf._files import FilesExtractor
 
@@ -28,6 +28,6 @@ def test_exact_match() -> None:
     ), f"Failed to make connection on exact match: {printed_statements}"
 
     has_property = neat._state.instances.store.queries.type_with_property(
-        CLASSIC_CDF_NAMESPACE["Asset"], CLASSIC_CDF_NAMESPACE["files"]
+        CLASSIC_CDF_NAMESPACE["Asset"], DEFAULT_NAMESPACE["files"]
     )
     assert has_property is True
