@@ -6,6 +6,7 @@ from functools import lru_cache
 from typing import cast
 
 from rdflib import RDF, Graph, Literal, Namespace, URIRef
+from rdflib.query import ResultRow
 
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat._graph import extractors
@@ -18,71 +19,57 @@ from cognite.neat._utils.rdf_ import (
     remove_namespace_from_uri,
 )
 
-from ._base import BaseTransformer
+from ._base import BaseTransformer, BaseTransformerStandardised, RowTransformationOutput
 
 
-# TODO: standardise
-class AddAssetDepth(BaseTransformer):
-    description: str = "Adds depth of asset in the asset hierarchy to the graph"
+class AddAssetDepth(BaseTransformerStandardised):
+    description: str = "Adds depth of asset in the asset hierarchy and optionally types asset based on depth"
     _use_only_once: bool = True
     _need_changes = frozenset({str(extractors.AssetsExtractor.__name__)})
-
-    _parent_template: str = """SELECT ?child ?parent WHERE {{
-                              <{asset_id}> <{parent_prop}> ?child .
-                              OPTIONAL{{?child <{parent_prop}>+ ?parent .}}}}"""
-
-    _root_template: str = """SELECT ?root WHERE {{
-                             <{asset_id}> <{root_prop}> ?root .}}"""
 
     def __init__(
         self,
         asset_type: URIRef | None = None,
-        root_prop: URIRef | None = None,
         parent_prop: URIRef | None = None,
         depth_typing: dict[int, str] | None = None,
     ):
         self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
-        self.root_prop = root_prop or DEFAULT_NAMESPACE.rootId
         self.parent_prop = parent_prop or DEFAULT_NAMESPACE.parentId
         self.depth_typing = depth_typing
 
-    def transform(self, graph: Graph) -> None:
-        """Adds depth of asset in the asset hierarchy to the graph."""
-        for result in graph.query(f"SELECT DISTINCT ?asset_id WHERE {{?asset_id a <{self.asset_type}>}}"):
-            asset_id = cast(tuple, result)[0]
-            if depth := self.get_depth(graph, asset_id, self.root_prop, self.parent_prop):
-                graph.add((asset_id, DEFAULT_NAMESPACE.depth, Literal(depth)))
+    def _iterate_query(self) -> str:
+        query = """SELECT ?asset (IF(?isRoot, 0, COUNT(?parent)) AS ?parentCount)
+                   WHERE {{
+                        ?asset a <{asset_type}> .
+                        OPTIONAL {{ ?asset <{parent_prop}>+ ?parent . }}
+                        BIND(IF(BOUND(?parent), false, true) AS ?isRoot)}}
+                   GROUP BY ?asset ?isRoot
+                   ORDER BY DESC(?parentCount)"""
 
-                if self.depth_typing and (type_ := self.depth_typing.get(depth, None)):
-                    # remove existing type
-                    graph.remove((asset_id, RDF.type, None))
+        return query.format(
+            asset_type=self.asset_type,
+            parent_prop=self.parent_prop,
+        )
 
-                    # add new type
-                    graph.add((asset_id, RDF.type, DEFAULT_NAMESPACE[type_]))
+    def _count_query(self) -> str:
+        query = """SELECT (COUNT(?asset) as ?count)
+                   WHERE {{ ?asset a <{asset_type}> . }}"""
 
-    @classmethod
-    def get_depth(
-        cls,
-        graph: Graph,
-        asset_id: URIRef,
-        root_prop: URIRef,
-        parent_prop: URIRef,
-    ) -> int | None:
-        """Get asset depth in the asset hierarchy."""
+        return query.format(asset_type=self.asset_type)
 
-        # Handles non-root assets
-        if result := list(graph.query(cls._parent_template.format(asset_id=asset_id, parent_prop=parent_prop))):
-            return len(cast(list[tuple], result)) + 2 if cast(list[tuple], result)[0][1] else 2
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
+        row_output = RowTransformationOutput()
+        subject, object = query_result_row
 
-        # Handles root assets
-        elif (
-            (result := list(graph.query(cls._root_template.format(asset_id=asset_id, root_prop=root_prop))))
-            and len(cast(list[tuple], result)) == 1
-            and cast(list[tuple], result)[0][0] == asset_id
-        ):
-            return 1
-        else:
-            return None
+        row_output.add_triples.append(cast(Triple, (subject, DEFAULT_NAMESPACE.depth, object)))
+
+        if self.depth_typing and (type_ := self.depth_typing.get(int(object), None)):
+            row_output.remove_triples.append(cast(Triple, (subject, RDF.type, self.asset_type)))
+            row_output.add_triples.append(cast(Triple, (subject, RDF.type, DEFAULT_NAMESPACE[type_])))
+
+        row_output.instances_modified_count += 1
+
+        return row_output
 
 
 # TODO: standardise
