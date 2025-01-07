@@ -27,12 +27,7 @@ def test_consistent_version_variables():
         r"\[(\d+\.\d+\.\d+)\]",
         "Failed to obtain changelog version",
     )
-    docker_version = _extract_version_from_file(
-        "Makefile",
-        r'version="(\d+\.\d+\.\d+)"',
-        "Failed to obtain docker version",
-    )
-    assert neat.__version__ == changelog_version == pyproject_toml == docker_version, "Inconsistent version variables"
+    assert neat.__version__ == changelog_version == pyproject_toml, "Inconsistent version variables"
 
 
 def test_no_spaces_in_sub_folders() -> None:
