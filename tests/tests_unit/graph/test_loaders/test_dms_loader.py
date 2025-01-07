@@ -1,6 +1,10 @@
+from cognite.client.data_classes import Asset, FileMetadata
 from cognite.client.data_classes.data_modeling import InstanceApply
+from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
+from cognite.neat import NeatSession
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
+from cognite.neat._graph.extractors import AssetsExtractor, FilesExtractor, RdfFileExtractor
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.catalog import imf_attributes
 from cognite.neat._rules.importers import ExcelImporter, InferenceImporter
@@ -68,3 +72,21 @@ def test_imf_attribute_nodes():
     assert len(knowledge_nodes) == 56
     assert knowledge_nodes[0].sources[0].properties["predicate"].startswith("http")
     assert len(store.multi_type_instances) == 63
+
+
+def test_extract_above_direct_relation_limit(self) -> None:
+    neat = NeatSession()
+    assets = [Asset(id=i, name=f"Asset_{i}") for i in range(12, 1001)]
+    file = FileMetadata(id=1, name="P&ID file", asset_ids=list(range(1, 1001)))
+
+    neat._state.instances.store.write(AssetsExtractor(assets, namespace=CLASSIC_CDF_NAMESPACE, as_write=False))
+    neat._state.instances.store.write(FilesExtractor([file], namespace=CLASSIC_CDF_NAMESPACE, as_write=False))
+
+    neat.infer()
+    neat.verify()
+    neat.convert("dms")
+
+    with monkeypatch_cognite_client as client:
+        neat.to.cdf.instances()
+
+    assert client.data_modeling.instances.create.call_count == 2
