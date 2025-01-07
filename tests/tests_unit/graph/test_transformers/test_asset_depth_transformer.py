@@ -14,7 +14,7 @@ def test_asset_depth_transformer_without_typing():
 
     store.transform(transformer)
 
-    result = list(store.graph.query(f"SELECT ?s WHERE {{ ?s <{DEFAULT_NAMESPACE.depth}> 1}}"))
+    result = list(store.graph.query(f"SELECT ?s WHERE {{ ?s <{DEFAULT_NAMESPACE.depth}> 0}}"))
 
     assert len(result) == 1
     assert result[0][0] == DEFAULT_NAMESPACE.Asset_4901062138807933
@@ -30,10 +30,10 @@ def test_asset_depth_transformer_with_typing():
 
     transformer = transformers.AddAssetDepth(
         depth_typing={
-            1: "RootCimNode",
-            2: "GeographicalRegion",
-            3: "SubGeographicalRegion",
-            4: "Substation",
+            0: "RootCimNode",
+            1: "GeographicalRegion",
+            2: "SubGeographicalRegion",
+            3: "Substation",
         }
     )
 
