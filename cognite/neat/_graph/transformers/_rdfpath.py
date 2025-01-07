@@ -1,15 +1,14 @@
 from typing import cast
 from urllib.parse import quote
 
-from rdflib import Graph, URIRef
+from rdflib import Graph, Namespace, URIRef
 from rdflib.query import ResultRow
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
 from cognite.neat._rules.models.information import InformationRules
 from cognite.neat._shared import Triple
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import get_namespace, remove_namespace_from_uri
 
 from ._base import BaseTransformer, BaseTransformerStandardised, RowTransformationOutput
 
@@ -76,11 +75,11 @@ class MakeConnectionOnExactMatch(BaseTransformerStandardised):
         self.subject_predicate = subject_predicate
         self.object_type = object_type
         self.object_predicate = object_predicate
-
+        subject_namespace = Namespace(get_namespace(subject_type))
         self.connection = (
-            DEFAULT_NAMESPACE[quote(connection.strip())]
+            subject_namespace[quote(connection.strip())]
             if isinstance(connection, str)
-            else connection or DEFAULT_NAMESPACE[remove_namespace_from_uri(self.object_type).lower()]
+            else connection or subject_namespace[remove_namespace_from_uri(self.object_type).lower()]
         )
 
         self.limit = limit
@@ -88,10 +87,10 @@ class MakeConnectionOnExactMatch(BaseTransformerStandardised):
     def _iterate_query(self) -> str:
         query = """SELECT DISTINCT ?subject ?object
                             WHERE {{
-                                ?subject a <{subject_type}> .
-                                ?subject <{subject_predicate}> ?value .
-                                ?object <{object_predicate}> ?value .
-                                ?object a <{object_type}> .
+                                ?subject a <{subject_type}> ;
+                                        <{subject_predicate}> ?value .
+                                ?object a <{object_type}> ;
+                                        <{object_predicate}> ?value .
                             }}"""
 
         if self.limit and isinstance(self.limit, int) and self.limit > 0:
@@ -105,12 +104,12 @@ class MakeConnectionOnExactMatch(BaseTransformerStandardised):
         )
 
     def _count_query(self) -> str:
-        query = """SELECT (COUNT(DISTINCT (?subject ?object)) as ?count)
+        query = """SELECT (COUNT(DISTINCT ?subject) as ?count)
                     WHERE {{
-                        ?subject a <{subject_type}> .
-                        ?subject <{subject_predicate}> ?value .
-                        ?object <{object_predicate}> ?value .
-                        ?object a <{object_type}> .
+                        ?subject a <{subject_type}> ;
+                                <{subject_predicate}> ?value .
+                        ?object a <{object_type}> ;
+                                <{object_predicate}> ?value .
                     }}"""
 
         if self.limit and isinstance(self.limit, int) and self.limit > 0:

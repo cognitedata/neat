@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Fixed
+- The `neat.prepare.instances.make_connection_on_exact_match` no longer raises a `SyntaxError` when called.
+
 ## [0.105.0] - 07-01-**2025**
 ### Added
 - All `neat.read` methods now supports reading from a URL.
