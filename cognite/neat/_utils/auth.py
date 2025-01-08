@@ -41,9 +41,18 @@ def get_cognite_client(env_file_name: str) -> CogniteClient:
             client = variables.get_client()
             print(f"Found {env_file_name} file in repository root. Loaded variables from {env_file_name} file.")
             return client
+    elif (Path.cwd() / env_file_name).exists():
+        with suppress(KeyError, FileNotFoundError, TypeError):
+            variables = _from_dotenv(Path.cwd() / env_file_name)
+            client = variables.get_client()
+            print(
+                f"Found {env_file_name} file in current working directory. Loaded variables from {env_file_name} file."
+            )
+            return client
     # Then try to load from environment variables
     with suppress(KeyError):
         variables = EnvironmentVariables.create_from_environ()
+        print("Loaded variables from environment variables.")
         return variables.get_client()
     # If not found, prompt the user
     variables = _prompt_user()
@@ -53,10 +62,7 @@ def get_cognite_client(env_file_name: str) -> CogniteClient:
     elif repo_root:
         # We do not offer to create the file in the repository root if it is in .gitignore
         # as an inexperienced user might accidentally commit it.
-        print(
-            "Cannot create .env file in repository root as it is not in .gitignore."
-            ".env files should not be committed to the repository, and should be added to .gitignore."
-        )
+        print("Cannot create .env file in repository root as there is no .env entry in the .gitignore.")
         return variables.get_client()
     else:
         env_file = Path.cwd() / env_file_name
