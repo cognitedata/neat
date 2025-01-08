@@ -23,8 +23,9 @@ def get_cognite_client(env_file_name: str) -> CogniteClient:
     be prompted to enter them.
 
     Args:
-        env_file_name: The name of the .env file to look for in the repository root. If the file is found, the variables
-            will be loaded from the file. If the file is not found, the user will be prompted to enter the variables.
+        env_file_name: The name of the .env file to look for in the repository root / current working directory. If
+        the file is found, the variables will be loaded from the file. If the file is not found, the user will
+        be prompted to enter the variables and the file will be created.
 
     Returns:
         CogniteClient: A CogniteClient instance.
@@ -52,6 +53,10 @@ def get_cognite_client(env_file_name: str) -> CogniteClient:
     elif repo_root:
         # We do not offer to create the file in the repository root if it is in .gitignore
         # as an inexperienced user might accidentally commit it.
+        print(
+            "Cannot create .env file in repository root as it is not in .gitignore."
+            ".env files should not be committed to the repository, and should be added to .gitignore."
+        )
         return variables.get_client()
     else:
         env_file = Path.cwd() / env_file_name
