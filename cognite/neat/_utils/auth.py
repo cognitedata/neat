@@ -339,7 +339,10 @@ def _prompt_cluster_and_project() -> EnvironmentVariables:
 def _repo_root() -> Path | None:
     with suppress(Exception):
         result = subprocess.run("git rev-parse --show-toplevel".split(), stdout=subprocess.PIPE)
-        return Path(result.stdout.decode().strip())
+        output = Path(result.stdout.decode().strip())
+        if output == Path():
+            return None
+        return output
     return None
 
 
