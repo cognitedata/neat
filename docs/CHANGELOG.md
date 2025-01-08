@@ -15,6 +15,11 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Added
+- The `get_cognite_client` function uses the current working directory to store the environment file if neat
+  is not run inside a git repository.
+
 ## [0.105.1] - 08-01-**2025**
 ### Added
 - `neat.to.cdf.instances()` now automatically ignore relations above the DMS limit of 100. This is to ensure that
