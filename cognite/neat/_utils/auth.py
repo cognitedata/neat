@@ -47,19 +47,27 @@ def get_cognite_client(env_file_name: str) -> CogniteClient:
     # If not found, prompt the user
     variables = _prompt_user()
     if repo_root and _env_in_gitignore(repo_root, env_file_name):
-        local_import("rich", "jupyter")
-        from rich.prompt import Prompt
-
         env_file = repo_root / env_file_name
-        answer = Prompt.ask(
-            f"Do you store the variables in an {env_file_name} file in the repository root for easy reuse?",
-            choices=["y", "n"],
-        )
-        if env_file.exists():
-            answer = Prompt.ask(f"{env_file} already exists. Overwrite?", choices=["y", "n"])
-        if answer == "y":
-            env_file.write_text(variables.create_env_file())
-            print(f"Created {env_file_name} file in repository root.")
+        location = "repository root"
+    elif repo_root:
+        # We do not offer to create the file in the repository root if it is in .gitignore
+        # as an inexperienced user might accidentally commit it.
+        return variables.get_client()
+    else:
+        env_file = Path.cwd() / env_file_name
+        location = "current working directory"
+    local_import("rich", "jupyter")
+    from rich.prompt import Prompt
+
+    answer = Prompt.ask(
+        f"Do you store the variables in an {env_file_name} file in the {location} for easy reuse?",
+        choices=["y", "n"],
+    )
+    if env_file.exists():
+        answer = Prompt.ask(f"{env_file} already exists. Overwrite?", choices=["y", "n"])
+    if answer == "y":
+        env_file.write_text(variables.create_env_file())
+        print(f"Created {env_file_name} file in {location}.")
 
     return variables.get_client()
 
