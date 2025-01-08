@@ -1,4 +1,3 @@
-from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.mapping import load_classic_to_core_mapping
@@ -10,15 +9,14 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 @session_class_wrapper
 class MappingAPI:
-    def __init__(self, state: SessionState, client: NeatClient | None = None):
-        self.data_model = DataModelMappingAPI(state, client)
+    def __init__(self, state: SessionState):
+        self.data_model = DataModelMappingAPI(state)
 
 
 @session_class_wrapper
 class DataModelMappingAPI:
-    def __init__(self, state: SessionState, client: NeatClient | None = None):
+    def __init__(self, state: SessionState):
         self._state = state
-        self._client = client
 
     def classic_to_core(self, company_prefix: str, use_parent_property_name: bool = True) -> IssueList:
         """Map classic types to core types.
@@ -44,13 +42,13 @@ class DataModelMappingAPI:
             # Todo better hint of what you should do.
             raise NeatSessionError(f"Expected DMSRules, got {type(rules)}")
 
-        if self._client is None:
+        if self._state.client is None:
             raise NeatSessionError("Client is required to map classic to core")
 
         transformers = [
             RuleMapper(load_classic_to_core_mapping(company_prefix, rules.metadata.space, rules.metadata.version)),
-            IncludeReferenced(self._client),
+            IncludeReferenced(self._state.client),
         ]
         if use_parent_property_name:
-            transformers.append(AsParentPropertyId(self._client))
+            transformers.append(AsParentPropertyId(self._state.client))
         return self._state.rule_transform(*transformers)

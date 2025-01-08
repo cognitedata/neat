@@ -4,7 +4,6 @@ from typing import Any, Literal, cast
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from rdflib import URIRef
 
-from cognite.neat._client import NeatClient
 from cognite.neat._constants import (
     get_default_prefixes_and_namespaces,
 )
@@ -47,10 +46,10 @@ class PrepareAPI:
     inferring a data model or exporting the knowledge graph to a desired destination.
     """
 
-    def __init__(self, client: NeatClient | None, state: SessionState, verbose: bool) -> None:
+    def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
-        self.data_model = DataModelPrepareAPI(client, state, verbose)
+        self.data_model = DataModelPrepareAPI(state, verbose)
         self.instances = InstancePrepareAPI(state, verbose)
 
 
@@ -391,8 +390,7 @@ class DataModelPrepareAPI:
     to a desired destination.
     """
 
-    def __init__(self, client: NeatClient | None, state: SessionState, verbose: bool) -> None:
-        self._client = client
+    def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
 
@@ -507,14 +505,15 @@ class DataModelPrepareAPI:
             self._state.rule_store.last_verified_dms_rules
         ).imported_views_and_containers_ids()
         transformers: list[RulesTransformer] = []
-        if (view_ids or container_ids) and self._client is None:
+        client = self._state.client
+        if (view_ids or container_ids) and client is None:
             raise NeatSessionError(
                 "No client provided. You are referencing unknown views and containers in your data model, "
                 "NEAT needs a client to lookup the definitions. "
                 "Please set the client in the session, NeatSession(client=client)."
             )
-        elif (view_ids or container_ids) and self._client:
-            transformers.append(IncludeReferenced(self._client, include_properties=True))
+        elif (view_ids or container_ids) and client:
+            transformers.append(IncludeReferenced(client, include_properties=True))
 
         transformers.append(
             ToDataProductModel(
@@ -539,13 +538,13 @@ class DataModelPrepareAPI:
 
     def include_referenced(self) -> IssueList:
         """Include referenced views and containers in the data model."""
-        if self._client is None:
+        if self._state.client is None:
             raise NeatSessionError(
                 "No client provided. You are referencing unknown views and containers in your data model, "
                 "NEAT needs a client to lookup the definitions. "
                 "Please set the client in the session, NeatSession(client=client)."
             )
-        return self._state.rule_transform(IncludeReferenced(self._client))
+        return self._state.rule_transform(IncludeReferenced(self._state.client))
 
     def add_implements_to_classes(self, suffix: Literal["Edge"], implements: str = "Edge") -> IssueList:
         """All classes with the suffix will have the implements property set to the given value.
