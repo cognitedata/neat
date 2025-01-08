@@ -1,10 +1,11 @@
 import itertools
 import json
+import warnings
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from graphlib import TopologicalSorter
 from pathlib import Path
-from typing import Any, get_args
+from typing import Any, cast, get_args
 
 import yaml
 from cognite.client import CogniteClient
@@ -19,7 +20,7 @@ from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 from rdflib import RDF, URIRef
 
 from cognite.neat._client import NeatClient
-from cognite.neat._constants import is_readonly_property
+from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT, is_readonly_property
 from cognite.neat._graph._tracking import LogTracker, Tracker
 from cognite.neat._issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
@@ -28,7 +29,7 @@ from cognite.neat._issues.errors import (
     ResourceDuplicatedError,
     ResourceRetrievalError,
 )
-from cognite.neat._issues.warnings import PropertyTypeNotSupportedWarning
+from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
 from cognite.neat._rules.analysis._dms import DMSAnalysis
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
@@ -373,7 +374,21 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
                 if list.__name__ in _get_field_value_types(cls, info):
-                    return [{"space": self.instance_space, "externalId": remove_namespace_from_uri(v)} for v in value]
+                    result = [{"space": self.instance_space, "externalId": remove_namespace_from_uri(v)} for v in value]
+                    if len(result) <= DMS_DIRECT_RELATION_LIST_LIMIT:
+                        return result
+                    warnings.warn(
+                        PropertyDirectRelationLimitWarning(
+                            identifier="unknown",
+                            resource_type="view property",
+                            property_name=cast(str, cls.model_fields[info.field_name].alias or info.field_name),
+                            limit=DMS_DIRECT_RELATION_LIST_LIMIT,
+                        ),
+                        stacklevel=2,
+                    )
+                    # To get deterministic results, we sort by space and externalId
+                    result.sort(key=lambda x: (x["space"], x["externalId"]))
+                    return result[:DMS_DIRECT_RELATION_LIST_LIMIT]
                 elif value:
                     return {"space": self.instance_space, "externalId": remove_namespace_from_uri(value[0])}
                 return {}

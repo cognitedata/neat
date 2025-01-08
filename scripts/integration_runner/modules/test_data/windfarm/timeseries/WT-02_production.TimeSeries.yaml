@@ -1,0 +1,10 @@
+externalId: WT-02_production
+name: WT-02 production
+isString: false
+metadata:
+  blob: data
+unitExternalId: power:megaw
+isStep: false
+description: WT-02 production
+dataSetExternalId: source_ds
+assetExternalId: WT-02
