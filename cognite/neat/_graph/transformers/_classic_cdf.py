@@ -1,4 +1,3 @@
-import textwrap
 import warnings
 from abc import ABC
 from collections.abc import Callable, Iterable
@@ -15,6 +14,7 @@ from cognite.neat._utils.collection_ import iterate_progress_bar
 from cognite.neat._utils.rdf_ import (
     Triple,
     add_triples_in_batch,
+    get_namespace,
     remove_instance_ids_in_batch,
     remove_namespace_from_uri,
 )
@@ -72,87 +72,161 @@ class AddAssetDepth(BaseTransformerStandardised):
         return row_output
 
 
-# TODO: standardise
-class BaseAssetConnector(BaseTransformer, ABC):
-    _asset_type: URIRef = DEFAULT_NAMESPACE.Asset
-    _item_type: URIRef
-    _default_attribute: URIRef
-    _connection_type: URIRef
+class BaseAssetConnector(BaseTransformerStandardised, ABC):
+    description: str = "Connects assets to other cognite resources, thus forming bi-directional connection"
+    _use_only_once: bool = True
 
-    _select_item_ids = "SELECT DISTINCT ?item_id WHERE {{?item_id a <{item_type}>}}"
-    _select_connected_assets: str = textwrap.dedent("""SELECT ?asset_id WHERE {{
-                              <{item_id}> <{attribute}> ?asset_id .
-                              ?asset_id a <{asset_type}>}}""")
+    def _count_query(self) -> str:
+        query = """SELECT (COUNT(?asset) as ?count)
+                   WHERE {{
+                        ?resource a <{resource_type}> .
+                        ?resource <{connection}> ?asset .
+                        ?asset a <{asset_type}> .
+                        }}"""
 
-    def __init__(self, attribute: URIRef | None = None) -> None:
-        self._attribute = attribute or self._default_attribute
+        return query.format(
+            asset_type=self.asset_type,
+            resource_type=self.resource_type,
+            connection=self.resource_to_asset_connection,
+        )
 
-    def transform(self, graph: Graph) -> None:
-        for item_id, *_ in graph.query(self._select_item_ids.format(item_type=self._item_type)):  # type: ignore[misc]
-            triples: list[Triple] = []
-            for asset_id, *_ in graph.query(  # type: ignore[misc]
-                self._select_connected_assets.format(
-                    item_id=item_id, attribute=self._attribute, asset_type=self._asset_type
-                )
-            ):
-                triples.append((asset_id, self._connection_type, item_id))  # type: ignore[arg-type]
-            add_triples_in_batch(graph, triples)
+    def _iterate_query(self) -> str:
+        query = """SELECT ?asset ?resource
+                   WHERE {{
+                        ?resource a <{resource_type}> .
+                        ?resource <{connection}> ?asset .
+                        ?asset a <{asset_type}> .
+                        }}"""
+
+        return query.format(
+            asset_type=self.asset_type,
+            resource_type=self.resource_type,
+            connection=self.resource_to_asset_connection,
+        )
+
+    def __init__(
+        self,
+        resource_to_asset_connection: URIRef,
+        resource_type: URIRef,
+        asset_to_resource_connection: URIRef | None = None,
+        asset_type: URIRef | None = None,
+    ) -> None:
+        self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
+        self.resource_to_asset_connection = resource_to_asset_connection
+        self.resource_type = resource_type
+
+        if asset_to_resource_connection:
+            self.asset_to_resource_connection = asset_to_resource_connection
+        else:
+            namespace = Namespace(get_namespace(resource_type))
+            type_ = remove_namespace_from_uri(resource_type)
+            self.asset_to_resource_connection = namespace[type_[0].lower() + type_[1:]]
+
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
+        row_output = RowTransformationOutput()
+        subject, object = query_result_row
+
+        row_output.add_triples.append(cast(Triple, (subject, self.asset_to_resource_connection, object)))
+
+        row_output.instances_modified_count += 1
+
+        return row_output
 
 
 class AssetTimeSeriesConnector(BaseAssetConnector):
     description: str = "Connects assets to timeseries, thus forming bi-directional connection"
-    _use_only_once: bool = True
     _need_changes = frozenset(
         {
             str(extractors.AssetsExtractor.__name__),
             str(extractors.TimeSeriesExtractor.__name__),
         }
     )
-    _item_type = DEFAULT_NAMESPACE.TimeSeries
-    _default_attribute = DEFAULT_NAMESPACE.assetId
-    _connection_type = DEFAULT_NAMESPACE.timeSeries
+
+    def __init__(
+        self,
+        resource_to_asset_connection: URIRef | None = None,
+        resource_type: URIRef | None = None,
+        asset_to_resource_connection: URIRef | None = None,
+        asset_type: URIRef | None = None,
+    ):
+        super().__init__(
+            resource_to_asset_connection=resource_to_asset_connection or DEFAULT_NAMESPACE.assetId,
+            resource_type=resource_type or DEFAULT_NAMESPACE.TimeSeries,
+            asset_to_resource_connection=asset_to_resource_connection or DEFAULT_NAMESPACE.timeSeries,
+            asset_type=asset_type or DEFAULT_NAMESPACE.Asset,
+        )
 
 
 class AssetSequenceConnector(BaseAssetConnector):
     description: str = "Connects assets to sequences, thus forming bi-directional connection"
-    _use_only_once: bool = True
     _need_changes = frozenset(
         {
             str(extractors.AssetsExtractor.__name__),
             str(extractors.SequencesExtractor.__name__),
         }
     )
-    _item_type = DEFAULT_NAMESPACE.Sequence
-    _default_attribute = DEFAULT_NAMESPACE.assetId
-    _connection_type = DEFAULT_NAMESPACE.sequence
+
+    def __init__(
+        self,
+        resource_to_asset_connection: URIRef | None = None,
+        resource_type: URIRef | None = None,
+        asset_to_resource_connection: URIRef | None = None,
+        asset_type: URIRef | None = None,
+    ):
+        super().__init__(
+            resource_to_asset_connection=resource_to_asset_connection or DEFAULT_NAMESPACE.assetId,
+            resource_type=resource_type or DEFAULT_NAMESPACE.Sequence,
+            asset_to_resource_connection=asset_to_resource_connection or DEFAULT_NAMESPACE.sequence,
+            asset_type=asset_type or DEFAULT_NAMESPACE.Asset,
+        )
 
 
 class AssetFileConnector(BaseAssetConnector):
     description: str = "Connects assets to files, thus forming bi-directional connection"
-    _use_only_once: bool = True
     _need_changes = frozenset(
         {
             str(extractors.AssetsExtractor.__name__),
             str(extractors.FilesExtractor.__name__),
         }
     )
-    _item_type = DEFAULT_NAMESPACE.File
-    _default_attribute = DEFAULT_NAMESPACE.assetIds
-    _connection_type = DEFAULT_NAMESPACE.file
+
+    def __init__(
+        self,
+        resource_to_asset_connection: URIRef | None = None,
+        resource_type: URIRef | None = None,
+        asset_to_resource_connection: URIRef | None = None,
+        asset_type: URIRef | None = None,
+    ):
+        super().__init__(
+            resource_to_asset_connection=resource_to_asset_connection or DEFAULT_NAMESPACE.assetIds,
+            resource_type=resource_type or DEFAULT_NAMESPACE.File,
+            asset_to_resource_connection=asset_to_resource_connection or DEFAULT_NAMESPACE.file,
+            asset_type=asset_type or DEFAULT_NAMESPACE.Asset,
+        )
 
 
 class AssetEventConnector(BaseAssetConnector):
     description: str = "Connects assets to events, thus forming bi-directional connection"
-    _use_only_once: bool = True
     _need_changes = frozenset(
         {
             str(extractors.AssetsExtractor.__name__),
             str(extractors.EventsExtractor.__name__),
         }
     )
-    _item_type = DEFAULT_NAMESPACE.Event
-    _default_attribute = DEFAULT_NAMESPACE.assetIds
-    _connection_type = DEFAULT_NAMESPACE.event
+
+    def __init__(
+        self,
+        resource_to_asset_connection: URIRef | None = None,
+        resource_type: URIRef | None = None,
+        asset_to_resource_connection: URIRef | None = None,
+        asset_type: URIRef | None = None,
+    ):
+        super().__init__(
+            resource_to_asset_connection=resource_to_asset_connection or DEFAULT_NAMESPACE.assetIds,
+            resource_type=resource_type or DEFAULT_NAMESPACE.Event,
+            asset_to_resource_connection=asset_to_resource_connection or DEFAULT_NAMESPACE.event,
+            asset_type=asset_type or DEFAULT_NAMESPACE.Asset,
+        )
 
 
 # TODO: standardise
