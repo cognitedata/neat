@@ -386,6 +386,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                         ),
                         stacklevel=2,
                     )
+                    # To get deterministic results, we sort by space and externalId
+                    result.sort(key=lambda x: (x["space"], x["externalId"]))
                     return result[:DMS_DIRECT_RELATION_LIST_LIMIT]
                 elif value:
                     return {"space": self.instance_space, "externalId": remove_namespace_from_uri(value[0])}

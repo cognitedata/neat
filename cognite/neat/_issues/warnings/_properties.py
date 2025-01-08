@@ -83,7 +83,7 @@ class PropertyDataTypeConversionWarning(PropertyWarning[T_Identifier]):
 @dataclass(unsafe_hash=True)
 class PropertyDirectRelationLimitWarning(PropertyWarning[T_Identifier]):
     """The listable direct relation property {property_name} in the {resource_type} with identifier {identifier}
-    has more than {limit} relations. Extra relations will be ignored."""
+    has more than {limit} relations. The relations will be sorted by (space, externalId) and truncated."""
 
     resource_type = "view"
 

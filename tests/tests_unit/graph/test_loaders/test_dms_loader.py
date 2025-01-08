@@ -1,8 +1,8 @@
 from cognite.client.data_classes import Asset, FileMetadata
 from cognite.client.data_classes.data_modeling import InstanceApply
-from cognite.client.testing import monkeypatch_cognite_client
 
 from cognite.neat import NeatSession
+from cognite.neat._client.testing import monkeypatch_neat_client
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DMS_DIRECT_RELATION_LIST_LIMIT
 from cognite.neat._graph.extractors import AssetsExtractor, FilesExtractor, RdfFileExtractor
 from cognite.neat._graph.loaders import DMSLoader
@@ -75,7 +75,7 @@ def test_imf_attribute_nodes():
 
 
 def test_extract_above_direct_relation_limit() -> None:
-    with monkeypatch_cognite_client() as client:
+    with monkeypatch_neat_client() as client:
         neat = NeatSession(client, storage="oxigraph")
         assets = [Asset(id=i, name=f"Asset_{i}") for i in range(1, 1001)]
         file = FileMetadata(id=1, name="P&ID file", asset_ids=list(range(1, 1001)))
