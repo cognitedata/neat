@@ -59,7 +59,7 @@ class AddSelfReferenceProperty(BaseTransformer):
 
 class MakeConnectionOnExactMatch(BaseTransformerStandardised):
     description: str = "Adds property that contains id of reference to all references of given class in Rules"
-    _use_only_once: bool = True
+    _use_only_once: bool = False
     _need_changes = frozenset({})
 
     def __init__(

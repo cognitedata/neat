@@ -15,6 +15,14 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Added
+- Method for setting session client, `neat.set.client(...)`.
+
+### Fixed
+- `neat.prepare.instances.make_connection_on_exact_match` can now run multiple times.
+
+
 ## [0.105.2] - 08-01-**2025**
 ### Added
 - The `get_cognite_client` function uses the current working directory to store the environment file if neat

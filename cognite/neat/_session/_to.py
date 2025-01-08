@@ -4,7 +4,6 @@ from typing import Any, Literal, overload
 
 from cognite.client.data_classes.data_modeling import SpaceApply
 
-from cognite.neat._client import NeatClient
 from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._graph import loaders
 from cognite.neat._rules import exporters
@@ -25,10 +24,10 @@ class ToAPI:
 
     """
 
-    def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
+    def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
-        self.cdf = CDFToAPI(state, client, verbose)
+        self.cdf = CDFToAPI(state, verbose)
 
     def excel(
         self,
@@ -153,8 +152,7 @@ class ToAPI:
 class CDFToAPI:
     """Write a verified Data Model and Instances to CDF."""
 
-    def __init__(self, state: SessionState, client: NeatClient | None, verbose: bool) -> None:
-        self._client = client
+    def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
 
@@ -166,9 +164,9 @@ class CDFToAPI:
             Note this space is required to be different than the space with the data model.
 
         """
-        if not self._client:
+        if not self._state.client:
             raise NeatSessionError("No CDF client provided!")
-
+        client = self._state.client
         space = space or f"{self._state.rule_store.last_verified_dms_rules.metadata.space}_instances"
 
         if space and space == self._state.rule_store.last_verified_dms_rules.metadata.space:
@@ -176,16 +174,16 @@ class CDFToAPI:
         elif not PATTERNS.space_compliance.match(str(space)):
             raise NeatSessionError("Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
 
-        if not self._client.data_modeling.spaces.retrieve(space):
-            self._client.data_modeling.spaces.apply(SpaceApply(space=space))
+        if not client.data_modeling.spaces.retrieve(space):
+            client.data_modeling.spaces.apply(SpaceApply(space=space))
 
         loader = loaders.DMSLoader.from_rules(
             self._state.rule_store.last_verified_dms_rules,
             self._state.instances.store,
             instance_space=space,
-            client=self._client,
+            client=client,
         )
-        result = loader.load_into_cdf(self._client)
+        result = loader.load_into_cdf(client)
         self._state.instances.outcome.append(result)
         print("You can inspect the details with the .inspect.outcome.instances(...) method.")
         return result
@@ -219,9 +217,9 @@ class CDFToAPI:
 
         exporter = exporters.DMSExporter(existing=existing, export_components=components, drop_data=drop_data)
 
-        if not self._client:
+        if not self._state.client:
             raise NeatSessionError("No client provided!")
 
-        result = self._state.rule_store.export_to_cdf(exporter, self._client, dry_run)
+        result = self._state.rule_store.export_to_cdf(exporter, self._state.client, dry_run)
         print("You can inspect the details with the .inspect.outcome.data_model(...) method.")
         return result
