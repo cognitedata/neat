@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.105.1] - 08-01-**2025**
 ### Added
 - `neat.to.cdf.instances()` now automatically ignore relations above the DMS limit of 100. This is to ensure that
   the instances are successfully loaded into CDF. A warning is issued to the user if any relations are ignored.
