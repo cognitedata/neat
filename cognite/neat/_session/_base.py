@@ -74,16 +74,15 @@ class NeatSession:
         verbose: bool = True,
         load_engine: Literal["newest", "cache", "skip"] = "cache",
     ) -> None:
-        self._client = NeatClient(client) if client else None
         self._verbose = verbose
-        self._state = SessionState(store_type=storage)
-        self.read = ReadAPI(self._state, self._client, verbose)
-        self.to = ToAPI(self._state, self._client, verbose)
-        self.prepare = PrepareAPI(self._client, self._state, verbose)
+        self._state = SessionState(store_type=storage, client=NeatClient(client) if client else None)
+        self.read = ReadAPI(self._state, verbose)
+        self.to = ToAPI(self._state, verbose)
+        self.prepare = PrepareAPI(self._state, verbose)
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
-        self.mapping = MappingAPI(self._state, self._client)
+        self.mapping = MappingAPI(self._state)
         self.drop = DropAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()
@@ -119,7 +118,7 @@ class NeatSession:
             neat.verify()
             ```
         """
-        transformer = VerifyAnyRules(validate=True, client=self._client)  # type: ignore[var-annotated]
+        transformer = VerifyAnyRules(validate=True, client=self._state.client)  # type: ignore[var-annotated]
         issues = self._state.rule_transform(transformer)
         if not issues.has_errors:
             rules = self._state.rule_store.last_verified_rule
