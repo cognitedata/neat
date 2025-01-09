@@ -1,11 +1,14 @@
 import pytest
 from cognite.client import CogniteClient
 from cognite.client.data_classes import SequenceList, SequenceRowsList
+from cognite.client.exceptions import CogniteAPIError
 from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
 from cognite.neat._graph.extractors import SequencesExtractor
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._issues import catch_warnings
+from cognite.neat._issues.warnings import CDFAuthWarning
+from cognite.neat._utils.rdf_ import Triple, remove_namespace_from_uri
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 
@@ -81,3 +84,27 @@ def unique_properties(g: Graph) -> set[str]:
     """)
 
     return {remove_namespace_from_uri(row[0]) for row in result}
+
+
+def test_no_access() -> None:
+    def raise_exception(*args, **kwargs):
+        raise CogniteAPIError(
+            code=403,
+            x_request_id="",
+            message="Not allowed to read sequences",
+        )
+
+    with monkeypatch_cognite_client() as client_mock:
+        client_mock.sequences.aggregate_count.side_effect = raise_exception
+
+        extractor = SequencesExtractor.from_hierarchy(client_mock, root_asset_external_id="root")
+
+        triples: list[Triple] = []
+        with catch_warnings() as issue_list:
+            for triple in extractor.extract():
+                triples.append(triple)
+
+        assert len(triples) == 0
+        assert len(issue_list) == 1
+        issue = issue_list[0]
+        assert isinstance(issue, CDFAuthWarning)
