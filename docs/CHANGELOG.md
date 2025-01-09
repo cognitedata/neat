@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.106.0] - 09-01-**2025**
 ### Added
 - Method for setting session client, `neat.set.client(...)`.
 
