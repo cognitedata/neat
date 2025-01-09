@@ -23,6 +23,7 @@ Changes are grouped as follows:
 - `neat.prepare.instances.make_connection_on_exact_match` can now run multiple times.
 - The `mapping.data_model.classic_to_core` method now produces a `..SourceSystem` with a `guid` property that ensures
   that only instances written through this view are returned when querying it.
+- The `neat.read.cdf.classic.graph(...)` now handles lack of access to CDF resources more gracefully.
 
 ## [0.105.2] - 08-01-**2025**
 ### Added
