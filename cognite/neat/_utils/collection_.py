@@ -29,11 +29,17 @@ def remove_list_elements(input_list: list, elements_to_remove: list) -> list:
 def iterate_progress_bar(iterable: Iterable[T_Element], total: int, description: str) -> Iterable[T_Element]:
     if IN_PYODIDE or GLOBAL_CONFIG.progress_bar in ("infer", "tqdm"):
         try:
-            from tqdm.notebook import tqdm
+            from tqdm import tqdm
         except ModuleNotFoundError:
             return iterable
         return tqdm(iterable, total=total, desc=description)
 
+    elif GLOBAL_CONFIG.progress_bar == "tqdm-notebook":
+        try:
+            from tqdm.notebook import tqdm as tqdm_notebook
+        except ModuleNotFoundError:
+            return iterable
+        return tqdm_notebook(iterable, total=total, desc=description)
     elif GLOBAL_CONFIG.progress_bar in ("infer", "rich"):
         # Progress bar from rich requires multi-threading, which is not supported in Pyodide
         try:
