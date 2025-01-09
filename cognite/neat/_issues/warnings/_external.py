@@ -42,7 +42,7 @@ class FileItemNotSupportedWarning(NeatWarning):
 
 @dataclass(unsafe_hash=True)
 class CDFAuthWarning(NeatWarning):
-    """Failed to {action} due to {reason}"""
+    """Failed to {action}: {reason}"""
 
     action: str
     reason: str
