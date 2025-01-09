@@ -1,17 +1,14 @@
 import itertools
 import json
-import warnings
 from collections.abc import Callable, Iterable, Set
 from pathlib import Path
 from typing import Any
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Sequence, SequenceFilter
-from cognite.client.exceptions import CogniteAPIError
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._client.data_classes.neat_sequence import NeatSequence, NeatSequenceList
-from cognite.neat._issues.warnings import CDFAuthWarning
 from cognite.neat._shared import Triple
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
@@ -76,7 +73,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         as_write: bool = False,
         unpack_columns: bool = False,
     ):
-        total, items = cls._from_dataset(client, data_set_external_id)
+        total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id))
         return cls(
             items,
             namespace,
@@ -104,16 +101,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         as_write: bool = False,
         unpack_columns: bool = False,
     ):
-        try:
-            total, items = cls._from_hierarchy(client, root_asset_external_id)
-        except CogniteAPIError as e:
-            if e.code == 403:
-                total, items = 0, []
-                warnings.warn(
-                    CDFAuthWarning(f"extract {cls.__name__.removesuffix('Extractor').casefold()}", str(e)), stacklevel=2
-                )
-            else:
-                raise e
+        total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id))
         return cls(
             items,
             namespace,
