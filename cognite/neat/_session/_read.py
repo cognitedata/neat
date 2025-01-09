@@ -92,7 +92,7 @@ class CDFClassicAPI(BaseReadAPI):
             raise ValueError("No client provided. Please provide a client to read a data model.")
         return self._state.client
 
-    def graph(self, root_asset_external_id: str, limit_per_type: int | None = None) -> None:
+    def graph(self, root_asset_external_id: str, limit_per_type: int | None = None) -> IssueList:
         """Reads the classic knowledge graph from CDF.
 
         The Classic Graph consists of the following core resource type.
@@ -128,14 +128,22 @@ class CDFClassicAPI(BaseReadAPI):
             root_asset_external_id: The external id of the root asset
             limit_per_type: The maximum number of nodes to extract per core node type. If None, all nodes are extracted.
 
+        Returns:
+            IssueList: A list of issues that occurred during the extraction.
+
+        Example:
+            ```python
+            neat.read.cdf.graph("root_asset_external_id")
+            ```
+
         """
         extractor = extractors.ClassicGraphExtractor(
             self._get_client, root_asset_external_id=root_asset_external_id, limit_per_type=limit_per_type
         )
 
-        self._state.instances.store.write(extractor)
-        if self._verbose:
-            print(f"Classic Graph {root_asset_external_id} read successfully")
+        issues = self._state.instances.store.write(extractor)
+        issues.action = "Read Classic Graph"
+        return issues
 
 
 @session_class_wrapper

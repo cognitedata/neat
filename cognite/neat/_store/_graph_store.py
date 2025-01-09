@@ -15,6 +15,7 @@ from cognite.neat._graph._shared import rdflib_to_oxi_type
 from cognite.neat._graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
+from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.entities import ClassEntity
@@ -157,39 +158,41 @@ class NeatGraphStore:
 
         return cls(graph, rules)
 
-    def write(self, extractor: TripleExtractors) -> None:
-        _start = datetime.now(timezone.utc)
-        success = True
+    def write(self, extractor: TripleExtractors) -> IssueList:
+        with catch_issues() as issue_list:
+            _start = datetime.now(timezone.utc)
+            success = True
 
-        if isinstance(extractor, RdfFileExtractor) and not extractor.issue_list.has_errors:
-            self._parse_file(extractor.filepath, cast(str, extractor.format), extractor.base_uri)
-        elif isinstance(extractor, RdfFileExtractor):
-            success = False
-            issue_text = "\n".join([issue.as_message() for issue in extractor.issue_list])
-            warnings.warn(
-                f"Cannot write to graph store with {type(extractor).__name__}, errors found in file:\n{issue_text}",
-                stacklevel=2,
-            )
-        else:
-            self._add_triples(extractor.extract())
-
-        if success:
-            _end = datetime.now(timezone.utc)
-            # Need to do the hasattr in case the extractor comes from NeatEngine.
-            activities = (
-                extractor._get_activity_names()
-                if hasattr(extractor, "_get_activity_names")
-                else [type(extractor).__name__]
-            )
-            for activity in activities:
-                self.provenance.append(
-                    Change.record(
-                        activity=activity,
-                        start=_start,
-                        end=_end,
-                        description=f"Extracted triples to graph store using {type(extractor).__name__}",
-                    )
+            if isinstance(extractor, RdfFileExtractor) and not extractor.issue_list.has_errors:
+                self._parse_file(extractor.filepath, cast(str, extractor.format), extractor.base_uri)
+            elif isinstance(extractor, RdfFileExtractor):
+                success = False
+                issue_text = "\n".join([issue.as_message() for issue in extractor.issue_list])
+                warnings.warn(
+                    f"Cannot write to graph store with {type(extractor).__name__}, errors found in file:\n{issue_text}",
+                    stacklevel=2,
                 )
+            else:
+                self._add_triples(extractor.extract())
+
+            if success:
+                _end = datetime.now(timezone.utc)
+                # Need to do the hasattr in case the extractor comes from NeatEngine.
+                activities = (
+                    extractor._get_activity_names()
+                    if hasattr(extractor, "_get_activity_names")
+                    else [type(extractor).__name__]
+                )
+                for activity in activities:
+                    self.provenance.append(
+                        Change.record(
+                            activity=activity,
+                            start=_start,
+                            end=_end,
+                            description=f"Extracted triples to graph store using {type(extractor).__name__}",
+                        )
+                    )
+        return issue_list
 
     def _read_via_rules_linkage(
         self, class_neat_id: URIRef, property_link_pairs: dict[str, URIRef] | None
