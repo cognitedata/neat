@@ -1,7 +1,7 @@
 - externalId: 2dd9048c-bdfb-11e5-94fa-c8f73332c8f4:root-node
   sourceExternalId: 2dd9048c-bdfb-11e5-94fa-c8f73332c8f4
   sourceType: asset
-  targetExternalId: root-node
+  targetExternalId: room-cim-node
   targetType: asset
   startTime: 1698070775242
   endTime: 1701870361607

@@ -230,7 +230,7 @@ class AssetEventConnector(BaseAssetConnector):
 
 
 # TODO: standardise
-class AssetRelationshipConnector(BaseTransformer):
+class AssetRelationshipConnector(BaseTransformerStandardised):
     description: str = "Connects assets via relationships"
     _use_only_once: bool = True
     _need_changes = frozenset(
@@ -248,6 +248,44 @@ class AssetRelationshipConnector(BaseTransformer):
                               ?target <{asset_xid_property}> ?target_xid .
                               ?target a <{asset_type}> .}}"""
 
+    def _count_query(self) -> str:
+        query = """SELECT (COUNT(?target) as ?count) WHERE {{
+                   ?relationship a <{relationship_type}> .
+                   ?relationship <{relationship_source_xid_prop}> ?source_xid .
+                   ?source <{asset_xid_property}> ?source_xid .
+                   ?source a <{asset_type}> .
+
+                   ?relationship <{relationship_target_xid_prop}> ?target_xid .
+                   ?target <{asset_xid_property}> ?target_xid .
+                   ?target a <{asset_type}> .}}"""
+
+        return query.format(
+            relationship_type=self.relationship_type,
+            relationship_source_xid_prop=self.relationship_source_xid_prop,
+            relationship_target_xid_prop=self.relationship_target_xid_prop,
+            asset_xid_property=self.asset_xid_property,
+            asset_type=self.asset_type,
+        )
+
+    def _iterate_query(self) -> str:
+        query = """SELECT ?source ?relationship ?target WHERE {{
+                   ?relationship a <{relationship_type}> .
+                   ?relationship <{relationship_source_xid_prop}> ?source_xid .
+                   ?source <{asset_xid_property}> ?source_xid .
+                   ?source a <{asset_type}> .
+
+                   ?relationship <{relationship_target_xid_prop}> ?target_xid .
+                   ?target <{asset_xid_property}> ?target_xid .
+                   ?target a <{asset_type}> .}}"""
+
+        return query.format(
+            relationship_type=self.relationship_type,
+            relationship_source_xid_prop=self.relationship_source_xid_prop,
+            relationship_target_xid_prop=self.relationship_target_xid_prop,
+            asset_xid_property=self.asset_xid_property,
+            asset_type=self.asset_type,
+        )
+
     def __init__(
         self,
         asset_type: URIRef | None = None,
@@ -262,48 +300,20 @@ class AssetRelationshipConnector(BaseTransformer):
         self.relationship_target_xid_prop = relationship_target_xid_prop or DEFAULT_NAMESPACE.targetExternalId
         self.asset_xid_property = asset_xid_property or DEFAULT_NAMESPACE.externalId
 
-    def transform(self, graph: Graph) -> None:
-        for relationship_id_result in graph.query(
-            f"SELECT DISTINCT ?relationship_id WHERE {{?relationship_id a <{self.relationship_type}>}}"
-        ):
-            relationship_id: URIRef = cast(tuple, relationship_id_result)[0]
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
+        row_output = RowTransformationOutput()
+        source, relationship, target = query_result_row
 
-            if assets_id_res := list(
-                graph.query(
-                    self._asset_template.format(
-                        relationship_id=relationship_id,
-                        asset_xid_property=self.asset_xid_property,
-                        relationship_source_xid_prop=self.relationship_source_xid_prop,
-                        relationship_target_xid_prop=self.relationship_target_xid_prop,
-                        asset_type=self.asset_type,
-                    )
-                )
-            ):
-                # files can be connected to multiple assets in the graph
-                for source_asset_id, target_asset_id in cast(list[tuple], assets_id_res):
-                    # create a relationship between the two assets
-                    graph.add(
-                        (
-                            source_asset_id,
-                            DEFAULT_NAMESPACE.relationship,
-                            relationship_id,
-                        )
-                    )
-                    graph.add(
-                        (
-                            target_asset_id,
-                            DEFAULT_NAMESPACE.relationship,
-                            relationship_id,
-                        )
-                    )
+        row_output.add_triples.append(cast(Triple, (source, DEFAULT_NAMESPACE.relationship, target)))
+        row_output.add_triples.append(cast(Triple, (relationship, DEFAULT_NAMESPACE.source, source)))
+        row_output.add_triples.append(cast(Triple, (relationship, DEFAULT_NAMESPACE.target, target)))
 
-                    # add source and target to the relationship
-                    graph.add((relationship_id, DEFAULT_NAMESPACE.source, source_asset_id))
-                    graph.add((relationship_id, DEFAULT_NAMESPACE.target, target_asset_id))
+        row_output.remove_triples.append(cast(Triple, (relationship, self.relationship_source_xid_prop, None)))
+        row_output.remove_triples.append(cast(Triple, (relationship, self.relationship_target_xid_prop, None)))
 
-                    # remove properties that are not needed, specifically the external ids
-                    graph.remove((relationship_id, self.relationship_source_xid_prop, None))
-                    graph.remove((relationship_id, self.relationship_target_xid_prop, None))
+        row_output.instances_modified_count += 2
+
+        return row_output
 
 
 # TODO: standardise
