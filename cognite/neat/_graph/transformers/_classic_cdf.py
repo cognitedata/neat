@@ -229,7 +229,6 @@ class AssetEventConnector(BaseAssetConnector):
         )
 
 
-# TODO: standardise
 class AssetRelationshipConnector(BaseTransformerStandardised):
     description: str = "Connects assets via relationships"
     _use_only_once: bool = True
