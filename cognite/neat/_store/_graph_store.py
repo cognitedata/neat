@@ -193,7 +193,6 @@ class NeatGraphStore:
                     )
                     self.provenance.append(last_change)
         if last_change:
-            print(f"Updating provenance with {len(issue_list)} issues")
             last_change.target_entity.issues.extend(issue_list)
         return issue_list
 
