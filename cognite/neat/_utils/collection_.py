@@ -56,3 +56,11 @@ def iterate_progress_bar(iterable: Iterable[T_Element], total: int, description:
         return iterable
     else:
         raise ValueError(f"Unsupported progress bar type: {GLOBAL_CONFIG.progress_bar}")
+
+
+def iterate_progress_bar_if_above_config_threshold(
+    iterable: Iterable[T_Element], total: int, description: str
+) -> Iterable[T_Element]:
+    if GLOBAL_CONFIG.use_iterate_bar_threshold and total > GLOBAL_CONFIG.use_iterate_bar_threshold:
+        return iterate_progress_bar(iterable, total, description)
+    return iterable
