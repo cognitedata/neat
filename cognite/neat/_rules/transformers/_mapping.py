@@ -172,8 +172,9 @@ class RuleMapper(RulesTransformer[DMSRules, DMSRules]):
                 # All connections must be included in the rules. This is to update the
                 # ValueTypes of the implemented views.
                 new_rules.properties.append(mapping_prop)
-            elif mapping_prop.view in new_views:
-                # All properties of new views are included. Main motivation is GUIDs properties
+            elif "guid" in mapping_prop.view_property.casefold():
+                # All guid properties are included. Theses are necessary to get an appropriate
+                # filter on the resulting view.
                 new_rules.properties.append(mapping_prop)
             else:
                 # Skipping mapped properties that are not in the input rules.
