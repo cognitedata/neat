@@ -4949,6 +4949,20 @@ files = [
 ]
 
 [[package]]
+name = "types-tqdm"
+version = "4.67.0.20241221"
+description = "Typing stubs for tqdm"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types_tqdm-4.67.0.20241221-py3-none-any.whl", hash = "sha256:a1f1c9cda5c2d8482d2c73957a5398bfdedda10f6bc7b3b4e812d5c910486d29"},
+    {file = "types_tqdm-4.67.0.20241221.tar.gz", hash = "sha256:e56046631056922385abe89aeb18af5611f471eadd7918a0ad7f34d84cd4c8cc"},
+]
+
+[package.dependencies]
+types-requests = "*"
+
+[[package]]
 name = "typing-extensions"
 version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -5176,4 +5190,4 @@ oxi = ["oxrdflib", "pyoxigraph"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "3c1d73d8238f2f67961c73972f6e479d0fa7bde9246b1265db936ff7881b671b"
+content-hash = "d7db38980e895ec833d6e0bda1ecebf6e49b3fd9f1d0241fddf476c5821c1707"

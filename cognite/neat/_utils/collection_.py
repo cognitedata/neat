@@ -29,7 +29,7 @@ def remove_list_elements(input_list: list, elements_to_remove: list) -> list:
 def iterate_progress_bar(iterable: Iterable[T_Element], total: int, description: str) -> Iterable[T_Element]:
     if IN_PYODIDE or GLOBAL_CONFIG.progress_bar in ("infer", "tqdm"):
         try:
-            from tqdm import tqdm  # type: ignore [import]
+            from tqdm import tqdm
         except ModuleNotFoundError:
             return iterable
         return tqdm(iterable, total=total, desc=description)
