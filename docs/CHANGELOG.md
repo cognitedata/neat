@@ -25,6 +25,9 @@ Changes are grouped as follows:
   that only instances written through this view are returned when querying it.
 - The `neat.read.cdf.classic.graph(...)` now handles lack of access to CDF resources more gracefully.
 
+### Improved
+- `neat.infer(...)` and `neat.to.cdf.instances(...)` now display a progress bar if the number of instances is large.
+
 ## [0.105.2] - 08-01-**2025**
 ### Added
 - The `get_cognite_client` function uses the current working directory to store the environment file if neat
