@@ -37,6 +37,7 @@ from cognite.neat._rules.models.entities._single_value import ViewEntity
 from cognite.neat._shared import InstanceType
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
+from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 from cognite.neat._utils.upload import UploadResult
 
@@ -157,7 +158,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 view_ids.append(f"{view_id!r} (self)")
 
         tracker = self._tracker(type(self).__name__, view_ids, "views")
-        for view_id, (view, _) in view_and_count_by_id.items():
+        for view_id, (view, instance_count) in view_and_count_by_id.items():
             pydantic_cls, edge_by_type, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
             yield from issues
             tracker.issue(issues)
@@ -194,7 +195,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     # this assumes no changes in the suffix of view and class
                     reader = self.graph_store.read(view.external_id)
 
-                for identifier, properties in reader:
+                instance_iterable = iterate_progress_bar_if_above_config_threshold(
+                    reader, instance_count, f"Loading {track_id}"
+                )
+
+                for identifier, properties in instance_iterable:
                     if skip_properties:
                         properties = {k: v for k, v in properties.items() if k not in skip_properties}
                     try:

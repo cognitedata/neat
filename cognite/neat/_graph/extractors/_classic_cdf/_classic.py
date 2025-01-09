@@ -226,4 +226,7 @@ class ClassicGraphExtractor(BaseExtractor):
     @staticmethod
     def _chunk(items: Sequence, description: str) -> Iterable:
         to_iterate: Iterable = chunker(items, chunk_size=1000)
-        return iterate_progress_bar(to_iterate, (len(items) // 1_000) + 1, description)
+        if items:
+            return iterate_progress_bar(to_iterate, (len(items) // 1_000) + 1, description)
+        else:
+            return to_iterate

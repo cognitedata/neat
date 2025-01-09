@@ -91,9 +91,13 @@ class InspectIssues:
         return_dataframe: bool = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> pd.DataFrame | None:
         """Returns the issues of the current data model."""
-        issues = self._state.rule_store.last_issues
-        if not issues:
+        if self._state.rule_store.provenance:
+            issues = self._state.rule_store.last_issues
+        elif self._state.instances.store.provenance:
+            issues = self._state.instances.store.provenance[-1].target_entity.issues
+        else:
             self._print("No issues found.")
+            return pd.DataFrame() if return_dataframe else None
 
         if issues and search is not None:
             unique_types = {type(issue).__name__ for issue in issues}

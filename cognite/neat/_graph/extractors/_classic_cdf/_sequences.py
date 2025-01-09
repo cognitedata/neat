@@ -73,7 +73,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         as_write: bool = False,
         unpack_columns: bool = False,
     ):
-        total, items = cls._from_dataset(client, data_set_external_id)
+        total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id))
         return cls(
             items,
             namespace,
@@ -101,7 +101,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         as_write: bool = False,
         unpack_columns: bool = False,
     ):
-        total, items = cls._from_hierarchy(client, root_asset_external_id)
+        total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id))
         return cls(
             items,
             namespace,

@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Literal, cast
 
+from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.importers import BaseImporter, InferenceImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
@@ -15,10 +16,11 @@ from .exceptions import NeatSessionError
 
 
 class SessionState:
-    def __init__(self, store_type: Literal["memory", "oxigraph"]) -> None:
+    def __init__(self, store_type: Literal["memory", "oxigraph"], client: NeatClient | None = None) -> None:
         self.instances = InstancesState(store_type)
         self.rule_store = NeatRulesStore()
         self.last_reference: DMSRules | InformationRules | None = None
+        self.client = client
 
     def rule_transform(self, *transformer: RulesTransformer) -> IssueList:
         if not transformer:

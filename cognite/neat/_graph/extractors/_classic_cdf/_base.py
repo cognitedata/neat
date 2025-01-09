@@ -1,6 +1,7 @@
 import json
 import re
 import sys
+import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence, Set
 from datetime import datetime, timezone
@@ -9,13 +10,16 @@ from typing import Any, Generic, TypeVar
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import WriteableCogniteResource
+from cognite.client.exceptions import CogniteAPIError
 from pydantic import AnyHttpUrl, ValidationError
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
+from cognite.neat._issues.warnings import CDFAuthWarning
 from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import string_to_ideal_type
+from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 
 T_CogniteResource = TypeVar("T_CogniteResource", bound=WriteableCogniteResource)
 
@@ -98,17 +102,11 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
-        if self.total:
-            try:
-                from rich.progress import track
-            except ModuleNotFoundError:
-                to_iterate = self.items
-            else:
-                to_iterate = track(
-                    self.items,
-                    total=self.limit or self.total,
-                    description=f"Extracting {type(self).__name__.removesuffix('Extractor')}",
-                )
+
+        if self.total is not None and self.total > 0:
+            to_iterate = iterate_progress_bar_if_above_config_threshold(
+                self.items, self.total, f"Extracting {type(self).__name__.removesuffix('Extractor')}"
+            )
         else:
             to_iterate = self.items
         for no, asset in enumerate(to_iterate):
@@ -221,7 +219,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         camel_case: bool = True,
         as_write: bool = False,
     ):
-        total, items = cls._from_dataset(client, data_set_external_id)
+        total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id))
         return cls(items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write)
 
     @classmethod
@@ -244,7 +242,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         camel_case: bool = True,
         as_write: bool = False,
     ):
-        total, items = cls._from_hierarchy(client, root_asset_external_id)
+        total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id))
         return cls(items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write)
 
     @classmethod
@@ -273,3 +271,18 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     @abstractmethod
     def _from_file(cls, file_path: str | Path) -> tuple[int | None, Iterable[T_CogniteResource]]:
         raise NotImplementedError
+
+    @classmethod
+    def _handle_no_access(
+        cls, action: Callable[[], tuple[int | None, Iterable[T_CogniteResource]]]
+    ) -> tuple[int | None, Iterable[T_CogniteResource]]:
+        try:
+            return action()
+        except CogniteAPIError as e:
+            if e.code == 403:
+                warnings.warn(
+                    CDFAuthWarning(f"extract {cls.__name__.removesuffix('Extractor').casefold()}", str(e)), stacklevel=2
+                )
+                return 0, []
+            else:
+                raise e

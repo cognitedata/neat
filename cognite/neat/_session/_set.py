@@ -1,5 +1,7 @@
+from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
+from cognite.neat._client import NeatClient
 from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.models import DMSRules
@@ -35,3 +37,10 @@ class SetAPI:
                     " due to temporarily issue with the reverse direct relation interpretation"
                 )
         return self._state.rule_transform(SetIDDMSModel(new_model_id))
+
+    def client(self, client: CogniteClient) -> None:
+        """Sets the client to be used in the session."""
+        self._state.client = NeatClient(client)
+        if self._verbose:
+            print(f"Client set to {self._state.client.config.project} CDF project.")
+        return None

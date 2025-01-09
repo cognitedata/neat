@@ -20,21 +20,21 @@ def test_asset_relationship_connector_transformer():
 
     result = list(
         store.graph.query(
-            f"SELECT ?asset ?relationship WHERE {{ ?asset <{DEFAULT_NAMESPACE.relationship}> ?relationship}}"
+            f"SELECT ?sourceAsset ?targetAsset WHERE {{ ?sourceAsset <{DEFAULT_NAMESPACE.relationship}> ?targetAsset}}"
         )
     )
 
-    assert len(result) == 4
-    assert result[0][1] == result[1][1]
-    assert result[0][0] != result[1][0]
+    assert len(result) == 3
+
     assert {res[0] for res in result} == {
         DEFAULT_NAMESPACE.Asset_5132527530441957,
         DEFAULT_NAMESPACE.Asset_78504378486679,
         DEFAULT_NAMESPACE.Asset_4288662884680989,
     }
     assert {res[1] for res in result} == {
-        DEFAULT_NAMESPACE.Relationship_3f155ae6498be0dcbf464cfca4b9c327459e1ec81cd96493711f5fd37ef64454,
-        DEFAULT_NAMESPACE.Relationship_7182fc7afef6b4769dda628483fda662a3465c595ff1de1f7f08ad88f6a33242,
+        DEFAULT_NAMESPACE.Asset_4288662884680989,
+        DEFAULT_NAMESPACE.Asset_5132527530441957,
+        DEFAULT_NAMESPACE.Asset_4901062138807933,
     }
 
 
