@@ -19,6 +19,7 @@ from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._issues.warnings import CDFAuthWarning
 from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import string_to_ideal_type
+from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 
 T_CogniteResource = TypeVar("T_CogniteResource", bound=WriteableCogniteResource)
 
@@ -101,17 +102,11 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
-        if self.total:
-            try:
-                from rich.progress import track
-            except ModuleNotFoundError:
-                to_iterate = self.items
-            else:
-                to_iterate = track(
-                    self.items,
-                    total=self.limit or self.total,
-                    description=f"Extracting {type(self).__name__.removesuffix('Extractor')}",
-                )
+
+        if self.total is not None and self.total > 0:
+            to_iterate = iterate_progress_bar_if_above_config_threshold(
+                self.items, self.total, f"Extracting {type(self).__name__.removesuffix('Extractor')}"
+            )
         else:
             to_iterate = self.items
         for no, asset in enumerate(to_iterate):

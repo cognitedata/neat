@@ -17,6 +17,7 @@ from cognite.neat._rules.models.information import (
 )
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._store._provenance import INSTANCES_ENTITY
+from cognite.neat._utils.collection_ import iterate_progress_bar
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri, uri_to_short_form
 
 from ._base import DEFAULT_NON_EXISTING_NODE_TYPE, BaseRDFImporter
@@ -26,7 +27,6 @@ DEFAULT_INFERENCE_DATA_MODEL_ID = ("neat_space", "InferredDataModel", "inferred"
 ORDERED_CLASSES_QUERY = """SELECT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class . }
                            group by ?class order by DESC(?instances)"""
-
 
 INSTANCES_OF_CLASS_QUERY = """SELECT ?s ?propertyCount WHERE { ?s a <class> . BIND ('Unknown' as ?propertyCount) }"""
 
@@ -171,8 +171,10 @@ class InferenceImporter(BaseRDFImporter):
             INSTANCES_OF_CLASS_QUERY if self.max_number_of_instance == -1 else INSTANCES_OF_CLASS_RICHNESS_ORDERED_QUERY
         )
 
+        classes_iterable = iterate_progress_bar(classes.items(), len(classes), "Inferring classes")
+
         # Infers all the properties of the class
-        for class_id, class_definition in classes.items():
+        for class_id, class_definition in classes_iterable:
             for (  # type: ignore[misc]
                 instance,
                 _,

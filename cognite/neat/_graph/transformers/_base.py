@@ -9,7 +9,7 @@ from rdflib.query import ResultRow
 
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._shared import Triple
-from cognite.neat._utils.collection_ import iterate_progress_bar
+from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat._utils.graph_transformations_report import GraphTransformationResult
 
 To_Add_Triples: TypeAlias = list[Triple]
@@ -43,7 +43,6 @@ class BaseTransformerStandardised(ABC):
     description: str
     _use_only_once: bool = False
     _need_changes: ClassVar[frozenset[str]] = frozenset()
-    _use_iterate_bar_threshold: int = 500
 
     @abstractmethod
     def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:

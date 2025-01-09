@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.106.0] - 09-01-**2025**
 ### Added
 - Method for setting session client, `neat.set.client(...)`.
 
@@ -24,6 +24,9 @@ Changes are grouped as follows:
 - The `mapping.data_model.classic_to_core` method now produces a `..SourceSystem` with a `guid` property that ensures
   that only instances written through this view are returned when querying it.
 - The `neat.read.cdf.classic.graph(...)` now handles lack of access to CDF resources more gracefully.
+
+### Improved
+- `neat.infer(...)` and `neat.to.cdf.instances(...)` now display a progress bar if the number of instances is large.
 
 ## [0.105.2] - 08-01-**2025**
 ### Added
