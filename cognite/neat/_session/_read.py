@@ -143,6 +143,8 @@ class CDFClassicAPI(BaseReadAPI):
 
         issues = self._state.instances.store.write(extractor)
         issues.action = "Read Classic Graph"
+        if issues:
+            print("Use the .inspect.issues() for more details")
         return issues
 
 

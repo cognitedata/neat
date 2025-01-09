@@ -159,6 +159,7 @@ class NeatGraphStore:
         return cls(graph, rules)
 
     def write(self, extractor: TripleExtractors) -> IssueList:
+        last_change: Change | None = None
         with catch_issues() as issue_list:
             _start = datetime.now(timezone.utc)
             success = True
@@ -183,7 +184,6 @@ class NeatGraphStore:
                     if hasattr(extractor, "_get_activity_names")
                     else [type(extractor).__name__]
                 )
-                last_change: Change | None = None
                 for activity in activities:
                     last_change = Change.record(
                         activity=activity,
@@ -192,8 +192,9 @@ class NeatGraphStore:
                         description=f"Extracted triples to graph store using {type(extractor).__name__}",
                     )
                     self.provenance.append(last_change)
-                if last_change:
-                    last_change.target_entity.issues.extend(issue_list)
+        if last_change:
+            print(f"Updating provenance with {len(issue_list)} issues")
+            last_change.target_entity.issues.extend(issue_list)
         return issue_list
 
     def _read_via_rules_linkage(
