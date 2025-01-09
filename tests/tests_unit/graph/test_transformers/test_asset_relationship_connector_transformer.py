@@ -20,7 +20,7 @@ def test_asset_relationship_connector_transformer():
 
     result = list(
         store.graph.query(
-            f"SELECT ?sourceAsset ?targetAsset WHERE {{ ?asset <{DEFAULT_NAMESPACE.relationship}> ?relationship}}"
+            f"SELECT ?sourceAsset ?targetAsset WHERE {{ ?sourceAsset <{DEFAULT_NAMESPACE.relationship}> ?targetAsset}}"
         )
     )
 
