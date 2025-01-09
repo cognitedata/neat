@@ -9,7 +9,6 @@ from rdflib.query import ResultRow
 
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._shared import Triple
-from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat._utils.graph_transformations_report import GraphTransformationResult
 
 To_Add_Triples: TypeAlias = list[Triple]
