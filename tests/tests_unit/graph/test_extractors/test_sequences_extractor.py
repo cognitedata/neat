@@ -97,10 +97,9 @@ def test_no_access() -> None:
     with monkeypatch_cognite_client() as client_mock:
         client_mock.sequences.aggregate_count.side_effect = raise_exception
 
-        extractor = SequencesExtractor.from_hierarchy(client_mock, root_asset_external_id="root")
-
         triples: list[Triple] = []
         with catch_warnings() as issue_list:
+            extractor = SequencesExtractor.from_hierarchy(client_mock, root_asset_external_id="root")
             for triple in extractor.extract():
                 triples.append(triple)
 
