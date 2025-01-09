@@ -183,15 +183,17 @@ class NeatGraphStore:
                     if hasattr(extractor, "_get_activity_names")
                     else [type(extractor).__name__]
                 )
+                last_change: Change | None = None
                 for activity in activities:
-                    self.provenance.append(
-                        Change.record(
-                            activity=activity,
-                            start=_start,
-                            end=_end,
-                            description=f"Extracted triples to graph store using {type(extractor).__name__}",
-                        )
+                    last_change = Change.record(
+                        activity=activity,
+                        start=_start,
+                        end=_end,
+                        description=f"Extracted triples to graph store using {type(extractor).__name__}",
                     )
+                    self.provenance.append(last_change)
+                if last_change:
+                    last_change.target_entity.issues.extend(issue_list)
         return issue_list
 
     def _read_via_rules_linkage(
