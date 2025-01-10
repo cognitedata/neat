@@ -86,12 +86,12 @@ class ToAPI:
         """Export the current session to a file.
 
         Args:
-            io: The file path or file-like object to write the session to.
+            io: The file path to file-like object to write the session to.
 
         Example:
             Export the session to a file
             ```python
-            session_file_name = "neat_session.pkl"
+            session_file_name = "neat_session.zip"
             neat.to.session(session_file_name)
             ```
         """
