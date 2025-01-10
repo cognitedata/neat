@@ -1,3 +1,4 @@
+import urllib.parse
 import warnings
 from abc import ABC
 from collections.abc import Callable, Iterable
@@ -465,7 +466,7 @@ WHERE {{
                 ResourceNotFoundWarning(target_source_id, "class", str(relationship_id), "class"), stacklevel=2
             )
             return []
-        edge_id = str(object_by_predicates["externalId"])
+        edge_id = urllib.parse.quote(str(object_by_predicates["externalId"]))
         # If there is properties on the relationship, we create a new intermediate node
         edge_type = self._namespace[f"{source_type}To{target_type}Edge"]
         return self._create_edge(
