@@ -1,3 +1,4 @@
+import urllib.parse
 from collections.abc import Iterable, Iterator
 from typing import cast
 
@@ -124,12 +125,12 @@ class DMSExtractor(BaseExtractor):
                 yield from self._get_objects(item)
 
     def _as_uri_ref(self, instance: Instance | dm.DirectRelationReference) -> URIRef:
-        return self._get_namespace(instance.space)[instance.external_id]
+        return self._get_namespace(instance.space)[urllib.parse.quote(instance.external_id)]
 
     def _get_namespace(self, space: str) -> Namespace:
         if self.overwrite_namespace:
             return self.overwrite_namespace
-        return Namespace(DEFAULT_SPACE_URI.format(space=space))
+        return Namespace(DEFAULT_SPACE_URI.format(space=urllib.parse.quote(space)))
 
 
 class _InstanceIterator(Iterator[Instance]):
