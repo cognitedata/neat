@@ -32,6 +32,22 @@ class ReadAPI:
         self.yaml = YamlReadAPI(state, verbose)
         self.xml = XMLReadAPI(state, verbose)
 
+    def session(self, io: Any) -> None:
+        """Reads a Neat Session from a zip file.
+
+        Args:
+            io: file path to the Neat Session
+
+        Example:
+            ```python
+            neat.read.session("path_to_neat_session")
+            ```
+        """
+        reader = NeatReader.create(io)
+        path = reader.materialize_path()
+
+        self._state.instances.store.write(extractors.RdfFileExtractor.from_zip(path))
+
 
 @session_class_wrapper
 class BaseReadAPI:

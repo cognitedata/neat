@@ -1,3 +1,5 @@
+import tempfile
+
 import pytest
 import yaml
 from cognite.client import CogniteClient
@@ -44,3 +46,16 @@ class TestRead:
         neat.prepare.data_model.include_referenced()
 
         assert not issues.has_errors
+
+    def test_store_read_neat_session(self):
+        neat = NeatSession()
+
+        _ = neat.read.rdf.examples.nordic44
+
+        with tempfile.NamedTemporaryFile(suffix=".zip") as session_file:
+            neat.to.session(session_file.name)
+
+            neat2 = NeatSession()
+            neat2.read.session(session_file.name)
+
+            assert (neat2._state.instances.store.graph - neat._state.instances.store.graph).serialize() == "\n"
