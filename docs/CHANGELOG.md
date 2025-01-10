@@ -19,6 +19,11 @@ Changes are grouped as follows:
 ### Fixed
 - The `neat.prepare.instances.relationships_as_edges()` no longer creates invalid identifiers for the edges.
 
+### Added
+- Fast serialization of NeatGraphStore
+- `neat.to.session(...)` and `neat.from.session(...)` methods to save and load a `NeatSession` object to and from a file.
+
+
 ## [0.106.0] - 09-01-**2025**
 ### Added
 - Method for setting session client, `neat.set.client(...)`.
