@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from collections.abc import Iterable
 
-from cognite.neat._rules.models import DMSRules, InformationRules
+from cognite.neat._rules.models import InformationRules
 from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import class_html_doc
 
@@ -35,11 +35,4 @@ class KnowledgeGraphExtractor(BaseExtractor):
     @abstractmethod
     def get_information_rules(self) -> InformationRules:
         """Returns the information rules that the extractor uses."""
-        raise NotImplementedError()
-
-
-class DMSGraphExtractor(KnowledgeGraphExtractor):
-    @abstractmethod
-    def get_dms_rules(self) -> DMSRules:
-        """Returns the DMS rules that the extractor uses."""
         raise NotImplementedError()
