@@ -74,7 +74,7 @@ class NeatGraphStore:
         "Return type of the graph store"
         return type(self.graph.store).__name__
 
-    def serialize(self, filepath: Path | None = None) -> bytes | str | Graph:
+    def serialize(self, filepath: Path) -> Graph:
         """Serialize the graph store to a file.
 
         Args:
