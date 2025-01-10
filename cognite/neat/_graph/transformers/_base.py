@@ -9,6 +9,9 @@ from rdflib.query import ResultRow
 
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._shared import Triple
+from cognite.neat._utils.collection_ import (
+    iterate_progress_bar_if_above_config_threshold,
+)
 from cognite.neat._utils.graph_transformations_report import GraphTransformationResult
 
 To_Add_Triples: TypeAlias = list[Triple]
@@ -45,7 +48,7 @@ class BaseTransformerStandardised(ABC):
 
     @abstractmethod
     def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
-        """The operations to perform on each row resulting from the ._iterator() method.
+        """The operations to perform on each row resulting from the ._iterate_query() method.
         The operation should return a list of triples to add and to remove.
         """
         raise NotImplementedError()
@@ -67,8 +70,8 @@ class BaseTransformerStandardised(ABC):
             A query string.
 
         !!! note "Complex Queries"
-            In majority of cases the query should be a simple SELECT query. However, in case of more complex queries
-            especially where multiple consecutive queries are needed, one can overwrite the ._iterator() method
+            In majority of cases the query should be a simple SELECT query. However, in case
+            when there is a need to have one or more sub iterators, one can overwrite the ._iterator() method
         """
         raise NotImplementedError()
 
@@ -105,13 +108,9 @@ class BaseTransformerStandardised(ABC):
             return outcome
 
         result_iterable = self._iterator(graph)
-
-        if iteration_count > self._use_iterate_bar_threshold:
-            result_iterable = iterate_progress_bar(  # type: ignore[misc, assignment]
-                result_iterable,
-                total=iteration_count,
-                description=self.description,
-            )
+        result_iterable = iterate_progress_bar_if_above_config_threshold(
+            result_iterable, iteration_count, self.description
+        )
 
         for row in result_iterable:
             row = cast(ResultRow, row)
