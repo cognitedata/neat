@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal, TypeAlias, get_args
 
 from cognite.client import ClientConfig, CogniteClient
+from cognite.client.config import global_config
 from cognite.client.credentials import CredentialProvider, OAuthClientCredentials, OAuthInteractive, Token
 
 from cognite.neat import _version
@@ -33,6 +34,7 @@ def get_cognite_client(env_file_name: str) -> CogniteClient:
     """
     if not env_file_name.endswith(".env"):
         raise ValueError("env_file_name must end with '.env'")
+    global_config.disable_pypi_version_check = True
     # First try to load from .env file in repository root
     repo_root = _repo_root()
     if repo_root:
