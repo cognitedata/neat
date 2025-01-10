@@ -2,7 +2,6 @@ from typing import Literal
 
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
-from cognite.client.config import global_config
 
 from cognite.neat import _version
 from cognite.neat._client import NeatClient
@@ -75,7 +74,6 @@ class NeatSession:
         verbose: bool = True,
         load_engine: Literal["newest", "cache", "skip"] = "cache",
     ) -> None:
-        global_config.disable_pypi_version_check = True
         self._verbose = verbose
         self._state = SessionState(store_type=storage, client=NeatClient(client) if client else None)
         self.read = ReadAPI(self._state, verbose)
