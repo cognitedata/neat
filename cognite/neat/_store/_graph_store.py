@@ -3,7 +3,7 @@ import warnings
 from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import cast
+from typing import cast, overload
 
 import pandas as pd
 from pandas import Index
@@ -73,6 +73,14 @@ class NeatGraphStore:
     def type_(self) -> str:
         "Return type of the graph store"
         return type(self.graph.store).__name__
+
+    # no destination
+    @overload
+    def serialize(self, filepath: None) -> str: ...
+
+    # with destination
+    @overload
+    def serialize(self, filepath: Path) -> None: ...
 
     def serialize(self, filepath: Path | None) -> None | str:
         """Serialize the graph store to a file.
