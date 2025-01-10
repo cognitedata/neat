@@ -76,13 +76,13 @@ class NeatGraphStore:
 
     # no destination
     @overload
-    def serialize(self, filepath: None) -> str: ...
+    def serialize(self, filepath: None = None) -> str: ...
 
     # with destination
     @overload
     def serialize(self, filepath: Path) -> None: ...
 
-    def serialize(self, filepath: Path | None) -> None | str:
+    def serialize(self, filepath: Path | None = None) -> None | str:
         """Serialize the graph store to a file.
 
         Args:

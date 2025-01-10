@@ -1,3 +1,5 @@
+import warnings
+import zipfile
 from collections.abc import Collection
 from pathlib import Path
 from typing import Any, Literal, overload
@@ -80,11 +82,47 @@ class ToAPI:
         exporter = exporters.ExcelExporter(styling="maximal", reference_rules_with_prefix=reference_rules_with_prefix)
         return self._state.rule_store.export_to_file(exporter, Path(io))
 
-    @overload
-    def yaml(self, io: None, format: Literal["neat"] = "neat", skip_system_spaces: bool = True) -> str: ...
+    def session(self, io: Any) -> None:
+        """Export the current session to a file.
+
+        Args:
+            io: The file path or file-like object to write the session to.
+
+        Example:
+            Export the session to a file
+            ```python
+            session_file_name = "neat_session.pkl"
+            neat.to.session(session_file_name)
+            ```
+        """
+        filepath = Path(io)
+        if filepath.suffix not in {".zip"}:
+            warnings.warn("File extension is not .zip, adding it to the file name", stacklevel=2)
+            filepath = filepath.with_suffix(".zip")
+
+        filepath.parent.mkdir(exist_ok=True, parents=True)
+
+        with zipfile.ZipFile(filepath, "w") as zip_ref:
+            zip_ref.writestr(
+                "neat-session/instances/instances.ttl",
+                self._state.instances.store.serialize(),
+            )
 
     @overload
-    def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat", skip_system_spaces: bool = True) -> None: ...
+    def yaml(
+        self,
+        io: None,
+        format: Literal["neat"] = "neat",
+        skip_system_spaces: bool = True,
+    ) -> str: ...
+
+    @overload
+    def yaml(
+        self,
+        io: Any,
+        format: Literal["neat", "toolkit"] = "neat",
+        skip_system_spaces: bool = True,
+    ) -> None: ...
 
     def yaml(
         self, io: Any | None = None, format: Literal["neat", "toolkit"] = "neat", skip_system_spaces: bool = True
