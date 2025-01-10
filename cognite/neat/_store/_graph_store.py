@@ -7,7 +7,7 @@ from typing import cast
 
 import pandas as pd
 from pandas import Index
-from rdflib import Dataset, Graph, Namespace, URIRef
+from rdflib import Dataset, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -74,17 +74,17 @@ class NeatGraphStore:
         "Return type of the graph store"
         return type(self.graph.store).__name__
 
-    def serialize(self, filepath: Path) -> Graph:
+    def serialize(self, filepath: Path) -> None:
         """Serialize the graph store to a file.
 
         Args:
-            filepath: File path to serialize the graph store to, by default None
+            filepath: File path to serialize the graph store to
 
         Returns:
             Serialized graph store
         """
 
-        return self.graph.serialize(filepath, format="ox-trig" if self.type_ == "OxigraphStore" else "turtle")
+        self.graph.serialize(filepath, format="ox-trig" if self.type_ == "OxigraphStore" else "turtle")
 
     def add_rules(self, rules: InformationRules) -> None:
         """This method is used to add rules to the graph store and it is the only correct
