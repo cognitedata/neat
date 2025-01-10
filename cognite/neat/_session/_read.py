@@ -1,3 +1,5 @@
+import zipfile
+from pathlib import Path
 from typing import Any, Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
@@ -31,6 +33,31 @@ class ReadAPI:
         self.csv = CSVReadAPI(state, verbose)
         self.yaml = YamlReadAPI(state, verbose)
         self.xml = XMLReadAPI(state, verbose)
+
+    def session(self, io: Any) -> None:
+        """Reads a Neat Session from a zip file.
+
+        Args:
+            io: file path to the Neat Session
+
+        Example:
+            ```python
+            neat.read.session("path_to_neat_session")
+            ```
+        """
+        filepath = Path(io)
+
+        if filepath.suffix not in {".zip"}:
+            raise NeatValueError("Expected a zip file, got {filepath.suffix}")
+        if not filepath.exists():
+            raise NeatValueError(f"File {filepath} does not exist.")
+
+        with zipfile.ZipFile(filepath, "r") as zip_ref:
+            for file_info in zip_ref.infolist():
+                if file_info.filename == "neat-session/instances/instances.ttl":
+                    with zip_ref.open(file_info) as file:
+                        self._state.instances.store.write(extractors.RdfFileExtractor(cast(zipfile.ZipExtFile, file)))
+                    print("Session instances read!")
 
 
 @session_class_wrapper

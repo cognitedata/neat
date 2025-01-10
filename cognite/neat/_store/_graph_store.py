@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast, overload
+from zipfile import ZipExtFile
 
 import pandas as pd
 from pandas import Index
@@ -381,7 +382,7 @@ class NeatGraphStore:
 
     def _parse_file(
         self,
-        filepath: Path,
+        filepath: Path | ZipExtFile,
         format: str = "turtle",
         base_uri: URIRef | None = None,
     ) -> None:
@@ -406,7 +407,7 @@ class NeatGraphStore:
 
             # this is necessary to trigger rdflib oxigraph plugin
             self.graph.parse(
-                filepath,
+                filepath,  # type: ignore[arg-type]
                 format=rdflib_to_oxi_type(format),
                 transactional=False,
                 publicID=base_uri,
@@ -415,8 +416,8 @@ class NeatGraphStore:
 
         # All other stores
         else:
-            if filepath.is_file():
-                self.graph.parse(filepath, publicID=base_uri)
+            if isinstance(filepath, ZipExtFile) or filepath.is_file():
+                self.graph.parse(filepath, publicID=base_uri)  # type: ignore[arg-type]
             else:
                 for filename in filepath.iterdir():
                     if filename.is_file():

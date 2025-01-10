@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from pathlib import Path
 from typing import get_args
+from zipfile import ZipExtFile
 
 from rdflib import URIRef
 from rdflib.util import guess_format
@@ -24,22 +25,23 @@ class RdfFileExtractor(BaseExtractor):
 
     def __init__(
         self,
-        filepath: Path,
+        filepath: Path | ZipExtFile,
         base_uri: URIRef = DEFAULT_BASE_URI,
         issue_list: IssueList | None = None,
     ):
         self.issue_list = issue_list or IssueList(title=f"{filepath.name}")
         self.base_uri = base_uri
         self.filepath = filepath
-        self.format = guess_format(str(self.filepath))
 
-        if not self.filepath.exists():
+        self.format = guess_format(str(self.filepath) if isinstance(self.filepath, Path) else self.filepath.name)
+
+        if isinstance(self.filepath, Path) and not self.filepath.exists():
             self.issue_list.append(FileNotFoundNeatError(self.filepath))
 
         if not self.format:
             self.issue_list.append(
                 FileTypeUnexpectedError(
-                    self.filepath,
+                    (self.filepath if isinstance(self.filepath, Path) else Path(self.filepath.name)),
                     frozenset(get_args(RDFTypes)),
                 )
             )
