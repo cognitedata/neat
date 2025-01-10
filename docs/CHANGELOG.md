@@ -16,6 +16,10 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Fixed
+- The `neat.prepare.instances.relationships_as_edges()` no longer creates invalid identifiers for the edges.
+
+## [0.106.0] - 09-01-**2025**
 ### Added
 - Method for setting session client, `neat.set.client(...)`.
 

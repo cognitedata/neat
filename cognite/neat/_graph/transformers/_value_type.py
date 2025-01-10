@@ -1,23 +1,21 @@
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from typing import Any, cast
 from urllib.parse import quote
 
 import rdflib
-from rdflib import RDF, XSD, Graph, Namespace, URIRef
+from rdflib import RDF, Namespace, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat._constants import UNKNOWN_TYPE
-from cognite.neat._graph.queries import Queries
 from cognite.neat._issues.warnings import PropertyDataTypeConversionWarning
 from cognite.neat._utils.auxiliary import string_to_ideal_type
-from cognite.neat._utils.rdf_ import get_namespace, remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import Triple, get_namespace, remove_namespace_from_uri
 
-from ._base import BaseTransformer, BaseTransformerStandardised, RowTransformationOutput
+from ._base import BaseTransformerStandardised, RowTransformationOutput
 
 
-# TODO: Standardise
-class SplitMultiValueProperty(BaseTransformer):
+class SplitMultiValueProperty(BaseTransformerStandardised):
     description: str = (
         "SplitMultiValueProperty is a transformer that splits a "
         "multi-value property into multiple single-value properties."
@@ -25,55 +23,67 @@ class SplitMultiValueProperty(BaseTransformer):
     _use_only_once: bool = True
     _need_changes = frozenset({})
 
-    _object_property_template: str = """SELECT ?s ?o WHERE{{
+    def __init__(self, unknown_type: URIRef | None = None) -> None:
+        self.unknown_type = unknown_type or UNKNOWN_TYPE
 
-                                ?s a <{subject_uri}> .
-                                ?s <{property_uri}> ?o .
-                                ?o a <{object_uri}> .
+    def _iterate_query(self) -> str:
+        query = """SELECT ?subjectType ?property
+                          (GROUP_CONCAT(DISTINCT STR(?valueType); SEPARATOR=",") AS ?valueTypes)
 
-                            }}"""
+                   WHERE {{
+                       ?s ?property ?o .
+                       ?s a ?subjectType .
+                       OPTIONAL {{ ?o a ?type }}
 
-    _datatype_property_template: str = """SELECT ?s ?o WHERE {{
+                       # Key part to determine value type: either object, data or unknown
+                       BIND(   IF(isLiteral(?o),DATATYPE(?o),
+                               IF(BOUND(?type), ?type,
+                                               <{unknownType}>)) AS ?valueType)
+                   }}
 
-                                ?s a <{subject_uri}> .
-                                ?s <{property_uri}> ?o .
-                                FILTER (datatype(?o) = <{object_uri}>)
+                   GROUP BY ?subjectType ?property
+                   HAVING (COUNT(DISTINCT ?valueType) > 1)"""
 
-                                }}"""
+        return query.format(unknownType=self.unknown_type)
 
-    _unknown_property_template: str = """SELECT ?s ?o WHERE {{
+    def _count_query(self) -> str:
+        query = """SELECT (COUNT(*) AS ?tripleCount)
+                   WHERE {?s ?p ?o .}"""
+        return query
 
-                                ?s a <{subject_uri}> .
-                                ?s <{property_uri}> ?o .
-                                FILTER NOT EXISTS {{ ?o a ?objectType }}
-                                }}"""
+    def _sub_iterate_query(self, type_: URIRef, property_: URIRef) -> str:
+        query = """ SELECT ?s ?p ?o ?valueType WHERE {{
+                           ?s a <{subject_uri}> .
+                           ?s <{property_uri}> ?o .
 
-    def transform(self, graph: Graph) -> None:
-        # handle multi value type object properties
-        for subject_uri, property_uri, value_types in Queries(graph).multi_value_type_property():
-            for value_type_uri in value_types:
-                _args = {
-                    "subject_uri": subject_uri,
-                    "property_uri": property_uri,
-                    "object_uri": value_type_uri,
-                }
+                           OPTIONAL {{ ?o a ?type }}
 
-                # Case 1: Unknown value type
-                if value_type_uri == UNKNOWN_TYPE:
-                    iterator = graph.query(self._unknown_property_template.format(**_args))
+                           BIND(<{property_uri}> AS ?p)
 
-                # Case 2: Datatype value type
-                elif value_type_uri.startswith(str(XSD)):
-                    iterator = graph.query(self._datatype_property_template.format(**_args))
+                           BIND(IF(isLiteral(?o),  DATATYPE(?o),
+                                   IF(BOUND(?type),?type,
+                                                   <{unknownType}>)) AS ?valueType)
 
-                # Case 3: Object value type
-                else:
-                    iterator = graph.query(self._object_property_template.format(**_args))
+                                               }} """
 
-                for s, o in iterator:  # type: ignore [misc]
-                    graph.remove((s, property_uri, o))
-                    new_property = URIRef(f"{property_uri}_{remove_namespace_from_uri(value_type_uri)}")
-                    graph.add((s, new_property, o))
+        return query.format(unknownType=self.unknown_type, subject_uri=type_, property_uri=property_)
+
+    def _iterator(self, graph) -> Iterator:
+        for type_, property_, _ in graph.query(self._iterate_query()):
+            yield from graph.query(self._sub_iterate_query(type_, property_))
+
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
+        row_output = RowTransformationOutput()
+        subject, old_property, object, value_type = query_result_row
+
+        new_property = URIRef(f"{old_property}_{remove_namespace_from_uri(value_type)}")
+
+        row_output.add_triples.append(cast(Triple, (subject, new_property, object)))
+        row_output.remove_triples.append(cast(Triple, (subject, old_property, object)))
+
+        row_output.instances_modified_count += 1
+
+        return row_output
 
 
 class ConvertLiteral(BaseTransformerStandardised):

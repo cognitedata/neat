@@ -1,6 +1,7 @@
 import dataclasses
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from typing import ClassVar, TypeAlias, cast
 
 from rdflib import Graph
@@ -65,8 +66,15 @@ class BaseTransformerStandardised(ABC):
         The query to use for extracting target triples from the graph and performing the transformation.
         Returns:
             A query string.
+
+        !!! note "Complex Queries"
+            In majority of cases the query should be a simple SELECT query. However, in case
+            when there is a need to have one or more sub iterators, one can overwrite the ._iterator() method
         """
         raise NotImplementedError()
+
+    def _iterator(self, graph: Graph) -> Iterator:
+        yield from graph.query(self._iterate_query())
 
     def _skip_count_query(self) -> str:
         """
@@ -97,7 +105,7 @@ class BaseTransformerStandardised(ABC):
         if iteration_count == 0:
             return outcome
 
-        result_iterable = graph.query(self._iterate_query())
+        result_iterable = self._iterator(graph)
         result_iterable = iterate_progress_bar_if_above_config_threshold(
             result_iterable, iteration_count, self.description
         )
