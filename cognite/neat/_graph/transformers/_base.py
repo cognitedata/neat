@@ -76,7 +76,7 @@ class BaseTransformerStandardised(ABC):
         raise NotImplementedError()
 
     def _iterator(self, graph: Graph) -> Iterator:
-        yield graph.query(self._iterate_query())
+        yield from graph.query(self._iterate_query())
 
     def _skip_count_query(self) -> str:
         """
