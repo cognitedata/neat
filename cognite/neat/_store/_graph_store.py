@@ -7,7 +7,7 @@ from typing import cast
 
 import pandas as pd
 from pandas import Index
-from rdflib import Dataset, Namespace, URIRef
+from rdflib import Dataset, Graph, Namespace, URIRef
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -73,6 +73,18 @@ class NeatGraphStore:
     def type_(self) -> str:
         "Return type of the graph store"
         return type(self.graph.store).__name__
+
+    def serialize(self, filepath: Path | None = None) -> bytes | str | Graph:
+        """Serialize the graph store to a file.
+
+        Args:
+            filepath: File path to serialize the graph store to, by default None
+
+        Returns:
+            Serialized graph store
+        """
+
+        return self.graph.serialize(filepath, format="ox-trig" if self.type_ == "OxigraphStore" else "turtle")
 
     def add_rules(self, rules: InformationRules) -> None:
         """This method is used to add rules to the graph store and it is the only correct
@@ -375,7 +387,7 @@ class NeatGraphStore:
         """
 
         # Oxigraph store, do not want to type hint this as it is an optional dependency
-        if type(self.graph.store).__name__ == "OxigraphStore":
+        if self.type_ == "OxigraphStore":
             local_import("pyoxigraph", "oxi")
 
             # this is necessary to trigger rdflib oxigraph plugin
