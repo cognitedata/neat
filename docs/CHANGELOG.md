@@ -23,6 +23,8 @@ Changes are grouped as follows:
 - Fast serialization of NeatGraphStore
 - `neat.to.session(...)` and `neat.from.session(...)` methods to save and load a `NeatSession` object to and from a file.
 
+### Improved
+- Better error message if `NeatSession(..., storage="oxigraph")` and the `oxigraph` package is not installed.
 
 ## [0.106.0] - 09-01-**2025**
 ### Added
