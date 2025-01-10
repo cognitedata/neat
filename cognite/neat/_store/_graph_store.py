@@ -74,7 +74,7 @@ class NeatGraphStore:
         "Return type of the graph store"
         return type(self.graph.store).__name__
 
-    def serialize(self, filepath: Path) -> None:
+    def serialize(self, filepath: Path | None) -> None | str:
         """Serialize the graph store to a file.
 
         Args:
@@ -83,8 +83,14 @@ class NeatGraphStore:
         Returns:
             Serialized graph store
         """
-
-        self.graph.serialize(filepath, format="ox-trig" if self.type_ == "OxigraphStore" else "turtle")
+        if filepath:
+            self.graph.serialize(
+                filepath,
+                format="ox-trig" if self.type_ == "OxigraphStore" else "turtle",
+            )
+            return None
+        else:
+            return self.graph.serialize(format="ox-trig" if self.type_ == "OxigraphStore" else "turtle")
 
     def add_rules(self, rules: InformationRules) -> None:
         """This method is used to add rules to the graph store and it is the only correct
