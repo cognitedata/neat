@@ -396,7 +396,6 @@ class RDFExamples:
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
-    @property
     def nordic44(self) -> IssueList:
         """Reads the Nordic 44 knowledge graph into the NeatSession graph store."""
         self._state.instances.store.write(extractors.RdfFileExtractor(instances_examples.nordic44_knowledge_graph))
