@@ -1,7 +1,7 @@
+import zipfile
 from collections.abc import Iterable
 from pathlib import Path
-from typing import get_args
-from zipfile import ZipExtFile
+from typing import cast, get_args
 
 from rdflib import URIRef
 from rdflib.util import guess_format
@@ -11,6 +11,7 @@ from cognite.neat._graph._shared import RDFTypes
 from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._issues._base import IssueList
 from cognite.neat._issues.errors import FileNotFoundNeatError, FileTypeUnexpectedError
+from cognite.neat._issues.errors._general import NeatValueError
 from cognite.neat._shared import Triple
 
 
@@ -25,7 +26,7 @@ class RdfFileExtractor(BaseExtractor):
 
     def __init__(
         self,
-        filepath: Path | ZipExtFile,
+        filepath: Path | zipfile.ZipExtFile,
         base_uri: URIRef = DEFAULT_BASE_URI,
         issue_list: IssueList | None = None,
     ):
@@ -35,6 +36,7 @@ class RdfFileExtractor(BaseExtractor):
 
         self.format = guess_format(str(self.filepath) if isinstance(self.filepath, Path) else self.filepath.name)
 
+        print(self.format)
         if isinstance(self.filepath, Path) and not self.filepath.exists():
             self.issue_list.append(FileNotFoundNeatError(self.filepath))
 
@@ -48,3 +50,26 @@ class RdfFileExtractor(BaseExtractor):
 
     def extract(self) -> Iterable[Triple]:
         raise NotImplementedError()
+
+    @classmethod
+    def from_zip(
+        cls,
+        filepath: Path,
+        filename: str = "neat-session/instances/instances.ttl",
+        base_uri: URIRef = DEFAULT_BASE_URI,
+        issue_list: IssueList | None = None,
+    ):
+        if not filepath.exists():
+            raise FileNotFoundNeatError(filepath)
+        if filepath.suffix not in {".zip"}:
+            raise NeatValueError("Expected a zip file, got {filepath.suffix}")
+
+        with zipfile.ZipFile(filepath, "r") as zip_ref:
+            for file_info in zip_ref.infolist():
+                if file_info.filename == filename:
+                    # We need to open the file in the zip file, and close it upon
+                    # triple extraction ...
+                    file = zip_ref.open(file_info)
+                    return cls(cast(zipfile.ZipExtFile, file), base_uri, issue_list)
+
+        raise NeatValueError(f"Cannot extract {filename} from zip file {filepath}")

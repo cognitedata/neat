@@ -193,6 +193,8 @@ class NeatGraphStore:
 
             if isinstance(extractor, RdfFileExtractor) and not extractor.issue_list.has_errors:
                 self._parse_file(extractor.filepath, cast(str, extractor.format), extractor.base_uri)
+                if isinstance(extractor.filepath, ZipExtFile):
+                    extractor.filepath.close()
             elif isinstance(extractor, RdfFileExtractor):
                 success = False
                 issue_text = "\n".join([issue.as_message() for issue in extractor.issue_list])
