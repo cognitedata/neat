@@ -31,6 +31,9 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         self._issues = IssueList(issues)
         self._instance_space = instance_space
 
+        self._information_rules: InformationRules | None = None
+        self._dms_rules: DMSRules | None = None
+
     @classmethod
     def from_data_model_id(
         cls, data_model_id: dm.DataModelId, client: CogniteClient, namespace: Namespace = DEFAULT_NAMESPACE
@@ -89,12 +92,19 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
 
     def get_information_rules(self) -> InformationRules:
         """Returns the information rules that the extractor uses."""
-        raise NotImplementedError()
+        if self._information_rules is None:
+            self._information_rules, self._dms_rules = self._create_rules()
+        return self._information_rules
 
     def get_dms_rules(self) -> DMSRules:
         """Returns the DMS rules that the extractor uses."""
-        raise NotImplementedError()
+        if self._dms_rules is None:
+            self._information_rules, self._dms_rules = self._create_rules()
+        return self._dms_rules
 
     def get_issues(self) -> IssueList:
         """Returns the issues that occurred during the extraction."""
         return self._issues
+
+    def _create_rules(self) -> tuple[InformationRules, DMSRules]:
+        raise NotImplementedError()
