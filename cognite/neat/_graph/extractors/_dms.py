@@ -128,6 +128,10 @@ class DMSExtractor(BaseExtractor):
         else:
             raise NotImplementedError(f"Unknown instance type {type(instance)}")
 
+        if self.overwrite_namespace:
+            # If the namespace is overwritten, keep the original space as a property to avoid losing information.
+            yield id_, self._get_namespace(instance.space)["space"], Literal(instance.space)
+
         for view_id, properties in instance.properties.items():
             namespace = self._get_namespace(view_id.space)
             for key, value in properties.items():
