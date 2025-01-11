@@ -3,7 +3,7 @@ from collections.abc import Iterable, Sequence
 from cognite.client import data_modeling as dm
 from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -39,18 +39,26 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
 
     @classmethod
     def from_data_model_id(
-        cls, data_model_id: dm.DataModelId, client: NeatClient, namespace: Namespace = DEFAULT_NAMESPACE
+        cls,
+        data_model_id: dm.DataModelIdentifier,
+        client: NeatClient,
+        namespace: Namespace = DEFAULT_NAMESPACE,
+        instance_space: str | SequenceNotStr[str] | None = None,
     ) -> "DMSGraphExtractor":
         issues: list[NeatIssue] = []
         try:
             data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True)
         except CogniteAPIError as e:
             issues.append(CDFAuthWarning("retrieving data model", str(e)))
-            return cls(cls._create_empty_model(data_model_id), client, namespace, issues)
+            return cls(
+                cls._create_empty_model(dm.DataModelId.load(data_model_id)), client, namespace, issues, instance_space
+            )
         if not data_model:
             issues.append(ResourceRetrievalWarning(frozenset({data_model_id}), "data model"))
-            return cls(cls._create_empty_model(data_model_id), client, namespace, issues)
-        return cls(data_model.latest_version(), client, namespace, issues)
+            return cls(
+                cls._create_empty_model(dm.DataModelId.load(data_model_id)), client, namespace, issues, instance_space
+            )
+        return cls(data_model.latest_version(), client, namespace, issues, instance_space)
 
     @classmethod
     def _create_empty_model(cls, data_model_id: dm.DataModelId) -> dm.DataModel:
@@ -71,6 +79,15 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         if self._views is None:
             self._views = self._get_views()
         return self._views
+
+    @property
+    def description(self) -> str:
+        return "Extracts a data model with nodes and edges."
+
+    @property
+    def source_uri(self) -> URIRef:
+        space, external_id, version = self._data_model.as_id().as_tuple()
+        return DEFAULT_NAMESPACE[f"{self._client.config.project}/{space}/{external_id}/{version}"]
 
     def extract(self) -> Iterable[Triple]:
         """Extracts the knowledge graph from the data model."""

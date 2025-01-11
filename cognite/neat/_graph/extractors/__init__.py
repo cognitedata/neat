@@ -1,6 +1,6 @@
 from cognite.neat._session.engine._interface import Extractor as EngineExtractor
 
-from ._base import BaseExtractor
+from ._base import BaseExtractor, KnowledgeGraphExtractor
 from ._classic_cdf._assets import AssetsExtractor
 from ._classic_cdf._classic import ClassicGraphExtractor
 from ._classic_cdf._data_sets import DataSetExtractor
@@ -28,6 +28,7 @@ __all__ = [
     "EventsExtractor",
     "FilesExtractor",
     "IODDExtractor",
+    "KnowledgeGraphExtractor",
     "LabelsExtractor",
     "MockGraphGenerator",
     "RdfFileExtractor",
