@@ -9,12 +9,14 @@ from typing import ClassVar, Literal, TypeVar, cast, overload
 
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
+from rdflib import Namespace
 
 from cognite.neat._client import NeatClient
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
 from cognite.neat._constants import (
     COGNITE_MODELS,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
+    get_default_prefixes_and_namespaces,
 )
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning
@@ -37,6 +39,7 @@ from cognite.neat._rules.models import (
     SheetList,
     data_types,
 )
+from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
 from cognite.neat._rules.models.data_types import AnyURI, DataType, String
 from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSValidation, DMSView
 from cognite.neat._rules.models.dms._rules import DMSContainer
@@ -259,8 +262,11 @@ class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
 class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
     """Converts DMSRules to InformationRules."""
 
+    def __init__(self, instance_namespace: Namespace | None = None):
+        self.instance_namespace = instance_namespace
+
     def transform(self, rules: DMSRules) -> InformationRules:
-        return _DMSRulesConverter(rules).as_information_rules()
+        return _DMSRulesConverter(rules, self.instance_namespace).as_information_rules()
 
 
 class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
@@ -1136,8 +1142,9 @@ class _InformationRulesConverter:
 
 
 class _DMSRulesConverter:
-    def __init__(self, dms: DMSRules):
+    def __init__(self, dms: DMSRules, instance_namespace: Namespace | None = None) -> None:
         self.dms = dms
+        self.instance_namespace = instance_namespace
 
     def as_information_rules(
         self,
@@ -1166,6 +1173,15 @@ class _DMSRulesConverter:
             for view in self.dms.views
         ]
 
+        prefixes = get_default_prefixes_and_namespaces()
+        instance_prefix: str | None = None
+        if self.instance_namespace:
+            instance_prefix = next((k for k, v in prefixes.items() if v == self.instance_namespace), None)
+            if instance_prefix is None:
+                # We need to add a new prefix
+                instance_prefix = f"prefix_{len(prefixes) + 1}"
+                prefixes[instance_prefix] = self.instance_namespace
+
         properties: list[InformationProperty] = []
         value_type: DataType | ClassEntity | str
         for property_ in self.dms.properties:
@@ -1181,6 +1197,13 @@ class _DMSRulesConverter:
             else:
                 raise ValueError(f"Unsupported value type: {property_.value_type.type_}")
 
+            transformation: RDFPath | None = None
+            if instance_prefix is not None:
+                transformation = SingleProperty(
+                    class_=Entity(prefix=instance_prefix, suffix=property_.view.external_id),
+                    property=Entity(prefix=instance_prefix, suffix=property_.view_property),
+                )
+
             properties.append(
                 InformationProperty(
                     # Removing version
@@ -1190,6 +1213,7 @@ class _DMSRulesConverter:
                     description=property_.description,
                     min_count=(0 if property_.nullable or property_.nullable is None else 1),
                     max_count=(float("inf") if property_.is_list or property_.nullable is None else 1),
+                    transformation=transformation,
                 )
             )
 
@@ -1197,6 +1221,7 @@ class _DMSRulesConverter:
             metadata=metadata,
             properties=SheetList[InformationProperty](properties),
             classes=SheetList[InformationClass](classes),
+            prefixes=prefixes,
         )
 
     @classmethod

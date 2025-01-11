@@ -125,5 +125,5 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         importer = DMSImporter.from_data_model(self._client, self._data_model)
         unverified_dms = importer.to_rules()
         verified_dms = VerifyDMSRules(client=self._client).transform(unverified_dms)
-        information_rules = DMSToInformation().transform(verified_dms)
+        information_rules = DMSToInformation(self._namespace).transform(verified_dms)
         return information_rules, verified_dms
