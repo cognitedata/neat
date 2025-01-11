@@ -7,7 +7,7 @@ from tests.data import car
 class TestDMSGraphExtractor:
     def test_extract_car_example(self) -> None:
         with monkeypatch_cognite_client() as client:
-            extractor = DMSGraphExtractor(client)
+            extractor = DMSGraphExtractor(car.CAR_MODEL, client)
 
             triple_count = len(list(extractor.extract()))
             info_rules = extractor.get_information_rules()
