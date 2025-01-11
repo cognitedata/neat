@@ -1160,8 +1160,9 @@ class _DMSRulesConverter:
 
         metadata = self._convert_metadata_to_info(dms)
 
-        classes = [
-            InformationClass(
+        classes: list[InformationClass] = []
+        for view in self.dms.views:
+            info_class = InformationClass(
                 # we do not want a version in class as we use URI for the class
                 class_=ClassEntity(prefix=view.view.prefix, suffix=view.view.suffix),
                 description=view.description,
@@ -1171,8 +1172,11 @@ class _DMSRulesConverter:
                     for implemented_view in view.implements or []
                 ],
             )
-            for view in self.dms.views
-        ]
+
+            # Linking
+            view.logical = info_class.neatId
+            info_class.physical = view.neatId
+            classes.append(info_class)
 
         prefixes = get_default_prefixes_and_namespaces()
         instance_prefix: str | None = None
@@ -1207,18 +1211,22 @@ class _DMSRulesConverter:
                     )
                 )
 
-            properties.append(
-                InformationProperty(
-                    # Removing version
-                    class_=ClassEntity(suffix=property_.view.suffix, prefix=property_.view.prefix),
-                    property_=property_.view_property,
-                    value_type=value_type,
-                    description=property_.description,
-                    min_count=(0 if property_.nullable or property_.nullable is None else 1),
-                    max_count=(float("inf") if property_.is_list or property_.nullable is None else 1),
-                    transformation=transformation,
-                )
+            info_property = InformationProperty(
+                # Removing version
+                class_=ClassEntity(suffix=property_.view.suffix, prefix=property_.view.prefix),
+                property_=property_.view_property,
+                value_type=value_type,
+                description=property_.description,
+                min_count=(0 if property_.nullable or property_.nullable is None else 1),
+                max_count=(float("inf") if property_.is_list or property_.nullable is None else 1),
+                transformation=transformation,
             )
+
+            # Linking
+            property_.logical = info_property.neatId
+            info_property.physical = property_.neatId
+
+            properties.append(info_property)
 
         return InformationRules(
             metadata=metadata,
