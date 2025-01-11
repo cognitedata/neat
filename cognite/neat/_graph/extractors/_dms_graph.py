@@ -7,7 +7,7 @@ from rdflib import Namespace
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._issues import IssueList, NeatIssue
+from cognite.neat._issues import IssueList, NeatIssue, catch_warnings
 from cognite.neat._issues.warnings import CDFAuthWarning, ResourceNotFoundWarning, ResourceRetrievalWarning
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
@@ -124,6 +124,9 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         # The DMS and Information rules must be created together to link them property.
         importer = DMSImporter.from_data_model(self._client, self._data_model)
         unverified_dms = importer.to_rules()
-        verified_dms = VerifyDMSRules(client=self._client).transform(unverified_dms)
-        information_rules = DMSToInformation(self._namespace).transform(verified_dms)
+        with catch_warnings() as issues:
+            # Any errors occur will be raised and caught outside the extractor.
+            verified_dms = VerifyDMSRules(client=self._client).transform(unverified_dms)
+            information_rules = DMSToInformation(self._namespace).transform(verified_dms)
+        self._issues.extend(issues)
         return information_rules, verified_dms
