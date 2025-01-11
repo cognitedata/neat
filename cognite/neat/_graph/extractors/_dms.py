@@ -6,6 +6,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.data_classes.data_modeling.instances import Instance, PropertyValue
+from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_SPACE_URI
@@ -39,7 +40,12 @@ class DMSExtractor(BaseExtractor):
 
     @classmethod
     def from_data_model(
-        cls, client: CogniteClient, data_model: DataModelIdentifier, limit: int | None = None
+        cls,
+        client: CogniteClient,
+        data_model: DataModelIdentifier,
+        limit: int | None = None,
+        overwrite_namespace: Namespace | None = None,
+        instance_space: str | SequenceNotStr[str] | None = None,
     ) -> "DMSExtractor":
         """Create an extractor from a data model.
 
@@ -47,22 +53,38 @@ class DMSExtractor(BaseExtractor):
             client: The Cognite client to use.
             data_model: The data model to extract.
             limit: The maximum number of instances to extract.
+            overwrite_namespace: If provided, this will overwrite the space of the extracted items.
+            instance_space: The space to extract instances from.
         """
         retrieved = client.data_modeling.data_models.retrieve(data_model, inline_views=True)
         if not retrieved:
             raise ResourceRetrievalError(dm.DataModelId.load(data_model), "data model", "Data Model is missing in CDF")
-        return cls.from_views(client, retrieved.latest_version().views, limit)
+        return cls.from_views(client, retrieved.latest_version().views, limit, overwrite_namespace, instance_space)
 
     @classmethod
-    def from_views(cls, client: CogniteClient, views: Iterable[dm.View], limit: int | None = None) -> "DMSExtractor":
+    def from_views(
+        cls,
+        client: CogniteClient,
+        views: Iterable[dm.View],
+        limit: int | None = None,
+        overwrite_namespace: Namespace | None = None,
+        instance_space: str | SequenceNotStr[str] | None = None,
+    ) -> "DMSExtractor":
         """Create an extractor from a set of views.
 
         Args:
             client: The Cognite client to use.
             views: The views to extract.
             limit: The maximum number of instances to extract.
+            overwrite_namespace: If provided, this will overwrite the space of the extracted items.
+            instance_space: The space to extract instances from.
         """
-        return cls(_InstanceIterator(client, views), total=None, limit=limit)
+        return cls(
+            _InstanceIterator(client, views, instance_space),
+            total=None,
+            limit=limit,
+            overwrite_namespace=overwrite_namespace,
+        )
 
     def extract(self) -> Iterable[Triple]:
         for count, item in enumerate(self.items, 1):
@@ -134,26 +156,43 @@ class DMSExtractor(BaseExtractor):
 
 
 class _InstanceIterator(Iterator[Instance]):
-    def __init__(self, client: CogniteClient, views: Iterable[dm.View]):
+    def __init__(
+        self, client: CogniteClient, views: Iterable[dm.View], instance_space: str | SequenceNotStr[str] | None = None
+    ):
         self.client = client
         self.views = views
+        self.instance_space = instance_space
 
     def __iter__(self) -> Iterator[Instance]:
         return self
 
     def __next__(self) -> Instance:  # type: ignore[misc]
+        node_filter: dm.filters.Filter | None = None
+        edge_filter: dm.filters.Filter | None = None
+        if self.instance_space:
+            node_filter = dm.filters.SpaceFilter(self.instance_space, "node")
+            edge_filter = dm.filters.SpaceFilter(self.instance_space, "edge")
+
         for view in self.views:
             # All nodes and edges with properties
-            yield from self.client.data_modeling.instances(chunk_size=None, instance_type="node", sources=[view])
-            yield from self.client.data_modeling.instances(chunk_size=None, instance_type="edge", sources=[view])
+            yield from self.client.data_modeling.instances(
+                chunk_size=None, instance_type="node", sources=[view], filter=node_filter
+            )
+            yield from self.client.data_modeling.instances(
+                chunk_size=None, instance_type="edge", sources=[view], filter=edge_filter
+            )
 
             for prop in view.properties.values():
                 if isinstance(prop, dm.EdgeConnection):
                     # Get all edges with properties
+                    edge_type_filter: dm.filters.Filter = dm.filters.Equals(
+                        ["edge", "type"], {"space": prop.type.space, "externalId": prop.type.external_id}
+                    )
+                    if edge_filter:
+                        edge_type_filter = dm.filters.And(edge_filter, edge_type_filter)
+
                     yield from self.client.data_modeling.instances(
                         chunk_size=None,
                         instance_type="edge",
-                        filter=dm.filters.Equals(
-                            ["edge", "type"], {"space": prop.type.space, "externalId": prop.type.external_id}
-                        ),
+                        filter=edge_type_filter,
                     )
