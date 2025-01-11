@@ -39,6 +39,7 @@ from cognite.neat._rules.models import (
     SheetList,
     data_types,
 )
+from cognite.neat._rules.models._rdfpath import Entity as RDFPathEntity
 from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
 from cognite.neat._rules.models.data_types import AnyURI, DataType, String
 from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSValidation, DMSView
@@ -1199,9 +1200,11 @@ class _DMSRulesConverter:
 
             transformation: RDFPath | None = None
             if instance_prefix is not None:
-                transformation = SingleProperty(
-                    class_=Entity(prefix=instance_prefix, suffix=property_.view.external_id),
-                    property=Entity(prefix=instance_prefix, suffix=property_.view_property),
+                transformation = RDFPath(
+                    traversal=SingleProperty(
+                        class_=RDFPathEntity(prefix=instance_prefix, suffix=property_.view.external_id),
+                        property=RDFPathEntity(prefix=instance_prefix, suffix=property_.view_property),
+                    )
                 )
 
             properties.append(
