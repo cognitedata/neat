@@ -12,6 +12,7 @@ from cognite.neat._utils.auxiliary import get_classmethods, get_parameters_by_me
         (
             DMSImporter,
             [
+                DMSImporter.from_data_model,
                 DMSImporter.from_data_model_id,
                 DMSImporter.from_directory,
                 DMSImporter.from_path,
