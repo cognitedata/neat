@@ -159,7 +159,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         tracker = self._tracker(type(self).__name__, view_ids, "views")
         for view_id, (view, instance_count) in view_and_count_by_id.items():
-            pydantic_cls, edge_by_type, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
+            pydantic_cls, edge_by_type, edge_by_prop_id, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
             yield from issues
             tracker.issue(issues)
 
@@ -210,7 +210,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                         if stop_on_exception:
                             raise error_node from e
                         yield error_node
-                    yield from self._create_edges(identifier, properties, edge_by_type, tracker)
+                    yield from self._create_edges(identifier, properties, edge_by_type, edge_by_prop_id, tracker)
                 tracker.finish(track_id)
                 yield _END_OF_CLASS
 
@@ -298,10 +298,16 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def _create_validation_classes(
         self, view: dm.View
-    ) -> tuple[type[BaseModel], dict[str, tuple[str, dm.EdgeConnection]], NeatIssueList]:
+    ) -> tuple[
+        type[BaseModel],
+        dict[str, tuple[str, dm.EdgeConnection]],
+        dict[str, tuple[str, dm.EdgeConnection]],
+        NeatIssueList,
+    ]:
         issues = IssueList()
         field_definitions: dict[str, tuple[type, Any]] = {}
         edge_by_type: dict[str, tuple[str, dm.EdgeConnection]] = {}
+        edge_by_prop_id: dict[str, tuple[str, dm.EdgeConnection]] = {}
         validators: dict[str, classmethod] = {}
         direct_relation_by_property: dict[str, dm.DirectRelation] = {}
         unit_properties: list[str] = []
@@ -309,6 +315,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         for prop_id, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
                 edge_by_type[prop.type.external_id] = prop_id, prop
+                edge_by_prop_id[prop_id] = prop_id, prop
             if isinstance(prop, dm.MappedProperty):
                 if is_readonly_property(prop.container, prop.container_property_identifier):
                     continue
@@ -414,7 +421,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             )
 
         pydantic_cls = create_model(view.external_id, __validators__=validators, **field_definitions)  # type: ignore[arg-type, call-overload]
-        return pydantic_cls, edge_by_type, issues
+        return pydantic_cls, edge_by_type, edge_by_prop_id, issues
 
     def _create_node(
         self,
@@ -440,12 +447,16 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         identifier: str,
         properties: dict[str, list[str]],
         edge_by_type: dict[str, tuple[str, dm.EdgeConnection]],
+        edge_by_prop_id: dict[str, tuple[str, dm.EdgeConnection]],
         tracker: Tracker,
     ) -> Iterable[dm.EdgeApply | NeatIssue]:
         for predicate, values in properties.items():
-            if predicate not in edge_by_type:
+            if predicate in edge_by_type:
+                prop_id, edge = edge_by_type[predicate]
+            elif predicate in edge_by_prop_id:
+                prop_id, edge = edge_by_prop_id[predicate]
+            else:
                 continue
-            prop_id, edge = edge_by_type[predicate]
             if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
                 error = ResourceDuplicatedError(
                     resource_type="edge",
