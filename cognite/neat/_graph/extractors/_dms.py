@@ -169,12 +169,13 @@ class _InstanceIterator(Iterable[Instance]):
 
     def __iter__(self) -> Iterator[Instance]:
         for view in self.views:
+            view_id = view.as_id()
             # All nodes and edges with properties
             yield from self.client.data_modeling.instances(
-                chunk_size=None, instance_type="node", sources=[view], space=self.instance_space
+                chunk_size=None, instance_type="node", sources=[view_id], space=self.instance_space
             )
             yield from self.client.data_modeling.instances(
-                chunk_size=None, instance_type="edge", sources=[view], space=self.instance_space
+                chunk_size=None, instance_type="edge", sources=[view_id], space=self.instance_space
             )
 
             for prop in view.properties.values():

@@ -11,7 +11,7 @@ from tests.data import car
 
 
 def car_instances(
-    instance_type: Literal["node", "edge"] = "node", sources: Source | Sequence[Source] | None = None, **_
+    instance_type: Literal["node", "edge"] = "node", sources: Source | Sequence[Source] | None = None, **other_args
 ) -> Iterable[Instance]:
     for instance in car.INSTANCES:
         if instance_type == "node" and isinstance(instance, dm.EdgeApply):
@@ -20,10 +20,13 @@ def car_instances(
             continue
         if sources is not None and instance.sources and instance.sources[0].source not in sources:
             continue
-        yield as_read(instance)
+        if not instance.sources and "filter" not in other_args:
+            # If there is not source, we have an edge type, which should have a filter.
+            continue
+        yield as_read_instance(instance)
 
 
-def as_read(instance: dm.NodeApply | dm.EdgeApply) -> Instance:
+def as_read_instance(instance: dm.NodeApply | dm.EdgeApply) -> Instance:
     args = dict(
         space=instance.space,
         external_id=instance.external_id,
@@ -93,5 +96,7 @@ class TestDMSGraphExtractor:
 
         expected_info = car.get_care_rules()
         assert triples == set(car.TRIPLES)
-        assert {cls_.class_ for cls_ in info_rules.classes} == {cls_.class_ for cls_ in expected_info.classes}
+        assert {cls_.class_.suffix for cls_ in info_rules.classes} == {
+            cls_.class_.suffix for cls_ in expected_info.classes
+        }
         assert {view.view.external_id for view in dms_rules.views} == {view.external_id for view in car.CAR_MODEL.views}
