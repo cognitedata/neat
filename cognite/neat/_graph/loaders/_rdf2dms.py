@@ -301,14 +301,14 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     ) -> tuple[type[BaseModel], dict[str, tuple[str, dm.EdgeConnection]], NeatIssueList]:
         issues = IssueList()
         field_definitions: dict[str, tuple[type, Any]] = {}
-        edge_by_property: dict[str, tuple[str, dm.EdgeConnection]] = {}
+        edge_by_type: dict[str, tuple[str, dm.EdgeConnection]] = {}
         validators: dict[str, classmethod] = {}
         direct_relation_by_property: dict[str, dm.DirectRelation] = {}
         unit_properties: list[str] = []
         json_fields: list[str] = []
         for prop_id, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
-                edge_by_property[prop_id] = prop_id, prop
+                edge_by_type[prop.type.external_id] = prop_id, prop
             if isinstance(prop, dm.MappedProperty):
                 if is_readonly_property(prop.container, prop.container_property_identifier):
                     continue
@@ -414,7 +414,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             )
 
         pydantic_cls = create_model(view.external_id, __validators__=validators, **field_definitions)  # type: ignore[arg-type, call-overload]
-        return pydantic_cls, edge_by_property, issues
+        return pydantic_cls, edge_by_type, issues
 
     def _create_node(
         self,
