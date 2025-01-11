@@ -1,15 +1,17 @@
 from collections.abc import Iterable, Sequence
 
-from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import Namespace
 
+from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList, NeatIssue
 from cognite.neat._issues.warnings import CDFAuthWarning, ResourceNotFoundWarning, ResourceRetrievalWarning
+from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
+from cognite.neat._rules.transformers import DMSToInformation, VerifyDMSRules
 from cognite.neat._shared import Triple
 
 from ._base import KnowledgeGraphExtractor
@@ -19,8 +21,8 @@ from ._dms import DMSExtractor
 class DMSGraphExtractor(KnowledgeGraphExtractor):
     def __init__(
         self,
-        data_model: dm.DataModel,
-        client: CogniteClient,
+        data_model: dm.DataModel[dm.View],
+        client: NeatClient,
         namespace: Namespace = DEFAULT_NAMESPACE,
         issues: Sequence[NeatIssue] | None = None,
         instance_space: str | SequenceNotStr[str] | None = None,
@@ -31,16 +33,17 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         self._issues = IssueList(issues)
         self._instance_space = instance_space
 
+        self._views: list[dm.View] | None = None
         self._information_rules: InformationRules | None = None
         self._dms_rules: DMSRules | None = None
 
     @classmethod
     def from_data_model_id(
-        cls, data_model_id: dm.DataModelId, client: CogniteClient, namespace: Namespace = DEFAULT_NAMESPACE
+        cls, data_model_id: dm.DataModelId, client: NeatClient, namespace: Namespace = DEFAULT_NAMESPACE
     ) -> "DMSGraphExtractor":
         issues: list[NeatIssue] = []
         try:
-            data_model = client.data_modeling.data_models.retrieve(data_model_id)
+            data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True)
         except CogniteAPIError as e:
             issues.append(CDFAuthWarning("retrieving data model", str(e)))
             return cls(cls._create_empty_model(data_model_id), client, namespace, issues)
@@ -63,12 +66,28 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
             views=[],
         )
 
+    @property
+    def _model_views(self) -> list[dm.View]:
+        if self._views is None:
+            self._views = self._get_views()
+        return self._views
+
     def extract(self) -> Iterable[Triple]:
         """Extracts the knowledge graph from the data model."""
+        views = self._model_views
+        yield from DMSExtractor.from_views(
+            self._client,
+            views,
+            overwrite_namespace=self._namespace,
+            instance_space=self._instance_space,
+        ).extract()
+
+    def _get_views(self) -> list[dm.View]:
         view_by_id: dict[dm.ViewId, dm.View] = {}
         if view_ids := [view_id for view_id in self._data_model.views if isinstance(view_id, dm.ViewId)]:
             try:
-                retrieved = self._client.data_modeling.views.retrieve(view_ids)
+                # MyPy does not understand the isinstance check above.
+                retrieved = self._client.data_modeling.views.retrieve(ids=view_ids)  #  type: ignore[arg-type]
             except CogniteAPIError as e:
                 self._issues.append(CDFAuthWarning("retrieving views", str(e)))
             else:
@@ -83,12 +102,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                     views.append(view)
                 else:
                     self._issues.append(ResourceNotFoundWarning(dm_view, "view", data_model_id, "data model"))
-        yield from DMSExtractor.from_views(
-            self._client,
-            views,
-            overwrite_namespace=self._namespace,
-            instance_space=self._instance_space,
-        ).extract()
+        return views
 
     def get_information_rules(self) -> InformationRules:
         """Returns the information rules that the extractor uses."""
@@ -107,4 +121,9 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         return self._issues
 
     def _create_rules(self) -> tuple[InformationRules, DMSRules]:
-        raise NotImplementedError()
+        # The DMS and Information rules must be created together to link them property.
+        importer = DMSImporter.from_data_model(self._client, self._data_model)
+        unverified_dms = importer.to_rules()
+        verified_dms = VerifyDMSRules(client=self._client).transform(unverified_dms)
+        information_rules = DMSToInformation().transform(verified_dms)
+        return information_rules, verified_dms
