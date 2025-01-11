@@ -22,6 +22,7 @@ Changes are grouped as follows:
 ### Added
 - Fast serialization of NeatGraphStore
 - `neat.to.session(...)` and `neat.from.session(...)` methods to save and load a `NeatSession` object to and from a file.
+- Neat can now read a knowledge graph from DMS with the `neat.read.cdf.graph(...)` method.
 
 ### Improved
 - Better error message if `NeatSession(..., storage="oxigraph")` and the `oxigraph` package is not installed.
