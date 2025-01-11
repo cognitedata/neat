@@ -17,25 +17,32 @@ from cognite.neat._rules.models.dms import (
 )
 from cognite.neat._rules.transformers import VerifyInformationRules
 
+INSTANCE_SPACE = "sp_cars"
 _neat = DEFAULT_NAMESPACE
 TRIPLES = tuple(
     [
         (_neat["Toyota"], RDF.type, _neat["Manufacturer"]),
         (_neat["Toyota"], _neat["name"], Literal("Toyota")),
+        (_neat["Toyota"], _neat["space"], Literal(INSTANCE_SPACE)),
         (_neat["Blue"], RDF.type, _neat["Color"]),
         (_neat["Blue"], _neat["name"], Literal("blue")),
+        (_neat["Blue"], _neat["space"], Literal(INSTANCE_SPACE)),
         (_neat["Car1"], RDF.type, _neat["Car"]),
         (_neat["Car1"], _neat["make"], _neat["Toyota"]),
         (_neat["Car1"], _neat["year"], Literal(2020)),
         (_neat["Car1"], _neat["color"], _neat["Blue"]),
+        (_neat["Car1"], _neat["space"], Literal(INSTANCE_SPACE)),
         (_neat["Ford"], RDF.type, _neat["Manufacturer"]),
         (_neat["Ford"], _neat["name"], Literal("Ford")),
+        (_neat["Ford"], _neat["space"], Literal(INSTANCE_SPACE)),
         (_neat["Red"], RDF.type, _neat["Color"]),
         (_neat["Red"], _neat["name"], Literal("red")),
+        (_neat["Red"], _neat["space"], Literal(INSTANCE_SPACE)),
         (_neat["Car2"], RDF.type, _neat["Car"]),
         (_neat["Car2"], _neat["make"], _neat["Ford"]),
         (_neat["Car2"], _neat["year"], Literal(2018)),
         (_neat["Car2"], _neat["color"], _neat["Red"]),
+        (_neat["Car2"], _neat["space"], Literal(INSTANCE_SPACE)),
     ]
 )
 MODEL_SPACE = "sp_example_car"
@@ -197,7 +204,6 @@ NODE_TYPES = dm.NodeApplyList(
     ]
 )
 
-INSTANCE_SPACE = "sp_cars"
 INSTANCES = [
     dm.NodeApply(
         space=INSTANCE_SPACE,
