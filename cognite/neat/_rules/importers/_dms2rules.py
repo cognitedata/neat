@@ -133,7 +133,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     def from_data_model(cls, client: NeatClient, model: dm.DataModel[dm.View]) -> "DMSImporter":
         issue_list = IssueList()
         with _handle_issues(issue_list) as result:
-            schema = NeatClient(client).schema.retrieve_data_model(model)
+            schema = client.schema.retrieve_data_model(model)
 
         if result.result == "failure" or issue_list.has_errors:
             return cls(DMSSchema(), issue_list)

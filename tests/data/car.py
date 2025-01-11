@@ -5,6 +5,8 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF
 from rdflib.term import Literal
 
+from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, NodeApplyDict, ViewApplyDict
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules import importers
 from cognite.neat._rules.models import DMSRules, InformationRules
@@ -269,3 +271,15 @@ INSTANCES = [
         type=dm.DirectRelationReference(MODEL_SPACE, "Color"),
     ),
 ]
+
+
+@lru_cache(maxsize=1)
+def get_car_schema() -> DMSSchema:
+    model = CAR_MODEL.as_write()
+    model.views = [view.as_id() for view in model.views]
+    return DMSSchema(
+        data_model=model,
+        containers=ContainerApplyDict(CONTAINERS),
+        views=ViewApplyDict([view.as_write() for view in CAR_MODEL.views]),
+        node_types=NodeApplyDict(NODE_TYPES),
+    )

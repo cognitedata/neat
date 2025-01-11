@@ -159,7 +159,7 @@ class DMSExtractor(BaseExtractor):
         return Namespace(DEFAULT_SPACE_URI.format(space=urllib.parse.quote(space)))
 
 
-class _InstanceIterator(Iterator[Instance]):
+class _InstanceIterator(Iterable[Instance]):
     def __init__(
         self, client: CogniteClient, views: Iterable[dm.View], instance_space: str | SequenceNotStr[str] | None = None
     ):
@@ -168,35 +168,22 @@ class _InstanceIterator(Iterator[Instance]):
         self.instance_space = instance_space
 
     def __iter__(self) -> Iterator[Instance]:
-        return self
-
-    def __next__(self) -> Instance:  # type: ignore[misc]
-        node_filter: dm.filters.Filter | None = None
-        edge_filter: dm.filters.Filter | None = None
-        if self.instance_space:
-            node_filter = dm.filters.SpaceFilter(self.instance_space, "node")
-            edge_filter = dm.filters.SpaceFilter(self.instance_space, "edge")
-
         for view in self.views:
             # All nodes and edges with properties
             yield from self.client.data_modeling.instances(
-                chunk_size=None, instance_type="node", sources=[view], filter=node_filter
+                chunk_size=None, instance_type="node", sources=[view], space=self.instance_space
             )
             yield from self.client.data_modeling.instances(
-                chunk_size=None, instance_type="edge", sources=[view], filter=edge_filter
+                chunk_size=None, instance_type="edge", sources=[view], space=self.instance_space
             )
 
             for prop in view.properties.values():
                 if isinstance(prop, dm.EdgeConnection):
-                    # Get all edges with properties
-                    edge_type_filter: dm.filters.Filter = dm.filters.Equals(
-                        ["edge", "type"], {"space": prop.type.space, "externalId": prop.type.external_id}
-                    )
-                    if edge_filter:
-                        edge_type_filter = dm.filters.And(edge_filter, edge_type_filter)
-
                     yield from self.client.data_modeling.instances(
                         chunk_size=None,
                         instance_type="edge",
-                        filter=edge_type_filter,
+                        filter=dm.filters.Equals(
+                            ["edge", "type"], {"space": prop.type.space, "externalId": prop.type.external_id}
+                        ),
+                        space=self.instance_space,
                     )
