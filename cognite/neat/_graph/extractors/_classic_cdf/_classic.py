@@ -5,9 +5,9 @@ from typing import ClassVar, NamedTuple, cast
 
 from cognite.client import CogniteClient
 from cognite.client.exceptions import CogniteAPIError
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
 
-from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, get_default_prefixes_and_namespaces
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE, get_default_prefixes_and_namespaces
 from cognite.neat._graph.extractors._base import KnowledgeGraphExtractor
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import CDFAuthWarning
@@ -178,6 +178,29 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 )
             )
         return verified
+
+    @property
+    def description(self) -> str:
+        if self._data_set_external_id:
+            source = f"data set {self._data_set_external_id}."
+        elif self._root_asset_external_id:
+            source = f"root asset {self._root_asset_external_id}."
+        else:
+            source = "unkown source."
+        return f"Extracting clasic CDF Graph (Assets, TimeSeries, Sequences, Events, Files) from {source}."
+
+    @property
+    def source_uri(self) -> URIRef:
+        if self._data_set_external_id:
+            resource = "dataset"
+            external_id = self._data_set_external_id
+        elif self._root_asset_external_id:
+            resource = "asset"
+            external_id = self._root_asset_external_id
+        else:
+            resource = "unknown"
+            external_id = "unknown"
+        return DEFAULT_NAMESPACE[f"{self._client.config.project}/{resource}/{external_id}"]
 
     def _extract_core_start_nodes(self):
         for core_node in self._classic_node_types:

@@ -176,7 +176,7 @@ class CDFClassicAPI(BaseReadAPI):
             self._get_client, root_asset_external_id=root_asset_external_id, limit_per_type=limit_per_type
         )
 
-        issues = self._state.instances.store.write(extractor)
+        issues = self._state.write_graph(extractor)
         issues.action = "Read Classic Graph"
         if issues:
             print("Use the .inspect.issues() for more details")
