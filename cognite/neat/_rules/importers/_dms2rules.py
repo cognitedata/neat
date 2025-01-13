@@ -115,8 +115,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         data_model_ids = [data_model_id]
         data_models = client.data_modeling.data_models.retrieve(data_model_ids, inline_views=True)
 
-        user_models = cls._find_model_in_list(data_models, data_model_id)
-        if len(user_models) == 0:
+        retrieved_models = cls._find_model_in_list(data_models, data_model_id)
+        if len(retrieved_models) == 0:
             return cls(
                 DMSSchema(),
                 [
@@ -127,16 +127,18 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                     )
                 ],
             )
-        user_model = user_models.latest_version()
+        return cls.from_data_model(client, retrieved_models.latest_version())
 
+    @classmethod
+    def from_data_model(cls, client: NeatClient, model: dm.DataModel[dm.View]) -> "DMSImporter":
         issue_list = IssueList()
         with _handle_issues(issue_list) as result:
-            schema = NeatClient(client).schema.retrieve_data_model(user_model)
+            schema = client.schema.retrieve_data_model(model)
 
         if result.result == "failure" or issue_list.has_errors:
             return cls(DMSSchema(), issue_list)
 
-        metadata = cls._create_metadata_from_model(user_model)
+        metadata = cls._create_metadata_from_model(model)
 
         return cls(
             schema,

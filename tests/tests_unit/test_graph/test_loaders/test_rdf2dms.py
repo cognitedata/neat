@@ -26,7 +26,7 @@ class TestDMSLoader:
 
         loaded = loader.load(stop_on_exception=True)
 
-        instances_source = {inst.external_id: inst.dump() for inst in car.INSTANCES}
-        instances_target = {inst.external_id: inst.dump() for inst in loaded}
+        instances_expected = {inst.external_id: inst.dump() for inst in car.INSTANCES}
+        instances_actual = {inst.external_id: inst.dump() for inst in loaded}
 
-        assert dict(sorted(instances_source.items())) == dict(sorted(instances_target.items()))
+        assert dict(sorted(instances_expected.items())) == dict(sorted(instances_actual.items()))

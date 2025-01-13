@@ -1,6 +1,6 @@
 from cognite.neat._session.engine._interface import Extractor as EngineExtractor
 
-from ._base import BaseExtractor
+from ._base import BaseExtractor, KnowledgeGraphExtractor
 from ._classic_cdf._assets import AssetsExtractor
 from ._classic_cdf._classic import ClassicGraphExtractor
 from ._classic_cdf._data_sets import DataSetExtractor
@@ -12,6 +12,7 @@ from ._classic_cdf._sequences import SequencesExtractor
 from ._classic_cdf._timeseries import TimeSeriesExtractor
 from ._dexpi import DexpiExtractor
 from ._dms import DMSExtractor
+from ._dms_graph import DMSGraphExtractor
 from ._iodd import IODDExtractor
 from ._mock_graph_generator import MockGraphGenerator
 from ._rdf_file import RdfFileExtractor
@@ -21,11 +22,13 @@ __all__ = [
     "BaseExtractor",
     "ClassicGraphExtractor",
     "DMSExtractor",
+    "DMSGraphExtractor",
     "DataSetExtractor",
     "DexpiExtractor",
     "EventsExtractor",
     "FilesExtractor",
     "IODDExtractor",
+    "KnowledgeGraphExtractor",
     "LabelsExtractor",
     "MockGraphGenerator",
     "RdfFileExtractor",
@@ -51,6 +54,7 @@ TripleExtractors = (
     | ClassicGraphExtractor
     | DataSetExtractor
     | EngineExtractor
+    | DMSGraphExtractor
 )
 
 
