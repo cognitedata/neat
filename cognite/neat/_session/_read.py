@@ -1,6 +1,7 @@
 from typing import Any, Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
+from cognite.client.utils.useful_types import SequenceNotStr
 
 from cognite.neat._client import NeatClient
 from cognite.neat._graph import examples as instances_examples
@@ -93,6 +94,24 @@ class CDFReadAPI(BaseReadAPI):
 
         importer = importers.DMSImporter.from_data_model_id(self._get_client, data_model_id)
         return self._state.rule_import(importer)
+
+    def graph(
+        self, data_model_id: DataModelIdentifier, instance_space: str | SequenceNotStr[str] | None = None
+    ) -> IssueList:
+        """Reads a knowledge graph from Cognite Data Fusion (CDF).
+
+        Args:
+            data_model_id: Tuple of strings with the id of a CDF Data Model.
+            instance_space: The instance spaces to extract. If None, all instance spaces are extracted.
+
+        Returns:
+            IssueList: A list of issues that occurred during the extraction.
+
+        """
+        extractor = extractors.DMSGraphExtractor.from_data_model_id(
+            data_model_id, self._get_client, instance_space=instance_space
+        )
+        return self._state.write_graph(extractor)
 
 
 @session_class_wrapper

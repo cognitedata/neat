@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Literal, cast
 
 from cognite.neat._client import NeatClient
+from cognite.neat._graph.extractors import KnowledgeGraphExtractor
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.importers import BaseImporter, InferenceImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
@@ -61,6 +62,10 @@ class SessionState:
         if issues:
             issues.hint = "Use the .inspect.issues() for more details."
         return issues
+
+    def write_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
+        self.instances.store.write(extractor)
+        return self.rule_store.import_graph(extractor)
 
 
 @dataclass
