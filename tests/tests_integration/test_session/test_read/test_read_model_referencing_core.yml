@@ -13,7 +13,7 @@ properties:
   container_property: UUID
   immutable: false
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_23b8c1e9_3924_46de_beb1_3b9046685257
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_referencing_core/ReferencingCore/v1/MyDescribable/UUID
   nullable: true
   value_type: text
   view: MyDescribable
@@ -23,7 +23,7 @@ properties:
   description: Alternative names for the node
   immutable: false
   is_list: true
-  neatId: http://purl.org/cognite/neat/neatId_47378190_96da_4dac_b2ff_5d2a386ecbe0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
   nullable: true
   value_type: text
   view: MyDescribable
@@ -33,7 +33,7 @@ properties:
   description: Description of the instance
   immutable: false
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_b74d0fb1_32e7_4629_8fad_c1a606cb0fb3
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/description
   nullable: true
   value_type: text
   view: MyDescribable
@@ -44,7 +44,7 @@ properties:
   immutable: false
   index: name
   is_list: false
-  neatId: http://purl.org/cognite/neat/neatId_9a1de644_815e_46d1_bb8f_aa1837f8a88b
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/name
   nullable: true
   value_type: text
   view: MyDescribable
@@ -54,7 +54,7 @@ properties:
   description: Text based labels for generic use, limited to 1000
   immutable: false
   is_list: true
-  neatId: http://purl.org/cognite/neat/neatId_6b65a6a4_8b81_48f6_b38a_088ca65ed389
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/tags
   nullable: true
   value_type: text
   view: MyDescribable
@@ -63,5 +63,5 @@ views:
 - filter_: hasData(cdf_cdm:CogniteDescribable,sp_referencing_core:MyDescribable)
   in_model: true
   name: MyDescribable
-  neatId: http://purl.org/cognite/neat/neatId_bd9c66b3_ad3c_4d6d_9a3d_1fa7bc8960a9
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_referencing_core/ReferencingCore/v1/MyDescribable
   view: MyDescribable

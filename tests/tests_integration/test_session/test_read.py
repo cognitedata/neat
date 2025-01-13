@@ -11,7 +11,6 @@ from tests import data
 
 
 class TestRead:
-    @pytest.mark.usefixtures("deterministic_uuid4")
     @pytest.mark.freeze_time("2024-11-22")
     def test_read_model_referencing_core(
         self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
