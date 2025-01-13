@@ -15,7 +15,7 @@ class FailingTransformer(RulesTransformer[DMSInputRules, DMSRules]):
 
 
 class TestRuleStore:
-    def test_import_transform_export(self, deterministic_uuid4: None, data_regression: DataRegressionFixture) -> None:
+    def test_import_transform_export(self, data_regression: DataRegressionFixture) -> None:
         store = NeatRulesStore()
 
         import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump))
@@ -34,7 +34,7 @@ class TestRuleStore:
 
         data_regression.check(yaml.safe_load(result))
 
-    def test_import_fail_transform(self, deterministic_uuid4: None) -> None:
+    def test_import_fail_transform(self) -> None:
         store = NeatRulesStore()
 
         import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump))
@@ -48,7 +48,7 @@ class TestRuleStore:
         assert isinstance(error, NeatValueError)
         assert "This transformer always fails" in error.as_message()
 
-    def test_import_invalid_transformer(self, deterministic_uuid4: None) -> None:
+    def test_import_invalid_transformer(self) -> None:
         store = NeatRulesStore()
 
         import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump))
@@ -58,7 +58,7 @@ class TestRuleStore:
         with pytest.raises(NeatValueError):
             _ = store.transform(transformers.VerifyInformationRules(validate=False))
 
-    def test_import_prune_until_compatible(self, deterministic_uuid4: None) -> None:
+    def test_import_prune_until_compatible(self) -> None:
         store = NeatRulesStore()
         # Gives us unverified information rules
         issues = store.import_(importers.ExcelImporter(catalog.imf_attributes))

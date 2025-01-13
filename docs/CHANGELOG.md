@@ -27,6 +27,7 @@ Changes are grouped as follows:
 
 ### Improved
 - Better error message if `NeatSession(..., storage="oxigraph")` and the `oxigraph` package is not installed.
+- NeatIDs are now human-readable and deterministic.
 
 ## [0.106.0] - 09-01-**2025**
 ### Added

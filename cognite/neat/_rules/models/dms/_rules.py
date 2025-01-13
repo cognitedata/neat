@@ -4,7 +4,7 @@ from typing import Any, ClassVar, Literal
 
 import pandas as pd
 from cognite.client import data_modeling as dm
-from pydantic import Field, field_serializer, field_validator
+from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat._client.data_classes.schema import DMSSchema
@@ -441,6 +441,31 @@ class DMSRules(BaseRules):
                     stacklevel=2,
                 )
         return value
+
+    @model_validator(mode="after")
+    def set_neat_id(self) -> "DMSRules":
+        namespace = self.metadata.namespace
+
+        for view in self.views:
+            if not view.neatId:
+                view.neatId = namespace[view.view.suffix]
+
+        for property_ in self.properties:
+            if not property_.neatId:
+                property_.neatId = namespace[f"{property_.view.suffix}/{property_.view_property}"]
+
+        return self
+
+    def update_neat_id(self) -> None:
+        """Update neat ids"""
+
+        namespace = self.metadata.namespace
+
+        for view in self.views:
+            view.neatId = namespace[view.view.suffix]
+
+        for property_ in self.properties:
+            property_.neatId = namespace[f"{property_.view.suffix}/{property_.view_property}"]
 
     def as_schema(self, instance_space: str | None = None, remove_cdf_spaces: bool = False) -> DMSSchema:
         from ._exporter import _DMSExporter
