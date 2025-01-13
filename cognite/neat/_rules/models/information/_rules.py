@@ -290,6 +290,26 @@ class InformationRules(BaseRules):
         for property_ in self.properties:
             property_.neatId = namespace[f"{property_.class_.suffix}/{property_.property_}"]
 
+    def sync_with_dms_rules(self, dms_rules: "DMSRules") -> None:
+        # Sync at the metadata level
+        if dms_rules.metadata.logical == self.metadata.identifier:
+            self.metadata.physical = dms_rules.metadata.identifier
+        else:
+            # if models are not linked to start with, we skip
+            return None
+
+        info_properties_by_neat_id = {prop.neatId: prop for prop in self.properties}
+        dms_properties_by_neat_id = {prop.neatId: prop for prop in dms_rules.properties}
+        for neat_id, prop in dms_properties_by_neat_id.items():
+            if prop.logical in info_properties_by_neat_id:
+                info_properties_by_neat_id[prop.logical].physical = neat_id
+
+        info_classes_by_neat_id = {cls.neatId: cls for cls in self.classes}
+        dms_views_by_neat_id = {view.neatId: view for view in dms_rules.views}
+        for neat_id, view in dms_views_by_neat_id.items():
+            if view.logical in info_classes_by_neat_id:
+                info_classes_by_neat_id[view.logical].physical = neat_id
+
     def as_dms_rules(self) -> "DMSRules":
         from cognite.neat._rules.transformers._converters import _InformationRulesConverter
 
