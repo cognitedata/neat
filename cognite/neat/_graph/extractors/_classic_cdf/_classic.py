@@ -8,8 +8,9 @@ from cognite.client.exceptions import CogniteAPIError
 from rdflib import Namespace
 
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
-from cognite.neat._graph.extractors._base import BaseExtractor
+from cognite.neat._graph.extractors._base import KnowledgeGraphExtractor
 from cognite.neat._issues.warnings import CDFAuthWarning
+from cognite.neat._rules.models import InformationRules
 from cognite.neat._shared import Triple
 from cognite.neat._utils.collection_ import chunker, iterate_progress_bar
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
@@ -37,7 +38,7 @@ class _ClassicCoreType(NamedTuple):
     api_name: str
 
 
-class ClassicGraphExtractor(BaseExtractor):
+class ClassicGraphExtractor(KnowledgeGraphExtractor):
     """This extractor extracts all classic CDF Resources.
 
     The Classic Graph consists of the following core resource type.
@@ -143,6 +144,9 @@ class ClassicGraphExtractor(BaseExtractor):
             warnings.warn(CDFAuthWarning("extract data sets", str(e)), stacklevel=2)
         else:
             self._extracted_data_sets = True
+
+    def get_information_rules(self) -> InformationRules:
+        raise NotImplementedError
 
     def _extract_core_start_nodes(self):
         for core_node in self._classic_node_types:
