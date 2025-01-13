@@ -881,8 +881,6 @@ class _InformationRulesConverter:
             )
 
             dms_view.logical = cls_.neatId
-            cls_.physical = dms_view.neatId
-
             views.append(dms_view)
 
         class_by_entity = {cls_.class_: cls_ for cls_ in self.rules.classes}
@@ -906,12 +904,33 @@ class _InformationRulesConverter:
             )
             containers.append(container)
 
-        return DMSRules(
+        dms_rules = DMSRules(
             metadata=dms_metadata,
             properties=SheetList[DMSProperty]([prop for prop_set in properties_by_class.values() for prop in prop_set]),
             views=SheetList[DMSView](views),
             containers=SheetList[DMSContainer](containers),
         )
+
+        self._sync_info_properties(dms_rules)
+        self._sync_info_classes(dms_rules)
+
+        return dms_rules
+
+    def _sync_info_properties(self, dms_rules: DMSRules) -> None:
+        info_properties_by_neat_id = {prop.neatId: prop for prop in self.rules.properties}
+        dms_properties_by_neat_id = {prop.neatId: prop for prop in dms_rules.properties}
+
+        for neat_id, prop in dms_properties_by_neat_id.items():
+            if prop.logical in info_properties_by_neat_id:
+                info_properties_by_neat_id[prop.logical].physical = neat_id
+
+    def _sync_info_classes(self, dms_rules: DMSRules) -> None:
+        info_classes_by_neat_id = {cls.neatId: cls for cls in self.rules.classes}
+        dms_views_by_neat_id = {view.neatId: view for view in dms_rules.views}
+
+        for neat_id, view in dms_views_by_neat_id.items():
+            if view.logical in info_classes_by_neat_id:
+                info_classes_by_neat_id[view.logical].physical = neat_id
 
     @staticmethod
     def _create_container_constraint(
@@ -999,7 +1018,6 @@ class _InformationRulesConverter:
 
         # linking
         dms_property.logical = info_property.neatId
-        info_property.physical = dms_property.neatId
 
         return dms_property
 
