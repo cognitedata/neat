@@ -7,7 +7,7 @@ from cognite.neat._store import NeatGraphStore
 
 
 def test_split_multi_value_property():
-    store = NeatGraphStore.from_oxi_store()
+    store = NeatGraphStore.from_oxi_local_store()
     extractor = RdfFileExtractor(nordic44_knowledge_graph, base_uri="http://nordic44.com/")
     store.write(extractor)
 

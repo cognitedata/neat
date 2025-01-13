@@ -160,8 +160,24 @@ class NeatGraphStore:
         return cls(graph, rules)
 
     @classmethod
-    def from_oxi_store(cls, storage_dir: Path | None = None, rules: InformationRules | None = None) -> "Self":
-        """Creates a NeatGraphStore from an Oxigraph store."""
+    def from_oxi_remote_store(
+        cls,
+        query_endpoint: str | None = None,
+        update_endpoint: str | None = None,
+        autocommit: bool = False,
+        rules: InformationRules | None = None,
+    ) -> "Self":
+        """Creates a NeatGraphStore from a remote Oxigraph store SPARQL endpoint."""
+
+        store = SPARQLUpdateStore(query_endpoint=query_endpoint, update_endpoint=update_endpoint, autocommit=autocommit)
+
+        graph = Dataset(store=store, default_union=True)
+
+        return cls(graph, rules)
+
+    @classmethod
+    def from_oxi_local_store(cls, storage_dir: Path | None = None, rules: InformationRules | None = None) -> "Self":
+        """Creates a NeatGraphStore from a local Oxigraph store."""
         local_import("pyoxigraph", "oxi")
         local_import("oxrdflib", "oxi")
         import oxrdflib
