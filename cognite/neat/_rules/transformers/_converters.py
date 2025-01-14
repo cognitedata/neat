@@ -911,26 +911,9 @@ class _InformationRulesConverter:
             containers=SheetList[DMSContainer](containers),
         )
 
-        self._sync_info_properties(dms_rules)
-        self._sync_info_classes(dms_rules)
+        self.rules.sync_with_dms_rules(dms_rules)
 
         return dms_rules
-
-    def _sync_info_properties(self, dms_rules: DMSRules) -> None:
-        info_properties_by_neat_id = {prop.neatId: prop for prop in self.rules.properties}
-        dms_properties_by_neat_id = {prop.neatId: prop for prop in dms_rules.properties}
-
-        for neat_id, prop in dms_properties_by_neat_id.items():
-            if prop.logical in info_properties_by_neat_id:
-                info_properties_by_neat_id[prop.logical].physical = neat_id
-
-    def _sync_info_classes(self, dms_rules: DMSRules) -> None:
-        info_classes_by_neat_id = {cls.neatId: cls for cls in self.rules.classes}
-        dms_views_by_neat_id = {view.neatId: view for view in dms_rules.views}
-
-        for neat_id, view in dms_views_by_neat_id.items():
-            if view.logical in info_classes_by_neat_id:
-                info_classes_by_neat_id[view.logical].physical = neat_id
 
     @staticmethod
     def _create_container_constraint(
@@ -965,8 +948,6 @@ class _InformationRulesConverter:
         )
 
         dms_metadata.logical = metadata.identifier
-        metadata.physical = dms_metadata.identifier
-
         return dms_metadata
 
     def _as_dms_property(
@@ -1192,7 +1173,6 @@ class _DMSRulesConverter:
             )
 
             # Linking
-            view.logical = info_class.neatId
             info_class.physical = view.neatId
             classes.append(info_class)
 
@@ -1241,17 +1221,20 @@ class _DMSRulesConverter:
             )
 
             # Linking
-            property_.logical = info_property.neatId
             info_property.physical = property_.neatId
 
             properties.append(info_property)
 
-        return InformationRules(
+        info_rules = InformationRules(
             metadata=metadata,
             properties=SheetList[InformationProperty](properties),
             classes=SheetList[InformationClass](classes),
             prefixes=prefixes,
         )
+
+        self.dms.sync_with_info_rules(info_rules)
+
+        return info_rules
 
     @classmethod
     def _convert_metadata_to_info(cls, metadata: DMSMetadata) -> "InformationMetadata":
