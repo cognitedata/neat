@@ -121,7 +121,7 @@ class InformationProperty(SheetRow):
         min_count: Minimum count of the property values. Defaults to 0
         max_count: Maximum count of the property values. Defaults to None
         default: Default value of the property
-        transformation: Actual rule for the transformation from source to target representation of
+        instance_source: Actual rule for the transformation from source to target representation of
               knowledge graph. Defaults to None (no transformation)
     """
 
@@ -153,10 +153,10 @@ class InformationProperty(SheetRow):
         "which means that the property can hold any number of values (listable).",
     )
     default: Any | None = Field(alias="Default", default=None, description="Default value of the property.")
-    transformation: RDFPath | None = Field(
-        alias="Transformation",
+    instance_source: RDFPath | None = Field(
+        alias="Instance Source",
         default=None,
-        description="The rule that is used to populate the data model. "
+        description="The link to to the instance property for the model. "
         "The rule is provided in a RDFPath query syntax which is converted to downstream solution query (e.g. SPARQL).",
     )
     inherited: bool = Field(
@@ -181,7 +181,7 @@ class InformationProperty(SheetRow):
             return float("inf")
         return value
 
-    @field_validator("transformation", mode="before")
+    @field_validator("instance_source", mode="before")
     def generate_rdfpath(cls, value: str | RDFPath | None) -> RDFPath | None:
         if value is None or isinstance(value, RDFPath):
             return value
@@ -289,6 +289,26 @@ class InformationRules(BaseRules):
             class_.neatId = namespace[class_.class_.suffix]
         for property_ in self.properties:
             property_.neatId = namespace[f"{property_.class_.suffix}/{property_.property_}"]
+
+    def sync_with_dms_rules(self, dms_rules: "DMSRules") -> None:
+        # Sync at the metadata level
+        if dms_rules.metadata.logical == self.metadata.identifier:
+            self.metadata.physical = dms_rules.metadata.identifier
+        else:
+            # if models are not linked to start with, we skip
+            return None
+
+        info_properties_by_neat_id = {prop.neatId: prop for prop in self.properties}
+        dms_properties_by_neat_id = {prop.neatId: prop for prop in dms_rules.properties}
+        for neat_id, prop in dms_properties_by_neat_id.items():
+            if prop.logical in info_properties_by_neat_id:
+                info_properties_by_neat_id[prop.logical].physical = neat_id
+
+        info_classes_by_neat_id = {cls.neatId: cls for cls in self.classes}
+        dms_views_by_neat_id = {view.neatId: view for view in dms_rules.views}
+        for neat_id, view in dms_views_by_neat_id.items():
+            if view.logical in info_classes_by_neat_id:
+                info_classes_by_neat_id[view.logical].physical = neat_id
 
     def as_dms_rules(self) -> "DMSRules":
         from cognite.neat._rules.transformers._converters import _InformationRulesConverter

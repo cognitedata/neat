@@ -106,7 +106,7 @@ def to_construct_triples(
     non_inherited_starting_rdf_types = []
 
     for transformation in transformations:
-        traversal = cast(RDFPath, transformation.transformation).traversal
+        traversal = cast(RDFPath, transformation.instance_source).traversal
 
         # keeping track of starting rdf types of non-inherited transformations/properties
         if isinstance(traversal, Traversal) and not transformation.inherited:

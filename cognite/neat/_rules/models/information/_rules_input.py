@@ -79,7 +79,7 @@ class InformationInputProperty(InputComponent[InformationProperty]):
     min_count: int | None = None
     max_count: int | float | None = None
     default: Any | None = None
-    transformation: str | None = None
+    instance_source: str | None = None
     # Only used internally
     inherited: bool = False
     neatId: str | URIRef | None = None
