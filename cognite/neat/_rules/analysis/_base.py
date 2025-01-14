@@ -251,7 +251,7 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
                 if (
                     only_rdfpath
                     and isinstance(property_, InformationProperty)
-                    and isinstance(property_.transformation, RDFPath)
+                    and isinstance(property_.instance_source, RDFPath)
                 ) or not only_rdfpath:
                     processed_properties[prop_entity] = property_
             class_property_pairs[class_] = processed_properties

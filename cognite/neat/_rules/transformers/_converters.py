@@ -1217,7 +1217,7 @@ class _DMSRulesConverter:
                 description=property_.description,
                 min_count=(0 if property_.nullable or property_.nullable is None else 1),
                 max_count=(float("inf") if property_.is_list or property_.nullable is None else 1),
-                transformation=transformation,
+                instance_source=transformation,
             )
 
             # Linking

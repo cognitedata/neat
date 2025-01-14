@@ -29,6 +29,10 @@ Changes are grouped as follows:
 - Better error message if `NeatSession(..., storage="oxigraph")` and the `oxigraph` package is not installed.
 - NeatIDs are now human-readable and deterministic.
 
+### Changed
+- [BREAKING] The `Transformation` column in the Information Data Model properties sheet has been renamed to
+  `Instnace Source`.
+
 ## [0.106.0] - 09-01-**2025**
 ### Added
 - Method for setting session client, `neat.set.client(...)`.

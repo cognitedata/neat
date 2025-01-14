@@ -55,12 +55,13 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
 
     def has_hop_transformations(self):
         return any(
-            prop_.transformation and isinstance(prop_.transformation.traversal, Hop) for prop_ in self.rules.properties
+            prop_.instance_source and isinstance(prop_.instance_source.traversal, Hop)
+            for prop_ in self.rules.properties
         )
 
     def has_self_reference_property_transformations(self):
         return any(
-            prop_.transformation and isinstance(prop_.transformation.traversal, SelfReferenceProperty)
+            prop_.instance_source and isinstance(prop_.instance_source.traversal, SelfReferenceProperty)
             for prop_ in self.rules.properties
         )
 
@@ -68,7 +69,7 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
         return [
             prop_
             for prop_ in self.rules.properties
-            if prop_.transformation and isinstance(prop_.transformation.traversal, SelfReferenceProperty)
+            if prop_.instance_source and isinstance(prop_.instance_source.traversal, SelfReferenceProperty)
         ]
 
     def define_property_renaming_config(self, class_: ClassEntity) -> dict[str | URIRef, str]:
@@ -76,7 +77,7 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
 
         if definitions := self.class_property_pairs(only_rdfpath=True, consider_inheritance=True).get(class_, None):
             for property_id, definition in definitions.items():
-                transformation = cast(RDFPath, definition.transformation)
+                transformation = cast(RDFPath, definition.instance_source)
 
                 # use case we have a single property rdf path, and defined prefix
                 # in either metadata or prefixes of rules
@@ -104,23 +105,23 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
     def neat_id_to_transformation_property_uri(self, property_neat_id: URIRef) -> URIRef | None:
         if (
             (property_ := self.properties_by_neat_id.get(property_neat_id))
-            and property_.transformation
+            and property_.instance_source
             and isinstance(
-                property_.transformation.traversal,
+                property_.instance_source.traversal,
                 SingleProperty,
             )
             and (
-                property_.transformation.traversal.property.prefix in self.rules.prefixes
-                or property_.transformation.traversal.property.prefix == self.rules.metadata.prefix
+                property_.instance_source.traversal.property.prefix in self.rules.prefixes
+                or property_.instance_source.traversal.property.prefix == self.rules.metadata.prefix
             )
         ):
             namespace = (
                 self.rules.metadata.namespace
-                if property_.transformation.traversal.property.prefix == self.rules.metadata.prefix
-                else self.rules.prefixes[property_.transformation.traversal.property.prefix]
+                if property_.instance_source.traversal.property.prefix == self.rules.metadata.prefix
+                else self.rules.prefixes[property_.instance_source.traversal.property.prefix]
             )
 
-            return namespace[property_.transformation.traversal.property.suffix]
+            return namespace[property_.instance_source.traversal.property.suffix]
         return None
 
     def property_types(self, class_: ClassEntity) -> dict[str, EntityTypes]:
@@ -137,7 +138,7 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
             class_, None
         ):
             for property_ in class_property_pairs.values():
-                classes.append(cast(RDFPath, property_.transformation).traversal.class_)
+                classes.append(cast(RDFPath, property_.instance_source).traversal.class_)
 
             return cast(ClassEntity, most_occurring_element(classes))
         else:

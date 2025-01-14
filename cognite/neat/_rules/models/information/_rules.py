@@ -121,7 +121,7 @@ class InformationProperty(SheetRow):
         min_count: Minimum count of the property values. Defaults to 0
         max_count: Maximum count of the property values. Defaults to None
         default: Default value of the property
-        transformation: Actual rule for the transformation from source to target representation of
+        instance_source: Actual rule for the transformation from source to target representation of
               knowledge graph. Defaults to None (no transformation)
     """
 
@@ -153,10 +153,10 @@ class InformationProperty(SheetRow):
         "which means that the property can hold any number of values (listable).",
     )
     default: Any | None = Field(alias="Default", default=None, description="Default value of the property.")
-    transformation: RDFPath | None = Field(
-        alias="Transformation",
+    instance_source: RDFPath | None = Field(
+        alias="Instance Source",
         default=None,
-        description="The rule that is used to populate the data model. "
+        description="The link to to the instance property for the model. "
         "The rule is provided in a RDFPath query syntax which is converted to downstream solution query (e.g. SPARQL).",
     )
     inherited: bool = Field(
@@ -181,7 +181,7 @@ class InformationProperty(SheetRow):
             return float("inf")
         return value
 
-    @field_validator("transformation", mode="before")
+    @field_validator("instance_source", mode="before")
     def generate_rdfpath(cls, value: str | RDFPath | None) -> RDFPath | None:
         if value is None or isinstance(value, RDFPath):
             return value
