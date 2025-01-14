@@ -1217,11 +1217,10 @@ data_product:
     view_property: manufacturer
   - container: cdf_cdm:CogniteDescribable
     container_property: name
-    description: Name of the instance
     immutable: false
-    index: name
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/name
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
     nullable: true
     value_type: text
     view: ClassicSourceSystem
@@ -1501,6 +1500,7 @@ data_product:
   - description: A source system that provides data to the data model.
     filter_: hasData(cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceSystem,sp_windfarm:ClassicSourceSystem)
     in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSourceSystem
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSourceSystem
     view: ClassicSourceSystem
   - filter_: hasData(cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteTimeSeries,sp_windfarm:ClassicTimeSeries)
@@ -1626,6 +1626,94 @@ instances:
   space: sp_instance_space
   type:
     externalId: ClassicAsset
+    space: sp_windfarm
+- externalId: ClassicSourceSystem_manufacturer1
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer1
+    source:
+      externalId: ClassicSourceSystem
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicSourceSystem
+    space: sp_windfarm
+- externalId: ClassicSourceSystem_manufacturer2
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer2
+    source:
+      externalId: ClassicSourceSystem
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicSourceSystem
+    space: sp_windfarm
+- externalId: DataSet_2115244274213977
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: usecase_01
+      description: Usecase 01 data set
+      metadata:
+        information: here
+        some: other
+      name: Usecase 01
+      writeProtected: false
+    source:
+      externalId: ClassicDataSet
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicDataSet
+    space: sp_windfarm
+- externalId: DataSet_2458119666837052
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: source_ds
+      description: Source data set
+      metadata:
+        information: here
+        some: extra
+      name: Source DS
+      writeProtected: true
+    source:
+      externalId: ClassicDataSet
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicDataSet
+    space: sp_windfarm
+- externalId: DataSet_6333017856399877
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: maintenance
+      description: Maintenance data set
+      metadata:
+        information: here
+        some: other
+      name: Maintenance
+      writeProtected: true
+    source:
+      externalId: ClassicDataSet
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicDataSet
     space: sp_windfarm
 - externalId: Event_3988904612812432
   instanceType: node
@@ -2087,8 +2175,8 @@ rules:
   - container: ClassicSequence
     used_for: all
   - container: ClassicSourceSystem
-    neatId: http://purl.org/cognite/neat/neatId_57fcf04b_a65f_4fc5_92e6_e9e7ac5d6876
-    used_for: node
+    description: A source system that provides data to the data model.
+    used_for: all
   - container: ClassicTimeSeries
     used_for: all
   enum:
@@ -2852,6 +2940,16 @@ rules:
     value_type: text
     view: ClassicSourceSystem
     view_property: classicSourceSystemGUID
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
+    nullable: true
+    value_type: text
+    view: ClassicSourceSystem
+    view_property: name
   - connection: reverse(property=timeSeries)
     description: An automatically updated list of activities the time series is related
       to.
@@ -3208,6 +3306,7 @@ rules:
   - description: A source system that provides data to the data model.
     implements: cdf_cdm:CogniteSourceSystem(version=v1)
     in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSourceSystem
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSourceSystem
     view: ClassicSourceSystem
   - implements: cdf_cdm:CogniteTimeSeries(version=v1)
