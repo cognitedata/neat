@@ -17,19 +17,6 @@ def test_num_triples():
     assert len(store.dataset) == 392
 
     # Asset num instances of each type
-    assert (
-        len(list(store.dataset.query(f"SELECT ?s WHERE {{ ?s a <{IODD.TextObject}>}}")))
-        == 166
-    )
-    assert (
-        len(list(store.dataset.query(f"SELECT ?s WHERE {{ ?s a <{IODD.IoddDevice}>}}")))
-        == 1
-    )
-    assert (
-        len(
-            list(
-                store.dataset.query(f"SELECT ?s WHERE {{ ?s a <{IODD.ProcessDataIn}>}}")
-            )
-        )
-        == 1
-    )
+    assert len(list(store.dataset.query(f"SELECT ?s WHERE {{ ?s a <{IODD.TextObject}>}}"))) == 166
+    assert len(list(store.dataset.query(f"SELECT ?s WHERE {{ ?s a <{IODD.IoddDevice}>}}"))) == 1
+    assert len(list(store.dataset.query(f"SELECT ?s WHERE {{ ?s a <{IODD.ProcessDataIn}>}}"))) == 1

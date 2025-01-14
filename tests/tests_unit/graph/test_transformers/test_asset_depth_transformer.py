@@ -14,15 +14,11 @@ def test_asset_depth_transformer_without_typing():
 
     store.transform(transformer)
 
-    result = list(
-        store.dataset.query(f"SELECT ?s WHERE {{ ?s <{DEFAULT_NAMESPACE.depth}> 0}}")
-    )
+    result = list(store.dataset.query(f"SELECT ?s WHERE {{ ?s <{DEFAULT_NAMESPACE.depth}> 0}}"))
 
     assert len(result) == 1
     assert result[0][0] == DEFAULT_NAMESPACE.Asset_4901062138807933
-    assert set(
-        store.dataset.query(f"SELECT ?s WHERE {{ ?s <{DEFAULT_NAMESPACE.depth}> ?d}}")
-    ) == set(
+    assert set(store.dataset.query(f"SELECT ?s WHERE {{ ?s <{DEFAULT_NAMESPACE.depth}> ?d}}")) == set(
         store.dataset.query(f"SELECT ?s WHERE {{ ?s a <{DEFAULT_NAMESPACE.Asset}>}}")
     )
 

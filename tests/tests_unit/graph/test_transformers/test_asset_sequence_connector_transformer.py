@@ -19,9 +19,7 @@ def test_asset_sequence_connector_transformer():
     store.transform(transformers.AssetSequenceConnector())
 
     result = list(
-        store.dataset.query(
-            f"SELECT ?asset ?sequence WHERE {{ ?asset <{DEFAULT_NAMESPACE.sequence}> ?sequence}}"
-        )
+        store.dataset.query(f"SELECT ?asset ?sequence WHERE {{ ?asset <{DEFAULT_NAMESPACE.sequence}> ?sequence}}")
     )
 
     assert len(result) == 2
