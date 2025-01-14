@@ -1,4 +1,3 @@
-from collections import defaultdict
 import sys
 import warnings
 from collections.abc import Iterable
@@ -11,11 +10,8 @@ import pandas as pd
 from pandas import Index
 from rdflib import Dataset, Graph, Namespace, URIRef
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
-
-
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph._shared import rdflib_to_oxi_type
 from cognite.neat._graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat._graph.queries import Queries
@@ -26,7 +22,7 @@ from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._shared import InstanceType, Triple
 from cognite.neat._utils.auxiliary import local_import
-from cognite.neat._utils.rdf_ import add_triples_in_batch
+from cognite.neat._utils.rdf_ import add_triples_in_batch, remove_namespace_from_uri
 
 from ._provenance import Change, Provenance
 
@@ -56,9 +52,10 @@ class NeatGraphStore:
     def __init__(
         self,
         dataset: Dataset,
+        default_named_graph: URIRef | None = None,
     ):
-        self.rules: dict[URIRef, InformationRules] = defaultdict(InformationRules)
-        self.base_namespace: dict[URIRef, Namespace] = defaultdict(Namespace)
+        self.rules: dict[URIRef, InformationRules] = {}
+        self.base_namespace: dict[URIRef, Namespace] = {}
 
         _start = datetime.now(timezone.utc)
         self.dataset = dataset
@@ -73,16 +70,13 @@ class NeatGraphStore:
             ]
         )
 
-        # if rules:
-        #     self.add_rules(rules)
-        # else:
-        #     self.base_namespace = DEFAULT_NAMESPACE
+        self.default_named_graph = default_named_graph or DATASET_DEFAULT_GRAPH_ID
 
-        self.queries = Queries(self.dataset, self.rules)
+        self.queries = Queries(self.dataset, self.rules, self.default_named_graph)
 
     def graph(self, named_graph: URIRef | None = None) -> Graph:
         """Get named graph from the dataset to query over"""
-        return self.dataset.graph(named_graph or DATASET_DEFAULT_GRAPH_ID)
+        return self.dataset.graph(named_graph or self.default_named_graph)
 
     @property
     def type_(self) -> str:
@@ -119,13 +113,9 @@ class NeatGraphStore:
             )
             return None
         else:
-            return self.dataset.serialize(
-                format="ox-trig" if self.type_ == "OxigraphStore" else "trig"
-            )
+            return self.dataset.serialize(format="ox-trig" if self.type_ == "OxigraphStore" else "trig")
 
-    def add_rules(
-        self, rules: InformationRules, named_graph: URIRef | None = None
-    ) -> None:
+    def add_rules(self, rules: InformationRules, named_graph: URIRef | None = None) -> None:
         """This method is used to add rules to a named graph stored in the graph store.
 
         Args:
@@ -135,14 +125,13 @@ class NeatGraphStore:
 
         """
 
-        named_graph = named_graph or DATASET_DEFAULT_GRAPH_ID
+        named_graph = named_graph or self.default_named_graph
 
         if named_graph in self.named_graphs:
-
             # attaching appropriate namespace to the rules
             # as well base_namespace
             self.rules[named_graph] = rules
-            self.base_namespace[named_graph] = rules.namespace
+            self.base_namespace[named_graph] = rules.metadata.namespace
 
             self.queries = Queries(self.dataset, self.rules)
             self.provenance.append(
@@ -157,9 +146,7 @@ class NeatGraphStore:
             if self.rules[named_graph].prefixes:
                 self._upsert_prefixes(self.rules[named_graph].prefixes, named_graph)
 
-    def _upsert_prefixes(
-        self, prefixes: dict[str, Namespace], named_graph: URIRef
-    ) -> None:
+    def _upsert_prefixes(self, prefixes: dict[str, Namespace], named_graph: URIRef) -> None:
         """Adds prefixes to the graph store."""
         _start = datetime.now(timezone.utc)
         for prefix, namespace in prefixes.items():
@@ -222,11 +209,9 @@ class NeatGraphStore:
 
         return cls(graph)
 
-    def write(
-        self, extractor: TripleExtractors, named_graph: URIRef | None = None
-    ) -> IssueList:
+    def write(self, extractor: TripleExtractors, named_graph: URIRef | None = None) -> IssueList:
         last_change: Change | None = None
-        named_graph = named_graph or DATASET_DEFAULT_GRAPH_ID
+        named_graph = named_graph or self.default_named_graph
         with catch_issues() as issue_list:
             _start = datetime.now(timezone.utc)
             success = True
@@ -244,7 +229,10 @@ class NeatGraphStore:
                 success = False
                 issue_text = "\n".join([issue.as_message() for issue in extractor.issue_list])
                 warnings.warn(
-                    f"Cannot write to named graph {named_graph} with {type(extractor).__name__}, errors found in file:\n{issue_text}",
+                    (
+                        f"Cannot write to named graph {named_graph} with "
+                        f"{type(extractor).__name__}, errors found in file:\n{issue_text}"
+                    ),
                     stacklevel=2,
                 )
             else:
@@ -271,10 +259,25 @@ class NeatGraphStore:
         return issue_list
 
     def _read_via_rules_linkage(
-        self, class_neat_id: URIRef, property_link_pairs: dict[str, URIRef] | None
+        self,
+        class_neat_id: URIRef,
+        property_link_pairs: dict[str, URIRef] | None,
+        named_graph: URIRef | None = None,
     ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
-        if self.rules is None:
-            warnings.warn("Rules not found in graph store! Aborting!", stacklevel=2)
+        named_graph = named_graph or self.default_named_graph
+
+        if named_graph not in self.named_graphs:
+            warnings.warn(
+                f"Named graph {named_graph} not found in graph store, cannot read",
+                stacklevel=2,
+            )
+            return
+
+        if not self.rules or named_graph not in self.rules:
+            warnings.warn(
+                f"Rules for named graph {named_graph} not found in graph store!",
+                stacklevel=2,
+            )
             return
         if self.multi_type_instances:
             warnings.warn(
@@ -282,13 +285,15 @@ class NeatGraphStore:
                 stacklevel=2,
             )
 
-        if cls := InformationAnalysis(self.rules).classes_by_neat_id.get(class_neat_id):
+        if cls := InformationAnalysis(self.rules[named_graph]).classes_by_neat_id.get(class_neat_id):
             if property_link_pairs:
                 property_renaming_config = {
                     prop_uri: prop_name
                     for prop_name, prop_neat_id in property_link_pairs.items()
                     if (
-                        prop_uri := InformationAnalysis(self.rules).neat_id_to_transformation_property_uri(prop_neat_id)
+                        prop_uri := InformationAnalysis(self.rules[named_graph]).neat_id_to_transformation_property_uri(
+                            prop_neat_id
+                        )
                     )
                 }
 
@@ -305,9 +310,22 @@ class NeatGraphStore:
         self,
         class_entity: ClassEntity,
         property_renaming_config: dict[URIRef, str] | None = None,
+        named_graph: URIRef | None = None,
     ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
-        if self.rules is None:
-            warnings.warn("Rules not found in graph store!", stacklevel=2)
+        named_graph = named_graph or self.default_named_graph
+
+        if named_graph not in self.named_graphs:
+            warnings.warn(
+                f"Named graph {named_graph} not found in graph store, cannot read",
+                stacklevel=2,
+            )
+            return
+
+        if not self.rules or named_graph not in self.rules:
+            warnings.warn(
+                f"Rules for named graph {named_graph} not found in graph store!",
+                stacklevel=2,
+            )
             return
         if self.multi_type_instances:
             warnings.warn(
@@ -315,20 +333,20 @@ class NeatGraphStore:
                 stacklevel=2,
             )
 
-        if class_entity not in [definition.class_ for definition in self.rules.classes]:
+        if class_entity not in [definition.class_ for definition in self.rules[named_graph].classes]:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return
 
-        if not (class_uri := InformationAnalysis(self.rules).class_uri(class_entity)):
+        if not (class_uri := InformationAnalysis(self.rules[named_graph]).class_uri(class_entity)):
             warnings.warn(
                 f"Class {class_entity.suffix} does not have namespace defined for prefix {class_entity.prefix} Rules!",
                 stacklevel=2,
             )
             return
 
-        has_hop_transformations = InformationAnalysis(self.rules).has_hop_transformations()
+        has_hop_transformations = InformationAnalysis(self.rules[named_graph]).has_hop_transformations()
         has_self_reference_transformations = InformationAnalysis(
-            self.rules
+            self.rules[named_graph]
         ).has_self_reference_property_transformations()
         if has_hop_transformations or has_self_reference_transformations:
             msg = (
@@ -351,11 +369,11 @@ class NeatGraphStore:
 
         # get potential property renaming config
         property_renaming_config = property_renaming_config or InformationAnalysis(
-            self.rules
+            self.rules[named_graph]
         ).define_property_renaming_config(class_entity)
 
         # get property types to guide process of removing or not namespaces from results
-        property_types = InformationAnalysis(self.rules).property_types(class_entity)
+        property_types = InformationAnalysis(self.rules[named_graph]).property_types(class_entity)
         for instance_id in instance_ids:
             if res := self.queries.describe(
                 instance_id=instance_id,
@@ -366,8 +384,7 @@ class NeatGraphStore:
                 yield res
 
     def read(
-        self,
-        class_: str,
+        self, class_: str, named_graph: URIRef | None = None
     ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
         """Read instances for given class from the graph store.
 
@@ -376,9 +393,20 @@ class NeatGraphStore:
             the rules which are attached to the graph store.
 
         """
+        named_graph = named_graph or self.default_named_graph
 
-        if not self.rules:
-            warnings.warn("Rules not found in graph store!", stacklevel=2)
+        if named_graph not in self.named_graphs:
+            warnings.warn(
+                f"Named graph {named_graph} not found in graph store, cannot read",
+                stacklevel=2,
+            )
+            return
+
+        if not self.rules or named_graph not in self.rules:
+            warnings.warn(
+                f"Rules for named graph {named_graph} not found in graph store!",
+                stacklevel=2,
+            )
             return
         if self.multi_type_instances:
             warnings.warn(
@@ -386,15 +414,15 @@ class NeatGraphStore:
                 stacklevel=2,
             )
 
-        class_entity = ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_)
+        class_entity = ClassEntity(prefix=self.rules[named_graph].metadata.prefix, suffix=class_)
 
-        if class_entity not in [definition.class_ for definition in self.rules.classes]:
+        if class_entity not in [definition.class_ for definition in self.rules[named_graph].classes]:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return
 
         yield from self._read_via_class_entity(class_entity)
 
-    def count_of_id(self, neat_id: URIRef) -> int:
+    def count_of_id(self, neat_id: URIRef, named_graph: URIRef | None = None) -> int:
         """Count the number of instances of a given type
 
         Args:
@@ -403,18 +431,31 @@ class NeatGraphStore:
         Returns:
             Number of instances
         """
-        if not self.rules:
-            warnings.warn("Rules not found in graph store!", stacklevel=2)
+        named_graph = named_graph or self.default_named_graph
+
+        if named_graph not in self.named_graphs:
+            warnings.warn(
+                f"Named graph {named_graph} not found in graph store, cannot count",
+                stacklevel=2,
+            )
+            return 0
+
+        if not self.rules or named_graph not in self.rules:
+            warnings.warn(
+                f"Rules for named graph {named_graph} not found in graph store!",
+                stacklevel=2,
+            )
             return 0
 
         class_entity = next(
-            (definition.class_ for definition in self.rules.classes if definition.neatId == neat_id), None
+            (definition.class_ for definition in self.rules[named_graph].classes if definition.neatId == neat_id),
+            None,
         )
         if not class_entity:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return 0
 
-        if not (class_uri := InformationAnalysis(self.rules).class_uri(class_entity)):
+        if not (class_uri := InformationAnalysis(self.rules[named_graph]).class_uri(class_entity)):
             warnings.warn(
                 f"Class {class_entity.suffix} does not have namespace defined for prefix {class_entity.prefix} Rules!",
                 stacklevel=2,
@@ -487,39 +528,44 @@ class NeatGraphStore:
         """
         add_triples_in_batch(self.graph(named_graph), triples, batch_size)
 
-    def transform(
-        self, transformer: Transformers, named_graph: URIRef | None = None
-    ) -> None:
+    def transform(self, transformer: Transformers, named_graph: URIRef | None = None) -> None:
         """Transforms the graph store using a transformer."""
 
-        named_graph = named_graph or DATASET_DEFAULT_GRAPH_ID
-        missing_changes = [
-            change for change in transformer._need_changes if not self.provenance.activity_took_place(change)
-        ]
-        if self.provenance.activity_took_place(type(transformer).__name__) and transformer._use_only_once:
-            warnings.warn(
-                f"Cannot transform graph store with {type(transformer).__name__}, already applied",
-                stacklevel=2,
-            )
-        elif missing_changes:
-            warnings.warn(
-                (
-                    f"Cannot transform graph store with {type(transformer).__name__}, "
-                    f"missing one or more required changes [{', '.join(missing_changes)}]"
-                ),
-                stacklevel=2,
-            )
+        named_graph = named_graph or self.default_named_graph
+        if named_graph in self.named_graphs:
+            missing_changes = [
+                change for change in transformer._need_changes if not self.provenance.activity_took_place(change)
+            ]
+            if self.provenance.activity_took_place(type(transformer).__name__) and transformer._use_only_once:
+                warnings.warn(
+                    f"Cannot transform graph store with {type(transformer).__name__}, already applied",
+                    stacklevel=2,
+                )
+            elif missing_changes:
+                warnings.warn(
+                    (
+                        f"Cannot transform graph store with {type(transformer).__name__}, "
+                        f"missing one or more required changes [{', '.join(missing_changes)}]"
+                    ),
+                    stacklevel=2,
+                )
+
+            else:
+                _start = datetime.now(timezone.utc)
+                transformer.transform(self.graph(named_graph))
+                self.provenance.append(
+                    Change.record(
+                        activity=f"{type(transformer).__name__}",
+                        start=_start,
+                        end=datetime.now(timezone.utc),
+                        description=transformer.description,
+                    )
+                )
 
         else:
-            _start = datetime.now(timezone.utc)
-            transformer.transform(self.graph(named_graph))
-            self.provenance.append(
-                Change.record(
-                    activity=f"{type(transformer).__name__}",
-                    start=_start,
-                    end=datetime.now(timezone.utc),
-                    description=transformer.description,
-                )
+            warnings.warn(
+                f"Named graph {named_graph} not found in graph store, cannot transform",
+                stacklevel=2,
             )
 
     @property
@@ -533,32 +579,22 @@ class NeatGraphStore:
         }
 
     @property
-    def multi_type_instances(self) -> dict[str, dict[str, list[str]]]:
-        return {
-            named_graph: self.queries.multi_type_instances()
-            for named_graph in self.named_graphs
-        }
+    def multi_type_instances(self) -> dict[URIRef, dict[str, list[str]]]:
+        return {named_graph: self.queries.multi_type_instances(named_graph) for named_graph in self.named_graphs}
 
     def _repr_html_(self) -> str:
         provenance = self.provenance._repr_html_()
         summary: dict[URIRef, pd.DataFrame] = self.summary
 
+        def _short_name_of_graph(named_graph: URIRef) -> str:
+            return "default" if named_graph == self.default_named_graph else remove_namespace_from_uri(named_graph)
+
         if not summary:
             summary_text = "<br /><strong>Graph is empty</strong><br />"
         else:
-
             all_types = set().union(
-                *[
-                    set(sub_summary.Type)
-                    for sub_summary in summary.values()
-                    if not sub_summary.empty
-                ]
+                *[set(sub_summary.Type) for sub_summary in summary.values() if not sub_summary.empty]
             )
-
-            instance_count = {
-                named_graph: sum(table["Occurrence"])
-                for named_graph, table in summary.items()
-            }
 
             summary_text = (
                 "<br /><strong>Overview</strong>:"  # type: ignore
@@ -567,17 +603,24 @@ class NeatGraphStore:
             )
 
             for named_graph, table in summary.items():
-                summary_text += f"<li>{sum(table['Occurrence'])} instances in {named_graph} </strong></li>"
+                summary_text += (
+                    f"<li>{sum(table['Occurrence'])} instances in {_short_name_of_graph(named_graph)}"
+                    " graph</strong></li>"
+                )
 
             summary_text += "</ul>"
             for named_graph, table in summary.items():
-
-                summary_text += f"<br /><strong>{named_graph}</strong>:"
-                summary_text += f"{cast(pd.DataFrame, self._shorten_summary(table))._repr_html_()}"  # type: ignore[operator]
+                summary_text += (
+                    f"<br /><strong>{_short_name_of_graph(named_graph)} graph</strong>:"
+                    f"{cast(pd.DataFrame, self._shorten_summary(table))._repr_html_()}"  # type: ignore[operator]
+                )
 
         for named_graph, multi_value_instances in self.multi_type_instances.items():
             if multi_value_instances:
-                summary_text += f"<br><strong>Multi value instances detected in {named_graph}! Loading could have issues!</strong></br>"
+                summary_text += (
+                    f"<br><strong>Multi value instances detected in {_short_name_of_graph(named_graph)}"
+                    "graph! Loading could have issues!</strong></br>"
+                )
 
         return f"{summary_text}" f"{provenance}"
 
@@ -609,4 +652,4 @@ class NeatGraphStore:
 
     @property
     def named_graphs(self) -> list[URIRef]:
-        return [context.identifier for context in self.dataset.contexts()]
+        return [cast(URIRef, context.identifier) for context in self.dataset.contexts()]

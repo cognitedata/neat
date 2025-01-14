@@ -307,7 +307,7 @@ class TestAttachPropertyFromTargetToSource:
     ):
         store = NeatGraphStore.from_memory_store()
 
-        store._add_triples(triples)
+        store._add_triples(triples, named_graph=store.default_named_graph)
 
         transformer = AttachPropertyFromTargetToSource(
             target_node_type=target_node_type,
@@ -345,7 +345,7 @@ class TestAttachPropertyFromTargetToSource:
     ):
         store = NeatGraphStore.from_memory_store()
 
-        store._add_triples(triples)
+        store._add_triples(triples, named_graph=store.default_named_graph)
 
         transformer = AttachPropertyFromTargetToSource(
             target_node_type=target_node_type,

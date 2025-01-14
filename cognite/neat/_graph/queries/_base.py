@@ -3,10 +3,10 @@ from collections import defaultdict
 from collections.abc import Iterable
 from typing import Literal, cast, overload
 
-from rdflib import RDF, Graph, Dataset, Namespace, URIRef
+from rdflib import RDF, Dataset, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
-from rdflib.query import ResultRow
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
+from rdflib.query import ResultRow
 
 from cognite.neat._constants import UNKNOWN_TYPE
 from cognite.neat._rules._constants import EntityTypes
@@ -22,14 +22,18 @@ class Queries:
     """Helper class for storing standard queries for the graph store."""
 
     def __init__(
-        self, dataset: Dataset, rules: dict[URIRef, InformationRules] | None = None
+        self,
+        dataset: Dataset,
+        rules: dict[URIRef, InformationRules] | None = None,
+        default_named_graph: URIRef | None = None,
     ):
         self.dataset = dataset
         self.rules = rules or {}
+        self.default_named_graph = default_named_graph or DATASET_DEFAULT_GRAPH_ID
 
     def graph(self, named_graph: URIRef | None = None) -> Graph:
         """Get named graph from the dataset to query over"""
-        return self.dataset.graph(named_graph or DATASET_DEFAULT_GRAPH_ID)
+        return self.dataset.graph(named_graph or self.default_named_graph)
 
     def summarize_instances(self, named_graph: URIRef | None = None) -> list[tuple]:
         """Summarize instances in the graph store by class and count"""
@@ -53,7 +57,11 @@ class Queries:
         """Types and their short form in the graph"""
         query = """SELECT DISTINCT ?type
                    WHERE {?s a ?type .}"""
-        return {type_: remove_namespace_from_uri(cast(URIRef, type_)) for (type_,) in list(self.graph(named_graph).query(query))}  # type: ignore[misc, index, arg-type]
+
+        return {  # type: ignore[misc, index, arg-type]
+            cast(URIRef, type_): remove_namespace_from_uri(cast(URIRef, type_))
+            for (type_,) in list(self.graph(named_graph).query(query))
+        }
 
     def type_uri(self, type_: str, named_graph: URIRef | None = None) -> list[URIRef]:
         """Get the URIRef of a type"""
@@ -68,11 +76,12 @@ class Queries:
         """
         query = """SELECT DISTINCT ?property
                WHERE {?s ?property ?o . FILTER(?property != rdf:type)}"""
-        return {type_: remove_namespace_from_uri(cast(URIRef, type_)) for (type_,) in list(self.graph(named_graph).query(query))}  # type: ignore[misc, index, arg-type]
+        return {  # type: ignore[misc, index, arg-type]
+            cast(URIRef, type_): remove_namespace_from_uri(cast(URIRef, type_))
+            for (type_,) in list(self.graph(named_graph).query(query))
+        }
 
-    def property_uri(
-        self, property_: str, named_graph: URIRef | None = None
-    ) -> list[URIRef]:
+    def property_uri(self, property_: str, named_graph: URIRef | None = None) -> list[URIRef]:
         """Get the URIRef of a property
 
         Args:
@@ -97,14 +106,9 @@ class Queries:
         query_statement = "SELECT DISTINCT ?subject WHERE { ?subject a <class> .} LIMIT X".replace(
             "class", class_uri
         ).replace("LIMIT X", "" if limit == -1 else f"LIMIT {limit}")
-        return [
-            cast(tuple, res)[0]
-            for res in list(self.graph(named_graph).query(query_statement))
-        ]
+        return [cast(tuple, res)[0] for res in list(self.graph(named_graph).query(query_statement))]
 
-    def list_instances_of_type(
-        self, class_uri: URIRef, named_graph: URIRef | None = None
-    ) -> list[ResultRow]:
+    def list_instances_of_type(self, class_uri: URIRef, named_graph: URIRef | None = None) -> list[ResultRow]:
         """Get all triples for instances of a given class
 
         Args:
@@ -134,7 +138,7 @@ class Queries:
         if isinstance(rdf_type, URIRef):
             rdf_uri = rdf_type
         elif isinstance(rdf_type, str) and self.rules:
-            rdf_uri = self.rules.metadata.namespace[rdf_type]
+            rdf_uri = self.rules[named_graph or self.default_named_graph].metadata.namespace[rdf_type]
         else:
             warnings.warn(
                 "Unknown namespace. Please either provide a URIRef or set the rules of the store.",
@@ -153,9 +157,7 @@ class Queries:
         # We cannot include the RDF.type in case there is a neat:type property
         return [remove_namespace_from_uri(list(triple)) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index, arg-type]
 
-    def type_with_property(
-        self, type_: URIRef, property_uri: URIRef, named_graph: URIRef | None = None
-    ) -> bool:
+    def type_with_property(self, type_: URIRef, property_uri: URIRef, named_graph: URIRef | None = None) -> bool:
         """Check if a property exists in the graph store
 
         Args:
@@ -169,9 +171,7 @@ class Queries:
         query = f"SELECT ?o WHERE {{ ?s a <{type_}> ; <{property_uri}> ?o .}} Limit 1"
         return bool(list(self.graph(named_graph).query(query)))
 
-    def has_namespace(
-        self, namespace: Namespace, named_graph: URIRef | None = None
-    ) -> bool:
+    def has_namespace(self, namespace: Namespace, named_graph: URIRef | None = None) -> bool:
         """Check if a namespace exists in the graph store
 
         Args:
@@ -220,9 +220,7 @@ class Queries:
         """
         property_values: dict[str, list[str]] = defaultdict(list)
         identifier = remove_namespace_from_uri(instance_id, validation="prefix")
-        for _, predicate, object_ in cast(
-            list[ResultRow], self.graph(named_graph).query(f"DESCRIBE <{instance_id}>")
-        ):
+        for _, predicate, object_ in cast(list[ResultRow], self.graph(named_graph).query(f"DESCRIBE <{instance_id}>")):
             if object_.lower() in [
                 "",
                 "none",
@@ -305,14 +303,21 @@ class Queries:
         Returns:
             List of triples for instances of the given class
         """
-
-        if self.rules and (
-            query := build_construct_query(
-                class_=ClassEntity(prefix=self.rules.metadata.prefix, suffix=class_),
-                graph=self.graph(named_graph),
-                rules=self.rules,
-                properties_optional=properties_optional,
-                instance_id=instance_id,
+        named_graph = named_graph or self.default_named_graph
+        if (
+            self.rules
+            and self.rules.get(named_graph)
+            and (
+                query := build_construct_query(
+                    class_=ClassEntity(
+                        prefix=self.rules[named_graph].metadata.prefix,
+                        suffix=class_,
+                    ),
+                    graph=self.graph(named_graph),
+                    rules=self.rules[named_graph],
+                    properties_optional=properties_optional,
+                    instance_id=instance_id,
+                )
             )
         ):
             result = self.graph(named_graph).query(query)
@@ -326,9 +331,7 @@ class Queries:
             )
             return []
 
-    def list_triples(
-        self, limit: int = 25, named_graph: URIRef | None = None
-    ) -> list[ResultRow]:
+    def list_triples(self, limit: int = 25, named_graph: URIRef | None = None) -> list[ResultRow]:
         """List triples in the graph store
 
         Args:
@@ -342,9 +345,7 @@ class Queries:
         return cast(list[ResultRow], list(self.graph(named_graph).query(query)))
 
     @overload
-    def list_types(
-        self, remove_namespace: Literal[False] = False, limit: int = 25
-    ) -> list[ResultRow]: ...
+    def list_types(self, remove_namespace: Literal[False] = False, limit: int = 25) -> list[ResultRow]: ...
 
     @overload
     def list_types(
@@ -427,9 +428,7 @@ class Queries:
             remove_instance_ids_in_batch(self.graph(named_graph), instance_ids)
         return dropped_types
 
-    def multi_type_instances(
-        self, named_graph: URIRef | None = None
-    ) -> dict[str, list[str]]:
+    def multi_type_instances(self, named_graph: URIRef | None = None) -> dict[str, list[str]]:
         """Find instances with multiple types
 
         Args:

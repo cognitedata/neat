@@ -31,7 +31,11 @@ class DropAPI:
             ```
         """
         type_list = type if isinstance(type, list) else [type]
-        uri_type_type = dict((v, k) for k, v in self._state.instances.store.queries.types.items())
+
+        # Temporary solution until we agree on the form of specifying named graphs
+        # it will default to the default named graph
+        named_graph = self._state.instances.store.default_named_graph
+        uri_type_type = dict((v, k) for k, v in self._state.instances.store.queries.types(named_graph).items())
         selected_uri_by_type: dict[URIRef, str] = {}
         for type_item in type_list:
             if type_item not in uri_type_type:

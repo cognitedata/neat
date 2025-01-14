@@ -67,7 +67,7 @@ class TestPruneGraph:
     ):
         store = NeatGraphStore.from_memory_store()
 
-        store._add_triples(original_triples)
+        store._add_triples(original_triples, store.default_named_graph)
 
         transformation_result = PruneDeadEndEdges().transform(store.dataset)
 

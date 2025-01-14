@@ -63,7 +63,8 @@ def test_imf_attribute_nodes():
 
     dms_rules = InformationToDMS().transform(info_rules)
 
-    store = NeatGraphStore.from_oxi_store(rules=info_rules)
+    store = NeatGraphStore.from_oxi_store()
+    store.add_rules(info_rules)
     store.write(RdfFileExtractor(IMF_EXAMPLE))
 
     loader = DMSLoader.from_rules(dms_rules, store, instance_space="knowledge")
@@ -71,7 +72,7 @@ def test_imf_attribute_nodes():
 
     assert len(knowledge_nodes) == 56
     assert knowledge_nodes[0].sources[0].properties["predicate"].startswith("http")
-    assert len(store.multi_type_instances) == 63
+    assert len(store.multi_type_instances[store.named_graphs[0]]) == 63
 
 
 def test_extract_above_direct_relation_limit() -> None:

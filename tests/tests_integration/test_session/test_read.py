@@ -57,4 +57,4 @@ class TestRead:
             neat2 = NeatSession()
             neat2.read.session(session_file.name)
 
-            assert (neat2._state.instances.store.graph - neat._state.instances.store.graph).serialize() == "\n"
+            assert (neat2._state.instances.store.dataset - neat._state.instances.store.dataset).serialize() == "\n"
