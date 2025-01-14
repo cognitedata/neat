@@ -826,6 +826,10 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
     - Rename externalId properties to classicExternalId
     """
 
+    @property
+    def description(self) -> str:
+        return "Update the classic data model to the data types in Cognite Core."
+
     def transform(self, rules: InformationRules) -> InformationRules:
         output = rules.model_copy(deep=True)
         for prop in output.properties:

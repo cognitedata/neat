@@ -12,7 +12,6 @@ from pytest_regressions.data_regression import DataRegressionFixture
 from cognite.neat import NeatSession
 from cognite.neat._graph.loaders import DMSLoader
 from tests.config import DATA_FOLDER
-from tests.data import classic_windfarm
 
 RESERVED_PROPERTIES = frozenset(
     {
@@ -178,22 +177,10 @@ class TestExtractToLoadFlow:
 
     def test_classic_to_cdf(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
-        # Hack to read in the test data.
-        for extractor in classic_windfarm.create_extractors():
-            neat._state.instances.store.write(extractor)
+        neat.read.cdf.classic.graph("Utsira")
+        neat.convert("dms")
 
-        neat.prepare.instances.classic_to_core()
-
-        neat.infer()
-
-        neat.prepare.data_model.prefix("Classic")
-
-        neat.verify()
-
-        neat.prepare.data_model.add_implements_to_classes("Edge", "Edge")
-        neat.convert("dms", mode="edge_properties")
         neat.mapping.data_model.classic_to_core("Classic")
-
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
         model_result = neat.to.cdf.data_model(existing="force")
