@@ -166,6 +166,8 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             # We need to add a new prefix
             instance_prefix = f"prefix_{len(prefixes) + 1}"
             prefixes[instance_prefix] = self._namespace
+        verified.prefixes = prefixes
+
         is_snake_case = self._extractor_args["camel_case"] is False
         for prop in verified.properties:
             prop_id = prop.property_
