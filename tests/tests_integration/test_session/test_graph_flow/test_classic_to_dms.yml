@@ -291,7 +291,7 @@ data_product:
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
     nullable: true
-    value_type: int64
+    value_type: json
     view: ClassicDataSet
     view_property: metadata
   - container: sp_windfarm:ClassicDataSet
@@ -2296,7 +2296,7 @@ rules:
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
     nullable: true
-    value_type: int64
+    value_type: json
     view: ClassicDataSet
     view_property: metadata
   - container: ClassicDataSet
