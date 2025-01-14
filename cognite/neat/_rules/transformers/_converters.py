@@ -836,9 +836,10 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
             if prop.class_.suffix == "Timeseries" and prop.property_ == "isString":
                 prop.value_type = String()
         prefix = output.metadata.space
-        source_system_class = InformationInputClass(
+        source_system_class = InformationClass(
             class_=ClassEntity(prefix=prefix, suffix="ClassicSourceSystem"),
             description="A source system that provides data to the data model.",
+            neatId=Namespace(prefix)["ClassicSourceSystem"],
         )
         output.classes.append(source_system_class)
         for prop in output.properties:
