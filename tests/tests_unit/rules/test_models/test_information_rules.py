@@ -101,7 +101,7 @@ def invalid_domain_rules_cases():
                     "Min Count": 1,
                     "Max Count": 1.0,
                     "Default": None,
-                    "Transformation": ":GeneratingUnit(cim:name)",
+                    "Instance Source": ":GeneratingUnit(cim:name)",
                 }
             ],
         },
