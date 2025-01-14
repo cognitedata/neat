@@ -233,7 +233,7 @@ class InferenceImporter(BaseRDFImporter):
                         "property_": property_id,
                         "max_count": cast(RdfLiteral, occurrence).value,
                         "value_type": value_type_id,
-                        "transformation": (
+                        "instance_source": (
                             f"{uri_to_short_form(class_definition['uri'], prefixes)}"
                             f"({uri_to_short_form(cast(URIRef, property_uri), prefixes)})"
                         ),
