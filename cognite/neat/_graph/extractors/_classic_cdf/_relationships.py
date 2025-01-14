@@ -28,6 +28,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
         camel_case: bool = True,
         as_write: bool = False,
+        prefix: str | None = None,
     ):
         super().__init__(
             items,
@@ -39,6 +40,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
             skip_metadata_values=skip_metadata_values,
             camel_case=camel_case,
             as_write=as_write,
+            prefix=prefix,
         )
         # This is used by the ClassicExtractor to log the target nodes, such
         # that it can extract them.

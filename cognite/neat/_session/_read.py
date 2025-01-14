@@ -180,6 +180,7 @@ class CDFClassicAPI(BaseReadAPI):
             root_asset_external_id=root_asset_external_id,
             limit_per_type=limit_per_type,
             namespace=namespace,
+            prefix="Classic",
         )
         issues = self._state.write_graph(extractor)
         issues.action = "Read Classic Graph"
