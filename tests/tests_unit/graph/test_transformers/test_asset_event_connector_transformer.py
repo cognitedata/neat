@@ -18,7 +18,11 @@ def test_asset_event_connector_transformer():
     # Connect assets and time series
     store.transform(transformers.AssetEventConnector())
 
-    result = list(store.graph.query(f"SELECT ?asset ?event WHERE {{ ?asset <{DEFAULT_NAMESPACE.event}> ?event}}"))
+    result = list(
+        store.dataset.query(
+            f"SELECT ?asset ?event WHERE {{ ?asset <{DEFAULT_NAMESPACE.event}> ?event}}"
+        )
+    )
 
     assert len(result) == 2
     assert result[0][0] == result[1][0]

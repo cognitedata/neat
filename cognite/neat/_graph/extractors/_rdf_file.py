@@ -36,7 +36,6 @@ class RdfFileExtractor(BaseExtractor):
 
         self.format = guess_format(str(self.filepath) if isinstance(self.filepath, Path) else self.filepath.name)
 
-        print(self.format)
         if isinstance(self.filepath, Path) and not self.filepath.exists():
             self.issue_list.append(FileNotFoundNeatError(self.filepath))
 

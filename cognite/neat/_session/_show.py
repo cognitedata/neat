@@ -364,7 +364,7 @@ class ShowInstanceAPI(ShowBaseAPI):
                 'Try setting [bold]NeatSession(storage="oxigraph")[/bold] enable Oxigraph store.'
             )
 
-        if not self._state.instances.store.graph:
+        if not self._state.instances.store.dataset:
             raise NeatSessionError("No instances available. Try using [bold].read[/bold] to load instances.")
 
         di_graph = self._generate_instance_di_graph_and_types()
@@ -395,7 +395,7 @@ class ShowInstanceAPI(ShowBaseAPI):
             object,
             subject_type,
             object_type,
-        ) in self._state.instances.store.graph.query(query):
+        ) in self._state.instances.store.dataset.query(query):
             subject = remove_namespace_from_uri(subject)
             property_ = remove_namespace_from_uri(property_)
             object = remove_namespace_from_uri(object)

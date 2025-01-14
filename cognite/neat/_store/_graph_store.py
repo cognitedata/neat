@@ -1,3 +1,4 @@
+from collections import defaultdict
 import sys
 import warnings
 from collections.abc import Iterable
@@ -8,7 +9,10 @@ from zipfile import ZipExtFile
 
 import pandas as pd
 from pandas import Index
-from rdflib import Dataset, Namespace, URIRef
+from rdflib import Dataset, Graph, Namespace, URIRef
+from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
+
+
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -39,41 +43,51 @@ class NeatGraphStore:
     Args:
         graph : Instance of rdflib.Graph class for graph storage
         rules:
+
+    !!! note "Dataset"
+        The store leverages a RDF dataset which is defined as a collection of RDF graphs
+        where all but one are named graphs associated with URIRef (the graph name),
+        and the unnamed default graph which is in context of rdflib library has an
+        identifier URIRef('urn:x-rdflib:default').
     """
 
     rdf_store_type: str
 
     def __init__(
         self,
-        graph: Dataset,
-        rules: InformationRules | None = None,
+        dataset: Dataset,
     ):
-        self.rules: InformationRules | None = None
+        self.rules: dict[URIRef, InformationRules] = defaultdict(InformationRules)
+        self.base_namespace: dict[URIRef, Namespace] = defaultdict(Namespace)
 
         _start = datetime.now(timezone.utc)
-        self.graph = graph
+        self.dataset = dataset
         self.provenance = Provenance(
             [
                 Change.record(
                     activity=f"{type(self).__name__}.__init__",
                     start=_start,
                     end=datetime.now(timezone.utc),
-                    description=f"Initialize graph store as {type(self.graph.store).__name__}",
+                    description=f"Initialize graph store as {type(self.dataset.store).__name__}",
                 )
             ]
         )
 
-        if rules:
-            self.add_rules(rules)
-        else:
-            self.base_namespace = DEFAULT_NAMESPACE
+        # if rules:
+        #     self.add_rules(rules)
+        # else:
+        #     self.base_namespace = DEFAULT_NAMESPACE
 
-        self.queries = Queries(self.graph, self.rules)
+        self.queries = Queries(self.dataset, self.rules)
+
+    def graph(self, named_graph: URIRef | None = None) -> Graph:
+        """Get named graph from the dataset to query over"""
+        return self.dataset.graph(named_graph or DATASET_DEFAULT_GRAPH_ID)
 
     @property
     def type_(self) -> str:
         "Return type of the graph store"
-        return type(self.graph.store).__name__
+        return type(self.dataset.store).__name__
 
     # no destination
     @overload
@@ -91,54 +105,78 @@ class NeatGraphStore:
 
         Returns:
             Serialized graph store
+
+        !!! note "Trig Format"
+            Notice that instead of turtle format we are using trig format for serialization.
+            This is because trig format is a superset of turtle format and it allows us to
+            serialize named graphs as well. Allowing serialization of one or more named graphs
+            including the default graph.
         """
         if filepath:
-            self.graph.serialize(
+            self.dataset.serialize(
                 filepath,
-                format="ox-trig" if self.type_ == "OxigraphStore" else "turtle",
+                format="ox-trig" if self.type_ == "OxigraphStore" else "trig",
             )
             return None
         else:
-            return self.graph.serialize(format="ox-trig" if self.type_ == "OxigraphStore" else "turtle")
+            return self.dataset.serialize(
+                format="ox-trig" if self.type_ == "OxigraphStore" else "trig"
+            )
 
-    def add_rules(self, rules: InformationRules) -> None:
-        """This method is used to add rules to the graph store and it is the only correct
-        way to add rules to the graph store, after the graph store has been initialized.
+    def add_rules(
+        self, rules: InformationRules, named_graph: URIRef | None = None
+    ) -> None:
+        """This method is used to add rules to a named graph stored in the graph store.
+
+        Args:
+            rules: InformationRules object containing rules to be added to the named graph
+            named_graph: URIRef of the named graph to store the rules in, by default None
+                        rules will be added to the default graph
+
         """
 
-        self.rules = rules
-        self.base_namespace = self.rules.metadata.namespace
-        self.queries = Queries(self.graph, self.rules)
-        self.provenance.append(
-            Change.record(
-                activity=f"{type(self)}.rules",
-                start=datetime.now(timezone.utc),
-                end=datetime.now(timezone.utc),
-                description=f"Added rules to graph store as {type(self.rules).__name__}",
+        named_graph = named_graph or DATASET_DEFAULT_GRAPH_ID
+
+        if named_graph in self.named_graphs:
+
+            # attaching appropriate namespace to the rules
+            # as well base_namespace
+            self.rules[named_graph] = rules
+            self.base_namespace[named_graph] = rules.namespace
+
+            self.queries = Queries(self.dataset, self.rules)
+            self.provenance.append(
+                Change.record(
+                    activity=f"{type(self)}.rules",
+                    start=datetime.now(timezone.utc),
+                    end=datetime.now(timezone.utc),
+                    description=f"Added {type(self.rules).__name__} to {named_graph} named graph",
+                )
             )
-        )
 
-        if self.rules.prefixes:
-            self._upsert_prefixes(self.rules.prefixes)
+            if self.rules[named_graph].prefixes:
+                self._upsert_prefixes(self.rules[named_graph].prefixes, named_graph)
 
-    def _upsert_prefixes(self, prefixes: dict[str, Namespace]) -> None:
+    def _upsert_prefixes(
+        self, prefixes: dict[str, Namespace], named_graph: URIRef
+    ) -> None:
         """Adds prefixes to the graph store."""
         _start = datetime.now(timezone.utc)
         for prefix, namespace in prefixes.items():
-            self.graph.bind(prefix, namespace)
+            self.graph(named_graph).bind(prefix, namespace)
 
         self.provenance.append(
             Change.record(
                 activity=f"{type(self).__name__}._upsert_prefixes",
                 start=_start,
                 end=datetime.now(timezone.utc),
-                description="Upsert prefixes to graph store",
+                description="Upsert prefixes to the name graph {named_graph}",
             )
         )
 
     @classmethod
-    def from_memory_store(cls, rules: InformationRules | None = None) -> "Self":
-        return cls(Dataset(), rules)
+    def from_memory_store(cls) -> "Self":
+        return cls(Dataset())
 
     @classmethod
     def from_sparql_store(
@@ -146,7 +184,6 @@ class NeatGraphStore:
         query_endpoint: str | None = None,
         update_endpoint: str | None = None,
         returnFormat: str = "csv",
-        rules: InformationRules | None = None,
     ) -> "Self":
         store = SPARQLUpdateStore(
             query_endpoint=query_endpoint,
@@ -157,10 +194,10 @@ class NeatGraphStore:
             autocommit=False,
         )
         graph = Dataset(store=store)
-        return cls(graph, rules)
+        return cls(graph)
 
     @classmethod
-    def from_oxi_store(cls, storage_dir: Path | None = None, rules: InformationRules | None = None) -> "Self":
+    def from_oxi_store(cls, storage_dir: Path | None = None) -> "Self":
         """Creates a NeatGraphStore from an Oxigraph store."""
         local_import("pyoxigraph", "oxi")
         local_import("oxrdflib", "oxi")
@@ -183,27 +220,35 @@ class NeatGraphStore:
             store=oxrdflib.OxigraphStore(store=oxi_store),
         )
 
-        return cls(graph, rules)
+        return cls(graph)
 
-    def write(self, extractor: TripleExtractors) -> IssueList:
+    def write(
+        self, extractor: TripleExtractors, named_graph: URIRef | None = None
+    ) -> IssueList:
         last_change: Change | None = None
+        named_graph = named_graph or DATASET_DEFAULT_GRAPH_ID
         with catch_issues() as issue_list:
             _start = datetime.now(timezone.utc)
             success = True
 
             if isinstance(extractor, RdfFileExtractor) and not extractor.issue_list.has_errors:
-                self._parse_file(extractor.filepath, cast(str, extractor.format), extractor.base_uri)
+                self._parse_file(
+                    named_graph,
+                    extractor.filepath,
+                    cast(str, extractor.format),
+                    extractor.base_uri,
+                )
                 if isinstance(extractor.filepath, ZipExtFile):
                     extractor.filepath.close()
             elif isinstance(extractor, RdfFileExtractor):
                 success = False
                 issue_text = "\n".join([issue.as_message() for issue in extractor.issue_list])
                 warnings.warn(
-                    f"Cannot write to graph store with {type(extractor).__name__}, errors found in file:\n{issue_text}",
+                    f"Cannot write to named graph {named_graph} with {type(extractor).__name__}, errors found in file:\n{issue_text}",
                     stacklevel=2,
                 )
             else:
-                self._add_triples(extractor.extract())
+                self._add_triples(extractor.extract(), named_graph=named_graph)
 
             if success:
                 _end = datetime.now(timezone.utc)
@@ -218,7 +263,7 @@ class NeatGraphStore:
                         activity=activity,
                         start=_start,
                         end=_end,
-                        description=f"Extracted triples to graph store using {type(extractor).__name__}",
+                        description=f"Extracted triples to named graph {named_graph} using {type(extractor).__name__}",
                     )
                     self.provenance.append(last_change)
         if last_change:
@@ -380,10 +425,11 @@ class NeatGraphStore:
 
     def count_of_type(self, class_uri: URIRef) -> int:
         query = f"SELECT (COUNT(?instance) AS ?instanceCount) WHERE {{ ?instance a <{class_uri}> }}"
-        return int(next(iter(self.graph.query(query)))[0])  # type: ignore[arg-type, index]
+        return int(next(iter(self.dataset.query(query)))[0])  # type: ignore[arg-type, index]
 
     def _parse_file(
         self,
+        named_graph: URIRef,
         filepath: Path | ZipExtFile,
         format: str = "turtle",
         base_uri: URIRef | None = None,
@@ -391,6 +437,7 @@ class NeatGraphStore:
         """Imports graph data from file.
 
         Args:
+            named_graph : URIRef of the named graph to store the data in
             filepath : File path to file containing graph data, by default None
             format : rdflib format file containing RDF graph, by default "turtle"
             base_uri : base URI to add to graph in case of relative URIs, by default None
@@ -408,24 +455,29 @@ class NeatGraphStore:
             local_import("pyoxigraph", "oxi")
 
             # this is necessary to trigger rdflib oxigraph plugin
-            self.graph.parse(
+            self.graph(named_graph).parse(
                 filepath,  # type: ignore[arg-type]
                 format=rdflib_to_oxi_type(format),
                 transactional=False,
                 publicID=base_uri,
             )
-            self.graph.store._store.optimize()  # type: ignore[attr-defined]
+            self.dataset.store._store.optimize()  # type: ignore[attr-defined]
 
         # All other stores
         else:
             if isinstance(filepath, ZipExtFile) or filepath.is_file():
-                self.graph.parse(filepath, publicID=base_uri)  # type: ignore[arg-type]
+                self.graph(named_graph).parse(filepath, publicID=base_uri)  # type: ignore[arg-type]
             else:
                 for filename in filepath.iterdir():
                     if filename.is_file():
-                        self.graph.parse(filename, publicID=base_uri)
+                        self.graph(named_graph).parse(filename, publicID=base_uri)
 
-    def _add_triples(self, triples: Iterable[Triple], batch_size: int = 10_000):
+    def _add_triples(
+        self,
+        triples: Iterable[Triple],
+        named_graph: URIRef,
+        batch_size: int = 10_000,
+    ) -> None:
         """Adds triples to the graph store in batches.
 
         Args:
@@ -433,11 +485,14 @@ class NeatGraphStore:
             batch_size: Batch size of triples per commit, by default 10_000
             verbose: Verbose mode, by default False
         """
-        add_triples_in_batch(self.graph, triples, batch_size)
+        add_triples_in_batch(self.graph(named_graph), triples, batch_size)
 
-    def transform(self, transformer: Transformers) -> None:
+    def transform(
+        self, transformer: Transformers, named_graph: URIRef | None = None
+    ) -> None:
         """Transforms the graph store using a transformer."""
 
+        named_graph = named_graph or DATASET_DEFAULT_GRAPH_ID
         missing_changes = [
             change for change in transformer._need_changes if not self.provenance.activity_took_place(change)
         ]
@@ -457,7 +512,7 @@ class NeatGraphStore:
 
         else:
             _start = datetime.now(timezone.utc)
-            transformer.transform(self.graph)
+            transformer.transform(self.graph(named_graph))
             self.provenance.append(
                 Change.record(
                     activity=f"{type(transformer).__name__}",
@@ -468,29 +523,61 @@ class NeatGraphStore:
             )
 
     @property
-    def summary(self) -> pd.DataFrame:
-        return pd.DataFrame(self.queries.summarize_instances(), columns=["Type", "Occurrence"])
+    def summary(self) -> dict[URIRef, pd.DataFrame]:
+        return {
+            named_graph: pd.DataFrame(
+                self.queries.summarize_instances(named_graph),
+                columns=["Type", "Occurrence"],
+            )
+            for named_graph in self.named_graphs
+        }
 
     @property
-    def multi_type_instances(self) -> dict[str, list[str]]:
-        return self.queries.multi_type_instances()
+    def multi_type_instances(self) -> dict[str, dict[str, list[str]]]:
+        return {
+            named_graph: self.queries.multi_type_instances()
+            for named_graph in self.named_graphs
+        }
 
     def _repr_html_(self) -> str:
         provenance = self.provenance._repr_html_()
-        summary: pd.DataFrame = self.summary
+        summary: dict[URIRef, pd.DataFrame] = self.summary
 
-        if summary.empty:
+        if not summary:
             summary_text = "<br /><strong>Graph is empty</strong><br />"
         else:
-            summary_text = (
-                "<br /><strong>Overview</strong>:"  # type: ignore
-                f"<ul><li>{len(summary)} types</strong></li>"
-                f"<li>{sum(summary['Occurrence'])} instances</strong></li></ul>"
-                f"{cast(pd.DataFrame, self._shorten_summary(summary))._repr_html_()}"  # type: ignore[operator]
+
+            all_types = set().union(
+                *[
+                    set(sub_summary.Type)
+                    for sub_summary in summary.values()
+                    if not sub_summary.empty
+                ]
             )
 
-        if self.multi_type_instances:
-            summary_text += "<br><strong>Multi value instances detected! Loading could have issues!</strong></br>"  # type: ignore
+            instance_count = {
+                named_graph: sum(table["Occurrence"])
+                for named_graph, table in summary.items()
+            }
+
+            summary_text = (
+                "<br /><strong>Overview</strong>:"  # type: ignore
+                f"<ul><li>{len(summary)} named graphs</strong></li>"
+                f"<li>Total of {len(all_types)} unique types</strong></li>"
+            )
+
+            for named_graph, table in summary.items():
+                summary_text += f"<li>{sum(table['Occurrence'])} instances in {named_graph} </strong></li>"
+
+            summary_text += "</ul>"
+            for named_graph, table in summary.items():
+
+                summary_text += f"<br /><strong>{named_graph}</strong>:"
+                summary_text += f"{cast(pd.DataFrame, self._shorten_summary(table))._repr_html_()}"  # type: ignore[operator]
+
+        for named_graph, multi_value_instances in self.multi_type_instances.items():
+            if multi_value_instances:
+                summary_text += f"<br><strong>Multi value instances detected in {named_graph}! Loading could have issues!</strong></br>"
 
         return f"{summary_text}" f"{provenance}"
 
@@ -519,3 +606,7 @@ class NeatGraphStore:
         shorter_summary.index = cast(Index, indexes)
 
         return shorter_summary
+
+    @property
+    def named_graphs(self) -> list[URIRef]:
+        return [context.identifier for context in self.dataset.contexts()]

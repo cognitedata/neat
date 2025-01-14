@@ -14,9 +14,22 @@ def test_num_triples():
     store.write(IODDExtractor.from_file(IODD_EXAMPLE))
 
     # Asset total length
-    assert len(store.graph) == 392
+    assert len(store.dataset) == 392
 
     # Asset num instances of each type
-    assert len(list(store.graph.query(f"SELECT ?s WHERE {{ ?s a <{IODD.TextObject}>}}"))) == 166
-    assert len(list(store.graph.query(f"SELECT ?s WHERE {{ ?s a <{IODD.IoddDevice}>}}"))) == 1
-    assert len(list(store.graph.query(f"SELECT ?s WHERE {{ ?s a <{IODD.ProcessDataIn}>}}"))) == 1
+    assert (
+        len(list(store.dataset.query(f"SELECT ?s WHERE {{ ?s a <{IODD.TextObject}>}}")))
+        == 166
+    )
+    assert (
+        len(list(store.dataset.query(f"SELECT ?s WHERE {{ ?s a <{IODD.IoddDevice}>}}")))
+        == 1
+    )
+    assert (
+        len(
+            list(
+                store.dataset.query(f"SELECT ?s WHERE {{ ?s a <{IODD.ProcessDataIn}>}}")
+            )
+        )
+        == 1
+    )
