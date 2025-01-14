@@ -818,8 +818,12 @@ class AddClassImplements(RulesTransformer[InformationRules, InformationRules]):
 class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
     """Update the classic data model with the following:
 
+    This is a special purpose transformer that is only intended to be used with when reading
+    from classic cdf using the neat.read.cdf.classic.graph(...).
+
     - ClassicTimeseries.isString from boolean to string
     - Add class ClassicSourceSystem, and update all source properties from string to ClassicSourceSystem.
+    - Rename externalId properties to classicExternalId
     """
 
     def transform(self, rules: InformationRules) -> InformationRules:
@@ -836,6 +840,8 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
         for prop in output.properties:
             if prop.property_ == "source" and prop.class_.suffix != "ClassicSourceSystem":
                 prop.value_type = ClassEntity(prefix=prefix, suffix="ClassicSourceSystem")
+            elif prop.property_ == "externalId":
+                prop.property_ = "classicExternalId"
         return output
 
 

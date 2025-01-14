@@ -171,7 +171,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             prop_id = prop.property_
             if is_snake_case:
                 prop_id = to_snake(prop_id)
-            prop.transformation = RDFPath(
+            prop.instance_source = RDFPath(
                 traversal=SingleProperty(
                     class_=RDFPathEntity(prefix=instance_prefix, suffix=prop.class_.suffix),
                     property=RDFPathEntity(prefix=instance_prefix, suffix=prop_id),

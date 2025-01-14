@@ -185,17 +185,19 @@ class CDFClassicAPI(BaseReadAPI):
         issues.action = "Read Classic Graph"
         if issues:
             print("Use the .inspect.issues() for more details")
-        transformers = [
+
+        # Converting the instances from classic to core
+        self._state.instances.store.transform(
             ConvertLiteral(
                 namespace["ClassicTimeSeries"],
                 namespace["isString"],
                 lambda is_string: "string" if is_string else "numeric",
-            ),
-            LiteralToEntity(None, namespace["source"], namespace["ClassicSourceSystem"], "name"),
-        ]
-        for transformer in transformers:
-            self._state.instances.store.transform(transformer)
-
+            )
+        )
+        self._state.instances.store.transform(
+            LiteralToEntity(None, namespace["source"], "ClassicSourceSystem", "name"),
+        )
+        # Updating the information model.
         self._state.rule_store.transform(ClassicPrepareCore())
         return issues
 
