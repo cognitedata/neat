@@ -181,7 +181,7 @@ class InformationProperty(SheetRow):
             return float("inf")
         return value
 
-    @field_validator("transformation", mode="before")
+    @field_validator("instance_source", mode="before")
     def generate_rdfpath(cls, value: str | RDFPath | None) -> RDFPath | None:
         if value is None or isinstance(value, RDFPath):
             return value
