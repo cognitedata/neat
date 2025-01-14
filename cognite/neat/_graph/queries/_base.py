@@ -135,10 +135,11 @@ class Queries:
             rdf_type: Type URI to query
             named_graph: Named graph to query over, default None (default graph)
         """
+        named_graph = named_graph or self.default_named_graph
         if isinstance(rdf_type, URIRef):
             rdf_uri = rdf_type
-        elif isinstance(rdf_type, str) and self.rules:
-            rdf_uri = self.rules[named_graph or self.default_named_graph].metadata.namespace[rdf_type]
+        elif isinstance(rdf_type, str) and self.rules and self.rules.get(named_graph):
+            rdf_uri = self.rules[named_graph].metadata.namespace[rdf_type]
         else:
             warnings.warn(
                 "Unknown namespace. Please either provide a URIRef or set the rules of the store.",
