@@ -116,6 +116,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             limit=limit_per_type,
             prefix=prefix,
         )
+        self._prefix = prefix
         self._limit_per_type = limit_per_type
 
         self._source_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
@@ -194,7 +195,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         elif self._root_asset_external_id:
             source = f"root asset {self._root_asset_external_id}."
         else:
-            source = "unkown source."
+            source = "unknown source."
         return f"Extracting clasic CDF Graph (Assets, TimeSeries, Sequences, Events, Files) from {source}."
 
     @property
@@ -283,7 +284,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 self._source_external_ids_by_type[resource_type].add(remove_namespace_from_uri(triple[2]))
             elif triple[1] == self._namespace.labels:
                 self._labels.add(remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.label))
-            elif triple[1] == self._namespace.datasetId:
+            elif triple[1] == self._namespace.dataSetId:
                 self._data_set_ids.add(
                     int(remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.data_set))
                 )
