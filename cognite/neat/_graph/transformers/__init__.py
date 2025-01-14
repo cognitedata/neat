@@ -1,3 +1,4 @@
+from ._base import BaseTransformerStandardised
 from ._classic_cdf import (
     AddAssetDepth,
     AssetEventConnector,
@@ -57,4 +58,5 @@ Transformers = (
     | ConvertLiteral
     | LiteralToEntity
     | ConnectionToLiteral
+    | BaseTransformerStandardised
 )

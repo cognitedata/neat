@@ -815,6 +815,30 @@ class AddClassImplements(RulesTransformer[InformationRules, InformationRules]):
         return f"Added implements property to classes with suffix {self.suffix}"
 
 
+class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
+    """Update the classic data model with the following:
+
+    - ClassicTimeseries.isString from boolean to string
+    - Add class ClassicSourceSystem, and update all source properties from string to ClassicSourceSystem.
+    """
+
+    def transform(self, rules: InformationRules) -> InformationRules:
+        output = rules.model_copy(deep=True)
+        for prop in output.properties:
+            if prop.class_.suffix == "Timeseries" and prop.property_ == "isString":
+                prop.value_type = String()
+        prefix = output.metadata.space
+        source_system_class = InformationInputClass(
+            class_=ClassEntity(prefix=prefix, suffix="ClassicSourceSystem"),
+            description="A source system that provides data to the data model.",
+        )
+        output.classes.append(source_system_class)
+        for prop in output.properties:
+            if prop.property_ == "source" and prop.class_.suffix != "ClassicSourceSystem":
+                prop.value_type = ClassEntity(prefix=prefix, suffix="ClassicSourceSystem")
+        return output
+
+
 class _InformationRulesConverter:
     _edge_properties: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
 
