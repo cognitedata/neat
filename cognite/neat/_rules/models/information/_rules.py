@@ -267,6 +267,29 @@ class InformationRules(BaseRules):
             values = get_default_prefixes_and_namespaces()
         return values
 
+    @model_validator(mode="after")
+    def set_neat_id(self) -> "InformationRules":
+        namespace = self.metadata.namespace
+
+        for class_ in self.classes:
+            if not class_.neatId:
+                class_.neatId = namespace[class_.class_.suffix]
+        for property_ in self.properties:
+            if not property_.neatId:
+                property_.neatId = namespace[f"{property_.class_.suffix}/{property_.property_}"]
+
+        return self
+
+    def update_neat_id(self) -> None:
+        """Update neat ids"""
+
+        namespace = self.metadata.namespace
+
+        for class_ in self.classes:
+            class_.neatId = namespace[class_.class_.suffix]
+        for property_ in self.properties:
+            property_.neatId = namespace[f"{property_.class_.suffix}/{property_.property_}"]
+
     def as_dms_rules(self) -> "DMSRules":
         from cognite.neat._rules.transformers._converters import _InformationRulesConverter
 

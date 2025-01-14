@@ -19,7 +19,7 @@ from tests.data import COGNITE_CORE_ZIP
 
 
 class TestImportersToYAMLExporter:
-    def test_excel_importer_to_yaml(self, deterministic_uuid4: None, data_regression: DataRegressionFixture) -> None:
+    def test_excel_importer_to_yaml(self, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(verbose=False)
 
         neat.read.excel(DOC_RULES / "information-architect-david.xlsx")
@@ -63,7 +63,6 @@ class TestImportersToYAMLExporter:
         exported_rules = yaml.safe_load(exported_yaml_str)
         data_regression.check(exported_rules)
 
-    @pytest.mark.usefixtures("deterministic_uuid4")
     @pytest.mark.freeze_time("2025-01-03")
     def test_to_extension_transformer(self, data_regression: DataRegressionFixture) -> None:
         cdf_simulation = DMSSchema.from_zip(COGNITE_CORE_ZIP)

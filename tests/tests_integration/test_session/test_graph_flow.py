@@ -1,6 +1,5 @@
 from typing import Any
 
-import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
@@ -37,7 +36,6 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
-    @pytest.mark.usefixtures("deterministic_uuid4")
     def test_classic_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
@@ -90,9 +88,7 @@ class TestExtractToLoadFlow:
             }
         )
 
-    def test_dexpi_to_dms(
-        self, deterministic_uuid4: None, cognite_client: CogniteClient, data_regression: DataRegressionFixture
-    ) -> None:
+    def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
 
@@ -134,9 +130,7 @@ class TestExtractToLoadFlow:
         assert len(nodes) == 206
         assert len(edges) == 40
 
-    def test_aml_to_dms(
-        self, deterministic_uuid4: None, cognite_client: CogniteClient, data_regression: DataRegressionFixture
-    ) -> None:
+    def test_aml_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
 
