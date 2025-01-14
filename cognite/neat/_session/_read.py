@@ -199,7 +199,10 @@ class CDFClassicAPI(BaseReadAPI):
             LiteralToEntity(None, namespace["source"], "ClassicSourceSystem", "name"),
         )
         # Updating the information model.
-        self._state.rule_store.transform(ClassicPrepareCore())
+        self._state.rule_store.transform(ClassicPrepareCore(namespace))
+        # Update the instance store with the latest rules
+        information_rules = self._state.rule_store.last_verified_information_rules
+        self._state.instances.store.rules = information_rules
         return issues
 
 

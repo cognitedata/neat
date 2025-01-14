@@ -826,6 +826,9 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
     - Rename externalId properties to classicExternalId
     """
 
+    def __init__(self, instance_namespace: Namespace) -> None:
+        self.instance_namespace = instance_namespace
+
     @property
     def description(self) -> str:
         return "Update the classic data model to the data types in Cognite Core."
@@ -835,11 +838,12 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
         for prop in output.properties:
             if prop.class_.suffix == "Timeseries" and prop.property_ == "isString":
                 prop.value_type = String()
-        prefix = output.metadata.space
+        prefix = output.metadata.prefix
+        namespace = output.metadata.namespace
         source_system_class = InformationClass(
             class_=ClassEntity(prefix=prefix, suffix="ClassicSourceSystem"),
             description="A source system that provides data to the data model.",
-            neatId=Namespace(prefix)["ClassicSourceSystem"],
+            neatId=namespace["ClassicSourceSystem"],
         )
         output.classes.append(source_system_class)
         for prop in output.properties:
@@ -847,6 +851,30 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
                 prop.value_type = ClassEntity(prefix=prefix, suffix="ClassicSourceSystem")
             elif prop.property_ == "externalId":
                 prop.property_ = "classicExternalId"
+        instance_prefix = next(
+            (prefix for prefix, namespace in output.prefixes.items() if namespace == self.instance_namespace), None
+        )
+        if instance_prefix is None:
+            raise NeatValueError("Instance namespace not found in the prefixes.")
+
+        output.properties.append(
+            InformationProperty(
+                neatId=namespace["ClassicSourceSystem/name"],
+                property_="name",
+                value_type=String(),
+                class_=ClassEntity(prefix=prefix, suffix="ClassicSourceSystem"),
+                max_count=1,
+                instance_source=RDFPath(
+                    traversal=SingleProperty(
+                        class_=RDFPathEntity(
+                            prefix=instance_prefix,
+                            suffix="ClassicSourceSystem",
+                        ),
+                        property=RDFPathEntity(prefix=instance_prefix, suffix="name"),
+                    ),
+                ),
+            )
+        )
         return output
 
 
