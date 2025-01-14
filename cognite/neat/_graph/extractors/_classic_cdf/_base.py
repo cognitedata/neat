@@ -176,6 +176,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         type_ = self._default_rdf_type
         if self.to_type:
             type_ = self.to_type(item) or type_
+        if self.prefix:
+            type_ = f"{self.prefix}{type_}"
         return self._SPACE_PATTERN.sub("_", type_)
 
     def _as_object(self, raw: Any, key: str) -> Literal | URIRef:
