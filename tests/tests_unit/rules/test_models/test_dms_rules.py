@@ -6,7 +6,6 @@ from typing import Any
 import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
-from rdflib import URIRef
 
 from cognite.neat._client.data_classes.data_modeling import (
     ContainerApplyDict,
@@ -1360,29 +1359,29 @@ class TestDMSRules:
                     "container_property": "name",
                     "view": "WindFarm",
                     "view_property": "name",
-                    "neatId": URIRef("http://purl.org/cognite/neat/Property_0"),
+                    "neatId": "http://purl.org/cognite/neat/Property_0",
                 }
             ],
             "views": [
                 {
                     "view": "cdf_cdm:Describable(version=v1)",
-                    "neatId": URIRef("http://purl.org/cognite/neat/View_2"),
+                    "neatId": "http://purl.org/cognite/neat/View_2",
                 },
                 {
                     "view": "cdf_cdm:Sourceable(version=v1)",
-                    "neatId": URIRef("http://purl.org/cognite/neat/View_1"),
+                    "neatId": "http://purl.org/cognite/neat/View_1",
                 },
                 {
                     "view": "WindFarm",
                     "implements": "cdf_cdm:Sourceable(version=v1),cdf_cdm:Describable(version=v1)",
-                    "neatId": URIRef("http://purl.org/cognite/neat/View_0"),
+                    "neatId": "http://purl.org/cognite/neat/View_0",
                 },
             ],
             "containers": [
                 {
                     "container": "Asset",
                     "constraint": "Sourceable,Describable",
-                    "neatId": URIRef("http://purl.org/cognite/neat/Container_0"),
+                    "neatId": "http://purl.org/cognite/neat/Container_0",
                 }
             ],
         }
