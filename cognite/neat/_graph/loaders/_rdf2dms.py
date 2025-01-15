@@ -210,7 +210,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                         if stop_on_exception:
                             raise error_node from e
                         yield error_node
-                    yield from self._create_edges(identifier, properties, edge_by_type, edge_by_prop_id, tracker)
+                    yield from self._create_edges_without_properties(
+                        identifier, properties, edge_by_type, edge_by_prop_id, tracker
+                    )
                 tracker.finish(track_id)
                 yield _END_OF_CLASS
 
@@ -315,8 +317,13 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         text_fields: list[str] = []
         for prop_id, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
+                if prop.source:
+                    # Edges with properties are created separately
+                    continue
+
                 edge_by_type[prop.type.external_id] = prop_id, prop
                 edge_by_prop_id[prop_id] = prop_id, prop
+
             if isinstance(prop, dm.MappedProperty):
                 if is_readonly_property(prop.container, prop.container_property_identifier):
                     continue
@@ -454,7 +461,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             ],
         )
 
-    def _create_edges(
+    def _create_edges_without_properties(
         self,
         identifier: str,
         properties: dict[str, list[str]],
