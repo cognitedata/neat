@@ -530,49 +530,50 @@ class LookupRelationshipSourceTarget(BaseTransformerStandardised):
 
     _lookup_entity_query = """SELECT ?entity
     WHERE {{
-        ?entity a <{namespace}>:{entity_type} .
-        ?entity <{namespace}>:externalId "{external_id}" .
+        ?entity a <{entity_type}> .
+        ?entity <{namespace}externalId> "{external_id}" .
     }}"""
 
-    def __init__(self, namespace: Namespace = CLASSIC_CDF_NAMESPACE) -> None:
+    def __init__(self, namespace: Namespace = CLASSIC_CDF_NAMESPACE, type_prefix: str | None = None) -> None:
         self._namespace = namespace
-        self._lookup_entity: Callable[[str, str], URIRef] | None = None
+        self._type_prefix = type_prefix
+        self._lookup_entity: Callable[[URIRef, str], URIRef] | None = None
 
     def _count_query(self) -> str:
         return f"""SELECT (COUNT(?instance) AS ?instanceCount)
 WHERE {{
-  ?instance a <{self._namespace}>:Relationship .
+  ?instance a <{self._namespace}ClassicRelationship> .
 }}"""
 
     def _iterate_query(self) -> str:
         return f"""SELECT ?instance ?source ?sourceType ?target ?targetType
         WHERE {{
-          ?instance a <{self._namespace}>:Relationship .
-          ?instance <{self._namespace}>:sourceExternalId ?source .
-          ?instance <{self._namespace}>:targetExternalId ?target .
-          ?instance <{self._namespace}>:sourceType ?source_type .
-          ?instance <{self._namespace}>:targetType ?target_type
+          ?instance a <{self._namespace}ClassicRelationship> .
+          ?instance <{self._namespace}sourceExternalId> ?source .
+          ?instance <{self._namespace}targetExternalId> ?target .
+          ?instance <{self._namespace}sourceType> ?sourceType .
+          ?instance <{self._namespace}targetType> ?targetType
         }}"""
 
     def _iterator(self, graph: Graph) -> Iterator:
-        self._lookup_entity = self.create_lookup_entity_with_external_id(graph, self._namespace)
+        self._lookup_entity = self.create_lookup_entity_with_external_id(graph, self._namespace, self._type_prefix)
         yield from graph.query(self._iterate_query())
 
     def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
         output = RowTransformationOutput()
         instance, source, source_type, target, target_type = cast(
-            tuple[URIRef, Literal, Literal, Literal, Literal], query_result_row
+            tuple[URIRef, Literal, URIRef, Literal, URIRef], query_result_row
         )
         if self._lookup_entity is None:
             raise NeatValueError(f"{type(self)}: .operation() called before .transform()")
         try:
-            source_id = self._lookup_entity(source_type, source)
+            source_id = self._lookup_entity(source_type, source.toPython())
         except ValueError:
             warnings.warn(ResourceNotFoundWarning(source, "class", str(instance), "class"), stacklevel=2)
             return output
 
         try:
-            target_id = self._lookup_entity(target_type, target)
+            target_id = self._lookup_entity(target_type, target.toPython())
         except ValueError:
             warnings.warn(ResourceNotFoundWarning(target, "class", str(instance), "class"), stacklevel=2)
             return output
@@ -585,9 +586,14 @@ WHERE {{
         return output
 
     @staticmethod
-    def create_lookup_entity_with_external_id(graph: Graph, namespace: Namespace) -> Callable[[str, str], URIRef]:
+    def create_lookup_entity_with_external_id(
+        graph: Graph, namespace: Namespace, type_prefix: str | None
+    ) -> Callable[[URIRef, str], URIRef]:
         @lru_cache(maxsize=10_000)
-        def lookup_entity_with_external_id(entity_type: str, external_id: str) -> URIRef:
+        def lookup_entity_with_external_id(entity_type: URIRef, external_id: str) -> URIRef:
+            if type_prefix:
+                entity_type = namespace[type_prefix + remove_namespace_from_uri(entity_type)]
+
             query = LookupRelationshipSourceTarget._lookup_entity_query.format(
                 namespace=namespace, entity_type=entity_type, external_id=external_id
             )

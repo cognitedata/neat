@@ -40,7 +40,7 @@ class TestExtractToLoadFlow:
         neat = NeatSession(cognite_client, storage="oxigraph")
         neat.read.cdf.classic.graph("Utsira")
         neat.convert("dms")
-        neat.mapping.data_model.classic_to_core("Classic", use_parent_property_name=True)
+        neat.mapping.data_model.classic_to_core("Classic")
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
         # Hack to get the instances.

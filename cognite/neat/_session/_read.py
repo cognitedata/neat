@@ -188,7 +188,7 @@ class CDFClassicAPI(BaseReadAPI):
             print("Use the .inspect.issues() for more details")
 
         # Converting the instances from classic to core
-        self._state.instances.store.transform(LookupRelationshipSourceTarget(namespace))
+        self._state.instances.store.transform(LookupRelationshipSourceTarget(namespace, "Classic"))
         self._state.instances.store.transform(
             ConvertLiteral(
                 namespace["ClassicTimeSeries"],
