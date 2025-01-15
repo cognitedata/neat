@@ -1529,8 +1529,8 @@ instances:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_instance_space
       tags:
-      - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
-      - http://purl.org/cognite/cdf-classic#Label_WindTurbine
+      - Label_PowerGeneratingUnit
+      - Label_WindTurbine
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1556,7 +1556,7 @@ instances:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_instance_space
       tags:
-      - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
+      - Label_PowerGeneratingUnit
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1586,8 +1586,8 @@ instances:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_instance_space
       tags:
-      - http://purl.org/cognite/cdf-classic#Label_PowerGeneratingUnit
-      - http://purl.org/cognite/cdf-classic#Label_WindTurbine
+      - Label_PowerGeneratingUnit
+      - Label_WindTurbine
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1616,8 +1616,8 @@ instances:
         externalId: ClassicSourceSystem_manufacturer2
         space: sp_instance_space
       tags:
-      - http://purl.org/cognite/cdf-classic#Label_Measurement
-      - http://purl.org/cognite/cdf-classic#Label_metMast
+      - Label_Measurement
+      - Label_metMast
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1856,9 +1856,9 @@ instances:
         externalId: DataSet_2458119666837052
         space: sp_instance_space
       sourceExternalId: WT-01
-      sourceType: http://purl.org/cognite/cdf-classic#Asset
+      sourceType: Asset
       targetExternalId: MetMast
-      targetType: http://purl.org/cognite/cdf-classic#Asset
+      targetType: Asset
     source:
       externalId: ClassicRelationship
       space: sp_windfarm
@@ -1889,9 +1889,9 @@ instances:
         externalId: DataSet_2458119666837052
         space: sp_instance_space
       sourceExternalId: WT-02
-      sourceType: http://purl.org/cognite/cdf-classic#Asset
+      sourceType: Asset
       targetExternalId: MetMast
-      targetType: http://purl.org/cognite/cdf-classic#Asset
+      targetType: Asset
     source:
       externalId: ClassicRelationship
       space: sp_windfarm

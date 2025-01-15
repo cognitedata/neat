@@ -1,4 +1,4 @@
-import tempfile
+from pathlib import Path
 
 import pytest
 import yaml
@@ -46,15 +46,18 @@ class TestRead:
 
         assert not issues.has_errors
 
-    def test_store_read_neat_session(self):
+    def test_store_read_neat_session(self, tmp_path: Path) -> None:
         neat = NeatSession()
 
-        _ = neat.read.rdf.examples.nordic44
+        _ = neat.read.rdf.examples.nordic44()
 
-        with tempfile.NamedTemporaryFile(suffix=".zip") as session_file:
-            neat.to.session(session_file.name)
+        session_file = tmp_path / "session.zip"
+        try:
+            neat.to.session(session_file)
 
             neat2 = NeatSession()
-            neat2.read.session(session_file.name)
+            neat2.read.session(session_file)
 
             assert (neat2._state.instances.store.graph - neat._state.instances.store.graph).serialize() == "\n"
+        finally:
+            session_file.unlink()
