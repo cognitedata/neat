@@ -31,6 +31,9 @@ Changes are grouped as follows:
 ### Changed
 - [BREAKING] The `Transformation` column in the Information Data Model properties sheet has been renamed to
   `Instnace Source`.
+- [BREAKING] The `neat.convert()` no longer has a property `mode` used to recognize classes that should be implemented
+  as edges. Instead, information model to dms model conversion classes with both `startNode` and `endNode` properties
+  are implemented as edges.
 
 ## [0.106.0] - 09-01-**2025**
 ### Added

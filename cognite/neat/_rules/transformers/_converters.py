@@ -252,12 +252,11 @@ class PrefixEntities(RulesTransformer[ReadRules[T_InputRules], ReadRules[T_Input
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
-    def __init__(self, ignore_undefined_value_types: bool = False, mode: Literal["edge_properties"] | None = None):
+    def __init__(self, ignore_undefined_value_types: bool = False):
         self.ignore_undefined_value_types = ignore_undefined_value_types
-        self.mode = mode
 
     def transform(self, rules: InformationRules) -> DMSRules:
-        return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types, self.mode)
+        return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types)
 
 
 class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
@@ -879,15 +878,13 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
 
 
 class _InformationRulesConverter:
-    _edge_properties: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
+    _start_or_end_node: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
 
     def __init__(self, information: InformationRules):
         self.rules = information
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
 
-    def as_dms_rules(
-        self, ignore_undefined_value_types: bool = False, mode: Literal["edge_properties"] | None = None
-    ) -> "DMSRules":
+    def as_dms_rules(self, ignore_undefined_value_types: bool = False) -> "DMSRules":
         from cognite.neat._rules.models.dms._rules import (
             DMSContainer,
             DMSProperty,
@@ -899,35 +896,44 @@ class _InformationRulesConverter:
         default_version = info_metadata.version
         default_space = self._to_space(info_metadata.prefix)
         dms_metadata = self._convert_metadata_to_dms(info_metadata)
-        edge_classes: set[ClassEntity] = set()
-        property_to_edge: dict[tuple[ClassEntity, str], ClassEntity] = {}
-        end_node_by_edge: dict[ClassEntity, ClassEntity] = {}
-        if mode == "edge_properties":
-            edge_classes = {
-                cls_.class_ for cls_ in self.rules.classes if cls_.implements and cls_.implements[0].suffix == "Edge"
-            }
-            property_to_edge = {
-                (prop.class_, prop.property_): prop.value_type
-                for prop in self.rules.properties
-                if prop.value_type in edge_classes and isinstance(prop.value_type, ClassEntity)
-            }
-            end_node_by_edge = {
-                prop.class_: prop.value_type
-                for prop in self.rules.properties
-                if prop.class_ in edge_classes
-                and (prop.property_ == "endNode" or prop.property_ == "end_node")
-                and isinstance(prop.value_type, ClassEntity)
-            }
+
+        properties_by_class: dict[ClassEntity, set[str]] = defaultdict(set)
+        for prop in self.rules.properties:
+            properties_by_class[prop.class_].add(prop.property_)
+
+        # Edge Classes is defined by having both startNode and endNode properties
+        edge_classes = {
+            cls_
+            for cls_, class_properties in properties_by_class.items()
+            if ({"startNode", "start_node"} & class_properties) and ({"endNode", "end_node"} & class_properties)
+        }
+        edge_value_types_by_class_property_pair = {
+            (prop.class_, prop.property_): prop.value_type
+            for prop in self.rules.properties
+            if prop.value_type in edge_classes and isinstance(prop.value_type, ClassEntity)
+        }
+        end_node_by_edge = {
+            prop.class_: prop.value_type
+            for prop in self.rules.properties
+            if prop.class_ in edge_classes
+            and (prop.property_ == "endNode" or prop.property_ == "end_node")
+            and isinstance(prop.value_type, ClassEntity)
+        }
 
         properties_by_class: dict[ClassEntity, list[DMSProperty]] = defaultdict(list)
         referenced_containers: dict[ContainerEntity, Counter[ClassEntity]] = defaultdict(Counter)
         for prop in self.rules.properties:
             if ignore_undefined_value_types and isinstance(prop.value_type, UnknownEntity):
                 continue
-            if prop.class_ in edge_classes and prop.property_ in self._edge_properties:
+            if prop.class_ in edge_classes and prop.property_ in self._start_or_end_node:
                 continue
             dms_property = self._as_dms_property(
-                prop, default_space, default_version, edge_classes, property_to_edge, end_node_by_edge
+                prop,
+                default_space,
+                default_version,
+                edge_classes,
+                edge_value_types_by_class_property_pair,
+                end_node_by_edge,
             )
             properties_by_class[prop.class_].append(dms_property)
             if dms_property.container:
@@ -940,7 +946,7 @@ class _InformationRulesConverter:
                 name=cls_.name,
                 view=cls_.class_.as_view_entity(default_space, default_version),
                 description=cls_.description,
-                implements=self._get_view_implements(cls_, info_metadata, mode),
+                implements=self._get_view_implements(cls_, info_metadata),
             )
 
             dms_view.logical = cls_.neatId
@@ -1019,7 +1025,7 @@ class _InformationRulesConverter:
         default_space: str,
         default_version: str,
         edge_classes: set[ClassEntity],
-        property_to_edge: dict[tuple[ClassEntity, str], ClassEntity],
+        edge_value_types_by_class_property_pair: dict[tuple[ClassEntity, str], ClassEntity],
         end_node_by_edge: dict[ClassEntity, ClassEntity],
     ) -> "DMSProperty":
         from cognite.neat._rules.models.dms._rules import DMSProperty
@@ -1033,7 +1039,9 @@ class _InformationRulesConverter:
             end_node_by_edge,
         )
 
-        connection = self._get_connection(info_property, value_type, property_to_edge, default_space, default_version)
+        connection = self._get_connection(
+            info_property, value_type, edge_value_types_by_class_property_pair, default_space, default_version
+        )
 
         container: ContainerEntity | None = None
         container_property: str | None = None
@@ -1069,13 +1077,16 @@ class _InformationRulesConverter:
     def _get_connection(
         prop: InformationProperty,
         value_type: DataType | ViewEntity | DMSUnknownEntity,
-        property_to_edge: dict[tuple[ClassEntity, str], ClassEntity],
+        edge_value_types_by_class_property_pair: dict[tuple[ClassEntity, str], ClassEntity],
         default_space: str,
         default_version: str,
     ) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
-        if isinstance(value_type, ViewEntity) and (prop.class_, prop.property_) in property_to_edge:
-            edge_properties = property_to_edge[(prop.class_, prop.property_)]
-            return EdgeEntity(properties=edge_properties.as_view_entity(default_space, default_version))
+        if (
+            isinstance(value_type, ViewEntity)
+            and (prop.class_, prop.property_) in edge_value_types_by_class_property_pair
+        ):
+            edge_value_type = edge_value_types_by_class_property_pair[(prop.class_, prop.property_)]
+            return EdgeEntity(properties=edge_value_type.as_view_entity(default_space, default_version))
         if isinstance(value_type, ViewEntity) and prop.is_list:
             return EdgeEntity()
         elif isinstance(value_type, ViewEntity):
@@ -1104,6 +1115,7 @@ class _InformationRulesConverter:
         elif isinstance(prop.value_type, ClassEntity) and (prop.value_type in edge_classes):
             if prop.value_type in end_node_by_edge:
                 return end_node_by_edge[prop.value_type].as_view_entity(default_space, default_version)
+            # This occurs if the end node is not pointing to a class
             warnings.warn(
                 NeatValueWarning(
                     f"Edge class {prop.value_type} does not have 'endNode' property, defaulting to DMSUnknownEntity"
@@ -1160,13 +1172,9 @@ class _InformationRulesConverter:
         self.property_count_by_container[container_entity] += 1
         return container_entity, prop.property_
 
-    def _get_view_implements(
-        self, cls_: InformationClass, metadata: InformationMetadata, mode: Literal["edge_properties"] | None
-    ) -> list[ViewEntity]:
+    def _get_view_implements(self, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
         implements = []
         for parent in cls_.implements or []:
-            if mode == "edge_properties" and parent.suffix == "Edge":
-                continue
             view_entity = parent.as_view_entity(metadata.prefix, metadata.version)
             implements.append(view_entity)
         return implements
