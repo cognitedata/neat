@@ -27,6 +27,8 @@ Changes are grouped as follows:
 ### Improved
 - Better error message if `NeatSession(..., storage="oxigraph")` and the `oxigraph` package is not installed.
 - NeatIDs are now human-readable and deterministic.
+- The `neat.convert()` from DMS ot information now sets the container.usedFor to "node"/"edge"/"all" based on 
+  how the classes are implemented.
 
 ### Changed
 - [BREAKING] The `Transformation` column in the Information Data Model properties sheet has been renamed to
