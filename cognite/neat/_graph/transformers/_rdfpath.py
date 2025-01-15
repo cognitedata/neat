@@ -35,8 +35,8 @@ class AddSelfReferenceProperty(BaseTransformer):
 
     def transform(self, graph: Graph) -> None:
         for property_ in self.properties:
-            prefix = property_.transformation.traversal.class_.prefix
-            suffix = property_.transformation.traversal.class_.suffix
+            prefix = property_.instance_source.traversal.class_.prefix
+            suffix = property_.instance_source.traversal.class_.suffix
 
             namespace = self.rules.prefixes[prefix] if prefix in self.rules.prefixes else self.rules.metadata.namespace
 
@@ -54,7 +54,7 @@ class AddSelfReferenceProperty(BaseTransformer):
                 property_=f"{self.rules.metadata.prefix}:{property_.property_}",
             )
 
-            property_.transformation = RDFPath(traversal=traversal)
+            property_.instance_source = RDFPath(traversal=traversal)
 
 
 class MakeConnectionOnExactMatch(BaseTransformerStandardised):

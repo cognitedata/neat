@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 import yaml
 from cognite.client import CogniteClient
@@ -9,7 +11,6 @@ from tests import data
 
 
 class TestRead:
-    @pytest.mark.usefixtures("deterministic_uuid4")
     @pytest.mark.freeze_time("2024-11-22")
     def test_read_model_referencing_core(
         self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
@@ -44,3 +45,19 @@ class TestRead:
         neat.prepare.data_model.include_referenced()
 
         assert not issues.has_errors
+
+    def test_store_read_neat_session(self, tmp_path: Path) -> None:
+        neat = NeatSession()
+
+        _ = neat.read.rdf.examples.nordic44()
+
+        session_file = tmp_path / "session.zip"
+        try:
+            neat.to.session(session_file)
+
+            neat2 = NeatSession()
+            neat2.read.session(session_file)
+
+            assert (neat2._state.instances.store.graph - neat._state.instances.store.graph).serialize() == "\n"
+        finally:
+            session_file.unlink()

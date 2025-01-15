@@ -11,6 +11,7 @@ import rdflib
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._graph.extractors import DMSGraphExtractor, KnowledgeGraphExtractor
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules._shared import ReadRules, Rules, T_VerifiedRules, VerifiedRules
@@ -72,6 +73,18 @@ class NeatRulesStore:
             id_=importer.source_uri,
         )
         return self._do_activity(importer.to_rules, agent, source_entity, importer.description)[1]
+
+    def import_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
+        agent = extractor.agent
+        source_entity = Entity(
+            was_attributed_to=UNKNOWN_AGENT,
+            id_=extractor.source_uri,
+        )
+        _, issues = self._do_activity(extractor.get_information_rules, agent, source_entity, extractor.description)
+        if isinstance(extractor, DMSGraphExtractor):
+            _, dms_issues = self._do_activity(extractor.get_dms_rules, agent, source_entity, extractor.description)
+            issues.extend(dms_issues)
+        return issues
 
     def transform(self, *transformer: RulesTransformer) -> IssueList:
         if not self.provenance:
@@ -364,6 +377,15 @@ class NeatRulesStore:
             if isinstance(change.target_entity, ModelEntity) and isinstance(change.target_entity.result, DMSRules):
                 return change.target_entity.result
         raise NeatValueError("No verified DMS rules found in the provenance.")
+
+    @property
+    def last_verified_information_rules(self) -> InformationRules:
+        for change in reversed(self.provenance):
+            if isinstance(change.target_entity, ModelEntity) and isinstance(
+                change.target_entity.result, InformationRules
+            ):
+                return change.target_entity.result
+        raise NeatValueError("No verified information rules found in the provenance.")
 
     @property
     def last_issues(self) -> IssueList:

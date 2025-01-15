@@ -3,7 +3,8 @@ import warnings
 from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import cast
+from typing import cast, overload
+from zipfile import ZipExtFile
 
 import pandas as pd
 from pandas import Index
@@ -73,6 +74,32 @@ class NeatGraphStore:
     def type_(self) -> str:
         "Return type of the graph store"
         return type(self.graph.store).__name__
+
+    # no destination
+    @overload
+    def serialize(self, filepath: None = None) -> str: ...
+
+    # with destination
+    @overload
+    def serialize(self, filepath: Path) -> None: ...
+
+    def serialize(self, filepath: Path | None = None) -> None | str:
+        """Serialize the graph store to a file.
+
+        Args:
+            filepath: File path to serialize the graph store to
+
+        Returns:
+            Serialized graph store
+        """
+        if filepath:
+            self.graph.serialize(
+                filepath,
+                format="ox-trig" if self.type_ == "OxigraphStore" else "turtle",
+            )
+            return None
+        else:
+            return self.graph.serialize(format="ox-trig" if self.type_ == "OxigraphStore" else "turtle")
 
     def add_rules(self, rules: InformationRules) -> None:
         """This method is used to add rules to the graph store and it is the only correct
@@ -166,6 +193,8 @@ class NeatGraphStore:
 
             if isinstance(extractor, RdfFileExtractor) and not extractor.issue_list.has_errors:
                 self._parse_file(extractor.filepath, cast(str, extractor.format), extractor.base_uri)
+                if isinstance(extractor.filepath, ZipExtFile):
+                    extractor.filepath.close()
             elif isinstance(extractor, RdfFileExtractor):
                 success = False
                 issue_text = "\n".join([issue.as_message() for issue in extractor.issue_list])
@@ -207,16 +236,28 @@ class NeatGraphStore:
                 "Multi typed instances detected, issues with loading can occur!",
                 stacklevel=2,
             )
-
-        if cls := InformationAnalysis(self.rules).classes_by_neat_id.get(class_neat_id):
+        analysis = InformationAnalysis(self.rules)
+        if cls := analysis.classes_by_neat_id.get(class_neat_id):
             if property_link_pairs:
                 property_renaming_config = {
                     prop_uri: prop_name
                     for prop_name, prop_neat_id in property_link_pairs.items()
-                    if (
-                        prop_uri := InformationAnalysis(self.rules).neat_id_to_transformation_property_uri(prop_neat_id)
-                    )
+                    if (prop_uri := analysis.neat_id_to_instance_source_property_uri(prop_neat_id))
                 }
+                if information_properties := analysis.classes_with_properties(consider_inheritance=True).get(
+                    cls.class_
+                ):
+                    for prop in information_properties:
+                        if prop.neatId is None:
+                            continue
+                        # Include renaming done in the Information rules that are not present in the
+                        # property_link_pairs. The use case for this renaming to startNode and endNode
+                        # properties that are not part of DMSRules but will typically be present
+                        # in the Information rules.
+                        if (
+                            uri := analysis.neat_id_to_instance_source_property_uri(prop.neatId)
+                        ) and uri not in property_renaming_config:
+                            property_renaming_config[uri] = prop.property_
 
                 yield from self._read_via_class_entity(cls.class_, property_renaming_config)
                 return
@@ -355,7 +396,7 @@ class NeatGraphStore:
 
     def _parse_file(
         self,
-        filepath: Path,
+        filepath: Path | ZipExtFile,
         format: str = "turtle",
         base_uri: URIRef | None = None,
     ) -> None:
@@ -375,12 +416,12 @@ class NeatGraphStore:
         """
 
         # Oxigraph store, do not want to type hint this as it is an optional dependency
-        if type(self.graph.store).__name__ == "OxigraphStore":
+        if self.type_ == "OxigraphStore":
             local_import("pyoxigraph", "oxi")
 
             # this is necessary to trigger rdflib oxigraph plugin
             self.graph.parse(
-                filepath,
+                filepath,  # type: ignore[arg-type]
                 format=rdflib_to_oxi_type(format),
                 transactional=False,
                 publicID=base_uri,
@@ -389,8 +430,8 @@ class NeatGraphStore:
 
         # All other stores
         else:
-            if filepath.is_file():
-                self.graph.parse(filepath, publicID=base_uri)
+            if isinstance(filepath, ZipExtFile) or filepath.is_file():
+                self.graph.parse(filepath, publicID=base_uri)  # type: ignore[arg-type]
             else:
                 for filename in filepath.iterdir():
                     if filename.is_file():

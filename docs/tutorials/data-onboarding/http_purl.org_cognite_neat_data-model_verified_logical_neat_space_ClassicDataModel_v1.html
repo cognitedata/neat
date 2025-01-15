@@ -261,21 +261,23 @@ function highlightFilter(filter) {
                             >
                                 <option selected>Select a Node by ID</option>
                                 
-                                    <option value="DoctrinoIncTimeSeries">DoctrinoIncTimeSeries</option>
+                                    <option value="ClassicAsset">ClassicAsset</option>
                                 
-                                    <option value="DoctrinoIncAsset">DoctrinoIncAsset</option>
+                                    <option value="ClassicDataSet">ClassicDataSet</option>
                                 
-                                    <option value="DoctrinoIncSourceSystem">DoctrinoIncSourceSystem</option>
+                                    <option value="ClassicLabel">ClassicLabel</option>
                                 
-                                    <option value="DoctrinoIncAssetToAssetEdge">DoctrinoIncAssetToAssetEdge</option>
+                                    <option value="ClassicSourceSystem">ClassicSourceSystem</option>
                                 
-                                    <option value="DoctrinoIncLabel">DoctrinoIncLabel</option>
+                                    <option value="ClassicEvent">ClassicEvent</option>
                                 
-                                    <option value="DoctrinoIncEvent">DoctrinoIncEvent</option>
+                                    <option value="ClassicFile">ClassicFile</option>
                                 
-                                    <option value="DoctrinoIncSequence">DoctrinoIncSequence</option>
+                                    <option value="ClassicTimeSeries">ClassicTimeSeries</option>
                                 
-                                    <option value="DoctrinoIncFile">DoctrinoIncFile</option>
+                                    <option value="ClassicRelationship">ClassicRelationship</option>
+                                
+                                    <option value="ClassicSequence">ClassicSequence</option>
                                 
                             </select>
                         </div>
@@ -329,8 +331,8 @@ function highlightFilter(filter) {
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "DoctrinoIncTimeSeries", "label": "DoctrinoIncTimeSeries", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncAsset", "label": "DoctrinoIncAsset", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncSourceSystem", "label": "DoctrinoIncSourceSystem", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncAssetToAssetEdge", "label": "DoctrinoIncAssetToAssetEdge", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncLabel", "label": "DoctrinoIncLabel", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncEvent", "label": "DoctrinoIncEvent", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncSequence", "label": "DoctrinoIncSequence", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncFile", "label": "DoctrinoIncFile", "shape": "dot", "size": 10}]);
-                  edges = new vis.DataSet([{"arrows": "to", "from": "DoctrinoIncTimeSeries", "label": "assetId", "to": "DoctrinoIncAsset", "width": 1}, {"arrows": "to", "from": "DoctrinoIncAsset", "label": "parentId", "to": "DoctrinoIncAsset", "width": 1}, {"arrows": "to", "from": "DoctrinoIncAsset", "label": "source", "to": "DoctrinoIncSourceSystem", "width": 1}, {"arrows": "to", "from": "DoctrinoIncAsset", "label": "relationshipAsset", "to": "DoctrinoIncAssetToAssetEdge", "width": 1}, {"arrows": "to", "from": "DoctrinoIncAssetToAssetEdge", "label": "startNode", "to": "DoctrinoIncAsset", "width": 1}, {"arrows": "to", "from": "DoctrinoIncAssetToAssetEdge", "label": "labels", "to": "DoctrinoIncLabel", "width": 1}, {"arrows": "to", "from": "DoctrinoIncEvent", "label": "assetIds", "to": "DoctrinoIncAsset", "width": 1}, {"arrows": "to", "from": "DoctrinoIncEvent", "label": "source", "to": "DoctrinoIncSourceSystem", "width": 1}, {"arrows": "to", "from": "DoctrinoIncSequence", "label": "assetId", "to": "DoctrinoIncAsset", "width": 1}, {"arrows": "to", "from": "DoctrinoIncFile", "label": "assetIds", "to": "DoctrinoIncAsset", "width": 1}, {"arrows": "to", "from": "DoctrinoIncFile", "label": "source", "to": "DoctrinoIncSourceSystem", "width": 1}]);
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "ClassicAsset", "label": "ClassicAsset", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "ClassicDataSet", "label": "ClassicDataSet", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "ClassicLabel", "label": "ClassicLabel", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "ClassicSourceSystem", "label": "ClassicSourceSystem", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "ClassicEvent", "label": "ClassicEvent", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "ClassicFile", "label": "ClassicFile", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "ClassicTimeSeries", "label": "ClassicTimeSeries", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "ClassicRelationship", "label": "ClassicRelationship", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "ClassicSequence", "label": "ClassicSequence", "shape": "dot", "size": 10}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "ClassicAsset", "label": "dataSetId", "to": "ClassicDataSet", "width": 1}, {"arrows": "to", "from": "ClassicAsset", "label": "parentId", "to": "ClassicAsset", "width": 1}, {"arrows": "to", "from": "ClassicAsset", "label": "labels", "to": "ClassicLabel", "width": 1}, {"arrows": "to", "from": "ClassicAsset", "label": "source", "to": "ClassicSourceSystem", "width": 1}, {"arrows": "to", "from": "ClassicEvent", "label": "assetIds", "to": "ClassicAsset", "width": 1}, {"arrows": "to", "from": "ClassicEvent", "label": "dataSetId", "to": "ClassicDataSet", "width": 1}, {"arrows": "to", "from": "ClassicEvent", "label": "source", "to": "ClassicSourceSystem", "width": 1}, {"arrows": "to", "from": "ClassicFile", "label": "assetIds", "to": "ClassicAsset", "width": 1}, {"arrows": "to", "from": "ClassicFile", "label": "dataSetId", "to": "ClassicDataSet", "width": 1}, {"arrows": "to", "from": "ClassicFile", "label": "source", "to": "ClassicSourceSystem", "width": 1}, {"arrows": "to", "from": "ClassicFile", "label": "labels", "to": "ClassicLabel", "width": 1}, {"arrows": "to", "from": "ClassicTimeSeries", "label": "assetId", "to": "ClassicAsset", "width": 1}, {"arrows": "to", "from": "ClassicTimeSeries", "label": "dataSetId", "to": "ClassicDataSet", "width": 1}, {"arrows": "to", "from": "ClassicRelationship", "label": "dataSetId", "to": "ClassicDataSet", "width": 1}, {"arrows": "to", "from": "ClassicRelationship", "label": "labels", "to": "ClassicLabel", "width": 1}, {"arrows": "to", "from": "ClassicSequence", "label": "assetId", "to": "ClassicAsset", "width": 1}, {"arrows": "to", "from": "ClassicSequence", "label": "dataSetId", "to": "ClassicDataSet", "width": 1}, {"arrows": "to", "from": "ClassicLabel", "label": "dataSetId", "to": "ClassicDataSet", "width": 1}]);
 
                   nodeColors = {};
                   allNodes = nodes.get({ returnType: "Object" });

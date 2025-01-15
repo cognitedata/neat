@@ -89,6 +89,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
         camel_case: bool = True,
         as_write: bool = False,
+        prefix: str | None = None,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.items = items
@@ -99,6 +100,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         self.skip_metadata_values = skip_metadata_values
         self.camel_case = camel_case
         self.as_write = as_write
+        self.prefix = prefix
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
@@ -174,6 +176,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         type_ = self._default_rdf_type
         if self.to_type:
             type_ = self.to_type(item) or type_
+        if self.prefix:
+            type_ = f"{self.prefix}{type_}"
         return self._SPACE_PATTERN.sub("_", type_)
 
     def _as_object(self, raw: Any, key: str) -> Literal | URIRef:
@@ -218,9 +222,12 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
         camel_case: bool = True,
         as_write: bool = False,
+        prefix: str | None = None,
     ):
         total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id))
-        return cls(items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write)
+        return cls(
+            items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write, prefix
+        )
 
     @classmethod
     @abstractmethod
@@ -241,9 +248,12 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
         camel_case: bool = True,
         as_write: bool = False,
+        prefix: str | None = None,
     ):
         total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id))
-        return cls(items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write)
+        return cls(
+            items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write, prefix
+        )
 
     @classmethod
     @abstractmethod
@@ -263,9 +273,12 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
         camel_case: bool = True,
         as_write: bool = False,
+        prefix: str | None = None,
     ):
         total, items = cls._from_file(file_path)
-        return cls(items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write)
+        return cls(
+            items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write, prefix
+        )
 
     @classmethod
     @abstractmethod

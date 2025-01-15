@@ -32,7 +32,7 @@ from cognite.neat._issues.errors import (
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
 from cognite.neat._rules.analysis._dms import DMSAnalysis
 from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
+from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json, String
 from cognite.neat._rules.models.entities._single_value import ViewEntity
 from cognite.neat._shared import InstanceType
 from cognite.neat._store import NeatGraphStore
@@ -159,7 +159,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         tracker = self._tracker(type(self).__name__, view_ids, "views")
         for view_id, (view, instance_count) in view_and_count_by_id.items():
-            pydantic_cls, edge_by_type, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
+            pydantic_cls, edge_by_type, edge_by_prop_id, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
             yield from issues
             tracker.issue(issues)
 
@@ -200,19 +200,60 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 )
 
                 for identifier, properties in instance_iterable:
+                    start_node, end_node = self._pop_start_end_node(properties)
+                    is_edge = start_node and end_node
+                    if (is_edge and view.used_for == "node") or (not is_edge and view.used_for == "edge"):
+                        instance_type = "edge" if is_edge else "node"
+                        creation_error = ResourceCreationError(
+                            identifier,
+                            instance_type,
+                            error=f"{instance_type.capitalize()} found in {view.used_for} view",
+                        )
+                        tracker.issue(creation_error)
+                        if stop_on_exception:
+                            raise creation_error
+                        yield creation_error
+                        continue
+
                     if skip_properties:
                         properties = {k: v for k, v in properties.items() if k not in skip_properties}
-                    try:
-                        yield self._create_node(identifier, properties, pydantic_cls, view_id)
-                    except ValueError as e:
-                        error_node = ResourceCreationError(identifier, "node", error=str(e))
-                        tracker.issue(error_node)
-                        if stop_on_exception:
-                            raise error_node from e
-                        yield error_node
-                    yield from self._create_edges(identifier, properties, edge_by_type, tracker)
+
+                    if start_node and end_node:
+                        # Is an edge
+                        try:
+                            yield self._create_edge_with_properties(
+                                identifier, properties, start_node, end_node, pydantic_cls, view_id
+                            )
+                        except ValueError as e:
+                            error_edge = ResourceCreationError(identifier, "edge", error=str(e))
+                            tracker.issue(error_edge)
+                            if stop_on_exception:
+                                raise error_edge from e
+                            yield error_edge
+                    else:
+                        try:
+                            yield self._create_node(identifier, properties, pydantic_cls, view_id)
+                        except ValueError as e:
+                            error_node = ResourceCreationError(identifier, "node", error=str(e))
+                            tracker.issue(error_node)
+                            if stop_on_exception:
+                                raise error_node from e
+                            yield error_node
+                        yield from self._create_edges_without_properties(
+                            identifier, properties, edge_by_type, edge_by_prop_id, tracker
+                        )
                 tracker.finish(track_id)
                 yield _END_OF_CLASS
+
+    @staticmethod
+    def _pop_start_end_node(properties: dict[str | InstanceType, list[str]]) -> tuple[str | None, str | None]:
+        start_node = properties.pop("startNode", [None])[0]
+        if not start_node:
+            start_node = properties.pop("start_node", [None])[0]
+        end_node = properties.pop("endNode", [None])[0]
+        if not end_node:
+            end_node = properties.pop("end_node", [None])[0]
+        return start_node, end_node
 
     def write_to_file(self, filepath: Path) -> None:
         if filepath.suffix not in [".json", ".yaml", ".yml"]:
@@ -298,17 +339,30 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def _create_validation_classes(
         self, view: dm.View
-    ) -> tuple[type[BaseModel], dict[str, tuple[str, dm.EdgeConnection]], NeatIssueList]:
+    ) -> tuple[
+        type[BaseModel],
+        dict[str, tuple[str, dm.EdgeConnection]],
+        dict[str, tuple[str, dm.EdgeConnection]],
+        NeatIssueList,
+    ]:
         issues = IssueList()
         field_definitions: dict[str, tuple[type, Any]] = {}
-        edge_by_property: dict[str, tuple[str, dm.EdgeConnection]] = {}
+        edge_by_type: dict[str, tuple[str, dm.EdgeConnection]] = {}
+        edge_by_prop_id: dict[str, tuple[str, dm.EdgeConnection]] = {}
         validators: dict[str, classmethod] = {}
         direct_relation_by_property: dict[str, dm.DirectRelation] = {}
         unit_properties: list[str] = []
         json_fields: list[str] = []
+        text_fields: list[str] = []
         for prop_id, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
-                edge_by_property[prop_id] = prop_id, prop
+                if prop.edge_source:
+                    # Edges with properties are created separately
+                    continue
+
+                edge_by_type[prop.type.external_id] = prop_id, prop
+                edge_by_prop_id[prop_id] = prop_id, prop
+
             if isinstance(prop, dm.MappedProperty):
                 if is_readonly_property(prop.container, prop.container_property_identifier):
                     continue
@@ -334,6 +388,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
                     if data_type == Json:
                         json_fields.append(prop_id)
+                    elif data_type == String:
+                        text_fields.append(prop_id)
                     python_type = data_type.python
                 if isinstance(prop.type, ListablePropertyType) and prop.type.is_list:
                     python_type = list[python_type]
@@ -369,10 +425,19 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 raise ValueError(f"Expect valid JSON string or dict for {info.field_name}: {value}")
 
+        def parse_text(cls, value: Any, info: ValidationInfo) -> Any:
+            if isinstance(value, list):
+                return [remove_namespace_from_uri(v) for v in value]
+            else:
+                return remove_namespace_from_uri(value)
+
         if json_fields:
             validators["parse_json_string"] = field_validator(*json_fields, mode="before")(parse_json_string)  # type: ignore[assignment, arg-type]
 
         validators["parse_list"] = field_validator("*", mode="before")(parse_list)  # type: ignore[assignment, arg-type]
+
+        if text_fields:
+            validators["parse_text"] = field_validator(*text_fields, mode="before")(parse_text)  # type: ignore[assignment, arg-type]
 
         if direct_relation_by_property:
 
@@ -414,7 +479,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             )
 
         pydantic_cls = create_model(view.external_id, __validators__=validators, **field_definitions)  # type: ignore[arg-type, call-overload]
-        return pydantic_cls, edge_by_property, issues
+        return pydantic_cls, edge_by_type, edge_by_prop_id, issues
 
     def _create_node(
         self,
@@ -435,17 +500,46 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             ],
         )
 
-    def _create_edges(
+    def _create_edge_with_properties(
+        self,
+        identifier: str,
+        properties: dict[str | InstanceType, list[str]],
+        start_node: str,
+        end_node: str,
+        pydantic_cls: type[BaseModel],
+        view_id: dm.ViewId,
+    ) -> dm.EdgeApply:
+        type_ = properties.pop(RDF.type, [None])[0]
+        created = pydantic_cls.model_validate(properties)
+        if type_ is None:
+            raise ValueError(f"Missing type for edge {identifier}")
+
+        return dm.EdgeApply(
+            space=self.instance_space,
+            external_id=identifier,
+            type=dm.DirectRelationReference(view_id.space, view_id.external_id),
+            start_node=dm.DirectRelationReference(self.instance_space, start_node),
+            end_node=dm.DirectRelationReference(self.instance_space, end_node),
+            sources=[
+                dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump(exclude_unset=True).items()))
+            ],
+        )
+
+    def _create_edges_without_properties(
         self,
         identifier: str,
         properties: dict[str, list[str]],
         edge_by_type: dict[str, tuple[str, dm.EdgeConnection]],
+        edge_by_prop_id: dict[str, tuple[str, dm.EdgeConnection]],
         tracker: Tracker,
     ) -> Iterable[dm.EdgeApply | NeatIssue]:
         for predicate, values in properties.items():
-            if predicate not in edge_by_type:
+            if predicate in edge_by_type:
+                prop_id, edge = edge_by_type[predicate]
+            elif predicate in edge_by_prop_id:
+                prop_id, edge = edge_by_prop_id[predicate]
+            else:
                 continue
-            prop_id, edge = edge_by_type[predicate]
             if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
                 error = ResourceDuplicatedError(
                     resource_type="edge",

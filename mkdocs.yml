@@ -31,7 +31,8 @@ nav:
       - Data Onboarding:
         - CSV Onboarding: tutorials/data-onboarding/csv_onboarding.ipynb
         - Multi CSVs Onboarding: tutorials/data-onboarding/multi_csv_onboarding.ipynb
-        - CDF Classic Onboarding: tutorials/data-onboarding/asset_hierarchy_migration.ipynb
+        - CDF Asset Hierarchy Onboarding: tutorials/data-onboarding/asset_hierarchy_migration.ipynb
+        - CDF Classic Knowledge Graph Onboarding: tutorials/data-onboarding/classic_knowledge_graph.ipynb
         - RDF Onboarding : tutorials/data-onboarding/nordic44_onboarding.ipynb
         - DEXPI Onboarding: tutorials/data-onboarding/dexpi/dexpi_onboarding.ipynb
         - AML Onboarding: tutorials/data-onboarding/aml/aml_onboarding.ipynb

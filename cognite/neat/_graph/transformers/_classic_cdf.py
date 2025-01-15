@@ -1,6 +1,7 @@
+import urllib.parse
 import warnings
 from abc import ABC
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from functools import lru_cache
 from typing import cast
 
@@ -9,6 +10,7 @@ from rdflib.query import ResultRow
 
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat._graph import extractors
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import ResourceNotFoundWarning
 from cognite.neat._utils.collection_ import iterate_progress_bar
 from cognite.neat._utils.rdf_ import (
@@ -229,7 +231,6 @@ class AssetEventConnector(BaseAssetConnector):
         )
 
 
-# TODO: standardise
 class AssetRelationshipConnector(BaseTransformerStandardised):
     description: str = "Connects assets via relationships"
     _use_only_once: bool = True
@@ -465,7 +466,7 @@ WHERE {{
                 ResourceNotFoundWarning(target_source_id, "class", str(relationship_id), "class"), stacklevel=2
             )
             return []
-        edge_id = str(object_by_predicates["externalId"])
+        edge_id = urllib.parse.quote(str(object_by_predicates["externalId"]))
         # If there is properties on the relationship, we create a new intermediate node
         edge_type = self._namespace[f"{source_type}To{target_type}Edge"]
         return self._create_edge(
@@ -516,3 +517,89 @@ WHERE {{
 
     def _predicate(self, target_type: str) -> URIRef:
         return self._namespace[f"relationship{target_type.capitalize()}"]
+
+
+class LookupRelationshipSourceTarget(BaseTransformerStandardised):
+    """When relationships are extracted, the source and target are extracted as literals. This transformers
+    lookup the externalID of the source and target and replaces the literals with the URIRef of the entity.
+    """
+
+    description = "Lookup relationships source and target externalId"
+    _use_only_once: bool = True
+    _need_changes = frozenset({extractors.RelationshipsExtractor.__name__})
+
+    _lookup_entity_query = """SELECT ?entity
+    WHERE {{
+        ?entity a <{entity_type}> .
+        ?entity <{namespace}externalId> "{external_id}" .
+    }}"""
+
+    def __init__(self, namespace: Namespace = CLASSIC_CDF_NAMESPACE, type_prefix: str | None = None) -> None:
+        self._namespace = namespace
+        self._type_prefix = type_prefix
+        self._lookup_entity: Callable[[URIRef, str], URIRef] | None = None
+
+    def _count_query(self) -> str:
+        return f"""SELECT (COUNT(?instance) AS ?instanceCount)
+WHERE {{
+  ?instance a <{self._namespace}ClassicRelationship> .
+}}"""
+
+    def _iterate_query(self) -> str:
+        return f"""SELECT ?instance ?source ?sourceType ?target ?targetType
+        WHERE {{
+          ?instance a <{self._namespace}ClassicRelationship> .
+          ?instance <{self._namespace}sourceExternalId> ?source .
+          ?instance <{self._namespace}targetExternalId> ?target .
+          ?instance <{self._namespace}sourceType> ?sourceType .
+          ?instance <{self._namespace}targetType> ?targetType
+        }}"""
+
+    def _iterator(self, graph: Graph) -> Iterator:
+        self._lookup_entity = self.create_lookup_entity_with_external_id(graph, self._namespace, self._type_prefix)
+        yield from graph.query(self._iterate_query())
+
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
+        output = RowTransformationOutput()
+        instance, source, source_type, target, target_type = cast(
+            tuple[URIRef, Literal, URIRef, Literal, URIRef], query_result_row
+        )
+        if self._lookup_entity is None:
+            raise NeatValueError(f"{type(self)}: .operation() called before .transform()")
+        try:
+            source_id = self._lookup_entity(source_type, source.toPython())
+        except ValueError:
+            warnings.warn(ResourceNotFoundWarning(source, "class", str(instance), "class"), stacklevel=2)
+            return output
+
+        try:
+            target_id = self._lookup_entity(target_type, target.toPython())
+        except ValueError:
+            warnings.warn(ResourceNotFoundWarning(target, "class", str(instance), "class"), stacklevel=2)
+            return output
+
+        output.remove_triples.append((instance, self._namespace.sourceExternalId, source))
+        output.remove_triples.append((instance, self._namespace.targetExternalId, target))
+        output.add_triples.append((instance, self._namespace.sourceExternalId, source_id))
+        output.add_triples.append((instance, self._namespace.targetExternalId, target_id))
+        output.instances_modified_count += 1
+        return output
+
+    @staticmethod
+    def create_lookup_entity_with_external_id(
+        graph: Graph, namespace: Namespace, type_prefix: str | None
+    ) -> Callable[[URIRef, str], URIRef]:
+        @lru_cache(maxsize=10_000)
+        def lookup_entity_with_external_id(entity_type: URIRef, external_id: str) -> URIRef:
+            if type_prefix:
+                entity_type = namespace[type_prefix + remove_namespace_from_uri(entity_type)]
+
+            query = LookupRelationshipSourceTarget._lookup_entity_query.format(
+                namespace=namespace, entity_type=entity_type, external_id=external_id
+            )
+            result = list(graph.query(query))
+            if len(result) == 1:
+                return cast(URIRef, result[0][0])  # type: ignore[index]
+            raise ValueError(f"Could not find entity with external_id {external_id} and type {entity_type}")
+
+        return lookup_entity_with_external_id

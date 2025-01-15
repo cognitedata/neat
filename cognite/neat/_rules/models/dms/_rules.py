@@ -1,10 +1,10 @@
 import warnings
 from collections.abc import Hashable
-from typing import Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import pandas as pd
 from cognite.client import data_modeling as dm
-from pydantic import Field, field_serializer, field_validator
+from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat._client.data_classes.schema import DMSSchema
@@ -47,6 +47,9 @@ from cognite.neat._rules.models.entities import (
     ViewEntity,
     ViewEntityList,
 )
+
+if TYPE_CHECKING:
+    from cognite.neat._rules.models import InformationRules
 
 _DEFAULT_VERSION = "1"
 
@@ -441,6 +444,51 @@ class DMSRules(BaseRules):
                     stacklevel=2,
                 )
         return value
+
+    @model_validator(mode="after")
+    def set_neat_id(self) -> "DMSRules":
+        namespace = self.metadata.namespace
+
+        for view in self.views:
+            if not view.neatId:
+                view.neatId = namespace[view.view.suffix]
+
+        for property_ in self.properties:
+            if not property_.neatId:
+                property_.neatId = namespace[f"{property_.view.suffix}/{property_.view_property}"]
+
+        return self
+
+    def update_neat_id(self) -> None:
+        """Update neat ids"""
+
+        namespace = self.metadata.namespace
+
+        for view in self.views:
+            view.neatId = namespace[view.view.suffix]
+
+        for property_ in self.properties:
+            property_.neatId = namespace[f"{property_.view.suffix}/{property_.view_property}"]
+
+    def sync_with_info_rules(self, info_rules: "InformationRules") -> None:
+        # Sync at the metadata level
+        if info_rules.metadata.physical == self.metadata.identifier:
+            self.metadata.logical = info_rules.metadata.identifier
+        else:
+            # if models are not linked to start with, we skip
+            return None
+
+        info_properties_by_neat_id = {prop.neatId: prop for prop in info_rules.properties}
+        dms_properties_by_neat_id = {prop.neatId: prop for prop in self.properties}
+        for neat_id, prop in info_properties_by_neat_id.items():
+            if prop.physical in dms_properties_by_neat_id:
+                dms_properties_by_neat_id[prop.physical].logical = neat_id
+
+        info_classes_by_neat_id = {cls.neatId: cls for cls in info_rules.classes}
+        dms_views_by_neat_id = {view.neatId: view for view in self.views}
+        for neat_id, class_ in info_classes_by_neat_id.items():
+            if class_.physical in dms_views_by_neat_id:
+                dms_views_by_neat_id[class_.physical].logical = neat_id
 
     def as_schema(self, instance_space: str | None = None, remove_cdf_spaces: bool = False) -> DMSSchema:
         from ._exporter import _DMSExporter

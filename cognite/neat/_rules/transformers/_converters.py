@@ -9,12 +9,14 @@ from typing import ClassVar, Literal, TypeVar, cast, overload
 
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
+from rdflib import Namespace
 
 from cognite.neat._client import NeatClient
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
 from cognite.neat._constants import (
     COGNITE_MODELS,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
+    get_default_prefixes_and_namespaces,
 )
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning
@@ -37,6 +39,8 @@ from cognite.neat._rules.models import (
     SheetList,
     data_types,
 )
+from cognite.neat._rules.models._rdfpath import Entity as RDFPathEntity
+from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
 from cognite.neat._rules.models.data_types import AnyURI, DataType, String
 from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSValidation, DMSView
 from cognite.neat._rules.models.dms._rules import DMSContainer
@@ -248,19 +252,21 @@ class PrefixEntities(RulesTransformer[ReadRules[T_InputRules], ReadRules[T_Input
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
-    def __init__(self, ignore_undefined_value_types: bool = False, mode: Literal["edge_properties"] | None = None):
+    def __init__(self, ignore_undefined_value_types: bool = False):
         self.ignore_undefined_value_types = ignore_undefined_value_types
-        self.mode = mode
 
     def transform(self, rules: InformationRules) -> DMSRules:
-        return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types, self.mode)
+        return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types)
 
 
 class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
     """Converts DMSRules to InformationRules."""
 
+    def __init__(self, instance_namespace: Namespace | None = None):
+        self.instance_namespace = instance_namespace
+
     def transform(self, rules: DMSRules) -> InformationRules:
-        return _DMSRulesConverter(rules).as_information_rules()
+        return _DMSRulesConverter(rules, self.instance_namespace).as_information_rules()
 
 
 class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
@@ -808,16 +814,107 @@ class AddClassImplements(RulesTransformer[InformationRules, InformationRules]):
         return f"Added implements property to classes with suffix {self.suffix}"
 
 
+class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
+    """Update the classic data model with the following:
+
+    This is a special purpose transformer that is only intended to be used with when reading
+    from classic cdf using the neat.read.cdf.classic.graph(...).
+
+    - ClassicTimeseries.isString from boolean to string
+    - Add class ClassicSourceSystem, and update all source properties from string to ClassicSourceSystem.
+    - Rename externalId properties to classicExternalId
+    - Renames the Relationship.sourceExternaId and Relationship.targetExternalId to startNode and endNode
+    """
+
+    def __init__(self, instance_namespace: Namespace) -> None:
+        self.instance_namespace = instance_namespace
+
+    @property
+    def description(self) -> str:
+        return "Update the classic data model to the data types in Cognite Core."
+
+    def transform(self, rules: InformationRules) -> InformationRules:
+        output = rules.model_copy(deep=True)
+        for prop in output.properties:
+            if prop.class_.suffix == "Timeseries" and prop.property_ == "isString":
+                prop.value_type = String()
+        prefix = output.metadata.prefix
+        namespace = output.metadata.namespace
+        source_system_class = InformationClass(
+            class_=ClassEntity(prefix=prefix, suffix="ClassicSourceSystem"),
+            description="A source system that provides data to the data model.",
+            neatId=namespace["ClassicSourceSystem"],
+        )
+        output.classes.append(source_system_class)
+        for prop in output.properties:
+            if prop.property_ == "source" and prop.class_.suffix != "ClassicSourceSystem":
+                prop.value_type = ClassEntity(prefix=prefix, suffix="ClassicSourceSystem")
+            elif prop.property_ == "externalId":
+                prop.property_ = "classicExternalId"
+            elif prop.property_ == "sourceExternalId" and prop.class_.suffix == "ClassicRelationship":
+                prop.property_ = "startNode"
+            elif prop.property_ == "targetExternalId" and prop.class_.suffix == "ClassicRelationship":
+                prop.property_ = "endNode"
+        instance_prefix = next(
+            (prefix for prefix, namespace in output.prefixes.items() if namespace == self.instance_namespace), None
+        )
+        if instance_prefix is None:
+            raise NeatValueError("Instance namespace not found in the prefixes.")
+
+        output.properties.append(
+            InformationProperty(
+                neatId=namespace["ClassicSourceSystem/name"],
+                property_="name",
+                value_type=String(),
+                class_=ClassEntity(prefix=prefix, suffix="ClassicSourceSystem"),
+                max_count=1,
+                instance_source=RDFPath(
+                    traversal=SingleProperty(
+                        class_=RDFPathEntity(
+                            prefix=instance_prefix,
+                            suffix="ClassicSourceSystem",
+                        ),
+                        property=RDFPathEntity(prefix=instance_prefix, suffix="name"),
+                    ),
+                ),
+            )
+        )
+        return output
+
+
+class ChangeViewPrefix(RulesTransformer[DMSRules, DMSRules]):
+    def __init__(self, old: str, new: str) -> None:
+        self.old = old
+        self.new = new
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        output = rules.model_copy(deep=True)
+        new_by_old: dict[ViewEntity, ViewEntity] = {}
+        for view in output.views:
+            if view.view.external_id.startswith(self.old):
+                new_external_id = f"{self.new}{view.view.external_id.removeprefix(self.old)}"
+                new_view_entity = view.view.copy(update={"suffix": new_external_id})
+                new_by_old[view.view] = new_view_entity
+                view.view = new_view_entity
+        for view in output.views:
+            if view.implements:
+                view.implements = [new_by_old.get(implemented, implemented) for implemented in view.implements]
+        for prop in output.properties:
+            if prop.view in new_by_old:
+                prop.view = new_by_old[prop.view]
+            if prop.value_type in new_by_old and isinstance(prop.value_type, ViewEntity):
+                prop.value_type = new_by_old[prop.value_type]
+        return output
+
+
 class _InformationRulesConverter:
-    _edge_properties: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
+    _start_or_end_node: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
 
     def __init__(self, information: InformationRules):
         self.rules = information
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
 
-    def as_dms_rules(
-        self, ignore_undefined_value_types: bool = False, mode: Literal["edge_properties"] | None = None
-    ) -> "DMSRules":
+    def as_dms_rules(self, ignore_undefined_value_types: bool = False) -> "DMSRules":
         from cognite.neat._rules.models.dms._rules import (
             DMSContainer,
             DMSProperty,
@@ -829,35 +926,44 @@ class _InformationRulesConverter:
         default_version = info_metadata.version
         default_space = self._to_space(info_metadata.prefix)
         dms_metadata = self._convert_metadata_to_dms(info_metadata)
-        edge_classes: set[ClassEntity] = set()
-        property_to_edge: dict[tuple[ClassEntity, str], ClassEntity] = {}
-        end_node_by_edge: dict[ClassEntity, ClassEntity] = {}
-        if mode == "edge_properties":
-            edge_classes = {
-                cls_.class_ for cls_ in self.rules.classes if cls_.implements and cls_.implements[0].suffix == "Edge"
-            }
-            property_to_edge = {
-                (prop.class_, prop.property_): prop.value_type
-                for prop in self.rules.properties
-                if prop.value_type in edge_classes and isinstance(prop.value_type, ClassEntity)
-            }
-            end_node_by_edge = {
-                prop.class_: prop.value_type
-                for prop in self.rules.properties
-                if prop.class_ in edge_classes
-                and (prop.property_ == "endNode" or prop.property_ == "end_node")
-                and isinstance(prop.value_type, ClassEntity)
-            }
+
+        properties_by_class: dict[ClassEntity, set[str]] = defaultdict(set)
+        for prop in self.rules.properties:
+            properties_by_class[prop.class_].add(prop.property_)
+
+        # Edge Classes is defined by having both startNode and endNode properties
+        edge_classes = {
+            cls_
+            for cls_, class_properties in properties_by_class.items()
+            if ({"startNode", "start_node"} & class_properties) and ({"endNode", "end_node"} & class_properties)
+        }
+        edge_value_types_by_class_property_pair = {
+            (prop.class_, prop.property_): prop.value_type
+            for prop in self.rules.properties
+            if prop.value_type in edge_classes and isinstance(prop.value_type, ClassEntity)
+        }
+        end_node_by_edge = {
+            prop.class_: prop.value_type
+            for prop in self.rules.properties
+            if prop.class_ in edge_classes
+            and (prop.property_ == "endNode" or prop.property_ == "end_node")
+            and isinstance(prop.value_type, ClassEntity)
+        }
 
         properties_by_class: dict[ClassEntity, list[DMSProperty]] = defaultdict(list)
         referenced_containers: dict[ContainerEntity, Counter[ClassEntity]] = defaultdict(Counter)
         for prop in self.rules.properties:
             if ignore_undefined_value_types and isinstance(prop.value_type, UnknownEntity):
                 continue
-            if prop.class_ in edge_classes and prop.property_ in self._edge_properties:
+            if prop.class_ in edge_classes and prop.property_ in self._start_or_end_node:
                 continue
             dms_property = self._as_dms_property(
-                prop, default_space, default_version, edge_classes, property_to_edge, end_node_by_edge
+                prop,
+                default_space,
+                default_version,
+                edge_classes,
+                edge_value_types_by_class_property_pair,
+                end_node_by_edge,
             )
             properties_by_class[prop.class_].append(dms_property)
             if dms_property.container:
@@ -870,12 +976,10 @@ class _InformationRulesConverter:
                 name=cls_.name,
                 view=cls_.class_.as_view_entity(default_space, default_version),
                 description=cls_.description,
-                implements=self._get_view_implements(cls_, info_metadata, mode),
+                implements=self._get_view_implements(cls_, info_metadata),
             )
 
             dms_view.logical = cls_.neatId
-            cls_.physical = dms_view.neatId
-
             views.append(dms_view)
 
         class_by_entity = {cls_.class_: cls_ for cls_ in self.rules.classes}
@@ -891,20 +995,33 @@ class _InformationRulesConverter:
             )
             most_used_class_entity = class_entities.most_common(1)[0][0]
             class_ = class_by_entity[most_used_class_entity]
+
+            if len(set(class_entities) - set(edge_classes)) == 0:
+                used_for: Literal["node", "edge", "all"] = "edge"
+            elif len(set(class_entities) - set(edge_classes)) == len(class_entities):
+                used_for = "node"
+            else:
+                used_for = "all"
+
             container = DMSContainer(
                 container=container_entity,
                 name=class_.name,
                 description=class_.description,
                 constraint=constrains or None,
+                used_for=used_for,
             )
             containers.append(container)
 
-        return DMSRules(
+        dms_rules = DMSRules(
             metadata=dms_metadata,
             properties=SheetList[DMSProperty]([prop for prop_set in properties_by_class.values() for prop in prop_set]),
             views=SheetList[DMSView](views),
             containers=SheetList[DMSContainer](containers),
         )
+
+        self.rules.sync_with_dms_rules(dms_rules)
+
+        return dms_rules
 
     @staticmethod
     def _create_container_constraint(
@@ -939,8 +1056,6 @@ class _InformationRulesConverter:
         )
 
         dms_metadata.logical = metadata.identifier
-        metadata.physical = dms_metadata.identifier
-
         return dms_metadata
 
     def _as_dms_property(
@@ -949,7 +1064,7 @@ class _InformationRulesConverter:
         default_space: str,
         default_version: str,
         edge_classes: set[ClassEntity],
-        property_to_edge: dict[tuple[ClassEntity, str], ClassEntity],
+        edge_value_types_by_class_property_pair: dict[tuple[ClassEntity, str], ClassEntity],
         end_node_by_edge: dict[ClassEntity, ClassEntity],
     ) -> "DMSProperty":
         from cognite.neat._rules.models.dms._rules import DMSProperty
@@ -963,7 +1078,9 @@ class _InformationRulesConverter:
             end_node_by_edge,
         )
 
-        connection = self._get_connection(info_property, value_type, property_to_edge, default_space, default_version)
+        connection = self._get_connection(
+            info_property, value_type, edge_value_types_by_class_property_pair, default_space, default_version
+        )
 
         container: ContainerEntity | None = None
         container_property: str | None = None
@@ -992,7 +1109,6 @@ class _InformationRulesConverter:
 
         # linking
         dms_property.logical = info_property.neatId
-        info_property.physical = dms_property.neatId
 
         return dms_property
 
@@ -1000,13 +1116,16 @@ class _InformationRulesConverter:
     def _get_connection(
         prop: InformationProperty,
         value_type: DataType | ViewEntity | DMSUnknownEntity,
-        property_to_edge: dict[tuple[ClassEntity, str], ClassEntity],
+        edge_value_types_by_class_property_pair: dict[tuple[ClassEntity, str], ClassEntity],
         default_space: str,
         default_version: str,
     ) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
-        if isinstance(value_type, ViewEntity) and (prop.class_, prop.property_) in property_to_edge:
-            edge_properties = property_to_edge[(prop.class_, prop.property_)]
-            return EdgeEntity(properties=edge_properties.as_view_entity(default_space, default_version))
+        if (
+            isinstance(value_type, ViewEntity)
+            and (prop.class_, prop.property_) in edge_value_types_by_class_property_pair
+        ):
+            edge_value_type = edge_value_types_by_class_property_pair[(prop.class_, prop.property_)]
+            return EdgeEntity(properties=edge_value_type.as_view_entity(default_space, default_version))
         if isinstance(value_type, ViewEntity) and prop.is_list:
             return EdgeEntity()
         elif isinstance(value_type, ViewEntity):
@@ -1035,6 +1154,7 @@ class _InformationRulesConverter:
         elif isinstance(prop.value_type, ClassEntity) and (prop.value_type in edge_classes):
             if prop.value_type in end_node_by_edge:
                 return end_node_by_edge[prop.value_type].as_view_entity(default_space, default_version)
+            # This occurs if the end node is not pointing to a class
             warnings.warn(
                 NeatValueWarning(
                     f"Edge class {prop.value_type} does not have 'endNode' property, defaulting to DMSUnknownEntity"
@@ -1091,13 +1211,9 @@ class _InformationRulesConverter:
         self.property_count_by_container[container_entity] += 1
         return container_entity, prop.property_
 
-    def _get_view_implements(
-        self, cls_: InformationClass, metadata: InformationMetadata, mode: Literal["edge_properties"] | None
-    ) -> list[ViewEntity]:
+    def _get_view_implements(self, cls_: InformationClass, metadata: InformationMetadata) -> list[ViewEntity]:
         implements = []
         for parent in cls_.implements or []:
-            if mode == "edge_properties" and parent.suffix == "Edge":
-                continue
             view_entity = parent.as_view_entity(metadata.prefix, metadata.version)
             implements.append(view_entity)
         return implements
@@ -1136,8 +1252,9 @@ class _InformationRulesConverter:
 
 
 class _DMSRulesConverter:
-    def __init__(self, dms: DMSRules):
+    def __init__(self, dms: DMSRules, instance_namespace: Namespace | None = None) -> None:
         self.dms = dms
+        self.instance_namespace = instance_namespace
 
     def as_information_rules(
         self,
@@ -1152,8 +1269,9 @@ class _DMSRulesConverter:
 
         metadata = self._convert_metadata_to_info(dms)
 
-        classes = [
-            InformationClass(
+        classes: list[InformationClass] = []
+        for view in self.dms.views:
+            info_class = InformationClass(
                 # we do not want a version in class as we use URI for the class
                 class_=ClassEntity(prefix=view.view.prefix, suffix=view.view.suffix),
                 description=view.description,
@@ -1163,8 +1281,19 @@ class _DMSRulesConverter:
                     for implemented_view in view.implements or []
                 ],
             )
-            for view in self.dms.views
-        ]
+
+            # Linking
+            info_class.physical = view.neatId
+            classes.append(info_class)
+
+        prefixes = get_default_prefixes_and_namespaces()
+        instance_prefix: str | None = None
+        if self.instance_namespace:
+            instance_prefix = next((k for k, v in prefixes.items() if v == self.instance_namespace), None)
+            if instance_prefix is None:
+                # We need to add a new prefix
+                instance_prefix = f"prefix_{len(prefixes) + 1}"
+                prefixes[instance_prefix] = self.instance_namespace
 
         properties: list[InformationProperty] = []
         value_type: DataType | ClassEntity | str
@@ -1181,23 +1310,41 @@ class _DMSRulesConverter:
             else:
                 raise ValueError(f"Unsupported value type: {property_.value_type.type_}")
 
-            properties.append(
-                InformationProperty(
-                    # Removing version
-                    class_=ClassEntity(suffix=property_.view.suffix, prefix=property_.view.prefix),
-                    property_=property_.view_property,
-                    value_type=value_type,
-                    description=property_.description,
-                    min_count=(0 if property_.nullable or property_.nullable is None else 1),
-                    max_count=(float("inf") if property_.is_list or property_.nullable is None else 1),
+            transformation: RDFPath | None = None
+            if instance_prefix is not None:
+                transformation = RDFPath(
+                    traversal=SingleProperty(
+                        class_=RDFPathEntity(prefix=instance_prefix, suffix=property_.view.external_id),
+                        property=RDFPathEntity(prefix=instance_prefix, suffix=property_.view_property),
+                    )
                 )
+
+            info_property = InformationProperty(
+                # Removing version
+                class_=ClassEntity(suffix=property_.view.suffix, prefix=property_.view.prefix),
+                property_=property_.view_property,
+                value_type=value_type,
+                description=property_.description,
+                min_count=(0 if property_.nullable or property_.nullable is None else 1),
+                max_count=(float("inf") if property_.is_list or property_.nullable is None else 1),
+                instance_source=transformation,
             )
 
-        return InformationRules(
+            # Linking
+            info_property.physical = property_.neatId
+
+            properties.append(info_property)
+
+        info_rules = InformationRules(
             metadata=metadata,
             properties=SheetList[InformationProperty](properties),
             classes=SheetList[InformationClass](classes),
+            prefixes=prefixes,
         )
+
+        self.dms.sync_with_info_rules(info_rules)
+
+        return info_rules
 
     @classmethod
     def _convert_metadata_to_info(cls, metadata: DMSMetadata) -> "InformationMetadata":

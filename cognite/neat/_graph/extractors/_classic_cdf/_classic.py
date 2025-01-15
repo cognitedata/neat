@@ -1,18 +1,25 @@
 import warnings
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from typing import ClassVar, NamedTuple
+from typing import ClassVar, NamedTuple, cast
 
 from cognite.client import CogniteClient
 from cognite.client.exceptions import CogniteAPIError
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
 
-from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
-from cognite.neat._graph.extractors._base import BaseExtractor
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE, get_default_prefixes_and_namespaces
+from cognite.neat._graph.extractors._base import KnowledgeGraphExtractor
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import CDFAuthWarning
+from cognite.neat._rules._shared import ReadRules
+from cognite.neat._rules.catalog import classic_model
+from cognite.neat._rules.models import InformationInputRules, InformationRules
+from cognite.neat._rules.models._rdfpath import Entity as RDFPathEntity
+from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
 from cognite.neat._shared import Triple
 from cognite.neat._utils.collection_ import chunker, iterate_progress_bar
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.text import to_snake
 
 from ._assets import AssetsExtractor
 from ._base import ClassicCDFBaseExtractor, InstanceIdPrefix
@@ -37,7 +44,7 @@ class _ClassicCoreType(NamedTuple):
     api_name: str
 
 
-class ClassicGraphExtractor(BaseExtractor):
+class ClassicGraphExtractor(KnowledgeGraphExtractor):
     """This extractor extracts all classic CDF Resources.
 
     The Classic Graph consists of the following core resource type.
@@ -93,6 +100,7 @@ class ClassicGraphExtractor(BaseExtractor):
         root_asset_external_id: str | None = None,
         namespace: Namespace | None = None,
         limit_per_type: int | None = None,
+        prefix: str | None = None,
     ):
         self._client = client
         if sum([bool(data_set_external_id), bool(root_asset_external_id)]) != 1:
@@ -101,8 +109,14 @@ class ClassicGraphExtractor(BaseExtractor):
         self._data_set_external_id = data_set_external_id
         self._namespace = namespace or CLASSIC_CDF_NAMESPACE
         self._extractor_args = dict(
-            namespace=self._namespace, unpack_metadata=False, as_write=True, camel_case=True, limit=limit_per_type
+            namespace=self._namespace,
+            unpack_metadata=False,
+            as_write=True,
+            camel_case=True,
+            limit=limit_per_type,
+            prefix=prefix,
         )
+        self._prefix = prefix
         self._limit_per_type = limit_per_type
 
         self._source_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
@@ -143,6 +157,59 @@ class ClassicGraphExtractor(BaseExtractor):
             warnings.warn(CDFAuthWarning("extract data sets", str(e)), stacklevel=2)
         else:
             self._extracted_data_sets = True
+
+    def get_information_rules(self) -> InformationRules:
+        # To avoid circular imports
+        from cognite.neat._rules.importers import ExcelImporter
+
+        unverified = cast(ReadRules[InformationInputRules], ExcelImporter(classic_model).to_rules())
+        if unverified.rules is None:
+            raise NeatValueError(f"Could not read the classic model rules from {classic_model}.")
+
+        verified = unverified.rules.as_verified_rules()
+        prefixes = get_default_prefixes_and_namespaces()
+        instance_prefix: str | None = next((k for k, v in prefixes.items() if v == self._namespace), None)
+        if instance_prefix is None:
+            # We need to add a new prefix
+            instance_prefix = f"prefix_{len(prefixes) + 1}"
+            prefixes[instance_prefix] = self._namespace
+        verified.prefixes = prefixes
+
+        is_snake_case = self._extractor_args["camel_case"] is False
+        for prop in verified.properties:
+            prop_id = prop.property_
+            if is_snake_case:
+                prop_id = to_snake(prop_id)
+            prop.instance_source = RDFPath(
+                traversal=SingleProperty(
+                    class_=RDFPathEntity(prefix=instance_prefix, suffix=prop.class_.suffix),
+                    property=RDFPathEntity(prefix=instance_prefix, suffix=prop_id),
+                )
+            )
+        return verified
+
+    @property
+    def description(self) -> str:
+        if self._data_set_external_id:
+            source = f"data set {self._data_set_external_id}."
+        elif self._root_asset_external_id:
+            source = f"root asset {self._root_asset_external_id}."
+        else:
+            source = "unknown source."
+        return f"Extracting clasic CDF Graph (Assets, TimeSeries, Sequences, Events, Files) from {source}."
+
+    @property
+    def source_uri(self) -> URIRef:
+        if self._data_set_external_id:
+            resource = "dataset"
+            external_id = self._data_set_external_id
+        elif self._root_asset_external_id:
+            resource = "asset"
+            external_id = self._root_asset_external_id
+        else:
+            resource = "unknown"
+            external_id = "unknown"
+        return DEFAULT_NAMESPACE[f"{self._client.config.project}/{resource}/{external_id}"]
 
     def _extract_core_start_nodes(self):
         for core_node in self._classic_node_types:
@@ -217,7 +284,7 @@ class ClassicGraphExtractor(BaseExtractor):
                 self._source_external_ids_by_type[resource_type].add(remove_namespace_from_uri(triple[2]))
             elif triple[1] == self._namespace.labels:
                 self._labels.add(remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.label))
-            elif triple[1] == self._namespace.datasetId:
+            elif triple[1] == self._namespace.dataSetId:
                 self._data_set_ids.add(
                     int(remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.data_set))
                 )

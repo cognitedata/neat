@@ -1,15 +1,19 @@
 from typing import Any, Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
+from cognite.client.utils.useful_types import SequenceNotStr
 
 from cognite.neat._client import NeatClient
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
+from cognite.neat._graph.transformers import ConvertLiteral, LiteralToEntity, LookupRelationshipSourceTarget
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import MissingCogniteClientWarning
 from cognite.neat._rules import catalog, importers
 from cognite.neat._rules.importers import BaseImporter
+from cognite.neat._rules.transformers import ClassicPrepareCore
 from cognite.neat._utils.reader import NeatReader
 
 from ._state import SessionState
@@ -31,6 +35,22 @@ class ReadAPI:
         self.csv = CSVReadAPI(state, verbose)
         self.yaml = YamlReadAPI(state, verbose)
         self.xml = XMLReadAPI(state, verbose)
+
+    def session(self, io: Any) -> None:
+        """Reads a Neat Session from a zip file.
+
+        Args:
+            io: file path to the Neat Session
+
+        Example:
+            ```python
+            neat.read.session("path_to_neat_session")
+            ```
+        """
+        reader = NeatReader.create(io)
+        path = reader.materialize_path()
+
+        self._state.instances.store.write(extractors.RdfFileExtractor.from_zip(path))
 
 
 @session_class_wrapper
@@ -77,6 +97,24 @@ class CDFReadAPI(BaseReadAPI):
 
         importer = importers.DMSImporter.from_data_model_id(self._get_client, data_model_id)
         return self._state.rule_import(importer)
+
+    def graph(
+        self, data_model_id: DataModelIdentifier, instance_space: str | SequenceNotStr[str] | None = None
+    ) -> IssueList:
+        """Reads a knowledge graph from Cognite Data Fusion (CDF).
+
+        Args:
+            data_model_id: Tuple of strings with the id of a CDF Data Model.
+            instance_space: The instance spaces to extract. If None, all instance spaces are extracted.
+
+        Returns:
+            IssueList: A list of issues that occurred during the extraction.
+
+        """
+        extractor = extractors.DMSGraphExtractor.from_data_model_id(
+            data_model_id, self._get_client, instance_space=instance_space
+        )
+        return self._state.write_graph(extractor)
 
 
 @session_class_wrapper
@@ -135,16 +173,37 @@ class CDFClassicAPI(BaseReadAPI):
             ```python
             neat.read.cdf.graph("root_asset_external_id")
             ```
-
         """
+        namespace = CLASSIC_CDF_NAMESPACE
         extractor = extractors.ClassicGraphExtractor(
-            self._get_client, root_asset_external_id=root_asset_external_id, limit_per_type=limit_per_type
+            self._get_client,
+            root_asset_external_id=root_asset_external_id,
+            limit_per_type=limit_per_type,
+            namespace=namespace,
+            prefix="Classic",
         )
-
-        issues = self._state.instances.store.write(extractor)
+        issues = self._state.write_graph(extractor)
         issues.action = "Read Classic Graph"
         if issues:
             print("Use the .inspect.issues() for more details")
+
+        # Converting the instances from classic to core
+        self._state.instances.store.transform(LookupRelationshipSourceTarget(namespace, "Classic"))
+        self._state.instances.store.transform(
+            ConvertLiteral(
+                namespace["ClassicTimeSeries"],
+                namespace["isString"],
+                lambda is_string: "string" if is_string else "numeric",
+            )
+        )
+        self._state.instances.store.transform(
+            LiteralToEntity(None, namespace["source"], "ClassicSourceSystem", "name"),
+        )
+        # Updating the information model.
+        self._state.rule_store.transform(ClassicPrepareCore(namespace))
+        # Update the instance store with the latest rules
+        information_rules = self._state.rule_store.last_verified_information_rules
+        self._state.instances.store.rules = information_rules
         return issues
 
 
@@ -396,7 +455,6 @@ class RDFExamples:
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
-    @property
     def nordic44(self) -> IssueList:
         """Reads the Nordic 44 knowledge graph into the NeatSession graph store."""
         self._state.instances.store.write(extractors.RdfFileExtractor(instances_examples.nordic44_knowledge_graph))
