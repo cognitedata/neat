@@ -18,7 +18,7 @@ def test_asset_ts_connector_transformer():
     # Connect assets and time series
     store.transform(transformers.AssetTimeSeriesConnector())
 
-    result = list(store.graph.query(f"SELECT ?asset ?ts WHERE {{ ?asset <{DEFAULT_NAMESPACE.timeSeries}> ?ts}}"))
+    result = list(store.dataset.query(f"SELECT ?asset ?ts WHERE {{ ?asset <{DEFAULT_NAMESPACE.timeSeries}> ?ts}}"))
 
     assert len(result) == 2
     assert result[0][0] == result[1][0]

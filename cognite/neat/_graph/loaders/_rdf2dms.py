@@ -142,7 +142,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if self.rules and self.rules.metadata.logical
             else None
         )
+
         view_and_count_by_id = self._select_views_with_instances(self.data_model.views)
+
         if self._client:
             view_and_count_by_id, properties_point_to_self = self._sort_by_direct_relation_dependencies(
                 view_and_count_by_id

@@ -72,7 +72,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
     ):
         return cls(
             IssueList(title=f"{cls.__name__} issues"),
-            store.graph,
+            store.dataset,
             data_model_id=data_model_id,
             max_number_of_instance=max_number_of_instance,
             non_existing_node_type=non_existing_node_type,
