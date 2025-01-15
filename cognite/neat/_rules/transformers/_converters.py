@@ -823,6 +823,7 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
     - ClassicTimeseries.isString from boolean to string
     - Add class ClassicSourceSystem, and update all source properties from string to ClassicSourceSystem.
     - Rename externalId properties to classicExternalId
+    - Renames the Relationship.sourceExternaId and Relationship.targetExternalId to startNode and endNode
     """
 
     def __init__(self, instance_namespace: Namespace) -> None:
@@ -850,6 +851,10 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
                 prop.value_type = ClassEntity(prefix=prefix, suffix="ClassicSourceSystem")
             elif prop.property_ == "externalId":
                 prop.property_ = "classicExternalId"
+            elif prop.property_ == "sourceExternalId" and prop.class_.suffix == "ClassicRelationship":
+                prop.property_ = "startNode"
+            elif prop.property_ == "targetExternalId" and prop.class_.suffix == "ClassicRelationship":
+                prop.property_ = "endNode"
         instance_prefix = next(
             (prefix for prefix, namespace in output.prefixes.items() if namespace == self.instance_namespace), None
         )
