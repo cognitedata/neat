@@ -1,27 +1,45 @@
 containers:
 - container: CircuitBreaker
+  used_for: node
 - container: CurrentTransformer
+  used_for: node
 - container: DisconnectSwitch
+  used_for: node
 - constraint: Substation
   container: DistributionSubstation
+  used_for: node
 - container: EnergyArea
+  used_for: node
 - container: EnergyConsumer
+  used_for: node
 - container: GeneratingUnit
+  used_for: node
 - container: GeoLocation
+  used_for: node
 - container: Meter
+  used_for: node
 - constraint: Substation
   container: OffshoreSubstation
+  used_for: node
 - container: OnshoreSubstation
+  used_for: node
 - constraint: GeoLocation
   container: Point
+  used_for: node
 - container: PowerLine
+  used_for: node
 - container: Substation
+  used_for: node
 - container: VoltageLevel
+  used_for: node
 - container: VoltageTransformer
+  used_for: node
 - constraint: EnergyArea
   container: WindFarm
+  used_for: node
 - constraint: GeneratingUnit
   container: WindTurbine
+  used_for: node
 metadata:
   created: '2024-02-09T00:00:00'
   creator: Jon,Emma,David
