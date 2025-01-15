@@ -129,15 +129,11 @@ class NeatSession:
             print("You can inspect the issues with the .inspect.issues(...) method.")
         return issues
 
-    def convert(
-        self, target: Literal["dms", "information"], mode: Literal["edge_properties"] | None = None
-    ) -> IssueList:
+    def convert(self, target: Literal["dms", "information"]) -> IssueList:
         """Converts the last verified data model to the target type.
 
         Args:
             target: The target type to convert the data model to.
-            mode: If the target is "dms", the mode to use for the conversion. None is used for default conversion.
-                "edge_properties" treas classes that implements Edge as edge properties.
 
         Example:
             Convert to DMS rules
@@ -153,7 +149,7 @@ class NeatSession:
         """
         converter: ConversionTransformer
         if target == "dms":
-            converter = InformationToDMS(mode=mode)
+            converter = InformationToDMS()
         elif target == "information":
             converter = ConvertToRules(InformationRules)
         else:
