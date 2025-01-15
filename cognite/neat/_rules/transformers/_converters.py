@@ -815,6 +815,69 @@ class AddClassImplements(RulesTransformer[InformationRules, InformationRules]):
         return f"Added implements property to classes with suffix {self.suffix}"
 
 
+class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
+    """Update the classic data model with the following:
+
+    This is a special purpose transformer that is only intended to be used with when reading
+    from classic cdf using the neat.read.cdf.classic.graph(...).
+
+    - ClassicTimeseries.isString from boolean to string
+    - Add class ClassicSourceSystem, and update all source properties from string to ClassicSourceSystem.
+    - Rename externalId properties to classicExternalId
+    """
+
+    def __init__(self, instance_namespace: Namespace) -> None:
+        self.instance_namespace = instance_namespace
+
+    @property
+    def description(self) -> str:
+        return "Update the classic data model to the data types in Cognite Core."
+
+    def transform(self, rules: InformationRules) -> InformationRules:
+        output = rules.model_copy(deep=True)
+        for prop in output.properties:
+            if prop.class_.suffix == "Timeseries" and prop.property_ == "isString":
+                prop.value_type = String()
+        prefix = output.metadata.prefix
+        namespace = output.metadata.namespace
+        source_system_class = InformationClass(
+            class_=ClassEntity(prefix=prefix, suffix="ClassicSourceSystem"),
+            description="A source system that provides data to the data model.",
+            neatId=namespace["ClassicSourceSystem"],
+        )
+        output.classes.append(source_system_class)
+        for prop in output.properties:
+            if prop.property_ == "source" and prop.class_.suffix != "ClassicSourceSystem":
+                prop.value_type = ClassEntity(prefix=prefix, suffix="ClassicSourceSystem")
+            elif prop.property_ == "externalId":
+                prop.property_ = "classicExternalId"
+        instance_prefix = next(
+            (prefix for prefix, namespace in output.prefixes.items() if namespace == self.instance_namespace), None
+        )
+        if instance_prefix is None:
+            raise NeatValueError("Instance namespace not found in the prefixes.")
+
+        output.properties.append(
+            InformationProperty(
+                neatId=namespace["ClassicSourceSystem/name"],
+                property_="name",
+                value_type=String(),
+                class_=ClassEntity(prefix=prefix, suffix="ClassicSourceSystem"),
+                max_count=1,
+                instance_source=RDFPath(
+                    traversal=SingleProperty(
+                        class_=RDFPathEntity(
+                            prefix=instance_prefix,
+                            suffix="ClassicSourceSystem",
+                        ),
+                        property=RDFPathEntity(prefix=instance_prefix, suffix="name"),
+                    ),
+                ),
+            )
+        )
+        return output
+
+
 class _InformationRulesConverter:
     _edge_properties: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
 

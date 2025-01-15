@@ -52,10 +52,11 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
         camel_case: bool = True,
         as_write: bool = False,
+        prefix: str | None = None,
         unpack_columns: bool = False,
     ):
         super().__init__(
-            items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write
+            items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write, prefix
         )
         self.unpack_columns = unpack_columns
 
@@ -71,6 +72,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
         camel_case: bool = True,
         as_write: bool = False,
+        prefix: str | None = None,
         unpack_columns: bool = False,
     ):
         total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id))
@@ -84,6 +86,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
             skip_metadata_values,
             camel_case,
             as_write,
+            prefix,
             unpack_columns,
         )
 
@@ -99,6 +102,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
         camel_case: bool = True,
         as_write: bool = False,
+        prefix: str | None = None,
         unpack_columns: bool = False,
     ):
         total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id))
@@ -112,6 +116,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
             skip_metadata_values,
             camel_case,
             as_write,
+            prefix,
             unpack_columns,
         )
 
@@ -126,6 +131,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
         camel_case: bool = True,
         as_write: bool = False,
+        prefix: str | None = None,
         unpack_columns: bool = False,
     ):
         total, items = cls._from_file(file_path)
@@ -139,6 +145,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
             skip_metadata_values,
             camel_case,
             as_write,
+            prefix,
             unpack_columns,
         )
 

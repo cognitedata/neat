@@ -65,7 +65,9 @@ class SessionState:
 
     def write_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
         self.instances.store.write(extractor)
-        return self.rule_store.import_graph(extractor)
+        issue_list = self.rule_store.import_graph(extractor)
+        self.instances.store.add_rules(self.rule_store.last_verified_information_rules)
+        return issue_list
 
 
 @dataclass
