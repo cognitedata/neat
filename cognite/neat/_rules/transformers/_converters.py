@@ -965,11 +965,20 @@ class _InformationRulesConverter:
             )
             most_used_class_entity = class_entities.most_common(1)[0][0]
             class_ = class_by_entity[most_used_class_entity]
+
+            if len(set(class_entities) - set(edge_classes)) == 0:
+                used_for: Literal["node", "edge", "all"] = "edge"
+            elif len(set(class_entities) - set(edge_classes)) == len(class_entities):
+                used_for = "node"
+            else:
+                used_for = "all"
+
             container = DMSContainer(
                 container=container_entity,
                 name=class_.name,
                 description=class_.description,
                 constraint=constrains or None,
+                used_for=used_for,
             )
             containers.append(container)
 
