@@ -70,7 +70,7 @@ def test_imf_attribute_nodes():
     knowledge_nodes = list(loader.load())
 
     assert len(knowledge_nodes) == 56
-    assert knowledge_nodes[0].sources[0].properties["predicate"].startswith("http")
+    assert knowledge_nodes[0].sources[0].properties["predicate"] == "CFIHOS-40000524"
     assert len(store.multi_type_instances) == 63
 
 

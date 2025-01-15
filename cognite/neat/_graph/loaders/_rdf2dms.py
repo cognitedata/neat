@@ -32,7 +32,7 @@ from cognite.neat._issues.errors import (
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
 from cognite.neat._rules.analysis._dms import DMSAnalysis
 from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json
+from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json, String
 from cognite.neat._rules.models.entities._single_value import ViewEntity
 from cognite.neat._shared import InstanceType
 from cognite.neat._store import NeatGraphStore
@@ -312,6 +312,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         direct_relation_by_property: dict[str, dm.DirectRelation] = {}
         unit_properties: list[str] = []
         json_fields: list[str] = []
+        text_fields: list[str] = []
         for prop_id, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
                 edge_by_type[prop.type.external_id] = prop_id, prop
@@ -341,6 +342,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
                     if data_type == Json:
                         json_fields.append(prop_id)
+                    elif data_type == String:
+                        text_fields.append(prop_id)
                     python_type = data_type.python
                 if isinstance(prop.type, ListablePropertyType) and prop.type.is_list:
                     python_type = list[python_type]
@@ -376,10 +379,19 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 raise ValueError(f"Expect valid JSON string or dict for {info.field_name}: {value}")
 
+        def parse_text(cls, value: Any, info: ValidationInfo) -> Any:
+            if isinstance(value, list):
+                return [remove_namespace_from_uri(v) for v in value]
+            else:
+                return remove_namespace_from_uri(value)
+
         if json_fields:
             validators["parse_json_string"] = field_validator(*json_fields, mode="before")(parse_json_string)  # type: ignore[assignment, arg-type]
 
         validators["parse_list"] = field_validator("*", mode="before")(parse_list)  # type: ignore[assignment, arg-type]
+
+        if text_fields:
+            validators["parse_text"] = field_validator(*text_fields, mode="before")(parse_text)  # type: ignore[assignment, arg-type]
 
         if direct_relation_by_property:
 
