@@ -18,6 +18,7 @@ Changes are grouped as follows:
 ## TBD
 ### Fixed
 - The `neat.prepare.instances.relationships_as_edges()` no longer creates invalid identifiers for the edges.
+- The `neat.to.cdf.instances()` can now create edges with properties.
 
 ### Added
 - Fast serialization of NeatGraphStore

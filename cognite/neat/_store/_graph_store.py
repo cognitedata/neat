@@ -252,16 +252,28 @@ class NeatGraphStore:
                 "Multi typed instances detected, issues with loading can occur!",
                 stacklevel=2,
             )
-
-        if cls := InformationAnalysis(self.rules).classes_by_neat_id.get(class_neat_id):
+        analysis = InformationAnalysis(self.rules)
+        if cls := analysis.classes_by_neat_id.get(class_neat_id):
             if property_link_pairs:
                 property_renaming_config = {
                     prop_uri: prop_name
                     for prop_name, prop_neat_id in property_link_pairs.items()
-                    if (
-                        prop_uri := InformationAnalysis(self.rules).neat_id_to_transformation_property_uri(prop_neat_id)
-                    )
+                    if (prop_uri := analysis.neat_id_to_instance_source_property_uri(prop_neat_id))
                 }
+                if information_properties := analysis.classes_with_properties(consider_inheritance=True).get(
+                    cls.class_
+                ):
+                    for prop in information_properties:
+                        if prop.neatId is None:
+                            continue
+                        # Include renaming done in the Information rules that are not present in the
+                        # property_link_pairs. The use case for this renaming to startNode and endNode
+                        # properties that are not part of DMSRules but will typically be present
+                        # in the Information rules.
+                        if (
+                            uri := analysis.neat_id_to_instance_source_property_uri(prop.neatId)
+                        ) and uri not in property_renaming_config:
+                            property_renaming_config[uri] = prop.property_
 
                 yield from self._read_via_class_entity(cls.class_, property_renaming_config)
                 return
