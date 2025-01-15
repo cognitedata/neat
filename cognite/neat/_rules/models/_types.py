@@ -76,6 +76,11 @@ NamespaceType = Annotated[
 URIRefType = Annotated[
     rdflib.URIRef,
     BeforeValidator(lambda value: rdflib.URIRef(value)),
+    PlainSerializer(
+        lambda value: str(value),
+        return_type=str,
+        when_used="unless-none",
+    ),
 ]
 
 PrefixType = Annotated[

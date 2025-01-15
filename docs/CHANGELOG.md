@@ -38,6 +38,11 @@ Changes are grouped as follows:
   as edges. Instead, information model to dms model conversion classes with both `startNode` and `endNode` properties
   are implemented as edges.
 
+### Removed
+- [BREAKING] The `neat.prepare.instances.classic_to_core()` and `neat.prepare.data_models.add_implents_to_classes()`
+  methods have been removed. These were only used for the classic to core flow. The simplified classic to core flow
+  now solves this automatically.
+
 ## [0.106.0] - 09-01-**2025**
 ### Added
 - Method for setting session client, `neat.set.client(...)`.

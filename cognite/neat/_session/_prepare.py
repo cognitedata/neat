@@ -7,7 +7,6 @@ from rdflib import URIRef
 from cognite.neat._constants import (
     get_default_prefixes_and_namespaces,
 )
-from cognite.neat._graph import extractors
 from cognite.neat._graph.transformers import (
     AttachPropertyFromTargetToSource,
     ConnectionToLiteral,
@@ -24,7 +23,6 @@ from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
-    AddClassImplements,
     IncludeReferenced,
     PrefixEntities,
     ReduceCogniteModel,
@@ -348,41 +346,6 @@ class InstancePrepareAPI:
         transformer = ConnectionToLiteral(subject_type, subject_predicate)
         self._state.instances.store.transform(transformer)
 
-    def classic_to_core(self) -> None:
-        """Prepares extracted CDF classic graph for the Core Data model.
-
-        !!! note "This method bundles several graph transformers which"
-            - Convert relationships to edges
-            - Convert TimeSeries.type from bool to enum
-            - Convert all properties 'source' to a connection to SourceSystem
-            - Convert all properties 'labels' from a connection to a string
-
-        Example:
-            Apply classic to core transformations:
-            ```python
-            neat.prepare.instances.classic_to_core()
-            ```
-        """
-        self.relationships_as_edges()
-        self.convert_data_type(
-            ("TimeSeries", "isString"), convert=lambda is_string: "string" if is_string else "numeric"
-        )
-        self.property_to_type((None, "source"), "SourceSystem", "name")
-        for type_ in [
-            extractors.EventsExtractor._default_rdf_type,
-            extractors.AssetsExtractor._default_rdf_type,
-            extractors.FilesExtractor._default_rdf_type,
-        ]:
-            try:
-                subject_type, subject_predicate = self._get_type_and_property_uris(type_, "labels")
-            except NeatValueError:
-                # If the type_.labels does not exist, continue. This is not an error, it just means that the
-                # Labels is not used in the graph for that type.
-                continue
-            else:
-                transformer = ConnectionToLiteral(subject_type, subject_predicate)
-                self._state.instances.store.transform(transformer)
-
 
 @session_class_wrapper
 class DataModelPrepareAPI:
@@ -545,13 +508,3 @@ class DataModelPrepareAPI:
                 "Please set the client in the session, NeatSession(client=client)."
             )
         return self._state.rule_transform(IncludeReferenced(self._state.client))
-
-    def add_implements_to_classes(self, suffix: Literal["Edge"], implements: str = "Edge") -> IssueList:
-        """All classes with the suffix will have the implements property set to the given value.
-
-        Args:
-            suffix: The suffix of the classes to add the implements property to.
-            implements:  The value of the implements property to set.
-
-        """
-        return self._state.rule_transform(AddClassImplements(implements, suffix))
