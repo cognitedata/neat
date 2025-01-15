@@ -3,10 +3,12 @@ from collections.abc import Iterable
 
 import pytest
 
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models import DMSInputRules, DMSRules, InformationInputRules, InformationRules
 from cognite.neat._rules.transformers import (
     AddClassImplements,
+    ClassicPrepareCore,
     IncludeReferenced,
     PrefixEntities,
     ReduceCogniteModel,
@@ -34,6 +36,8 @@ def instantiated_transformers_cls() -> Iterable[RulesTransformer]:
         elif issubclass(transformation_cls, RuleMapper | IncludeReferenced):
             # Manually checked as these require NeatClient or DMSRules in the setup
             continue
+        elif issubclass(transformation_cls, ClassicPrepareCore):
+            return ClassicPrepareCore(CLASSIC_CDF_NAMESPACE)
         else:
             yield transformation_cls()
 

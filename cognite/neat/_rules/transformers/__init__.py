@@ -1,6 +1,7 @@
 from ._base import RulesTransformer
 from ._converters import (
     AddClassImplements,
+    ClassicPrepareCore,
     ConvertToRules,
     DMSToInformation,
     IncludeReferenced,
@@ -20,6 +21,7 @@ from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRule
 __all__ = [
     "AddClassImplements",
     "AsParentPropertyId",
+    "ClassicPrepareCore",
     "ConvertToRules",
     "DMSToInformation",
     "IncludeReferenced",
