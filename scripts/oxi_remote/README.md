@@ -30,8 +30,7 @@ from cognite.neat import NeatSession
 
 
 # Assumes that the server runs on localhost port 7878
-store = NeatGraphStore.from_oxi_remote_store(query_endpoint="http://localhost:7878/query",
-                                             update_endpoint="http://localhost:7878/update")
+store = NeatGraphStore.from_oxi_remote_store(endpoint_url="http://localhost:7878")
 
 neat = NeatSession()
 
