@@ -15,9 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.107.0] - 15-01-**2025**
 ### Fixed
 - The `neat.prepare.instances.relationships_as_edges()` no longer creates invalid identifiers for the edges.
+- The `neat.to.cdf.instances()` can now create edges with properties.
 
 ### Added
 - Fast serialization of NeatGraphStore
@@ -28,10 +29,20 @@ Changes are grouped as follows:
 ### Improved
 - Better error message if `NeatSession(..., storage="oxigraph")` and the `oxigraph` package is not installed.
 - NeatIDs are now human-readable and deterministic.
+- The `neat.convert()` from DMS ot information now sets the container.usedFor to "node"/"edge"/"all" based on 
+  how the classes are implemented.
 
 ### Changed
 - [BREAKING] The `Transformation` column in the Information Data Model properties sheet has been renamed to
   `Instnace Source`.
+- [BREAKING] The `neat.convert()` no longer has a property `mode` used to recognize classes that should be implemented
+  as edges. Instead, information model to dms model conversion classes with both `startNode` and `endNode` properties
+  are implemented as edges.
+
+### Removed
+- [BREAKING] The `neat.prepare.instances.classic_to_core()` and `neat.prepare.data_models.add_implents_to_classes()`
+  methods have been removed. These were only used for the classic to core flow. The simplified classic to core flow
+  now solves this automatically.
 
 ## [0.106.0] - 09-01-**2025**
 ### Added

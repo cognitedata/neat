@@ -12,7 +12,7 @@ from rdflib import Dataset, Graph, Namespace, URIRef
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
-from cognite.neat._graph._shared import rdflib_to_oxi_type
+from cognite.neat._graph._shared import quad_formats, rdflib_to_oxi_type
 from cognite.neat._graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
@@ -132,7 +132,6 @@ class NeatGraphStore:
             # as well base_namespace
             self.rules[named_graph] = rules
             self.base_namespace[named_graph] = rules.metadata.namespace
-
             self.queries = Queries(self.dataset, self.rules)
             self.provenance.append(
                 Change.record(
@@ -225,6 +224,7 @@ class NeatGraphStore:
                 )
                 if isinstance(extractor.filepath, ZipExtFile):
                     extractor.filepath.close()
+
             elif isinstance(extractor, RdfFileExtractor):
                 success = False
                 issue_text = "\n".join([issue.as_message() for issue in extractor.issue_list])
@@ -279,23 +279,36 @@ class NeatGraphStore:
                 stacklevel=2,
             )
             return
+
         if self.multi_type_instances:
             warnings.warn(
                 "Multi typed instances detected, issues with loading can occur!",
                 stacklevel=2,
             )
 
-        if cls := InformationAnalysis(self.rules[named_graph]).classes_by_neat_id.get(class_neat_id):
+        analysis = InformationAnalysis(self.rules[named_graph])
+
+        if cls := analysis.classes_by_neat_id.get(class_neat_id):
             if property_link_pairs:
                 property_renaming_config = {
                     prop_uri: prop_name
                     for prop_name, prop_neat_id in property_link_pairs.items()
-                    if (
-                        prop_uri := InformationAnalysis(self.rules[named_graph]).neat_id_to_transformation_property_uri(
-                            prop_neat_id
-                        )
-                    )
+                    if (prop_uri := analysis.neat_id_to_instance_source_property_uri(prop_neat_id))
                 }
+                if information_properties := analysis.classes_with_properties(consider_inheritance=True).get(
+                    cls.class_
+                ):
+                    for prop in information_properties:
+                        if prop.neatId is None:
+                            continue
+                        # Include renaming done in the Information rules that are not present in the
+                        # property_link_pairs. The use case for this renaming to startNode and endNode
+                        # properties that are not part of DMSRules but will typically be present
+                        # in the Information rules.
+                        if (
+                            uri := analysis.neat_id_to_instance_source_property_uri(prop.neatId)
+                        ) and uri not in property_renaming_config:
+                            property_renaming_config[uri] = prop.property_
 
                 yield from self._read_via_class_entity(cls.class_, property_renaming_config)
                 return
@@ -495,23 +508,28 @@ class NeatGraphStore:
         if self.type_ == "OxigraphStore":
             local_import("pyoxigraph", "oxi")
 
-            # this is necessary to trigger rdflib oxigraph plugin
-            self.graph(named_graph).parse(
-                filepath,  # type: ignore[arg-type]
-                format=rdflib_to_oxi_type(format),
-                transactional=False,
-                publicID=base_uri,
-            )
+            if format in quad_formats():
+                self.dataset.parse(
+                    filepath,  # type: ignore[arg-type]
+                    format=rdflib_to_oxi_type(format),
+                    transactional=False,
+                    publicID=base_uri,
+                )
+            else:
+                self.graph(named_graph).parse(
+                    filepath,  # type: ignore[arg-type]
+                    format=rdflib_to_oxi_type(format),
+                    transactional=False,
+                    publicID=base_uri,
+                )
             self.dataset.store._store.optimize()  # type: ignore[attr-defined]
 
         # All other stores
         else:
-            if isinstance(filepath, ZipExtFile) or filepath.is_file():
-                self.graph(named_graph).parse(filepath, publicID=base_uri)  # type: ignore[arg-type]
+            if format in quad_formats():
+                self.dataset.parse(filepath, publicID=base_uri, format=format)  # type: ignore[arg-type]
             else:
-                for filename in filepath.iterdir():
-                    if filename.is_file():
-                        self.graph(named_graph).parse(filename, publicID=base_uri)
+                self.graph(named_graph).parse(filepath, publicID=base_uri, format=format)  # type: ignore[arg-type]
 
     def _add_triples(
         self,

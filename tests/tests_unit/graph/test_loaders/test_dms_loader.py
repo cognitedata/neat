@@ -71,8 +71,9 @@ def test_imf_attribute_nodes():
     knowledge_nodes = list(loader.load())
 
     assert len(knowledge_nodes) == 56
-    assert knowledge_nodes[0].sources[0].properties["predicate"].startswith("http")
-    assert len(store.multi_type_instances[store.named_graphs[0]]) == 63
+
+    assert knowledge_nodes[0].sources[0].properties["predicate"] == "CFIHOS-40000524"
+    assert len(store.multi_type_instances[store.default_named_graph]) == 63
 
 
 def test_extract_above_direct_relation_limit() -> None:

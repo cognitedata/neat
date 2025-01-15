@@ -2,11 +2,11 @@ instances: []
 rules:
   containers:
   - container: ExternalInterface
-    used_for: all
+    used_for: node
   - container: InternalElement
-    used_for: all
+    used_for: node
   - container: InternalLink
-    used_for: all
+    used_for: node
   metadata:
     created: '2024-09-19T00:00:00Z'
     creator: NEAT

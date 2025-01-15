@@ -15,14 +15,13 @@ def _read_source_file() -> str:
     return _CLASSIC_TO_CORE_MAPPING.read_text()
 
 
-def load_classic_to_core_mapping(org_name: str, source_space: str, source_version: str) -> DMSRules:
-    if not org_name:
-        raise NeatValueError("Organization name must be provided.")
-
+def load_classic_to_core_mapping(org_name: str | None, source_space: str, source_version: str) -> DMSRules:
     from cognite.neat._rules.importers import YAMLImporter
     from cognite.neat._rules.transformers import VerifyDMSRules
 
-    raw_str = _read_source_file().replace("Classic", org_name)
+    raw_str = _read_source_file()
+    if org_name is not None:
+        raw_str = raw_str.replace("Classic", org_name)
 
     loaded = yaml.safe_load(raw_str)
     loaded["metadata"]["space"] = source_space

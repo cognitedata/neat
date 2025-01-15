@@ -379,6 +379,15 @@ class NeatRulesStore:
         raise NeatValueError("No verified DMS rules found in the provenance.")
 
     @property
+    def last_verified_information_rules(self) -> InformationRules:
+        for change in reversed(self.provenance):
+            if isinstance(change.target_entity, ModelEntity) and isinstance(
+                change.target_entity.result, InformationRules
+            ):
+                return change.target_entity.result
+        raise NeatValueError("No verified information rules found in the provenance.")
+
+    @property
     def last_issues(self) -> IssueList:
         if not self.provenance:
             raise NeatValueError("No issues found in the provenance.")

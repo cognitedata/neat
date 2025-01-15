@@ -4,13 +4,16 @@ from cognite.client.data_classes.data_modeling import DataModelId, DataModelIden
 from cognite.client.utils.useful_types import SequenceNotStr
 
 from cognite.neat._client import NeatClient
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
+from cognite.neat._graph.transformers import ConvertLiteral, LiteralToEntity, LookupRelationshipSourceTarget
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import MissingCogniteClientWarning
 from cognite.neat._rules import catalog, importers
 from cognite.neat._rules.importers import BaseImporter
+from cognite.neat._rules.transformers import ClassicPrepareCore
 from cognite.neat._utils.reader import NeatReader
 
 from ._state import SessionState
@@ -170,16 +173,37 @@ class CDFClassicAPI(BaseReadAPI):
             ```python
             neat.read.cdf.graph("root_asset_external_id")
             ```
-
         """
+        namespace = CLASSIC_CDF_NAMESPACE
         extractor = extractors.ClassicGraphExtractor(
-            self._get_client, root_asset_external_id=root_asset_external_id, limit_per_type=limit_per_type
+            self._get_client,
+            root_asset_external_id=root_asset_external_id,
+            limit_per_type=limit_per_type,
+            namespace=namespace,
+            prefix="Classic",
         )
-
-        issues = self._state.instances.store.write(extractor)
+        issues = self._state.write_graph(extractor)
         issues.action = "Read Classic Graph"
         if issues:
             print("Use the .inspect.issues() for more details")
+
+        # Converting the instances from classic to core
+        self._state.instances.store.transform(LookupRelationshipSourceTarget(namespace, "Classic"))
+        self._state.instances.store.transform(
+            ConvertLiteral(
+                namespace["ClassicTimeSeries"],
+                namespace["isString"],
+                lambda is_string: "string" if is_string else "numeric",
+            )
+        )
+        self._state.instances.store.transform(
+            LiteralToEntity(None, namespace["source"], "ClassicSourceSystem", "name"),
+        )
+        # Updating the information model.
+        self._state.rule_store.transform(ClassicPrepareCore(namespace))
+        # Update the instance store with the latest rules
+        information_rules = self._state.rule_store.last_verified_information_rules
+        self._state.instances.store.rules[self._state.instances.store.default_named_graph] = information_rules
         return issues
 
 

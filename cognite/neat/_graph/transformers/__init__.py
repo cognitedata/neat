@@ -1,3 +1,4 @@
+from ._base import BaseTransformerStandardised
 from ._classic_cdf import (
     AddAssetDepth,
     AssetEventConnector,
@@ -5,6 +6,7 @@ from ._classic_cdf import (
     AssetRelationshipConnector,
     AssetSequenceConnector,
     AssetTimeSeriesConnector,
+    LookupRelationshipSourceTarget,
     RelationshipAsEdgeTransformer,
 )
 from ._prune_graph import (
@@ -29,6 +31,7 @@ __all__ = [
     "ConnectionToLiteral",
     "ConvertLiteral",
     "LiteralToEntity",
+    "LookupRelationshipSourceTarget",
     "MakeConnectionOnExactMatch",
     "PruneDanglingNodes",
     "PruneDeadEndEdges",
@@ -57,4 +60,6 @@ Transformers = (
     | ConvertLiteral
     | LiteralToEntity
     | ConnectionToLiteral
+    | BaseTransformerStandardised
+    | LookupRelationshipSourceTarget
 )
