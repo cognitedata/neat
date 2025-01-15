@@ -7,7 +7,6 @@ from collections.abc import Collection, Mapping
 from datetime import date, datetime
 from typing import ClassVar, Literal, TypeVar, cast, overload
 
-import yaml
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
 from rdflib import Namespace
@@ -883,17 +882,29 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
         return output
 
 
-class RenameString(RulesTransformer[DMSRules, DMSRules]):
+class ChangeViewPrefix(RulesTransformer[DMSRules, DMSRules]):
     def __init__(self, old: str, new: str) -> None:
         self.old = old
         self.new = new
 
     def transform(self, rules: DMSRules) -> DMSRules:
-        raw_str = yaml.safe_dump(rules.dump())
-
-        raw_str = raw_str.replace(self.old, self.new)
-
-        return DMSRules.model_validate(DMSInputRules.load(yaml.safe_load(raw_str)).dump())
+        output = rules.model_copy(deep=True)
+        new_by_old: dict[ViewEntity, ViewEntity] = {}
+        for view in output.views:
+            if view.view.external_id.startswith(self.old):
+                new_external_id = f"{self.new}{view.view.external_id.removeprefix(self.old)}"
+                new_view_entity = view.view.copy(update={"suffix": new_external_id})
+                new_by_old[view.view] = new_view_entity
+                view.view = new_view_entity
+        for view in output.views:
+            if view.implements:
+                view.implements = [new_by_old.get(implemented, implemented) for implemented in view.implements]
+        for prop in output.properties:
+            if prop.view in new_by_old:
+                prop.view = new_by_old[prop.view]
+            if prop.value_type in new_by_old and isinstance(prop.value_type, ViewEntity):
+                prop.value_type = new_by_old[prop.value_type]
+        return output
 
 
 class _InformationRulesConverter:

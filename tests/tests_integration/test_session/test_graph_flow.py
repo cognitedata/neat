@@ -180,7 +180,7 @@ class TestExtractToLoadFlow:
         neat.read.cdf.classic.graph("Utsira")
         neat.convert("dms")
 
-        neat.mapping.data_model.classic_to_core("Classic")
+        neat.mapping.data_model.classic_to_core("NeatInc")
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
         model_result = neat.to.cdf.data_model(existing="force")

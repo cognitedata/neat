@@ -3,8 +3,8 @@ from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.mapping import load_classic_to_core_mapping
 from cognite.neat._rules.transformers import (
     AsParentPropertyId,
+    ChangeViewPrefix,
     IncludeReferenced,
-    RenameString,
     RuleMapper,
     RulesTransformer,
 )
@@ -53,7 +53,7 @@ class DataModelMappingAPI:
 
         transformers: list[RulesTransformer] = []
         if company_prefix:
-            transformers.append(RenameString("Classic", company_prefix))
+            transformers.append(ChangeViewPrefix("Classic", company_prefix))
         transformers.extend(
             [
                 RuleMapper(load_classic_to_core_mapping(company_prefix, rules.metadata.space, rules.metadata.version)),

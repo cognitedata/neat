@@ -1,6 +1,7 @@
 from ._base import RulesTransformer
 from ._converters import (
     AddClassImplements,
+    ChangeViewPrefix,
     ClassicPrepareCore,
     ConvertToRules,
     DMSToInformation,
@@ -8,7 +9,6 @@ from ._converters import (
     InformationToDMS,
     PrefixEntities,
     ReduceCogniteModel,
-    RenameString,
     SetIDDMSModel,
     ToCompliantEntities,
     ToDataProductModel,
@@ -22,6 +22,7 @@ from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRule
 __all__ = [
     "AddClassImplements",
     "AsParentPropertyId",
+    "ChangeViewPrefix",
     "ClassicPrepareCore",
     "ConvertToRules",
     "DMSToInformation",
@@ -30,7 +31,6 @@ __all__ = [
     "MapOneToOne",
     "PrefixEntities",
     "ReduceCogniteModel",
-    "RenameString",
     "RuleMapper",
     "RulesTransformer",
     "SetIDDMSModel",
