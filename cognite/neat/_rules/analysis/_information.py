@@ -102,7 +102,7 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
 
         return property_renaming_configuration
 
-    def neat_id_to_transformation_property_uri(self, property_neat_id: URIRef) -> URIRef | None:
+    def neat_id_to_instance_source_property_uri(self, property_neat_id: URIRef) -> URIRef | None:
         if (
             (property_ := self.properties_by_neat_id.get(property_neat_id))
             and property_.instance_source

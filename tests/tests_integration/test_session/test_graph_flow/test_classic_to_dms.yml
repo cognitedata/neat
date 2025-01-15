@@ -1829,8 +1829,11 @@ instances:
   type:
     externalId: ClassicLabel
     space: sp_windfarm
-- externalId: Relationship_8ca8265214a7968fc1bcdbf71c8a623ae94be693c7aead5d779fb70e2a6ce130
-  instanceType: node
+- endNode:
+    externalId: http://purl.org/cognite/cdf-classic#Asset_8279627777657373
+    space: sp_instance_space
+  externalId: Relationship_8ca8265214a7968fc1bcdbf71c8a623ae94be693c7aead5d779fb70e2a6ce130
+  instanceType: edge
   sources:
   - properties:
       classicExternalId: WT-01_to_MetMast
@@ -1845,23 +1848,17 @@ instances:
       type: view
       version: v1
   space: sp_instance_space
+  startNode:
+    externalId: http://purl.org/cognite/cdf-classic#Asset_734702499721687
+    space: sp_instance_space
   type:
     externalId: ClassicRelationship
     space: sp_windfarm
 - endNode:
-    externalId: Label_metMast
+    externalId: http://purl.org/cognite/cdf-classic#Asset_8279627777657373
     space: sp_instance_space
-  externalId: Relationship_8ca8265214a7968fc1bcdbf71c8a623ae94be693c7aead5d779fb70e2a6ce130.labels.Label_metMast
+  externalId: Relationship_dd8ad0fb1b0957b30eedf6b2aedb7d39b2d663f4779fd85cc7c2be5285404447
   instanceType: edge
-  space: sp_instance_space
-  startNode:
-    externalId: Relationship_8ca8265214a7968fc1bcdbf71c8a623ae94be693c7aead5d779fb70e2a6ce130
-    space: sp_instance_space
-  type:
-    externalId: ClassicRelationship.labels
-    space: sp_windfarm
-- externalId: Relationship_dd8ad0fb1b0957b30eedf6b2aedb7d39b2d663f4779fd85cc7c2be5285404447
-  instanceType: node
   sources:
   - properties:
       classicExternalId: WT-02_to_MetMast
@@ -1876,20 +1873,11 @@ instances:
       type: view
       version: v1
   space: sp_instance_space
+  startNode:
+    externalId: http://purl.org/cognite/cdf-classic#Asset_2541486502201641
+    space: sp_instance_space
   type:
     externalId: ClassicRelationship
-    space: sp_windfarm
-- endNode:
-    externalId: Label_metMast
-    space: sp_instance_space
-  externalId: Relationship_dd8ad0fb1b0957b30eedf6b2aedb7d39b2d663f4779fd85cc7c2be5285404447.labels.Label_metMast
-  instanceType: edge
-  space: sp_instance_space
-  startNode:
-    externalId: Relationship_dd8ad0fb1b0957b30eedf6b2aedb7d39b2d663f4779fd85cc7c2be5285404447
-    space: sp_instance_space
-  type:
-    externalId: ClassicRelationship.labels
     space: sp_windfarm
 - externalId: Sequence_4211923354953533
   instanceType: node
