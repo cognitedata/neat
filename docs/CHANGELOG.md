@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Added
+- Support RDF Datasets in NeatGraphStore enabling writing of sources triples to dedicated named graphs
+
 ## [0.107.0] - 15-01-**2025**
 ### Fixed
 - The `neat.prepare.instances.relationships_as_edges()` no longer creates invalid identifiers for the edges.
@@ -24,12 +28,11 @@ Changes are grouped as follows:
 - Fast serialization of NeatGraphStore
 - `neat.to.session(...)` and `neat.from.session(...)` methods to save and load a `NeatSession` object to and from a file.
 - Neat can now read a knowledge graph from DMS with the `neat.read.cdf.graph(...)` method.
-- Support RDF Datasets in NeatGraphStore enabling writing of sources triples to dedicated named graphs
 
 ### Improved
 - Better error message if `NeatSession(..., storage="oxigraph")` and the `oxigraph` package is not installed.
 - NeatIDs are now human-readable and deterministic.
-- The `neat.convert()` from DMS ot information now sets the container.usedFor to "node"/"edge"/"all" based on 
+- The `neat.convert()` from DMS ot information now sets the container.usedFor to "node"/"edge"/"all" based on
   how the classes are implemented.
 
 ### Changed
