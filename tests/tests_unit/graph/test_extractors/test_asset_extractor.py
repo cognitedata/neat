@@ -24,8 +24,8 @@ def test_asset_extractor_with_lambda_unpacked_metadata():
     store.write(extractor)
 
     label_id = DEFAULT_NAMESPACE["Label_Substation"]
-    assert len(store.graph) == 73
-    assert len(list(store.graph.query(f"Select ?s Where {{ ?s <{DEFAULT_NAMESPACE['labels']}> <{label_id}>}}"))) == 1
+    assert len(store.dataset) == 73
+    assert len(list(store.dataset.query(f"Select ?s Where {{ ?s <{DEFAULT_NAMESPACE['labels']}> <{label_id}>}}"))) == 1
     expected_types = {
         "Substation",
         "SubGeographicalRegion",
@@ -51,5 +51,5 @@ def test_asset_extractor_with_packed_metadata():
     )
     store.write(extractor)
 
-    assert len(store.graph) == 43
-    assert len(list(store.graph.query(f"Select ?s Where {{ ?s <{DEFAULT_NAMESPACE['metadata']}> ?m}}"))) == 4
+    assert len(store.dataset) == 43
+    assert len(list(store.dataset.query(f"Select ?s Where {{ ?s <{DEFAULT_NAMESPACE['metadata']}> ?m}}"))) == 4

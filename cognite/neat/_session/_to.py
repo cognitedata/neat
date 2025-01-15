@@ -104,7 +104,7 @@ class ToAPI:
 
         with zipfile.ZipFile(filepath, "w") as zip_ref:
             zip_ref.writestr(
-                "neat-session/instances/instances.ttl",
+                "neat-session/instances/instances.trig",
                 self._state.instances.store.serialize(),
             )
 

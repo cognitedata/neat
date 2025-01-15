@@ -203,7 +203,7 @@ class CDFClassicAPI(BaseReadAPI):
         self._state.rule_store.transform(ClassicPrepareCore(namespace))
         # Update the instance store with the latest rules
         information_rules = self._state.rule_store.last_verified_information_rules
-        self._state.instances.store.rules = information_rules
+        self._state.instances.store.rules[self._state.instances.store.default_named_graph] = information_rules
         return issues
 
 

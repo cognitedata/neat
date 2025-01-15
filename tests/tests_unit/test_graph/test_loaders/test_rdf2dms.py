@@ -12,7 +12,7 @@ def car_case() -> NeatGraphStore:
     store = NeatGraphStore.from_oxi_local_store()
 
     for triple in car.TRIPLES:
-        store.graph.add(triple)
+        store.dataset.add(triple)
     read_rules = InferenceImporter.from_graph_store(store).to_rules()
     rules = VerifyInformationRules().transform(read_rules)
     store.add_rules(rules)

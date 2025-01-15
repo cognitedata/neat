@@ -71,7 +71,7 @@ class TestExtractToLoadFlow:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
 
-        neat._state.instances.store.graph.parse(DATA_FOLDER / "dexpi-raw-graph.ttl")
+        neat._state.instances.store.graph().parse(DATA_FOLDER / "dexpi-raw-graph.ttl")
         neat.prepare.instances.dexpi()
         neat.infer(max_number_of_instance=-1)
 
@@ -113,7 +113,7 @@ class TestExtractToLoadFlow:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
 
-        neat._state.instances.store.graph.parse(DATA_FOLDER / "aml-raw-graph.ttl")
+        neat._state.instances.store.graph().parse(DATA_FOLDER / "aml-raw-graph.ttl")
         neat.prepare.instances.aml()
         neat.infer(max_number_of_instance=-1)
 

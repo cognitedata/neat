@@ -307,7 +307,7 @@ class TestAttachPropertyFromTargetToSource:
     ):
         store = NeatGraphStore.from_memory_store()
 
-        store._add_triples(triples)
+        store._add_triples(triples, named_graph=store.default_named_graph)
 
         transformer = AttachPropertyFromTargetToSource(
             target_node_type=target_node_type,
@@ -318,9 +318,9 @@ class TestAttachPropertyFromTargetToSource:
             convert_literal_to_uri=convert_literal_to_uri,
         )
 
-        transformer.transform(store.graph)
+        transformer.transform(store.dataset)
 
-        triples_after = [triple for triple in store.graph.triples((None, None, None))]
+        triples_after = [triple for triple in store.dataset.triples((None, None, None))]
         triples_after = [[str(item) for item in triple] for triple in triples_after]
         # Sort the triples to ensure deterministic output
         triples_after.sort()
@@ -345,7 +345,7 @@ class TestAttachPropertyFromTargetToSource:
     ):
         store = NeatGraphStore.from_memory_store()
 
-        store._add_triples(triples)
+        store._add_triples(triples, named_graph=store.default_named_graph)
 
         transformer = AttachPropertyFromTargetToSource(
             target_node_type=target_node_type,
@@ -356,9 +356,9 @@ class TestAttachPropertyFromTargetToSource:
             convert_literal_to_uri=convert_literal_to_uri,
         )
 
-        transformer.transform(store.graph)
+        transformer.transform(store.dataset)
 
-        triples_after = [triple for triple in store.graph.triples((None, None, None))]
+        triples_after = [triple for triple in store.dataset.triples((None, None, None))]
         triples_after = [[str(item) for item in triple] for triple in triples_after]
         # Sort the triples to ensure deterministic output
         triples_after.sort()

@@ -55,15 +55,15 @@ def test_rdf_inference_with_removal_of_unknown_type():
     TERMINAL = Namespace("http://example.org/terminal/")
     store = NeatGraphStore.from_oxi_local_store()
 
-    store.graph.add((EX.substation1, RDF.type, SUBSTATION.Substation))
-    store.graph.add((EX.substation2, RDF.type, SUBSTATION.Substation))
-    store.graph.add((EX.substation3, RDF.type, SUBSTATION.Substation))
-    store.graph.add((EX.terminal1, RDF.type, TERMINAL.Terminal))
-    store.graph.add((EX.terminal2, RDF.type, TERMINAL.Terminal))
-    store.graph.add((EX.substation1, EX.hasTerminal, EX.terminal1))
-    store.graph.add((EX.substation2, EX.hasTerminal, EX.terminal3))
-    store.graph.add((EX.substation1, EX.name, Literal("Substation 1")))
-    store.graph.add((EX.substation3, EX.name, Literal("Substation 3")))
+    store.dataset.add((EX.substation1, RDF.type, SUBSTATION.Substation))
+    store.dataset.add((EX.substation2, RDF.type, SUBSTATION.Substation))
+    store.dataset.add((EX.substation3, RDF.type, SUBSTATION.Substation))
+    store.dataset.add((EX.terminal1, RDF.type, TERMINAL.Terminal))
+    store.dataset.add((EX.terminal2, RDF.type, TERMINAL.Terminal))
+    store.dataset.add((EX.substation1, EX.hasTerminal, EX.terminal1))
+    store.dataset.add((EX.substation2, EX.hasTerminal, EX.terminal3))
+    store.dataset.add((EX.substation1, EX.name, Literal("Substation 1")))
+    store.dataset.add((EX.substation3, EX.name, Literal("Substation 3")))
 
     with catch_issues():
         importer = InferenceImporter.from_graph_store(store, ("inferred", "drop_unknown", "rdf"))
@@ -112,7 +112,7 @@ def test_json_value_type_inference():
 def test_integer_as_long():
     store = NeatGraphStore.from_memory_store()
     for triple in car.TRIPLES:
-        store.graph.add(triple)
+        store.dataset.add(triple)
 
     with catch_issues():
         importer = InferenceImporter.from_graph_store(store)

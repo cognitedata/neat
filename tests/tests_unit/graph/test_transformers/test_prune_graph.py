@@ -67,11 +67,11 @@ class TestPruneGraph:
     ):
         store = NeatGraphStore.from_memory_store()
 
-        store._add_triples(original_triples)
+        store._add_triples(original_triples, store.default_named_graph)
 
-        transformation_result = PruneDeadEndEdges().transform(store.graph)
+        transformation_result = PruneDeadEndEdges().transform(store.dataset)
 
-        triples_after = [triple for triple in store.graph.triples((None, None, None))]
+        triples_after = [triple for triple in store.dataset.triples((None, None, None))]
         triples_after = [[str(item) for item in triple] for triple in triples_after]
         # Sort the triples to ensure deterministic output
         triples_after.sort()
