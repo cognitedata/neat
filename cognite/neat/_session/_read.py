@@ -7,7 +7,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
-from cognite.neat._graph.transformers import ConvertLiteral, LiteralToEntity
+from cognite.neat._graph.transformers import ConvertLiteral, LiteralToEntity, LookupRelationshipSourceTarget
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import MissingCogniteClientWarning
@@ -188,6 +188,7 @@ class CDFClassicAPI(BaseReadAPI):
             print("Use the .inspect.issues() for more details")
 
         # Converting the instances from classic to core
+        self._state.instances.store.transform(LookupRelationshipSourceTarget(namespace, "Classic"))
         self._state.instances.store.transform(
             ConvertLiteral(
                 namespace["ClassicTimeSeries"],
