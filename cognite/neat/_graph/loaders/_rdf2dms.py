@@ -356,7 +356,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         text_fields: list[str] = []
         for prop_id, prop in view.properties.items():
             if isinstance(prop, dm.EdgeConnection):
-                if prop.source:
+                if prop.edge_source:
                     # Edges with properties are created separately
                     continue
 
