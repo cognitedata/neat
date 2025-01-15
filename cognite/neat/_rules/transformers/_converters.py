@@ -7,6 +7,7 @@ from collections.abc import Collection, Mapping
 from datetime import date, datetime
 from typing import ClassVar, Literal, TypeVar, cast, overload
 
+import yaml
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
 from rdflib import Namespace
@@ -880,6 +881,19 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
             )
         )
         return output
+
+
+class RenameString(RulesTransformer[DMSRules, DMSRules]):
+    def __init__(self, old: str, new: str) -> None:
+        self.old = old
+        self.new = new
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        raw_str = yaml.safe_dump(rules.dump())
+
+        raw_str = raw_str.replace(self.old, self.new)
+
+        return DMSRules.model_validate(DMSInputRules.load(yaml.safe_load(raw_str)).dump())
 
 
 class _InformationRulesConverter:

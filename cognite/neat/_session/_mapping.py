@@ -1,7 +1,13 @@
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.mapping import load_classic_to_core_mapping
-from cognite.neat._rules.transformers import AsParentPropertyId, IncludeReferenced, RuleMapper
+from cognite.neat._rules.transformers import (
+    AsParentPropertyId,
+    IncludeReferenced,
+    RenameString,
+    RuleMapper,
+    RulesTransformer,
+)
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
@@ -18,7 +24,7 @@ class DataModelMappingAPI:
     def __init__(self, state: SessionState):
         self._state = state
 
-    def classic_to_core(self, company_prefix: str, use_parent_property_name: bool = True) -> IssueList:
+    def classic_to_core(self, company_prefix: str | None = None, use_parent_property_name: bool = True) -> IssueList:
         """Map classic types to core types.
 
         Note this automatically creates an extended CogniteCore model.
@@ -45,10 +51,15 @@ class DataModelMappingAPI:
         if self._state.client is None:
             raise NeatSessionError("Client is required to map classic to core")
 
-        transformers = [
-            RuleMapper(load_classic_to_core_mapping(company_prefix, rules.metadata.space, rules.metadata.version)),
-            IncludeReferenced(self._state.client),
-        ]
+        transformers: list[RulesTransformer] = []
+        if company_prefix:
+            transformers.append(RenameString("Classic", company_prefix))
+        transformers.extend(
+            [
+                RuleMapper(load_classic_to_core_mapping(company_prefix, rules.metadata.space, rules.metadata.version)),
+                IncludeReferenced(self._state.client),
+            ]
+        )
         if use_parent_property_name:
             transformers.append(AsParentPropertyId(self._state.client))
         return self._state.rule_transform(*transformers)
