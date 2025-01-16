@@ -182,10 +182,7 @@ class CDFClassicAPI(BaseReadAPI):
             namespace=namespace,
             prefix="Classic",
         )
-        issues = self._state.write_graph(extractor)
-        issues.action = "Read Classic Graph"
-        if issues:
-            print("Use the .inspect.issues() for more details")
+        extract_issues = self._state.write_graph(extractor)
 
         # Converting the instances from classic to core
         self._state.instances.store.transform(LookupRelationshipSourceTarget(namespace, "Classic"))
@@ -200,11 +197,19 @@ class CDFClassicAPI(BaseReadAPI):
             LiteralToEntity(None, namespace["source"], "ClassicSourceSystem", "name"),
         )
         # Updating the information model.
-        self._state.rule_store.transform(ClassicPrepareCore(namespace))
+        prepare_issues = self._state.rule_store.transform(ClassicPrepareCore(namespace))
         # Update the instance store with the latest rules
         information_rules = self._state.rule_store.last_verified_information_rules
         self._state.instances.store.rules[self._state.instances.store.default_named_graph] = information_rules
-        return issues
+
+        all_issues = IssueList(extract_issues + prepare_issues)
+        # Update the provenance with all issue.
+        object.__setattr__(self._state.instances.store.provenance[-1].target_entity, "issues", all_issues)
+        all_issues.action = "Read Classic Graph"
+        if all_issues:
+            print("Use the .inspect.issues() for more details")
+
+        return all_issues
 
 
 @session_class_wrapper

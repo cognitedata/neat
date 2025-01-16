@@ -391,7 +391,10 @@ class NeatRulesStore:
     def last_issues(self) -> IssueList:
         if not self.provenance:
             raise NeatValueError("No issues found in the provenance.")
-        return self.provenance[-1].target_entity.issues
+        last_change = self.provenance[-1]
+        if last_change.target_entity.issues:
+            return last_change.target_entity.issues
+        return last_change.source_entity.issues
 
     @property
     def last_outcome(self) -> UploadResultList:

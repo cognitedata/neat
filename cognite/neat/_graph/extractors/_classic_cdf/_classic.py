@@ -1,3 +1,4 @@
+import urllib.parse
 import warnings
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
@@ -9,7 +10,7 @@ from rdflib import Namespace, URIRef
 
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE, get_default_prefixes_and_namespaces
 from cognite.neat._graph.extractors._base import KnowledgeGraphExtractor
-from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._issues.errors import NeatValueError, ResourceNotFoundError
 from cognite.neat._issues.warnings import CDFAuthWarning
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.catalog import classic_model
@@ -138,6 +139,8 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
 
     def extract(self) -> Iterable[Triple]:
         """Extracts all classic CDF Resources."""
+        self._validate_exists()
+
         yield from self._extract_core_start_nodes()
 
         yield from self._extract_start_node_relationships()
@@ -209,7 +212,17 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         else:
             resource = "unknown"
             external_id = "unknown"
-        return DEFAULT_NAMESPACE[f"{self._client.config.project}/{resource}/{external_id}"]
+        return DEFAULT_NAMESPACE[f"{self._client.config.project}/{resource}/{urllib.parse.quote(external_id)}"]
+
+    def _validate_exists(self) -> None:
+        if self._data_set_external_id:
+            if self._client.data_sets.retrieve(external_id=self._data_set_external_id) is None:
+                raise ResourceNotFoundError(self._data_set_external_id, "data set")
+        elif self._root_asset_external_id:
+            if self._client.assets.retrieve(external_id=self._root_asset_external_id) is None:
+                raise ResourceNotFoundError(self._root_asset_external_id, "root asset")
+        else:
+            raise ValueError("Exactly one of data_set_external_id or root_asset_external_id must be set.")
 
     def _extract_core_start_nodes(self):
         for core_node in self._classic_node_types:

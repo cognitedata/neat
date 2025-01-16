@@ -64,10 +64,11 @@ class SessionState:
         return issues
 
     def write_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
-        self.instances.store.write(extractor)
-        issue_list = self.rule_store.import_graph(extractor)
+        extract_issues = self.instances.store.write(extractor)
+        issues = self.rule_store.import_graph(extractor)
         self.instances.store.add_rules(self.rule_store.last_verified_information_rules)
-        return issue_list
+        issues.extend(extract_issues)
+        return issues
 
 
 @dataclass
