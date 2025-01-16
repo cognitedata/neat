@@ -140,7 +140,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
             prefixes: Dict of prefixes and namespaces
         """
         if Namespace(get_namespace(URI)) not in prefixes.values():
-            prefixes[f"prefix_{len(prefixes)+1}"] = Namespace(get_namespace(URI))
+            prefixes[f"prefix_{len(prefixes) + 1}"] = Namespace(get_namespace(URI))
 
     @property
     def _metadata(self) -> dict:

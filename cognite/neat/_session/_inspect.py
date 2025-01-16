@@ -231,7 +231,7 @@ class InspectUploadOutcome:
                                     if i < 50:
                                         lines.append(f"  * {v}")
                                     elif i == 50 and total > 50:
-                                        lines.append(f"  * ... {total-50} more")
+                                        lines.append(f"  * ... {total - 50} more")
                                     elif i == 50 and total == 50:
                                         lines.append(f"  * {v}")
                                 else:

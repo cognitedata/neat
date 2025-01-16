@@ -109,8 +109,7 @@ class DMSProperty(SheetRow):
     )
     value_type: DataType | ViewEntity | DMSUnknownEntity = Field(
         alias="Value Type",
-        description="Value type that the property can hold. "
-        "It takes either subset of CDF primitive types or a View id",
+        description="Value type that the property can hold. It takes either subset of CDF primitive types or a View id",
     )
     nullable: bool | None = Field(
         default=None,

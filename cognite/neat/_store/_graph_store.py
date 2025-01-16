@@ -380,11 +380,11 @@ class NeatGraphStore:
         ).has_self_reference_property_transformations()
         if has_hop_transformations or has_self_reference_transformations:
             msg = (
-                f"Rules contain [{'Hop' if has_hop_transformations else '' }"
-                f", {'SelfReferenceProperty' if has_self_reference_transformations else '' }]"
+                f"Rules contain [{'Hop' if has_hop_transformations else ''}"
+                f", {'SelfReferenceProperty' if has_self_reference_transformations else ''}]"
                 " rdfpath."
-                f" Run [{'ReduceHopTraversal' if has_hop_transformations else '' }"
-                f", {'AddSelfReferenceProperty' if has_self_reference_transformations else '' }]"
+                f" Run [{'ReduceHopTraversal' if has_hop_transformations else ''}"
+                f", {'AddSelfReferenceProperty' if has_self_reference_transformations else ''}]"
                 " transformer(s) first!"
             )
 
@@ -657,7 +657,7 @@ class NeatGraphStore:
                     "graph! Loading could have issues!</strong></br>"
                 )
 
-        return f"{summary_text}" f"{provenance}"
+        return f"{summary_text}{provenance}"
 
     def _shorten_summary(self, summary: pd.DataFrame) -> pd.DataFrame:
         """Shorten summary to top 5 types by occurrence."""

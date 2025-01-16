@@ -74,7 +74,7 @@ class CDFNotSupportedWarning(NeatWarning, ABC):
 class NotSupportedViewContainerLimitWarning(CDFNotSupportedWarning):
     """The view {view_id} maps, {count} containers, which is more than the limit {limit}."""
 
-    fix = "Reduce the number of containers the view maps to." ""
+    fix = "Reduce the number of containers the view maps to."
 
     view_id: ViewId
     count: int

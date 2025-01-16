@@ -141,7 +141,7 @@ def generate_triples(
 
     # pregenerate instance ids for each remaining class
     instance_ids = {
-        key: [URIRef(namespace[f"{key.suffix}-{i+1}"]) for i in range(value)] for key, value in class_count.items()
+        key: [URIRef(namespace[f"{key.suffix}-{i + 1}"]) for i in range(value)] for key, value in class_count.items()
     }
 
     # create triple for each class instance defining its type
