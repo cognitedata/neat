@@ -23,6 +23,11 @@ def test_metadata_as_json_filed():
     importer = InferenceImporter.from_graph_store(store)
 
     info_rules = importer.to_rules().rules.as_verified_rules()
+    # Need to change externalId as it is not allowed in DMS
+    for prop in info_rules.properties:
+        if prop.property_ == "externalId":
+            prop.property_ = "classicExternalId"
+
     dms_rules = InformationToDMS().transform(info_rules)
 
     # simulating update of the DMS rules

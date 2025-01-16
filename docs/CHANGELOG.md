@@ -19,6 +19,9 @@ Changes are grouped as follows:
 ### Added
 - Support RDF Datasets in NeatGraphStore enabling writing of sources triples to dedicated named graphs
 
+### Improved
+- The `neat.infer()` no longer skips `externalId`/`external_id` properties when inferring the data model.
+
 ## [0.107.0] - 15-01-**2025**
 ### Fixed
 - The `neat.prepare.instances.relationships_as_edges()` no longer creates invalid identifiers for the edges.
