@@ -103,7 +103,7 @@ def test_json_value_type_inference():
 
     properties = {prop.property_: prop for prop in rules.properties}
 
-    assert len(rules.properties) == 8
+    assert len(rules.properties) == 9
     assert len(rules.classes) == 1
 
     assert isinstance(properties["metadata"].value_type, Json)
