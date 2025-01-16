@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import rdflib
+from cognite.client import data_modeling as dm
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -68,10 +69,12 @@ class NeatRulesStore:
 
     def import_(self, importer: BaseImporter) -> IssueList:
         agent = importer.agent
+
         source_entity = Entity(
             was_attributed_to=UNKNOWN_AGENT,
             id_=importer.source_uri,
         )
+
         return self._do_activity(importer.to_rules, agent, source_entity, importer.description)[1]
 
     def import_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
@@ -269,6 +272,57 @@ class NeatRulesStore:
         result, _ = self._do_activity(lambda: action(rules), agent, last_entity, description)
         return result
 
+    def _sync_import(self, source_entity: Entity, result: Rules, issue_list: IssueList) -> Entity:
+        """Sync the import activity with the provenance."""
+
+        # Case 1: rules_store empty
+        # Clean start return Source Entity with Unknown Agent
+        if self.empty:
+            return source_entity
+
+        # Case 2: source of imported rules not in rules_store and rules_store is not empty
+        # raise error and do not allow importing, error should suggest
+        # starting new session
+        if (source_id := self._get_source_id(result)) and not self.provenance.target_entity(source_id):
+            raise NeatValueError("Data model source is not in the provenance. Please start a new NEAT session.")
+
+        # need to check if the source_entity is the latest entity
+        if (source_id := self._get_source_id(result)) and (source_entity := self.provenance.target_entity(source_id)):  # type: ignore
+            if self._get_data_model_id(result) == self._get_data_model_id(
+                cast(Rules, cast(ModelEntity, source_entity).result)
+            ):
+                raise NeatValueError(
+                    "Imported rules and rules which were used as the source for them"
+                    " and which are are already in this neat session have the same data model id."
+                    "Import will be skipped."
+                    "\n\nSuggestions:\n\t(1) Update the data model id in the imported rules"
+                    ", for example bump the version \n\t(2) Start a new NEAT session"
+                    " and import the rules there."
+                )
+
+            if self.provenance[-1].target_entity.id_ != source_entity.id_:
+                raise NeatValueError(
+                    "Source of imported rules is not the latest entity in the provenance."
+                    "Pruning required to set the source entity to the latest entity in the provenance."
+                )
+
+        # Case 2: source_entity in rules_store and it is the latest entity
+        # typical case, exported rules for manual manipulation, eg. mapping
+        # we need to do sync with provenance
+        # sub cases
+        # # Case 2.1: result is identical to source entity
+        # # we raise error and skip importing
+        # # Case 2.2: result not identical to source_entity but they have same identifiers
+        # # we raise error and force users to update data model id
+        # # Case 2.3: result not identical to source_entity and they have different identifiers
+        # # everything runs smoothly
+
+        # Case 3: source_entity in rules_store and but it is not the latest entity
+        # we need to prompt user that the pruning will be required
+        # and that import should be run with maybe flag FORCE
+
+        return source_entity
+
     def _do_activity(
         self, action: Callable[[], Rules | None], agent: Agent, source_entity: Entity, description: str
     ) -> tuple[Any, IssueList]:
@@ -277,6 +331,10 @@ class NeatRulesStore:
         with catch_issues() as issue_list:
             result = action()
         end = datetime.now(timezone.utc)
+
+        # This handles import activity that needs to be properly registered
+        if source_entity.was_attributed_to == UNKNOWN_AGENT and result:
+            source_entity = self._sync_import(source_entity, result, issue_list)
 
         activity = Activity(
             was_associated_with=agent,
@@ -301,6 +359,24 @@ class NeatRulesStore:
 
         self.provenance.append(change)
         return result, issue_list
+
+    def _get_source_id(self, result: Rules) -> rdflib.URIRef | None:
+        """Return the source of the result."""
+
+        if isinstance(result, ReadRules) and result.rules is not None:
+            return result.rules.metadata.source_id
+        if isinstance(result, VerifiedRules):
+            return result.metadata.source
+        return None
+
+    def _get_data_model_id(self, result: Rules) -> dm.DataModelId | None:
+        """Return the source of the result."""
+
+        if isinstance(result, ReadRules) and result.rules is not None:
+            return result.rules.metadata.as_data_model_id()
+        if isinstance(result, VerifiedRules):
+            return result.metadata.as_data_model_id()
+        return None
 
     def _create_id(self, result: Any) -> rdflib.URIRef:
         identifier: rdflib.URIRef
@@ -398,3 +474,8 @@ class NeatRulesStore:
         if self._last_outcome is not None:
             return self._last_outcome
         raise NeatValueError("No outcome found in the provenance.")
+
+    @property
+    def empty(self) -> bool:
+        """Check if the store is empty."""
+        return not self.provenance
