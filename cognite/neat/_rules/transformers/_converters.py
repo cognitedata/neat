@@ -882,6 +882,31 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
         return output
 
 
+class ChangeViewPrefix(RulesTransformer[DMSRules, DMSRules]):
+    def __init__(self, old: str, new: str) -> None:
+        self.old = old
+        self.new = new
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        output = rules.model_copy(deep=True)
+        new_by_old: dict[ViewEntity, ViewEntity] = {}
+        for view in output.views:
+            if view.view.external_id.startswith(self.old):
+                new_external_id = f"{self.new}{view.view.external_id.removeprefix(self.old)}"
+                new_view_entity = view.view.copy(update={"suffix": new_external_id})
+                new_by_old[view.view] = new_view_entity
+                view.view = new_view_entity
+        for view in output.views:
+            if view.implements:
+                view.implements = [new_by_old.get(implemented, implemented) for implemented in view.implements]
+        for prop in output.properties:
+            if prop.view in new_by_old:
+                prop.view = new_by_old[prop.view]
+            if prop.value_type in new_by_old and isinstance(prop.value_type, ViewEntity):
+                prop.value_type = new_by_old[prop.value_type]
+        return output
+
+
 class _InformationRulesConverter:
     _start_or_end_node: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
 

@@ -81,7 +81,7 @@ class InstancesState:
     def store(self) -> NeatGraphStore:
         if not self.has_store:
             if self.store_type == "oxigraph":
-                self._store = NeatGraphStore.from_oxi_store()
+                self._store = NeatGraphStore.from_oxi_local_store()
             else:
                 self._store = NeatGraphStore.from_memory_store()
         return cast(NeatGraphStore, self._store)

@@ -21,10 +21,11 @@ def deployed_car_model(cognite_client: CogniteClient) -> dm.DataModelId:
 
 @pytest.fixture()
 def car_store() -> NeatGraphStore:
-    store = NeatGraphStore.from_memory_store(rules=car.get_care_rules())
+    store = NeatGraphStore.from_memory_store()
+    store.add_rules(car.get_care_rules())
 
     for triple in car.TRIPLES:
-        store.graph.add(triple)
+        store.dataset.add(triple)
 
     rules = InferenceImporter.from_graph_store(store).to_rules().rules.as_verified_rules()
     store.add_rules(rules)

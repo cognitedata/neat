@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  oxigraph:
+    image: oxigraph/oxigraph
+    init: true
+    volumes:
+      - ./data:/data
+    ports:
+      - "7878:7878"
+    restart: always

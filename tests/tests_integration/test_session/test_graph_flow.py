@@ -70,7 +70,7 @@ class TestExtractToLoadFlow:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
 
-        neat._state.instances.store.graph.parse(DATA_FOLDER / "dexpi-raw-graph.ttl")
+        neat._state.instances.store.graph().parse(DATA_FOLDER / "dexpi-raw-graph.ttl")
         neat.prepare.instances.dexpi()
         neat.infer(max_number_of_instance=-1)
 
@@ -112,7 +112,7 @@ class TestExtractToLoadFlow:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
 
-        neat._state.instances.store.graph.parse(DATA_FOLDER / "aml-raw-graph.ttl")
+        neat._state.instances.store.graph().parse(DATA_FOLDER / "aml-raw-graph.ttl")
         neat.prepare.instances.aml()
         neat.infer(max_number_of_instance=-1)
 
@@ -180,7 +180,7 @@ class TestExtractToLoadFlow:
         neat.read.cdf.classic.graph("Utsira")
         neat.convert("dms")
 
-        neat.mapping.data_model.classic_to_core("Classic")
+        neat.mapping.data_model.classic_to_core("NeatInc")
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
         model_result = neat.to.cdf.data_model(existing="force")

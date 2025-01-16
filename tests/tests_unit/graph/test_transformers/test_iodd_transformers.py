@@ -13,9 +13,9 @@ def test_iodd_attach_property_from_target_to_source():
     store.write(IODDExtractor.from_file(IODD_EXAMPLE))
 
     flatten_iodd = IODDAttachPropertyFromTargetToSource()
-    flatten_iodd.transform(store.graph)
+    flatten_iodd.transform(store.dataset)
 
-    triples = [triple for triple in store.graph.triples((None, None, None))]
+    triples = [triple for triple in store.dataset.triples((None, None, None))]
 
     assert len(triples) == 386
 
@@ -25,12 +25,12 @@ def test_prune_dangling_nodes():
     store.write(IODDExtractor.from_file(IODD_EXAMPLE))
 
     flatten_iodd = IODDAttachPropertyFromTargetToSource()
-    flatten_iodd.transform(store.graph)
+    flatten_iodd.transform(store.dataset)
 
     prune_transformer = IODDPruneDanglingNodes()
 
-    prune_transformer.transform(store.graph)
+    prune_transformer.transform(store.dataset)
 
-    triples = [triple for triple in store.graph.triples((None, None, None))]
+    triples = [triple for triple in store.dataset.triples((None, None, None))]
 
     assert len(triples) == 60

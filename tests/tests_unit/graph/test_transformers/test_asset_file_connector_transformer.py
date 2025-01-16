@@ -18,7 +18,7 @@ def test_asset_file_connector_transformer():
     # Connect assets and time series
     store.transform(transformers.AssetFileConnector())
 
-    result = list(store.graph.query(f"SELECT ?asset ?file WHERE {{ ?asset <{DEFAULT_NAMESPACE.file}> ?file}}"))
+    result = list(store.dataset.query(f"SELECT ?asset ?file WHERE {{ ?asset <{DEFAULT_NAMESPACE.file}> ?file}}"))
 
     assert len(result) == 2
     assert result[0][0] != result[1][0]

@@ -36,7 +36,6 @@ class RdfFileExtractor(BaseExtractor):
 
         self.format = guess_format(str(self.filepath) if isinstance(self.filepath, Path) else self.filepath.name)
 
-        print(self.format)
         if isinstance(self.filepath, Path) and not self.filepath.exists():
             self.issue_list.append(FileNotFoundNeatError(self.filepath))
 
@@ -55,7 +54,7 @@ class RdfFileExtractor(BaseExtractor):
     def from_zip(
         cls,
         filepath: Path,
-        filename: str = "neat-session/instances/instances.ttl",
+        filename: str = "neat-session/instances/instances.trig",
         base_uri: URIRef = DEFAULT_BASE_URI,
         issue_list: IssueList | None = None,
     ):
@@ -69,6 +68,8 @@ class RdfFileExtractor(BaseExtractor):
                 if file_info.filename == filename:
                     # We need to open the file in the zip file, and close it upon
                     # triple extraction ...
+
+                    print(file_info)
                     file = zip_ref.open(file_info)
                     return cls(cast(zipfile.ZipExtFile, file), base_uri, issue_list)
 

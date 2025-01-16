@@ -19,7 +19,7 @@ def test_asset_relationship_connector_transformer():
     store.transform(transformers.AssetRelationshipConnector())
 
     result = list(
-        store.graph.query(
+        store.dataset.query(
             f"SELECT ?sourceAsset ?targetAsset WHERE {{ ?sourceAsset <{DEFAULT_NAMESPACE.relationship}> ?targetAsset}}"
         )
     )
