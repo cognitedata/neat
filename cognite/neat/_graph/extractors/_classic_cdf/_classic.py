@@ -1,3 +1,4 @@
+import urllib.parse
 import warnings
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
@@ -211,7 +212,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         else:
             resource = "unknown"
             external_id = "unknown"
-        return DEFAULT_NAMESPACE[f"{self._client.config.project}/{resource}/{external_id}"]
+        return DEFAULT_NAMESPACE[f"{self._client.config.project}/{resource}/{urllib.parse.quote(external_id)}"]
 
     def _validate_exists(self) -> None:
         if self._data_set_external_id:
