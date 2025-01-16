@@ -31,7 +31,6 @@ from ._properties import (
     PropertyDirectRelationLimitWarning,
     PropertyNotFoundWarning,
     PropertyOverwritingWarning,
-    PropertySkippedWarning,
     PropertyTypeNotSupportedWarning,
     PropertyValueTypeUndefinedWarning,
 )
@@ -68,7 +67,6 @@ __all__ = [
     "PropertyDirectRelationLimitWarning",
     "PropertyNotFoundWarning",
     "PropertyOverwritingWarning",
-    "PropertySkippedWarning",
     "PropertyTypeNotSupportedWarning",
     "PropertyValueTypeUndefinedWarning",
     "RegexViolationWarning",

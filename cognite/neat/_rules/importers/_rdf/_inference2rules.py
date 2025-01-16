@@ -8,7 +8,7 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
-from cognite.neat._issues.warnings import PropertySkippedWarning, PropertyValueTypeUndefinedWarning
+from cognite.neat._issues.warnings import PropertyValueTypeUndefinedWarning
 from cognite.neat._rules.models import data_types
 from cognite.neat._rules.models.data_types import AnyURI
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
@@ -190,18 +190,6 @@ class InferenceImporter(BaseRDFImporter):
                     if property_uri == RDF.type:
                         continue
                     property_id = remove_namespace_from_uri(property_uri)
-                    if property_id in {"external_id", "externalId"}:
-                        skip_issue = PropertySkippedWarning(
-                            resource_type="Property",
-                            identifier=f"{class_id}:{property_id}",
-                            property_name=property_id,
-                            reason="External ID is assumed to be the unique identifier of the instance "
-                            "and is not part of the data model schema.",
-                        )
-                        if skip_issue not in self.issue_list:
-                            self.issue_list.append(skip_issue)
-                        continue
-
                     self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
 
                     if isinstance(data_type_uri, URIRef):
