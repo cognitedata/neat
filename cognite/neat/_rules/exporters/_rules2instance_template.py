@@ -96,13 +96,13 @@ class InstanceTemplateExporter(BaseExporter[InformationRules, Workbook]):
 def _add_index_identifiers(workbook: Workbook, sheet: str, no_rows: int):
     """Adds index-based auto identifier to a sheet identifier column"""
     for i in range(no_rows):
-        workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{sheet}-{i+1}")'
+        workbook[sheet][f"A{i + 2}"] = f'=IF(ISBLANK(B{i + 2}), "","{sheet}-{i + 1}")'
 
 
 def _add_uuid_identifiers(workbook: Workbook, sheet: str, no_rows: int):
     """Adds UUID-based auto identifier to a sheet identifier column"""
     for i in range(no_rows):
-        workbook[sheet][f"A{i+2}"] = f'=IF(ISBLANK(B{i+2}), "","{sheet}-{uuid.uuid4()}")'
+        workbook[sheet][f"A{i + 2}"] = f'=IF(ISBLANK(B{i + 2}), "","{sheet}-{uuid.uuid4()}")'
 
 
 def _add_drop_down_list(
@@ -122,7 +122,7 @@ def _add_drop_down_list(
     workbook[sheet].add_data_validation(drop_down_list)
 
     for i in range(no_rows):
-        drop_down_list.add(workbook[sheet][f"{column}{i+2}"])
+        drop_down_list.add(workbook[sheet][f"{column}{i + 2}"])
 
 
 def _adjust_column_width(workbook: Workbook):

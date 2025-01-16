@@ -115,7 +115,7 @@ def to_construct_triples(
         graph_template_triple = Triple(
             subject="?instance",
             predicate=f"{transformation.class_.prefix}:{transformation.property_}",
-            object=f'?{re.sub(r"[^_a-zA-Z0-9/_]", "_", str(transformation.property_).lower())}',
+            object=f"?{re.sub(r'[^_a-zA-Z0-9/_]', '_', str(transformation.property_).lower())}",
             optional=False,
         )
         templates.append(graph_template_triple)

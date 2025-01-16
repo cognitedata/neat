@@ -157,7 +157,7 @@ class InferenceImporter(BaseRDFImporter):
         for class_uri, no_instances in self.graph.query(ORDERED_CLASSES_QUERY):  # type: ignore[misc]
             if (class_id := remove_namespace_from_uri(cast(URIRef, class_uri))) in classes:
                 # handles cases when class id is already present in classes
-                class_id = f"{class_id}_{len(classes)+1}"
+                class_id = f"{class_id}_{len(classes) + 1}"
 
             classes[class_id] = {
                 "class_": class_id,

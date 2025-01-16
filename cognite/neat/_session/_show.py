@@ -112,7 +112,7 @@ class ShowDataModelAPI(ShowBaseAPI):
         else:
             # This should never happen, but we need to handle it to satisfy mypy
             raise NeatSessionError(
-                f"Unsupported type {type(rules) }. Make sure you have either information or DMS rules."
+                f"Unsupported type {type(rules)}. Make sure you have either information or DMS rules."
             )
         identifier = to_directory_compatible(str(rules.metadata.identifier))
         name = f"{identifier}.html"
@@ -201,7 +201,7 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
         else:
             # This should never happen, but we need to handle it to satisfy mypy
             raise NeatSessionError(
-                f"Unsupported type {type(rules) }. Make sure you have either information or DMS rules."
+                f"Unsupported type {type(rules)}. Make sure you have either information or DMS rules."
             )
         identifier = to_directory_compatible(str(rules.metadata.identifier))
         name = f"{identifier}_implements.html"
