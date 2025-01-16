@@ -1,6 +1,5 @@
 from typing import Any
 
-import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
@@ -176,10 +175,6 @@ class TestExtractToLoadFlow:
                     value.sort()
         return instance.dump()
 
-    @pytest.mark.skip(
-        "Will be fixed in separate PR - issue is that container are now created for edge/node instances"
-        "and then this fails as we try to load a node instance into an edge container"
-    )
     def test_classic_to_cdf(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         neat.read.cdf.classic.graph("Utsira")

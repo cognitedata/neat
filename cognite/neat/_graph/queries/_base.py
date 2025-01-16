@@ -232,13 +232,18 @@ class Queries:
 
             # set property
             if property_renaming_config and predicate != RDF.type:
-                property_ = property_renaming_config.get(
+                property_ = remove_namespace_from_uri(predicate, validation="prefix")
+                renamed_property_ = property_renaming_config.get(
                     predicate, remove_namespace_from_uri(predicate, validation="prefix")
                 )
+
             elif not property_renaming_config and predicate != RDF.type:
                 property_ = remove_namespace_from_uri(predicate, validation="prefix")
+                renamed_property_ = property_
+
             else:
                 property_ = RDF.type
+                renamed_property_ = property_
 
             # set value
             # if it is URIRef and property type is object property, we need to remove namespace
@@ -258,11 +263,19 @@ class Queries:
             ):
                 value = remove_namespace_from_uri(object_, validation="prefix")
 
-            # case 3 when property type is not defined and returned value is URIRef we remove namespace
+            # case 3 purposely we are converting URIRef to string while removing namespace
+            elif (
+                isinstance(object_, URIRef)
+                and property_types
+                and property_types.get(property_, None) == EntityTypes.data_property
+            ):
+                value = remove_namespace_from_uri(object_, validation="prefix")
+
+            # case 4 when property type is not defined and returned value is URIRef we remove namespace
             elif isinstance(object_, URIRef) and not property_types:
                 value = remove_namespace_from_uri(object_, validation="prefix")
 
-            # case 4 for data type properties we do not remove namespace but keep the entire value
+            # case 5 for data type properties we do not remove namespace but keep the entire value
             # but we drop the datatype part, and keep everything to be string (data loader will do the conversion)
             # for value type it expects (if possible)
             else:
@@ -270,7 +283,7 @@ class Queries:
 
             # add type to the dictionary
             if predicate != RDF.type:
-                property_values[property_].append(value)
+                property_values[renamed_property_].append(value)
             else:
                 # guarding against multiple rdf:type values as this is not allowed in CDF
                 if RDF.type not in property_values:
