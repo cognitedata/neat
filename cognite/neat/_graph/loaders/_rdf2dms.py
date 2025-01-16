@@ -427,19 +427,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 raise ValueError(f"Expect valid JSON string or dict for {info.field_name}: {value}")
 
-        def parse_text(cls, value: Any, info: ValidationInfo) -> Any:
-            if isinstance(value, list):
-                return [remove_namespace_from_uri(v) for v in value]
-            else:
-                return remove_namespace_from_uri(value)
-
         if json_fields:
             validators["parse_json_string"] = field_validator(*json_fields, mode="before")(parse_json_string)  # type: ignore[assignment, arg-type]
 
         validators["parse_list"] = field_validator("*", mode="before")(parse_list)  # type: ignore[assignment, arg-type]
-
-        if text_fields:
-            validators["parse_text"] = field_validator(*text_fields, mode="before")(parse_text)  # type: ignore[assignment, arg-type]
 
         if direct_relation_by_property:
 
