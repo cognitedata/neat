@@ -21,7 +21,7 @@ Changes are grouped as follows:
 
 ### Improved
 - The `neat.infer()` no longer skips `externalId`/`external_id` properties when inferring the data model.
-
+- The `neat.read.cdf.classic.graph(...)` gives an error is the root asset is not found in CDF.
 ## [0.107.0] - 15-01-**2025**
 ### Fixed
 - The `neat.prepare.instances.relationships_as_edges()` no longer creates invalid identifiers for the edges.
