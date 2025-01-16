@@ -2,6 +2,7 @@ import json
 import re
 import sys
 import typing
+import urllib.parse
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence, Set
@@ -17,6 +18,7 @@ from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import CDFAuthWarning
 from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import string_to_ideal_type
@@ -106,9 +108,13 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         self.as_write = as_write
         self.prefix = prefix
         self.identifier = identifier
+        # If identifier=externalId, we need to keep track of the external ids
+        # and use them in linking of Files, Sequences, TimeSeries, and Events.
+        self.asset_external_id_by_id: dict[int, str] = {}
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
+        from ._assets import AssetsExtractor
 
         if self.total is not None and self.total > 0:
             to_iterate = iterate_progress_bar_if_above_config_threshold(
@@ -116,21 +122,38 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             )
         else:
             to_iterate = self.items
+        if self.identifier == "externalId" and isinstance(self, AssetsExtractor):
+            to_iterate = self._store_asset_external_ids(to_iterate)  # type: ignore[attr-defined]
+
         for no, asset in enumerate(to_iterate):
             yield from self._item2triples(asset)
             if self.limit and no >= self.limit:
                 break
 
-    def _item2triples(self, item: T_CogniteResource) -> list[Triple]:
-        id_value: str | None
-        if hasattr(item, "id"):
-            id_value = str(item.id)
-        else:
-            id_value = self._fallback_id(item)
-        if id_value is None:
-            return []
+    def _store_asset_external_ids(self, items: Iterable[T_CogniteResource]) -> Iterable[T_CogniteResource]:
+        for item in items:
+            if hasattr(item, "id") and hasattr(item, "external_id"):
+                self.asset_external_id_by_id[item.id] = item.external_id
+            yield item
 
-        id_ = self.namespace[f"{self._instance_id_prefix}{id_value}"]
+    def _item2triples(self, item: T_CogniteResource) -> list[Triple]:
+        if self.identifier == "id":
+            id_value: str | None
+            if hasattr(item, "id"):
+                id_value = str(item.id)
+            else:
+                id_value = self._fallback_id(item)
+            if id_value is None:
+                return []
+            id_suffix = f"{self._instance_id_prefix}{id_value}"
+        elif self.identifier == "externalId":
+            if not hasattr(item, "external_id"):
+                return []
+            id_suffix = self._external_id_as_uri_suffix(item.external_id)
+        else:
+            raise NeatValueError(f"Unknown identifier {self.identifier}")
+
+        id_ = self.namespace[id_suffix]
 
         type_ = self._get_rdf_type(item)
 
@@ -158,6 +181,15 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     def _item2triples_special_cases(self, id_: URIRef, dumped: dict[str, Any]) -> list[Triple]:
         """This can be overridden to handle special cases for the item."""
         return []
+
+    @staticmethod
+    def _external_id_as_uri_suffix(external_id: str) -> str:
+        if external_id == "" or external_id == "\x00":
+            return "null"
+        # The external ID needs to pass the ^[^\\x00]{1,256}$ regex for the DMS API.
+        # In addition, neat internals requires the external ID to be a valid URI.
+        # The null character \x00 is handled by the quote function
+        return urllib.parse.quote(external_id)
 
     def _fallback_id(self, item: T_CogniteResource) -> str | None:
         raise AttributeError(
@@ -189,7 +221,13 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         if key in {"data_set_id", "dataSetId"}:
             return self.namespace[f"{InstanceIdPrefix.data_set}{raw}"]
         elif key in {"assetId", "asset_id", "assetIds", "asset_ids", "parentId", "rootId", "parent_id", "root_id"}:
-            return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
+            if self.identifier == "id":
+                return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
+            else:
+                try:
+                    return self.namespace[self._external_id_as_uri_suffix(self.asset_external_id_by_id[raw])]
+                except KeyError:
+                    return Literal("Unknown asset", datatype=XSD.string)
         elif key in {
             "startTime",
             "endTime",
@@ -204,7 +242,10 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         elif key == "labels":
             from ._labels import LabelsExtractor
 
-            return self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(raw)}"]
+            if self.identifier == "id":
+                return self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(raw)}"]
+            else:
+                return self.namespace[LabelsExtractor._label_id(raw)]
         elif key in {"sourceType", "targetType", "source_type", "target_type"} and isinstance(raw, str):
             # Relationship types. Titled so they can be looked up.
             return self.namespace[raw.title()]
