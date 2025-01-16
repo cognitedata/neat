@@ -1,3 +1,4 @@
+import typing
 import urllib.parse
 import warnings
 from collections import defaultdict
@@ -102,6 +103,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         namespace: Namespace | None = None,
         limit_per_type: int | None = None,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
     ):
         self._client = client
         if sum([bool(data_set_external_id), bool(root_asset_external_id)]) != 1:
@@ -116,6 +118,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             camel_case=True,
             limit=limit_per_type,
             prefix=prefix,
+            identifier=identifier,
         )
         self._prefix = prefix
         self._limit_per_type = limit_per_type
