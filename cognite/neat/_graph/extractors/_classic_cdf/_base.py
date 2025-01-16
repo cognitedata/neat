@@ -1,6 +1,7 @@
 import json
 import re
 import sys
+import typing
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence, Set
@@ -72,6 +73,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         camel_case (bool, optional): Whether to use camelCase instead of snake_case for property names.
             Defaults to True.
         as_write (bool, optional): Whether to use the write/request format of the items. Defaults to False.
+        prefix (str, optional): A prefix to add to the rdf type. Defaults to None.
+        identifier (Literal["id", "externalId"], optional): The identifier to use. Defaults to "id".
     """
 
     _default_rdf_type: str
@@ -90,6 +93,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.items = items
@@ -101,6 +105,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         self.camel_case = camel_case
         self.as_write = as_write
         self.prefix = prefix
+        self.identifier = identifier
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
@@ -157,7 +162,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     def _fallback_id(self, item: T_CogniteResource) -> str | None:
         raise AttributeError(
             f"Item of type {type(item)} does not have an id attribute. "
-            f"Please implement the _fallback_id method in the extractor."
+            "Please implement the _fallback_id method in the extractor."
         )
 
     def _metadata_to_triples(self, id_: URIRef, metadata: dict[str, str]) -> Iterable[Triple]:
@@ -223,10 +228,21 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
     ):
         total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id))
         return cls(
-            items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write, prefix
+            items,
+            namespace,
+            to_type,
+            total,
+            limit,
+            unpack_metadata,
+            skip_metadata_values,
+            camel_case,
+            as_write,
+            prefix,
+            identifier,
         )
 
     @classmethod
@@ -249,10 +265,21 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
     ):
         total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id))
         return cls(
-            items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write, prefix
+            items,
+            namespace,
+            to_type,
+            total,
+            limit,
+            unpack_metadata,
+            skip_metadata_values,
+            camel_case,
+            as_write,
+            prefix,
+            identifier,
         )
 
     @classmethod
@@ -274,10 +301,21 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
     ):
         total, items = cls._from_file(file_path)
         return cls(
-            items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write, prefix
+            items,
+            namespace,
+            to_type,
+            total,
+            limit,
+            unpack_metadata,
+            skip_metadata_values,
+            camel_case,
+            as_write,
+            prefix,
+            identifier,
         )
 
     @classmethod

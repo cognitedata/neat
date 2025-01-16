@@ -1,5 +1,6 @@
 import itertools
 import json
+import typing
 from collections.abc import Callable, Iterable, Set
 from pathlib import Path
 from typing import Any
@@ -53,10 +54,21 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
     ):
         super().__init__(
-            items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write, prefix
+            items,
+            namespace,
+            to_type,
+            total,
+            limit,
+            unpack_metadata,
+            skip_metadata_values,
+            camel_case,
+            as_write,
+            prefix,
+            identifier,
         )
         self.unpack_columns = unpack_columns
 
@@ -73,6 +85,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
     ):
         total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id))
@@ -87,6 +100,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
             camel_case,
             as_write,
             prefix,
+            identifier,
             unpack_columns,
         )
 
@@ -103,6 +117,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
     ):
         total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id))
@@ -117,6 +132,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
             camel_case,
             as_write,
             prefix,
+            identifier,
             unpack_columns,
         )
 
@@ -132,6 +148,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
     ):
         total, items = cls._from_file(file_path)
@@ -146,6 +163,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
             camel_case,
             as_write,
             prefix,
+            identifier,
             unpack_columns,
         )
 

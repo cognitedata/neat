@@ -1,3 +1,4 @@
+import typing
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Set
 from pathlib import Path
@@ -29,6 +30,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
     ):
         super().__init__(
             items,
@@ -41,6 +43,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
             camel_case=camel_case,
             as_write=as_write,
             prefix=prefix,
+            identifier=identifier,
         )
         # This is used by the ClassicExtractor to log the target nodes, such
         # that it can extract them.
