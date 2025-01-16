@@ -229,7 +229,7 @@ class Queries:
                 "null",
             ]:
                 continue
-            print(predicate, object_)
+
             # set property
             if property_renaming_config and predicate != RDF.type:
                 property_ = remove_namespace_from_uri(predicate, validation="prefix")
