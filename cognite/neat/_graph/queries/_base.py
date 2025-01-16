@@ -292,7 +292,6 @@ class Queries:
                     # we should not have multiple rdf:type values
                     continue
         if property_values:
-            print(identifier, property_values)
             return (
                 identifier,
                 property_values,
