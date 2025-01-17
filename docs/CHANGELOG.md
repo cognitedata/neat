@@ -22,6 +22,7 @@ Changes are grouped as follows:
 
 ### Improved
 - The `neat.infer()` no longer skips `externalId`/`external_id` properties when inferring the data model.
+- Importing rules which were exported then modified externally then re-imported to the neat session
 - The `neat.read.cdf.classic.graph(...)` gives an error is the root asset is not found in CDF.
 
 ## [0.107.0] - 15-01-**2025**

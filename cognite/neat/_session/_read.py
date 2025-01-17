@@ -257,7 +257,6 @@ class ExcelReadAPI(BaseReadAPI):
 class ExcelExampleAPI(BaseReadAPI):
     """Used as example for reading some data model into the NeatSession."""
 
-    @property
     def pump_example(self) -> IssueList:
         """Reads the Hello World pump example into the NeatSession."""
         importer: importers.ExcelImporter = importers.ExcelImporter(catalog.hello_world_pump)
