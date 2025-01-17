@@ -188,6 +188,7 @@ class CDFClassicAPI(BaseReadAPI):
             limit_per_type=limit_per_type,
             namespace=namespace,
             prefix="Classic",
+            identifier=identifier,
         )
         extract_issues = self._state.write_graph(extractor)
 

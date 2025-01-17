@@ -241,7 +241,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             else:
                 raise ValueError("Exactly one of data_set_external_id or root_asset_external_id must be set.")
             if isinstance(extractor, AssetsExtractor):
-                self._asset_external_ids_by_id.update(extractor.asset_external_ids_by_id)
+                self._asset_external_ids_by_id = extractor.asset_external_ids_by_id
             else:
                 extractor.asset_external_ids_by_id = self._asset_external_ids_by_id
 
