@@ -37,6 +37,7 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
     created: datetime | str | None = None
     updated: datetime | str | None = None
     logical: str | URIRef | None = None
+    source: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSMetadata]:
@@ -76,6 +77,16 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
             creator = ["MISSING"]
             description = None
         return description, creator
+
+    def as_data_model_id(self) -> dm.DataModelId:
+        return dm.DataModelId(space=self.space, external_id=self.external_id, version=self.version)
+
+    @property
+    def source_id(self) -> URIRef | None:
+        """Returns the source of the imported data model."""
+        if self.source:
+            return URIRef(self.source)
+        return None
 
     @property
     def identifier(self) -> URIRef:
