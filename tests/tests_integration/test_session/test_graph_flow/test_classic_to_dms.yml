@@ -1491,40 +1491,7 @@ data_product:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries
     view: ClassicTimeSeries
 instances:
-- externalId: ClassicSourceSystem_manufacturer1
-  instanceType: node
-  sources:
-  - properties:
-      name: manufacturer1
-    source:
-      externalId: ClassicSourceSystem
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: sp_instance_space
-  type:
-    externalId: ClassicSourceSystem
-    space: sp_windfarm
-- externalId: PowerGeneratingUnit
-  instanceType: node
-  sources:
-  - properties:
-      classicExternalId: PowerGeneratingUnit
-      dataSetId:
-        externalId: DataSet_2458119666837052
-        space: sp_instance_space
-      description: Power generating unit
-      name: Power generating unit
-    source:
-      externalId: ClassicLabel
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: sp_instance_space
-  type:
-    externalId: ClassicLabel
-    space: sp_windfarm
-- externalId: Utsira
+- externalId: Asset_Utsira
   instanceType: node
   sources:
   - properties:
@@ -1540,7 +1507,7 @@ instances:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_instance_space
       tags:
-      - PowerGeneratingUnit
+      - Label_PowerGeneratingUnit
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1550,7 +1517,7 @@ instances:
   type:
     externalId: ClassicAsset
     space: sp_windfarm
-- externalId: WT-01
+- externalId: Asset_WT-01
   instanceType: node
   sources:
   - properties:
@@ -1564,14 +1531,14 @@ instances:
         turbineType: V112/3075
       name: WT-01
       parent:
-        externalId: Utsira
+        externalId: Asset_Utsira
         space: sp_instance_space
       source:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_instance_space
       tags:
-      - PowerGeneratingUnit
-      - WindTurbine
+      - Label_PowerGeneratingUnit
+      - Label_WindTurbine
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1581,116 +1548,7 @@ instances:
   type:
     externalId: ClassicAsset
     space: sp_windfarm
-- externalId: WT-01_datasheet
-  instanceType: node
-  sources:
-  - properties:
-      assets:
-      - externalId: WT-01
-        space: sp_instance_space
-      classicExternalId: WT-01_datasheet
-      dataSetId:
-        externalId: DataSet_2458119666837052
-        space: sp_instance_space
-      metadata:
-        blob: data
-      name: WT-01_datasheet.txt
-      source:
-        externalId: ClassicSourceSystem_manufacturer1
-        space: sp_instance_space
-    source:
-      externalId: ClassicFile
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: sp_instance_space
-  type:
-    externalId: ClassicFile
-    space: sp_windfarm
-- externalId: WT-01_forecast
-  instanceType: node
-  sources:
-  - properties:
-      assets:
-      - externalId: WT-01
-        space: sp_instance_space
-      classicExternalId: WT-01_forecast
-      dataSetId:
-        externalId: DataSet_2115244274213977
-        space: sp_instance_space
-      description: WT-01 forecast
-      isStep: false
-      metadata:
-        blob: data
-      name: WT-01 forecast
-      type: numeric
-      unit:
-        externalId: power:megaw
-        space: cdf_cdm_units
-    source:
-      externalId: ClassicTimeSeries
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: sp_instance_space
-  type:
-    externalId: ClassicTimeSeries
-    space: sp_windfarm
-- externalId: WT-01_production
-  instanceType: node
-  sources:
-  - properties:
-      assets:
-      - externalId: WT-01
-        space: sp_instance_space
-      classicExternalId: WT-01_production
-      dataSetId:
-        externalId: DataSet_2458119666837052
-        space: sp_instance_space
-      description: WT-01 production
-      isStep: false
-      metadata:
-        blob: data
-      name: WT-01 production
-      type: numeric
-      unit:
-        externalId: power:megaw
-        space: cdf_cdm_units
-    source:
-      externalId: ClassicTimeSeries
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: sp_instance_space
-  type:
-    externalId: ClassicTimeSeries
-    space: sp_windfarm
-- endNode:
-    externalId: MetMast
-    space: sp_instance_space
-  externalId: WT-01_to_MetMast
-  instanceType: edge
-  sources:
-  - properties:
-      classicExternalId: WT-01_to_MetMast
-      dataSetId:
-        externalId: DataSet_2458119666837052
-        space: sp_instance_space
-      sourceType: Asset
-      targetType: Asset
-    source:
-      externalId: ClassicRelationship
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: sp_instance_space
-  startNode:
-    externalId: WT-01
-    space: sp_instance_space
-  type:
-    externalId: ClassicRelationship
-    space: sp_windfarm
-- externalId: WT-02
+- externalId: Asset_WT-02
   instanceType: node
   sources:
   - properties:
@@ -1704,14 +1562,14 @@ instances:
         turbineType: V112/3075
       name: WT-02
       parent:
-        externalId: Utsira
+        externalId: Asset_Utsira
         space: sp_instance_space
       source:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_instance_space
       tags:
-      - PowerGeneratingUnit
-      - WindTurbine
+      - Label_PowerGeneratingUnit
+      - Label_WindTurbine
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1721,109 +1579,21 @@ instances:
   type:
     externalId: ClassicAsset
     space: sp_windfarm
-- externalId: WT-02_forecast
+- externalId: ClassicSourceSystem_manufacturer1
   instanceType: node
   sources:
   - properties:
-      assets:
-      - externalId: WT-02
-        space: sp_instance_space
-      classicExternalId: WT-02_forecast
-      dataSetId:
-        externalId: DataSet_2115244274213977
-        space: sp_instance_space
-      description: WT-02 forecast
-      isStep: false
-      metadata:
-        blob: data
-      name: WT-02 forecast
-      type: numeric
-      unit:
-        externalId: power:megaw
-        space: cdf_cdm_units
+      name: manufacturer1
     source:
-      externalId: ClassicTimeSeries
+      externalId: ClassicSourceSystem
       space: sp_windfarm
       type: view
       version: v1
   space: sp_instance_space
   type:
-    externalId: ClassicTimeSeries
+    externalId: ClassicSourceSystem
     space: sp_windfarm
-- externalId: WT-02_production
-  instanceType: node
-  sources:
-  - properties:
-      assets:
-      - externalId: WT-02
-        space: sp_instance_space
-      classicExternalId: WT-02_production
-      dataSetId:
-        externalId: DataSet_2458119666837052
-        space: sp_instance_space
-      description: WT-02 production
-      isStep: false
-      metadata:
-        blob: data
-      name: WT-02 production
-      type: numeric
-      unit:
-        externalId: power:megaw
-        space: cdf_cdm_units
-    source:
-      externalId: ClassicTimeSeries
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: sp_instance_space
-  type:
-    externalId: ClassicTimeSeries
-    space: sp_windfarm
-- endNode:
-    externalId: MetMast
-    space: sp_instance_space
-  externalId: WT-02_to_MetMast
-  instanceType: edge
-  sources:
-  - properties:
-      classicExternalId: WT-02_to_MetMast
-      dataSetId:
-        externalId: DataSet_2458119666837052
-        space: sp_instance_space
-      sourceType: Asset
-      targetType: Asset
-    source:
-      externalId: ClassicRelationship
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: sp_instance_space
-  startNode:
-    externalId: WT-02
-    space: sp_instance_space
-  type:
-    externalId: ClassicRelationship
-    space: sp_windfarm
-- externalId: WindTurbine
-  instanceType: node
-  sources:
-  - properties:
-      classicExternalId: WindTurbine
-      dataSetId:
-        externalId: DataSet_2458119666837052
-        space: sp_instance_space
-      description: Wind turbine
-      name: Wind turbine
-    source:
-      externalId: ClassicLabel
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: sp_instance_space
-  type:
-    externalId: ClassicLabel
-    space: sp_windfarm
-- externalId: maintenance
+- externalId: DataSet_maintenance
   instanceType: node
   sources:
   - properties:
@@ -1843,12 +1613,52 @@ instances:
   type:
     externalId: ClassicDataSet
     space: sp_windfarm
-- externalId: planned%3AWT-01%3A2022-01-01
+- externalId: DataSet_source_ds
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: source_ds
+      description: Source data set
+      metadata:
+        information: here
+        some: extra
+      name: Source DS
+      writeProtected: true
+    source:
+      externalId: ClassicDataSet
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicDataSet
+    space: sp_windfarm
+- externalId: DataSet_usecase_01
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: usecase_01
+      description: Usecase 01 data set
+      metadata:
+        information: here
+        some: other
+      name: Usecase 01
+      writeProtected: false
+    source:
+      externalId: ClassicDataSet
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicDataSet
+    space: sp_windfarm
+- externalId: Event_planned%3AWT-01%3A2022-01-01
   instanceType: node
   sources:
   - properties:
       assets:
-      - externalId: WT-01
+      - externalId: Asset_WT-01
         space: sp_instance_space
       classicExternalId: planned:WT-01:2022-01-01
       dataSetId:
@@ -1873,12 +1683,126 @@ instances:
   type:
     externalId: ClassicEvent
     space: sp_windfarm
-- externalId: power_curve_manufacturer1
+- externalId: File_WT-01_datasheet
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: Asset_WT-01
+        space: sp_instance_space
+      classicExternalId: WT-01_datasheet
+      dataSetId:
+        externalId: DataSet_2458119666837052
+        space: sp_instance_space
+      metadata:
+        blob: data
+      name: WT-01_datasheet.txt
+      source:
+        externalId: ClassicSourceSystem_manufacturer1
+        space: sp_instance_space
+    source:
+      externalId: ClassicFile
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicFile
+    space: sp_windfarm
+- externalId: Label_PowerGeneratingUnit
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: PowerGeneratingUnit
+      dataSetId:
+        externalId: DataSet_2458119666837052
+        space: sp_instance_space
+      description: Power generating unit
+      name: Power generating unit
+    source:
+      externalId: ClassicLabel
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicLabel
+    space: sp_windfarm
+- externalId: Label_WindTurbine
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: WindTurbine
+      dataSetId:
+        externalId: DataSet_2458119666837052
+        space: sp_instance_space
+      description: Wind turbine
+      name: Wind turbine
+    source:
+      externalId: ClassicLabel
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicLabel
+    space: sp_windfarm
+- endNode:
+    externalId: MetMast
+    space: sp_instance_space
+  externalId: Relationship_WT-01_to_MetMast
+  instanceType: edge
+  sources:
+  - properties:
+      classicExternalId: WT-01_to_MetMast
+      dataSetId:
+        externalId: DataSet_2458119666837052
+        space: sp_instance_space
+      sourceType: Asset
+      targetType: Asset
+    source:
+      externalId: ClassicRelationship
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  startNode:
+    externalId: WT-01
+    space: sp_instance_space
+  type:
+    externalId: ClassicRelationship
+    space: sp_windfarm
+- endNode:
+    externalId: MetMast
+    space: sp_instance_space
+  externalId: Relationship_WT-02_to_MetMast
+  instanceType: edge
+  sources:
+  - properties:
+      classicExternalId: WT-02_to_MetMast
+      dataSetId:
+        externalId: DataSet_2458119666837052
+        space: sp_instance_space
+      sourceType: Asset
+      targetType: Asset
+    source:
+      externalId: ClassicRelationship
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  startNode:
+    externalId: WT-02
+    space: sp_instance_space
+  type:
+    externalId: ClassicRelationship
+    space: sp_windfarm
+- externalId: Sequence_power_curve_manufacturer1
   instanceType: node
   sources:
   - properties:
       assetId:
-        externalId: WT-01
+        externalId: Asset_WT-01
         space: sp_instance_space
       classicExternalId: power_curve_manufacturer1
       columns:
@@ -1913,45 +1837,121 @@ instances:
   type:
     externalId: ClassicSequence
     space: sp_windfarm
-- externalId: source_ds
+- externalId: TimeSeries_WT-01_forecast
   instanceType: node
   sources:
   - properties:
-      classicExternalId: source_ds
-      description: Source data set
+      assets:
+      - externalId: Asset_WT-01
+        space: sp_instance_space
+      classicExternalId: WT-01_forecast
+      dataSetId:
+        externalId: DataSet_2115244274213977
+        space: sp_instance_space
+      description: WT-01 forecast
+      isStep: false
       metadata:
-        information: here
-        some: extra
-      name: Source DS
-      writeProtected: true
+        blob: data
+      name: WT-01 forecast
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: cdf_cdm_units
     source:
-      externalId: ClassicDataSet
+      externalId: ClassicTimeSeries
       space: sp_windfarm
       type: view
       version: v1
   space: sp_instance_space
   type:
-    externalId: ClassicDataSet
+    externalId: ClassicTimeSeries
     space: sp_windfarm
-- externalId: usecase_01
+- externalId: TimeSeries_WT-01_production
   instanceType: node
   sources:
   - properties:
-      classicExternalId: usecase_01
-      description: Usecase 01 data set
+      assets:
+      - externalId: Asset_WT-01
+        space: sp_instance_space
+      classicExternalId: WT-01_production
+      dataSetId:
+        externalId: DataSet_2458119666837052
+        space: sp_instance_space
+      description: WT-01 production
+      isStep: false
       metadata:
-        information: here
-        some: other
-      name: Usecase 01
-      writeProtected: false
+        blob: data
+      name: WT-01 production
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: cdf_cdm_units
     source:
-      externalId: ClassicDataSet
+      externalId: ClassicTimeSeries
       space: sp_windfarm
       type: view
       version: v1
   space: sp_instance_space
   type:
-    externalId: ClassicDataSet
+    externalId: ClassicTimeSeries
+    space: sp_windfarm
+- externalId: TimeSeries_WT-02_forecast
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: Asset_WT-02
+        space: sp_instance_space
+      classicExternalId: WT-02_forecast
+      dataSetId:
+        externalId: DataSet_2115244274213977
+        space: sp_instance_space
+      description: WT-02 forecast
+      isStep: false
+      metadata:
+        blob: data
+      name: WT-02 forecast
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: cdf_cdm_units
+    source:
+      externalId: ClassicTimeSeries
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicTimeSeries
+    space: sp_windfarm
+- externalId: TimeSeries_WT-02_production
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: Asset_WT-02
+        space: sp_instance_space
+      classicExternalId: WT-02_production
+      dataSetId:
+        externalId: DataSet_2458119666837052
+        space: sp_instance_space
+      description: WT-02 production
+      isStep: false
+      metadata:
+        blob: data
+      name: WT-02 production
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: cdf_cdm_units
+    source:
+      externalId: ClassicTimeSeries
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicTimeSeries
     space: sp_windfarm
 rules:
   containers:
