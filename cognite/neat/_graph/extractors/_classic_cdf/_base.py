@@ -222,9 +222,13 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         if key in {"data_set_id", "dataSetId"}:
             if self.identifier == "externalId" and self.lookup_dataset_external_id:
                 try:
-                    raw = self.lookup_dataset_external_id(raw)
+                    data_set_external_id = self.lookup_dataset_external_id(raw)
                 except KeyError:
                     return Literal("Unknown data set", datatype=XSD.string)
+                else:
+                    return self.namespace[
+                        f"{InstanceIdPrefix.data_set}{self._external_id_as_uri_suffix(data_set_external_id)}"
+                    ]
             else:
                 return self.namespace[f"{InstanceIdPrefix.data_set}{raw}"]
         elif key in {"assetId", "asset_id", "assetIds", "asset_ids", "parentId", "rootId", "parent_id", "root_id"}:
