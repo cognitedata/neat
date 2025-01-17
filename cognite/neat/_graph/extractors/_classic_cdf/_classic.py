@@ -127,9 +127,11 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
         self._labels: set[str] = set()
         self._data_set_ids: set[int] = set()
+        self._data_set_external_ids: set[str] = set()
         self._extracted_labels = False
         self._extracted_data_sets = False
         self._asset_external_ids_by_id: dict[int, str] = {}
+        self._dataset_external_ids_by_id: dict[int, str] = {}
 
     def _get_activity_names(self) -> list[str]:
         activities = [data_access_object.extractor_cls.__name__ for data_access_object in self._classic_node_types] + [
@@ -244,6 +246,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 self._asset_external_ids_by_id = extractor.asset_external_ids_by_id
             else:
                 extractor.asset_external_ids_by_id = self._asset_external_ids_by_id
+            extractor.lookup_dataset_external_id = self._lookup_dataset
 
             yield from self._extract_with_logging_label_dataset(extractor, core_node.resource_type)
 
@@ -287,6 +290,8 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 extractor = core_node.extractor_cls(resource_iterator, **self._extractor_args)
 
                 extractor.asset_external_ids_by_id = self._asset_external_ids_by_id
+                extractor.lookup_dataset_external_id = self._lookup_dataset
+
                 yield from self._extract_with_logging_label_dataset(extractor)
 
     def _extract_labels(self):
@@ -298,6 +303,11 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         for chunk in self._chunk(list(self._data_set_ids), description="Extracting data sets"):
             data_set_iterator = self._client.data_sets.retrieve_multiple(ids=list(chunk), ignore_unknown_ids=True)
             yield from DataSetExtractor(data_set_iterator, **self._extractor_args).extract()
+        for chunk in self._chunk(list(self._data_set_external_ids), description="Extracting data sets"):
+            data_set_iterator = self._client.data_sets.retrieve_multiple(
+                external_ids=list(chunk), ignore_unknown_ids=True
+            )
+            yield from DataSetExtractor(data_set_iterator, **self._extractor_args).extract()
 
     def _extract_with_logging_label_dataset(
         self, extractor: ClassicCDFBaseExtractor, resource_type: InstanceIdPrefix | None = None
@@ -308,9 +318,11 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             elif triple[1] == self._namespace.labels:
                 self._labels.add(remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.label))
             elif triple[1] == self._namespace.dataSetId:
-                self._data_set_ids.add(
-                    int(remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.data_set))
-                )
+                identifier = remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.data_set)
+                try:
+                    self._data_set_ids.add(int(identifier))
+                except ValueError:
+                    self._data_set_external_ids.add(identifier)
             yield triple
 
     @staticmethod
@@ -320,3 +332,11 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             return iterate_progress_bar(to_iterate, (len(items) // 1_000) + 1, description)
         else:
             return to_iterate
+
+    def _lookup_dataset(self, dataset_id: int) -> str:
+        if dataset_id not in self._dataset_external_ids_by_id:
+            if (dataset := self._client.data_sets.retrieve(id=dataset_id)) and dataset.external_id:
+                self._dataset_external_ids_by_id[dataset_id] = dataset.external_id
+            else:
+                raise KeyError(f"Could not find dataset with id {dataset_id}.")
+        return self._dataset_external_ids_by_id[dataset_id]

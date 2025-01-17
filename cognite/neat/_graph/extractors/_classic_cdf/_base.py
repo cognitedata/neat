@@ -111,6 +111,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         # If identifier=externalId, we need to keep track of the external ids
         # and use them in linking of Files, Sequences, TimeSeries, and Events.
         self.asset_external_ids_by_id: dict[int, str] = {}
+        self.lookup_dataset_external_id: Callable[[int], str] | None = None
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
@@ -219,7 +220,13 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
 
     def _as_object(self, raw: Any, key: str) -> Literal | URIRef:
         if key in {"data_set_id", "dataSetId"}:
-            return self.namespace[f"{InstanceIdPrefix.data_set}{raw}"]
+            if self.identifier == "externalId" and self.lookup_dataset_external_id:
+                try:
+                    raw = self.lookup_dataset_external_id(raw)
+                except KeyError:
+                    return Literal("Unknown data set", datatype=XSD.string)
+            else:
+                return self.namespace[f"{InstanceIdPrefix.data_set}{raw}"]
         elif key in {"assetId", "asset_id", "assetIds", "asset_ids", "parentId", "rootId", "parent_id", "root_id"}:
             if self.identifier == "id":
                 return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
