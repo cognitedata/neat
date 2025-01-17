@@ -18,6 +18,7 @@ Changes are grouped as follows:
 ## TBD
 ### Added
 - Support RDF Datasets in NeatGraphStore enabling writing of sources triples to dedicated named graphs
+- Support for classic graph using externalIDs `neat.read.cdf.classic.graph(..., id="externalId")` 
 
 ### Improved
 - The `neat.infer()` no longer skips `externalId`/`external_id` properties when inferring the data model.
