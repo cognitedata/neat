@@ -130,7 +130,12 @@ class CDFClassicAPI(BaseReadAPI):
             raise ValueError("No client provided. Please provide a client to read a data model.")
         return self._state.client
 
-    def graph(self, root_asset_external_id: str, limit_per_type: int | None = None) -> IssueList:
+    def graph(
+        self,
+        root_asset_external_id: str,
+        limit_per_type: int | None = None,
+        identifier: Literal["id", "externalId"] = "id",
+    ) -> IssueList:
         """Reads the classic knowledge graph from CDF.
 
         The Classic Graph consists of the following core resource type.
@@ -165,6 +170,8 @@ class CDFClassicAPI(BaseReadAPI):
         Args:
             root_asset_external_id: The external id of the root asset
             limit_per_type: The maximum number of nodes to extract per core node type. If None, all nodes are extracted.
+            identifier: The identifier to use for the core nodes. Note selecting "id" can cause issues if the external
+                ID of the core nodes is missing. Default is "id".
 
         Returns:
             IssueList: A list of issues that occurred during the extraction.
@@ -185,7 +192,8 @@ class CDFClassicAPI(BaseReadAPI):
         extract_issues = self._state.write_graph(extractor)
 
         # Converting the instances from classic to core
-        self._state.instances.store.transform(LookupRelationshipSourceTarget(namespace, "Classic"))
+        if identifier == "id":
+            self._state.instances.store.transform(LookupRelationshipSourceTarget(namespace, "Classic"))
         self._state.instances.store.transform(
             ConvertLiteral(
                 namespace["ClassicTimeSeries"],

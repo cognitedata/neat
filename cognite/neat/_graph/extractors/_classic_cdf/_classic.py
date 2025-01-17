@@ -129,6 +129,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         self._data_set_ids: set[int] = set()
         self._extracted_labels = False
         self._extracted_data_sets = False
+        self._asset_external_ids_by_id: dict[int, str] = {}
 
     def _get_activity_names(self) -> list[str]:
         activities = [data_access_object.extractor_cls.__name__ for data_access_object in self._classic_node_types] + [
@@ -239,6 +240,10 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 )
             else:
                 raise ValueError("Exactly one of data_set_external_id or root_asset_external_id must be set.")
+            if isinstance(extractor, AssetsExtractor):
+                self._asset_external_ids_by_id.update(extractor.asset_external_ids_by_id)
+            else:
+                extractor.asset_external_ids_by_id = self._asset_external_ids_by_id
 
             yield from self._extract_with_logging_label_dataset(extractor, core_node.resource_type)
 
@@ -280,6 +285,8 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             ):
                 resource_iterator = api.retrieve_multiple(external_ids=list(chunk), ignore_unknown_ids=True)
                 extractor = core_node.extractor_cls(resource_iterator, **self._extractor_args)
+
+                extractor.asset_external_ids_by_id = self._asset_external_ids_by_id
                 yield from self._extract_with_logging_label_dataset(extractor)
 
     def _extract_labels(self):

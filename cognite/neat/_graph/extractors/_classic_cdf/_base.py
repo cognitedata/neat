@@ -110,7 +110,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         self.identifier = identifier
         # If identifier=externalId, we need to keep track of the external ids
         # and use them in linking of Files, Sequences, TimeSeries, and Events.
-        self.asset_external_id_by_id: dict[int, str] = {}
+        self.asset_external_ids_by_id: dict[int, str] = {}
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
@@ -133,7 +133,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     def _store_asset_external_ids(self, items: Iterable[T_CogniteResource]) -> Iterable[T_CogniteResource]:
         for item in items:
             if hasattr(item, "id") and hasattr(item, "external_id"):
-                self.asset_external_id_by_id[item.id] = item.external_id
+                self.asset_external_ids_by_id[item.id] = item.external_id
             yield item
 
     def _item2triples(self, item: T_CogniteResource) -> list[Triple]:
@@ -225,7 +225,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
             else:
                 try:
-                    return self.namespace[self._external_id_as_uri_suffix(self.asset_external_id_by_id[raw])]
+                    return self.namespace[self._external_id_as_uri_suffix(self.asset_external_ids_by_id[raw])]
                 except KeyError:
                     return Literal("Unknown asset", datatype=XSD.string)
         elif key in {
