@@ -1497,7 +1497,7 @@ instances:
   - properties:
       classicExternalId: Utsira
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: sp_instance_space
       description: Utsira wind farm
       metadata:
@@ -1523,7 +1523,7 @@ instances:
   - properties:
       classicExternalId: WT-01
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: sp_instance_space
       description: Wind turbine 01
       metadata:
@@ -1554,7 +1554,7 @@ instances:
   - properties:
       classicExternalId: WT-02
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: sp_instance_space
       description: Wind turbine 02
       metadata:
@@ -1662,7 +1662,7 @@ instances:
         space: sp_instance_space
       classicExternalId: planned:WT-01:2022-01-01
       dataSetId:
-        externalId: DataSet_6333017856399877
+        externalId: DataSet_maintenance
         space: sp_instance_space
       description: Planned maintenance
       endTime: '1970-01-01T00:00:00.500+00:00'
@@ -1692,7 +1692,7 @@ instances:
         space: sp_instance_space
       classicExternalId: WT-01_datasheet
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: sp_instance_space
       metadata:
         blob: data
@@ -1821,7 +1821,7 @@ instances:
         name: Wind speed
         valueType: DOUBLE
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: sp_instance_space
       description: Power curve from manufacturer 1
       metadata:
@@ -1846,7 +1846,7 @@ instances:
         space: sp_instance_space
       classicExternalId: WT-01_forecast
       dataSetId:
-        externalId: DataSet_2115244274213977
+        externalId: DataSet_usecase_01
         space: sp_instance_space
       description: WT-01 forecast
       isStep: false
@@ -1875,7 +1875,7 @@ instances:
         space: sp_instance_space
       classicExternalId: WT-01_production
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: sp_instance_space
       description: WT-01 production
       isStep: false
@@ -1904,7 +1904,7 @@ instances:
         space: sp_instance_space
       classicExternalId: WT-02_forecast
       dataSetId:
-        externalId: DataSet_2115244274213977
+        externalId: DataSet_usecase_01
         space: sp_instance_space
       description: WT-02 forecast
       isStep: false
@@ -1933,7 +1933,7 @@ instances:
         space: sp_instance_space
       classicExternalId: WT-02_production
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: sp_instance_space
       description: WT-02 production
       isStep: false
