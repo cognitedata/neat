@@ -102,7 +102,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     @classmethod
     def from_rules(
-        cls, rules: DMSRules, graph_store: NeatGraphStore, instance_space: str, client: NeatClient | None = None
+        cls,
+        rules: DMSRules,
+        graph_store: NeatGraphStore,
+        instance_space: str,
+        client: NeatClient | None = None,
+        unquote_external_ids: bool = False,
     ) -> "DMSLoader":
         issues: list[NeatIssue] = []
         data_model: dm.DataModel[dm.View] | None = None
@@ -128,6 +133,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             issues,
             rules=rules,
             client=client,
+            unquote_external_ids=unquote_external_ids,
         )
 
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue | type[_END_OF_CLASS]]:

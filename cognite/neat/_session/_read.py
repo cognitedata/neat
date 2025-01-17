@@ -191,6 +191,8 @@ class CDFClassicAPI(BaseReadAPI):
             identifier=identifier,
         )
         extract_issues = self._state.write_graph(extractor)
+        if identifier == "externalLId":
+            self._state.quoted_source_identifiers = True
 
         # Converting the instances from classic to core
         if identifier == "id":

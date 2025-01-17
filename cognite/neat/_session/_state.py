@@ -22,6 +22,7 @@ class SessionState:
         self.rule_store = NeatRulesStore()
         self.last_reference: DMSRules | InformationRules | None = None
         self.client = client
+        self.quoted_source_identifiers = False
 
     def rule_transform(self, *transformer: RulesTransformer) -> IssueList:
         if not transformer:
