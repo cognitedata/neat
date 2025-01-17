@@ -145,7 +145,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 id_value = self._fallback_id(item)
             if id_value is None:
                 return []
-            id_suffix = f"{self._instance_id_prefix}{id_value}"
+            id_suffix = id_value
         elif self.identifier == "externalId":
             if not hasattr(item, "external_id"):
                 return []
@@ -153,7 +153,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         else:
             raise NeatValueError(f"Unknown identifier {self.identifier}")
 
-        id_ = self.namespace[id_suffix]
+        id_ = self.namespace[f"{self._instance_id_prefix}{id_suffix}"]
 
         type_ = self._get_rdf_type(item)
 
@@ -225,9 +225,11 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
             else:
                 try:
-                    return self.namespace[self._external_id_as_uri_suffix(self.asset_external_ids_by_id[raw])]
+                    asset_external_id = self._external_id_as_uri_suffix(self.asset_external_ids_by_id[raw])
                 except KeyError:
                     return Literal("Unknown asset", datatype=XSD.string)
+                else:
+                    return self.namespace[f"{InstanceIdPrefix.asset}{asset_external_id}"]
         elif key in {
             "startTime",
             "endTime",
@@ -242,10 +244,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         elif key == "labels":
             from ._labels import LabelsExtractor
 
-            if self.identifier == "id":
-                return self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(raw)}"]
-            else:
-                return self.namespace[LabelsExtractor._label_id(raw)]
+            return self.namespace[f"{InstanceIdPrefix.label}{LabelsExtractor._label_id(raw)}"]
         elif key in {"sourceType", "targetType", "source_type", "target_type"} and isinstance(raw, str):
             # Relationship types. Titled so they can be looked up.
             return self.namespace[raw.title()]
