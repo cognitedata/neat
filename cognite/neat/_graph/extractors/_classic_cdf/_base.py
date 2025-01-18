@@ -184,12 +184,15 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         return []
 
     @staticmethod
-    def _external_id_as_uri_suffix(external_id: str) -> str:
-        if external_id == "" or external_id == "\x00":
+    def _external_id_as_uri_suffix(external_id: str | None) -> str:
+        if external_id == "":
+            return "empty"
+        elif external_id == "\x00":
             return "null"
+        elif external_id is None:
+            return "None"
         # The external ID needs to pass the ^[^\\x00]{1,256}$ regex for the DMS API.
         # In addition, neat internals requires the external ID to be a valid URI.
-        # The null character \x00 is handled by the quote function
         return urllib.parse.quote(external_id)
 
     def _fallback_id(self, item: T_CogniteResource) -> str | None:
