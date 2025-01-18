@@ -30,6 +30,10 @@ Changes are grouped as follows:
 - The `neat.read.cdf.graph(...)` no longer extracts instances from cognite views by default. Instead, the parameter
   `skip_cognite_views` has been added to the method to allow for this.
 
+### Changed
+- The `neat.read.cdf.graph(...)` no longer extracts instances from cognite views by default. Instead, the parameter
+  `skip_cognite_views` has been added to the method to allow for this.
+
 ## [0.107.0] - 15-01-**2025**
 ### Fixed
 - The `neat.prepare.instances.relationships_as_edges()` no longer creates invalid identifiers for the edges.
