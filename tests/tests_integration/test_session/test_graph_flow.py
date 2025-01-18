@@ -197,3 +197,9 @@ class TestExtractToLoadFlow:
             ("sp_windfarm", "WindFarm", "v1"), instance_space="sp_windfarm_instance_external_ids", unpack_json=True
         )
         neat.set._instance_sub_type("NeatIncAsset", "assetCategory")
+        neat._infer_subclasses()
+
+        neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
+
+        neat.to.cdf.data_model(existing="force")
+        neat.to.cdf.instances()

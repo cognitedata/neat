@@ -43,7 +43,7 @@ from cognite.neat._rules.models._rdfpath import Entity as RDFPathEntity
 from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
 from cognite.neat._rules.models.data_types import AnyURI, DataType, Enum, File, String, Timeseries
 from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSValidation, DMSView
-from cognite.neat._rules.models.dms._rules import DMSContainer
+from cognite.neat._rules.models.dms._rules import DMSContainer, DMSEnum, DMSNode
 from cognite.neat._rules.models.entities import (
     ClassEntity,
     ContainerEntity,
@@ -932,12 +932,10 @@ class MergeDMSRules(RulesTransformer[DMSRules, DMSRules]):
             if view.view not in existing_views:
                 output.views.append(view)
         existing_properties = {(prop.view, prop.view_property) for prop in output.properties}
-        existing_containers = {container.container for container in output.containers}
-        existing_enum_collections = {collection.collection for collection in output.enum_collections}
+        existing_containers = {container.container for container in output.containers or []}
+        existing_enum_collections = {collection.collection for collection in output.enum or []}
         new_containers_by_entity = {container.container: container for container in self.extra.containers or []}
-        new_enum_collections_by_entity = {
-            collection.collection: collection for collection in self.extra.enum_collections or {}
-        }
+        new_enum_collections_by_entity = {collection.collection: collection for collection in self.extra.enum or []}
         for prop in self.extra.properties:
             if (prop.view, prop.view_property) in existing_properties:
                 continue
@@ -952,7 +950,7 @@ class MergeDMSRules(RulesTransformer[DMSRules, DMSRules]):
                 output.enum.append(new_enum_collections_by_entity[prop.value_type.collection])
 
         existing_nodes = {node.node for node in output.nodes or []}
-        for node in self.extra.properties:
+        for node in self.extra.nodes or []:
             if node.node not in existing_nodes:
                 if output.nodes is None:
                     output.nodes = SheetList[DMSNode]()
