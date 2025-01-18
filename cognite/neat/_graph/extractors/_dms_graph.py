@@ -106,7 +106,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         """Extracts the knowledge graph from the data model."""
         views = self._model_views
         if self._skip_cognite_views:
-            views = [view for view in views if not view.space not in COGNITE_SPACES]
+            views = [view for view in views if view.space not in COGNITE_SPACES]
 
         yield from DMSExtractor.from_views(
             self._client,

@@ -98,6 +98,8 @@ class DMSExtractor(BaseExtractor):
         )
 
         for view_id, (total, instances) in self.total_instances_pair_by_view.items():
+            if total == 0:
+                continue
             if use_progress_bar and total is not None:
                 instances = iterate_progress_bar(instances, total, f"Extracting instances from {view_id!r}")
 
