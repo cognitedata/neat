@@ -140,6 +140,9 @@ class DMSExtractor(BaseExtractor):
             id_ = self._as_uri_ref(instance)
             if instance.type:
                 type_ = self._as_uri_ref(cast(dm.DirectRelationReference, instance.type))
+            elif len(instance.properties) == 1:
+                view_id = next(iter(instance.properties.keys()))
+                type_ = self._get_namespace(view_id.space)[urllib.parse.quote(view_id.external_id)]
             else:
                 type_ = self._get_namespace(instance.space).Node
 
