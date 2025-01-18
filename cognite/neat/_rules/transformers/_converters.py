@@ -41,7 +41,7 @@ from cognite.neat._rules.models import (
 )
 from cognite.neat._rules.models._rdfpath import Entity as RDFPathEntity
 from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
-from cognite.neat._rules.models.data_types import AnyURI, DataType, File, String, Timeseries
+from cognite.neat._rules.models.data_types import AnyURI, DataType, Enum, File, String, Timeseries
 from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSValidation, DMSView
 from cognite.neat._rules.models.dms._rules import DMSContainer
 from cognite.neat._rules.models.entities import (
@@ -921,25 +921,68 @@ class ChangeViewPrefix(RulesTransformer[DMSRules, DMSRules]):
         return output
 
 
-class MergeRules(RulesTransformer[T_VerifiedInRules, T_VerifiedInRules]):
-    def __init__(self, extra: T_VerifiedInRules) -> None:
+class MergeDMSRules(RulesTransformer[DMSRules, DMSRules]):
+    def __init__(self, extra: DMSRules) -> None:
         self.extra = extra
 
-    def transform(self, rules: T_VerifiedInRules) -> T_VerifiedInRules:
+    def transform(self, rules: DMSRules) -> DMSRules:
         output = rules.model_copy(deep=True)
-        if isinstance(output, InformationRules):
-            output.classes.extend(self.extra.classes)
-            output.properties.extend(self.extra.properties)
-            output.prefix.extend(self.extra.prefix)
-        elif isinstance(output, DMSRules):
-            output.views.extend(self.extra.views)
-            output.properties.extend(self.extra.properties)
-            output.containers.extend(self.extra.containers)
+        existing_views = {view.view for view in output.views}
+        for view in self.extra.views:
+            if view.view not in existing_views:
+                output.views.append(view)
+        existing_properties = {(prop.view, prop.view_property) for prop in output.properties}
+        existing_containers = {container.container for container in output.containers}
+        existing_enum_collections = {collection.collection for collection in output.enum_collections}
+        new_containers_by_entity = {container.container: container for container in self.extra.containers or []}
+        new_enum_collections_by_entity = {
+            collection.collection: collection for collection in self.extra.enum_collections or {}
+        }
+        for prop in self.extra.properties:
+            if (prop.view, prop.view_property) in existing_properties:
+                continue
+            output.properties.append(prop)
+            if prop.container and prop.container not in existing_containers:
+                if output.containers is None:
+                    output.containers = SheetList[DMSContainer]()
+                output.containers.append(new_containers_by_entity[prop.container])
+            if isinstance(prop.value_type, Enum) and prop.value_type.collection not in existing_enum_collections:
+                if output.enum is None:
+                    output.enum = SheetList[DMSEnum]()
+                output.enum.append(new_enum_collections_by_entity[prop.value_type.collection])
+
+        existing_nodes = {node.node for node in output.nodes or []}
+        for node in self.extra.properties:
+            if node.node not in existing_nodes:
+                if output.nodes is None:
+                    output.nodes = SheetList[DMSNode]()
+                output.nodes.append(node)
+
         return output
 
     @property
     def description(self) -> str:
         return f"Merged with {self.extra.metadata.as_data_model_id()}"
+
+
+class MergeInformationRules(RulesTransformer[InformationRules, InformationRules]):
+    def __init__(self, extra: InformationRules) -> None:
+        self.extra = extra
+
+    def transform(self, rules: InformationRules) -> InformationRules:
+        output = rules.model_copy(deep=True)
+        existing_classes = {cls.class_ for cls in output.classes}
+        for cls in self.extra.classes:
+            if cls.class_ not in existing_classes:
+                output.classes.append(cls)
+        existing_properties = {(prop.class_, prop.property_) for prop in output.properties}
+        for prop in self.extra.properties:
+            if (prop.class_, prop.property_) not in existing_properties:
+                output.properties.append(prop)
+        for prefix, namespace in self.extra.prefixes.items():
+            if prefix not in output.prefixes:
+                output.prefixes[prefix] = namespace
+        return output
 
 
 class _InformationRulesConverter:
