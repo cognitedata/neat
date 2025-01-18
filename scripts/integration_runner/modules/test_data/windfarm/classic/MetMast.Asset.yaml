@@ -4,6 +4,7 @@ parentExternalId: Measurement
 description: Meteorological mast
 metadata:
   assetCategory: MetMast
+  height: 100
 source: manufacturer2
 labels:
 - externalId: metMast
