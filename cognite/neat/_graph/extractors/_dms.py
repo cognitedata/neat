@@ -183,9 +183,19 @@ class DMSExtractor(BaseExtractor):
             yield key, self._as_uri_ref(dm.DirectRelationReference.load(value))
         elif isinstance(value, dict) and self.unpack_json:
             for sub_key, sub_value in value.items():
-                if sub_value in self.empty_values:
-                    continue
-                yield sub_key, Literal(sub_value)
+                if isinstance(sub_value, str):
+                    if sub_value.casefold() in self.empty_values:
+                        continue
+                    yield sub_key, Literal(sub_value)
+                elif isinstance(sub_value, int | float | bool):
+                    yield sub_key, Literal(sub_value)
+                elif isinstance(sub_value, dict):
+                    yield from self._get_predicate_objects(f"{key}_{sub_key}", sub_value)
+                elif isinstance(sub_value, list):
+                    for item in sub_value:
+                        yield from self._get_predicate_objects(f"{key}_{sub_key}", item)
+                else:
+                    yield sub_key, Literal(str(sub_value))
         elif isinstance(value, dict):
             # This object is a json object.
             yield key, Literal(str(value), datatype=XSD._NS["json"])
