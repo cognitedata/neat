@@ -179,7 +179,7 @@ class TestExtractToLoadFlow:
 
     def test_classic_to_cdf(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
-        neat.read.cdf.classic.graph("Utsira")
+        neat.read.cdf.classic.graph("Utsira", identifier="externalId")
         neat.convert("dms")
 
         neat.mapping.data_model.classic_to_core("NeatInc")
