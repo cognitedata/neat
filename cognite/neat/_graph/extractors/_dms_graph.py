@@ -63,6 +63,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                 issues,
                 instance_space,
                 skip_cognite_views,
+                unpack_json,
             )
         if not data_model:
             issues.append(ResourceRetrievalWarning(frozenset({data_model_id}), "data model"))
@@ -73,8 +74,11 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                 issues,
                 instance_space,
                 skip_cognite_views,
+                unpack_json,
             )
-        return cls(data_model.latest_version(), client, namespace, issues, instance_space, skip_cognite_views)
+        return cls(
+            data_model.latest_version(), client, namespace, issues, instance_space, skip_cognite_views, unpack_json
+        )
 
     @classmethod
     def _create_empty_model(cls, data_model_id: dm.DataModelId) -> dm.DataModel:
@@ -116,6 +120,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
             views,
             overwrite_namespace=self._namespace,
             instance_space=self._instance_space,
+            unpack_json=self._unpack_json,
         ).extract()
 
     def _get_views(self) -> list[dm.View]:

@@ -34,10 +34,12 @@ class DMSExtractor(BaseExtractor):
         total_instances_pair_by_view: dict[dm.ViewId, tuple[int | None, Iterable[Instance]]],
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
+        unpack_json: bool = False,
     ) -> None:
         self.total_instances_pair_by_view = total_instances_pair_by_view
         self.limit = limit
         self.overwrite_namespace = overwrite_namespace
+        self.unpack_json = unpack_json
 
     @classmethod
     def from_data_model(
@@ -47,6 +49,7 @@ class DMSExtractor(BaseExtractor):
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
         instance_space: str | SequenceNotStr[str] | None = None,
+        unpack_json: bool = False,
     ) -> "DMSExtractor":
         """Create an extractor from a data model.
 
@@ -60,7 +63,9 @@ class DMSExtractor(BaseExtractor):
         retrieved = client.data_modeling.data_models.retrieve(data_model, inline_views=True)
         if not retrieved:
             raise ResourceRetrievalError(dm.DataModelId.load(data_model), "data model", "Data Model is missing in CDF")
-        return cls.from_views(client, retrieved.latest_version().views, limit, overwrite_namespace, instance_space)
+        return cls.from_views(
+            client, retrieved.latest_version().views, limit, overwrite_namespace, instance_space, unpack_json
+        )
 
     @classmethod
     def from_views(
@@ -70,6 +75,7 @@ class DMSExtractor(BaseExtractor):
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
         instance_space: str | SequenceNotStr[str] | None = None,
+        unpack_json: bool = False,
     ) -> "DMSExtractor":
         """Create an extractor from a set of views.
 
@@ -79,6 +85,7 @@ class DMSExtractor(BaseExtractor):
             limit: The maximum number of instances to extract.
             overwrite_namespace: If provided, this will overwrite the space of the extracted items.
             instance_space: The space to extract instances from.
+            unpack_json: If True, JSON objects will be unpacked into RDF literals.
         """
         total_instances_pair_by_view: dict[dm.ViewId, tuple[int | None, Iterable[Instance]]] = {}
         for view in views:
@@ -89,6 +96,7 @@ class DMSExtractor(BaseExtractor):
             total_instances_pair_by_view=total_instances_pair_by_view,
             limit=limit,
             overwrite_namespace=overwrite_namespace,
+            unpack_json=unpack_json,
         )
 
     def extract(self) -> Iterable[Triple]:
