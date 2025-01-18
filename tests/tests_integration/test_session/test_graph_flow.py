@@ -187,6 +187,12 @@ class TestExtractToLoadFlow:
         has_errors = {res.name: res.error_messages for res in model_result if res.error_messages}
         assert not has_errors, has_errors
 
-        instance_result = neat.to.cdf.instances()
+        instance_result = neat.to.cdf.instances("sp_windfarm_instance_external_ids")
         has_errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
         assert not has_errors, has_errors
+
+    def test_snapshot_to_enterprise(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        neat.read.cdf._graph(
+            ("sp_windfarm", "WindFarm", "v1"), instance_space="sp_windfarm_instance_external_ids", unpack_json=True
+        )
