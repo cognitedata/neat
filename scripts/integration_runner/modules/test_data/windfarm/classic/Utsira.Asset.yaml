@@ -2,7 +2,7 @@ externalId: Utsira
 name: Utsira
 description: Utsira wind farm
 metadata:
-  blob: data
+  assetCategory: WindFarm
 source: manufacturer1
 labels:
 - externalId: PowerGeneratingUnit

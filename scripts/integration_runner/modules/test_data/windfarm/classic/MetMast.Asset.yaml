@@ -3,7 +3,7 @@ name: MetMast
 parentExternalId: Measurement
 description: Meteorological mast
 metadata:
-  blob: data
+  assetCategory: MetMast
 source: manufacturer2
 labels:
 - externalId: metMast

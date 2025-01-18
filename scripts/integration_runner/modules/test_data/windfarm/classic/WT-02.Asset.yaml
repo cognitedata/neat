@@ -3,7 +3,7 @@ name: WT-02
 parentExternalId: Utsira
 description: Wind turbine 02
 metadata:
-  blob: data
+  assetCategory: Turbine
   turbineType: V112/3075
 source: manufacturer1
 labels:
