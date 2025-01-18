@@ -1,5 +1,6 @@
 import urllib.parse
 from collections.abc import Iterable, Iterator
+from functools import cached_property
 from typing import cast
 
 from cognite.client import CogniteClient
@@ -9,9 +10,11 @@ from cognite.client.data_classes.data_modeling.instances import Instance, Proper
 from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
+from cognite.neat._config import GLOBAL_CONFIG
 from cognite.neat._constants import DEFAULT_SPACE_URI
 from cognite.neat._issues.errors import ResourceRetrievalError
 from cognite.neat._shared import Triple
+from cognite.neat._utils.collection_ import iterate_progress_bar
 
 from ._base import BaseExtractor
 
@@ -20,21 +23,19 @@ class DMSExtractor(BaseExtractor):
     """Extract data from Cognite Data Fusion DMS instances into Neat.
 
     Args:
-        items: The items to extract.
-        total: The total number of items to extract. If provided, this will be used to estimate the progress.
+        total_instances_pair_by_view: A dictionary where the key is the view id and the value is a tuple with the total
+            number of instances and an iterable of instances.
         limit: The maximum number of items to extract.
         overwrite_namespace: If provided, this will overwrite the space of the extracted items.
     """
 
     def __init__(
         self,
-        items: Iterable[Instance],
-        total: int | None = None,
+        total_instances_pair_by_view: dict[dm.ViewId, tuple[int | None, Iterable[Instance]]],
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
     ) -> None:
-        self.items = items
-        self.total = total
+        self.total_instances_pair_by_view = total_instances_pair_by_view
         self.limit = limit
         self.overwrite_namespace = overwrite_namespace
 
@@ -79,18 +80,31 @@ class DMSExtractor(BaseExtractor):
             overwrite_namespace: If provided, this will overwrite the space of the extracted items.
             instance_space: The space to extract instances from.
         """
+        total_instances_pair_by_view: dict[dm.ViewId, tuple[int | None, Iterable[Instance]]] = {}
+        for view in views:
+            instance_iterator = _ViewInstanceIterator(client, view, instance_space)
+            total_instances_pair_by_view[view.as_id()] = (instance_iterator.count, instance_iterator)
+
         return cls(
-            _InstanceIterator(client, views, instance_space),
-            total=None,
+            total_instances_pair_by_view=total_instances_pair_by_view,
             limit=limit,
             overwrite_namespace=overwrite_namespace,
         )
 
     def extract(self) -> Iterable[Triple]:
-        for count, item in enumerate(self.items, 1):
-            if self.limit and count > self.limit:
-                break
-            yield from self._extract_instance(item)
+        total_instances = sum(total for total, _ in self.total_instances_pair_by_view.values() if total is not None)
+        use_progress_bar = (
+            GLOBAL_CONFIG.use_iterate_bar_threshold and total_instances > GLOBAL_CONFIG.use_iterate_bar_threshold
+        )
+
+        for view_id, (total, instances) in self.total_instances_pair_by_view.items():
+            if use_progress_bar and total is not None:
+                instances = iterate_progress_bar(instances, total, f"Extracting instances from {view_id!r}")
+
+            for count, item in enumerate(instances, 1):
+                if self.limit and count > self.limit:
+                    break
+                yield from self._extract_instance(item)
 
     def _extract_instance(self, instance: Instance) -> Iterable[Triple]:
         if isinstance(instance, dm.Edge):
@@ -159,34 +173,54 @@ class DMSExtractor(BaseExtractor):
         return Namespace(DEFAULT_SPACE_URI.format(space=urllib.parse.quote(space)))
 
 
-class _InstanceIterator(Iterable[Instance]):
-    def __init__(
-        self, client: CogniteClient, views: Iterable[dm.View], instance_space: str | SequenceNotStr[str] | None = None
-    ):
+class _ViewInstanceIterator(Iterable[Instance]):
+    def __init__(self, client: CogniteClient, view: dm.View, instance_space: str | SequenceNotStr[str] | None = None):
         self.client = client
-        self.views = views
+        self.view = view
         self.instance_space = instance_space
 
-    def __iter__(self) -> Iterator[Instance]:
-        for view in self.views:
-            view_id = view.as_id()
-            # All nodes and edges with properties
-            if view.used_for in ("node", "all"):
-                yield from self.client.data_modeling.instances(
-                    chunk_size=None, instance_type="node", sources=[view_id], space=self.instance_space
-                )
-            if view.used_for in ("edge", "all"):
-                yield from self.client.data_modeling.instances(
-                    chunk_size=None, instance_type="edge", sources=[view_id], space=self.instance_space
-                )
+    @cached_property
+    def count(self) -> int:
+        node_count = edge_count = 0
+        if self.view.used_for in ("node", "all"):
+            node_count = int(
+                self.client.data_modeling.instances.aggregate(
+                    view=self.view.as_id(),
+                    aggregates=dm.aggregations.Count("externalId"),
+                    instance_type="node",
+                    space=self.instance_space,
+                ).value
+            )
+        if self.view.used_for in ("edge", "all"):
+            edge_count = int(
+                self.client.data_modeling.instances.aggregate(
+                    view=self.view.as_id(),
+                    aggregates=dm.aggregations.Count("externalId"),
+                    instance_type="edge",
+                    space=self.instance_space,
+                ).value
+            )
+        return node_count + edge_count
 
-            for prop in view.properties.values():
-                if isinstance(prop, dm.EdgeConnection):
-                    yield from self.client.data_modeling.instances(
-                        chunk_size=None,
-                        instance_type="edge",
-                        filter=dm.filters.Equals(
-                            ["edge", "type"], {"space": prop.type.space, "externalId": prop.type.external_id}
-                        ),
-                        space=self.instance_space,
-                    )
+    def __iter__(self) -> Iterator[Instance]:
+        view_id = self.view.as_id()
+        # All nodes and edges with properties
+        if self.view.used_for in ("node", "all"):
+            yield from self.client.data_modeling.instances(
+                chunk_size=None, instance_type="node", sources=[view_id], space=self.instance_space
+            )
+        if self.view.used_for in ("edge", "all"):
+            yield from self.client.data_modeling.instances(
+                chunk_size=None, instance_type="edge", sources=[view_id], space=self.instance_space
+            )
+
+        for prop in self.view.properties.values():
+            if isinstance(prop, dm.EdgeConnection):
+                yield from self.client.data_modeling.instances(
+                    chunk_size=None,
+                    instance_type="edge",
+                    filter=dm.filters.Equals(
+                        ["edge", "type"], {"space": prop.type.space, "externalId": prop.type.external_id}
+                    ),
+                    space=self.instance_space,
+                )
