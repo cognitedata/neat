@@ -1501,7 +1501,7 @@ instances:
         space: sp_instance_space
       description: Utsira wind farm
       metadata:
-        blob: data
+        assetCategory: WindFarm
       name: Utsira
       source:
         externalId: ClassicSourceSystem_manufacturer1
@@ -1527,7 +1527,8 @@ instances:
         space: sp_instance_space
       description: Wind turbine 01
       metadata:
-        blob: data
+        assetCategory: Turbine
+        maxCapacity: '3'
         turbineType: V112/3075
       name: WT-01
       parent:
@@ -1558,7 +1559,8 @@ instances:
         space: sp_instance_space
       description: Wind turbine 02
       metadata:
-        blob: data
+        assetCategory: Turbine
+        maxCapacity: '3'
         turbineType: V112/3075
       name: WT-02
       parent:
@@ -1695,7 +1697,7 @@ instances:
         externalId: DataSet_source_ds
         space: sp_instance_space
       metadata:
-        blob: data
+        fileCategory: DataSheet
       name: WT-01_datasheet.txt
       source:
         externalId: ClassicSourceSystem_manufacturer1
@@ -1851,7 +1853,7 @@ instances:
       description: WT-01 forecast
       isStep: false
       metadata:
-        blob: data
+        timeSeriesCategory: Forecast
       name: WT-01 forecast
       type: numeric
       unit:
@@ -1880,7 +1882,7 @@ instances:
       description: WT-01 production
       isStep: false
       metadata:
-        blob: data
+        timeSeriesCategory: Production
       name: WT-01 production
       type: numeric
       unit:
@@ -1909,7 +1911,7 @@ instances:
       description: WT-02 forecast
       isStep: false
       metadata:
-        blob: data
+        timeSeriesCategory: Forecast
       name: WT-02 forecast
       type: numeric
       unit:
@@ -1938,7 +1940,7 @@ instances:
       description: WT-02 production
       isStep: false
       metadata:
-        blob: data
+        timeSeriesCategory: Production
       name: WT-02 production
       type: numeric
       unit:
