@@ -1,5 +1,5 @@
 import urllib.parse
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Set
 from functools import cached_property
 from typing import cast
 
@@ -18,6 +18,8 @@ from cognite.neat._utils.collection_ import iterate_progress_bar
 
 from ._base import BaseExtractor
 
+DEFAULT_EMPTY_VALUES = frozenset({"nan", "null", "none", "", " ", "nil", "n/a", "na", "unknown", "undefined"})
+
 
 class DMSExtractor(BaseExtractor):
     """Extract data from Cognite Data Fusion DMS instances into Neat.
@@ -27,6 +29,9 @@ class DMSExtractor(BaseExtractor):
             number of instances and an iterable of instances.
         limit: The maximum number of items to extract.
         overwrite_namespace: If provided, this will overwrite the space of the extracted items.
+        unpack_json: If True, JSON objects will be unpacked into RDF literals.
+        empty_values: If unpack_json is True, when unpacking JSON objects, if a key has a value in this set, it will be
+            considered as an empty value and skipped.
     """
 
     def __init__(
@@ -35,11 +40,13 @@ class DMSExtractor(BaseExtractor):
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
         unpack_json: bool = False,
+        empty_values: Set[str] = DEFAULT_EMPTY_VALUES,
     ) -> None:
         self.total_instances_pair_by_view = total_instances_pair_by_view
         self.limit = limit
         self.overwrite_namespace = overwrite_namespace
         self.unpack_json = unpack_json
+        self.empty_values = empty_values
 
     @classmethod
     def from_data_model(
@@ -59,6 +66,7 @@ class DMSExtractor(BaseExtractor):
             limit: The maximum number of instances to extract.
             overwrite_namespace: If provided, this will overwrite the space of the extracted items.
             instance_space: The space to extract instances from.
+            unpack_json: If True, JSON objects will be unpacked into RDF literals.
         """
         retrieved = client.data_modeling.data_models.retrieve(data_model, inline_views=True)
         if not retrieved:
@@ -165,20 +173,22 @@ class DMSExtractor(BaseExtractor):
         for view_id, properties in instance.properties.items():
             namespace = self._get_namespace(view_id.space)
             for key, value in properties.items():
-                for object_ in self._get_objects(value):
-                    yield id_, namespace[key], object_
+                for predicate_str, object_ in self._get_predicate_objects(key, value):
+                    yield id_, namespace[urllib.parse.quote(predicate_str)], object_
 
-    def _get_objects(self, value: PropertyValue) -> Iterable[Literal | URIRef]:
+    def _get_predicate_objects(self, key: str, value: PropertyValue) -> Iterable[tuple[str, Literal | URIRef]]:
         if isinstance(value, str | float | bool | int):
-            yield Literal(value)
+            yield key, Literal(value)
         elif isinstance(value, dict) and "space" in value and "externalId" in value:
-            yield self._as_uri_ref(dm.DirectRelationReference.load(value))
+            yield key, self._as_uri_ref(dm.DirectRelationReference.load(value))
+        elif isinstance(value, dict) and self.unpack_json:
+            raise NotImplementedError("Unpacking JSON objects is not yet implemented.")
         elif isinstance(value, dict):
             # This object is a json object.
-            yield Literal(str(value), datatype=XSD._NS["json"])
+            yield key, Literal(str(value), datatype=XSD._NS["json"])
         elif isinstance(value, list):
             for item in value:
-                yield from self._get_objects(item)
+                yield from self._get_predicate_objects(key, item)
 
     def _as_uri_ref(self, instance: Instance | dm.DirectRelationReference) -> URIRef:
         return self._get_namespace(instance.space)[urllib.parse.quote(instance.external_id)]
