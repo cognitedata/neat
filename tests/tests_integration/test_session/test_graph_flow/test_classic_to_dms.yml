@@ -12,7 +12,7 @@ data_product:
     value: string
   metadata:
     created: '2025-01-08T06:40:43.340000'
-    creator: NEAT
+    creator: Cognite
     external_id: DataProduct
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1
     name: data_product data model
@@ -1491,6 +1491,37 @@ data_product:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries
     view: ClassicTimeSeries
 instances:
+- externalId: Asset_MetMast
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: MetMast
+      dataSetId:
+        externalId: DataSet_source_ds
+        space: sp_instance_space
+      description: Meteorological mast
+      metadata:
+        assetCategory: MetMast
+        height: '100'
+      name: MetMast
+      parent:
+        externalId: Unknown asset
+        space: sp_instance_space
+      source:
+        externalId: ClassicSourceSystem_manufacturer2
+        space: sp_instance_space
+      tags:
+      - Label_Measurement
+      - Label_metMast
+    source:
+      externalId: ClassicAsset
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicAsset
+    space: sp_windfarm
 - externalId: Asset_Utsira
   instanceType: node
   sources:
@@ -1586,6 +1617,20 @@ instances:
   sources:
   - properties:
       name: manufacturer1
+    source:
+      externalId: ClassicSourceSystem
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicSourceSystem
+    space: sp_windfarm
+- externalId: ClassicSourceSystem_manufacturer2
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer2
     source:
       externalId: ClassicSourceSystem
       space: sp_windfarm
@@ -1711,6 +1756,25 @@ instances:
   type:
     externalId: ClassicFile
     space: sp_windfarm
+- externalId: Label_Measurement
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: Measurement
+      dataSetId:
+        externalId: DataSet_2458119666837052
+        space: sp_instance_space
+      description: Measurement
+      name: Measurement
+    source:
+      externalId: ClassicLabel
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicLabel
+    space: sp_windfarm
 - externalId: Label_PowerGeneratingUnit
   instanceType: node
   sources:
@@ -1740,6 +1804,25 @@ instances:
         space: sp_instance_space
       description: Wind turbine
       name: Wind turbine
+    source:
+      externalId: ClassicLabel
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicLabel
+    space: sp_windfarm
+- externalId: Label_metMast
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: metMast
+      dataSetId:
+        externalId: DataSet_2458119666837052
+        space: sp_instance_space
+      description: Meteorological mast
+      name: Meteorological mast
     source:
       externalId: ClassicLabel
       space: sp_windfarm
@@ -2078,10 +2161,10 @@ rules:
     value: string
   metadata:
     created: '2025-01-08T06:40:43.340000'
-    creator: NEAT
+    creator: Cognite
     external_id: WindFarm
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1
-    name: Inferred Model
+    name: ClassicDataModel
     role: DMS Architect
     space: sp_windfarm
     updated: '2025-01-08T06:40:43.340000'
