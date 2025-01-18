@@ -181,6 +181,18 @@ class CDFClassicAPI(BaseReadAPI):
             neat.read.cdf.graph("root_asset_external_id")
             ```
         """
+        return self._graph(
+            root_asset_external_id, limit_per_type, identifier, reference_timeseries=False, reference_files=False
+        )
+
+    def _graph(
+        self,
+        root_asset_external_id: str,
+        limit_per_type: int | None = None,
+        identifier: Literal["id", "externalId"] = "id",
+        reference_timeseries: bool = False,
+        reference_files: bool = False,
+    ) -> IssueList:
         namespace = CLASSIC_CDF_NAMESPACE
         extractor = extractors.ClassicGraphExtractor(
             self._get_client,
@@ -208,7 +220,9 @@ class CDFClassicAPI(BaseReadAPI):
             LiteralToEntity(None, namespace["source"], "ClassicSourceSystem", "name"),
         )
         # Updating the information model.
-        prepare_issues = self._state.rule_store.transform(ClassicPrepareCore(namespace))
+        prepare_issues = self._state.rule_store.transform(
+            ClassicPrepareCore(namespace, reference_timeseries, reference_files)
+        )
         # Update the instance store with the latest rules
         information_rules = self._state.rule_store.last_verified_information_rules
         self._state.instances.store.rules[self._state.instances.store.default_named_graph] = information_rules
