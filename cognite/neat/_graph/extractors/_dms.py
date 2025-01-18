@@ -182,7 +182,10 @@ class DMSExtractor(BaseExtractor):
         elif isinstance(value, dict) and "space" in value and "externalId" in value:
             yield key, self._as_uri_ref(dm.DirectRelationReference.load(value))
         elif isinstance(value, dict) and self.unpack_json:
-            raise NotImplementedError("Unpacking JSON objects is not yet implemented.")
+            for sub_key, sub_value in value.items():
+                if sub_value in self.empty_values:
+                    continue
+                yield sub_key, Literal(sub_value)
         elif isinstance(value, dict):
             # This object is a json object.
             yield key, Literal(str(value), datatype=XSD._NS["json"])
