@@ -116,12 +116,22 @@ class CDFReadAPI(BaseReadAPI):
             IssueList: A list of issues that occurred during the extraction.
 
         """
+        return self._graph(data_model_id, instance_space, skip_cognite_views, unpack_json=False)
+
+    def _graph(
+        self,
+        data_model_id: DataModelIdentifier,
+        instance_space: str | SequenceNotStr[str] | None = None,
+        skip_cognite_views: bool = True,
+        unpack_json: bool = False,
+    ) -> IssueList:
         extractor = extractors.DMSGraphExtractor.from_data_model_id(
             # We are skipping the Cognite Views
             data_model_id,
             self._get_client,
             instance_space=instance_space,
             skip_cognite_views=skip_cognite_views,
+            unpack_json=unpack_json,
         )
         return self._state.write_graph(extractor)
 

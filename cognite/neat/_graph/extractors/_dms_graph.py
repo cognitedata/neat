@@ -27,6 +27,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         issues: Sequence[NeatIssue] | None = None,
         instance_space: str | SequenceNotStr[str] | None = None,
         skip_cognite_views: bool = True,
+        unpack_json: bool = False,
     ) -> None:
         self._client = client
         self._data_model = data_model
@@ -34,6 +35,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         self._issues = IssueList(issues)
         self._instance_space = instance_space
         self._skip_cognite_views = skip_cognite_views
+        self._unpack_json = unpack_json
 
         self._views: list[dm.View] | None = None
         self._information_rules: InformationRules | None = None
@@ -47,6 +49,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         namespace: Namespace = DEFAULT_NAMESPACE,
         instance_space: str | SequenceNotStr[str] | None = None,
         skip_cognite_views: bool = True,
+        unpack_json: bool = False,
     ) -> "DMSGraphExtractor":
         issues: list[NeatIssue] = []
         try:
