@@ -101,7 +101,11 @@ class DMSExtractor(BaseExtractor):
             if total == 0:
                 continue
             if use_progress_bar and total is not None:
-                instances = iterate_progress_bar(instances, total, f"Extracting instances from {view_id!r}")
+                instances = iterate_progress_bar(
+                    instances,
+                    total,
+                    f"Extracting instances from {view_id.space}:{view_id.external_id}(version={view_id.version})",
+                )
 
             for count, item in enumerate(instances, 1):
                 if self.limit and count > self.limit:
