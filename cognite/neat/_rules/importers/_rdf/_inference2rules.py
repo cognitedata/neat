@@ -15,6 +15,7 @@ from cognite.neat._rules.models import InformationRules, data_types
 from cognite.neat._rules.models.data_types import AnyURI
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.models.information import (
+    InformationInputClass,
     InformationMetadata,
 )
 from cognite.neat._store import NeatGraphStore
@@ -340,24 +341,23 @@ class SubclassInferenceImporter(BaseRDFImporter):
         Returns:
             Tuple of data model and prefixes of the graph
         """
-        classes: dict[(str, str), dict] = {}
+        classes: dict[(str, str), InformationInputClass] = {}
         properties: dict[str, dict] = {}
         prefixes: dict[str, Namespace] = {}
         count_by_value_type_by_property: dict[str, dict[str, int]] = defaultdict(Counter)
 
         # Infers all the classes in the graph
-        for class_uri, subclass_uri, instance_count in self.graph.query(self._ordered_subclass_query):  # type: ignore[misc]
-            if (class_id := remove_namespace_from_uri(cast(URIRef, class_uri))) in classes:
-                # handles cases when class id is already present in classes
-                class_id = f"{class_id}_{len(classes) + 1}"
-
-            classes[class_id] = {
-                "class_": class_id,
-                "uri": class_uri,
-                "comment": f"Inferred from knowledge graph, where this class has <{instance_count}> instances",
-            }
-
-            self._add_uri_namespace_to_prefixes(cast(URIRef, class_uri), prefixes)
+        for result_row in self.graph.query(self._ordered_subclass_query):  # type: ignore[misc]
+            class_uri, subclass_uri, instance_count = cast(tuple[URIRef, URIRef, RdfLiteral], result_row)
+            class_id, subclass_id = remove_namespace_from_uri([class_uri, subclass_uri])
+            classes[(class_id, subclass_id)] = InformationInputClass(
+                class_=subclass_id,
+                name=subclass_id.title(),
+                implements=class_id,
+                description=f"Inferred from knowledge graph, where this class has <{instance_count}> instances",
+            )
+            self._add_uri_namespace_to_prefixes(class_uri, prefixes)
+            self._add_uri_namespace_to_prefixes(subclass_uri, prefixes)
 
         instances_query = (
             INSTANCES_OF_CLASS_QUERY if self.max_number_of_instance == -1 else INSTANCES_OF_CLASS_RICHNESS_ORDERED_QUERY

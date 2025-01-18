@@ -14,7 +14,7 @@ from cognite.neat._rules.transformers import (
     ConversionTransformer,
     ConvertToRules,
     InformationToDMS,
-    MergeRules,
+    MergeDMSRules,
     VerifyAnyRules,
     VerifyInformationRules,
 )
@@ -216,7 +216,7 @@ class NeatSession:
         # This is to be able to populate the instances store with the inferred subclasses.
         dms_rules = InformationToDMS().transform(verified_information)
 
-        return self._state.rule_transform(MergeRules(dms_rules))
+        return self._state.rule_transform(MergeDMSRules(dms_rules))
 
     def _repr_html_(self) -> str:
         state = self._state
