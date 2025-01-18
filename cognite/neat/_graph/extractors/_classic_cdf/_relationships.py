@@ -32,8 +32,15 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
     ):
+        # This is used by the ClassicExtractor to log the target nodes, such
+        # that it can extract them.
+        # It is private to avoid exposing it to the user.
+        self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
+        self._log_target_nodes = False
+        # Ensure that this becomes an iterator, even if it is a list.
+        to_iterate = (self._log_target_nodes_if_set(item) for item in items)
         super().__init__(
-            items,
+            to_iterate,
             namespace=namespace,
             to_type=to_type,
             total=total,
@@ -45,11 +52,13 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
             prefix=prefix,
             identifier=identifier,
         )
-        # This is used by the ClassicExtractor to log the target nodes, such
-        # that it can extract them.
-        # It is private to avoid exposing it to the user.
-        self._log_target_nodes = False
-        self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
+
+    def _log_target_nodes_if_set(self, item: Relationship) -> Relationship:
+        if not self._log_target_nodes:
+            return item
+        if item.target_type and item.target_external_id:
+            self._target_external_ids_by_type[InstanceIdPrefix.from_str(item.target_type)].add(item.target_external_id)
+        return item
 
     @classmethod
     def _from_dataset(
@@ -72,10 +81,6 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         return len(relationships), relationships
 
     def _fallback_id(self, item: Relationship) -> str | None:
-        if item.external_id and item.source_external_id and item.target_external_id:
-            if self._log_target_nodes and item.target_type and item.target_external_id:
-                self._target_external_ids_by_type[InstanceIdPrefix.from_str(item.target_type)].add(
-                    item.target_external_id
-                )
+        if item.external_id:
             return create_sha256_hash(item.external_id)
         return None
