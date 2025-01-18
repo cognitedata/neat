@@ -921,6 +921,27 @@ class ChangeViewPrefix(RulesTransformer[DMSRules, DMSRules]):
         return output
 
 
+class MergeRules(RulesTransformer[T_VerifiedInRules, T_VerifiedInRules]):
+    def __init__(self, extra: T_VerifiedInRules) -> None:
+        self.extra = extra
+
+    def transform(self, rules: T_VerifiedInRules) -> T_VerifiedInRules:
+        output = rules.model_copy(deep=True)
+        if isinstance(output, InformationRules):
+            output.classes.extend(self.extra.classes)
+            output.properties.extend(self.extra.properties)
+            output.prefix.extend(self.extra.prefix)
+        elif isinstance(output, DMSRules):
+            output.views.extend(self.extra.views)
+            output.properties.extend(self.extra.properties)
+            output.containers.extend(self.extra.containers)
+        return output
+
+    @property
+    def description(self) -> str:
+        return f"Merged with {self.extra.metadata.as_data_model_id()}"
+
+
 class _InformationRulesConverter:
     _start_or_end_node: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
 

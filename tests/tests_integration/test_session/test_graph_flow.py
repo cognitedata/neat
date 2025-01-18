@@ -196,3 +196,4 @@ class TestExtractToLoadFlow:
         neat.read.cdf._graph(
             ("sp_windfarm", "WindFarm", "v1"), instance_space="sp_windfarm_instance_external_ids", unpack_json=True
         )
+        neat.set._instance_sub_type("NeatIncAsset", "assetCategory")

@@ -10,8 +10,14 @@ from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
 from cognite.neat._rules.models._base_input import InputRules
 from cognite.neat._rules.models.information._rules import InformationRules
-from cognite.neat._rules.transformers import ConvertToRules, InformationToDMS, VerifyAnyRules
-from cognite.neat._rules.transformers._converters import ConversionTransformer
+from cognite.neat._rules.transformers import (
+    ConversionTransformer,
+    ConvertToRules,
+    InformationToDMS,
+    MergeRules,
+    VerifyAnyRules,
+    VerifyInformationRules,
+)
 
 from ._collector import _COLLECTOR, Collector
 from ._drop import DropAPI
@@ -198,6 +204,19 @@ class NeatSession:
             data_model_id=model_id,
         )
         return self._state.rule_import(importer)
+
+    def _infer_subclasses(self) -> IssueList:
+        """Infer the subclass of instances."""
+        importer = importers.SubclassInferenceImporter.from_graph_store(
+            store=self._state.instances.store,
+        )
+        unverified_information = importer.to_rules()
+        verified_information = VerifyInformationRules().transform(unverified_information)
+        # Todo Need to hack into the last information rules to merge the rules with the last verified information rules.
+        # This is to be able to populate the instances store with the inferred subclasses.
+        dms_rules = InformationToDMS().transform(verified_information)
+
+        return self._state.rule_transform(MergeRules(dms_rules))
 
     def _repr_html_(self) -> str:
         state = self._state

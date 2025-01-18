@@ -5,11 +5,13 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 from cognite.client import data_modeling as dm
-from rdflib import RDF, Namespace, URIRef
+from rdflib import RDF, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
+from cognite.neat._constants import NEAT
+from cognite.neat._issues import IssueList
 from cognite.neat._issues.warnings import PropertyValueTypeUndefinedWarning
-from cognite.neat._rules.models import data_types
+from cognite.neat._rules.models import InformationRules, data_types
 from cognite.neat._rules.models.data_types import AnyURI
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.models.information import (
@@ -280,3 +282,176 @@ class InferenceImporter(BaseRDFImporter):
     @property
     def source_uri(self) -> URIRef:
         return INSTANCES_ENTITY.id_
+
+
+class SubclassInferenceImporter(BaseRDFImporter):
+    """Infer subclasses from a triple store.
+
+    Assumes that the graph already is connected to a schema. The classes should
+    match the RDF.type of the instances in the graph, while the subclasses should
+    match the NEAT.type of the instances in the graph.
+
+    ClassVars:
+        overwrite_data_types: Mapping of data types to be overwritten. The InferenceImporter will overwrite
+            32-bit integer and 32-bit float data types to 64-bit integer and 64-bit float data types
+
+    Args:
+        issue_list: Issue list to store issues
+        graph: Knowledge graph
+        max_number_of_instance: Maximum number of instances to be used in inference
+    """
+
+    overwrite_data_types: ClassVar[Mapping[URIRef, URIRef]] = {
+        data_types.Integer.as_xml_uri_ref(): data_types.Long.as_xml_uri_ref(),
+        data_types.Float.as_xml_uri_ref(): data_types.Double.as_xml_uri_ref(),
+    }
+
+    def __init__(
+        self,
+        issue_list: IssueList,
+        graph: Graph,
+        rules: InformationRules,
+        max_number_of_instance: int,
+        non_existing_node_type: UnknownEntity | AnyURI,
+    ) -> None:
+        super().__init__(
+            issue_list,
+            graph,
+            rules.metadata.as_data_model_id().as_tuple(),
+            max_number_of_instance,
+            non_existing_node_type,
+            language="en",
+        )
+        self._rules = rules
+
+    _ordered_subclass_query = f"""SELECT DISTINCT ?class ?sublass (count(?s) as ?instances )
+                           WHERE {{ ?s a ?class . ?s <{NEAT.type}> ?subclass }}
+                           group by ?class ?subclass order by DESC(?instances)"""
+
+    def _to_rules_components(
+        self,
+    ) -> dict:
+        """Convert RDF graph to dictionary defining data model and prefixes of the graph
+
+        Args:
+            graph: RDF graph to be converted to TransformationRules object
+            max_number_of_instance: Max number of instances to be considered for each class
+
+        Returns:
+            Tuple of data model and prefixes of the graph
+        """
+        classes: dict[(str, str), dict] = {}
+        properties: dict[str, dict] = {}
+        prefixes: dict[str, Namespace] = {}
+        count_by_value_type_by_property: dict[str, dict[str, int]] = defaultdict(Counter)
+
+        # Infers all the classes in the graph
+        for class_uri, subclass_uri, instance_count in self.graph.query(self._ordered_subclass_query):  # type: ignore[misc]
+            if (class_id := remove_namespace_from_uri(cast(URIRef, class_uri))) in classes:
+                # handles cases when class id is already present in classes
+                class_id = f"{class_id}_{len(classes) + 1}"
+
+            classes[class_id] = {
+                "class_": class_id,
+                "uri": class_uri,
+                "comment": f"Inferred from knowledge graph, where this class has <{instance_count}> instances",
+            }
+
+            self._add_uri_namespace_to_prefixes(cast(URIRef, class_uri), prefixes)
+
+        instances_query = (
+            INSTANCES_OF_CLASS_QUERY if self.max_number_of_instance == -1 else INSTANCES_OF_CLASS_RICHNESS_ORDERED_QUERY
+        )
+
+        classes_iterable = iterate_progress_bar(classes.items(), len(classes), "Inferring classes")
+
+        # Infers all the properties of the class
+        for class_id, class_definition in classes_iterable:
+            for (  # type: ignore[misc]
+                instance,
+                _,
+            ) in self.graph.query(  # type: ignore[misc]
+                instances_query.replace("class", class_definition["uri"])
+                if self.max_number_of_instance < 0
+                else instances_query.replace("class", class_definition["uri"]) + f" LIMIT {self.max_number_of_instance}"
+            ):
+                for property_uri, occurrence, data_type_uri, object_type_uri in self.graph.query(  # type: ignore[misc]
+                    INSTANCE_PROPERTIES_DEFINITION.replace("instance_id", instance)
+                ):  # type: ignore[misc]
+                    # this is to skip rdf:type property
+                    if property_uri == RDF.type:
+                        continue
+                    property_id = remove_namespace_from_uri(property_uri)
+                    self._add_uri_namespace_to_prefixes(cast(URIRef, property_uri), prefixes)
+
+                    if isinstance(data_type_uri, URIRef):
+                        data_type_uri = self.overwrite_data_types.get(data_type_uri, data_type_uri)
+
+                    if value_type_uri := (data_type_uri or object_type_uri):
+                        self._add_uri_namespace_to_prefixes(cast(URIRef, value_type_uri), prefixes)
+                        value_type_id = remove_namespace_from_uri(value_type_uri)
+
+                    # this handles situations when property points to node that is not present in graph
+                    else:
+                        value_type_id = str(self.non_existing_node_type)
+
+                        issue = PropertyValueTypeUndefinedWarning(
+                            resource_type="Property",
+                            identifier=f"{class_id}:{property_id}",
+                            property_name=property_id,
+                            default_action="Remove the property from the rules",
+                            recommended_action="Make sure that graph is complete",
+                        )
+
+                        if issue not in self.issue_list:
+                            self.issue_list.append(issue)
+
+                    id_ = f"{class_id}:{property_id}"
+
+                    definition = {
+                        "class_": class_id,
+                        "property_": property_id,
+                        "max_count": cast(RdfLiteral, occurrence).value,
+                        "value_type": value_type_id,
+                        "instance_source": (
+                            f"{uri_to_short_form(class_definition['uri'], prefixes)}"
+                            f"({uri_to_short_form(cast(URIRef, property_uri), prefixes)})"
+                        ),
+                    }
+
+                    count_by_value_type_by_property[id_][value_type_id] += 1
+
+                    # USE CASE 1: If property is not present in properties
+                    if id_ not in properties:
+                        definition["value_type"] = {definition["value_type"]}
+                        properties[id_] = definition
+
+                    # USE CASE 2: first time redefinition, value type change to multi
+                    elif id_ in properties and definition["value_type"] not in properties[id_]["value_type"]:
+                        properties[id_]["value_type"].add(definition["value_type"])
+
+                    # USE CASE 3: existing but max count is different
+                    elif (
+                        id_ in properties
+                        and definition["value_type"] in properties[id_]["value_type"]
+                        and properties[id_]["max_count"] != definition["max_count"]
+                    ):
+                        properties[id_]["max_count"] = max(properties[id_]["max_count"], definition["max_count"])
+
+        # Create multi-value properties otherwise single value
+        for property_ in properties.values():
+            # Removes non-existing node type from value type prior final conversion to string
+            if len(property_["value_type"]) > 1 and str(self.non_existing_node_type) in property_["value_type"]:
+                property_["value_type"].remove(str(self.non_existing_node_type))
+
+            if len(property_["value_type"]) > 1:
+                property_["value_type"] = " | ".join([str(t) for t in property_["value_type"]])
+            else:
+                property_["value_type"] = next(iter(property_["value_type"]))
+
+        return {
+            "metadata": self._default_metadata().model_dump(),
+            "classes": list(classes.values()),
+            "properties": list(properties.values()),
+            "prefixes": prefixes,
+        }
