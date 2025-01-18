@@ -222,6 +222,9 @@ class _ViewInstanceIterator(Iterable[Instance]):
 
         for prop in self.view.properties.values():
             if isinstance(prop, dm.EdgeConnection):
+                if prop.edge_source:
+                    # All edges with properties are extracted from the edge source
+                    continue
                 yield from self.client.data_modeling.instances(
                     chunk_size=None,
                     instance_type="edge",
