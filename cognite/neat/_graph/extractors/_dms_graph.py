@@ -29,6 +29,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         instance_space: str | SequenceNotStr[str] | None = None,
         skip_cognite_views: bool = True,
         unpack_json: bool = False,
+        str_to_ideal_type: bool = False,
     ) -> None:
         self._client = client
         self._data_model = data_model
@@ -37,6 +38,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         self._instance_space = instance_space
         self._skip_cognite_views = skip_cognite_views
         self._unpack_json = unpack_json
+        self._str_to_ideal_type = str_to_ideal_type
 
         self._views: list[dm.View] | None = None
         self._information_rules: InformationRules | None = None
@@ -51,6 +53,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         instance_space: str | SequenceNotStr[str] | None = None,
         skip_cognite_views: bool = True,
         unpack_json: bool = False,
+        str_to_ideal_type: bool = False,
     ) -> "DMSGraphExtractor":
         issues: list[NeatIssue] = []
         try:
@@ -65,6 +68,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                 instance_space,
                 skip_cognite_views,
                 unpack_json,
+                str_to_ideal_type,
             )
         if not data_model:
             issues.append(ResourceRetrievalWarning(frozenset({data_model_id}), "data model"))
@@ -76,9 +80,17 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                 instance_space,
                 skip_cognite_views,
                 unpack_json,
+                str_to_ideal_type,
             )
         return cls(
-            data_model.latest_version(), client, namespace, issues, instance_space, skip_cognite_views, unpack_json
+            data_model.latest_version(),
+            client,
+            namespace,
+            issues,
+            instance_space,
+            skip_cognite_views,
+            unpack_json,
+            str_to_ideal_type,
         )
 
     @classmethod
@@ -122,6 +134,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
             overwrite_namespace=self._namespace,
             instance_space=self._instance_space,
             unpack_json=self._unpack_json,
+            str_to_ideal_type=self._str_to_ideal_type,
         ).extract()
 
     def _get_views(self) -> list[dm.View]:

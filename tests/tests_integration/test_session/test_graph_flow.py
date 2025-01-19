@@ -194,7 +194,10 @@ class TestExtractToLoadFlow:
     def test_snapshot_to_enterprise(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         neat.read.cdf._graph(
-            ("sp_windfarm", "WindFarm", "v1"), instance_space="sp_windfarm_instance_external_ids", unpack_json=True
+            ("sp_windfarm", "WindFarm", "v1"),
+            instance_space="sp_windfarm_instance_external_ids",
+            unpack_json=True,
+            str_to_ideal_type=True,
         )
         neat.set._instance_sub_type("NeatIncAsset", "assetCategory")
         neat._infer_subclasses()
