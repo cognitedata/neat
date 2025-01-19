@@ -16,6 +16,7 @@ from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, 
 from cognite.neat._constants import (
     COGNITE_MODELS,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
+    DMS_RESERVED_PROPERTIES,
     get_default_prefixes_and_namespaces,
 )
 from cognite.neat._issues.errors import NeatValueError
@@ -252,11 +253,16 @@ class PrefixEntities(RulesTransformer[ReadRules[T_InputRules], ReadRules[T_Input
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
-    def __init__(self, ignore_undefined_value_types: bool = False):
+    def __init__(
+        self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "skip"] = "error"
+    ):
         self.ignore_undefined_value_types = ignore_undefined_value_types
+        self.reserved_properties = reserved_properties
 
     def transform(self, rules: InformationRules) -> DMSRules:
-        return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types)
+        return _InformationRulesConverter(rules).as_dms_rules(
+            self.ignore_undefined_value_types, self.reserved_properties
+        )
 
 
 class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
@@ -990,7 +996,9 @@ class _InformationRulesConverter:
         self.rules = information
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
 
-    def as_dms_rules(self, ignore_undefined_value_types: bool = False) -> "DMSRules":
+    def as_dms_rules(
+        self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "skip"] = "error"
+    ) -> "DMSRules":
         from cognite.neat._rules.models.dms._rules import (
             DMSContainer,
             DMSProperty,
@@ -1033,6 +1041,13 @@ class _InformationRulesConverter:
                 continue
             if prop.class_ in edge_classes and prop.property_ in self._start_or_end_node:
                 continue
+            if prop.property_ in DMS_RESERVED_PROPERTIES:
+                msg = f"Property {prop.property_} is a reserved property in DMS."
+                if reserved_properties == "error":
+                    raise NeatValueError(msg)
+                warnings.warn(NeatValueWarning(f"{msg} Skipping..."), stacklevel=2)
+                continue
+
             dms_property = self._as_dms_property(
                 prop,
                 default_space,

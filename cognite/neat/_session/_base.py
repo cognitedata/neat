@@ -213,13 +213,14 @@ class NeatSession:
             issue_list=issue_list,
             graph=self._state.instances.store.graph(),
             rules=last_information,
-            max_number_of_instance=-1)
+            max_number_of_instance=-1,
+        )
 
         unverified_information = importer.to_rules()
         verified_information = VerifyInformationRules().transform(unverified_information)
         # Todo Need to hack into the last information rules to merge the rules with the last verified information rules.
         # This is to be able to populate the instances store with the inferred subclasses.
-        dms_rules = InformationToDMS().transform(verified_information)
+        dms_rules = InformationToDMS(reserved_properties="skip").transform(verified_information)
 
         return self._state.rule_transform(MergeDMSRules(dms_rules))
 

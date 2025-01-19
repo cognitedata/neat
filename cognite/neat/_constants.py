@@ -163,3 +163,24 @@ READONLY_PROPERTIES_BY_CONTAINER: Mapping[dm.ContainerId, frozenset[str]] = {
 
 def is_readonly_property(container: dm.ContainerId, property_: str) -> bool:
     return container in READONLY_PROPERTIES_BY_CONTAINER and property_ in READONLY_PROPERTIES_BY_CONTAINER[container]
+
+
+DMS_RESERVED_PROPERTIES = frozenset(
+    {
+        "createdTime",
+        "deletedTime",
+        "edge_id",
+        "extensions",
+        "externalId",
+        "lastUpdatedTime",
+        "node_id",
+        "project_id",
+        "property_group",
+        "seq",
+        "space",
+        "version",
+        "tg_table_name",
+        "startNode",
+        "endNode",
+    }
+)
