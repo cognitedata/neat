@@ -207,9 +207,14 @@ class NeatSession:
 
     def _infer_subclasses(self) -> IssueList:
         """Infer the subclass of instances."""
-        importer = importers.SubclassInferenceImporter.from_graph_store(
-            store=self._state.instances.store,
-        )
+        last_information = self._state.rule_store.last_verified_information_rules
+        issue_list = IssueList()
+        importer = importers.SubclassInferenceImporter(
+            issue_list=issue_list,
+            graph=self._state.instances.store.graph(),
+            rules=last_information,
+            max_number_of_instance=-1)
+
         unverified_information = importer.to_rules()
         verified_information = VerifyInformationRules().transform(unverified_information)
         # Todo Need to hack into the last information rules to merge the rules with the last verified information rules.
