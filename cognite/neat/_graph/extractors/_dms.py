@@ -11,7 +11,7 @@ from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._config import GLOBAL_CONFIG
-from cognite.neat._constants import DEFAULT_SPACE_URI
+from cognite.neat._constants import DEFAULT_SPACE_URI, is_readonly_property
 from cognite.neat._issues.errors import ResourceRetrievalError
 from cognite.neat._shared import Triple
 from cognite.neat._utils.collection_ import iterate_progress_bar
@@ -173,10 +173,10 @@ class DMSExtractor(BaseExtractor):
         for view_id, properties in instance.properties.items():
             namespace = self._get_namespace(view_id.space)
             for key, value in properties.items():
-                for predicate_str, object_ in self._get_predicate_objects(key, value):
+                for predicate_str, object_ in self._get_predicate_objects_pair(key, value):
                     yield id_, namespace[urllib.parse.quote(predicate_str)], object_
 
-    def _get_predicate_objects(self, key: str, value: PropertyValue) -> Iterable[tuple[str, Literal | URIRef]]:
+    def _get_predicate_objects_pair(self, key: str, value: PropertyValue) -> Iterable[tuple[str, Literal | URIRef]]:
         if isinstance(value, str | float | bool | int):
             yield key, Literal(value)
         elif isinstance(value, dict) and "space" in value and "externalId" in value:
@@ -190,10 +190,10 @@ class DMSExtractor(BaseExtractor):
                 elif isinstance(sub_value, int | float | bool):
                     yield sub_key, Literal(sub_value)
                 elif isinstance(sub_value, dict):
-                    yield from self._get_predicate_objects(f"{key}_{sub_key}", sub_value)
+                    yield from self._get_predicate_objects_pair(f"{key}_{sub_key}", sub_value)
                 elif isinstance(sub_value, list):
                     for item in sub_value:
-                        yield from self._get_predicate_objects(f"{key}_{sub_key}", item)
+                        yield from self._get_predicate_objects_pair(f"{key}_{sub_key}", item)
                 else:
                     yield sub_key, Literal(str(sub_value))
         elif isinstance(value, dict):
@@ -201,7 +201,7 @@ class DMSExtractor(BaseExtractor):
             yield key, Literal(str(value), datatype=XSD._NS["json"])
         elif isinstance(value, list):
             for item in value:
-                yield from self._get_predicate_objects(key, item)
+                yield from self._get_predicate_objects_pair(key, item)
 
     def _as_uri_ref(self, instance: Instance | dm.DirectRelationReference) -> URIRef:
         return self._get_namespace(instance.space)[urllib.parse.quote(instance.external_id)]
@@ -243,11 +243,21 @@ class _ViewInstanceIterator(Iterable[Instance]):
 
     def __iter__(self) -> Iterator[Instance]:
         view_id = self.view.as_id()
+        read_only_properties = {
+            prop_id
+            for prop_id, prop in self.view.properties.items()
+            if isinstance(prop, dm.MappedProperty)
+            and is_readonly_property(prop.container, prop.container_property_identifier)
+        }
         # All nodes and edges with properties
         if self.view.used_for in ("node", "all"):
-            yield from self.client.data_modeling.instances(
+            node_iterable: Iterable[Instance] = self.client.data_modeling.instances(
                 chunk_size=None, instance_type="node", sources=[view_id], space=self.instance_space
             )
+            if read_only_properties:
+                node_iterable = self._remove_read_only_properties(node_iterable, read_only_properties, view_id)
+            yield from node_iterable
+
         if self.view.used_for in ("edge", "all"):
             yield from self.client.data_modeling.instances(
                 chunk_size=None, instance_type="edge", sources=[view_id], space=self.instance_space
@@ -266,3 +276,13 @@ class _ViewInstanceIterator(Iterable[Instance]):
                     ),
                     space=self.instance_space,
                 )
+
+    @staticmethod
+    def _remove_read_only_properties(
+        nodes: Iterable[Instance], read_only_properties: Set[str], view_id: dm.ViewId
+    ) -> Iterable[Instance]:
+        for node in nodes:
+            if properties := node.properties.get(view_id):
+                for read_only in read_only_properties:
+                    properties.pop(read_only, None)
+            yield node

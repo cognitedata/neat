@@ -4,7 +4,7 @@ from typing import Any, cast
 from urllib.parse import quote
 
 import rdflib
-from rdflib import RDF, Namespace, URIRef
+from rdflib import RDF, Literal, Namespace, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat._constants import NEAT, UNKNOWN_TYPE
@@ -310,10 +310,13 @@ class ConnectionToLiteral(BaseTransformerStandardised):
 class SetNeatType(BaseTransformerStandardised):
     description = "Set the sub type of an instance based on the property"
 
-    def __init__(self, subject_type: URIRef, subject_predicate: URIRef, drop_property: bool) -> None:
+    def __init__(
+        self, subject_type: URIRef, subject_predicate: URIRef, drop_property: bool, namespace: Namespace | None = None
+    ) -> None:
         self.subject_type = subject_type
         self.subject_predicate = subject_predicate
         self.drop_property = drop_property
+        self._namespace = namespace or Namespace(get_namespace(subject_type))
 
     def _count_query(self) -> str:
         query = """SELECT (COUNT(?object) AS ?objectCount)
@@ -345,11 +348,11 @@ class SetNeatType(BaseTransformerStandardised):
     def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
         row_output = RowTransformationOutput()
 
-        instance, object_entity = cast(tuple[URIRef, URIRef], query_result_row)
+        instance, object_literal = cast(tuple[URIRef, Literal], query_result_row)
         if self.drop_property:
-            row_output.remove_triples.append((instance, self.subject_predicate, object_entity))
+            row_output.remove_triples.append((instance, self.subject_predicate, object_literal))
 
-        row_output.add_triples.append((instance, NEAT.type, object_entity))
+        row_output.add_triples.append((instance, NEAT.type, self._namespace[str(object_literal.toPython())]))
         row_output.instances_modified_count += 1
 
         return row_output
