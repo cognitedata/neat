@@ -290,7 +290,7 @@ class NeatRulesStore:
         update_source_entity: Entity | None = self.provenance.target_entity(source_id)
 
         # Case 2: source of imported rules not in rules_store
-        if not source_entity:
+        if not update_source_entity:
             raise NeatValueError(
                 "The source of the data model being imported is not in"
                 " the content of this NEAT session."
@@ -301,14 +301,14 @@ class NeatRulesStore:
             )
 
         # Case 3: source_entity in rules_store and but it is not the latest entity
-        if self.provenance[-1].target_entity.id_ != source_entity.id_:
+        if self.provenance[-1].target_entity.id_ != update_source_entity.id_:
             raise NeatValueError(
                 "Source of imported data model is not the latest entity in the data model provenance."
                 "Pruning required to set the source entity to the latest entity in the provenance."
             )
 
         # Case 4: source_entity in rules_store and it is not the latest target entity
-        if self.provenance[-1].target_entity.id_ != source_entity.id_:
+        if self.provenance[-1].target_entity.id_ != update_source_entity.id_:
             raise NeatValueError(
                 "Source of imported rules is not the latest entity in the provenance."
                 "Pruning required to set the source entity to the latest entity in the provenance."
