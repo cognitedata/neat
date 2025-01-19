@@ -37,7 +37,7 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
     updated: datetime | str | None = None
     physical: str | URIRef | None = None
     conceptual: str | URIRef | None = None
-    source: str | URIRef | None = None
+    source_id: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationMetadata]:
@@ -67,13 +67,6 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
 
         """
         return DEFAULT_NAMESPACE[f"data-model/unverified/logical/{self.space}/{self.external_id}/{self.version}"]
-
-    @property
-    def source_id(self) -> URIRef | None:
-        """Returns source of the imported data model."""
-        if self.source:
-            return URIRef(self.source)
-        return None
 
     @property
     def namespace(self) -> Namespace:
