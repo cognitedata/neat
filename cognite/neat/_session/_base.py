@@ -15,9 +15,11 @@ from cognite.neat._rules.transformers import (
     ConvertToRules,
     InformationToDMS,
     MergeDMSRules,
+    MergeInformationRules,
     VerifyAnyRules,
     VerifyInformationRules,
 )
+from cognite.neat._store._rules_store import ModelEntity
 
 from ._collector import _COLLECTOR, Collector
 from ._drop import DropAPI
@@ -218,10 +220,19 @@ class NeatSession:
 
         unverified_information = importer.to_rules()
         verified_information = VerifyInformationRules().transform(unverified_information)
-        # Todo Need to hack into the last information rules to merge the rules with the last verified information rules.
-        # This is to be able to populate the instances store with the inferred subclasses.
-        dms_rules = InformationToDMS(reserved_properties="skip").transform(verified_information)
 
+        # Hack into the last information rules to merge the rules with the last verified information rules.
+        # This is to be able to populate the instances store with the inferred subclasses.
+        provenance = self._state.rule_store.provenance
+        for change in reversed(provenance):
+            target_entity = change.target_entity
+            if isinstance(target_entity, ModelEntity) and isinstance(target_entity.result, InformationRules):
+                last_information_rules = change.target_entity.result
+                new_information_rules = MergeInformationRules(verified_information).transform(last_information_rules)
+                object.__setattr__(change.target_entity, "result", new_information_rules)
+                break
+
+        dms_rules = InformationToDMS(reserved_properties="skip").transform(verified_information)
         return self._state.rule_transform(MergeDMSRules(dms_rules))
 
     def _repr_html_(self) -> str:
