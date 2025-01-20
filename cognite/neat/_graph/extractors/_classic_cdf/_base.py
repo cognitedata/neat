@@ -19,7 +19,7 @@ from rdflib import RDF, XSD, Literal, Namespace, URIRef
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._issues.warnings import CDFAuthWarning
+from cognite.neat._issues.warnings import CDFAuthWarning, NeatValueWarning
 from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import string_to_ideal_type
 from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
@@ -183,13 +183,16 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         """This can be overridden to handle special cases for the item."""
         return []
 
-    @staticmethod
-    def _external_id_as_uri_suffix(external_id: str | None) -> str:
+    @classmethod
+    def _external_id_as_uri_suffix(cls, external_id: str | None) -> str:
         if external_id == "":
+            warnings.warn(NeatValueWarning(f"Empty external id in {cls._default_rdf_type}"), stacklevel=2)
             return "empty"
         elif external_id == "\x00":
+            warnings.warn(NeatValueWarning(f"Null external id in {cls._default_rdf_type}"), stacklevel=2)
             return "null"
         elif external_id is None:
+            warnings.warn(NeatValueWarning(f"None external id in {cls._default_rdf_type}"), stacklevel=2)
             return "None"
         # The external ID needs to pass the ^[^\\x00]{1,256}$ regex for the DMS API.
         # In addition, neat internals requires the external ID to be a valid URI.
@@ -222,12 +225,13 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         return self._SPACE_PATTERN.sub("_", type_)
 
     def _as_object(self, raw: Any, key: str) -> Literal | URIRef:
+        """Return properly formatted object part of s-p-o triple"""
         if key in {"data_set_id", "dataSetId"}:
             if self.identifier == "externalId" and self.lookup_dataset_external_id:
                 try:
                     data_set_external_id = self.lookup_dataset_external_id(raw)
                 except KeyError:
-                    return Literal("Unknown data set", datatype=XSD.string)
+                    return Literal("Unknown data set")
                 else:
                     return self.namespace[
                         f"{InstanceIdPrefix.data_set}{self._external_id_as_uri_suffix(data_set_external_id)}"
