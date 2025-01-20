@@ -99,20 +99,29 @@ class CDFReadAPI(BaseReadAPI):
         return self._state.rule_import(importer)
 
     def graph(
-        self, data_model_id: DataModelIdentifier, instance_space: str | SequenceNotStr[str] | None = None
+        self,
+        data_model_id: DataModelIdentifier,
+        instance_space: str | SequenceNotStr[str] | None = None,
+        skip_cognite_views: bool = True,
     ) -> IssueList:
         """Reads a knowledge graph from Cognite Data Fusion (CDF).
 
         Args:
             data_model_id: Tuple of strings with the id of a CDF Data Model.
             instance_space: The instance spaces to extract. If None, all instance spaces are extracted.
+            skip_cognite_views: If True, all Cognite Views are skipped. For example, if you have the CogniteAsset
+                view in you data model, it will ont be used to extract instances.
 
         Returns:
             IssueList: A list of issues that occurred during the extraction.
 
         """
         extractor = extractors.DMSGraphExtractor.from_data_model_id(
-            data_model_id, self._get_client, instance_space=instance_space
+            # We are skipping the Cognite Views
+            data_model_id,
+            self._get_client,
+            instance_space=instance_space,
+            skip_cognite_views=skip_cognite_views,
         )
         return self._state.write_graph(extractor)
 

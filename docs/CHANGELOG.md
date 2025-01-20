@@ -24,6 +24,11 @@ Changes are grouped as follows:
 - The `neat.infer()` no longer skips `externalId`/`external_id` properties when inferring the data model.
 - Importing rules which were exported then modified externally then re-imported to the neat session
 - The `neat.read.cdf.classic.graph(...)` gives an error is the root asset is not found in CDF.
+- The `neat.read.cdf.graph(...)` method now shows progress bars for each view when loading large graphs.
+
+### Changed
+- The `neat.read.cdf.graph(...)` no longer extracts instances from cognite views by default. Instead, the parameter
+  `skip_cognite_views` has been added to the method to allow for this.
 
 ## [0.107.0] - 15-01-**2025**
 ### Fixed
