@@ -2,11 +2,13 @@ import typing
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Set
 from pathlib import Path
+from typing import Any
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Relationship, RelationshipList
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
 
+from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import create_sha256_hash
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix, T_CogniteResource
@@ -52,6 +54,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
             prefix=prefix,
             identifier=identifier,
         )
+        self._ids_by_external_id_by_by_type: dict[InstanceIdPrefix, dict[str, str]] = defaultdict(dict)
 
     def _log_target_nodes_if_set(self, item: Relationship) -> Relationship:
         if not self._log_target_nodes:
@@ -59,6 +62,11 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         if item.target_type and item.target_external_id:
             self._target_external_ids_by_type[InstanceIdPrefix.from_str(item.target_type)].add(item.target_external_id)
         return item
+
+    def _item2triples_special_cases(self, id_: URIRef, dumped: dict[str, Any]) -> list[Triple]:
+        if self.identifier == "externalId":
+            return []
+        raise NotImplementedError
 
     @classmethod
     def _from_dataset(
