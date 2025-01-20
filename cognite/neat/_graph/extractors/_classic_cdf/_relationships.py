@@ -1,4 +1,5 @@
 import typing
+import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Set
 from pathlib import Path
@@ -8,6 +9,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Relationship, RelationshipList
 from rdflib import Namespace, URIRef
 
+from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import create_sha256_hash
 
@@ -54,7 +56,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
             prefix=prefix,
             identifier=identifier,
         )
-        self._ids_by_external_id_by_by_type: dict[InstanceIdPrefix, dict[str, str]] = defaultdict(dict)
+        self._uri_by_external_id_by_by_type: dict[InstanceIdPrefix, dict[str, URIRef]] = defaultdict(dict)
 
     def _log_target_nodes_if_set(self, item: Relationship) -> Relationship:
         if not self._log_target_nodes:
@@ -66,7 +68,32 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
     def _item2triples_special_cases(self, id_: URIRef, dumped: dict[str, Any]) -> list[Triple]:
         if self.identifier == "externalId":
             return []
-        raise NotImplementedError
+        triples: list[Triple] = []
+        if (source_external_id := dumped.pop("sourceExternalId")) and "sourceType" in dumped:
+            source_type = dumped["sourceType"]
+            try:
+                source_uri = self._uri_by_external_id_by_by_type[InstanceIdPrefix.from_str(source_type)][
+                    source_external_id
+                ]
+            except KeyError:
+                warnings.warn(
+                    NeatValueWarning(f"Missing externalId {source_external_id} for {source_type}"), stacklevel=2
+                )
+            else:
+                triples.append((id_, self.namespace["sourceExternalId"], source_uri))
+        if (target_external_id := dumped.pop("targetExternalId")) and "targetType" in dumped:
+            target_type = dumped["targetType"]
+            try:
+                target_uri = self._uri_by_external_id_by_by_type[InstanceIdPrefix.from_str(target_type)][
+                    target_external_id
+                ]
+            except KeyError:
+                warnings.warn(
+                    NeatValueWarning(f"Missing externalId {target_external_id} for {target_type}"), stacklevel=2
+                )
+            else:
+                triples.append((id_, self.namespace["targetExternalId"], target_uri))
+        return triples
 
     @classmethod
     def _from_dataset(
