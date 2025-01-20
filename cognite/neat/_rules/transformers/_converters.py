@@ -16,6 +16,7 @@ from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, 
 from cognite.neat._constants import (
     COGNITE_MODELS,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
+    DMS_RESERVED_PROPERTIES,
     get_default_prefixes_and_namespaces,
 )
 from cognite.neat._issues.errors import NeatValueError
@@ -41,9 +42,9 @@ from cognite.neat._rules.models import (
 )
 from cognite.neat._rules.models._rdfpath import Entity as RDFPathEntity
 from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
-from cognite.neat._rules.models.data_types import AnyURI, DataType, File, String, Timeseries
+from cognite.neat._rules.models.data_types import AnyURI, DataType, Enum, File, String, Timeseries
 from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSValidation, DMSView
-from cognite.neat._rules.models.dms._rules import DMSContainer
+from cognite.neat._rules.models.dms._rules import DMSContainer, DMSEnum, DMSNode
 from cognite.neat._rules.models.entities import (
     ClassEntity,
     ContainerEntity,
@@ -252,11 +253,16 @@ class PrefixEntities(RulesTransformer[ReadRules[T_InputRules], ReadRules[T_Input
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
-    def __init__(self, ignore_undefined_value_types: bool = False):
+    def __init__(
+        self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "skip"] = "error"
+    ):
         self.ignore_undefined_value_types = ignore_undefined_value_types
+        self.reserved_properties = reserved_properties
 
     def transform(self, rules: InformationRules) -> DMSRules:
-        return _InformationRulesConverter(rules).as_dms_rules(self.ignore_undefined_value_types)
+        return _InformationRulesConverter(rules).as_dms_rules(
+            self.ignore_undefined_value_types, self.reserved_properties
+        )
 
 
 class DMSToInformation(ConversionTransformer[DMSRules, InformationRules]):
@@ -921,6 +927,68 @@ class ChangeViewPrefix(RulesTransformer[DMSRules, DMSRules]):
         return output
 
 
+class MergeDMSRules(RulesTransformer[DMSRules, DMSRules]):
+    def __init__(self, extra: DMSRules) -> None:
+        self.extra = extra
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        output = rules.model_copy(deep=True)
+        existing_views = {view.view for view in output.views}
+        for view in self.extra.views:
+            if view.view not in existing_views:
+                output.views.append(view)
+        existing_properties = {(prop.view, prop.view_property) for prop in output.properties}
+        existing_containers = {container.container for container in output.containers or []}
+        existing_enum_collections = {collection.collection for collection in output.enum or []}
+        new_containers_by_entity = {container.container: container for container in self.extra.containers or []}
+        new_enum_collections_by_entity = {collection.collection: collection for collection in self.extra.enum or []}
+        for prop in self.extra.properties:
+            if (prop.view, prop.view_property) in existing_properties:
+                continue
+            output.properties.append(prop)
+            if prop.container and prop.container not in existing_containers:
+                if output.containers is None:
+                    output.containers = SheetList[DMSContainer]()
+                output.containers.append(new_containers_by_entity[prop.container])
+            if isinstance(prop.value_type, Enum) and prop.value_type.collection not in existing_enum_collections:
+                if output.enum is None:
+                    output.enum = SheetList[DMSEnum]()
+                output.enum.append(new_enum_collections_by_entity[prop.value_type.collection])
+
+        existing_nodes = {node.node for node in output.nodes or []}
+        for node in self.extra.nodes or []:
+            if node.node not in existing_nodes:
+                if output.nodes is None:
+                    output.nodes = SheetList[DMSNode]()
+                output.nodes.append(node)
+
+        return output
+
+    @property
+    def description(self) -> str:
+        return f"Merged with {self.extra.metadata.as_data_model_id()}"
+
+
+class MergeInformationRules(RulesTransformer[InformationRules, InformationRules]):
+    def __init__(self, extra: InformationRules) -> None:
+        self.extra = extra
+
+    def transform(self, rules: InformationRules) -> InformationRules:
+        output = rules.model_copy(deep=True)
+        existing_classes = {cls.class_ for cls in output.classes}
+        for cls in self.extra.classes:
+            if cls.class_ not in existing_classes:
+                output.classes.append(cls)
+        existing_properties = {(prop.class_, prop.property_) for prop in output.properties}
+        for prop in self.extra.properties:
+            if (prop.class_, prop.property_) not in existing_properties:
+                output.properties.append(prop)
+        for prefix, namespace in self.extra.prefixes.items():
+            if prefix not in output.prefixes:
+                output.prefixes[prefix] = namespace
+        return output
+
+
 class _InformationRulesConverter:
     _start_or_end_node: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
 
@@ -928,7 +996,9 @@ class _InformationRulesConverter:
         self.rules = information
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
 
-    def as_dms_rules(self, ignore_undefined_value_types: bool = False) -> "DMSRules":
+    def as_dms_rules(
+        self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "skip"] = "error"
+    ) -> "DMSRules":
         from cognite.neat._rules.models.dms._rules import (
             DMSContainer,
             DMSProperty,
@@ -971,6 +1041,13 @@ class _InformationRulesConverter:
                 continue
             if prop.class_ in edge_classes and prop.property_ in self._start_or_end_node:
                 continue
+            if prop.property_ in DMS_RESERVED_PROPERTIES:
+                msg = f"Property {prop.property_} is a reserved property in DMS."
+                if reserved_properties == "error":
+                    raise NeatValueError(msg)
+                warnings.warn(NeatValueWarning(f"{msg} Skipping..."), stacklevel=2)
+                continue
+
             dms_property = self._as_dms_property(
                 prop,
                 default_space,

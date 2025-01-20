@@ -1,5 +1,5 @@
 import urllib.parse
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Set
 from functools import cached_property
 from typing import cast
 
@@ -11,12 +11,15 @@ from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._config import GLOBAL_CONFIG
-from cognite.neat._constants import DEFAULT_SPACE_URI
+from cognite.neat._constants import DEFAULT_SPACE_URI, is_readonly_property
 from cognite.neat._issues.errors import ResourceRetrievalError
 from cognite.neat._shared import Triple
+from cognite.neat._utils.auxiliary import string_to_ideal_type
 from cognite.neat._utils.collection_ import iterate_progress_bar
 
 from ._base import BaseExtractor
+
+DEFAULT_EMPTY_VALUES = frozenset({"nan", "null", "none", "", " ", "nil", "n/a", "na", "unknown", "undefined"})
 
 
 class DMSExtractor(BaseExtractor):
@@ -27,6 +30,11 @@ class DMSExtractor(BaseExtractor):
             number of instances and an iterable of instances.
         limit: The maximum number of items to extract.
         overwrite_namespace: If provided, this will overwrite the space of the extracted items.
+        unpack_json: If True, JSON objects will be unpacked into RDF literals.
+        empty_values: If unpack_json is True, when unpacking JSON objects, if a key has a value in this set, it will be
+            considered as an empty value and skipped.
+        str_to_ideal_type: If unpack_json is True, when unpacking JSON objects, if the value is a string, the extractor
+            will try to convert it to the ideal type.
     """
 
     def __init__(
@@ -34,10 +42,16 @@ class DMSExtractor(BaseExtractor):
         total_instances_pair_by_view: dict[dm.ViewId, tuple[int | None, Iterable[Instance]]],
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
+        unpack_json: bool = False,
+        empty_values: Set[str] = DEFAULT_EMPTY_VALUES,
+        str_to_ideal_type: bool = False,
     ) -> None:
         self.total_instances_pair_by_view = total_instances_pair_by_view
         self.limit = limit
         self.overwrite_namespace = overwrite_namespace
+        self.unpack_json = unpack_json
+        self.empty_values = empty_values
+        self.str_to_ideal_type = str_to_ideal_type
 
     @classmethod
     def from_data_model(
@@ -47,6 +61,8 @@ class DMSExtractor(BaseExtractor):
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
         instance_space: str | SequenceNotStr[str] | None = None,
+        unpack_json: bool = False,
+        str_to_ideal_type: bool = False,
     ) -> "DMSExtractor":
         """Create an extractor from a data model.
 
@@ -56,11 +72,20 @@ class DMSExtractor(BaseExtractor):
             limit: The maximum number of instances to extract.
             overwrite_namespace: If provided, this will overwrite the space of the extracted items.
             instance_space: The space to extract instances from.
+            unpack_json: If True, JSON objects will be unpacked into RDF literals.
         """
         retrieved = client.data_modeling.data_models.retrieve(data_model, inline_views=True)
         if not retrieved:
             raise ResourceRetrievalError(dm.DataModelId.load(data_model), "data model", "Data Model is missing in CDF")
-        return cls.from_views(client, retrieved.latest_version().views, limit, overwrite_namespace, instance_space)
+        return cls.from_views(
+            client,
+            retrieved.latest_version().views,
+            limit,
+            overwrite_namespace,
+            instance_space,
+            unpack_json,
+            str_to_ideal_type,
+        )
 
     @classmethod
     def from_views(
@@ -70,6 +95,8 @@ class DMSExtractor(BaseExtractor):
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
         instance_space: str | SequenceNotStr[str] | None = None,
+        unpack_json: bool = False,
+        str_to_ideal_type: bool = False,
     ) -> "DMSExtractor":
         """Create an extractor from a set of views.
 
@@ -79,6 +106,9 @@ class DMSExtractor(BaseExtractor):
             limit: The maximum number of instances to extract.
             overwrite_namespace: If provided, this will overwrite the space of the extracted items.
             instance_space: The space to extract instances from.
+            unpack_json: If True, JSON objects will be unpacked into RDF literals.
+            str_to_ideal_type: If True, when unpacking JSON objects, if the value is a string, the extractor will try to
+                convert it to the ideal type.
         """
         total_instances_pair_by_view: dict[dm.ViewId, tuple[int | None, Iterable[Instance]]] = {}
         for view in views:
@@ -89,6 +119,8 @@ class DMSExtractor(BaseExtractor):
             total_instances_pair_by_view=total_instances_pair_by_view,
             limit=limit,
             overwrite_namespace=overwrite_namespace,
+            unpack_json=unpack_json,
+            str_to_ideal_type=str_to_ideal_type,
         )
 
     def extract(self) -> Iterable[Triple]:
@@ -157,20 +189,38 @@ class DMSExtractor(BaseExtractor):
         for view_id, properties in instance.properties.items():
             namespace = self._get_namespace(view_id.space)
             for key, value in properties.items():
-                for object_ in self._get_objects(value):
-                    yield id_, namespace[key], object_
+                for predicate_str, object_ in self._get_predicate_objects_pair(key, value):
+                    yield id_, namespace[urllib.parse.quote(predicate_str)], object_
 
-    def _get_objects(self, value: PropertyValue) -> Iterable[Literal | URIRef]:
+    def _get_predicate_objects_pair(self, key: str, value: PropertyValue) -> Iterable[tuple[str, Literal | URIRef]]:
         if isinstance(value, str | float | bool | int):
-            yield Literal(value)
+            yield key, Literal(value)
         elif isinstance(value, dict) and "space" in value and "externalId" in value:
-            yield self._as_uri_ref(dm.DirectRelationReference.load(value))
+            yield key, self._as_uri_ref(dm.DirectRelationReference.load(value))
+        elif isinstance(value, dict) and self.unpack_json:
+            for sub_key, sub_value in value.items():
+                if isinstance(sub_value, str):
+                    if sub_value.casefold() in self.empty_values:
+                        continue
+                    if self.str_to_ideal_type:
+                        yield sub_key, Literal(string_to_ideal_type(sub_value))
+                    else:
+                        yield sub_key, Literal(sub_value)
+                elif isinstance(sub_value, int | float | bool):
+                    yield sub_key, Literal(sub_value)
+                elif isinstance(sub_value, dict):
+                    yield from self._get_predicate_objects_pair(f"{key}_{sub_key}", sub_value)
+                elif isinstance(sub_value, list):
+                    for item in sub_value:
+                        yield from self._get_predicate_objects_pair(f"{key}_{sub_key}", item)
+                else:
+                    yield sub_key, Literal(str(sub_value))
         elif isinstance(value, dict):
             # This object is a json object.
-            yield Literal(str(value), datatype=XSD._NS["json"])
+            yield key, Literal(str(value), datatype=XSD._NS["json"])
         elif isinstance(value, list):
             for item in value:
-                yield from self._get_objects(item)
+                yield from self._get_predicate_objects_pair(key, item)
 
     def _as_uri_ref(self, instance: Instance | dm.DirectRelationReference) -> URIRef:
         return self._get_namespace(instance.space)[urllib.parse.quote(instance.external_id)]
@@ -212,11 +262,21 @@ class _ViewInstanceIterator(Iterable[Instance]):
 
     def __iter__(self) -> Iterator[Instance]:
         view_id = self.view.as_id()
+        read_only_properties = {
+            prop_id
+            for prop_id, prop in self.view.properties.items()
+            if isinstance(prop, dm.MappedProperty)
+            and is_readonly_property(prop.container, prop.container_property_identifier)
+        }
         # All nodes and edges with properties
         if self.view.used_for in ("node", "all"):
-            yield from self.client.data_modeling.instances(
+            node_iterable: Iterable[Instance] = self.client.data_modeling.instances(
                 chunk_size=None, instance_type="node", sources=[view_id], space=self.instance_space
             )
+            if read_only_properties:
+                node_iterable = self._remove_read_only_properties(node_iterable, read_only_properties, view_id)
+            yield from node_iterable
+
         if self.view.used_for in ("edge", "all"):
             yield from self.client.data_modeling.instances(
                 chunk_size=None, instance_type="edge", sources=[view_id], space=self.instance_space
@@ -235,3 +295,13 @@ class _ViewInstanceIterator(Iterable[Instance]):
                     ),
                     space=self.instance_space,
                 )
+
+    @staticmethod
+    def _remove_read_only_properties(
+        nodes: Iterable[Instance], read_only_properties: Set[str], view_id: dm.ViewId
+    ) -> Iterable[Instance]:
+        for node in nodes:
+            if properties := node.properties.get(view_id):
+                for read_only in read_only_properties:
+                    properties.pop(read_only, None)
+            yield node

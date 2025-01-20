@@ -11,6 +11,7 @@ from cognite.neat._issues import IssueList, NeatIssue, catch_warnings
 from cognite.neat._issues.warnings import CDFAuthWarning, ResourceNotFoundWarning, ResourceRetrievalWarning
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
+from cognite.neat._rules.models.data_types import Json
 from cognite.neat._rules.transformers import DMSToInformation, VerifyDMSRules
 from cognite.neat._shared import Triple
 
@@ -27,6 +28,8 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         issues: Sequence[NeatIssue] | None = None,
         instance_space: str | SequenceNotStr[str] | None = None,
         skip_cognite_views: bool = True,
+        unpack_json: bool = False,
+        str_to_ideal_type: bool = False,
     ) -> None:
         self._client = client
         self._data_model = data_model
@@ -34,6 +37,8 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         self._issues = IssueList(issues)
         self._instance_space = instance_space
         self._skip_cognite_views = skip_cognite_views
+        self._unpack_json = unpack_json
+        self._str_to_ideal_type = str_to_ideal_type
 
         self._views: list[dm.View] | None = None
         self._information_rules: InformationRules | None = None
@@ -47,6 +52,8 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         namespace: Namespace = DEFAULT_NAMESPACE,
         instance_space: str | SequenceNotStr[str] | None = None,
         skip_cognite_views: bool = True,
+        unpack_json: bool = False,
+        str_to_ideal_type: bool = False,
     ) -> "DMSGraphExtractor":
         issues: list[NeatIssue] = []
         try:
@@ -60,6 +67,8 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                 issues,
                 instance_space,
                 skip_cognite_views,
+                unpack_json,
+                str_to_ideal_type,
             )
         if not data_model:
             issues.append(ResourceRetrievalWarning(frozenset({data_model_id}), "data model"))
@@ -70,8 +79,19 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                 issues,
                 instance_space,
                 skip_cognite_views,
+                unpack_json,
+                str_to_ideal_type,
             )
-        return cls(data_model.latest_version(), client, namespace, issues, instance_space, skip_cognite_views)
+        return cls(
+            data_model.latest_version(),
+            client,
+            namespace,
+            issues,
+            instance_space,
+            skip_cognite_views,
+            unpack_json,
+            str_to_ideal_type,
+        )
 
     @classmethod
     def _create_empty_model(cls, data_model_id: dm.DataModelId) -> dm.DataModel:
@@ -113,6 +133,8 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
             views,
             overwrite_namespace=self._namespace,
             instance_space=self._instance_space,
+            unpack_json=self._unpack_json,
+            str_to_ideal_type=self._str_to_ideal_type,
         ).extract()
 
     def _get_views(self) -> list[dm.View]:
@@ -157,6 +179,18 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         # The DMS and Information rules must be created together to link them property.
         importer = DMSImporter.from_data_model(self._client, self._data_model)
         unverified_dms = importer.to_rules()
+        if self._unpack_json and (dms_rules := unverified_dms.rules):
+            # Drop the JSON properties from the DMS rules as these are no longer valid.
+            json_name = Json().name  # To avoid instantiating Json multiple times.
+            dms_rules.properties = [
+                prop
+                for prop in dms_rules.properties
+                if not (
+                    isinstance(prop.value_type, Json)
+                    or (isinstance(prop.value_type, str) and prop.value_type == json_name)
+                )
+            ]
+
         with catch_warnings() as issues:
             # Any errors occur will be raised and caught outside the extractor.
             verified_dms = VerifyDMSRules(client=self._client).transform(unverified_dms)

@@ -10,8 +10,16 @@ from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._rules import importers
 from cognite.neat._rules.models._base_input import InputRules
 from cognite.neat._rules.models.information._rules import InformationRules
-from cognite.neat._rules.transformers import ConvertToRules, InformationToDMS, VerifyAnyRules
-from cognite.neat._rules.transformers._converters import ConversionTransformer
+from cognite.neat._rules.transformers import (
+    ConversionTransformer,
+    ConvertToRules,
+    InformationToDMS,
+    MergeDMSRules,
+    MergeInformationRules,
+    VerifyAnyRules,
+    VerifyInformationRules,
+)
+from cognite.neat._store._rules_store import ModelEntity
 
 from ._collector import _COLLECTOR, Collector
 from ._drop import DropAPI
@@ -198,6 +206,34 @@ class NeatSession:
             data_model_id=model_id,
         )
         return self._state.rule_import(importer)
+
+    def _infer_subclasses(self) -> IssueList:
+        """Infer the subclass of instances."""
+        last_information = self._state.rule_store.last_verified_information_rules
+        issue_list = IssueList()
+        importer = importers.SubclassInferenceImporter(
+            issue_list=issue_list,
+            graph=self._state.instances.store.graph(),
+            rules=last_information,
+            max_number_of_instance=-1,
+        )
+
+        unverified_information = importer.to_rules()
+        verified_information = VerifyInformationRules().transform(unverified_information)
+
+        # Hack into the last information rules to merge the rules with the last verified information rules.
+        # This is to be able to populate the instances store with the inferred subclasses.
+        provenance = self._state.rule_store.provenance
+        for change in reversed(provenance):
+            target_entity = change.target_entity
+            if isinstance(target_entity, ModelEntity) and isinstance(target_entity.result, InformationRules):
+                last_information_rules = change.target_entity.result
+                new_information_rules = MergeInformationRules(verified_information).transform(last_information_rules)
+                object.__setattr__(change.target_entity, "result", new_information_rules)
+                break
+
+        dms_rules = InformationToDMS(reserved_properties="skip").transform(verified_information)
+        return self._state.rule_transform(MergeDMSRules(dms_rules))
 
     def _repr_html_(self) -> str:
         state = self._state
