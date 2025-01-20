@@ -1,5 +1,6 @@
 from typing import Any
 
+import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
@@ -35,9 +36,10 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
+    @pytest.mark.skip("Test data in CDF changed, will be added back in PR #925")
     def test_classic_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
-        neat.read.cdf.classic.graph("Utsira")
+        neat.read.cdf.classic.graph("Utsira", identifier="externalId")
         neat.convert("dms")
         neat.mapping.data_model.classic_to_core("Classic")
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
