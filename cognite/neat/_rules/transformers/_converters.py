@@ -41,7 +41,7 @@ from cognite.neat._rules.models import (
 )
 from cognite.neat._rules.models._rdfpath import Entity as RDFPathEntity
 from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
-from cognite.neat._rules.models.data_types import AnyURI, DataType, String
+from cognite.neat._rules.models.data_types import AnyURI, DataType, File, String, Timeseries
 from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSValidation, DMSView
 from cognite.neat._rules.models.dms._rules import DMSContainer
 from cognite.neat._rules.models.entities import (
@@ -823,11 +823,21 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
     - ClassicTimeseries.isString from boolean to string
     - Add class ClassicSourceSystem, and update all source properties from string to ClassicSourceSystem.
     - Rename externalId properties to classicExternalId
-    - Renames the Relationship.sourceExternaId and Relationship.targetExternalId to startNode and endNode
+    - Renames the Relationship.sourceExternalId and Relationship.targetExternalId to startNode and endNode
+    - If reference_timeseries is True, the classicExternalId property of the TimeSeries class will change type
+      from string to timeseries.
+    - If reference_files is True, the classicExternalId property of the File class will change type from string to file.
     """
 
-    def __init__(self, instance_namespace: Namespace) -> None:
+    def __init__(
+        self,
+        instance_namespace: Namespace,
+        reference_timeseries: bool = False,
+        reference_files: bool = False,
+    ) -> None:
         self.instance_namespace = instance_namespace
+        self.reference_timeseries = reference_timeseries
+        self.reference_files = reference_files
 
     @property
     def description(self) -> str:
@@ -851,6 +861,10 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
                 prop.value_type = ClassEntity(prefix=prefix, suffix="ClassicSourceSystem")
             elif prop.property_ == "externalId":
                 prop.property_ = "classicExternalId"
+                if self.reference_timeseries and prop.class_.suffix == "ClassicTimeSeries":
+                    prop.value_type = Timeseries()
+                elif self.reference_files and prop.class_.suffix == "ClassicFile":
+                    prop.value_type = File()
             elif prop.property_ == "sourceExternalId" and prop.class_.suffix == "ClassicRelationship":
                 prop.property_ = "startNode"
             elif prop.property_ == "targetExternalId" and prop.class_.suffix == "ClassicRelationship":
