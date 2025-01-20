@@ -112,6 +112,9 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         # and use them in linking of Files, Sequences, TimeSeries, and Events.
         self.asset_external_ids_by_id: dict[int, str] = {}
         self.lookup_dataset_external_id: Callable[[int], str] | None = None
+        # Used by the ClassicGraphExtractor to log URIRefs
+        self._log_urirefs = False
+        self._uriref_by_external_id: dict[str, URIRef] = {}
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
@@ -155,6 +158,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             raise NeatValueError(f"Unknown identifier {self.identifier}")
 
         id_ = self.namespace[f"{self._instance_id_prefix}{id_suffix}"]
+        if self._log_urirefs and hasattr(item, "external_id"):
+            self._uriref_by_external_id[item.external_id] = id_
 
         type_ = self._get_rdf_type(item)
 
