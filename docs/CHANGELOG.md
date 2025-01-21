@@ -25,6 +25,8 @@ Changes are grouped as follows:
 - Importing rules which were exported then modified externally then re-imported to the neat session
 - The `neat.read.cdf.classic.graph(...)` gives an error is the root asset is not found in CDF.
 - The `neat.read.cdf.graph(...)` method now shows progress bars for each view when loading large graphs.
+- The `neat.read.cdf.classic.graph(...)` now looks-up internal ids for external ids upon extraction instead of a 
+  separate step. This has a significant performance improvement for large graphs.
 
 ### Changed
 - The `neat.read.cdf.graph(...)` no longer extracts instances from cognite views by default. Instead, the parameter
