@@ -4,10 +4,10 @@ from typing import Any, cast
 from urllib.parse import quote
 
 import rdflib
-from rdflib import RDF, Namespace, URIRef
+from rdflib import RDF, Literal, Namespace, URIRef
 from rdflib.query import ResultRow
 
-from cognite.neat._constants import UNKNOWN_TYPE
+from cognite.neat._constants import NEAT, UNKNOWN_TYPE
 from cognite.neat._issues.warnings import PropertyDataTypeConversionWarning
 from cognite.neat._utils.auxiliary import string_to_ideal_type
 from cognite.neat._utils.rdf_ import Triple, get_namespace, remove_namespace_from_uri
@@ -302,6 +302,57 @@ class ConnectionToLiteral(BaseTransformerStandardised):
 
         row_output.add_triples.append((instance, self.subject_predicate, rdflib.Literal(value)))
         row_output.remove_triples.append((instance, self.subject_predicate, object_entity))
+        row_output.instances_modified_count += 1
+
+        return row_output
+
+
+class SetNeatType(BaseTransformerStandardised):
+    description = "Set the sub type of an instance based on the property"
+
+    def __init__(
+        self, subject_type: URIRef, subject_predicate: URIRef, drop_property: bool, namespace: Namespace | None = None
+    ) -> None:
+        self.subject_type = subject_type
+        self.subject_predicate = subject_predicate
+        self.drop_property = drop_property
+        self._namespace = namespace or Namespace(get_namespace(subject_type))
+
+    def _count_query(self) -> str:
+        query = """SELECT (COUNT(?object) AS ?objectCount)
+                    WHERE {{
+                      ?instance a <{subject_type}> .
+                      ?instance <{subject_predicate}> ?object
+                      FILTER(isLiteral(?object))
+                    }}"""
+        return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
+
+    def _skip_count_query(self) -> str:
+        query = """SELECT (COUNT(?object) AS ?objectCount)
+                    WHERE {{
+                      ?instance a <{subject_type}> .
+                      ?instance <{subject_predicate}> ?object
+                      FILTER(isIRI(?object))
+                    }}"""
+        return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
+
+    def _iterate_query(self) -> str:
+        query = """SELECT ?instance ?object
+                    WHERE {{
+                      ?instance a <{subject_type}> .
+                      ?instance <{subject_predicate}> ?object
+                      FILTER(isLiteral(?object))
+                    }}"""
+        return query.format(subject_type=self.subject_type, subject_predicate=self.subject_predicate)
+
+    def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
+        row_output = RowTransformationOutput()
+
+        instance, object_literal = cast(tuple[URIRef, Literal], query_result_row)
+        if self.drop_property:
+            row_output.remove_triples.append((instance, self.subject_predicate, object_literal))
+
+        row_output.add_triples.append((instance, NEAT.type, self._namespace[str(object_literal.toPython())]))
         row_output.instances_modified_count += 1
 
         return row_output

@@ -76,6 +76,15 @@ CLASSIC_CDF_NAMESPACE = Namespace("http://purl.org/cognite/cdf-classic#")
 UNKNOWN_TYPE = DEFAULT_NAMESPACE.UnknownType
 XML_SCHEMA_NAMESPACE = Namespace("http://www.w3.org/2001/XMLSchema#")
 
+_INTERNAL_NAMESPACE = Namespace("http://thisisneat.io/cognite/neat/internal#")
+
+
+class _Neat:
+    type = _INTERNAL_NAMESPACE["type"]
+
+
+NEAT = _Neat()
+
 
 def get_default_prefixes_and_namespaces() -> dict[str, Namespace]:
     return {
@@ -154,3 +163,24 @@ READONLY_PROPERTIES_BY_CONTAINER: Mapping[dm.ContainerId, frozenset[str]] = {
 
 def is_readonly_property(container: dm.ContainerId, property_: str) -> bool:
     return container in READONLY_PROPERTIES_BY_CONTAINER and property_ in READONLY_PROPERTIES_BY_CONTAINER[container]
+
+
+DMS_RESERVED_PROPERTIES = frozenset(
+    {
+        "createdTime",
+        "deletedTime",
+        "edge_id",
+        "extensions",
+        "externalId",
+        "lastUpdatedTime",
+        "node_id",
+        "project_id",
+        "property_group",
+        "seq",
+        "space",
+        "version",
+        "tg_table_name",
+        "startNode",
+        "endNode",
+    }
+)
