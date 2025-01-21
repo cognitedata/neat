@@ -322,11 +322,11 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
     def _extract_relationship_target_triples(self):
         for id_, predicate, type_, external_id in self._relationship_subject_predicate_type_external_id:
             try:
-                uri = self._uris_by_external_id_by_type[InstanceIdPrefix.from_str(type_)][external_id]
+                object_uri = self._uris_by_external_id_by_type[InstanceIdPrefix.from_str(type_)][external_id]
             except KeyError:
                 warnings.warn(NeatValueWarning(f"Missing externalId {external_id} for {type_}"), stacklevel=2)
             else:
-                yield id_, predicate, uri
+                yield id_, predicate, object_uri
 
     def _extract_labels(self):
         for chunk in self._chunk(list(self._labels), description="Extracting labels"):
