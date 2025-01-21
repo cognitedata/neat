@@ -12,7 +12,7 @@ from rdflib import Namespace, URIRef
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE, get_default_prefixes_and_namespaces
 from cognite.neat._graph.extractors._base import KnowledgeGraphExtractor
 from cognite.neat._issues.errors import NeatValueError, ResourceNotFoundError
-from cognite.neat._issues.warnings import CDFAuthWarning
+from cognite.neat._issues.warnings import CDFAuthWarning, NeatValueWarning
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.catalog import classic_model
 from cognite.neat._rules.models import InformationInputRules, InformationRules
@@ -127,6 +127,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         self._uris_by_external_id_by_type: dict[InstanceIdPrefix, dict[str, URIRef]] = defaultdict(dict)
         self._source_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
         self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
+        self._relationship_subject_predicate_type_external_id: list[tuple[URIRef, URIRef, str, str]] = []
         self._labels: set[str] = set()
         self._data_set_ids: set[int] = set()
         self._data_set_external_ids: set[str] = set()
@@ -154,6 +155,9 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         yield from self._extract_start_node_relationships()
 
         yield from self._extract_core_end_nodes()
+
+        if self._identifier == "id":
+            yield from self._extract_relationship_target_triples()
 
         try:
             yield from self._extract_labels()
@@ -289,6 +293,11 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                         ):
                             self._target_external_ids_by_type[end_type].add(external_id)
 
+                if self._identifier == "id":
+                    # We need to store all future target triples which we will lookup after fetching
+                    # the target nodes.
+                    self._relationship_subject_predicate_type_external_id.extend(extractor._target_triples)
+
     def _extract_core_end_nodes(self):
         for core_node in self._classic_node_types:
             target_external_ids = self._target_external_ids_by_type[core_node.resource_type]
@@ -302,8 +311,22 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
 
                 extractor.asset_external_ids_by_id = self._asset_external_ids_by_id
                 extractor.lookup_dataset_external_id = self._lookup_dataset
+                if self._identifier == "id":
+                    extractor._log_urirefs = True
 
                 yield from self._extract_with_logging_label_dataset(extractor)
+
+                if self._identifier == "id":
+                    self._uris_by_external_id_by_type[core_node.resource_type].update(extractor._uriref_by_external_id)
+
+    def _extract_relationship_target_triples(self):
+        for id_, predicate, type_, external_id in self._relationship_subject_predicate_type_external_id:
+            try:
+                uri = self._uris_by_external_id_by_type[InstanceIdPrefix.from_str(type_)][external_id]
+            except KeyError:
+                warnings.warn(NeatValueWarning(f"Missing externalId {external_id} for {type_}"), stacklevel=2)
+            else:
+                yield id_, predicate, uri
 
     def _extract_labels(self):
         for chunk in self._chunk(list(self._labels), description="Extracting labels"):
