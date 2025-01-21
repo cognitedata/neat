@@ -181,10 +181,10 @@ class BaseMetadata(SchemaModel):
         description="Date of the data model update",
     )
 
-    source: URIRefType | None = Field(
+    source_id: URIRefType | None = Field(
         None,
-        description="Source (entity) that produced this rules",
-        alias="source",
+        description="Id of source that produced this rules",
+        alias="sourceId",
     )
 
     @field_validator("*", mode="before")

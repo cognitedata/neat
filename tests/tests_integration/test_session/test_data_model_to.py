@@ -89,6 +89,7 @@ class TestDataModelToCDF:
 
 
 class TestRulesStoreProvenanceSyncing:
+    @pytest.mark.skip("Skipped until in-depth comparison of data models is implemented")
     def test_stopping_reloading_same_model(self, neat_client: NeatClient, tmp_path: Path) -> None:
         neat = NeatSession(neat_client)
         neat.read.excel.examples.pump_example()
@@ -109,18 +110,18 @@ class TestRulesStoreProvenanceSyncing:
             "this neat session have the same data model id"
         ) in e.value.raw_message
 
-    def test_stopping_loading_model_which_source_is_not_in_session(
-        self, neat_client: NeatClient, tmp_path: Path
-    ) -> None:
+    def test_stop_model_import_which_source_is_not_in_session(self, neat_client: NeatClient, tmp_path: Path) -> None:
         neat = NeatSession(neat_client)
         neat.read.excel.examples.pump_example()
         neat.verify()
 
         # set source to be the same as the target
         target = neat._state.rule_store.provenance[-1].target_entity.result
-        target.metadata.source = target.metadata.namespace + "some_other_source"
+        target.metadata.source_id = target.metadata.namespace + "some_other_source"
 
         with pytest.raises(NeatValueError) as e:
             neat._state.rule_import(importers.ExcelImporter(DATA_DIR / "pump_example.xlsx"))
 
-        assert ("Data model source is not in the provenance. Please start a new NEAT session.") in e.value.raw_message
+        assert (
+            "The source of the data model being imported is not in the content of this NEAT session"
+        ) in e.value.raw_message

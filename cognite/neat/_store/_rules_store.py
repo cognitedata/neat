@@ -272,56 +272,54 @@ class NeatRulesStore:
         result, _ = self._do_activity(lambda: action(rules), agent, last_entity, description)
         return result
 
-    def _sync_import(self, source_entity: Entity, result: Rules, issue_list: IssueList) -> Entity:
-        """Sync the import activity with the provenance."""
+    def _update_source_entity(self, source_entity: Entity, result: Rules, issue_list: IssueList) -> Entity:
+        """Update source entity to keep the unbroken provenance chain of changes."""
 
-        # Case 1: rules_store empty
-        # Clean start return Source Entity with Unknown Agent
-        if self.empty:
-            return source_entity
+        # Case 1: Store not empty, source of imported rules is not known
+        if not (source_id := self._get_source_id(result)):
+            raise NeatValueError(
+                "The data model to be read to the current NEAT session"
+                " has no relation to the session content."
+                " Import will be skipped."
+                "\n\nSuggestions:\n\t(1) Start a new NEAT session and "
+                "import the data model there."
+            )
 
-        # Case 2: source of imported rules not in rules_store and rules_store is not empty
-        # raise error and do not allow importing, error should suggest
-        # starting new session
-        if (source_id := self._get_source_id(result)) and not self.provenance.target_entity(source_id):
-            raise NeatValueError("Data model source is not in the provenance. Please start a new NEAT session.")
+        # We are taking target entity as it is the entity that produce rules
+        # which were updated by activities outside of the rules tore
+        update_source_entity: Entity | None = self.provenance.target_entity(source_id)
 
-        # need to check if the source_entity is the latest entity
-        if (source_id := self._get_source_id(result)) and (source_entity := self.provenance.target_entity(source_id)):  # type: ignore
-            if self._get_data_model_id(result) == self._get_data_model_id(
-                cast(Rules, cast(ModelEntity, source_entity).result)
-            ):
-                raise NeatValueError(
-                    "Imported rules and rules which were used as the source for them"
-                    " and which are are already in this neat session have the same data model id."
-                    "Import will be skipped."
-                    "\n\nSuggestions:\n\t(1) Update the data model id in the imported rules"
-                    ", for example bump the version \n\t(2) Start a new NEAT session"
-                    " and import the rules there."
-                )
-
-            if self.provenance[-1].target_entity.id_ != source_entity.id_:
-                raise NeatValueError(
-                    "Source of imported rules is not the latest entity in the provenance."
-                    "Pruning required to set the source entity to the latest entity in the provenance."
-                )
-
-        # Case 2: source_entity in rules_store and it is the latest entity
-        # typical case, exported rules for manual manipulation, eg. mapping
-        # we need to do sync with provenance
-        # sub cases
-        # # Case 2.1: result is identical to source entity
-        # # we raise error and skip importing
-        # # Case 2.2: result not identical to source_entity but they have same identifiers
-        # # we raise error and force users to update data model id
-        # # Case 2.3: result not identical to source_entity and they have different identifiers
-        # # everything runs smoothly
+        # Case 2: source of imported rules not in rules_store
+        if not update_source_entity:
+            raise NeatValueError(
+                "The source of the data model being imported is not in"
+                " the content of this NEAT session."
+                " Import will be skipped."
+                "\n\nSuggestions:"
+                "\n\t(1) Start a new NEAT session and import the data model source"
+                "\n\t(2) Then import the data model itself"
+            )
 
         # Case 3: source_entity in rules_store and but it is not the latest entity
-        # we need to prompt user that the pruning will be required
-        # and that import should be run with maybe flag FORCE
+        if self.provenance[-1].target_entity.id_ != update_source_entity.id_:
+            raise NeatValueError(
+                "Source of imported data model is not the latest entity in the data model provenance."
+                "Pruning required to set the source entity to the latest entity in the provenance."
+            )
 
-        return source_entity
+        # Case 4: source_entity in rules_store and it is not the latest target entity
+        if self.provenance[-1].target_entity.id_ != update_source_entity.id_:
+            raise NeatValueError(
+                "Source of imported rules is not the latest entity in the provenance."
+                "Pruning required to set the source entity to the latest entity in the provenance."
+            )
+
+        # Case 5: source_entity in rules_store and it is the latest entity
+        # Here we need to check if the source and target entities are identical
+        # if they are ... we should raise an error and skip importing
+        # for now we will just return the source entity that we managed to extract
+
+        return update_source_entity or source_entity
 
     def _do_activity(
         self, action: Callable[[], Rules | None], agent: Agent, source_entity: Entity, description: str
@@ -333,8 +331,16 @@ class NeatRulesStore:
         end = datetime.now(timezone.utc)
 
         # This handles import activity that needs to be properly registered
-        if source_entity.was_attributed_to == UNKNOWN_AGENT and result:
-            source_entity = self._sync_import(source_entity, result, issue_list)
+        # hence we check if class of action is subclass of BaseImporter
+        # and only if the store is not empty !
+        if (
+            hasattr(action, "__self__")
+            and issubclass(action.__self__.__class__, BaseImporter)
+            and source_entity.was_attributed_to == UNKNOWN_AGENT
+            and result
+            and not self.empty
+        ):
+            source_entity = self._update_source_entity(source_entity, result, issue_list)
 
         activity = Activity(
             was_associated_with=agent,
@@ -347,6 +353,7 @@ class NeatRulesStore:
             was_generated_by=activity,
             result=result,
             issues=issue_list,
+            # here id can be bumped in case id already exists
             id_=self._create_id(result),
         )
         change = Change(
@@ -363,10 +370,10 @@ class NeatRulesStore:
     def _get_source_id(self, result: Rules) -> rdflib.URIRef | None:
         """Return the source of the result."""
 
-        if isinstance(result, ReadRules) and result.rules is not None:
-            return result.rules.metadata.source_id
+        if isinstance(result, ReadRules) and result.rules is not None and result.rules.metadata.source_id:
+            return rdflib.URIRef(result.rules.metadata.source_id)
         if isinstance(result, VerifiedRules):
-            return result.metadata.source
+            return result.metadata.source_id
         return None
 
     def _get_data_model_id(self, result: Rules) -> dm.DataModelId | None:
@@ -380,21 +387,37 @@ class NeatRulesStore:
 
     def _create_id(self, result: Any) -> rdflib.URIRef:
         identifier: rdflib.URIRef
+
+        # Case 1: Unsuccessful activity -> target entity will be EMPTY_ENTITY
         if result is None:
             identifier = EMPTY_ENTITY.id_
+
+        # Case 2: Result ReadRules
         elif isinstance(result, ReadRules):
+            # Case 2.1: ReadRules with no rules -> target entity will be EMPTY_ENTITY
             if result.rules is None:
                 identifier = EMPTY_ENTITY.id_
+
+            # Case 2.2: ReadRules with rules identified by metadata.identifier
             else:
                 identifier = result.rules.metadata.identifier
+
+        # Case 3: Result VerifiedRules, identifier will be metadata.identifier
         elif isinstance(result, VerifiedRules):
             identifier = result.metadata.identifier
+
+        # Case 4: Defaults to unknown entity
         else:
             identifier = DEFAULT_NAMESPACE["unknown-entity"]
 
+        # Here we check if the identifier is already in the iteration dictionary
+        # to track specific changes to the same entity, if it is we increment the iteration
         if identifier not in self._iteration_by_id:
             self._iteration_by_id[identifier] = 1
             return identifier
+
+        # If the identifier is already in the iteration dictionary we increment the iteration
+        # and update identifier to include the iteration number
         self._iteration_by_id[identifier] += 1
         return identifier + f"/Iteration_{self._iteration_by_id[identifier]}"
 

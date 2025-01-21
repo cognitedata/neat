@@ -28,6 +28,8 @@ class SessionState:
         if not transformer:
             raise NeatSessionError("No transformers provided.")
         first_transformer = transformer[0]
+
+        # This should not be allowed to be done automatically
         pruned = self.rule_store.prune_until_compatible(first_transformer)
         if pruned:
             type_hint = first_transformer.transform_type_hint()
