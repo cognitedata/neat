@@ -156,7 +156,7 @@ class NeatGraphStore:
                 activity=f"{type(self).__name__}._upsert_prefixes",
                 start=_start,
                 end=datetime.now(timezone.utc),
-                description="Upsert prefixes to the name graph {named_graph}",
+                description=f"Upsert prefixes to the name graph {named_graph}",
             )
         )
 
@@ -395,8 +395,11 @@ class NeatGraphStore:
             return
 
         # get all the instances for give class_uri
+
         instance_ids = self.queries.list_instances_ids_of_class(class_uri)
 
+        print(f"Total instances for class {class_entity} are {len(instance_ids)}")
+        print(50 * "*")
         # get potential property renaming config
         property_renaming_config = property_renaming_config or InformationAnalysis(
             self.rules[named_graph]
@@ -445,6 +448,7 @@ class NeatGraphStore:
             )
 
         class_entity = ClassEntity(prefix=self.rules[named_graph].metadata.prefix, suffix=class_)
+        print(f"Class entity {class_entity}")
 
         if class_entity not in [definition.class_ for definition in self.rules[named_graph].classes]:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
@@ -452,7 +456,7 @@ class NeatGraphStore:
 
         yield from self._read_via_class_entity(class_entity)
 
-    def count_of_id(self, neat_id: URIRef, named_graph: URIRef | None = None) -> int:
+    def count_of_neat_id(self, neat_id: URIRef, named_graph: URIRef | None = None) -> int:
         """Count the number of instances of a given type
 
         Args:
@@ -492,11 +496,7 @@ class NeatGraphStore:
             )
             return 0
 
-        return self.count_of_type(class_uri)
-
-    def count_of_type(self, class_uri: URIRef) -> int:
-        query = f"SELECT (COUNT(?instance) AS ?instanceCount) WHERE {{ ?instance a <{class_uri}> }}"
-        return int(next(iter(self.dataset.query(query)))[0])  # type: ignore[arg-type, index]
+        return self.queries.count_of_type(class_uri)
 
     def _parse_file(
         self,

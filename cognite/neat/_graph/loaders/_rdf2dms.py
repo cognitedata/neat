@@ -152,8 +152,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else None
         )
 
+        # Views with linked properties
         view_and_count_by_id = self._select_views_with_instances(self.data_model.views)
-
         if self._client:
             view_and_count_by_id, properties_point_to_self = self._sort_by_direct_relation_dependencies(
                 view_and_count_by_id
@@ -297,9 +297,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             view_id = view.as_id()
             neat_id = self.class_neat_id_by_view_id.get(view_id)
             if neat_id is not None:
-                count = self.graph_store.count_of_id(neat_id)
+                count = self.graph_store.count_of_neat_id(neat_id)
             elif view.external_id in uri_by_type:
-                count = self.graph_store.count_of_type(uri_by_type[view.external_id])
+                count = self.graph_store.queries.count_of_type(uri_by_type[view.external_id])
             else:
                 continue
             if count > 0:

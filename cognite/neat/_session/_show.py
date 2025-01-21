@@ -344,7 +344,7 @@ class ShowDataModelProvenanceAPI(ShowBaseAPI):
 
 @session_class_wrapper
 class ShowInstanceAPI(ShowBaseAPI):
-    """Visualise the instances contained in the graph store."""
+    """Visualize the instances contained in the graph store."""
 
     def __init__(self, state: SessionState) -> None:
         super().__init__(state)
