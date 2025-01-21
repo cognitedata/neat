@@ -57,6 +57,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
             identifier=identifier,
         )
         self._uri_by_external_id_by_by_type: dict[InstanceIdPrefix, dict[str, URIRef]] = defaultdict(dict)
+        self._target_triples: list[tuple[URIRef, URIRef, str, str]] = []
 
     def _log_target_nodes_if_set(self, item: Relationship) -> Relationship:
         if not self._log_target_nodes:
@@ -83,16 +84,8 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
                 triples.append((id_, self.namespace["sourceExternalId"], source_uri))
         if (target_external_id := dumped.pop("targetExternalId")) and "targetType" in dumped:
             target_type = dumped["targetType"]
-            try:
-                target_uri = self._uri_by_external_id_by_by_type[InstanceIdPrefix.from_str(target_type)][
-                    target_external_id
-                ]
-            except KeyError:
-                warnings.warn(
-                    NeatValueWarning(f"Missing externalId {target_external_id} for {target_type}"), stacklevel=2
-                )
-            else:
-                triples.append((id_, self.namespace["targetExternalId"], target_uri))
+            # We do not yet have the target nodes, so we log them for later extraction.
+            self._target_triples.append((id_, self.namespace["targetExternalId"], target_type, target_external_id))
         return triples
 
     @classmethod

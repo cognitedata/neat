@@ -120,9 +120,11 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             prefix=prefix,
             identifier=identifier,
         )
+        self._identifier = identifier
         self._prefix = prefix
         self._limit_per_type = limit_per_type
 
+        self._uris_by_external_id_by_type: dict[InstanceIdPrefix, dict[str, URIRef]] = defaultdict(dict)
         self._source_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
         self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
         self._labels: set[str] = set()
@@ -242,13 +244,20 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 )
             else:
                 raise ValueError("Exactly one of data_set_external_id or root_asset_external_id must be set.")
-            if isinstance(extractor, AssetsExtractor):
-                self._asset_external_ids_by_id = extractor.asset_external_ids_by_id
-            else:
-                extractor.asset_external_ids_by_id = self._asset_external_ids_by_id
-            extractor.lookup_dataset_external_id = self._lookup_dataset
+
+            if self._identifier == "externalId":
+                if isinstance(extractor, AssetsExtractor):
+                    self._asset_external_ids_by_id = extractor.asset_external_ids_by_id
+                else:
+                    extractor.asset_external_ids_by_id = self._asset_external_ids_by_id
+                extractor.lookup_dataset_external_id = self._lookup_dataset
+            elif self._identifier == "id":
+                extractor._log_urirefs = True
 
             yield from self._extract_with_logging_label_dataset(extractor, core_node.resource_type)
+
+            if self._identifier == "id":
+                self._uris_by_external_id_by_type[core_node.resource_type].update(extractor._uriref_by_external_id)
 
     def _extract_start_node_relationships(self):
         for start_resource_type, source_external_ids in self._source_external_ids_by_type.items():
@@ -260,6 +269,8 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 extractor = RelationshipsExtractor(relationship_iterator, **self._extractor_args)
                 # This is a private attribute, but we need to set it to log the target nodes.
                 extractor._log_target_nodes = True
+                if self._identifier == "id":
+                    extractor._uri_by_external_id_by_by_type = self._uris_by_external_id_by_type
 
                 yield from extractor.extract()
 
