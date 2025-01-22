@@ -27,6 +27,8 @@ Changes are grouped as follows:
 - The `neat.read.cdf.graph(...)` method now shows progress bars for each view when loading large graphs.
 - Initiating NeatSession will automatically select the best possible graph storage
 - Form of internal neat data model
+- The `neat.read.cdf.classic.graph(...)` now looks-up internal ids for external ids upon extraction instead of a 
+  separate step. This has a significant performance improvement for large graphs.
 
 ### Changed
 - The `neat.read.cdf.graph(...)` no longer extracts instances from cognite views by default. Instead, the parameter
