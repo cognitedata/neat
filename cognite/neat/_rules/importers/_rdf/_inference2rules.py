@@ -182,7 +182,6 @@ class InferenceImporter(BaseRDFImporter):
 
         # Infers all the properties of the class
         for class_id, class_definition in classes_iterable:
-            print(class_id)
             for (  # type: ignore[misc]
                 instance,
                 _,
@@ -235,13 +234,6 @@ class InferenceImporter(BaseRDFImporter):
                             f"({uri_to_short_form(cast(URIRef, property_uri), prefixes)})"
                         ),
                     }
-
-                    print(
-                        definition["class_"],
-                        definition["property_"],
-                        definition["value_type"],
-                        definition["max_count"],
-                    )
 
                     count_by_value_type_by_property[id_][value_type_id] += 1
 
