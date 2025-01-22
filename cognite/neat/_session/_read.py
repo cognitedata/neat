@@ -4,10 +4,23 @@ from cognite.client.data_classes.data_modeling import DataModelId, DataModelIden
 from cognite.client.utils.useful_types import SequenceNotStr
 
 from cognite.neat._client import NeatClient
-from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
+from cognite.neat._constants import (
+    CLASSIC_CDF_NAMESPACE,
+    get_default_prefixes_and_namespaces,
+)
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
-from cognite.neat._graph.transformers import ConvertLiteral, LiteralToEntity
+from cognite.neat._graph.transformers import (
+    ConvertLiteral,
+    LiteralToEntity,
+    Transformers,
+)
+from cognite.neat._graph.transformers._prune_graph import (
+    AttachPropertyFromTargetToSource,
+    PruneDeadEndEdges,
+    PruneInstancesOfUnknownType,
+    PruneTypes,
+)
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import MissingCogniteClientWarning
@@ -387,7 +400,7 @@ class XMLReadAPI(BaseReadAPI):
             raise NeatValueError("Only support XML files of DEXPI format at the moment.")
 
     def dexpi(self, io: Any) -> None:
-        """Reads a DEXPI file into the NeatSession.
+        """Reads a DEXPI file into the NeatSession and executes set of predefined transformations.
 
         Args:
             io: file path or url to the DEXPI file
@@ -396,6 +409,13 @@ class XMLReadAPI(BaseReadAPI):
             ```python
             neat.read.xml.dexpi("url_or_path_to_dexpi_file")
             ```
+
+        !!! note "This method bundles several graph transformers which"
+            - attach values of generic attributes to nodes
+            - create associations between nodes
+            - remove unused generic attributes
+            - remove associations between nodes that do not exist in the extracted graph
+            - remove edges to nodes that do not exist in the extracted graph
         """
         path = NeatReader.create(io).materialize_path()
         engine = import_engine()
@@ -404,8 +424,36 @@ class XMLReadAPI(BaseReadAPI):
         extractor = engine.create_extractor()
         self._state.instances.store.write(extractor)
 
+        DEXPI = get_default_prefixes_and_namespaces()["dexpi"]
+
+        transformers = [
+            # Remove any instance which type is unknown
+            PruneInstancesOfUnknownType(),
+            # Directly connect generic attributes
+            AttachPropertyFromTargetToSource(
+                target_property=DEXPI.Value,
+                target_property_holding_new_property=DEXPI.Name,
+                target_node_type=DEXPI.GenericAttribute,
+                delete_target_node=True,
+            ),
+            # Directly connect associations
+            AttachPropertyFromTargetToSource(
+                target_property=DEXPI.ItemID,
+                target_property_holding_new_property=DEXPI.Type,
+                target_node_type=DEXPI.Association,
+                delete_target_node=True,
+            ),
+            # Remove unused generic attributes and associations
+            PruneTypes([DEXPI.GenericAttribute, DEXPI.Association]),
+            # Remove edges to nodes that do not exist in the extracted graph
+            PruneDeadEndEdges(),
+        ]
+
+        for transformer in transformers:
+            self._state.instances.store.transform(cast(Transformers, transformer))
+
     def aml(self, io: Any):
-        """Reads an AML file into NeatSession.
+        """Reads an AML file into NeatSession and executes a set of predefined transformations.
 
         Args:
             io: file path or url to the AML file
@@ -414,6 +462,11 @@ class XMLReadAPI(BaseReadAPI):
             ```python
             neat.read.xml.aml("url_or_path_to_aml_file")
             ```
+
+        !!! note "This method bundles several graph transformers which"
+            - attach values of attributes to nodes
+            - remove unused attributes
+            - remove edges to nodes that do not exist in the extracted graph
         """
         path = NeatReader.create(io).materialize_path()
         engine = import_engine()
@@ -421,6 +474,27 @@ class XMLReadAPI(BaseReadAPI):
         engine.set.file = path
         extractor = engine.create_extractor()
         self._state.instances.store.write(extractor)
+
+        AML = get_default_prefixes_and_namespaces()["aml"]
+
+        transformers = [
+            # Remove any instance which type is unknown
+            PruneInstancesOfUnknownType(),
+            # Directly connect generic attributes
+            AttachPropertyFromTargetToSource(
+                target_property=AML.Value,
+                target_property_holding_new_property=AML.Name,
+                target_node_type=AML.Attribute,
+                delete_target_node=True,
+            ),
+            # Prune unused attributes
+            PruneTypes([AML.Attribute]),
+            # # Remove edges to nodes that do not exist in the extracted graph
+            PruneDeadEndEdges(),
+        ]
+
+        for transformer in transformers:
+            self._state.instances.store.transform(cast(Transformers, transformer))
 
 
 @session_class_wrapper

@@ -1,5 +1,6 @@
 from typing import Any
 
+import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
@@ -66,12 +67,10 @@ class TestExtractToLoadFlow:
             }
         )
 
+    @pytest.mark.skip("We need to enable download of neat engine to run this test, locally it works")
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
-        neat = NeatSession(cognite_client, storage="oxigraph")
-        # Hack to read in the test data.
-
-        neat._state.instances.store.graph().parse(DATA_FOLDER / "dexpi-raw-graph.ttl")
-        neat.prepare.instances.dexpi()
+        neat = NeatSession(cognite_client)
+        neat.read.xml.dexpi(DATA_FOLDER / "depxi_example.xml")
         neat.infer(max_number_of_instance=-1)
 
         # Hack to ensure deterministic output
@@ -108,12 +107,10 @@ class TestExtractToLoadFlow:
         assert len(nodes) == 206
         assert len(edges) == 40
 
+    @pytest.mark.skip("We need to enable download of neat engine to run this test, locally it works")
     def test_aml_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
-        neat = NeatSession(cognite_client, storage="oxigraph")
-        # Hack to read in the test data.
-
-        neat._state.instances.store.graph().parse(DATA_FOLDER / "aml-raw-graph.ttl")
-        neat.prepare.instances.aml()
+        neat = NeatSession(cognite_client)
+        neat.read.xml.aml(DATA_FOLDER / "aml_example.aml")
         neat.infer(max_number_of_instance=-1)
 
         # Hack to ensure deterministic output

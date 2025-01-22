@@ -182,6 +182,7 @@ class InferenceImporter(BaseRDFImporter):
 
         # Infers all the properties of the class
         for class_id, class_definition in classes_iterable:
+            print(class_id)
             for (  # type: ignore[misc]
                 instance,
                 _,
@@ -194,6 +195,7 @@ class InferenceImporter(BaseRDFImporter):
                     INSTANCE_PROPERTIES_DEFINITION.replace("instance_id", instance)
                 ):  # type: ignore[misc]
                     # this is to skip rdf:type property
+
                     if property_uri == RDF.type:
                         continue
                     property_id = remove_namespace_from_uri(property_uri)
@@ -234,6 +236,13 @@ class InferenceImporter(BaseRDFImporter):
                         ),
                     }
 
+                    print(
+                        definition["class_"],
+                        definition["property_"],
+                        definition["value_type"],
+                        definition["max_count"],
+                    )
+
                     count_by_value_type_by_property[id_][value_type_id] += 1
 
                     # USE CASE 1: If property is not present in properties
@@ -245,13 +254,8 @@ class InferenceImporter(BaseRDFImporter):
                     elif id_ in properties and definition["value_type"] not in properties[id_]["value_type"]:
                         properties[id_]["value_type"].add(definition["value_type"])
 
-                    # USE CASE 3: existing but max count is different
-                    elif (
-                        id_ in properties
-                        and definition["value_type"] in properties[id_]["value_type"]
-                        and properties[id_]["max_count"] != definition["max_count"]
-                    ):
-                        properties[id_]["max_count"] = max(properties[id_]["max_count"], definition["max_count"])
+                    # always update max_count with the upmost value
+                    properties[id_]["max_count"] = max(properties[id_]["max_count"], definition["max_count"])
 
         # Create multi-value properties otherwise single value
         for property_ in properties.values():
