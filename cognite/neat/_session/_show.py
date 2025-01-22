@@ -108,7 +108,7 @@ class ShowDataModelAPI(ShowBaseAPI):
         if isinstance(rules, DMSRules):
             di_graph = self._generate_dms_di_graph(rules, include_connections, include_inheritance)
         elif isinstance(rules, InformationRules):
-            di_graph = self._generate_info_di_graph(rules)
+            di_graph = self._generate_info_di_graph(rules, include_connections, include_inheritance)
         else:
             # This should never happen, but we need to handle it to satisfy mypy
             raise NeatSessionError(
@@ -169,7 +169,9 @@ class ShowDataModelAPI(ShowBaseAPI):
 
         return di_graph
 
-    def _generate_info_di_graph(self, rules: InformationRules) -> nx.DiGraph:
+    def _generate_info_di_graph(
+        self, rules: InformationRules, include_connections: bool = True, include_inheritance: bool = False
+    ) -> nx.DiGraph:
         """Generate DiGraph representing information data model."""
 
         di_graph = nx.DiGraph()
@@ -183,17 +185,31 @@ class ShowDataModelAPI(ShowBaseAPI):
                     label=class_.name or class_.class_.suffix,
                 )
 
-        # Add nodes and edges from Properties sheet
-        for prop_ in rules.properties:
-            if prop_.type_ == EntityTypes.object_property:
-                if not di_graph.has_node(prop_.class_.suffix):
-                    di_graph.add_node(prop_.class_.suffix, label=prop_.class_.suffix)
+        if include_connections:
+            # Add nodes and edges from Properties sheet
+            for prop_ in rules.properties:
+                if prop_.type_ == EntityTypes.object_property:
+                    if not di_graph.has_node(prop_.class_.suffix):
+                        di_graph.add_node(prop_.class_.suffix, label=prop_.class_.suffix)
 
-                di_graph.add_edge(
-                    prop_.class_.suffix,
-                    cast(ClassEntity, prop_.value_type).suffix,
-                    label=prop_.name or prop_.property_,
-                )
+                    di_graph.add_edge(
+                        prop_.class_.suffix,
+                        cast(ClassEntity, prop_.value_type).suffix,
+                        label=prop_.name or prop_.property_,
+                    )
+        if include_inheritance:
+            for class_ in rules.classes:
+                for parent in class_.implements or []:
+                    if not di_graph.has_node(class_.class_.suffix):
+                        di_graph.add_node(class_.class_.suffix, label=class_.name or class_.class_.suffix)
+                    if not di_graph.has_node(parent.suffix):
+                        di_graph.add_node(parent.suffix, label=parent.suffix)
+                    di_graph.add_edge(
+                        class_.class_.suffix,
+                        parent.suffix,
+                        label="implements",
+                        dashes=True,
+                    )
 
         return di_graph
 
