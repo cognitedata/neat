@@ -21,6 +21,7 @@ from typing import (
 )
 
 import pandas as pd
+from cognite.client import data_modeling as dm
 from pydantic import (
     BaseModel,
     BeforeValidator,
@@ -180,6 +181,12 @@ class BaseMetadata(SchemaModel):
         description="Date of the data model update",
     )
 
+    source_id: URIRefType | None = Field(
+        None,
+        description="Id of source that produced this rules",
+        alias="sourceId",
+    )
+
     @field_validator("*", mode="before")
     def strip_string(cls, value: Any) -> Any:
         if isinstance(value, str):
@@ -213,9 +220,6 @@ class BaseMetadata(SchemaModel):
     def prefix(self) -> str:
         return self.space
 
-    def as_identifier(self) -> str:
-        return f"{self.prefix}:{self.external_id}"
-
     def get_prefix(self) -> str:
         return self.prefix
 
@@ -233,6 +237,12 @@ class BaseMetadata(SchemaModel):
     def namespace(self) -> Namespace:
         """Namespace for the data model used for the entities in the data model."""
         return Namespace(f"{self.identifier}/")
+
+    def as_data_model_id(self) -> dm.DataModelId:
+        return dm.DataModelId(space=self.space, external_id=self.external_id, version=self.version)
+
+    def as_identifier(self) -> str:
+        return repr(self.as_data_model_id())
 
 
 class BaseRules(SchemaModel, ABC):

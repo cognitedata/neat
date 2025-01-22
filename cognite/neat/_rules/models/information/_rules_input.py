@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any
 
 import pandas as pd
+from cognite.client import data_modeling as dm
 from rdflib import Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -36,6 +37,7 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
     updated: datetime | str | None = None
     physical: str | URIRef | None = None
     conceptual: str | URIRef | None = None
+    source_id: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationMetadata]:
@@ -48,6 +50,9 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
         if self.updated is None:
             output["updated"] = datetime.now()
         return output
+
+    def as_data_model_id(self) -> dm.DataModelId:
+        return dm.DataModelId(space=self.space, external_id=self.external_id, version=self.version)
 
     @property
     def prefix(self) -> str:

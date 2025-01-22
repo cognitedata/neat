@@ -23,9 +23,9 @@ def test_exact_match() -> None:
             ("Asset", "name"), ("File", "source"), connection="files", limit=None
         )
     printed_statements = output.getvalue()
-    assert not printed_statements.startswith(
-        "[ERROR]"
-    ), f"Failed to make connection on exact match: {printed_statements}"
+    assert not printed_statements.startswith("[ERROR]"), (
+        f"Failed to make connection on exact match: {printed_statements}"
+    )
 
     has_property = neat._state.instances.store.queries.type_with_property(
         CLASSIC_CDF_NAMESPACE["Asset"], CLASSIC_CDF_NAMESPACE["files"]

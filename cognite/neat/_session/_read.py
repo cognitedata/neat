@@ -7,7 +7,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._graph import examples as instances_examples
 from cognite.neat._graph import extractors
-from cognite.neat._graph.transformers import ConvertLiteral, LiteralToEntity, LookupRelationshipSourceTarget
+from cognite.neat._graph.transformers import ConvertLiteral, LiteralToEntity
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import MissingCogniteClientWarning
@@ -99,20 +99,41 @@ class CDFReadAPI(BaseReadAPI):
         return self._state.rule_import(importer)
 
     def graph(
-        self, data_model_id: DataModelIdentifier, instance_space: str | SequenceNotStr[str] | None = None
+        self,
+        data_model_id: DataModelIdentifier,
+        instance_space: str | SequenceNotStr[str] | None = None,
+        skip_cognite_views: bool = True,
     ) -> IssueList:
         """Reads a knowledge graph from Cognite Data Fusion (CDF).
 
         Args:
             data_model_id: Tuple of strings with the id of a CDF Data Model.
             instance_space: The instance spaces to extract. If None, all instance spaces are extracted.
+            skip_cognite_views: If True, all Cognite Views are skipped. For example, if you have the CogniteAsset
+                view in you data model, it will ont be used to extract instances.
 
         Returns:
             IssueList: A list of issues that occurred during the extraction.
 
         """
+        return self._graph(data_model_id, instance_space, skip_cognite_views, unpack_json=False)
+
+    def _graph(
+        self,
+        data_model_id: DataModelIdentifier,
+        instance_space: str | SequenceNotStr[str] | None = None,
+        skip_cognite_views: bool = True,
+        unpack_json: bool = False,
+        str_to_ideal_type: bool = False,
+    ) -> IssueList:
         extractor = extractors.DMSGraphExtractor.from_data_model_id(
-            data_model_id, self._get_client, instance_space=instance_space
+            # We are skipping the Cognite Views
+            data_model_id,
+            self._get_client,
+            instance_space=instance_space,
+            skip_cognite_views=skip_cognite_views,
+            unpack_json=unpack_json,
+            str_to_ideal_type=str_to_ideal_type,
         )
         return self._state.write_graph(extractor)
 
@@ -130,7 +151,12 @@ class CDFClassicAPI(BaseReadAPI):
             raise ValueError("No client provided. Please provide a client to read a data model.")
         return self._state.client
 
-    def graph(self, root_asset_external_id: str, limit_per_type: int | None = None) -> IssueList:
+    def graph(
+        self,
+        root_asset_external_id: str,
+        limit_per_type: int | None = None,
+        identifier: Literal["id", "externalId"] = "id",
+    ) -> IssueList:
         """Reads the classic knowledge graph from CDF.
 
         The Classic Graph consists of the following core resource type.
@@ -165,6 +191,8 @@ class CDFClassicAPI(BaseReadAPI):
         Args:
             root_asset_external_id: The external id of the root asset
             limit_per_type: The maximum number of nodes to extract per core node type. If None, all nodes are extracted.
+            identifier: The identifier to use for the core nodes. Note selecting "id" can cause issues if the external
+                ID of the core nodes is missing. Default is "id".
 
         Returns:
             IssueList: A list of issues that occurred during the extraction.
@@ -174,6 +202,18 @@ class CDFClassicAPI(BaseReadAPI):
             neat.read.cdf.graph("root_asset_external_id")
             ```
         """
+        return self._graph(
+            root_asset_external_id, limit_per_type, identifier, reference_timeseries=False, reference_files=False
+        )
+
+    def _graph(
+        self,
+        root_asset_external_id: str,
+        limit_per_type: int | None = None,
+        identifier: Literal["id", "externalId"] = "id",
+        reference_timeseries: bool = False,
+        reference_files: bool = False,
+    ) -> IssueList:
         namespace = CLASSIC_CDF_NAMESPACE
         extractor = extractors.ClassicGraphExtractor(
             self._get_client,
@@ -181,14 +221,12 @@ class CDFClassicAPI(BaseReadAPI):
             limit_per_type=limit_per_type,
             namespace=namespace,
             prefix="Classic",
+            identifier=identifier,
         )
-        issues = self._state.write_graph(extractor)
-        issues.action = "Read Classic Graph"
-        if issues:
-            print("Use the .inspect.issues() for more details")
+        extract_issues = self._state.write_graph(extractor)
+        if identifier == "externalId":
+            self._state.quoted_source_identifiers = True
 
-        # Converting the instances from classic to core
-        self._state.instances.store.transform(LookupRelationshipSourceTarget(namespace, "Classic"))
         self._state.instances.store.transform(
             ConvertLiteral(
                 namespace["ClassicTimeSeries"],
@@ -200,11 +238,21 @@ class CDFClassicAPI(BaseReadAPI):
             LiteralToEntity(None, namespace["source"], "ClassicSourceSystem", "name"),
         )
         # Updating the information model.
-        self._state.rule_store.transform(ClassicPrepareCore(namespace))
+        prepare_issues = self._state.rule_store.transform(
+            ClassicPrepareCore(namespace, reference_timeseries, reference_files)
+        )
         # Update the instance store with the latest rules
         information_rules = self._state.rule_store.last_verified_information_rules
-        self._state.instances.store.rules = information_rules
-        return issues
+        self._state.instances.store.rules[self._state.instances.store.default_named_graph] = information_rules
+
+        all_issues = IssueList(extract_issues + prepare_issues)
+        # Update the provenance with all issue.
+        object.__setattr__(self._state.instances.store.provenance[-1].target_entity, "issues", all_issues)
+        all_issues.action = "Read Classic Graph"
+        if all_issues:
+            print("Use the .inspect.issues() for more details")
+
+        return all_issues
 
 
 @session_class_wrapper
@@ -241,7 +289,6 @@ class ExcelReadAPI(BaseReadAPI):
 class ExcelExampleAPI(BaseReadAPI):
     """Used as example for reading some data model into the NeatSession."""
 
-    @property
     def pump_example(self) -> IssueList:
         """Reads the Hello World pump example into the NeatSession."""
         importer: importers.ExcelImporter = importers.ExcelImporter(catalog.hello_world_pump)

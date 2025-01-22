@@ -63,9 +63,9 @@ class TestViewLoader:
         new_created = neat_client.loaders.views.update([modified], force=True)[0]
 
         assert new_created.as_id() == original.as_id(), "The view version should be the same"
-        assert (
-            new_created.properties["count"].container_property_identifier == new_prop
-        ), "The property should have been updated"
+        assert new_created.properties["count"].container_property_identifier == new_prop, (
+            "The property should have been updated"
+        )
 
     def test_find_all_connected(self, neat_client: NeatClient) -> None:
         views = neat_client.loaders.views.retrieve(

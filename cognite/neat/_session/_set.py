@@ -3,9 +3,12 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import COGNITE_MODELS
+from cognite.neat._graph.transformers import SetNeatType
 from cognite.neat._issues import IssueList
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.transformers import SetIDDMSModel
+from cognite.neat._utils.text import humanize_collection
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
@@ -43,4 +46,28 @@ class SetAPI:
         self._state.client = NeatClient(client)
         if self._verbose:
             print(f"Client set to {self._state.client.config.project} CDF project.")
+        return None
+
+    def _instance_sub_type(self, type: str, property: str, drop_property: bool = False) -> None:
+        """Sets the sub type of an instance based on the property."""
+        type_uri = self._state.instances.store.queries.type_uri(type)
+        property_uri = self._state.instances.store.queries.property_uri(property)
+
+        if not type_uri:
+            raise NeatValueError(f"Type {type} does not exist in the graph.")
+        elif len(type_uri) > 1:
+            raise NeatValueError(f"{type} has multiple ids found in the graph: {humanize_collection(type_uri)}.")
+
+        if not property_uri:
+            raise NeatValueError(f"Property {property} does not exist in the graph.")
+        elif len(type_uri) > 1:
+            raise NeatValueError(
+                f"{property} has multiple ids found in the graph: {humanize_collection(property_uri)}."
+            )
+
+        if not self._state.instances.store.queries.type_with_property(type_uri[0], property_uri[0]):
+            raise NeatValueError(f"Property {property} is not defined for type {type}.")
+
+        self._state.instances.store.transform(SetNeatType(type_uri[0], property_uri[0], drop_property))
+
         return None

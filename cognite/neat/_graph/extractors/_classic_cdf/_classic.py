@@ -1,3 +1,5 @@
+import typing
+import urllib.parse
 import warnings
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
@@ -9,8 +11,8 @@ from rdflib import Namespace, URIRef
 
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE, get_default_prefixes_and_namespaces
 from cognite.neat._graph.extractors._base import KnowledgeGraphExtractor
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._issues.warnings import CDFAuthWarning
+from cognite.neat._issues.errors import NeatValueError, ResourceNotFoundError
+from cognite.neat._issues.warnings import CDFAuthWarning, NeatValueWarning
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.catalog import classic_model
 from cognite.neat._rules.models import InformationInputRules, InformationRules
@@ -101,6 +103,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         namespace: Namespace | None = None,
         limit_per_type: int | None = None,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
     ):
         self._client = client
         if sum([bool(data_set_external_id), bool(root_asset_external_id)]) != 1:
@@ -115,16 +118,23 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             camel_case=True,
             limit=limit_per_type,
             prefix=prefix,
+            identifier=identifier,
         )
+        self._identifier = identifier
         self._prefix = prefix
         self._limit_per_type = limit_per_type
 
+        self._uris_by_external_id_by_type: dict[InstanceIdPrefix, dict[str, URIRef]] = defaultdict(dict)
         self._source_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
         self._target_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
+        self._relationship_subject_predicate_type_external_id: list[tuple[URIRef, URIRef, str, str]] = []
         self._labels: set[str] = set()
         self._data_set_ids: set[int] = set()
+        self._data_set_external_ids: set[str] = set()
         self._extracted_labels = False
         self._extracted_data_sets = False
+        self._asset_external_ids_by_id: dict[int, str] = {}
+        self._dataset_external_ids_by_id: dict[int, str] = {}
 
     def _get_activity_names(self) -> list[str]:
         activities = [data_access_object.extractor_cls.__name__ for data_access_object in self._classic_node_types] + [
@@ -138,11 +148,16 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
 
     def extract(self) -> Iterable[Triple]:
         """Extracts all classic CDF Resources."""
+        self._validate_exists()
+
         yield from self._extract_core_start_nodes()
 
         yield from self._extract_start_node_relationships()
 
         yield from self._extract_core_end_nodes()
+
+        if self._identifier == "id":
+            yield from self._extract_relationship_target_triples()
 
         try:
             yield from self._extract_labels()
@@ -209,7 +224,17 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         else:
             resource = "unknown"
             external_id = "unknown"
-        return DEFAULT_NAMESPACE[f"{self._client.config.project}/{resource}/{external_id}"]
+        return DEFAULT_NAMESPACE[f"{self._client.config.project}/{resource}/{urllib.parse.quote(external_id)}"]
+
+    def _validate_exists(self) -> None:
+        if self._data_set_external_id:
+            if self._client.data_sets.retrieve(external_id=self._data_set_external_id) is None:
+                raise ResourceNotFoundError(self._data_set_external_id, "data set")
+        elif self._root_asset_external_id:
+            if self._client.assets.retrieve(external_id=self._root_asset_external_id) is None:
+                raise ResourceNotFoundError(self._root_asset_external_id, "root asset")
+        else:
+            raise ValueError("Exactly one of data_set_external_id or root_asset_external_id must be set.")
 
     def _extract_core_start_nodes(self):
         for core_node in self._classic_node_types:
@@ -224,7 +249,19 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             else:
                 raise ValueError("Exactly one of data_set_external_id or root_asset_external_id must be set.")
 
+            if self._identifier == "externalId":
+                if isinstance(extractor, AssetsExtractor):
+                    self._asset_external_ids_by_id = extractor.asset_external_ids_by_id
+                else:
+                    extractor.asset_external_ids_by_id = self._asset_external_ids_by_id
+                extractor.lookup_dataset_external_id = self._lookup_dataset
+            elif self._identifier == "id":
+                extractor._log_urirefs = True
+
             yield from self._extract_with_logging_label_dataset(extractor, core_node.resource_type)
+
+            if self._identifier == "id":
+                self._uris_by_external_id_by_type[core_node.resource_type].update(extractor._uriref_by_external_id)
 
     def _extract_start_node_relationships(self):
         for start_resource_type, source_external_ids in self._source_external_ids_by_type.items():
@@ -236,6 +273,8 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 extractor = RelationshipsExtractor(relationship_iterator, **self._extractor_args)
                 # This is a private attribute, but we need to set it to log the target nodes.
                 extractor._log_target_nodes = True
+                if self._identifier == "id":
+                    extractor._uri_by_external_id_by_by_type = self._uris_by_external_id_by_type
 
                 yield from extractor.extract()
 
@@ -254,6 +293,11 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                         ):
                             self._target_external_ids_by_type[end_type].add(external_id)
 
+                if self._identifier == "id":
+                    # We need to store all future target triples which we will lookup after fetching
+                    # the target nodes.
+                    self._relationship_subject_predicate_type_external_id.extend(extractor._target_triples)
+
     def _extract_core_end_nodes(self):
         for core_node in self._classic_node_types:
             target_external_ids = self._target_external_ids_by_type[core_node.resource_type]
@@ -264,7 +308,25 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             ):
                 resource_iterator = api.retrieve_multiple(external_ids=list(chunk), ignore_unknown_ids=True)
                 extractor = core_node.extractor_cls(resource_iterator, **self._extractor_args)
+
+                extractor.asset_external_ids_by_id = self._asset_external_ids_by_id
+                extractor.lookup_dataset_external_id = self._lookup_dataset
+                if self._identifier == "id":
+                    extractor._log_urirefs = True
+
                 yield from self._extract_with_logging_label_dataset(extractor)
+
+                if self._identifier == "id":
+                    self._uris_by_external_id_by_type[core_node.resource_type].update(extractor._uriref_by_external_id)
+
+    def _extract_relationship_target_triples(self):
+        for id_, predicate, type_, external_id in self._relationship_subject_predicate_type_external_id:
+            try:
+                object_uri = self._uris_by_external_id_by_type[InstanceIdPrefix.from_str(type_)][external_id]
+            except KeyError:
+                warnings.warn(NeatValueWarning(f"Missing externalId {external_id} for {type_}"), stacklevel=2)
+            else:
+                yield id_, predicate, object_uri
 
     def _extract_labels(self):
         for chunk in self._chunk(list(self._labels), description="Extracting labels"):
@@ -274,6 +336,11 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
     def _extract_data_sets(self):
         for chunk in self._chunk(list(self._data_set_ids), description="Extracting data sets"):
             data_set_iterator = self._client.data_sets.retrieve_multiple(ids=list(chunk), ignore_unknown_ids=True)
+            yield from DataSetExtractor(data_set_iterator, **self._extractor_args).extract()
+        for chunk in self._chunk(list(self._data_set_external_ids), description="Extracting data sets"):
+            data_set_iterator = self._client.data_sets.retrieve_multiple(
+                external_ids=list(chunk), ignore_unknown_ids=True
+            )
             yield from DataSetExtractor(data_set_iterator, **self._extractor_args).extract()
 
     def _extract_with_logging_label_dataset(
@@ -285,9 +352,11 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             elif triple[1] == self._namespace.labels:
                 self._labels.add(remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.label))
             elif triple[1] == self._namespace.dataSetId:
-                self._data_set_ids.add(
-                    int(remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.data_set))
-                )
+                identifier = remove_namespace_from_uri(triple[2]).removeprefix(InstanceIdPrefix.data_set)
+                try:
+                    self._data_set_ids.add(int(identifier))
+                except ValueError:
+                    self._data_set_external_ids.add(identifier)
             yield triple
 
     @staticmethod
@@ -297,3 +366,11 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             return iterate_progress_bar(to_iterate, (len(items) // 1_000) + 1, description)
         else:
             return to_iterate
+
+    def _lookup_dataset(self, dataset_id: int) -> str:
+        if dataset_id not in self._dataset_external_ids_by_id:
+            if (dataset := self._client.data_sets.retrieve(id=dataset_id)) and dataset.external_id:
+                self._dataset_external_ids_by_id[dataset_id] = dataset.external_id
+            else:
+                raise KeyError(f"Could not find dataset with id {dataset_id}.")
+        return self._dataset_external_ids_by_id[dataset_id]

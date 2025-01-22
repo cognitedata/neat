@@ -1,6 +1,5 @@
 from typing import Any
 
-import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
@@ -38,7 +37,7 @@ RESERVED_PROPERTIES = frozenset(
 class TestExtractToLoadFlow:
     def test_classic_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
-        neat.read.cdf.classic.graph("Utsira")
+        neat.read.cdf.classic.graph("Utsira", identifier="id")
         neat.convert("dms")
         neat.mapping.data_model.classic_to_core("Classic")
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
@@ -71,7 +70,7 @@ class TestExtractToLoadFlow:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
 
-        neat._state.instances.store.graph.parse(DATA_FOLDER / "dexpi-raw-graph.ttl")
+        neat._state.instances.store.graph().parse(DATA_FOLDER / "dexpi-raw-graph.ttl")
         neat.prepare.instances.dexpi()
         neat.infer(max_number_of_instance=-1)
 
@@ -113,7 +112,7 @@ class TestExtractToLoadFlow:
         neat = NeatSession(cognite_client, storage="oxigraph")
         # Hack to read in the test data.
 
-        neat._state.instances.store.graph.parse(DATA_FOLDER / "aml-raw-graph.ttl")
+        neat._state.instances.store.graph().parse(DATA_FOLDER / "aml-raw-graph.ttl")
         neat.prepare.instances.aml()
         neat.infer(max_number_of_instance=-1)
 
@@ -176,13 +175,9 @@ class TestExtractToLoadFlow:
                     value.sort()
         return instance.dump()
 
-    @pytest.mark.skip(
-        "Will be fixed in separate PR - issue is that container are now created for edge/node instances"
-        "and then this fails as we try to load a node instance into an edge container"
-    )
     def test_classic_to_cdf(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
-        neat.read.cdf.classic.graph("Utsira")
+        neat.read.cdf.classic.graph("Utsira", identifier="externalId")
         neat.convert("dms")
 
         neat.mapping.data_model.classic_to_core("NeatInc")
@@ -192,6 +187,22 @@ class TestExtractToLoadFlow:
         has_errors = {res.name: res.error_messages for res in model_result if res.error_messages}
         assert not has_errors, has_errors
 
-        instance_result = neat.to.cdf.instances()
+        instance_result = neat.to.cdf.instances("sp_windfarm_instance_external_ids")
         has_errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
         assert not has_errors, has_errors
+
+    def test_snapshot_to_enterprise(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        neat.read.cdf._graph(
+            ("sp_windfarm", "WindFarm", "v1"),
+            instance_space="sp_windfarm_instance_external_ids",
+            unpack_json=True,
+            str_to_ideal_type=True,
+        )
+        neat.set._instance_sub_type("NeatIncAsset", "assetCategory")
+        neat._infer_subclasses()
+
+        neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
+
+        neat.to.cdf.data_model(existing="force")
+        neat.to.cdf.instances()

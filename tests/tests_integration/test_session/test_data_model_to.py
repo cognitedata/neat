@@ -1,8 +1,13 @@
+from pathlib import Path
+
+import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat import NeatSession
 from cognite.neat._client import NeatClient
-from tests.data import car
+from cognite.neat._issues.errors._general import NeatValueError
+from cognite.neat._rules import importers
+from tests.data import DATA_DIR, car
 
 
 def create_new_car_model(neat_client: NeatClient, schema_space: str, instance_space: str) -> dm.DataModelId:
@@ -81,3 +86,42 @@ class TestDataModelToCDF:
         assert len(result_by_name["views"].created) == 3
         assert len(result_by_name["data_models"].deleted) == 1
         assert len(result_by_name["data_models"].created) == 1
+
+
+class TestRulesStoreProvenanceSyncing:
+    @pytest.mark.skip("Skipped until in-depth comparison of data models is implemented")
+    def test_stopping_reloading_same_model(self, neat_client: NeatClient, tmp_path: Path) -> None:
+        neat = NeatSession(neat_client)
+        neat.read.excel.examples.pump_example()
+        neat.verify()
+
+        # set source to be the same as the target
+        target = neat._state.rule_store.provenance[-1].target_entity.result
+        target.metadata.source = target.metadata.identifier
+
+        neat.to.excel(tmp_path / "pump_example.xlsx")
+
+        with pytest.raises(NeatValueError) as e:
+            neat._state.rule_import(importers.ExcelImporter(tmp_path / "pump_example.xlsx"))
+
+        assert (
+            "Imported rules and rules which were used as the source for"
+            " them and which are are already in "
+            "this neat session have the same data model id"
+        ) in e.value.raw_message
+
+    def test_stop_model_import_which_source_is_not_in_session(self, neat_client: NeatClient, tmp_path: Path) -> None:
+        neat = NeatSession(neat_client)
+        neat.read.excel.examples.pump_example()
+        neat.verify()
+
+        # set source to be the same as the target
+        target = neat._state.rule_store.provenance[-1].target_entity.result
+        target.metadata.source_id = target.metadata.namespace + "some_other_source"
+
+        with pytest.raises(NeatValueError) as e:
+            neat._state.rule_import(importers.ExcelImporter(DATA_DIR / "pump_example.xlsx"))
+
+        assert (
+            "The source of the data model being imported is not in the content of this NEAT session"
+        ) in e.value.raw_message

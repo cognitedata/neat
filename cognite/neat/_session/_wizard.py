@@ -26,7 +26,7 @@ _T_Option = TypeVar("_T_Option")
 
 
 def _selection(message: str, options: Sequence[_T_Option]) -> _T_Option:
-    option_text = "\n  ".join([f"{i+1}) {option}" for i, option in enumerate(options)])
+    option_text = "\n  ".join([f"{i + 1}) {option}" for i, option in enumerate(options)])
     selected_index = (
         IntPrompt().ask(f"{message}\n  {option_text}\n", choices=list(map(str, range(1, len(options) + 1)))) - 1
     )

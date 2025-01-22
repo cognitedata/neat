@@ -1,5 +1,6 @@
 import itertools
 import json
+import urllib.parse
 import warnings
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
@@ -70,6 +71,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         tracker: type[Tracker] | None = None,
         rules: DMSRules | None = None,
         client: NeatClient | None = None,
+        unquote_external_ids: bool = False,
     ):
         super().__init__(graph_store)
         self.data_model = data_model
@@ -79,6 +81,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self._tracker: type[Tracker] = tracker or LogTracker
         self.rules = rules
         self._client = client
+        self._unquote_external_ids = unquote_external_ids
 
     @classmethod
     def from_data_model_id(
@@ -99,7 +102,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     @classmethod
     def from_rules(
-        cls, rules: DMSRules, graph_store: NeatGraphStore, instance_space: str, client: NeatClient | None = None
+        cls,
+        rules: DMSRules,
+        graph_store: NeatGraphStore,
+        instance_space: str,
+        client: NeatClient | None = None,
+        unquote_external_ids: bool = False,
     ) -> "DMSLoader":
         issues: list[NeatIssue] = []
         data_model: dm.DataModel[dm.View] | None = None
@@ -125,6 +133,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             issues,
             rules=rules,
             client=client,
+            unquote_external_ids=unquote_external_ids,
         )
 
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue | type[_END_OF_CLASS]]:
@@ -142,7 +151,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if self.rules and self.rules.metadata.logical
             else None
         )
+
         view_and_count_by_id = self._select_views_with_instances(self.data_model.views)
+
         if self._client:
             view_and_count_by_id, properties_point_to_self = self._sort_by_direct_relation_dependencies(
                 view_and_count_by_id
@@ -425,19 +436,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 raise ValueError(f"Expect valid JSON string or dict for {info.field_name}: {value}")
 
-        def parse_text(cls, value: Any, info: ValidationInfo) -> Any:
-            if isinstance(value, list):
-                return [remove_namespace_from_uri(v) for v in value]
-            else:
-                return remove_namespace_from_uri(value)
-
         if json_fields:
             validators["parse_json_string"] = field_validator(*json_fields, mode="before")(parse_json_string)  # type: ignore[assignment, arg-type]
 
         validators["parse_list"] = field_validator("*", mode="before")(parse_list)  # type: ignore[assignment, arg-type]
-
-        if text_fields:
-            validators["parse_text"] = field_validator(*text_fields, mode="before")(parse_text)  # type: ignore[assignment, arg-type]
 
         if direct_relation_by_property:
 
@@ -490,6 +492,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     ) -> dm.InstanceApply:
         type_ = properties.pop(RDF.type, [None])[0]
         created = pydantic_cls.model_validate(properties)
+        if self._unquote_external_ids:
+            identifier = urllib.parse.unquote(identifier)
 
         return dm.NodeApply(
             space=self.instance_space,
@@ -513,6 +517,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         created = pydantic_cls.model_validate(properties)
         if type_ is None:
             raise ValueError(f"Missing type for edge {identifier}")
+
+        if self._unquote_external_ids:
+            identifier = urllib.parse.unquote(identifier)
 
         return dm.EdgeApply(
             space=self.instance_space,
@@ -550,6 +557,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 yield error
             for target in values:
                 external_id = f"{identifier}.{prop_id}.{target}"
+                if self._unquote_external_ids:
+                    external_id = urllib.parse.unquote(external_id)
+
                 yield dm.EdgeApply(
                     space=self.instance_space,
                     external_id=(external_id if len(external_id) < 256 else create_sha256_hash(external_id)),

@@ -66,14 +66,6 @@ class PropertyOverwritingWarning(PropertyWarning[T_Identifier]):
 
 
 @dataclass(unsafe_hash=True)
-class PropertySkippedWarning(PropertyWarning[T_Identifier]):
-    """The {resource_type} with identifier {identifier} has a property {property_name}
-    which is skipped. {reason}."""
-
-    reason: str
-
-
-@dataclass(unsafe_hash=True)
 class PropertyDataTypeConversionWarning(PropertyWarning[T_Identifier]):
     """The {resource_type} with identifier {identifier} failed to convert the property {property_name}: {error}"""
 

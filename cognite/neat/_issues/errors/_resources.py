@@ -30,7 +30,7 @@ class ResourceRetrievalError(ResourceError[T_Identifier]):
 
 @dataclass(unsafe_hash=True)
 class ResourceNotFoundError(ResourceError, Generic[T_Identifier, T_ReferenceIdentifier]):
-    """The {resource_type} with identifier {identifier} does not exist"""
+    """The {resource_type} with identifier '{identifier}' does not exist"""
 
     extra = " This is expected by {referred_type} {referred_by}."
 

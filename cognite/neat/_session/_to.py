@@ -104,7 +104,7 @@ class ToAPI:
 
         with zipfile.ZipFile(filepath, "w") as zip_ref:
             zip_ref.writestr(
-                "neat-session/instances/instances.ttl",
+                "neat-session/instances/instances.trig",
                 self._state.instances.store.serialize(),
             )
 
@@ -220,6 +220,9 @@ class CDFToAPI:
             self._state.instances.store,
             instance_space=space,
             client=client,
+            # In case urllib.parse.quote() was run on the extraction, we need to run
+            # urllib.parse.unquote() on the load.
+            unquote_external_ids=self._state.quoted_source_identifiers,
         )
         result = loader.load_into_cdf(client)
         self._state.instances.outcome.append(result)

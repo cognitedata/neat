@@ -302,8 +302,7 @@ class Interface(DTDLBase):
     spec_version = frozenset(["2", "3"])
     default_context: ClassVar[IRI] = Field(
         "dtmi:dtdl:context;3",
-        description="This can be set directly on the class to change the "
-        "default context used when parsing a document.",
+        description="This can be set directly on the class to change the default context used when parsing a document.",
     )
     id_: DTMI = Field(alias="@id")  # type: ignore[assignment]
     context: IRI | None = Field(alias="@context")

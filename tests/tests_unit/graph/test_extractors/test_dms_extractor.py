@@ -1,3 +1,4 @@
+from collections import defaultdict
 from collections.abc import Iterable
 from typing import cast
 
@@ -11,8 +12,19 @@ from tests.data import car
 
 class TestDMSExtractor:
     def test_extract_instances(self) -> None:
+        total_instances_pair_by_view: dict[dm.ViewId, tuple[int | None, list[Instance]]] = defaultdict(lambda: (0, []))
+        for instance in instance_apply_to_read(car.INSTANCES):
+            if isinstance(instance, dm.Node):
+                view_id = next(iter(instance.properties.keys()))
+            else:
+                # Hardcoded for this test - all edges belong to this view
+                view_id = dm.ViewId("sp_example_car", "Car", "v1")
+            total_instances, instances = total_instances_pair_by_view[view_id]
+            instances.append(instance)
+            total_instances_pair_by_view[view_id] = total_instances + 1, instances
+
         extractor = DMSExtractor(
-            instance_apply_to_read(car.INSTANCES),
+            total_instances_pair_by_view,
             overwrite_namespace=DEFAULT_NAMESPACE,
         )
         expected_triples = set(car.TRIPLES)

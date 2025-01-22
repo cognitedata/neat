@@ -22,11 +22,14 @@ class SessionState:
         self.rule_store = NeatRulesStore()
         self.last_reference: DMSRules | InformationRules | None = None
         self.client = client
+        self.quoted_source_identifiers = False
 
     def rule_transform(self, *transformer: RulesTransformer) -> IssueList:
         if not transformer:
             raise NeatSessionError("No transformers provided.")
         first_transformer = transformer[0]
+
+        # This should not be allowed to be done automatically
         pruned = self.rule_store.prune_until_compatible(first_transformer)
         if pruned:
             type_hint = first_transformer.transform_type_hint()
@@ -64,10 +67,11 @@ class SessionState:
         return issues
 
     def write_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
-        self.instances.store.write(extractor)
-        issue_list = self.rule_store.import_graph(extractor)
+        extract_issues = self.instances.store.write(extractor)
+        issues = self.rule_store.import_graph(extractor)
         self.instances.store.add_rules(self.rule_store.last_verified_information_rules)
-        return issue_list
+        issues.extend(extract_issues)
+        return issues
 
 
 @dataclass
@@ -81,7 +85,7 @@ class InstancesState:
     def store(self) -> NeatGraphStore:
         if not self.has_store:
             if self.store_type == "oxigraph":
-                self._store = NeatGraphStore.from_oxi_store()
+                self._store = NeatGraphStore.from_oxi_local_store()
             else:
                 self._store = NeatGraphStore.from_memory_store()
         return cast(NeatGraphStore, self._store)

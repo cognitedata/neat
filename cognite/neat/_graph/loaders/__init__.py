@@ -20,6 +20,4 @@ def _repr_html_() -> str:
         ]
     )._repr_html_()
 
-    return (
-        "<strong>Loader</strong> A loader writes data from Neat's triple storage into a target system" f"<br />{table}"
-    )
+    return f"<strong>Loader</strong> A loader writes data from Neat's triple storage into a target system<br />{table}"

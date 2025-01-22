@@ -64,9 +64,6 @@ class DMSMetadata(BaseMetadata):
             space=self.space,
         )
 
-    def as_data_model_id(self) -> dm.DataModelId:
-        return dm.DataModelId(space=self.space, external_id=self.external_id, version=self.version)
-
     def as_data_model(self) -> dm.DataModelApply:
         suffix = f"Creator: {', '.join(self.creator)}"
         if self.description:
@@ -82,9 +79,6 @@ class DMSMetadata(BaseMetadata):
             description=description,
             views=[],
         )
-
-    def as_identifier(self) -> str:
-        return repr(self.as_data_model_id())
 
     def get_prefix(self) -> str:
         return self.space
@@ -109,8 +103,7 @@ class DMSProperty(SheetRow):
     )
     value_type: DataType | ViewEntity | DMSUnknownEntity = Field(
         alias="Value Type",
-        description="Value type that the property can hold. "
-        "It takes either subset of CDF primitive types or a View id",
+        description="Value type that the property can hold. It takes either subset of CDF primitive types or a View id",
     )
     nullable: bool | None = Field(
         default=None,

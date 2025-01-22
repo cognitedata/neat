@@ -15,7 +15,7 @@ from tests.data import car
 
 
 def test_rdf_inference():
-    store = NeatGraphStore.from_oxi_store()
+    store = NeatGraphStore.from_oxi_local_store()
     extractor = RdfFileExtractor(nordic44_knowledge_graph, base_uri="http://nordic44.com/")
     store.write(extractor)
 
@@ -53,17 +53,17 @@ def test_rdf_inference_with_removal_of_unknown_type():
     EX = Namespace("http://example.org/")
     SUBSTATION = Namespace("http://example.org/substation/")
     TERMINAL = Namespace("http://example.org/terminal/")
-    store = NeatGraphStore.from_oxi_store()
+    store = NeatGraphStore.from_oxi_local_store()
 
-    store.graph.add((EX.substation1, RDF.type, SUBSTATION.Substation))
-    store.graph.add((EX.substation2, RDF.type, SUBSTATION.Substation))
-    store.graph.add((EX.substation3, RDF.type, SUBSTATION.Substation))
-    store.graph.add((EX.terminal1, RDF.type, TERMINAL.Terminal))
-    store.graph.add((EX.terminal2, RDF.type, TERMINAL.Terminal))
-    store.graph.add((EX.substation1, EX.hasTerminal, EX.terminal1))
-    store.graph.add((EX.substation2, EX.hasTerminal, EX.terminal3))
-    store.graph.add((EX.substation1, EX.name, Literal("Substation 1")))
-    store.graph.add((EX.substation3, EX.name, Literal("Substation 3")))
+    store.dataset.add((EX.substation1, RDF.type, SUBSTATION.Substation))
+    store.dataset.add((EX.substation2, RDF.type, SUBSTATION.Substation))
+    store.dataset.add((EX.substation3, RDF.type, SUBSTATION.Substation))
+    store.dataset.add((EX.terminal1, RDF.type, TERMINAL.Terminal))
+    store.dataset.add((EX.terminal2, RDF.type, TERMINAL.Terminal))
+    store.dataset.add((EX.substation1, EX.hasTerminal, EX.terminal1))
+    store.dataset.add((EX.substation2, EX.hasTerminal, EX.terminal3))
+    store.dataset.add((EX.substation1, EX.name, Literal("Substation 1")))
+    store.dataset.add((EX.substation3, EX.name, Literal("Substation 3")))
 
     with catch_issues():
         importer = InferenceImporter.from_graph_store(store, ("inferred", "drop_unknown", "rdf"))
@@ -74,7 +74,7 @@ def test_rdf_inference_with_removal_of_unknown_type():
 
 
 def test_rdf_inference_with_none_existing_node():
-    store = NeatGraphStore.from_oxi_store()
+    store = NeatGraphStore.from_oxi_local_store()
     extractor = RdfFileExtractor(DATA_FOLDER / "low-quality-graph.ttl")
     store.write(extractor)
 
@@ -103,7 +103,7 @@ def test_json_value_type_inference():
 
     properties = {prop.property_: prop for prop in rules.properties}
 
-    assert len(rules.properties) == 8
+    assert len(rules.properties) == 9
     assert len(rules.classes) == 1
 
     assert isinstance(properties["metadata"].value_type, Json)
@@ -112,7 +112,7 @@ def test_json_value_type_inference():
 def test_integer_as_long():
     store = NeatGraphStore.from_memory_store()
     for triple in car.TRIPLES:
-        store.graph.add(triple)
+        store.dataset.add(triple)
 
     with catch_issues():
         importer = InferenceImporter.from_graph_store(store)

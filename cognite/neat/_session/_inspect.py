@@ -94,7 +94,8 @@ class InspectIssues:
         if self._state.rule_store.provenance:
             issues = self._state.rule_store.last_issues
         elif self._state.instances.store.provenance:
-            issues = self._state.instances.store.provenance[-1].target_entity.issues
+            last_change = self._state.instances.store.provenance[-1]
+            issues = last_change.target_entity.issues
         else:
             self._print("No issues found.")
             return pd.DataFrame() if return_dataframe else None
@@ -231,7 +232,7 @@ class InspectUploadOutcome:
                                     if i < 50:
                                         lines.append(f"  * {v}")
                                     elif i == 50 and total > 50:
-                                        lines.append(f"  * ... {total-50} more")
+                                        lines.append(f"  * ... {total - 50} more")
                                     elif i == 50 and total == 50:
                                         lines.append(f"  * {v}")
                                 else:
