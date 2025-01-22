@@ -1,12 +1,16 @@
 import typing
+import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Set
 from pathlib import Path
+from typing import Any
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Relationship, RelationshipList
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
 
+from cognite.neat._issues.warnings import NeatValueWarning
+from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import create_sha256_hash
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix, T_CogniteResource
@@ -52,6 +56,8 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
             prefix=prefix,
             identifier=identifier,
         )
+        self._uri_by_external_id_by_by_type: dict[InstanceIdPrefix, dict[str, URIRef]] = defaultdict(dict)
+        self._target_triples: list[tuple[URIRef, URIRef, str, str]] = []
 
     def _log_target_nodes_if_set(self, item: Relationship) -> Relationship:
         if not self._log_target_nodes:
@@ -59,6 +65,28 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         if item.target_type and item.target_external_id:
             self._target_external_ids_by_type[InstanceIdPrefix.from_str(item.target_type)].add(item.target_external_id)
         return item
+
+    def _item2triples_special_cases(self, id_: URIRef, dumped: dict[str, Any]) -> list[Triple]:
+        if self.identifier == "externalId":
+            return []
+        triples: list[Triple] = []
+        if (source_external_id := dumped.pop("sourceExternalId")) and "sourceType" in dumped:
+            source_type = dumped["sourceType"]
+            try:
+                source_uri = self._uri_by_external_id_by_by_type[InstanceIdPrefix.from_str(source_type)][
+                    source_external_id
+                ]
+            except KeyError:
+                warnings.warn(
+                    NeatValueWarning(f"Missing externalId {source_external_id} for {source_type}"), stacklevel=2
+                )
+            else:
+                triples.append((id_, self.namespace["sourceExternalId"], source_uri))
+        if (target_external_id := dumped.pop("targetExternalId")) and "targetType" in dumped:
+            target_type = dumped["targetType"]
+            # We do not yet have the target nodes, so we log them for later extraction.
+            self._target_triples.append((id_, self.namespace["targetExternalId"], target_type, target_external_id))
+        return triples
 
     @classmethod
     def _from_dataset(

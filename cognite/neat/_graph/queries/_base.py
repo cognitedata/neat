@@ -233,9 +233,7 @@ class Queries:
             # set property
             if property_renaming_config and predicate != RDF.type:
                 property_ = remove_namespace_from_uri(predicate, validation="prefix")
-                renamed_property_ = property_renaming_config.get(
-                    predicate, remove_namespace_from_uri(predicate, validation="prefix")
-                )
+                renamed_property_ = property_renaming_config.get(predicate, property_)
 
             elif not property_renaming_config and predicate != RDF.type:
                 property_ = remove_namespace_from_uri(predicate, validation="prefix")
@@ -245,40 +243,12 @@ class Queries:
                 property_ = RDF.type
                 renamed_property_ = property_
 
-            # set value
-            # if it is URIRef and property type is object property, we need to remove namespace
-            # if it URIref but we are doing this into data type property, we do not remove namespace
-            # case 1 for RDF type we remove namespace
-            if property_ == RDF.type:
+            if isinstance(object_, URIRef):
                 value = remove_namespace_from_uri(object_, validation="prefix")
-
-            # case 2 for define object properties we remove namespace
-            elif (
-                isinstance(object_, URIRef)
-                and property_types
-                and (
-                    property_types.get(property_, None) == EntityTypes.object_property
-                    or property_types.get(property_, None) == EntityTypes.undefined
-                )
-            ):
-                value = remove_namespace_from_uri(object_, validation="prefix")
-
-            # case 3 purposely we are converting URIRef to string while removing namespace
-            elif (
-                isinstance(object_, URIRef)
-                and property_types
-                and property_types.get(property_, None) == EntityTypes.data_property
-            ):
-                value = remove_namespace_from_uri(object_, validation="prefix")
-
-            # case 4 when property type is not defined and returned value is URIRef we remove namespace
-            elif isinstance(object_, URIRef) and not property_types:
-                value = remove_namespace_from_uri(object_, validation="prefix")
-
-            # case 5 for data type properties we do not remove namespace but keep the entire value
-            # but we drop the datatype part, and keep everything to be string (data loader will do the conversion)
-            # for value type it expects (if possible)
+            elif isinstance(object_, RdfLiteral):
+                value = object_.toPython()
             else:
+                # It is a blank node
                 value = str(object_)
 
             # add type to the dictionary
