@@ -23,6 +23,9 @@ Changes are grouped as follows:
 ### Removed
 - [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.
 
+### Fixed
+- Fixed issue with not correctly set of max count when inferring properties which value type are multi type
+
 ## [0.108.0] - 22-01-**2025**
 ### Added
 - Support RDF Datasets in NeatGraphStore enabling writing of sources triples to dedicated named graphs
