@@ -1,6 +1,5 @@
 from typing import Any
 
-import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
@@ -67,7 +66,6 @@ class TestExtractToLoadFlow:
             }
         )
 
-    @pytest.mark.skip("We need to enable download of neat engine to run this test, locally it works")
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
         neat.read.xml.dexpi(DATA_FOLDER / "depxi_example.xml")
@@ -107,7 +105,6 @@ class TestExtractToLoadFlow:
         assert len(nodes) == 206
         assert len(edges) == 40
 
-    @pytest.mark.skip("We need to enable download of neat engine to run this test, locally it works")
     def test_aml_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
         neat.read.xml.aml(DATA_FOLDER / "aml_example.aml")
