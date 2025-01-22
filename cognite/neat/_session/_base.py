@@ -7,6 +7,7 @@ from cognite.neat import _version
 from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import RegexViolationError
+from cognite.neat._issues.errors._general import NeatImportError
 from cognite.neat._rules import importers
 from cognite.neat._rules.models._base_input import InputRules
 from cognite.neat._rules.models.information._rules import InformationRules
@@ -20,6 +21,7 @@ from cognite.neat._rules.transformers import (
     VerifyInformationRules,
 )
 from cognite.neat._store._rules_store import ModelEntity
+from cognite.neat._utils.auxiliary import local_import
 
 from ._collector import _COLLECTOR, Collector
 from ._drop import DropAPI
@@ -78,12 +80,15 @@ class NeatSession:
     def __init__(
         self,
         client: CogniteClient | None = None,
-        storage: Literal["memory", "oxigraph"] = "memory",
+        storage: Literal["memory", "oxigraph"] | None = None,
         verbose: bool = True,
         load_engine: Literal["newest", "cache", "skip"] = "cache",
     ) -> None:
         self._verbose = verbose
-        self._state = SessionState(store_type=storage, client=NeatClient(client) if client else None)
+        self._state = SessionState(
+            store_type=storage or self._select_most_performant_store(),
+            client=NeatClient(client) if client else None,
+        )
         self.read = ReadAPI(self._state, verbose)
         self.to = ToAPI(self._state, verbose)
         self.prepare = PrepareAPI(self._state, verbose)
@@ -96,6 +101,16 @@ class NeatSession:
         self.opt._display()
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
             print(f"Neat Engine {engine_version} loaded.")
+
+    def _select_most_performant_store(self) -> Literal["memory", "oxigraph"]:
+        """Select the most performant store based on the current environment."""
+
+        try:
+            local_import("pyoxigraph", "oxi")
+            local_import("oxrdflib", "oxi")
+            return "oxigraph"
+        except NeatImportError:
+            return "memory"
 
     @property
     def version(self) -> str:

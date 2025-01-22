@@ -8,7 +8,7 @@ from rdflib import Literal as RdfLiteral
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.query import ResultRow
 
-from cognite.neat._constants import UNKNOWN_TYPE
+from cognite.neat._constants import NEAT
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import InformationRules
@@ -387,7 +387,7 @@ class Queries:
             value_types,
         ) in cast(
             ResultRow,
-            self.graph(named_graph).query(query.format(unknownType=str(UNKNOWN_TYPE))),
+            self.graph(named_graph).query(query.format(unknownType=str(NEAT.UnknownType))),
         ):
             yield cast(URIRef, source_type), cast(URIRef, property_), [URIRef(uri) for uri in value_types.split(",")]
 

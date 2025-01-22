@@ -7,7 +7,7 @@ import rdflib
 from rdflib import RDF, Literal, Namespace, URIRef
 from rdflib.query import ResultRow
 
-from cognite.neat._constants import NEAT, UNKNOWN_TYPE
+from cognite.neat._constants import NEAT
 from cognite.neat._issues.warnings import PropertyDataTypeConversionWarning
 from cognite.neat._utils.auxiliary import string_to_ideal_type
 from cognite.neat._utils.rdf_ import Triple, get_namespace, remove_namespace_from_uri
@@ -24,7 +24,7 @@ class SplitMultiValueProperty(BaseTransformerStandardised):
     _need_changes = frozenset({})
 
     def __init__(self, unknown_type: URIRef | None = None) -> None:
-        self.unknown_type = unknown_type or UNKNOWN_TYPE
+        self.unknown_type = unknown_type or NEAT.UnknownType
 
     def _iterate_query(self) -> str:
         query = """SELECT ?subjectType ?property

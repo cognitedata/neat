@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.ids import DataModelId
 from rdflib import DC, DCTERMS, FOAF, OWL, RDF, RDFS, SH, SKOS, XSD, Namespace, URIRef
+from rdflib.namespace import DefinedNamespace
 
 from cognite import neat
 
@@ -73,17 +74,20 @@ DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/neat/")
 CDF_NAMESPACE = Namespace("https://cognitedata.com/")
 DEFAULT_BASE_URI = URIRef(DEFAULT_NAMESPACE)
 CLASSIC_CDF_NAMESPACE = Namespace("http://purl.org/cognite/cdf-classic#")
-UNKNOWN_TYPE = DEFAULT_NAMESPACE.UnknownType
 XML_SCHEMA_NAMESPACE = Namespace("http://www.w3.org/2001/XMLSchema#")
 
-_INTERNAL_NAMESPACE = Namespace("http://thisisneat.io/cognite/neat/internal#")
 
+class NEAT(DefinedNamespace):
+    """
+    NEAT internal data model used for internal purposes of the NEAT library
 
-class _Neat:
-    type = _INTERNAL_NAMESPACE["type"]
+    """
 
+    _fail = True
+    _NS = Namespace("http://thisisneat.io/internal/")
 
-NEAT = _Neat()
+    type: URIRef  # type property used to express a type of a subject
+    UnknownType: URIRef  # Unknown type used to express that the type of a subject is unknown
 
 
 def get_default_prefixes_and_namespaces() -> dict[str, Namespace]:
