@@ -18,13 +18,15 @@ Changes are grouped as follows:
 ## TBD
 ### Added
 - Support RDF Datasets in NeatGraphStore enabling writing of sources triples to dedicated named graphs
-- Support for classic graph using externalIDs `neat.read.cdf.classic.graph(..., id="externalId")` 
+- Support for classic graph using externalIDs `neat.read.cdf.classic.graph(..., id="externalId")`
 
 ### Improved
 - The `neat.infer()` no longer skips `externalId`/`external_id` properties when inferring the data model.
 - Importing rules which were exported then modified externally then re-imported to the neat session
 - The `neat.read.cdf.classic.graph(...)` gives an error is the root asset is not found in CDF.
 - The `neat.read.cdf.graph(...)` method now shows progress bars for each view when loading large graphs.
+- Initiating NeatSession will automatically select the best possible graph storage
+- Form of internal neat data model
 
 ### Changed
 - The `neat.read.cdf.graph(...)` no longer extracts instances from cognite views by default. Instead, the parameter
