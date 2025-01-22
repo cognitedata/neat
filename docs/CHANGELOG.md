@@ -15,6 +15,14 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+
+## TBD
+### Improved
+- AML and DEXPI reader for neat session automatically perform extraction and transformation
+
+### Removed
+- [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.
+
 ## [0.108.0] - 22-01-**2025**
 ### Added
 - Support RDF Datasets in NeatGraphStore enabling writing of sources triples to dedicated named graphs
@@ -27,7 +35,7 @@ Changes are grouped as follows:
 - The `neat.read.cdf.graph(...)` method now shows progress bars for each view when loading large graphs.
 - Initiating NeatSession will automatically select the best possible graph storage
 - Form of internal neat data model
-- The `neat.read.cdf.classic.graph(...)` now looks-up internal ids for external ids upon extraction instead of a 
+- The `neat.read.cdf.classic.graph(...)` now looks-up internal ids for external ids upon extraction instead of a
   separate step. This has a significant performance improvement for large graphs.
 
 ### Changed
