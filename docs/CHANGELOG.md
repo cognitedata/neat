@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.108.0] - 22-01-**2025**
 ### Added
 - Support RDF Datasets in NeatGraphStore enabling writing of sources triples to dedicated named graphs
 - Support for classic graph using externalIDs `neat.read.cdf.classic.graph(..., id="externalId")`
