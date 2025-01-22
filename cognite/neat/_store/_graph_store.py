@@ -402,14 +402,11 @@ class NeatGraphStore:
             self.rules[named_graph]
         ).define_property_renaming_config(class_entity)
 
-        # get property types to guide process of removing or not namespaces from results
-        property_types = InformationAnalysis(self.rules[named_graph]).property_types(class_entity)
         for instance_id in instance_ids:
             if res := self.queries.describe(
                 instance_id=instance_id,
                 instance_type=class_entity.suffix,
                 property_renaming_config=property_renaming_config,
-                property_types=property_types,
             ):
                 yield res
 
