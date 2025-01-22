@@ -97,7 +97,7 @@ class ShowDataModelAPI(ShowBaseAPI):
         self.provenance = ShowDataModelProvenanceAPI(self._state)
         self.implements = ShowDataModelImplementsAPI(self._state)
 
-    def __call__(self) -> Any:
+    def __call__(self, include_connections: bool = True, include_inheritance: bool = False) -> Any:
         if not self._state.rule_store.has_verified_rules:
             raise NeatSessionError(
                 "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
@@ -106,7 +106,7 @@ class ShowDataModelAPI(ShowBaseAPI):
         rules = self._state.rule_store.last_verified_rule
 
         if isinstance(rules, DMSRules):
-            di_graph = self._generate_dms_di_graph(rules)
+            di_graph = self._generate_dms_di_graph(rules, include_connections, include_inheritance)
         elif isinstance(rules, InformationRules):
             di_graph = self._generate_info_di_graph(rules)
         else:
@@ -119,7 +119,9 @@ class ShowDataModelAPI(ShowBaseAPI):
 
         return self._generate_visualization(di_graph, name)
 
-    def _generate_dms_di_graph(self, rules: DMSRules) -> nx.DiGraph:
+    def _generate_dms_di_graph(
+        self, rules: DMSRules, include_connections: bool = True, include_inheritance: bool = False
+    ) -> nx.DiGraph:
         """Generate a DiGraph from the last verified DMS rules."""
         di_graph = nx.DiGraph()
 
@@ -138,16 +140,32 @@ class ShowDataModelAPI(ShowBaseAPI):
             if not di_graph.has_node(view.view.suffix):
                 di_graph.add_node(view.view.suffix, label=view.view.suffix)
 
-        # Add nodes and edges from Properties sheet
-        for prop_ in rules.properties:
-            if prop_.connection and isinstance(prop_.value_type, ViewEntity):
-                if not di_graph.has_node(prop_.view.suffix):
-                    di_graph.add_node(prop_.view.suffix, label=prop_.view.suffix)
-                di_graph.add_edge(
-                    prop_.view.suffix,
-                    prop_.value_type.suffix,
-                    label=prop_.name or prop_.view_property,
-                )
+        if include_connections:
+            # Add nodes and edges from Properties sheet
+            for prop_ in rules.properties:
+                if prop_.connection and isinstance(prop_.value_type, ViewEntity):
+                    if not di_graph.has_node(prop_.view.suffix):
+                        di_graph.add_node(prop_.view.suffix, label=prop_.view.suffix)
+                    di_graph.add_edge(
+                        prop_.view.suffix,
+                        prop_.value_type.suffix,
+                        label=prop_.name or prop_.view_property,
+                    )
+        if include_inheritance:
+            for view in rules.views:
+                if view.view not in used_views:
+                    continue
+                for parent in view.implements or []:
+                    if not di_graph.has_node(view.view.suffix):
+                        di_graph.add_node(view.view.suffix, label=view.view.suffix)
+                    if not di_graph.has_node(parent.suffix):
+                        di_graph.add_node(parent.suffix, label=parent.suffix)
+                    di_graph.add_edge(
+                        view.view.suffix,
+                        parent.suffix,
+                        label="implements",
+                        dashes=True,
+                    )
 
         return di_graph
 
