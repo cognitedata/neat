@@ -1,7 +1,8 @@
 import os
 import subprocess
-from contextlib import suppress
+from contextlib import redirect_stderr, redirect_stdout, suppress
 from dataclasses import dataclass, fields
+from io import StringIO
 from pathlib import Path
 from typing import Literal, TypeAlias, get_args
 
@@ -339,7 +340,8 @@ def _prompt_cluster_and_project() -> EnvironmentVariables:
 
 
 def _repo_root() -> Path | None:
-    with suppress(Exception):
+    # Redirecting stderr to suppress the error message if the command fails
+    with suppress(Exception), redirect_stderr(StringIO()), redirect_stdout(StringIO()):
         result = subprocess.run("git rev-parse --show-toplevel".split(), stdout=subprocess.PIPE)
         if (output := result.stdout.decode().strip()) != "":
             return Path(output)
