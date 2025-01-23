@@ -67,15 +67,23 @@ class CreateAPI:
     def solution_model(
         self,
         data_model_id: DataModelIdentifier,
-        mode: Literal["read", "write"] = "read",
         dummy_property: str = "GUID",
+        connections: Literal["repeat", "connection"] = "connection",
+        direct_property: str = "enterprise",
+        view_prefix: str = "Enterprise",
     ) -> IssueList:
         """Uses the current data model as a basis to create solution data model
 
         Args:
             data_model_id: The solution data model id that is being created.
-            mode: The mode of the solution data model. Can be either "read" or "write".
             dummy_property: The dummy property to use as placeholder for the views in the new data model.
+            connections: How to implement the connection between the enterprise data model and the solution data model.
+                Can be either "implements" or "direct". Implements each view in the solution data model will
+                implement a view in the enterprise data model. Direct will create a direct connection between
+                the view in the solution data model and the view in the enterprise data model.
+            direct_property: The property to use for the direct connection between the views in the solution data model
+                and the enterprise data model.
+            view_prefix: The prefix to use for the views in the enterprise data model.
 
         !!! note "Solution Data Model Mode"
 
@@ -92,8 +100,10 @@ class CreateAPI:
         return self._state.rule_transform(
             ToSolutionModel(
                 new_model_id=data_model_id,
-                mode=mode,
                 dummy_property=dummy_property,
+                properties=connections,
+                direct_property=direct_property,
+                view_prefix=view_prefix
             )
         )
 
