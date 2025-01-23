@@ -478,7 +478,6 @@ class ToSolutionModel(ToExtensionModel):
 
     Args:
         new_model_id: DataData model identifier for the new model.
-        org_name: If the existing model is a Cognite Data Model, this will replace the "Cognite" affix.
         mode: The mode of the solution model. Either "read" or "write". A "write" model will create a new
             container for each view with a dummy property. Read mode will only inherit the view filter from the
             original model.
@@ -498,13 +497,12 @@ class ToSolutionModel(ToExtensionModel):
     def __init__(
         self,
         new_model_id: DataModelIdentifier,
-        org_name: str = "My",
         mode: Literal["read", "write"] = "read",
         dummy_property: str | None = "GUID",
         exclude_views_in_other_spaces: bool = True,
         filter_type: Literal["container", "view"] = "container",
     ):
-        super().__init__(new_model_id, org_name, dummy_property if mode == "write" else None)
+        super().__init__(new_model_id, "", dummy_property if mode == "write" else None)
         self.mode = mode
         self.exclude_views_in_other_spaces = exclude_views_in_other_spaces
         self.filter_type = filter_type
@@ -617,10 +615,9 @@ class ToDataProductModel(ToSolutionModel):
     def __init__(
         self,
         new_model_id: DataModelIdentifier,
-        org_name: str = "My",
         include: Literal["same-space", "all"] = "same-space",
     ):
-        super().__init__(new_model_id, org_name, mode="read", dummy_property=None, exclude_views_in_other_spaces=False)
+        super().__init__(new_model_id, mode="read", dummy_property=None, exclude_views_in_other_spaces=False)
         self.include = include
 
     def transform(self, rules: DMSRules) -> DMSRules:
