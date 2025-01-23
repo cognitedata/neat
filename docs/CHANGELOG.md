@@ -15,6 +15,15 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Fixed
+- `neat.read.cdf.classic.graph` no longer requires read access to data sets in CDF.
+
+### Improved
+- The `get_cognite_client` function no longer prints an irrelevant warning message when running outside a git
+  repository.
+- The `neat.verify()` no longer gives warnings about empty `Cognite` system containers.
+
 ## [0.108.0] - 22-01-**2025**
 ### Added
 - Support RDF Datasets in NeatGraphStore enabling writing of sources triples to dedicated named graphs
