@@ -67,11 +67,8 @@ class TestExtractToLoadFlow:
         )
 
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
-        neat = NeatSession(cognite_client, storage="oxigraph")
-        # Hack to read in the test data.
-
-        neat._state.instances.store.graph().parse(DATA_FOLDER / "dexpi-raw-graph.ttl")
-        neat.prepare.instances.dexpi()
+        neat = NeatSession(cognite_client)
+        neat.read.xml.dexpi(DATA_FOLDER / "depxi_example.xml")
         neat.infer(max_number_of_instance=-1)
 
         # Hack to ensure deterministic output
@@ -109,11 +106,8 @@ class TestExtractToLoadFlow:
         assert len(edges) == 40
 
     def test_aml_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
-        neat = NeatSession(cognite_client, storage="oxigraph")
-        # Hack to read in the test data.
-
-        neat._state.instances.store.graph().parse(DATA_FOLDER / "aml-raw-graph.ttl")
-        neat.prepare.instances.aml()
+        neat = NeatSession(cognite_client)
+        neat.read.xml.aml(DATA_FOLDER / "aml_example.aml")
         neat.infer(max_number_of_instance=-1)
 
         # Hack to ensure deterministic output

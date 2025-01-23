@@ -15,14 +15,20 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
-### Fixed
-- `neat.read.cdf.classic.graph` no longer requires read access to data sets in CDF.
 
+## TBD
 ### Improved
+- AML and DEXPI reader for neat session automatically perform extraction and transformation
 - The `get_cognite_client` function no longer prints an irrelevant warning message when running outside a git
   repository.
 - The `neat.verify()` no longer gives warnings about empty `Cognite` system containers.
+
+### Removed
+- [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.
+
+### Fixed
+- Fixed issue with not correctly set of max count when inferring properties which value type are multi type
+- `neat.read.cdf.classic.graph` no longer requires read access to data sets in CDF.
 
 ## [0.108.0] - 22-01-**2025**
 ### Added
@@ -36,7 +42,7 @@ Changes are grouped as follows:
 - The `neat.read.cdf.graph(...)` method now shows progress bars for each view when loading large graphs.
 - Initiating NeatSession will automatically select the best possible graph storage
 - Form of internal neat data model
-- The `neat.read.cdf.classic.graph(...)` now looks-up internal ids for external ids upon extraction instead of a 
+- The `neat.read.cdf.classic.graph(...)` now looks-up internal ids for external ids upon extraction instead of a
   separate step. This has a significant performance improvement for large graphs.
 
 ### Changed

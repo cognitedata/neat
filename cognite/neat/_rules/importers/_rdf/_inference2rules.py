@@ -194,6 +194,7 @@ class InferenceImporter(BaseRDFImporter):
                     INSTANCE_PROPERTIES_DEFINITION.replace("instance_id", instance)
                 ):  # type: ignore[misc]
                     # this is to skip rdf:type property
+
                     if property_uri == RDF.type:
                         continue
                     property_id = remove_namespace_from_uri(property_uri)
@@ -245,13 +246,8 @@ class InferenceImporter(BaseRDFImporter):
                     elif id_ in properties and definition["value_type"] not in properties[id_]["value_type"]:
                         properties[id_]["value_type"].add(definition["value_type"])
 
-                    # USE CASE 3: existing but max count is different
-                    elif (
-                        id_ in properties
-                        and definition["value_type"] in properties[id_]["value_type"]
-                        and properties[id_]["max_count"] != definition["max_count"]
-                    ):
-                        properties[id_]["max_count"] = max(properties[id_]["max_count"], definition["max_count"])
+                    # always update max_count with the upmost value
+                    properties[id_]["max_count"] = max(properties[id_]["max_count"], definition["max_count"])
 
         # Create multi-value properties otherwise single value
         for property_ in properties.values():
