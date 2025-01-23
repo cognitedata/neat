@@ -25,7 +25,7 @@ class TestRead:
         issues = neat.verify()
         assert not issues.has_errors
 
-        neat.prepare.data_model.to_data_product(("sp_my_space", "MyProduct", "v1"), org_name="")
+        neat.prepare.data_model.data_product_model(("sp_my_space", "MyProduct", "v1"), org_name="")
 
         exported_yaml_str = neat.to.yaml()
         exported_rules = yaml.safe_load(exported_yaml_str)
