@@ -318,6 +318,7 @@ class BaseRules(SchemaModel, ABC):
                 For example, given a class that is dumped as 'my_prefix:MyClass', if the prefix for the rules
                 set in metadata.prefix = 'my_prefix', then this class will be dumped as 'MyClass' when this flag is set.
                 Defaults to True.
+            sort: Whether to sort the entities in the output.
             mode: The mode in which `to_python` should run.
                 If mode is 'json', the output will only contain JSON serializable types.
                 If mode is 'python', the output may contain non-JSON-serializable Python objects.

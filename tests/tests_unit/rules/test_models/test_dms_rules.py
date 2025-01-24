@@ -1277,7 +1277,7 @@ class TestDMSRules:
             # The Exporter adds node types for each view as this is an Enterprise model.
             "nodes": {"__all__"},
         }
-        args = {"exclude_none": True, "exclude_unset": True, "exclude_defaults": True, "exclude": exclude}
+        args = {"exclude_none": True, "sort": True, "exclude_unset": True, "exclude_defaults": True, "exclude": exclude}
         dumped = recreated_rules.dump(**args)
         # The exclude above leaves an empty list for nodes, so we set it to None, to match the input.
         if not dumped.get("nodes"):
@@ -1386,7 +1386,7 @@ class TestDMSRules:
             ],
         }
 
-        actual_dump = dms_rules.dump(exclude_none=True, exclude_unset=True, exclude_defaults=True)
+        actual_dump = dms_rules.dump(exclude_none=True, sort=True, exclude_unset=True, exclude_defaults=True)
 
         assert actual_dump == expected_dump
 
