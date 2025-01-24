@@ -291,7 +291,7 @@ class _ReadProperties:
     type_uri: URIRef
     property_uri: URIRef
     value_type: URIRef
-    superclass_uri: URIRef | None
+    parent_uri: URIRef | None
     max_occurrence: int
     instance_count: int
 
@@ -390,12 +390,14 @@ class SubclassInferenceImporter(BaseRDFImporter):
         properties: list[InformationInputProperty] = []
         # Help for IDE
         type_uri: URIRef
-        superclass_uri: URIRef
-        for superclass_uri, super_class_properties_iterable in itertools.groupby(
-            sorted(read_properties, key=lambda x: x.superclass_uri or NEAT.UnknownType),
-            key=lambda x: x.superclass_uri or NEAT.UnknownType,
+        parent_uri: URIRef
+        for parent_uri, parent_class_properties_iterable in itertools.groupby(
+            sorted(read_properties, key=lambda x: x.parent_uri or NEAT.EmptyType),
+            key=lambda x: x.parent_uri or NEAT.EmptyType,
         ):
-            properties_by_class_by_property = self._get_properties_by_class_by_property(super_class_properties_iterable)
+            properties_by_class_by_property = self._get_properties_by_class_by_property(
+                parent_class_properties_iterable
+            )
 
             shared_property_uris = set.intersection(
                 *[
@@ -403,9 +405,9 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     for properties_by_property in properties_by_class_by_property.values()
                 ]
             )
-            if superclass_uri != NEAT.UnknownType:
-                parent_suffix = remove_namespace_from_uri(superclass_uri)
-                self._add_uri_namespace_to_prefixes(superclass_uri, prefixes)
+            if parent_uri != NEAT.EmptyType:
+                parent_suffix = remove_namespace_from_uri(parent_uri)
+                self._add_uri_namespace_to_prefixes(parent_uri, prefixes)
                 if parent_suffix not in existing_classes:
                     classes.append(InformationInputClass(class_=parent_suffix))
                 else:
@@ -420,7 +422,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     classes.append(
                         InformationInputClass(
                             class_=class_suffix,
-                            implements=parent_suffix if superclass_uri != NEAT.UnknownType else None,
+                            implements=parent_suffix if parent_uri != NEAT.UnknownType else None,
                         )
                     )
                 else:
@@ -434,22 +436,24 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     )
             for property_uri, read_properties in shared_properties.items():
                 properties.append(
-                    self._create_property(read_properties, parent_suffix, type_uri, property_uri, prefixes)
+                    self._create_property(
+                        read_properties, parent_suffix, read_properties[0].type_uri, property_uri, prefixes
+                    )
                 )
         return classes, properties
 
     @staticmethod
     def _get_properties_by_class_by_property(
-        super_class_properties_iterable: Iterable[_ReadProperties],
+        parent_class_properties_iterable: Iterable[_ReadProperties],
     ) -> dict[URIRef, dict[URIRef, list[_ReadProperties]]]:
-        properties_by_subclass_by_property: dict[URIRef, dict[URIRef, list[_ReadProperties]]] = {}
+        properties_by_class_by_property: dict[URIRef, dict[URIRef, list[_ReadProperties]]] = {}
         for class_uri, class_properties_iterable in itertools.groupby(
-            sorted(super_class_properties_iterable, key=lambda x: x.type_uri), key=lambda x: x.type_uri
+            sorted(parent_class_properties_iterable, key=lambda x: x.type_uri), key=lambda x: x.type_uri
         ):
-            properties_by_subclass_by_property[class_uri] = defaultdict(list)
+            properties_by_class_by_property[class_uri] = defaultdict(list)
             for read_prop in class_properties_iterable:
-                properties_by_subclass_by_property[class_uri][read_prop.property_uri].append(read_prop)
-        return properties_by_subclass_by_property
+                properties_by_class_by_property[class_uri][read_prop.property_uri].append(read_prop)
+        return properties_by_class_by_property
 
     def _read_class_properties_from_graph(self, parent_by_child: dict[URIRef, URIRef]) -> list[_ReadProperties]:
         count_by_type: dict[URIRef, int] = {}
@@ -488,7 +492,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     _ReadProperties(
                         type_uri=type_uri,
                         property_uri=property_uri,
-                        superclass_uri=parent_by_child.get(type_uri),
+                        parent_uri=parent_by_child.get(type_uri),
                         value_type=value_type_uri,
                         max_occurrence=max_occurrence,
                         instance_count=instance_count,
