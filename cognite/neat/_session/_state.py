@@ -23,7 +23,6 @@ class SessionState:
         storage_path: Path | None = None,
         client: NeatClient | None = None,
     ) -> None:
-        print("Here")
         self.instances = InstancesState(store_type, storage_path=storage_path)
         self.rule_store = NeatRulesStore()
         self.last_reference: DMSRules | InformationRules | None = None
