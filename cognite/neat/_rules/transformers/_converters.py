@@ -583,7 +583,7 @@ class ToSolutionModel(ToExtensionModel):
                 # This will be used to point to the one view in the Enterprise model,
                 # while the new view will to be written to.
                 new_entity.suffix = f"{self.view_prefix}{current.suffix}"
-                new_view = view.model_copy(deep=True)
+                new_view = DMSView(view=new_entity)
                 new_view.view = ViewEntity(
                     # MyPy we validate that version is string in the constructor
                     space=self.new_model_id.space,
