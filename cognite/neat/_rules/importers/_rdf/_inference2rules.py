@@ -290,9 +290,8 @@ class InferenceImporter(BaseRDFImporter):
 class _ReadProperties:
     type_uri: URIRef
     property_uri: URIRef
+    value_type: URIRef
     superclass_uri: URIRef | None
-    data_type: URIRef | None
-    object_type: URIRef | None
     max_occurrence: int
     instance_count: int
 
@@ -311,7 +310,6 @@ class SubclassInferenceImporter(BaseRDFImporter):
     Args:
         issue_list: Issue list to store issues
         graph: Knowledge graph
-        max_number_of_instance: Maximum number of instances to be used in inference
     """
 
     overwrite_data_types: ClassVar[Mapping[URIRef, URIRef]] = {
@@ -324,14 +322,13 @@ class SubclassInferenceImporter(BaseRDFImporter):
         issue_list: IssueList,
         graph: Graph,
         rules: InformationRules,
-        max_number_of_instance: int,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ) -> None:
         super().__init__(
             issue_list,
             graph,
             rules.metadata.as_data_model_id().as_tuple(),  # type: ignore[arg-type]
-            max_number_of_instance,
+            -1,
             non_existing_node_type,
             language="en",
         )
@@ -345,14 +342,22 @@ class SubclassInferenceImporter(BaseRDFImporter):
                             WHERE {{ ?s a ?type .
                             ?type <{RDFS.subClassOf}> ?parent }}"""
 
-    _properties_query = """SELECT DISTINCT ?property ?dataType ?objectType
+    _properties_query = """SELECT DISTINCT ?property ?valueType
                          WHERE {{
                             ?s a <{type}> .
-                            ?s ?property ?value .
-                            BIND(datatype(?value) AS ?dataType) .
-                            OPTIONAL {{?value a ?objectType}}
+                            ?s ?property ?object .
+                            OPTIONAL {{ ?object a ?objectType }}
+                            BIND(
+                               IF(
+                                    isLiteral(?object), datatype(?object),
+                                    IF(BOUND(?objectType), ?objectType, <{unknown_type}>) 
+                                ) AS ?valueType
+                            )
                         }}"""
-
+    # BIND(datatype(?value) AS ?dataType).
+    # OPTIONAL
+    # {{?value
+    # a ?objectType}}
     _max_occurrence_query = """SELECT (MAX(?count) AS ?maxCount)
                             WHERE {{
                               {{
@@ -370,17 +375,26 @@ class SubclassInferenceImporter(BaseRDFImporter):
     ) -> dict:
         parent_by_child = self._read_parent_by_child_from_graph()
         read_properties = self._read_class_properties_from_graph(parent_by_child)
+        classes, properties = self._create_classes_properties(read_properties)
+
+        return {
+            "metadata": self._rules.metadata.model_dump(),
+            "classes": [cls.dump(self._rules.metadata.prefix) for cls in classes],
+            "properties": [prop.dump(self._rules.metadata.prefix) for prop in properties],
+            "prefixes": self._rules.prefixes,
+        }
+
+    def _create_classes_properties(self, read_properties: list[_ReadProperties]) -> tuple[list[InformationInputClass], list[InformationInputProperty]]:
         existing_classes = {class_.class_.suffix: class_ for class_ in self._rules.classes}
         prefixes = self._rules.prefixes.copy()
-
         classes: list[InformationInputClass] = []
         properties: list[InformationInputProperty] = []
         # Help for IDE
         type_uri: URIRef
         superclass_uri: URIRef
         for superclass_uri, super_class_properties_iterable in itertools.groupby(
-            sorted(read_properties, key=lambda x: x.superclass_uri or NEAT.UnknownType),
-            key=lambda x: x.superclass_uri or NEAT.UnknownType,
+                sorted(read_properties, key=lambda x: x.superclass_uri or NEAT.UnknownType),
+                key=lambda x: x.superclass_uri or NEAT.UnknownType,
         ):
             properties_by_class_by_property = self._get_properties_by_class_by_property(super_class_properties_iterable)
 
@@ -423,13 +437,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 properties.append(
                     self._create_property(read_properties, parent_suffix, type_uri, property_uri, prefixes)
                 )
-
-        return {
-            "metadata": self._rules.metadata.model_dump(),
-            "classes": [cls.dump(self._rules.metadata.prefix) for cls in classes],
-            "properties": [prop.dump(self._rules.metadata.prefix) for prop in properties],
-            "prefixes": self._rules.prefixes,
-        }
+        return classes, properties
 
     @staticmethod
     def _get_properties_by_class_by_property(
@@ -446,23 +454,24 @@ class SubclassInferenceImporter(BaseRDFImporter):
 
     def _read_class_properties_from_graph(self, parent_by_child: dict[URIRef, URIRef]) -> list[_ReadProperties]:
         count_by_type: dict[URIRef, int] = {}
-        # Infers all the classes w in the graph
+        # Infers all the classes in the graph
         for result_row in self.graph.query(self._ordered_class_query):
             type_uri, instance_count_literal = cast(tuple[URIRef, RdfLiteral], result_row)
             count_by_type[type_uri] = instance_count_literal.toPython()
         del result_row
         analysis = InformationAnalysis(self._rules)
         existing_class_properties = {
-            (class_entity.suffix, property)
-            for class_entity, properties in analysis.class_property_pairs(consider_inheritance=True).items()
-            for property in properties.keys()
+            (class_entity.suffix, prop.property_)
+            for class_entity, properties in
+            analysis.classes_with_properties(consider_inheritance=True, allow_different_namespace=True).items()
+            for prop in properties
         }
         properties_by_class_by_subclass: list[_ReadProperties] = []
         for type_uri, instance_count in count_by_type.items():
-            property_query = self._properties_query.format(type=type_uri)
+            property_query = self._properties_query.format(type=type_uri, unknown_type=NEAT.UnknownType)
             class_suffix = remove_namespace_from_uri(type_uri)
             for result_row in self.graph.query(property_query):
-                property_uri, data_type_uri, object_type_uri = cast(tuple[URIRef, URIRef, URIRef], result_row)
+                property_uri, value_type_uri = cast(tuple[URIRef, URIRef], result_row)
                 if property_uri == RDF.type:
                     continue
                 property_str = remove_namespace_from_uri(property_uri)
@@ -470,18 +479,17 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     continue
                 occurrence_query = self._max_occurrence_query.format(type=type_uri, property=property_uri)
                 max_occurrence = 1  # default value
-                ocurrence_row, *_ = list(self.graph.query(occurrence_query))
-                if ocurrence_row:
-                    max_occurrence_literal, *__ = cast(tuple[RdfLiteral, Any], ocurrence_row)
+                occurrence_row, *_ = list(self.graph.query(occurrence_query))
+                if occurrence_row:
+                    max_occurrence_literal, *__ = cast(tuple[RdfLiteral, Any], occurrence_row)
                     max_occurrence = int(max_occurrence_literal.toPython())
-                del ocurrence_row
+                del occurrence_row
                 properties_by_class_by_subclass.append(
                     _ReadProperties(
                         type_uri=type_uri,
                         property_uri=property_uri,
                         superclass_uri=parent_by_child.get(type_uri),
-                        data_type=data_type_uri,
-                        object_type=object_type_uri,
+                        value_type=value_type_uri,
                         max_occurrence=max_occurrence,
                         instance_count=instance_count,
                     )
