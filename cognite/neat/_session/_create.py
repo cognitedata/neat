@@ -103,7 +103,7 @@ class CreateAPI:
                 dummy_property=dummy_property,
                 properties=connections,
                 direct_property=direct_property,
-                view_prefix=view_prefix
+                view_prefix=view_prefix,
             )
         )
 
