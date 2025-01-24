@@ -23,12 +23,18 @@ Changes are grouped as follows:
   repository.
 - The `neat.verify()` no longer gives warnings about empty `Cognite` system containers.
 
+### Changed
+- [BREAKING] NeatSession.prepare.data_model.cdf_compliant_external_ids is moved under NeatSession.fix.data_model.cdf_compliant_external_ids
+- [BREAKING] `cdf_compliant_external_ids` expects validated InformationRules as input instead of InformationInputRules
+
 ### Removed
 - [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.
-
+- [BREAKING] NeatSession.prepare.data_model.cdf_compliant_external_ids
+- 
 ### Fixed
 - Fixed issue with not correctly set of max count when inferring properties which value type are multi type
 - `neat.read.cdf.classic.graph` no longer requires read access to data sets in CDF.
+
 
 ## [0.108.0] - 22-01-**2025**
 ### Added
