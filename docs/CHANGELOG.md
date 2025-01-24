@@ -20,7 +20,7 @@ Changes are grouped as follows:
 ### Improved
 - AML and DEXPI reader for neat session automatically perform extraction and transformation
 - [BREAKING] NeatSession.prepare.data_model.cdf_compliant_external_ids is moved under NeatSession.fix.data_model.cdf_compliant_external_ids
-- [BREAKING] `cdf_compliant_external_ids` expects validated InformationRules as added
+- [BREAKING] `cdf_compliant_external_ids` expects validated InformationRules as input instead of InformationInputRules
 
 ### Removed
 - [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.
