@@ -350,7 +350,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                             BIND(
                                IF(
                                     isLiteral(?object), datatype(?object),
-                                    IF(BOUND(?objectType), ?objectType, <{unknown_type}>) 
+                                    IF(BOUND(?objectType), ?objectType, <{unknown_type}>)
                                 ) AS ?valueType
                             )
                         }}"""
@@ -384,7 +384,9 @@ class SubclassInferenceImporter(BaseRDFImporter):
             "prefixes": self._rules.prefixes,
         }
 
-    def _create_classes_properties(self, read_properties: list[_ReadProperties]) -> tuple[list[InformationInputClass], list[InformationInputProperty]]:
+    def _create_classes_properties(
+        self, read_properties: list[_ReadProperties]
+    ) -> tuple[list[InformationInputClass], list[InformationInputProperty]]:
         existing_classes = {class_.class_.suffix: class_ for class_ in self._rules.classes}
         prefixes = self._rules.prefixes.copy()
         classes: list[InformationInputClass] = []
@@ -393,8 +395,8 @@ class SubclassInferenceImporter(BaseRDFImporter):
         type_uri: URIRef
         superclass_uri: URIRef
         for superclass_uri, super_class_properties_iterable in itertools.groupby(
-                sorted(read_properties, key=lambda x: x.superclass_uri or NEAT.UnknownType),
-                key=lambda x: x.superclass_uri or NEAT.UnknownType,
+            sorted(read_properties, key=lambda x: x.superclass_uri or NEAT.UnknownType),
+            key=lambda x: x.superclass_uri or NEAT.UnknownType,
         ):
             properties_by_class_by_property = self._get_properties_by_class_by_property(super_class_properties_iterable)
 
@@ -462,8 +464,9 @@ class SubclassInferenceImporter(BaseRDFImporter):
         analysis = InformationAnalysis(self._rules)
         existing_class_properties = {
             (class_entity.suffix, prop.property_)
-            for class_entity, properties in
-            analysis.classes_with_properties(consider_inheritance=True, allow_different_namespace=True).items()
+            for class_entity, properties in analysis.classes_with_properties(
+                consider_inheritance=True, allow_different_namespace=True
+            ).items()
             for prop in properties
         }
         properties_by_class_by_subclass: list[_ReadProperties] = []
@@ -530,11 +533,11 @@ class SubclassInferenceImporter(BaseRDFImporter):
     def _get_value_type(
         self, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
     ) -> str | UnknownEntity:
-        value_types = {prop.data_type for prop in read_properties if prop.data_type} | {
-            prop.object_type for prop in read_properties if prop.object_type
-        }
+        value_types = {prop.value_type for prop in read_properties}
         if len(value_types) == 1:
             uri_ref = value_types.pop()
+            if uri_ref == NEAT.UnknownType:
+                return UnknownEntity()
             self._add_uri_namespace_to_prefixes(uri_ref, prefixes)
             return remove_namespace_from_uri(uri_ref)
         elif len(value_types) == 0:
