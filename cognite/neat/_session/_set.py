@@ -48,25 +48,27 @@ class SetAPI:
             print(f"Client set to {self._state.client.config.project} CDF project.")
         return None
 
-    def _type(self, type: str, property: str, drop_property: bool = False) -> None:
+    def _replace_type(self, current_type: str, property_type: str, drop_property: bool = True) -> None:
         """Sets the type of instance based on the property."""
-        type_uri = self._state.instances.store.queries.type_uri(type)
-        property_uri = self._state.instances.store.queries.property_uri(property)
+        type_uri = self._state.instances.store.queries.type_uri(current_type)
+        property_uri = self._state.instances.store.queries.property_uri(property_type)
 
         if not type_uri:
-            raise NeatValueError(f"Type {type} does not exist in the graph.")
-        elif len(type_uri) > 1:
-            raise NeatValueError(f"{type} has multiple ids found in the graph: {humanize_collection(type_uri)}.")
-
-        if not property_uri:
-            raise NeatValueError(f"Property {property} does not exist in the graph.")
+            raise NeatValueError(f"Type {current_type} does not exist in the graph.")
         elif len(type_uri) > 1:
             raise NeatValueError(
-                f"{property} has multiple ids found in the graph: {humanize_collection(property_uri)}."
+                f"{current_type} has multiple ids found in the graph: {humanize_collection(type_uri)}."
+            )
+
+        if not property_uri:
+            raise NeatValueError(f"Property {property_type} does not exist in the graph.")
+        elif len(type_uri) > 1:
+            raise NeatValueError(
+                f"{property_type} has multiple ids found in the graph: {humanize_collection(property_uri)}."
             )
 
         if not self._state.instances.store.queries.type_with_property(type_uri[0], property_uri[0]):
-            raise NeatValueError(f"Property {property} is not defined for type {type}.")
+            raise NeatValueError(f"Property {property_type} is not defined for type {current_type}.")
 
         self._state.instances.store.transform(SetType(type_uri[0], property_uri[0], drop_property))
 
