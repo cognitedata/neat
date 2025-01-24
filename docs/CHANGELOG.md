@@ -19,12 +19,15 @@ Changes are grouped as follows:
 ## TBD
 ### Improved
 - AML and DEXPI reader for neat session automatically perform extraction and transformation
+- [BREAKING] NeatSession.prepare.data_model.cdf_compliant_external_ids is moved under NeatSession.fix.data_model.cdf_compliant_external_ids
+- [BREAKING] `cdf_compliant_external_ids` expects validated InformationRules as added
 
 ### Removed
 - [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.
 
 ### Fixed
 - Fixed issue with not correctly set of max count when inferring properties which value type are multi type
+
 
 ## [0.108.0] - 22-01-**2025**
 ### Added
