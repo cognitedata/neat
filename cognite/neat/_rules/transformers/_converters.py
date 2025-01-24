@@ -482,34 +482,40 @@ class ToSolutionModel(ToExtensionModel):
 
     def _to_solution(self, reference_rules: DMSRules) -> DMSRules:
         """For creation of solution data model / rules specifically for mapping over existing containers."""
-        solution_model = reference_rules.model_copy(deep=True)
-        solution_model.metadata.space = self.new_model_id.space
-        solution_model.metadata.external_id = self.new_model_id.external_id
-        # MyPy we validate that version is string in the constructor
-        solution_model.metadata.version = self.new_model_id.version  # type: ignore[assignment]
-        solution_model.metadata.name = f"{self.type_} data model"
-        solution_model = self._expand_properties(solution_model)
+        reference_rules = self._expand_properties(reference_rules.model_copy(deep=True))
 
-        new_views, new_properties, read_view_by_new_view = self._create_views(solution_model)
+        new_views, new_properties, read_view_by_new_view = self._create_views(reference_rules)
         new_containers, new_container_properties = self._create_containers_update_view_filter(
             new_views, reference_rules, read_view_by_new_view
         )
         new_properties.extend(new_container_properties)
 
-        solution_model.views = new_views
-        solution_model.containers = new_containers or None
-        solution_model.properties = new_properties
-
         if self.properties == "connection":
             # Ensure the Enterprise view and the new solution view are next to each other
-            solution_model.properties.sort(
+            new_properties.sort(
                 key=lambda prop: (
                     prop.view.external_id.removeprefix(self.view_prefix),
                     bool(prop.view.external_id.startswith(self.view_prefix)),
                 )
             )
 
-        return solution_model
+        metadata = reference_rules.metadata.model_copy(
+            deep=True,
+            update={
+                "space": self.new_model_id.space,
+                "external_id": self.new_model_id.external_id,
+                "version": self.new_model_id.version,
+                "name": f"{self.type_} data model",
+            },
+        )
+        return DMSRules(
+            metadata=metadata,
+            properties=new_properties,
+            views=new_views,
+            containers=new_containers or None,
+            enum=reference_rules.enum,
+            nodes=reference_rules.nodes,
+        )
 
     @staticmethod
     def _expand_properties(rules: DMSRules) -> DMSRules:
@@ -534,38 +540,36 @@ class ToSolutionModel(ToExtensionModel):
         return rules
 
     def _create_views(
-        self, model: DMSRules
+        self, reference: DMSRules
     ) -> tuple[SheetList[DMSView], SheetList[DMSProperty], dict[ViewEntity, ViewEntity]]:
         renaming: dict[ViewEntity, ViewEntity] = {}
         new_views = SheetList[DMSView]()
         read_view_by_new_view: dict[ViewEntity, ViewEntity] = {}
         skipped_views: set[ViewEntity] = set()
-        for view in model.views:
-            if self.skip_cognite_views and view.view.space in COGNITE_SPACES:
-                skipped_views.add(view.view)
+        for ref_view in reference.views:
+            if (self.skip_cognite_views and ref_view.view.space in COGNITE_SPACES) or (
+                self.exclude_views_in_other_spaces and ref_view.view.space != reference.metadata.space
+            ):
+                skipped_views.add(ref_view.view)
                 continue
-            elif self.exclude_views_in_other_spaces and view.view.space != model.metadata.space:
-                skipped_views.add(view.view)
-                continue
-            current = view.view
-            view.implements = None
             new_entity = ViewEntity(
                 # MyPy we validate that version is string in the constructor
                 space=self.new_model_id.space,
-                externalId=current.external_id,
+                externalId=ref_view.view.external_id,
                 version=self.new_model_id.version,  # type: ignore[arg-type]
             )
             if self.properties == "connection":
                 # Set suffix to existing view and introduce a new view.
                 # This will be used to point to the one view in the Enterprise model,
                 # while the new view will to be written to.
-                new_entity.suffix = f"{self.view_prefix}{current.suffix}"
-                new_view = DMSView(view=new_entity)
-                new_view.view = ViewEntity(
-                    # MyPy we validate that version is string in the constructor
-                    space=self.new_model_id.space,
-                    externalId=current.external_id,
-                    version=self.new_model_id.version,  # type: ignore[arg-type]
+                new_entity.suffix = f"{self.view_prefix}{ref_view.view.suffix}"
+                new_view = DMSView(
+                    view=ViewEntity(
+                        # MyPy we validate that version is string in the constructor
+                        space=self.new_model_id.space,
+                        externalId=ref_view.view.external_id,
+                        version=self.new_model_id.version,  # type: ignore[arg-type]
+                    )
                 )
                 new_views.append(new_view)
                 read_view_by_new_view[new_view.view] = new_entity
@@ -575,26 +579,26 @@ class ToSolutionModel(ToExtensionModel):
                 # do this.
                 read_view_by_new_view[new_entity] = new_entity
 
-            renaming[current] = new_entity
-            view.view = new_entity
-            new_views.append(view)
+            renaming[ref_view.view] = new_entity
+            new_views.append(ref_view.model_copy(deep=True, update={"implements": None, "view": new_entity}))
 
         new_properties = SheetList[DMSProperty]()
-        for prop in model.properties:
+        for prop in reference.properties:
             if prop.view in skipped_views:
                 continue
-            if prop.value_type in renaming and isinstance(prop.value_type, ViewEntity):
-                prop.value_type = renaming[prop.value_type]
-            if prop.view in renaming:
-                prop.view = renaming[prop.view]
-            new_properties.append(prop)
+            new_property = prop.model_copy(deep=True)
+            if new_property.value_type in renaming and isinstance(new_property.value_type, ViewEntity):
+                new_property.value_type = renaming[new_property.value_type]
+            if new_property.view in renaming:
+                new_property.view = renaming[new_property.view]
+            new_properties.append(new_property)
         return new_views, new_properties, read_view_by_new_view
 
     def _create_containers_update_view_filter(
         self, new_views: SheetList[DMSView], reference: DMSRules, read_view_by_new_view: dict[ViewEntity, ViewEntity]
     ) -> tuple[SheetList[DMSContainer], SheetList[DMSProperty]]:
         new_containers = SheetList[DMSContainer]()
-        new_properties: SheetList[DMSProperty] = SheetList[DMSProperty]()
+        container_properties: SheetList[DMSProperty] = SheetList[DMSProperty]()
         ref_containers_by_ref_view: dict[ViewEntity, set[ContainerEntity]] = defaultdict(set)
         ref_views_by_external_id = {
             view.view.external_id: view for view in reference.views if view.view.space == reference.metadata.space
@@ -621,13 +625,13 @@ class ToSolutionModel(ToExtensionModel):
                         container_property=f"{prefix}{self.dummy_property}",
                     )
                     new_containers.append(DMSContainer(container=container_entity))
+                    container_properties.append(property_)
                 elif self.properties == "repeat" and self.dummy_property is None:
                     # For this case we set the filter. This is used by the DataProductModel.
                     # Inherit view filter from original model to ensure the same instances are returned
                     # when querying the new view.
                     if ref_view := ref_views_by_external_id.get(view.view.external_id):
                         self._set_view_filter(view, ref_containers_by_ref_view, ref_view)
-                    continue
                 elif self.properties == "connection" and self.direct_property:
                     property_ = DMSProperty(
                         view=view.view,
@@ -640,16 +644,16 @@ class ToSolutionModel(ToExtensionModel):
                         container_property=self.direct_property,
                     )
                     new_containers.append(DMSContainer(container=container_entity))
+                    container_properties.append(property_)
                 else:
                     raise NeatValueError(f"Unsupported properties mode: {self.properties}")
-                new_properties.append(property_)
 
             if self.properties == "connection" and view.view in read_views:
                 # Need to ensure that the 'Enterprise' view always returns the same instances
                 # as the original view, no matter which properties are removed by the user.
                 if ref_view := ref_views_by_external_id.get(view.view.external_id.removeprefix(self.view_prefix)):
                     self._set_view_filter(view, ref_containers_by_ref_view, ref_view)
-        return new_containers, new_properties
+        return new_containers, container_properties
 
     def _set_view_filter(
         self, view: DMSView, ref_containers_by_ref_view: dict[ViewEntity, set[ContainerEntity]], ref_view: DMSView
