@@ -354,10 +354,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                                 ) AS ?valueType
                             )
                         }}"""
-    # BIND(datatype(?value) AS ?dataType).
-    # OPTIONAL
-    # {{?value
-    # a ?objectType}}
+
     _max_occurrence_query = """SELECT (MAX(?count) AS ?maxCount)
                             WHERE {{
                               {{
