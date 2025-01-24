@@ -88,7 +88,7 @@ class ToCompliantEntities(RulesTransformer[InformationRules, InformationRules]):
         return "Ensures externalIDs are compliant with CDF"
 
     def transform(self, rules: InformationRules) -> InformationRules:
-        copy: InformationRules = rules.model_copy(deep=True)
+        copy = rules.model_copy(deep=True)
         copy.classes = self._fix_classes(copy.classes)
         copy.properties = self._fix_properties(copy.properties)
         return copy
