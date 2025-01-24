@@ -389,9 +389,9 @@ class Enum(DataType):
 _DATA_TYPE_BY_NAME = {cls.model_fields["name"].default.casefold(): cls for cls in DataType.__subclasses__()}
 _seen = set()
 _DATA_TYPE_BY_DMS_TYPE = {
-    cls.dms._replace_type.casefold(): cls  # type: ignore[attr-defined]
+    cls.dms._type.casefold(): cls
     for cls in DataType.__subclasses__()
-    if cls.dms._replace_type not in _seen and not _seen.add(cls.dms._replace_type)  # type: ignore[func-returns-value, attr-defined]
+    if cls.dms._type not in _seen and not _seen.add(cls.dms._type)  # type: ignore[func-returns-value]
 }
 del _seen
 _XSD_TYPES = {cls_.xsd for cls_ in _DATA_TYPE_BY_NAME.values()}
