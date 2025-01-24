@@ -6,7 +6,11 @@ from cognite.neat._graph.extractors import KnowledgeGraphExtractor
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.importers import BaseImporter, InferenceImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.transformers import RulesTransformer, ToExtensionModel
+from cognite.neat._rules.transformers import (
+    RulesTransformer,
+    ToCompliantEntities,
+    ToExtensionModel,
+)
 from cognite.neat._store import NeatGraphStore, NeatRulesStore
 from cognite.neat._store._rules_store import ModelEntity
 from cognite.neat._utils.rdf_ import uri_display_name
@@ -58,6 +62,15 @@ class SessionState:
         end = cast(ModelEntity, self.rule_store.provenance[-1].target_entity).display_name
         issues.action = f"{start} &#8594; {end}"
         issues.hint = "Use the .inspect.issues() for more details."
+
+        # Make sure to attach the latest information rules to the instances store
+        if (
+            any(isinstance(t, ToCompliantEntities) for t in transformer)
+            and isinstance(self.rule_store.provenance[-1].target_entity, ModelEntity)
+            and isinstance(self.rule_store.provenance[-1].target_entity.result, InformationRules)
+        ):
+            self.instances.store.add_rules(self.rule_store.provenance[-1].target_entity.result)
+
         return issues
 
     def rule_import(self, importer: BaseImporter) -> IssueList:

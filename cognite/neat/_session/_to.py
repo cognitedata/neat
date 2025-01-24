@@ -4,7 +4,7 @@ from collections.abc import Collection
 from pathlib import Path
 from typing import Any, Literal, overload
 
-from cognite.client.data_classes.data_modeling import SpaceApply
+from cognite.client import data_modeling as dm
 
 from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._graph import loaders
@@ -194,7 +194,10 @@ class CDFToAPI:
         self._state = state
         self._verbose = verbose
 
-    def instances(self, space: str | None = None) -> UploadResultList:
+    def instances(
+        self,
+        space: str | None = None,
+    ) -> UploadResultList:
         """Export the verified DMS instances to CDF.
 
         Args:
@@ -213,7 +216,7 @@ class CDFToAPI:
             raise NeatSessionError("Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
 
         if not client.data_modeling.spaces.retrieve(space):
-            client.data_modeling.spaces.apply(SpaceApply(space=space))
+            client.data_modeling.spaces.apply(dm.SpaceApply(space=space))
 
         loader = loaders.DMSLoader.from_rules(
             self._state.rule_store.last_verified_dms_rules,
@@ -224,6 +227,7 @@ class CDFToAPI:
             # urllib.parse.unquote() on the load.
             unquote_external_ids=self._state.quoted_source_identifiers,
         )
+
         result = loader.load_into_cdf(client)
         self._state.instances.outcome.append(result)
         print("You can inspect the details with the .inspect.outcome.instances(...) method.")
