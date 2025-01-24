@@ -168,6 +168,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 # If the views have a dependency on themselves, we need to run it twice.
                 view_ids.append(f"{view_id!r} (self)")
 
+        print(view_and_count_by_id)
         tracker = self._tracker(type(self).__name__, view_ids, "views")
         for view_id, (view, instance_count) in view_and_count_by_id.items():
             pydantic_cls, edge_by_type, edge_by_prop_id, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]

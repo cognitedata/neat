@@ -27,6 +27,7 @@ from cognite.neat._rules.transformers._converters import (
     ToCompliantEntities,
     _InformationRulesConverter,
 )
+from cognite.neat._rules.transformers._verification import VerifyAnyRules
 
 
 def case_insensitive_value_types():
@@ -398,10 +399,13 @@ class TestInformationConverter:
         self,
         rules_dict: dict[str, dict[str, Any]],
     ) -> None:
-        input_rules = InformationInputRules.load(rules_dict)
+        input_rules = ReadRules(rules=InformationInputRules.load(rules_dict), read_context={})
+        transformer = VerifyAnyRules(validate=True)
+        rules = transformer.transform(input_rules)
 
-        rules = ToCompliantEntities().transform(ReadRules(input_rules, {})).rules.as_verified_rules()
+        rules = ToCompliantEntities().transform(rules)
 
         assert rules.classes[0].class_.prefix == "power_or_not"
+        assert rules.classes[0].class_.suffix == "Generating_Unit"
         assert rules.properties[0].property_ == "IdentifiedObject_name"
-        assert rules.properties[0].value_type == data_types.String()
+        assert rules.properties[0].class_.suffix == "Generating_Unit"
