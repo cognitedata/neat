@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal
 
 from cognite.client import CogniteClient
@@ -81,12 +82,14 @@ class NeatSession:
         self,
         client: CogniteClient | None = None,
         storage: Literal["memory", "oxigraph"] | None = None,
+        storage_path: str | None = None,
         verbose: bool = True,
         load_engine: Literal["newest", "cache", "skip"] = "cache",
     ) -> None:
         self._verbose = verbose
         self._state = SessionState(
             store_type=storage or self._select_most_performant_store(),
+            storage_path=Path(storage_path) if storage_path else None,
             client=NeatClient(client) if client else None,
         )
         self.read = ReadAPI(self._state, verbose)
@@ -253,7 +256,7 @@ class NeatSession:
     def _repr_html_(self) -> str:
         state = self._state
         if (
-            not state.instances.has_store
+            not state.instances.empty
             and not state.rule_store.has_unverified_rules
             and not state.rule_store.has_verified_rules
         ):
@@ -268,10 +271,14 @@ class NeatSession:
         if state.rule_store.has_verified_rules:
             output.append(f"<H2>Verified Data Model</H2><br />{state.rule_store.last_verified_rule._repr_html_()}")  # type: ignore
 
-        if state.instances.has_store:
+        if state.instances.empty:
             output.append(f"<H2>Instances</H2> {state.instances.store._repr_html_()}")
 
         return "<br />".join(output)
+
+    def close(self) -> None:
+        """Close the session and release resources."""
+        self._state.instances.store.dataset.close()
 
 
 @session_class_wrapper
