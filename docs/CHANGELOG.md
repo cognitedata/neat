@@ -30,6 +30,9 @@ Changes are grouped as follows:
 - Fixed issue with not correctly set of max count when inferring properties which value type are multi type
 - `neat.read.cdf.classic.graph` no longer requires read access to data sets in CDF.
 
+### Added
+- Support for "on-disk" storage for oxigraph in NeatSession
+
 ## [0.108.0] - 22-01-**2025**
 ### Added
 - Support RDF Datasets in NeatGraphStore enabling writing of sources triples to dedicated named graphs
