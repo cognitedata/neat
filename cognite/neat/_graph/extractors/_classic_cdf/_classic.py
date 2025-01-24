@@ -369,8 +369,12 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
 
     def _lookup_dataset(self, dataset_id: int) -> str:
         if dataset_id not in self._dataset_external_ids_by_id:
-            if (dataset := self._client.data_sets.retrieve(id=dataset_id)) and dataset.external_id:
-                self._dataset_external_ids_by_id[dataset_id] = dataset.external_id
-            else:
-                raise KeyError(f"Could not find dataset with id {dataset_id}.")
+            try:
+                if (dataset := self._client.data_sets.retrieve(id=dataset_id)) and dataset.external_id:
+                    self._dataset_external_ids_by_id[dataset_id] = dataset.external_id
+                else:
+                    raise KeyError(f"Could not find dataset with id {dataset_id}.")
+            except CogniteAPIError as e:
+                warnings.warn(CDFAuthWarning("lookup dataset", str(e)), stacklevel=2)
+                return f"{InstanceIdPrefix.data_set}{dataset_id}"
         return self._dataset_external_ids_by_id[dataset_id]
