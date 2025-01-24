@@ -30,7 +30,6 @@ class CreateAPI:
         data_model_id: DataModelIdentifier,
         org_name: str = "My",
         dummy_property: str = "GUID",
-        move_connections: bool = False,
     ) -> IssueList:
         """Uses the current data model as a basis to create enterprise data model
 
@@ -38,7 +37,6 @@ class CreateAPI:
             data_model_id: The enterprise data model id that is being created
             org_name: Organization name to use for the views in the enterprise data model.
             dummy_property: The dummy property to use as placeholder for the views in the new data model.
-            move_connections: If True, the connections will be moved to the new data model.
 
         !!! note "Enterprise Data Model Creation"
 
@@ -60,7 +58,7 @@ class CreateAPI:
                 new_model_id=data_model_id,
                 org_name=org_name,
                 dummy_property=dummy_property,
-                move_connections=move_connections,
+                move_connections=True,
             )
         )
 
