@@ -301,6 +301,7 @@ class BaseRules(SchemaModel, ABC):
     def dump(
         self,
         entities_exclude_defaults: bool = True,
+        sort: bool = False,
         mode: Literal["python", "json"] = "python",
         by_alias: bool = False,
         exclude: IncEx | None = None,
@@ -326,11 +327,12 @@ class BaseRules(SchemaModel, ABC):
             exclude_unset: Whether to exclude fields that have not been explicitly set.
             exclude_defaults: Whether to exclude fields that are set to their default value.
         """
-        for field_name in self.model_fields.keys():
-            value = getattr(self, field_name)
-            # Ensure deterministic order of properties, classes, views, and so on
-            if isinstance(value, SheetList):
-                value.sort(key=lambda x: x._identifier())
+        if sort:
+            for field_name in self.model_fields.keys():
+                value = getattr(self, field_name)
+                # Ensure deterministic order of properties, classes, views, and so on
+                if isinstance(value, SheetList):
+                    value.sort(key=lambda x: x._identifier())
 
         context: dict[str, Any] = {}
         if entities_exclude_defaults:
@@ -338,7 +340,7 @@ class BaseRules(SchemaModel, ABC):
 
         exclude_input: IncEx | None = exclude
 
-        output = self.model_dump(
+        return self.model_dump(
             mode=mode,
             by_alias=by_alias,
             exclude=exclude_input,
@@ -347,8 +349,6 @@ class BaseRules(SchemaModel, ABC):
             exclude_defaults=exclude_defaults,
             context=context,
         )
-
-        return output
 
 
 class SheetRow(SchemaModel):

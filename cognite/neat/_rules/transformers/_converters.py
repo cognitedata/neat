@@ -595,17 +595,14 @@ class ToSolutionModel(ToExtensionModel):
     ) -> tuple[SheetList[DMSContainer], SheetList[DMSProperty]]:
         new_containers = SheetList[DMSContainer]()
         new_properties: SheetList[DMSProperty] = SheetList[DMSProperty]()
-        ref_views_by_external_id: dict[str, DMSView] = {}
         ref_containers_by_ref_view: dict[ViewEntity, set[ContainerEntity]] = defaultdict(set)
-        if self.properties == "repeat" and self.dummy_property is None:
-            if self.filter_type == "view":
-                for view in reference.views:
-                    if view.view.space == reference.metadata.space:
-                        ref_views_by_external_id[view.view.external_id] = view
-            elif self.filter_type == "container":
-                for prop in reference.properties:
-                    if prop.container:
-                        ref_containers_by_ref_view[prop.view].add(prop.container)
+        ref_views_by_external_id = {
+            view.view.external_id: view for view in reference.views if view.view.space == reference.metadata.space
+        }
+        if self.filter_type == "container":
+            for prop in reference.properties:
+                if prop.container:
+                    ref_containers_by_ref_view[prop.view].add(prop.container)
         read_views = set(read_view_by_new_view.values())
         for view in new_views:
             if view.view in read_view_by_new_view:
@@ -650,7 +647,7 @@ class ToSolutionModel(ToExtensionModel):
             if self.properties == "connection" and view.view in read_views:
                 # Need to ensure that the 'Enterprise' view always returns the same instances
                 # as the original view, no matter which properties are removed by the user.
-                if ref_view := ref_views_by_external_id.get(view.view.external_id):
+                if ref_view := ref_views_by_external_id.get(view.view.external_id.removeprefix(self.view_prefix)):
                     self._set_view_filter(view, ref_containers_by_ref_view, ref_view)
         return new_containers, new_properties
 

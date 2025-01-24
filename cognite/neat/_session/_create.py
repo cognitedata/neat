@@ -67,7 +67,7 @@ class CreateAPI:
     def solution_model(
         self,
         data_model_id: DataModelIdentifier,
-        connections: Literal["repeat", "connection"] = "connection",
+        properties: Literal["repeat", "connection"] = "connection",
         dummy_property: str = "GUID",
         direct_property: str = "enterprise",
         view_prefix: str = "Enterprise",
@@ -76,8 +76,8 @@ class CreateAPI:
 
         Args:
             data_model_id: The solution data model id that is being created.
-            connections: How to implement the connection between the enterprise data model and the solution data model.
-                Can be either "implements" or "direct". Implements each view in the solution data model will
+            properties: How to implement the connection between the enterprise data model and the solution data model.
+                Can be either "repeat" or "connection". Implements each view in the solution data model will
                 implement a view in the enterprise data model. Direct will create a direct connection between
                 the view in the solution data model and the view in the enterprise data model.
             dummy_property: The dummy property to use as placeholder for the views in the new data model.
@@ -101,7 +101,7 @@ class CreateAPI:
             ToSolutionModel(
                 new_model_id=data_model_id,
                 dummy_property=dummy_property,
-                properties=connections,
+                properties=properties,
                 direct_property=direct_property,
                 view_prefix=view_prefix,
             )
