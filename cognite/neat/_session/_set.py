@@ -3,7 +3,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import COGNITE_MODELS
-from cognite.neat._graph.transformers import SetNeatType
+from cognite.neat._graph.transformers import SetType
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules.models import DMSRules
@@ -48,8 +48,8 @@ class SetAPI:
             print(f"Client set to {self._state.client.config.project} CDF project.")
         return None
 
-    def _instance_sub_type(self, type: str, property: str, drop_property: bool = False) -> None:
-        """Sets the sub type of an instance based on the property."""
+    def _type(self, type: str, property: str, drop_property: bool = False) -> None:
+        """Sets the type of instance based on the property."""
         type_uri = self._state.instances.store.queries.type_uri(type)
         property_uri = self._state.instances.store.queries.property_uri(property)
 
@@ -68,6 +68,6 @@ class SetAPI:
         if not self._state.instances.store.queries.type_with_property(type_uri[0], property_uri[0]):
             raise NeatValueError(f"Property {property} is not defined for type {type}.")
 
-        self._state.instances.store.transform(SetNeatType(type_uri[0], property_uri[0], drop_property))
+        self._state.instances.store.transform(SetType(type_uri[0], property_uri[0], drop_property))
 
         return None

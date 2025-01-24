@@ -4,7 +4,7 @@ from typing import Any, cast
 from urllib.parse import quote
 
 import rdflib
-from rdflib import RDF, Literal, Namespace, URIRef
+from rdflib import RDF, RDFS, Literal, Namespace, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat._constants import NEAT
@@ -307,11 +307,15 @@ class ConnectionToLiteral(BaseTransformerStandardised):
         return row_output
 
 
-class SetNeatType(BaseTransformerStandardised):
-    description = "Set the sub type of an instance based on the property"
+class SetType(BaseTransformerStandardised):
+    description = "Set the type of an instance based on a property"
 
     def __init__(
-        self, subject_type: URIRef, subject_predicate: URIRef, drop_property: bool, namespace: Namespace | None = None
+        self,
+        subject_type: URIRef,
+        subject_predicate: URIRef,
+        drop_property: bool = False,
+        namespace: Namespace | None = None,
     ) -> None:
         self.subject_type = subject_type
         self.subject_predicate = subject_predicate
@@ -352,7 +356,10 @@ class SetNeatType(BaseTransformerStandardised):
         if self.drop_property:
             row_output.remove_triples.append((instance, self.subject_predicate, object_literal))
 
-        row_output.add_triples.append((instance, NEAT.type, self._namespace[str(object_literal.toPython())]))
+        row_output.remove_triples.append((instance, RDF.type, self.subject_type))
+        new_type = self._namespace[quote(object_literal.toPython())]
+        row_output.add_triples.append((instance, RDF.type, new_type))
+        row_output.add_triples.append((new_type, RDFS.subClassOf, self.subject_type))
         row_output.instances_modified_count += 1
 
         return row_output
