@@ -110,11 +110,9 @@ class TestExtractToLoadFlow:
         neat.infer(max_number_of_instance=-1)
 
         # Hack to ensure deterministic output
-        rules = neat._state.rule_store.last_unverified_rule
-        rules.metadata.created = "2024-09-19T00:00:00Z"
-        rules.metadata.updated = "2024-09-19T00:00:00Z"
-
-        neat.verify()
+        rules = neat._state.rule_store.last_verified_information_rules
+        rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
+        rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 
         neat.convert("dms")
         neat.set.data_model_id(("aml_playground", "AML", "terminology_3.0"))

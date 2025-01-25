@@ -68,6 +68,15 @@ class NeatRulesStore:
     def import_rules(
         self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
     ) -> IssueList:
+        if self.empty:
+            return self._import_rules(importer, validate, client)
+        else:
+            # Importing can be used as a manual transformation.
+            return self._manual_transform(importer, validate, client)
+
+    def _import_rules(
+        self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
+    ) -> IssueList:
         def action() -> tuple[InformationRules, DMSRules | None]:
             read_rules = importer.to_rules()
             verified = VerifyAnyRules(validate, client).transform(read_rules)  # type: ignore[arg-type]
@@ -80,6 +89,11 @@ class NeatRulesStore:
                 raise ValueError(f"Invalid output from importer: {type(verified)}")
 
         return self.import_action(action, importer)
+
+    def _manual_transform(
+        self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
+    ) -> IssueList:
+        raise NotImplementedError("Manual transformation is not yet implemented.")
 
     def import_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
         def action() -> tuple[InformationRules, DMSRules | None]:
