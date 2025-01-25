@@ -26,6 +26,7 @@ from cognite.neat._utils.auxiliary import local_import
 from ._collector import _COLLECTOR, Collector
 from ._create import CreateAPI
 from ._drop import DropAPI
+from ._fix import FixAPI
 from ._inspect import InspectAPI
 from ._mapping import MappingAPI
 from ._prepare import PrepareAPI
@@ -92,6 +93,7 @@ class NeatSession:
         )
         self.read = ReadAPI(self._state, verbose)
         self.to = ToAPI(self._state, verbose)
+        self.fix = FixAPI(self._state, verbose)
         self.prepare = PrepareAPI(self._state, verbose)
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)

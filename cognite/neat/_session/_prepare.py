@@ -16,7 +16,6 @@ from cognite.neat._rules.transformers import (
     IncludeReferenced,
     PrefixEntities,
     ReduceCogniteModel,
-    ToCompliantEntities,
 )
 from cognite.neat._utils.text import humanize_collection
 
@@ -257,10 +256,6 @@ class DataModelPrepareAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
-
-    def cdf_compliant_external_ids(self) -> IssueList:
-        """Convert data model component external ids to CDF compliant entities."""
-        return self._state.rule_transform(ToCompliantEntities())
 
     def prefix(self, prefix: str) -> IssueList:
         """Prefix all views in the data model with the given prefix.
