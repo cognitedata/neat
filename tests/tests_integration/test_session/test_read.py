@@ -20,10 +20,8 @@ class TestRead:
         # The data product should lookup the describable properties and include them.
         view = cognite_client.data_modeling.views.retrieve(("cdf_cdm", "CogniteDescribable", "v1"))[0]
 
-        neat.read.yaml(data.REFERENCING_CORE, format="toolkit")
-
-        issues = neat.verify()
-        assert not issues.has_errors
+        issues = neat.read.yaml(data.REFERENCING_CORE, format="toolkit")
+        assert not issues.has_errors, issues
 
         neat.create.data_product_model(("sp_my_space", "MyProduct", "v1"))
 

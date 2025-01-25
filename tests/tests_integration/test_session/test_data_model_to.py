@@ -113,7 +113,6 @@ class TestRulesStoreProvenanceSyncing:
     def test_stop_model_import_which_source_is_not_in_session(self, neat_client: NeatClient, tmp_path: Path) -> None:
         neat = NeatSession(neat_client)
         neat.read.excel.examples.pump_example()
-        neat.verify()
 
         # set source to be the same as the target
         target = neat._state.rule_store.provenance[-1].target_entity.result

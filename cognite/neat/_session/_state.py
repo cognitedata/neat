@@ -35,8 +35,11 @@ class SessionState:
         return issues
 
     def rule_import(self, importer: BaseImporter) -> IssueList:
-        issues = self.rule_store.import_rules(importer)
-        result = self.rule_store.provenance[-1].target_entity.display_name
+        issues = self.rule_store.import_rules(importer, client=self.client)
+        if self.rule_store.empty:
+            result = "failed"
+        else:
+            result = self.rule_store.provenance[-1].target_entity.display_name
         if isinstance(importer, InferenceImporter):
             issues.action = f"Inferred {result}"
         else:
