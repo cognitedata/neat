@@ -7,7 +7,7 @@ from cognite.neat._issues import IssueList
 from cognite.neat._rules.importers import BaseImporter, InferenceImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.transformers import (
-    RulesTransformer,
+    VerifiedRulesTransformer,
 )
 from cognite.neat._store import NeatGraphStore, NeatRulesStore
 from cognite.neat._utils.upload import UploadResultList
@@ -23,7 +23,7 @@ class SessionState:
         self.client = client
         self.quoted_source_identifiers = False
 
-    def rule_transform(self, *transformer: RulesTransformer) -> IssueList:
+    def rule_transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:
         if not transformer:
             raise NeatSessionError("No transformers provided.")
 

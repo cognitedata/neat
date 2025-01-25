@@ -6,10 +6,10 @@ from cognite.neat._issues import IssueList
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
     IncludeReferenced,
-    RulesTransformer,
     ToDataProductModel,
     ToEnterpriseModel,
     ToSolutionModel,
+    VerifiedRulesTransformer,
 )
 
 from ._state import SessionState
@@ -117,7 +117,7 @@ class CreateAPI:
         view_ids, container_ids = DMSValidation(
             self._state.rule_store.last_verified_dms_rules
         ).imported_views_and_containers_ids()
-        transformers: list[RulesTransformer] = []
+        transformers: list[VerifiedRulesTransformer] = []
         client = self._state.client
         if (view_ids or container_ids) and client is None:
             raise NeatSessionError(

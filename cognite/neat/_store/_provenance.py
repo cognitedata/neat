@@ -143,7 +143,7 @@ class Change(FrozenNeatObject, Generic[T_Entity]):
         )
 
     @classmethod
-    def record(cls, activity: str, start: datetime, end: datetime, description: str) -> "Change":
+    def record(cls, activity: str, start: datetime, end: datetime, description: str) -> "Change[Entity]":
         """User friendly method to record a change that occurred in the graph store."""
         agent = Agent()
         activity = Activity(
@@ -152,8 +152,8 @@ class Change(FrozenNeatObject, Generic[T_Entity]):
             started_at_time=start,
             ended_at_time=end,
         )
-        target_entity = Entity(was_generated_by=activity, was_attributed_to=agent)
-        return cls(
+        target_entity = Entity.create_with_defaults(was_generated_by=activity, was_attributed_to=agent)
+        return Change(
             agent=agent,
             activity=activity,
             target_entity=target_entity,

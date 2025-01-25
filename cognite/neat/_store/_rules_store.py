@@ -70,7 +70,7 @@ class NeatRulesStore:
     ) -> IssueList:
         def action() -> tuple[InformationRules, DMSRules | None]:
             read_rules = importer.to_rules()
-            verified = VerifyAnyRules(validate, client).transform(read_rules)
+            verified = VerifyAnyRules(validate, client).transform(read_rules)  # type: ignore[arg-type]
             if isinstance(verified, InformationRules):
                 return verified, None
             elif isinstance(verified, DMSRules):
@@ -197,7 +197,7 @@ class NeatRulesStore:
         elif isinstance(source_entity.information, expected_types):
             input_ = source_entity.information
         else:
-            available = [InformationRules]
+            available: list[type] = [InformationRules]
             if source_entity.dms is not None:
                 available.append(DMSRules)
             raise InvalidActivityInput(expected=expected_types, have=tuple(available))
@@ -216,7 +216,7 @@ class NeatRulesStore:
             used=source_entity,
         )
         if isinstance(result, UploadResultList | Path | URIRef):
-            outcome_result = result
+            outcome_result: UploadResultList | Path | URIRef | str = result
         else:
             outcome_result = type(result).__name__
 

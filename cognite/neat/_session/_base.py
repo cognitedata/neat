@@ -10,7 +10,6 @@ from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._issues.errors._general import NeatImportError
 from cognite.neat._rules import importers
 from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models._base_input import InputRules
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.transformers import (
     ConversionTransformer,
@@ -18,7 +17,6 @@ from cognite.neat._rules.transformers import (
     InformationToDMS,
     MergeDMSRules,
     MergeInformationRules,
-    VerifyAnyRules,
     VerifyInformationRules,
 )
 from cognite.neat._utils.auxiliary import local_import
@@ -145,16 +143,8 @@ class NeatSession:
             neat.verify()
             ```
         """
-        transformer = VerifyAnyRules(validate=True, client=self._state.client)  # type: ignore[var-annotated]
-        issues = self._state.rule_transform(transformer)
-        if not issues.has_errors:
-            rules = self._state.rule_store.last_verified_rule
-            if isinstance(rules, InformationRules):
-                self._state.instances.store.add_rules(rules)
-
-        if issues:
-            print("You can inspect the issues with the .inspect.issues(...) method.")
-        return issues
+        print("This action has no effect. Neat no longer supports unverified data models.")
+        return IssueList()
 
     def convert(self, target: Literal["dms", "information"]) -> IssueList:
         """Converts the last verified data model to the target type.
@@ -243,31 +233,30 @@ class NeatSession:
 
         def action() -> tuple[InformationRules, DMSRules | None]:
             unverified_information = importer.to_rules()
-            verified_information = VerifyInformationRules().transform(unverified_information)
-            dms_rules = InformationToDMS(reserved_properties="skip").transform(verified_information)
-            merged_info = MergeInformationRules(verified_information).transform(last_entity.information)
-            merged_dms = MergeDMSRules(dms_rules).transform(last_entity.dms)
+            extra_info = VerifyInformationRules().transform(unverified_information)
+            merged_info = MergeInformationRules(extra_info).transform(last_entity.information)
+            if not last_entity.dms:
+                return merged_info, None
+            extra_dms = InformationToDMS(reserved_properties="skip").transform(extra_info)
+            merged_dms = MergeDMSRules(extra_dms).transform(last_entity.dms)
             return merged_info, merged_dms
 
         return self._state.rule_store.do_activity(action, importer)
 
     def _repr_html_(self) -> str:
         state = self._state
-        if (
-            not state.instances.has_store
-            and not state.rule_store.has_unverified_rules
-            and not state.rule_store.has_verified_rules
-        ):
+        if not state.instances.has_store and state.rule_store.empty:
             return "<strong>Empty session</strong>. Get started by reading something with the <em>.read</em> attribute."
 
         output = []
 
-        if state.rule_store.has_unverified_rules and not state.rule_store.has_verified_rules:
-            rules: InputRules = state.rule_store.last_unverified_rule
-            output.append(f"<H2>Unverified Data Model</H2><br />{rules._repr_html_()}")  # type: ignore
-
-        if state.rule_store.has_verified_rules:
-            output.append(f"<H2>Verified Data Model</H2><br />{state.rule_store.last_verified_rule._repr_html_()}")  # type: ignore
+        if state.rule_store.provenance:
+            last_entity = state.rule_store.provenance[-1].target_entity
+            if last_entity.dms:
+                html = last_entity.dms._repr_html_()
+            else:
+                html = last_entity.information._repr_html_()
+            output.append(f"<H2>Data Model</H2><br />{html}")  # type: ignore
 
         if state.instances.has_store:
             output.append(f"<H2>Instances</H2> {state.instances.store._repr_html_()}")
