@@ -61,8 +61,6 @@ from cognite.neat._rules.models.entities import (
 )
 from cognite.neat._rules.models.information import InformationClass, InformationMetadata, InformationProperty
 from cognite.neat._rules.models.information._rules_input import (
-    InformationInputClass,
-    InformationInputProperty,
     InformationInputRules,
 )
 from cognite.neat._utils.text import to_camel
@@ -82,7 +80,7 @@ class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRul
     ...
 
 
-class ToCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]):  # type: ignore[misc]
+class ToCompliantEntities(RulesTransformer[InformationRules, InformationRules]):  # type: ignore[misc]
     """Converts input rules to rules with compliant entity IDs that match regex patters used
     by DMS schema components."""
 
@@ -90,13 +88,11 @@ class ToCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], Rea
     def description(self) -> str:
         return "Ensures externalIDs are compliant with CDF"
 
-    def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
-        if rules.rules is None:
-            return rules
-        copy: InformationInputRules = dataclasses.replace(rules.rules)
+    def transform(self, rules: InformationRules) -> InformationRules:
+        copy = rules.model_copy(deep=True)
         copy.classes = self._fix_classes(copy.classes)
         copy.properties = self._fix_properties(copy.properties)
-        return ReadRules(copy, rules.read_context)
+        return copy
 
     @classmethod
     def _fix_entity(cls, entity: str) -> str:
@@ -113,16 +109,8 @@ class ToCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], Rea
         return re.sub(r"[^a-zA-Z0-9]+", "_", entity)
 
     @classmethod
-    def _fix_class(cls, class_: str | ClassEntity) -> str | ClassEntity:
-        if isinstance(class_, str):
-            if len(class_.split(":")) == 2:
-                prefix, suffix = class_.split(":")
-                class_ = f"{cls._fix_entity(prefix)}:{cls._fix_entity(suffix)}"
-
-            else:
-                class_ = cls._fix_entity(class_)
-
-        elif isinstance(class_, ClassEntity) and type(class_.prefix) is str:
+    def _fix_class(cls, class_: ClassEntity) -> ClassEntity:
+        if isinstance(class_, ClassEntity) and type(class_.prefix) is str:
             class_ = ClassEntity(
                 prefix=cls._fix_entity(class_.prefix),
                 suffix=cls._fix_entity(class_.suffix),
@@ -132,28 +120,17 @@ class ToCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], Rea
 
     @classmethod
     def _fix_value_type(
-        cls, value_type: str | DataType | ClassEntity | MultiValueTypeInfo
-    ) -> str | DataType | ClassEntity | MultiValueTypeInfo:
-        fixed_value_type: str | DataType | ClassEntity | MultiValueTypeInfo
+        cls, value_type: DataType | ClassEntity | MultiValueTypeInfo
+    ) -> DataType | ClassEntity | MultiValueTypeInfo:
+        fixed_value_type: DataType | ClassEntity | MultiValueTypeInfo
 
-        if isinstance(value_type, str):
-            # this is a multi value type but as string
-            if " | " in value_type:
-                value_types = value_type.split(" | ")
-                fixed_value_type = " | ".join([cast(str, cls._fix_value_type(v)) for v in value_types])
-            # this is value type specified with prefix:suffix string
-            elif ":" in value_type:
-                fixed_value_type = cls._fix_class(value_type)
-
-            # this is value type specified as suffix only
-            else:
-                fixed_value_type = cls._fix_entity(value_type)
-
-        # value type specified as instances of DataType, ClassEntity or MultiValueTypeInfo
-        elif isinstance(value_type, MultiValueTypeInfo):
+        # value type specified as MultiValueTypeInfo
+        if isinstance(value_type, MultiValueTypeInfo):
             fixed_value_type = MultiValueTypeInfo(
                 types=[cast(DataType | ClassEntity, cls._fix_value_type(type_)) for type_ in value_type.types],
             )
+
+        # value type specified as ClassEntity instance
         elif isinstance(value_type, ClassEntity):
             fixed_value_type = cls._fix_class(value_type)
 
@@ -164,16 +141,16 @@ class ToCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], Rea
         return fixed_value_type
 
     @classmethod
-    def _fix_classes(cls, definitions: list[InformationInputClass]) -> list[InformationInputClass]:
-        fixed_definitions = []
+    def _fix_classes(cls, definitions: SheetList[InformationClass]) -> SheetList[InformationClass]:
+        fixed_definitions = SheetList[InformationClass]()
         for definition in definitions:
             definition.class_ = cls._fix_class(definition.class_)
             fixed_definitions.append(definition)
         return fixed_definitions
 
     @classmethod
-    def _fix_properties(cls, definitions: list[InformationInputProperty]) -> list[InformationInputProperty]:
-        fixed_definitions = []
+    def _fix_properties(cls, definitions: SheetList[InformationProperty]) -> SheetList[InformationProperty]:
+        fixed_definitions = SheetList[InformationProperty]()
         for definition in definitions:
             definition.class_ = cls._fix_class(definition.class_)
             definition.property_ = cls._fix_entity(definition.property_)
