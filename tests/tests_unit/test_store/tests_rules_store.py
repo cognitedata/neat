@@ -7,12 +7,16 @@ from cognite.neat._rules import catalog, exporters, importers, transformers
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.transformers import VerifiedRulesTransformer
 from cognite.neat._store import NeatRulesStore
-from cognite.neat._store.exceptions import InvalidInputOperation
+from cognite.neat._store.exceptions import InvalidActivityInput
 
 
 class FailingTransformer(VerifiedRulesTransformer[DMSRules, DMSRules]):
     def transform(self, rules: DMSRules) -> DMSRules:
         raise NeatValueError("This transformer always fails")
+
+    @property
+    def description(self) -> str:
+        return "Failing transformer"
 
 
 class TestRuleStore:
@@ -50,7 +54,8 @@ class TestRuleStore:
 
         assert not import_issues.errors
 
-        with pytest.raises(NeatValueError) as exc_info:
+        with pytest.raises(InvalidActivityInput) as exc_info:
             _ = store.transform(transformers.ToCompliantEntities())
 
-        assert exc_info.value.as_message()
+        assert exc_info.value.expected == (InformationRules,)
+        assert exc_info.value.have == (DMSRules,)

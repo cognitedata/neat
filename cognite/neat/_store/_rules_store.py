@@ -24,7 +24,7 @@ from cognite.neat._rules.transformers import DMSToInformation, VerifyAnyRules
 from cognite.neat._rules.transformers import VerifiedRulesTransformer
 from cognite.neat._utils.upload import UploadResultList
 from ._provenance import UNKNOWN_AGENT, Activity, Change, Entity, Provenance
-from .exceptions import EmptyStore, InvalidInputOperation, ActivityFailed
+from .exceptions import EmptyStore, InvalidActivityInput, ActivityFailed
 
 
 @dataclass(frozen=True)
@@ -61,10 +61,6 @@ class NeatRulesStore:
     def import_rules(self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None) -> IssueList:
         if self.provenance:
             raise NeatValueError(f"Data model already exists. Cannot import {importer.source_uri}.")
-        source_entity = Entity.create_with_defaults(
-            was_attributed_to=UNKNOWN_AGENT,
-            id_=importer.source_uri,
-        )
         def action() -> tuple[InformationRules, DMSRules | None]:
             read_rules = importer.to_rules()
             verified = VerifyAnyRules(validate, client).transform(read_rules)
@@ -76,7 +72,7 @@ class NeatRulesStore:
                 # Bug in the code
                 raise ValueError(f"Invalid output from importer: {type(verified)}")
 
-        return self._do_activity(action, importer, source_entity)
+        return self._do_activity(action, importer)
 
     def import_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
         if self.provenance:
@@ -135,7 +131,7 @@ class NeatRulesStore:
         start = datetime.now(timezone.utc)
         result: tuple[InformationRules, DMSRules | None] | None = None
         with catch_issues() as issue_list:
-            info, dms = action()
+            result = action()
 
         end = datetime.now(timezone.utc)
         agent = agent_tool.agent
@@ -146,7 +142,8 @@ class NeatRulesStore:
             used=source_entity,
         )
         if result is None:
-            raise ActivityFailed(activity, issue_list, agent_tool)
+            return issue_list
+        info, dms = result
 
         target_entity = RulesEntity(
             was_attributed_to=agent,
@@ -182,7 +179,7 @@ class NeatRulesStore:
             available = [InformationRules]
             if source_entity.dms is not None:
                 available.append(DMSRules)
-            raise InvalidInputOperation(expected=expected_types, have=tuple(available))
+            raise InvalidActivityInput(expected=expected_types, have=tuple(available))
 
         agent = exporter.agent
         start = datetime.now(timezone.utc)
@@ -227,12 +224,12 @@ class NeatRulesStore:
         if source_entity.dms is None:
             if transformer.is_valid_input(source_entity.information):
                 return source_entity.information
-            raise InvalidInputOperation(expected=(DMSRules, ), have=(InformationRules,))
+            raise InvalidActivityInput(expected=(DMSRules,), have=(InformationRules,))
         # Case 2: We have both information and dms rules and the transformer is compatible with dms rules
         elif isinstance(source_entity.dms, DMSRules) and transformer.is_valid_input(source_entity.dms):
             return source_entity.dms
         # Case 3: We have both information and dms rules and the transformer is compatible with information rules
-        raise NeatValueError(f"Cannot do action {transformer.description} on a converted physical model.")
+        raise InvalidActivityInput(expected=(InformationRules,), have=(DMSRules,))
 
     def _update_source_entity(self, source_entity: Entity, result: Rules, issue_list: IssueList) -> Entity:
         """Update source entity to keep the unbroken provenance chain of changes."""

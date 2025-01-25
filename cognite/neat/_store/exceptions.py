@@ -23,7 +23,14 @@ class ActivityFailed(NeatStoreError):
         self.tool = tool
 
     def __str__(self):
-        return f"{super().__str__()}: {self.tool.description}"
+        return self.tool.description
+
+@dataclass
+class InvalidActivityInput(NeatStoreError, RuntimeError):
+    """Raised when an invalid activity is attempted"""
+
+    expected: tuple[type, ...]
+    have: tuple[type, ...]
 
 class InvalidActivityOutput(NeatStoreError):
     """Raised when an activity has an invalid output"""
@@ -34,15 +41,6 @@ class InvalidActivityOutput(NeatStoreError):
 
     def __str__(self):
         return f"{super().__str__()}: {self.activity.id_} -> {self.output}"
-
-
-
-@dataclass
-class InvalidInputOperation(NeatStoreError, RuntimeError):
-    """Raised when an invalid operation is attempted"""
-
-    expected: tuple[type, ...]
-    have: tuple[type, ...]
 
 
 class EmptyStore(NeatStoreError, RuntimeError):
