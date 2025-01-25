@@ -20,7 +20,7 @@ import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
+from typing import Generic, Optional, TypeVar
 
 from rdflib import PROV, RDF, Literal, URIRef
 
@@ -78,6 +78,7 @@ class Entity:
         )
 
 
+T_Entity = TypeVar("T_Entity", bound=Entity)
 INSTANCES_ENTITY = Entity(was_attributed_to=NEAT_AGENT, id_=CDF_NAMESPACE["instances"])
 EMPTY_ENTITY = Entity(was_attributed_to=NEAT_AGENT, id_=DEFAULT_NAMESPACE["empty-entity"])
 
@@ -111,10 +112,10 @@ class Activity:
 
 
 @dataclass(frozen=True)
-class Change(FrozenNeatObject):
+class Change(FrozenNeatObject, Generic[T_Entity]):
     agent: Agent
     activity: Activity
-    target_entity: Entity
+    target_entity: T_Entity
     description: str
     source_entity: Entity = field(default_factory=Entity.new_unknown_entity)
 
@@ -154,7 +155,7 @@ class Change(FrozenNeatObject):
         }
 
 
-class Provenance(NeatList[Change]):
+class Provenance(NeatList[Change[T_Entity]]):
     def __init__(self, changes: Sequence[Change] | None = None):
         super().__init__(changes or [])
 
