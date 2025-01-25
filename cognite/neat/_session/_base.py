@@ -20,7 +20,6 @@ from cognite.neat._rules.transformers import (
     VerifyAnyRules,
     VerifyInformationRules,
 )
-from cognite.neat._store._rules_store import ModelEntity
 from cognite.neat._utils.auxiliary import local_import
 
 from ._collector import _COLLECTOR, Collector

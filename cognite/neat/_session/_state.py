@@ -12,7 +12,7 @@ from cognite.neat._rules.transformers import (
     ToExtensionModel,
 )
 from cognite.neat._store import NeatGraphStore, NeatRulesStore
-from cognite.neat._store._rules_store import ModelEntity
+
 from cognite.neat._utils.rdf_ import uri_display_name
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.upload import UploadResultList
