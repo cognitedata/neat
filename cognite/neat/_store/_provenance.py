@@ -20,7 +20,7 @@ import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 from rdflib import PROV, RDF, Literal, URIRef
 
@@ -54,7 +54,13 @@ class Entity:
     id_: URIRef
 
     @classmethod
-    def create_with_defaults(cls, was_attributed_to: Agent, issues: IssueList | None = None, was_generated_by: "Activity | None" = None, id_: URIRef = DEFAULT_NAMESPACE["graph-store"]) -> "Entity":
+    def create_with_defaults(
+        cls,
+        was_attributed_to: Agent,
+        issues: IssueList | None = None,
+        was_generated_by: "Activity | None" = None,
+        id_: URIRef = DEFAULT_NAMESPACE["graph-store"],
+    ) -> "Entity":
         return cls(
             was_attributed_to=was_attributed_to,
             issues=issues or IssueList(),

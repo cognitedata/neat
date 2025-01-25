@@ -14,6 +14,7 @@ T_RulesOut = TypeVar("T_RulesOut", bound=Rules)
 T_VerifiedIn = TypeVar("T_VerifiedIn", bound=VerifiedRules)
 T_VerifiedOut = TypeVar("T_VerifiedOut", bound=VerifiedRules)
 
+
 class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
     """This is the base class for all rule transformers."""
 
@@ -65,5 +66,4 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
         return (annotation,)
 
 
-class VerifiedRulesTransformer(RulesTransformer[T_VerifiedIn, T_VerifiedOut], ABC):
-    ...
+class VerifiedRulesTransformer(RulesTransformer[T_VerifiedIn, T_VerifiedOut], ABC): ...

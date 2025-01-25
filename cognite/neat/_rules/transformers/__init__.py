@@ -45,8 +45,8 @@ __all__ = [
     "ToEnterpriseModel",
     "ToExtensionModel",
     "ToSolutionModel",
+    "VerifiedRulesTransformer",
     "VerifyAnyRules",
     "VerifyDMSRules",
     "VerifyInformationRules",
-    "VerifiedRulesTransformer",
 ]

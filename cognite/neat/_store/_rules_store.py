@@ -20,11 +20,11 @@ from cognite.neat._rules.exporters import BaseExporter
 from cognite.neat._rules.exporters._base import CDFExporter, T_Export
 from cognite.neat._rules.importers import BaseImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.transformers import DMSToInformation, VerifyAnyRules
-from cognite.neat._rules.transformers import VerifiedRulesTransformer
+from cognite.neat._rules.transformers import DMSToInformation, VerifiedRulesTransformer, VerifyAnyRules
 from cognite.neat._utils.upload import UploadResultList
+
 from ._provenance import UNKNOWN_AGENT, Activity, Change, Entity, Provenance
-from .exceptions import EmptyStore, InvalidActivityInput, ActivityFailed
+from .exceptions import EmptyStore, InvalidActivityInput
 
 
 @dataclass(frozen=True)
@@ -35,6 +35,13 @@ class RulesEntity(Entity):
     @property
     def has_dms(self) -> bool:
         return self.dms is not None
+
+    @property
+    def display_name(self) -> str:
+        if self.dms is not None:
+            return self.dms.display_name
+        return self.information.display_name
+
 
 @dataclass(frozen=True)
 class OutcomeEntity(Entity):
@@ -58,9 +65,9 @@ class NeatRulesStore:
             return calculated_hash[:8]
         return calculated_hash
 
-    def import_rules(self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None) -> IssueList:
-        if self.provenance:
-            raise NeatValueError(f"Data model already exists. Cannot import {importer.source_uri}.")
+    def import_rules(
+        self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
+    ) -> IssueList:
         def action() -> tuple[InformationRules, DMSRules | None]:
             read_rules = importer.to_rules()
             verified = VerifyAnyRules(validate, client).transform(read_rules)
@@ -72,19 +79,26 @@ class NeatRulesStore:
                 # Bug in the code
                 raise ValueError(f"Invalid output from importer: {type(verified)}")
 
-        return self._do_activity(action, importer)
+        return self.import_action(action, importer)
 
     def import_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
-        if self.provenance:
-            raise NeatValueError(f"Data model already exists. Cannot import {extractor.source_uri}.")
-
         def action() -> tuple[InformationRules, DMSRules | None]:
             info = extractor.get_information_rules()
             dms: DMSRules | None = None
             if isinstance(extractor, DMSGraphExtractor):
                 dms = extractor.get_dms_rules()
             return info, dms
-        return self._do_activity(action, extractor)
+
+        return self.import_action(action, extractor)
+
+    def import_action(
+        self,
+        action: Callable[[], tuple[InformationRules, DMSRules | None]],
+        agent_tool: BaseImporter | KnowledgeGraphExtractor,
+    ) -> IssueList:
+        if self.provenance:
+            raise NeatValueError(f"Data model already exists. Cannot import {agent_tool.source_uri}.")
+        return self.do_activity(action, agent_tool)
 
     def transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:
         if not self.provenance:
@@ -92,16 +106,17 @@ class NeatRulesStore:
 
         all_issues = IssueList()
         for item in transformer:
-            def action() -> tuple[InformationRules, DMSRules | None]:
+
+            def action(transformer_item=item) -> tuple[InformationRules, DMSRules | None]:
                 last_change = self.provenance[-1]
                 source_entity = last_change.target_entity
-                transformer_input = self._get_transformer_input(source_entity, item)
-                transformer_output = item.transform(transformer_input)
+                transformer_input = self._get_transformer_input(source_entity, transformer_item)
+                transformer_output = transformer_item.transform(transformer_input)
                 if isinstance(transformer_output, InformationRules):
                     return transformer_output, None
                 return last_change.target_entity.information, transformer_output
 
-            issues = self._do_activity(action, item)
+            issues = self.do_activity(action, item)
             all_issues.extend(issues)
         return all_issues
 
@@ -112,13 +127,19 @@ class NeatRulesStore:
         def export_action(input_: VerifiedRules) -> Path:
             exporter.export_to_file(input_, path)
             return path
+
         self._export_activity(export_action, exporter, DEFAULT_NAMESPACE[path.name])
 
     def export_to_cdf(self, exporter: CDFExporter, client: NeatClient, dry_run: bool) -> UploadResultList:
-        return self._export_activity(exporter.export_to_cdf, exporter, DEFAULT_NAMESPACE["upload-result"], client, dry_run)
+        return self._export_activity(
+            exporter.export_to_cdf, exporter, DEFAULT_NAMESPACE["upload-result"], client, dry_run
+        )
 
-    def _do_activity(self, action: Callable[[], tuple[InformationRules, DMSRules | None]],
-                     agent_tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor) -> IssueList:
+    def do_activity(
+        self,
+        action: Callable[[], tuple[InformationRules, DMSRules | None]],
+        agent_tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor,
+    ) -> IssueList:
         if isinstance(agent_tool, BaseImporter | KnowledgeGraphExtractor):
             source_entity = Entity.create_with_defaults(
                 was_attributed_to=UNKNOWN_AGENT,
@@ -219,7 +240,9 @@ class NeatRulesStore:
         return result
 
     @staticmethod
-    def _get_transformer_input(source_entity: RulesEntity, transformer: VerifiedRulesTransformer) -> InformationRules | DMSRules:
+    def _get_transformer_input(
+        source_entity: RulesEntity, transformer: VerifiedRulesTransformer
+    ) -> InformationRules | DMSRules:
         # Case 1: We only have information rules
         if source_entity.dms is None:
             if transformer.is_valid_input(source_entity.information):

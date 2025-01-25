@@ -8,13 +8,8 @@ from cognite.neat._rules.importers import BaseImporter, InferenceImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.transformers import (
     RulesTransformer,
-    ToCompliantEntities,
-    ToExtensionModel,
 )
 from cognite.neat._store import NeatGraphStore, NeatRulesStore
-
-from cognite.neat._utils.rdf_ import uri_display_name
-from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError
@@ -31,46 +26,17 @@ class SessionState:
     def rule_transform(self, *transformer: RulesTransformer) -> IssueList:
         if not transformer:
             raise NeatSessionError("No transformers provided.")
-        first_transformer = transformer[0]
 
-        # This should not be allowed to be done automatically
-        pruned = self.rule_store.prune_until_compatible(first_transformer)
-        if pruned:
-            type_hint = first_transformer.transform_type_hint()
-            action = uri_display_name(first_transformer.agent.id_)
-            location = cast(ModelEntity, self.rule_store.provenance[-1].target_entity).display_name
-            expected = humanize_collection([hint.display_type_name() for hint in type_hint])  # type: ignore[attr-defined]
-            step_str = "step" if len(pruned) == 1 else "steps"
-            print(
-                f"The {action} actions expects a {expected}. "
-                f"Moving back {len(pruned)} {step_str} to the last {location}."
-            )
-        if (
-            any(isinstance(t, ToExtensionModel) for t in transformer)
-            and isinstance(self.rule_store.provenance[-1].target_entity, ModelEntity)
-            and isinstance(self.rule_store.provenance[-1].target_entity.result, DMSRules | InformationRules)
-        ):
-            self.last_reference = self.rule_store.provenance[-1].target_entity.result
-
-        start = cast(ModelEntity, self.rule_store.provenance[-1].target_entity).display_name
+        start = self.rule_store.provenance[-1].target_entity.display_name
         issues = self.rule_store.transform(*transformer)
-        end = cast(ModelEntity, self.rule_store.provenance[-1].target_entity).display_name
+        end = self.rule_store.provenance[-1].target_entity.display_name
         issues.action = f"{start} &#8594; {end}"
         issues.hint = "Use the .inspect.issues() for more details."
-
-        # Make sure to attach the latest information rules to the instances store
-        if (
-            any(isinstance(t, ToCompliantEntities) for t in transformer)
-            and isinstance(self.rule_store.provenance[-1].target_entity, ModelEntity)
-            and isinstance(self.rule_store.provenance[-1].target_entity.result, InformationRules)
-        ):
-            self.instances.store.add_rules(self.rule_store.provenance[-1].target_entity.result)
-
         return issues
 
     def rule_import(self, importer: BaseImporter) -> IssueList:
         issues = self.rule_store.import_rules(importer)
-        result = cast(ModelEntity, self.rule_store.provenance[-1].target_entity).display_name
+        result = self.rule_store.provenance[-1].target_entity.display_name
         if isinstance(importer, InferenceImporter):
             issues.action = f"Inferred {result}"
         else:

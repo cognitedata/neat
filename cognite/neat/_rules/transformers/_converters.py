@@ -65,7 +65,7 @@ from cognite.neat._rules.models.information._rules_input import (
 )
 from cognite.neat._utils.text import to_camel
 
-from ._base import RulesTransformer, VerifiedRulesTransformer, T_VerifiedIn, T_VerifiedOut
+from ._base import RulesTransformer, T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
 from ._verification import VerifyDMSRules
 
 T_InputInRules = TypeVar("T_InputInRules", bound=ReadInputRules)
