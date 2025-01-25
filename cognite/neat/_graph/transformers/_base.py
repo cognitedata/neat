@@ -12,14 +12,14 @@ from cognite.neat._shared import Triple
 from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat._utils.graph_transformations_report import GraphTransformationResult
 
-To_Add_Triples: TypeAlias = list[Triple]
-To_Remove_Triples: TypeAlias = list[Triple]
+To_Add_Triples: TypeAlias = set[Triple]
+To_Remove_Triples: TypeAlias = set[Triple]
 
 
 @dataclasses.dataclass
 class RowTransformationOutput:
-    remove_triples: To_Remove_Triples = dataclasses.field(default_factory=list)
-    add_triples: To_Add_Triples = dataclasses.field(default_factory=list)
+    remove_triples: To_Remove_Triples = dataclasses.field(default_factory=set)
+    add_triples: To_Add_Triples = dataclasses.field(default_factory=set)
     instances_removed_count: int = 0
     instances_added_count: int = 0
     instances_modified_count: int = 0

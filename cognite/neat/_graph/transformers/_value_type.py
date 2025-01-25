@@ -78,8 +78,8 @@ class SplitMultiValueProperty(BaseTransformerStandardised):
 
         new_property = URIRef(f"{old_property}_{remove_namespace_from_uri(value_type)}")
 
-        row_output.add_triples.append(cast(Triple, (subject, new_property, object)))
-        row_output.remove_triples.append(cast(Triple, (subject, old_property, object)))
+        row_output.add_triples.add(cast(Triple, (subject, new_property, object)))
+        row_output.remove_triples.add(cast(Triple, (subject, old_property, object)))
 
         row_output.instances_modified_count += 1
 
@@ -143,8 +143,8 @@ class ConvertLiteral(BaseTransformerStandardised):
                 PropertyDataTypeConversionWarning(str(instance), self._type_name, self._property_name, str(e)),
                 stacklevel=2,
             )
-        row_output.add_triples.append((instance, self.subject_predicate, rdflib.Literal(converted_value)))  # type: ignore[arg-type]
-        row_output.remove_triples.append((instance, self.subject_predicate, literal))  # type: ignore[arg-type]
+        row_output.add_triples.add((instance, self.subject_predicate, rdflib.Literal(converted_value)))  # type: ignore[arg-type]
+        row_output.remove_triples.add((instance, self.subject_predicate, literal))  # type: ignore[arg-type]
         row_output.instances_modified_count += 1
 
         return row_output
@@ -221,15 +221,15 @@ class LiteralToEntity(BaseTransformerStandardised):
         namespace = Namespace(get_namespace(instance))  # type: ignore[arg-type]
         entity_type = namespace[self.entity_type]
         new_entity = namespace[f"{self.entity_type}_{quote(value)!s}"]
-        row_output.add_triples.append((new_entity, RDF.type, entity_type))
+        row_output.add_triples.add((new_entity, RDF.type, entity_type))
         row_output.instances_added_count += 1  # we add one new entity
 
         if self.new_property is not None:
-            row_output.add_triples.append((new_entity, namespace[self.new_property], rdflib.Literal(value)))  # type: ignore[arg-type]
+            row_output.add_triples.add((new_entity, namespace[self.new_property], rdflib.Literal(value)))  # type: ignore[arg-type]
             row_output.instances_modified_count += 1  # we modify the new entity
 
-        row_output.add_triples.append((instance, self.subject_predicate, new_entity))  # type: ignore[arg-type]
-        row_output.remove_triples.append((instance, self.subject_predicate, literal))  # type: ignore[arg-type]
+        row_output.add_triples.add((instance, self.subject_predicate, new_entity))  # type: ignore[arg-type]
+        row_output.remove_triples.add((instance, self.subject_predicate, literal))  # type: ignore[arg-type]
         row_output.instances_modified_count += 1  # we modify the old entity
 
         return row_output
@@ -300,8 +300,8 @@ class ConnectionToLiteral(BaseTransformerStandardised):
         instance, object_entity = cast(tuple[URIRef, URIRef], query_result_row)
         value = remove_namespace_from_uri(object_entity)
 
-        row_output.add_triples.append((instance, self.subject_predicate, rdflib.Literal(value)))
-        row_output.remove_triples.append((instance, self.subject_predicate, object_entity))
+        row_output.add_triples.add((instance, self.subject_predicate, rdflib.Literal(value)))
+        row_output.remove_triples.add((instance, self.subject_predicate, object_entity))
         row_output.instances_modified_count += 1
 
         return row_output
@@ -354,12 +354,12 @@ class SetType(BaseTransformerStandardised):
 
         instance, object_literal = cast(tuple[URIRef, Literal], query_result_row)
         if self.drop_property:
-            row_output.remove_triples.append((instance, self.subject_predicate, object_literal))
+            row_output.remove_triples.add((instance, self.subject_predicate, object_literal))
 
-        row_output.remove_triples.append((instance, RDF.type, self.subject_type))
+        row_output.remove_triples.add((instance, RDF.type, self.subject_type))
         new_type = self._namespace[quote(object_literal.toPython())]
-        row_output.add_triples.append((instance, RDF.type, new_type))
-        row_output.add_triples.append((new_type, RDFS.subClassOf, self.subject_type))
+        row_output.add_triples.add((instance, RDF.type, new_type))
+        row_output.add_triples.add((new_type, RDFS.subClassOf, self.subject_type))
         row_output.instances_modified_count += 1
 
         return row_output
