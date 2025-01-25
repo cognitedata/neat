@@ -1,8 +1,12 @@
 """These are special exceptions that are used by the store to signal invalid transformers"""
 
 from dataclasses import dataclass
-from ._provenance import Activity
+
+from cognite.neat._graph.extractors import KnowledgeGraphExtractor
 from cognite.neat._issues import IssueList
+from cognite.neat._rules.importers import BaseImporter
+from cognite.neat._rules.transformers import VerifiedRulesTransformer
+from ._provenance import Activity
 
 
 class NeatStoreError(Exception):
@@ -13,12 +17,13 @@ class NeatStoreError(Exception):
 class ActivityFailed(NeatStoreError):
     """Raised when an activity fails"""
 
-    def __init__(self, activity: Activity, issue_list: IssueList) -> None:
+    def __init__(self, activity: Activity, issue_list: IssueList, tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor) -> None:
         self.activity = activity
         self.issue_list = issue_list
+        self.tool = tool
 
     def __str__(self):
-        return f"{super().__str__()}: {self.activity.id_}"
+        return f"{super().__str__()}: {self.tool.description}"
 
 class InvalidActivityOutput(NeatStoreError):
     """Raised when an activity has an invalid output"""

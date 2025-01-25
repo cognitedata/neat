@@ -19,7 +19,7 @@ class TestRuleStore:
     def test_import_export(self, data_regression: DataRegressionFixture) -> None:
         store = NeatRulesStore()
 
-        import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
+        import_issues = store.import_rules(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
 
         assert not import_issues.errors
 
@@ -32,7 +32,7 @@ class TestRuleStore:
     def test_import_fail_transform(self) -> None:
         store = NeatRulesStore()
 
-        import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
+        import_issues = store.import_rules(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
 
         assert not import_issues.errors
 
@@ -46,7 +46,7 @@ class TestRuleStore:
     def test_import_invalid_transformer(self) -> None:
         store = NeatRulesStore()
 
-        import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
+        import_issues = store.import_rules(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
 
         assert not import_issues.errors
 

@@ -69,7 +69,7 @@ class SessionState:
         return issues
 
     def rule_import(self, importer: BaseImporter) -> IssueList:
-        issues = self.rule_store.import_(importer)
+        issues = self.rule_store.import_rules(importer)
         result = cast(ModelEntity, self.rule_store.provenance[-1].target_entity).display_name
         if isinstance(importer, InferenceImporter):
             issues.action = f"Inferred {result}"
