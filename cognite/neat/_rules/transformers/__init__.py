@@ -1,4 +1,4 @@
-from ._base import RulesTransformer
+from ._base import RulesTransformer, VerifiedRulesTransformer
 from ._converters import (
     AddClassImplements,
     ChangeViewPrefix,
@@ -48,4 +48,5 @@ __all__ = [
     "VerifyAnyRules",
     "VerifyDMSRules",
     "VerifyInformationRules",
+    "VerifiedRulesTransformer",
 ]

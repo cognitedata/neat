@@ -5,13 +5,14 @@ from types import UnionType
 from typing import Generic, TypeVar, Union, get_args, get_origin
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._rules._shared import ReadRules, Rules
+from cognite.neat._rules._shared import ReadRules, Rules, VerifiedRules
 from cognite.neat._rules.models import DMSInputRules, InformationInputRules
 from cognite.neat._store._provenance import Agent as ProvenanceAgent
 
 T_RulesIn = TypeVar("T_RulesIn", bound=Rules)
 T_RulesOut = TypeVar("T_RulesOut", bound=Rules)
-
+T_VerifiedIn = TypeVar("T_VerifiedIn", bound=VerifiedRules)
+T_VerifiedOut = TypeVar("T_VerifiedOut", bound=VerifiedRules)
 
 class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
     """This is the base class for all rule transformers."""
@@ -62,3 +63,7 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
             return ReadRules[DMSInputRules], ReadRules[InformationInputRules]
 
         return (annotation,)
+
+
+class VerifiedRulesTransformer(RulesTransformer[T_VerifiedIn, T_VerifiedOut], ABC):
+    ...

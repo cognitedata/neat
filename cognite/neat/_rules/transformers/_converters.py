@@ -65,22 +65,20 @@ from cognite.neat._rules.models.information._rules_input import (
 )
 from cognite.neat._utils.text import to_camel
 
-from ._base import RulesTransformer
+from ._base import RulesTransformer, VerifiedRulesTransformer, T_VerifiedIn, T_VerifiedOut
 from ._verification import VerifyDMSRules
 
-T_VerifiedInRules = TypeVar("T_VerifiedInRules", bound=VerifiedRules)
-T_VerifiedOutRules = TypeVar("T_VerifiedOutRules", bound=VerifiedRules)
 T_InputInRules = TypeVar("T_InputInRules", bound=ReadInputRules)
 T_InputOutRules = TypeVar("T_InputOutRules", bound=ReadInputRules)
 
 
-class ConversionTransformer(RulesTransformer[T_VerifiedInRules, T_VerifiedOutRules], ABC):
+class ConversionTransformer(VerifiedRulesTransformer[T_VerifiedIn, T_VerifiedOut], ABC):
     """Base class for all conversion transformers."""
 
     ...
 
 
-class ToCompliantEntities(RulesTransformer[InformationRules, InformationRules]):  # type: ignore[misc]
+class ToCompliantEntities(VerifiedRulesTransformer[InformationRules, InformationRules]):  # type: ignore[misc]
     """Converts input rules to rules with compliant entity IDs that match regex patters used
     by DMS schema components."""
 
@@ -272,7 +270,7 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
 _T_Entity = TypeVar("_T_Entity", bound=ClassEntity | ViewEntity)
 
 
-class SetIDDMSModel(RulesTransformer[DMSRules, DMSRules]):
+class SetIDDMSModel(VerifiedRulesTransformer[DMSRules, DMSRules]):
     def __init__(self, new_id: DataModelId | tuple[str, str, str]):
         self.new_id = DataModelId.load(new_id)
 
@@ -292,7 +290,7 @@ class SetIDDMSModel(RulesTransformer[DMSRules, DMSRules]):
         return DMSRules.model_validate(DMSInputRules.load(dump).dump())
 
 
-class ToExtensionModel(RulesTransformer[DMSRules, DMSRules], ABC):
+class ToExtensionModel(VerifiedRulesTransformer[DMSRules, DMSRules], ABC):
     type_: ClassVar[str]
 
     def __init__(self, new_model_id: DataModelIdentifier) -> None:
@@ -701,7 +699,7 @@ class ToDataProductModel(ToSolutionModel):
         return self._to_solution(rules)
 
 
-class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
+class ReduceCogniteModel(VerifiedRulesTransformer[DMSRules, DMSRules]):
     _ASSET_VIEW = ViewId("cdf_cdm", "CogniteAsset", "v1")
     _VIEW_BY_COLLECTION: Mapping[Literal["3D", "Annotation", "BaseViews"], frozenset[ViewId]] = {
         "3D": frozenset(
@@ -784,7 +782,7 @@ class ReduceCogniteModel(RulesTransformer[DMSRules, DMSRules]):
         return f"Removed {len(self.drop_external_ids) + len(self.drop_collection)} views from data model"
 
 
-class IncludeReferenced(RulesTransformer[DMSRules, DMSRules]):
+class IncludeReferenced(VerifiedRulesTransformer[DMSRules, DMSRules]):
     def __init__(self, client: NeatClient, include_properties: bool = False) -> None:
         self._client = client
         self.include_properties = include_properties
@@ -835,7 +833,7 @@ class IncludeReferenced(RulesTransformer[DMSRules, DMSRules]):
         return "Included referenced views and containers in the data model."
 
 
-class AddClassImplements(RulesTransformer[InformationRules, InformationRules]):
+class AddClassImplements(VerifiedRulesTransformer[InformationRules, InformationRules]):
     def __init__(self, implements: str, suffix: str):
         self.implements = implements
         self.suffix = suffix
@@ -853,7 +851,7 @@ class AddClassImplements(RulesTransformer[InformationRules, InformationRules]):
         return f"Added implements property to classes with suffix {self.suffix}"
 
 
-class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
+class ClassicPrepareCore(VerifiedRulesTransformer[InformationRules, InformationRules]):
     """Update the classic data model with the following:
 
     This is a special purpose transformer that is only intended to be used with when reading
@@ -935,7 +933,7 @@ class ClassicPrepareCore(RulesTransformer[InformationRules, InformationRules]):
         return output
 
 
-class ChangeViewPrefix(RulesTransformer[DMSRules, DMSRules]):
+class ChangeViewPrefix(VerifiedRulesTransformer[DMSRules, DMSRules]):
     def __init__(self, old: str, new: str) -> None:
         self.old = old
         self.new = new
@@ -960,7 +958,7 @@ class ChangeViewPrefix(RulesTransformer[DMSRules, DMSRules]):
         return output
 
 
-class MergeDMSRules(RulesTransformer[DMSRules, DMSRules]):
+class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
     def __init__(self, extra: DMSRules) -> None:
         self.extra = extra
 
@@ -1002,7 +1000,7 @@ class MergeDMSRules(RulesTransformer[DMSRules, DMSRules]):
         return f"Merged with {self.extra.metadata.as_data_model_id()}"
 
 
-class MergeInformationRules(RulesTransformer[InformationRules, InformationRules]):
+class MergeInformationRules(VerifiedRulesTransformer[InformationRules, InformationRules]):
     def __init__(self, extra: InformationRules) -> None:
         self.extra = extra
 

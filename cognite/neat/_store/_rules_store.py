@@ -22,7 +22,7 @@ from cognite.neat._rules.exporters._base import CDFExporter, T_Export
 from cognite.neat._rules.importers import BaseImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models._base_input import InputRules
-from cognite.neat._rules.transformers import RulesTransformer
+from cognite.neat._rules.transformers import VerifiedRulesTransformer
 from cognite.neat._utils.upload import UploadResultList
 from cognite.neat._rules.transformers import DMSToInformation, InformationToDMS, MergeInformationRules, MergeDMSRules, VerifyAnyRules
 
@@ -47,7 +47,6 @@ class NeatRulesStore:
     def __init__(self) -> None:
         self.provenance = Provenance[RulesEntity]()
         self.exports_by_source_entity_id: dict[rdflib.URIRef, list[Change[OutcomeEntity]]] = defaultdict(list)
-        # self.pruned_by_source_entity_id: dict[rdflib.URIRef, list[Provenance]] = defaultdict(list)
         self._last_outcome: UploadResultList | None = None
         self._iteration_by_id: dict[Hashable, int] = {}
 
@@ -125,7 +124,7 @@ class NeatRulesStore:
             issues.extend(dms_issues)
         return issues
 
-    def transform(self, *transformer: RulesTransformer) -> IssueList:
+    def transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:
         if not self.provenance:
             raise EmptyStore()
 
@@ -133,22 +132,63 @@ class NeatRulesStore:
         for item in transformer:
             last_change = self.provenance[-1]
             source_entity = last_change.target_entity
-            if not isinstance(source_entity, ModelEntity):
-                # Todo: Provenance should be of an entity type
-                raise ValueError("Bug in neat: The last entity in the provenance is not a model entity.")
-            transformer_input = source_entity.result
 
-            if not item.is_valid_input(transformer_input):
-                raise InvalidInputOperation(expected=item.transform_type_hint(), got=type(transformer_input))
+            transformer_input = self._get_transformer_input(source_entity, item)
+            start = datetime.now(timezone.utc)
+            result: InformationRules | DMSRules | None = None
+            with catch_issues() as issue_list:
+                result = item.transform(transformer_input)
+            all_issues.extend(issue_list)
+            if result is None:
+                return all_issues
+            end = datetime.now(timezone.utc)
 
-            transform_issues = self._do_activity(
-                partial(item.transform, rules=transformer_input),
-                item.agent,
-                source_entity,
-                item.description,
-            )[1]
-            all_issues.extend(transform_issues)
+            activity = Activity(
+                was_associated_with=item.agent,
+                ended_at_time=end,
+                started_at_time=start,
+                used=source_entity,
+            )
+            if isinstance(result, InformationRules):
+                info = result
+                dms = None
+            elif isinstance(result, DMSRules):
+                dms = result
+                info = source_entity.information
+            else:
+                raise InvalidActivityOutput(activity, type(result))
+
+            target_entity = RulesEntity(
+                was_attributed_to=item.agent,
+                was_generated_by=activity,
+                information=info,
+                dms=dms,
+                issues=issue_list,
+                # here id can be bumped in case id already exists
+                id_=self._create_id(result),
+            )
+            change = Change(
+                agent=item.agent,
+                activity=activity,
+                target_entity=target_entity,
+                description=item.description,
+                source_entity=source_entity,
+            )
+            self.provenance.append(change)
         return all_issues
+
+    @staticmethod
+    def _get_transformer_input(source_entity: RulesEntity, transformer: VerifiedRulesTransformer) -> InformationRules | DMSRules:
+        # Case 1: We only have information rules
+        if source_entity.dms is None:
+            if transformer.is_valid_input(source_entity.information):
+                return source_entity.information
+            raise InvalidInputOperation(expected=(DMSRules, ), have=(InformationRules,))
+        # Case 2: We have both information and dms rules and the transformer is compatible with dms rules
+        elif isinstance(source_entity.dms, DMSRules) and transformer.is_valid_input(source_entity.dms):
+            return source_entity.dms
+        # Case 3: We have both information and dms rules and the transformer is compatible with information rules
+        raise NeatValueError(f"Cannot do action {transformer.description} on a converted physical model.")
 
     def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export]) -> T_Export:
         if self.empty:
@@ -277,44 +317,6 @@ class NeatRulesStore:
         self._last_outcome = result
         return result
 
-    # def prune_until_compatible(self, transformer: RulesTransformer) -> list[Change]:
-    #     """Prune the provenance until the last successful entity is compatible with the transformer.
-    #
-    #     Args:
-    #         transformer: The transformer to check compatibility with.
-    #
-    #     Returns:
-    #         The changes that were pruned.
-    #     """
-    #     pruned_candidates: list[Change] = []
-    #     for change in reversed(self.provenance):
-    #         if not isinstance(change.target_entity, ModelEntity):
-    #             continue
-    #         if not transformer.is_valid_input(change.target_entity.result):
-    #             pruned_candidates.append(change)
-    #         else:
-    #             break
-    #     else:
-    #         raise NeatValueError("No compatible entity found in the provenance.")
-    #     if not pruned_candidates:
-    #         return []
-    #     self.provenance = self.provenance[: -len(pruned_candidates)]
-    #     pruned_candidates.reverse()
-    #     self.pruned_by_source_entity_id[self.provenance[-1].target_entity.id_].append(Provenance(pruned_candidates))
-    #     return pruned_candidates
-
-    # def _export(self, action: Callable[[Any], Any], agent: Agent, description: str) -> Any:
-    #     last_entity: ModelEntity | None = None
-    #     for change in reversed(self.provenance):
-    #         if isinstance(change.target_entity, ModelEntity) and isinstance(change.target_entity.result, DMSRules):
-    #             last_entity = change.target_entity
-    #             break
-    #     if last_entity is None:
-    #         raise NeatValueError("No verified DMS rules found in the provenance.")
-    #     rules = last_entity.result
-    #     result, _ = self._do_activity(lambda: action(rules), agent, last_entity, description)
-    #     return result
-
     def _update_source_entity(self, source_entity: Entity, result: Rules, issue_list: IssueList) -> Entity:
         """Update source entity to keep the unbroken provenance chain of changes."""
 
@@ -428,30 +430,8 @@ class NeatRulesStore:
             return result.metadata.as_data_model_id()
         return None
 
-    def _create_id(self, result: Any) -> rdflib.URIRef:
-        identifier: rdflib.URIRef
-
-        # Case 1: Unsuccessful activity -> target entity will be EMPTY_ENTITY
-        if result is None:
-            identifier = EMPTY_ENTITY.id_
-
-        # Case 2: Result ReadRules
-        elif isinstance(result, ReadRules):
-            # Case 2.1: ReadRules with no rules -> target entity will be EMPTY_ENTITY
-            if result.rules is None:
-                identifier = EMPTY_ENTITY.id_
-
-            # Case 2.2: ReadRules with rules identified by metadata.identifier
-            else:
-                identifier = result.rules.metadata.identifier
-
-        # Case 3: Result VerifiedRules, identifier will be metadata.identifier
-        elif isinstance(result, VerifiedRules):
-            identifier = result.metadata.identifier
-
-        # Case 4: Defaults to unknown entity
-        else:
-            identifier = DEFAULT_NAMESPACE["unknown-entity"]
+    def _create_id(self, result: InformationRules | DMSRules) -> rdflib.URIRef:
+        identifier = result.metadata.identifier
 
         # Here we check if the identifier is already in the iteration dictionary
         # to track specific changes to the same entity, if it is we increment the iteration
@@ -464,55 +444,6 @@ class NeatRulesStore:
         self._iteration_by_id[identifier] += 1
         return identifier + f"/Iteration_{self._iteration_by_id[identifier]}"
 
-    # def get_last_entity(self) -> ModelEntity:
-    #     if not self.provenance:
-    #         raise NeatValueError("No entity found in the provenance.")
-    #     return cast(ModelEntity, self.provenance[-1].target_entity)
-    #
-    # def get_last_successful_entity(self) -> ModelEntity:
-    #     for change in reversed(self.provenance):
-    #         if isinstance(change.target_entity, ModelEntity) and change.target_entity.result:
-    #             return change.target_entity
-    #     raise NeatValueError("No successful entity found in the provenance.")
-    #
-    # @property
-    # def has_unverified_rules(self) -> bool:
-    #     return any(
-    #         isinstance(change.target_entity, ModelEntity)
-    #         and isinstance(change.target_entity.result, ReadRules)
-    #         and change.target_entity.result.rules is not None
-    #         for change in self.provenance
-    #     )
-    #
-    # @property
-    # def has_verified_rules(self) -> bool:
-    #     return any(
-    #         isinstance(change.target_entity, ModelEntity)
-    #         and isinstance(change.target_entity.result, DMSRules | InformationRules)
-    #         for change in self.provenance
-    #     )
-    #
-    # @property
-    # def last_unverified_rule(self) -> InputRules:
-    #     for change in reversed(self.provenance):
-    #         if (
-    #             isinstance(change.target_entity, ModelEntity)
-    #             and isinstance(change.target_entity.result, ReadRules)
-    #             and change.target_entity.result.rules is not None
-    #         ):
-    #             return change.target_entity.result.rules
-    #
-    #     raise NeatValueError("No unverified rule found in the provenance.")
-    #
-    # @property
-    # def last_verified_rule(self) -> DMSRules | InformationRules:
-    #     for change in reversed(self.provenance):
-    #         if isinstance(change.target_entity, ModelEntity) and isinstance(
-    #             change.target_entity.result, DMSRules | InformationRules
-    #         ):
-    #             return change.target_entity.result
-    #     raise NeatValueError("No verified rule found in the provenance.")
-    #
     # @property
     # def last_verified_dms_rules(self) -> DMSRules:
     #     for change in reversed(self.provenance):
@@ -537,7 +468,7 @@ class NeatRulesStore:
     #     if last_change.target_entity.issues:
     #         return last_change.target_entity.issues
     #     return last_change.source_entity.issues
-    #
+
     @property
     def last_outcome(self) -> UploadResultList:
         if self._last_outcome is not None:
