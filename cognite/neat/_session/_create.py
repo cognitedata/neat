@@ -30,7 +30,6 @@ class CreateAPI:
         data_model_id: DataModelIdentifier,
         org_name: str = "My",
         dummy_property: str = "GUID",
-        move_connections: bool = False,
     ) -> IssueList:
         """Uses the current data model as a basis to create enterprise data model
 
@@ -38,7 +37,6 @@ class CreateAPI:
             data_model_id: The enterprise data model id that is being created
             org_name: Organization name to use for the views in the enterprise data model.
             dummy_property: The dummy property to use as placeholder for the views in the new data model.
-            move_connections: If True, the connections will be moved to the new data model.
 
         !!! note "Enterprise Data Model Creation"
 
@@ -60,24 +58,23 @@ class CreateAPI:
                 new_model_id=data_model_id,
                 org_name=org_name,
                 dummy_property=dummy_property,
-                move_connections=move_connections,
+                move_connections=True,
             )
         )
 
     def solution_model(
         self,
         data_model_id: DataModelIdentifier,
-        org_name: str = "My",
-        mode: Literal["read", "write"] = "read",
-        dummy_property: str = "GUID",
+        direct_property: str = "enterprise",
+        view_prefix: str = "Enterprise",
     ) -> IssueList:
         """Uses the current data model as a basis to create solution data model
 
         Args:
             data_model_id: The solution data model id that is being created.
-            org_name: Organization name to use for the views in the new data model.
-            mode: The mode of the solution data model. Can be either "read" or "write".
-            dummy_property: The dummy property to use as placeholder for the views in the new data model.
+            direct_property: The property to use for the direct connection between the views in the solution data model
+                and the enterprise data model.
+            view_prefix: The prefix to use for the views in the enterprise data model.
 
         !!! note "Solution Data Model Mode"
 
@@ -87,23 +84,22 @@ class CreateAPI:
             will be read-only.
 
             The write mode will have additional containers in the solution data model space,
-            allowing in addition to reading through the solution model views, also writing to
+            allowing in addition to read through the solution model views, also writing to
             the containers in the solution data model space.
 
         """
         return self._state.rule_transform(
             ToSolutionModel(
                 new_model_id=data_model_id,
-                org_name=org_name,
-                mode=mode,
-                dummy_property=dummy_property,
+                properties="connection",
+                direct_property=direct_property,
+                view_prefix=view_prefix,
             )
         )
 
     def data_product_model(
         self,
         data_model_id: DataModelIdentifier,
-        org_name: str = "",
         include: Literal["same-space", "all"] = "same-space",
     ) -> None:
         """Uses the current data model as a basis to create data product data model.
@@ -113,7 +109,6 @@ class CreateAPI:
 
         Args:
             data_model_id: The data product data model id that is being created.
-            org_name: Organization name used as prefix if the model is building on top of a Cognite Data Model.
             include: The views to include in the data product data model. Can be either "same-space" or "all".
                 If you set same-space, only the properties of the views in the same space as the data model
                 will be included.
@@ -133,12 +128,6 @@ class CreateAPI:
         elif (view_ids or container_ids) and client:
             transformers.append(IncludeReferenced(client, include_properties=True))
 
-        transformers.append(
-            ToDataProductModel(
-                new_model_id=data_model_id,
-                org_name=org_name,
-                include=include,
-            )
-        )
+        transformers.append(ToDataProductModel(new_model_id=data_model_id, include=include))
 
         self._state.rule_transform(*transformers)
