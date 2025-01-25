@@ -208,31 +208,3 @@ class Provenance(NeatList[Change[T_Entity]]):
     def as_triples(self) -> Iterable[Triple]:
         for change in self:
             yield from change.as_triples()
-
-
-class NeatProvenanceExceptions(Exception):
-    """Base class for all neat provenance exceptions. Note that these are different than the issue exceptions"""
-
-    def __str__(self):
-        return type(self).__name__
-
-class ActivityFailed(NeatProvenanceExceptions):
-    """Raised when an activity fails"""
-
-    def __init__(self, activity: Activity, issue_list: IssueList) -> None:
-        self.activity = activity
-        self.issue_list = issue_list
-
-    def __str__(self):
-        return f"{super().__str__()}: {self.activity.id_}"
-
-class InvalidActivityOutput(NeatProvenanceExceptions):
-    """Raised when an activity has an invalid output"""
-
-    def __init__(self, activity: Activity, output: str) -> None:
-        self.activity = activity
-        self.output = output
-
-    def __str__(self):
-        return f"{super().__str__()}: {self.activity.id_} -> {self.output}"
-

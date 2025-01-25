@@ -26,8 +26,8 @@ from cognite.neat._rules.transformers import RulesTransformer
 from cognite.neat._utils.upload import UploadResultList
 from cognite.neat._rules.transformers import DMSToInformation, InformationToDMS, MergeInformationRules, MergeDMSRules, VerifyAnyRules
 
-from ._provenance import EMPTY_ENTITY, UNKNOWN_AGENT, Activity, Agent, Change, Entity, Provenance, ActivityFailed, InvalidActivityOutput
-from .exceptions import EmptyStore, InvalidInputOperation
+from ._provenance import EMPTY_ENTITY, UNKNOWN_AGENT, Activity, Agent, Change, Entity, Provenance
+from .exceptions import EmptyStore, InvalidInputOperation, ActivityFailed, InvalidActivityOutput
 
 @dataclass(frozen=True)
 class RulesEntity(Entity):
@@ -61,7 +61,7 @@ class NeatRulesStore:
             return calculated_hash[:8]
         return calculated_hash
 
-    def import_(self, importer: BaseImporter, client: NeatClient | None = None) -> IssueList:
+    def import_(self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None) -> IssueList:
         if self.provenance:
             raise NeatValueError(f"Data model already exists in the store. Cannot import {importer.source_uri}.")
         source_entity = Entity.create_with_defaults(
@@ -72,7 +72,7 @@ class NeatRulesStore:
         verified: InformationRules | DMSRules | None = None
         with catch_issues() as issue_list:
             read_rules = importer.to_rules()
-            verified = VerifyAnyRules(True, client).transform(read_rules)
+            verified = VerifyAnyRules(validate, client).transform(read_rules)
 
         end = datetime.now(timezone.utc)
         agent = importer.agent
@@ -151,20 +151,27 @@ class NeatRulesStore:
         return all_issues
 
     def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export]) -> T_Export:
+        if self.empty:
+            raise EmptyStore()
         last_change = self.provenance[-1]
         source_entity = last_change.target_entity
-        if not isinstance(source_entity, ModelEntity):
-            # Todo: Provenance should be of an entity type
-            raise ValueError("Bug in neat: The last entity in the provenance is not a model entity.")
         expected_types = exporter.source_types()
-        if not any(isinstance(source_entity.result, type_) for type_ in expected_types):
-            raise InvalidInputOperation(expected=expected_types, got=type(source_entity.result))
+
+        if source_entity.dms is not None and isinstance(source_entity.dms, expected_types):
+            input_ = source_entity.dms
+        elif isinstance(source_entity.information, expected_types):
+            input_ = source_entity.information
+        else:
+            available = [InformationRules]
+            if source_entity.dms is not None:
+                available.append(DMSRules)
+            raise InvalidInputOperation(expected=expected_types, have=tuple(available))
 
         agent = exporter.agent
         start = datetime.now(timezone.utc)
         with catch_issues() as issue_list:
             # Validate the type of the result
-            result = exporter.export(source_entity.result)  # type: ignore[arg-type]
+            result = exporter.export(input_)
         end = datetime.now(timezone.utc)
         target_id = DEFAULT_NAMESPACE["export-result"]
         activity = Activity(
@@ -531,11 +538,11 @@ class NeatRulesStore:
     #         return last_change.target_entity.issues
     #     return last_change.source_entity.issues
     #
-    # @property
-    # def last_outcome(self) -> UploadResultList:
-    #     if self._last_outcome is not None:
-    #         return self._last_outcome
-    #     raise NeatValueError("No outcome found in the provenance.")
+    @property
+    def last_outcome(self) -> UploadResultList:
+        if self._last_outcome is not None:
+            return self._last_outcome
+        raise NeatValueError("No outcome found in the provenance.")
 
     @property
     def empty(self) -> bool:

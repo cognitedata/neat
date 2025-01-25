@@ -15,22 +15,16 @@ class FailingTransformer(RulesTransformer[DMSInputRules, DMSRules]):
 
 
 class TestRuleStore:
-    def test_import_transform_export(self, data_regression: DataRegressionFixture) -> None:
+    def test_import_export(self, data_regression: DataRegressionFixture) -> None:
         store = NeatRulesStore()
 
-        import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump))
+        import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
 
         assert not import_issues.errors
-
-        transform_issues = store.transform(transformers.VerifyDMSRules(validate=False))
-
-        assert not transform_issues.errors
 
         result = store.export(exporters.YAMLExporter())
 
         assert isinstance(result, str)
-        last_entity = store.get_last_successful_entity()
-        assert last_entity.result == result
 
         data_regression.check(yaml.safe_load(result))
 
