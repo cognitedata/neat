@@ -234,7 +234,6 @@ class NeatSession:
             issue_list=issue_list,
             graph=self._state.instances.store.graph(),
             rules=last_information,
-            max_number_of_instance=-1,
         )
 
         unverified_information = importer.to_rules()
