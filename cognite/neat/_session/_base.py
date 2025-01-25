@@ -24,6 +24,7 @@ from cognite.neat._store._rules_store import ModelEntity
 from cognite.neat._utils.auxiliary import local_import
 
 from ._collector import _COLLECTOR, Collector
+from ._create import CreateAPI
 from ._drop import DropAPI
 from ._fix import FixAPI
 from ._inspect import InspectAPI
@@ -99,6 +100,7 @@ class NeatSession:
         self.inspect = InspectAPI(self._state)
         self.mapping = MappingAPI(self._state)
         self.drop = DropAPI(self._state)
+        self.create = CreateAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
