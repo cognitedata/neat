@@ -29,9 +29,10 @@ class SessionState:
 
         start = self.rule_store.provenance[-1].target_entity.display_name
         issues = self.rule_store.transform(*transformer)
-        end = self.rule_store.provenance[-1].target_entity.display_name
-        issues.action = f"{start} &#8594; {end}"
+        last_entity = self.rule_store.provenance[-1].target_entity
+        issues.action = f"{start} &#8594; {last_entity.display_name}"
         issues.hint = "Use the .inspect.issues() for more details."
+        self.instances.store.add_rules(last_entity.information)
         return issues
 
     def rule_import(self, importer: BaseImporter) -> IssueList:
