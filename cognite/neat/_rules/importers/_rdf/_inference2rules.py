@@ -563,3 +563,16 @@ class SubclassInferenceImporter(BaseRDFImporter):
         for uri_ref in value_types:
             self._add_uri_namespace_to_prefixes(uri_ref, prefixes)
         return " | ".join(remove_namespace_from_uri(uri_ref) for uri_ref in value_types)
+
+    def _default_metadata(self) -> dict[str, Any]:
+        now = datetime.now(timezone.utc)
+        return InformationMetadata(
+            space=self.data_model_id.space,
+            external_id=self.data_model_id.external_id,
+            version=cast(str, self.data_model_id.version),
+            name="Inferred Model",
+            creator=["NEAT"],
+            created=now,
+            updated=now,
+            description="Inferred model from knowledge graph",
+        ).model_dump()
