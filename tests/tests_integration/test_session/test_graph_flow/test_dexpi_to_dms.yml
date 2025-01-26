@@ -2191,7 +2191,7 @@ rules:
   - connection: direct
     container: ProcessInstrumentationFunction
     container_property: isAPartOf
-    is_list: false
+    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isAPartOf
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isAPartOf
     nullable: true
