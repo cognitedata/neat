@@ -13,8 +13,6 @@ from cognite.neat._rules import importers
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.transformers import (
-    ConversionTransformer,
-    ConvertToRules,
     InformationToDMS,
     MergeDMSRules,
     MergeInformationRules,
@@ -36,7 +34,7 @@ from ._show import ShowAPI
 from ._state import SessionState
 from ._to import ToAPI
 from .engine import load_neat_engine
-from .exceptions import NeatSessionError, session_class_wrapper
+from .exceptions import session_class_wrapper
 
 
 @session_class_wrapper
@@ -150,35 +148,24 @@ class NeatSession:
         print("This action has no effect. Neat no longer supports unverified data models.")
         return IssueList()
 
-    def convert(self, target: Literal["dms", "information"]) -> IssueList:
+    def convert(self, reserved_properties: Literal["error", "skip"] = "skip") -> IssueList:
         """Converts the last verified data model to the target type.
 
         Args:
-            target: The target type to convert the data model to.
+            reserved_properties: The reserved properties to use when converting to DMS. Can be "error" or "skip".
 
         Example:
             Convert to DMS rules
             ```python
-            neat.convert(target="dms")
-            ```
-
-        Example:
-            Convert to Information rules
-            ```python
-            neat.convert(target="information")
+            neat.convert()
             ```
         """
-        converter: ConversionTransformer
-        if target == "dms":
-            converter = InformationToDMS()
-        elif target == "information":
-            converter = ConvertToRules(InformationRules)
-        else:
-            raise NeatSessionError(f"Target {target} not supported.")
+        converter = InformationToDMS(reserved_properties=reserved_properties)
+
         issues = self._state.rule_transform(converter)
 
         if self._verbose and not issues.has_errors:
-            print(f"Rules converted to {target}")
+            print("Rules converted to dms.")
         else:
             print("Conversion failed.")
         if issues:
