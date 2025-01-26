@@ -54,7 +54,7 @@ class NeatRulesStore:
         self.exports_by_source_entity_id: dict[rdflib.URIRef, list[Change[OutcomeEntity]]] = defaultdict(list)
         self._last_outcome: UploadResultList | None = None
         self._iteration_by_id: dict[Hashable, int] = {}
-        self._last_failed_issues: IssueList | None = None
+        self._last_issues: IssueList | None = None
 
     def calculate_provenance_hash(self, shorten: bool = True) -> str:
         sha256_hash = hashlib.sha256()
@@ -170,6 +170,8 @@ class NeatRulesStore:
             result = action()
 
         end = datetime.now(timezone.utc)
+        self._last_issues = issue_list
+
         agent = agent_tool.agent
         activity = Activity(
             was_associated_with=agent,
@@ -178,7 +180,6 @@ class NeatRulesStore:
             used=source_entity,
         )
         if result is None:
-            self._last_failed_issues = issue_list
             return issue_list
         info, dms = result
 
@@ -199,7 +200,6 @@ class NeatRulesStore:
             source_entity=source_entity,
         )
         self.provenance.append(change)
-        self._last_failed_issues = None
         return issue_list
 
     def _export_activity(self, action: Callable, exporter: BaseExporter, target_id: URIRef, *exporter_args: Any) -> Any:
@@ -226,6 +226,7 @@ class NeatRulesStore:
             result = action(input_, *exporter_args)
 
         end = datetime.now(timezone.utc)
+        self._last_issues = issue_list
         activity = Activity(
             was_associated_with=agent,
             ended_at_time=end,
@@ -371,13 +372,7 @@ class NeatRulesStore:
 
     @property
     def last_issues(self) -> IssueList | None:
-        if self._last_failed_issues is not None:
-            return self._last_failed_issues
-        if not self.provenance:
-            raise EmptyStore()
-        if self.provenance[-1].target_entity.issues:
-            return self.provenance[-1].target_entity.issues
-        return self.provenance[-1].source_entity.issues
+        return self._last_issues
 
     @property
     def last_outcome(self) -> UploadResultList:
