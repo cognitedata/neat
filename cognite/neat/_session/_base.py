@@ -221,7 +221,7 @@ class NeatSession:
 
     def _infer_subclasses(self) -> IssueList:
         """Infer the subclass of instances."""
-        if not self._state.instances.has_store:
+        if self._state.instances.empty:
             raise NeatSessionError("No instances to infer subclasses from.")
         if not self._state.rule_store.provenance:
             raise NeatSessionError("No existing data model to infer subclasses from.")
@@ -261,7 +261,7 @@ class NeatSession:
                 html = last_entity.information._repr_html_()
             output.append(f"<H2>Data Model</H2><br />{html}")  # type: ignore
 
-        if state.instances.empty:
+        if not state.instances.empty:
             output.append(f"<H2>Instances</H2> {state.instances.store._repr_html_()}")
 
         return "<br />".join(output)
