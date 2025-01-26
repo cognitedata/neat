@@ -282,6 +282,10 @@ class NeatSession:
         """Close the session and release resources."""
         self._state.instances.store.dataset.close()
 
+    def __del__(self) -> None:
+        """Called by garbage collector"""
+        self.close()
+
 
 @session_class_wrapper
 class OptAPI:
