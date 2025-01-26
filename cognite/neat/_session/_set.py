@@ -32,7 +32,9 @@ class SetAPI:
             neat.set.data_model_id(("my_data_model_space", "My_Data_Model", "v1"))
             ```
         """
-        rules = self._state.rule_store.get_last_successful_entity().result
+        if self._state.rule_store.empty:
+            raise NeatSessionError("No rules to set the data model ID.")
+        rules = self._state.rule_store.provenance[-1].target_entity.dms
         if isinstance(rules, DMSRules):
             if rules.metadata.as_data_model_id() in COGNITE_MODELS:
                 raise NeatSessionError(

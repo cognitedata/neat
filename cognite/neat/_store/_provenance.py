@@ -20,7 +20,7 @@ import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
+from typing import Generic, TypeVar
 
 from rdflib import PROV, RDF, Literal, URIRef
 
@@ -49,9 +49,31 @@ UNKNOWN_AGENT = Agent(acted_on_behalf_of="UNKNOWN", id_=DEFAULT_NAMESPACE["unkno
 @dataclass(frozen=True)
 class Entity:
     was_attributed_to: Agent
-    issues: IssueList = field(default_factory=IssueList)
-    was_generated_by: Optional["Activity"] = field(default=None, repr=False)
-    id_: URIRef = DEFAULT_NAMESPACE["graph-store"]
+    issues: IssueList
+    was_generated_by: "Activity | None" = field(repr=False)
+    id_: URIRef
+
+    @classmethod
+    def create_with_defaults(
+        cls,
+        was_attributed_to: Agent,
+        issues: IssueList | None = None,
+        was_generated_by: "Activity | None" = None,
+        id_: URIRef = DEFAULT_NAMESPACE["graph-store"],
+    ) -> "Entity":
+        return cls(
+            was_attributed_to=was_attributed_to,
+            issues=issues or IssueList(),
+            was_generated_by=was_generated_by,
+            id_=id_,
+        )
+
+    @classmethod
+    def create_new_unknown_entity(cls) -> "Entity":
+        return cls.create_with_defaults(
+            was_attributed_to=UNKNOWN_AGENT,
+            id_=DEFAULT_NAMESPACE[f"unknown-entity/{uuid.uuid4()}"],
+        )
 
     def as_triples(self) -> list[Triple]:
         output: list[tuple[URIRef, URIRef, Literal | URIRef]] = [
@@ -70,16 +92,10 @@ class Entity:
 
         return output
 
-    @classmethod
-    def new_unknown_entity(cls) -> "Entity":
-        return cls(
-            was_attributed_to=UNKNOWN_AGENT,
-            id_=DEFAULT_NAMESPACE[f"unknown-entity/{uuid.uuid4()}"],
-        )
 
-
-INSTANCES_ENTITY = Entity(was_attributed_to=NEAT_AGENT, id_=CDF_NAMESPACE["instances"])
-EMPTY_ENTITY = Entity(was_attributed_to=NEAT_AGENT, id_=DEFAULT_NAMESPACE["empty-entity"])
+T_Entity = TypeVar("T_Entity", bound=Entity)
+INSTANCES_ENTITY = Entity.create_with_defaults(was_attributed_to=NEAT_AGENT, id_=CDF_NAMESPACE["instances"])
+EMPTY_ENTITY = Entity.create_with_defaults(was_attributed_to=NEAT_AGENT, id_=DEFAULT_NAMESPACE["empty-entity"])
 
 
 @dataclass(frozen=True)
@@ -111,12 +127,12 @@ class Activity:
 
 
 @dataclass(frozen=True)
-class Change(FrozenNeatObject):
+class Change(FrozenNeatObject, Generic[T_Entity]):
     agent: Agent
     activity: Activity
-    target_entity: Entity
+    target_entity: T_Entity
     description: str
-    source_entity: Entity = field(default_factory=Entity.new_unknown_entity)
+    source_entity: Entity = field(default_factory=Entity.create_new_unknown_entity)
 
     def as_triples(self) -> list[Triple]:
         return (
@@ -127,7 +143,7 @@ class Change(FrozenNeatObject):
         )
 
     @classmethod
-    def record(cls, activity: str, start: datetime, end: datetime, description: str) -> "Change":
+    def record(cls, activity: str, start: datetime, end: datetime, description: str) -> "Change[Entity]":
         """User friendly method to record a change that occurred in the graph store."""
         agent = Agent()
         activity = Activity(
@@ -136,8 +152,8 @@ class Change(FrozenNeatObject):
             started_at_time=start,
             ended_at_time=end,
         )
-        target_entity = Entity(was_generated_by=activity, was_attributed_to=agent)
-        return cls(
+        target_entity = Entity.create_with_defaults(was_generated_by=activity, was_attributed_to=agent)
+        return Change(
             agent=agent,
             activity=activity,
             target_entity=target_entity,
@@ -154,7 +170,7 @@ class Change(FrozenNeatObject):
         }
 
 
-class Provenance(NeatList[Change]):
+class Provenance(NeatList[Change[T_Entity]]):
     def __init__(self, changes: Sequence[Change] | None = None):
         super().__init__(changes or [])
 

@@ -4,40 +4,39 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules import catalog, exporters, importers, transformers
-from cognite.neat._rules.models import DMSInputRules, DMSRules
-from cognite.neat._rules.transformers import RulesTransformer
+from cognite.neat._rules.models import DMSRules, InformationRules
+from cognite.neat._rules.transformers import VerifiedRulesTransformer
 from cognite.neat._store import NeatRulesStore
+from cognite.neat._store.exceptions import InvalidActivityInput
 
 
-class FailingTransformer(RulesTransformer[DMSInputRules, DMSRules]):
-    def transform(self, rules: DMSInputRules) -> DMSRules:
+class FailingTransformer(VerifiedRulesTransformer[DMSRules, DMSRules]):
+    def transform(self, rules: DMSRules) -> DMSRules:
         raise NeatValueError("This transformer always fails")
+
+    @property
+    def description(self) -> str:
+        return "Failing transformer"
 
 
 class TestRuleStore:
-    def test_import_transform_export(self, data_regression: DataRegressionFixture) -> None:
+    def test_import_export(self, data_regression: DataRegressionFixture) -> None:
         store = NeatRulesStore()
 
-        import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump))
+        import_issues = store.import_rules(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
 
         assert not import_issues.errors
-
-        transform_issues = store.transform(transformers.VerifyDMSRules(validate=False))
-
-        assert not transform_issues.errors
 
         result = store.export(exporters.YAMLExporter())
 
         assert isinstance(result, str)
-        last_entity = store.get_last_successful_entity()
-        assert last_entity.result == result
 
         data_regression.check(yaml.safe_load(result))
 
     def test_import_fail_transform(self) -> None:
         store = NeatRulesStore()
 
-        import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump))
+        import_issues = store.import_rules(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
 
         assert not import_issues.errors
 
@@ -51,28 +50,12 @@ class TestRuleStore:
     def test_import_invalid_transformer(self) -> None:
         store = NeatRulesStore()
 
-        import_issues = store.import_(importers.ExcelImporter(catalog.hello_world_pump))
+        import_issues = store.import_rules(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
 
         assert not import_issues.errors
 
-        with pytest.raises(NeatValueError):
-            _ = store.transform(transformers.VerifyInformationRules(validate=False))
+        with pytest.raises(InvalidActivityInput) as exc_info:
+            _ = store.transform(transformers.ToCompliantEntities())
 
-    def test_import_prune_until_compatible(self) -> None:
-        store = NeatRulesStore()
-        # Gives us unverified information rules
-        issues = store.import_(importers.ExcelImporter(catalog.imf_attributes))
-
-        assert not issues
-        # Verify the information rules
-        issues = store.transform(transformers.VerifyInformationRules(validate=False))
-        assert not issues
-
-        # We want ot run a transformer on unverified rules, so we need to go back to the unverified state
-        next_transformer = transformers.ToCompliantEntities()
-        pruned = store.prune_until_compatible(next_transformer)
-        # Removes the VerifiedInformationRules
-        assert len(pruned) == 1
-
-        issues = store.transform(next_transformer)
-        assert not issues
+        assert exc_info.value.expected == (InformationRules,)
+        assert exc_info.value.have == (DMSRules,)

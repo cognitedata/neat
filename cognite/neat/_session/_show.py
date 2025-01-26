@@ -98,22 +98,15 @@ class ShowDataModelAPI(ShowBaseAPI):
         self.implements = ShowDataModelImplementsAPI(self._state)
 
     def __call__(self) -> Any:
-        if not self._state.rule_store.has_verified_rules:
-            raise NeatSessionError(
-                "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
-            )
+        if not self._state.rule_store.empty:
+            raise NeatSessionError("No data model available. Try using [bold].read[/bold] to read a new data model.")
+        last_target = self._state.rule_store.provenance[-1].target_entity
+        rules = last_target.dms or last_target.information
 
-        rules = self._state.rule_store.last_verified_rule
-
-        if isinstance(rules, DMSRules):
-            di_graph = self._generate_dms_di_graph(rules)
-        elif isinstance(rules, InformationRules):
-            di_graph = self._generate_info_di_graph(rules)
+        if last_target.dms is not None:
+            di_graph = self._generate_dms_di_graph(last_target.dms)
         else:
-            # This should never happen, but we need to handle it to satisfy mypy
-            raise NeatSessionError(
-                f"Unsupported type {type(rules)}. Make sure you have either information or DMS rules."
-            )
+            di_graph = self._generate_info_di_graph(last_target.information)
         identifier = to_directory_compatible(str(rules.metadata.identifier))
         name = f"{identifier}.html"
 
@@ -187,22 +180,16 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
         self._state = state
 
     def __call__(self) -> Any:
-        if not self._state.rule_store.has_verified_rules:
-            raise NeatSessionError(
-                "No verified data model available. Try using [bold].verify()[/bold] to verify data model."
-            )
+        if not self._state.rule_store.empty:
+            raise NeatSessionError("No data model available. Try using [bold].read[/bold] to read a data model.")
 
-        rules = self._state.rule_store.last_verified_rule
+        last_target = self._state.rule_store.provenance[-1].target_entity
+        rules = last_target.dms or last_target.information
 
-        if isinstance(rules, DMSRules):
-            di_graph = self._generate_dms_di_graph(rules)
-        elif isinstance(rules, InformationRules):
-            di_graph = self._generate_info_di_graph(rules)
+        if last_target.dms is not None:
+            di_graph = self._generate_dms_di_graph(last_target.dms)
         else:
-            # This should never happen, but we need to handle it to satisfy mypy
-            raise NeatSessionError(
-                f"Unsupported type {type(rules)}. Make sure you have either information or DMS rules."
-            )
+            di_graph = self._generate_info_di_graph(last_target.information)
         identifier = to_directory_compatible(str(rules.metadata.identifier))
         name = f"{identifier}_implements.html"
         return self._generate_visualization(di_graph, name)
@@ -324,20 +311,6 @@ class ShowDataModelProvenanceAPI(ShowBaseAPI):
                     color=hex_colored_types["Export"],
                 )
                 di_graph.add_edge(source_shorten, export_id, label="exported", color="grey")
-
-        for pruned_lists in self._state.rule_store.pruned_by_source_entity_id.values():
-            for prune_path in pruned_lists:
-                for change in prune_path:
-                    source = uri_display_name(change.source_entity.id_)
-                    target = uri_display_name(change.target_entity.id_)
-                    di_graph.add_node(
-                        target,
-                        label=target,
-                        type="Pruned",
-                        title="Pruned",
-                        color=hex_colored_types["Pruned"],
-                    )
-                    di_graph.add_edge(source, target, label="pruned", color="grey")
 
         return di_graph
 

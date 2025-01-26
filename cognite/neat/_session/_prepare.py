@@ -264,7 +264,9 @@ class DataModelPrepareAPI:
             prefix: The prefix to add to the views in the data model.
 
         """
-        return self._state.rule_transform(PrefixEntities(prefix))
+        # Todo: Fix prefix entities to be a verified rules transformer
+        raise NotImplementedError("Prefix entities is not implemented yet.")
+        return self._state.rule_transform(PrefixEntities(prefix))  # type: ignore[arg-type]
 
     def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]) -> IssueList:
         """This is a special method that allow you to drop parts of the data model.

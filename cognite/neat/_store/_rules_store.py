@@ -3,12 +3,12 @@ from collections import defaultdict
 from collections.abc import Callable, Hashable
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from functools import partial
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import rdflib
 from cognite.client import data_modeling as dm
+from rdflib import URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -20,40 +20,38 @@ from cognite.neat._rules.exporters import BaseExporter
 from cognite.neat._rules.exporters._base import CDFExporter, T_Export
 from cognite.neat._rules.importers import BaseImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models._base_input import InputRules
-from cognite.neat._rules.transformers import RulesTransformer
+from cognite.neat._rules.transformers import DMSToInformation, VerifiedRulesTransformer, VerifyAnyRules
 from cognite.neat._utils.upload import UploadResultList
 
-from ._provenance import EMPTY_ENTITY, UNKNOWN_AGENT, Activity, Agent, Change, Entity, Provenance
-from .exceptions import EmptyStore, InvalidInputOperation
+from ._provenance import UNKNOWN_AGENT, Activity, Change, Entity, Provenance
+from .exceptions import EmptyStore, InvalidActivityInput
 
 
 @dataclass(frozen=True)
-class ModelEntity(Entity):
-    result: Rules | None = None
+class RulesEntity(Entity):
+    information: InformationRules
+    dms: DMSRules | None = None
+
+    @property
+    def has_dms(self) -> bool:
+        return self.dms is not None
 
     @property
     def display_name(self) -> str:
-        if self.result is None:
-            return "Failed"
-        if isinstance(self.result, ReadRules):
-            if self.result.rules is None:
-                return "FailedRead"
-            return self.result.rules.display_type_name()
-        else:
-            return self.result.display_type_name()
+        if self.dms is not None:
+            return self.dms.display_name
+        return self.information.display_name
 
 
 @dataclass(frozen=True)
 class OutcomeEntity(Entity):
-    result: UploadResultList | Path | str | None = None
+    result: UploadResultList | Path | str | URIRef
 
 
 class NeatRulesStore:
     def __init__(self) -> None:
-        self.provenance = Provenance()
-        self.exports_by_source_entity_id: dict[rdflib.URIRef, list[Change]] = defaultdict(list)
-        self.pruned_by_source_entity_id: dict[rdflib.URIRef, list[Provenance]] = defaultdict(list)
+        self.provenance = Provenance[RulesEntity]()
+        self.exports_by_source_entity_id: dict[rdflib.URIRef, list[Change[OutcomeEntity]]] = defaultdict(list)
         self._last_outcome: UploadResultList | None = None
         self._iteration_by_id: dict[Hashable, int] = {}
 
@@ -67,210 +65,208 @@ class NeatRulesStore:
             return calculated_hash[:8]
         return calculated_hash
 
-    def import_(self, importer: BaseImporter) -> IssueList:
-        agent = importer.agent
+    def import_rules(
+        self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
+    ) -> IssueList:
+        if self.empty:
+            return self._import_rules(importer, validate, client)
+        else:
+            # Importing can be used as a manual transformation.
+            return self._manual_transform(importer, validate, client)
 
-        source_entity = Entity(
-            was_attributed_to=UNKNOWN_AGENT,
-            id_=importer.source_uri,
-        )
+    def _import_rules(
+        self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
+    ) -> IssueList:
+        def action() -> tuple[InformationRules, DMSRules | None]:
+            read_rules = importer.to_rules()
+            verified = VerifyAnyRules(validate, client).transform(read_rules)  # type: ignore[arg-type]
+            if isinstance(verified, InformationRules):
+                return verified, None
+            elif isinstance(verified, DMSRules):
+                return DMSToInformation().transform(verified), verified
+            else:
+                # Bug in the code
+                raise ValueError(f"Invalid output from importer: {type(verified)}")
 
-        return self._do_activity(importer.to_rules, agent, source_entity, importer.description)[1]
+        return self.import_action(action, importer)
+
+    def _manual_transform(
+        self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
+    ) -> IssueList:
+        raise NotImplementedError("Manual transformation is not yet implemented.")
 
     def import_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
-        agent = extractor.agent
-        source_entity = Entity(
-            was_attributed_to=UNKNOWN_AGENT,
-            id_=extractor.source_uri,
-        )
-        _, issues = self._do_activity(extractor.get_information_rules, agent, source_entity, extractor.description)
-        if isinstance(extractor, DMSGraphExtractor):
-            _, dms_issues = self._do_activity(extractor.get_dms_rules, agent, source_entity, extractor.description)
-            issues.extend(dms_issues)
-        return issues
+        def action() -> tuple[InformationRules, DMSRules | None]:
+            info = extractor.get_information_rules()
+            dms: DMSRules | None = None
+            if isinstance(extractor, DMSGraphExtractor):
+                dms = extractor.get_dms_rules()
+            return info, dms
 
-    def transform(self, *transformer: RulesTransformer) -> IssueList:
+        return self.import_action(action, extractor)
+
+    def import_action(
+        self,
+        action: Callable[[], tuple[InformationRules, DMSRules | None]],
+        agent_tool: BaseImporter | KnowledgeGraphExtractor,
+    ) -> IssueList:
+        if self.provenance:
+            raise NeatValueError(f"Data model already exists. Cannot import {agent_tool.source_uri}.")
+        return self.do_activity(action, agent_tool)
+
+    def transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:
         if not self.provenance:
             raise EmptyStore()
 
         all_issues = IssueList()
         for item in transformer:
-            last_change = self.provenance[-1]
-            source_entity = last_change.target_entity
-            if not isinstance(source_entity, ModelEntity):
-                # Todo: Provenance should be of an entity type
-                raise ValueError("Bug in neat: The last entity in the provenance is not a model entity.")
-            transformer_input = source_entity.result
 
-            if not item.is_valid_input(transformer_input):
-                raise InvalidInputOperation(expected=item.transform_type_hint(), got=type(transformer_input))
+            def action(transformer_item=item) -> tuple[InformationRules, DMSRules | None]:
+                last_change = self.provenance[-1]
+                source_entity = last_change.target_entity
+                transformer_input = self._get_transformer_input(source_entity, transformer_item)
+                transformer_output = transformer_item.transform(transformer_input)
+                if isinstance(transformer_output, InformationRules):
+                    return transformer_output, None
+                return last_change.target_entity.information, transformer_output
 
-            transform_issues = self._do_activity(
-                partial(item.transform, rules=transformer_input),
-                item.agent,
-                source_entity,
-                item.description,
-            )[1]
-            all_issues.extend(transform_issues)
+            issues = self.do_activity(action, item)
+            all_issues.extend(issues)
         return all_issues
 
     def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export]) -> T_Export:
+        return self._export_activity(exporter.export, exporter, DEFAULT_NAMESPACE["export-result"])
+
+    def export_to_file(self, exporter: BaseExporter, path: Path) -> None:
+        def export_action(input_: VerifiedRules) -> Path:
+            exporter.export_to_file(input_, path)
+            return path
+
+        self._export_activity(export_action, exporter, DEFAULT_NAMESPACE[path.name])
+
+    def export_to_cdf(self, exporter: CDFExporter, client: NeatClient, dry_run: bool) -> UploadResultList:
+        return self._export_activity(
+            exporter.export_to_cdf, exporter, DEFAULT_NAMESPACE["upload-result"], client, dry_run
+        )
+
+    def do_activity(
+        self,
+        action: Callable[[], tuple[InformationRules, DMSRules | None]],
+        agent_tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor,
+    ) -> IssueList:
+        if isinstance(agent_tool, BaseImporter | KnowledgeGraphExtractor):
+            source_entity = Entity.create_with_defaults(
+                was_attributed_to=UNKNOWN_AGENT,
+                id_=agent_tool.source_uri,
+            )
+        else:
+            # This is a transformer
+            source_entity = self.provenance[-1].target_entity
+
+        start = datetime.now(timezone.utc)
+        result: tuple[InformationRules, DMSRules | None] | None = None
+        with catch_issues() as issue_list:
+            result = action()
+
+        end = datetime.now(timezone.utc)
+        agent = agent_tool.agent
+        activity = Activity(
+            was_associated_with=agent,
+            ended_at_time=end,
+            started_at_time=start,
+            used=source_entity,
+        )
+        if result is None:
+            return issue_list
+        info, dms = result
+
+        target_entity = RulesEntity(
+            was_attributed_to=agent,
+            was_generated_by=activity,
+            information=info,
+            dms=dms,
+            issues=issue_list,
+            # here id can be bumped in case id already exists
+            id_=self._create_id(info, dms),
+        )
+        change = Change(
+            agent=agent,
+            activity=activity,
+            target_entity=target_entity,
+            description=agent_tool.description,
+            source_entity=source_entity,
+        )
+        self.provenance.append(change)
+        return issue_list
+
+    def _export_activity(self, action: Callable, exporter: BaseExporter, target_id: URIRef, *exporter_args: Any) -> Any:
+        if self.empty:
+            raise EmptyStore()
         last_change = self.provenance[-1]
         source_entity = last_change.target_entity
-        if not isinstance(source_entity, ModelEntity):
-            # Todo: Provenance should be of an entity type
-            raise ValueError("Bug in neat: The last entity in the provenance is not a model entity.")
         expected_types = exporter.source_types()
-        if not any(isinstance(source_entity.result, type_) for type_ in expected_types):
-            raise InvalidInputOperation(expected=expected_types, got=type(source_entity.result))
+
+        if source_entity.dms is not None and isinstance(source_entity.dms, expected_types):
+            input_ = source_entity.dms
+        elif isinstance(source_entity.information, expected_types):
+            input_ = source_entity.information
+        else:
+            available: list[type] = [InformationRules]
+            if source_entity.dms is not None:
+                available.append(DMSRules)
+            raise InvalidActivityInput(expected=expected_types, have=tuple(available))
 
         agent = exporter.agent
         start = datetime.now(timezone.utc)
         with catch_issues() as issue_list:
             # Validate the type of the result
-            result = exporter.export(source_entity.result)  # type: ignore[arg-type]
+            result = action(input_, *exporter_args)
+
         end = datetime.now(timezone.utc)
-        target_id = DEFAULT_NAMESPACE["export-result"]
         activity = Activity(
             was_associated_with=agent,
             ended_at_time=end,
             started_at_time=start,
             used=source_entity,
         )
-        target_entity = OutcomeEntity(
-            was_attributed_to=agent,
-            was_generated_by=activity,
-            result=type(result).__name__,
-            issues=issue_list,
-            id_=target_id,
-        )
-        change = Change(
-            agent=agent,
-            activity=activity,
-            target_entity=target_entity,
-            description=exporter.description,
-            source_entity=source_entity,
-        )
-        self.exports_by_source_entity_id[source_entity.id_].append(change)
-        return result
-
-    def export_to_file(self, exporter: BaseExporter, path: Path) -> None:
-        last_change = self.provenance[-1]
-        source_entity = last_change.target_entity
-        if not isinstance(source_entity, ModelEntity):
-            # Todo: Provenance should be of an entity type
-            raise ValueError("Bug in neat: The last entity in the provenance is not a model entity.")
-        expected_types = exporter.source_types()
-        if not any(isinstance(source_entity.result, type_) for type_ in expected_types):
-            raise InvalidInputOperation(expected=expected_types, got=type(source_entity.result))
-        target_id = DEFAULT_NAMESPACE[path.name]
-        agent = exporter.agent
-        start = datetime.now(timezone.utc)
-        with catch_issues() as issue_list:
-            exporter.export_to_file(source_entity.result, path)
-        end = datetime.now(timezone.utc)
-
-        activity = Activity(
-            was_associated_with=agent,
-            ended_at_time=end,
-            started_at_time=start,
-            used=source_entity,
-        )
-        target_entity = OutcomeEntity(
-            was_attributed_to=agent,
-            was_generated_by=activity,
-            result=path,
-            issues=issue_list,
-            id_=target_id,
-        )
-        change = Change(
-            agent=agent,
-            activity=activity,
-            target_entity=target_entity,
-            description=exporter.description,
-            source_entity=source_entity,
-        )
-        self.exports_by_source_entity_id[source_entity.id_].append(change)
-
-    def export_to_cdf(self, exporter: CDFExporter, client: NeatClient, dry_run: bool) -> UploadResultList:
-        last_change = self.provenance[-1]
-        source_entity = last_change.target_entity
-        if not isinstance(source_entity, ModelEntity):
-            # Todo: Provenance should be of an entity type
-            raise ValueError("Bug in neat: The last entity in the provenance is not a model entity.")
-        expected_types = exporter.source_types()
-        if not any(isinstance(source_entity.result, type_) for type_ in expected_types):
-            raise InvalidInputOperation(expected=expected_types, got=type(source_entity.result))
-
-        agent = exporter.agent
-        start = datetime.now(timezone.utc)
-        target_id = DEFAULT_NAMESPACE["upload-result"]
-        result: UploadResultList | None = None
-        with catch_issues() as issue_list:
-            result = exporter.export_to_cdf(source_entity.result, client, dry_run)
-        end = datetime.now(timezone.utc)
-
-        activity = Activity(
-            was_associated_with=agent,
-            ended_at_time=end,
-            started_at_time=start,
-            used=source_entity,
-        )
-        target_entity = OutcomeEntity(
-            was_attributed_to=agent,
-            was_generated_by=activity,
-            result=result,
-            issues=issue_list,
-            id_=target_id,
-        )
-        change = Change(
-            agent=agent,
-            activity=activity,
-            target_entity=target_entity,
-            description=exporter.description,
-            source_entity=source_entity,
-        )
-        self.exports_by_source_entity_id[source_entity.id_].append(change)
-        self._last_outcome = result
-        return result
-
-    def prune_until_compatible(self, transformer: RulesTransformer) -> list[Change]:
-        """Prune the provenance until the last successful entity is compatible with the transformer.
-
-        Args:
-            transformer: The transformer to check compatibility with.
-
-        Returns:
-            The changes that were pruned.
-        """
-        pruned_candidates: list[Change] = []
-        for change in reversed(self.provenance):
-            if not isinstance(change.target_entity, ModelEntity):
-                continue
-            if not transformer.is_valid_input(change.target_entity.result):
-                pruned_candidates.append(change)
-            else:
-                break
+        if isinstance(result, UploadResultList | Path | URIRef):
+            outcome_result: UploadResultList | Path | URIRef | str = result
         else:
-            raise NeatValueError("No compatible entity found in the provenance.")
-        if not pruned_candidates:
-            return []
-        self.provenance = self.provenance[: -len(pruned_candidates)]
-        pruned_candidates.reverse()
-        self.pruned_by_source_entity_id[self.provenance[-1].target_entity.id_].append(Provenance(pruned_candidates))
-        return pruned_candidates
+            outcome_result = type(result).__name__
 
-    def _export(self, action: Callable[[Any], Any], agent: Agent, description: str) -> Any:
-        last_entity: ModelEntity | None = None
-        for change in reversed(self.provenance):
-            if isinstance(change.target_entity, ModelEntity) and isinstance(change.target_entity.result, DMSRules):
-                last_entity = change.target_entity
-                break
-        if last_entity is None:
-            raise NeatValueError("No verified DMS rules found in the provenance.")
-        rules = last_entity.result
-        result, _ = self._do_activity(lambda: action(rules), agent, last_entity, description)
+        target_entity = OutcomeEntity(
+            was_attributed_to=agent,
+            was_generated_by=activity,
+            result=outcome_result,
+            issues=issue_list,
+            id_=target_id,
+        )
+        change = Change(
+            agent=agent,
+            activity=activity,
+            target_entity=target_entity,
+            description=exporter.description,
+            source_entity=source_entity,
+        )
+        self.exports_by_source_entity_id[source_entity.id_].append(change)
+        if isinstance(result, UploadResultList):
+            self._last_outcome = result
         return result
+
+    @staticmethod
+    def _get_transformer_input(
+        source_entity: RulesEntity, transformer: VerifiedRulesTransformer
+    ) -> InformationRules | DMSRules:
+        # Case 1: We only have information rules
+        if source_entity.dms is None:
+            if transformer.is_valid_input(source_entity.information):
+                return source_entity.information
+            raise InvalidActivityInput(expected=(DMSRules,), have=(InformationRules,))
+        # Case 2: We have both information and dms rules and the transformer is compatible with dms rules
+        elif isinstance(source_entity.dms, DMSRules) and transformer.is_valid_input(source_entity.dms):
+            return source_entity.dms
+        # Case 3: We have both information and dms rules and the transformer is compatible with information rules
+        raise InvalidActivityInput(expected=(InformationRules,), have=(DMSRules,))
 
     def _update_source_entity(self, source_entity: Entity, result: Rules, issue_list: IssueList) -> Entity:
         """Update source entity to keep the unbroken provenance chain of changes."""
@@ -321,52 +317,6 @@ class NeatRulesStore:
 
         return update_source_entity or source_entity
 
-    def _do_activity(
-        self, action: Callable[[], Rules | None], agent: Agent, source_entity: Entity, description: str
-    ) -> tuple[Any, IssueList]:
-        start = datetime.now(timezone.utc)
-        result: Rules | None = None
-        with catch_issues() as issue_list:
-            result = action()
-        end = datetime.now(timezone.utc)
-
-        # This handles import activity that needs to be properly registered
-        # hence we check if class of action is subclass of BaseImporter
-        # and only if the store is not empty !
-        if (
-            hasattr(action, "__self__")
-            and issubclass(action.__self__.__class__, BaseImporter)
-            and source_entity.was_attributed_to == UNKNOWN_AGENT
-            and result
-            and not self.empty
-        ):
-            source_entity = self._update_source_entity(source_entity, result, issue_list)
-
-        activity = Activity(
-            was_associated_with=agent,
-            ended_at_time=end,
-            started_at_time=start,
-            used=source_entity,
-        )
-        target_entity = ModelEntity(
-            was_attributed_to=agent,
-            was_generated_by=activity,
-            result=result,
-            issues=issue_list,
-            # here id can be bumped in case id already exists
-            id_=self._create_id(result),
-        )
-        change = Change(
-            agent=agent,
-            activity=activity,
-            target_entity=target_entity,
-            description=description,
-            source_entity=source_entity,
-        )
-
-        self.provenance.append(change)
-        return result, issue_list
-
     def _get_source_id(self, result: Rules) -> rdflib.URIRef | None:
         """Return the source of the result."""
 
@@ -385,30 +335,11 @@ class NeatRulesStore:
             return result.metadata.as_data_model_id()
         return None
 
-    def _create_id(self, result: Any) -> rdflib.URIRef:
-        identifier: rdflib.URIRef
-
-        # Case 1: Unsuccessful activity -> target entity will be EMPTY_ENTITY
-        if result is None:
-            identifier = EMPTY_ENTITY.id_
-
-        # Case 2: Result ReadRules
-        elif isinstance(result, ReadRules):
-            # Case 2.1: ReadRules with no rules -> target entity will be EMPTY_ENTITY
-            if result.rules is None:
-                identifier = EMPTY_ENTITY.id_
-
-            # Case 2.2: ReadRules with rules identified by metadata.identifier
-            else:
-                identifier = result.rules.metadata.identifier
-
-        # Case 3: Result VerifiedRules, identifier will be metadata.identifier
-        elif isinstance(result, VerifiedRules):
-            identifier = result.metadata.identifier
-
-        # Case 4: Defaults to unknown entity
+    def _create_id(self, info: InformationRules, dms: DMSRules | None) -> rdflib.URIRef:
+        if dms is None:
+            identifier = info.metadata.identifier
         else:
-            identifier = DEFAULT_NAMESPACE["unknown-entity"]
+            identifier = dms.metadata.identifier
 
         # Here we check if the identifier is already in the iteration dictionary
         # to track specific changes to the same entity, if it is we increment the iteration
@@ -421,79 +352,27 @@ class NeatRulesStore:
         self._iteration_by_id[identifier] += 1
         return identifier + f"/Iteration_{self._iteration_by_id[identifier]}"
 
-    def get_last_entity(self) -> ModelEntity:
-        if not self.provenance:
-            raise NeatValueError("No entity found in the provenance.")
-        return cast(ModelEntity, self.provenance[-1].target_entity)
-
-    def get_last_successful_entity(self) -> ModelEntity:
-        for change in reversed(self.provenance):
-            if isinstance(change.target_entity, ModelEntity) and change.target_entity.result:
-                return change.target_entity
-        raise NeatValueError("No successful entity found in the provenance.")
-
-    @property
-    def has_unverified_rules(self) -> bool:
-        return any(
-            isinstance(change.target_entity, ModelEntity)
-            and isinstance(change.target_entity.result, ReadRules)
-            and change.target_entity.result.rules is not None
-            for change in self.provenance
-        )
-
-    @property
-    def has_verified_rules(self) -> bool:
-        return any(
-            isinstance(change.target_entity, ModelEntity)
-            and isinstance(change.target_entity.result, DMSRules | InformationRules)
-            for change in self.provenance
-        )
-
-    @property
-    def last_unverified_rule(self) -> InputRules:
-        for change in reversed(self.provenance):
-            if (
-                isinstance(change.target_entity, ModelEntity)
-                and isinstance(change.target_entity.result, ReadRules)
-                and change.target_entity.result.rules is not None
-            ):
-                return change.target_entity.result.rules
-
-        raise NeatValueError("No unverified rule found in the provenance.")
-
-    @property
-    def last_verified_rule(self) -> DMSRules | InformationRules:
-        for change in reversed(self.provenance):
-            if isinstance(change.target_entity, ModelEntity) and isinstance(
-                change.target_entity.result, DMSRules | InformationRules
-            ):
-                return change.target_entity.result
-        raise NeatValueError("No verified rule found in the provenance.")
-
     @property
     def last_verified_dms_rules(self) -> DMSRules:
-        for change in reversed(self.provenance):
-            if isinstance(change.target_entity, ModelEntity) and isinstance(change.target_entity.result, DMSRules):
-                return change.target_entity.result
-        raise NeatValueError("No verified DMS rules found in the provenance.")
+        if not self.provenance:
+            raise EmptyStore()
+        if self.provenance[-1].target_entity.dms is None:
+            raise NeatValueError("No verified DMS rules found in the provenance.")
+        return self.provenance[-1].target_entity.dms
 
     @property
     def last_verified_information_rules(self) -> InformationRules:
-        for change in reversed(self.provenance):
-            if isinstance(change.target_entity, ModelEntity) and isinstance(
-                change.target_entity.result, InformationRules
-            ):
-                return change.target_entity.result
-        raise NeatValueError("No verified information rules found in the provenance.")
+        if not self.provenance:
+            raise EmptyStore()
+        return self.provenance[-1].target_entity.information
 
     @property
     def last_issues(self) -> IssueList:
         if not self.provenance:
-            raise NeatValueError("No issues found in the provenance.")
-        last_change = self.provenance[-1]
-        if last_change.target_entity.issues:
-            return last_change.target_entity.issues
-        return last_change.source_entity.issues
+            raise EmptyStore()
+        if self.provenance[-1].target_entity.issues:
+            return self.provenance[-1].target_entity.issues
+        return self.provenance[-1].source_entity.issues
 
     @property
     def last_outcome(self) -> UploadResultList:
