@@ -9,6 +9,7 @@ from ._external import (
     FileReadError,
     FileTypeUnexpectedError,
     NeatYamlError,
+    OxigraphStorageLockedError,
 )
 from ._general import NeatImportError, NeatTypeError, NeatValueError, RegexViolationError
 from ._properties import (
@@ -51,6 +52,7 @@ __all__ = [
     "NeatTypeError",
     "NeatValueError",
     "NeatYamlError",
+    "OxigraphStorageLockedError",
     "PropertyDefinitionDuplicatedError",
     "PropertyDefinitionError",
     "PropertyMappingDuplicatedError",

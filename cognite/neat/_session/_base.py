@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal
 
 from cognite.client import CogniteClient
@@ -81,12 +82,14 @@ class NeatSession:
         self,
         client: CogniteClient | None = None,
         storage: Literal["memory", "oxigraph"] | None = None,
+        storage_path: str | None = None,
         verbose: bool = True,
         load_engine: Literal["newest", "cache", "skip"] = "cache",
     ) -> None:
         self._verbose = verbose
         self._state = SessionState(
             store_type=storage or self._select_most_performant_store(),
+            storage_path=Path(storage_path) if storage_path else None,
             client=NeatClient(client) if client else None,
         )
         self.read = ReadAPI(self._state, verbose)
@@ -218,7 +221,7 @@ class NeatSession:
 
     def _infer_subclasses(self) -> IssueList:
         """Infer the subclass of instances."""
-        if not self._state.instances.has_store:
+        if self._state.instances.empty:
             raise NeatSessionError("No instances to infer subclasses from.")
         if not self._state.rule_store.provenance:
             raise NeatSessionError("No existing data model to infer subclasses from.")
@@ -245,7 +248,7 @@ class NeatSession:
 
     def _repr_html_(self) -> str:
         state = self._state
-        if not state.instances.has_store and state.rule_store.empty:
+        if state.instances.empty and state.rule_store.empty:
             return "<strong>Empty session</strong>. Get started by reading something with the <em>.read</em> attribute."
 
         output = []
@@ -258,10 +261,18 @@ class NeatSession:
                 html = last_entity.information._repr_html_()
             output.append(f"<H2>Data Model</H2><br />{html}")  # type: ignore
 
-        if state.instances.has_store:
+        if not state.instances.empty:
             output.append(f"<H2>Instances</H2> {state.instances.store._repr_html_()}")
 
         return "<br />".join(output)
+
+    def close(self) -> None:
+        """Close the session and release resources."""
+        self._state.instances.store.dataset.close()
+
+    def __del__(self) -> None:
+        """Called by garbage collector"""
+        self.close()
 
 
 @session_class_wrapper

@@ -3,6 +3,7 @@ from collections.abc import Callable
 from typing import Any
 
 from cognite.neat._issues.errors import CDFMissingClientError, NeatImportError
+from cognite.neat._issues.errors._external import OxigraphStorageLockedError
 from cognite.neat._issues.errors._general import NeatValueError
 
 from ._collector import _COLLECTOR
@@ -34,7 +35,12 @@ def _session_method_wrapper(func: Callable, cls_name: str):
         except NeatSessionError as e:
             action = _get_action()
             print(f"{_PREFIX} Cannot {action}: {e}")
-        except (CDFMissingClientError, NeatImportError, NeatValueError) as e:
+        except (
+            CDFMissingClientError,
+            NeatImportError,
+            NeatValueError,
+            OxigraphStorageLockedError,
+        ) as e:
             print(f"{_PREFIX} {escape(e.as_message())}")
         except ModuleNotFoundError as e:
             if e.name == "neatengine":
