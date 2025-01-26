@@ -195,13 +195,11 @@ class NeatSession:
             "NeatInferredDataModel",
             "v1",
         ),
-        max_number_of_instance: int = 100,
     ) -> IssueList:
         """Data model inference from instances.
 
         Args:
             model_id: The ID of the inferred data model.
-            max_number_of_instance: The maximum number of instances to use for inference.
 
         Example:
             Infer a data model after reading a source file
@@ -212,6 +210,12 @@ class NeatSession:
             neat.infer()
             ```
         """
+        return self._infer_subclasses(model_id)
+
+    def _previous_inference(
+        self, model_id: dm.DataModelId | tuple[str, str, str], max_number_of_instance: int = 100
+    ) -> IssueList:
+        # Temporary keeping the old inference method in case we need to revert back
         model_id = dm.DataModelId.load(model_id)
         importer = importers.InferenceImporter.from_graph_store(
             store=self._state.instances.store,
@@ -233,8 +237,8 @@ class NeatSession:
         if self._state.rule_store.provenance:
             last_entity = self._state.rule_store.provenance[-1].target_entity
 
-        # Note that this importer behaves as a transformer in the rule store. We are essentially
-        # transforming the last entity's information rules into a new set of information rules.
+        # Note that this importer behaves as a transformer in the rule store when there is an existing rules.
+        # We are essentially transforming the last entity's information rules into a new set of information rules.
         importer = importers.SubclassInferenceImporter(
             issue_list=IssueList(),
             graph=self._state.instances.store.graph(),
