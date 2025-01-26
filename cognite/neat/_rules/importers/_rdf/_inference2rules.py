@@ -10,7 +10,7 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF, RDFS, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
-from cognite.neat._constants import NEAT
+from cognite.neat._constants import NEAT, get_default_prefixes_and_namespaces
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.warnings import PropertyValueTypeUndefinedWarning
 from cognite.neat._rules.analysis import InformationAnalysis
@@ -81,7 +81,7 @@ class InferenceImporter(BaseRDFImporter):
     def from_graph_store(
         cls,
         store: NeatGraphStore,
-        data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_INFERENCE_DATA_MODEL_ID,
+        data_model_id: dm.DataModelId | tuple[str, str, str] = DEFAULT_INFERENCE_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
         language: str = "en",
@@ -317,23 +317,6 @@ class SubclassInferenceImporter(BaseRDFImporter):
         data_types.Float.as_xml_uri_ref(): data_types.Double.as_xml_uri_ref(),
     }
 
-    def __init__(
-        self,
-        issue_list: IssueList,
-        graph: Graph,
-        rules: InformationRules,
-        non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
-    ) -> None:
-        super().__init__(
-            issue_list,
-            graph,
-            rules.metadata.as_data_model_id().as_tuple(),  # type: ignore[arg-type]
-            -1,
-            non_existing_node_type,
-            language="en",
-        )
-        self._rules = rules
-
     _ordered_class_query = """SELECT DISTINCT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class }
                            group by ?class order by DESC(?instances)"""
@@ -367,25 +350,57 @@ class SubclassInferenceImporter(BaseRDFImporter):
                               }}
                             }}"""
 
+    def __init__(
+        self,
+        issue_list: IssueList,
+        graph: Graph,
+        rules: InformationRules | None = None,
+        data_model_id: dm.DataModelId | tuple[str, str, str] | None = None,
+        non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
+    ) -> None:
+        if sum([1 for v in [rules, data_model_id] if v is not None]) != 1:
+            raise ValueError("Exactly one of rules or data_model_id must be provided.")
+        if data_model_id is not None:
+            identifier = data_model_id
+        elif rules is not None:
+            identifier = rules.metadata.as_data_model_id().as_tuple()  # type: ignore[assignment]
+        else:
+            raise ValueError("Exactly one of rules or data_model_id must be provided.")
+        super().__init__(issue_list, graph, identifier, -1, non_existing_node_type, language="en")
+        self._rules = rules
+
     def _to_rules_components(
         self,
     ) -> dict:
+        if self._rules:
+            prefixes = self._rules.prefixes.copy()
+        else:
+            prefixes = get_default_prefixes_and_namespaces()
+
         parent_by_child = self._read_parent_by_child_from_graph()
         read_properties = self._read_class_properties_from_graph(parent_by_child)
-        classes, properties = self._create_classes_properties(read_properties)
+        classes, properties = self._create_classes_properties(read_properties, prefixes)
 
+        if self._rules:
+            metadata = self._rules.metadata.model_dump()
+            default_space = self._rules.metadata.prefix
+        else:
+            metadata = self._default_metadata()
+            default_space = metadata["space"]
         return {
-            "metadata": self._rules.metadata.model_dump(),
-            "classes": [cls.dump(self._rules.metadata.prefix) for cls in classes],
-            "properties": [prop.dump(self._rules.metadata.prefix) for prop in properties],
-            "prefixes": self._rules.prefixes,
+            "metadata": metadata,
+            "classes": [cls.dump(default_space) for cls in classes],
+            "properties": [prop.dump(default_space) for prop in properties],
+            "prefixes": prefixes,
         }
 
     def _create_classes_properties(
-        self, read_properties: list[_ReadProperties]
+        self, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
     ) -> tuple[list[InformationInputClass], list[InformationInputProperty]]:
-        existing_classes = {class_.class_.suffix: class_ for class_ in self._rules.classes}
-        prefixes = self._rules.prefixes.copy()
+        if self._rules:
+            existing_classes = {class_.class_.suffix: class_ for class_ in self._rules.classes}
+        else:
+            existing_classes = {}
         classes: list[InformationInputClass] = []
         properties: list[InformationInputProperty] = []
         # Help for IDE
@@ -462,14 +477,17 @@ class SubclassInferenceImporter(BaseRDFImporter):
             type_uri, instance_count_literal = cast(tuple[URIRef, RdfLiteral], result_row)
             count_by_type[type_uri] = instance_count_literal.toPython()
         del result_row
-        analysis = InformationAnalysis(self._rules)
-        existing_class_properties = {
-            (class_entity.suffix, prop.property_)
-            for class_entity, properties in analysis.classes_with_properties(
-                consider_inheritance=True, allow_different_namespace=True
-            ).items()
-            for prop in properties
-        }
+        if self._rules:
+            analysis = InformationAnalysis(self._rules)
+            existing_class_properties = {
+                (class_entity.suffix, prop.property_)
+                for class_entity, properties in analysis.classes_with_properties(
+                    consider_inheritance=True, allow_different_namespace=True
+                ).items()
+                for prop in properties
+            }
+        else:
+            existing_class_properties = set()
         properties_by_class_by_subclass: list[_ReadProperties] = []
         for type_uri, instance_count in count_by_type.items():
             property_query = self._properties_query.format(type=type_uri, unknown_type=NEAT.UnknownType)
