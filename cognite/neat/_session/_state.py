@@ -17,7 +17,7 @@ from cognite.neat._utils.rdf_ import uri_display_name
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.upload import UploadResultList
 
-from .exceptions import NeatSessionError
+from .exceptions import NeatSessionError, _session_method_wrapper
 
 
 class SessionState:
@@ -103,15 +103,19 @@ class InstancesState:
         self.issue_lists = IssueList()
         self.outcome = UploadResultList()
 
-        if self.store_type == "oxigraph":
-            if self.storage_path:
-                self.storage_path.mkdir(parents=True, exist_ok=True)
-            self.store = NeatGraphStore.from_oxi_local_store(storage_dir=self.storage_path)
-        else:
-            self.store = NeatGraphStore.from_memory_store()
+        # Ensure that error handling is done in the constructor
+        self.store = _session_method_wrapper(self._create_store, "NeatSession")()
 
         if self.storage_path:
             print("Remember to close neat session .close() once you are done to avoid oxigraph lock.")
+
+    def _create_store(self) -> NeatGraphStore:
+        if self.store_type == "oxigraph":
+            if self.storage_path:
+                self.storage_path.mkdir(parents=True, exist_ok=True)
+            return NeatGraphStore.from_oxi_local_store(storage_dir=self.storage_path)
+        else:
+            return NeatGraphStore.from_memory_store()
 
     @property
     def empty(self) -> bool:
