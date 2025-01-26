@@ -414,20 +414,22 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 parent_class_properties_iterable
             )
 
-            shared_property_uris = set.intersection(
-                *[
-                    set(properties_by_property.keys())
-                    for properties_by_property in properties_by_class_by_property.values()
-                ]
-            )
+            parent_suffix: str | None = None
             if parent_uri != NEAT.EmptyType:
+                shared_property_uris = set.intersection(
+                    *[
+                        set(properties_by_property.keys())
+                        for properties_by_property in properties_by_class_by_property.values()
+                    ]
+                )
                 parent_suffix = remove_namespace_from_uri(parent_uri)
                 self._add_uri_namespace_to_prefixes(parent_uri, prefixes)
                 if parent_suffix not in existing_classes:
                     classes.append(InformationInputClass(class_=parent_suffix))
                 else:
                     classes.append(InformationInputClass.load(existing_classes[parent_suffix].model_dump()))
-
+            else:
+                shared_property_uris = set()
             shared_properties: dict[URIRef, list[_ReadProperties]] = defaultdict(list)
             for type_uri, properties_by_property_uri in properties_by_class_by_property.items():
                 class_suffix = remove_namespace_from_uri(type_uri)
@@ -437,7 +439,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     classes.append(
                         InformationInputClass(
                             class_=class_suffix,
-                            implements=parent_suffix if parent_uri != NEAT.UnknownType else None,
+                            implements=parent_suffix,
                         )
                     )
                 else:
@@ -449,12 +451,14 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     properties.append(
                         self._create_property(read_properties, class_suffix, type_uri, property_uri, prefixes)
                     )
-            for property_uri, read_properties in shared_properties.items():
-                properties.append(
-                    self._create_property(
-                        read_properties, parent_suffix, read_properties[0].type_uri, property_uri, prefixes
+
+            if parent_suffix:
+                for property_uri, read_properties in shared_properties.items():
+                    properties.append(
+                        self._create_property(
+                            read_properties, parent_suffix, read_properties[0].type_uri, property_uri, prefixes
+                        )
                     )
-                )
         return classes, properties
 
     @staticmethod
@@ -476,7 +480,6 @@ class SubclassInferenceImporter(BaseRDFImporter):
         for result_row in self.graph.query(self._ordered_class_query):
             type_uri, instance_count_literal = cast(tuple[URIRef, RdfLiteral], result_row)
             count_by_type[type_uri] = instance_count_literal.toPython()
-        del result_row
         if self._rules:
             analysis = InformationAnalysis(self._rules)
             existing_class_properties = {
@@ -505,7 +508,6 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 if occurrence_row:
                     max_occurrence_literal, *__ = cast(tuple[RdfLiteral, Any], occurrence_row)
                     max_occurrence = int(max_occurrence_literal.toPython())
-                del occurrence_row
                 properties_by_class_by_subclass.append(
                     _ReadProperties(
                         type_uri=type_uri,
@@ -516,8 +518,6 @@ class SubclassInferenceImporter(BaseRDFImporter):
                         instance_count=instance_count,
                     )
                 )
-
-            del result_row
         return properties_by_class_by_subclass
 
     def _read_parent_by_child_from_graph(self) -> dict[URIRef, URIRef]:
@@ -525,7 +525,6 @@ class SubclassInferenceImporter(BaseRDFImporter):
         for result_row in self.graph.query(self._type_parent_query):
             parent_uri, child_uri = cast(tuple[URIRef, URIRef], result_row)
             parent_by_child[child_uri] = parent_uri
-        del result_row
         return parent_by_child
 
     def _create_property(

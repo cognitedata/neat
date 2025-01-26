@@ -217,13 +217,15 @@ class NeatSession:
         )
         return self._state.rule_import(importer)
 
-    def _infer_subclasses(self) -> IssueList:
-        """Infer the subclass of instances."""
-        if not self._state.instances.has_store:
-            raise NeatSessionError("No instances to infer subclasses from.")
-        if not self._state.rule_store.provenance:
-            raise NeatSessionError("No existing data model to infer subclasses from.")
-
+    def _infer_subclasses(
+        self,
+        model_id: dm.DataModelId | tuple[str, str, str] = (
+            "neat_space",
+            "NeatInferredDataModel",
+            "v1",
+        ),
+    ) -> IssueList:
+        """Infer data model from instances."""
         last_entity: RulesEntity | None = None
         if self._state.rule_store.provenance:
             last_entity = self._state.rule_store.provenance[-1].target_entity
@@ -233,7 +235,8 @@ class NeatSession:
         importer = importers.SubclassInferenceImporter(
             issue_list=IssueList(),
             graph=self._state.instances.store.graph(),
-            rules=last_entity.information if last_entity else None,
+            rules=last_entity.information if last_entity is not None else None,
+            data_model_id=dm.DataModelId.load(model_id) if last_entity is None else None,
         )
 
         def action() -> tuple[InformationRules, DMSRules | None]:
