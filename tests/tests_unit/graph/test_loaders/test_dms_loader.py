@@ -92,9 +92,9 @@ def test_extract_above_direct_relation_limit() -> None:
         neat._state.instances.store.write(AssetsExtractor(assets, namespace=CLASSIC_CDF_NAMESPACE, as_write=True))
         neat._state.instances.store.write(FilesExtractor([file], namespace=CLASSIC_CDF_NAMESPACE, as_write=True))
 
-        neat.infer(max_number_of_instance=2)
+        neat.infer()
         neat.prepare.data_model.prefix("Classic")
-        neat.convert("dms")
+        neat.convert()
         dms_rules = neat._state.rule_store.last_verified_dms_rules
         # Default conversion uses edges for connections. We need to change it to direct relations
         asset_ids = next(prop for prop in dms_rules.properties if prop.view_property == "assetIds")
