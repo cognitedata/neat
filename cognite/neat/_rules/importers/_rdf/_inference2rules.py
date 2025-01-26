@@ -552,7 +552,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
     def _get_value_type(
         self, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
     ) -> str | UnknownEntity:
-        value_types = {prop.value_type for prop in read_properties}
+        value_types = {self.overwrite_data_types.get(prop.value_type, prop.value_type) for prop in read_properties}
         if len(value_types) == 1:
             uri_ref = value_types.pop()
             if uri_ref == NEAT.UnknownType:
