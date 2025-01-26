@@ -19,6 +19,7 @@ from cognite.neat._rules.transformers import (
     MergeInformationRules,
     VerifyInformationRules,
 )
+from cognite.neat._store._rules_store import RulesEntity
 from cognite.neat._utils.auxiliary import local_import
 
 from ._collector import _COLLECTOR, Collector
@@ -222,18 +223,24 @@ class NeatSession:
             raise NeatSessionError("No instances to infer subclasses from.")
         if not self._state.rule_store.provenance:
             raise NeatSessionError("No existing data model to infer subclasses from.")
-        last_entity = self._state.rule_store.provenance[-1].target_entity
+
+        last_entity: RulesEntity | None = None
+        if self._state.rule_store.provenance:
+            last_entity = self._state.rule_store.provenance[-1].target_entity
+
         # Note that this importer behaves as a transformer in the rule store. We are essentially
         # transforming the last entity's information rules into a new set of information rules.
         importer = importers.SubclassInferenceImporter(
             issue_list=IssueList(),
             graph=self._state.instances.store.graph(),
-            rules=last_entity.information,
+            rules=last_entity.information if last_entity else None,
         )
 
         def action() -> tuple[InformationRules, DMSRules | None]:
             unverified_information = importer.to_rules()
             extra_info = VerifyInformationRules().transform(unverified_information)
+            if not last_entity:
+                return extra_info, None
             merged_info = MergeInformationRules(extra_info).transform(last_entity.information)
             if not last_entity.dms:
                 return merged_info, None
