@@ -86,8 +86,8 @@ class NEAT(DefinedNamespace):
     _fail = True
     _NS = Namespace("http://thisisneat.io/internal/")
 
-    type: URIRef  # type property used to express a type of a subject
     UnknownType: URIRef  # Unknown type used to express that the type of a subject is unknown
+    EmptyType: URIRef  # Empty type used to express that the type of a subject is empty
 
 
 def get_default_prefixes_and_namespaces() -> dict[str, Namespace]:

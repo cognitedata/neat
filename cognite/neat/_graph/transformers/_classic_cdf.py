@@ -63,11 +63,11 @@ class AddAssetDepth(BaseTransformerStandardised):
         row_output = RowTransformationOutput()
         subject, object = query_result_row
 
-        row_output.add_triples.append(cast(Triple, (subject, DEFAULT_NAMESPACE.depth, object)))
+        row_output.add_triples.add(cast(Triple, (subject, DEFAULT_NAMESPACE.depth, object)))
 
         if self.depth_typing and (type_ := self.depth_typing.get(int(object), None)):
-            row_output.remove_triples.append(cast(Triple, (subject, RDF.type, self.asset_type)))
-            row_output.add_triples.append(cast(Triple, (subject, RDF.type, DEFAULT_NAMESPACE[type_])))
+            row_output.remove_triples.add(cast(Triple, (subject, RDF.type, self.asset_type)))
+            row_output.add_triples.add(cast(Triple, (subject, RDF.type, DEFAULT_NAMESPACE[type_])))
 
         row_output.instances_modified_count += 1
 
@@ -128,7 +128,7 @@ class BaseAssetConnector(BaseTransformerStandardised, ABC):
         row_output = RowTransformationOutput()
         subject, object = query_result_row
 
-        row_output.add_triples.append(cast(Triple, (subject, self.asset_to_resource_connection, object)))
+        row_output.add_triples.add(cast(Triple, (subject, self.asset_to_resource_connection, object)))
 
         row_output.instances_modified_count += 1
 
@@ -305,12 +305,12 @@ class AssetRelationshipConnector(BaseTransformerStandardised):
         row_output = RowTransformationOutput()
         source, relationship, target = query_result_row
 
-        row_output.add_triples.append(cast(Triple, (source, DEFAULT_NAMESPACE.relationship, target)))
-        row_output.add_triples.append(cast(Triple, (relationship, DEFAULT_NAMESPACE.source, source)))
-        row_output.add_triples.append(cast(Triple, (relationship, DEFAULT_NAMESPACE.target, target)))
+        row_output.add_triples.add(cast(Triple, (source, DEFAULT_NAMESPACE.relationship, target)))
+        row_output.add_triples.add(cast(Triple, (relationship, DEFAULT_NAMESPACE.source, source)))
+        row_output.add_triples.add(cast(Triple, (relationship, DEFAULT_NAMESPACE.target, target)))
 
-        row_output.remove_triples.append(cast(Triple, (relationship, self.relationship_source_xid_prop, None)))
-        row_output.remove_triples.append(cast(Triple, (relationship, self.relationship_target_xid_prop, None)))
+        row_output.remove_triples.add(cast(Triple, (relationship, self.relationship_source_xid_prop, None)))
+        row_output.remove_triples.add(cast(Triple, (relationship, self.relationship_target_xid_prop, None)))
 
         row_output.instances_modified_count += 2
 
@@ -578,10 +578,10 @@ WHERE {{
             warnings.warn(ResourceNotFoundWarning(target, "class", str(instance), "class"), stacklevel=2)
             return output
 
-        output.remove_triples.append((instance, self._namespace.sourceExternalId, source))
-        output.remove_triples.append((instance, self._namespace.targetExternalId, target))
-        output.add_triples.append((instance, self._namespace.sourceExternalId, source_id))
-        output.add_triples.append((instance, self._namespace.targetExternalId, target_id))
+        output.remove_triples.add((instance, self._namespace.sourceExternalId, source))
+        output.remove_triples.add((instance, self._namespace.targetExternalId, target))
+        output.add_triples.add((instance, self._namespace.sourceExternalId, source_id))
+        output.add_triples.add((instance, self._namespace.targetExternalId, target_id))
         output.instances_modified_count += 1
         return output
 

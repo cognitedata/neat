@@ -39,6 +39,18 @@ data_product:
     value_type: text
     view: ClassicAsset
     view_property: aliases
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetClass
+    description: Specifies the class of the asset. It's a direct relation to CogniteAssetClass.
+    immutable: false
+    is_list: false
+    name: Asset class
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteAsset/assetClass
+    nullable: true
+    value_type: cdf_cdm:CogniteAssetClass(version=v1)
+    view: ClassicAsset
+    view_property: assetClass
   - connection: reverse(property=parent)
     description: An automatically updated list of assets with this asset as their
       parent.
@@ -122,6 +134,18 @@ data_product:
     value_type: text
     view: ClassicAsset
     view_property: name
+  - connection: direct
+    constraint: uniqueObject3D
+    container: cdf_cdm:CogniteVisualizable
+    container_property: object3D
+    description: Direct relation to an Object3D instance representing the 3D resource
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteVisualizable/object3D
+    nullable: true
+    value_type: cdf_cdm:Cognite3DObject(version=v1)
+    view: ClassicAsset
+    view_property: object3D
   - connection: direct
     container: cdf_cdm:CogniteAsset
     container_property: assetHierarchy_parent
@@ -267,6 +291,18 @@ data_product:
     value_type: ClassicTimeSeries
     view: ClassicAsset
     view_property: timeSeries
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: type
+    description: Specifies the type of the asset. It's a direct relation to CogniteAssetType.
+    immutable: false
+    is_list: false
+    name: Asset type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteAsset/type
+    nullable: true
+    value_type: cdf_cdm:CogniteAssetType(version=v1)
+    view: ClassicAsset
+    view_property: type
   - container: sp_windfarm:ClassicDataSet
     container_property: classicExternalId
     is_list: false
@@ -361,6 +397,18 @@ data_product:
     value_type: text
     view: ClassicEquipment
     view_property: description
+  - connection: direct
+    container: cdf_cdm:CogniteEquipment
+    container_property: equipmentType
+    description: Specifies the type of the equipment. It's a direct relation to CogniteEquipmentType.
+    immutable: false
+    is_list: false
+    name: Equipment type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteEquipment/equipmentType
+    nullable: true
+    value_type: cdf_cdm:CogniteEquipmentType(version=v1)
+    view: ClassicEquipment
+    view_property: equipmentType
   - connection: direct
     container: cdf_cdm:CogniteEquipment
     container_property: files
@@ -769,6 +817,19 @@ data_product:
     value_type: ClassicAsset
     view: ClassicFile
     view_property: assets
+  - connection: direct
+    container: cdf_cdm:CogniteFile
+    container_property: category
+    description: Specifies the detected category the file belongs to. It's a direct
+      relation to an instance of CogniteFileCategory.
+    immutable: false
+    is_list: false
+    name: Category
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteFile/category
+    nullable: true
+    value_type: cdf_cdm:CogniteFileCategory(version=v1)
+    view: ClassicFile
+    view_property: category
   - container: sp_windfarm:ClassicFile
     container_property: classicExternalId
     is_list: false
@@ -1437,8 +1498,19 @@ data_product:
     value_type: enum(collection=timeseriesType)
     view: ClassicTimeSeries
     view_property: type
+  - connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: unit
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unitExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unitExternalId
+    nullable: true
+    value_type: cdf_cdm:CogniteUnit(version=v1)
+    view: ClassicTimeSeries
+    view_property: unit
   views:
-  - filter_: hasData(cdf_cdm:CogniteAsset,cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,sp_windfarm:ClassicAsset)
+  - filter_: hasData(cdf_cdm:CogniteAsset,cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteVisualizable,sp_windfarm:ClassicAsset)
     in_model: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset

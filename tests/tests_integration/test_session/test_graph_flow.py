@@ -1,3 +1,4 @@
+import datetime
 from typing import Any
 
 import yaml
@@ -53,7 +54,7 @@ class TestExtractToLoadFlow:
 
         rules_str = neat.to.yaml(format="neat")
 
-        neat.prepare.data_model.to_data_product(("sp_data_product", "DataProduct", "v1"))
+        neat.create.data_product_model(("sp_data_product", "DataProduct", "v1"))
 
         data_product_dict = yaml.safe_load(neat.to.yaml(format="neat"))
 
@@ -72,11 +73,9 @@ class TestExtractToLoadFlow:
         neat.infer(max_number_of_instance=-1)
 
         # Hack to ensure deterministic output
-        rules = neat._state.rule_store.last_unverified_rule
-        rules.metadata.created = "2024-09-19T00:00:00Z"
-        rules.metadata.updated = "2024-09-19T00:00:00Z"
-
-        neat.verify()
+        rules = neat._state.rule_store.last_verified_information_rules
+        rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
+        rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 
         neat.convert("dms")
         neat.set.data_model_id(("dexpi_playground", "DEXPI", "v1.3.1"))
@@ -111,11 +110,9 @@ class TestExtractToLoadFlow:
         neat.infer(max_number_of_instance=-1)
 
         # Hack to ensure deterministic output
-        rules = neat._state.rule_store.last_unverified_rule
-        rules.metadata.created = "2024-09-19T00:00:00Z"
-        rules.metadata.updated = "2024-09-19T00:00:00Z"
-
-        neat.verify()
+        rules = neat._state.rule_store.last_verified_information_rules
+        rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
+        rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 
         neat.convert("dms")
         neat.set.data_model_id(("aml_playground", "AML", "terminology_3.0"))
@@ -193,7 +190,7 @@ class TestExtractToLoadFlow:
             unpack_json=True,
             str_to_ideal_type=True,
         )
-        neat.set._instance_sub_type("NeatIncAsset", "assetCategory")
+        neat.set._replace_type("NeatIncAsset", "assetCategory")
         neat._infer_subclasses()
 
         neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))

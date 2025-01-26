@@ -94,18 +94,18 @@ class TestImportersToYAMLExporter:
 
             neat.verify()
 
-            neat.prepare.data_model.to_enterprise(("sp_enterprise", "Enterprise", "v1"), "Neat", move_connections=True)
+            neat.create.enterprise_model(("sp_enterprise", "Enterprise", "v1"), "Neat")
 
             enterprise_yml_str = neat.to.yaml()
 
             # Writing to CDF such that the mock client can look up the containers in the data product step.
             neat.to.cdf.data_model()
 
-            neat.prepare.data_model.to_solution(("sp_solution", "Solution", "v1"), mode="write")
+            neat.create.solution_model(("sp_solution", "Solution", "v1"))
 
             solution_yml_str = neat.to.yaml()
 
-            neat.prepare.data_model.to_data_product(("sp_data_product", "DataProduct", "v1"))
+            neat.create.data_product_model(("sp_data_product", "DataProduct", "v1"))
 
             data_product_yml_str = neat.to.yaml()
 

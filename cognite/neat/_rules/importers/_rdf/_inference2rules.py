@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, ClassVar, cast
 
 from cognite.client import data_modeling as dm
-from rdflib import RDF, Graph, Namespace, URIRef
+from rdflib import RDF, RDFS, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
 from cognite.neat._constants import NEAT
@@ -288,11 +288,10 @@ class InferenceImporter(BaseRDFImporter):
 # Internal helper class
 @dataclass
 class _ReadProperties:
-    class_uri: URIRef
-    subclass_uri: URIRef
+    type_uri: URIRef
     property_uri: URIRef
-    data_type: URIRef | None
-    object_type: URIRef | None
+    value_type: URIRef
+    parent_uri: URIRef | None
     max_occurrence: int
     instance_count: int
 
@@ -311,7 +310,6 @@ class SubclassInferenceImporter(BaseRDFImporter):
     Args:
         issue_list: Issue list to store issues
         graph: Knowledge graph
-        max_number_of_instance: Maximum number of instances to be used in inference
     """
 
     overwrite_data_types: ClassVar[Mapping[URIRef, URIRef]] = {
@@ -324,30 +322,37 @@ class SubclassInferenceImporter(BaseRDFImporter):
         issue_list: IssueList,
         graph: Graph,
         rules: InformationRules,
-        max_number_of_instance: int,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ) -> None:
         super().__init__(
             issue_list,
             graph,
             rules.metadata.as_data_model_id().as_tuple(),  # type: ignore[arg-type]
-            max_number_of_instance,
+            -1,
             non_existing_node_type,
             language="en",
         )
         self._rules = rules
 
-    _ordered_subclass_query = f"""SELECT DISTINCT ?class ?subclass (count(?s) as ?instances )
-                           WHERE {{ ?s a ?class . ?s <{NEAT.type}> ?subclass }}
-                           group by ?class ?subclass order by DESC(?instances)"""
+    _ordered_class_query = """SELECT DISTINCT ?class (count(?s) as ?instances )
+                           WHERE { ?s a ?class }
+                           group by ?class order by DESC(?instances)"""
 
-    _properties_query = """SELECT DISTINCT ?property ?dataType ?objectType
+    _type_parent_query = f"""SELECT ?parent ?type
+                            WHERE {{ ?s a ?type .
+                            ?type <{RDFS.subClassOf}> ?parent }}"""
+
+    _properties_query = """SELECT DISTINCT ?property ?valueType
                          WHERE {{
                             ?s a <{type}> .
-                            ?s <{neat_type}> <{subtype}> .
-                            ?s ?property ?value .
-                            BIND(datatype(?value) AS ?dataType) .
-                            OPTIONAL {{?value rdf:type ?objectType}}
+                            ?s ?property ?object .
+                            OPTIONAL {{ ?object a ?objectType }}
+                            BIND(
+                               IF(
+                                    isLiteral(?object), datatype(?object),
+                                    IF(BOUND(?objectType), ?objectType, <{unknown_type}>)
+                                ) AS ?valueType
+                            )
                         }}"""
 
     _max_occurrence_query = """SELECT (MAX(?count) AS ?maxCount)
@@ -356,7 +361,6 @@ class SubclassInferenceImporter(BaseRDFImporter):
                                 SELECT ?subject (COUNT(?object) AS ?count)
                                 WHERE {{
                                   ?subject a <{type}> .
-                                  ?subject <{neat_type}> <{subtype}> .
                                   ?subject <{property}> ?object .
                                 }}
                                 GROUP BY ?subject
@@ -366,50 +370,9 @@ class SubclassInferenceImporter(BaseRDFImporter):
     def _to_rules_components(
         self,
     ) -> dict:
-        properties_by_class_subclass_pair = self._read_class_properties_from_graph()
-        existing_classes = {class_.class_.suffix: class_ for class_ in self._rules.classes}
-        prefixes = self._rules.prefixes.copy()
-
-        classes: list[InformationInputClass] = []
-        properties: list[InformationInputProperty] = []
-        # Help for IDE
-        subclass_uri: URIRef
-        for class_uri, class_properties_iterable in itertools.groupby(
-            properties_by_class_subclass_pair, key=lambda x: x.class_uri
-        ):
-            properties_by_subclass_by_property = self._get_properties_by_subclass_by_property(class_properties_iterable)
-
-            shared_property_uris = set.intersection(
-                *[
-                    set(properties_by_property.keys())
-                    for properties_by_property in properties_by_subclass_by_property.values()
-                ]
-            )
-            class_suffix = remove_namespace_from_uri(class_uri)
-            self._add_uri_namespace_to_prefixes(class_uri, prefixes)
-            if class_suffix not in existing_classes:
-                classes.append(InformationInputClass(class_=class_suffix))
-            else:
-                classes.append(InformationInputClass.load(existing_classes[class_suffix].model_dump()))
-            shared_properties: dict[URIRef, list[_ReadProperties]] = defaultdict(list)
-            for subclass_uri, properties_by_property_uri in properties_by_subclass_by_property.items():
-                subclass_suffix = remove_namespace_from_uri(subclass_uri)
-                self._add_uri_namespace_to_prefixes(subclass_uri, prefixes)
-                if subclass_suffix not in existing_classes:
-                    classes.append(InformationInputClass(class_=subclass_suffix, implements=class_suffix))
-                else:
-                    classes.append(InformationInputClass.load(existing_classes[subclass_suffix].model_dump()))
-                for property_uri, read_properties in properties_by_property_uri.items():
-                    if property_uri in shared_property_uris:
-                        shared_properties[property_uri].extend(read_properties)
-                        continue
-                    properties.append(
-                        self._create_property(read_properties, subclass_suffix, class_uri, property_uri, prefixes)
-                    )
-            for property_uri, read_properties in shared_properties.items():
-                properties.append(
-                    self._create_property(read_properties, class_suffix, class_uri, property_uri, prefixes)
-                )
+        parent_by_child = self._read_parent_by_child_from_graph()
+        read_properties = self._read_class_properties_from_graph(parent_by_child)
+        classes, properties = self._create_classes_properties(read_properties)
 
         return {
             "metadata": self._rules.metadata.model_dump(),
@@ -418,68 +381,140 @@ class SubclassInferenceImporter(BaseRDFImporter):
             "prefixes": self._rules.prefixes,
         }
 
-    @staticmethod
-    def _get_properties_by_subclass_by_property(
-        class_properties_iterable: Iterable[_ReadProperties],
-    ) -> dict[URIRef, dict[URIRef, list[_ReadProperties]]]:
-        properties_by_subclass_by_property: dict[URIRef, dict[URIRef, list[_ReadProperties]]] = {}
-        for subclass_uri, subclass_properties_iterable in itertools.groupby(
-            class_properties_iterable, key=lambda x: x.subclass_uri
+    def _create_classes_properties(
+        self, read_properties: list[_ReadProperties]
+    ) -> tuple[list[InformationInputClass], list[InformationInputProperty]]:
+        existing_classes = {class_.class_.suffix: class_ for class_ in self._rules.classes}
+        prefixes = self._rules.prefixes.copy()
+        classes: list[InformationInputClass] = []
+        properties: list[InformationInputProperty] = []
+        # Help for IDE
+        type_uri: URIRef
+        parent_uri: URIRef
+        for parent_uri, parent_class_properties_iterable in itertools.groupby(
+            sorted(read_properties, key=lambda x: x.parent_uri or NEAT.EmptyType),
+            key=lambda x: x.parent_uri or NEAT.EmptyType,
         ):
-            properties_by_subclass_by_property[subclass_uri] = defaultdict(list)
-            for read_prop in subclass_properties_iterable:
-                properties_by_subclass_by_property[subclass_uri][read_prop.property_uri].append(read_prop)
-        return properties_by_subclass_by_property
+            properties_by_class_by_property = self._get_properties_by_class_by_property(
+                parent_class_properties_iterable
+            )
 
-    def _read_class_properties_from_graph(self) -> list[_ReadProperties]:
-        count_by_class_subclass_pair: dict[tuple[URIRef, URIRef], int] = {}
-        # Infers all the classes w in the graph
-        for result_row in self.graph.query(self._ordered_subclass_query):
-            class_uri, subclass_uri, instance_count_literal = cast(tuple[URIRef, URIRef, RdfLiteral], result_row)
-            count_by_class_subclass_pair[(class_uri, subclass_uri)] = instance_count_literal.toPython()
+            shared_property_uris = set.intersection(
+                *[
+                    set(properties_by_property.keys())
+                    for properties_by_property in properties_by_class_by_property.values()
+                ]
+            )
+            if parent_uri != NEAT.EmptyType:
+                parent_suffix = remove_namespace_from_uri(parent_uri)
+                self._add_uri_namespace_to_prefixes(parent_uri, prefixes)
+                if parent_suffix not in existing_classes:
+                    classes.append(InformationInputClass(class_=parent_suffix))
+                else:
+                    classes.append(InformationInputClass.load(existing_classes[parent_suffix].model_dump()))
+
+            shared_properties: dict[URIRef, list[_ReadProperties]] = defaultdict(list)
+            for type_uri, properties_by_property_uri in properties_by_class_by_property.items():
+                class_suffix = remove_namespace_from_uri(type_uri)
+                self._add_uri_namespace_to_prefixes(type_uri, prefixes)
+
+                if class_suffix not in existing_classes:
+                    classes.append(
+                        InformationInputClass(
+                            class_=class_suffix,
+                            implements=parent_suffix if parent_uri != NEAT.UnknownType else None,
+                        )
+                    )
+                else:
+                    classes.append(InformationInputClass.load(existing_classes[class_suffix].model_dump()))
+                for property_uri, read_properties in properties_by_property_uri.items():
+                    if property_uri in shared_property_uris:
+                        shared_properties[property_uri].extend(read_properties)
+                        continue
+                    properties.append(
+                        self._create_property(read_properties, class_suffix, type_uri, property_uri, prefixes)
+                    )
+            for property_uri, read_properties in shared_properties.items():
+                properties.append(
+                    self._create_property(
+                        read_properties, parent_suffix, read_properties[0].type_uri, property_uri, prefixes
+                    )
+                )
+        return classes, properties
+
+    @staticmethod
+    def _get_properties_by_class_by_property(
+        parent_class_properties_iterable: Iterable[_ReadProperties],
+    ) -> dict[URIRef, dict[URIRef, list[_ReadProperties]]]:
+        properties_by_class_by_property: dict[URIRef, dict[URIRef, list[_ReadProperties]]] = {}
+        for class_uri, class_properties_iterable in itertools.groupby(
+            sorted(parent_class_properties_iterable, key=lambda x: x.type_uri), key=lambda x: x.type_uri
+        ):
+            properties_by_class_by_property[class_uri] = defaultdict(list)
+            for read_prop in class_properties_iterable:
+                properties_by_class_by_property[class_uri][read_prop.property_uri].append(read_prop)
+        return properties_by_class_by_property
+
+    def _read_class_properties_from_graph(self, parent_by_child: dict[URIRef, URIRef]) -> list[_ReadProperties]:
+        count_by_type: dict[URIRef, int] = {}
+        # Infers all the classes in the graph
+        for result_row in self.graph.query(self._ordered_class_query):
+            type_uri, instance_count_literal = cast(tuple[URIRef, RdfLiteral], result_row)
+            count_by_type[type_uri] = instance_count_literal.toPython()
+        del result_row
         analysis = InformationAnalysis(self._rules)
         existing_class_properties = {
-            (class_entity.suffix, property)
-            for class_entity, properties in analysis.class_property_pairs(consider_inheritance=True).items()
-            for property in properties.keys()
+            (class_entity.suffix, prop.property_)
+            for class_entity, properties in analysis.classes_with_properties(
+                consider_inheritance=True, allow_different_namespace=True
+            ).items()
+            for prop in properties
         }
         properties_by_class_by_subclass: list[_ReadProperties] = []
-        for (class_uri, subclass_uri), instance_count in count_by_class_subclass_pair.items():
-            property_query = self._properties_query.format(type=class_uri, subtype=subclass_uri, neat_type=NEAT.type)
-            class_suffix = remove_namespace_from_uri(class_uri)
+        for type_uri, instance_count in count_by_type.items():
+            property_query = self._properties_query.format(type=type_uri, unknown_type=NEAT.UnknownType)
+            class_suffix = remove_namespace_from_uri(type_uri)
             for result_row in self.graph.query(property_query):
-                property_uri, data_type_uri, object_type_uri = cast(tuple[URIRef, URIRef, URIRef], result_row)
-                if property_uri == RDF.type or property_uri == NEAT.type:
+                property_uri, value_type_uri = cast(tuple[URIRef, URIRef], result_row)
+                if property_uri == RDF.type:
                     continue
                 property_str = remove_namespace_from_uri(property_uri)
                 if (class_suffix, property_str) in existing_class_properties:
                     continue
-                occurrence_query = self._max_occurrence_query.format(
-                    type=class_uri, subtype=subclass_uri, property=property_uri, neat_type=NEAT.type
-                )
+                occurrence_query = self._max_occurrence_query.format(type=type_uri, property=property_uri)
                 max_occurrence = 1  # default value
-                result_row, *_ = list(self.graph.query(occurrence_query))
-                if result_row:
-                    max_occurrence_literal, *__ = cast(tuple[RdfLiteral, Any], result_row)
+                occurrence_row, *_ = list(self.graph.query(occurrence_query))
+                if occurrence_row:
+                    max_occurrence_literal, *__ = cast(tuple[RdfLiteral, Any], occurrence_row)
                     max_occurrence = int(max_occurrence_literal.toPython())
+                del occurrence_row
                 properties_by_class_by_subclass.append(
                     _ReadProperties(
-                        class_uri=class_uri,
-                        subclass_uri=subclass_uri,
+                        type_uri=type_uri,
                         property_uri=property_uri,
-                        data_type=data_type_uri,
-                        object_type=object_type_uri,
+                        parent_uri=parent_by_child.get(type_uri),
+                        value_type=value_type_uri,
                         max_occurrence=max_occurrence,
                         instance_count=instance_count,
                     )
                 )
+
+            del result_row
         return properties_by_class_by_subclass
+
+    def _read_parent_by_child_from_graph(self) -> dict[URIRef, URIRef]:
+        parent_by_child: dict[URIRef, URIRef] = {}
+        for result_row in self.graph.query(self._type_parent_query):
+            parent_uri, child_uri = cast(tuple[URIRef, URIRef], result_row)
+            parent_by_child[child_uri] = parent_uri
+        del result_row
+        return parent_by_child
 
     def _create_property(
         self,
         read_properties: list[_ReadProperties],
         class_suffix: str,
-        class_uri: URIRef,
+        type_uri: URIRef,
         property_uri: URIRef,
         prefixes: dict[str, Namespace],
     ) -> InformationInputProperty:
@@ -493,17 +528,17 @@ class SubclassInferenceImporter(BaseRDFImporter):
             property_=property_name,
             max_count=first.max_occurrence,
             value_type=value_type,
-            instance_source=(f"{uri_to_short_form(class_uri, prefixes)}({uri_to_short_form(property_uri, prefixes)})"),
+            instance_source=(f"{uri_to_short_form(type_uri, prefixes)}({uri_to_short_form(property_uri, prefixes)})"),
         )
 
     def _get_value_type(
         self, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
     ) -> str | UnknownEntity:
-        value_types = {prop.data_type for prop in read_properties if prop.data_type} | {
-            prop.object_type for prop in read_properties if prop.object_type
-        }
+        value_types = {prop.value_type for prop in read_properties}
         if len(value_types) == 1:
             uri_ref = value_types.pop()
+            if uri_ref == NEAT.UnknownType:
+                return UnknownEntity()
             self._add_uri_namespace_to_prefixes(uri_ref, prefixes)
             return remove_namespace_from_uri(uri_ref)
         elif len(value_types) == 0:

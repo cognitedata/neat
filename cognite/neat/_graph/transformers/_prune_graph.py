@@ -237,7 +237,7 @@ class PruneTypes(BaseTransformerStandardised):
         row_output = RowTransformationOutput()
 
         (subject,) = query_result_row
-        row_output.remove_triples.append((subject, None, None))  # type: ignore
+        row_output.remove_triples.add((subject, None, None))  # type: ignore
         row_output.instances_removed_count = 1
 
         return row_output
@@ -272,7 +272,7 @@ class PruneDeadEndEdges(BaseTransformerStandardised):
 
     def operation(self, row: ResultRow) -> RowTransformationOutput:
         row_output = RowTransformationOutput()
-        row_output.remove_triples.append(cast(Triple, row))
+        row_output.remove_triples.add(cast(Triple, row))
         row_output.instances_modified_count = 1
 
         return row_output
@@ -307,7 +307,7 @@ class PruneInstancesOfUnknownType(BaseTransformerStandardised):
     def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
         row_output = RowTransformationOutput()
         (subject,) = query_result_row
-        row_output.remove_triples.append(cast(Triple, (subject, None, None)))
+        row_output.remove_triples.add(cast(Triple, (subject, None, None)))
         row_output.instances_removed_count = 1
 
         return row_output

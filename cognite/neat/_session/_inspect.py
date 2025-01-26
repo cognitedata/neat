@@ -59,7 +59,13 @@ class InspectAPI:
             neat.inspect.properties
             ```
         """
-        df = self._state.rule_store.last_verified_rule.properties.to_pandas()
+        if self._state.rule_store.empty:
+            return pd.DataFrame()
+        last_entity = self._state.rule_store.provenance[-1].target_entity
+        if last_entity.dms:
+            df = last_entity.dms.properties.to_pandas()
+        else:
+            df = last_entity.information.properties.to_pandas()
         df.drop(columns=["neatId"], errors="ignore", inplace=True)
         return df
 

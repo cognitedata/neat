@@ -25,7 +25,7 @@ from cognite.neat._shared import InstanceType, Triple
 from cognite.neat._utils.auxiliary import local_import
 from cognite.neat._utils.rdf_ import add_triples_in_batch, remove_namespace_from_uri
 
-from ._provenance import Change, Provenance
+from ._provenance import Change, Entity, Provenance
 
 if sys.version_info < (3, 11):
     from typing_extensions import Self
@@ -60,7 +60,7 @@ class NeatGraphStore:
 
         _start = datetime.now(timezone.utc)
         self.dataset = dataset
-        self.provenance = Provenance(
+        self.provenance = Provenance[Entity](
             [
                 Change.record(
                     activity=f"{type(self).__name__}.__init__",

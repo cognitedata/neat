@@ -3,7 +3,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import COGNITE_MODELS
-from cognite.neat._graph.transformers import SetNeatType
+from cognite.neat._graph.transformers import SetType
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules.models import DMSRules
@@ -32,7 +32,9 @@ class SetAPI:
             neat.set.data_model_id(("my_data_model_space", "My_Data_Model", "v1"))
             ```
         """
-        rules = self._state.rule_store.get_last_successful_entity().result
+        if self._state.rule_store.empty:
+            raise NeatSessionError("No rules to set the data model ID.")
+        rules = self._state.rule_store.provenance[-1].target_entity.dms
         if isinstance(rules, DMSRules):
             if rules.metadata.as_data_model_id() in COGNITE_MODELS:
                 raise NeatSessionError(
@@ -48,26 +50,28 @@ class SetAPI:
             print(f"Client set to {self._state.client.config.project} CDF project.")
         return None
 
-    def _instance_sub_type(self, type: str, property: str, drop_property: bool = False) -> None:
-        """Sets the sub type of an instance based on the property."""
-        type_uri = self._state.instances.store.queries.type_uri(type)
-        property_uri = self._state.instances.store.queries.property_uri(property)
+    def _replace_type(self, current_type: str, property_type: str, drop_property: bool = True) -> None:
+        """Sets the type of instance based on the property."""
+        type_uri = self._state.instances.store.queries.type_uri(current_type)
+        property_uri = self._state.instances.store.queries.property_uri(property_type)
 
         if not type_uri:
-            raise NeatValueError(f"Type {type} does not exist in the graph.")
-        elif len(type_uri) > 1:
-            raise NeatValueError(f"{type} has multiple ids found in the graph: {humanize_collection(type_uri)}.")
-
-        if not property_uri:
-            raise NeatValueError(f"Property {property} does not exist in the graph.")
+            raise NeatValueError(f"Type {current_type} does not exist in the graph.")
         elif len(type_uri) > 1:
             raise NeatValueError(
-                f"{property} has multiple ids found in the graph: {humanize_collection(property_uri)}."
+                f"{current_type} has multiple ids found in the graph: {humanize_collection(type_uri)}."
+            )
+
+        if not property_uri:
+            raise NeatValueError(f"Property {property_type} does not exist in the graph.")
+        elif len(type_uri) > 1:
+            raise NeatValueError(
+                f"{property_type} has multiple ids found in the graph: {humanize_collection(property_uri)}."
             )
 
         if not self._state.instances.store.queries.type_with_property(type_uri[0], property_uri[0]):
-            raise NeatValueError(f"Property {property} is not defined for type {type}.")
+            raise NeatValueError(f"Property {property_type} is not defined for type {current_type}.")
 
-        self._state.instances.store.transform(SetNeatType(type_uri[0], property_uri[0], drop_property))
+        self._state.instances.store.transform(SetType(type_uri[0], property_uri[0], drop_property))
 
         return None
