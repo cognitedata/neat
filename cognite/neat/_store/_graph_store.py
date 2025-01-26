@@ -685,4 +685,4 @@ class NeatGraphStore:
     @property
     def empty(self) -> bool:
         """Cheap way to check if the graph store is empty."""
-        return self.queries.has_data()
+        return not self.queries.has_data()
