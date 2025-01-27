@@ -39,7 +39,7 @@ class TestExtractToLoadFlow:
     def test_classic_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         neat.read.cdf.classic.graph("Utsira", identifier="id")
-        neat.convert("dms")
+        neat.convert()
         neat.mapping.data_model.classic_to_core("Classic")
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
@@ -77,7 +77,7 @@ class TestExtractToLoadFlow:
         rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
         rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 
-        neat.convert("dms")
+        neat.convert()
         neat.set.data_model_id(("dexpi_playground", "DEXPI", "v1.3.1"))
 
         if True:
@@ -114,7 +114,7 @@ class TestExtractToLoadFlow:
         rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
         rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 
-        neat.convert("dms")
+        neat.convert()
         neat.set.data_model_id(("aml_playground", "AML", "terminology_3.0"))
 
         if True:
@@ -169,7 +169,7 @@ class TestExtractToLoadFlow:
     def test_classic_to_cdf(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         neat.read.cdf.classic.graph("Utsira", identifier="externalId")
-        neat.convert("dms")
+        neat.convert()
 
         neat.mapping.data_model.classic_to_core("NeatInc")
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))

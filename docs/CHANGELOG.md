@@ -31,6 +31,8 @@ Changes are grouped as follows:
 - [BREAKING] The `neat.prepare.data_model.to_solution/to_enterprise/to_data_product` methods are moved to 
   `neat.create.solution_model/enterprise_model/data_product_model`. In addition, the methods been simplified with
   fewer parameters and better defaults.
+- [BREAKING] The `neat.convert()` no longer takes a target parameter. Only conversion from Information to DMS rules is
+  supported.
 
 ### Removed
 - [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.

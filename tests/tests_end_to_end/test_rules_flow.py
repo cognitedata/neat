@@ -23,9 +23,8 @@ class TestImportersToYAMLExporter:
         neat = NeatSession(verbose=False)
 
         neat.read.excel(DOC_RULES / "information-architect-david.xlsx")
-        neat.verify()
 
-        neat.convert("dms")
+        neat.convert()
 
         exported_yaml_str = neat.to.yaml()
 
@@ -45,8 +44,7 @@ class TestImportersToYAMLExporter:
         tmp_file.write_bytes(response.content)
 
         neat.read.rdf(tmp_file, source="Ontology", type="Data Model")
-        neat.verify()
-        neat.convert("dms")
+        neat.convert()
         exported_yaml_str = neat.to.yaml()
         exported_rules = yaml.safe_load(exported_yaml_str)
         data_regression.check(exported_rules)
