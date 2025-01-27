@@ -22,6 +22,8 @@ Changes are grouped as follows:
 - The `get_cognite_client` function no longer prints an irrelevant warning message when running outside a git
   repository.
 - The `neat.verify()` no longer gives warnings about empty `Cognite` system containers.
+- The `neat.infer()` is now much faster for large number of instances. (It now scales linearly with number of properties
+  and not instances.). In addition, it supports inferring schema with an existing data model.
 
 ### Changed
 - [BREAKING] NeatSession.prepare.data_model.cdf_compliant_external_ids is moved under NeatSession.fix.data_model.cdf_compliant_external_ids

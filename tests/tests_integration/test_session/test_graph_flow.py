@@ -70,7 +70,7 @@ class TestExtractToLoadFlow:
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
         neat.read.xml.dexpi(DATA_FOLDER / "depxi_example.xml")
-        neat.infer(max_number_of_instance=-1)
+        neat.infer()
 
         # Hack to ensure deterministic output
         rules = neat._state.rule_store.last_verified_information_rules
@@ -107,7 +107,7 @@ class TestExtractToLoadFlow:
     def test_aml_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
         neat.read.xml.aml(DATA_FOLDER / "aml_example.aml")
-        neat.infer(max_number_of_instance=-1)
+        neat.infer()
 
         # Hack to ensure deterministic output
         rules = neat._state.rule_store.last_verified_information_rules

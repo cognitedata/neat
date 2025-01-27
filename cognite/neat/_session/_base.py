@@ -20,6 +20,7 @@ from cognite.neat._rules.transformers import (
     MergeInformationRules,
     VerifyInformationRules,
 )
+from cognite.neat._store._rules_store import RulesEntity
 from cognite.neat._utils.auxiliary import local_import
 
 from ._collector import _COLLECTOR, Collector
@@ -194,13 +195,11 @@ class NeatSession:
             "NeatInferredDataModel",
             "v1",
         ),
-        max_number_of_instance: int = 100,
     ) -> IssueList:
         """Data model inference from instances.
 
         Args:
             model_id: The ID of the inferred data model.
-            max_number_of_instance: The maximum number of instances to use for inference.
 
         Example:
             Infer a data model after reading a source file
@@ -211,6 +210,12 @@ class NeatSession:
             neat.infer()
             ```
         """
+        return self._infer_subclasses(model_id)
+
+    def _previous_inference(
+        self, model_id: dm.DataModelId | tuple[str, str, str], max_number_of_instance: int = 100
+    ) -> IssueList:
+        # Temporary keeping the old inference method in case we need to revert back
         model_id = dm.DataModelId.load(model_id)
         importer = importers.InferenceImporter.from_graph_store(
             store=self._state.instances.store,
@@ -219,24 +224,33 @@ class NeatSession:
         )
         return self._state.rule_import(importer)
 
-    def _infer_subclasses(self) -> IssueList:
-        """Infer the subclass of instances."""
-        if self._state.instances.empty:
-            raise NeatSessionError("No instances to infer subclasses from.")
-        if not self._state.rule_store.provenance:
-            raise NeatSessionError("No existing data model to infer subclasses from.")
-        last_entity = self._state.rule_store.provenance[-1].target_entity
-        # Note that this importer behaves as a transformer in the rule store. We are essentially
-        # transforming the last entity's information rules into a new set of information rules.
+    def _infer_subclasses(
+        self,
+        model_id: dm.DataModelId | tuple[str, str, str] = (
+            "neat_space",
+            "NeatInferredDataModel",
+            "v1",
+        ),
+    ) -> IssueList:
+        """Infer data model from instances."""
+        last_entity: RulesEntity | None = None
+        if self._state.rule_store.provenance:
+            last_entity = self._state.rule_store.provenance[-1].target_entity
+
+        # Note that this importer behaves as a transformer in the rule store when there is an existing rules.
+        # We are essentially transforming the last entity's information rules into a new set of information rules.
         importer = importers.SubclassInferenceImporter(
             issue_list=IssueList(),
             graph=self._state.instances.store.graph(),
-            rules=last_entity.information,
+            rules=last_entity.information if last_entity is not None else None,
+            data_model_id=dm.DataModelId.load(model_id) if last_entity is None else None,
         )
 
         def action() -> tuple[InformationRules, DMSRules | None]:
             unverified_information = importer.to_rules()
             extra_info = VerifyInformationRules().transform(unverified_information)
+            if not last_entity:
+                return extra_info, None
             merged_info = MergeInformationRules(extra_info).transform(last_entity.information)
             if not last_entity.dms:
                 return merged_info, None
