@@ -97,9 +97,8 @@ class InspectIssues:
         return_dataframe: bool = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> pd.DataFrame | None:
         """Returns the issues of the current data model."""
-        if self._state.rule_store.provenance:
-            issues = self._state.rule_store.last_issues
-        elif self._state.instances.store.provenance:
+        issues = self._state.rule_store.last_issues
+        if issues is None and self._state.instances.store.provenance:
             last_change = self._state.instances.store.provenance[-1]
             issues = last_change.target_entity.issues
         else:

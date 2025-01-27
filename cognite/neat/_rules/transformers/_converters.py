@@ -496,6 +496,8 @@ class ToSolutionModel(ToExtensionModel):
                     bool(prop.view.external_id.startswith(self.view_prefix)),
                 )
             )
+        else:
+            new_properties.sort(key=lambda prop: (prop.view.external_id, prop.view_property))
 
         metadata = reference_rules.metadata.model_copy(
             deep=True,

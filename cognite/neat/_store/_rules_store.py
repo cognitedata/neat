@@ -54,6 +54,7 @@ class NeatRulesStore:
         self.exports_by_source_entity_id: dict[rdflib.URIRef, list[Change[OutcomeEntity]]] = defaultdict(list)
         self._last_outcome: UploadResultList | None = None
         self._iteration_by_id: dict[Hashable, int] = {}
+        self._last_issues: IssueList | None = None
 
     def calculate_provenance_hash(self, shorten: bool = True) -> str:
         sha256_hash = hashlib.sha256()
@@ -169,6 +170,8 @@ class NeatRulesStore:
             result = action()
 
         end = datetime.now(timezone.utc)
+        self._last_issues = issue_list
+
         agent = agent_tool.agent
         activity = Activity(
             was_associated_with=agent,
@@ -223,6 +226,7 @@ class NeatRulesStore:
             result = action(input_, *exporter_args)
 
         end = datetime.now(timezone.utc)
+        self._last_issues = issue_list
         activity = Activity(
             was_associated_with=agent,
             ended_at_time=end,
@@ -367,12 +371,8 @@ class NeatRulesStore:
         return self.provenance[-1].target_entity.information
 
     @property
-    def last_issues(self) -> IssueList:
-        if not self.provenance:
-            raise EmptyStore()
-        if self.provenance[-1].target_entity.issues:
-            return self.provenance[-1].target_entity.issues
-        return self.provenance[-1].source_entity.issues
+    def last_issues(self) -> IssueList | None:
+        return self._last_issues
 
     @property
     def last_outcome(self) -> UploadResultList:

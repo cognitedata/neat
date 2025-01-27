@@ -180,7 +180,7 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
         self._state = state
 
     def __call__(self) -> Any:
-        if not self._state.rule_store.empty:
+        if self._state.rule_store.empty:
             raise NeatSessionError("No data model available. Try using [bold].read[/bold] to read a data model.")
 
         last_target = self._state.rule_store.provenance[-1].target_entity
