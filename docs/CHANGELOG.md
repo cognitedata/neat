@@ -26,9 +26,10 @@ Changes are grouped as follows:
 ### Changed
 - [BREAKING] NeatSession.prepare.data_model.cdf_compliant_external_ids is moved under NeatSession.fix.data_model.cdf_compliant_external_ids
 - [BREAKING] `cdf_compliant_external_ids` expects validated InformationRules as input instead of InformationInputRules
-- [BREAKING] The `neat.prepare.data_model.to_solution/to_enterprise/to_data_product` methods are moved to 
+- [BREAKING] The `neat.prepare.data_model.to_solution/to_enterprise/to_data_product` methods are moved to
   `neat.create.solution_model/enterprise_model/data_product_model`. In addition, the methods been simplified with
   fewer parameters and better defaults.
+- [BREAKING] NeatSession.prepare.data_model.prefix works only on verified Information and DMS rules, where in case of both rules are provided, it will use DMS rules
 
 ### Removed
 - [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.
