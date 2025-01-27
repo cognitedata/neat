@@ -148,11 +148,11 @@ class NeatSession:
         print("This action has no effect. Neat no longer supports unverified data models.")
         return IssueList()
 
-    def convert(self, reserved_properties: Literal["error", "skip"] = "skip") -> IssueList:
+    def convert(self, reserved_properties: Literal["error", "warning"] = "warning") -> IssueList:
         """Converts the last verified data model to the target type.
 
         Args:
-            reserved_properties: The reserved properties to use when converting to DMS. Can be "error" or "skip".
+            reserved_properties: What to do with reserved properties. Can be "error" or "warning".
 
         Example:
             Convert to DMS rules
@@ -241,7 +241,7 @@ class NeatSession:
             merged_info = MergeInformationRules(extra_info).transform(last_entity.information)
             if not last_entity.dms:
                 return merged_info, None
-            extra_dms = InformationToDMS(reserved_properties="skip").transform(extra_info)
+            extra_dms = InformationToDMS(reserved_properties="warning").transform(extra_info)
             merged_dms = MergeDMSRules(extra_dms).transform(last_entity.dms)
             return merged_info, merged_dms
 

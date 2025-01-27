@@ -230,7 +230,7 @@ class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
     def __init__(
-        self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "skip"] = "error"
+        self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "warning"] = "error"
     ):
         self.ignore_undefined_value_types = ignore_undefined_value_types
         self.reserved_properties = reserved_properties
@@ -1030,7 +1030,7 @@ class _InformationRulesConverter:
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
 
     def as_dms_rules(
-        self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "skip"] = "error"
+        self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "warning"] = "error"
     ) -> "DMSRules":
         from cognite.neat._rules.models.dms._rules import (
             DMSContainer,
