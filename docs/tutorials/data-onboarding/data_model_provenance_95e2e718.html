@@ -261,11 +261,15 @@ function highlightFilter(filter) {
                             >
                                 <option selected>Select a Node by ID</option>
                                 
-                                    <option value="InternalElement">InternalElement</option>
+                                    <option value="UNKNOWN">UNKNOWN</option>
                                 
-                                    <option value="ExternalInterface">ExternalInterface</option>
+                                    <option value="SubclassInferenceImporter">SubclassInferenceImporter</option>
                                 
-                                    <option value="InternalLink">InternalLink</option>
+                                    <option value="NEAT(verified,logical,neat_space,NeatInferredDataModel,v1)">NEAT(verified,logical,neat_space,NeatInferredDataModel,v1)</option>
+                                
+                                    <option value="InformationToDMS">InformationToDMS</option>
+                                
+                                    <option value="NEAT(verified,physical,neat_space,NeatInferredDataModel,v1)">NEAT(verified,physical,neat_space,NeatInferredDataModel,v1)</option>
                                 
                             </select>
                         </div>
@@ -319,8 +323,8 @@ function highlightFilter(filter) {
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "InternalElement", "label": "InternalElement", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "ExternalInterface", "label": "ExternalInterface", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "InternalLink", "label": "InternalLink", "shape": "dot", "size": 10}]);
-                  edges = new vis.DataSet([{"arrows": "to", "from": "InternalElement", "label": "externalInterface", "to": "ExternalInterface", "width": 1}, {"arrows": "to", "from": "InternalElement", "label": "internalElement", "to": "InternalElement", "width": 1}, {"arrows": "to", "from": "InternalElement", "label": "internalLink", "to": "InternalLink", "width": 1}, {"arrows": "to", "from": "InternalLink", "label": "RefPartnerSideB", "to": "ExternalInterface", "width": 1}]);
+                  nodes = new vis.DataSet([{"color": "#b92886", "id": "UNKNOWN", "label": "UNKNOWN", "shape": "dot", "size": 10, "title": "Entity", "type": "Entity"}, {"color": "#01cdb4", "id": "SubclassInferenceImporter", "label": "SubclassInferenceImporter", "shape": "dot", "size": 10, "title": "Agent", "type": "Agent"}, {"color": "#b92886", "id": "NEAT(verified,logical,neat_space,NeatInferredDataModel,v1)", "label": "NEAT(verified,logical,neat_space,NeatInferredDataModel,v1)", "shape": "dot", "size": 10, "title": "Entity", "type": "Entity"}, {"color": "#01cdb4", "id": "InformationToDMS", "label": "InformationToDMS", "shape": "dot", "size": 10, "title": "Agent", "type": "Agent"}, {"color": "#b92886", "id": "NEAT(verified,physical,neat_space,NeatInferredDataModel,v1)", "label": "NEAT(verified,physical,neat_space,NeatInferredDataModel,v1)", "shape": "dot", "size": 10, "title": "Entity", "type": "Entity"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "grey", "from": "UNKNOWN", "label": "used", "to": "SubclassInferenceImporter", "width": 1}, {"arrows": "to", "color": "grey", "from": "NEAT(verified,logical,neat_space,NeatInferredDataModel,v1)", "label": "used", "to": "InformationToDMS", "width": 1}, {"arrows": "to", "color": "grey", "from": "SubclassInferenceImporter", "label": "generated", "to": "NEAT(verified,logical,neat_space,NeatInferredDataModel,v1)", "width": 1}, {"arrows": "to", "color": "grey", "from": "InformationToDMS", "label": "generated", "to": "NEAT(verified,physical,neat_space,NeatInferredDataModel,v1)", "width": 1}]);
 
                   nodeColors = {};
                   allNodes = nodes.get({ returnType: "Object" });

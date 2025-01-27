@@ -22,6 +22,8 @@ Changes are grouped as follows:
 - The `get_cognite_client` function no longer prints an irrelevant warning message when running outside a git
   repository.
 - The `neat.verify()` no longer gives warnings about empty `Cognite` system containers.
+- The `neat.infer()` is now much faster for large number of instances. (It now scales linearly with number of properties
+  and not instances.). In addition, it supports inferring schema with an existing data model.
 
 ### Changed
 - [BREAKING] NeatSession.prepare.data_model.cdf_compliant_external_ids is moved under NeatSession.fix.data_model.cdf_compliant_external_ids
@@ -30,6 +32,8 @@ Changes are grouped as follows:
   `neat.create.solution_model/enterprise_model/data_product_model`. In addition, the methods been simplified with
   fewer parameters and better defaults.
 - [BREAKING] NeatSession.prepare.data_model.prefix works only on verified Information and DMS rules, where in case of both rules are provided, it will use DMS rules
+- [BREAKING] The `neat.convert()` no longer takes a target parameter. Only conversion from Information to DMS rules is
+  supported.
 
 ### Removed
 - [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.
