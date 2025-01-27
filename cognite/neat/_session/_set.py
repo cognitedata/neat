@@ -21,6 +21,7 @@ class SetAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
+        self.instances = SetInstances(state, verbose)
 
     def data_model_id(self, new_model_id: dm.DataModelId | tuple[str, str, str]) -> IssueList:
         """Sets the data model ID of the latest verified data model. Set the data model id as a tuple of strings
@@ -52,6 +53,49 @@ class SetAPI:
 
     def _replace_type(self, current_type: str, property_type: str, drop_property: bool = True) -> None:
         """Sets the type of instance based on the property."""
+        type_uri = self._state.instances.store.queries.type_uri(current_type)
+        property_uri = self._state.instances.store.queries.property_uri(property_type)
+
+        if not type_uri:
+            raise NeatValueError(f"Type {current_type} does not exist in the graph.")
+        elif len(type_uri) > 1:
+            raise NeatValueError(
+                f"{current_type} has multiple ids found in the graph: {humanize_collection(type_uri)}."
+            )
+
+        if not property_uri:
+            raise NeatValueError(f"Property {property_type} does not exist in the graph.")
+        elif len(type_uri) > 1:
+            raise NeatValueError(
+                f"{property_type} has multiple ids found in the graph: {humanize_collection(property_uri)}."
+            )
+
+        if not self._state.instances.store.queries.type_with_property(type_uri[0], property_uri[0]):
+            raise NeatValueError(f"Property {property_type} is not defined for type {current_type}.")
+
+        self._state.instances.store.transform(SetType(type_uri[0], property_uri[0], drop_property))
+
+        return None
+
+
+@session_class_wrapper
+class SetInstances:
+    """Used to change instances"""
+
+    def __init__(self, state: SessionState, verbose: bool) -> None:
+        self._state = state
+        self._verbose = verbose
+
+    def replace_type(self, current_type: str, property_type: str, drop_property: bool = True) -> None:
+        """Replaces the type of all instances with the value of a property.
+
+        Example:
+            All Assets have a property `assetCategory` that we want to use as the type of all asset instances.
+
+            ```python
+            neat.set.instances.replace_type("Asset", "assetCategory")
+            ```
+        """
         type_uri = self._state.instances.store.queries.type_uri(current_type)
         property_uri = self._state.instances.store.queries.property_uri(property_type)
 

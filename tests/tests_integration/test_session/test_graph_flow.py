@@ -190,7 +190,7 @@ class TestExtractToLoadFlow:
             unpack_json=True,
             str_to_ideal_type=True,
         )
-        neat.set._replace_type("NeatIncAsset", "assetCategory")
+        neat.set.instances.replace_type("NeatIncAsset", "assetCategory")
         neat._infer_subclasses()
 
         neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
