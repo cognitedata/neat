@@ -21,6 +21,7 @@ class SetAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
+        self.instances = SetInstances(state, verbose)
 
     def data_model_id(self, new_model_id: dm.DataModelId | tuple[str, str, str]) -> IssueList:
         """Sets the data model ID of the latest verified data model. Set the data model id as a tuple of strings
@@ -50,8 +51,25 @@ class SetAPI:
             print(f"Client set to {self._state.client.config.project} CDF project.")
         return None
 
-    def _replace_type(self, current_type: str, property_type: str, drop_property: bool = True) -> None:
-        """Sets the type of instance based on the property."""
+
+@session_class_wrapper
+class SetInstances:
+    """Used to change instances"""
+
+    def __init__(self, state: SessionState, verbose: bool) -> None:
+        self._state = state
+        self._verbose = verbose
+
+    def type_using_property(self, current_type: str, property_type: str, drop_property: bool = True) -> None:
+        """Replaces the type of all instances with the value of a property.
+
+        Example:
+            All Assets have a property `assetCategory` that we want to use as the type of all asset instances.
+
+            ```python
+            neat.set.instances.replace_type("Asset", "assetCategory")
+            ```
+        """
         type_uri = self._state.instances.store.queries.type_uri(current_type)
         property_uri = self._state.instances.store.queries.property_uri(property_type)
 
