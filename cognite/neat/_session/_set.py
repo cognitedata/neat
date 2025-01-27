@@ -60,7 +60,7 @@ class SetInstances:
         self._state = state
         self._verbose = verbose
 
-    def replace_type(self, current_type: str, property_type: str, drop_property: bool = True) -> None:
+    def type_using_property(self, current_type: str, property_type: str, drop_property: bool = True) -> None:
         """Replaces the type of all instances with the value of a property.
 
         Example:
