@@ -207,6 +207,9 @@ class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
                 if isinstance(dms_prop.value_type, ViewEntity) and dms_prop.value_type.space == copy.metadata.space:
                     dms_prop.value_type = self._with_prefix(dms_prop.value_type)
 
+                if isinstance(dms_prop.container, ContainerEntity) and dms_prop.container.space == copy.metadata.space:
+                    dms_prop.container = self._with_prefix(dms_prop.container)
+
             if copy.containers:
                 for container in copy.containers:
                     if container.container.space == copy.metadata.space:
