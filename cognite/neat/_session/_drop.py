@@ -1,9 +1,11 @@
+import difflib
 from collections.abc import Collection
 from typing import Literal
 
 from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import URIRef
 
+from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.transformers import DropModelViews
 
@@ -76,4 +78,22 @@ class DropDataModelAPI:
         """
         if sum([view_external_id is not None, group is not None]) != 1:
             raise NeatSessionError("Only one of view_external_id or group can be specified.")
+        last_dms = self._state.rule_store.last_verified_dms_rules
+        if group is not None and last_dms.metadata.as_data_model_id() not in COGNITE_MODELS:
+            raise NeatSessionError("Group can only be specified for CogniteCore models.")
+        if view_external_id is not None:
+            existing_views = {view.view.external_id for view in last_dms.views}
+            requested_views = {view_external_id} if isinstance(view_external_id, str) else set(view_external_id)
+            missing_views = requested_views - existing_views
+            if missing_views:
+                suggestions: list[str] = []
+                for view in missing_views:
+                    suggestion = difflib.get_close_matches(view, existing_views, n=1)
+                    if suggestion:
+                        suggestions.append(f"{view} -> {suggestion[0]}")
+                    else:
+                        suggestions.append(f"{view} -> NOT FOUND")
+                raise NeatSessionError(
+                    f"{len(missing_views)} view(s) not found in the data model.\nDid you mean {', '.join(suggestions)}?"
+                )
         return self._state.rule_transform(DropModelViews(view_external_id, group))

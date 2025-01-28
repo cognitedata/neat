@@ -748,10 +748,16 @@ class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
         | Collection[Literal["3D", "Annotation", "BaseViews"]]
         | None = None,
     ):
-        self.drop_external_ids = set(view_external_id or [])
-        self.drop_collection = cast(
-            list[Literal["3D", "Annotation", "BaseViews"]],
-            [collection for collection in group or [] if collection in self._VIEW_BY_COLLECTION],
+        self.drop_external_ids = (
+            {view_external_id} if isinstance(view_external_id, str) else set(view_external_id or [])
+        )
+        self.drop_collection = (
+            [group]
+            if isinstance(group, str)
+            else cast(
+                list[Literal["3D", "Annotation", "BaseViews"]],
+                [collection for collection in group or [] if collection in self._VIEW_BY_COLLECTION],
+            )
         )
 
     def transform(self, rules: DMSRules) -> DMSRules:
