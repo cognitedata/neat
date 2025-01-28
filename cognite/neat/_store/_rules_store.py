@@ -67,21 +67,13 @@ class NeatRulesStore:
             return calculated_hash[:8]
         return calculated_hash
 
-    def import_rules(
-        self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
-    ) -> IssueList:
-        if self.empty:
-            return self._import_rules(importer, validate, client)
-        else:
-            # Importing can be used as a manual transformation.
-            return self._manual_transform(importer, validate, client)
-
-    def _import_verify_convert(
+    def _rules_import_verify_convert(
         self,
         importer: BaseImporter,
         validate: bool,
         client: NeatClient | None = None,
     ) -> tuple[InformationRules, DMSRules | None]:
+        """Action that imports rules, verifies them and optionally converts them."""
         read_rules = importer.to_rules()
         verified = VerifyAnyRules(validate, client).transform(read_rules)  # type: ignore[arg-type]
         if isinstance(verified, InformationRules):
@@ -92,13 +84,15 @@ class NeatRulesStore:
             # Bug in the code
             raise ValueError(f"Invalid output from importer: {type(verified)}")
 
-    def _import_rules(
+    def _graph_import_verify_convert(
         self,
-        importer: BaseImporter,
-        validate: bool = True,
-        client: NeatClient | None = None,
-    ) -> IssueList:
-        return self.import_action(partial(self._import_verify_convert, importer, validate, client), importer)
+        extractor: KnowledgeGraphExtractor,
+    ) -> tuple[InformationRules, DMSRules | None]:
+        info = extractor.get_information_rules()
+        dms: DMSRules | None = None
+        if isinstance(extractor, DMSGraphExtractor):
+            dms = extractor.get_dms_rules()
+        return info, dms
 
     def _manual_transform(
         self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
@@ -106,32 +100,36 @@ class NeatRulesStore:
         raise NotImplementedError("Manual transformation is not yet implemented.")
 
     def import_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
-        def action() -> tuple[InformationRules, DMSRules | None]:
-            info = extractor.get_information_rules()
-            dms: DMSRules | None = None
-            if isinstance(extractor, DMSGraphExtractor):
-                dms = extractor.get_dms_rules()
-            return info, dms
+        if not self.empty:
+            raise NeatValueError(f"Data model already exists. Cannot import {extractor.source_uri}.")
+        else:
+            return self.do_activity(partial(self._graph_import_verify_convert, extractor), extractor)
 
-        return self.import_action(action, extractor)
-
-    def import_action(
+    def import_rules(
         self,
-        action: Callable[[], tuple[InformationRules, DMSRules | None]],
-        agent_tool: BaseImporter | KnowledgeGraphExtractor,
+        importer: BaseImporter,
+        validate: bool = True,
+        client: NeatClient | None = None,
     ) -> IssueList:
-        if self.provenance:
-            raise NeatValueError(f"Data model already exists. Cannot import {agent_tool.source_uri}.")
-        return self.do_activity(action, agent_tool)
+        if self.empty:
+            return self.do_activity(
+                partial(self._rules_import_verify_convert, importer, validate, client),
+                importer,
+            )
+        else:
+            # Importing can be used as a manual transformation.
+            return self._manual_transform(importer, validate, client)
 
     def transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:
         if not self.provenance:
             raise EmptyStore()
 
         all_issues = IssueList()
-        for item in transformer:
+        for agent_tool in transformer:
 
-            def action(transformer_item=item) -> tuple[InformationRules, DMSRules | None]:
+            def action(
+                transformer_item=agent_tool,
+            ) -> tuple[InformationRules, DMSRules | None]:
                 last_change = self.provenance[-1]
                 source_entity = last_change.target_entity
                 transformer_input = self._get_transformer_input(source_entity, transformer_item)
@@ -140,8 +138,9 @@ class NeatRulesStore:
                     return transformer_output, None
                 return last_change.target_entity.information, transformer_output
 
-            issues = self.do_activity(action, item)
+            issues = self.do_activity(action, agent_tool)
             all_issues.extend(issues)
+
         return all_issues
 
     def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export]) -> T_Export:
@@ -163,34 +162,40 @@ class NeatRulesStore:
         self,
         action: Callable[[], tuple[InformationRules, DMSRules | None]],
         agent_tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor,
-    ) -> IssueList:
+    ):
+        result, issue_list, start, end = self._do_activity(action)
+        self._last_issues = issue_list
+
+        if result:
+            self._update_provenance(agent_tool, result, issue_list, start, end)
+        return issue_list
+
+    def _update_provenance(
+        self,
+        agent_tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor,
+        result: tuple[InformationRules, DMSRules | None],
+        issue_list: IssueList,
+        activity_start: datetime,
+        activity_end: datetime,
+    ) -> None:
+        # set source entity
         if isinstance(agent_tool, BaseImporter | KnowledgeGraphExtractor):
             source_entity = Entity.create_with_defaults(
                 was_attributed_to=UNKNOWN_AGENT,
                 id_=agent_tool.source_uri,
             )
         else:
-            # This is a transformer
             source_entity = self.provenance[-1].target_entity
 
-        start = datetime.now(timezone.utc)
-        result: tuple[InformationRules, DMSRules | None] | None = None
-        with catch_issues() as issue_list:
-            result = action()
-
-        end = datetime.now(timezone.utc)
-        self._last_issues = issue_list
-
+        # setting the rest of provenance components
+        info, dms = result
         agent = agent_tool.agent
         activity = Activity(
             was_associated_with=agent,
-            ended_at_time=end,
-            started_at_time=start,
+            ended_at_time=activity_end,
+            started_at_time=activity_start,
             used=source_entity,
         )
-        if result is None:
-            return issue_list
-        info, dms = result
 
         target_entity = RulesEntity(
             was_attributed_to=agent,
@@ -208,8 +213,20 @@ class NeatRulesStore:
             description=agent_tool.description,
             source_entity=source_entity,
         )
+
         self.provenance.append(change)
-        return issue_list
+
+    def _do_activity(
+        self,
+        action: Callable[[], tuple[InformationRules, DMSRules | None]],
+    ):
+        """This private method is used to execute an activity and return the result and issues."""
+        start = datetime.now(timezone.utc)
+        result: tuple[InformationRules, DMSRules | None] | None = None
+        with catch_issues() as issue_list:
+            result = action()
+        end = datetime.now(timezone.utc)
+        return result, issue_list, start, end
 
     def _export_activity(self, action: Callable, exporter: BaseExporter, target_id: URIRef, *exporter_args: Any) -> Any:
         if self.empty:
