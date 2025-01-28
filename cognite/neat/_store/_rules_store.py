@@ -1,9 +1,9 @@
-from functools import partial
 import hashlib
 from collections import defaultdict
 from collections.abc import Callable, Hashable
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -98,10 +98,7 @@ class NeatRulesStore:
         validate: bool = True,
         client: NeatClient | None = None,
     ) -> IssueList:
-
-        return self.import_action(
-            partial(self._import_verify_convert, importer, validate, client), importer
-        )
+        return self.import_action(partial(self._import_verify_convert, importer, validate, client), importer)
 
     def _manual_transform(
         self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
