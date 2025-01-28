@@ -1,3 +1,4 @@
+from functools import partial
 import hashlib
 from collections import defaultdict
 from collections.abc import Callable, Hashable
@@ -75,21 +76,32 @@ class NeatRulesStore:
             # Importing can be used as a manual transformation.
             return self._manual_transform(importer, validate, client)
 
-    def _import_rules(
-        self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
-    ) -> IssueList:
-        def action() -> tuple[InformationRules, DMSRules | None]:
-            read_rules = importer.to_rules()
-            verified = VerifyAnyRules(validate, client).transform(read_rules)  # type: ignore[arg-type]
-            if isinstance(verified, InformationRules):
-                return verified, None
-            elif isinstance(verified, DMSRules):
-                return DMSToInformation().transform(verified), verified
-            else:
-                # Bug in the code
-                raise ValueError(f"Invalid output from importer: {type(verified)}")
+    def _import_verify_convert(
+        self,
+        importer: BaseImporter,
+        validate: bool,
+        client: NeatClient | None = None,
+    ) -> tuple[InformationRules, DMSRules | None]:
+        read_rules = importer.to_rules()
+        verified = VerifyAnyRules(validate, client).transform(read_rules)  # type: ignore[arg-type]
+        if isinstance(verified, InformationRules):
+            return verified, None
+        elif isinstance(verified, DMSRules):
+            return DMSToInformation().transform(verified), verified
+        else:
+            # Bug in the code
+            raise ValueError(f"Invalid output from importer: {type(verified)}")
 
-        return self.import_action(action, importer)
+    def _import_rules(
+        self,
+        importer: BaseImporter,
+        validate: bool = True,
+        client: NeatClient | None = None,
+    ) -> IssueList:
+
+        return self.import_action(
+            partial(self._import_verify_convert, importer, validate, client), importer
+        )
 
     def _manual_transform(
         self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
