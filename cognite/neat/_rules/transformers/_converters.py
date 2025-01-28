@@ -782,6 +782,8 @@ class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
                 if "3D" in self.drop_collection and self._is_asset_3D_property(prop):
                     # We filter out the 3D property of asset
                     continue
+                if prop.view in exclude_views:
+                    continue
                 new_properties.append(prop)
                 if prop.container:
                     mapped_containers.add(prop.container)
