@@ -33,6 +33,9 @@ Changes are grouped as follows:
   fewer parameters and better defaults.
 - [BREAKING] The `neat.convert()` no longer takes a target parameter. Only conversion from Information to DMS rules is
   supported.
+- [BREAKING] The `neat.prepare.data_model.drop(...)` has been moved to `neat.drop.data_model.views(...)`. In addition,
+  the `drop` paramter has been split into `view_external_id` and `group` to differentiate between dropping individual
+  views and groups of views.
 
 ### Removed
 - [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.
@@ -44,6 +47,7 @@ Changes are grouped as follows:
 
 ### Added
 - Support for "on-disk" storage for oxigraph in NeatSession
+- New method `neat.inspect.views()` to check the views in the data model.
 
 
 ## [0.108.0] - 22-01-**2025**
