@@ -1,5 +1,5 @@
-from collections.abc import Callable, Collection
-from typing import Any, Literal
+from collections.abc import Callable
+from typing import Any
 
 from rdflib import URIRef
 
@@ -14,7 +14,6 @@ from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules.transformers import (
     PrefixEntities,
-    ReduceCogniteModel,
 )
 from cognite.neat._utils.text import humanize_collection
 
@@ -266,14 +265,3 @@ class DataModelPrepareAPI:
         # Todo: Fix prefix entities to be a verified rules transformer
         raise NotImplementedError("Prefix entities is not implemented yet.")
         return self._state.rule_transform(PrefixEntities(prefix))  # type: ignore[arg-type]
-
-    def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]) -> IssueList:
-        """This is a special method that allow you to drop parts of the data model.
-        This only applies to Cognite Data Models.
-
-        Args:
-            drop: What to drop from the data model. The values 3D, Annotation, and BaseViews are special values that
-                drops multiple views at once. You can also pass externalIds of views to drop individual views.
-
-        """
-        return self._state.rule_transform(ReduceCogniteModel(drop))

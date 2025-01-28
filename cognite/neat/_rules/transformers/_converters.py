@@ -9,6 +9,7 @@ from typing import ClassVar, Literal, TypeVar, cast, overload
 
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
+from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import Namespace
 
 from cognite.neat._client import NeatClient
@@ -701,7 +702,7 @@ class ToDataProductModel(ToSolutionModel):
         return self._to_solution(rules)
 
 
-class ReduceCogniteModel(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
     _ASSET_VIEW = ViewId("cdf_cdm", "CogniteAsset", "v1")
     _VIEW_BY_COLLECTION: Mapping[Literal["3D", "Annotation", "BaseViews"], frozenset[ViewId]] = {
         "3D": frozenset(
@@ -740,44 +741,58 @@ class ReduceCogniteModel(VerifiedRulesTransformer[DMSRules, DMSRules]):
         ),
     }
 
-    def __init__(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]):
+    def __init__(
+        self,
+        view_external_id: str | SequenceNotStr[str] | None = None,
+        group: Literal["3D", "Annotation", "BaseViews"]
+        | Collection[Literal["3D", "Annotation", "BaseViews"]]
+        | None = None,
+    ):
+        self.drop_external_ids = set(view_external_id or [])
         self.drop_collection = cast(
             list[Literal["3D", "Annotation", "BaseViews"]],
-            [collection for collection in drop if collection in self._VIEW_BY_COLLECTION],
+            [collection for collection in group or [] if collection in self._VIEW_BY_COLLECTION],
         )
-        self.drop_external_ids = {external_id for external_id in drop if external_id not in self._VIEW_BY_COLLECTION}
 
     def transform(self, rules: DMSRules) -> DMSRules:
-        verified = rules
-        if verified.metadata.as_data_model_id() not in COGNITE_MODELS:
-            raise NeatValueError(f"Can only reduce Cognite Data Models, not {verified.metadata.as_data_model_id()}")
-
-        exclude_views = {view for collection in self.drop_collection for view in self._VIEW_BY_COLLECTION[collection]}
-        exclude_views |= {view.view.as_id() for view in verified.views if view.view.suffix in self.drop_external_ids}
-        new_model = verified.model_copy(deep=True)
+        exclude_views: set[ViewEntity] = {
+            view.view for view in rules.views if view.view.suffix in self.drop_external_ids
+        }
+        if rules.metadata.as_data_model_id() in COGNITE_MODELS:
+            exclude_views |= {
+                ViewEntity.from_id(view_id, "v1")
+                for collection in self.drop_collection
+                for view_id in self._VIEW_BY_COLLECTION[collection]
+            }
+        new_model = rules.model_copy(deep=True)
 
         properties_by_view = DMSAnalysis(new_model).classes_with_properties(consider_inheritance=True)
 
-        new_model.views = SheetList[DMSView](
-            [view for view in new_model.views if view.view.as_id() not in exclude_views]
-        )
+        new_model.views = SheetList[DMSView]([view for view in new_model.views if view.view not in exclude_views])
         new_properties = SheetList[DMSProperty]()
-
+        mapped_containers: set[ContainerEntity] = set()
         for view in new_model.views:
             for prop in properties_by_view[view.view]:
-                if self._is_asset_3D_property(prop):
+                if "3D" in self.drop_collection and self._is_asset_3D_property(prop):
                     # We filter out the 3D property of asset
                     continue
                 new_properties.append(prop)
+                if prop.container:
+                    mapped_containers.add(prop.container)
 
         new_model.properties = new_properties
+        new_model.containers = (
+            SheetList[DMSContainer](
+                [container for container in new_model.containers or [] if container.container in mapped_containers]
+            )
+            or None
+        )
 
         return new_model
 
-    def _is_asset_3D_property(self, prop: DMSProperty) -> bool:
-        if "3D" not in self.drop_collection:
-            return False
-        return prop.view.as_id() == self._ASSET_VIEW and prop.view_property == "object3D"
+    @classmethod
+    def _is_asset_3D_property(cls, prop: DMSProperty) -> bool:
+        return prop.view.as_id() == cls._ASSET_VIEW and prop.view_property == "object3D"
 
     @property
     def description(self) -> str:

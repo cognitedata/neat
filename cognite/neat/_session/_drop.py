@@ -1,7 +1,14 @@
+from collections.abc import Collection
+from typing import Literal
+
+from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import URIRef
 
+from cognite.neat._issues import IssueList
+from cognite.neat._rules.transformers import DropModelViews
+
 from ._state import SessionState
-from .exceptions import session_class_wrapper
+from .exceptions import NeatSessionError, session_class_wrapper
 
 try:
     from rich import print
@@ -17,6 +24,7 @@ class DropAPI:
 
     def __init__(self, state: SessionState):
         self._state = state
+        self.data_model = DropDataModelAPI(state)
 
     def instances(self, type: str | list[str]) -> None:
         """Drop instances from the session.
@@ -47,3 +55,25 @@ class DropAPI:
         for type_uri, count in result.items():
             print(f"Dropped {count} instances of type {selected_uri_by_type[type_uri]}")
         return None
+
+
+@session_class_wrapper
+class DropDataModelAPI:
+    def __init__(self, state: SessionState):
+        self._state = state
+
+    def views(
+        self,
+        view_external_id: str | SequenceNotStr[str] | None = None,
+        group: Literal["3D", "Annotation", "BaseViews"]
+        | Collection[Literal["3D", "Annotation", "BaseViews"]]
+        | None = None,
+    ) -> IssueList:
+        """Drops views from the data model.
+        Args:
+            view_external_id: The externalId of the view to drop.
+            group: Only applies to CogniteCore model. This is a shorthand for dropping multiple views at once.
+        """
+        if sum([view_external_id is not None, group is not None]) != 1:
+            raise NeatSessionError("Only one of view_external_id or group can be specified.")
+        return self._state.rule_transform(DropModelViews(view_external_id, group))

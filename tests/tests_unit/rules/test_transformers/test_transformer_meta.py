@@ -9,9 +9,9 @@ from cognite.neat._rules.models import DMSInputRules, DMSRules, InformationInput
 from cognite.neat._rules.transformers import (
     AddClassImplements,
     ClassicPrepareCore,
+    DropModelViews,
     IncludeReferenced,
     PrefixEntities,
-    ReduceCogniteModel,
     RuleMapper,
     RulesTransformer,
     SetIDDMSModel,
@@ -29,7 +29,7 @@ def instantiated_transformers_cls() -> Iterable[RulesTransformer]:
             yield transformation_cls(prefix="test")
         elif issubclass(transformation_cls, SetIDDMSModel | ToExtensionModel):
             yield transformation_cls(("my_space", "my_id", "v1"))
-        elif issubclass(transformation_cls, ReduceCogniteModel):
+        elif issubclass(transformation_cls, DropModelViews):
             yield transformation_cls("3D")
         elif issubclass(transformation_cls, AddClassImplements):
             yield transformation_cls("Edge", "Edge")
