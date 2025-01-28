@@ -264,8 +264,7 @@ class DataModelPrepareAPI:
             prefix: The prefix to add to the views in the data model.
 
         """
-        # Todo: Fix prefix entities to be a verified rules transformer
-        raise NotImplementedError("Prefix entities is not implemented yet.")
+
         return self._state.rule_transform(PrefixEntities(prefix))  # type: ignore[arg-type]
 
     def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]) -> IssueList:
