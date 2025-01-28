@@ -1,4 +1,3 @@
-import dataclasses
 import re
 import warnings
 from abc import ABC
@@ -28,8 +27,6 @@ from cognite.neat._issues.warnings._models import (
 )
 from cognite.neat._rules._shared import (
     ReadInputRules,
-    ReadRules,
-    T_InputRules,
     VerifiedRules,
 )
 from cognite.neat._rules.analysis import DMSAnalysis
@@ -51,21 +48,16 @@ from cognite.neat._rules.models.entities import (
     ContainerEntity,
     DMSUnknownEntity,
     EdgeEntity,
-    Entity,
     HasDataFilter,
     MultiValueTypeInfo,
     ReverseConnectionEntity,
-    T_Entity,
     UnknownEntity,
     ViewEntity,
 )
 from cognite.neat._rules.models.information import InformationClass, InformationMetadata, InformationProperty
-from cognite.neat._rules.models.information._rules_input import (
-    InformationInputRules,
-)
 from cognite.neat._utils.text import to_camel
 
-from ._base import RulesTransformer, T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
+from ._base import T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
 from ._verification import VerifyDMSRules
 
 T_InputInRules = TypeVar("T_InputInRules", bound=ReadInputRules)
@@ -157,73 +149,100 @@ class ToCompliantEntities(VerifiedRulesTransformer[InformationRules, Information
         return fixed_definitions
 
 
-class PrefixEntities(RulesTransformer[ReadRules[T_InputRules], ReadRules[T_InputRules]]):  # type: ignore[type-var]
-    """Prefixes all entities with a given prefix."""
+class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
+    """Prefixes all entities with a given prefix if they are in the same space as data model."""
 
     def __init__(self, prefix: str) -> None:
         self._prefix = prefix
 
     @property
     def description(self) -> str:
-        return f"Prefixes all views with {self._prefix!r}"
+        return f"Prefixes all entities with {self._prefix!r} prefix if they are in the same space as data model."
 
-    def transform(self, rules: ReadRules[T_InputRules]) -> ReadRules[T_InputRules]:
-        in_ = rules.rules
-        if in_ is None:
-            return rules
-        copy: T_InputRules = dataclasses.replace(in_)
-        if isinstance(copy, InformationInputRules):
-            prefixed_by_class: dict[str, str] = {}
+    @overload
+    def transform(self, rules: DMSRules) -> DMSRules: ...
+
+    @overload
+    def transform(self, rules: InformationRules) -> InformationRules: ...
+
+    def transform(self, rules: InformationRules | DMSRules) -> InformationRules | DMSRules:
+        copy: InformationRules | DMSRules = rules.model_copy(deep=True)
+
+        # Case: Prefix Information Rules
+        if isinstance(copy, InformationRules):
+            # prefix classes
             for cls in copy.classes:
-                prefixed = str(self._with_prefix(cls.class_))
-                prefixed_by_class[str(cls.class_)] = prefixed
-                cls.class_ = prefixed
+                if cls.class_.prefix == copy.metadata.prefix:
+                    cls.class_ = self._with_prefix(cls.class_)
+
+                if cls.implements:
+                    # prefix parents
+                    for i, parent_class in enumerate(cls.implements):
+                        if parent_class.prefix == copy.metadata.prefix:
+                            cls.implements[i] = self._with_prefix(parent_class)
+
             for prop in copy.properties:
-                prop.class_ = self._with_prefix(prop.class_)
-                if str(prop.value_type) in prefixed_by_class:
-                    prop.value_type = prefixed_by_class[str(prop.value_type)]
-            return ReadRules(copy, rules.read_context)  # type: ignore[arg-type]
-        elif isinstance(copy, DMSInputRules):
-            prefixed_by_view: dict[str, str] = {}
+                if prop.class_.prefix == copy.metadata.prefix:
+                    prop.class_ = self._with_prefix(prop.class_)
+
+                # value type property is not multi and it is ClassEntity
+
+                if isinstance(prop.value_type, ClassEntity) and prop.value_type.prefix == copy.metadata.prefix:
+                    prop.value_type = self._with_prefix(cast(ClassEntity, prop.value_type))
+                elif isinstance(prop.value_type, MultiValueTypeInfo):
+                    for i, value_type in enumerate(prop.value_type.types):
+                        if isinstance(value_type, ClassEntity) and value_type.prefix == copy.metadata.prefix:
+                            prop.value_type.types[i] = self._with_prefix(cast(ClassEntity, value_type))
+            return copy
+
+        # Case: Prefix DMS Rules
+        elif isinstance(copy, DMSRules):
             for view in copy.views:
-                prefixed = str(self._with_prefix(view.view))
-                prefixed_by_view[str(view.view)] = prefixed
-                view.view = prefixed
+                if view.view.space == copy.metadata.space:
+                    view.view = self._with_prefix(view.view)
+
+                if view.implements:
+                    for i, parent_view in enumerate(view.implements):
+                        if parent_view.space == copy.metadata.space:
+                            view.implements[i] = self._with_prefix(parent_view)
+
             for dms_prop in copy.properties:
-                dms_prop.view = self._with_prefix(dms_prop.view)
-                if str(dms_prop.value_type) in prefixed_by_view:
-                    dms_prop.value_type = prefixed_by_view[str(dms_prop.value_type)]
+                if dms_prop.view.space == copy.metadata.space:
+                    dms_prop.view = self._with_prefix(dms_prop.view)
+
+                if isinstance(dms_prop.value_type, ViewEntity) and dms_prop.value_type.space == copy.metadata.space:
+                    dms_prop.value_type = self._with_prefix(dms_prop.value_type)
+
+                if isinstance(dms_prop.container, ContainerEntity) and dms_prop.container.space == copy.metadata.space:
+                    dms_prop.container = self._with_prefix(dms_prop.container)
+
             if copy.containers:
                 for container in copy.containers:
-                    container.container = self._with_prefix(container.container)
-            return ReadRules(copy, rules.read_context)
+                    if container.container.space == copy.metadata.space:
+                        container.container = self._with_prefix(container.container)
+            return copy
+
         raise NeatValueError(f"Unsupported rules type: {type(copy)}")
 
     @overload
-    def _with_prefix(self, raw: str) -> str: ...
+    def _with_prefix(self, entity: ClassEntity) -> ClassEntity: ...
 
     @overload
-    def _with_prefix(self, raw: T_Entity) -> T_Entity: ...
+    def _with_prefix(self, entity: ViewEntity) -> ViewEntity: ...
 
-    def _with_prefix(self, raw: str | T_Entity) -> str | T_Entity:
-        is_entity_format = not isinstance(raw, str)
-        entity = Entity.load(raw)
-        output: ClassEntity | ViewEntity | ContainerEntity
-        if isinstance(entity, ClassEntity):
-            output = ClassEntity(prefix=entity.prefix, suffix=f"{self._prefix}{entity.suffix}", version=entity.version)
-        elif isinstance(entity, ViewEntity):
-            output = ViewEntity(
-                space=entity.space, externalId=f"{self._prefix}{entity.external_id}", version=entity.version
-            )
-        elif isinstance(entity, ContainerEntity):
-            output = ContainerEntity(space=entity.space, externalId=f"{self._prefix}{entity.external_id}")
-        elif isinstance(entity, UnknownEntity | Entity):
-            return f"{self._prefix}{raw}"
+    @overload
+    def _with_prefix(self, entity: ContainerEntity) -> ContainerEntity: ...
+
+    def _with_prefix(
+        self, entity: ViewEntity | ContainerEntity | ClassEntity
+    ) -> ViewEntity | ContainerEntity | ClassEntity:
+        if isinstance(entity, ViewEntity | ContainerEntity | ClassEntity):
+            entity.suffix = f"{self._prefix}{entity.suffix}"
+
         else:
             raise NeatValueError(f"Unsupported entity type: {type(entity)}")
-        if is_entity_format:
-            return cast(T_Entity, output)
-        return str(output)
+
+        return entity
 
 
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
