@@ -159,6 +159,12 @@ class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
     def description(self) -> str:
         return f"Prefixes all entities with {self._prefix!r} prefix if they are in the same space as data model."
 
+    @overload
+    def transform(self, rules: DMSRules) -> DMSRules: ...
+
+    @overload
+    def transform(self, rules: InformationRules) -> InformationRules: ...
+
     def transform(self, rules: InformationRules | DMSRules) -> InformationRules | DMSRules:
         copy: InformationRules | DMSRules = rules.model_copy(deep=True)
 
