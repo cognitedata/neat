@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.109.1] - 28-01-**2025**
+
+### Fixed
+- The `neat.inspect.issue()` now returns data model issues. 
 
 ## [0.109.0] - 28-01-**2025**
 ### Improved
