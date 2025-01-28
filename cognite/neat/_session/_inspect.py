@@ -110,7 +110,7 @@ class InspectIssues:
         if issues is None and self._state.instances.store.provenance:
             last_change = self._state.instances.store.provenance[-1]
             issues = last_change.target_entity.issues
-        else:
+        elif issues is None:
             self._print("No issues found.")
             return pd.DataFrame() if return_dataframe else None
 
