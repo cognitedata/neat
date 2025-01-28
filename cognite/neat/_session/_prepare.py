@@ -13,7 +13,6 @@ from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules.transformers import (
-    IncludeReferenced,
     PrefixEntities,
     ReduceCogniteModel,
 )
@@ -278,13 +277,3 @@ class DataModelPrepareAPI:
 
         """
         return self._state.rule_transform(ReduceCogniteModel(drop))
-
-    def include_referenced(self) -> IssueList:
-        """Include referenced views and containers in the data model."""
-        if self._state.client is None:
-            raise NeatSessionError(
-                "No client provided. You are referencing unknown views and containers in your data model, "
-                "NEAT needs a client to lookup the definitions. "
-                "Please set the client in the session, NeatSession(client=client)."
-            )
-        return self._state.rule_transform(IncludeReferenced(self._state.client))

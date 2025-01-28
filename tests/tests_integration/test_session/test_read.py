@@ -37,10 +37,7 @@ class TestRead:
     def test_read_pump_hello_world(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(client=cognite_client)
 
-        neat.read.excel(hello_world_pump)
-
-        issues = neat.verify()
-        neat.prepare.data_model.include_referenced()
+        issues = neat.read.excel(hello_world_pump)
 
         assert not issues.has_errors
 
