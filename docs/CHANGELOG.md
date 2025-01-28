@@ -16,7 +16,7 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 
-## TBD
+## [0.109.0] - 28-01-**2025**
 ### Improved
 - AML and DEXPI reader for neat session automatically perform extraction and transformation
 - The `get_cognite_client` function no longer prints an irrelevant warning message when running outside a git
