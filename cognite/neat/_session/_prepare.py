@@ -1,36 +1,19 @@
-from collections.abc import Callable, Collection
-from typing import Any, Literal, cast
+from collections.abc import Callable
+from typing import Any
 
-from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from rdflib import URIRef
 
-from cognite.neat._constants import (
-    get_default_prefixes_and_namespaces,
-)
 from cognite.neat._graph.transformers import (
-    AttachPropertyFromTargetToSource,
     ConnectionToLiteral,
     ConvertLiteral,
     LiteralToEntity,
-    PruneDeadEndEdges,
-    PruneInstancesOfUnknownType,
-    PruneTypes,
     RelationshipAsEdgeTransformer,
-    Transformers,
 )
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
-    IncludeReferenced,
     PrefixEntities,
-    ReduceCogniteModel,
-    RulesTransformer,
-    ToCompliantEntities,
-    ToDataProductModel,
-    ToEnterpriseModel,
-    ToSolutionModel,
 )
 from cognite.neat._utils.text import humanize_collection
 
@@ -58,91 +41,6 @@ class InstancePrepareAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
-
-    def dexpi(self) -> None:
-        """Prepares extracted DEXPI graph for further usage in CDF
-
-        !!! note "This method bundles several graph transformers which"
-            - attach values of generic attributes to nodes
-            - create associations between nodes
-            - remove unused generic attributes
-            - remove associations between nodes that do not exist in the extracted graph
-            - remove edges to nodes that do not exist in the extracted graph
-
-        and therefore safeguard CDF from a bad graph
-
-        Example:
-            Apply Dexpi specific transformations:
-            ```python
-            neat.prepare.instances.dexpi()
-            ```
-        """
-
-        DEXPI = get_default_prefixes_and_namespaces()["dexpi"]
-
-        transformers = [
-            # Remove any instance which type is unknown
-            PruneInstancesOfUnknownType(),
-            # Directly connect generic attributes
-            AttachPropertyFromTargetToSource(
-                target_property=DEXPI.Value,
-                target_property_holding_new_property=DEXPI.Name,
-                target_node_type=DEXPI.GenericAttribute,
-                delete_target_node=True,
-            ),
-            # Directly connect associations
-            AttachPropertyFromTargetToSource(
-                target_property=DEXPI.ItemID,
-                target_property_holding_new_property=DEXPI.Type,
-                target_node_type=DEXPI.Association,
-                delete_target_node=True,
-            ),
-            # Remove unused generic attributes and associations
-            PruneTypes([DEXPI.GenericAttribute, DEXPI.Association]),
-            # Remove edges to nodes that do not exist in the extracted graph
-            PruneDeadEndEdges(),
-        ]
-
-        for transformer in transformers:
-            self._state.instances.store.transform(cast(Transformers, transformer))
-
-    def aml(self) -> None:
-        """Prepares extracted AutomationML graph for further usage in CDF
-
-        !!! note "This method bundles several graph transformers which"
-            - attach values of attributes to nodes
-            - remove unused attributes
-            - remove edges to nodes that do not exist in the extracted graph
-
-        and therefore safeguard CDF from a bad graph
-
-        Example:
-            Apply AML specific transformations:
-            ```python
-            neat.prepare.instances.aml()
-            ```
-        """
-
-        AML = get_default_prefixes_and_namespaces()["aml"]
-
-        transformers = [
-            # Remove any instance which type is unknown
-            PruneInstancesOfUnknownType(),
-            # Directly connect generic attributes
-            AttachPropertyFromTargetToSource(
-                target_property=AML.Value,
-                target_property_holding_new_property=AML.Name,
-                target_node_type=AML.Attribute,
-                delete_target_node=True,
-            ),
-            # Prune unused attributes
-            PruneTypes([AML.Attribute]),
-            # # Remove edges to nodes that do not exist in the extracted graph
-            PruneDeadEndEdges(),
-        ]
-
-        for transformer in transformers:
-            self._state.instances.store.transform(cast(Transformers, transformer))
 
     def make_connection_on_exact_match(
         self,
@@ -357,10 +255,6 @@ class DataModelPrepareAPI:
         self._state = state
         self._verbose = verbose
 
-    def cdf_compliant_external_ids(self) -> IssueList:
-        """Convert data model component external ids to CDF compliant entities."""
-        return self._state.rule_transform(ToCompliantEntities())
-
     def prefix(self, prefix: str) -> IssueList:
         """Prefix all views in the data model with the given prefix.
 
@@ -368,143 +262,5 @@ class DataModelPrepareAPI:
             prefix: The prefix to add to the views in the data model.
 
         """
-        return self._state.rule_transform(PrefixEntities(prefix))
 
-    def to_enterprise(
-        self,
-        data_model_id: DataModelIdentifier,
-        org_name: str = "My",
-        dummy_property: str = "GUID",
-        move_connections: bool = False,
-    ) -> IssueList:
-        """Uses the current data model as a basis to create enterprise data model
-
-        Args:
-            data_model_id: The enterprise data model id that is being created
-            org_name: Organization name to use for the views in the enterprise data model.
-            dummy_property: The dummy property to use as placeholder for the views in the new data model.
-            move_connections: If True, the connections will be moved to the new data model.
-
-        !!! note "Enterprise Data Model Creation"
-
-            Always create an enterprise data model from a Cognite Data Model as this will
-            assure all the Cognite Data Fusion applications to run smoothly, such as
-                - Search
-                - Atlas AI
-                - ...
-
-        !!! note "Move Connections"
-
-            If you want to move the connections to the new data model, set the move_connections
-            to True. This will move the connections to the new data model and use new model
-            views as the source and target views.
-
-        """
-        return self._state.rule_transform(
-            ToEnterpriseModel(
-                new_model_id=data_model_id,
-                org_name=org_name,
-                dummy_property=dummy_property,
-                move_connections=move_connections,
-            )
-        )
-
-    def to_solution(
-        self,
-        data_model_id: DataModelIdentifier,
-        org_name: str = "My",
-        mode: Literal["read", "write"] = "read",
-        dummy_property: str = "GUID",
-    ) -> IssueList:
-        """Uses the current data model as a basis to create solution data model
-
-        Args:
-            data_model_id: The solution data model id that is being created.
-            org_name: Organization name to use for the views in the new data model.
-            mode: The mode of the solution data model. Can be either "read" or "write".
-            dummy_property: The dummy property to use as placeholder for the views in the new data model.
-
-        !!! note "Solution Data Model Mode"
-
-            The read-only solution model will only be able to read from the existing containers
-            from the enterprise data model, therefore the solution data model will not have
-            containers in the solution data model space. Meaning the solution data model views
-            will be read-only.
-
-            The write mode will have additional containers in the solution data model space,
-            allowing in addition to reading through the solution model views, also writing to
-            the containers in the solution data model space.
-
-        """
-        return self._state.rule_transform(
-            ToSolutionModel(
-                new_model_id=data_model_id,
-                org_name=org_name,
-                mode=mode,
-                dummy_property=dummy_property,
-            )
-        )
-
-    def to_data_product(
-        self,
-        data_model_id: DataModelIdentifier,
-        org_name: str = "",
-        include: Literal["same-space", "all"] = "same-space",
-    ) -> None:
-        """Uses the current data model as a basis to create data product data model.
-
-        A data product model is a data model that ONLY maps to containers and do not use implements. This is
-        typically used for defining the data in a data product.
-
-        Args:
-            data_model_id: The data product data model id that is being created.
-            org_name: Organization name used as prefix if the model is building on top of a Cognite Data Model.
-            include: The views to include in the data product data model. Can be either "same-space" or "all".
-                If you set same-space, only the properties of the views in the same space as the data model
-                will be included.
-        """
-
-        view_ids, container_ids = DMSValidation(
-            self._state.rule_store.last_verified_dms_rules
-        ).imported_views_and_containers_ids()
-        transformers: list[RulesTransformer] = []
-        client = self._state.client
-        if (view_ids or container_ids) and client is None:
-            raise NeatSessionError(
-                "No client provided. You are referencing unknown views and containers in your data model, "
-                "NEAT needs a client to lookup the definitions. "
-                "Please set the client in the session, NeatSession(client=client)."
-            )
-        elif (view_ids or container_ids) and client:
-            transformers.append(IncludeReferenced(client, include_properties=True))
-
-        transformers.append(
-            ToDataProductModel(
-                new_model_id=data_model_id,
-                org_name=org_name,
-                include=include,
-            )
-        )
-
-        self._state.rule_transform(*transformers)
-
-    def reduce(self, drop: Collection[Literal["3D", "Annotation", "BaseViews"] | str]) -> IssueList:
-        """This is a special method that allow you to drop parts of the data model.
-        This only applies to Cognite Data Models.
-
-        Args:
-            drop: What to drop from the data model. The values 3D, Annotation, and BaseViews are special values that
-                drops multiple views at once. You can also pass externalIds of views to drop individual views.
-
-        """
-        return self._state.rule_transform(ReduceCogniteModel(drop))
-
-    def include_referenced(self) -> IssueList:
-        """Include referenced views and containers in the data model."""
-        if self._state.client is None:
-            raise NeatSessionError(
-                "No client provided. You are referencing unknown views and containers in your data model, "
-                "NEAT needs a client to lookup the definitions. "
-                "Please set the client in the session, NeatSession(client=client)."
-            )
-        return self._state.rule_transform(IncludeReferenced(self._state.client))
+        return self._state.rule_transform(PrefixEntities(prefix))  # type: ignore[arg-type]

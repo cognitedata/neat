@@ -185,6 +185,10 @@ class Queries:
         query = f"ASK WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?p), STR(<{namespace}>))) }}"
         return bool(self.graph(named_graph).query(query))
 
+    def has_data(self) -> bool:
+        """Check if the graph store has data"""
+        return cast(bool, next(iter(self.dataset.query("ASK WHERE { ?s ?p ?o }"))))
+
     def has_type(self, type_: URIRef, named_graph: URIRef | None = None) -> bool:
         """Check if a type exists in the graph store
 

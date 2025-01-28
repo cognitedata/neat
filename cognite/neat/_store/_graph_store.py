@@ -17,6 +17,7 @@ from cognite.neat._graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
 from cognite.neat._issues import IssueList, catch_issues
+from cognite.neat._issues.errors import OxigraphStorageLockedError
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.entities import ClassEntity
@@ -24,7 +25,7 @@ from cognite.neat._shared import InstanceType, Triple
 from cognite.neat._utils.auxiliary import local_import
 from cognite.neat._utils.rdf_ import add_triples_in_batch, remove_namespace_from_uri
 
-from ._provenance import Change, Provenance
+from ._provenance import Change, Entity, Provenance
 
 if sys.version_info < (3, 11):
     from typing_extensions import Self
@@ -59,7 +60,7 @@ class NeatGraphStore:
 
         _start = datetime.now(timezone.utc)
         self.dataset = dataset
-        self.provenance = Provenance(
+        self.provenance = Provenance[Entity](
             [
                 Change.record(
                     activity=f"{type(self).__name__}.__init__",
@@ -207,17 +208,12 @@ class NeatGraphStore:
         import oxrdflib
         import pyoxigraph
 
-        # Adding support for both oxigraph in-memory and file-based storage
-        for i in range(4):
-            try:
-                oxi_store = pyoxigraph.Store(path=str(storage_dir) if storage_dir else None)
-                break
-            except OSError as e:
-                if "lock" in str(e) and i < 3:
-                    continue
-                raise e
-        else:
-            raise Exception("Error initializing Oxigraph store")
+        try:
+            oxi_store = pyoxigraph.Store(path=str(storage_dir) if storage_dir else None)
+        except OSError as e:
+            if "lock" in str(e):
+                raise OxigraphStorageLockedError(filepath=cast(Path, storage_dir)) from e
+            raise e
 
         return cls(
             dataset=Dataset(
@@ -685,3 +681,8 @@ class NeatGraphStore:
     @property
     def named_graphs(self) -> list[URIRef]:
         return [cast(URIRef, context.identifier) for context in self.dataset.contexts()]
+
+    @property
+    def empty(self) -> bool:
+        """Cheap way to check if the graph store is empty."""
+        return not self.queries.has_data()

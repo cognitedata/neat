@@ -15,6 +15,42 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+
+## [0.109.0] - 28-01-**2025**
+### Improved
+- AML and DEXPI reader for neat session automatically perform extraction and transformation
+- The `get_cognite_client` function no longer prints an irrelevant warning message when running outside a git
+  repository.
+- The `neat.verify()` no longer gives warnings about empty `Cognite` system containers.
+- The `neat.infer()` is now much faster for large number of instances. (It now scales linearly with number of properties
+  and not instances.). In addition, it supports inferring schema with an existing data model.
+
+### Changed
+- [BREAKING] NeatSession.prepare.data_model.cdf_compliant_external_ids is moved under NeatSession.fix.data_model.cdf_compliant_external_ids
+- [BREAKING] `cdf_compliant_external_ids` expects validated InformationRules as input instead of InformationInputRules
+- [BREAKING] The `neat.prepare.data_model.to_solution/to_enterprise/to_data_product` methods are moved to
+  `neat.create.solution_model/enterprise_model/data_product_model`. In addition, the methods been simplified with
+  fewer parameters and better defaults.
+- [BREAKING] NeatSession.prepare.data_model.prefix works only on verified Information and DMS rules, where in case of both rules are provided, it will use DMS rules
+- [BREAKING] The `neat.convert()` no longer takes a target parameter. Only conversion from Information to DMS rules is
+  supported.
+- [BREAKING] The `neat.prepare.data_model.drop(...)` has been moved to `neat.drop.data_model.views(...)`. In addition,
+  the `drop` paramter has been split into `view_external_id` and `group` to differentiate between dropping individual
+  views and groups of views.
+
+### Removed
+- [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.
+- [BREAKING] NeatSession.prepare.data_model.cdf_compliant_external_ids
+
+### Fixed
+- Fixed issue with not correctly set of max count when inferring properties which value type are multi type
+- `neat.read.cdf.classic.graph` no longer requires read access to data sets in CDF.
+
+### Added
+- Support for "on-disk" storage for oxigraph in NeatSession
+- New method `neat.inspect.views()` to check the views in the data model.
+
+
 ## [0.108.0] - 22-01-**2025**
 ### Added
 - Support RDF Datasets in NeatGraphStore enabling writing of sources triples to dedicated named graphs
@@ -27,7 +63,7 @@ Changes are grouped as follows:
 - The `neat.read.cdf.graph(...)` method now shows progress bars for each view when loading large graphs.
 - Initiating NeatSession will automatically select the best possible graph storage
 - Form of internal neat data model
-- The `neat.read.cdf.classic.graph(...)` now looks-up internal ids for external ids upon extraction instead of a 
+- The `neat.read.cdf.classic.graph(...)` now looks-up internal ids for external ids upon extraction instead of a
   separate step. This has a significant performance improvement for large graphs.
 
 ### Changed

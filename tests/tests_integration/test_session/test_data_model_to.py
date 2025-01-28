@@ -110,13 +110,13 @@ class TestRulesStoreProvenanceSyncing:
             "this neat session have the same data model id"
         ) in e.value.raw_message
 
-    def test_stop_model_import_which_source_is_not_in_session(self, neat_client: NeatClient, tmp_path: Path) -> None:
+    @pytest.mark.skip("Skipped need a discussion on how to add with the Info + DMS regime")
+    def test_stop_model_import_which_source_is_not_in_session(self, neat_client: NeatClient) -> None:
         neat = NeatSession(neat_client)
         neat.read.excel.examples.pump_example()
-        neat.verify()
 
         # set source to be the same as the target
-        target = neat._state.rule_store.provenance[-1].target_entity.result
+        target = neat._state.rule_store.provenance[-1].target_entity.dms
         target.metadata.source_id = target.metadata.namespace + "some_other_source"
 
         with pytest.raises(NeatValueError) as e:

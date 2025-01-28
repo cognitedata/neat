@@ -7,7 +7,6 @@ from rdflib.query import ResultRow
 from cognite.neat._rules.analysis import InformationAnalysis
 from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
 from cognite.neat._rules.models.information import InformationRules
-from cognite.neat._shared import Triple
 from cognite.neat._utils.rdf_ import get_namespace, remove_namespace_from_uri
 
 from ._base import BaseTransformer, BaseTransformerStandardised, RowTransformationOutput
@@ -76,7 +75,7 @@ class MakeConnectionOnExactMatch(BaseTransformerStandardised):
         self.object_type = object_type
         self.object_predicate = object_predicate
         subject_namespace = Namespace(get_namespace(subject_type))
-        self.connection = (
+        self.connection: URIRef = (
             subject_namespace[quote(connection.strip())]
             if isinstance(connection, str)
             else connection or subject_namespace[remove_namespace_from_uri(self.object_type).lower()]
@@ -125,8 +124,8 @@ class MakeConnectionOnExactMatch(BaseTransformerStandardised):
     def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
         row_output = RowTransformationOutput()
 
-        subject, object = query_result_row
+        subject, object = cast(tuple[URIRef, URIRef], query_result_row)
 
-        row_output.add_triples.append(cast(Triple, (subject, self.connection, object)))
+        row_output.add_triples.add((subject, self.connection, object))
         row_output.instances_modified_count += 1
         return row_output

@@ -74,26 +74,17 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360Image/collection360
     nullable: true
-    value_type: Neat360ImageCollection
-    view: Neat360Image
+    value_type: EnterpriseNeat360ImageCollection
+    view: EnterpriseNeat360Image
     view_property: collection360
   - container: sp_enterprise:Neat360Image
     container_property: neat360ImageGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360Image/neat360ImageGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360Image/neat360ImageGUID
     nullable: true
     value_type: text
-    view: Neat360Image
-    view_property: neat360ImageGUID
-  - container: sp_solution:Neat360Image
-    container_property: neat360ImageGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/Neat360Image/neat360ImageGUID
-    nullable: true
-    value_type: text
-    view: Neat360Image
+    view: EnterpriseNeat360Image
     view_property: neat360ImageGUID
   - connection: direct
     container: cdf_cdm_3d:Cognite360Image
@@ -104,26 +95,17 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360Image/station360
     nullable: true
-    value_type: Neat360ImageStation
-    view: Neat360Image
+    value_type: EnterpriseNeat360ImageStation
+    view: EnterpriseNeat360Image
     view_property: station360
   - container: sp_enterprise:Neat360ImageAnnotation
     container_property: neat360ImageAnnotationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageAnnotation/neat360ImageAnnotationGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageAnnotation/neat360ImageAnnotationGUID
     nullable: true
     value_type: text
-    view: Neat360ImageAnnotation
-    view_property: neat360ImageAnnotationGUID
-  - container: sp_solution:Neat360ImageAnnotation
-    container_property: neat360ImageAnnotationGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/Neat360ImageAnnotation/neat360ImageAnnotationGUID
-    nullable: true
-    value_type: text
-    view: Neat360ImageAnnotation
+    view: EnterpriseNeat360ImageAnnotation
     view_property: neat360ImageAnnotationGUID
   - connection: direct
     container: cdf_cdm_3d:Cognite3DRevision
@@ -133,87 +115,51 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageCollection/model3D
     nullable: true
-    value_type: Neat360ImageModel
-    view: Neat360ImageCollection
+    value_type: EnterpriseNeat360ImageModel
+    view: EnterpriseNeat360ImageCollection
     view_property: model3D
   - container: sp_enterprise:Neat360ImageCollection
     container_property: neat360ImageCollectionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageCollection/neat360ImageCollectionGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageCollection/neat360ImageCollectionGUID
     nullable: true
     value_type: text
-    view: Neat360ImageCollection
-    view_property: neat360ImageCollectionGUID
-  - container: sp_solution:Neat360ImageCollection
-    container_property: neat360ImageCollectionGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/Neat360ImageCollection/neat360ImageCollectionGUID
-    nullable: true
-    value_type: text
-    view: Neat360ImageCollection
+    view: EnterpriseNeat360ImageCollection
     view_property: neat360ImageCollectionGUID
   - connection: reverse(property=model3D)
     description: List Cognite360Image collections for this instance
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageModel/collections
-    value_type: Neat360ImageCollection
-    view: Neat360ImageModel
+    value_type: EnterpriseNeat360ImageCollection
+    view: EnterpriseNeat360ImageModel
     view_property: collections
   - container: sp_enterprise:Neat360ImageModel
     container_property: neat360ImageModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageModel/neat360ImageModelGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageModel/neat360ImageModelGUID
     nullable: true
     value_type: text
-    view: Neat360ImageModel
-    view_property: neat360ImageModelGUID
-  - container: sp_solution:Neat360ImageModel
-    container_property: neat360ImageModelGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/Neat360ImageModel/neat360ImageModelGUID
-    nullable: true
-    value_type: text
-    view: Neat360ImageModel
+    view: EnterpriseNeat360ImageModel
     view_property: neat360ImageModelGUID
   - container: sp_enterprise:Neat360ImageStation
     container_property: neat360ImageStationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageStation/neat360ImageStationGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageStation/neat360ImageStationGUID
     nullable: true
     value_type: text
-    view: Neat360ImageStation
-    view_property: neat360ImageStationGUID
-  - container: sp_solution:Neat360ImageStation
-    container_property: neat360ImageStationGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/Neat360ImageStation/neat360ImageStationGUID
-    nullable: true
-    value_type: text
-    view: Neat360ImageStation
+    view: EnterpriseNeat360ImageStation
     view_property: neat360ImageStationGUID
   - container: sp_enterprise:Neat3DModel
     container_property: neat3DModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DModel/neat3DModelGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DModel/neat3DModelGUID
     nullable: true
     value_type: text
-    view: Neat3DModel
-    view_property: neat3DModelGUID
-  - container: sp_solution:Neat3DModel
-    container_property: neat3DModelGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/Neat3DModel/neat3DModelGUID
-    nullable: true
-    value_type: text
-    view: Neat3DModel
+    view: EnterpriseNeat3DModel
     view_property: neat3DModelGUID
   - connection: direct
     container: cdf_cdm_3d:Cognite3DModel
@@ -223,48 +169,47 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DModel/thumbnail
     nullable: true
-    value_type: NeatFile
-    view: Neat3DModel
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeat3DModel
     view_property: thumbnail
   - connection: reverse(property=object3D)
     description: Asset that is tied to this 3D object
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/asset
-    value_type: NeatAsset
-    view: Neat3DObject
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeat3DObject
     view_property: asset
   - connection: reverse(property=object3D)
     description: List of up to 1000 CADNodes that represents the connected CogniteAsset
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/cadNodes
-    value_type: NeatCADNode
-    view: Neat3DObject
+    value_type: EnterpriseNeatCADNode
+    view: EnterpriseNeat3DObject
     view_property: cadNodes
+  - connection: edge(properties=cdf_cdm:Cognite360ImageAnnotation(version=v1),type=cdf_cdm:image-360-annotation)
+    description: Edge connection to Cognite360Image annotations that represents the
+      connected CogniteAsset
+    is_list: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/images360
+    value_type: EnterpriseNeat360Image
+    view: EnterpriseNeat3DObject
+    view_property: images360
   - container: sp_enterprise:Neat3DObject
     container_property: neat3DObjectGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DObject/neat3DObjectGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DObject/neat3DObjectGUID
     nullable: true
     value_type: text
-    view: Neat3DObject
-    view_property: neat3DObjectGUID
-  - container: sp_solution:Neat3DObject
-    container_property: neat3DObjectGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/Neat3DObject/neat3DObjectGUID
-    nullable: true
-    value_type: text
-    view: Neat3DObject
+    view: EnterpriseNeat3DObject
     view_property: neat3DObjectGUID
   - connection: reverse(property=object3D)
     description: List of up to 1000 PointCloudVolumes that represents the connected
       CogniteAsset
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/pointCloudVolumes
-    value_type: NeatPointCloudVolume
-    view: Neat3DObject
+    value_type: EnterpriseNeatPointCloudVolume
+    view: EnterpriseNeat3DObject
     view_property: pointCloudVolumes
   - connection: direct
     container: cdf_cdm_3d:Cognite3DRevision
@@ -273,44 +218,26 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DRevision/model3D
     nullable: true
-    value_type: Neat3DModel
-    view: Neat3DRevision
+    value_type: EnterpriseNeat3DModel
+    view: EnterpriseNeat3DRevision
     view_property: model3D
   - container: sp_enterprise:Neat3DRevision
     container_property: neat3DRevisionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DRevision/neat3DRevisionGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DRevision/neat3DRevisionGUID
     nullable: true
     value_type: text
-    view: Neat3DRevision
-    view_property: neat3DRevisionGUID
-  - container: sp_solution:Neat3DRevision
-    container_property: neat3DRevisionGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/Neat3DRevision/neat3DRevisionGUID
-    nullable: true
-    value_type: text
-    view: Neat3DRevision
+    view: EnterpriseNeat3DRevision
     view_property: neat3DRevisionGUID
   - container: sp_enterprise:Neat3DTransformation
     container_property: neat3DTransformationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DTransformation/neat3DTransformationGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DTransformation/neat3DTransformationGUID
     nullable: true
     value_type: text
-    view: Neat3DTransformation
-    view_property: neat3DTransformationGUID
-  - container: sp_solution:Neat3DTransformation
-    container_property: neat3DTransformationGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/Neat3DTransformation/neat3DTransformationGUID
-    nullable: true
-    value_type: text
-    view: Neat3DTransformation
+    view: EnterpriseNeat3DTransformation
     view_property: neat3DTransformationGUID
   - connection: direct
     container: cdf_cdm:CogniteActivity
@@ -321,8 +248,8 @@ data_product:
     name: Assets
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteActivity/assets
     nullable: true
-    value_type: NeatAsset
-    view: NeatActivity
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatActivity
     view_property: assets
   - connection: direct
     container: cdf_cdm:CogniteActivity
@@ -333,26 +260,17 @@ data_product:
     name: Equipment
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteActivity/equipment
     nullable: true
-    value_type: NeatEquipment
-    view: NeatActivity
+    value_type: EnterpriseNeatEquipment
+    view: EnterpriseNeatActivity
     view_property: equipment
   - container: sp_enterprise:NeatActivity
     container_property: neatActivityGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatActivity/neatActivityGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatActivity/neatActivityGUID
     nullable: true
     value_type: text
-    view: NeatActivity
-    view_property: neatActivityGUID
-  - container: sp_solution:NeatActivity
-    container_property: neatActivityGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatActivity/neatActivityGUID
-    nullable: true
-    value_type: text
-    view: NeatActivity
+    view: EnterpriseNeatActivity
     view_property: neatActivityGUID
   - connection: direct
     container: cdf_cdm:CogniteActivity
@@ -363,34 +281,25 @@ data_product:
     name: Time series
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteActivity/timeSeries
     nullable: true
-    value_type: NeatTimeSeries
-    view: NeatActivity
+    value_type: EnterpriseNeatTimeSeries
+    view: EnterpriseNeatActivity
     view_property: timeSeries
   - container: sp_enterprise:NeatAnnotation
     container_property: neatAnnotationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAnnotation/neatAnnotationGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAnnotation/neatAnnotationGUID
     nullable: true
     value_type: text
-    view: NeatAnnotation
-    view_property: neatAnnotationGUID
-  - container: sp_solution:NeatAnnotation
-    container_property: neatAnnotationGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatAnnotation/neatAnnotationGUID
-    nullable: true
-    value_type: text
-    view: NeatAnnotation
+    view: EnterpriseNeatAnnotation
     view_property: neatAnnotationGUID
   - connection: reverse(property=assets)
     description: An automatically updated list of activities related to the asset.
     is_list: true
     name: Activities
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/activities
-    value_type: NeatActivity
-    view: NeatAsset
+    value_type: EnterpriseNeatActivity
+    view: EnterpriseNeatAsset
     view_property: activities
   - connection: direct
     container: cdf_cdm:CogniteAsset
@@ -401,8 +310,8 @@ data_product:
     name: Asset class
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/assetClass
     nullable: true
-    value_type: NeatAssetClass
-    view: NeatAsset
+    value_type: EnterpriseNeatAssetClass
+    view: EnterpriseNeatAsset
     view_property: assetClass
   - connection: reverse(property=parent)
     description: An automatically updated list of assets with this asset as their
@@ -410,42 +319,33 @@ data_product:
     is_list: true
     name: Children
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/children
-    value_type: NeatAsset
-    view: NeatAsset
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatAsset
     view_property: children
   - connection: reverse(property=asset)
     description: An automatically updated list of equipment related to the asset.
     is_list: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/equipment
-    value_type: NeatEquipment
-    view: NeatAsset
+    value_type: EnterpriseNeatEquipment
+    view: EnterpriseNeatAsset
     view_property: equipment
   - connection: reverse(property=assets)
     description: An automatically updated list of files related to the asset.
     is_list: true
     name: Files
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/files
-    value_type: NeatFile
-    view: NeatAsset
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatAsset
     view_property: files
   - container: sp_enterprise:NeatAsset
     container_property: neatAssetGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAsset/neatAssetGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAsset/neatAssetGUID
     nullable: true
     value_type: text
-    view: NeatAsset
-    view_property: neatAssetGUID
-  - container: sp_solution:NeatAsset
-    container_property: neatAssetGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatAsset/neatAssetGUID
-    nullable: true
-    value_type: text
-    view: NeatAsset
+    view: EnterpriseNeatAsset
     view_property: neatAssetGUID
   - connection: direct
     container: cdf_cdm:CogniteAsset
@@ -456,8 +356,8 @@ data_product:
     name: Parent
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/parent
     nullable: true
-    value_type: NeatAsset
-    view: NeatAsset
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatAsset
     view_property: parent
   - connection: direct
     container: cdf_cdm:CogniteAsset
@@ -470,8 +370,8 @@ data_product:
     name: Path
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/path
     nullable: true
-    value_type: NeatAsset
-    view: NeatAsset
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatAsset
     view_property: path
   - connection: direct
     container: cdf_cdm:CogniteAsset
@@ -483,16 +383,16 @@ data_product:
     name: Root
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/root
     nullable: true
-    value_type: NeatAsset
-    view: NeatAsset
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatAsset
     view_property: root
   - connection: reverse(property=assets)
     description: An automatically updated list of time series related to the asset.
     is_list: true
     name: Time series
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/timeSeries
-    value_type: NeatTimeSeries
-    view: NeatAsset
+    value_type: EnterpriseNeatTimeSeries
+    view: EnterpriseNeatAsset
     view_property: timeSeries
   - connection: direct
     container: cdf_cdm:CogniteAsset
@@ -503,26 +403,17 @@ data_product:
     name: Asset type
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/type
     nullable: true
-    value_type: NeatAssetType
-    view: NeatAsset
+    value_type: EnterpriseNeatAssetType
+    view: EnterpriseNeatAsset
     view_property: type
   - container: sp_enterprise:NeatAssetClass
     container_property: neatAssetClassGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetClass/neatAssetClassGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAssetClass/neatAssetClassGUID
     nullable: true
     value_type: text
-    view: NeatAssetClass
-    view_property: neatAssetClassGUID
-  - container: sp_solution:NeatAssetClass
-    container_property: neatAssetClassGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatAssetClass/neatAssetClassGUID
-    nullable: true
-    value_type: text
-    view: NeatAssetClass
+    view: EnterpriseNeatAssetClass
     view_property: neatAssetClassGUID
   - connection: direct
     container: cdf_cdm:CogniteAssetType
@@ -534,51 +425,33 @@ data_product:
     name: Asset class
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAssetType/assetClass
     nullable: true
-    value_type: NeatAssetClass
-    view: NeatAssetType
+    value_type: EnterpriseNeatAssetClass
+    view: EnterpriseNeatAssetType
     view_property: assetClass
   - container: sp_enterprise:NeatAssetType
     container_property: neatAssetTypeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetType/neatAssetTypeGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAssetType/neatAssetTypeGUID
     nullable: true
     value_type: text
-    view: NeatAssetType
-    view_property: neatAssetTypeGUID
-  - container: sp_solution:NeatAssetType
-    container_property: neatAssetTypeGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatAssetType/neatAssetTypeGUID
-    nullable: true
-    value_type: text
-    view: NeatAssetType
+    view: EnterpriseNeatAssetType
     view_property: neatAssetTypeGUID
   - container: sp_enterprise:NeatCADModel
     container_property: neatCADModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADModel/neatCADModelGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCADModel/neatCADModelGUID
     nullable: true
     value_type: text
-    view: NeatCADModel
-    view_property: neatCADModelGUID
-  - container: sp_solution:NeatCADModel
-    container_property: neatCADModelGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatCADModel/neatCADModelGUID
-    nullable: true
-    value_type: text
-    view: NeatCADModel
+    view: EnterpriseNeatCADModel
     view_property: neatCADModelGUID
   - connection: reverse(property=model3D)
     description: List of revisions for this CAD model
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADModel/revisions
-    value_type: NeatCADRevision
-    view: NeatCADModel
+    value_type: EnterpriseNeatCADRevision
+    view: EnterpriseNeatCADModel
     view_property: revisions
   - connection: direct
     container: cdf_cdm_3d:CogniteCADNode
@@ -588,26 +461,17 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode/model3D
     nullable: true
-    value_type: NeatCADModel
-    view: NeatCADNode
+    value_type: EnterpriseNeatCADModel
+    view: EnterpriseNeatCADNode
     view_property: model3D
   - container: sp_enterprise:NeatCADNode
     container_property: neatCADNodeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADNode/neatCADNodeGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCADNode/neatCADNodeGUID
     nullable: true
     value_type: text
-    view: NeatCADNode
-    view_property: neatCADNodeGUID
-  - container: sp_solution:NeatCADNode
-    container_property: neatCADNodeGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatCADNode/neatCADNodeGUID
-    nullable: true
-    value_type: text
-    view: NeatCADNode
+    view: EnterpriseNeatCADNode
     view_property: neatCADNodeGUID
   - connection: direct
     container: cdf_cdm_3d:CogniteCADNode
@@ -617,8 +481,8 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode/object3D
     nullable: true
-    value_type: Neat3DObject
-    view: NeatCADNode
+    value_type: EnterpriseNeat3DObject
+    view: EnterpriseNeatCADNode
     view_property: object3D
   - connection: direct
     container: cdf_cdm_3d:CogniteCADNode
@@ -629,8 +493,8 @@ data_product:
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode/revisions
     nullable: true
-    value_type: NeatCADRevision
-    view: NeatCADNode
+    value_type: EnterpriseNeatCADRevision
+    view: EnterpriseNeatCADNode
     view_property: revisions
   - connection: direct
     container: cdf_cdm_3d:Cognite3DRevision
@@ -640,26 +504,17 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADRevision/model3D
     nullable: true
-    value_type: NeatCADModel
-    view: NeatCADRevision
+    value_type: EnterpriseNeatCADModel
+    view: EnterpriseNeatCADRevision
     view_property: model3D
   - container: sp_enterprise:NeatCADRevision
     container_property: neatCADRevisionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADRevision/neatCADRevisionGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCADRevision/neatCADRevisionGUID
     nullable: true
     value_type: text
-    view: NeatCADRevision
-    view_property: neatCADRevisionGUID
-  - container: sp_solution:NeatCADRevision
-    container_property: neatCADRevisionGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatCADRevision/neatCADRevisionGUID
-    nullable: true
-    value_type: text
-    view: NeatCADRevision
+    view: EnterpriseNeatCADRevision
     view_property: neatCADRevisionGUID
   - connection: direct
     container: cdf_cdm_3d:CogniteCubeMap
@@ -670,8 +525,8 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/back
     nullable: true
-    value_type: NeatFile
-    view: NeatCubeMap
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatCubeMap
     view_property: back
   - connection: direct
     container: cdf_cdm_3d:CogniteCubeMap
@@ -682,8 +537,8 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/bottom
     nullable: true
-    value_type: NeatFile
-    view: NeatCubeMap
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatCubeMap
     view_property: bottom
   - connection: direct
     container: cdf_cdm_3d:CogniteCubeMap
@@ -694,8 +549,8 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/front
     nullable: true
-    value_type: NeatFile
-    view: NeatCubeMap
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatCubeMap
     view_property: front
   - connection: direct
     container: cdf_cdm_3d:CogniteCubeMap
@@ -706,26 +561,17 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/left
     nullable: true
-    value_type: NeatFile
-    view: NeatCubeMap
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatCubeMap
     view_property: left
   - container: sp_enterprise:NeatCubeMap
     container_property: neatCubeMapGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCubeMap/neatCubeMapGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCubeMap/neatCubeMapGUID
     nullable: true
     value_type: text
-    view: NeatCubeMap
-    view_property: neatCubeMapGUID
-  - container: sp_solution:NeatCubeMap
-    container_property: neatCubeMapGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatCubeMap/neatCubeMapGUID
-    nullable: true
-    value_type: text
-    view: NeatCubeMap
+    view: EnterpriseNeatCubeMap
     view_property: neatCubeMapGUID
   - connection: direct
     container: cdf_cdm_3d:CogniteCubeMap
@@ -736,8 +582,8 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/right
     nullable: true
-    value_type: NeatFile
-    view: NeatCubeMap
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatCubeMap
     view_property: right
   - connection: direct
     container: cdf_cdm_3d:CogniteCubeMap
@@ -748,52 +594,34 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/top
     nullable: true
-    value_type: NeatFile
-    view: NeatCubeMap
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatCubeMap
     view_property: top
   - container: sp_enterprise:NeatDescribable
     container_property: neatDescribableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDescribable/neatDescribableGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatDescribable/neatDescribableGUID
     nullable: true
     value_type: text
-    view: NeatDescribable
-    view_property: neatDescribableGUID
-  - container: sp_solution:NeatDescribable
-    container_property: neatDescribableGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatDescribable/neatDescribableGUID
-    nullable: true
-    value_type: text
-    view: NeatDescribable
+    view: EnterpriseNeatDescribable
     view_property: neatDescribableGUID
   - container: sp_enterprise:NeatDiagramAnnotation
     container_property: neatDiagramAnnotationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDiagramAnnotation/neatDiagramAnnotationGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatDiagramAnnotation/neatDiagramAnnotationGUID
     nullable: true
     value_type: text
-    view: NeatDiagramAnnotation
-    view_property: neatDiagramAnnotationGUID
-  - container: sp_solution:NeatDiagramAnnotation
-    container_property: neatDiagramAnnotationGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatDiagramAnnotation/neatDiagramAnnotationGUID
-    nullable: true
-    value_type: text
-    view: NeatDiagramAnnotation
+    view: EnterpriseNeatDiagramAnnotation
     view_property: neatDiagramAnnotationGUID
   - connection: reverse(property=equipment)
     description: An automatically updated list of activities related to the equipment.
     is_list: true
     name: Activities
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/activities
-    value_type: NeatActivity
-    view: NeatEquipment
+    value_type: EnterpriseNeatActivity
+    view: EnterpriseNeatEquipment
     view_property: activities
   - connection: direct
     container: cdf_cdm:CogniteEquipment
@@ -804,8 +632,8 @@ data_product:
     name: Asset
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/asset
     nullable: true
-    value_type: NeatAsset
-    view: NeatEquipment
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatEquipment
     view_property: asset
   - connection: direct
     container: cdf_cdm:CogniteEquipment
@@ -816,8 +644,8 @@ data_product:
     name: Equipment type
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/equipmentType
     nullable: true
-    value_type: NeatEquipmentType
-    view: NeatEquipment
+    value_type: EnterpriseNeatEquipmentType
+    view: EnterpriseNeatEquipment
     view_property: equipmentType
   - connection: direct
     container: cdf_cdm:CogniteEquipment
@@ -828,52 +656,34 @@ data_product:
     name: Files
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/files
     nullable: true
-    value_type: NeatFile
-    view: NeatEquipment
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatEquipment
     view_property: files
   - container: sp_enterprise:NeatEquipment
     container_property: neatEquipmentGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipment/neatEquipmentGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatEquipment/neatEquipmentGUID
     nullable: true
     value_type: text
-    view: NeatEquipment
-    view_property: neatEquipmentGUID
-  - container: sp_solution:NeatEquipment
-    container_property: neatEquipmentGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatEquipment/neatEquipmentGUID
-    nullable: true
-    value_type: text
-    view: NeatEquipment
+    view: EnterpriseNeatEquipment
     view_property: neatEquipmentGUID
   - connection: reverse(property=equipment)
     description: An automatically updated list of time series related to the equipment.
     is_list: true
     name: Time series
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/timeSeries
-    value_type: NeatTimeSeries
-    view: NeatEquipment
+    value_type: EnterpriseNeatTimeSeries
+    view: EnterpriseNeatEquipment
     view_property: timeSeries
   - container: sp_enterprise:NeatEquipmentType
     container_property: neatEquipmentTypeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipmentType/neatEquipmentTypeGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatEquipmentType/neatEquipmentTypeGUID
     nullable: true
     value_type: text
-    view: NeatEquipmentType
-    view_property: neatEquipmentTypeGUID
-  - container: sp_solution:NeatEquipmentType
-    container_property: neatEquipmentTypeGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatEquipmentType/neatEquipmentTypeGUID
-    nullable: true
-    value_type: text
-    view: NeatEquipmentType
+    view: EnterpriseNeatEquipmentType
     view_property: neatEquipmentTypeGUID
   - connection: direct
     container: cdf_cdm:CogniteFile
@@ -884,8 +694,8 @@ data_product:
     name: Assets
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/assets
     nullable: true
-    value_type: NeatAsset
-    view: NeatFile
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatFile
     view_property: assets
   - connection: direct
     container: cdf_cdm:CogniteFile
@@ -897,77 +707,50 @@ data_product:
     name: Category
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/category
     nullable: true
-    value_type: NeatFileCategory
-    view: NeatFile
+    value_type: EnterpriseNeatFileCategory
+    view: EnterpriseNeatFile
     view_property: category
   - connection: reverse(property=files)
     description: An automatically updated list of equipment this file is related to.
     is_list: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/equipment
-    value_type: NeatEquipment
-    view: NeatFile
+    value_type: EnterpriseNeatEquipment
+    view: EnterpriseNeatFile
     view_property: equipment
   - container: sp_enterprise:NeatFile
     container_property: neatFileGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFile/neatFileGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatFile/neatFileGUID
     nullable: true
     value_type: text
-    view: NeatFile
-    view_property: neatFileGUID
-  - container: sp_solution:NeatFile
-    container_property: neatFileGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatFile/neatFileGUID
-    nullable: true
-    value_type: text
-    view: NeatFile
+    view: EnterpriseNeatFile
     view_property: neatFileGUID
   - container: sp_enterprise:NeatFileCategory
     container_property: neatFileCategoryGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFileCategory/neatFileCategoryGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatFileCategory/neatFileCategoryGUID
     nullable: true
     value_type: text
-    view: NeatFileCategory
-    view_property: neatFileCategoryGUID
-  - container: sp_solution:NeatFileCategory
-    container_property: neatFileCategoryGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatFileCategory/neatFileCategoryGUID
-    nullable: true
-    value_type: text
-    view: NeatFileCategory
+    view: EnterpriseNeatFileCategory
     view_property: neatFileCategoryGUID
   - container: sp_enterprise:NeatPointCloudModel
     container_property: neatPointCloudModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudModel/neatPointCloudModelGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatPointCloudModel/neatPointCloudModelGUID
     nullable: true
     value_type: text
-    view: NeatPointCloudModel
-    view_property: neatPointCloudModelGUID
-  - container: sp_solution:NeatPointCloudModel
-    container_property: neatPointCloudModelGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatPointCloudModel/neatPointCloudModelGUID
-    nullable: true
-    value_type: text
-    view: NeatPointCloudModel
+    view: EnterpriseNeatPointCloudModel
     view_property: neatPointCloudModelGUID
   - connection: reverse(property=model3D)
     description: List of revisions for this PointCloud model
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudModel/revisions
-    value_type: NeatPointCloudRevision
-    view: NeatPointCloudModel
+    value_type: EnterpriseNeatPointCloudRevision
+    view: EnterpriseNeatPointCloudModel
     view_property: revisions
   - connection: direct
     container: cdf_cdm_3d:Cognite3DRevision
@@ -977,26 +760,17 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudRevision/model3D
     nullable: true
-    value_type: NeatPointCloudModel
-    view: NeatPointCloudRevision
+    value_type: EnterpriseNeatPointCloudModel
+    view: EnterpriseNeatPointCloudRevision
     view_property: model3D
   - container: sp_enterprise:NeatPointCloudRevision
     container_property: neatPointCloudRevisionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudRevision/neatPointCloudRevisionGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatPointCloudRevision/neatPointCloudRevisionGUID
     nullable: true
     value_type: text
-    view: NeatPointCloudRevision
-    view_property: neatPointCloudRevisionGUID
-  - container: sp_solution:NeatPointCloudRevision
-    container_property: neatPointCloudRevisionGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatPointCloudRevision/neatPointCloudRevisionGUID
-    nullable: true
-    value_type: text
-    view: NeatPointCloudRevision
+    view: EnterpriseNeatPointCloudRevision
     view_property: neatPointCloudRevisionGUID
   - connection: direct
     container: cdf_cdm_3d:CognitePointCloudVolume
@@ -1006,26 +780,17 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/model3D
     nullable: true
-    value_type: NeatCADModel
-    view: NeatPointCloudVolume
+    value_type: EnterpriseNeatCADModel
+    view: EnterpriseNeatPointCloudVolume
     view_property: model3D
   - container: sp_enterprise:NeatPointCloudVolume
     container_property: neatPointCloudVolumeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudVolume/neatPointCloudVolumeGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatPointCloudVolume/neatPointCloudVolumeGUID
     nullable: true
     value_type: text
-    view: NeatPointCloudVolume
-    view_property: neatPointCloudVolumeGUID
-  - container: sp_solution:NeatPointCloudVolume
-    container_property: neatPointCloudVolumeGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatPointCloudVolume/neatPointCloudVolumeGUID
-    nullable: true
-    value_type: text
-    view: NeatPointCloudVolume
+    view: EnterpriseNeatPointCloudVolume
     view_property: neatPointCloudVolumeGUID
   - connection: direct
     container: cdf_cdm_3d:CognitePointCloudVolume
@@ -1035,8 +800,8 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/object3D
     nullable: true
-    value_type: Neat3DObject
-    view: NeatPointCloudVolume
+    value_type: EnterpriseNeat3DObject
+    view: EnterpriseNeatPointCloudVolume
     view_property: object3D
   - connection: direct
     container: cdf_cdm_3d:CognitePointCloudVolume
@@ -1046,62 +811,35 @@ data_product:
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/revisions
     nullable: true
-    value_type: NeatCADRevision
-    view: NeatPointCloudVolume
+    value_type: EnterpriseNeatCADRevision
+    view: EnterpriseNeatPointCloudVolume
     view_property: revisions
   - container: sp_enterprise:NeatSchedulable
     container_property: neatSchedulableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSchedulable/neatSchedulableGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatSchedulable/neatSchedulableGUID
     nullable: true
     value_type: text
-    view: NeatSchedulable
-    view_property: neatSchedulableGUID
-  - container: sp_solution:NeatSchedulable
-    container_property: neatSchedulableGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatSchedulable/neatSchedulableGUID
-    nullable: true
-    value_type: text
-    view: NeatSchedulable
+    view: EnterpriseNeatSchedulable
     view_property: neatSchedulableGUID
   - container: sp_enterprise:NeatSourceSystem
     container_property: neatSourceSystemGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceSystem/neatSourceSystemGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatSourceSystem/neatSourceSystemGUID
     nullable: true
     value_type: text
-    view: NeatSourceSystem
-    view_property: neatSourceSystemGUID
-  - container: sp_solution:NeatSourceSystem
-    container_property: neatSourceSystemGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatSourceSystem/neatSourceSystemGUID
-    nullable: true
-    value_type: text
-    view: NeatSourceSystem
+    view: EnterpriseNeatSourceSystem
     view_property: neatSourceSystemGUID
   - container: sp_enterprise:NeatSourceable
     container_property: neatSourceableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceable/neatSourceableGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatSourceable/neatSourceableGUID
     nullable: true
     value_type: text
-    view: NeatSourceable
-    view_property: neatSourceableGUID
-  - container: sp_solution:NeatSourceable
-    container_property: neatSourceableGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatSourceable/neatSourceableGUID
-    nullable: true
-    value_type: text
-    view: NeatSourceable
+    view: EnterpriseNeatSourceable
     view_property: neatSourceableGUID
   - connection: direct
     container: cdf_cdm:CogniteSourceable
@@ -1112,8 +850,8 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceable/source
     nullable: true
-    value_type: NeatSourceSystem
-    view: NeatSourceable
+    value_type: EnterpriseNeatSourceSystem
+    view: EnterpriseNeatSourceable
     view_property: source
   - connection: reverse(property=timeSeries)
     description: An automatically updated list of activities the time series is related
@@ -1121,8 +859,8 @@ data_product:
     is_list: true
     name: Activities
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/activities
-    value_type: NeatActivity
-    view: NeatTimeSeries
+    value_type: EnterpriseNeatActivity
+    view: EnterpriseNeatTimeSeries
     view_property: activities
   - connection: direct
     container: cdf_cdm:CogniteTimeSeries
@@ -1133,8 +871,8 @@ data_product:
     name: Assets
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/assets
     nullable: true
-    value_type: NeatAsset
-    view: NeatTimeSeries
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatTimeSeries
     view_property: assets
   - connection: direct
     container: cdf_cdm:CogniteTimeSeries
@@ -1145,26 +883,17 @@ data_product:
     name: Equipment
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/equipment
     nullable: true
-    value_type: NeatEquipment
-    view: NeatTimeSeries
+    value_type: EnterpriseNeatEquipment
+    view: EnterpriseNeatTimeSeries
     view_property: equipment
   - container: sp_enterprise:NeatTimeSeries
     container_property: neatTimeSeriesGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatTimeSeries/neatTimeSeriesGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatTimeSeries/neatTimeSeriesGUID
     nullable: true
     value_type: text
-    view: NeatTimeSeries
-    view_property: neatTimeSeriesGUID
-  - container: sp_solution:NeatTimeSeries
-    container_property: neatTimeSeriesGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatTimeSeries/neatTimeSeriesGUID
-    nullable: true
-    value_type: text
-    view: NeatTimeSeries
+    view: EnterpriseNeatTimeSeries
     view_property: neatTimeSeriesGUID
   - connection: direct
     container: cdf_cdm:CogniteTimeSeries
@@ -1175,44 +904,26 @@ data_product:
     name: Unit
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/unit
     nullable: true
-    value_type: NeatUnit
-    view: NeatTimeSeries
+    value_type: EnterpriseNeatUnit
+    view: EnterpriseNeatTimeSeries
     view_property: unit
   - container: sp_enterprise:NeatUnit
     container_property: neatUnitGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatUnit/neatUnitGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatUnit/neatUnitGUID
     nullable: true
     value_type: text
-    view: NeatUnit
-    view_property: neatUnitGUID
-  - container: sp_solution:NeatUnit
-    container_property: neatUnitGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatUnit/neatUnitGUID
-    nullable: true
-    value_type: text
-    view: NeatUnit
+    view: EnterpriseNeatUnit
     view_property: neatUnitGUID
   - container: sp_enterprise:NeatVisualizable
     container_property: neatVisualizableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatVisualizable/neatVisualizableGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatVisualizable/neatVisualizableGUID
     nullable: true
     value_type: text
-    view: NeatVisualizable
-    view_property: neatVisualizableGUID
-  - container: sp_solution:NeatVisualizable
-    container_property: neatVisualizableGUID
-    immutable: false
-    is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1/NeatVisualizable/neatVisualizableGUID
-    nullable: true
-    value_type: text
-    view: NeatVisualizable
+    view: EnterpriseNeatVisualizable
     view_property: neatVisualizableGUID
   - connection: direct
     constraint: uniqueObject3D
@@ -1223,149 +934,545 @@ data_product:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteVisualizable/object3D
     nullable: true
-    value_type: Neat3DObject
-    view: NeatVisualizable
+    value_type: EnterpriseNeat3DObject
+    view: EnterpriseNeatVisualizable
     view_property: object3D
-  views:
-  - filter_: hasData(cdf_cdm_3d:Cognite360Image,sp_enterprise:Neat360Image,sp_solution:Neat360Image)
-    in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360Image
+  - container: sp_solution:Neat360Image
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360Image/enterprise
+    nullable: true
+    value_type: EnterpriseNeat360Image
     view: Neat360Image
-  - filter_: hasData(sp_enterprise:Neat360ImageAnnotation,sp_solution:Neat360ImageAnnotation)
-    in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageAnnotation
+    view_property: enterprise
+  - container: sp_solution:Neat360ImageAnnotation
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageAnnotation/enterprise
+    nullable: true
+    value_type: EnterpriseNeat360ImageAnnotation
     view: Neat360ImageAnnotation
-  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:Neat360ImageCollection,sp_solution:Neat360ImageCollection)
-    in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageCollection
+    view_property: enterprise
+  - container: sp_solution:Neat360ImageCollection
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageCollection/enterprise
+    nullable: true
+    value_type: EnterpriseNeat360ImageCollection
     view: Neat360ImageCollection
-  - filter_: hasData(sp_enterprise:Neat360ImageModel,sp_solution:Neat360ImageModel)
-    in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageModel
+    view_property: enterprise
+  - container: sp_solution:Neat360ImageModel
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageModel/enterprise
+    nullable: true
+    value_type: EnterpriseNeat360ImageModel
     view: Neat360ImageModel
-  - filter_: hasData(sp_enterprise:Neat360ImageStation,sp_solution:Neat360ImageStation)
-    in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageStation
+    view_property: enterprise
+  - container: sp_solution:Neat360ImageStation
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageStation/enterprise
+    nullable: true
+    value_type: EnterpriseNeat360ImageStation
     view: Neat360ImageStation
-  - filter_: hasData(cdf_cdm_3d:Cognite3DModel,sp_enterprise:Neat3DModel,sp_solution:Neat3DModel)
-    in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DModel
+    view_property: enterprise
+  - container: sp_solution:Neat3DModel
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DModel/enterprise
+    nullable: true
+    value_type: EnterpriseNeat3DModel
     view: Neat3DModel
-  - filter_: hasData(sp_enterprise:Neat3DObject,sp_solution:Neat3DObject)
-    in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DObject
+    view_property: enterprise
+  - container: sp_solution:Neat3DObject
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DObject/enterprise
+    nullable: true
+    value_type: EnterpriseNeat3DObject
     view: Neat3DObject
-  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:Neat3DRevision,sp_solution:Neat3DRevision)
-    in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DRevision
+    view_property: enterprise
+  - container: sp_solution:Neat3DRevision
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DRevision/enterprise
+    nullable: true
+    value_type: EnterpriseNeat3DRevision
     view: Neat3DRevision
-  - filter_: hasData(sp_enterprise:Neat3DTransformation,sp_solution:Neat3DTransformation)
-    in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DTransformation
+    view_property: enterprise
+  - container: sp_solution:Neat3DTransformation
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DTransformation/enterprise
+    nullable: true
+    value_type: EnterpriseNeat3DTransformation
     view: Neat3DTransformation
-  - filter_: hasData(cdf_cdm:CogniteActivity,sp_enterprise:NeatActivity,sp_solution:NeatActivity)
+    view_property: enterprise
+  - container: sp_solution:NeatActivity
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatActivity/enterprise
+    nullable: true
+    value_type: EnterpriseNeatActivity
+    view: NeatActivity
+    view_property: enterprise
+  - container: sp_solution:NeatAnnotation
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAnnotation/enterprise
+    nullable: true
+    value_type: EnterpriseNeatAnnotation
+    view: NeatAnnotation
+    view_property: enterprise
+  - container: sp_solution:NeatAsset
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAsset/enterprise
+    nullable: true
+    value_type: EnterpriseNeatAsset
+    view: NeatAsset
+    view_property: enterprise
+  - container: sp_solution:NeatAssetClass
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetClass/enterprise
+    nullable: true
+    value_type: EnterpriseNeatAssetClass
+    view: NeatAssetClass
+    view_property: enterprise
+  - container: sp_solution:NeatAssetType
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetType/enterprise
+    nullable: true
+    value_type: EnterpriseNeatAssetType
+    view: NeatAssetType
+    view_property: enterprise
+  - container: sp_solution:NeatCADModel
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADModel/enterprise
+    nullable: true
+    value_type: EnterpriseNeatCADModel
+    view: NeatCADModel
+    view_property: enterprise
+  - container: sp_solution:NeatCADNode
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADNode/enterprise
+    nullable: true
+    value_type: EnterpriseNeatCADNode
+    view: NeatCADNode
+    view_property: enterprise
+  - container: sp_solution:NeatCADRevision
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADRevision/enterprise
+    nullable: true
+    value_type: EnterpriseNeatCADRevision
+    view: NeatCADRevision
+    view_property: enterprise
+  - container: sp_solution:NeatCubeMap
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCubeMap/enterprise
+    nullable: true
+    value_type: EnterpriseNeatCubeMap
+    view: NeatCubeMap
+    view_property: enterprise
+  - container: sp_solution:NeatDescribable
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDescribable/enterprise
+    nullable: true
+    value_type: EnterpriseNeatDescribable
+    view: NeatDescribable
+    view_property: enterprise
+  - container: sp_solution:NeatDiagramAnnotation
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDiagramAnnotation/enterprise
+    nullable: true
+    value_type: EnterpriseNeatDiagramAnnotation
+    view: NeatDiagramAnnotation
+    view_property: enterprise
+  - container: sp_solution:NeatEquipment
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipment/enterprise
+    nullable: true
+    value_type: EnterpriseNeatEquipment
+    view: NeatEquipment
+    view_property: enterprise
+  - container: sp_solution:NeatEquipmentType
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipmentType/enterprise
+    nullable: true
+    value_type: EnterpriseNeatEquipmentType
+    view: NeatEquipmentType
+    view_property: enterprise
+  - container: sp_solution:NeatFile
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFile/enterprise
+    nullable: true
+    value_type: EnterpriseNeatFile
+    view: NeatFile
+    view_property: enterprise
+  - container: sp_solution:NeatFileCategory
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFileCategory/enterprise
+    nullable: true
+    value_type: EnterpriseNeatFileCategory
+    view: NeatFileCategory
+    view_property: enterprise
+  - container: sp_solution:NeatPointCloudModel
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudModel/enterprise
+    nullable: true
+    value_type: EnterpriseNeatPointCloudModel
+    view: NeatPointCloudModel
+    view_property: enterprise
+  - container: sp_solution:NeatPointCloudRevision
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudRevision/enterprise
+    nullable: true
+    value_type: EnterpriseNeatPointCloudRevision
+    view: NeatPointCloudRevision
+    view_property: enterprise
+  - container: sp_solution:NeatPointCloudVolume
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudVolume/enterprise
+    nullable: true
+    value_type: EnterpriseNeatPointCloudVolume
+    view: NeatPointCloudVolume
+    view_property: enterprise
+  - container: sp_solution:NeatSchedulable
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSchedulable/enterprise
+    nullable: true
+    value_type: EnterpriseNeatSchedulable
+    view: NeatSchedulable
+    view_property: enterprise
+  - container: sp_solution:NeatSourceSystem
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceSystem/enterprise
+    nullable: true
+    value_type: EnterpriseNeatSourceSystem
+    view: NeatSourceSystem
+    view_property: enterprise
+  - container: sp_solution:NeatSourceable
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceable/enterprise
+    nullable: true
+    value_type: EnterpriseNeatSourceable
+    view: NeatSourceable
+    view_property: enterprise
+  - container: sp_solution:NeatTimeSeries
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatTimeSeries/enterprise
+    nullable: true
+    value_type: EnterpriseNeatTimeSeries
+    view: NeatTimeSeries
+    view_property: enterprise
+  - container: sp_solution:NeatUnit
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatUnit/enterprise
+    nullable: true
+    value_type: EnterpriseNeatUnit
+    view: NeatUnit
+    view_property: enterprise
+  - container: sp_solution:NeatVisualizable
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatVisualizable/enterprise
+    nullable: true
+    value_type: EnterpriseNeatVisualizable
+    view: NeatVisualizable
+    view_property: enterprise
+  views:
+  - filter_: hasData(cdf_cdm_3d:Cognite360Image,sp_enterprise:Neat360Image)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360Image
+    view: EnterpriseNeat360Image
+  - filter_: hasData(sp_enterprise:Neat360ImageAnnotation)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageAnnotation
+    view: EnterpriseNeat360ImageAnnotation
+  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:Neat360ImageCollection)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageCollection
+    view: EnterpriseNeat360ImageCollection
+  - filter_: hasData(sp_enterprise:Neat360ImageModel)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageModel
+    view: EnterpriseNeat360ImageModel
+  - filter_: hasData(sp_enterprise:Neat360ImageStation)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageStation
+    view: EnterpriseNeat360ImageStation
+  - filter_: hasData(cdf_cdm_3d:Cognite3DModel,sp_enterprise:Neat3DModel)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DModel
+    view: EnterpriseNeat3DModel
+  - filter_: hasData(sp_enterprise:Neat3DObject)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DObject
+    view: EnterpriseNeat3DObject
+  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:Neat3DRevision)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DRevision
+    view: EnterpriseNeat3DRevision
+  - filter_: hasData(sp_enterprise:Neat3DTransformation)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DTransformation
+    view: EnterpriseNeat3DTransformation
+  - filter_: hasData(cdf_cdm:CogniteActivity,sp_enterprise:NeatActivity)
     in_model: true
     name: Activity
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatActivity
-    view: NeatActivity
-  - filter_: hasData(sp_enterprise:NeatAnnotation,sp_solution:NeatAnnotation)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatActivity
+    view: EnterpriseNeatActivity
+  - filter_: hasData(sp_enterprise:NeatAnnotation)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAnnotation
-    view: NeatAnnotation
-  - filter_: hasData(cdf_cdm:CogniteAsset,sp_enterprise:NeatAsset,sp_solution:NeatAsset)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAnnotation
+    view: EnterpriseNeatAnnotation
+  - filter_: hasData(cdf_cdm:CogniteAsset,sp_enterprise:NeatAsset)
     in_model: true
     name: Asset
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAsset
-    view: NeatAsset
-  - filter_: hasData(sp_enterprise:NeatAssetClass,sp_solution:NeatAssetClass)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAsset
+    view: EnterpriseNeatAsset
+  - filter_: hasData(sp_enterprise:NeatAssetClass)
     in_model: true
     name: Asset class
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetClass
-    view: NeatAssetClass
-  - filter_: hasData(cdf_cdm:CogniteAssetType,sp_enterprise:NeatAssetType,sp_solution:NeatAssetType)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAssetClass
+    view: EnterpriseNeatAssetClass
+  - filter_: hasData(cdf_cdm:CogniteAssetType,sp_enterprise:NeatAssetType)
     in_model: true
     name: Asset type
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetType
-    view: NeatAssetType
-  - filter_: hasData(sp_enterprise:NeatCADModel,sp_solution:NeatCADModel)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAssetType
+    view: EnterpriseNeatAssetType
+  - filter_: hasData(sp_enterprise:NeatCADModel)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADModel
-    view: NeatCADModel
-  - filter_: hasData(cdf_cdm_3d:CogniteCADNode,sp_enterprise:NeatCADNode,sp_solution:NeatCADNode)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCADModel
+    view: EnterpriseNeatCADModel
+  - filter_: hasData(cdf_cdm_3d:CogniteCADNode,sp_enterprise:NeatCADNode)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADNode
-    view: NeatCADNode
-  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:NeatCADRevision,sp_solution:NeatCADRevision)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCADNode
+    view: EnterpriseNeatCADNode
+  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:NeatCADRevision)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADRevision
-    view: NeatCADRevision
-  - filter_: hasData(cdf_cdm_3d:CogniteCubeMap,sp_enterprise:NeatCubeMap,sp_solution:NeatCubeMap)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCADRevision
+    view: EnterpriseNeatCADRevision
+  - filter_: hasData(cdf_cdm_3d:CogniteCubeMap,sp_enterprise:NeatCubeMap)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCubeMap
-    view: NeatCubeMap
-  - filter_: hasData(sp_enterprise:NeatDescribable,sp_solution:NeatDescribable)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCubeMap
+    view: EnterpriseNeatCubeMap
+  - filter_: hasData(sp_enterprise:NeatDescribable)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDescribable
-    view: NeatDescribable
-  - filter_: hasData(sp_enterprise:NeatDiagramAnnotation,sp_solution:NeatDiagramAnnotation)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatDescribable
+    view: EnterpriseNeatDescribable
+  - filter_: hasData(sp_enterprise:NeatDiagramAnnotation)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDiagramAnnotation
-    view: NeatDiagramAnnotation
-  - filter_: hasData(cdf_cdm:CogniteEquipment,sp_enterprise:NeatEquipment,sp_solution:NeatEquipment)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatDiagramAnnotation
+    view: EnterpriseNeatDiagramAnnotation
+  - filter_: hasData(cdf_cdm:CogniteEquipment,sp_enterprise:NeatEquipment)
     in_model: true
     name: Equipment
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipment
-    view: NeatEquipment
-  - filter_: hasData(sp_enterprise:NeatEquipmentType,sp_solution:NeatEquipmentType)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatEquipment
+    view: EnterpriseNeatEquipment
+  - filter_: hasData(sp_enterprise:NeatEquipmentType)
     in_model: true
     name: Equipment type
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipmentType
-    view: NeatEquipmentType
-  - filter_: hasData(cdf_cdm:CogniteFile,sp_enterprise:NeatFile,sp_solution:NeatFile)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatEquipmentType
+    view: EnterpriseNeatEquipmentType
+  - filter_: hasData(cdf_cdm:CogniteFile,sp_enterprise:NeatFile)
     in_model: true
     name: File
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFile
-    view: NeatFile
-  - filter_: hasData(sp_enterprise:NeatFileCategory,sp_solution:NeatFileCategory)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatFile
+    view: EnterpriseNeatFile
+  - filter_: hasData(sp_enterprise:NeatFileCategory)
     in_model: true
     name: File category
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFileCategory
-    view: NeatFileCategory
-  - filter_: hasData(sp_enterprise:NeatPointCloudModel,sp_solution:NeatPointCloudModel)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatFileCategory
+    view: EnterpriseNeatFileCategory
+  - filter_: hasData(sp_enterprise:NeatPointCloudModel)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudModel
-    view: NeatPointCloudModel
-  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:NeatPointCloudRevision,sp_solution:NeatPointCloudRevision)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatPointCloudModel
+    view: EnterpriseNeatPointCloudModel
+  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:NeatPointCloudRevision)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudRevision
-    view: NeatPointCloudRevision
-  - filter_: hasData(cdf_cdm_3d:CognitePointCloudVolume,sp_enterprise:NeatPointCloudVolume,sp_solution:NeatPointCloudVolume)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatPointCloudRevision
+    view: EnterpriseNeatPointCloudRevision
+  - filter_: hasData(cdf_cdm_3d:CognitePointCloudVolume,sp_enterprise:NeatPointCloudVolume)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudVolume
-    view: NeatPointCloudVolume
-  - filter_: hasData(sp_enterprise:NeatSchedulable,sp_solution:NeatSchedulable)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatPointCloudVolume
+    view: EnterpriseNeatPointCloudVolume
+  - filter_: hasData(sp_enterprise:NeatSchedulable)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSchedulable
-    view: NeatSchedulable
-  - filter_: hasData(sp_enterprise:NeatSourceSystem,sp_solution:NeatSourceSystem)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatSchedulable
+    view: EnterpriseNeatSchedulable
+  - filter_: hasData(sp_enterprise:NeatSourceSystem)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceSystem
-    view: NeatSourceSystem
-  - filter_: hasData(cdf_cdm:CogniteSourceable,sp_enterprise:NeatSourceable,sp_solution:NeatSourceable)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatSourceSystem
+    view: EnterpriseNeatSourceSystem
+  - filter_: hasData(cdf_cdm:CogniteSourceable,sp_enterprise:NeatSourceable)
     in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceable
-    view: NeatSourceable
-  - filter_: hasData(cdf_cdm:CogniteTimeSeries,sp_enterprise:NeatTimeSeries,sp_solution:NeatTimeSeries)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatSourceable
+    view: EnterpriseNeatSourceable
+  - filter_: hasData(cdf_cdm:CogniteTimeSeries,sp_enterprise:NeatTimeSeries)
     in_model: true
     name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatTimeSeries
+    view: EnterpriseNeatTimeSeries
+  - filter_: hasData(sp_enterprise:NeatUnit)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatUnit
+    view: EnterpriseNeatUnit
+  - filter_: hasData(cdf_cdm:CogniteVisualizable,sp_enterprise:NeatVisualizable)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatVisualizable
+    view: EnterpriseNeatVisualizable
+  - filter_: hasData(sp_solution:Neat360Image)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360Image
+    view: Neat360Image
+  - filter_: hasData(sp_solution:Neat360ImageAnnotation)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageAnnotation
+    view: Neat360ImageAnnotation
+  - filter_: hasData(sp_solution:Neat360ImageCollection)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageCollection
+    view: Neat360ImageCollection
+  - filter_: hasData(sp_solution:Neat360ImageModel)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageModel
+    view: Neat360ImageModel
+  - filter_: hasData(sp_solution:Neat360ImageStation)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageStation
+    view: Neat360ImageStation
+  - filter_: hasData(sp_solution:Neat3DModel)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DModel
+    view: Neat3DModel
+  - filter_: hasData(sp_solution:Neat3DObject)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DObject
+    view: Neat3DObject
+  - filter_: hasData(sp_solution:Neat3DRevision)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DRevision
+    view: Neat3DRevision
+  - filter_: hasData(sp_solution:Neat3DTransformation)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DTransformation
+    view: Neat3DTransformation
+  - filter_: hasData(sp_solution:NeatActivity)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatActivity
+    view: NeatActivity
+  - filter_: hasData(sp_solution:NeatAnnotation)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAnnotation
+    view: NeatAnnotation
+  - filter_: hasData(sp_solution:NeatAsset)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAsset
+    view: NeatAsset
+  - filter_: hasData(sp_solution:NeatAssetClass)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetClass
+    view: NeatAssetClass
+  - filter_: hasData(sp_solution:NeatAssetType)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetType
+    view: NeatAssetType
+  - filter_: hasData(sp_solution:NeatCADModel)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADModel
+    view: NeatCADModel
+  - filter_: hasData(sp_solution:NeatCADNode)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADNode
+    view: NeatCADNode
+  - filter_: hasData(sp_solution:NeatCADRevision)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADRevision
+    view: NeatCADRevision
+  - filter_: hasData(sp_solution:NeatCubeMap)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCubeMap
+    view: NeatCubeMap
+  - filter_: hasData(sp_solution:NeatDescribable)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDescribable
+    view: NeatDescribable
+  - filter_: hasData(sp_solution:NeatDiagramAnnotation)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDiagramAnnotation
+    view: NeatDiagramAnnotation
+  - filter_: hasData(sp_solution:NeatEquipment)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipment
+    view: NeatEquipment
+  - filter_: hasData(sp_solution:NeatEquipmentType)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipmentType
+    view: NeatEquipmentType
+  - filter_: hasData(sp_solution:NeatFile)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFile
+    view: NeatFile
+  - filter_: hasData(sp_solution:NeatFileCategory)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFileCategory
+    view: NeatFileCategory
+  - filter_: hasData(sp_solution:NeatPointCloudModel)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudModel
+    view: NeatPointCloudModel
+  - filter_: hasData(sp_solution:NeatPointCloudRevision)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudRevision
+    view: NeatPointCloudRevision
+  - filter_: hasData(sp_solution:NeatPointCloudVolume)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudVolume
+    view: NeatPointCloudVolume
+  - filter_: hasData(sp_solution:NeatSchedulable)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSchedulable
+    view: NeatSchedulable
+  - filter_: hasData(sp_solution:NeatSourceSystem)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceSystem
+    view: NeatSourceSystem
+  - filter_: hasData(sp_solution:NeatSourceable)
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceable
+    view: NeatSourceable
+  - filter_: hasData(sp_solution:NeatTimeSeries)
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatTimeSeries
     view: NeatTimeSeries
-  - filter_: hasData(sp_enterprise:NeatUnit,sp_solution:NeatUnit)
-    in_model: true
+  - filter_: hasData(sp_solution:NeatUnit)
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatUnit
     view: NeatUnit
-  - filter_: hasData(cdf_cdm:CogniteVisualizable,sp_enterprise:NeatVisualizable,sp_solution:NeatVisualizable)
-    in_model: true
+  - filter_: hasData(sp_solution:NeatVisualizable)
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatVisualizable
     view: NeatVisualizable
 enterprise:
@@ -1584,6 +1691,14 @@ enterprise:
     value_type: NeatCADNode
     view: Neat3DObject
     view_property: cadNodes
+  - connection: edge(properties=cdf_cdm:Cognite360ImageAnnotation(version=v1),type=cdf_cdm:image-360-annotation)
+    description: Edge connection to Cognite360Image annotations that represents the
+      connected CogniteAsset
+    is_list: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/images360
+    value_type: Neat360Image
+    view: Neat3DObject
+    view_property: images360
   - container: Neat3DObject
     container_property: neat3DObjectGUID
     immutable: false
@@ -2690,7 +2805,7 @@ solution:
     created: '2025-01-03T00:00:00'
     creator: MISSING
     external_id: Solution
-    name: My solution data model
+    name: solution data model
     role: DMS Architect
     space: sp_solution
     updated: '2025-01-03T00:00:00'
@@ -2704,25 +2819,17 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360Image/collection360
     nullable: true
-    value_type: Neat360ImageCollection
-    view: Neat360Image
+    value_type: EnterpriseNeat360ImageCollection
+    view: EnterpriseNeat360Image
     view_property: collection360
   - container: sp_enterprise:Neat360Image
     container_property: neat360ImageGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360Image/neat360ImageGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360Image/neat360ImageGUID
     nullable: true
     value_type: text
-    view: Neat360Image
-    view_property: neat360ImageGUID
-  - container: Neat360Image
-    container_property: neat360ImageGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: Neat360Image
+    view: EnterpriseNeat360Image
     view_property: neat360ImageGUID
   - connection: direct
     container: cdf_cdm_3d:Cognite360Image
@@ -2733,25 +2840,17 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360Image/station360
     nullable: true
-    value_type: Neat360ImageStation
-    view: Neat360Image
+    value_type: EnterpriseNeat360ImageStation
+    view: EnterpriseNeat360Image
     view_property: station360
   - container: sp_enterprise:Neat360ImageAnnotation
     container_property: neat360ImageAnnotationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageAnnotation/neat360ImageAnnotationGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageAnnotation/neat360ImageAnnotationGUID
     nullable: true
     value_type: text
-    view: Neat360ImageAnnotation
-    view_property: neat360ImageAnnotationGUID
-  - container: Neat360ImageAnnotation
-    container_property: neat360ImageAnnotationGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: Neat360ImageAnnotation
+    view: EnterpriseNeat360ImageAnnotation
     view_property: neat360ImageAnnotationGUID
   - connection: direct
     container: cdf_cdm_3d:Cognite3DRevision
@@ -2761,83 +2860,51 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageCollection/model3D
     nullable: true
-    value_type: Neat360ImageModel
-    view: Neat360ImageCollection
+    value_type: EnterpriseNeat360ImageModel
+    view: EnterpriseNeat360ImageCollection
     view_property: model3D
   - container: sp_enterprise:Neat360ImageCollection
     container_property: neat360ImageCollectionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageCollection/neat360ImageCollectionGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageCollection/neat360ImageCollectionGUID
     nullable: true
     value_type: text
-    view: Neat360ImageCollection
-    view_property: neat360ImageCollectionGUID
-  - container: Neat360ImageCollection
-    container_property: neat360ImageCollectionGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: Neat360ImageCollection
+    view: EnterpriseNeat360ImageCollection
     view_property: neat360ImageCollectionGUID
   - connection: reverse(property=model3D)
     description: List Cognite360Image collections for this instance
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageModel/collections
-    value_type: Neat360ImageCollection
-    view: Neat360ImageModel
+    value_type: EnterpriseNeat360ImageCollection
+    view: EnterpriseNeat360ImageModel
     view_property: collections
   - container: sp_enterprise:Neat360ImageModel
     container_property: neat360ImageModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageModel/neat360ImageModelGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageModel/neat360ImageModelGUID
     nullable: true
     value_type: text
-    view: Neat360ImageModel
-    view_property: neat360ImageModelGUID
-  - container: Neat360ImageModel
-    container_property: neat360ImageModelGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: Neat360ImageModel
+    view: EnterpriseNeat360ImageModel
     view_property: neat360ImageModelGUID
   - container: sp_enterprise:Neat360ImageStation
     container_property: neat360ImageStationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageStation/neat360ImageStationGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageStation/neat360ImageStationGUID
     nullable: true
     value_type: text
-    view: Neat360ImageStation
-    view_property: neat360ImageStationGUID
-  - container: Neat360ImageStation
-    container_property: neat360ImageStationGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: Neat360ImageStation
+    view: EnterpriseNeat360ImageStation
     view_property: neat360ImageStationGUID
   - container: sp_enterprise:Neat3DModel
     container_property: neat3DModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DModel/neat3DModelGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DModel/neat3DModelGUID
     nullable: true
     value_type: text
-    view: Neat3DModel
-    view_property: neat3DModelGUID
-  - container: Neat3DModel
-    container_property: neat3DModelGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: Neat3DModel
+    view: EnterpriseNeat3DModel
     view_property: neat3DModelGUID
   - connection: direct
     container: cdf_cdm_3d:Cognite3DModel
@@ -2847,47 +2914,47 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DModel/thumbnail
     nullable: true
-    value_type: NeatFile
-    view: Neat3DModel
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeat3DModel
     view_property: thumbnail
   - connection: reverse(property=object3D)
     description: Asset that is tied to this 3D object
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/asset
-    value_type: NeatAsset
-    view: Neat3DObject
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeat3DObject
     view_property: asset
   - connection: reverse(property=object3D)
     description: List of up to 1000 CADNodes that represents the connected CogniteAsset
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/cadNodes
-    value_type: NeatCADNode
-    view: Neat3DObject
+    value_type: EnterpriseNeatCADNode
+    view: EnterpriseNeat3DObject
     view_property: cadNodes
+  - connection: edge(properties=cdf_cdm:Cognite360ImageAnnotation(version=v1),type=cdf_cdm:image-360-annotation)
+    description: Edge connection to Cognite360Image annotations that represents the
+      connected CogniteAsset
+    is_list: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/images360
+    value_type: EnterpriseNeat360Image
+    view: EnterpriseNeat3DObject
+    view_property: images360
   - container: sp_enterprise:Neat3DObject
     container_property: neat3DObjectGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DObject/neat3DObjectGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DObject/neat3DObjectGUID
     nullable: true
     value_type: text
-    view: Neat3DObject
-    view_property: neat3DObjectGUID
-  - container: Neat3DObject
-    container_property: neat3DObjectGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: Neat3DObject
+    view: EnterpriseNeat3DObject
     view_property: neat3DObjectGUID
   - connection: reverse(property=object3D)
     description: List of up to 1000 PointCloudVolumes that represents the connected
       CogniteAsset
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/pointCloudVolumes
-    value_type: NeatPointCloudVolume
-    view: Neat3DObject
+    value_type: EnterpriseNeatPointCloudVolume
+    view: EnterpriseNeat3DObject
     view_property: pointCloudVolumes
   - connection: direct
     container: cdf_cdm_3d:Cognite3DRevision
@@ -2896,42 +2963,26 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DRevision/model3D
     nullable: true
-    value_type: Neat3DModel
-    view: Neat3DRevision
+    value_type: EnterpriseNeat3DModel
+    view: EnterpriseNeat3DRevision
     view_property: model3D
   - container: sp_enterprise:Neat3DRevision
     container_property: neat3DRevisionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DRevision/neat3DRevisionGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DRevision/neat3DRevisionGUID
     nullable: true
     value_type: text
-    view: Neat3DRevision
-    view_property: neat3DRevisionGUID
-  - container: Neat3DRevision
-    container_property: neat3DRevisionGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: Neat3DRevision
+    view: EnterpriseNeat3DRevision
     view_property: neat3DRevisionGUID
   - container: sp_enterprise:Neat3DTransformation
     container_property: neat3DTransformationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DTransformation/neat3DTransformationGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DTransformation/neat3DTransformationGUID
     nullable: true
     value_type: text
-    view: Neat3DTransformation
-    view_property: neat3DTransformationGUID
-  - container: Neat3DTransformation
-    container_property: neat3DTransformationGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: Neat3DTransformation
+    view: EnterpriseNeat3DTransformation
     view_property: neat3DTransformationGUID
   - connection: direct
     container: cdf_cdm:CogniteActivity
@@ -2942,8 +2993,8 @@ solution:
     name: Assets
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteActivity/assets
     nullable: true
-    value_type: NeatAsset
-    view: NeatActivity
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatActivity
     view_property: assets
   - connection: direct
     container: cdf_cdm:CogniteActivity
@@ -2954,25 +3005,17 @@ solution:
     name: Equipment
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteActivity/equipment
     nullable: true
-    value_type: NeatEquipment
-    view: NeatActivity
+    value_type: EnterpriseNeatEquipment
+    view: EnterpriseNeatActivity
     view_property: equipment
   - container: sp_enterprise:NeatActivity
     container_property: neatActivityGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatActivity/neatActivityGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatActivity/neatActivityGUID
     nullable: true
     value_type: text
-    view: NeatActivity
-    view_property: neatActivityGUID
-  - container: NeatActivity
-    container_property: neatActivityGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatActivity
+    view: EnterpriseNeatActivity
     view_property: neatActivityGUID
   - connection: direct
     container: cdf_cdm:CogniteActivity
@@ -2983,33 +3026,25 @@ solution:
     name: Time series
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteActivity/timeSeries
     nullable: true
-    value_type: NeatTimeSeries
-    view: NeatActivity
+    value_type: EnterpriseNeatTimeSeries
+    view: EnterpriseNeatActivity
     view_property: timeSeries
   - container: sp_enterprise:NeatAnnotation
     container_property: neatAnnotationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAnnotation/neatAnnotationGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAnnotation/neatAnnotationGUID
     nullable: true
     value_type: text
-    view: NeatAnnotation
-    view_property: neatAnnotationGUID
-  - container: NeatAnnotation
-    container_property: neatAnnotationGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatAnnotation
+    view: EnterpriseNeatAnnotation
     view_property: neatAnnotationGUID
   - connection: reverse(property=assets)
     description: An automatically updated list of activities related to the asset.
     is_list: true
     name: Activities
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/activities
-    value_type: NeatActivity
-    view: NeatAsset
+    value_type: EnterpriseNeatActivity
+    view: EnterpriseNeatAsset
     view_property: activities
   - connection: direct
     container: cdf_cdm:CogniteAsset
@@ -3020,8 +3055,8 @@ solution:
     name: Asset class
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/assetClass
     nullable: true
-    value_type: NeatAssetClass
-    view: NeatAsset
+    value_type: EnterpriseNeatAssetClass
+    view: EnterpriseNeatAsset
     view_property: assetClass
   - connection: reverse(property=parent)
     description: An automatically updated list of assets with this asset as their
@@ -3029,41 +3064,33 @@ solution:
     is_list: true
     name: Children
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/children
-    value_type: NeatAsset
-    view: NeatAsset
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatAsset
     view_property: children
   - connection: reverse(property=asset)
     description: An automatically updated list of equipment related to the asset.
     is_list: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/equipment
-    value_type: NeatEquipment
-    view: NeatAsset
+    value_type: EnterpriseNeatEquipment
+    view: EnterpriseNeatAsset
     view_property: equipment
   - connection: reverse(property=assets)
     description: An automatically updated list of files related to the asset.
     is_list: true
     name: Files
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/files
-    value_type: NeatFile
-    view: NeatAsset
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatAsset
     view_property: files
   - container: sp_enterprise:NeatAsset
     container_property: neatAssetGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAsset/neatAssetGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAsset/neatAssetGUID
     nullable: true
     value_type: text
-    view: NeatAsset
-    view_property: neatAssetGUID
-  - container: NeatAsset
-    container_property: neatAssetGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatAsset
+    view: EnterpriseNeatAsset
     view_property: neatAssetGUID
   - connection: direct
     container: cdf_cdm:CogniteAsset
@@ -3074,8 +3101,8 @@ solution:
     name: Parent
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/parent
     nullable: true
-    value_type: NeatAsset
-    view: NeatAsset
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatAsset
     view_property: parent
   - connection: direct
     container: cdf_cdm:CogniteAsset
@@ -3088,8 +3115,8 @@ solution:
     name: Path
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/path
     nullable: true
-    value_type: NeatAsset
-    view: NeatAsset
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatAsset
     view_property: path
   - connection: direct
     container: cdf_cdm:CogniteAsset
@@ -3101,16 +3128,16 @@ solution:
     name: Root
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/root
     nullable: true
-    value_type: NeatAsset
-    view: NeatAsset
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatAsset
     view_property: root
   - connection: reverse(property=assets)
     description: An automatically updated list of time series related to the asset.
     is_list: true
     name: Time series
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/timeSeries
-    value_type: NeatTimeSeries
-    view: NeatAsset
+    value_type: EnterpriseNeatTimeSeries
+    view: EnterpriseNeatAsset
     view_property: timeSeries
   - connection: direct
     container: cdf_cdm:CogniteAsset
@@ -3121,25 +3148,17 @@ solution:
     name: Asset type
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/type
     nullable: true
-    value_type: NeatAssetType
-    view: NeatAsset
+    value_type: EnterpriseNeatAssetType
+    view: EnterpriseNeatAsset
     view_property: type
   - container: sp_enterprise:NeatAssetClass
     container_property: neatAssetClassGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetClass/neatAssetClassGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAssetClass/neatAssetClassGUID
     nullable: true
     value_type: text
-    view: NeatAssetClass
-    view_property: neatAssetClassGUID
-  - container: NeatAssetClass
-    container_property: neatAssetClassGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatAssetClass
+    view: EnterpriseNeatAssetClass
     view_property: neatAssetClassGUID
   - connection: direct
     container: cdf_cdm:CogniteAssetType
@@ -3151,49 +3170,33 @@ solution:
     name: Asset class
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAssetType/assetClass
     nullable: true
-    value_type: NeatAssetClass
-    view: NeatAssetType
+    value_type: EnterpriseNeatAssetClass
+    view: EnterpriseNeatAssetType
     view_property: assetClass
   - container: sp_enterprise:NeatAssetType
     container_property: neatAssetTypeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetType/neatAssetTypeGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAssetType/neatAssetTypeGUID
     nullable: true
     value_type: text
-    view: NeatAssetType
-    view_property: neatAssetTypeGUID
-  - container: NeatAssetType
-    container_property: neatAssetTypeGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatAssetType
+    view: EnterpriseNeatAssetType
     view_property: neatAssetTypeGUID
   - container: sp_enterprise:NeatCADModel
     container_property: neatCADModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADModel/neatCADModelGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCADModel/neatCADModelGUID
     nullable: true
     value_type: text
-    view: NeatCADModel
-    view_property: neatCADModelGUID
-  - container: NeatCADModel
-    container_property: neatCADModelGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatCADModel
+    view: EnterpriseNeatCADModel
     view_property: neatCADModelGUID
   - connection: reverse(property=model3D)
     description: List of revisions for this CAD model
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADModel/revisions
-    value_type: NeatCADRevision
-    view: NeatCADModel
+    value_type: EnterpriseNeatCADRevision
+    view: EnterpriseNeatCADModel
     view_property: revisions
   - connection: direct
     container: cdf_cdm_3d:CogniteCADNode
@@ -3203,25 +3206,17 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode/model3D
     nullable: true
-    value_type: NeatCADModel
-    view: NeatCADNode
+    value_type: EnterpriseNeatCADModel
+    view: EnterpriseNeatCADNode
     view_property: model3D
   - container: sp_enterprise:NeatCADNode
     container_property: neatCADNodeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADNode/neatCADNodeGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCADNode/neatCADNodeGUID
     nullable: true
     value_type: text
-    view: NeatCADNode
-    view_property: neatCADNodeGUID
-  - container: NeatCADNode
-    container_property: neatCADNodeGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatCADNode
+    view: EnterpriseNeatCADNode
     view_property: neatCADNodeGUID
   - connection: direct
     container: cdf_cdm_3d:CogniteCADNode
@@ -3231,8 +3226,8 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode/object3D
     nullable: true
-    value_type: Neat3DObject
-    view: NeatCADNode
+    value_type: EnterpriseNeat3DObject
+    view: EnterpriseNeatCADNode
     view_property: object3D
   - connection: direct
     container: cdf_cdm_3d:CogniteCADNode
@@ -3243,8 +3238,8 @@ solution:
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode/revisions
     nullable: true
-    value_type: NeatCADRevision
-    view: NeatCADNode
+    value_type: EnterpriseNeatCADRevision
+    view: EnterpriseNeatCADNode
     view_property: revisions
   - connection: direct
     container: cdf_cdm_3d:Cognite3DRevision
@@ -3254,25 +3249,17 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADRevision/model3D
     nullable: true
-    value_type: NeatCADModel
-    view: NeatCADRevision
+    value_type: EnterpriseNeatCADModel
+    view: EnterpriseNeatCADRevision
     view_property: model3D
   - container: sp_enterprise:NeatCADRevision
     container_property: neatCADRevisionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADRevision/neatCADRevisionGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCADRevision/neatCADRevisionGUID
     nullable: true
     value_type: text
-    view: NeatCADRevision
-    view_property: neatCADRevisionGUID
-  - container: NeatCADRevision
-    container_property: neatCADRevisionGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatCADRevision
+    view: EnterpriseNeatCADRevision
     view_property: neatCADRevisionGUID
   - connection: direct
     container: cdf_cdm_3d:CogniteCubeMap
@@ -3283,8 +3270,8 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/back
     nullable: true
-    value_type: NeatFile
-    view: NeatCubeMap
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatCubeMap
     view_property: back
   - connection: direct
     container: cdf_cdm_3d:CogniteCubeMap
@@ -3295,8 +3282,8 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/bottom
     nullable: true
-    value_type: NeatFile
-    view: NeatCubeMap
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatCubeMap
     view_property: bottom
   - connection: direct
     container: cdf_cdm_3d:CogniteCubeMap
@@ -3307,8 +3294,8 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/front
     nullable: true
-    value_type: NeatFile
-    view: NeatCubeMap
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatCubeMap
     view_property: front
   - connection: direct
     container: cdf_cdm_3d:CogniteCubeMap
@@ -3319,25 +3306,17 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/left
     nullable: true
-    value_type: NeatFile
-    view: NeatCubeMap
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatCubeMap
     view_property: left
   - container: sp_enterprise:NeatCubeMap
     container_property: neatCubeMapGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCubeMap/neatCubeMapGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCubeMap/neatCubeMapGUID
     nullable: true
     value_type: text
-    view: NeatCubeMap
-    view_property: neatCubeMapGUID
-  - container: NeatCubeMap
-    container_property: neatCubeMapGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatCubeMap
+    view: EnterpriseNeatCubeMap
     view_property: neatCubeMapGUID
   - connection: direct
     container: cdf_cdm_3d:CogniteCubeMap
@@ -3348,8 +3327,8 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/right
     nullable: true
-    value_type: NeatFile
-    view: NeatCubeMap
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatCubeMap
     view_property: right
   - connection: direct
     container: cdf_cdm_3d:CogniteCubeMap
@@ -3360,50 +3339,34 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/top
     nullable: true
-    value_type: NeatFile
-    view: NeatCubeMap
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatCubeMap
     view_property: top
   - container: sp_enterprise:NeatDescribable
     container_property: neatDescribableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDescribable/neatDescribableGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatDescribable/neatDescribableGUID
     nullable: true
     value_type: text
-    view: NeatDescribable
-    view_property: neatDescribableGUID
-  - container: NeatDescribable
-    container_property: neatDescribableGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatDescribable
+    view: EnterpriseNeatDescribable
     view_property: neatDescribableGUID
   - container: sp_enterprise:NeatDiagramAnnotation
     container_property: neatDiagramAnnotationGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDiagramAnnotation/neatDiagramAnnotationGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatDiagramAnnotation/neatDiagramAnnotationGUID
     nullable: true
     value_type: text
-    view: NeatDiagramAnnotation
-    view_property: neatDiagramAnnotationGUID
-  - container: NeatDiagramAnnotation
-    container_property: neatDiagramAnnotationGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatDiagramAnnotation
+    view: EnterpriseNeatDiagramAnnotation
     view_property: neatDiagramAnnotationGUID
   - connection: reverse(property=equipment)
     description: An automatically updated list of activities related to the equipment.
     is_list: true
     name: Activities
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/activities
-    value_type: NeatActivity
-    view: NeatEquipment
+    value_type: EnterpriseNeatActivity
+    view: EnterpriseNeatEquipment
     view_property: activities
   - connection: direct
     container: cdf_cdm:CogniteEquipment
@@ -3414,8 +3377,8 @@ solution:
     name: Asset
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/asset
     nullable: true
-    value_type: NeatAsset
-    view: NeatEquipment
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatEquipment
     view_property: asset
   - connection: direct
     container: cdf_cdm:CogniteEquipment
@@ -3426,8 +3389,8 @@ solution:
     name: Equipment type
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/equipmentType
     nullable: true
-    value_type: NeatEquipmentType
-    view: NeatEquipment
+    value_type: EnterpriseNeatEquipmentType
+    view: EnterpriseNeatEquipment
     view_property: equipmentType
   - connection: direct
     container: cdf_cdm:CogniteEquipment
@@ -3438,50 +3401,34 @@ solution:
     name: Files
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/files
     nullable: true
-    value_type: NeatFile
-    view: NeatEquipment
+    value_type: EnterpriseNeatFile
+    view: EnterpriseNeatEquipment
     view_property: files
   - container: sp_enterprise:NeatEquipment
     container_property: neatEquipmentGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipment/neatEquipmentGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatEquipment/neatEquipmentGUID
     nullable: true
     value_type: text
-    view: NeatEquipment
-    view_property: neatEquipmentGUID
-  - container: NeatEquipment
-    container_property: neatEquipmentGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatEquipment
+    view: EnterpriseNeatEquipment
     view_property: neatEquipmentGUID
   - connection: reverse(property=equipment)
     description: An automatically updated list of time series related to the equipment.
     is_list: true
     name: Time series
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/timeSeries
-    value_type: NeatTimeSeries
-    view: NeatEquipment
+    value_type: EnterpriseNeatTimeSeries
+    view: EnterpriseNeatEquipment
     view_property: timeSeries
   - container: sp_enterprise:NeatEquipmentType
     container_property: neatEquipmentTypeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipmentType/neatEquipmentTypeGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatEquipmentType/neatEquipmentTypeGUID
     nullable: true
     value_type: text
-    view: NeatEquipmentType
-    view_property: neatEquipmentTypeGUID
-  - container: NeatEquipmentType
-    container_property: neatEquipmentTypeGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatEquipmentType
+    view: EnterpriseNeatEquipmentType
     view_property: neatEquipmentTypeGUID
   - connection: direct
     container: cdf_cdm:CogniteFile
@@ -3492,8 +3439,8 @@ solution:
     name: Assets
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/assets
     nullable: true
-    value_type: NeatAsset
-    view: NeatFile
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatFile
     view_property: assets
   - connection: direct
     container: cdf_cdm:CogniteFile
@@ -3505,74 +3452,50 @@ solution:
     name: Category
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/category
     nullable: true
-    value_type: NeatFileCategory
-    view: NeatFile
+    value_type: EnterpriseNeatFileCategory
+    view: EnterpriseNeatFile
     view_property: category
   - connection: reverse(property=files)
     description: An automatically updated list of equipment this file is related to.
     is_list: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/equipment
-    value_type: NeatEquipment
-    view: NeatFile
+    value_type: EnterpriseNeatEquipment
+    view: EnterpriseNeatFile
     view_property: equipment
   - container: sp_enterprise:NeatFile
     container_property: neatFileGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFile/neatFileGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatFile/neatFileGUID
     nullable: true
     value_type: text
-    view: NeatFile
-    view_property: neatFileGUID
-  - container: NeatFile
-    container_property: neatFileGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatFile
+    view: EnterpriseNeatFile
     view_property: neatFileGUID
   - container: sp_enterprise:NeatFileCategory
     container_property: neatFileCategoryGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFileCategory/neatFileCategoryGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatFileCategory/neatFileCategoryGUID
     nullable: true
     value_type: text
-    view: NeatFileCategory
-    view_property: neatFileCategoryGUID
-  - container: NeatFileCategory
-    container_property: neatFileCategoryGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatFileCategory
+    view: EnterpriseNeatFileCategory
     view_property: neatFileCategoryGUID
   - container: sp_enterprise:NeatPointCloudModel
     container_property: neatPointCloudModelGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudModel/neatPointCloudModelGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatPointCloudModel/neatPointCloudModelGUID
     nullable: true
     value_type: text
-    view: NeatPointCloudModel
-    view_property: neatPointCloudModelGUID
-  - container: NeatPointCloudModel
-    container_property: neatPointCloudModelGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatPointCloudModel
+    view: EnterpriseNeatPointCloudModel
     view_property: neatPointCloudModelGUID
   - connection: reverse(property=model3D)
     description: List of revisions for this PointCloud model
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudModel/revisions
-    value_type: NeatPointCloudRevision
-    view: NeatPointCloudModel
+    value_type: EnterpriseNeatPointCloudRevision
+    view: EnterpriseNeatPointCloudModel
     view_property: revisions
   - connection: direct
     container: cdf_cdm_3d:Cognite3DRevision
@@ -3582,25 +3505,17 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudRevision/model3D
     nullable: true
-    value_type: NeatPointCloudModel
-    view: NeatPointCloudRevision
+    value_type: EnterpriseNeatPointCloudModel
+    view: EnterpriseNeatPointCloudRevision
     view_property: model3D
   - container: sp_enterprise:NeatPointCloudRevision
     container_property: neatPointCloudRevisionGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudRevision/neatPointCloudRevisionGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatPointCloudRevision/neatPointCloudRevisionGUID
     nullable: true
     value_type: text
-    view: NeatPointCloudRevision
-    view_property: neatPointCloudRevisionGUID
-  - container: NeatPointCloudRevision
-    container_property: neatPointCloudRevisionGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatPointCloudRevision
+    view: EnterpriseNeatPointCloudRevision
     view_property: neatPointCloudRevisionGUID
   - connection: direct
     container: cdf_cdm_3d:CognitePointCloudVolume
@@ -3610,25 +3525,17 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/model3D
     nullable: true
-    value_type: NeatCADModel
-    view: NeatPointCloudVolume
+    value_type: EnterpriseNeatCADModel
+    view: EnterpriseNeatPointCloudVolume
     view_property: model3D
   - container: sp_enterprise:NeatPointCloudVolume
     container_property: neatPointCloudVolumeGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudVolume/neatPointCloudVolumeGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatPointCloudVolume/neatPointCloudVolumeGUID
     nullable: true
     value_type: text
-    view: NeatPointCloudVolume
-    view_property: neatPointCloudVolumeGUID
-  - container: NeatPointCloudVolume
-    container_property: neatPointCloudVolumeGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatPointCloudVolume
+    view: EnterpriseNeatPointCloudVolume
     view_property: neatPointCloudVolumeGUID
   - connection: direct
     container: cdf_cdm_3d:CognitePointCloudVolume
@@ -3638,8 +3545,8 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/object3D
     nullable: true
-    value_type: Neat3DObject
-    view: NeatPointCloudVolume
+    value_type: EnterpriseNeat3DObject
+    view: EnterpriseNeatPointCloudVolume
     view_property: object3D
   - connection: direct
     container: cdf_cdm_3d:CognitePointCloudVolume
@@ -3649,59 +3556,35 @@ solution:
     is_list: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/revisions
     nullable: true
-    value_type: NeatCADRevision
-    view: NeatPointCloudVolume
+    value_type: EnterpriseNeatCADRevision
+    view: EnterpriseNeatPointCloudVolume
     view_property: revisions
   - container: sp_enterprise:NeatSchedulable
     container_property: neatSchedulableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSchedulable/neatSchedulableGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatSchedulable/neatSchedulableGUID
     nullable: true
     value_type: text
-    view: NeatSchedulable
-    view_property: neatSchedulableGUID
-  - container: NeatSchedulable
-    container_property: neatSchedulableGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatSchedulable
+    view: EnterpriseNeatSchedulable
     view_property: neatSchedulableGUID
   - container: sp_enterprise:NeatSourceSystem
     container_property: neatSourceSystemGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceSystem/neatSourceSystemGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatSourceSystem/neatSourceSystemGUID
     nullable: true
     value_type: text
-    view: NeatSourceSystem
-    view_property: neatSourceSystemGUID
-  - container: NeatSourceSystem
-    container_property: neatSourceSystemGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatSourceSystem
+    view: EnterpriseNeatSourceSystem
     view_property: neatSourceSystemGUID
   - container: sp_enterprise:NeatSourceable
     container_property: neatSourceableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceable/neatSourceableGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatSourceable/neatSourceableGUID
     nullable: true
     value_type: text
-    view: NeatSourceable
-    view_property: neatSourceableGUID
-  - container: NeatSourceable
-    container_property: neatSourceableGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatSourceable
+    view: EnterpriseNeatSourceable
     view_property: neatSourceableGUID
   - connection: direct
     container: cdf_cdm:CogniteSourceable
@@ -3712,8 +3595,8 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceable/source
     nullable: true
-    value_type: NeatSourceSystem
-    view: NeatSourceable
+    value_type: EnterpriseNeatSourceSystem
+    view: EnterpriseNeatSourceable
     view_property: source
   - connection: reverse(property=timeSeries)
     description: An automatically updated list of activities the time series is related
@@ -3721,8 +3604,8 @@ solution:
     is_list: true
     name: Activities
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/activities
-    value_type: NeatActivity
-    view: NeatTimeSeries
+    value_type: EnterpriseNeatActivity
+    view: EnterpriseNeatTimeSeries
     view_property: activities
   - connection: direct
     container: cdf_cdm:CogniteTimeSeries
@@ -3733,8 +3616,8 @@ solution:
     name: Assets
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/assets
     nullable: true
-    value_type: NeatAsset
-    view: NeatTimeSeries
+    value_type: EnterpriseNeatAsset
+    view: EnterpriseNeatTimeSeries
     view_property: assets
   - connection: direct
     container: cdf_cdm:CogniteTimeSeries
@@ -3745,25 +3628,17 @@ solution:
     name: Equipment
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/equipment
     nullable: true
-    value_type: NeatEquipment
-    view: NeatTimeSeries
+    value_type: EnterpriseNeatEquipment
+    view: EnterpriseNeatTimeSeries
     view_property: equipment
   - container: sp_enterprise:NeatTimeSeries
     container_property: neatTimeSeriesGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatTimeSeries/neatTimeSeriesGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatTimeSeries/neatTimeSeriesGUID
     nullable: true
     value_type: text
-    view: NeatTimeSeries
-    view_property: neatTimeSeriesGUID
-  - container: NeatTimeSeries
-    container_property: neatTimeSeriesGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatTimeSeries
+    view: EnterpriseNeatTimeSeries
     view_property: neatTimeSeriesGUID
   - connection: direct
     container: cdf_cdm:CogniteTimeSeries
@@ -3774,42 +3649,26 @@ solution:
     name: Unit
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/unit
     nullable: true
-    value_type: NeatUnit
-    view: NeatTimeSeries
+    value_type: EnterpriseNeatUnit
+    view: EnterpriseNeatTimeSeries
     view_property: unit
   - container: sp_enterprise:NeatUnit
     container_property: neatUnitGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatUnit/neatUnitGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatUnit/neatUnitGUID
     nullable: true
     value_type: text
-    view: NeatUnit
-    view_property: neatUnitGUID
-  - container: NeatUnit
-    container_property: neatUnitGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatUnit
+    view: EnterpriseNeatUnit
     view_property: neatUnitGUID
   - container: sp_enterprise:NeatVisualizable
     container_property: neatVisualizableGUID
     immutable: false
     is_list: false
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatVisualizable/neatVisualizableGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatVisualizable/neatVisualizableGUID
     nullable: true
     value_type: text
-    view: NeatVisualizable
-    view_property: neatVisualizableGUID
-  - container: NeatVisualizable
-    container_property: neatVisualizableGUID
-    immutable: false
-    is_list: false
-    nullable: true
-    value_type: text
-    view: NeatVisualizable
+    view: EnterpriseNeatVisualizable
     view_property: neatVisualizableGUID
   - connection: direct
     constraint: uniqueObject3D
@@ -3820,115 +3679,511 @@ solution:
     is_list: false
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteVisualizable/object3D
     nullable: true
-    value_type: Neat3DObject
-    view: NeatVisualizable
+    value_type: EnterpriseNeat3DObject
+    view: EnterpriseNeatVisualizable
     view_property: object3D
-  views:
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360Image
+  - container: Neat360Image
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360Image/enterprise
+    nullable: true
+    value_type: EnterpriseNeat360Image
     view: Neat360Image
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageAnnotation
+    view_property: enterprise
+  - container: Neat360ImageAnnotation
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageAnnotation/enterprise
+    nullable: true
+    value_type: EnterpriseNeat360ImageAnnotation
     view: Neat360ImageAnnotation
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageCollection
+    view_property: enterprise
+  - container: Neat360ImageCollection
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageCollection/enterprise
+    nullable: true
+    value_type: EnterpriseNeat360ImageCollection
     view: Neat360ImageCollection
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageModel
+    view_property: enterprise
+  - container: Neat360ImageModel
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageModel/enterprise
+    nullable: true
+    value_type: EnterpriseNeat360ImageModel
     view: Neat360ImageModel
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageStation
+    view_property: enterprise
+  - container: Neat360ImageStation
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageStation/enterprise
+    nullable: true
+    value_type: EnterpriseNeat360ImageStation
     view: Neat360ImageStation
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DModel
+    view_property: enterprise
+  - container: Neat3DModel
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DModel/enterprise
+    nullable: true
+    value_type: EnterpriseNeat3DModel
     view: Neat3DModel
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DObject
+    view_property: enterprise
+  - container: Neat3DObject
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DObject/enterprise
+    nullable: true
+    value_type: EnterpriseNeat3DObject
     view: Neat3DObject
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DRevision
+    view_property: enterprise
+  - container: Neat3DRevision
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DRevision/enterprise
+    nullable: true
+    value_type: EnterpriseNeat3DRevision
     view: Neat3DRevision
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DTransformation
+    view_property: enterprise
+  - container: Neat3DTransformation
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DTransformation/enterprise
+    nullable: true
+    value_type: EnterpriseNeat3DTransformation
     view: Neat3DTransformation
-  - in_model: true
-    name: Activity
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatActivity
+    view_property: enterprise
+  - container: NeatActivity
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatActivity/enterprise
+    nullable: true
+    value_type: EnterpriseNeatActivity
     view: NeatActivity
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAnnotation
+    view_property: enterprise
+  - container: NeatAnnotation
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAnnotation/enterprise
+    nullable: true
+    value_type: EnterpriseNeatAnnotation
     view: NeatAnnotation
-  - in_model: true
-    name: Asset
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAsset
+    view_property: enterprise
+  - container: NeatAsset
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAsset/enterprise
+    nullable: true
+    value_type: EnterpriseNeatAsset
     view: NeatAsset
-  - in_model: true
-    name: Asset class
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetClass
+    view_property: enterprise
+  - container: NeatAssetClass
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetClass/enterprise
+    nullable: true
+    value_type: EnterpriseNeatAssetClass
     view: NeatAssetClass
-  - in_model: true
-    name: Asset type
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetType
+    view_property: enterprise
+  - container: NeatAssetType
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetType/enterprise
+    nullable: true
+    value_type: EnterpriseNeatAssetType
     view: NeatAssetType
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADModel
+    view_property: enterprise
+  - container: NeatCADModel
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADModel/enterprise
+    nullable: true
+    value_type: EnterpriseNeatCADModel
     view: NeatCADModel
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADNode
+    view_property: enterprise
+  - container: NeatCADNode
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADNode/enterprise
+    nullable: true
+    value_type: EnterpriseNeatCADNode
     view: NeatCADNode
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADRevision
+    view_property: enterprise
+  - container: NeatCADRevision
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADRevision/enterprise
+    nullable: true
+    value_type: EnterpriseNeatCADRevision
     view: NeatCADRevision
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCubeMap
+    view_property: enterprise
+  - container: NeatCubeMap
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCubeMap/enterprise
+    nullable: true
+    value_type: EnterpriseNeatCubeMap
     view: NeatCubeMap
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDescribable
+    view_property: enterprise
+  - container: NeatDescribable
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDescribable/enterprise
+    nullable: true
+    value_type: EnterpriseNeatDescribable
     view: NeatDescribable
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDiagramAnnotation
+    view_property: enterprise
+  - container: NeatDiagramAnnotation
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDiagramAnnotation/enterprise
+    nullable: true
+    value_type: EnterpriseNeatDiagramAnnotation
     view: NeatDiagramAnnotation
-  - in_model: true
-    name: Equipment
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipment
+    view_property: enterprise
+  - container: NeatEquipment
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipment/enterprise
+    nullable: true
+    value_type: EnterpriseNeatEquipment
     view: NeatEquipment
-  - in_model: true
-    name: Equipment type
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipmentType
+    view_property: enterprise
+  - container: NeatEquipmentType
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipmentType/enterprise
+    nullable: true
+    value_type: EnterpriseNeatEquipmentType
     view: NeatEquipmentType
-  - in_model: true
-    name: File
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFile
+    view_property: enterprise
+  - container: NeatFile
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFile/enterprise
+    nullable: true
+    value_type: EnterpriseNeatFile
     view: NeatFile
-  - in_model: true
-    name: File category
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFileCategory
+    view_property: enterprise
+  - container: NeatFileCategory
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFileCategory/enterprise
+    nullable: true
+    value_type: EnterpriseNeatFileCategory
     view: NeatFileCategory
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudModel
+    view_property: enterprise
+  - container: NeatPointCloudModel
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudModel/enterprise
+    nullable: true
+    value_type: EnterpriseNeatPointCloudModel
     view: NeatPointCloudModel
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudRevision
+    view_property: enterprise
+  - container: NeatPointCloudRevision
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudRevision/enterprise
+    nullable: true
+    value_type: EnterpriseNeatPointCloudRevision
     view: NeatPointCloudRevision
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudVolume
+    view_property: enterprise
+  - container: NeatPointCloudVolume
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudVolume/enterprise
+    nullable: true
+    value_type: EnterpriseNeatPointCloudVolume
     view: NeatPointCloudVolume
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSchedulable
+    view_property: enterprise
+  - container: NeatSchedulable
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSchedulable/enterprise
+    nullable: true
+    value_type: EnterpriseNeatSchedulable
     view: NeatSchedulable
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceSystem
+    view_property: enterprise
+  - container: NeatSourceSystem
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceSystem/enterprise
+    nullable: true
+    value_type: EnterpriseNeatSourceSystem
     view: NeatSourceSystem
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceable
+    view_property: enterprise
+  - container: NeatSourceable
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceable/enterprise
+    nullable: true
+    value_type: EnterpriseNeatSourceable
     view: NeatSourceable
-  - in_model: true
-    name: Time series
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatTimeSeries
+    view_property: enterprise
+  - container: NeatTimeSeries
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatTimeSeries/enterprise
+    nullable: true
+    value_type: EnterpriseNeatTimeSeries
     view: NeatTimeSeries
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatUnit
+    view_property: enterprise
+  - container: NeatUnit
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatUnit/enterprise
+    nullable: true
+    value_type: EnterpriseNeatUnit
     view: NeatUnit
-  - in_model: true
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatVisualizable
+    view_property: enterprise
+  - container: NeatVisualizable
+    container_property: enterprise
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatVisualizable/enterprise
+    nullable: true
+    value_type: EnterpriseNeatVisualizable
+    view: NeatVisualizable
+    view_property: enterprise
+  views:
+  - filter_: hasData(cdf_cdm_3d:Cognite360Image,sp_enterprise:Neat360Image)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360Image
+    view: EnterpriseNeat360Image
+  - filter_: hasData(sp_enterprise:Neat360ImageAnnotation)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageAnnotation
+    view: EnterpriseNeat360ImageAnnotation
+  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:Neat360ImageCollection)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageCollection
+    view: EnterpriseNeat360ImageCollection
+  - filter_: hasData(sp_enterprise:Neat360ImageModel)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageModel
+    view: EnterpriseNeat360ImageModel
+  - filter_: hasData(sp_enterprise:Neat360ImageStation)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat360ImageStation
+    view: EnterpriseNeat360ImageStation
+  - filter_: hasData(cdf_cdm_3d:Cognite3DModel,sp_enterprise:Neat3DModel)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DModel
+    view: EnterpriseNeat3DModel
+  - filter_: hasData(sp_enterprise:Neat3DObject)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DObject
+    view: EnterpriseNeat3DObject
+  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:Neat3DRevision)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DRevision
+    view: EnterpriseNeat3DRevision
+  - filter_: hasData(sp_enterprise:Neat3DTransformation)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeat3DTransformation
+    view: EnterpriseNeat3DTransformation
+  - filter_: hasData(cdf_cdm:CogniteActivity,sp_enterprise:NeatActivity)
+    in_model: true
+    name: Activity
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatActivity
+    view: EnterpriseNeatActivity
+  - filter_: hasData(sp_enterprise:NeatAnnotation)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAnnotation
+    view: EnterpriseNeatAnnotation
+  - filter_: hasData(cdf_cdm:CogniteAsset,sp_enterprise:NeatAsset)
+    in_model: true
+    name: Asset
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAsset
+    view: EnterpriseNeatAsset
+  - filter_: hasData(sp_enterprise:NeatAssetClass)
+    in_model: true
+    name: Asset class
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAssetClass
+    view: EnterpriseNeatAssetClass
+  - filter_: hasData(cdf_cdm:CogniteAssetType,sp_enterprise:NeatAssetType)
+    in_model: true
+    name: Asset type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatAssetType
+    view: EnterpriseNeatAssetType
+  - filter_: hasData(sp_enterprise:NeatCADModel)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCADModel
+    view: EnterpriseNeatCADModel
+  - filter_: hasData(cdf_cdm_3d:CogniteCADNode,sp_enterprise:NeatCADNode)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCADNode
+    view: EnterpriseNeatCADNode
+  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:NeatCADRevision)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCADRevision
+    view: EnterpriseNeatCADRevision
+  - filter_: hasData(cdf_cdm_3d:CogniteCubeMap,sp_enterprise:NeatCubeMap)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatCubeMap
+    view: EnterpriseNeatCubeMap
+  - filter_: hasData(sp_enterprise:NeatDescribable)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatDescribable
+    view: EnterpriseNeatDescribable
+  - filter_: hasData(sp_enterprise:NeatDiagramAnnotation)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatDiagramAnnotation
+    view: EnterpriseNeatDiagramAnnotation
+  - filter_: hasData(cdf_cdm:CogniteEquipment,sp_enterprise:NeatEquipment)
+    in_model: true
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatEquipment
+    view: EnterpriseNeatEquipment
+  - filter_: hasData(sp_enterprise:NeatEquipmentType)
+    in_model: true
+    name: Equipment type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatEquipmentType
+    view: EnterpriseNeatEquipmentType
+  - filter_: hasData(cdf_cdm:CogniteFile,sp_enterprise:NeatFile)
+    in_model: true
+    name: File
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatFile
+    view: EnterpriseNeatFile
+  - filter_: hasData(sp_enterprise:NeatFileCategory)
+    in_model: true
+    name: File category
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatFileCategory
+    view: EnterpriseNeatFileCategory
+  - filter_: hasData(sp_enterprise:NeatPointCloudModel)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatPointCloudModel
+    view: EnterpriseNeatPointCloudModel
+  - filter_: hasData(cdf_cdm_3d:Cognite3DRevision,sp_enterprise:NeatPointCloudRevision)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatPointCloudRevision
+    view: EnterpriseNeatPointCloudRevision
+  - filter_: hasData(cdf_cdm_3d:CognitePointCloudVolume,sp_enterprise:NeatPointCloudVolume)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatPointCloudVolume
+    view: EnterpriseNeatPointCloudVolume
+  - filter_: hasData(sp_enterprise:NeatSchedulable)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatSchedulable
+    view: EnterpriseNeatSchedulable
+  - filter_: hasData(sp_enterprise:NeatSourceSystem)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatSourceSystem
+    view: EnterpriseNeatSourceSystem
+  - filter_: hasData(cdf_cdm:CogniteSourceable,sp_enterprise:NeatSourceable)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatSourceable
+    view: EnterpriseNeatSourceable
+  - filter_: hasData(cdf_cdm:CogniteTimeSeries,sp_enterprise:NeatTimeSeries)
+    in_model: true
+    name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatTimeSeries
+    view: EnterpriseNeatTimeSeries
+  - filter_: hasData(sp_enterprise:NeatUnit)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatUnit
+    view: EnterpriseNeatUnit
+  - filter_: hasData(cdf_cdm:CogniteVisualizable,sp_enterprise:NeatVisualizable)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/EnterpriseNeatVisualizable
+    view: EnterpriseNeatVisualizable
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360Image
+    view: Neat360Image
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageAnnotation
+    view: Neat360ImageAnnotation
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageCollection
+    view: Neat360ImageCollection
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageModel
+    view: Neat360ImageModel
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat360ImageStation
+    view: Neat360ImageStation
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DModel
+    view: Neat3DModel
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DObject
+    view: Neat3DObject
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DRevision
+    view: Neat3DRevision
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/Neat3DTransformation
+    view: Neat3DTransformation
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatActivity
+    view: NeatActivity
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAnnotation
+    view: NeatAnnotation
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAsset
+    view: NeatAsset
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetClass
+    view: NeatAssetClass
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatAssetType
+    view: NeatAssetType
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADModel
+    view: NeatCADModel
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADNode
+    view: NeatCADNode
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCADRevision
+    view: NeatCADRevision
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatCubeMap
+    view: NeatCubeMap
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDescribable
+    view: NeatDescribable
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatDiagramAnnotation
+    view: NeatDiagramAnnotation
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipment
+    view: NeatEquipment
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatEquipmentType
+    view: NeatEquipmentType
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFile
+    view: NeatFile
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatFileCategory
+    view: NeatFileCategory
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudModel
+    view: NeatPointCloudModel
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudRevision
+    view: NeatPointCloudRevision
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatPointCloudVolume
+    view: NeatPointCloudVolume
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSchedulable
+    view: NeatSchedulable
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceSystem
+    view: NeatSourceSystem
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatSourceable
+    view: NeatSourceable
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatTimeSeries
+    view: NeatTimeSeries
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatUnit
+    view: NeatUnit
+  - neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1/NeatVisualizable
     view: NeatVisualizable

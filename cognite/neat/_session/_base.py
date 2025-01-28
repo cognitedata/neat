@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal
 
 from cognite.client import CogniteClient
@@ -9,22 +10,21 @@ from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import RegexViolationError
 from cognite.neat._issues.errors._general import NeatImportError
 from cognite.neat._rules import importers
-from cognite.neat._rules.models._base_input import InputRules
+from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.transformers import (
-    ConversionTransformer,
-    ConvertToRules,
     InformationToDMS,
     MergeDMSRules,
     MergeInformationRules,
-    VerifyAnyRules,
     VerifyInformationRules,
 )
-from cognite.neat._store._rules_store import ModelEntity
+from cognite.neat._store._rules_store import RulesEntity
 from cognite.neat._utils.auxiliary import local_import
 
 from ._collector import _COLLECTOR, Collector
+from ._create import CreateAPI
 from ._drop import DropAPI
+from ._fix import FixAPI
 from ._inspect import InspectAPI
 from ._mapping import MappingAPI
 from ._prepare import PrepareAPI
@@ -34,7 +34,7 @@ from ._show import ShowAPI
 from ._state import SessionState
 from ._to import ToAPI
 from .engine import load_neat_engine
-from .exceptions import NeatSessionError, session_class_wrapper
+from .exceptions import session_class_wrapper
 
 
 @session_class_wrapper
@@ -81,22 +81,26 @@ class NeatSession:
         self,
         client: CogniteClient | None = None,
         storage: Literal["memory", "oxigraph"] | None = None,
+        storage_path: str | None = None,
         verbose: bool = True,
         load_engine: Literal["newest", "cache", "skip"] = "cache",
     ) -> None:
         self._verbose = verbose
         self._state = SessionState(
             store_type=storage or self._select_most_performant_store(),
+            storage_path=Path(storage_path) if storage_path else None,
             client=NeatClient(client) if client else None,
         )
         self.read = ReadAPI(self._state, verbose)
         self.to = ToAPI(self._state, verbose)
+        self.fix = FixAPI(self._state, verbose)
         self.prepare = PrepareAPI(self._state, verbose)
         self.show = ShowAPI(self._state)
         self.set = SetAPI(self._state, verbose)
         self.inspect = InspectAPI(self._state)
         self.mapping = MappingAPI(self._state)
         self.drop = DropAPI(self._state)
+        self.create = CreateAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
@@ -141,46 +145,27 @@ class NeatSession:
             neat.verify()
             ```
         """
-        transformer = VerifyAnyRules(validate=True, client=self._state.client)  # type: ignore[var-annotated]
-        issues = self._state.rule_transform(transformer)
-        if not issues.has_errors:
-            rules = self._state.rule_store.last_verified_rule
-            if isinstance(rules, InformationRules):
-                self._state.instances.store.add_rules(rules)
+        print("This action has no effect. Neat no longer supports unverified data models.")
+        return IssueList()
 
-        if issues:
-            print("You can inspect the issues with the .inspect.issues(...) method.")
-        return issues
-
-    def convert(self, target: Literal["dms", "information"]) -> IssueList:
+    def convert(self, reserved_properties: Literal["error", "warning"] = "warning") -> IssueList:
         """Converts the last verified data model to the target type.
 
         Args:
-            target: The target type to convert the data model to.
+            reserved_properties: What to do with reserved properties. Can be "error" or "warning".
 
         Example:
             Convert to DMS rules
             ```python
-            neat.convert(target="dms")
-            ```
-
-        Example:
-            Convert to Information rules
-            ```python
-            neat.convert(target="information")
+            neat.convert()
             ```
         """
-        converter: ConversionTransformer
-        if target == "dms":
-            converter = InformationToDMS()
-        elif target == "information":
-            converter = ConvertToRules(InformationRules)
-        else:
-            raise NeatSessionError(f"Target {target} not supported.")
+        converter = InformationToDMS(reserved_properties=reserved_properties)
+
         issues = self._state.rule_transform(converter)
 
         if self._verbose and not issues.has_errors:
-            print(f"Rules converted to {target}")
+            print("Rules converted to dms.")
         else:
             print("Conversion failed.")
         if issues:
@@ -197,13 +182,11 @@ class NeatSession:
             "NeatInferredDataModel",
             "v1",
         ),
-        max_number_of_instance: int = 100,
     ) -> IssueList:
         """Data model inference from instances.
 
         Args:
             model_id: The ID of the inferred data model.
-            max_number_of_instance: The maximum number of instances to use for inference.
 
         Example:
             Infer a data model after reading a source file
@@ -214,6 +197,12 @@ class NeatSession:
             neat.infer()
             ```
         """
+        return self._infer_subclasses(model_id)
+
+    def _previous_inference(
+        self, model_id: dm.DataModelId | tuple[str, str, str], max_number_of_instance: int = 100
+    ) -> IssueList:
+        # Temporary keeping the old inference method in case we need to revert back
         model_id = dm.DataModelId.load(model_id)
         importer = importers.InferenceImporter.from_graph_store(
             store=self._state.instances.store,
@@ -222,56 +211,69 @@ class NeatSession:
         )
         return self._state.rule_import(importer)
 
-    def _infer_subclasses(self) -> IssueList:
-        """Infer the subclass of instances."""
-        last_information = self._state.rule_store.last_verified_information_rules
-        issue_list = IssueList()
+    def _infer_subclasses(
+        self,
+        model_id: dm.DataModelId | tuple[str, str, str] = (
+            "neat_space",
+            "NeatInferredDataModel",
+            "v1",
+        ),
+    ) -> IssueList:
+        """Infer data model from instances."""
+        last_entity: RulesEntity | None = None
+        if self._state.rule_store.provenance:
+            last_entity = self._state.rule_store.provenance[-1].target_entity
+
+        # Note that this importer behaves as a transformer in the rule store when there is an existing rules.
+        # We are essentially transforming the last entity's information rules into a new set of information rules.
         importer = importers.SubclassInferenceImporter(
-            issue_list=issue_list,
+            issue_list=IssueList(),
             graph=self._state.instances.store.graph(),
-            rules=last_information,
-            max_number_of_instance=-1,
+            rules=last_entity.information if last_entity is not None else None,
+            data_model_id=dm.DataModelId.load(model_id) if last_entity is None else None,
         )
 
-        unverified_information = importer.to_rules()
-        verified_information = VerifyInformationRules().transform(unverified_information)
+        def action() -> tuple[InformationRules, DMSRules | None]:
+            unverified_information = importer.to_rules()
+            extra_info = VerifyInformationRules().transform(unverified_information)
+            if not last_entity:
+                return extra_info, None
+            merged_info = MergeInformationRules(extra_info).transform(last_entity.information)
+            if not last_entity.dms:
+                return merged_info, None
+            extra_dms = InformationToDMS(reserved_properties="warning").transform(extra_info)
+            merged_dms = MergeDMSRules(extra_dms).transform(last_entity.dms)
+            return merged_info, merged_dms
 
-        # Hack into the last information rules to merge the rules with the last verified information rules.
-        # This is to be able to populate the instances store with the inferred subclasses.
-        provenance = self._state.rule_store.provenance
-        for change in reversed(provenance):
-            target_entity = change.target_entity
-            if isinstance(target_entity, ModelEntity) and isinstance(target_entity.result, InformationRules):
-                last_information_rules = change.target_entity.result
-                new_information_rules = MergeInformationRules(verified_information).transform(last_information_rules)
-                object.__setattr__(change.target_entity, "result", new_information_rules)
-                break
-
-        dms_rules = InformationToDMS(reserved_properties="skip").transform(verified_information)
-        return self._state.rule_transform(MergeDMSRules(dms_rules))
+        return self._state.rule_store.do_activity(action, importer)
 
     def _repr_html_(self) -> str:
         state = self._state
-        if (
-            not state.instances.has_store
-            and not state.rule_store.has_unverified_rules
-            and not state.rule_store.has_verified_rules
-        ):
+        if state.instances.empty and state.rule_store.empty:
             return "<strong>Empty session</strong>. Get started by reading something with the <em>.read</em> attribute."
 
         output = []
 
-        if state.rule_store.has_unverified_rules and not state.rule_store.has_verified_rules:
-            rules: InputRules = state.rule_store.last_unverified_rule
-            output.append(f"<H2>Unverified Data Model</H2><br />{rules._repr_html_()}")  # type: ignore
+        if state.rule_store.provenance:
+            last_entity = state.rule_store.provenance[-1].target_entity
+            if last_entity.dms:
+                html = last_entity.dms._repr_html_()
+            else:
+                html = last_entity.information._repr_html_()
+            output.append(f"<H2>Data Model</H2><br />{html}")  # type: ignore
 
-        if state.rule_store.has_verified_rules:
-            output.append(f"<H2>Verified Data Model</H2><br />{state.rule_store.last_verified_rule._repr_html_()}")  # type: ignore
-
-        if state.instances.has_store:
+        if not state.instances.empty:
             output.append(f"<H2>Instances</H2> {state.instances.store._repr_html_()}")
 
         return "<br />".join(output)
+
+    def close(self) -> None:
+        """Close the session and release resources."""
+        self._state.instances.store.dataset.close()
+
+    def __del__(self) -> None:
+        """Called by garbage collector"""
+        self.close()
 
 
 @session_class_wrapper
