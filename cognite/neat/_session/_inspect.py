@@ -48,7 +48,6 @@ class InspectAPI:
         self.issues = InspectIssues(state)
         self.outcome = InspectOutcome(state)
 
-    @property
     def properties(self) -> pd.DataFrame:
         """Returns the properties of the current data model.
 
@@ -66,6 +65,16 @@ class InspectAPI:
             df = last_entity.dms.properties.to_pandas()
         else:
             df = last_entity.information.properties.to_pandas()
+        df.drop(columns=["neatId"], errors="ignore", inplace=True)
+        return df
+
+    def views(self) -> pd.DataFrame:
+        if self._state.rule_store.empty:
+            return pd.DataFrame()
+        last_entity = self._state.rule_store.provenance[-1].target_entity
+        if last_entity.dms is None:
+            return pd.DataFrame()
+        df = last_entity.dms.views.to_pandas()
         df.drop(columns=["neatId"], errors="ignore", inplace=True)
         return df
 
