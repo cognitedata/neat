@@ -207,7 +207,7 @@ class NeatRulesStore:
                 importer,
             )
         else:
-            # Importing can be used as a manual transformation.
+            print("Manual transformation of rules is alpha feature. Use with caution.")
             return self._manual_transform(importer, validate, client)
 
     def transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:

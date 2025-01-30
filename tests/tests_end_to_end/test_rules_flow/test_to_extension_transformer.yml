@@ -62,6 +62,7 @@ data_product:
     external_id: DataProduct
     name: data_product data model
     role: DMS Architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1
     space: sp_data_product
     updated: '2025-01-03T00:00:00'
     version: v1
@@ -1573,6 +1574,7 @@ enterprise:
     external_id: Enterprise
     name: Neat enterprise data model
     role: DMS Architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_enterprise/Enterprise/v1
     space: sp_enterprise
     updated: '2025-01-03T00:00:00'
     version: v1
@@ -2807,6 +2809,7 @@ solution:
     external_id: Solution
     name: solution data model
     role: DMS Architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_solution/Solution/v1
     space: sp_solution
     updated: '2025-01-03T00:00:00'
     version: v1

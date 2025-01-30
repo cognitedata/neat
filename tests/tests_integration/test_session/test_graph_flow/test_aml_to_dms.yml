@@ -14,6 +14,7 @@ rules:
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1
     name: Inferred Model
     role: DMS Architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/physical/aml_playground/AML/terminology_3.0
     space: aml_playground
     updated: '2024-09-19T00:00:00Z'
     version: terminology_3.0
