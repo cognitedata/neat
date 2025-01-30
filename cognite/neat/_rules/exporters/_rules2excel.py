@@ -22,6 +22,7 @@ from cognite.neat._rules.models import (
 from cognite.neat._rules.models.dms import DMSMetadata
 from cognite.neat._rules.models.information import InformationMetadata
 from cognite.neat._rules.models.information._rules import InformationRules
+from cognite.neat._utils.spreadsheet import find_column_with_value
 
 from ._base import BaseExporter
 
@@ -63,6 +64,13 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     style_options = get_args(Style)
     dump_options = get_args(DumpOptions)
 
+    _internal_columns: ClassVar[list[str]] = [
+        "physical",
+        "logical",
+        "conceptual",
+        "Neat ID",
+    ]
+
     def __init__(
         self,
         styling: Style = "default",
@@ -70,6 +78,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         sheet_prefix: str | None = None,
         reference_rules_with_prefix: tuple[VerifiedRules, str] | None = None,
         add_empty_rows: bool = False,
+        hide_internal_columns: bool = True,
     ):
         self.sheet_prefix = sheet_prefix or ""
         if styling not in self.style_options:
@@ -79,6 +88,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self.new_model_id = new_model_id
         self.reference_rules_with_prefix = reference_rules_with_prefix
         self.add_empty_rows = add_empty_rows
+        self.hide_internal_columns = hide_internal_columns
 
     @property
     def description(self) -> str:
@@ -113,6 +123,16 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)
+
+        if self.hide_internal_columns:
+            for sheet in workbook.sheetnames:
+                if sheet.lower() == "metadata":
+                    continue
+                ws = workbook[sheet]
+                for col in self._internal_columns:
+                    column_letter = find_column_with_value(ws, col)
+                    if column_letter:
+                        ws.column_dimensions[column_letter].hidden = True
 
         return workbook
 
