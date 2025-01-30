@@ -15,8 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.109.1] - 28-01-**2025**
 
-## TBD
+### Fixed
+- The `neat.inspect.issue()` now returns data model issues. 
+
+## [0.109.0] - 28-01-**2025**
 ### Improved
 - AML and DEXPI reader for neat session automatically perform extraction and transformation
 - The `get_cognite_client` function no longer prints an irrelevant warning message when running outside a git
@@ -34,6 +38,9 @@ Changes are grouped as follows:
 - [BREAKING] NeatSession.prepare.data_model.prefix works only on verified Information and DMS rules, where in case of both rules are provided, it will use DMS rules
 - [BREAKING] The `neat.convert()` no longer takes a target parameter. Only conversion from Information to DMS rules is
   supported.
+- [BREAKING] The `neat.prepare.data_model.drop(...)` has been moved to `neat.drop.data_model.views(...)`. In addition,
+  the `drop` paramter has been split into `view_external_id` and `group` to differentiate between dropping individual
+  views and groups of views.
 
 ### Removed
 - [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.
@@ -45,8 +52,8 @@ Changes are grouped as follows:
 
 ### Added
 - Support for "on-disk" storage for oxigraph in NeatSession
+- New method `neat.inspect.views()` to check the views in the data model.
 - Support for external modification of data model from NeatSession and its re-import
-
 
 ## [0.108.0] - 22-01-**2025**
 ### Added
