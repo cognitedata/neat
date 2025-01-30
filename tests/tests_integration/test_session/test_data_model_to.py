@@ -105,18 +105,28 @@ class TestRulesStoreProvenanceSyncing:
             "import the data model there."
         ) in e.value.raw_message
 
-    def test_non_existing_source(self, neat_client: NeatClient) -> None:
+    def test_unknown_source(self, neat_client: NeatClient) -> None:
         neat = NeatSession(neat_client)
         neat.read.excel.examples.pump_example()
 
         with pytest.raises(NeatValueError) as e:
             neat._state.rule_import(importers.ExcelImporter(DATA_DIR / "dms-unknown-value-type.xlsx"))
 
-        assert (
-            "The source of the imported rules is not in the provenance. "
-            "Import will be skipped. "
-            "Start a new NEAT session and import the data model there."
-        ) in e.value.raw_message
+        assert "The source of the imported rules is unknown" in e.value.raw_message
+
+    def test_source_not_in_store(self, tmp_path: Path, neat_client: NeatClient) -> None:
+        neat = NeatSession(neat_client)
+        neat.read.excel.examples.pump_example()
+        neat.to.excel(tmp_path / "pump.xlsx")
+
+        neat2 = NeatSession(neat_client)
+        neat2.read.rdf.examples.nordic44()
+        neat2.infer()
+
+        with pytest.raises(NeatValueError) as e:
+            neat2._state.rule_import(importers.ExcelImporter(tmp_path / "pump.xlsx"))
+
+        assert "The source of the imported rules is not in the provenance" in e.value.raw_message
 
     def test_external_mod_allowed_provenance(self, tmp_path: Path) -> None:
         neat = NeatSession()
