@@ -45,6 +45,7 @@ Changes are grouped as follows:
 
 ### Added
 - Support for "on-disk" storage for oxigraph in NeatSession
+- Support for external modification of data model from NeatSession and its re-import
 
 
 ## [0.108.0] - 22-01-**2025**
