@@ -18,8 +18,8 @@ Changes are grouped as follows:
 ## [0.109.1] - 28-01-**2025**
 
 ### Fixed
-- The `neat.inspect.issue()` now returns data model issues. 
-
+- The `neat.inspect.issue()` now returns data model issues.
+- Issue with setting new data model id for rules that have raw filter
 ## [0.109.0] - 28-01-**2025**
 ### Improved
 - AML and DEXPI reader for neat session automatically perform extraction and transformation
