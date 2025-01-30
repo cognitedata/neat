@@ -18,7 +18,7 @@ Changes are grouped as follows:
 ## [0.109.1] - 28-01-**2025**
 
 ### Fixed
-- The `neat.inspect.issue()` now returns data model issues. 
+- The `neat.inspect.issue()` now returns data model issues.
 
 ## [0.109.0] - 28-01-**2025**
 ### Improved
@@ -53,6 +53,7 @@ Changes are grouped as follows:
 ### Added
 - Support for "on-disk" storage for oxigraph in NeatSession
 - New method `neat.inspect.views()` to check the views in the data model.
+- Export of data model to Excel will now automatically hide the columns used for the internal neat processes.
 
 
 ## [0.108.0] - 22-01-**2025**
