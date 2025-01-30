@@ -69,6 +69,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         new_model_id: tuple[str, str] | None = None,
         sheet_prefix: str | None = None,
         reference_rules_with_prefix: tuple[VerifiedRules, str] | None = None,
+        add_empty_rows: bool = False,
     ):
         self.sheet_prefix = sheet_prefix or ""
         if styling not in self.style_options:
@@ -77,6 +78,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self._styling_level = self.style_options.index(styling)
         self.new_model_id = new_model_id
         self.reference_rules_with_prefix = reference_rules_with_prefix
+        self.add_empty_rows = add_empty_rows
 
     @property
     def description(self) -> str:
@@ -149,7 +151,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 is_properties = sheet_name == "Properties"
                 is_new_class = class_ != last_class and last_class is not None
                 if self._styling_level > 2 and is_new_class and is_properties:
-                    sheet.append([""] * len(headers))
+                    if self.add_empty_rows:
+                        sheet.append([""] * len(headers))
                     for cell in sheet[sheet.max_row]:
                         cell.fill = PatternFill(fgColor=fill_color, patternType="solid")
                         side = Side(style="thin", color="000000")
