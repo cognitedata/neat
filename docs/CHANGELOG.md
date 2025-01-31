@@ -19,6 +19,7 @@ Changes are grouped as follows:
 
 ### Fixed
 - The `neat.inspect.issue()` now returns data model issues.
+- Issue with setting new data model id for rules that have raw filter
 
 ## [0.109.0] - 28-01-**2025**
 ### Improved
@@ -53,6 +54,7 @@ Changes are grouped as follows:
 ### Added
 - Support for "on-disk" storage for oxigraph in NeatSession
 - New method `neat.inspect.views()` to check the views in the data model.
+- [ALPHA] Support for external modification of data model from NeatSession and its re-import
 - Export of data model to Excel will now automatically hide the columns used for the internal neat processes.
 
 

@@ -15,6 +15,7 @@ rules:
     external_id: NeatHelloWorld
     name: Neat Hello World
     role: DMS Architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Iteration_2
     space: neat_playground
     updated: '2024-09-19T00:00:00Z'
     version: v1

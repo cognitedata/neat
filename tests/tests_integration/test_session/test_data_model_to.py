@@ -89,39 +89,64 @@ class TestDataModelToCDF:
 
 
 class TestRulesStoreProvenanceSyncing:
-    @pytest.mark.skip("Skipped until in-depth comparison of data models is implemented")
-    def test_stopping_reloading_same_model(self, neat_client: NeatClient, tmp_path: Path) -> None:
-        neat = NeatSession(neat_client)
-        neat.read.excel.examples.pump_example()
-        neat.verify()
-
-        # set source to be the same as the target
-        target = neat._state.rule_store.provenance[-1].target_entity.result
-        target.metadata.source = target.metadata.identifier
-
-        neat.to.excel(tmp_path / "pump_example.xlsx")
+    def test_detached_provenance(self, tmp_path: Path) -> None:
+        neat = NeatSession()
+        neat.read.rdf.examples.nordic44()
+        neat.infer()
+        neat.to.excel(tmp_path / "nordic44.xlsx")
+        neat.fix.data_model.cdf_compliant_external_ids()
 
         with pytest.raises(NeatValueError) as e:
-            neat._state.rule_import(importers.ExcelImporter(tmp_path / "pump_example.xlsx"))
+            neat._state.rule_import(
+                importers.ExcelImporter(tmp_path / "nordic44.xlsx"),
+                enable_manual_edit=True,
+            )
 
         assert (
-            "Imported rules and rules which were used as the source for"
-            " them and which are are already in "
-            "this neat session have the same data model id"
+            "Imported rules are detached from the provenance chain."
+            " Import will be skipped. Start a new NEAT session and "
+            "import the data model there."
         ) in e.value.raw_message
 
-    @pytest.mark.skip("Skipped need a discussion on how to add with the Info + DMS regime")
-    def test_stop_model_import_which_source_is_not_in_session(self, neat_client: NeatClient) -> None:
+    def test_unknown_source(self, neat_client: NeatClient) -> None:
         neat = NeatSession(neat_client)
         neat.read.excel.examples.pump_example()
 
-        # set source to be the same as the target
-        target = neat._state.rule_store.provenance[-1].target_entity.dms
-        target.metadata.source_id = target.metadata.namespace + "some_other_source"
+        with pytest.raises(NeatValueError) as e:
+            neat._state.rule_import(
+                importers.ExcelImporter(DATA_DIR / "dms-unknown-value-type.xlsx"),
+                enable_manual_edit=True,
+            )
+
+        assert "The source of the imported rules is unknown" in e.value.raw_message
+
+    def test_source_not_in_store(self, tmp_path: Path, neat_client: NeatClient) -> None:
+        neat = NeatSession(neat_client)
+        neat.read.excel.examples.pump_example()
+        neat.to.excel(tmp_path / "pump.xlsx")
+
+        neat2 = NeatSession(neat_client)
+        neat2.read.rdf.examples.nordic44()
+        neat2.infer()
 
         with pytest.raises(NeatValueError) as e:
-            neat._state.rule_import(importers.ExcelImporter(DATA_DIR / "pump_example.xlsx"))
+            neat2._state.rule_import(
+                importers.ExcelImporter(tmp_path / "pump.xlsx"),
+                enable_manual_edit=True,
+            )
 
-        assert (
-            "The source of the data model being imported is not in the content of this NEAT session"
-        ) in e.value.raw_message
+        assert "The source of the imported rules is not in the provenance" in e.value.raw_message
+
+    def test_external_mod_allowed_provenance(self, tmp_path: Path) -> None:
+        neat = NeatSession()
+        neat.read.rdf.examples.nordic44()
+        neat.infer()
+        neat.fix.data_model.cdf_compliant_external_ids()
+        neat.to.excel(tmp_path / "nordic44.xlsx")
+        neat.read.excel(
+            tmp_path / "nordic44.xlsx",
+            enable_manual_edit=True,
+        )
+
+        assert len(neat._state.rule_store.provenance) == 3
+        assert neat._state.rule_store.provenance[-1].description == "Manual transformation of rules outside of NEAT"

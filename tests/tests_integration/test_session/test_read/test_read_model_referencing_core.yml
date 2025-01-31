@@ -5,6 +5,7 @@ metadata:
   external_id: MyProduct
   name: data_product data model
   role: DMS Architect
+  source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_my_space/MyProduct/v1
   space: sp_my_space
   updated: '2024-11-22T00:00:00'
   version: v1
