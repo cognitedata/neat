@@ -21,7 +21,1423 @@ data_product:
     space: sp_data_product
     updated: '2025-01-08T06:40:43.340000'
     version: v1
-  properties: []
+  properties:
+  - connection: reverse(property=assets)
+    description: An automatically updated list of activities related to the asset.
+    is_list: true
+    name: Activities
+    neatId: http://purl.org/cognite/neat/neatId_4487a4a9_6e1e_4fde_871c_de37ea8134eb
+    value_type: ClassicEvent
+    view: ClassicAsset
+    view_property: activities
+  - container: cdf_cdm:CogniteDescribable
+    container_property: aliases
+    description: Alternative names for the node
+    immutable: false
+    is_list: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: aliases
+  - connection: reverse(property=parent)
+    description: An automatically updated list of assets with this asset as their
+      parent.
+    is_list: true
+    name: Children
+    neatId: http://purl.org/cognite/neat/neatId_04c63f13_3088_4d24_9494_7f6948feb498
+    value_type: ClassicAsset
+    view: ClassicAsset
+    view_property: children
+  - container: sp_windfarm:ClassicAsset
+    container_property: classicExternalId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/externalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: classicExternalId
+  - connection: direct
+    container: sp_windfarm:ClassicAsset
+    container_property: dataSetId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicAsset
+    view_property: dataSetId
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/description
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: description
+  - connection: reverse(property=asset)
+    description: An automatically updated list of equipment related to the asset.
+    is_list: true
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/neatId_46d2b553_9e62_4cb8_bdd7_7bcea1f5d989
+    value_type: ClassicEquipment
+    view: ClassicAsset
+    view_property: equipment
+  - connection: reverse(property=assets)
+    description: An automatically updated list of files related to the asset.
+    is_list: true
+    name: Files
+    neatId: http://purl.org/cognite/neat/neatId_e515ea88_f19d_4069_b88d_b3244fd87cf4
+    value_type: ClassicFile
+    view: ClassicAsset
+    view_property: files
+  - container: sp_windfarm:ClassicAsset
+    container_property: geoLocation
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
+    nullable: true
+    value_type: json
+    view: ClassicAsset
+    view_property: geoLocation
+  - container: sp_windfarm:ClassicAsset
+    container_property: metadata
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
+    nullable: true
+    value_type: json
+    view: ClassicAsset
+    view_property: metadata
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    index: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/name
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: name
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_parent
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicAsset
+    view_property: parent
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_path
+    description: An automatically updated ordered list of this asset's ancestors,
+      starting with the root asset. Enables subtree filtering to find all assets under
+      a parent.
+    immutable: false
+    is_list: true
+    name: Path
+    neatId: http://purl.org/cognite/neat/neatId_11622da5_9e91_4699_b69c_174b054a1a93
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicAsset
+    view_property: path
+  - container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_path_last_updated_time
+    description: The last time the path was updated for this asset.
+    immutable: false
+    is_list: false
+    name: Path last updated time
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteAsset/pathLastUpdatedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicAsset
+    view_property: pathLastUpdatedTime
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_root
+    description: An automatically updated reference to the top-level asset of the
+      hierarchy.
+    immutable: false
+    is_list: false
+    name: Root
+    neatId: http://purl.org/cognite/neat/neatId_11138a07_144c_4998_a51d_4fbced64ce3d
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicAsset
+    view_property: root
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/source
+    nullable: true
+    value_type: ClassicSourceSystem
+    view: ClassicAsset
+    view_property: source
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceContext
+    description: Context of the source id. For systems where the sourceId is globally
+      unique, the sourceContext is expected to not be set.
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceContext
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: sourceContext
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedTime
+    description: When the instance was created in source system (if available)
+    immutable: false
+    index: sourceCreatedTime
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicAsset
+    view_property: sourceCreatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedUser
+    description: User identifier from the source system on who created the source
+      data. This identifier is not guaranteed to match the user identifiers in CDF
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedUser
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: sourceCreatedUser
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceId
+    description: Identifier from the source system
+    immutable: false
+    index: sourceId
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: sourceId
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedTime
+    description: When the instance was last updated in the source system (if available)
+    immutable: false
+    index: sourceUpdatedTime
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicAsset
+    view_property: sourceUpdatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedUser
+    description: User identifier from the source system on who last updated the source
+      data. This identifier is not guaranteed to match the user identifiers in CDF
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedUser
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: sourceUpdatedUser
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/labels
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/labels
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: tags
+  - connection: reverse(property=assets)
+    description: An automatically updated list of time series related to the asset.
+    is_list: true
+    name: Time series
+    neatId: http://purl.org/cognite/neat/neatId_53bf067f_d9de_4ef0_945c_8024e9ed8981
+    value_type: ClassicTimeSeries
+    view: ClassicAsset
+    view_property: timeSeries
+  - container: sp_windfarm:ClassicDataSet
+    container_property: classicExternalId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/externalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicDataSet
+    view_property: classicExternalId
+  - container: sp_windfarm:ClassicDataSet
+    container_property: description
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/description
+    nullable: true
+    value_type: text
+    view: ClassicDataSet
+    view_property: description
+  - container: sp_windfarm:ClassicDataSet
+    container_property: metadata
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
+    nullable: true
+    value_type: json
+    view: ClassicDataSet
+    view_property: metadata
+  - container: sp_windfarm:ClassicDataSet
+    container_property: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/name
+    nullable: true
+    value_type: text
+    view: ClassicDataSet
+    view_property: name
+  - container: sp_windfarm:ClassicDataSet
+    container_property: writeProtected
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
+    nullable: true
+    value_type: boolean
+    view: ClassicDataSet
+    view_property: writeProtected
+  - connection: reverse(property=equipment)
+    description: An automatically updated list of activities related to the equipment.
+    is_list: true
+    name: Activities
+    neatId: http://purl.org/cognite/neat/neatId_c25997c1_a8c4_4c29_9517_3188cfe433b4
+    value_type: ClassicEvent
+    view: ClassicEquipment
+    view_property: activities
+  - container: cdf_cdm:CogniteDescribable
+    container_property: aliases
+    description: Alternative names for the node
+    immutable: false
+    is_list: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
+    nullable: true
+    value_type: text
+    view: ClassicEquipment
+    view_property: aliases
+  - connection: direct
+    container: cdf_cdm:CogniteEquipment
+    container_property: asset
+    description: The asset the equipment is related to.
+    immutable: false
+    is_list: false
+    name: Asset
+    neatId: http://purl.org/cognite/neat/neatId_5e08021f_2315_4b48_a769_b824abc215a0
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicEquipment
+    view_property: asset
+  - container: sp_windfarm:ClassicEquipment
+    container_property: classicEquipmentGUID
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/neatId_d22d3e64_b57e_4fef_921f_6aa05cbc563b
+    nullable: true
+    value_type: text
+    view: ClassicEquipment
+    view_property: classicEquipmentGUID
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    description: Description of the instance
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/description
+    nullable: true
+    value_type: text
+    view: ClassicEquipment
+    view_property: description
+  - connection: direct
+    container: cdf_cdm:CogniteEquipment
+    container_property: files
+    description: A list of files the equipment relates to.
+    immutable: false
+    is_list: true
+    name: Files
+    neatId: http://purl.org/cognite/neat/neatId_3bd8dc76_ccec_4790_afc1_ad4c5dbdcadb
+    nullable: true
+    value_type: ClassicFile
+    view: ClassicEquipment
+    view_property: files
+  - container: cdf_cdm:CogniteEquipment
+    container_property: manufacturer
+    description: The manufacturer of the equipment.
+    immutable: false
+    index: manufacturer
+    is_list: false
+    name: Manufacturer
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteEquipment/manufacturer
+    nullable: true
+    value_type: text
+    view: ClassicEquipment
+    view_property: manufacturer
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    description: Name of the instance
+    immutable: false
+    index: name
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/name
+    nullable: true
+    value_type: text
+    view: ClassicEquipment
+    view_property: name
+  - container: cdf_cdm:CogniteEquipment
+    container_property: serialNumber
+    description: The serial number of the equipment.
+    immutable: false
+    index: serialNumber
+    is_list: false
+    name: Serial number
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteEquipment/serialNumber
+    nullable: true
+    value_type: text
+    view: ClassicEquipment
+    view_property: serialNumber
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    description: Direct relation to a source system
+    immutable: false
+    index: source
+    is_list: false
+    neatId: http://purl.org/cognite/neat/neatId_4f64197b_ac89_4963_bdd5_527e7b1f6d4b
+    nullable: true
+    value_type: ClassicSourceSystem
+    view: ClassicEquipment
+    view_property: source
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceContext
+    description: Context of the source id. For systems where the sourceId is globally
+      unique, the sourceContext is expected to not be set.
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceContext
+    nullable: true
+    value_type: text
+    view: ClassicEquipment
+    view_property: sourceContext
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedTime
+    description: When the instance was created in source system (if available)
+    immutable: false
+    index: sourceCreatedTime
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicEquipment
+    view_property: sourceCreatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedUser
+    description: User identifier from the source system on who created the source
+      data. This identifier is not guaranteed to match the user identifiers in CDF
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedUser
+    nullable: true
+    value_type: text
+    view: ClassicEquipment
+    view_property: sourceCreatedUser
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceId
+    description: Identifier from the source system
+    immutable: false
+    index: sourceId
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
+    nullable: true
+    value_type: text
+    view: ClassicEquipment
+    view_property: sourceId
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedTime
+    description: When the instance was last updated in the source system (if available)
+    immutable: false
+    index: sourceUpdatedTime
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicEquipment
+    view_property: sourceUpdatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedUser
+    description: User identifier from the source system on who last updated the source
+      data. This identifier is not guaranteed to match the user identifiers in CDF
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedUser
+    nullable: true
+    value_type: text
+    view: ClassicEquipment
+    view_property: sourceUpdatedUser
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    description: Text based labels for generic use, limited to 1000
+    immutable: false
+    is_list: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/tags
+    nullable: true
+    value_type: text
+    view: ClassicEquipment
+    view_property: tags
+  - connection: reverse(property=equipment)
+    description: An automatically updated list of time series related to the equipment.
+    is_list: true
+    name: Time series
+    neatId: http://purl.org/cognite/neat/neatId_e8c0570d_3a83_4b4d_8a7c_93e73a066e0c
+    value_type: ClassicTimeSeries
+    view: ClassicEquipment
+    view_property: timeSeries
+  - container: cdf_cdm:CogniteDescribable
+    container_property: aliases
+    description: Alternative names for the node
+    immutable: false
+    is_list: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: aliases
+  - connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: assets
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicEvent
+    view_property: assets
+  - container: sp_windfarm:ClassicEvent
+    container_property: classicExternalId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/externalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: classicExternalId
+  - connection: direct
+    container: sp_windfarm:ClassicEvent
+    container_property: dataSetId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicEvent
+    view_property: dataSetId
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/description
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: description
+  - container: cdf_cdm:CogniteSchedulable
+    container_property: endTime
+    immutable: false
+    index: endTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicEvent
+    view_property: endTime
+  - connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: equipment
+    description: A list of equipment the activity is related to.
+    immutable: false
+    is_list: true
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/neatId_02efaf0e_d311_4b1f_9cbd_fa43c6141606
+    nullable: true
+    value_type: ClassicEquipment
+    view: ClassicEvent
+    view_property: equipment
+  - container: sp_windfarm:ClassicEvent
+    container_property: metadata
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
+    nullable: true
+    value_type: json
+    view: ClassicEvent
+    view_property: metadata
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    description: Name of the instance
+    immutable: false
+    index: name
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/name
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: name
+  - container: cdf_cdm:CogniteSchedulable
+    container_property: scheduledEndTime
+    description: The planned end time of an activity (or similar that extends this)
+    immutable: false
+    index: scheduledEndTime
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSchedulable/scheduledEndTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicEvent
+    view_property: scheduledEndTime
+  - container: cdf_cdm:CogniteSchedulable
+    container_property: scheduledStartTime
+    description: The planned start time of an activity (or similar that extends this)
+    immutable: false
+    index: scheduledStartTime
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSchedulable/scheduledStartTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicEvent
+    view_property: scheduledStartTime
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/source
+    nullable: true
+    value_type: ClassicSourceSystem
+    view: ClassicEvent
+    view_property: source
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceContext
+    description: Context of the source id. For systems where the sourceId is globally
+      unique, the sourceContext is expected to not be set.
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceContext
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: sourceContext
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedTime
+    description: When the instance was created in source system (if available)
+    immutable: false
+    index: sourceCreatedTime
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicEvent
+    view_property: sourceCreatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedUser
+    description: User identifier from the source system on who created the source
+      data. This identifier is not guaranteed to match the user identifiers in CDF
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedUser
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: sourceCreatedUser
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceId
+    description: Identifier from the source system
+    immutable: false
+    index: sourceId
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: sourceId
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedTime
+    description: When the instance was last updated in the source system (if available)
+    immutable: false
+    index: sourceUpdatedTime
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicEvent
+    view_property: sourceUpdatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedUser
+    description: User identifier from the source system on who last updated the source
+      data. This identifier is not guaranteed to match the user identifiers in CDF
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedUser
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: sourceUpdatedUser
+  - container: cdf_cdm:CogniteSchedulable
+    container_property: startTime
+    immutable: false
+    index: startTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicEvent
+    view_property: startTime
+  - container: sp_windfarm:ClassicEvent
+    container_property: subtype
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: subtype
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    description: Text based labels for generic use, limited to 1000
+    immutable: false
+    is_list: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/tags
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: tags
+  - connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: timeSeries
+    description: A list of time series the activity is related to.
+    immutable: false
+    is_list: true
+    name: Time series
+    neatId: http://purl.org/cognite/neat/neatId_a0c5e084_cdf1_49cf_9d39_0997c06d2f3b
+    nullable: true
+    value_type: ClassicTimeSeries
+    view: ClassicEvent
+    view_property: timeSeries
+  - container: sp_windfarm:ClassicEvent
+    container_property: type
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/type
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: type
+  - container: cdf_cdm:CogniteDescribable
+    container_property: aliases
+    description: Alternative names for the node
+    immutable: false
+    is_list: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: aliases
+  - connection: direct
+    container: cdf_cdm:CogniteFile
+    container_property: assets
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicFile
+    view_property: assets
+  - container: sp_windfarm:ClassicFile
+    container_property: classicExternalId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/externalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: classicExternalId
+  - connection: direct
+    container: sp_windfarm:ClassicFile
+    container_property: dataSetId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicFile
+    view_property: dataSetId
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    description: Description of the instance
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/description
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: description
+  - container: cdf_cdm:CogniteFile
+    container_property: directory
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/directory
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/directory
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: directory
+  - connection: reverse(property=files)
+    description: An automatically updated list of equipment this file is related to.
+    is_list: true
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/neatId_527cc7c9_d504_41a7_b25d_f64ba2906a99
+    value_type: ClassicEquipment
+    view: ClassicFile
+    view_property: equipment
+  - container: sp_windfarm:ClassicFile
+    container_property: geoLocation
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
+    nullable: true
+    value_type: json
+    view: ClassicFile
+    view_property: geoLocation
+  - container: cdf_cdm:CogniteFile
+    container_property: isUploaded
+    default: 'False'
+    description: Specifies if the file content has been uploaded to Cognite Data Fusion
+      or not.
+    immutable: false
+    is_list: false
+    name: Is uploaded
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteFile/isUploaded
+    nullable: true
+    value_type: boolean
+    view: ClassicFile
+    view_property: isUploaded
+  - container: sp_windfarm:ClassicFile
+    container_property: metadata
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/metadata
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/metadata
+    nullable: true
+    value_type: json
+    view: ClassicFile
+    view_property: metadata
+  - container: cdf_cdm:CogniteFile
+    container_property: mimeType
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: mimeType
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    index: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/name
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: name
+  - container: sp_windfarm:ClassicFile
+    container_property: securityCategories
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
+    nullable: true
+    value_type: int64
+    view: ClassicFile
+    view_property: securityCategories
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/source
+    nullable: true
+    value_type: ClassicSourceSystem
+    view: ClassicFile
+    view_property: source
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceContext
+    description: Context of the source id. For systems where the sourceId is globally
+      unique, the sourceContext is expected to not be set.
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceContext
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: sourceContext
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedTime
+    immutable: false
+    index: sourceCreatedTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicFile
+    view_property: sourceCreatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedUser
+    description: User identifier from the source system on who created the source
+      data. This identifier is not guaranteed to match the user identifiers in CDF
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedUser
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: sourceCreatedUser
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceId
+    description: Identifier from the source system
+    immutable: false
+    index: sourceId
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: sourceId
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedTime
+    immutable: false
+    index: sourceUpdatedTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicFile
+    view_property: sourceUpdatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedUser
+    description: User identifier from the source system on who last updated the source
+      data. This identifier is not guaranteed to match the user identifiers in CDF
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedUser
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: sourceUpdatedUser
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/labels
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/labels
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: tags
+  - container: cdf_cdm:CogniteFile
+    container_property: uploadedTime
+    description: The time the file upload completed.
+    immutable: false
+    is_list: false
+    name: Uploaded time
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteFile/uploadedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicFile
+    view_property: uploadedTime
+  - container: sp_windfarm:ClassicLabel
+    container_property: classicExternalId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/externalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicLabel
+    view_property: classicExternalId
+  - connection: direct
+    container: sp_windfarm:ClassicLabel
+    container_property: dataSetId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicLabel
+    view_property: dataSetId
+  - container: sp_windfarm:ClassicLabel
+    container_property: description
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/description
+    nullable: true
+    value_type: text
+    view: ClassicLabel
+    view_property: description
+  - container: sp_windfarm:ClassicLabel
+    container_property: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/name
+    nullable: true
+    value_type: text
+    view: ClassicLabel
+    view_property: name
+  - container: sp_windfarm:ClassicRelationship
+    container_property: classicExternalId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/externalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicRelationship
+    view_property: classicExternalId
+  - container: sp_windfarm:ClassicRelationship
+    container_property: confidence
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
+    nullable: true
+    value_type: float64
+    view: ClassicRelationship
+    view_property: confidence
+  - connection: direct
+    container: sp_windfarm:ClassicRelationship
+    container_property: dataSetId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicRelationship
+    view_property: dataSetId
+  - container: sp_windfarm:ClassicRelationship
+    container_property: endTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicRelationship
+    view_property: endTime
+  - connection: edge
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
+    value_type: ClassicLabel
+    view: ClassicRelationship
+    view_property: labels
+  - container: sp_windfarm:ClassicRelationship
+    container_property: sourceType
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
+    nullable: true
+    value_type: text
+    view: ClassicRelationship
+    view_property: sourceType
+  - container: sp_windfarm:ClassicRelationship
+    container_property: startTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicRelationship
+    view_property: startTime
+  - container: sp_windfarm:ClassicRelationship
+    container_property: targetType
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
+    nullable: true
+    value_type: text
+    view: ClassicRelationship
+    view_property: targetType
+  - connection: direct
+    container: sp_windfarm:ClassicSequence
+    container_property: assetId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicSequence
+    view_property: assetId
+  - container: sp_windfarm:ClassicSequence
+    container_property: classicExternalId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/externalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicSequence
+    view_property: classicExternalId
+  - container: sp_windfarm:ClassicSequence
+    container_property: columns
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/columns
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/columns
+    nullable: true
+    value_type: json
+    view: ClassicSequence
+    view_property: columns
+  - connection: direct
+    container: sp_windfarm:ClassicSequence
+    container_property: dataSetId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicSequence
+    view_property: dataSetId
+  - container: sp_windfarm:ClassicSequence
+    container_property: description
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/description
+    nullable: true
+    value_type: text
+    view: ClassicSequence
+    view_property: description
+  - container: sp_windfarm:ClassicSequence
+    container_property: metadata
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
+    nullable: true
+    value_type: json
+    view: ClassicSequence
+    view_property: metadata
+  - container: sp_windfarm:ClassicSequence
+    container_property: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/name
+    nullable: true
+    value_type: text
+    view: ClassicSequence
+    view_property: name
+  - container: sp_windfarm:ClassicSequence
+    container_property: rows
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/rows
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/rows
+    nullable: true
+    value_type: json
+    view: ClassicSequence
+    view_property: rows
+  - container: cdf_cdm:CogniteDescribable
+    container_property: aliases
+    description: Alternative names for the node
+    immutable: false
+    is_list: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
+    nullable: true
+    value_type: text
+    view: ClassicSourceSystem
+    view_property: aliases
+  - container: sp_windfarm:ClassicSourceSystem
+    container_property: classicSourceSystemGUID
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/neatId_baba86c4_fed1_4faf_8e48_b5f1e8179a50
+    nullable: true
+    value_type: text
+    view: ClassicSourceSystem
+    view_property: classicSourceSystemGUID
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    description: Description of the instance
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/description
+    nullable: true
+    value_type: text
+    view: ClassicSourceSystem
+    view_property: description
+  - container: cdf_cdm:CogniteSourceSystem
+    container_property: manufacturer
+    description: Manufacturer of the source system
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceSystem/manufacturer
+    nullable: true
+    value_type: text
+    view: ClassicSourceSystem
+    view_property: manufacturer
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
+    nullable: true
+    value_type: text
+    view: ClassicSourceSystem
+    view_property: name
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    description: Text based labels for generic use, limited to 1000
+    immutable: false
+    is_list: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/tags
+    nullable: true
+    value_type: text
+    view: ClassicSourceSystem
+    view_property: tags
+  - container: cdf_cdm:CogniteSourceSystem
+    container_property: version
+    description: Version identifier for the source system
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceSystem/version
+    nullable: true
+    value_type: text
+    view: ClassicSourceSystem
+    view_property: version
+  - connection: reverse(property=timeSeries)
+    description: An automatically updated list of activities the time series is related
+      to.
+    is_list: true
+    name: Activities
+    neatId: http://purl.org/cognite/neat/neatId_eb1527e5_e163_4d50_bcee_dd2546b7691f
+    value_type: ClassicEvent
+    view: ClassicTimeSeries
+    view_property: activities
+  - container: cdf_cdm:CogniteDescribable
+    container_property: aliases
+    description: Alternative names for the node
+    immutable: false
+    is_list: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: aliases
+  - connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: assets
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicTimeSeries
+    view_property: assets
+  - container: sp_windfarm:ClassicTimeSeries
+    container_property: classicExternalId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/externalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: classicExternalId
+  - connection: direct
+    container: sp_windfarm:ClassicTimeSeries
+    container_property: dataSetId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicTimeSeries
+    view_property: dataSetId
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: description
+  - connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: equipment
+    description: A list of equipment the time series is related to.
+    immutable: false
+    is_list: true
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/neatId_1fc3b262_51f2_444b_b105_2e5bf1feb3df
+    nullable: true
+    value_type: ClassicEquipment
+    view: ClassicTimeSeries
+    view_property: equipment
+  - container: cdf_cdm:CogniteTimeSeries
+    container_property: isStep
+    default: 0
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
+    nullable: false
+    value_type: boolean
+    view: ClassicTimeSeries
+    view_property: isStep
+  - container: sp_windfarm:ClassicTimeSeries
+    container_property: metadata
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
+    nullable: true
+    value_type: json
+    view: ClassicTimeSeries
+    view_property: metadata
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    index: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: name
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    description: Direct relation to a source system
+    immutable: false
+    index: source
+    is_list: false
+    neatId: http://purl.org/cognite/neat/neatId_b5d6ecd8_d48b_439d_892c_3d6e1bc7ffca
+    nullable: true
+    value_type: ClassicSourceSystem
+    view: ClassicTimeSeries
+    view_property: source
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceContext
+    description: Context of the source id. For systems where the sourceId is globally
+      unique, the sourceContext is expected to not be set.
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceContext
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: sourceContext
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedTime
+    description: When the instance was created in source system (if available)
+    immutable: false
+    index: sourceCreatedTime
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicTimeSeries
+    view_property: sourceCreatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedUser
+    description: User identifier from the source system on who created the source
+      data. This identifier is not guaranteed to match the user identifiers in CDF
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedUser
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: sourceCreatedUser
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceId
+    description: Identifier from the source system
+    immutable: false
+    index: sourceId
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: sourceId
+  - container: cdf_cdm:CogniteTimeSeries
+    container_property: sourceUnit
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: sourceUnit
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedTime
+    description: When the instance was last updated in the source system (if available)
+    immutable: false
+    index: sourceUpdatedTime
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicTimeSeries
+    view_property: sourceUpdatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedUser
+    description: User identifier from the source system on who last updated the source
+      data. This identifier is not guaranteed to match the user identifiers in CDF
+    immutable: false
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedUser
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: sourceUpdatedUser
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: tags
+  - container: cdf_cdm:CogniteTimeSeries
+    container_property: type
+    immutable: true
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
+    nullable: false
+    value_type: enum(collection=timeseriesType)
+    view: ClassicTimeSeries
+    view_property: type
   views:
   - filter_: hasData(cdf_cdm:CogniteAsset,cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteVisualizable,sp_windfarm:ClassicAsset)
     in_model: true
