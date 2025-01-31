@@ -56,7 +56,7 @@ Changes are grouped as follows:
 - New method `neat.inspect.views()` to check the views in the data model.
 - [ALPHA] Support for external modification of data model from NeatSession and its re-import
 - Export of data model to Excel will now automatically hide the columns used for the internal neat processes.
-
+- [ALPHA] when exporting data model to Excel one can specify to export only properties of views which are in the same space as the data model
 
 ## [0.108.0] - 22-01-**2025**
 ### Added
