@@ -3,11 +3,11 @@ from collections import defaultdict
 from collections.abc import Callable, Hashable
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import rdflib
-from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
 from cognite.neat._client import NeatClient
@@ -15,7 +15,7 @@ from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors import DMSGraphExtractor, KnowledgeGraphExtractor
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules._shared import ReadRules, Rules, T_VerifiedRules, VerifiedRules
+from cognite.neat._rules._shared import T_VerifiedRules, VerifiedRules
 from cognite.neat._rules.exporters import BaseExporter
 from cognite.neat._rules.exporters._base import CDFExporter, T_Export
 from cognite.neat._rules.importers import BaseImporter
@@ -23,7 +23,14 @@ from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.transformers import DMSToInformation, VerifiedRulesTransformer, VerifyAnyRules
 from cognite.neat._utils.upload import UploadResultList
 
-from ._provenance import UNKNOWN_AGENT, Activity, Change, Entity, Provenance
+from ._provenance import (
+    EXTERNAL_AGENT,
+    UNKNOWN_AGENT,
+    Activity,
+    Change,
+    Entity,
+    Provenance,
+)
 from .exceptions import EmptyStore, InvalidActivityInput
 
 
@@ -66,63 +73,156 @@ class NeatRulesStore:
             return calculated_hash[:8]
         return calculated_hash
 
-    def import_rules(
-        self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
-    ) -> IssueList:
-        if self.empty:
-            return self._import_rules(importer, validate, client)
+    def _rules_import_verify_convert(
+        self,
+        importer: BaseImporter,
+        validate: bool,
+        client: NeatClient | None = None,
+    ) -> tuple[InformationRules, DMSRules | None]:
+        """Action that imports rules, verifies them and optionally converts them."""
+        read_rules = importer.to_rules()
+        verified = VerifyAnyRules(validate, client).transform(read_rules)  # type: ignore[arg-type]
+        if isinstance(verified, InformationRules):
+            return verified, None
+        elif isinstance(verified, DMSRules):
+            return DMSToInformation().transform(verified), verified
         else:
-            # Importing can be used as a manual transformation.
-            return self._manual_transform(importer, validate, client)
+            # Bug in the code
+            raise ValueError(f"Invalid output from importer: {type(verified)}")
 
-    def _import_rules(
-        self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
-    ) -> IssueList:
-        def action() -> tuple[InformationRules, DMSRules | None]:
-            read_rules = importer.to_rules()
-            verified = VerifyAnyRules(validate, client).transform(read_rules)  # type: ignore[arg-type]
-            if isinstance(verified, InformationRules):
-                return verified, None
-            elif isinstance(verified, DMSRules):
-                return DMSToInformation().transform(verified), verified
-            else:
-                # Bug in the code
-                raise ValueError(f"Invalid output from importer: {type(verified)}")
-
-        return self.import_action(action, importer)
+    def _graph_import_verify_convert(
+        self,
+        extractor: KnowledgeGraphExtractor,
+    ) -> tuple[InformationRules, DMSRules | None]:
+        info = extractor.get_information_rules()
+        dms: DMSRules | None = None
+        if isinstance(extractor, DMSGraphExtractor):
+            dms = extractor.get_dms_rules()
+        return info, dms
 
     def _manual_transform(
         self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
     ) -> IssueList:
-        raise NotImplementedError("Manual transformation is not yet implemented.")
+        result, issue_list, start, end = self._do_activity(
+            partial(self._rules_import_verify_convert, importer, validate, client)
+        )
+
+        if not result:
+            return issue_list
+
+        info, dms = result
+        last_change = self.provenance[-1]
+
+        outside_agent = EXTERNAL_AGENT
+        outside_activity = Activity(
+            was_associated_with=outside_agent,
+            started_at_time=last_change.activity.ended_at_time,
+            ended_at_time=end,
+            used=last_change.target_entity,
+        )
+
+        # Case 1: Source of imported rules is not known
+        if not (source_id := self._get_source_id(result)):
+            raise NeatValueError(
+                "The source of the imported rules is unknown."
+                " Import will be skipped. Start a new NEAT session and import the data model there."
+            )
+
+        # Case 2: Source of imported rules not in rules_store
+        if not (source_entity := self.provenance.target_entity(source_id)) or not isinstance(
+            source_entity, RulesEntity
+        ):
+            raise NeatValueError(
+                "The source of the imported rules is not in the provenance."
+                " Import will be skipped. Start a new NEAT session and import the data model there."
+            )
+
+        # Case 3: Source is not the latest source entity in the provenance change
+        if source_entity.id_ != last_change.target_entity.id_:
+            raise NeatValueError(
+                "Imported rules are detached from the provenance chain."
+                " Import will be skipped. Start a new NEAT session and import the data model there."
+            )
+
+        # Case 4: Provenance is already at the physical state of the data model, going back to logical not possible
+        if not dms and source_entity.dms:
+            raise NeatValueError(
+                "Rules are already in physical state, import of logical model not possible."
+                " Import will be skipped. Start a new NEAT session and import the data model there."
+            )
+
+        # modification took place on information rules
+        if not dms and not source_entity.dms:
+            outside_target_entity = RulesEntity(
+                was_attributed_to=outside_agent,
+                was_generated_by=outside_activity,
+                information=info,
+                dms=dms,
+                issues=issue_list,
+                id_=self._create_id(info, dms),
+            )
+
+        # modification took place on dms rules, keep latest information rules
+        elif dms and source_entity.dms:
+            outside_target_entity = RulesEntity(
+                was_attributed_to=outside_agent,
+                was_generated_by=outside_activity,
+                information=last_change.target_entity.information,
+                dms=dms,
+                issues=issue_list,
+                id_=self._create_id(info, dms),
+            )
+
+        else:
+            raise NeatValueError("Invalid state of rules for manual transformation")
+
+        outside_change = Change(
+            source_entity=last_change.target_entity,
+            agent=outside_agent,
+            activity=outside_activity,
+            target_entity=outside_target_entity,
+            description="Manual transformation of rules outside of NEAT",
+        )
+
+        self._last_issues = issue_list
+        # record change that took place outside of neat
+        self.provenance.append(outside_change)
+
+        return issue_list
 
     def import_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
-        def action() -> tuple[InformationRules, DMSRules | None]:
-            info = extractor.get_information_rules()
-            dms: DMSRules | None = None
-            if isinstance(extractor, DMSGraphExtractor):
-                dms = extractor.get_dms_rules()
-            return info, dms
+        if not self.empty:
+            raise NeatValueError(f"Data model already exists. Cannot import {extractor.source_uri}.")
+        else:
+            return self.do_activity(partial(self._graph_import_verify_convert, extractor), extractor)
 
-        return self.import_action(action, extractor)
-
-    def import_action(
+    def import_rules(
         self,
-        action: Callable[[], tuple[InformationRules, DMSRules | None]],
-        agent_tool: BaseImporter | KnowledgeGraphExtractor,
+        importer: BaseImporter,
+        validate: bool = True,
+        client: NeatClient | None = None,
+        enable_manual_edit: bool = False,
     ) -> IssueList:
-        if self.provenance:
-            raise NeatValueError(f"Data model already exists. Cannot import {agent_tool.source_uri}.")
-        return self.do_activity(action, agent_tool)
+        if self.empty:
+            return self.do_activity(
+                partial(self._rules_import_verify_convert, importer, validate, client),
+                importer,
+            )
+        elif enable_manual_edit:
+            return self._manual_transform(importer, validate, client)
+        else:
+            raise NeatValueError("Re-importing rules in the rules store is not allowed.")
 
     def transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:
         if not self.provenance:
             raise EmptyStore()
 
         all_issues = IssueList()
-        for item in transformer:
+        for agent_tool in transformer:
 
-            def action(transformer_item=item) -> tuple[InformationRules, DMSRules | None]:
+            def action(
+                transformer_item=agent_tool,
+            ) -> tuple[InformationRules, DMSRules | None]:
                 last_change = self.provenance[-1]
                 source_entity = last_change.target_entity
                 transformer_input = self._get_transformer_input(source_entity, transformer_item)
@@ -131,8 +231,9 @@ class NeatRulesStore:
                     return transformer_output, None
                 return last_change.target_entity.information, transformer_output
 
-            issues = self.do_activity(action, item)
+            issues = self.do_activity(action, agent_tool)
             all_issues.extend(issues)
+
         return all_issues
 
     def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export]) -> T_Export:
@@ -154,34 +255,40 @@ class NeatRulesStore:
         self,
         action: Callable[[], tuple[InformationRules, DMSRules | None]],
         agent_tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor,
-    ) -> IssueList:
+    ):
+        result, issue_list, start, end = self._do_activity(action)
+        self._last_issues = issue_list
+
+        if result:
+            self._update_provenance(agent_tool, result, issue_list, start, end)
+        return issue_list
+
+    def _update_provenance(
+        self,
+        agent_tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor,
+        result: tuple[InformationRules, DMSRules | None],
+        issue_list: IssueList,
+        activity_start: datetime,
+        activity_end: datetime,
+    ) -> None:
+        # set source entity
         if isinstance(agent_tool, BaseImporter | KnowledgeGraphExtractor):
             source_entity = Entity.create_with_defaults(
                 was_attributed_to=UNKNOWN_AGENT,
                 id_=agent_tool.source_uri,
             )
         else:
-            # This is a transformer
             source_entity = self.provenance[-1].target_entity
 
-        start = datetime.now(timezone.utc)
-        result: tuple[InformationRules, DMSRules | None] | None = None
-        with catch_issues() as issue_list:
-            result = action()
-
-        end = datetime.now(timezone.utc)
-        self._last_issues = issue_list
-
+        # setting the rest of provenance components
+        info, dms = result
         agent = agent_tool.agent
         activity = Activity(
             was_associated_with=agent,
-            ended_at_time=end,
-            started_at_time=start,
+            ended_at_time=activity_end,
+            started_at_time=activity_start,
             used=source_entity,
         )
-        if result is None:
-            return issue_list
-        info, dms = result
 
         target_entity = RulesEntity(
             was_attributed_to=agent,
@@ -199,8 +306,20 @@ class NeatRulesStore:
             description=agent_tool.description,
             source_entity=source_entity,
         )
+
         self.provenance.append(change)
-        return issue_list
+
+    def _do_activity(
+        self,
+        action: Callable[[], tuple[InformationRules, DMSRules | None]],
+    ):
+        """This private method is used to execute an activity and return the result and issues."""
+        start = datetime.now(timezone.utc)
+        result: tuple[InformationRules, DMSRules | None] | None = None
+        with catch_issues() as issue_list:
+            result = action()
+        end = datetime.now(timezone.utc)
+        return result, issue_list, start, end
 
     def _export_activity(self, action: Callable, exporter: BaseExporter, target_id: URIRef, *exporter_args: Any) -> Any:
         if self.empty:
@@ -210,14 +329,17 @@ class NeatRulesStore:
         expected_types = exporter.source_types()
 
         if source_entity.dms is not None and isinstance(source_entity.dms, expected_types):
-            input_ = source_entity.dms
+            input_ = cast(VerifiedRules, source_entity.dms).model_copy(deep=True)
         elif isinstance(source_entity.information, expected_types):
-            input_ = source_entity.information
+            input_ = cast(VerifiedRules, source_entity.information).model_copy(deep=True)
         else:
             available: list[type] = [InformationRules]
             if source_entity.dms is not None:
                 available.append(DMSRules)
             raise InvalidActivityInput(expected=expected_types, have=tuple(available))
+
+        # need to write source prior the export
+        input_.metadata.source_id = source_entity.id_
 
         agent = exporter.agent
         start = datetime.now(timezone.utc)
@@ -252,6 +374,7 @@ class NeatRulesStore:
             description=exporter.description,
             source_entity=source_entity,
         )
+
         self.exports_by_source_entity_id[source_entity.id_].append(change)
         if isinstance(result, UploadResultList):
             self._last_outcome = result
@@ -272,72 +395,14 @@ class NeatRulesStore:
         # Case 3: We have both information and dms rules and the transformer is compatible with information rules
         raise InvalidActivityInput(expected=(InformationRules,), have=(DMSRules,))
 
-    def _update_source_entity(self, source_entity: Entity, result: Rules, issue_list: IssueList) -> Entity:
-        """Update source entity to keep the unbroken provenance chain of changes."""
+    def _get_source_id(self, result: tuple[InformationRules, DMSRules | None]) -> rdflib.URIRef | None:
+        """Return the source of the result.
 
-        # Case 1: Store not empty, source of imported rules is not known
-        if not (source_id := self._get_source_id(result)):
-            raise NeatValueError(
-                "The data model to be read to the current NEAT session"
-                " has no relation to the session content."
-                " Import will be skipped."
-                "\n\nSuggestions:\n\t(1) Start a new NEAT session and "
-                "import the data model there."
-            )
-
-        # We are taking target entity as it is the entity that produce rules
-        # which were updated by activities outside of the rules tore
-        update_source_entity: Entity | None = self.provenance.target_entity(source_id)
-
-        # Case 2: source of imported rules not in rules_store
-        if not update_source_entity:
-            raise NeatValueError(
-                "The source of the data model being imported is not in"
-                " the content of this NEAT session."
-                " Import will be skipped."
-                "\n\nSuggestions:"
-                "\n\t(1) Start a new NEAT session and import the data model source"
-                "\n\t(2) Then import the data model itself"
-            )
-
-        # Case 3: source_entity in rules_store and but it is not the latest entity
-        if self.provenance[-1].target_entity.id_ != update_source_entity.id_:
-            raise NeatValueError(
-                "Source of imported data model is not the latest entity in the data model provenance."
-                "Pruning required to set the source entity to the latest entity in the provenance."
-            )
-
-        # Case 4: source_entity in rules_store and it is not the latest target entity
-        if self.provenance[-1].target_entity.id_ != update_source_entity.id_:
-            raise NeatValueError(
-                "Source of imported rules is not the latest entity in the provenance."
-                "Pruning required to set the source entity to the latest entity in the provenance."
-            )
-
-        # Case 5: source_entity in rules_store and it is the latest entity
-        # Here we need to check if the source and target entities are identical
-        # if they are ... we should raise an error and skip importing
-        # for now we will just return the source entity that we managed to extract
-
-        return update_source_entity or source_entity
-
-    def _get_source_id(self, result: Rules) -> rdflib.URIRef | None:
-        """Return the source of the result."""
-
-        if isinstance(result, ReadRules) and result.rules is not None and result.rules.metadata.source_id:
-            return rdflib.URIRef(result.rules.metadata.source_id)
-        if isinstance(result, VerifiedRules):
-            return result.metadata.source_id
-        return None
-
-    def _get_data_model_id(self, result: Rules) -> dm.DataModelId | None:
-        """Return the source of the result."""
-
-        if isinstance(result, ReadRules) and result.rules is not None:
-            return result.rules.metadata.as_data_model_id()
-        if isinstance(result, VerifiedRules):
-            return result.metadata.as_data_model_id()
-        return None
+        !!! note
+            This method prioritizes the source_id of the DMS rules
+        """
+        info, dms = result
+        return dms.metadata.source_id if dms else info.metadata.source_id
 
     def _create_id(self, info: InformationRules, dms: DMSRules | None) -> rdflib.URIRef:
         if dms is None:

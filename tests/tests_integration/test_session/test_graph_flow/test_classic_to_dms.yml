@@ -17,6 +17,7 @@ data_product:
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1
     name: data_product data model
     role: DMS Architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1
     space: sp_data_product
     updated: '2025-01-08T06:40:43.340000'
     version: v1
@@ -2238,6 +2239,7 @@ rules:
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1
     name: ClassicDataModel
     role: DMS Architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1
     space: sp_windfarm
     updated: '2025-01-08T06:40:43.340000'
     version: v1

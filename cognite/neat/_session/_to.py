@@ -6,6 +6,7 @@ from typing import Any, Literal, overload
 
 from cognite.client import data_modeling as dm
 
+from cognite.neat._alpha import AlphaFlags
 from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._graph import loaders
 from cognite.neat._rules import exporters
@@ -35,6 +36,8 @@ class ToAPI:
         self,
         io: Any,
         include_reference: bool = True,
+        include_properties: Literal["same-space", "all"] = "all",
+        add_empty_rows: bool = False,
     ) -> None:
         """Export the verified data model to Excel.
 
@@ -42,7 +45,10 @@ class ToAPI:
             io: The file path or file-like object to write the Excel file to.
             include_reference: If True, the reference data model will be included. Defaults to True.
                 Note that this only applies if you have created the data model using the
-                .to_enterprise(), .to_solution(), or .to_data_product() methods.
+                create.enterprise_model(...), create.solution_model(), or create.data_product_model() methods.
+        include_properties: The properties to include in the Excel file. Defaults to "all".
+            - "same-space": Only properties that are in the same space as the data model will be included.
+        add_empty_rows: If True, empty rows will be added between each component. Defaults to False.
 
         Example:
             Export information model to excel rules sheet
@@ -58,17 +64,17 @@ class ToAPI:
             neat = NeatSession(client)
 
             neat.read.cdf(("cdf_cdm", "CogniteCore", "v1"))
-            neat.verify()
-            neat.prepare.data_model.to_enterprise(
+            neat.create.enterprise_model(
                 data_model_id=("sp_doctrino_space", "ExtensionCore", "v1"),
                 org_name="MyOrg",
-                move_connections=True
             )
             dms_rules_file_name = "dms_rules.xlsx"
             neat.to.excel(dms_rules_file_name, include_reference=True)
             ```
         """
         reference_rules_with_prefix: tuple[VerifiedRules, str] | None = None
+        include_properties = include_properties.strip().lower()
+
         if include_reference and self._state.last_reference:
             if (
                 isinstance(self._state.last_reference.metadata, DMSMetadata)
@@ -79,7 +85,16 @@ class ToAPI:
                 prefix = "Ref"
             reference_rules_with_prefix = self._state.last_reference, prefix
 
-        exporter = exporters.ExcelExporter(styling="maximal", reference_rules_with_prefix=reference_rules_with_prefix)
+        if include_properties == "same-space":
+            warnings.filterwarnings("default")
+            AlphaFlags.same_space_properties_only_export.warn()
+
+        exporter = exporters.ExcelExporter(
+            styling="maximal",
+            reference_rules_with_prefix=reference_rules_with_prefix,
+            add_empty_rows=add_empty_rows,
+            include_properties=include_properties,  # type: ignore
+        )
         return self._state.rule_store.export_to_file(exporter, Path(io))
 
     def session(self, io: Any) -> None:

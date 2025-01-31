@@ -23,6 +23,7 @@ rules:
     external_id: ClassicDataModel
     name: ClassicDataModel
     role: information architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/Iteration_2
     space: neat_space
     updated: '2024-09-19T00:00:00Z'
     version: v1

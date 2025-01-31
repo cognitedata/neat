@@ -15,10 +15,17 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.109.2] - 31-01-**2025**
+### Added
+- [ALPHA] Support for external modification of data model from NeatSession and its re-import
+- Export of data model to Excel will now automatically hide the columns used for the internal neat processes.
+- [ALPHA] when exporting data model to Excel one can specify to export only properties of views which are in the same space as the data model
+
 ## [0.109.1] - 28-01-**2025**
 
 ### Fixed
-- The `neat.inspect.issue()` now returns data model issues. 
+- The `neat.inspect.issue()` now returns data model issues.
+- Issue with setting new data model id for rules that have raw filter
 
 ## [0.109.0] - 28-01-**2025**
 ### Improved
@@ -53,7 +60,6 @@ Changes are grouped as follows:
 ### Added
 - Support for "on-disk" storage for oxigraph in NeatSession
 - New method `neat.inspect.views()` to check the views in the data model.
-
 
 ## [0.108.0] - 22-01-**2025**
 ### Added

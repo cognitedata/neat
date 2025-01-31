@@ -44,6 +44,7 @@ class Agent:
 CDF_AGENT = Agent(acted_on_behalf_of="UNKNOWN", id_=CDF_NAMESPACE["agent"])
 NEAT_AGENT = Agent(acted_on_behalf_of="UNKNOWN", id_=DEFAULT_NAMESPACE["agent"])
 UNKNOWN_AGENT = Agent(acted_on_behalf_of="UNKNOWN", id_=DEFAULT_NAMESPACE["unknown-agent"])
+EXTERNAL_AGENT = Agent(acted_on_behalf_of="HUMAN", id_=DEFAULT_NAMESPACE["external-agent"])
 
 
 @dataclass(frozen=True)
