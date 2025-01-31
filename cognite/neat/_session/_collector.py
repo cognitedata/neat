@@ -65,7 +65,10 @@ class Collector:
         if kwargs:
             for key, value in kwargs.items():
                 event_information[key] = self._serialize_value(value)[:500]
-        self._track(command, event_information)
+
+        with suppress(RuntimeError):
+            # In case any thread issues, the tracking should not crash the program
+            self._track(command, event_information)
 
     @staticmethod
     def _serialize_value(value: Any) -> str:

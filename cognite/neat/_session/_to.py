@@ -43,7 +43,7 @@ class ToAPI:
             io: The file path or file-like object to write the Excel file to.
             include_reference: If True, the reference data model will be included. Defaults to True.
                 Note that this only applies if you have created the data model using the
-                .to_enterprise(), .to_solution(), or .to_data_product() methods.
+                create.enterprise_model(...), create.solution_model(), or create.data_product_model() methods.
 
         Example:
             Export information model to excel rules sheet
@@ -59,11 +59,9 @@ class ToAPI:
             neat = NeatSession(client)
 
             neat.read.cdf(("cdf_cdm", "CogniteCore", "v1"))
-            neat.verify()
-            neat.prepare.data_model.to_enterprise(
+            neat.create.enterprise_model(
                 data_model_id=("sp_doctrino_space", "ExtensionCore", "v1"),
                 org_name="MyOrg",
-                move_connections=True
             )
             dms_rules_file_name = "dms_rules.xlsx"
             neat.to.excel(dms_rules_file_name, include_reference=True)
