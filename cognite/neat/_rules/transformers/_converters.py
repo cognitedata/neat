@@ -601,16 +601,17 @@ class ToSolutionModel(ToExtensionModel):
             new_views.append(ref_view.model_copy(deep=True, update={"implements": None, "view": new_entity}))
 
         new_properties = SheetList[DMSProperty]()
-        views = {view.view: view for view in new_views}
+        new_view_entities = {view.view: view for view in new_views}
         for prop in reference.properties:
-            if prop.view not in views or (isinstance(prop.value_type, ViewEntity) and prop.value_type not in views):
-                continue
             new_property = prop.model_copy(deep=True)
             if new_property.value_type in renaming and isinstance(new_property.value_type, ViewEntity):
                 new_property.value_type = renaming[new_property.value_type]
             if new_property.view in renaming:
                 new_property.view = renaming[new_property.view]
-            new_properties.append(new_property)
+            if prop.view in new_view_entities and (
+                not isinstance(prop.value_type, ViewEntity) or prop.value_type in new_view_entities
+            ):
+                new_properties.append(new_property)
         return new_views, new_properties, read_view_by_new_view
 
     def _create_containers_update_view_filter(
