@@ -35,6 +35,7 @@ class ToAPI:
         self,
         io: Any,
         include_reference: bool = True,
+        add_empty_rows: bool = False,
     ) -> None:
         """Export the verified data model to Excel.
 
@@ -77,7 +78,11 @@ class ToAPI:
                 prefix = "Ref"
             reference_rules_with_prefix = self._state.last_reference, prefix
 
-        exporter = exporters.ExcelExporter(styling="maximal", reference_rules_with_prefix=reference_rules_with_prefix)
+        exporter = exporters.ExcelExporter(
+            styling="maximal",
+            reference_rules_with_prefix=reference_rules_with_prefix,
+            add_empty_rows=add_empty_rows,
+        )
         return self._state.rule_store.export_to_file(exporter, Path(io))
 
     def session(self, io: Any) -> None:

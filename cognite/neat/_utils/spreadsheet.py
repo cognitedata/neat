@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Literal, cast, overload
+from typing import Any, Literal, cast, overload
 
 import pandas as pd
 from openpyxl import load_workbook
@@ -80,4 +80,13 @@ def _get_row_number(sheet: Worksheet, values_to_find: list[str]) -> int | None:
     for row_number, row in enumerate(sheet.iter_rows(values_only=True), start=1):
         if any(value in row for value in values_to_find):
             return row_number
+    return None
+
+
+def find_column_with_value(sheet: Worksheet, value: Any) -> str | None:
+    for row in sheet.iter_rows():
+        for cell in row:
+            if cell.value and isinstance(cell.value, str) and cell.value.lower() == value.lower():
+                return cell.column_letter  # type: ignore
+
     return None
