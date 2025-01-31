@@ -40,8 +40,12 @@ class SessionState:
         self.instances.store.add_rules(last_entity.information)
         return issues
 
-    def rule_import(self, importer: BaseImporter) -> IssueList:
-        issues = self.rule_store.import_rules(importer, client=self.client)
+    def rule_import(self, importer: BaseImporter, enable_manual_edit: bool = False) -> IssueList:
+        issues = self.rule_store.import_rules(
+            importer,
+            client=self.client,
+            enable_manual_edit=enable_manual_edit,
+        )
         if self.rule_store.empty:
             result = "failed"
         else:

@@ -97,7 +97,10 @@ class TestRulesStoreProvenanceSyncing:
         neat.fix.data_model.cdf_compliant_external_ids()
 
         with pytest.raises(NeatValueError) as e:
-            neat._state.rule_import(importers.ExcelImporter(tmp_path / "nordic44.xlsx"))
+            neat._state.rule_import(
+                importers.ExcelImporter(tmp_path / "nordic44.xlsx"),
+                enable_manual_edit=True,
+            )
 
         assert (
             "Imported rules are detached from the provenance chain."
@@ -110,7 +113,10 @@ class TestRulesStoreProvenanceSyncing:
         neat.read.excel.examples.pump_example()
 
         with pytest.raises(NeatValueError) as e:
-            neat._state.rule_import(importers.ExcelImporter(DATA_DIR / "dms-unknown-value-type.xlsx"))
+            neat._state.rule_import(
+                importers.ExcelImporter(DATA_DIR / "dms-unknown-value-type.xlsx"),
+                enable_manual_edit=True,
+            )
 
         assert "The source of the imported rules is unknown" in e.value.raw_message
 
@@ -124,7 +130,10 @@ class TestRulesStoreProvenanceSyncing:
         neat2.infer()
 
         with pytest.raises(NeatValueError) as e:
-            neat2._state.rule_import(importers.ExcelImporter(tmp_path / "pump.xlsx"))
+            neat2._state.rule_import(
+                importers.ExcelImporter(tmp_path / "pump.xlsx"),
+                enable_manual_edit=True,
+            )
 
         assert "The source of the imported rules is not in the provenance" in e.value.raw_message
 
@@ -134,7 +143,10 @@ class TestRulesStoreProvenanceSyncing:
         neat.infer()
         neat.fix.data_model.cdf_compliant_external_ids()
         neat.to.excel(tmp_path / "nordic44.xlsx")
-        neat.read.excel(tmp_path / "nordic44.xlsx")
+        neat.read.excel(
+            tmp_path / "nordic44.xlsx",
+            enable_manual_edit=True,
+        )
 
         assert len(neat._state.rule_store.provenance) == 3
         assert neat._state.rule_store.provenance[-1].description == "Manual transformation of rules outside of NEAT"

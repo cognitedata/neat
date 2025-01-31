@@ -184,6 +184,7 @@ class NeatRulesStore:
             description="Manual transformation of rules outside of NEAT",
         )
 
+        self._last_issues = issue_list
         # record change that took place outside of neat
         self.provenance.append(outside_change)
 
@@ -200,15 +201,17 @@ class NeatRulesStore:
         importer: BaseImporter,
         validate: bool = True,
         client: NeatClient | None = None,
+        enable_manual_edit: bool = False,
     ) -> IssueList:
         if self.empty:
             return self.do_activity(
                 partial(self._rules_import_verify_convert, importer, validate, client),
                 importer,
             )
-        else:
-            print("Manual transformation of rules is alpha feature. Use with caution.")
+        elif enable_manual_edit:
             return self._manual_transform(importer, validate, client)
+        else:
+            raise NeatValueError("Re-importing rules in the rules store is not allowed.")
 
     def transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:
         if not self.provenance:

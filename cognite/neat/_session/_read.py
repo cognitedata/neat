@@ -1,8 +1,10 @@
+import warnings
 from typing import Any, Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.utils.useful_types import SequenceNotStr
 
+from cognite.neat._alpha import AlphaFlags
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import (
     CLASSIC_CDF_NAMESPACE,
@@ -286,16 +288,26 @@ class ExcelReadAPI(BaseReadAPI):
         super().__init__(state, verbose)
         self.examples = ExcelExampleAPI(state, verbose)
 
-    def __call__(self, io: Any) -> IssueList:
+    def __call__(self, io: Any, enable_manual_edit: bool = False) -> IssueList:
         """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
         or a DMS Architect.
 
         Args:
             io: file path to the Excel sheet
+            enable_manual_edit: If True, the user will be able to re-import rules which where edit outside NeatSession
+
+        !!! note "Manual Edit Warning"
+            This is an alpha feature and is subject to change without notice.
+            It is expected to have some limitations and may not work as expected in all cases.
         """
         reader = NeatReader.create(io)
         path = reader.materialize_path()
-        return self._state.rule_import(importers.ExcelImporter(path))
+
+        if enable_manual_edit:
+            warnings.filterwarnings("default")
+            AlphaFlags.manual_rules_edit.warn()
+
+        return self._state.rule_import(importers.ExcelImporter(path), enable_manual_edit)
 
 
 @session_class_wrapper
