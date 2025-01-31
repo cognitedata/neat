@@ -11,3 +11,4 @@ class AlphaWarning(UserWarning):
 
 class AlphaFlags:
     manual_rules_edit = AlphaWarning("enable_manual_edit")
+    same_space_properties_only_export = AlphaWarning("same-space-properties-only")

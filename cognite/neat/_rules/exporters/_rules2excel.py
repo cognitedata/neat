@@ -79,6 +79,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         reference_rules_with_prefix: tuple[VerifiedRules, str] | None = None,
         add_empty_rows: bool = False,
         hide_internal_columns: bool = True,
+        include_properties: Literal["same-space", "all"] = "all",
     ):
         self.sheet_prefix = sheet_prefix or ""
         if styling not in self.style_options:
@@ -89,6 +90,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self.reference_rules_with_prefix = reference_rules_with_prefix
         self.add_empty_rows = add_empty_rows
         self.hide_internal_columns = hide_internal_columns
+        self.include_properties = include_properties
 
     @property
     def description(self) -> str:
@@ -178,6 +180,11 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                         side = Side(style="thin", color="000000")
                         cell.border = Border(left=side, right=side, top=side, bottom=side)
                     fill_color = next(fill_colors)
+
+                if is_properties and self.include_properties == "same-space":
+                    space = class_.split(":")[0] if ":" in class_ else rules.metadata.space
+                    if space != rules.metadata.space:
+                        continue
 
                 sheet.append(row)
                 if self._styling_level > 2 and is_properties:
