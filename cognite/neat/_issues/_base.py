@@ -233,11 +233,13 @@ class NeatError(NeatIssue, Exception):
                 # Skip the error for SheetList, as it is not relevant for the user. This is an
                 # internal class used to have helper methods for a lists as .to_pandas()
                 continue
+
             neat_error: NeatError | None = None
             if isinstance(error, dict) and isinstance(ctx := error.get("ctx"), dict) and "error" in ctx:
                 neat_error = ctx["error"]
             elif isinstance(error, NeatError | MultiValueError):
                 neat_error = error
+
             loc = error["loc"] if isinstance(error, dict) else tuple()
             if isinstance(neat_error, MultiValueError):
                 all_errors.extend([cls._adjust_error(e, loc, read_info_by_sheet) for e in neat_error.errors])
@@ -301,7 +303,16 @@ class DefaultPydanticError(NeatError, ValueError):
     msg: str
 
     @classmethod
-    def from_pydantic_error(cls, error: ErrorDetails) -> "DefaultPydanticError":
+    def from_pydantic_error(cls, error: ErrorDetails) -> "NeatError":
+        loc = error["loc"]
+        if len(loc) >= 2 and isinstance(loc[0], str) and loc[0].casefold() == "metadata":
+            from .errors._general import NeatValueError
+            from .errors._wrapper import MetadataValueError
+
+            return MetadataValueError(
+                field_name=str(loc[1]), error=NeatValueError(f"{error['msg']} got '{error['input']}'")
+            )
+
         return cls(
             type=error["type"],
             loc=error["loc"],
