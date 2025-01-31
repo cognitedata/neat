@@ -103,6 +103,8 @@ class NeatIssue:
                 variables[name] = var_.as_posix()
             elif isinstance(var_, Collection):
                 variables[name] = humanize_collection(var_)
+            elif isinstance(var_, NeatError):
+                variables[name] = var_.as_message(include_type=False)
             else:
                 variables[name] = repr(var_)
         return variables, has_all_optional
@@ -138,6 +140,8 @@ class NeatIssue:
             return value.dump(camel_case=True)
         elif isinstance(value, DataModelId):
             return value.dump(camel_case=True, include_type=False)
+        elif isinstance(value, NeatError):
+            return value.dump()
         raise ValueError(f"Unsupported type: {type(value)}")
 
     @classmethod
@@ -192,6 +196,8 @@ class NeatIssue:
             return ContainerId.load(value)
         elif inspect.isclass(type_) and issubclass(type_, Entity):
             return type_.load(value)
+        elif type_ is NeatError:
+            return cls.load(value)
         return value
 
     def __lt__(self, other: "NeatIssue") -> bool:
@@ -250,7 +256,7 @@ class NeatError(NeatIssue, Exception):
     def _adjust_error(
         cls, error: "NeatError", loc: tuple[str | int, ...], read_info_by_sheet: dict[str, SpreadsheetRead] | None
     ) -> "NeatError":
-        from .errors._model import MetadataValueError
+        from .errors._wrapper import MetadataValueError
 
         if read_info_by_sheet:
             cls._adjust_row_numbers(error, read_info_by_sheet)

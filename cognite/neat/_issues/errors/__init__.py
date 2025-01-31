@@ -12,7 +12,6 @@ from ._external import (
     OxigraphStorageLockedError,
 )
 from ._general import NeatImportError, NeatTypeError, NeatValueError, RegexViolationError
-from ._model import MetadataValueError
 from ._properties import (
     PropertyDefinitionDuplicatedError,
     PropertyDefinitionError,
@@ -32,6 +31,7 @@ from ._resources import (
     ResourceNotFoundError,
     ResourceRetrievalError,
 )
+from ._wrapper import MetadataValueError
 
 __all__ = [
     "AuthorizationError",
