@@ -19,7 +19,7 @@ class NeatClientMock(CogniteClientMock):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         if "parent" in kwargs:
             super().__init__(*args, **kwargs)
-            return None
+            return
         super().__init__(*args, **kwargs)
         self.schema = SchemaAPI(self)
         self.loaders = DataModelLoaderAPI(self)
