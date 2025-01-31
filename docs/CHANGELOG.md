@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.109.2] - 31-01-**2025**
 ### Added
 - [ALPHA] Support for external modification of data model from NeatSession and its re-import
 - Export of data model to Excel will now automatically hide the columns used for the internal neat processes.
