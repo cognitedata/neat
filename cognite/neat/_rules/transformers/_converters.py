@@ -565,12 +565,10 @@ class ToSolutionModel(ToExtensionModel):
         renaming: dict[ViewEntity, ViewEntity] = {}
         new_views = SheetList[DMSView]()
         read_view_by_new_view: dict[ViewEntity, ViewEntity] = {}
-        skipped_views: set[ViewEntity] = set()
         for ref_view in reference.views:
             if (self.skip_cognite_views and ref_view.view.space in COGNITE_SPACES) or (
                 self.exclude_views_in_other_spaces and ref_view.view.space != reference.metadata.space
             ):
-                skipped_views.add(ref_view.view)
                 continue
             new_entity = ViewEntity(
                 # MyPy we validate that version is string in the constructor
@@ -603,8 +601,9 @@ class ToSolutionModel(ToExtensionModel):
             new_views.append(ref_view.model_copy(deep=True, update={"implements": None, "view": new_entity}))
 
         new_properties = SheetList[DMSProperty]()
+        views = {view.view: view for view in new_views}
         for prop in reference.properties:
-            if prop.view in skipped_views:
+            if prop.view not in views or (isinstance(prop.value_type, ViewEntity) and prop.value_type not in views):
                 continue
             new_property = prop.model_copy(deep=True)
             if new_property.value_type in renaming and isinstance(new_property.value_type, ViewEntity):
