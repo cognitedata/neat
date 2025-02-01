@@ -78,7 +78,7 @@ class InstancesState:
         self.outcome = UploadResultList()
 
         # Ensure that error handling is done in the constructor
-        self.store = _session_method_wrapper(self._create_store, "NeatSession")()
+        self.store: NeatGraphStore = _session_method_wrapper(self._create_store, "NeatSession")()
 
         if self.storage_path:
             print("Remember to close neat session .close() once you are done to avoid oxigraph lock.")
