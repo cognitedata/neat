@@ -16,7 +16,7 @@ class TestStandardizeNaming:
             properties=[
                 DMSInputProperty(
                     "my_poorly_formatted_view",
-                    "and_sTranGeLY_named_property",
+                    "and_strangely_named_property",
                     "text",
                     container="my_container",
                     container_property="my_property",

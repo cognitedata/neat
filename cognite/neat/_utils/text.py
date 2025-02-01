@@ -3,7 +3,9 @@ from collections.abc import Collection
 from typing import Any
 
 
-def to_camel(string: str) -> str:
+def to_camel(
+    string: str,
+) -> str:
     """Convert snake_case_name to camelCaseName.
 
     Args:
@@ -17,21 +19,23 @@ def to_camel(string: str) -> str:
         >>> to_camel("ScenarioInstance_priceForecast")
         'scenarioInstancePriceForecast'
     """
+    string = re.sub(r"[\s_-]", "_", string)
+    string = re.sub("_+", "_", string)
     if "_" in string:
-        # Could be a combination of snake and pascal/camel case
-        parts = string.split("_")
-        pascal_splits = [to_pascal(subpart) for part in parts for subpart in part.split("-") if subpart]
-    elif "-" in string:
-        # Could be a combination of kebab and pascal/camel case
-        parts = string.split("-")
-        pascal_splits = [to_pascal(subpart) for part in parts for subpart in part.split("_") if subpart]
+        pascal_splits = [to_pascal(part) for part in string.split("_")]
     else:
-        # Assume is pascal/camel case
         # Ensure pascal
         string = string[0].upper() + string[1:]
         pascal_splits = [string]
-    string_split = []
+    cleaned: list[str] = []
     for part in pascal_splits:
+        if part.upper() == part:
+            cleaned.append(part.capitalize())
+        else:
+            cleaned.append(part)
+
+    string_split = []
+    for part in cleaned:
         string_split.extend(re.findall(r"[A-Z][a-z0-9]*", part))
     if not string_split:
         string_split = [string]
@@ -41,7 +45,9 @@ def to_camel(string: str) -> str:
         return ""
 
 
-def to_pascal(string: str) -> str:
+def to_pascal(
+    string: str,
+) -> str:
     """Convert string to PascalCaseName.
 
     Args:

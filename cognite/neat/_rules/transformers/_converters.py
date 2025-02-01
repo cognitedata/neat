@@ -254,7 +254,7 @@ class StandardizeNaming(ConversionTransformer):
 
     @property
     def description(self) -> str:
-        return "Sets views/classes/container names to PascalCase and properties to camelCase."
+        return "Sets views/classes/containers names to PascalCase and properties to camelCase."
 
     @overload
     def transform(self, rules: DMSRules) -> DMSRules: ...
@@ -299,12 +299,71 @@ class StandardizeNaming(ConversionTransformer):
         return rules
 
     def _standardize_dms_rules(self, rules: DMSRules) -> DMSRules:
-        raise NotImplementedError("StandardizeNaming for DMSRules is not implemented yet.")
+        new_by_old_view: dict[str, str] = {}
+        for view in rules.views:
+            new_suffix = self.standardize_class_str(view.view.suffix)
+            new_by_old_view[view.view.suffix] = new_suffix
+            view.view.suffix = new_suffix
+        new_by_old_container: dict[str, str] = {}
+        if rules.containers:
+            for container in rules.containers:
+                new_suffix = self.standardize_class_str(container.container.suffix)
+                new_by_old_container[container.container.suffix] = new_suffix
+                container.container.suffix = new_suffix
+
+        for view in rules.views:
+            if view.implements:
+                for i, parent in enumerate(view.implements):
+                    if parent.suffix in new_by_old_view:
+                        view.implements[i].suffix = new_by_old_view[parent.suffix]
+            if view.filter_ and isinstance(view.filter_, HasDataFilter) and view.filter_.inner:
+                for i, item in enumerate(view.filter_.inner):
+                    if isinstance(item, ContainerEntity) and item.suffix in new_by_old_container:
+                        view.filter_.inner[i].suffix = new_by_old_container[item.suffix]
+                    if isinstance(item, ViewEntity) and item.suffix in new_by_old_view:
+                        view.filter_.inner[i].suffix = new_by_old_view[item.suffix]
+        if rules.containers:
+            for container in rules.containers:
+                if container.constraint:
+                    for i, constraint in enumerate(container.constraint):
+                        if constraint.suffix in new_by_old_container:
+                            container.constraint[i].suffix = new_by_old_container[constraint.suffix]
+        new_property_by_view_by_old_property: dict[ViewEntity, dict[str, str]] = defaultdict(dict)
+        for prop in rules.properties:
+            if prop.view.suffix in new_by_old_view:
+                prop.view.suffix = new_by_old_view[prop.view.suffix]
+            new_view_property = self.standardize_property_str(prop.view_property)
+            new_property_by_view_by_old_property[prop.view][prop.view_property] = new_view_property
+            prop.view_property = new_view_property
+            if isinstance(prop.value_type, ViewEntity) and prop.value_type.suffix in new_by_old_view:
+                prop.value_type.suffix = new_by_old_view[prop.value_type.suffix]
+            if (
+                isinstance(prop.connection, EdgeEntity)
+                and prop.connection.properties
+                and prop.connection.properties.suffix in new_by_old_view
+            ):
+                prop.connection.properties.suffix = new_by_old_view[prop.connection.properties.suffix]
+            if isinstance(prop.container, ContainerEntity) and prop.container.suffix in new_by_old_container:
+                prop.container.suffix = new_by_old_container[prop.container.suffix]
+            if prop.container_property:
+                prop.container_property = self.standardize_property_str(prop.container_property)
+        for prop in rules.properties:
+            if (
+                isinstance(prop.connection, ReverseConnectionEntity)
+                and isinstance(prop.value_type, ViewEntity)
+                and prop.value_type in new_property_by_view_by_old_property
+            ):
+                new_by_old_property = new_property_by_view_by_old_property[prop.value_type]
+                if prop.connection.property_ in new_by_old_property:
+                    prop.connection.property_ = new_by_old_property[prop.connection.property_]
+        return rules
 
     @classmethod
     def standardize_class_str(cls, raw: str) -> str:
         clean = cls._clean_string(raw)
         if not cls._start_letter_pattern.match(clean):
+            # Underscore ensure that 'Class' it treated as a separate word
+            # in the to_pascale function
             clean = f"Class_{clean}"
         return to_pascal(clean)
 
@@ -312,6 +371,8 @@ class StandardizeNaming(ConversionTransformer):
     def standardize_property_str(cls, raw: str) -> str:
         clean = cls._clean_string(raw)
         if not cls._start_letter_pattern.match(clean):
+            # Underscore ensure that 'property' it treated as a separate word
+            # in the to_camel function
             clean = f"property_{clean}"
         return to_camel(clean)
 
