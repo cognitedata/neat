@@ -21,6 +21,7 @@ Changes are grouped as follows:
 
 ### Improved
 - `neat.inspect.issues()` for errors in Metadata sheet and ill-formed views in te Views and Properties sheets
+- `neat.infer()` now automatically makes the inferred classes and properties comply with the CDF naming conventions.
 
 ### Fixed
 - The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model 
