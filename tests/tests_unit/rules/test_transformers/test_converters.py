@@ -1,5 +1,13 @@
-from cognite.neat._rules.models import DMSInputRules
+import urllib.parse
+
+from cognite.neat._rules.models import DMSInputRules, InformationRules
 from cognite.neat._rules.models.dms import DMSInputContainer, DMSInputMetadata, DMSInputProperty, DMSInputView
+from cognite.neat._rules.models.information import (
+    InformationInputClass,
+    InformationInputMetadata,
+    InformationInputProperty,
+    InformationInputRules,
+)
 from cognite.neat._rules.transformers import StandardizeNaming
 
 
@@ -22,6 +30,24 @@ class TestStandardizeNaming:
 
         transformed = StandardizeNaming().transform(dms.as_verified_rules())
 
-        assert transformed.views[0].view == "MyPoorlyFormattedView"
+        assert transformed.views[0].view.suffix == "MyPoorlyFormattedView"
         assert transformed.properties[0].view_property == "andStrangelyNamedProperty"
-        assert transformed.properties[0].container == "MyContainer"
+        assert transformed.properties[0].view.suffix == "MyPoorlyFormattedView"
+        assert transformed.properties[0].container.suffix == "MyContainer"
+        assert transformed.containers[0].container.suffix == "MyContainer"
+
+    def test_transform_information(self) -> None:
+        class_name = urllib.parse.quote("not a good cLass NAME")
+        information = InformationInputRules(
+            metadata=InformationInputMetadata("my_spac", "MyModel", "me", "v1"),
+            properties=[
+                InformationInputProperty(class_name, urllib.parse.quote("TAG_(NAME)"), "string", max_count=1),
+            ],
+            classes=[InformationInputClass(class_name)],
+        )
+
+        res: InformationRules = StandardizeNaming().transform(information.as_verified_rules())
+
+        assert res.properties[0].property == "tagName"
+        assert res.properties[0].class_.suffix == "NotAGoodCLassNAME"
+        assert res.classes[0].class_.suffix == "NotAGoodCLassNAME"
