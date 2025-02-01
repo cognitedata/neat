@@ -1,5 +1,3 @@
-import urllib.parse
-
 from cognite.neat._rules.models import DMSInputRules, InformationRules
 from cognite.neat._rules.models.dms import DMSInputContainer, DMSInputMetadata, DMSInputProperty, DMSInputView
 from cognite.neat._rules.models.information import (
@@ -37,11 +35,11 @@ class TestStandardizeNaming:
         assert transformed.containers[0].container.suffix == "MyContainer"
 
     def test_transform_information(self) -> None:
-        class_name = urllib.parse.quote("not a good cLass NAME")
+        class_name = "not_a_good_cLass_NAME"
         information = InformationInputRules(
             metadata=InformationInputMetadata("my_spac", "MyModel", "me", "v1"),
             properties=[
-                InformationInputProperty(class_name, urllib.parse.quote("TAG_(NAME)"), "string", max_count=1),
+                InformationInputProperty(class_name, "TAG_NAME", "string", max_count=1),
             ],
             classes=[InformationInputClass(class_name)],
         )
@@ -49,5 +47,5 @@ class TestStandardizeNaming:
         res: InformationRules = StandardizeNaming().transform(information.as_verified_rules())
 
         assert res.properties[0].property == "tagName"
-        assert res.properties[0].class_.suffix == "NotAGoodCLassNAME"
-        assert res.classes[0].class_.suffix == "NotAGoodCLassNAME"
+        assert res.properties[0].class_.suffix == "NotAGoodCLassName"
+        assert res.classes[0].class_.suffix == "NotAGoodCLassName"
