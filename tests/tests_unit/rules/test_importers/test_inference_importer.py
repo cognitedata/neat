@@ -135,7 +135,7 @@ def test_infer_with_bad_property_names() -> None:
             (DEFAULT_NAMESPACE["MyAsset"], RDF.type, DEFAULT_NAMESPACE["Asset"]),
             (
                 DEFAULT_NAMESPACE["MyAsset"],
-                DEFAULT_NAMESPACE[urllib.parse.quote("My Property(ill-formed)")],
+                DEFAULT_NAMESPACE[urllib.parse.quote("My Property ill-formed")],
                 Literal("My Value"),
             ),
         ],
@@ -143,8 +143,8 @@ def test_infer_with_bad_property_names() -> None:
     )
     neat.infer()
     assert neat._state.rule_store.provenance
-    dms = neat._state.rule_store.last_verified_dms_rules
+    info = neat._state.rule_store.last_verified_information_rules
 
-    assert dms is not None
-    assert len(dms.properties) == 1
-    assert dms.properties[0].property_ == "myPropertyIllFormed"
+    assert info is not None
+    assert len(info.properties) == 1
+    assert info.properties[0].property_ == "myPropertyIllFormed"
