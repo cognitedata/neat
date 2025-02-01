@@ -1,9 +1,11 @@
 import re
+import urllib.parse
 import warnings
 from abc import ABC
 from collections import Counter, defaultdict
 from collections.abc import Collection, Mapping
 from datetime import date, datetime
+from functools import cached_property
 from typing import ClassVar, Literal, TypeVar, cast, overload
 
 from cognite.client.data_classes import data_modeling as dms
@@ -25,8 +27,10 @@ from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._issues.warnings._models import (
     SolutionModelBuildOnTopOfCDMWarning,
 )
+from cognite.neat._rules._constants import PATTERNS, get_reserved_words
 from cognite.neat._rules._shared import (
     ReadInputRules,
+    ReadRules,
     VerifiedRules,
 )
 from cognite.neat._rules.analysis import DMSAnalysis
@@ -34,6 +38,7 @@ from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import (
     DMSInputRules,
     DMSRules,
+    InformationInputRules,
     InformationRules,
     SheetList,
     data_types,
@@ -57,7 +62,7 @@ from cognite.neat._rules.models.entities import (
 from cognite.neat._rules.models.information import InformationClass, InformationMetadata, InformationProperty
 from cognite.neat._utils.text import NamingStandardization, to_camel
 
-from ._base import T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
+from ._base import RulesTransformer, T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
 from ._verification import VerifyDMSRules
 
 T_InputInRules = TypeVar("T_InputInRules", bound=ReadInputRules)
@@ -68,6 +73,105 @@ class ConversionTransformer(VerifiedRulesTransformer[T_VerifiedIn, T_VerifiedOut
     """Base class for all conversion transformers."""
 
     ...
+
+
+class ToInformationCompliantEntities(
+    RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]
+):
+    """Converts input rules to rules that is compliant with the Information Model.
+
+    This is typically used with importers from arbitrary sources to ensure that classes and properties have valid
+    names.
+
+    Args:
+        renaming: How to handle renaming of entities that are not compliant with the Information Model.
+            - "warning": Raises a warning and renames the entity.
+            - "skip": Renames the entity without raising a warning.
+    """
+
+    def __init__(self, renaming: Literal["warning", "skip"] = "skip") -> None:
+        self._renaming = renaming
+
+    @property
+    def description(self) -> str:
+        return "Ensures that all entities are compliant with the Information Model."
+
+    def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
+        if rules.rules is None:
+            return rules
+        # Doing dump to obtain a copy, and ensure that all entities are created. Input allows
+        # string for entities, the dump call will convert these to entities.
+        dumped = rules.rules.dump()
+        copy = InformationInputRules.load(dumped)
+
+        new_by_old_class_suffix: dict[str, str] = {}
+        for cls in copy.classes:
+            cls_entity = cast(ClassEntity, cls.class_)  # Safe due to the dump above
+            if not PATTERNS.class_id_compliance.match(cls_entity.suffix):
+                new_suffix = self._fix_cls_suffix(cls_entity.suffix)
+                if self._renaming == "warning":
+                    warnings.warn(
+                        NeatValueWarning(f"Invalid class name {cls_entity.suffix!r}.Renaming to {new_suffix}"),
+                        stacklevel=2,
+                    )
+                cls.class_.suffix = new_suffix  # type: ignore[union-attr]
+
+        for cls_ in copy.classes:
+            if cls_.implements:
+                for i, parent in enumerate(cls_.implements):
+                    if isinstance(parent, ClassEntity) and parent.suffix in new_by_old_class_suffix:
+                        cls_.implements[i].suffix = new_by_old_class_suffix[parent.suffix]  # type: ignore[union-attr]
+
+        for prop in copy.properties:
+            if not PATTERNS.information_property_id_compliance.match(prop.property_):
+                new_property = self._fix_property(prop.property_)
+                if self._renaming == "warning":
+                    warnings.warn(
+                        NeatValueWarning(
+                            f"Invalid property name {prop.class_.suffix}.{prop.property_!r}. Renaming to {new_property}"  # type: ignore[union-attr]
+                        ),
+                        stacklevel=2,
+                    )
+                prop.property_ = new_property
+
+            if isinstance(prop.class_, ClassEntity) and prop.class_.suffix in new_by_old_class_suffix:
+                prop.class_.suffix = new_by_old_class_suffix[prop.class_.suffix]
+
+            if isinstance(prop.value_type, ClassEntity) and prop.value_type.suffix in new_by_old_class_suffix:
+                prop.value_type.suffix = new_by_old_class_suffix[prop.value_type.suffix]
+
+            if isinstance(prop.value_type, MultiValueTypeInfo):
+                for i, value_type in enumerate(prop.value_type.types):
+                    if isinstance(value_type, ClassEntity) and value_type.suffix in new_by_old_class_suffix:
+                        prop.value_type.types[i].suffix = new_by_old_class_suffix[value_type.suffix]  # type: ignore[union-attr]
+
+        return ReadRules(rules=copy, read_context=rules.read_context)
+
+    @cached_property
+    def _reserved_class_words(self) -> set[str]:
+        return set(get_reserved_words("class"))
+
+    @cached_property
+    def _reserved_property_words(self) -> set[str]:
+        return set(get_reserved_words("property"))
+
+    def _fix_cls_suffix(self, suffix: str) -> str:
+        if suffix in self._reserved_class_words:
+            return f"My{suffix}"
+        suffix = urllib.parse.unquote(suffix)
+        suffix = NamingStandardization.standardize_class_str(suffix)
+        if len(suffix) > 252:
+            suffix = suffix[:252]
+        return suffix
+
+    def _fix_property(self, property_: str) -> str:
+        if property_ in self._reserved_property_words:
+            return f"my{property_}"
+        property_ = urllib.parse.unquote(property_)
+        property_ = NamingStandardization.standardize_property_str(property_)
+        if len(property_) > 252:
+            property_ = property_[:252]
+        return property_
 
 
 class ToCompliantEntities(VerifiedRulesTransformer[InformationRules, InformationRules]):  # type: ignore[misc]

@@ -142,6 +142,7 @@ def test_infer_with_bad_property_names() -> None:
         named_graph=neat._state.instances.store.default_named_graph,
     )
     neat.infer()
+    assert neat._state.rule_store.provenance
     dms = neat._state.rule_store.last_verified_dms_rules
 
     assert dms is not None

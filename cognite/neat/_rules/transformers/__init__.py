@@ -18,6 +18,7 @@ from ._converters import (
     ToDataProductModel,
     ToEnterpriseModel,
     ToExtensionModel,
+    ToInformationCompliantEntities,
     ToSolutionModel,
 )
 from ._mapping import AsParentPropertyId, MapOneToOne, RuleMapper
@@ -46,6 +47,7 @@ __all__ = [
     "ToDataProductModel",
     "ToEnterpriseModel",
     "ToExtensionModel",
+    "ToInformationCompliantEntities",
     "ToSolutionModel",
     "VerifiedRulesTransformer",
     "VerifyAnyRules",
