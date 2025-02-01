@@ -55,7 +55,7 @@ from cognite.neat._rules.models.entities import (
     ViewEntity,
 )
 from cognite.neat._rules.models.information import InformationClass, InformationMetadata, InformationProperty
-from cognite.neat._utils.text import to_camel, to_pascal
+from cognite.neat._utils.text import NamingStandardization, to_camel
 
 from ._base import T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
 from ._verification import VerifyDMSRules
@@ -248,10 +248,6 @@ class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
 class StandardizeNaming(ConversionTransformer):
     """Sets views/classes/container names to PascalCase and properties to camelCase."""
 
-    _clean_pattern = re.compile(r"[^a-zA-Z0-9_]+")
-    _multi_underscore_pattern = re.compile(r"_+")
-    _start_letter_pattern = re.compile(r"^[a-zA-Z]")
-
     @property
     def description(self) -> str:
         return "Sets views/classes/containers names to PascalCase and properties to camelCase."
@@ -273,7 +269,7 @@ class StandardizeNaming(ConversionTransformer):
     def _standardize_information_rules(self, rules: InformationRules) -> InformationRules:
         new_by_old_class_suffix: dict[str, str] = {}
         for cls in rules.classes:
-            new_suffix = self.standardize_class_str(cls.class_.suffix)
+            new_suffix = NamingStandardization.standardize_class_str(cls.class_.suffix)
             new_by_old_class_suffix[cls.class_.suffix] = new_suffix
             cls.class_.suffix = new_suffix
 
@@ -284,7 +280,7 @@ class StandardizeNaming(ConversionTransformer):
                         cls.implements[i].suffix = new_by_old_class_suffix[parent.suffix]
 
         for prop in rules.properties:
-            prop.property_ = self.standardize_property_str(prop.property_)
+            prop.property_ = NamingStandardization.standardize_property_str(prop.property_)
             if prop.class_.suffix in new_by_old_class_suffix:
                 prop.class_.suffix = new_by_old_class_suffix[prop.class_.suffix]
 
@@ -301,13 +297,13 @@ class StandardizeNaming(ConversionTransformer):
     def _standardize_dms_rules(self, rules: DMSRules) -> DMSRules:
         new_by_old_view: dict[str, str] = {}
         for view in rules.views:
-            new_suffix = self.standardize_class_str(view.view.suffix)
+            new_suffix = NamingStandardization.standardize_class_str(view.view.suffix)
             new_by_old_view[view.view.suffix] = new_suffix
             view.view.suffix = new_suffix
         new_by_old_container: dict[str, str] = {}
         if rules.containers:
             for container in rules.containers:
-                new_suffix = self.standardize_class_str(container.container.suffix)
+                new_suffix = NamingStandardization.standardize_class_str(container.container.suffix)
                 new_by_old_container[container.container.suffix] = new_suffix
                 container.container.suffix = new_suffix
 
@@ -332,7 +328,7 @@ class StandardizeNaming(ConversionTransformer):
         for prop in rules.properties:
             if prop.view.suffix in new_by_old_view:
                 prop.view.suffix = new_by_old_view[prop.view.suffix]
-            new_view_property = self.standardize_property_str(prop.view_property)
+            new_view_property = NamingStandardization.standardize_property_str(prop.view_property)
             new_property_by_view_by_old_property[prop.view][prop.view_property] = new_view_property
             prop.view_property = new_view_property
             if isinstance(prop.value_type, ViewEntity) and prop.value_type.suffix in new_by_old_view:
@@ -346,7 +342,7 @@ class StandardizeNaming(ConversionTransformer):
             if isinstance(prop.container, ContainerEntity) and prop.container.suffix in new_by_old_container:
                 prop.container.suffix = new_by_old_container[prop.container.suffix]
             if prop.container_property:
-                prop.container_property = self.standardize_property_str(prop.container_property)
+                prop.container_property = NamingStandardization.standardize_property_str(prop.container_property)
         for prop in rules.properties:
             if (
                 isinstance(prop.connection, ReverseConnectionEntity)
@@ -357,29 +353,6 @@ class StandardizeNaming(ConversionTransformer):
                 if prop.connection.property_ in new_by_old_property:
                     prop.connection.property_ = new_by_old_property[prop.connection.property_]
         return rules
-
-    @classmethod
-    def standardize_class_str(cls, raw: str) -> str:
-        clean = cls._clean_string(raw)
-        if not cls._start_letter_pattern.match(clean):
-            # Underscore ensure that 'Class' it treated as a separate word
-            # in the to_pascale function
-            clean = f"Class_{clean}"
-        return to_pascal(clean)
-
-    @classmethod
-    def standardize_property_str(cls, raw: str) -> str:
-        clean = cls._clean_string(raw)
-        if not cls._start_letter_pattern.match(clean):
-            # Underscore ensure that 'property' it treated as a separate word
-            # in the to_camel function
-            clean = f"property_{clean}"
-        return to_camel(clean)
-
-    @classmethod
-    def _clean_string(cls, raw: str) -> str:
-        raw = cls._clean_pattern.sub("_", raw)
-        return cls._multi_underscore_pattern.sub("_", raw)
 
 
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
