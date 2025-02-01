@@ -12,9 +12,7 @@ from cognite.neat._graph.transformers import (
 from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules.transformers import (
-    PrefixEntities,
-)
+from cognite.neat._rules.transformers import PrefixEntities, StandardizeNaming
 from cognite.neat._utils.text import humanize_collection
 
 from ._state import SessionState
@@ -264,3 +262,11 @@ class DataModelPrepareAPI:
         """
 
         return self._state.rule_transform(PrefixEntities(prefix))  # type: ignore[arg-type]
+
+    def standardize_naming(self) -> IssueList:
+        """Standardize the naming of all views/classes/properties in the data model.
+
+        For classes/views/containers, the naming will be standardized to PascalCase.
+        For properties, the naming will be standardized to camelCase.
+        """
+        return self._state.rule_transform(StandardizeNaming())

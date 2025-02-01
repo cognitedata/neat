@@ -245,6 +245,23 @@ class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
         return entity
 
 
+class StandardizeNaming(ConversionTransformer):
+    """Sets views/classes/container names to PascalCase and properties to camelCase."""
+
+    @property
+    def description(self) -> str:
+        return "Sets views/classes/container names to PascalCase and properties to camelCase."
+
+    @overload
+    def transform(self, rules: DMSRules) -> DMSRules: ...
+
+    @overload
+    def transform(self, rules: InformationRules) -> InformationRules: ...
+
+    def transform(self, rules: InformationRules | DMSRules) -> InformationRules | DMSRules:
+        raise NotImplementedError("Not implemented yet")
+
+
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
