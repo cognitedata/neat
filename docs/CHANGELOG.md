@@ -16,6 +16,9 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Added
+- Support for standardizing of naming in the `neat.prepare.data_model.standardize_naming()` method.
+
 ### Improved
 - `neat.inspect.issues()` for errors in Metadata sheet and ill-formed views in te Views and Properties sheets
 
