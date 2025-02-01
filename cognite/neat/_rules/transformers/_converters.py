@@ -55,7 +55,7 @@ from cognite.neat._rules.models.entities import (
     ViewEntity,
 )
 from cognite.neat._rules.models.information import InformationClass, InformationMetadata, InformationProperty
-from cognite.neat._utils.text import to_camel
+from cognite.neat._utils.text import to_camel, to_pascal
 
 from ._base import T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
 from ._verification import VerifyDMSRules
@@ -248,6 +248,10 @@ class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
 class StandardizeNaming(ConversionTransformer):
     """Sets views/classes/container names to PascalCase and properties to camelCase."""
 
+    _clean_pattern = re.compile(r"[^a-zA-Z0-9_]+")
+    _multi_underscore_pattern = re.compile(r"_+")
+    _start_letter_pattern = re.compile(r"^[a-zA-Z]")
+
     @property
     def description(self) -> str:
         return "Sets views/classes/container names to PascalCase and properties to camelCase."
@@ -259,7 +263,62 @@ class StandardizeNaming(ConversionTransformer):
     def transform(self, rules: InformationRules) -> InformationRules: ...
 
     def transform(self, rules: InformationRules | DMSRules) -> InformationRules | DMSRules:
-        raise NotImplementedError("Not implemented yet")
+        output = rules.model_copy(deep=True)
+        if isinstance(output, InformationRules):
+            return self._standardize_information_rules(output)
+        elif isinstance(output, DMSRules):
+            return self._standardize_dms_rules(output)
+        raise NeatValueError(f"Unsupported rules type: {type(output)}")
+
+    def _standardize_information_rules(self, rules: InformationRules) -> InformationRules:
+        new_by_old_class_suffix: dict[str, str] = {}
+        for cls in rules.classes:
+            new_suffix = self.standardize_class_str(cls.class_.suffix)
+            new_by_old_class_suffix[cls.class_.suffix] = new_suffix
+            cls.class_.suffix = new_suffix
+
+        for cls in rules.classes:
+            if cls.implements:
+                for i, parent in enumerate(cls.implements):
+                    if parent.suffix in new_by_old_class_suffix:
+                        cls.implements[i].suffix = new_by_old_class_suffix[parent.suffix]
+
+        for prop in rules.properties:
+            prop.property_ = self.standardize_property_str(prop.property_)
+            if prop.class_.suffix in new_by_old_class_suffix:
+                prop.class_.suffix = new_by_old_class_suffix[prop.class_.suffix]
+
+            if isinstance(prop.value_type, ClassEntity) and prop.value_type.suffix in new_by_old_class_suffix:
+                prop.value_type.suffix = new_by_old_class_suffix[prop.value_type.suffix]
+
+            if isinstance(prop.value_type, MultiValueTypeInfo):
+                for i, value_type in enumerate(prop.value_type.types):
+                    if isinstance(value_type, ClassEntity) and value_type.suffix in new_by_old_class_suffix:
+                        prop.value_type.types[i].suffix = new_by_old_class_suffix[value_type.suffix]  # type: ignore[union-attr]
+
+        return rules
+
+    def _standardize_dms_rules(self, rules: DMSRules) -> DMSRules:
+        raise NotImplementedError("StandardizeNaming for DMSRules is not implemented yet.")
+
+    @classmethod
+    def standardize_class_str(cls, raw: str) -> str:
+        clean = cls._clean_string(raw)
+        if not cls._start_letter_pattern.match(clean):
+            clean = f"Class_{clean}"
+        return to_pascal(clean)
+
+    @classmethod
+    def standardize_property_str(cls, raw: str) -> str:
+        clean = cls._clean_string(raw)
+        if not cls._start_letter_pattern.match(clean):
+            clean = f"property_{clean}"
+        return to_camel(clean)
+
+    @classmethod
+    def _clean_string(cls, raw: str) -> str:
+        raw = cls._clean_pattern.sub("_", raw)
+        return cls._multi_underscore_pattern.sub("_", raw)
 
 
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):

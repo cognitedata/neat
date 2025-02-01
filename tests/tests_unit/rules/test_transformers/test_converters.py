@@ -46,6 +46,6 @@ class TestStandardizeNaming:
 
         res: InformationRules = StandardizeNaming().transform(information.as_verified_rules())
 
-        assert res.properties[0].property == "tagName"
+        assert res.properties[0].property_ == "tagName"
         assert res.properties[0].class_.suffix == "NotAGoodCLassName"
         assert res.classes[0].class_.suffix == "NotAGoodCLassName"
