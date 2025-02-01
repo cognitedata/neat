@@ -244,12 +244,15 @@ class CDFToAPI:
     def instances(
         self,
         space: str | None = None,
+        space_from_property: str | None = None,
     ) -> UploadResultList:
         """Export the verified DMS instances to CDF.
 
         Args:
             space: Name of instance space to use. Default is to suffix the schema space with '_instances'.
-            Note this space is required to be different than the space with the data model.
+                Note this space is required to be different from the space with the data model.
+            space_from_property: This is an alternative way to set the space. This sets the space from the given
+                property and uses the 'space' argument as a fallback.
 
         """
         if not self._state.client:
@@ -270,6 +273,7 @@ class CDFToAPI:
             self._state.rule_store.last_verified_information_rules,
             self._state.instances.store,
             instance_space=space,
+            space_from_property=space_from_property,
             client=client,
             # In case urllib.parse.quote() was run on the extraction, we need to run
             # urllib.parse.unquote() on the load.
