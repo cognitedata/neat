@@ -1,4 +1,3 @@
-import warnings
 from collections.abc import Hashable
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
@@ -8,11 +7,7 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat._client.data_classes.schema import DMSSchema
-from cognite.neat._constants import COGNITE_SPACES
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._issues.warnings import (
-    PrincipleMatchingSpaceAndVersionWarning,
-)
 from cognite.neat._rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
@@ -406,37 +401,6 @@ class DMSRules(BaseRules):
     nodes: SheetList[DMSNode] | None = Field(
         None, alias="Nodes", description="Contains the definition of the node types."
     )
-
-    @field_validator("views")
-    def matching_version_and_space(cls, value: SheetList[DMSView], info: ValidationInfo) -> SheetList[DMSView]:
-        if not (metadata := info.data.get("metadata")):
-            return value
-        model_version = metadata.version
-        if different_version := [
-            view.view.as_id()
-            for view in value
-            if view.view.version != model_version and view.view.space not in COGNITE_SPACES
-        ]:
-            for view_id in different_version:
-                warnings.warn(
-                    PrincipleMatchingSpaceAndVersionWarning(
-                        f"The view {view_id!r} has a different version than the data model version, {model_version}",
-                    ),
-                    stacklevel=2,
-                )
-        if different_space := [
-            view.view.as_id()
-            for view in value
-            if view.view.space != metadata.space and view.view.space not in COGNITE_SPACES
-        ]:
-            for view_id in different_space:
-                warnings.warn(
-                    PrincipleMatchingSpaceAndVersionWarning(
-                        f"The view {view_id!r} is in a different space than the data model space, {metadata.space}",
-                    ),
-                    stacklevel=2,
-                )
-        return value
 
     @model_validator(mode="after")
     def set_neat_id(self) -> "DMSRules":

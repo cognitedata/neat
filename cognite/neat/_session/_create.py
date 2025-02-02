@@ -39,6 +39,13 @@ class CreateAPI:
             org_name: Organization name to use for the views in the enterprise data model.
             dummy_property: The dummy property to use as placeholder for the views in the new data model.
 
+        What does this function do?
+            1. It creates a new view for each view in the current data model that implements the view it is based on.
+            2. If dummy_property is set, it will create a container with one property for each view and connect the
+               view to the container.
+            3. It will repeat all connection properties in the new views and update the ValueTypes to match the new
+               views.
+
         !!! note "Enterprise Data Model Creation"
 
             Always create an enterprise data model from a Cognite Data Model as this will
@@ -84,6 +91,13 @@ class CreateAPI:
                 and the enterprise data model.
             view_prefix: The prefix to use for the views in the enterprise data model.
 
+        What does this function do?
+        1. It will create two new views for each view in the current data model. The first view will be read-only and
+           prefixed with the 'view_prefix'. The second view will be writable and have one property that connects to the
+           read-only view named 'direct_property'.
+        2. It will repeat all connection properties in the new views and update the ValueTypes to match the new views.
+        3. Each writable view will have a container with the single property that connects to the read-only view.
+
         !!! note "Solution Data Model Mode"
 
             The read-only solution model will only be able to read from the existing containers
@@ -118,6 +132,11 @@ class CreateAPI:
 
         A data product model is a data model that ONLY maps to containers and do not use implements. This is
         typically used for defining the data in a data product.
+
+        What does this function do?
+        1. It creates a new view for each view in the current data model. The new views uses the same filter
+           as the view it is based on.
+        2. It will repeat all connection properties in the new views and update the ValueTypes to match the new views.
 
         Args:
             data_model_id: The data product data model id that is being created.

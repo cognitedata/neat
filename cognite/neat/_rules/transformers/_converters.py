@@ -23,7 +23,6 @@ from cognite.neat._constants import (
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._issues.warnings._models import (
-    EnterpriseModelNotBuildOnTopOfCDMWarning,
     SolutionModelBuildOnTopOfCDMWarning,
 )
 from cognite.neat._rules._shared import (
@@ -339,13 +338,6 @@ class ToEnterpriseModel(ToExtensionModel):
         self.move_connections = move_connections
 
     def transform(self, rules: DMSRules) -> DMSRules:
-        reference_model_id = rules.metadata.as_data_model_id()
-        if reference_model_id not in COGNITE_MODELS:
-            warnings.warn(
-                EnterpriseModelNotBuildOnTopOfCDMWarning(reference_model_id=reference_model_id).as_message(),
-                stacklevel=2,
-            )
-
         return self._to_enterprise(rules)
 
     def _to_enterprise(self, reference_model: DMSRules) -> DMSRules:
