@@ -46,9 +46,9 @@ class ToAPI:
             include_reference: If True, the reference data model will be included. Defaults to True.
                 Note that this only applies if you have created the data model using the
                 create.enterprise_model(...), create.solution_model(), or create.data_product_model() methods.
-        include_properties: The properties to include in the Excel file. Defaults to "all".
-            - "same-space": Only properties that are in the same space as the data model will be included.
-        add_empty_rows: If True, empty rows will be added between each component. Defaults to False.
+            include_properties: The properties to include in the Excel file. Defaults to "all".
+                - "same-space": Only properties that are in the same space as the data model will be included.
+            add_empty_rows: If True, empty rows will be added between each component. Defaults to False.
 
         Example:
             Export information model to excel rules sheet
