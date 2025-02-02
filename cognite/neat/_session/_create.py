@@ -3,6 +3,7 @@ from typing import Literal
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
 from cognite.neat._issues import IssueList
+from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
     IncludeReferenced,
@@ -44,16 +45,14 @@ class CreateAPI:
             assure all the Cognite Data Fusion applications to run smoothly, such as
                 - Search
                 - Atlas AI
-                - ...
-
-        !!! note "Move Connections"
-
-            If you want to move the connections to the new data model, set the move_connections
-            to True. This will move the connections to the new data model and use new model
-            views as the source and target views.
+                - Infield
+                - Canvas
+                - Maintain
+                - Charts
 
         """
-        return self._state.rule_transform(
+        last_rules = self._get_last_rules()
+        issues = self._state.rule_transform(
             ToEnterpriseModel(
                 new_model_id=data_model_id,
                 org_name=org_name,
@@ -61,6 +60,15 @@ class CreateAPI:
                 move_connections=True,
             )
         )
+        if last_rules and not issues.has_errors:
+            self._state.last_reference = last_rules
+        return issues
+
+    def _get_last_rules(self) -> InformationRules | DMSRules | None:
+        if not self._state.rule_store.provenance:
+            return None
+        last_entity = self._state.rule_store.provenance[-1].target_entity
+        return last_entity.dms or last_entity.information
 
     def solution_model(
         self,
@@ -88,7 +96,8 @@ class CreateAPI:
             the containers in the solution data model space.
 
         """
-        return self._state.rule_transform(
+        last_rules = self._get_last_rules()
+        issues = self._state.rule_transform(
             ToSolutionModel(
                 new_model_id=data_model_id,
                 properties="connection",
@@ -96,12 +105,15 @@ class CreateAPI:
                 view_prefix=view_prefix,
             )
         )
+        if last_rules and not issues.has_errors:
+            self._state.last_reference = last_rules
+        return issues
 
     def data_product_model(
         self,
         data_model_id: DataModelIdentifier,
         include: Literal["same-space", "all"] = "same-space",
-    ) -> None:
+    ) -> IssueList:
         """Uses the current data model as a basis to create data product data model.
 
         A data product model is a data model that ONLY maps to containers and do not use implements. This is
@@ -113,7 +125,7 @@ class CreateAPI:
                 If you set same-space, only the properties of the views in the same space as the data model
                 will be included.
         """
-
+        last_rules = self._get_last_rules()
         view_ids, container_ids = DMSValidation(
             self._state.rule_store.last_verified_dms_rules
         ).imported_views_and_containers_ids()
@@ -130,4 +142,7 @@ class CreateAPI:
 
         transformers.append(ToDataProductModel(new_model_id=data_model_id, include=include))
 
-        self._state.rule_transform(*transformers)
+        issues = self._state.rule_transform(*transformers)
+        if last_rules and not issues.has_errors:
+            self._state.last_reference = last_rules
+        return issues
