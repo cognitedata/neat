@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.109.4] - 03-02-**2025**
+### Fixed
+- The `neat.create.enterprise_model()` now sorts properties based on (view + property) in alphabetical order.
+
 ## [0.109.3] - 03-02-**2025**
 ### Added
 - Support for standardizing of naming in the `neat.prepare.data_model.standardize_naming()` method.
