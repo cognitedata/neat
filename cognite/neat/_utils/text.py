@@ -3,9 +3,7 @@ from collections.abc import Collection
 from typing import Any
 
 
-def to_camel(
-    string: str,
-) -> str:
+def to_camel(string: str) -> str:
     """Convert snake_case_name to camelCaseName.
 
     Args:
@@ -45,9 +43,7 @@ def to_camel(
         return ""
 
 
-def to_pascal(
-    string: str,
-) -> str:
+def to_pascal(string: str) -> str:
     """Convert string to PascalCaseName.
 
     Args:
@@ -150,7 +146,7 @@ class NamingStandardization:
 
     @classmethod
     def standardize_class_str(cls, raw: str) -> str:
-        clean = cls.clean_string(raw)
+        clean = cls._clean_string(raw)
         if not cls._start_letter_pattern.match(clean):
             # Underscore ensure that 'Class' it treated as a separate word
             # in the to_pascale function
@@ -159,7 +155,7 @@ class NamingStandardization:
 
     @classmethod
     def standardize_property_str(cls, raw: str) -> str:
-        clean = cls.clean_string(raw)
+        clean = cls._clean_string(raw)
         if not cls._start_letter_pattern.match(clean):
             # Underscore ensure that 'property' it treated as a separate word
             # in the to_camel function
@@ -167,6 +163,6 @@ class NamingStandardization:
         return to_camel(clean)
 
     @classmethod
-    def clean_string(cls, raw: str) -> str:
+    def _clean_string(cls, raw: str) -> str:
         raw = cls._clean_pattern.sub("_", raw)
-        return cls._multi_underscore_pattern.sub("_", raw).removesuffix("_").removeprefix("_")
+        return cls._multi_underscore_pattern.sub("_", raw)
