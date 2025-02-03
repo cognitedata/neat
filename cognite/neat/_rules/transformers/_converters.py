@@ -579,6 +579,15 @@ class ToEnterpriseModel(ToExtensionModel):
         enterprise_properties.sort(key=lambda prop: (prop.view.external_id, prop.view_property))
         enterprise_model.properties = enterprise_properties
 
+        # Sorting all your views first.
+        enterprise_model.views.sort(
+            key=lambda view: (
+                int(view.view.space != self.new_model_id.space),
+                view.view.space,
+                view.view.external_id,
+                view.view.version,
+            )
+        )
         return enterprise_model
 
     @staticmethod
