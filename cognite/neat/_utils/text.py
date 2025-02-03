@@ -23,7 +23,8 @@ def to_camel(string: str) -> str:
         pascal_splits = [to_pascal(part) for part in string.split("_")]
     else:
         # Ensure pascal
-        string = string[0].upper() + string[1:]
+        if string:
+            string = string[0].upper() + string[1:]
         pascal_splits = [string]
     cleaned: list[str] = []
     for part in pascal_splits:
