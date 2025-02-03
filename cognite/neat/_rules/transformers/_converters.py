@@ -55,7 +55,7 @@ from cognite.neat._rules.models.entities import (
     ViewEntity,
 )
 from cognite.neat._rules.models.information import InformationClass, InformationMetadata, InformationProperty
-from cognite.neat._utils.text import to_camel
+from cognite.neat._utils.text import NamingStandardization, to_camel
 
 from ._base import T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
 from ._verification import VerifyDMSRules
@@ -243,6 +243,116 @@ class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
             raise NeatValueError(f"Unsupported entity type: {type(entity)}")
 
         return entity
+
+
+class StandardizeNaming(ConversionTransformer):
+    """Sets views/classes/container names to PascalCase and properties to camelCase."""
+
+    @property
+    def description(self) -> str:
+        return "Sets views/classes/containers names to PascalCase and properties to camelCase."
+
+    @overload
+    def transform(self, rules: DMSRules) -> DMSRules: ...
+
+    @overload
+    def transform(self, rules: InformationRules) -> InformationRules: ...
+
+    def transform(self, rules: InformationRules | DMSRules) -> InformationRules | DMSRules:
+        output = rules.model_copy(deep=True)
+        if isinstance(output, InformationRules):
+            return self._standardize_information_rules(output)
+        elif isinstance(output, DMSRules):
+            return self._standardize_dms_rules(output)
+        raise NeatValueError(f"Unsupported rules type: {type(output)}")
+
+    def _standardize_information_rules(self, rules: InformationRules) -> InformationRules:
+        new_by_old_class_suffix: dict[str, str] = {}
+        for cls in rules.classes:
+            new_suffix = NamingStandardization.standardize_class_str(cls.class_.suffix)
+            new_by_old_class_suffix[cls.class_.suffix] = new_suffix
+            cls.class_.suffix = new_suffix
+
+        for cls in rules.classes:
+            if cls.implements:
+                for i, parent in enumerate(cls.implements):
+                    if parent.suffix in new_by_old_class_suffix:
+                        cls.implements[i].suffix = new_by_old_class_suffix[parent.suffix]
+
+        for prop in rules.properties:
+            prop.property_ = NamingStandardization.standardize_property_str(prop.property_)
+            if prop.class_.suffix in new_by_old_class_suffix:
+                prop.class_.suffix = new_by_old_class_suffix[prop.class_.suffix]
+
+            if isinstance(prop.value_type, ClassEntity) and prop.value_type.suffix in new_by_old_class_suffix:
+                prop.value_type.suffix = new_by_old_class_suffix[prop.value_type.suffix]
+
+            if isinstance(prop.value_type, MultiValueTypeInfo):
+                for i, value_type in enumerate(prop.value_type.types):
+                    if isinstance(value_type, ClassEntity) and value_type.suffix in new_by_old_class_suffix:
+                        prop.value_type.types[i].suffix = new_by_old_class_suffix[value_type.suffix]  # type: ignore[union-attr]
+
+        return rules
+
+    def _standardize_dms_rules(self, rules: DMSRules) -> DMSRules:
+        new_by_old_view: dict[str, str] = {}
+        for view in rules.views:
+            new_suffix = NamingStandardization.standardize_class_str(view.view.suffix)
+            new_by_old_view[view.view.suffix] = new_suffix
+            view.view.suffix = new_suffix
+        new_by_old_container: dict[str, str] = {}
+        if rules.containers:
+            for container in rules.containers:
+                new_suffix = NamingStandardization.standardize_class_str(container.container.suffix)
+                new_by_old_container[container.container.suffix] = new_suffix
+                container.container.suffix = new_suffix
+
+        for view in rules.views:
+            if view.implements:
+                for i, parent in enumerate(view.implements):
+                    if parent.suffix in new_by_old_view:
+                        view.implements[i].suffix = new_by_old_view[parent.suffix]
+            if view.filter_ and isinstance(view.filter_, HasDataFilter) and view.filter_.inner:
+                for i, item in enumerate(view.filter_.inner):
+                    if isinstance(item, ContainerEntity) and item.suffix in new_by_old_container:
+                        view.filter_.inner[i].suffix = new_by_old_container[item.suffix]
+                    if isinstance(item, ViewEntity) and item.suffix in new_by_old_view:
+                        view.filter_.inner[i].suffix = new_by_old_view[item.suffix]
+        if rules.containers:
+            for container in rules.containers:
+                if container.constraint:
+                    for i, constraint in enumerate(container.constraint):
+                        if constraint.suffix in new_by_old_container:
+                            container.constraint[i].suffix = new_by_old_container[constraint.suffix]
+        new_property_by_view_by_old_property: dict[ViewEntity, dict[str, str]] = defaultdict(dict)
+        for prop in rules.properties:
+            if prop.view.suffix in new_by_old_view:
+                prop.view.suffix = new_by_old_view[prop.view.suffix]
+            new_view_property = NamingStandardization.standardize_property_str(prop.view_property)
+            new_property_by_view_by_old_property[prop.view][prop.view_property] = new_view_property
+            prop.view_property = new_view_property
+            if isinstance(prop.value_type, ViewEntity) and prop.value_type.suffix in new_by_old_view:
+                prop.value_type.suffix = new_by_old_view[prop.value_type.suffix]
+            if (
+                isinstance(prop.connection, EdgeEntity)
+                and prop.connection.properties
+                and prop.connection.properties.suffix in new_by_old_view
+            ):
+                prop.connection.properties.suffix = new_by_old_view[prop.connection.properties.suffix]
+            if isinstance(prop.container, ContainerEntity) and prop.container.suffix in new_by_old_container:
+                prop.container.suffix = new_by_old_container[prop.container.suffix]
+            if prop.container_property:
+                prop.container_property = NamingStandardization.standardize_property_str(prop.container_property)
+        for prop in rules.properties:
+            if (
+                isinstance(prop.connection, ReverseConnectionEntity)
+                and isinstance(prop.value_type, ViewEntity)
+                and prop.value_type in new_property_by_view_by_old_property
+            ):
+                new_by_old_property = new_property_by_view_by_old_property[prop.value_type]
+                if prop.connection.property_ in new_by_old_property:
+                    prop.connection.property_ = new_by_old_property[prop.connection.property_]
+        return rules
 
 
 class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):

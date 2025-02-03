@@ -3,7 +3,9 @@ from collections.abc import Collection
 from typing import Any
 
 
-def to_camel(string: str) -> str:
+def to_camel(
+    string: str,
+) -> str:
     """Convert snake_case_name to camelCaseName.
 
     Args:
@@ -17,21 +19,23 @@ def to_camel(string: str) -> str:
         >>> to_camel("ScenarioInstance_priceForecast")
         'scenarioInstancePriceForecast'
     """
+    string = re.sub(r"[\s_-]", "_", string)
+    string = re.sub("_+", "_", string)
     if "_" in string:
-        # Could be a combination of snake and pascal/camel case
-        parts = string.split("_")
-        pascal_splits = [to_pascal(subpart) for part in parts for subpart in part.split("-") if subpart]
-    elif "-" in string:
-        # Could be a combination of kebab and pascal/camel case
-        parts = string.split("-")
-        pascal_splits = [to_pascal(subpart) for part in parts for subpart in part.split("_") if subpart]
+        pascal_splits = [to_pascal(part) for part in string.split("_")]
     else:
-        # Assume is pascal/camel case
         # Ensure pascal
         string = string[0].upper() + string[1:]
         pascal_splits = [string]
-    string_split = []
+    cleaned: list[str] = []
     for part in pascal_splits:
+        if part.upper() == part:
+            cleaned.append(part.capitalize())
+        else:
+            cleaned.append(part)
+
+    string_split = []
+    for part in cleaned:
         string_split.extend(re.findall(r"[A-Z][a-z0-9]*", part))
     if not string_split:
         string_split = [string]
@@ -41,7 +45,9 @@ def to_camel(string: str) -> str:
         return ""
 
 
-def to_pascal(string: str) -> str:
+def to_pascal(
+    string: str,
+) -> str:
     """Convert string to PascalCaseName.
 
     Args:
@@ -135,3 +141,32 @@ def humanize_collection(collection: Collection[Any], /, *, sort: bool = True) ->
         sequence = list(strings)
 
     return f"{', '.join(sequence[:-1])} and {sequence[-1]}"
+
+
+class NamingStandardization:
+    _clean_pattern = re.compile(r"[^a-zA-Z0-9_]+")
+    _multi_underscore_pattern = re.compile(r"_+")
+    _start_letter_pattern = re.compile(r"^[a-zA-Z]")
+
+    @classmethod
+    def standardize_class_str(cls, raw: str) -> str:
+        clean = cls._clean_string(raw)
+        if not cls._start_letter_pattern.match(clean):
+            # Underscore ensure that 'Class' it treated as a separate word
+            # in the to_pascale function
+            clean = f"Class_{clean}"
+        return to_pascal(clean)
+
+    @classmethod
+    def standardize_property_str(cls, raw: str) -> str:
+        clean = cls._clean_string(raw)
+        if not cls._start_letter_pattern.match(clean):
+            # Underscore ensure that 'property' it treated as a separate word
+            # in the to_camel function
+            clean = f"property_{clean}"
+        return to_camel(clean)
+
+    @classmethod
+    def _clean_string(cls, raw: str) -> str:
+        raw = cls._clean_pattern.sub("_", raw)
+        return cls._multi_underscore_pattern.sub("_", raw)
