@@ -3,6 +3,7 @@ from typing import Any
 
 from rdflib import URIRef
 
+from cognite.neat._alpha import AlphaFlags
 from cognite.neat._graph.transformers import (
     ConnectionToLiteral,
     ConvertLiteral,
@@ -269,4 +270,5 @@ class DataModelPrepareAPI:
         For classes/views/containers, the naming will be standardized to PascalCase.
         For properties, the naming will be standardized to camelCase.
         """
+        AlphaFlags.standardize_naming.warn()
         return self._state.rule_transform(StandardizeNaming())
