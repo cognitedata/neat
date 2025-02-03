@@ -575,13 +575,17 @@ class ToEnterpriseModel(ToExtensionModel):
 
         # ... however, we do not want to keep the reference containers and properties
         # these we are getting for free through the implements.
+        enterprise_containers.sort(key=lambda container: (container.container.space, container.container.external_id))
         enterprise_model.containers = enterprise_containers
-        enterprise_properties.sort(key=lambda prop: (prop.view.external_id, prop.view_property))
+        enterprise_properties.sort(
+            key=lambda prop: (prop.view.space, prop.view.external_id, prop.view.version, prop.view_property)
+        )
         enterprise_model.properties = enterprise_properties
 
         # Sorting all your views first.
         enterprise_model.views.sort(
             key=lambda view: (
+                # Sorting your views first
                 int(view.view.space != self.new_model_id.space),
                 view.view.space,
                 view.view.external_id,
