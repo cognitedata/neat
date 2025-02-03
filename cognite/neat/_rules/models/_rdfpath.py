@@ -2,6 +2,7 @@
 
 import re
 import sys
+import urllib.parse
 from collections import Counter
 from functools import total_ordering
 from typing import ClassVar, Literal
@@ -327,6 +328,7 @@ def parse_table_lookup(raw: str) -> TableLookup:
 
 
 def parse_rule(rule_raw: str, rule_type: TransformationRuleType | None) -> RDFPath:
+    rule_raw = urllib.parse.unquote(rule_raw)
     match rule_type:
         case TransformationRuleType.rdfpath:
             rule_raw = rule_raw.replace(" ", "")

@@ -8,6 +8,9 @@ class _UnknownType(BaseModel):
     def __str__(self) -> str:
         return "#N/A"
 
+    def __hash__(self):
+        return hash(str(self))
+
 
 # This is a trick to make Undefined and Unknown singletons
 Undefined = _UndefinedType()

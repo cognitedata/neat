@@ -3,9 +3,7 @@ from collections.abc import Collection
 from typing import Any
 
 
-def to_camel(
-    string: str,
-) -> str:
+def to_camel(string: str) -> str:
     """Convert snake_case_name to camelCaseName.
 
     Args:
@@ -45,9 +43,7 @@ def to_camel(
         return ""
 
 
-def to_pascal(
-    string: str,
-) -> str:
+def to_pascal(string: str) -> str:
     """Convert string to PascalCaseName.
 
     Args:
