@@ -19,6 +19,10 @@ Changes are grouped as follows:
 ### Improved
 - `neat.inspect.issues()` for errors in Metadata sheet and ill-formed views in te Views and Properties sheets
 
+### Fixed
+- The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model 
+  in the Excel file.
+
 ## [0.109.2] - 31-01-**2025**
 ### Added
 - [ALPHA] Support for external modification of data model from NeatSession and its re-import
