@@ -3,6 +3,7 @@ from typing import Literal
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
 from cognite.neat._issues import IssueList
+from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
     IncludeReferenced,
@@ -38,22 +39,27 @@ class CreateAPI:
             org_name: Organization name to use for the views in the enterprise data model.
             dummy_property: The dummy property to use as placeholder for the views in the new data model.
 
+        What does this function do?
+            1. It creates a new view for each view in the current data model that implements the view it is based on.
+            2. If dummy_property is set, it will create a container with one property for each view and connect the
+               view to the container.
+            3. It will repeat all connection properties in the new views and update the ValueTypes to match the new
+               views.
+
         !!! note "Enterprise Data Model Creation"
 
             Always create an enterprise data model from a Cognite Data Model as this will
             assure all the Cognite Data Fusion applications to run smoothly, such as
                 - Search
                 - Atlas AI
-                - ...
-
-        !!! note "Move Connections"
-
-            If you want to move the connections to the new data model, set the move_connections
-            to True. This will move the connections to the new data model and use new model
-            views as the source and target views.
+                - Infield
+                - Canvas
+                - Maintain
+                - Charts
 
         """
-        return self._state.rule_transform(
+        last_rules = self._get_last_rules()
+        issues = self._state.rule_transform(
             ToEnterpriseModel(
                 new_model_id=data_model_id,
                 org_name=org_name,
@@ -61,6 +67,15 @@ class CreateAPI:
                 move_connections=True,
             )
         )
+        if last_rules and not issues.has_errors:
+            self._state.last_reference = last_rules
+        return issues
+
+    def _get_last_rules(self) -> InformationRules | DMSRules | None:
+        if not self._state.rule_store.provenance:
+            return None
+        last_entity = self._state.rule_store.provenance[-1].target_entity
+        return last_entity.dms or last_entity.information
 
     def solution_model(
         self,
@@ -76,6 +91,13 @@ class CreateAPI:
                 and the enterprise data model.
             view_prefix: The prefix to use for the views in the enterprise data model.
 
+        What does this function do?
+        1. It will create two new views for each view in the current data model. The first view will be read-only and
+           prefixed with the 'view_prefix'. The second view will be writable and have one property that connects to the
+           read-only view named 'direct_property'.
+        2. It will repeat all connection properties in the new views and update the ValueTypes to match the new views.
+        3. Each writable view will have a container with the single property that connects to the read-only view.
+
         !!! note "Solution Data Model Mode"
 
             The read-only solution model will only be able to read from the existing containers
@@ -88,7 +110,8 @@ class CreateAPI:
             the containers in the solution data model space.
 
         """
-        return self._state.rule_transform(
+        last_rules = self._get_last_rules()
+        issues = self._state.rule_transform(
             ToSolutionModel(
                 new_model_id=data_model_id,
                 properties="connection",
@@ -96,16 +119,24 @@ class CreateAPI:
                 view_prefix=view_prefix,
             )
         )
+        if last_rules and not issues.has_errors:
+            self._state.last_reference = last_rules
+        return issues
 
     def data_product_model(
         self,
         data_model_id: DataModelIdentifier,
         include: Literal["same-space", "all"] = "same-space",
-    ) -> None:
+    ) -> IssueList:
         """Uses the current data model as a basis to create data product data model.
 
         A data product model is a data model that ONLY maps to containers and do not use implements. This is
         typically used for defining the data in a data product.
+
+        What does this function do?
+        1. It creates a new view for each view in the current data model. The new views uses the same filter
+           as the view it is based on.
+        2. It will repeat all connection properties in the new views and update the ValueTypes to match the new views.
 
         Args:
             data_model_id: The data product data model id that is being created.
@@ -113,7 +144,7 @@ class CreateAPI:
                 If you set same-space, only the properties of the views in the same space as the data model
                 will be included.
         """
-
+        last_rules = self._get_last_rules()
         view_ids, container_ids = DMSValidation(
             self._state.rule_store.last_verified_dms_rules
         ).imported_views_and_containers_ids()
@@ -130,4 +161,7 @@ class CreateAPI:
 
         transformers.append(ToDataProductModel(new_model_id=data_model_id, include=include))
 
-        self._state.rule_transform(*transformers)
+        issues = self._state.rule_transform(*transformers)
+        if last_rules and not issues.has_errors:
+            self._state.last_reference = last_rules
+        return issues

@@ -1,5 +1,9 @@
+import urllib.parse
+
 from rdflib import RDF, Literal, Namespace
 
+from cognite.neat import NeatSession
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.examples import nordic44_knowledge_graph
 from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat._issues import catch_issues
@@ -122,3 +126,25 @@ def test_integer_as_long():
 
     assert Integer() not in data_types
     assert Long() in data_types
+
+
+def test_infer_with_bad_property_names() -> None:
+    neat = NeatSession()
+    neat._state.instances.store._add_triples(
+        [
+            (DEFAULT_NAMESPACE["MyAsset"], RDF.type, DEFAULT_NAMESPACE["Asset"]),
+            (
+                DEFAULT_NAMESPACE["MyAsset"],
+                DEFAULT_NAMESPACE[urllib.parse.quote("My Property ill-formed")],
+                Literal("My Value"),
+            ),
+        ],
+        named_graph=neat._state.instances.store.default_named_graph,
+    )
+    neat.infer()
+    assert neat._state.rule_store.provenance
+    info = neat._state.rule_store.last_verified_information_rules
+
+    assert info is not None
+    assert len(info.properties) == 1
+    assert info.properties[0].property_ == "myPropertyIllFormed"

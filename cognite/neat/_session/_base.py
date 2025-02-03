@@ -16,6 +16,7 @@ from cognite.neat._rules.transformers import (
     InformationToDMS,
     MergeDMSRules,
     MergeInformationRules,
+    ToInformationCompliantEntities,
     VerifyInformationRules,
 )
 from cognite.neat._store._rules_store import RulesEntity
@@ -235,13 +236,19 @@ class NeatSession:
 
         def action() -> tuple[InformationRules, DMSRules | None]:
             unverified_information = importer.to_rules()
+            unverified_information = ToInformationCompliantEntities(renaming="warning").transform(
+                unverified_information
+            )
+
             extra_info = VerifyInformationRules().transform(unverified_information)
             if not last_entity:
                 return extra_info, None
             merged_info = MergeInformationRules(extra_info).transform(last_entity.information)
             if not last_entity.dms:
                 return merged_info, None
+
             extra_dms = InformationToDMS(reserved_properties="warning").transform(extra_info)
+
             merged_dms = MergeDMSRules(extra_dms).transform(last_entity.dms)
             return merged_info, merged_dms
 

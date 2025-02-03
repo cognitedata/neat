@@ -107,13 +107,13 @@ class TestImportersToYAMLExporter:
 
             data_product_yml_str = neat.to.yaml()
 
-            data_regression.check(
-                {
-                    "enterprise": yaml.safe_load(enterprise_yml_str),
-                    "solution": yaml.safe_load(solution_yml_str),
-                    "data_product": yaml.safe_load(data_product_yml_str),
-                }
-            )
+        data_regression.check(
+            {
+                "enterprise": yaml.safe_load(enterprise_yml_str),
+                "solution": yaml.safe_load(solution_yml_str),
+                "data_product": yaml.safe_load(data_product_yml_str),
+            }
+        )
 
 
 def as_container_read(container: ContainerApply) -> Container:

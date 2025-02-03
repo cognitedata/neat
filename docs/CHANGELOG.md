@@ -15,11 +15,26 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.109.3] - 03-02-**2025**
+### Added
+- Support for standardizing of naming in the `neat.prepare.data_model.standardize_naming()` method.
+
+### Improved
+- `neat.inspect.issues()` for errors in Metadata sheet and ill-formed views in te Views and Properties sheets
+- `neat.infer()` now automatically makes the inferred classes and properties comply with the CDF naming conventions.
+
+### Fixed
+- The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model 
+  in the Excel file.
+
 ## [0.109.2] - 31-01-**2025**
 ### Added
 - [ALPHA] Support for external modification of data model from NeatSession and its re-import
 - Export of data model to Excel will now automatically hide the columns used for the internal neat processes.
 - [ALPHA] when exporting data model to Excel one can specify to export only properties of views which are in the same space as the data model
+
+### Fixed
+- The `neat.create.data_product_model` no longer includes properties pointing to views not in the model.
 
 ## [0.109.1] - 28-01-**2025**
 
