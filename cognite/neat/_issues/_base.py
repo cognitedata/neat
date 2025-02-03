@@ -103,6 +103,8 @@ class NeatIssue:
                 variables[name] = var_.as_posix()
             elif isinstance(var_, Collection):
                 variables[name] = humanize_collection(var_)
+            elif isinstance(var_, NeatError):
+                variables[name] = var_.as_message(include_type=False)
             else:
                 variables[name] = repr(var_)
         return variables, has_all_optional
@@ -138,6 +140,8 @@ class NeatIssue:
             return value.dump(camel_case=True)
         elif isinstance(value, DataModelId):
             return value.dump(camel_case=True, include_type=False)
+        elif isinstance(value, NeatError):
+            return value.dump()
         raise ValueError(f"Unsupported type: {type(value)}")
 
     @classmethod
@@ -192,6 +196,8 @@ class NeatIssue:
             return ContainerId.load(value)
         elif inspect.isclass(type_) and issubclass(type_, Entity):
             return type_.load(value)
+        elif type_ is NeatError:
+            return cls.load(value)
         return value
 
     def __lt__(self, other: "NeatIssue") -> bool:
@@ -227,22 +233,19 @@ class NeatError(NeatIssue, Exception):
                 # Skip the error for SheetList, as it is not relevant for the user. This is an
                 # internal class used to have helper methods for a lists as .to_pandas()
                 continue
+
             neat_error: NeatError | None = None
             if isinstance(error, dict) and isinstance(ctx := error.get("ctx"), dict) and "error" in ctx:
                 neat_error = ctx["error"]
             elif isinstance(error, NeatError | MultiValueError):
                 neat_error = error
 
+            loc = error["loc"] if isinstance(error, dict) else tuple()
             if isinstance(neat_error, MultiValueError):
-                if read_info_by_sheet:
-                    for caught_error in neat_error.errors:
-                        cls._adjust_row_numbers(caught_error, read_info_by_sheet)  # type: ignore[arg-type]
-                all_errors.extend(neat_error.errors)  # type: ignore[arg-type]
+                all_errors.extend([cls._adjust_error(e, loc, read_info_by_sheet) for e in neat_error.errors])
             elif isinstance(neat_error, NeatError):
-                if read_info_by_sheet:
-                    cls._adjust_row_numbers(neat_error, read_info_by_sheet)
-                all_errors.append(neat_error)
-            elif isinstance(error, dict) and len(error["loc"]) >= 4 and read_info_by_sheet:
+                all_errors.append(cls._adjust_error(neat_error, loc, read_info_by_sheet))
+            elif isinstance(error, dict) and len(loc) >= 4 and read_info_by_sheet:
                 all_errors.append(RowError.from_pydantic_error(error, read_info_by_sheet))
             elif isinstance(error, dict):
                 all_errors.append(DefaultPydanticError.from_pydantic_error(error))
@@ -250,6 +253,18 @@ class NeatError(NeatIssue, Exception):
                 # This is unreachable. However, in case it turns out to be reachable, we want to know about it.
                 raise ValueError(f"Unsupported error type: {error}")
         return all_errors
+
+    @classmethod
+    def _adjust_error(
+        cls, error: "NeatError", loc: tuple[str | int, ...], read_info_by_sheet: dict[str, SpreadsheetRead] | None
+    ) -> "NeatError":
+        from .errors._wrapper import MetadataValueError
+
+        if read_info_by_sheet:
+            cls._adjust_row_numbers(error, read_info_by_sheet)
+        if len(loc) == 2 and isinstance(loc[0], str) and loc[0].casefold() == "metadata":
+            return MetadataValueError(field_name=str(loc[1]), error=error)
+        return error
 
     @staticmethod
     def _adjust_row_numbers(caught_error: "NeatError", read_info_by_sheet: dict[str, SpreadsheetRead]) -> None:
@@ -288,7 +303,16 @@ class DefaultPydanticError(NeatError, ValueError):
     msg: str
 
     @classmethod
-    def from_pydantic_error(cls, error: ErrorDetails) -> "DefaultPydanticError":
+    def from_pydantic_error(cls, error: ErrorDetails) -> "NeatError":
+        loc = error["loc"]
+        if len(loc) >= 2 and isinstance(loc[0], str) and loc[0].casefold() == "metadata":
+            from .errors._general import NeatValueError
+            from .errors._wrapper import MetadataValueError
+
+            return MetadataValueError(
+                field_name=str(loc[1]), error=NeatValueError(f"{error['msg']} got '{error['input']}'")
+            )
+
         return cls(
             type=error["type"],
             loc=error["loc"],

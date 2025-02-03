@@ -16,6 +16,9 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Improved
+- `neat.inspect.issues()` for errors in Metadata sheet and ill-formed views in te Views and Properties sheets
+
 ### Fixed
 - The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model 
   in the Excel file.
