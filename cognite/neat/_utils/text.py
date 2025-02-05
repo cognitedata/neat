@@ -17,14 +17,21 @@ def to_camel_case(string: str) -> str:
         >>> to_camel_case("ScenarioInstance_priceForecast")
         'scenarioInstancePriceForecast'
     """
-    return _to_camel_case(string, string == string.upper())
-
-
-def _to_camel_case(string, is_all_upper: bool):
     string = re.sub(r"[^a-zA-Z0-9_]", "_", string)
     string = re.sub("_+", "_", string)
+    is_all_upper = string.upper() == string
+    is_first_upper = (
+        len(string) >= 2 and string[:2].upper() == string[:2] and "_" not in string[:2] and not is_all_upper
+    )
+    return _to_camel_case(string, is_all_upper, is_first_upper)
+
+
+def _to_camel_case(string, is_all_upper: bool, is_first_upper: bool):
     if "_" in string:
-        pascal_splits = [_to_pascal_case(part, is_all_upper) for part in string.split("_")]
+        pascal_splits = [
+            _to_pascal_case(part, is_all_upper, is_first_upper and no == 0)
+            for no, part in enumerate(string.split("_"), 0)
+        ]
     else:
         # Ensure pascal
         if string:
@@ -42,10 +49,13 @@ def _to_camel_case(string, is_all_upper: bool):
         string_split.extend(re.findall(r"[A-Z][a-z0-9]*", part))
     if not string_split:
         string_split = [string]
-    try:
-        return string_split[0].casefold() + "".join(word for word in string_split[1:])
-    except IndexError:
+    if len(string_split) == 0:
         return ""
+    # The first word is a single letter, keep the original case
+    if is_first_upper:
+        return "".join(word for word in string_split)
+    else:
+        return string_split[0].casefold() + "".join(word for word in string_split[1:])
 
 
 def to_pascal_case(string: str) -> str:
@@ -62,11 +72,11 @@ def to_pascal_case(string: str) -> str:
         >>> to_pascal_case('camel_case')
         'CamelCase'
     """
-    return _to_pascal_case(string, string == string.upper())
+    return _to_pascal_case(string, string == string.upper(), True)
 
 
-def _to_pascal_case(string: str, is_all_upper: bool) -> str:
-    camel = _to_camel_case(string, is_all_upper)
+def _to_pascal_case(string: str, is_all_upper: bool, is_first_upper: bool) -> str:
+    camel = _to_camel_case(string, is_all_upper, is_first_upper)
     return f"{camel[0].upper()}{camel[1:]}" if camel else ""
 
 

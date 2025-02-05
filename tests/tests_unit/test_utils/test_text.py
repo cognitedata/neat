@@ -14,6 +14,7 @@ class TestToCamel:
             ("camelCaseAlready", "camelCaseAlready"),
             ("A_-Strange@(Combination)-of#Casing", "aStrangeCombinationOfCasing"),
             ("#SHOUTING@SNAKE_CASE1234", "shoutingSnakeCase1234"),
+            ("WO Long Description", "WOLongDescription"),
         ],
     )
     def test_to_camel(self, actual: str, expected: str) -> None:
