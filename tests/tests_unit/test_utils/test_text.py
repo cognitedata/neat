@@ -11,6 +11,9 @@ class TestToCamel:
             ("TAG NAME", "tagName"),
             ("a_b", "aB"),
             ("Work Order ID", "workOrderID"),
+            ("camelCaseAlready", "camelCaseAlready"),
+            ("A_-Strange@(Combination)-of#Casing", "aStrangeCombinationOfCasing"),
+            ("#SHOUTING@SNAKE_CASE1234", "shoutingSnakeCase1234"),
         ],
     )
     def test_to_camel(self, actual: str, expected: str) -> None:

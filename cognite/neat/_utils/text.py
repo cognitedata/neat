@@ -17,10 +17,14 @@ def to_camel_case(string: str) -> str:
         >>> to_camel_case("ScenarioInstance_priceForecast")
         'scenarioInstancePriceForecast'
     """
-    string = re.sub(r"[\s_-]", "_", string)
+    return _to_camel_case(string, string == string.upper())
+
+
+def _to_camel_case(string, is_all_upper: bool):
+    string = re.sub(r"[^a-zA-Z0-9_]", "_", string)
     string = re.sub("_+", "_", string)
     if "_" in string:
-        pascal_splits = [to_pascal_case(part) for part in string.split("_")]
+        pascal_splits = [_to_pascal_case(part, is_all_upper) for part in string.split("_")]
     else:
         # Ensure pascal
         if string:
@@ -28,7 +32,7 @@ def to_camel_case(string: str) -> str:
         pascal_splits = [string]
     cleaned: list[str] = []
     for part in pascal_splits:
-        if part.upper() == part:
+        if part.upper() == part and is_all_upper:
             cleaned.append(part.capitalize())
         else:
             cleaned.append(part)
@@ -39,7 +43,7 @@ def to_camel_case(string: str) -> str:
     if not string_split:
         string_split = [string]
     try:
-        return string_split[0].casefold() + "".join(word.capitalize() for word in string_split[1:])
+        return string_split[0].casefold() + "".join(word for word in string_split[1:])
     except IndexError:
         return ""
 
@@ -58,7 +62,11 @@ def to_pascal_case(string: str) -> str:
         >>> to_pascal_case('camel_case')
         'CamelCase'
     """
-    camel = to_camel_case(string)
+    return _to_pascal_case(string, string == string.upper())
+
+
+def _to_pascal_case(string: str, is_all_upper: bool) -> str:
+    camel = _to_camel_case(string, is_all_upper)
     return f"{camel[0].upper()}{camel[1:]}" if camel else ""
 
 
