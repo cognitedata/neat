@@ -107,7 +107,7 @@ class ToInformationCompliantEntities(
         new_by_old_class_suffix: dict[str, str] = {}
         for cls in copy.classes:
             cls_entity = cast(ClassEntity, cls.class_)  # Safe due to the dump above
-            if not PATTERNS.class_id_compliance.match(cls_entity.suffix):
+            if not PATTERNS.view_id_compliance.match(cls_entity.suffix):
                 new_suffix = self._fix_cls_suffix(cls_entity.suffix)
                 if self._renaming == "warning":
                     warnings.warn(
@@ -123,7 +123,7 @@ class ToInformationCompliantEntities(
                         cls_.implements[i].suffix = new_by_old_class_suffix[parent.suffix]  # type: ignore[union-attr]
 
         for prop in copy.properties:
-            if not PATTERNS.information_property_id_compliance.match(prop.property_):
+            if not PATTERNS.dms_property_id_compliance.match(prop.property_):
                 new_property = self._fix_property(prop.property_)
                 if self._renaming == "warning":
                     warnings.warn(
