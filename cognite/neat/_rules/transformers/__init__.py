@@ -16,9 +16,9 @@ from ._converters import (
     StandardizeNaming,
     ToCompliantEntities,
     ToDataProductModel,
+    ToDMSCompliantEntities,
     ToEnterpriseModel,
     ToExtensionModel,
-    ToInformationCompliantEntities,
     ToSolutionModel,
 )
 from ._mapping import AsParentPropertyId, MapOneToOne, RuleMapper
@@ -44,10 +44,10 @@ __all__ = [
     "SetIDDMSModel",
     "StandardizeNaming",
     "ToCompliantEntities",
+    "ToDMSCompliantEntities",
     "ToDataProductModel",
     "ToEnterpriseModel",
     "ToExtensionModel",
-    "ToInformationCompliantEntities",
     "ToSolutionModel",
     "VerifiedRulesTransformer",
     "VerifyAnyRules",

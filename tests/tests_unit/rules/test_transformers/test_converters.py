@@ -1,3 +1,4 @@
+from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models import DMSInputRules, InformationRules
 from cognite.neat._rules.models.dms import DMSInputContainer, DMSInputMetadata, DMSInputProperty, DMSInputView
 from cognite.neat._rules.models.information import (
@@ -6,7 +7,7 @@ from cognite.neat._rules.models.information import (
     InformationInputProperty,
     InformationInputRules,
 )
-from cognite.neat._rules.transformers import StandardizeNaming
+from cognite.neat._rules.transformers import StandardizeNaming, ToDMSCompliantEntities
 
 
 class TestStandardizeNaming:
@@ -40,6 +41,8 @@ class TestStandardizeNaming:
             metadata=InformationInputMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
                 InformationInputProperty(class_name, "TAG_NAME", "string", max_count=1),
+                InformationInputProperty(class_name, "State(Previous)", "string", max_count=1),
+                InformationInputProperty(class_name, "P&ID", "string", max_count=1),
             ],
             classes=[InformationInputClass(class_name)],
         )
@@ -49,3 +52,33 @@ class TestStandardizeNaming:
         assert res.properties[0].property_ == "tagName"
         assert res.properties[0].class_.suffix == "NotAGoodCLassNAME"
         assert res.classes[0].class_.suffix == "NotAGoodCLassNAME"
+
+        assert res.properties[1].property_ == "statePrevious"
+        assert res.properties[2].property_ == "pId"
+
+
+class TestToInformationCompliantEntities:
+    def test_transform_information(self) -> None:
+        class_name = "not_a_good_cLass_NAME"
+        information = InformationInputRules(
+            metadata=InformationInputMetadata("my_space", "MyModel", "me", "v1"),
+            properties=[
+                InformationInputProperty(class_name, "TAG_NAME", "string", max_count=1),
+                InformationInputProperty(class_name, "State(Previous)", "string", max_count=1),
+                InformationInputProperty(class_name, "P&ID", "string", max_count=1),
+            ],
+            classes=[InformationInputClass(class_name)],
+        )
+
+        res: InformationRules = (
+            ToDMSCompliantEntities(rename_warning="raise")
+            .transform(ReadRules(information, {}))
+            .rules.as_verified_rules()
+        )
+
+        assert res.properties[0].property_ == "TAG_NAME"
+        assert res.properties[0].class_.suffix == "not_a_good_cLass_NAME"
+        assert res.classes[0].class_.suffix == "not_a_good_cLass_NAME"
+
+        assert res.properties[1].property_ == "statePrevious"
+        assert res.properties[2].property_ == "pId"

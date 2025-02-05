@@ -75,22 +75,20 @@ class ConversionTransformer(VerifiedRulesTransformer[T_VerifiedIn, T_VerifiedOut
     ...
 
 
-class ToInformationCompliantEntities(
-    RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]
-):
+class ToDMSCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]):
     """Converts input rules to rules that is compliant with the Information Model.
 
     This is typically used with importers from arbitrary sources to ensure that classes and properties have valid
     names.
 
     Args:
-        renaming: How to handle renaming of entities that are not compliant with the Information Model.
-            - "warning": Raises a warning and renames the entity.
+        rename_warning: How to handle renaming of entities that are not compliant with the Information Model.
+            - "raise": Raises a warning and renames the entity.
             - "skip": Renames the entity without raising a warning.
     """
 
-    def __init__(self, renaming: Literal["warning", "skip"] = "skip") -> None:
-        self._renaming = renaming
+    def __init__(self, rename_warning: Literal["raise", "skip"] = "skip") -> None:
+        self._renaming = rename_warning
 
     @property
     def description(self) -> str:
@@ -109,7 +107,7 @@ class ToInformationCompliantEntities(
             cls_entity = cast(ClassEntity, cls.class_)  # Safe due to the dump above
             if not PATTERNS.view_id_compliance.match(cls_entity.suffix):
                 new_suffix = self._fix_cls_suffix(cls_entity.suffix)
-                if self._renaming == "warning":
+                if self._renaming == "raise":
                     warnings.warn(
                         NeatValueWarning(f"Invalid class name {cls_entity.suffix!r}.Renaming to {new_suffix}"),
                         stacklevel=2,
