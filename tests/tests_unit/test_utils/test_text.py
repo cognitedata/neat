@@ -10,7 +10,7 @@ class TestToCamel:
             ("TAG_NAME", "tagName"),
             ("TAG NAME", "tagName"),
             ("a_b", "aB"),
-            ("camel_case", "camelCase"),
+            ("Work Order ID", "workOrderID"),
         ],
     )
     def test_to_camel(self, actual: str, expected: str) -> None:
