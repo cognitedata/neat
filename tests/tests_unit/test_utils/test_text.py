@@ -1,6 +1,6 @@
 import pytest
 
-from cognite.neat._utils.text import to_camel
+from cognite.neat._utils.text import to_camel_case
 
 
 class TestToCamel:
@@ -14,4 +14,4 @@ class TestToCamel:
         ],
     )
     def test_to_camel(self, actual: str, expected: str) -> None:
-        assert to_camel(actual) == expected
+        assert to_camel_case(actual) == expected

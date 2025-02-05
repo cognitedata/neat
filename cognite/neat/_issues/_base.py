@@ -22,7 +22,7 @@ from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
-from cognite.neat._utils.text import humanize_collection, to_camel, to_snake
+from cognite.neat._utils.text import humanize_collection, to_camel_case, to_snake_case
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
@@ -113,7 +113,7 @@ class NeatIssue:
         """Return a dictionary representation of the issue."""
         variables = vars(self)
         output = {
-            to_camel(key): self._dump_value(value)
+            to_camel_case(key): self._dump_value(value)
             for key, value in variables.items()
             if not (value is None or key.startswith("_"))
         }
@@ -153,7 +153,7 @@ class NeatIssue:
         if "NeatIssue" not in data:
             raise NeatValueError("The data does not contain a NeatIssue key.")
         issue_type = data.pop("NeatIssue")
-        args = {to_snake(key): value for key, value in data.items()}
+        args = {to_snake_case(key): value for key, value in data.items()}
         if issue_type in _NEAT_ERRORS_BY_NAME:
             return cls._load_values(_NEAT_ERRORS_BY_NAME[issue_type], args)
         elif issue_type in _NEAT_WARNINGS_BY_NAME:

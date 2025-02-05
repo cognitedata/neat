@@ -60,7 +60,7 @@ from cognite.neat._rules.models.entities import (
     ViewEntity,
 )
 from cognite.neat._rules.models.information import InformationClass, InformationMetadata, InformationProperty
-from cognite.neat._utils.text import NamingStandardization, to_camel
+from cognite.neat._utils.text import NamingStandardization, to_camel_case
 
 from ._base import RulesTransformer, T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
 from ._verification import VerifyDMSRules
@@ -649,7 +649,7 @@ class ToEnterpriseModel(ToExtensionModel):
 
             container = DMSContainer(container=container_entity)
 
-            property_id = f"{to_camel(view_entity.suffix)}{self.dummy_property}"
+            property_id = f"{to_camel_case(view_entity.suffix)}{self.dummy_property}"
             property_ = DMSProperty(
                 view=view_entity,
                 view_property=property_id,
@@ -852,7 +852,7 @@ class ToSolutionModel(ToExtensionModel):
             if view.view in read_view_by_new_view:
                 read_view = read_view_by_new_view[view.view]
                 container_entity = ContainerEntity(space=self.new_model_id.space, externalId=view.view.external_id)
-                prefix = to_camel(view.view.suffix)
+                prefix = to_camel_case(view.view.suffix)
                 if self.properties == "repeat" and self.dummy_property:
                     property_ = DMSProperty(
                         view=view.view,
