@@ -37,7 +37,7 @@ class TestStandardizeNaming:
     def test_transform_information(self) -> None:
         class_name = "not_a_good_cLass_NAME"
         information = InformationInputRules(
-            metadata=InformationInputMetadata("my_spac", "MyModel", "me", "v1"),
+            metadata=InformationInputMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
                 InformationInputProperty(class_name, "TAG_NAME", "string", max_count=1),
             ],
@@ -47,5 +47,5 @@ class TestStandardizeNaming:
         res: InformationRules = StandardizeNaming().transform(information.as_verified_rules())
 
         assert res.properties[0].property_ == "tagName"
-        assert res.properties[0].class_.suffix == "NotAGoodCLassName"
-        assert res.classes[0].class_.suffix == "NotAGoodCLassName"
+        assert res.properties[0].class_.suffix == "NotAGoodCLassNAME"
+        assert res.classes[0].class_.suffix == "NotAGoodCLassNAME"
