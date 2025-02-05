@@ -152,7 +152,7 @@ types-requests = "^2"
 types-setuptools = "^68"
 types-tqdm = "^4.67.0.20241221"
 networkx-stubs = "^0.0.1"
-cognite-toolkit = "^0.3.24"
+cognite-toolkit = "^0.4.2"
 tqdm = "^4.67.1"
 
 [build-system]
