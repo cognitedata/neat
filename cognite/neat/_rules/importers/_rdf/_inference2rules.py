@@ -486,7 +486,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
             )
             existing_class_properties = {
                 (class_entity.suffix, prop.property_)
-                for class_entity, properties in analysis.properties_by_classes(
+                for class_entity, properties in analysis.properties_by_class(
                     include_ancestors=True, include_different_space=True
                 ).items()
                 for prop in properties

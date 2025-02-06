@@ -14,7 +14,7 @@ class TestInformationRulesAnalysis:
         assert len(InformationAnalysis(david_rules).class_parent_pairs()) == 26
 
     def test_classes_with_properties(self, david_rules: InformationRules) -> None:
-        assert len(InformationAnalysis(david_rules).classes_with_properties()) == 20
+        assert len(RuleAnalysis(david_rules).properties_by_class()) == 20
 
     def test_class_property_pairs(self, david_rules: InformationRules) -> None:
         assert len(InformationAnalysis(david_rules).class_property_pairs()) == 20

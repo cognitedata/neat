@@ -39,7 +39,7 @@ class RuleAnalysis:
                         stacklevel=2,
                     )
         if include_ancestors:
-            # Topological sort to ensure that parents are defined before children
+            # Topological sort to ensure that classes include all ancestors
             for class_entity in list(TopologicalSorter(parents_by_class).static_order()):
                 parents_by_class[class_entity] |= {
                     grand_parent
@@ -49,7 +49,7 @@ class RuleAnalysis:
 
         return parents_by_class
 
-    def properties_by_classes(
+    def properties_by_class(
         self, include_ancestors: bool = False, include_different_space: bool = False
     ) -> dict[ClassEntity, list[InformationProperty]]:
         """Get a dictionary of classes and their properties.
