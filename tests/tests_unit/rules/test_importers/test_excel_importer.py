@@ -18,7 +18,7 @@ from cognite.neat._issues.warnings import (
 from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.transformers import VerifyAnyRules
-from tests.config import DOC_RULES
+from tests.config import DATA_FOLDER, DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 
 
@@ -158,3 +158,10 @@ class TestExcelImporter:
 
         assert len(issues) == len(expected_issues)
         assert issues == expected_issues
+
+    def test_import_dms_rules_missing_in_model(self):
+        importer = ExcelImporter(DATA_FOLDER / "missing-in-model-value.xlsx")
+        rules = VerifyAnyRules(validate=False).transform(importer.to_rules())
+
+        for views in rules.views:
+            assert views.in_model

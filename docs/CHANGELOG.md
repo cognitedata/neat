@@ -20,6 +20,7 @@ Changes are grouped as follows:
 - [ALPHA] Added standardization of version and space for views in DMS data model under `neat.prepare.data_model.standardize_space_and_version()`.
 
 ### Fixed
+- In Model was not automatically set to True importing from spreadsheet missing value in this column
 - Change the `Instance source` field on InformationProperty to be less restrictive. All URIs are now allowed.
 - The `neat.infer()` maintains acronyms when renaming invalid properties/classes. 
 

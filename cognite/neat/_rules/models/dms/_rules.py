@@ -295,7 +295,9 @@ class DMSView(SheetRow):
         None, alias="Filter", description="Explicitly define the filter for the view."
     )
     in_model: bool = Field(
-        True, alias="In Model", description="Indicates whether the view being defined is a part of the data model."
+        True,
+        alias="In Model",
+        description="Indicates whether the view being defined is a part of the data model.",
     )
     logical: URIRefType | None = Field(
         None,
