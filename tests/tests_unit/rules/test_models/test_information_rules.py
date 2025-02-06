@@ -14,6 +14,7 @@ from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo
 from cognite.neat._rules.models.information import (
     InformationClass,
     InformationInputRules,
+    InformationProperty,
     InformationRules,
     InformationValidation,
 )
@@ -106,7 +107,7 @@ def invalid_domain_rules_cases():
                 }
             ],
         },
-        NeatValueError("Invalid RDF Path: ':GeneratingUnit(cim:name)'"),
+        NeatValueError("Invalid RDF Path - the prefix is empty in ':GeneratingUnit'"),
         id="missing_rule",
     )
 
@@ -409,3 +410,35 @@ class TestInformationConverter:
         assert rules.classes[0].class_.suffix == "Generating_Unit"
         assert rules.properties[0].property_ == "IdentifiedObject_name"
         assert rules.properties[0].class_.suffix == "Generating_Unit"
+
+
+class TestInformationProperty:
+    @pytest.mark.parametrize(
+        "raw",
+        [
+            pytest.param(
+                InformationInputProperty(
+                    class_="MyAsset",
+                    property_="name",
+                    value_type="string",
+                    max_count=1,
+                    instance_source="prefix_16:MyAsset(prefix_16:P&ID)",
+                ),
+                id="Instance Source with ampersand",
+            ),
+            pytest.param(
+                InformationInputProperty(
+                    class_="MyAsset",
+                    property_="name",
+                    value_type="string",
+                    max_count=1,
+                    instance_source="prefix_16:MyAsset(prefix_16:State(Previous))",
+                ),
+                id="Instance Source with parentheses",
+            ),
+        ],
+    )
+    def test_rdf_properties(self, raw: InformationInputProperty):
+        prop = InformationProperty.model_validate(raw.dump(default_prefix="power"))
+
+        assert isinstance(prop, InformationProperty)

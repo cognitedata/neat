@@ -19,6 +19,10 @@ Changes are grouped as follows:
 ### Added
 - [ALPHA] Added standardization of version and space for views in DMS data model under `neat.prepare.data_model.standardize_space_and_version()`.
 
+### Fixed
+- Change the `Instance source` field on InformationProperty to be less restrictive. All URIs are now allowed.
+- The `neat.infer()` maintains acronyms when renaming invalid properties/classes. 
+
 ## [0.109.4] - 03-02-**2025**
 ### Fixed
 - The `neat.create.enterprise_model()` now sorts properties based on (view + property) in alphabetical order.
