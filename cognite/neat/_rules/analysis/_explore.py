@@ -16,6 +16,15 @@ class RuleExplore:
     def parents_by_class(
         self, include_ancestors: bool = False, include_different_space: bool = False
     ) -> dict[ClassEntity, set[ClassEntity]]:
+        """Get a dictionary of classes and their parents.
+
+        Args:
+            include_ancestors (bool, optional): Include ancestors of the parents. Defaults to False.
+            include_different_space (bool, optional): Include parents from different spaces. Defaults to False.
+
+        Returns:
+            dict[ClassEntity, set[ClassEntity]]: Values parents with class as key.
+        """
         parents_by_class: dict[ClassEntity, set[ClassEntity]] = {}
         for class_ in self._information.classes:
             parents_by_class[class_.class_] = set()
@@ -43,6 +52,16 @@ class RuleExplore:
     def properties_by_classes(
         self, include_ancestors: bool = False, include_different_space: bool = False
     ) -> dict[ClassEntity, list[InformationProperty]]:
+        """Get a dictionary of classes and their properties.
+
+        Args:
+            include_ancestors: Whether to include properties from parent classes.
+            include_different_space: Whether to include properties from parent classes in different spaces.
+
+        Returns:
+            dict[ClassEntity, list[InformationProperty]]: Values properties with class as key.
+
+        """
         properties_by_classes = defaultdict(list)
         for prop in self._information.properties:
             properties_by_classes[prop.class_].append(prop)
