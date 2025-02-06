@@ -346,7 +346,7 @@ class Queries:
     def list_types(
         self,
         remove_namespace: bool = False,
-        limit: int = 25,
+        limit: int | None = 25,
         named_graph: URIRef | None = None,
     ) -> list[ResultRow] | list[str]:
         """List types in the graph store
@@ -358,7 +358,9 @@ class Queries:
         Returns:
             List of types
         """
-        query = f"SELECT DISTINCT ?type WHERE {{ ?subject a ?type }} LIMIT {limit}"
+        query = f"SELECT DISTINCT ?type WHERE {{ ?subject a ?type }}"
+        if limit is not None:
+            query += f" LIMIT {limit}"
         result = cast(list[ResultRow], list(self.graph(named_graph).query(query)))
         if remove_namespace:
             return [remove_namespace_from_uri(res[0]) for res in result]

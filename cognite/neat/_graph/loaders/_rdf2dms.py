@@ -30,6 +30,7 @@ from cognite.neat._issues.errors import (
     ResourceDuplicatedError,
     ResourceRetrievalError,
 )
+from dataclasses import dataclass
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
 from cognite.neat._rules.analysis._dms import DMSAnalysis
 from cognite.neat._rules.models import DMSRules
@@ -43,6 +44,26 @@ from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 from cognite.neat._utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, CDFLoader
+
+@dataclass
+class _ViewIterator:
+    """This is a helper class to iterate over the views
+
+    Args:
+        view: The view to iterate over
+        instance_count: The number of instances in the view
+        self_required_properties: The properties in the view that are required to be created first.
+            There is only one known case, the CogniteAsset.parent property. If the view has a dependency on itself,
+            the DMS will create the nodes twice, first without the parent property, and then add only
+            the parent property.
+    """
+    view: dm.View
+    instance_count: int
+    self_required_properties: set[str]
+
+    @property
+    def view_id(self) -> dm.ViewId:
+        return self.view.as_id()
 
 
 class DMSLoader(CDFLoader[dm.InstanceApply]):
@@ -68,7 +89,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         instance_space: str,
         class_neat_id_by_view_id: dict[ViewId, URIRef] | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
-        tracker: type[Tracker] | None = None,
         rules: DMSRules | None = None,
         client: NeatClient | None = None,
         unquote_external_ids: bool = False,
@@ -78,7 +98,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self.instance_space = instance_space
         self.class_neat_id_by_view_id = class_neat_id_by_view_id or {}
         self._issues = IssueList(create_issues or [])
-        self._tracker: type[Tracker] = tracker or LogTracker
         self.rules = rules
         self._client = client
         self._unquote_external_ids = unquote_external_ids
@@ -146,115 +165,117 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             # There should already be an error in this case.
             return
 
+        view_iterations = self._create_view_iterations()
+
+        for view_iteration in view_iterations:
+            pydantic_cls, edge_by_type, edge_by_prop_id, issues = self._create_validation_classes(
+                view_iteration.view)  # type: ignore[var-annotated]
+            yield from issues
+            reader = get_reader()
+            instance_iterable = iterate_progress_bar_if_above_config_threshold(
+                reader, view_iteration.instance_count, f"Loading {track_id}"
+            )
+            for identifier, properties in instance_iterable:
+                yield from self._create_instances(...)
+            if view_iteration.self_required_properties:
+                # We need to run the view again to add the self properties.
+                # This is only relevant if the view has a require constraint on the container.
+                # If not, we can create an empty node on the fly.
+                yield from self._create_instances
+
+            yield _END_OF_CLASS
+
+        #
+        # for view_id, (view, instance_count, self_properties) in view_and_count_by_id.items():
+        #     pydantic_cls, edge_by_type, edge_by_prop_id, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
+        #     yield from issues
+        #     # tracker.issue(issues)
+        #
+        #
+        #     for skip_properties in iterations:
+        #         if skip_properties:
+        #             track_id = f"{view_id} (self)"
+        #         else:
+        #             track_id = repr(view_id)
+        #         tracker.start(track_id)
+        #         if views_with_linked_properties:
+        #             # we need graceful exit if the view is not in the view_property_pairs
+        #             property_link_pairs = views_with_linked_properties.get(ViewEntity.from_id(view_id))
+        #
+        #             if class_neat_id := self.class_neat_id_by_view_id.get(view_id):
+        #                 reader = self.graph_store._read_via_rules_linkage(class_neat_id, property_link_pairs)
+        #             else:
+        #                 error_view = ResourceRetrievalError(view_id, "view", "View not linked to class")
+        #                 tracker.issue(error_view)
+        #                 if stop_on_exception:
+        #                     raise error_view
+        #                 yield error_view
+        #                 continue
+        #         else:
+        #             # this assumes no changes in the suffix of view and class
+        #             reader = self.graph_store.read(view.external_id)
+        #
+        #         instance_iterable = iterate_progress_bar_if_above_config_threshold(
+        #             reader, instance_count, f"Loading {track_id}"
+        #         )
+        #
+        #         for identifier, properties in instance_iterable:
+        #             start_node, end_node = self._pop_start_end_node(properties)
+        #             is_edge = start_node and end_node
+        #             if (is_edge and view.used_for == "node") or (not is_edge and view.used_for == "edge"):
+        #                 instance_type = "edge" if is_edge else "node"
+        #                 creation_error = ResourceCreationError(
+        #                     identifier,
+        #                     instance_type,
+        #                     error=f"{instance_type.capitalize()} found in {view.used_for} view",
+        #                 )
+        #                 tracker.issue(creation_error)
+        #                 if stop_on_exception:
+        #                     raise creation_error
+        #                 yield creation_error
+        #                 continue
+        #
+        #             if skip_properties:
+        #                 properties = {k: v for k, v in properties.items() if k not in skip_properties}
+        #
+        #             if start_node and end_node:
+        #                 # Is an edge
+        #                 try:
+        #                     yield self._create_edge_with_properties(
+        #                         identifier, properties, start_node, end_node, pydantic_cls, view_id
+        #                     )
+        #                 except ValueError as e:
+        #                     error_edge = ResourceCreationError(identifier, "edge", error=str(e))
+        #                     tracker.issue(error_edge)
+        #                     if stop_on_exception:
+        #                         raise error_edge from e
+        #                     yield error_edge
+        #             else:
+        #                 try:
+        #                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
+        #                 except ValueError as e:
+        #                     error_node = ResourceCreationError(identifier, "node", error=str(e))
+        #                     tracker.issue(error_node)
+        #                     if stop_on_exception:
+        #                         raise error_node from e
+        #                     yield error_node
+        #                 yield from self._create_edges_without_properties(
+        #                     identifier, properties, edge_by_type, edge_by_prop_id, tracker
+        #                 )
+        #         tracker.finish(track_id)
+        #         yield _END_OF_CLASS
+
+    def _create_view_iterations(self) -> list[_ViewIterator]:
         views_with_linked_properties = (
             DMSAnalysis(self.rules).views_with_properties_linked_to_classes(consider_inheritance=True)
             if self.rules and self.rules.metadata.logical
             else None
         )
 
-        view_and_count_by_id = self._select_views_with_instances(self.data_model.views)
+        view_iterations = self._select_views_with_instances(self.data_model.views)
 
-        if self._client:
-            view_and_count_by_id, properties_point_to_self = self._sort_by_direct_relation_dependencies(
-                view_and_count_by_id
-            )
-        else:
-            properties_point_to_self = {}
-
-        view_ids: list[str] = []
-        for view_id in view_and_count_by_id.keys():
-            view_ids.append(repr(view_id))
-            if view_id in properties_point_to_self:
-                # If the views have a dependency on themselves, we need to run it twice.
-                view_ids.append(f"{view_id!r} (self)")
-
-        tracker = self._tracker(type(self).__name__, view_ids, "views")
-        for view_id, (view, instance_count) in view_and_count_by_id.items():
-            pydantic_cls, edge_by_type, edge_by_prop_id, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
-            yield from issues
-            tracker.issue(issues)
-
-            if view_id in properties_point_to_self:
-                # If the view has a dependency on itself, we need to run it twice.
-                # First, to ensure that all nodes are created, and then to add the direct relations.
-                # This only applies if there is a require constraint on the container, if not
-                # we can create an empty node on the fly.
-                iterations = [properties_point_to_self[view_id], set()]
-            else:
-                iterations = [set()]
-
-            for skip_properties in iterations:
-                if skip_properties:
-                    track_id = f"{view_id} (self)"
-                else:
-                    track_id = repr(view_id)
-                tracker.start(track_id)
-                if views_with_linked_properties:
-                    # we need graceful exit if the view is not in the view_property_pairs
-                    property_link_pairs = views_with_linked_properties.get(ViewEntity.from_id(view_id))
-
-                    if class_neat_id := self.class_neat_id_by_view_id.get(view_id):
-                        reader = self.graph_store._read_via_rules_linkage(class_neat_id, property_link_pairs)
-                    else:
-                        error_view = ResourceRetrievalError(view_id, "view", "View not linked to class")
-                        tracker.issue(error_view)
-                        if stop_on_exception:
-                            raise error_view
-                        yield error_view
-                        continue
-                else:
-                    # this assumes no changes in the suffix of view and class
-                    reader = self.graph_store.read(view.external_id)
-
-                instance_iterable = iterate_progress_bar_if_above_config_threshold(
-                    reader, instance_count, f"Loading {track_id}"
-                )
-
-                for identifier, properties in instance_iterable:
-                    start_node, end_node = self._pop_start_end_node(properties)
-                    is_edge = start_node and end_node
-                    if (is_edge and view.used_for == "node") or (not is_edge and view.used_for == "edge"):
-                        instance_type = "edge" if is_edge else "node"
-                        creation_error = ResourceCreationError(
-                            identifier,
-                            instance_type,
-                            error=f"{instance_type.capitalize()} found in {view.used_for} view",
-                        )
-                        tracker.issue(creation_error)
-                        if stop_on_exception:
-                            raise creation_error
-                        yield creation_error
-                        continue
-
-                    if skip_properties:
-                        properties = {k: v for k, v in properties.items() if k not in skip_properties}
-
-                    if start_node and end_node:
-                        # Is an edge
-                        try:
-                            yield self._create_edge_with_properties(
-                                identifier, properties, start_node, end_node, pydantic_cls, view_id
-                            )
-                        except ValueError as e:
-                            error_edge = ResourceCreationError(identifier, "edge", error=str(e))
-                            tracker.issue(error_edge)
-                            if stop_on_exception:
-                                raise error_edge from e
-                            yield error_edge
-                    else:
-                        try:
-                            yield self._create_node(identifier, properties, pydantic_cls, view_id)
-                        except ValueError as e:
-                            error_node = ResourceCreationError(identifier, "node", error=str(e))
-                            tracker.issue(error_node)
-                            if stop_on_exception:
-                                raise error_node from e
-                            yield error_node
-                        yield from self._create_edges_without_properties(
-                            identifier, properties, edge_by_type, edge_by_prop_id, tracker
-                        )
-                tracker.finish(track_id)
-                yield _END_OF_CLASS
+        view_iterations = self._sort_by_direct_relation_dependencies(view_iterations)
+        return view_iterations
 
     @staticmethod
     def _pop_start_end_node(properties: dict[str | InstanceType, list[str]]) -> tuple[str | None, str | None]:
@@ -286,12 +307,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 yaml.safe_dump(dumped, f, sort_keys=False)
 
-    def _select_views_with_instances(self, views: list[dm.View]) -> dict[dm.ViewId, tuple[dm.View, int]]:
+    def _select_views_with_instances(self, views: list[dm.View]) -> list[_ViewIterator]:
         """Selects the views with data."""
-        view_and_count_by_id: dict[dm.ViewId, tuple[dm.View, int]] = {}
+        view_and_count_by_id: list[_ViewIterator] = []
         uri_by_type: dict[str, URIRef] = {
             remove_namespace_from_uri(uri[0]): uri[0]  # type: ignore[misc]
-            for uri in self.graph_store.queries.list_types()
+            for uri in self.graph_store.queries.list_types(limit=None)
         }
         for view in views:
             view_id = view.as_id()
@@ -302,17 +323,19 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 count = self.graph_store.count_of_type(uri_by_type[view.external_id])
             else:
                 continue
+
             if count > 0:
                 view_and_count_by_id[view_id] = view, count
 
         return view_and_count_by_id
 
     def _sort_by_direct_relation_dependencies(
-        self, view_and_count_by_id: dict[dm.ViewId, tuple[dm.View, int]]
-    ) -> tuple[dict[dm.ViewId, tuple[dm.View, int]], dict[dm.ViewId, set[str]]]:
+        self, iterations: list[_ViewIterator]
+    ) -> list[_ViewIterator]:
         """Sorts the views by container constraints."""
         if not self._client:
-            return view_and_count_by_id, {}
+            return iterations
+
         # We need to retrieve the views to ensure we get all properties, such that we can find all
         # the containers that the view is linked to.
         views = self._client.data_modeling.views.retrieve(
