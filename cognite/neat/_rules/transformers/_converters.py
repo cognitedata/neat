@@ -216,7 +216,7 @@ class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]): 
                 property_.view.version = version
                 property_.view.prefix = space
 
-            if isinstance(property_.value_type, ViewEntity) and property_.value_type.space != "cdf_cdm":
+            if isinstance(property_.value_type, ViewEntity) and property_.value_type.space not in COGNITE_SPACES::
                 property_.value_type.version = version
                 property_.value_type.prefix = space
         return properties
