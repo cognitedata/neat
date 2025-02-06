@@ -15,6 +15,10 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Added
+- [ALPHA] Added standardization of version and space for views in DMS data model under `neat.prepare.data_model.standardize_space_and_version()`.
+
 ## [0.109.4] - 03-02-**2025**
 ### Fixed
 - The `neat.create.enterprise_model()` now sorts properties based on (view + property) in alphabetical order.
@@ -28,7 +32,7 @@ Changes are grouped as follows:
 - `neat.infer()` now automatically makes the inferred classes and properties comply with the CDF naming conventions.
 
 ### Fixed
-- The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model 
+- The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model
   in the Excel file.
 
 ## [0.109.2] - 31-01-**2025**

@@ -174,6 +174,54 @@ class ToInformationCompliantEntities(
         return property_
 
 
+class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]):  # type: ignore[misc]
+    """This transformer standardizes the space and version of the DMSRules.
+
+    typically used to ensure all the views are moved to the same version as the data model.
+
+    """
+
+    @property
+    def description(self) -> str:
+        return "Ensures uniform version and space of the views belonging to the data model."
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        copy = rules.model_copy(deep=True)
+
+        space = copy.metadata.space
+        version = copy.metadata.version
+
+        copy.views = self._standardize_views(copy.views, space, version)
+        copy.properties = self._standardize_properties(copy.properties, space, version)
+        return copy
+
+    def _standardize_views(self, views: SheetList[DMSView], space: str, version: str) -> SheetList[DMSView]:
+        for view in views:
+            if view.view.space != "cdf_cdm":
+                view.view.version = version
+                view.view.prefix = space
+
+            if view.implements:
+                for i, parent in enumerate(view.implements):
+                    if parent.space != "cdf_cdm":
+                        view.implements[i].version = version
+                        view.implements[i].prefix = space
+        return views
+
+    def _standardize_properties(
+        self, properties: SheetList[DMSProperty], space: str, version: str
+    ) -> SheetList[DMSProperty]:
+        for property_ in properties:
+            if property_.view.space != "cdf_cdm":
+                property_.view.version = version
+                property_.view.prefix = space
+
+            if isinstance(property_.value_type, ViewEntity) and property_.value_type.space != "cdf_cdm":
+                property_.value_type.version = version
+                property_.value_type.prefix = space
+        return properties
+
+
 class ToCompliantEntities(VerifiedRulesTransformer[InformationRules, InformationRules]):  # type: ignore[misc]
     """Converts input rules to rules with compliant entity IDs that match regex patters used
     by DMS schema components."""
