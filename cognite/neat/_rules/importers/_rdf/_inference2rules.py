@@ -13,7 +13,7 @@ from rdflib import Literal as RdfLiteral
 from cognite.neat._constants import NEAT, get_default_prefixes_and_namespaces
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.warnings import PropertyValueTypeUndefinedWarning
-from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.analysis import RuleAnalysis
 from cognite.neat._rules.models import InformationRules, data_types
 from cognite.neat._rules.models.data_types import AnyURI
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
@@ -481,11 +481,13 @@ class SubclassInferenceImporter(BaseRDFImporter):
             type_uri, instance_count_literal = cast(tuple[URIRef, RdfLiteral], result_row)
             count_by_type[type_uri] = instance_count_literal.toPython()
         if self._rules:
-            analysis = InformationAnalysis(self._rules)
+            analysis = RuleAnalysis(
+                self._rules,
+            )
             existing_class_properties = {
                 (class_entity.suffix, prop.property_)
-                for class_entity, properties in analysis.classes_with_properties(
-                    consider_inheritance=True, allow_different_namespace=True
+                for class_entity, properties in analysis.properties_by_classes(
+                    include_ancestors=True, include_different_space=True
                 ).items()
                 for prop in properties
             }

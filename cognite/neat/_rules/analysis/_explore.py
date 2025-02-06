@@ -8,8 +8,8 @@ from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import InformationProperty
 
 
-class RuleExplore:
-    def __init__(self, information: InformationRules, dms: DMSRules | None) -> None:
+class RuleAnalysis:
+    def __init__(self, information: InformationRules, dms: DMSRules | None = None) -> None:
         self._information = information
         self._dms = dms
 

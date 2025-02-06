@@ -1,4 +1,4 @@
-from cognite.neat._rules.analysis import InformationAnalysis, RuleExplore
+from cognite.neat._rules.analysis import InformationAnalysis, RuleAnalysis
 from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import (
@@ -68,7 +68,7 @@ class TestAnalysis:
             ],
         )
 
-        explore = RuleExplore(generation.as_verified_rules(), None)
+        explore = RuleAnalysis(generation.as_verified_rules(), None)
 
         parents_by_class = explore.parents_by_class(include_ancestors=True)
         assert {
