@@ -14,7 +14,7 @@ from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._issues.errors import FileReadError, NeatValueError
 from cognite.neat._shared import Triple
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
-from cognite.neat._utils.text import to_camel
+from cognite.neat._utils.text import to_camel_case
 from cognite.neat._utils.xml_ import get_children
 
 IODD = Namespace("http://www.io-link.com/IODD/2010/10/")
@@ -170,7 +170,7 @@ class IODDExtractor(BaseExtractor):
             ):
                 if text_id := child[0].attrib.get("textId"):
                     # Create connection from device to textId node
-                    element_tag = to_camel(element_tag)
+                    element_tag = to_camel_case(element_tag)
                     triples.append((id, IODD[element_tag], namespace[text_id]))
 
         return triples
@@ -216,7 +216,7 @@ class IODDExtractor(BaseExtractor):
                 if id := element.attrib.get("id"):
                     if id in cls.std_variable_elements_to_extract:
                         if object := element.attrib.get("defaultValue"):
-                            predicate = to_camel(id.replace("V_", ""))
+                            predicate = to_camel_case(id.replace("V_", ""))
                             triples.append((device_id, IODD[predicate], Literal(object)))
         return triples
 

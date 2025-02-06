@@ -21,7 +21,7 @@ from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
 from cognite.neat._shared import Triple
 from cognite.neat._utils.collection_ import chunker, iterate_progress_bar
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
-from cognite.neat._utils.text import to_snake
+from cognite.neat._utils.text import to_snake_case
 
 from ._assets import AssetsExtractor
 from ._base import ClassicCDFBaseExtractor, InstanceIdPrefix
@@ -194,7 +194,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         for prop in verified.properties:
             prop_id = prop.property_
             if is_snake_case:
-                prop_id = to_snake(prop_id)
+                prop_id = to_snake_case(prop_id)
             prop.instance_source = RDFPath(
                 traversal=SingleProperty(
                     class_=RDFPathEntity(prefix=instance_prefix, suffix=prop.class_.suffix),

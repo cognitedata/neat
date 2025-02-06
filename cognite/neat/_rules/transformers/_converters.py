@@ -60,7 +60,7 @@ from cognite.neat._rules.models.entities import (
     ViewEntity,
 )
 from cognite.neat._rules.models.information import InformationClass, InformationMetadata, InformationProperty
-from cognite.neat._utils.text import NamingStandardization, to_camel
+from cognite.neat._utils.text import NamingStandardization, to_camel_case
 
 from ._base import RulesTransformer, T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
 from ._verification import VerifyDMSRules
@@ -75,22 +75,20 @@ class ConversionTransformer(VerifiedRulesTransformer[T_VerifiedIn, T_VerifiedOut
     ...
 
 
-class ToInformationCompliantEntities(
-    RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]
-):
+class ToDMSCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]):
     """Converts input rules to rules that is compliant with the Information Model.
 
     This is typically used with importers from arbitrary sources to ensure that classes and properties have valid
     names.
 
     Args:
-        renaming: How to handle renaming of entities that are not compliant with the Information Model.
-            - "warning": Raises a warning and renames the entity.
+        rename_warning: How to handle renaming of entities that are not compliant with the Information Model.
+            - "raise": Raises a warning and renames the entity.
             - "skip": Renames the entity without raising a warning.
     """
 
-    def __init__(self, renaming: Literal["warning", "skip"] = "skip") -> None:
-        self._renaming = renaming
+    def __init__(self, rename_warning: Literal["raise", "skip"] = "skip") -> None:
+        self._renaming = rename_warning
 
     @property
     def description(self) -> str:
@@ -107,9 +105,9 @@ class ToInformationCompliantEntities(
         new_by_old_class_suffix: dict[str, str] = {}
         for cls in copy.classes:
             cls_entity = cast(ClassEntity, cls.class_)  # Safe due to the dump above
-            if not PATTERNS.class_id_compliance.match(cls_entity.suffix):
+            if not PATTERNS.view_id_compliance.match(cls_entity.suffix):
                 new_suffix = self._fix_cls_suffix(cls_entity.suffix)
-                if self._renaming == "warning":
+                if self._renaming == "raise":
                     warnings.warn(
                         NeatValueWarning(f"Invalid class name {cls_entity.suffix!r}.Renaming to {new_suffix}"),
                         stacklevel=2,
@@ -123,7 +121,7 @@ class ToInformationCompliantEntities(
                         cls_.implements[i].suffix = new_by_old_class_suffix[parent.suffix]  # type: ignore[union-attr]
 
         for prop in copy.properties:
-            if not PATTERNS.information_property_id_compliance.match(prop.property_):
+            if not PATTERNS.dms_property_id_compliance.match(prop.property_):
                 new_property = self._fix_property(prop.property_)
                 if self._renaming == "warning":
                     warnings.warn(
@@ -649,7 +647,7 @@ class ToEnterpriseModel(ToExtensionModel):
 
             container = DMSContainer(container=container_entity)
 
-            property_id = f"{to_camel(view_entity.suffix)}{self.dummy_property}"
+            property_id = f"{to_camel_case(view_entity.suffix)}{self.dummy_property}"
             property_ = DMSProperty(
                 view=view_entity,
                 view_property=property_id,
@@ -852,7 +850,7 @@ class ToSolutionModel(ToExtensionModel):
             if view.view in read_view_by_new_view:
                 read_view = read_view_by_new_view[view.view]
                 container_entity = ContainerEntity(space=self.new_model_id.space, externalId=view.view.external_id)
-                prefix = to_camel(view.view.suffix)
+                prefix = to_camel_case(view.view.suffix)
                 if self.properties == "repeat" and self.dummy_property:
                     property_ = DMSProperty(
                         view=view.view,
