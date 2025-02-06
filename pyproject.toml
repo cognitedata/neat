@@ -152,9 +152,8 @@ types-requests = "^2"
 types-setuptools = "^68"
 types-tqdm = "^4.67.0.20241221"
 networkx-stubs = "^0.0.1"
-#cognite-toolkit = "^0.4.2"
+cognite-toolkit = "^0.4.5"
 tqdm = "^4.67.1"
-cognite-toolkit = { git = "https://github.com/cognitedata/toolkit.git", branch = "auth-with-auth0" }
 
 [build-system]
 requires = ["poetry>=0.12"]
