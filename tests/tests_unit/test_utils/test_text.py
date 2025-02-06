@@ -1,6 +1,6 @@
 import pytest
 
-from cognite.neat._utils.text import to_camel
+from cognite.neat._utils.text import to_camel_case
 
 
 class TestToCamel:
@@ -10,8 +10,12 @@ class TestToCamel:
             ("TAG_NAME", "tagName"),
             ("TAG NAME", "tagName"),
             ("a_b", "aB"),
-            ("camel_case", "camelCase"),
+            ("Work Order ID", "workOrderID"),
+            ("camelCaseAlready", "camelCaseAlready"),
+            ("A_-Strange@(Combination)-of#Casing", "aStrangeCombinationOfCasing"),
+            ("#SHOUTING@SNAKE_CASE1234", "shoutingSnakeCase1234"),
+            ("WO Long Description", "WOLongDescription"),
         ],
     )
     def test_to_camel(self, actual: str, expected: str) -> None:
-        assert to_camel(actual) == expected
+        assert to_camel_case(actual) == expected

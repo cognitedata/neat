@@ -169,6 +169,17 @@ class Entity(BaseModel, arbitrary_types_allowed=True):
             raise ValueError(f"{cls.__name__} is expected to be prefix:suffix, got {entity_string}")
 
     @classmethod
+    def from_any_uri(cls, raw: str) -> Self:
+        if ":" not in raw:
+            raise NeatValueError(f"Invalid RDF Path - the entity {raw!r} is expected to be in the form prefix:suffix")
+        prefix, suffix = raw.split(":", maxsplit=1)
+        if len(prefix) == 0:
+            raise NeatValueError(f"Invalid RDF Path - the prefix is empty in {raw!r}")
+        if len(suffix) == 0:
+            raise NeatValueError(f"Invalid RDF Path - the suffix is empty in {raw!r}")
+        return cls(prefix=prefix, suffix=suffix)
+
+    @classmethod
     def from_list(cls, entity_strings: list[str], base_prefix: str | None = None) -> list[Self]:
         return [
             cls.from_string(entity_string=entity_string, base_prefix=base_prefix) for entity_string in entity_strings
@@ -228,6 +239,13 @@ class SingleProperty(Traversal):
     @classmethod
     def from_string(cls, class_: str, property_: str) -> Self:
         return cls(class_=Entity.from_string(class_), property=Entity.from_string(property_))
+
+    @classmethod
+    def parse_any_uri(cls, raw: str) -> Self | None:
+        if len(raw) == 0 or "(" not in raw or raw[-1] != ")":
+            return None
+        class_, rest = raw.split("(", maxsplit=1)
+        return cls(class_=Entity.from_any_uri(class_), property=Entity.from_any_uri(rest[:-1]))
 
     def __str__(self) -> str:
         return f"{self.class_}({self.property})"
@@ -313,6 +331,8 @@ def parse_traversal(raw: str) -> SelfReferenceProperty | SingleProperty | Hop:
         )
     elif result := HOP_REGEX_COMPILED.match(raw):
         return Hop.from_string(class_=result.group("origin"), traversal=result.group(_traversal))
+    elif prop := SingleProperty.parse_any_uri(raw):
+        return prop
     else:
         raise NeatValueError(f"Invalid RDF Path: {raw!r}")
 

@@ -18,6 +18,8 @@ Changes are grouped as follows:
 ## TBD
 ### Fixed
 - In Model was not automatically set to True importing from spreadsheet missing value in this column
+- Change the `Instance source` field on InformationProperty to be less restrictive. All URIs are now allowed.
+- The `neat.infer()` maintains acronyms when renaming invalid properties/classes. 
 
 ## [0.109.4] - 03-02-**2025**
 ### Fixed
