@@ -80,8 +80,6 @@ TABLE_REGEX_COMPILED = re.compile(
     rf"^(?P<{Lookup.table}>{SUFFIX_REGEX})\((?P<{Lookup.key}>{SUFFIX_REGEX}),\s*(?P<{Lookup.value}>{SUFFIX_REGEX})\)$"
 )
 
-# This capture two groups, one before and one inside a set of parenthesis.
-CAPTURE_PARENTHESIS = re.compile(r"([^()]+)\(([^()]+)\)")
 
 StepDirection = Literal["source", "target", "origin"]
 _direction_by_symbol: dict[str, StepDirection] = {"->": "target", "<-": "source"}
