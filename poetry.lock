@@ -548,35 +548,31 @@ yaml = ["PyYAML (>=6.0,<7.0)"]
 
 [[package]]
 name = "cognite-toolkit"
-version = "0.4.4"
+version = "0.4.5"
 description = "Official Cognite Data Fusion tool for project templates and configuration deployment"
 optional = false
-python-versions = "^3.10"
+python-versions = ">=3.10"
 groups = ["dev"]
 markers = "(sys_platform == \"darwin\" or sys_platform == \"linux\" or sys_platform != \"darwin\" and sys_platform != \"linux\") and (python_version <= \"3.11\" or python_version >= \"3.12\")"
-files = []
-develop = false
+files = [
+    {file = "cognite_toolkit-0.4.5-py3-none-any.whl", hash = "sha256:55481d6076116e5c463866e15bee1d377ae637395d90cc11f6ee349f587e1621"},
+    {file = "cognite_toolkit-0.4.5.tar.gz", hash = "sha256:866fb6419ca80d3b81a225786f0b7331575a18afaef8dbd040060fb8a509ce2e"},
+]
 
 [package.dependencies]
-cognite-sdk = {version = "^7.73.1", extras = ["pandas"]}
-mixpanel = "^4.10.1"
+cognite-sdk = {version = ">=7.73.1,<8.0.0", extras = ["pandas"]}
+mixpanel = ">=4.10.1,<5.0.0"
 packaging = ">=22.0,<25.0"
-pandas = ">=1.5.3, <3.0"
-python-dotenv = "^1.0.0"
-pyyaml = "^6.0.1"
-questionary = "^2.0.1"
-rich = "^13.9.4"
-sentry-sdk = "^2.1.0"
-toml = "^0.10.2"
-tomli = {version = "^2.0.1", markers = "python_version < \"3.11\""}
-typer = ">=0.12.0, <1.0"
-typing-extensions = "^4.0"
-
-[package.source]
-type = "git"
-url = "https://github.com/cognitedata/toolkit.git"
-reference = "auth-with-auth0"
-resolved_reference = "90d8dcee403d734a59c2d79550e8c25ae66f9e53"
+pandas = ">=1.5.3,<3.0"
+python-dotenv = ">=1.0.0,<2.0.0"
+pyyaml = ">=6.0.1,<7.0.0"
+questionary = ">=2.0.1,<3.0.0"
+rich = ">=13.9.4,<14.0.0"
+sentry-sdk = ">=2.1.0,<3.0.0"
+toml = ">=0.10.2,<0.11.0"
+tomli = {version = ">=2.0.1,<3.0.0", markers = "python_version < \"3.11\""}
+typer = ">=0.12.0,<1.0"
+typing-extensions = ">=4.0,<5.0"
 
 [[package]]
 name = "colorama"
@@ -5648,4 +5644,4 @@ oxi = ["oxrdflib", "pyoxigraph"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "9ab834e34ad1ce3bfd4292e01e044b18be1260214755dc271b74eced29f96da3"
+content-hash = "76da5aacc152f89b823ee7a3a92282103149f83cf4fab0aa0d5d080a7072b9fc"
