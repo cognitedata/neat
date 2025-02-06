@@ -173,8 +173,12 @@ class Entity(BaseModel, arbitrary_types_allowed=True):
     @classmethod
     def from_any_uri(cls, raw: str) -> Self:
         if ":" not in raw:
-            return cls(prefix=Undefined, suffix=Unknown)
+            raise NeatValueError(f"Invalid RDF Path - the entity {raw!r} is expected to be in the form prefix:suffix")
         prefix, suffix = raw.split(":", maxsplit=1)
+        if len(prefix) == 0:
+            raise NeatValueError(f"Invalid RDF Path - the prefix is empty in {raw!r}")
+        if len(suffix) == 0:
+            raise NeatValueError(f"Invalid RDF Path - the suffix is empty in {raw!r}")
         return cls(prefix=prefix, suffix=suffix)
 
     @classmethod

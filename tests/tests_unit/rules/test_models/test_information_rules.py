@@ -107,7 +107,7 @@ def invalid_domain_rules_cases():
                 }
             ],
         },
-        NeatValueError("Invalid RDF Path: ':GeneratingUnit(cim:name)'"),
+        NeatValueError("Invalid RDF Path - the prefix is empty in ':GeneratingUnit'"),
         id="missing_rule",
     )
 

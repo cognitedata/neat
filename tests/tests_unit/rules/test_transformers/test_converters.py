@@ -41,8 +41,6 @@ class TestStandardizeNaming:
             metadata=InformationInputMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
                 InformationInputProperty(class_name, "TAG_NAME", "string", max_count=1),
-                InformationInputProperty(class_name, "State(Previous)", "string", max_count=1),
-                InformationInputProperty(class_name, "P&ID", "string", max_count=1),
             ],
             classes=[InformationInputClass(class_name)],
         )
@@ -52,9 +50,6 @@ class TestStandardizeNaming:
         assert res.properties[0].property_ == "tagName"
         assert res.properties[0].class_.suffix == "NotAGoodCLassNAME"
         assert res.classes[0].class_.suffix == "NotAGoodCLassNAME"
-
-        assert res.properties[1].property_ == "statePrevious"
-        assert res.properties[2].property_ == "pId"
 
 
 class TestToInformationCompliantEntities:

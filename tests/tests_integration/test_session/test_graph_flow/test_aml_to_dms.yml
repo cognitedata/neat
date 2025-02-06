@@ -128,6 +128,15 @@ rules:
     view: InternalElement
     view_property: RoleRequirements
   - container: InternalElement
+    container_property: SISNotation
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/SISNotation
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/SISNotation
+    nullable: true
+    value_type: text
+    view: InternalElement
+    view_property: SISNotation
+  - container: InternalElement
     container_property: Version
     is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/Version
@@ -337,15 +346,6 @@ rules:
     value_type: text
     view: InternalElement
     view_property: revisionDate
-  - container: InternalElement
-    container_property: sISNotation
-    is_list: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/sISNotation
-    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/sISNotation
-    nullable: true
-    value_type: text
-    view: InternalElement
-    view_property: sISNotation
   - container: InternalElement
     container_property: scale
     is_list: false
