@@ -197,7 +197,7 @@ class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]): 
 
     def _standardize_views(self, views: SheetList[DMSView], space: str, version: str) -> SheetList[DMSView]:
         for view in views:
-            if view.view.space != "cdf_cdm":
+            if view.view.space not in COGNITE_SPACES::
                 view.view.version = version
                 view.view.prefix = space
 
