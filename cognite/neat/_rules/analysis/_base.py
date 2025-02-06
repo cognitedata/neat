@@ -170,10 +170,6 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
 
         return class_property_pairs
 
-    def class_inheritance_path(self, class_: ClassEntity) -> list[ClassEntity]:
-        class_parent_pairs = self.class_parent_pairs()
-        return get_inheritance_path(class_, class_parent_pairs)
-
     @classmethod
     def _add_inherited_properties(
         cls,
