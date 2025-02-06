@@ -203,7 +203,7 @@ class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]): 
 
             if view.implements:
                 for i, parent in enumerate(view.implements):
-                    if parent.space != "cdf_cdm":
+                    if parent.space not in COGNITE_SPACES:
                         view.implements[i].version = version
                         view.implements[i].prefix = space
         return views
