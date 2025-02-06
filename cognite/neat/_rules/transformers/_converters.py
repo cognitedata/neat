@@ -197,7 +197,7 @@ class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]): 
 
     def _standardize_views(self, views: SheetList[DMSView], space: str, version: str) -> SheetList[DMSView]:
         for view in views:
-            if view.view.space not in COGNITE_SPACES::
+            if view.view.space not in COGNITE_SPACES:
                 view.view.version = version
                 view.view.prefix = space
 
@@ -212,13 +212,24 @@ class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]): 
         self, properties: SheetList[DMSProperty], space: str, version: str
     ) -> SheetList[DMSProperty]:
         for property_ in properties:
-            if property_.view.space not in COGNITE_SPACES::
+            if property_.view.space not in COGNITE_SPACES:
                 property_.view.version = version
                 property_.view.prefix = space
 
-            if isinstance(property_.value_type, ViewEntity) and property_.value_type.space not in COGNITE_SPACES::
+            if isinstance(property_.value_type, ViewEntity) and property_.value_type.space not in COGNITE_SPACES:
                 property_.value_type.version = version
                 property_.value_type.prefix = space
+
+            # for edge connection
+            if (
+                property_.connection
+                and isinstance(property_.connection, EdgeEntity)
+                and property_.connection.properties
+            ):
+                if property_.connection.properties.space not in COGNITE_SPACES:
+                    property_.connection.properties.version = version
+                    property_.connection.properties.prefix = space
+
         return properties
 
 
