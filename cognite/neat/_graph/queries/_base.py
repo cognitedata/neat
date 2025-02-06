@@ -358,7 +358,7 @@ class Queries:
         Returns:
             List of types
         """
-        query = f"SELECT DISTINCT ?type WHERE {{ ?subject a ?type }}"
+        query = "SELECT DISTINCT ?type WHERE { ?subject a ?type }"
         if limit is not None:
             query += f" LIMIT {limit}"
         result = cast(list[ResultRow], list(self.graph(named_graph).query(query)))

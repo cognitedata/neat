@@ -4,6 +4,7 @@ import urllib.parse
 import warnings
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from graphlib import TopologicalSorter
 from pathlib import Path
 from typing import Any, cast, get_args
@@ -22,20 +23,17 @@ from rdflib import RDF, URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT, is_readonly_property
-from cognite.neat._graph._tracking import LogTracker, Tracker
+from cognite.neat._graph._tracking import Tracker
 from cognite.neat._issues import IssueList, NeatIssue, NeatIssueList
 from cognite.neat._issues.errors import (
     ResourceConversionError,
-    ResourceCreationError,
     ResourceDuplicatedError,
     ResourceRetrievalError,
 )
-from dataclasses import dataclass
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
 from cognite.neat._rules.analysis._dms import DMSAnalysis
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json, String
-from cognite.neat._rules.models.entities._single_value import ViewEntity
 from cognite.neat._shared import InstanceType
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
@@ -44,6 +42,7 @@ from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 from cognite.neat._utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, CDFLoader
+
 
 @dataclass
 class _ViewIterator:
@@ -57,6 +56,7 @@ class _ViewIterator:
             the DMS will create the nodes twice, first without the parent property, and then add only
             the parent property.
     """
+
     view: dm.View
     instance_count: int
     self_required_properties: set[str]
@@ -168,8 +168,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         view_iterations = self._create_view_iterations()
 
         for view_iteration in view_iterations:
-            pydantic_cls, edge_by_type, edge_by_prop_id, issues = self._create_validation_classes(
-                view_iteration.view)  # type: ignore[var-annotated]
+            pydantic_cls, edge_by_type, edge_by_prop_id, issues = self._create_validation_classes(view_iteration.view)  # type: ignore[var-annotated]
             yield from issues
             reader = get_reader()
             instance_iterable = iterate_progress_bar_if_above_config_threshold(
@@ -329,9 +328,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         return view_and_count_by_id
 
-    def _sort_by_direct_relation_dependencies(
-        self, iterations: list[_ViewIterator]
-    ) -> list[_ViewIterator]:
+    def _sort_by_direct_relation_dependencies(self, iterations: list[_ViewIterator]) -> list[_ViewIterator]:
         """Sorts the views by container constraints."""
         if not self._client:
             return iterations
