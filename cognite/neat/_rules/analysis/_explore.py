@@ -8,7 +8,7 @@ from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import InformationProperty
 
 
-class Explore:
+class RuleExplore:
     def __init__(self, information: InformationRules, dms: DMSRules | None) -> None:
         self._information = information
         self._dms = dms
@@ -16,8 +16,9 @@ class Explore:
     def parents_by_class(
         self, include_ancestors: bool = False, include_different_space: bool = False
     ) -> dict[ClassEntity, set[ClassEntity]]:
-        parents_by_class: dict[ClassEntity, set[ClassEntity]] = defaultdict(set)
+        parents_by_class: dict[ClassEntity, set[ClassEntity]] = {}
         for class_ in self._information.classes:
+            parents_by_class[class_.class_] = set()
             for parent in class_.implements or []:
                 if include_different_space or parent.prefix == class_.class_.prefix:
                     parents_by_class[class_.class_].add(parent)
@@ -32,7 +33,9 @@ class Explore:
             # Topological sort to ensure that parents are defined before children
             for class_entity in list(TopologicalSorter(parents_by_class).static_order()):
                 parents_by_class[class_entity] |= {
-                    parent for parent in parents_by_class[class_entity] for class_ in parents_by_class[parent]
+                    grand_parent
+                    for parent in parents_by_class[class_entity]
+                    for grand_parent in parents_by_class[parent]
                 }
 
         return parents_by_class

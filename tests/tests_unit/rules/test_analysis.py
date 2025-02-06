@@ -1,6 +1,12 @@
-from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.analysis import InformationAnalysis, RuleExplore
 from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.entities import ClassEntity
+from cognite.neat._rules.models.information import (
+    InformationInputClass,
+    InformationInputMetadata,
+    InformationInputProperty,
+    InformationInputRules,
+)
 
 
 class TestInformationRulesAnalysis:
@@ -39,3 +45,45 @@ class TestInformationRulesAnalysis:
             0
         ].class_ == ClassEntity.load("power:GeoLocation")
         assert len(InformationAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes) == 1
+
+
+class TestAnalysis:
+    def test_parents_by_class(self) -> None:
+        generation = InformationInputRules(
+            metadata=InformationInputMetadata(
+                "my_space",
+                "my_external_id",
+                "v1",
+                "doctrino",
+            ),
+            properties=[
+                InformationInputProperty("child", "childProp", "string"),
+                InformationInputProperty("parent", "parentProp", "string"),
+                InformationInputProperty("grandparent", "grandparentProp", "string"),
+            ],
+            classes=[
+                InformationInputClass("child", implements="parent"),
+                InformationInputClass("parent", implements="grandparent"),
+                InformationInputClass("grandparent", implements=None),
+            ],
+        )
+
+        explore = RuleExplore(generation.as_verified_rules(), None)
+
+        parents_by_class = explore.parents_by_class(include_ancestors=True)
+        assert {
+            class_.suffix: {parent.suffix for parent in parents} for class_, parents in parents_by_class.items()
+        } == {
+            "child": {"parent", "grandparent"},
+            "parent": {"grandparent"},
+            "grandparent": set(),
+        }
+
+        parents_by_class = explore.parents_by_class(include_ancestors=False)
+        assert {
+            class_.suffix: {parent.suffix for parent in parents} for class_, parents in parents_by_class.items()
+        } == {
+            "child": {"parent"},
+            "parent": {"grandparent"},
+            "grandparent": set(),
+        }
