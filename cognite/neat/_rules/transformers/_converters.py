@@ -212,7 +212,7 @@ class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]): 
         self, properties: SheetList[DMSProperty], space: str, version: str
     ) -> SheetList[DMSProperty]:
         for property_ in properties:
-            if property_.view.space != "cdf_cdm":
+            if property_.view.space not in COGNITE_SPACES::
                 property_.view.version = version
                 property_.view.prefix = space
 
