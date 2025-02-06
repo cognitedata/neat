@@ -16,6 +16,9 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Added
+- [ALPHA] Added standardization of version and space for views in DMS data model under `neat.prepare.data_model.standardize_space_and_version()`.
+
 ### Fixed
 - Change the `Instance source` field on InformationProperty to be less restrictive. All URIs are now allowed.
 - The `neat.infer()` maintains acronyms when renaming invalid properties/classes. 
@@ -33,7 +36,7 @@ Changes are grouped as follows:
 - `neat.infer()` now automatically makes the inferred classes and properties comply with the CDF naming conventions.
 
 ### Fixed
-- The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model 
+- The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model
   in the Excel file.
 
 ## [0.109.2] - 31-01-**2025**
