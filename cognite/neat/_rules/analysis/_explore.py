@@ -460,6 +460,10 @@ class RuleAnalysis:
     def properties_by_neat_id(self) -> dict[URIRef, InformationProperty]:
         return {prop.neatId: prop for prop in self.information.properties if prop.neatId}
 
+    @property
+    def classes_by_neat_id(self) -> dict[URIRef, InformationClass]:
+        return {class_.neatId: class_ for class_ in self.information.classes if class_.neatId}
+
     def neat_id_to_instance_source_property_uri(self, property_neat_id: URIRef) -> URIRef | None:
         if (
             (property_ := self.properties_by_neat_id.get(property_neat_id))
