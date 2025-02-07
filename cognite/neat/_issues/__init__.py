@@ -12,6 +12,8 @@ from ._base import (
     catch_issues,
     catch_warnings,
 )
+from .errors._factory import from_pydantic
+
 
 __all__ = [
     "DefaultWarning",
@@ -21,6 +23,7 @@ __all__ = [
     "NeatIssue",
     "NeatIssueList",
     "NeatWarning",
+    "from_pydantic",
     "catch_issues",
     "catch_warnings",
 ]

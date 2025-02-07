@@ -530,38 +530,3 @@ def _get_subclasses(cls_: type[T_Cls], include_base: bool = False) -> Iterable[t
     for s in cls_.__subclasses__():
         yield s
         yield from _get_subclasses(s, False)
-
-
-@contextmanager
-def catch_warnings() -> Iterator[IssueList]:
-    """Catch warnings and append them to the issues list."""
-    issues = IssueList()
-    with warnings.catch_warnings(record=True) as warning_logger:
-        warnings.simplefilter("always")
-        try:
-            yield issues
-        finally:
-            if warning_logger:
-                issues.extend([NeatWarning.from_warning(warning) for warning in warning_logger])  # type: ignore[misc]
-
-
-@contextmanager
-def catch_issues(error_args: dict[str, Any] | None = None) -> Iterator[IssueList]:
-    """This is an internal help function to handle issues and warnings.
-
-    Args:
-        error_args: Additional arguments to pass to the error class. The only use case as of (2025-01-03) is to pass
-            the read_info_by_sheet to the error class such that the row numbers can be adjusted to match the source
-            spreadsheet.
-
-    Returns:
-        IssueList: The list of issues.
-
-    """
-    with catch_warnings() as issues:
-        try:
-            yield issues
-        except ValidationError as e:
-            issues.extend(NeatError.from_errors(e.errors(), **(error_args or {})))  # type: ignore[arg-type]
-        except (NeatError, MultiValueError) as e:
-            issues.extend(NeatError.from_errors([e], **(error_args or {})))  # type: ignore[arg-type, list-item]
