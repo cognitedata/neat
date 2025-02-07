@@ -11,7 +11,7 @@ from cognite.neat._rules.models.information import InformationProperty
 
 
 class RuleAnalysis:
-    def __init__(self, information: InformationRules | None, dms: DMSRules | None = None) -> None:
+    def __init__(self, information: InformationRules | None = None, dms: DMSRules | None = None) -> None:
         self._information = information
         self._dms = dms
 
