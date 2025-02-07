@@ -5,8 +5,8 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
-from cognite.neat._issues import NeatError
-from cognite.neat._issues.errors import NeatValueError, ResourceNotDefinedError
+from cognite.neat._issues import NeatError, catch_issues
+from cognite.neat._issues.errors import NeatValueError, ResourceNotDefinedError, PropertyValueError
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models import DMSRules, SheetList, data_types
 from cognite.neat._rules.models.data_types import DataType, String
@@ -107,7 +107,7 @@ def invalid_domain_rules_cases():
                 }
             ],
         },
-        NeatValueError("Invalid RDF Path - the prefix is empty in ':GeneratingUnit'"),
+        PropertyValueError(row=0, column="Instance Source", error=NeatValueError("Invalid RDF Path - the prefix is empty in ':GeneratingUnit'")),
         id="missing_rule",
     )
 
@@ -178,10 +178,10 @@ class TestInformationRules:
 
     @pytest.mark.parametrize("invalid_rules, expected_exception", list(invalid_domain_rules_cases()))
     def test_invalid_rules(self, invalid_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:
-        with pytest.raises(ValueError) as e:
+        with catch_issues() as errors:
             InformationRules.model_validate(invalid_rules)
-        errors = NeatError.from_errors(e.value.errors())
         assert len(errors) == 1
+
         assert errors[0] == expected_exception
 
     @pytest.mark.parametrize("incomplete_rules, expected_exception", list(incomplete_rules_case()))
