@@ -37,7 +37,7 @@ class SpreadsheetError(NeatError, ValueError, ABC):
 
 @dataclass(unsafe_hash=True)
 class SpreadsheetListError(SpreadsheetError, ABC):
-    """In row {row}, column {column}: {error}"""
+    """In row {row}, column '{column}': {error}"""
 
     row: int
     column: str
@@ -82,3 +82,8 @@ class NodeValueError(SpreadsheetListError):
 
 
 ERROR_CLS_BY_SPREADSHEET_NAME = {cls_._name: cls_ for cls_ in SpreadsheetListError.__subclasses__()}
+
+# Efficient way to set docstring for all classes
+for _cls in ERROR_CLS_BY_SPREADSHEET_NAME.values():
+    _cls.__doc__ = SpreadsheetListError.__doc__
+del _cls

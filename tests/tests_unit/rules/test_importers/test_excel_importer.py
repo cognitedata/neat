@@ -36,7 +36,7 @@ def invalid_rules_filepaths():
             [
                 MetadataValueError(
                     field_name="space",
-                    error=NeatValueError("Missing required field."),
+                    error=NeatValueError("value is missing."),
                 ),
             ]
         ),

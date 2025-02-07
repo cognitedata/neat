@@ -52,7 +52,7 @@ def _pydantic_to_neat_error(error: ErrorDetails) -> NeatValueError:
         # See https://docs.pydantic.dev/latest/errors/validation_errors/ for all possible error types:
         case error_type if error_type.endswith("_type") | error_type.endswith("_parsing"):
             if input_value is None:
-                return NeatValueError("Missing required field.")
+                return NeatValueError("value is missing.")
             expected_type = error_type.removesuffix("_type").removesuffix("_parsing")
             return NeatValueError(f"Expected a {expected_type} type, got {input_value!r}")
         case _:

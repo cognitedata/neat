@@ -203,6 +203,9 @@ class NeatIssue:
             return NotImplemented
         return (type(self).__name__, self.as_message()) == (type(other).__name__, other.as_message())
 
+    def __str__(self) -> str:
+        return self.as_message()
+
 
 @dataclass(unsafe_hash=True)
 class NeatError(NeatIssue, Exception):
