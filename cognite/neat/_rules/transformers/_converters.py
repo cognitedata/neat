@@ -997,7 +997,7 @@ class ToDataProductModel(ToSolutionModel):
         self.include = include
 
     def transform(self, rules: DMSRules) -> DMSRules:
-        # Overwrite this to avoid the warning.
+        # Overwrite transform to avoid the warning.
         return self._to_solution(rules)
 
 

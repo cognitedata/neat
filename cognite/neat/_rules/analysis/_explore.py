@@ -4,7 +4,7 @@ from collections import defaultdict
 from collections.abc import Set
 from dataclasses import dataclass
 from graphlib import TopologicalSorter
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from pydantic import ValidationError
@@ -13,10 +13,11 @@ from rdflib import URIRef
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models._rdfpath import RDFPath
+from cognite.neat._rules.models._rdfpath import Hop, RDFPath, SelfReferenceProperty, SingleProperty
 from cognite.neat._rules.models.dms import DMSProperty
-from cognite.neat._rules.models.entities import ClassEntity, ViewEntity
+from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo, ViewEntity
 from cognite.neat._rules.models.information import InformationClass, InformationProperty
+from cognite.neat._utils.collection_ import most_occurring_element
 from cognite.neat._utils.rdf_ import get_inheritance_path
 
 
@@ -124,7 +125,7 @@ class RuleAnalysis:
             dict[ClassEntity, list[InformationProperty]]: Values properties with class as key.
 
         """
-        properties_by_classes = defaultdict(list)
+        properties_by_classes: dict[ClassEntity, list[InformationProperty]] = defaultdict(list)
         for prop in self.information.properties:
             properties_by_classes[prop.class_].append(prop)
 
@@ -137,8 +138,9 @@ class RuleAnalysis:
                 for parent in parents:
                     for parent_prop in properties_by_classes[parent]:
                         if parent_prop.property_ not in class_properties:
-                            properties_by_classes[class_].append(parent_prop)
-                            class_properties.add(parent_prop.property_)
+                            child_prop = parent_prop.model_copy(update={"class_": class_})
+                            properties_by_classes[class_].append(child_prop)
+                            class_properties.add(child_prop.property_)
 
         return properties_by_classes
 
@@ -177,7 +179,7 @@ class RuleAnalysis:
         """Get a dictionary of views and their properties."""
         # This is a duplicate fo the properties_by_class method, but for views
         # The choice to duplicate the code is to avoid generics which will make the code less readable.
-        properties_by_views = defaultdict(list)
+        properties_by_views: dict[ViewEntity, list[DMSProperty]] = defaultdict(list)
         for prop in self.dms.properties:
             properties_by_views[prop.view].append(prop)
 
@@ -190,8 +192,9 @@ class RuleAnalysis:
                 for parent in parents:
                     for parent_prop in properties_by_views[parent]:
                         if parent_prop.view_property not in view_properties:
-                            properties_by_views[view].append(parent_prop)
-                            view_properties.add(parent_prop.view_property)
+                            child_prop = parent_prop.model_copy(update={"view": view})
+                            properties_by_views[view].append(child_prop)
+                            view_properties.add(child_prop.view_property)
 
         return properties_by_views
 
@@ -411,3 +414,114 @@ class RuleAnalysis:
         except ValidationError as e:
             warnings.warn(f"Reduced data model is not complete: {e}", stacklevel=2)
             return InformationRules.model_construct(**reduced_data_model)
+
+    def has_hop_transformations(self):
+        return any(
+            prop_.instance_source and isinstance(prop_.instance_source.traversal, Hop)
+            for prop_ in self.information.properties
+        )
+
+    def has_self_reference_property_transformations(self):
+        return any(
+            prop_.instance_source and isinstance(prop_.instance_source.traversal, SelfReferenceProperty)
+            for prop_ in self.information.properties
+        )
+
+    def define_property_renaming_config(self, class_: ClassEntity) -> dict[str | URIRef, str]:
+        property_renaming_configuration: dict[str | URIRef, str] = {}
+
+        if definitions := self.properties_by_id_by_class(has_instance_source=True, include_ancestors=True).get(class_):
+            for property_id, definition in definitions.items():
+                transformation = cast(RDFPath, definition.instance_source)
+                # use case we have a single property rdf path, and defined prefix
+                # in either metadata or prefixes of rules
+                if isinstance(
+                    transformation.traversal,
+                    SingleProperty,
+                ) and (
+                    transformation.traversal.property.prefix in self.information.prefixes
+                    or transformation.traversal.property.prefix == self.information.metadata.prefix
+                ):
+                    namespace = (
+                        self.information.metadata.namespace
+                        if transformation.traversal.property.prefix == self.information.metadata.prefix
+                        else self.information.prefixes[transformation.traversal.property.prefix]
+                    )
+
+                    property_renaming_configuration[namespace[transformation.traversal.property.suffix]] = property_id
+
+                # otherwise we default to the property id
+                else:
+                    property_renaming_configuration[property_id] = property_id
+
+        return property_renaming_configuration
+
+    @property
+    def properties_by_neat_id(self) -> dict[URIRef, InformationProperty]:
+        return {prop.neatId: prop for prop in self.information.properties if prop.neatId}
+
+    def neat_id_to_instance_source_property_uri(self, property_neat_id: URIRef) -> URIRef | None:
+        if (
+            (property_ := self.properties_by_neat_id.get(property_neat_id))
+            and property_.instance_source
+            and isinstance(
+                property_.instance_source.traversal,
+                SingleProperty,
+            )
+            and (
+                property_.instance_source.traversal.property.prefix in self.information.prefixes
+                or property_.instance_source.traversal.property.prefix == self.information.metadata.prefix
+            )
+        ):
+            namespace = (
+                self.information.metadata.namespace
+                if property_.instance_source.traversal.property.prefix == self.information.metadata.prefix
+                else self.information.prefixes[property_.instance_source.traversal.property.prefix]
+            )
+
+            return namespace[property_.instance_source.traversal.property.suffix]
+        return None
+
+    def most_occurring_class_in_transformations(self, class_: ClassEntity) -> ClassEntity | None:
+        classes = []
+        if class_property_pairs := self.properties_by_id_by_class(include_ancestors=True, has_instance_source=True).get(
+            class_
+        ):
+            for property_ in class_property_pairs.values():
+                classes.append(cast(RDFPath, property_.instance_source).traversal.class_)
+
+            return cast(ClassEntity, most_occurring_element(classes))
+        else:
+            return None
+
+    def class_uri(self, class_: ClassEntity) -> URIRef | None:
+        """Get URI for a class entity based on the rules.
+
+        Args:
+            class_: instance of ClassEntity
+
+        Returns:
+            URIRef of the class entity or None if not found
+        """
+
+        # we need to handle optional renamings and we do this
+        # by checking if the most occurring class in transformations alternatively
+        # in cases when we are not specifying transformations we default to the class entity
+        if not (most_frequent_class := self.most_occurring_class_in_transformations(class_)):
+            most_frequent_class = class_
+
+        # case 1 class prefix in rules.prefixes
+        if most_frequent_class.prefix in self.information.prefixes:
+            return self.information.prefixes[cast(str, most_frequent_class.prefix)][most_frequent_class.suffix]
+
+        # case 2 class prefix equal to rules.metadata.prefix
+        elif most_frequent_class.prefix == self.information.metadata.prefix:
+            return self.information.metadata.namespace[most_frequent_class.suffix]
+
+        # case 3 when class prefix is not found in prefixes of rules
+        else:
+            return None
+
+    @property
+    def multi_value_properties(self) -> list[InformationProperty]:
+        return [prop_ for prop_ in self.information.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]

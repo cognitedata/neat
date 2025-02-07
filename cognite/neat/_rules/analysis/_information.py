@@ -4,7 +4,6 @@ from typing import Any, cast
 from pydantic import ValidationError
 from rdflib import URIRef
 
-from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models import SchemaCompleteness
 from cognite.neat._rules.models._rdfpath import (
     Hop,
@@ -65,13 +64,6 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
             for prop_ in self.rules.properties
         )
 
-    def all_reference_transformations(self):
-        return [
-            prop_
-            for prop_ in self.rules.properties
-            if prop_.instance_source and isinstance(prop_.instance_source.traversal, SelfReferenceProperty)
-        ]
-
     def define_property_renaming_config(self, class_: ClassEntity) -> dict[str | URIRef, str]:
         property_renaming_configuration: dict[str | URIRef, str] = {}
 
@@ -123,14 +115,6 @@ class InformationAnalysis(BaseAnalysis[InformationRules, InformationClass, Infor
 
             return namespace[property_.instance_source.traversal.property.suffix]
         return None
-
-    def property_types(self, class_: ClassEntity) -> dict[str, EntityTypes]:
-        property_types = {}
-        if definitions := self.class_property_pairs(consider_inheritance=True).get(class_, None):
-            for property_id, definition in definitions.items():
-                property_types[property_id] = definition.type_
-
-        return property_types
 
     def most_occurring_class_in_transformations(self, class_: ClassEntity) -> ClassEntity | None:
         classes = []
