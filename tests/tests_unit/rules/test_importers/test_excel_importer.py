@@ -2,12 +2,12 @@ from pathlib import Path
 
 import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
-from pydantic.version import VERSION
 
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import (
     CDFMissingClientError,
     FileNotFoundNeatError,
+    MetadataValueError,
     NeatValueError,
     PropertyDefinitionDuplicatedError,
     PropertyValueError,
@@ -29,7 +29,19 @@ def invalid_rules_filepaths():
         IssueList([FileNotFoundNeatError(DOC_RULES / "not-existing.xlsx")]),
         id="Not existing file",
     )
-    major, minor, *_ = VERSION.split(".")
+
+    yield pytest.param(
+        EXCEL_IMPORTER_DATA / "invalid_metadata.xlsx",
+        IssueList(
+            [
+                MetadataValueError(
+                    field_name="space",
+                    error=NeatValueError("Missing required field."),
+                ),
+            ]
+        ),
+        id="Missing space in Metadata sheet.",
+    )
 
     yield pytest.param(
         EXCEL_IMPORTER_DATA / "invalid_property_dms_rules.xlsx",

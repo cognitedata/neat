@@ -11,26 +11,19 @@ class SpreadsheetError(NeatError, ValueError, ABC):
     """In row {row}: {error}"""
 
     _name: ClassVar[str] = ""
-    row: int
     error: NeatError
-    column: str | None = None
-
-    def as_message(self, include_type: bool = True) -> str:
-        if self.column:
-            return f"In row {self.row}, column {self.column}: {self.error.as_message(include_type)}"
-        # We now have a __doc__ attribute, so we can use it directly
-        return self.__doc__.format(row=self.row, error=self.error.as_message(include_type))  # type: ignore[union-attr]
 
     @classmethod
     def create(
         cls, location: tuple[int | str, ...], error: NeatError, spreadsheet: SpreadsheetRead | None = None
     ) -> "SpreadsheetError":
         spreadsheet_name = cast(str, location[0])
+        if spreadsheet_name not in ERROR_CLS_BY_SPREADSHEET_NAME:
+            # This happens for the metadata sheet, which are individual fields
+            return MetadataValueError(error, field_name=spreadsheet_name)
+
         error_cls = ERROR_CLS_BY_SPREADSHEET_NAME[spreadsheet_name]
-        if error_cls is MetadataValueError:
-            raise NotImplementedError("MetadataValueError is not implemented")
-        else:
-            row, column = cast(tuple[int, str], location[2:4])
+        row, column = cast(tuple[int, str], location[2:4])
 
         if spreadsheet:
             row = spreadsheet.adjusted_row_number(row)
@@ -43,45 +36,49 @@ class SpreadsheetError(NeatError, ValueError, ABC):
 
 
 @dataclass(unsafe_hash=True)
-class MetadataValueError(SpreadsheetError):
-    _type: ClassVar[str] = "Metadata"
-    field_name: str | None = None
+class SpreadsheetListError(SpreadsheetError, ABC):
+    """In row {row}, column {column}: {error}"""
 
-    def as_message(self, include_type: bool = True) -> str:
-        if self.field_name:
-            return f"In row {self.row}, metadata field {self.field_name}: {self.error.as_message(include_type)}"
-        # We now have a __doc__ attribute, so we can use it directly
-        return SpreadsheetError.__doc__.format(row=self.row, error=self.error.as_message(include_type))  # type: ignore[union-attr]
+    row: int
+    column: str
 
 
 @dataclass(unsafe_hash=True)
-class ViewValueError(SpreadsheetError):
+class MetadataValueError(SpreadsheetError):
+    """In field {field_name}: {error}"""
+
+    _type: ClassVar[str] = "Metadata"
+    field_name: str
+
+
+@dataclass(unsafe_hash=True)
+class ViewValueError(SpreadsheetListError):
     _name = "Views"
 
 
 @dataclass(unsafe_hash=True)
-class ContainerValueError(SpreadsheetError):
+class ContainerValueError(SpreadsheetListError):
     _name = "Containers"
 
 
 @dataclass(unsafe_hash=True)
-class PropertyValueError(SpreadsheetError):
+class PropertyValueError(SpreadsheetListError):
     _name = "Properties"
 
 
 @dataclass(unsafe_hash=True)
-class ClassValueError(SpreadsheetError):
+class ClassValueError(SpreadsheetListError):
     _name = "Classes"
 
 
 @dataclass(unsafe_hash=True)
-class EnumValueError(SpreadsheetError):
+class EnumValueError(SpreadsheetListError):
     _name = "Enum"
 
 
 @dataclass(unsafe_hash=True)
-class NodeValueError(SpreadsheetError):
+class NodeValueError(SpreadsheetListError):
     _name = "Nodes"
 
 
-ERROR_CLS_BY_SPREADSHEET_NAME = {cls_._name: cls_ for cls_ in SpreadsheetError.__subclasses__()}
+ERROR_CLS_BY_SPREADSHEET_NAME = {cls_._name: cls_ for cls_ in SpreadsheetListError.__subclasses__()}
