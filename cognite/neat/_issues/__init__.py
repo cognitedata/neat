@@ -9,10 +9,8 @@ from ._base import (
     NeatIssue,
     NeatIssueList,
     NeatWarning,
-    catch_issues,
-    catch_warnings,
 )
-from .errors._factory import from_pydantic
+from ._contextmanagers import catch_issues, catch_warnings
 
 
 __all__ = [
@@ -23,7 +21,6 @@ __all__ = [
     "NeatIssue",
     "NeatIssueList",
     "NeatWarning",
-    "from_pydantic",
     "catch_issues",
     "catch_warnings",
 ]
