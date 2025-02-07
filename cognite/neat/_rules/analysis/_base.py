@@ -352,15 +352,6 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
                 sym_pairs.add((source, target))
         return sym_pairs
 
-    def as_property_dict(
-        self,
-    ) -> dict[T_PropertyEntity, list[T_Property]]:
-        """This is used to capture all definitions of a property in the data model."""
-        property_dict: dict[T_PropertyEntity, list[T_Property]] = defaultdict(list)
-        for definition in self._get_properties():
-            property_dict[self._get_prop_entity(definition)].append(definition)
-        return property_dict
-
     def as_class_dict(self) -> dict[str, T_Class]:
         """This is to simplify access to classes through dict."""
         class_dict: dict[str, T_Class] = {}

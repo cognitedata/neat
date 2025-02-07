@@ -1,8 +1,13 @@
 import itertools
 import warnings
 from collections import defaultdict
+from collections.abc import Set
+from dataclasses import dataclass
 from graphlib import TopologicalSorter
+from typing import Any
 
+import pandas as pd
+from pydantic import ValidationError
 from rdflib import URIRef
 
 from cognite.neat._issues.errors import NeatValueError
@@ -12,6 +17,45 @@ from cognite.neat._rules.models._rdfpath import RDFPath
 from cognite.neat._rules.models.dms import DMSProperty
 from cognite.neat._rules.models.entities import ClassEntity, ViewEntity
 from cognite.neat._rules.models.information import InformationClass, InformationProperty
+from cognite.neat._utils.rdf_ import get_inheritance_path
+
+
+@dataclass(frozen=True)
+class Linkage:
+    source_class: ClassEntity
+    connecting_property: str
+    target_class: ClassEntity
+    max_occurrence: int | float | None
+
+
+class LinkageSet(set, Set[Linkage]):
+    @property
+    def source_class(self) -> set[ClassEntity]:
+        return {link.source_class for link in self}
+
+    @property
+    def target_class(self) -> set[ClassEntity]:
+        return {link.target_class for link in self}
+
+    def get_target_classes_by_source(self) -> dict[ClassEntity, set[ClassEntity]]:
+        target_classes_by_source: dict[ClassEntity, set[ClassEntity]] = defaultdict(set)
+        for link in self:
+            target_classes_by_source[link.source_class].add(link.target_class)
+        return target_classes_by_source
+
+    def to_pandas(self) -> pd.DataFrame:
+        # Todo: Remove this method
+        return pd.DataFrame(
+            [
+                {
+                    "source_class": link.source_class,
+                    "connecting_property": link.connecting_property,
+                    "target_class": link.target_class,
+                    "max_occurrence": link.max_occurrence,
+                }
+                for link in self
+            ]
+        )
 
 
 class RuleAnalysis:
@@ -228,3 +272,142 @@ class RuleAnalysis:
         """
         class_property_pairs = self.properties_by_class(include_ancestors)
         return {prop.class_ for prop in itertools.chain.from_iterable(class_property_pairs.values())}
+
+    def class_linkage(
+        self,
+        include_ancestors: bool = False,
+    ) -> LinkageSet:
+        """Returns a set of class linkages in the data model.
+
+        Args:
+            include_ancestors: Whether to consider inheritance or not. Defaults False
+
+        Returns:
+
+        """
+        class_linkage = LinkageSet()
+
+        properties_by_class = self.properties_by_class(include_ancestors)
+
+        prop: InformationProperty
+        for prop in itertools.chain.from_iterable(properties_by_class.values()):
+            if not isinstance(prop.value_type, ClassEntity):
+                continue
+            class_linkage.add(
+                Linkage(
+                    source_class=prop.class_,
+                    connecting_property=prop.property_,
+                    target_class=prop.value_type,
+                    max_occurrence=prop.max_count,
+                )
+            )
+
+        return class_linkage
+
+    def symmetrically_connected_classes(
+        self,
+        include_ancestors: bool = False,
+    ) -> set[tuple[ClassEntity, ClassEntity]]:
+        """Returns a set of pairs of symmetrically linked classes.
+
+        Args:
+            include_ancestors: Whether to consider inheritance or not. Defaults False
+
+        Returns:
+            Set of pairs of symmetrically linked classes
+
+        !!! note "Symmetrically Connected Classes"
+            Symmetrically connected classes are classes that are connected to each other
+            in both directions. For example, if class A is connected to class B, and class B
+            is connected to class A, then classes A and B are symmetrically connected.
+        """
+        sym_pairs: set[tuple[ClassEntity, ClassEntity]] = set()
+        class_linkage = self.class_linkage(include_ancestors)
+        if not class_linkage:
+            return sym_pairs
+
+        targets_by_source = class_linkage.get_target_classes_by_source()
+        for link in class_linkage:
+            source = link.source_class
+            target = link.target_class
+
+            if source in targets_by_source[source] and (source, target) not in sym_pairs:
+                sym_pairs.add((source, target))
+        return sym_pairs
+
+    def subset_rules(self, include_classes: Set[ClassEntity]) -> InformationRules:
+        """Subset rules to only include desired classes and their properties.
+
+        Args:
+            include_classes: Desired classes to include in the reduced data model
+
+        Returns:
+            Instance of InformationRules
+
+        !!! note "Inheritance"
+            If desired classes contain a class that is a subclass of another class(es), the parent class(es)
+            will be included in the reduced data model as well even though the parent class(es) are
+            not in the desired classes set. This is to ensure that the reduced data model is
+            consistent and complete.
+
+        !!! note "Partial Reduction"
+            This method does not perform checks if classes that are value types of desired classes
+            properties are part of desired classes. If a class is not part of desired classes, but it
+            is a value type of a property of a class that is part of desired classes, derived reduced
+            rules will be marked as partial.
+
+        !!! note "Validation"
+            This method will attempt to validate the reduced rules with custom validations.
+            If it fails, it will return a partial rules with a warning message, validated
+            only with base Pydantic validators.
+        """
+        class_as_dict = self.class_by_suffix()
+        parents_by_class = self.parents_by_class()
+        defined_classes = self.defined_classes(include_ancestors=True)
+
+        possible_classes = defined_classes.intersection(include_classes)
+        impossible_classes = include_classes - possible_classes
+
+        # need to add all the parent classes of the desired classes to the possible classes
+        parents: set[ClassEntity] = set()
+        for class_ in possible_classes:
+            parents = parents.union(
+                {
+                    parent
+                    for parent in get_inheritance_path(
+                        class_, {cls_: list(parents) for cls_, parents in parents_by_class.items()}
+                    )
+                }
+            )
+        possible_classes = possible_classes.union(parents)
+
+        if not possible_classes:
+            raise ValueError("None of the desired classes are defined in the data model!")
+
+        if impossible_classes:
+            warnings.warn(
+                f"Could not find the following classes defined in the data model: {impossible_classes}",
+                stacklevel=2,
+            )
+
+        reduced_data_model: dict[str, Any] = {
+            "metadata": self.information.metadata.model_copy(),
+            "prefixes": (self.information.prefixes or {}).copy(),
+            "classes": [],
+            "properties": [],
+        }
+
+        for class_ in possible_classes:
+            reduced_data_model["classes"].append(class_as_dict[str(class_.suffix)])
+
+        class_property_pairs = self.properties_by_class(include_ancestors=False)
+
+        for class_, properties in class_property_pairs.items():
+            if class_ in possible_classes:
+                reduced_data_model["properties"].extend(properties)
+
+        try:
+            return InformationRules.model_validate(reduced_data_model)
+        except ValidationError as e:
+            warnings.warn(f"Reduced data model is not complete: {e}", stacklevel=2)
+            return InformationRules.model_construct(**reduced_data_model)

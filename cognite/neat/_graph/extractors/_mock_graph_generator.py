@@ -12,7 +12,7 @@ import pandas as pd
 from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules.analysis import InformationAnalysis, RuleAnalysis
+from cognite.neat._rules.analysis import RuleAnalysis
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ClassEntity
@@ -118,17 +118,13 @@ def generate_triples(
                 class_count.pop(class_)
 
     # Subset data model to only classes that are defined in class count
-    rules = (
-        InformationAnalysis(rules).subset_rules(set(class_count.keys()))
-        if defined_classes != set(class_count.keys())
-        else rules
-    )
+    rules = analysis.subset_rules(set(class_count.keys())) if defined_classes != set(class_count.keys()) else rules
 
-    class_linkage = InformationAnalysis(rules).class_linkage().to_pandas()
+    class_linkage = analysis.class_linkage().to_pandas()
 
     # Remove one of symmetric pairs from class linkage to maintain proper linking
     # among instances of symmetrically linked classes
-    if sym_pairs := InformationAnalysis(rules).symmetrically_connected_classes():
+    if sym_pairs := analysis.symmetrically_connected_classes():
         class_linkage = _remove_higher_occurring_sym_pair(class_linkage, sym_pairs)
 
     # Remove any of symmetric pairs containing classes that are not present class count
@@ -138,7 +134,7 @@ def generate_triples(
     generation_order = _prettify_generation_order(_get_generation_order(class_linkage))
 
     # Generated simple view of data model
-    class_property_pairs = RuleAnalysis(rules).properties_by_class(include_ancestors=True)
+    class_property_pairs = analysis.properties_by_class(include_ancestors=True)
 
     # pregenerate instance ids for each remaining class
     instance_ids = {
