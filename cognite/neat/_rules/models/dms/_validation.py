@@ -42,7 +42,7 @@ from cognite.neat._rules.models.entities import ContainerEntity, RawFilter
 from cognite.neat._rules.models.entities._single_value import (
     ViewEntity,
 )
-
+from cognite.neat._utils.spreadsheet import SpreadsheetRead
 from ._rules import DMSProperty, DMSRules
 
 
@@ -54,13 +54,14 @@ class DMSValidation:
     # For example, changing the filter is allowed, but changing the properties is not.
     changeable_view_attributes: ClassVar[set[str]] = {"filter"}
 
-    def __init__(self, rules: DMSRules, client: NeatClient | None = None) -> None:
+    def __init__(self, rules: DMSRules, client: NeatClient | None = None, read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None) -> None:
         self._rules = rules
         self._client = client
         self._metadata = rules.metadata
         self._properties = rules.properties
         self._containers = rules.containers
         self._views = rules.views
+        self._read_info_by_spreadsheet = read_info_by_spreadsheet or {}
 
     def imported_views_and_containers_ids(
         self, include_views_with_no_properties: bool = True
@@ -212,13 +213,16 @@ class DMSValidation:
         for prop_no, prop in enumerate(self._properties):
             if prop.container and prop.container_property:
                 container_properties_by_id[(prop.container, prop.container_property)].append((prop_no, prop))
-
+        properties_sheet = self._read_info_by_spreadsheet.get("Properties")
         errors = IssueList()
         for (container, prop_name), properties in container_properties_by_id.items():
             if len(properties) == 1:
                 continue
             container_id = container.as_id()
+
             row_numbers = {prop_no for prop_no, _ in properties}
+            if properties_sheet:
+                row_numbers = {properties_sheet.adjusted_row_number(row_no) for row_no in row_numbers}
             value_types = {prop.value_type for _, prop in properties if prop.value_type}
             # The container type 'direct' is an exception. On a container the type direct can point to any
             # node. The value type is typically set on the view.

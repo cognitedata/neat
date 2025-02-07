@@ -38,7 +38,7 @@ def invalid_rules_filepaths():
                 PropertyValueError(
                     row=5,
                     column="Is List",
-                    error=NeatValueError("Expected a boolean, got 'Apple'"),
+                    error=NeatValueError("Expected a bool type, got 'Apple'"),
                 ),
             ]
         ),

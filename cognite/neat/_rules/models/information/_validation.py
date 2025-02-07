@@ -12,6 +12,7 @@ from cognite.neat._issues.warnings._resources import (
 from cognite.neat._rules._constants import PATTERNS, EntityTypes
 from cognite.neat._rules.models.entities import ClassEntity, UnknownEntity
 from cognite.neat._rules.models.entities._multi_value import MultiValueTypeInfo
+from cognite.neat._utils.spreadsheet import SpreadsheetRead
 
 from ._rules import InformationRules
 
@@ -20,8 +21,9 @@ class InformationValidation:
     """This class does all the validation of the Information rules that have dependencies
     between components."""
 
-    def __init__(self, rules: InformationRules):
+    def __init__(self, rules: InformationRules, read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None):
         self.rules = rules
+        self.read_info_by_spreadsheet = read_info_by_spreadsheet
         self.metadata = rules.metadata
         self.properties = rules.properties
         self.classes = rules.classes
