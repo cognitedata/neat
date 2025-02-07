@@ -4,8 +4,7 @@ from urllib.parse import quote
 from rdflib import Graph, Namespace, URIRef
 from rdflib.query import ResultRow
 
-from cognite.neat._rules.analysis import InformationAnalysis
-from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
+from cognite.neat._rules.models._rdfpath import RDFPath, SelfReferenceProperty, SingleProperty
 from cognite.neat._rules.models.information import InformationRules
 from cognite.neat._utils.rdf_ import get_namespace, remove_namespace_from_uri
 
@@ -30,12 +29,17 @@ class AddSelfReferenceProperty(BaseTransformer):
         rules: InformationRules,
     ):
         self.rules = rules
-        self.properties = InformationAnalysis(rules).all_reference_transformations()
+        self.properties = [
+            prop_
+            for prop_ in rules.properties
+            if prop_.instance_source and isinstance(prop_.instance_source.traversal, SelfReferenceProperty)
+        ]
 
     def transform(self, graph: Graph) -> None:
         for property_ in self.properties:
-            prefix = property_.instance_source.traversal.class_.prefix
-            suffix = property_.instance_source.traversal.class_.suffix
+            # Checked the instance source in the init.
+            prefix = property_.instance_source.traversal.class_.prefix  # type: ignore [union-attr]
+            suffix = property_.instance_source.traversal.class_.suffix  # type: ignore [union-attr]
 
             namespace = self.rules.prefixes[prefix] if prefix in self.rules.prefixes else self.rules.metadata.namespace
 
@@ -49,7 +53,7 @@ class AddSelfReferenceProperty(BaseTransformer):
                 )
 
             traversal = SingleProperty.from_string(
-                class_=property_.view.id,
+                class_=str(property_.class_),
                 property_=f"{self.rules.metadata.prefix}:{property_.property_}",
             )
 

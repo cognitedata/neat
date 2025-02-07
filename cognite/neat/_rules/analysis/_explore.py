@@ -1,3 +1,4 @@
+import itertools
 import warnings
 from collections import defaultdict
 from graphlib import TopologicalSorter
@@ -7,9 +8,10 @@ from rdflib import URIRef
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._rules.models import DMSRules, InformationRules
+from cognite.neat._rules.models._rdfpath import RDFPath
 from cognite.neat._rules.models.dms import DMSProperty
 from cognite.neat._rules.models.entities import ClassEntity, ViewEntity
-from cognite.neat._rules.models.information import InformationProperty
+from cognite.neat._rules.models.information import InformationClass, InformationProperty
 
 
 class RuleAnalysis:
@@ -161,3 +163,68 @@ class RuleAnalysis:
             view: {prop.view_property: prop.logical for prop in properties if prop.logical}
             for view, properties in properties_by_view.items()
         }
+
+    def class_by_suffix(self) -> dict[str, InformationClass]:
+        """Get a dictionary of class suffixes to class entities."""
+        class_dict: dict[str, InformationClass] = {}
+        for definition in self.information.classes:
+            entity = definition.class_
+            if entity.suffix in class_dict:
+                warnings.warn(
+                    NeatValueWarning(
+                        f"Class {entity} has been defined more than once! Only the first definition "
+                        "will be considered, skipping the rest.."
+                    ),
+                    stacklevel=2,
+                )
+                continue
+            class_dict[entity.suffix] = definition
+        return class_dict
+
+    def property_by_id(self) -> dict[str, list[InformationProperty]]:
+        """Get a dictionary of property IDs to property entities."""
+        property_dict: dict[str, list[InformationProperty]] = defaultdict(list)
+        for prop in self.information.properties:
+            property_dict[prop.property_].append(prop)
+        return property_dict
+
+    def properties_by_id_by_class(
+        self,
+        has_instance_source: bool = False,
+        include_ancestors: bool = False,
+    ) -> dict[ClassEntity, dict[str, InformationProperty]]:
+        """Get a dictionary of class entities to dictionaries of property IDs to property entities."""
+        class_property_pairs: dict[ClassEntity, dict[str, InformationProperty]] = {}
+        for class_, properties in self.properties_by_class(include_ancestors).items():
+            processed_properties: dict[str, InformationProperty] = {}
+            for prop in properties:
+                if prop.property_ in processed_properties:
+                    warnings.warn(
+                        NeatValueWarning(
+                            f"Property {processed_properties} for {class_} has been defined more than once!"
+                            " Only the first definition will be considered, skipping the rest.."
+                        ),
+                        stacklevel=2,
+                    )
+                    continue
+                if has_instance_source and not isinstance(prop.instance_source, RDFPath):
+                    continue
+                processed_properties[prop.property_] = prop
+            class_property_pairs[class_] = processed_properties
+
+        return class_property_pairs
+
+    def defined_classes(
+        self,
+        include_ancestors: bool = False,
+    ) -> set[ClassEntity]:
+        """Returns classes that have properties defined for them in the data model.
+
+        Args:
+            include_ancestors: Whether to consider inheritance or not. Defaults False
+
+        Returns:
+            Set of classes that have been defined in the data model
+        """
+        class_property_pairs = self.properties_by_class(include_ancestors)
+        return {prop.class_ for prop in itertools.chain.from_iterable(class_property_pairs.values())}
