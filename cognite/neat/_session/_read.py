@@ -311,11 +311,6 @@ class ExcelReadAPI(BaseReadAPI):
 
 
 @session_class_wrapper
-class ExcelExampleAPI(BaseReadAPI):
-    """Used as example for reading some data model into the NeatSession."""
-
-
-@session_class_wrapper
 class YamlReadAPI(BaseReadAPI):
     def __call__(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> IssueList:
         """Reads a yaml with either neat rules, or several toolkit yaml files to import Data Model(s) into NeatSession.
