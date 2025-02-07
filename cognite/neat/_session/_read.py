@@ -572,7 +572,7 @@ class RDFReadAPI(BaseReadAPI):
 
 @session_class_wrapper
 class Examples:
-    """Used as example for reading some triples into the NeatSession knowledge grapgh."""
+    """Used as example for reading various sources into NeatSession."""
 
     def __init__(self, state: SessionState) -> None:
         self._state = state
