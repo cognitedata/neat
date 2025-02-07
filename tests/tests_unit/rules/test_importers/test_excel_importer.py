@@ -8,8 +8,9 @@ from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import (
     CDFMissingClientError,
     FileNotFoundNeatError,
+    NeatValueError,
     PropertyDefinitionDuplicatedError,
-    RowError,
+    PropertyValueError,
 )
 from cognite.neat._issues.warnings import (
     NotSupportedHasDataFilterLimitWarning,
@@ -34,15 +35,11 @@ def invalid_rules_filepaths():
         EXCEL_IMPORTER_DATA / "invalid_property_dms_rules.xlsx",
         IssueList(
             [
-                RowError(
-                    sheet_name="Properties",
-                    column="Is List",
+                PropertyValueError(
                     row=5,
-                    type="bool_parsing",
-                    msg="Input should be a valid boolean, unable to interpret input",
-                    input="Apple",
-                    url=f"https://errors.pydantic.dev/{major}.{minor}/v/bool_parsing",
-                )
+                    column="Is List",
+                    error=NeatValueError("Expected a boolean, got 'Apple'"),
+                ),
             ]
         ),
         id="Invalid property specification",

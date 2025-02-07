@@ -3,10 +3,11 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 
 from pydantic import ValidationError
-from ._base import IssueList, MultiValueError, NeatError
+
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
 
-from ._factory import from_pydantic_error, from_warning
+from ._base import IssueList, MultiValueError, NeatError
+from ._factory import from_pydantic_errors, from_warning
 
 
 @contextmanager
@@ -38,7 +39,7 @@ def catch_issues(read_info_by_sheet: dict[str, SpreadsheetRead] | None = None) -
         try:
             yield issues
         except ValidationError as e:
-            issues.extend(from_pydantic_error(e.errors(), read_info_by_sheet))
+            issues.extend(from_pydantic_errors(e.errors(), read_info_by_sheet))
         except NeatError as single:
             issues.append(single)
         except MultiValueError as multi:

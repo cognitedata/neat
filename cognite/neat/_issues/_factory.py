@@ -1,13 +1,18 @@
 from warnings import WarningMessage
 
-from cognite.neat._issues._base import NeatError, NeatWarning
 from pydantic_core import ErrorDetails
+
+from cognite.neat._issues._base import NeatError, NeatWarning
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
+
 from .warnings import NeatValueWarning
 
 
-def from_pydantic_error(errors: list[ErrorDetails], read_info_by_sheet: dict[str, SpreadsheetRead] | None = None) -> list[NeatError]:
-    raise NotImplementedError
+def from_pydantic_errors(
+    errors: list[ErrorDetails], read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+) -> list[NeatError]:
+    read_info_by_sheet = read_info_by_sheet or {}
+    return [_from_pydantic_error(error, read_info_by_sheet) for error in errors]
 
 
 def from_warning(warning: WarningMessage) -> NeatWarning:
@@ -17,6 +22,11 @@ def from_warning(warning: WarningMessage) -> NeatWarning:
     if warning.source:
         message += f" Source: {warning.source}"
     return NeatValueWarning(message)
+
+
+def _from_pydantic_error(error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead]) -> NeatError:
+    raise NotImplementedError
+
 
 # def from_errors(cls, errors: "list[ErrorDetails | NeatError]", ) -> "list[NeatError]":
 #     """Convert a list of pydantic errors to a list of Error instances.
@@ -55,7 +65,7 @@ def from_warning(warning: WarningMessage) -> NeatWarning:
 #             # This is unreachable. However, in case it turns out to be reachable, we want to know about it.
 #             raise ValueError(f"Unsupported error type: {error}")
 #     return all_errors
-#
+
 # @classmethod
 # def _adjust_error(
 #         cls, error: "NeatError", loc: tuple[str | int, ...], read_info_by_sheet: dict[str, SpreadsheetRead] | None
@@ -208,8 +218,7 @@ def from_warning(warning: WarningMessage) -> NeatWarning:
 #             return f"{self.loc[0]} sheet field/column <{self.loc[1]}>: {self.msg}"
 #         else:
 #             return self.msg
-#
-#
+
 # @dataclass(unsafe_hash=True)
 # class RowError(NeatError, ValueError):
 #     """In {sheet_name}, row={row}, column={column}: {msg}. [type={type}, input_value={input}]"""
@@ -252,29 +261,4 @@ def from_warning(warning: WarningMessage) -> NeatWarning:
 #         if self.url:
 #             output += f" For further information visit {self.url}"
 #         return output
-#
-#
-# @dataclass(unsafe_hash=True)
-# class DefaultWarning(NeatWarning):
-#     """{category}: {warning}"""
-#
-#     extra = "Source: {source}"
-#
-#     warning: str
-#     category: str
-#     source: str | None = None
-#
-#     @classmethod
-#     def from_warning_message(cls, warning: WarningMessage) -> NeatWarning:
-#         if isinstance(warning.message, NeatWarning):
-#             return warning.message
-#
-#         return cls(
-#             warning=str(warning.message),
-#             category=warning.category.__name__,
-#             source=warning.source,
-#         )
-#
-#     def as_message(self, include_type: bool = True) -> str:
-#         return str(self.warning)
 #
