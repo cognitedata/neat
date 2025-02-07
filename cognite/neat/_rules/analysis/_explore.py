@@ -2,6 +2,8 @@ import warnings
 from collections import defaultdict
 from graphlib import TopologicalSorter
 
+from rdflib import URIRef
+
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._rules.models import DMSRules, InformationRules
@@ -146,3 +148,16 @@ class RuleAnalysis:
                             view_properties.add(parent_prop.view_property)
 
         return properties_by_views
+
+    def logical_uri_by_property_by_view(
+        self,
+        include_ancestors: bool = False,
+        include_different_space: bool = False,
+    ) -> dict[ViewEntity, dict[str, URIRef]]:
+        """Get the logical URI by property by view."""
+        properties_by_view = self.properties_by_view(include_ancestors, include_different_space)
+
+        return {
+            view: {prop.view_property: prop.logical for prop in properties if prop.logical}
+            for view, properties in properties_by_view.items()
+        }

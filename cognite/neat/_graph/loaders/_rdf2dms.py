@@ -31,7 +31,7 @@ from cognite.neat._issues.errors import (
     ResourceRetrievalError,
 )
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
-from cognite.neat._rules.analysis._dms import DMSAnalysis
+from cognite.neat._rules.analysis import RuleAnalysis
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json, String
 from cognite.neat._rules.models.entities._single_value import ViewEntity
@@ -147,7 +147,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return
 
         views_with_linked_properties = (
-            DMSAnalysis(self.rules).views_with_properties_linked_to_classes(consider_inheritance=True)
+            RuleAnalysis(dms=self.rules).logical_uri_by_property_by_view(include_ancestors=True)
             if self.rules and self.rules.metadata.logical
             else None
         )
