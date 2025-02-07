@@ -475,7 +475,7 @@ class RulesAnalysis:
 
     def properties_by_neat_id(
         self, format: Literal["info", "dms"] = "info"
-    ) -> dict[URIRef, InformationProperty | DMSProperty]:
+    ) -> dict[URIRef, InformationProperty] | dict[URIRef, DMSProperty]:
         if format == "info":
             return {prop.neatId: prop for prop in self.information.properties if prop.neatId}
         elif format == "dms":
@@ -576,7 +576,7 @@ class RulesAnalysis:
         logical_uri_by_property_by_view = self.logical_uri_by_property_by_view(include_ancestors=True)
         information_properties_by_neat_id = self.properties_by_neat_id()
 
-        config = {}
+        config: dict[dm.ViewId, dict[str, None | URIRef | dict[URIRef, str]]] = {}
 
         for view in self.dms.views:
             # this entire block of sequential if statements checks:
@@ -595,9 +595,10 @@ class RulesAnalysis:
                     # start off with renaming of properties on the information level
                     # this is to encounter for special cases of startNode and endNode
                     "property_renaming_config": {
-                        self.property_uri(info_prop): info_prop.property_
-                        for info_prop in properties_by_class.get(class_.class_)
-                    },
+                        uri: prop_.property_ for prop_ in info_properties if (uri := self.property_uri(prop_))
+                    }
+                    if (info_properties := properties_by_class.get(class_.class_))
+                    else {},
                 }
 
                 if logical_uri_by_property := logical_uri_by_property_by_view.get(view.view):
@@ -605,6 +606,6 @@ class RulesAnalysis:
                         if (property_ := information_properties_by_neat_id.get(neat_id)) and (
                             uri := self.property_uri(property_)
                         ):
-                            config[view.view.as_id()]["property_renaming_config"][uri] = target_name
+                            cast(dict, config[view.view.as_id()]["property_renaming_config"])[uri] = target_name
 
         return config
