@@ -1,3 +1,3 @@
-from ._explore import RuleAnalysis
+from ._base import RuleAnalysis
 
 __all__ = ["RuleAnalysis"]

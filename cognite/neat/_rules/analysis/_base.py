@@ -1,10 +1,10 @@
 import itertools
 import warnings
 from collections import defaultdict
-from collections.abc import Set
+from collections.abc import Hashable, Set
 from dataclasses import dataclass
 from graphlib import TopologicalSorter
-from typing import Any, cast
+from typing import Any, TypeVar, cast
 
 import pandas as pd
 from pydantic import ValidationError
@@ -19,6 +19,8 @@ from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo,
 from cognite.neat._rules.models.information import InformationClass, InformationProperty
 from cognite.neat._utils.collection_ import most_occurring_element
 from cognite.neat._utils.rdf_ import get_inheritance_path
+
+T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
 
 @dataclass(frozen=True)
@@ -102,15 +104,17 @@ class RuleAnalysis:
                         stacklevel=2,
                     )
         if include_ancestors:
-            # Topological sort to ensure that classes include all ancestors
-            for class_entity in list(TopologicalSorter(parents_by_class).static_order()):
-                parents_by_class[class_entity] |= {
-                    grand_parent
-                    for parent in parents_by_class[class_entity]
-                    for grand_parent in parents_by_class[parent]
-                }
+            self._include_ancestors(parents_by_class)
 
         return parents_by_class
+
+    @staticmethod
+    def _include_ancestors(parents_by_class: dict[T_Hashable, set[T_Hashable]]) -> None:
+        # Topological sort to ensure that classes include all ancestors
+        for class_entity in list(TopologicalSorter(parents_by_class).static_order()):
+            parents_by_class[class_entity] |= {
+                grand_parent for parent in parents_by_class[class_entity] for grand_parent in parents_by_class[parent]
+            }
 
     def properties_by_class(
         self, include_ancestors: bool = False, include_different_space: bool = False
@@ -164,13 +168,7 @@ class RuleAnalysis:
                         stacklevel=2,
                     )
         if include_ancestors:
-            # Topological sort to ensure that views include all ancestors
-            for view_entity in list(TopologicalSorter(implements_by_view).static_order()):
-                implements_by_view[view_entity] |= {
-                    grand_parent
-                    for parent in implements_by_view[view_entity]
-                    for grand_parent in implements_by_view[parent]
-                }
+            self._include_ancestors(implements_by_view)
         return implements_by_view
 
     def properties_by_view(
