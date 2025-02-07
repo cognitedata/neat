@@ -10,7 +10,7 @@ import pytest
 from _pytest.mark import ParameterSet
 
 from cognite.neat._issues import NeatError, NeatIssue, NeatWarning
-from cognite.neat._issues.errors import ResourceChangedError, ResourceNotFoundError
+from cognite.neat._issues.errors import ResourceChangedError, ResourceNotFoundError, SpreadsheetError
 from tests.utils import DataClassCreator, get_all_subclasses
 
 
@@ -86,6 +86,8 @@ class TestIssuesMeta:
                 ]
                 # Exclude ChangedResourceError as it has a custom as_message method.
                 and issue not in {ResourceChangedError}
+                # All SpreadsheetErrors have their own as_message method.
+                and not issubclass(issue, SpreadsheetError)
             )
         ]
         assert missing_variables == [], f"Variables missing in docstring: {missing_variables}"

@@ -3,47 +3,20 @@ from warnings import WarningMessage
 from cognite.neat._issues._base import NeatError, NeatWarning
 from pydantic_core import ErrorDetails
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
+from .warnings import NeatValueWarning
 
 
 def from_pydantic_error(errors: list[ErrorDetails], read_info_by_sheet: dict[str, SpreadsheetRead] | None = None) -> list[NeatError]:
     raise NotImplementedError
 
-def from_warning(warn: WarningMessage) -> NeatWarning:
-    raise NotImplementedError
 
-    #
-    # @dataclass(unsafe_hash=True)
-    # class NeatWarning(NeatIssue, UserWarning):
-    #     """This is the base class for all warnings used in Neat."""
-    #
-    #     @classmethod
-    #     def from_warning(cls, warning: WarningMessage) -> "NeatWarning":
-    #         """Create a NeatWarning from a WarningMessage."""
-    #         return DefaultWarning.from_warning_message(warning)
-    #
-    # @dataclass(unsafe_hash=True)
-    # class DefaultWarning(NeatWarning):
-    #     """{category}: {warning}"""
-    #
-    #     extra = "Source: {source}"
-    #
-    #     warning: str
-    #     category: str
-    #     source: str | None = None
-    #
-    #     @classmethod
-    #     def from_warning_message(cls, warning: WarningMessage) -> NeatWarning:
-    #         if isinstance(warning.message, NeatWarning):
-    #             return warning.message
-    #
-    #         return cls(
-    #             warning=str(warning.message),
-    #             category=warning.category.__name__,
-    #             source=warning.source,
-    #         )
-    #
-    #     def as_message(self, include_type: bool = True) -> str:
-    #         return str(self.warning)
+def from_warning(warning: WarningMessage) -> NeatWarning:
+    if isinstance(warning.message, NeatWarning):
+        return warning.message
+    message = f"{warning.category.__name__}: {warning.message!s}"
+    if warning.source:
+        message += f" Source: {warning.source}"
+    return NeatValueWarning(message)
 
 # def from_errors(cls, errors: "list[ErrorDetails | NeatError]", ) -> "list[NeatError]":
 #     """Convert a list of pydantic errors to a list of Error instances.

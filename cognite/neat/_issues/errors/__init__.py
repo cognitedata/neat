@@ -31,7 +31,7 @@ from ._resources import (
     ResourceNotFoundError,
     ResourceRetrievalError,
 )
-from ._wrapper import MetadataValueError
+from ._wrapper import SpreadsheetError, MetadataValueError, ViewValueError, ContainerValueError, PropertyValueError, ClassValueError, EnumValueError, NodeValueError
 
 __all__ = [
     "AuthorizationError",
@@ -64,6 +64,13 @@ __all__ = [
     "ResourceNotFoundError",
     "ResourceRetrievalError",
     "ReversedConnectionNotFeasibleError",
+    "SpreadsheetError",
+    "ClassValueError",
+    "EnumValueError",
+    "NodeValueError",
+    "PropertyValueError",
+    "ViewValueError",
+    "ContainerValueError",
 ]
 
 _NEAT_ERRORS_BY_NAME = {error.__name__: error for error in _get_subclasses(NeatError, include_base=True)}
